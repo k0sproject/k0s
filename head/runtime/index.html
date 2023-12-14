@@ -1009,19 +1009,19 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-custom-cri-runtime" class="md-nav__link">
+  <a href="#using-custom-cri-runtimes" class="md-nav__link">
     <span class="md-ellipsis">
-      Using custom CRI runtime
+      Using custom CRI runtimes
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Using custom CRI runtime">
+    <nav class="md-nav" aria-label="Using custom CRI runtimes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#using-dockershim" class="md-nav__link">
+  <a href="#using-docker-as-the-container-runtime" class="md-nav__link">
     <span class="md-ellipsis">
-      Using dockershim
+      Using Docker as the container runtime
     </span>
   </a>
   
@@ -1684,27 +1684,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../dockershim/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Dockershim deprecation
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../troubleshooting/" class="md-nav__link">
         
   
@@ -2055,19 +2034,19 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-custom-cri-runtime" class="md-nav__link">
+  <a href="#using-custom-cri-runtimes" class="md-nav__link">
     <span class="md-ellipsis">
-      Using custom CRI runtime
+      Using custom CRI runtimes
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Using custom CRI runtime">
+    <nav class="md-nav" aria-label="Using custom CRI runtimes">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#using-dockershim" class="md-nav__link">
+  <a href="#using-docker-as-the-container-runtime" class="md-nav__link">
     <span class="md-ellipsis">
-      Using dockershim
+      Using Docker as the container runtime
     </span>
   </a>
   
@@ -2218,12 +2197,91 @@ sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"
 <span class="s">EOF</span>
 </code></pre></div>
 <p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2">here</a>.</p>
-<h2 id="using-custom-cri-runtime">Using custom CRI runtime<a class="headerlink" href="#using-custom-cri-runtime" title="Permanent link">#</a></h2>
+<h2 id="using-custom-cri-runtimes">Using custom CRI runtimes<a class="headerlink" href="#using-custom-cri-runtimes" title="Permanent link">#</a></h2>
 <p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
 <p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;socket_path&gt;</code> (for <code>type</code>, use <code>docker</code> for a pure Docker setup and <code>remote</code> for anything else).</p>
-<h3 id="using-dockershim">Using dockershim<a class="headerlink" href="#using-dockershim" title="Permanent link">#</a></h3>
-<p>To run k0s with a pre-existing Dockershim setup, run the worker with <code>k0s worker --cri-socket docker:unix:///var/run/cri-dockerd.sock &lt;token&gt;</code>.
-A detailed explanation on dockershim and a guide for installing cri-dockerd can be found in our <a href="../dockershim/">k0s dockershim guide</a>.</p>
+<h3 id="using-docker-as-the-container-runtime">Using Docker as the container runtime<a class="headerlink" href="#using-docker-as-the-container-runtime" title="Permanent link">#</a></h3>
+<p>As of Kubernetes 1.24, the use of Docker as a container runtime is <a href="https://kubernetes.io/blog/2020/12/02/dockershim-faq/">no longer
+supported</a> out of the box. However, Mirantis provides
+<a href="https://github.com/Mirantis/cri-dockerd">cri-dockerd</a>, a shim that allows Docker to be controlled via CRI. It's <a href="https://www.mirantis.com/blog/the-future-of-dockershim-is-cri-dockerd/">based
+on the dockershim</a> that was previously part of upstream
+Kubernetes.</p>
+<h4 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h4>
+<p>In order to use Docker as the container runtime for k0s, the following steps
+need to be taken:</p>
+<ol>
+<li>
+<p>Manually install required components.<br />
+  On each <code>k0s worker</code> and <code>k0s controller --enable-worker</code> node, both
+  Docker Engine and cri-dockerd need to be installed manually. Follow the
+  official <a href="https://docs.docker.com/engine/install/">Docker Engine installation guide</a> and <a href="https://github.com/Mirantis/cri-dockerd#using-cri-dockerd">cri-dockerd
+  installation instructions</a>.</p>
+</li>
+<li>
+<p>Configure and restart affected k0s nodes.<br />
+  Once installations are complete, the nodes needs to be restarted with the
+  <code>--cri-socket</code> flag pointing to cri-dockerd's socket, which is typically
+  located at <code>/var/run/cri-dockerd.sock</code>. For instance, the commands to start a
+  node would be as follows:</p>
+<div class="highlight"><pre><span></span><code>k0s worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+</code></pre></div>
+<p>or, respectively</p>
+<div class="highlight"><pre><span></span><code><span class="go">k0s controller --enable-worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock</span>
+</code></pre></div>
+<p>When running k0s <a href="../cli/k0s_install/">as a service</a>, consider reinstalling the
+service with the appropriate flags:</p>
+<div class="highlight"><pre><span></span><code><span class="go">sudo k0s install --force worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock</span>
+</code></pre></div>
+<p>or, respectively</p>
+<div class="highlight"><pre><span></span><code><span class="go">sudo k0s install --force controller --enable-worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock</span>
+</code></pre></div>
+</li>
+</ol>
+<p>In scenarios where Docker is managed via systemd, it is crucial that the
+<code>cgroupDriver: systemd</code> setting is included in the Kubelet configuration. It can
+be added to the <code>workerProfiles</code> section of the k0s configuration. An example of
+how the k0s configuration might look:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterConfig</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">systemd-docker-cri</span>
+<span class="w">      </span><span class="nt">values</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">cgroupDriver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">systemd</span>
+</code></pre></div>
+<p>Note that this is a cluster-wide configuration setting that must be added to
+the k0s controller's configuration rather than directly to the workers, or to
+the cluster configuration if using <a href="../dynamic-configuration/">dynamic configuration</a>. See the <a href="../worker-node-config/#worker-profiles">worker
+profiles</a> section of the documentation for more details. When starting workers,
+both the <code>--profile=systemd-docker-cri</code> and <code>--cri-socket</code> flags are required.
+The profile name, such as <code>systemd-docker-cri</code>, is flexible. Alternatively,
+this setting can be applied to the <code>default</code> profile, which will apply to all
+nodes started without a specific profile. In this case, the <code>--profile</code> flag is
+not needed.</p>
+<p>Please note that there are currently some <a href="../troubleshooting/#using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics">pitfalls around container
+metrics</a> when using cri-dockerd.</p>
+<h4 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">#</a></h4>
+<p>The successful configuration can be verified by executing the following command:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-o<span class="w"> </span>wide
+<span class="go">NAME              STATUS   ROLES    AGE   VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
+<span class="go">docker-worker-0   Ready    &lt;none&gt;   15m   v1.28.4+k0s   172.27.77.155   &lt;none&gt;        Ubuntu 22.04.3 LTS   5.15.0-82-generic   docker://24.0.7</span>
+</code></pre></div>
+<p>On the worker nodes, the Kubernetes containers should be listed as regular
+Docker containers:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.ID}}\t{{.Names}}\t{{.State}}\t{{.Status}}&quot;</span>
+<span class="go">CONTAINER ID   NAMES                                                                                                   STATE     STATUS</span>
+<span class="go">9167a937af28   k8s_konnectivity-agent_konnectivity-agent-9rnj7_kube-system_430027b4-75c3-487c-b94d-efeb7204616d_1      running   Up 14 minutes</span>
+<span class="go">b6978162a05d   k8s_metrics-server_metrics-server-7556957bb7-wfg8k_kube-system_5f642105-78c8-450a-bfd2-2021b680b932_1   running   Up 14 minutes</span>
+<span class="go">d576abe86c92   k8s_coredns_coredns-85df575cdb-vmdq5_kube-system_6f26626e-d241-4f15-889a-bcae20d04e2c_1                 running   Up 14 minutes</span>
+<span class="go">8f268b180c59   k8s_kube-proxy_kube-proxy-2x6jz_kube-system_34a7a8ba-e15d-4968-8a02-f5c0cb3c8361_1                      running   Up 14 minutes</span>
+<span class="go">ed0a665ec28e   k8s_POD_konnectivity-agent-9rnj7_kube-system_430027b4-75c3-487c-b94d-efeb7204616d_0                     running   Up 14 minutes</span>
+<span class="go">a9861a7beab5   k8s_POD_metrics-server-7556957bb7-wfg8k_kube-system_5f642105-78c8-450a-bfd2-2021b680b932_0              running   Up 14 minutes</span>
+<span class="go">898befa4840e   k8s_POD_kube-router-fftkt_kube-system_940ad783-055e-4fce-8ce1-093ca01625b9_0                            running   Up 14 minutes</span>
+<span class="go">e80dabc23ce7   k8s_POD_kube-proxy-2x6jz_kube-system_34a7a8ba-e15d-4968-8a02-f5c0cb3c8361_0                             running   Up 14 minutes</span>
+<span class="go">430a784b1bdd   k8s_POD_coredns-85df575cdb-vmdq5_kube-system_6f26626e-d241-4f15-889a-bcae20d04e2c_0                     running   Up 14 minutes</span>
+</code></pre></div>
 
 
 

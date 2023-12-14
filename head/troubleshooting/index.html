@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://docs.k0sproject.io/head/troubleshooting/">
       
       
-        <link rel="prev" href="../dockershim/">
+        <link rel="prev" href="../FAQ/">
       
       
         <link rel="next" href="../architecture/">
@@ -1569,27 +1569,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../dockershim/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Dockershim deprecation
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -1693,9 +1672,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#im-using-custom-cri-and-missing-some-labels-in-prometheus-metrics" class="md-nav__link">
+  <a href="#using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics" class="md-nav__link">
     <span class="md-ellipsis">
-      I'm using custom CRI and missing some labels in Prometheus metrics
+      Using a custom container runtime and missing labels in Prometheus metrics
     </span>
   </a>
   
@@ -2061,9 +2040,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#im-using-custom-cri-and-missing-some-labels-in-prometheus-metrics" class="md-nav__link">
+  <a href="#using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics" class="md-nav__link">
     <span class="md-ellipsis">
-      I'm using custom CRI and missing some labels in Prometheus metrics
+      Using a custom container runtime and missing labels in Prometheus metrics
     </span>
   </a>
   
@@ -2189,22 +2168,20 @@ with etcd itself is not fully supported on ARM either.</p>
 <p>To add custom linker flags use <code>LDFLAGS</code> variable.</p>
 <div class="highlight"><pre><span></span><code><span class="nv">LD_FLAGS</span><span class="o">=</span><span class="s2">&quot;--custom-flag=value&quot;</span><span class="w"> </span>make<span class="w"> </span>k0s
 </code></pre></div>
-<h2 id="im-using-custom-cri-and-missing-some-labels-in-prometheus-metrics">I'm using custom CRI and missing some labels in Prometheus metrics<a class="headerlink" href="#im-using-custom-cri-and-missing-some-labels-in-prometheus-metrics" title="Permanent link">#</a></h2>
-<p>Due to removal of the embedded dockershim from Kubelet, the Kubelet's embedded
-<a href="https://github.com/google/cadvisor">cAdvisor</a> metrics got slightly broken. If your container runtime is a custom
-containerd you can add
-<code>--kubelet-extra-flags="--containerd=&lt;path/to/containerd.sock&gt;"</code> into k0s worker
-startup. That configures the Kubelet embedded cAdvisor to talk directly with
-containerd to gather the metrics and thus gets the expected labels in place.</p>
-<p>Unfortunately this does not work on when using Docker via cri-dockerd shim.
-Currently, there is no easy solution to this problem.</p>
-<p>In the future Kubelet will be refactored to get the container metrics from CRI
-interface rather than from the runtime directly. This work is specified and
-followed up in <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/2371-cri-pod-container-stats/README.md">KEP-2371</a> but until that work completes the only option is to
-run a standalone cAdvisor. The <a href="https://kubernetes.io/docs/tasks/administer-cluster/migrating-from-dockershim/check-if-dockershim-removal-affects-you/#some-filesystem-metrics-are-missing-and-the-metrics-format-is-different">known issues</a>
-section in the official Kubernetes documentation about migrating away from
-dockershim explains the current shortcomings and shows how to run cAdvisor
-as a standalone DaemonSet.</p>
+<h2 id="using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics">Using a custom container runtime and missing labels in Prometheus metrics<a class="headerlink" href="#using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics" title="Permanent link">#</a></h2>
+<p>With Kubernetes' shift to CRI, Kubelet's method of obtaining container metrics
+through its embedded <a href="https://github.com/google/cadvisor">cAdvisor</a> no longer works as it used to. This process
+doesn't go via CRI but directly interacts with the container runtime, which is
+only natively supported for containerd. K0s automatically manages this for its
+built-in containerd runtime. For custom containerd runtimes, you can use the
+flag <code>--kubelet-extra-flags=--containerd=/path/to/containerd.sock</code> when starting
+k0s.</p>
+<p>However, this solution is not applicable to other runtimes such as Docker when
+used via the cri-dockerd shim, and there is currently no easy fix. Kubelet is
+expected to be refactored in the future to gather container metrics from CRI
+instead, as specified in <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/2371-cri-pod-container-stats/README.md">KEP-2371</a>. For now, running a standalone cAdvisor, as
+explained in Kubernetes' <a href="https://kubernetes.io/docs/tasks/administer-cluster/migrating-from-dockershim/check-if-dockershim-removal-affects-you/#some-filesystem-metrics-are-missing-and-the-metrics-format-is-different">known issues</a> section, is a
+recommended workaround.</p>
 <h2 id="customized-configurations">Customized configurations<a class="headerlink" href="#customized-configurations" title="Permanent link">#</a></h2>
 <ul>
 <li>All data directories reside under <code>/var/lib/k0s</code>, for example:<ul>
