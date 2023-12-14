@@ -8,7 +8,7 @@ When contributing to this repository, please consider first discussing the chang
 
 Our code of conduct can be found in the link below. Please follow it in all your interactions with the project.
 
-- [Code Of Conduct](./CODE_OF_CONDUCT.md)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
 
 ## GitHub Workflow
 

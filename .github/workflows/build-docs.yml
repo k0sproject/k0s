@@ -8,6 +8,7 @@ on:
     paths:
       - mkdocs.yml
       - embedded-bins/Makefile.variables
+      - CODE_OF_CONDUCT.md
       - docs/**
 
 jobs:

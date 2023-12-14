@@ -1,3 +1,3 @@
-# k0s Community Code Of Conduct
+# K0s Community Code of Conduct
 
-Please refer to our [contributor code of conduct](docs/contributors/CODE_OF_CONDUCT.md).
+K0s follows the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md).
