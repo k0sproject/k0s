@@ -561,8 +561,8 @@ jobs:
           - arch: arm64
             instance-type: c7g.xlarge
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_TERRAFORM_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_TERRAFORM_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
       TF_VERSION: 1.2.2
       TF_VAR_k0s_binary_path: ${{ github.workspace }}/k0s/k0s
