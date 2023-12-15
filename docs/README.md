@@ -54,8 +54,8 @@ check out the [Contributing Guide] and the [Code of Conduct].
 
 [Lens Forums]: https://forums.k8slens.dev/
 [GitHub Issues]: https://github.com/k0sproject/k0s/issues
-[Contributing Guide]: https://docs.k0sproject.io/latest/contributors/overview/
-[Code of Conduct]:https://docs.k0sproject.io/latest/contributors/CODE_OF_CONDUCT/
+[Contributing Guide]: https://docs.k0sproject.io/stable/contributors/overview/
+[Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
 
 ## Commercial Support
 

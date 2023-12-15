@@ -12,7 +12,7 @@ The cluster can be started with:
 k0s controller --single
 ```
 
-See also the [Getting Started](https://docs.k0sproject.io/latest/install/) tutorial.
+See also the [Getting Started](https://docs.k0sproject.io/stable/install/) tutorial.
 
 ## How do I connect to the cluster?
 
