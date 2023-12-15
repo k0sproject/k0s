@@ -2025,7 +2025,7 @@
 <p>The cluster can be started with:</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>controller<span class="w"> </span>--single
 </code></pre></div>
-<p>See also the <a href="https://docs.k0sproject.io/latest/install/">Getting Started</a> tutorial.</p>
+<p>See also the <a href="https://docs.k0sproject.io/stable/install/">Getting Started</a> tutorial.</p>
 <h2 id="how-do-i-connect-to-the-cluster">How do I connect to the cluster?<a class="headerlink" href="#how-do-i-connect-to-the-cluster" title="Permanent link">#</a></h2>
 <p>You find the config in <code>${DATADIR}/pki/admin.conf</code> (default: <code>/var/lib/k0s/pki/admin.conf</code>). Copy this file, and change the <code>localhost</code> entry to the public ip of the controller. Use the modified config to connect with kubectl:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/admin.conf
