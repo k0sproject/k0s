@@ -19,6 +19,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -36,7 +37,8 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"helm.sh/helm/v3/pkg/storage/driver"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -197,7 +199,7 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	var chartInstance v1beta1.Chart
 
 	if err := cr.Client.Get(ctx, req.NamespacedName, &chartInstance); err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
@@ -207,7 +209,11 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 		cr.L.Debugf("Uninstall reconciliation request: %s", req)
 		// uninstall chart
 		if err := cr.uninstall(ctx, chartInstance); err != nil {
-			return reconcile.Result{}, fmt.Errorf("can't uninstall chart: %w", err)
+			if !errors.Is(err, driver.ErrReleaseNotFound) {
+				return reconcile.Result{}, fmt.Errorf("can't uninstall chart: %w", err)
+			}
+
+			cr.L.Debugf("No Helm release found for chart %s, assuming it has already been uninstalled", req)
 		}
 		controllerutil.RemoveFinalizer(&chartInstance, finalizerName)
 		if err := cr.Client.Update(ctx, &chartInstance); err != nil {

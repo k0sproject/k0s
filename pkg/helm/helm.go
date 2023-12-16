@@ -319,7 +319,7 @@ func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
 func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string) error {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
-		return fmt.Errorf("can't create helmAction configuration: %v", err)
+		return fmt.Errorf("can't create helmAction configuration: %w", err)
 	}
 	helmAction := action.NewUninstall(cfg)
 	deadline, ok := ctx.Deadline()
@@ -328,7 +328,7 @@ func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, na
 	}
 
 	if _, err := helmAction.Run(releaseName); err != nil {
-		return fmt.Errorf("can't uninstall release `%s`: %v", releaseName, err)
+		return fmt.Errorf("can't uninstall release `%s`: %w", releaseName, err)
 	}
 	return nil
 }

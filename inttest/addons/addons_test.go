@@ -28,11 +28,13 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 
@@ -45,6 +47,7 @@ type AddonsSuite struct {
 }
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
+	ctx := as.Context()
 	crlog.SetLogger(testr.New(as.T()))
 
 	addonName := "test-addon"
@@ -74,6 +77,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	chart := as.waitForTestRelease(addonName, "0.6.0", "default", 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.deleteRelease(chart)
+	as.deleteUninstalledChart(ctx)
 }
 
 func (as *AddonsSuite) pullHelmChart(node string) {
@@ -119,6 +123,89 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 		}
 		as.T().Log("Release uninstalled successfully")
 		return true, nil
+	}))
+}
+
+func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
+	spec := v1beta1.ChartSpec{
+		ChartName:   "whatever",
+		ReleaseName: "nonexistent",
+		Namespace:   "default",
+		Version:     "1",
+	}
+	status := v1beta1.ChartStatus{
+		ReleaseName: spec.ReleaseName,
+		Namespace:   spec.Namespace,
+		Version:     spec.Version,
+		AppVersion:  "1",
+		Revision:    1,
+		ValuesHash:  spec.HashValues(),
+	}
+	chart := &v1beta1.Chart{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bogus",
+			Namespace:  "kube-system",
+			Finalizers: []string{"helm.k0sproject.io/uninstall-helm-release"},
+		},
+	}
+
+	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+
+	scheme, err := v1beta1.SchemeBuilder.Build()
+	as.Require().NoError(err)
+	crClient, err := client.New(cfg, client.Options{Scheme: scheme})
+	as.Require().NoError(err)
+
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+		if _, err := controllerutil.CreateOrUpdate(ctx, crClient, chart, func() error {
+			chart.Spec = spec
+			return nil
+		}); err != nil {
+			as.T().Log("Failed to create bogus chart resource: ", err)
+			return false, nil
+		}
+		chart.Status = status
+		if err := crClient.Status().Update(ctx, chart); err != nil {
+			as.T().Log("Failed to update bogus chart resource's status: ", err)
+			return false, nil
+		}
+
+		as.T().Log("Created bogus chart")
+		return true, nil
+	}))
+
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+		if err := crClient.Delete(ctx, chart); err != nil {
+			as.T().Log("Failed to delete bogus chart resource: ", err)
+			return false, nil
+		}
+
+		as.T().Log("Deleted bogus chart")
+		return true, nil
+	}))
+
+	as.T().Logf("Expecting bogus chart %s/%s to be deleted", chart.Namespace, chart.Name)
+	var lastResourceVersion string
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+		var found v1beta1.Chart
+		err := crClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
+		switch {
+		case err == nil:
+			if lastResourceVersion != found.ResourceVersion {
+				as.T().Log("Bogus chart not yet deleted")
+				lastResourceVersion = found.ResourceVersion
+			}
+			return false, nil
+
+		case apierrors.IsNotFound(err):
+			as.T().Log("Bogus chart has been deleted")
+			return true, nil
+
+		default:
+			as.T().Log("Error while getting bogus chart: ", err)
+			return false, nil
+		}
 	}))
 }
 
