@@ -1975,6 +1975,9 @@ k0s<span class="w"> </span>kubectl<span class="w"> </span>drain<span class="w"> 
 <span class="c1"># Delete the node from the cluster</span>
 k0s<span class="w"> </span>kubectl<span class="w"> </span>delete<span class="w"> </span>node<span class="w"> </span>&lt;controller&gt;
 </code></pre></div>
+<p>Delete Autopilot's <code>ControlNode</code> object for the controller node:</p>
+<div class="highlight"><pre><span></span><code><span class="go">k0s kubectl delete controlnode.autopilot.k0sproject.io &lt;controller&gt;</span>
+</code></pre></div>
 <p>Then you need to remove it from the Etcd cluster.
 For example, if you want to remove <code>controller01</code> from a cluster with 3 controllers:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># First, list the Etcd members</span>
