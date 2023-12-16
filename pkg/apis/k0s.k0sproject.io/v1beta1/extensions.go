@@ -151,13 +151,17 @@ func (e *ClusterExtensions) Validate() []error {
 	return errs
 }
 
+func DefaultStorageExtension() *StorageExtension {
+	return &StorageExtension{
+		Type:                      ExternalStorage,
+		CreateDefaultStorageClass: false,
+	}
+}
+
 // DefaultExtensions default values
 func DefaultExtensions() *ClusterExtensions {
 	return &ClusterExtensions{
-		Storage: &StorageExtension{
-			Type:                      ExternalStorage,
-			CreateDefaultStorageClass: false,
-		},
-		Helm: &HelmExtensions{},
+		Storage: DefaultStorageExtension(),
+		Helm:    &HelmExtensions{},
 	}
 }
