@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -91,9 +92,9 @@ spec:
         ports:
           - containerPort: 80
 `
-	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-ns.yaml", dir), []byte(templateNS), 0400))
-	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-list.yaml", dir), []byte(template), 0400))
-	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-deploy.yaml", dir), []byte(templateDeployment), 0400))
+	require.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-ns.yaml", dir), []byte(templateNS), 0400))
+	require.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-list.yaml", dir), []byte(template), 0400))
+	require.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-deploy.yaml", dir), []byte(templateDeployment), 0400))
 
 	fakes := kubeutil.NewFakeClientFactory()
 	verbs := []string{"get", "list", "delete", "create"}
@@ -122,13 +123,15 @@ spec:
 	assert.NoError(t, err)
 	gv, _ := schema.ParseResourceArg("configmaps.v1.")
 	r, err := a.client.Resource(*gv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
-	assert.NoError(t, err)
-	assert.Equal(t, "applier", r.GetLabels()["component"])
+	if assert.NoError(t, err) {
+		assert.Equal(t, "applier", r.GetLabels()["component"])
+	}
 	podgv, _ := schema.ParseResourceArg("pods.v1.")
 	r, err = a.client.Resource(*podgv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
-	assert.NoError(t, err)
-	assert.Equal(t, "Pod", r.GetKind())
-	assert.Equal(t, "applier", r.GetLabels()["component"])
+	if assert.NoError(t, err) {
+		assert.Equal(t, "Pod", r.GetKind())
+		assert.Equal(t, "applier", r.GetLabels()["component"])
+	}
 	deployGV, _ := schema.ParseResourceArg("deployments.v1.apps")
 	_, err = a.client.Resource(*deployGV).Namespace("kube-system").Get(ctx, "nginx", metav1.GetOptions{})
 	assert.NoError(t, err)
@@ -138,19 +141,15 @@ spec:
 	assert.NoError(t, a2.Delete(ctx))
 	// Check that the resources are deleted
 	_, err = a.client.Resource(*gv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
-	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 
 	_, err = a.client.Resource(*podgv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
-	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 
 	_, err = a.client.Resource(*deployGV).Namespace("kube-system").Get(ctx, "nginx", metav1.GetOptions{})
-	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 
 	gvNS, _ := schema.ParseResourceArg("namespaces.v1.")
 	_, err = a.client.Resource(*gvNS).Get(ctx, "kube-system", metav1.GetOptions{})
-	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 }

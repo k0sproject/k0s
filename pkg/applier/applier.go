@@ -18,9 +18,7 @@ package applier
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 
@@ -48,7 +46,6 @@ type Applier struct {
 	discoveryClient discovery.CachedDiscoveryInterface
 
 	restClientGetter resource.RESTClientGetter
-	resourceBuilder  *resource.Builder
 }
 
 // NewApplier creates new Applier
@@ -60,10 +57,6 @@ func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface)
 	})
 
 	clientGetter := kubernetes.NewRESTClientGetter(kubeClientFactory)
-	resourceBuilder := resource.NewBuilder(clientGetter).
-		Unstructured().
-		ContinueOnError().
-		Flatten()
 
 	return Applier{
 		log:              log,
@@ -71,7 +64,6 @@ func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface)
 		Name:             name,
 		clientFactory:    kubeClientFactory,
 		restClientGetter: clientGetter,
-		resourceBuilder:  resourceBuilder,
 	}
 }
 
@@ -153,23 +145,19 @@ func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, erro
 		return resources, nil
 	}
 
-	r := a.resourceBuilder.
-		FilenameParam(false, &resource.FilenameOptions{Filenames: files}).
-		Do()
-
-	objects, err := r.Infos()
+	objects, err := resource.NewBuilder(a.restClientGetter).
+		Unstructured().
+		Path(false, files...).
+		Flatten().
+		Do().
+		Infos()
 	if err != nil {
-		// don't return an error on file removal
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("enable to get object infos: %w", err)
-		}
-
+		return nil, fmt.Errorf("unable to build resources: %w", err)
 	}
 	for _, o := range objects {
 		item := o.Object.(*unstructured.Unstructured)
 		if item.GetAPIVersion() != "" && item.GetKind() != "" {
 			resources = append(resources, item)
-			o = nil
 		}
 	}
 
