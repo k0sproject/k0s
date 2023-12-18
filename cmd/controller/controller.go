@@ -279,7 +279,9 @@ func (c *command) start(ctx context.Context) error {
 	if !slices.Contains(c.DisableComponents, constant.CsrApproverComponentName) {
 		nodeComponents.Add(ctx, controller.NewCSRApprover(nodeConfig,
 			leaderElector,
-			adminClientFactory))
+			adminClientFactory,
+			30*time.Minute),
+		)
 	}
 
 	if c.EnableK0sCloudProvider {
