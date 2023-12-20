@@ -31,6 +31,9 @@ TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
 BUILD_GID ?= $(shell id -g)
 BUILD_GO_FLAGS := -tags osusergo -buildvcs=false -trimpath
+# See https://github.com/mattn/go-sqlite3/issues/1164#issuecomment-1635253695
+# Remove when https://github.com/mattn/go-sqlite3/issues/1164 is released
+BUILD_CGO_CFLAGS := -D_LARGEFILE64_SOURCE
 BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
 
@@ -75,6 +78,7 @@ GO_ENV ?= docker run --rm \
 	-w /go/src/github.com/k0sproject/k0s \
 	-e GOOS \
 	-e CGO_ENABLED \
+	-e CGO_CFLAGS \
 	-e GOARCH \
 	--user $(BUILD_UID):$(BUILD_GID) \
 	-- '$(shell cat .k0sbuild.docker-image.k0s)'
@@ -186,7 +190,7 @@ k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
 
 k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
-	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
+	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
 		&& rm -f $@.code \
 		&& chmod +x $@.tmp \
@@ -213,7 +217,7 @@ lint-copyright:
 lint-go: GOLANGCI_LINT_FLAGS ?=
 lint-go: .k0sbuild.docker-image.k0s go.sum codegen
 	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v$(golangci-lint_version)
-	$(GO_ENV) golangci-lint run --verbose $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
+	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO_ENV) golangci-lint run --verbose $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
 
 .PHONY: lint
 lint: lint-copyright lint-go
@@ -251,7 +255,7 @@ else
 check-unit: GO_TEST_RACE ?= -race
 endif
 check-unit: go.sum codegen
-	$(GO) test -tags=hack $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=hack $(GO_CHECK_UNIT_DIRS)`
+	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO) test -tags=hack $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=hack $(GO_CHECK_UNIT_DIRS)`
 
 .PHONY: check-image-validity
 check-image-validity: go.sum
