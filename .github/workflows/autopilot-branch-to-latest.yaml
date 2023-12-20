@@ -45,7 +45,7 @@ jobs:
 
     steps:
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         persist-credentials: false
@@ -94,7 +94,7 @@ jobs:
         rm tool-latest.tar.gz
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         persist-credentials: false
@@ -182,7 +182,7 @@ jobs:
 
     steps:
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         persist-credentials: false
@@ -239,7 +239,7 @@ jobs:
 
     steps:
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         persist-credentials: false

@@ -45,7 +45,7 @@ jobs:
           fi
         working-directory: ./
       - name: Run git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.github_ref }}
           # Dev builds rely on "git describe --tags" to set the binary version

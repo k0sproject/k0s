@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout k0s main
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: main
           path: main
@@ -41,7 +41,7 @@ jobs:
           pip install --disable-pip-version-check -r docs/requirements.txt
 
       - name: Checkout k0s ${{ github.event.inputs.version }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: '${{ github.event.inputs.version }}'
           fetch-depth: 0
