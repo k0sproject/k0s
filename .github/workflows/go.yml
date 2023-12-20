@@ -101,7 +101,7 @@ jobs:
           mkdir -p sbom && chmod 777 sbom
           make sbom/spdx.json
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: spdx.json
           path: sbom/spdx.json
@@ -258,7 +258,7 @@ jobs:
 
       - name: Collect k0s logs and support bundle
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: smoketests-${{ matrix.smoke-suite }}-files
           path: |
@@ -267,7 +267,7 @@ jobs:
 
       - name: Collect sonobuoy results
         if: failure() && contains(matrix.smoke-suite, 'conformance')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: smoketests-${{ matrix.smoke-suite }}-sonobuoy-results
           path: /tmp/*_sonobuoy_*.tar.gz
@@ -321,7 +321,7 @@ jobs:
 
       - name: Collect k0s logs and support bundle
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: autopilot-tests-${{ matrix.version }}-files
           path: |
@@ -395,7 +395,7 @@ jobs:
           make build
 
       - name: Upload compiled executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: k0s-${{ matrix.arch }}
           path: k0s
@@ -432,7 +432,7 @@ jobs:
 
       - name: Collect k0s logs and support bundle
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: smoketest-${{ matrix.arch }}-check-basic-files
           path: |

@@ -73,7 +73,7 @@ jobs:
           make build
 
       - name: "Upload :: k0s"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: |
@@ -86,7 +86,7 @@ jobs:
 
       - name: "Upload :: Airgap image list"
         if: inputs.target-os != 'windows'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: airgap-images.txt

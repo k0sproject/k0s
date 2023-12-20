@@ -26,7 +26,7 @@ jobs:
           echo $COSIGN_KEY | base64 -d > cosign.key
           make sign-sbom
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: sbom/
