@@ -31,6 +31,7 @@ import (
 
 	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -75,6 +76,8 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	if err != nil {
 		s.FailNow("failed to obtain Kubernetes client", err)
 	}
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0), "")
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
@@ -111,6 +114,20 @@ func (s *BasicSuite) TestK0sGetsUp() {
 		node := s.WorkerNode(i)
 		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)
 		s.Require().NoError(common.VerifyKubeletMetrics(ctx, kc, node))
+	}
+
+	s.T().Log("checking kube-router gobgp functionality")
+	kubeRouterPods, err := kc.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{LabelSelector: "k8s-app=kube-router"})
+	s.Require().NoError(err)
+	// Just take the first running pod for execing the gobgp command
+	for _, pod := range kubeRouterPods.Items {
+		if pod.Status.Phase == corev1.PodRunning {
+			out, err := common.PodExecCmdOutput(kc, restConfig, pod.Name, "kube-system", "gobgp global")
+			s.Require().NoError(err)
+			// Check that the output contains the default AS number, that's a sign that gobgp is working
+			s.Assert().Regexp(`AS:\s+64512`, out)
+			break
+		}
 	}
 
 	s.verifyContainerdDefaultConfig(ctx)
