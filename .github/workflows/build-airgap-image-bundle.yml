@@ -34,7 +34,7 @@ jobs:
           persist-credentials: false
 
       - name: "Download :: Airgap image list"
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
 

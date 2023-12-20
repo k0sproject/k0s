@@ -486,17 +486,17 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Fetch k0s amd64
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: k0s-amd64
           path: ./k0s-amd64
       - name: Fetch k0s arm64
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: k0s-arm64
           path: ./k0s-arm64
       - name: Fetch k0s arm
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: k0s-arm
           path: ./k0s-arm
@@ -597,7 +597,7 @@ jobs:
         run: terraform init
 
       - name: Fetch k0s Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: k0s-${{ matrix.arch }}
           path: ${{ github.workspace }}/k0s
