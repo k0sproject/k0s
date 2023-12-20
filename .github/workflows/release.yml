@@ -80,7 +80,7 @@ jobs:
 
       - name: Collect smoke test logs
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: logs
           path: tests/*.log
@@ -118,7 +118,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Artifact for use in other Jobs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: k0s-amd64
           path: ./k0s
@@ -269,7 +269,7 @@ jobs:
 
       - name: Collect smoke test logs
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: logs
           path: tests/*.log
@@ -293,7 +293,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Artifact for use in other Jobs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: k0s-arm64
           path: ./k0s
@@ -377,7 +377,7 @@ jobs:
 
       - name: Collect smoke test logs
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: logs
           path: tests/*.log
@@ -401,7 +401,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Artifact for use in other Jobs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: k0s-arm
           path: ./k0s
