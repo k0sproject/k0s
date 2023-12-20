@@ -116,7 +116,7 @@ jobs:
           echo TF_VAR_k0s_version="$K0S_VERSION" >>"$GITHUB_ENV"
 
       - name: "Terraform :: Setup"
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ inputs.terraform-version }}
           terraform_wrapper: false
