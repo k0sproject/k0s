@@ -101,7 +101,7 @@ jobs:
 
       - name: Upload Release Assets - Binary
         id: upload-release-asset
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -110,7 +110,7 @@ jobs:
 
       - name: Upload Release Assets - Signature
         id: upload-release-asset
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -125,7 +125,7 @@ jobs:
 
       - name: Upload Release Assets - Bundle
         id: upload-release-asset-images
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-amd64.tar
@@ -188,7 +188,7 @@ jobs:
 
       - name: Upload Release Assets
         id: upload-release-asset
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe
@@ -197,7 +197,7 @@ jobs:
 
       - name: Upload Release Assets - Signature
         id: upload-release-asset
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe.sig
@@ -276,7 +276,7 @@ jobs:
 
       - name: Upload Release Assets - Binary
         id: upload-release-asset
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -285,7 +285,7 @@ jobs:
 
       - name: Upload Release Assets - Signature
         id: upload-release-asset
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -300,7 +300,7 @@ jobs:
 
       - name: Upload Release Assets - Bundle
         id: upload-release-asset-images
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-arm64.tar
@@ -384,7 +384,7 @@ jobs:
 
       - name: Upload Release Assets - Binary
         id: upload-release-asset
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -393,7 +393,7 @@ jobs:
 
       - name: Upload Release Assets - Signature
         id: upload-release-asset
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -408,7 +408,7 @@ jobs:
 
       - name: Upload Release Assets - Bundle
         id: upload-release-asset-images
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-arm.tar
@@ -450,7 +450,7 @@ jobs:
         run: |
           cd release_assets && sha256sum -b * > ../sha256sums.txt
       - name: Upload sha256sums.txt
-        uses: shogo82148/actions-upload-release-asset@v1.6.5
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: sha256sums.txt
@@ -541,7 +541,7 @@ jobs:
 
       - name: Upload Release Assets - SBOM
         id: upload-release-asset-images
-        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./sbom/*
@@ -633,7 +633,7 @@ jobs:
         working-directory: ./inttest
 
       - name: Upload conformance test result to Release Assets
-        uses: shogo82148/actions-upload-release-asset@v1.6.6 # Allows us to upload a file with wildcard patterns
+        uses: shogo82148/actions-upload-release-asset@v1.7.2 # Allows us to upload a file with wildcard patterns
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: inttest/*_sonobuoy_*.tar.gz
