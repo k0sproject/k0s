@@ -18,7 +18,7 @@ require (
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/cilium/ebpf v0.12.3
 	github.com/cloudflare/cfssl v1.6.4
-	github.com/containerd/cgroups/v3 v3.0.2
+	github.com/containerd/cgroups/v3 v3.0.3
 	github.com/containerd/containerd v1.7.8
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/estesp/manifest-tool/v2 v2.1.3
