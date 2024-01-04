@@ -27,7 +27,7 @@ import (
 	"github.com/k0sproject/k0s/static"
 )
 
-func CanUpdate(clientFactory kubernetes.ClientFactoryInterface, newVersion string) error {
+func CanUpdate(log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInterface, newVersion string) error {
 	removedAPIs, err := GetRemovedAPIsList()
 	if err != nil {
 		return err
@@ -40,13 +40,13 @@ func CanUpdate(clientFactory kubernetes.ClientFactoryInterface, newVersion strin
 
 	_, resources, err := discoveryClient.ServerGroupsAndResources()
 	if err != nil {
-		logrus.Error(err)
+		log.WithError(err).Warn("Error while discovering supported API groups and resources")
 		if len(resources) == 0 {
 			return err
 		}
 	}
 
-	restClientGetter := kubernetes.NewRESTClientGetter(clientFactory)
+	restClientGetter := kubernetes.NewRESTClientGetter(clientFactory, log)
 	resourceBuilder := resource.NewBuilder(restClientGetter).
 		Unstructured().
 		ContinueOnError().

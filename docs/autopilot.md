@@ -106,7 +106,7 @@ spec:
         version: v{{{ extra.k8s_version }}}+k0s.0
         platforms:
           linux-amd64:
-            url: https://github.com/k0sproject/k0s/releases/download/v1.28.4+k0s.0/k0s-v1.28.4+k0s.0-amd64
+            url: https://github.com/k0sproject/k0s/releases/download/v1.29.0+k0s.0/k0s-v1.29.0+k0s.0-amd64
             sha256: '0000000000000000000000000000000000000000000000000000000000000000'
         targets:
           controllers:

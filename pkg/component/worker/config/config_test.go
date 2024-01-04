@@ -134,7 +134,7 @@ var roundtripTests = []roundtripTest{
 			Konnectivity: Konnectivity{AgentPort: 1337},
 		},
 		map[string]string{
-			"kubeletConfiguration": `{"syncFrequency":"0s","fileCheckFrequency":"0s","httpCheckFrequency":"0s","authentication":{"x509":{},"webhook":{"cacheTTL":"0s"},"anonymous":{}},"authorization":{"webhook":{"cacheAuthorizedTTL":"0s","cacheUnauthorizedTTL":"0s"}},"streamingConnectionIdleTimeout":"0s","nodeStatusUpdateFrequency":"0s","nodeStatusReportFrequency":"0s","imageMinimumGCAge":"0s","volumeStatsAggPeriod":"0s","cpuManagerReconcilePeriod":"0s","runtimeRequestTimeout":"0s","evictionPressureTransitionPeriod":"0s","memorySwap":{},"logging":{"flushFrequency":0,"verbosity":0,"options":{"json":{"infoBufferSize":"0"}}},"shutdownGracePeriod":"0s","shutdownGracePeriodCriticalPods":"0s","containerRuntimeEndpoint":""}`,
+			"kubeletConfiguration": `{"syncFrequency":"0s","fileCheckFrequency":"0s","httpCheckFrequency":"0s","authentication":{"x509":{},"webhook":{"cacheTTL":"0s"},"anonymous":{}},"authorization":{"webhook":{"cacheAuthorizedTTL":"0s","cacheUnauthorizedTTL":"0s"}},"streamingConnectionIdleTimeout":"0s","nodeStatusUpdateFrequency":"0s","nodeStatusReportFrequency":"0s","imageMinimumGCAge":"0s","imageMaximumGCAge":"0s","volumeStatsAggPeriod":"0s","cpuManagerReconcilePeriod":"0s","runtimeRequestTimeout":"0s","evictionPressureTransitionPeriod":"0s","memorySwap":{},"logging":{"flushFrequency":0,"verbosity":0,"options":{"json":{"infoBufferSize":"0"}}},"shutdownGracePeriod":"0s","shutdownGracePeriodCriticalPods":"0s","containerRuntimeEndpoint":""}`,
 			"konnectivity":         `{"agentPort":1337}`,
 		},
 	},

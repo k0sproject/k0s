@@ -56,7 +56,7 @@ func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface)
 		"bundle":    name,
 	})
 
-	clientGetter := kubernetes.NewRESTClientGetter(kubeClientFactory)
+	clientGetter := kubernetes.NewRESTClientGetter(kubeClientFactory, log)
 
 	return Applier{
 		log:              log,
