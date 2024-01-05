@@ -135,7 +135,7 @@ $ k0sctl apply
 ⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
 ⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
 ⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
-k0sctl 0.16.0 Copyright 2022, k0sctl authors.
+k0sctl 0.17.1 Copyright 2023, k0sctl authors.
 By continuing to use k0sctl you agree to these terms:
 https://k0sproject.io/licenses/eula
 level=info msg="==> Running phase: Connect to hosts"
