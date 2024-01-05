@@ -193,6 +193,7 @@ k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
 		&& rm -f $@.code \
+		&& printf "\nk0s size: %s\n\n" "$$(du -sh $@.tmp | cut -f1)" \
 		&& chmod +x $@.tmp \
 		&& mv $@.tmp $@
 
