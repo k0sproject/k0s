@@ -15,7 +15,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_TERRAFORM_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
       TF_VERSION: 1.2.2
-      K0SCTL_VERSION: 0.16.0
+      K0SCTL_VERSION: 0.17.1
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     name: "K8s Network Conformance Testing"
