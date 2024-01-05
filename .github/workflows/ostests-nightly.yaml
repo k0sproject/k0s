@@ -104,6 +104,6 @@ jobs:
       os: ${{ needs.select.outputs.os }}
       network-provider: ${{ needs.select.outputs.network-provider }}
     secrets:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-access-key-id: ${{ secrets.AWS_TERRAFORM_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_TERRAFORM_KEY }}
       aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
