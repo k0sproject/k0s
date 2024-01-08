@@ -21,7 +21,7 @@ require (
 	github.com/containerd/cgroups/v3 v3.0.3
 	github.com/containerd/containerd v1.7.11
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/estesp/manifest-tool/v2 v2.1.3
+	github.com/estesp/manifest-tool/v2 v2.1.5
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-logr/logr v1.4.1
@@ -127,7 +127,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/daviddengcn/go-colortext v1.0.0 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
-	github.com/docker/cli v24.0.6+incompatible // indirect
+	github.com/docker/cli v24.0.7+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
