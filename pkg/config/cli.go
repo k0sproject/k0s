@@ -105,12 +105,6 @@ func (o *ControllerOptions) Normalize() error {
 					constant.APIConfigComponentName, "--enable-dynamic-config",
 				)
 			}
-
-		case constant.KubeletConfigComponentName:
-			logrus.Warnf("Usage of deprecated component name %q, please switch to %q",
-				constant.KubeletConfigComponentName, constant.WorkerConfigComponentName,
-			)
-			disabledComponent = constant.WorkerConfigComponentName
 		}
 
 		if !slices.Contains(availableComponents, disabledComponent) {

@@ -469,7 +469,7 @@ func (c *command) start(ctx context.Context) error {
 			return err
 		}
 		clusterComponents.Add(ctx, reconciler)
-		clusterComponents.Add(ctx, controller.NewKubeletConfig(c.K0sVars, adminClientFactory, nodeConfig))
+		clusterComponents.Add(ctx, controller.NewKubeletConfig(c.K0sVars))
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.SystemRbacComponentName) {

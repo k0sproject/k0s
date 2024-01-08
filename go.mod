@@ -29,7 +29,6 @@ require (
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/terraform-exec v0.20.0
-	github.com/imdario/mergo v0.3.16
 	github.com/k0sproject/bootloose v0.7.2
 	github.com/k0sproject/dig v0.2.0
 	github.com/k0sproject/version v0.4.2
@@ -176,6 +175,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/terraform-json v0.19.0 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
+	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/intel/goresctrl v0.3.0 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
