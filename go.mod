@@ -19,7 +19,7 @@ require (
 	github.com/cilium/ebpf v0.12.3
 	github.com/cloudflare/cfssl v1.6.4
 	github.com/containerd/cgroups/v3 v3.0.3
-	github.com/containerd/containerd v1.7.8
+	github.com/containerd/containerd v1.7.11
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/estesp/manifest-tool/v2 v2.1.3
 	github.com/evanphx/json-patch v5.6.0+incompatible
@@ -249,8 +249,8 @@ require (
 	go.etcd.io/etcd/raft/v3 v3.5.10 // indirect
 	go.etcd.io/etcd/server/v3 v3.5.10 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.42.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.44.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0 // indirect
 	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.19.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.19.0 // indirect
