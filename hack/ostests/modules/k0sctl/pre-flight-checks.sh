@@ -37,7 +37,7 @@ countSeenControllers() {
 }
 
 testKonnectivityPods() {
-  pods="$(kubectl -n kube-system get po -l k8s-app=konnectivity-agent -oname)"
+  pods="$(kubectl -n kube-system get po -l k8s-app=konnectivity-agent --field-selector=status.phase=Running -oname)"
 
   seenPods=0
   for pod in $pods; do
@@ -48,6 +48,10 @@ testKonnectivityPods() {
 
   echo Seen pods with expected amount of controller connections: $seenPods >&2
   [ $seenPods -eq "$expectedWorkers" ]
+}
+
+testCoreDnsDeployment() {
+  kubectl -n kube-system wait --for=condition=Available --timeout=9s deploy/coredns
 }
 
 main() {
@@ -67,8 +71,7 @@ main() {
   echo Expecting "$expectedWorkers" pods with "$expectedControllers" controller connections each ... >&2
 
   failedAttempts=0
-  while :; do
-    ! testKonnectivityPods || return 0
+  while ! testKonnectivityPods; do
     failedAttempts=$((failedAttempts + 1))
     if [ $failedAttempts -gt 30 ]; then
       echo Giving up after $failedAttempts failed attempts ... >&2
@@ -76,6 +79,19 @@ main() {
     fi
     echo Attempt $failedAttempts failed, retrying in ten seconds ... >&2
     sleep 10
+  done
+
+  echo Waiting for CoreDNS deployment to become available ... >&2
+
+  failedAttempts=0
+  while ! testCoreDnsDeployment; do
+    failedAttempts=$((failedAttempts + 1))
+    if [ $failedAttempts -gt 30 ]; then
+      echo Giving up after $failedAttempts failed attempts ... >&2
+      return 1
+    fi
+    echo Attempt $failedAttempts failed, retrying in a second ... >&2
+    sleep 1
   done
 }
 

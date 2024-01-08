@@ -27,10 +27,10 @@ locals {
   num_workers     = length([for h in terraform_data.k0sctl_apply.output.hosts : h if h.is_worker])
 }
 
-resource "terraform_data" "konnectivity_available" {
+resource "terraform_data" "pre_flight_checks" {
   triggers_replace = [
     sha256(jsonencode(terraform_data.k0sctl_apply.output.k0sctl_config)),
-    sha256(file("${path.module}/wait-for-konnectivity.sh")),
+    sha256(file("${path.module}/pre-flight-checks.sh")),
   ]
 
   input = {
@@ -51,7 +51,7 @@ resource "terraform_data" "konnectivity_available" {
     inline = [
       "#!/usr/bin/env sh",
       format("set -- %d %d", local.num_controllers, local.num_workers),
-      file("${path.module}/wait-for-konnectivity.sh"),
+      file("${path.module}/pre-flight-checks.sh"),
     ]
   }
 }
