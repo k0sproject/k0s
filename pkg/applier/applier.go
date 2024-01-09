@@ -19,7 +19,6 @@ package applier
 import (
 	"context"
 	"fmt"
-	"path"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
@@ -34,6 +33,10 @@ import (
 
 // manifestFilePattern is the glob pattern that all applicable manifest files need to match.
 const manifestFilePattern = "*.yaml"
+
+func FindManifestFilesInDir(dir string) ([]string, error) {
+	return filepath.Glob(filepath.Join(dir, manifestFilePattern))
+}
 
 // Applier manages all the "static" manifests and applies them on the k8s API
 type Applier struct {
@@ -96,7 +99,7 @@ func (a *Applier) Apply(ctx context.Context) error {
 		return err
 	}
 
-	files, err := filepath.Glob(path.Join(a.Dir, manifestFilePattern))
+	files, err := FindManifestFilesInDir(a.Dir)
 	if err != nil {
 		return err
 	}
