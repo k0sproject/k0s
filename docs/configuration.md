@@ -91,6 +91,7 @@ spec:
       mtu: 0
       peerRouterASNs: ""
       peerRouterIPs: ""
+      extraArgs:
     nodeLocalLoadBalancing:
       enabled: false
       envoyProxy:
@@ -213,15 +214,16 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 #### `spec.network.kuberouter`
 
 | Element          | Description                                                                                                                                                                                                                                                               |
-| ---------------- |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `autoMTU`        | Autodetection of used MTU (default: `true`).                                                                                                                                                                                                                              |
 | `mtu`            | Override MTU setting, if `autoMTU` must be set to `false`).                                                                                                                                                                                                               |
 | `metricsPort`    | Kube-router metrics server port. Set to 0 to disable metrics  (default: `8080`).                                                                                                                                                                                          |
-| `peerRouterIPs`  | Comma-separated list of [global peer addresses](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).                                                                                                                        |
-| `peerRouterASNs` | Comma-separated list of [global peer ASNs](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).                                                                                                                             |
+| `peerRouterIPs`  | DEPRECATED: Use extraArgs with peerRouterIPs instead. Comma-separated list of [global peer addresses](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).                                                                  |
+| `peerRouterASNs` | DEPRECATED: Use extraArgs with peerRouterASNs instead. Comma-separated list of [global peer ASNs](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).                                                                      |
 | `hairpin`        | Hairpin mode, supported modes `Enabled`: enabled cluster wide, `Allowed`: must be allowed per service [using annotations](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode), `Disabled`: doesn't work at all (default: Enabled) |
 | `hairpinMode`    | **Deprecated** Use `hairpin` instead. If both `hairpin` and `hairpinMode` are defined, this is ignored. If only hairpinMode is configured explicitly activates hairpinMode (https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode).  |
-| `ipMasq`         | IP masquerade for traffic originating from the pod network, and destined outside of it (default: false) |
+| `ipMasq`         | IP masquerade for traffic originating from the pod network, and destined outside of it (default: false)                                                                                                                                                                   |
+| `extraArgs`      | Extra arguments to pass to kube-router. Can be also used to override any k0s managed args. For reference, see kube-router [documentation](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#command-line-options). (default: empty)           |
 
 **Note**: Kube-router allows many networking aspects to be configured per node, service, and pod (for more information, refer to the [Kube-router user guide](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md)).
 

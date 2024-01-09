@@ -428,6 +428,13 @@ spec:
                       autoMTU:
                         description: 'Auto-detection of used MTU (default: true)'
                         type: boolean
+                      extraArgs:
+                        additionalProperties:
+                          type: string
+                        description: ExtraArgs are extra arguments to pass to kube-router
+                          Can be also used to override the default k0s managed kube-router
+                          arguments
+                        type: object
                       hairpin:
                         default: Enabled
                         description: 'Admits three values: "Enabled" enables it globally,
@@ -456,10 +463,12 @@ spec:
                           false)
                         type: integer
                       peerRouterASNs:
-                        description: Comma-separated list of global peer addresses
+                        description: 'Comma-separated list of global peer addresses
+                          DEPRECATED: Use extraArgs with peerRouterASNs instead'
                         type: string
                       peerRouterIPs:
-                        description: Comma-separated list of global peer ASNs
+                        description: 'Comma-separated list of global peer ASNs DEPRECATED:
+                          Use extraArgs with peerRouterIPs instead'
                         type: string
                     type: object
                   nodeLocalLoadBalancing:
