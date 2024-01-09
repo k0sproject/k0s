@@ -32,10 +32,14 @@ const sysvScript = `#!/bin/sh
 # Description:       {{.Description}}
 ### END INIT INFO
 
+if [ -f "/etc/default/{{.Name}}" ]; then
+	. /etc/default/{{.Name}}
+fi
+
 {{- if .Option.Environment}}{{range .Option.Environment}}
 export {{.}}{{end}}{{- end}}
 
-cmd="{{.Path}}{{range .Arguments}} {{.|cmd}}{{end}}"
+cmd="{{.Path}}{{range .Arguments}} {{.|cmd}}{{end}} ${K0S_EXTRA_ARGS}"
 
 name=$(basename $(readlink -f $0))
 pid_file="/var/run/$name.pid"
