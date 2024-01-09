@@ -31,9 +31,7 @@ TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
 BUILD_GID ?= $(shell id -g)
 BUILD_GO_FLAGS := -tags osusergo -buildvcs=false -trimpath
-# See https://github.com/mattn/go-sqlite3/issues/1164#issuecomment-1635253695
-# Remove when https://github.com/mattn/go-sqlite3/issues/1164 is released
-BUILD_CGO_CFLAGS := -D_LARGEFILE64_SOURCE
+BUILD_CGO_CFLAGS :=
 BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
 
