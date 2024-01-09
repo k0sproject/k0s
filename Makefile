@@ -259,8 +259,8 @@ check-unit: go.sum codegen
 	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO) test -tags=hack $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=hack $(GO_CHECK_UNIT_DIRS)`
 
 .PHONY: check-image-validity
-check-image-validity: go.sum
-	$(GO) run -tags=hack hack/validate-images/main.go -architectures amd64,arm64,arm
+check-image-validity: airgap-images.txt
+	hack/validate-images.sh <airgap-images.txt
 
 .PHONY: clean-gocache
 clean-gocache:

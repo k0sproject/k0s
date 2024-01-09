@@ -85,6 +85,32 @@ jobs:
       target-os: linux
       target-arch: amd64
 
+  check-images:
+    name: "Check :: Images"
+    needs: [build-k0s]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: "Workflow run :: Checkout"
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: "Download :: Airgap image list"
+        uses: actions/download-artifact@v4
+        with:
+          name: airgap-image-list-linux-amd64
+
+      - name: "Check :: Image validity"
+        run: |
+          mkdir -p embedded-bins/staging/linux/bin
+          make --touch airgap-images.txt
+          make check-image-validity
+
   generate-sbom:
     name: "Build :: SBOM"
     needs: [build-k0s]
@@ -143,9 +169,6 @@ jobs:
           make bindata
           make --touch codegen
           make check-unit
-
-      - name: Validate OCI images manifests
-        run: make check-image-validity
 
   unittests-k0s-windows-amd64:
     name: "Unit tests :: windows-amd64"
