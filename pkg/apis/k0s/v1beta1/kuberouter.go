@@ -33,9 +33,14 @@ type KubeRouter struct {
 	// IP masquerade for traffic originating from the pod network, and destined outside of it (default: false)
 	IPMasq bool `json:"ipMasq"`
 	// Comma-separated list of global peer addresses
+	// DEPRECATED: Use extraArgs with peerRouterASNs instead
 	PeerRouterASNs string `json:"peerRouterASNs"`
 	// Comma-separated list of global peer ASNs
+	// DEPRECATED: Use extraArgs with peerRouterIPs instead
 	PeerRouterIPs string `json:"peerRouterIPs"`
+	// ExtraArgs are extra arguments to pass to kube-router
+	// Can be also used to override the default k0s managed kube-router arguments
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=Enabled;Allowed;Disabled
