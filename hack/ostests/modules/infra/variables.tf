@@ -10,6 +10,7 @@ variable "resource_name_prefix" {
 
 variable "os" {
   type = object({
+    arch = string
     node_configs = object({
       default = object({
         ami_id = string
@@ -29,6 +30,11 @@ variable "os" {
   })
 
   description = "The OS configuration."
+
+  validation {
+    condition     = contains(["x86_64", "arm64"], var.os.arch)
+    error_message = "Invalid processor architecture."
+  }
 }
 
 variable "additional_ingress_cidrs" {
