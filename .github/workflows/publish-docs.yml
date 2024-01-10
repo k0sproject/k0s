@@ -74,7 +74,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAGS=$(gh release list -L 1000 -R "$GITHUB_REPOSITORY" | grep "+k0s." | grep -v Draft | cut -f 1 | k0s_sort)
+          TAGS=$(gh release list -L 1000 -R "$GITHUB_REPOSITORY" | grep "+k0s." | grep -v Draft | cut -f 1 | ./k0s_sort)
           LATEST=$(echo "${TAGS}" | tail -1)
           STABLE=$(echo "${TAGS}" | grep -v -- "-" | tail -1)
           mike alias -u head main

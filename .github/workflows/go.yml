@@ -165,27 +165,10 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Cache GOCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-
-          path: |
-            ~\AppData\Local\go-build
-
-      - name: Cache GOMODCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            build-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            ~\go\pkg\mod
+          go-version-file: go.mod
+          cache: false
 
       - name: Run unit tests
         env:
@@ -222,9 +205,10 @@ jobs:
         run: .github/workflows/prepare-docker-ipv6.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
+          cache: false
 
       - name: Download compiled executable
         uses: actions/download-artifact@v4
@@ -285,9 +269,10 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
+          cache: false
 
       - name: Download compiled executable
         uses: actions/download-artifact@v4
@@ -346,9 +331,10 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
+          cache: false
 
       - name: Cache embedded binaries
         uses: actions/cache@v4

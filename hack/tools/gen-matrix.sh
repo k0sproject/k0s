@@ -13,8 +13,12 @@ list_k0s_releases() {
   VERSION_PREFIX="v$1" gh api -X GET /repos/k0sproject/k0s/releases -F per_page=100 --paginate --jq "$query"
 }
 
+k0s_sort() {
+  go run github.com/k0sproject/version/cmd/k0s_sort@v0.6.0 -l
+}
+
 latest_release() {
-  list_k0s_releases "$1" | k0s_sort -l
+  list_k0s_releases "$1" | k0s_sort 
 }
 
 json_print_latest_releases() {

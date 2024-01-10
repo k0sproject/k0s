@@ -38,15 +38,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Go caches
-        uses: actions/cache@v4
+      - name: Builder cache
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-lint-go-caches-${{ hashFiles('go.sum') }}
           path: |
             build/cache
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/golangci-lint
 
       - name: Check go.mod/go.sum to be consistent
         run: make --always-make go.sum && git diff --exit-code
