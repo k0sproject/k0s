@@ -26,6 +26,13 @@ data "aws_ami" "fcos_38" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Fedora CoreOS 38."
+    }
+  }
 }
 
 locals {

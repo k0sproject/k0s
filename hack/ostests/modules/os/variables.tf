@@ -3,6 +3,11 @@ variable "os" {
   description = "The OS which is to be configured."
 }
 
+variable "arch" {
+  type        = string
+  description = "The architecture for the OS."
+}
+
 variable "additional_ingress_cidrs" {
   type        = list(string)
   nullable    = false

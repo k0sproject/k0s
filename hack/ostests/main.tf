@@ -27,6 +27,7 @@ module "os" {
   source = "./modules/os"
 
   os                       = var.os
+  arch                     = var.arch
   additional_ingress_cidrs = [local.podCIDR]
 }
 

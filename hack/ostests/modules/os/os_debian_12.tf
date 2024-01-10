@@ -26,6 +26,13 @@ data "aws_ami" "debian_12" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Debian GNU/Linux 12 (bookworm)."
+    }
+  }
 }
 
 locals {

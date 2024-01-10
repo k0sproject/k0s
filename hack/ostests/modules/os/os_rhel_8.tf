@@ -26,6 +26,13 @@ data "aws_ami" "rhel_8" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Red Hat Enterprise Linux 8.6 (Ootpa)."
+    }
+  }
 }
 
 locals {
