@@ -32,10 +32,6 @@ on:
         type: string
         description: The Terraform version to use when provisioning test resources.
         default: 1.4.6
-      k0sctl-version:
-        type: string
-        description: The k0sctl version to use when bootstrapping the test cluster.
-        default: 0.17.2
     secrets:
       aws-access-key-id:
         description: The AWS access key ID to use when provisioning test resources.
@@ -93,9 +89,14 @@ jobs:
           name: k0s-linux-amd64
           path: ${{ github.workspace }}/.cache
 
+      - name: Set k0sctl version
+        run: |
+          version=$(grep k0sproject/k0sctl hack/tool/go.mod|cut -d" " -f2)
+          echo "Detected k0sctl dependency version ${version}"
+          echo "K0SCTL_VERSION=${version}" >> $GITHUB_ENV
+
       - name: "Terraform :: Requisites :: Prepare"
         env:
-          K0SCTL_VERSION: ${{ inputs.k0sctl-version }}
           K0S_VERSION: ${{ inputs.k0s-version }}
           K0S_EXECUTABLE_PATH: ${{ github.workspace }}/.cache/k0s
         run: |
@@ -103,7 +104,7 @@ jobs:
           jq --version
 
           mkdir -p "$(dirname -- "$TF_VAR_k0sctl_executable_path")"
-          curl -sSLo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/v${K0SCTL_VERSION}/k0sctl-linux-x64"
+          curl -sSLo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64"
           chmod +x -- "$TF_VAR_k0sctl_executable_path"
           "$TF_VAR_k0sctl_executable_path" version
 

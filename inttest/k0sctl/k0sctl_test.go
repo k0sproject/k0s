@@ -37,21 +37,19 @@ import (
 	"github.com/k0sproject/k0s/inttest/common"
 )
 
-const k0sctlVersion = "v0.17.2"
-
 type K0sctlSuite struct {
 	common.BootlooseSuite
 	k0sctlEnv []string
 }
 
-func (s *K0sctlSuite) haveLatest() bool {
+func (s *K0sctlSuite) haveVersion(version string) bool {
 	cmd := exec.Command("./k0sctl", "version")
 	cmd.Env = s.k0sctlEnv
 	out, err := cmd.Output()
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(out), fmt.Sprintf("%s\n", k0sctlVersion))
+	return strings.Contains(string(out), fmt.Sprintf("%s\n", version))
 }
 
 func k0sctlFilename() string {
@@ -76,15 +74,15 @@ func k0sctlFilename() string {
 	return fmt.Sprintf("k0sctl-%s-%s%s", os, arch, ext)
 }
 
-func (s *K0sctlSuite) downloadK0sctl() {
-	if s.haveLatest() {
-		s.T().Logf("Already have k0sctl %s", k0sctlVersion)
+func (s *K0sctlSuite) downloadK0sctl(version string) {
+	if s.haveVersion(version) {
+		s.T().Logf("Already have k0sctl %s", version)
 		return
 	}
 
-	s.T().Logf("Downloading k0sctl %s", k0sctlVersion)
+	s.T().Logf("Downloading k0sctl %s", version)
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://github.com/k0sproject/k0sctl/releases/download/%s/%s", k0sctlVersion, k0sctlFilename()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://github.com/k0sproject/k0sctl/releases/download/%s/%s", version, k0sctlFilename()), nil)
 	s.Require().NoError(err)
 	resp, err := http.DefaultClient.Do(req)
 	s.Require().NoError(err)
@@ -187,10 +185,13 @@ func (s *K0sctlSuite) k0sctlApply(cfg map[string]interface{}) {
 
 func (s *K0sctlSuite) TestK0sGetsUp() {
 	k0sBinaryPath := os.Getenv("K0S_PATH")
+	s.Require().NotEmpty(k0sBinaryPath, "K0S_PATH env var must be set")
 	k0sVersion, err := exec.Command(k0sBinaryPath, "version").Output()
 	s.Require().NoError(err, "failed to get k0s version")
+	k0sctlVersion := os.Getenv("K0SCTL_VERSION")
+	s.Require().NotEmpty(k0sctlVersion, "K0SCTL_VERSION env var must be set")
 
-	s.downloadK0sctl()
+	s.downloadK0sctl(k0sctlVersion)
 	cfg := s.k0sctlInitConfig()
 
 	spec, ok := cfg["spec"].(map[string]interface{})
