@@ -2,7 +2,7 @@ module github.com/k0sproject/k0s
 
 go 1.21.0
 
-toolchain go1.21.5
+toolchain go1.21.6
 
 // k0s
 require (
