@@ -32,6 +32,9 @@ on:
         type: string
         description: The Terraform version to use when provisioning test resources.
         default: 1.4.6
+      k0sctl-version:
+        type: string
+        description: The k0sctl version to use when bootstrapping the test cluster.
     secrets:
       aws-access-key-id:
         description: The AWS access key ID to use when provisioning test resources.
@@ -91,8 +94,13 @@ jobs:
 
       - name: Set k0sctl version
         run: |
-          version=$(grep k0sproject/k0sctl hack/tool/go.mod|cut -d" " -f2)
-          echo "Detected k0sctl dependency version ${version}"
+          if [ -z "${{ inputs.k0sctl-version }}" ]; then
+            version=$(grep k0sproject/k0sctl hack/tool/go.mod|cut -d" " -f2)
+            echo "Detected k0sctl dependency version ${version}"
+          else
+            version="${{ inputs.k0sctl-version }}"
+            echo "Using given k0sctl version ${version}"
+          fi
           echo "K0SCTL_VERSION=${version}" >> $GITHUB_ENV
 
       - name: "Terraform :: Requisites :: Prepare"
