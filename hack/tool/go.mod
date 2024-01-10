@@ -2,7 +2,7 @@ module tool
 
 go 1.21
 
-toolchain go1.21.5
+toolchain go1.21.6
 
 require (
 	github.com/hashicorp/terraform-exec v0.17.3
