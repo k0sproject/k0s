@@ -4,17 +4,17 @@ data "aws_ami" "debian_12" {
   count = var.os == "debian_12" ? 1 : 0
 
   owners      = ["136693071363"]
-  name_regex  = "^debian-12-amd64-\\d+-\\d+$"
+  name_regex  = "^debian-12-(amd64|arm64)-\\d+-\\d+$"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["debian-12-amd64-*-*"]
+    values = ["debian-12-*-*-*"]
   }
 
   filter {
     name   = "architecture"
-    values = ["x86_64"]
+    values = [var.arch]
   }
 
   filter {
@@ -25,13 +25,6 @@ data "aws_ami" "debian_12" {
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
-  }
-
-  lifecycle {
-    precondition {
-      condition     = var.arch == "x86_64"
-      error_message = "Unsupported architecture for Debian GNU/Linux 12 (bookworm)."
-    }
   }
 }
 
