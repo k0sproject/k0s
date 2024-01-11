@@ -2170,7 +2170,7 @@
 </ol>
 <h3 id="3-access-your-cluster">3. Access your cluster<a class="headerlink" href="#3-access-your-cluster" title="Permanent link">#</a></h3>
 <p>Access your cluster using kubectl:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 </code></pre></div>
 <p>Alternatively, grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/admin.conf</code> and paste it into <a href="https://github.com/lensapp/lens/">Lens</a>.</p>
 <h2 id="use-docker-compose-alternative">Use Docker Compose (alternative)<a class="headerlink" href="#use-docker-compose-alternative" title="Permanent link">#</a></h2>
