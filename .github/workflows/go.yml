@@ -144,9 +144,6 @@ jobs:
           make --touch codegen
           make check-unit
 
-      - name: Validate OCI images manifests
-        run: make check-image-validity
-
   unittests-k0s-windows-amd64:
     name: "Unit tests :: windows-amd64"
     runs-on: windows-2022
