@@ -28,9 +28,9 @@ NAME                                         DESIRED   CURRENT   READY   AGE
 replicaset.apps/k0s-pushgateway-6c5d8c54cf   1         1         1       43h
 ```
 
-That's not enough to start scraping these additional metrics.
-
-For Prometheus based solution you can create ServiceMonitor for it like this:
+That's not enough to start scraping these additional metrics. For Prometheus
+Operator](https://prometheus-operator.dev/) based solutions, you can create a
+`ServiceMonitor` for it like this:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
