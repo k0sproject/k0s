@@ -22,6 +22,8 @@ import (
 	clientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/client/clientset/typed/autopilot/v1beta2"
 	fakeautopilotv1beta2 "github.com/k0sproject/k0s/pkg/client/clientset/typed/autopilot/v1beta2/fake"
+	helmv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/helm/v1beta1"
+	fakehelmv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/helm/v1beta1/fake"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	fakek0sv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -84,6 +86,11 @@ var (
 // AutopilotV1beta2 retrieves the AutopilotV1beta2Client
 func (c *Clientset) AutopilotV1beta2() autopilotv1beta2.AutopilotV1beta2Interface {
 	return &fakeautopilotv1beta2.FakeAutopilotV1beta2{Fake: &c.Fake}
+}
+
+// HelmV1beta1 retrieves the HelmV1beta1Client
+func (c *Clientset) HelmV1beta1() helmv1beta1.HelmV1beta1Interface {
+	return &fakehelmv1beta1.FakeHelmV1beta1{Fake: &c.Fake}
 }
 
 // K0sV1beta1 retrieves the K0sV1beta1Client
