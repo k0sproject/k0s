@@ -11,7 +11,7 @@ You can read more about metrics for Kubernetes system components [here](https://
 sudo k0s install controller --enable-metrics-scraper
 ```
 
-Once you enable it new set of objects will show up on your cluster:
+Once enabled, a new set of objects will appear in the cluster:
 
 ```shell
 ❯ ~ kubectl get all -n k0s-system
