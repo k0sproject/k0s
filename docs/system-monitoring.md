@@ -53,7 +53,7 @@ Note that it won't clear alerts like "KubeControllerManagerDown" or
 you can get rid of these alerts by modifying them to detect a working component
 like this:
 
-```
+```promql
 absent(apiserver_audit_event_total{job="kube-scheduler"})
 ``` 
 
