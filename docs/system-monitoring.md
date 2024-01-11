@@ -48,8 +48,10 @@ spec:
       k0s.k0sproject.io/stack: metrics
 ```
 
-Note that it won't clear alerts like "KubeControllerManagerDown" nor "KubeSchedulerDown" as they are based on Prometheus's internal "up" metrics.
-But you can get rid of these alerts by modifying them to detect working component like this:
+Note that it won't clear alerts like "KubeControllerManagerDown" or
+"KubeSchedulerDown" as they are based on Prometheus' internal "up" metrics. But
+you can get rid of these alerts by modifying them to detect a working component
+like this:
 
 ```
 absent(apiserver_audit_event_total{job="kube-scheduler"})
