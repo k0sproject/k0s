@@ -142,6 +142,11 @@ pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: $(shell find pkg/api
 pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: groupver = autopilot.k0sproject.io/v1beta2
 pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: gen_output_dir = $(groupver)
 
+codegen_targets += pkg/apis/helm.k0sproject.io/v1beta1/.client-gen.stamp
+pkg/apis/helm.k0sproject.io/v1beta1/.client-gen.stamp: $(shell find pkg/apis/helm.k0sproject.io/v1beta1/ -maxdepth 1 -type f -name \*.go -not -name zz_\*.go)
+pkg/apis/helm.k0sproject.io/v1beta1/.client-gen.stamp: groupver = helm.k0sproject.io/v1beta1
+pkg/apis/helm.k0sproject.io/v1beta1/.client-gen.stamp: gen_output_dir = $(groupver)
+
 pkg/apis/%/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	rm -rf 'pkg/apis/$(gen_output_dir)/clientset/'
 	CGO_ENABLED=0 $(GO) install k8s.io/code-generator/cmd/client-gen@v$(patsubst 1.%,0.%,$(kubernetes_version))

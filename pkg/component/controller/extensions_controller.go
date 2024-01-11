@@ -368,7 +368,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
 	gk := schema.GroupKind{
-		Group: v1beta1.GroupVersion.Group,
+		Group: v1beta1.SchemeGroupVersion.Group,
 		Kind:  "Chart",
 	}
 
