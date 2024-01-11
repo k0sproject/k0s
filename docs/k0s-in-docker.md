@@ -54,7 +54,7 @@ For each required worker:
 Access your cluster using kubectl:
 
 ```sh
-docker exec k0s kubectl get nodes
+docker exec k0s k0s kubectl get nodes
 ```
 
 Alternatively, grab the kubeconfig file with `docker exec k0s cat /var/lib/k0s/pki/admin.conf` and paste it into [Lens](https://github.com/lensapp/lens/).
