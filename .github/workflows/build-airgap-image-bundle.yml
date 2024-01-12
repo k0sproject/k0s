@@ -20,9 +20,6 @@ jobs:
     name: "${{ inputs.target-os }}-${{ inputs.target-arch }}"
     runs-on: ubuntu-22.04
 
-    outputs:
-      cache-key: ${{ steps.cache-airgap-image-bundle-calc-key.outputs.cache-key }}
-
     env:
       TARGET_OS: ${{ inputs.target-os }}
       TARGET_ARCH: ${{ inputs.target-arch }}
@@ -38,11 +35,9 @@ jobs:
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
 
-        # Capture the calculated image bundle source hash in a build output, so
-        # it can be shared between the cache actions in this job and in the
-        # smoketests. Do this in a separate step, as the hashFiles function is
-        # evaluated before the step execution. So all the required files need to
-        # exist before that.
+        # Capture the calculated image bundle source hash in a separate step, as
+        # the hashFiles function is evaluated before the step execution. So all
+        # the required files need to exist before that.
       - name: "Cache :: Airgap image bundle :: Calculate cache key"
         id: cache-airgap-image-bundle-calc-key
         env:
@@ -56,7 +51,6 @@ jobs:
         with:
           key: ${{ steps.cache-airgap-image-bundle-calc-key.outputs.cache-key }}
           path: airgap-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
-          lookup-only: true
 
       - name: "Build :: Airgap image bundle"
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
@@ -64,3 +58,10 @@ jobs:
           mkdir -p "embedded-bins/staging/$TARGET_OS/bin"
           make --touch airgap-images.txt
           make "airgap-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
+
+      - name: "Upload :: Airgap image bundle"
+        uses: actions/upload-artifact@v4
+        with:
+          name: airgap-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: airgap-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
+          compression: 0
