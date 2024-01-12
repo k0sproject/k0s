@@ -18,6 +18,7 @@ package watch
 
 import (
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
@@ -27,4 +28,8 @@ func ClusterConfigs(client Provider[*k0sv1beta1.ClusterConfigList]) *Watcher[k0s
 
 func Plans(client Provider[*autopilotv1beta2.PlanList]) *Watcher[autopilotv1beta2.Plan] {
 	return FromClient[*autopilotv1beta2.PlanList, autopilotv1beta2.Plan](client)
+}
+
+func Charts(client Provider[*helmv1beta1.ChartList]) *Watcher[helmv1beta1.Chart] {
+	return FromClient[*helmv1beta1.ChartList, helmv1beta1.Chart](client)
 }

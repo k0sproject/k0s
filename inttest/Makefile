@@ -111,6 +111,8 @@ check-network-conformance-calico: TEST_PACKAGE=network-conformance
 
 check-nllb: TIMEOUT=15m
 
+check-openebs: TIMEOUT=7m
+
 .PHONY: $(smoketests)
 include Makefile.variables
 
