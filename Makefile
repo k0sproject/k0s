@@ -126,8 +126,7 @@ pkg/apis/autopilot/v1beta2/.controller-gen.stamp: gen_output_dir = autopilot
 pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/manifests/$(gen_output_dir)/CustomResourceDefinition'
 	rm -f -- '$(dir $@)'zz_*.go
-	CGO_ENABLED=0 $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version)
-	$(GO_ENV) controller-gen \
+	CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
 	  crd \
 	  paths="./$(dir $@)..." \
 	  output:crd:artifacts:config=./static/manifests/$(gen_output_dir)/CustomResourceDefinition \
