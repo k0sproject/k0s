@@ -20,7 +20,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"reflect"
 
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -49,12 +51,12 @@ type kubeRouterConfig struct {
 	MetricsPort       int
 	CNIInstallerImage string
 	CNIImage          string
-	GlobalHairpin     bool
 	CNIHairpin        bool
 	IPMasq            bool
 	PeerRouterIPs     string
 	PeerRouterASNs    string
 	PullPolicy        string
+	Args              []string
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
@@ -73,25 +75,26 @@ func (k *KubeRouter) Init(_ context.Context) error { return nil }
 // Stop no-op as nothing running
 func (k *KubeRouter) Stop() error { return nil }
 
-func getHairpinConfig(cfg *kubeRouterConfig, krc *v1beta1.KubeRouter) {
+func getHairpinConfig(krc *v1beta1.KubeRouter) (cniHairpin bool, globalHairpin bool) {
 	// Configure hairpin
 	switch krc.Hairpin {
 	case v1beta1.HairpinUndefined:
 		// If Hairpin is undefined, then we honor HairpinMode
 		if krc.HairpinMode {
-			cfg.CNIHairpin = true
-			cfg.GlobalHairpin = true
+			cniHairpin = true
+			globalHairpin = true
 		}
 	case v1beta1.HairpinDisabled:
-		cfg.CNIHairpin = false
-		cfg.GlobalHairpin = false
+		cniHairpin = false
+		globalHairpin = false
 	case v1beta1.HairpinAllowed:
-		cfg.CNIHairpin = true
-		cfg.GlobalHairpin = false
+		cniHairpin = true
+		globalHairpin = false
 	case v1beta1.HairpinEnabled:
-		cfg.CNIHairpin = true
-		cfg.GlobalHairpin = true
+		cniHairpin = true
+		globalHairpin = true
 	}
+	return
 }
 
 // Reconcile detects changes in configuration and applies them to the component
@@ -106,20 +109,44 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		return fmt.Errorf("cannot change CNI provider from %s to %s", existingCNI, constant.CNIProviderKubeRouter)
 	}
 
+	cniHairpin, globalHairpin := getHairpinConfig(clusterConfig.Spec.Network.KubeRouter)
+
+	args := stringmap.StringMap{
+		// k0s set default args
+		"run-router":           "true",
+		"run-firewall":         "true",
+		"run-service-proxy":    "false",
+		"bgp-graceful-restart": "true",
+		// Args from config values
+		"auto-mtu":     fmt.Sprintf("%t", clusterConfig.Spec.Network.KubeRouter.AutoMTU),
+		"metrics-port": fmt.Sprintf("%d", clusterConfig.Spec.Network.KubeRouter.MetricsPort),
+		"hairpin-mode": fmt.Sprintf("%t", globalHairpin),
+	}
+
+	// We should not add peering flags if the values are empty
+	if clusterConfig.Spec.Network.KubeRouter.PeerRouterASNs != "" {
+		args["peer-router-asns"] = clusterConfig.Spec.Network.KubeRouter.PeerRouterASNs
+	}
+	if clusterConfig.Spec.Network.KubeRouter.PeerRouterIPs != "" {
+		args["peer-router-ips"] = clusterConfig.Spec.Network.KubeRouter.PeerRouterIPs
+	}
+
+	// Override or add args from config
+	args.Merge(clusterConfig.Spec.Network.KubeRouter.ExtraArgs)
+
 	cfg := kubeRouterConfig{
 		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.AutoMTU,
 		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,
 		MetricsPort:       clusterConfig.Spec.Network.KubeRouter.MetricsPort,
-		PeerRouterIPs:     clusterConfig.Spec.Network.KubeRouter.PeerRouterIPs,
-		PeerRouterASNs:    clusterConfig.Spec.Network.KubeRouter.PeerRouterASNs,
 		IPMasq:            clusterConfig.Spec.Network.KubeRouter.IPMasq,
+		CNIHairpin:        cniHairpin,
 		CNIImage:          clusterConfig.Spec.Images.KubeRouter.CNI.URI(),
 		CNIInstallerImage: clusterConfig.Spec.Images.KubeRouter.CNIInstaller.URI(),
 		PullPolicy:        clusterConfig.Spec.Images.DefaultPullPolicy,
+		Args:              args.ToDashedArgs(),
 	}
-	getHairpinConfig(&cfg, clusterConfig.Spec.Network.KubeRouter)
 
-	if cfg == k.previousConfig {
+	if reflect.DeepEqual(k.previousConfig, cfg) {
 		k.log.Info("config matches with previous, not reconciling anything")
 		return nil
 	}
@@ -278,20 +305,8 @@ spec:
         image: {{ .CNIImage }}
         imagePullPolicy: {{ .PullPolicy }}
         args:
-        - "--run-router=true"
-        - "--run-firewall=true"
-        - "--run-service-proxy=false"
-        - "--bgp-graceful-restart=true"
-        - "--metrics-port={{ .MetricsPort }}"
-        - "--hairpin-mode={{ .GlobalHairpin }}"
-        {{- if not .AutoMTU }}
-        - "--auto-mtu=false"
-        {{- end }}
-        {{- if .PeerRouterIPs }}
-        - "--peer-router-ips={{ .PeerRouterIPs }}"
-        {{- end }}
-        {{- if .PeerRouterASNs }}
-        - "--peer-router-asns={{ .PeerRouterASNs }}"
+        {{- range .Args }}
+        - {{ . | printf "%q" }}
         {{- end }}
         env:
         - name: NODE_NAME
