@@ -139,10 +139,7 @@ jobs:
       - name: Run unit tests
         env:
           EMBEDDED_BINS_BUILDMODE: none
-        run: |
-          make bindata
-          make --touch codegen
-          make check-unit
+        run: make check-unit
 
   unittests-k0s-windows-amd64:
     name: "Unit tests :: windows-amd64"
@@ -191,9 +188,7 @@ jobs:
           GO: go
           GO_ENV: ''
         run: |
-          make --touch .k0sbuild.docker-image.k0s go.sum
-          make bindata
-          make --touch codegen
+          make --touch .k0sbuild.docker-image.k0s
           make check-unit
 
   smoketests:

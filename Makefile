@@ -30,7 +30,8 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
 BUILD_GID ?= $(shell id -g)
-BUILD_GO_FLAGS := -tags osusergo -buildvcs=false -trimpath
+BUILD_GO_TAGS ?= osusergo
+BUILD_GO_FLAGS = -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) -buildvcs=false -trimpath
 BUILD_CGO_CFLAGS :=
 BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
@@ -156,17 +157,11 @@ static/zz_generated_assets.go: $(shell find $(static_asset_dirs) -type f)
 	CGO_ENABLED=0 $(GO) install github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version)
 	$(GO_ENV) go-bindata -o '$@' -pkg static -prefix static $(patsubst %,%/...,$(static_asset_dirs))
 
+ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
+BUILD_GO_TAGS += noembedbins
+else
 codegen_targets += pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
-print_empty_generated_offsets = printf "%s\n\n%s\n%s\n" \
-			"package assets" \
-			"var BinData = map[string]struct{ offset, size, originalSize int64 }{}" \
-			"var BinDataSize int64"
-ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go:
-	rm -f bindata_$(zz_os) && touch bindata_$(zz_os)
-	$(print_empty_generated_offsets) > $@
-else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
 pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s go.sum
@@ -174,10 +169,6 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
 endif
-
-# needed for unit tests on macos
-pkg/assets/zz_generated_offsets_darwin.go:
-	$(print_empty_generated_offsets) > $@
 
 k0s: TARGET_OS = linux
 k0s: BUILD_GO_CGO_ENABLED = 1
@@ -187,12 +178,11 @@ k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
 
 k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
-	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
-	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
-		&& rm -f $@.code \
-		&& printf "\nk0s size: %s\n\n" "$$(du -sh $@.tmp | cut -f1)" \
-		&& chmod +x $@.tmp \
-		&& mv $@.tmp $@
+	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
+ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
+	cat -- bindata_$(TARGET_OS) >>$@
+endif
+	@printf '\n%s size: %s\n\n' '$@' "$$(du -sh -- $@ | cut -f1)"
 
 .bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
 	$(MAKE) -C embedded-bins \
@@ -205,7 +195,10 @@ codegen: $(codegen_targets)
 
 # bindata contains the parts of codegen which aren't version controlled.
 .PHONY: bindata
-bindata: static/zz_generated_assets.go pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+bindata: static/zz_generated_assets.go
+ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
+bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+endif
 
 .PHONY: lint-copyright
 lint-copyright:
@@ -213,9 +206,9 @@ lint-copyright:
 
 .PHONY: lint-go
 lint-go: GOLANGCI_LINT_FLAGS ?=
-lint-go: .k0sbuild.docker-image.k0s go.sum codegen
+lint-go: .k0sbuild.docker-image.k0s go.sum bindata
 	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v$(golangci-lint_version)
-	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO_ENV) golangci-lint run --verbose $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
+	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO_ENV) golangci-lint run --verbose --build-tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
 
 .PHONY: lint
 lint: lint-copyright lint-go
@@ -252,8 +245,9 @@ check-unit: GO_TEST_RACE ?=
 else
 check-unit: GO_TEST_RACE ?= -race
 endif
-check-unit: go.sum codegen
-	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO) test -tags=hack $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=hack $(GO_CHECK_UNIT_DIRS)`
+check-unit: BUILD_GO_TAGS += hack
+check-unit: .k0sbuild.docker-image.k0s go.sum bindata
+	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO) test -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GO_CHECK_UNIT_DIRS)`
 
 .PHONY: clean-gocache
 clean-gocache:
