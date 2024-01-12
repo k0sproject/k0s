@@ -10,7 +10,7 @@ When the storage solution implements CSI, kubernetes can communicate with the st
 
 ### Installing 3rd party storage solutions
 
-Follow your storage driver's installation instructions. Note that the Kubelet installed by k0s uses a slightly different path for its working directory (`/varlib/k0s/kubelet` instead of `/var/lib/kubelet`). Consult the CSI driver's configuration documentation on how to customize this path.
+Follow your storage driver's installation instructions. Note that by default the Kubelet installed by k0s uses a slightly different path for its working directory (`/varlib/k0s/kubelet` instead of `/var/lib/kubelet`). Consult the CSI driver's configuration documentation on how to customize this path. The actual path can differ if you defined the flag `--data-dir`.
 
 ## Example storage solutions
 
