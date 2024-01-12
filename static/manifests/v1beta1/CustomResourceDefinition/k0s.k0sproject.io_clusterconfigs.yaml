@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: clusterconfigs.k0s.k0sproject.io
 spec:
   group: k0s.k0sproject.io
@@ -20,14 +20,19 @@ spec:
         description: ClusterConfig is the Schema for the clusterconfigs API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -96,10 +101,10 @@ spec:
                             order:
                               type: integer
                             timeout:
-                              description: A Duration represents the elapsed time
-                                between two instants as an int64 nanosecond count.
-                                The representation limits the largest representable
-                                duration to approximately 290 years.
+                              description: |-
+                                A Duration represents the elapsed time between two instants
+                                as an int64 nanosecond count. The representation limits the
+                                largest representable duration to approximately 290 years.
                               format: int64
                               type: integer
                             values:
@@ -374,8 +379,9 @@ spec:
                       disabled:
                         type: boolean
                       iptables:
-                        description: KubeProxyIPTablesConfiguration contains iptables-related
-                          kube-proxy configuration @see https://github.com/kubernetes/kube-proxy/blob/v0.29.0/config/v1alpha1/types.go#L27-L48
+                        description: |-
+                          KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.29.0/config/v1alpha1/types.go#L27-L48
                         properties:
                           localhostNodePorts:
                             type: boolean
@@ -390,8 +396,9 @@ spec:
                             type: string
                         type: object
                       ipvs:
-                        description: KubeProxyIPVSConfiguration contains ipvs-related
-                          kube-proxy configuration @see https://github.com/kubernetes/kube-proxy/blob/v0.29.0/config/v1alpha1/types.go#L52-L78
+                        description: |-
+                          KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.29.0/config/v1alpha1/types.go#L52-L78
                         properties:
                           excludeCIDRs:
                             items:
@@ -431,15 +438,15 @@ spec:
                       extraArgs:
                         additionalProperties:
                           type: string
-                        description: ExtraArgs are extra arguments to pass to kube-router
-                          Can be also used to override the default k0s managed kube-router
-                          arguments
+                        description: |-
+                          ExtraArgs are extra arguments to pass to kube-router
+                          Can be also used to override the default k0s managed kube-router arguments
                         type: object
                       hairpin:
                         default: Enabled
-                        description: 'Admits three values: "Enabled" enables it globally,
-                          "Allowed" allows but services must be annotated explicitly
-                          and "Disabled" Defaults to "Enabled"'
+                        description: |-
+                          Admits three values: "Enabled" enables it globally, "Allowed" allows but services must be annotated explicitly and "Disabled"
+                          Defaults to "Enabled"
                         enum:
                         - Enabled
                         - Allowed
@@ -463,36 +470,40 @@ spec:
                           false)
                         type: integer
                       peerRouterASNs:
-                        description: 'Comma-separated list of global peer addresses
-                          DEPRECATED: Use extraArgs with peerRouterASNs instead'
+                        description: |-
+                          Comma-separated list of global peer addresses
+                          DEPRECATED: Use extraArgs with peerRouterASNs instead
                         type: string
                       peerRouterIPs:
-                        description: 'Comma-separated list of global peer ASNs DEPRECATED:
-                          Use extraArgs with peerRouterIPs instead'
+                        description: |-
+                          Comma-separated list of global peer ASNs
+                          DEPRECATED: Use extraArgs with peerRouterIPs instead
                         type: string
                     type: object
                   nodeLocalLoadBalancing:
-                    description: 'nodeLocalLoadBalancing defines the configuration
-                      options related to k0s''s node-local load balancing feature.
-                      NOTE: This feature is experimental, and currently unsupported
-                      on ARMv7!'
+                    description: |-
+                      nodeLocalLoadBalancing defines the configuration options related to k0s's
+                      node-local load balancing feature.
+                      NOTE: This feature is experimental, and currently unsupported on ARMv7!
                     properties:
                       enabled:
-                        description: 'enabled indicates if node-local load balancing
-                          should be used to access Kubernetes API servers from worker
-                          nodes. Default: false'
+                        description: |-
+                          enabled indicates if node-local load balancing should be used to access
+                          Kubernetes API servers from worker nodes.
+                          Default: false
                         type: boolean
                       envoyProxy:
-                        description: envoyProxy contains configuration options related
-                          to the "EnvoyProxy" type of load balancing.
+                        description: |-
+                          envoyProxy contains configuration options related to the "EnvoyProxy" type
+                          of load balancing.
                         properties:
                           apiServerBindPort:
                             default: 7443
-                            description: 'apiServerBindPort is the port number on
-                              which to bind the Envoy load balancer for the Kubernetes
-                              API server to on a worker''s loopback interface. This
-                              must be a valid port number, 0 < x < 65536. Default:
-                              7443'
+                            description: |-
+                              apiServerBindPort is the port number on which to bind the Envoy load
+                              balancer for the Kubernetes API server to on a worker's loopback
+                              interface. This must be a valid port number, 0 < x < 65536.
+                              Default: 7443
                             format: int32
                             maximum: 65535
                             minimum: 1
@@ -507,9 +518,9 @@ spec:
                                 type: string
                             type: object
                           imagePullPolicy:
-                            description: imagePullPolicy specifies the pull policy
-                              being used for the Envoy Pod. Defaults to the default
-                              image pull policy.
+                            description: |-
+                              imagePullPolicy specifies the pull policy being used for the Envoy Pod.
+                              Defaults to the default image pull policy.
                             enum:
                             - Always
                             - Never
@@ -517,10 +528,11 @@ spec:
                             type: string
                           konnectivityServerBindPort:
                             default: 7132
-                            description: 'konnectivityServerBindPort is the port number
-                              on which to bind the Envoy load balancer for the konnectivity
-                              server to on a worker''s loopback interface. This must
-                              be a valid port number, 0 < x < 65536. Default: 7132'
+                            description: |-
+                              konnectivityServerBindPort is the port number on which to bind the Envoy
+                              load balancer for the konnectivity server to on a worker's loopback
+                              interface. This must be a valid port number, 0 < x < 65536.
+                              Default: 7132
                             format: int32
                             maximum: 65535
                             minimum: 1
@@ -528,9 +540,9 @@ spec:
                         type: object
                       type:
                         default: EnvoyProxy
-                        description: type indicates the type of the node-local load
-                          balancer to deploy on worker nodes. Currently, the only
-                          supported type is "EnvoyProxy".
+                        description: |-
+                          type indicates the type of the node-local load balancer to deploy on
+                          worker nodes. Currently, the only supported type is "EnvoyProxy".
                         enum:
                         - EnvoyProxy
                         type: string
