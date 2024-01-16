@@ -37,13 +37,13 @@ type containers struct {
 	Config *Config
 }
 
-// Name returns the name of the step
+// Name returns the name of the step.
 func (c *containers) Name() string {
 	return "containers steps"
 }
 
-// Run removes all the pods and mounts and stops containers afterwards
-// Run starts containerd if custom CRI is not configured
+// Run removes all the pods and mounts and stops containers afterwards.
+// Run starts containerd if custom CRI is not configured.
 func (c *containers) Run() error {
 	if !c.isCustomCriUsed() {
 		if err := c.startContainerd(); err != nil {

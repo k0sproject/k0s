@@ -24,7 +24,6 @@ import (
 )
 
 func (s *K0sSysinfoSpec) addHostSpecificProbes(p probes.Probes) {
-
 	linux := linux.RequireLinux(p)
 
 	linux.AssertKernelRelease(func(release string) string {

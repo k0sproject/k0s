@@ -30,7 +30,7 @@ import (
 // Use in tests like so:
 //
 //	tmpDir := t.TempDir()
-//	defer testutil.Chdir(t, tmpDir)()
+//	defer testutil.Chdir(t, tmpDir)().
 func Chdir(t *testing.T, dir string) func() {
 	wd, err := os.Getwd()
 	require.NoError(t, err)

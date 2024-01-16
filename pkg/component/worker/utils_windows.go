@@ -31,7 +31,7 @@ type PowerShell struct {
 	err        error
 }
 
-// New create new session
+// New create new session.
 func NewPowershell() *PowerShell {
 	ps, err := exec.LookPath("powershell.exe")
 	return &PowerShell{

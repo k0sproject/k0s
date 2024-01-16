@@ -297,17 +297,17 @@ func (s *BootlooseSuite) Context() context.Context {
 	return k0scontext.WithValue(ctx, t)
 }
 
-// ControllerNode gets the node name of given controller index
+// ControllerNode gets the node name of given controller index.
 func (s *BootlooseSuite) ControllerNode(idx int) string {
 	return fmt.Sprintf(controllerNodeNameFormat, idx)
 }
 
-// WorkerNode gets the node name of given worker index
+// WorkerNode gets the node name of given worker index.
 func (s *BootlooseSuite) WorkerNode(idx int) string {
 	return fmt.Sprintf(workerNodeNameFormat, idx)
 }
 
-// K0smotronNode gets the node name of given K0smotron node index
+// K0smotronNode gets the node name of given K0smotron node index.
 func (s *BootlooseSuite) K0smotronNode(idx int) string {
 	return fmt.Sprintf(k0smotronNodeNameFormat, idx)
 }
@@ -326,7 +326,7 @@ func (s *BootlooseSuite) ExternalEtcdNode() string {
 	return fmt.Sprintf(etcdNodeNameFormat, 0)
 }
 
-// StartMachines starts specific machines(s) in cluster
+// StartMachines starts specific machines(s) in cluster.
 func (s *BootlooseSuite) Start(machineNames []string) error {
 	return s.cluster.Start(machineNames)
 }
@@ -408,7 +408,7 @@ func (s *BootlooseSuite) collectTroubleshootSupportBundle(ctx context.Context, t
 	}
 	defer ssh.Disconnect()
 
-	err = file.WriteAtomically(filePath, 0644, func(file io.Writer) error {
+	err = file.WriteAtomically(filePath, 0o644, func(file io.Writer) error {
 		stdout := bufio.NewWriter(file)
 		err := ssh.Exec(ctx, cmd, SSHStreams{Out: stdout})
 		if err != nil {
@@ -620,7 +620,7 @@ func (s *BootlooseSuite) getControllersIPAddresses() []string {
 	return addresses
 }
 
-// InitController initializes a controller
+// InitController initializes a controller.
 func (s *BootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 	controllerNode := s.ControllerNode(idx)
 	ssh, err := s.SSH(s.Context(), controllerNode)
@@ -642,7 +642,7 @@ func (s *BootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 	return s.WaitForKubeAPI(controllerNode, dataDirOpt)
 }
 
-// GetJoinToken generates join token for the asked role
+// GetJoinToken generates join token for the asked role.
 func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string, error) {
 	// assume we have main on node 0 always
 	controllerNode := s.ControllerNode(0)
@@ -665,7 +665,7 @@ func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 	return token, nil
 }
 
-// ImportK0smotrtonImages imports
+// ImportK0smotrtonImages imports.
 func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
 	for i := 0; i < s.WorkerCount; i++ {
 		workerNode := s.WorkerNode(i)
@@ -684,7 +684,7 @@ func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
 	return nil
 }
 
-// RunWorkers joins all the workers to the cluster
+// RunWorkers joins all the workers to the cluster.
 func (s *BootlooseSuite) RunWorkers(args ...string) error {
 	token, err := s.GetJoinToken("worker", getDataDirOpt(args))
 	if err != nil {
@@ -693,7 +693,7 @@ func (s *BootlooseSuite) RunWorkers(args ...string) error {
 	return s.RunWorkersWithToken(token, args...)
 }
 
-// RunWorkersWithToken joins all the workers to the cluster with the given token
+// RunWorkersWithToken joins all the workers to the cluster with the given token.
 func (s *BootlooseSuite) RunWorkersWithToken(token string, args ...string) error {
 	for i := 0; i < s.WorkerCount; i++ {
 		err := s.RunWithToken(s.WorkerNode(i), token, args...)
@@ -704,7 +704,7 @@ func (s *BootlooseSuite) RunWorkersWithToken(token string, args ...string) error
 	return nil
 }
 
-// RunWithToken joins a worker node to the cluster with the given token
+// RunWithToken joins a worker node to the cluster with the given token.
 func (s *BootlooseSuite) RunWithToken(worker string, token string, args ...string) error {
 	sshWorker, err := s.SSH(s.Context(), worker)
 	if err != nil {
@@ -719,7 +719,7 @@ func (s *BootlooseSuite) RunWithToken(worker string, token string, args ...strin
 	return nil
 }
 
-// SSH establishes an SSH connection to the node
+// SSH establishes an SSH connection to the node.
 func (s *BootlooseSuite) SSH(ctx context.Context, node string) (*SSHConnection, error) {
 	m, err := s.MachineForName(node)
 	if err != nil {
@@ -750,7 +750,7 @@ func (s *BootlooseSuite) InspectMachines(hostnames []string) ([]*cluster.Machine
 	return s.cluster.Inspect(hostnames)
 }
 
-// MachineForName gets the named machine details
+// MachineForName gets the named machine details.
 func (s *BootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
 	machines, err := s.InspectMachines(nil)
 	if err != nil {
@@ -804,7 +804,7 @@ func (s *BootlooseSuite) Reset(name string) error {
 	return err
 }
 
-// KubeClient return kube client by loading the admin access config from given node
+// KubeClient return kube client by loading the admin access config from given node.
 func (s *BootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
 	machine, err := s.MachineForName(node)
 	if err != nil {
@@ -841,7 +841,7 @@ func (s *BootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 }
 
 // CreateUserAndGetKubeClientConfig creates user and returns the kubeconfig as clientcmdapi.Config struct so it can be
-// used and loaded with clientsets directly
+// used and loaded with clientsets directly.
 func (s *BootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
 	machine, err := s.MachineForName(node)
 	if err != nil {
@@ -877,7 +877,7 @@ func (s *BootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username 
 	return cfg, nil
 }
 
-// KubeClient return kube client by loading the admin access config from given node
+// KubeClient return kube client by loading the admin access config from given node.
 func (s *BootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*kubernetes.Clientset, error) {
 	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
 	if err != nil {
@@ -886,7 +886,7 @@ func (s *BootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*
 	return kubernetes.NewForConfig(cfg)
 }
 
-// AutopilotClient returns a client for accessing the autopilot schema
+// AutopilotClient returns a client for accessing the autopilot schema.
 func (s *BootlooseSuite) AutopilotClient(node string, k0sKubeconfigArgs ...string) (apclient.Interface, error) {
 	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
 	if err != nil {
@@ -895,7 +895,7 @@ func (s *BootlooseSuite) AutopilotClient(node string, k0sKubeconfigArgs ...strin
 	return apclient.NewForConfig(cfg)
 }
 
-// ExtensionsClient returns a client for accessing the extensions schema
+// ExtensionsClient returns a client for accessing the extensions schema.
 func (s *BootlooseSuite) ExtensionsClient(node string, k0sKubeconfigArgs ...string) (*extclient.ApiextensionsV1Client, error) {
 	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
 	if err != nil {
@@ -905,7 +905,7 @@ func (s *BootlooseSuite) ExtensionsClient(node string, k0sKubeconfigArgs ...stri
 	return extclient.NewForConfig(cfg)
 }
 
-// WaitForNodeReady wait that we see the given node in "Ready" state in kubernetes API
+// WaitForNodeReady wait that we see the given node in "Ready" state in kubernetes API.
 func (s *BootlooseSuite) WaitForNodeReady(name string, kc kubernetes.Interface) error {
 	s.T().Logf("waiting to see %s ready in kube API", name)
 	if err := WaitForNodeReadyStatus(s.Context(), kc, name, corev1.ConditionTrue); err != nil {
@@ -915,7 +915,7 @@ func (s *BootlooseSuite) WaitForNodeReady(name string, kc kubernetes.Interface) 
 	return nil
 }
 
-// GetNodeLabels return the labels of given node
+// GetNodeLabels return the labels of given node.
 func (s *BootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (map[string]string, error) {
 	n, err := kc.CoreV1().Nodes().Get(s.Context(), node, metav1.GetOptions{})
 	if err != nil {
@@ -925,7 +925,7 @@ func (s *BootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 	return n.Labels, nil
 }
 
-// WaitForNodeLabel waits for label be assigned to the node
+// WaitForNodeLabel waits for label be assigned to the node.
 func (s *BootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelKey, labelValue string) error {
 	return watch.Nodes(kc.CoreV1().Nodes()).
 		WithObjectName(node).
@@ -946,7 +946,7 @@ func (s *BootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelK
 }
 
 // WaitForKubeAPI waits until we see kube API online on given node.
-// Timeouts with error return in 5 mins
+// Timeouts with error return in 5 mins.
 func (s *BootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string) error {
 	s.T().Logf("waiting for kube api to start on node %s", node)
 	return Poll(s.Context(), func(context.Context) (done bool, err error) {
@@ -1027,7 +1027,7 @@ func (s *BootlooseSuite) initializeBootlooseCluster() error {
 	return err
 }
 
-// Verifies that kubelet process has the address flag set
+// Verifies that kubelet process has the address flag set.
 func (s *BootlooseSuite) GetKubeletCMDLine(node string) ([]string, error) {
 	ssh, err := s.SSH(s.Context(), node)
 	if err != nil {
@@ -1236,7 +1236,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 		return fmt.Errorf("failed to marshal bootloose configuration: %w", err)
 	}
 
-	if err = os.WriteFile(path.Join(dir, "bootloose.yaml"), bootlooseYaml, 0700); err != nil {
+	if err = os.WriteFile(path.Join(dir, "bootloose.yaml"), bootlooseYaml, 0o700); err != nil {
 		return fmt.Errorf("failed to write bootloose configuration to file: %w", err)
 	}
 
@@ -1284,7 +1284,7 @@ func newSuiteContext(t *testing.T) (context.Context, context.CancelCauseFunc) {
 	return deadlineCtx, cancel
 }
 
-// GetControllerIPAddress returns controller ip address
+// GetControllerIPAddress returns controller ip address.
 func (s *BootlooseSuite) GetControllerIPAddress(idx int) string {
 	return s.getIPAddress(s.ControllerNode(idx))
 }
@@ -1311,7 +1311,7 @@ func (s *BootlooseSuite) getIPAddress(nodeName string) string {
 	return ipAddress
 }
 
-// RunCommandController runs a command via SSH on a specified controller node
+// RunCommandController runs a command via SSH on a specified controller node.
 func (s *BootlooseSuite) RunCommandController(idx int, command string) (string, error) {
 	ssh, err := s.SSH(s.Context(), s.ControllerNode(idx))
 	s.Require().NoError(err)
@@ -1320,7 +1320,7 @@ func (s *BootlooseSuite) RunCommandController(idx int, command string) (string, 
 	return ssh.ExecWithOutput(s.Context(), command)
 }
 
-// RunCommandWorker runs a command via SSH on a specified controller node
+// RunCommandWorker runs a command via SSH on a specified controller node.
 func (s *BootlooseSuite) RunCommandWorker(idx int, command string) (string, error) {
 	ssh, err := s.SSH(s.Context(), s.WorkerNode(idx))
 	s.Require().NoError(err)
@@ -1345,7 +1345,7 @@ func (s *BootlooseSuite) GetK0sVersion(node string) (string, error) {
 	return version, nil
 }
 
-// GetMembers returns all of the known etcd members for a given node
+// GetMembers returns all of the known etcd members for a given node.
 func (s *BootlooseSuite) GetMembers(idx int) map[string]string {
 	// our etcd instances doesn't listen on public IP, so test is performed by calling CLI tools over ssh
 	// which in general even makes sense, we can test tooling as well
@@ -1390,7 +1390,7 @@ func (s *BootlooseSuite) WaitForSSH(node string, timeout time.Duration, delay ti
 	return fmt.Errorf("timed out waiting for ssh connection to '%s'", node)
 }
 
-// GetUpdateServerIPAddress returns the load balancers ip address
+// GetUpdateServerIPAddress returns the load balancers ip address.
 func (s *BootlooseSuite) GetUpdateServerIPAddress() string {
 	ssh, err := s.SSH(s.Context(), "updateserver0")
 	s.Require().NoError(err)

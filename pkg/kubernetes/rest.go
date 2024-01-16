@@ -45,6 +45,7 @@ func (r *restClientGetter) ToRESTConfig() (*rest.Config, error) {
 func (r *restClientGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	return r.clientFactory.GetDiscoveryClient()
 }
+
 func (r *restClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
 	discoveryClient, err := r.clientFactory.GetDiscoveryClient()
 	if err != nil {

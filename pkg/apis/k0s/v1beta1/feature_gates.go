@@ -37,7 +37,7 @@ var KubernetesComponents = []string{
 // FeatureGates collection of feature gate specs
 type FeatureGates []FeatureGate
 
-// Validate validates all profiles
+// Validate validates all profiles.
 func (fgs FeatureGates) Validate() []error {
 	var errors []error
 	for _, p := range fgs {
@@ -48,7 +48,7 @@ func (fgs FeatureGates) Validate() []error {
 	return errors
 }
 
-// BuildArgs build cli args using the given args and component name
+// BuildArgs build cli args using the given args and component name.
 func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
 	componentFeatureGates := fgs.AsSliceOfStrings(component)
 	fg, componentHasFeatureGates := args["feature-gates"]
@@ -62,7 +62,7 @@ func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) st
 	return args
 }
 
-// AsMap returns feature gates as map[string]bool, used in kubelet
+// AsMap returns feature gates as map[string]bool, used in kubelet.
 func (fgs FeatureGates) AsMap(component string) map[string]bool {
 	componentFeatureGates := map[string]bool{}
 	for _, feature := range fgs {
@@ -74,7 +74,7 @@ func (fgs FeatureGates) AsMap(component string) map[string]bool {
 	return componentFeatureGates
 }
 
-// AsSliceOfStrings returns feature gates as slice of strings, used in arguments
+// AsSliceOfStrings returns feature gates as slice of strings, used in arguments.
 func (fgs FeatureGates) AsSliceOfStrings(component string) []string {
 	featureGates := []string{}
 	for _, feature := range fgs {
@@ -85,15 +85,15 @@ func (fgs FeatureGates) AsSliceOfStrings(component string) []string {
 
 // FeatureGate specifies single feature gate
 type FeatureGate struct {
-	// Name of the feature gate
+	// Name of the feature gate.
 	Name string `json:"name,omitempty"`
-	// Enabled or disabled
+	// Enabled or disabled.
 	Enabled bool `json:"enabled,omitempty"`
-	// Components to use feature gate on, if empty `KubernetesComponents` is used as the list
+	// Components to use feature gate on, if empty `KubernetesComponents` is used as the list.
 	Components []string `json:"components,omitempty"`
 }
 
-// EnabledFor checks if current feature gate is enabled for a given component
+// EnabledFor checks if current feature gate is enabled for a given component.
 func (fg *FeatureGate) EnabledFor(component string) (value bool, found bool) {
 	components := fg.Components
 	if len(components) == 0 {
@@ -111,7 +111,7 @@ func (fg *FeatureGate) EnabledFor(component string) (value bool, found bool) {
 	return
 }
 
-// Validate given feature gate
+// Validate given feature gate.
 func (fg *FeatureGate) Validate() error {
 	if fg.Name == "" {
 		return fmt.Errorf("feature gate must have name")
@@ -119,7 +119,7 @@ func (fg *FeatureGate) Validate() error {
 	return nil
 }
 
-// String represents feature gate as a string
+// String represents feature gate as a string.
 func (fg *FeatureGate) String(component string) string {
 	value, found := fg.EnabledFor(component)
 	if !found {

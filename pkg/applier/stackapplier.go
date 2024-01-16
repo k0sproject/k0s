@@ -39,7 +39,7 @@ type StackApplier struct {
 	doApply, doDelete func(context.Context) error
 }
 
-// NewStackApplier crates new stack applier to manage a stack
+// NewStackApplier crates new stack applier to manage a stack.
 func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInterface) *StackApplier {
 	var mu sync.Mutex
 	applier := NewApplier(path, kubeClientFactory)
@@ -132,13 +132,12 @@ func (s *StackApplier) apply(ctx context.Context) {
 		retry.Context(ctx),
 		retry.LastErrorOnly(true),
 	)
-
 	if err != nil {
 		s.log.WithError(err).Error("Failed to apply manifests")
 	}
 }
 
-// DeleteStack deletes the associated stack
+// DeleteStack deletes the associated stack.
 func (s *StackApplier) DeleteStack(ctx context.Context) error {
 	return s.doDelete(ctx)
 }

@@ -45,7 +45,7 @@ type Manager struct {
 	lastReconciledConfig *v1beta1.ClusterConfig
 }
 
-// New creates a manager
+// New creates a manager.
 func New(prober prober) *Manager {
 	return &Manager{
 		Components:        []Component{},
@@ -55,7 +55,7 @@ func New(prober prober) *Manager {
 	}
 }
 
-// Add adds a component to the manager
+// Add adds a component to the manager.
 func (m *Manager) Add(ctx context.Context, component Component) {
 	m.Components = append(m.Components, component)
 	if isReconcileComponent(component) && m.lastReconciledConfig != nil {
@@ -65,7 +65,7 @@ func (m *Manager) Add(ctx context.Context, component Component) {
 	}
 }
 
-// Init initializes all managed components
+// Init initializes all managed components.
 func (m *Manager) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
 
@@ -82,7 +82,7 @@ func (m *Manager) Init(ctx context.Context) error {
 	return err
 }
 
-// Start starts all managed components
+// Start starts all managed components.
 func (m *Manager) Start(ctx context.Context) error {
 	go m.prober.Run(ctx)
 	perfTimer := performance.NewTimer("component-start").Buffer().Start()
@@ -106,7 +106,7 @@ func (m *Manager) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops all managed components
+// Stop stops all managed components.
 func (m *Manager) Stop() error {
 	var ret error
 	var next *list.Element
@@ -135,7 +135,7 @@ type ReconcileError struct {
 	Errors []error
 }
 
-// Error returns the stringified error message
+// Error returns the stringified error message.
 func (r ReconcileError) Error() string {
 	messages := make([]string, len(r.Errors))
 	for i, e := range r.Errors {
@@ -144,7 +144,7 @@ func (r ReconcileError) Error() string {
 	return strings.Join(messages, "\n")
 }
 
-// Reconcile reconciles all managed components
+// Reconcile reconciles all managed components.
 func (m *Manager) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
 	errors := make([]error, 0)
 	var ret error

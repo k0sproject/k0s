@@ -23,13 +23,13 @@ import (
 	"strings"
 )
 
-// IsDirectory check the given path exists and is a directory
+// IsDirectory check the given path exists and is a directory.
 func IsDirectory(name string) bool {
 	fi, err := os.Stat(name)
 	return err == nil && fi.Mode().IsDir()
 }
 
-// GetAll return a list of dirs in given base path
+// GetAll return a list of dirs in given base path.
 func GetAll(base string) ([]string, error) {
 	var dirs []string
 	if !IsDirectory(base) {
@@ -48,7 +48,7 @@ func GetAll(base string) ([]string, error) {
 	return dirs, nil
 }
 
-// Init creates a path if it does not exist, and verifies its permissions, if it does
+// Init creates a path if it does not exist, and verifies its permissions, if it does.
 func Init(path string, perm os.FileMode) error {
 	if path == "" {
 		return errors.New("init dir: path cannot be empty")
@@ -60,7 +60,7 @@ func Init(path string, perm os.FileMode) error {
 	return os.Chmod(path, perm)
 }
 
-// PathListJoin uses the OS path list separator to join a list of strings for things like PATH=x:y:z
+// PathListJoin uses the OS path list separator to join a list of strings for things like PATH=x:y:z.
 func PathListJoin(elem ...string) string {
 	return strings.Join(elem, string(os.PathListSeparator))
 }

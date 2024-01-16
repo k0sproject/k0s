@@ -131,7 +131,7 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 		return false, nil
 	}
 
-	//only kill process if it has the _KOS_MANAGED env set
+	// only kill process if it has the _KOS_MANAGED env set
 	env, err := os.ReadFile(filepath.Join(s.ProcFSPath, strconv.Itoa(pid), "environ"))
 	if os.IsNotExist(err) {
 		return false, nil

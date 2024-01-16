@@ -115,7 +115,7 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 	if err := copyTo(p, gz); err != nil {
 		return fmt.Errorf("unable to copy to '%s': %w", p, err)
 	}
-	if err := os.Chmod(p, 0550); err != nil {
+	if err := os.Chmod(p, 0o550); err != nil {
 		return fmt.Errorf("failed to chmod '%s': %w", p, err)
 	}
 

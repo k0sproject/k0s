@@ -63,10 +63,12 @@ type ExtensionsController struct {
 	leaderElector leaderelector.Interface
 }
 
-var _ manager.Component = (*ExtensionsController)(nil)
-var _ manager.Reconciler = (*ExtensionsController)(nil)
+var (
+	_ manager.Component  = (*ExtensionsController)(nil)
+	_ manager.Reconciler = (*ExtensionsController)(nil)
+)
 
-// NewExtensionsController builds new HelmAddons
+// NewExtensionsController builds new HelmAddons.
 func NewExtensionsController(s manifestsSaver, k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
 		saver:         s,
@@ -81,7 +83,7 @@ const (
 	namespaceToWatch = "kube-system"
 )
 
-// Run runs the extensions controller
+// Run runs the extensions controller.
 func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0sAPI.ClusterConfig) error {
 	ec.L.Info("Extensions reconciliation started")
 	defer ec.L.Info("Extensions reconciliation finished")
@@ -335,7 +337,6 @@ func (cr *ChartReconciler) chartNeedsUpgrade(chart v1beta1.Chart) bool {
 }
 
 func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart, chartRelease *release.Release, err error) {
-
 	chart.Spec.YamlValues()
 	if chartRelease != nil {
 		chart.Status.ReleaseName = chartRelease.Name
@@ -380,12 +381,12 @@ spec:
 
 const finalizerName = "helm.k0sproject.io/uninstall-helm-release"
 
-// Init
+// Init.
 func (ec *ExtensionsController) Init(_ context.Context) error {
 	return nil
 }
 
-// Start
+// Start.
 func (ec *ExtensionsController) Start(ctx context.Context) error {
 	clientConfig, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
 	if err != nil {
@@ -452,7 +453,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop
+// Stop.
 func (ec *ExtensionsController) Stop() error {
 	return nil
 }

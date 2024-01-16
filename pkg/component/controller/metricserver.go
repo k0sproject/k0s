@@ -258,10 +258,12 @@ type metricsConfig struct {
 	MEMRequest string
 }
 
-var _ manager.Component = (*MetricServer)(nil)
-var _ manager.Reconciler = (*MetricServer)(nil)
+var (
+	_ manager.Component  = (*MetricServer)(nil)
+	_ manager.Reconciler = (*MetricServer)(nil)
+)
 
-// NewMetricServer creates new MetricServer reconciler
+// NewMetricServer creates new MetricServer reconciler.
 func NewMetricServer(k0sVars *config.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) *MetricServer {
 	return &MetricServer{
 		log: logrus.WithFields(logrus.Fields{"component": "metricServer"}),
@@ -271,12 +273,12 @@ func NewMetricServer(k0sVars *config.CfgVars, kubeClientFactory k8sutil.ClientFa
 	}
 }
 
-// Init does nothing
+// Init does nothing.
 func (m *MetricServer) Init(_ context.Context) error {
 	return nil
 }
 
-// Run runs the metric server reconciler
+// Run runs the metric server reconciler.
 func (m *MetricServer) Start(ctx context.Context) error {
 	ctx, m.tickerDone = context.WithCancel(ctx)
 
@@ -323,7 +325,7 @@ func (m *MetricServer) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops the reconciler
+// Stop stops the reconciler.
 func (m *MetricServer) Stop() error {
 	if m.tickerDone != nil {
 		m.tickerDone()
@@ -331,7 +333,7 @@ func (m *MetricServer) Stop() error {
 	return nil
 }
 
-// Reconcile detects changes in configuration and applies them to the component
+// Reconcile detects changes in configuration and applies them to the component.
 func (m *MetricServer) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: MetricServer")
 	// We just store the last known config, the main reconciler ticker will reconcile config based on number of nodes etc.

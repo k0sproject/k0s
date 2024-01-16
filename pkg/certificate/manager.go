@@ -99,9 +99,8 @@ func (m *Manager) EnsureCA(name, cn string) error {
 	return nil
 }
 
-// EnsureCertificate creates the specified certificate if it does not already exist
+// EnsureCertificate creates the specified certificate if it does not already exist.
 func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certificate, error) {
-
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
 	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
 
@@ -189,7 +188,6 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 		Key:  string(key),
 		Cert: string(cert),
 	}, nil
-
 }
 
 // if regenerateCert does not need to do any changes, it will return false
@@ -263,7 +261,7 @@ func (m *Manager) CreateKeyPair(name string, k0sVars *config.CfgVars, owner stri
 		return err
 	}
 
-	return file.WriteAtomically(pubFile, 0644, func(unbuffered io.Writer) error {
+	return file.WriteAtomically(pubFile, 0o644, func(unbuffered io.Writer) error {
 		// note to the next reader: key.Public() != key.PublicKey
 		pubBytes, err := x509.MarshalPKIXPublicKey(key.Public())
 		if err != nil {

@@ -238,7 +238,6 @@ func (c *command) start(ctx context.Context) error {
 			EventEmitter:               prober.NewEventEmitter(),
 			K0sControllersLeaseCounter: controllerLeaseCounter,
 		})
-
 	}
 
 	nodeComponents.Add(ctx, &controller.APIServer{

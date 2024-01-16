@@ -26,7 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// IsValidLease check whether or not the lease is expired
+// IsValidLease check whether or not the lease is expired.
 func IsValidLease(lease coordinationv1.Lease) bool {
 	leaseDur := time.Duration(*lease.Spec.LeaseDurationSeconds)
 

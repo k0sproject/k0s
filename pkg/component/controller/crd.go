@@ -32,7 +32,7 @@ type CRD struct {
 	bundles []string
 }
 
-// NewCRD build new CRD
+// NewCRD build new CRD.
 func NewCRD(s manifestsSaver, bundles []string) *CRD {
 	return &CRD{
 		saver:   s,
@@ -40,12 +40,12 @@ func NewCRD(s manifestsSaver, bundles []string) *CRD {
 	}
 }
 
-// Init  (c CRD) Init(_ context.Context) error {
+// Init  (c CRD) Init(_ context.Context) error {.
 func (c CRD) Init(_ context.Context) error {
 	return nil
 }
 
-// Run unpacks manifests from bindata
+// Run unpacks manifests from bindata.
 func (c CRD) Start(_ context.Context) error {
 	for _, bundle := range c.bundles {
 		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))

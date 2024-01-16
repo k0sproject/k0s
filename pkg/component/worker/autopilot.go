@@ -107,7 +107,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops Autopilot
+// Stop stops Autopilot.
 func (a *Autopilot) Stop() error {
 	return nil
 }

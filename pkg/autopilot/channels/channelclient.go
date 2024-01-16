@@ -53,7 +53,6 @@ func NewChannelClient(server string, channel string, token string) (*ChannelClie
 }
 
 func (c *ChannelClient) GetLatest(ctx context.Context, headers map[string]string) (VersionInfo, error) {
-
 	var v VersionInfo
 
 	req, err := http.NewRequestWithContext(ctx, "GET", c.channelURL, nil)

@@ -27,8 +27,10 @@ type Dummy struct {
 	callbacks []func()
 }
 
-var _ Interface = (*Dummy)(nil)
-var _ manager.Component = (*Dummy)(nil)
+var (
+	_ Interface         = (*Dummy)(nil)
+	_ manager.Component = (*Dummy)(nil)
+)
 
 func (l *Dummy) Init(_ context.Context) error { return nil }
 func (l *Dummy) Stop() error                  { return nil }

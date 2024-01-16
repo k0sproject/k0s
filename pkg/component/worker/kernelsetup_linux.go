@@ -51,14 +51,14 @@ func modprobe(module string) {
 
 func enableSysCtl(entry string) {
 	file := path.Join("/proc", "sys", entry)
-	err := os.WriteFile(file, []byte("1"), 0644)
+	err := os.WriteFile(file, []byte("1"), 0o644)
 	if err != nil {
 		logrus.Warnf("Failed to enable %s: %s", file, err.Error())
 	}
 }
 
 // KernelSetup sets the needed kernel tuning params. If setting the options fails, it only logs
-// a warning but does not prevent the starting of worker
+// a warning but does not prevent the starting of worker.
 func KernelSetup() {
 	if !hasFilesystem("overlay") {
 		modprobe("overlay")
@@ -81,7 +81,7 @@ func KernelSetup() {
 	enableSysCtl("net/bridge/bridge-nf-call-ip6tables")
 }
 
-// KernelMajorVersion returns the major version number of the running kernel
+// KernelMajorVersion returns the major version number of the running kernel.
 func KernelMajorVersion() byte {
 	data, err := os.ReadFile("/proc/sys/kernel/osrelease")
 	if err != nil {

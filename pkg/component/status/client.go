@@ -49,7 +49,7 @@ type ProbeStatus struct {
 	Success bool
 }
 
-// GetStatus returns the status of the k0s process using the status socket
+// GetStatus returns the status of the k0s process using the status socket.
 func GetStatusInfo(socketPath string) (*K0sStatus, error) {
 	status := &K0sStatus{}
 	if err := doHTTPRequestViaUnixSocket(socketPath, "status", status); err != nil {
@@ -58,7 +58,7 @@ func GetStatusInfo(socketPath string) (*K0sStatus, error) {
 	return status, nil
 }
 
-// GetComponentStatus returns the per-component events and health-checks
+// GetComponentStatus returns the per-component events and health-checks.
 func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) {
 	status := &prober.State{}
 	if err := doHTTPRequestViaUnixSocket(socketPath,

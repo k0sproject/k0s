@@ -32,26 +32,26 @@ var _ Validateable = (*APISpec)(nil)
 
 // APISpec defines the settings for the K0s API
 type APISpec struct {
-	// Local address on which to bind an API
+	// Local address on which to bind an API.
 	Address string `json:"address"`
 
-	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
+	// The loadbalancer address (for k0s controllers running behind a loadbalancer).
 	ExternalAddress string `json:"externalAddress,omitempty"`
-	// Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process
+	// Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
-	// Custom port for k0s-api server to listen on (default: 9443)
+	// Custom port for k0s-api server to listen on (default: 9443).
 	K0sAPIPort int `json:"k0sApiPort,omitempty"`
 
-	// Custom port for kube-api server to listen on (default: 6443)
+	// Custom port for kube-api server to listen on (default: 6443).
 	Port int `json:"port"`
 
-	// List of additional addresses to push to API servers serving the certificate
+	// List of additional addresses to push to API servers serving the certificate.
 	SANs []string `json:"sans"`
 }
 
 const defaultKasPort = 6443
 
-// DefaultAPISpec default settings for api
+// DefaultAPISpec default settings for api.
 func DefaultAPISpec() *APISpec {
 	// Collect all nodes addresses for sans
 	addresses, _ := iface.AllAddresses()
@@ -73,7 +73,7 @@ func (a *APISpec) APIAddress() string {
 	return a.Address
 }
 
-// APIAddressURL returns kube-apiserver external URI
+// APIAddressURL returns kube-apiserver external URI.
 func (a *APISpec) APIAddressURL() string {
 	return a.getExternalURIForPort(a.Port)
 }
@@ -84,7 +84,7 @@ func IsIPv6String(ip string) bool {
 	return netIP != nil && netIP.To4() == nil
 }
 
-// K0sControlPlaneAPIAddress returns the controller join APIs address
+// K0sControlPlaneAPIAddress returns the controller join APIs address.
 func (a *APISpec) K0sControlPlaneAPIAddress() string {
 	return a.getExternalURIForPort(a.K0sAPIPort)
 }
@@ -100,7 +100,7 @@ func (a *APISpec) getExternalURIForPort(port int) string {
 	return fmt.Sprintf("https://%s:%d", addr, port)
 }
 
-// Sans return the given SANS plus all local adresses and externalAddress if given
+// Sans return the given SANS plus all local adresses and externalAddress if given.
 func (a *APISpec) Sans() []string {
 	sans, _ := iface.AllAddresses()
 	sans = append(sans, a.Address)
@@ -112,7 +112,7 @@ func (a *APISpec) Sans() []string {
 	return stringslice.Unique(sans)
 }
 
-// Validate validates APISpec struct
+// Validate validates APISpec struct.
 func (a *APISpec) Validate() []error {
 	if a == nil {
 		return nil

@@ -58,7 +58,7 @@ func (p *provider) Instances() (cloudprovider.Instances, bool) {
 }
 
 // InstancesV2 is an implementation for instances and should only be implemented by external cloud providers.
-// Implementing InstancesV2 is behaviorally identical to Instances but is optimized to significantly reduce
+// Implementing InstancesV2 is behaviorally identical to Instances but is optimized to significantly reduce.
 // API calls to the cloud provider when registering and syncing nodes. Implementation of this interface will
 // disable calls to the Zones interface. Also returns true if the interface is supported, false otherwise.
 func (p *provider) InstancesV2() (cloudprovider.InstancesV2, bool) {
@@ -90,7 +90,7 @@ func (p *provider) ProviderName() string {
 	return Name
 }
 
-// HasClusterID returns true if a ClusterID is required and set
+// HasClusterID returns true if a ClusterID is required and set.
 func (p *provider) HasClusterID() bool {
 	// Not supported
 	return false

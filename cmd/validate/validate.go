@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TODO deprecated, remove when appropriate
+// TODO deprecated, remove when appropriate.
 func NewValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:    "validate",

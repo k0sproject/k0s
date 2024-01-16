@@ -18,28 +18,28 @@ package v1beta1
 
 // KubeRouter defines the kube-router related config options
 type KubeRouter struct {
-	// Auto-detection of used MTU (default: true)
+	// Auto-detection of used MTU (default: true).
 	AutoMTU bool `json:"autoMTU"`
-	// Override MTU setting (autoMTU must be set to false)
+	// Override MTU setting (autoMTU must be set to false).
 	MTU int `json:"mtu"`
-	// Kube-router metrics server port. Set to 0 to disable metrics  (default: 8080)
+	// Kube-router metrics server port. Set to 0 to disable metrics  (default: 8080).
 	MetricsPort int `json:"metricsPort"`
-	// Admits three values: "Enabled" enables it globally, "Allowed" allows but services must be annotated explicitly and "Disabled"
-	// Defaults to "Enabled"
+	// Admits three values: "Enabled" enables it globally, "Allowed" allows but services must be annotated explicitly and "Disabled".
+	// Defaults to "Enabled".
 	// +kubebuilder:default=Enabled
 	Hairpin Hairpin `json:"hairpin"`
-	// DEPRECATED: Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
+	// DEPRECATED: Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port).
 	HairpinMode bool `json:"hairpinMode,omitempty"`
-	// IP masquerade for traffic originating from the pod network, and destined outside of it (default: false)
+	// IP masquerade for traffic originating from the pod network, and destined outside of it (default: false).
 	IPMasq bool `json:"ipMasq"`
-	// Comma-separated list of global peer addresses
-	// DEPRECATED: Use extraArgs with peerRouterASNs instead
+	// Comma-separated list of global peer addresses.
+	// DEPRECATED: Use extraArgs with peerRouterASNs instead.
 	PeerRouterASNs string `json:"peerRouterASNs"`
-	// Comma-separated list of global peer ASNs
-	// DEPRECATED: Use extraArgs with peerRouterIPs instead
+	// Comma-separated list of global peer ASNs.
+	// DEPRECATED: Use extraArgs with peerRouterIPs instead.
 	PeerRouterIPs string `json:"peerRouterIPs"`
-	// ExtraArgs are extra arguments to pass to kube-router
-	// Can be also used to override the default k0s managed kube-router arguments
+	// ExtraArgs are extra arguments to pass to kube-router.
+	// Can be also used to override the default k0s managed kube-router arguments.
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
@@ -50,11 +50,11 @@ const (
 	HairpinEnabled  Hairpin = "Enabled"
 	HairpinAllowed  Hairpin = "Allowed"
 	HairpinDisabled Hairpin = "Disabled"
-	// Necessary for backwards compatibility with HairpinMode
+	// Necessary for backwards compatibility with HairpinMode.
 	HairpinUndefined Hairpin = ""
 )
 
-// DefaultKubeRouter returns the default config for kube-router
+// DefaultKubeRouter returns the default config for kube-router.
 func DefaultKubeRouter() *KubeRouter {
 	return &KubeRouter{
 		MTU:         0,

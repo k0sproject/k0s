@@ -25,12 +25,12 @@ type users struct {
 	Config *Config
 }
 
-// Name returns the name of the step
+// Name returns the name of the step.
 func (u *users) Name() string {
 	return "remove k0s users step:"
 }
 
-// Run removes all controller users that are present on the host
+// Run removes all controller users that are present on the host.
 func (u *users) Run() error {
 	cfg, err := u.Config.k0sVars.NodeConfig()
 	if err != nil {

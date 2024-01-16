@@ -27,7 +27,7 @@ import (
 
 // RegisterIndexers registers all required common indexers into the controller-runtime manager.
 func RegisterIndexers(ctx context.Context, mgr crman.Manager, scope string) error {
-	var indicies = []struct {
+	indicies := []struct {
 		field   string
 		object  crcli.Object
 		scope   string

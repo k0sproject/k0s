@@ -59,7 +59,8 @@ func makePingPong(t *testing.T) *pingPong {
 	t.Cleanup(func() { assert.NoError(t, ping.Close(), "Failed to close ping pipe") })
 
 	return &pingPong{
-		shellPath, []string{"-noprofile", "-noninteractive", scriptPath, namespace},
+		shellPath,
+		[]string{"-noprofile", "-noninteractive", scriptPath, namespace},
 		ping, pongPath,
 	}
 }

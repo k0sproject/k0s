@@ -109,7 +109,7 @@ func discoverNodesSelector(ctx context.Context, client crcli.Client, delegate ap
 // associated objects as identified by the provided exists function. If all nodes have been
 // determined to exist, `true` is included in the return.
 func ensureNodesExist(nodes []apv1beta2.PlanCommandTargetStatus, exists SignalObjectExistsFunc) ([]apv1beta2.PlanCommandTargetStatus, bool) {
-	var allAccountedFor = true
+	allAccountedFor := true
 
 	for idx, node := range nodes {
 		if found, status := exists(node.Name); !found {

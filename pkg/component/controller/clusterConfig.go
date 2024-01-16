@@ -52,9 +52,8 @@ type ClusterConfigReconciler struct {
 	configSource  clusterconfig.ConfigSource
 }
 
-// NewClusterConfigReconciler creates a new clusterConfig reconciler
+// NewClusterConfigReconciler creates a new clusterConfig reconciler.
 func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars *config.CfgVars, mgr *manager.Manager, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) (*ClusterConfigReconciler, error) {
-
 	cfg, err := k0sVars.NodeConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get config: %v", err)
@@ -142,7 +141,7 @@ func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops
+// Stop stops.
 func (r *ClusterConfigReconciler) Stop() error {
 	// Nothing really to stop, the main ConfigSource "watch" channel go-routine is stopped
 	// via the main Context's Done channel in the Run function

@@ -56,8 +56,10 @@ type Metrics struct {
 	jobs          []*job
 }
 
-var _ manager.Component = (*Metrics)(nil)
-var _ manager.Reconciler = (*Metrics)(nil)
+var (
+	_ manager.Component  = (*Metrics)(nil)
+	_ manager.Reconciler = (*Metrics)(nil)
+)
 
 // NewMetrics creates new Metrics reconciler
 func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface, storageType string) (*Metrics, error) {
@@ -253,6 +255,7 @@ func (j *job) Run(ctx context.Context) {
 		}
 	}
 }
+
 func (j *job) pushURL() string {
 	pushAddress := fmt.Sprintf("/api/v1/namespaces/%s/services/http:%s:http/proxy", namespace, pushGatewayName)
 	return fmt.Sprintf("%s/metrics/job/%s/instance/%s", pushAddress, j.name, j.hostname)

@@ -36,7 +36,7 @@ func GetControllerUsers(clusterConfig *v1beta1.ClusterConfig) []string {
 	return getUserList(*clusterConfig.Spec.Install.SystemUsers)
 }
 
-// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
+// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly.
 func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
 	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
@@ -51,7 +51,7 @@ func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config
 	return nil
 }
 
-// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
+// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly.
 func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 	cfgUsers := getUserList(*clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
@@ -71,8 +71,8 @@ func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 	return nil
 }
 
-// EnsureUser checks if a user exists, and creates it, if it doesn't
-// TODO: we should also consider modifying the user, if the user exists, but with wrong settings
+// EnsureUser checks if a user exists, and creates it, if it doesn't.
+// TODO: we should also consider modifying the user, if the user exists, but with wrong settings.
 func EnsureUser(name string, homeDir string) error {
 	_, err := users.GetUID(name)
 	if errors.Is(err, user.UnknownUserError(name)) {

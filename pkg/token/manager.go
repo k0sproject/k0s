@@ -42,7 +42,7 @@ func (t Token) ToArray() []string {
 	return []string{t.ID, t.Role, t.Expiry}
 }
 
-// NewManager creates a new token manager using given kubeconfig
+// NewManager creates a new token manager using given kubeconfig.
 func NewManager(kubeconfig string) (*Manager, error) {
 	logrus.Debugf("loading kubeconfig from: %s", kubeconfig)
 	client, err := k8sutil.NewClientFromFile(kubeconfig)
@@ -54,7 +54,7 @@ func NewManager(kubeconfig string) (*Manager, error) {
 	}, nil
 }
 
-// NewManagerForClient creates a new token manager using given client
+// NewManagerForClient creates a new token manager using given client.
 func NewManagerForClient(client kubernetes.Interface) (*Manager, error) {
 	return &Manager{
 		client: client,
@@ -126,7 +126,7 @@ func (m *Manager) Create(ctx context.Context, valid time.Duration, role string) 
 	return token, nil
 }
 
-// List returns all the join tokens for given role. If role == "" then it returns all join tokens
+// List returns all the join tokens for given role. If role == "" then it returns all join tokens.
 func (m *Manager) List(ctx context.Context, role string) ([]Token, error) {
 	tokenList, err := m.client.CoreV1().Secrets("kube-system").List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("type", string(corev1.SecretTypeBootstrapToken)).String(),

@@ -149,7 +149,6 @@ func (p *PeriodicUpgradeStrategy) IsWithinPeriod(t time.Time) bool {
 	return isWindowDay &&
 		t.After(startTime) &&
 		t.Before(startTime.Add(windowDuration))
-
 }
 
 // Returns the "adjusted" time for the current day. I.e. if the starTime is 15:00, this function will return the current day at 15:00

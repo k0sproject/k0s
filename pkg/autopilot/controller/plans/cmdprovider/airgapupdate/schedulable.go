@@ -27,7 +27,7 @@ import (
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Schedulable handles the provider state 'schedulable'
+// Schedulable handles the provider state 'schedulable'.
 func (aup *airgapupdate) Schedulable(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := aup.logger.WithField("state", "schedulable")
 	logger.Info("Processing")

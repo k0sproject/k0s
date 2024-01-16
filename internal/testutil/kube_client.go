@@ -18,6 +18,7 @@ package testutil
 
 import (
 	"fmt"
+
 	"k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -86,6 +87,7 @@ func (f FakeClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, 
 func (f FakeClientFactory) GetRESTClient() (rest.Interface, error) {
 	return f.RESTClient, nil
 }
+
 func (f FakeClientFactory) GetRESTConfig() *rest.Config {
 	return &rest.Config{}
 }

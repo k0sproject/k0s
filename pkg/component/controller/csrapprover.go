@@ -51,7 +51,7 @@ type CSRApprover struct {
 
 var _ manager.Component = (*CSRApprover)(nil)
 
-// NewCSRApprover creates the CSRApprover component
+// NewCSRApprover creates the CSRApprover component.
 func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface) *CSRApprover {
 	d := atomic.Value{}
 	d.Store(true)
@@ -63,13 +63,13 @@ func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector leaderelector.Interf
 	}
 }
 
-// Stop stops the CSRApprover
+// Stop stops the CSRApprover.
 func (a *CSRApprover) Stop() error {
 	a.stop()
 	return nil
 }
 
-// Init initializes the component needs
+// Init initializes the component needs.
 func (a *CSRApprover) Init(_ context.Context) error {
 	var err error
 	a.clientset, err = a.KubeClientFactory.GetClient()
@@ -80,7 +80,7 @@ func (a *CSRApprover) Init(_ context.Context) error {
 	return nil
 }
 
-// Run every 10 seconds checks for newly issued CSRs and approves them
+// Run every 10 seconds checks for newly issued CSRs and approves them.
 func (a *CSRApprover) Start(ctx context.Context) error {
 	ctx, a.stop = context.WithCancel(ctx)
 	go func() {

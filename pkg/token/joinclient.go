@@ -39,7 +39,7 @@ type JoinClient struct {
 	joinTokenType string
 }
 
-// JoinClientFromToken creates a new join api client from a token
+// JoinClientFromToken creates a new join api client from a token.
 func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 	tokenBytes, err := DecodeJoinToken(encodedToken)
 	if err != nil {
@@ -78,7 +78,7 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 	return c, nil
 }
 
-// GetCA calls the CA sync API
+// GetCA calls the CA sync API.
 func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
 	var caData v1beta1.CaResponse
 	req, err := http.NewRequest(http.MethodGet, j.joinAddress+"/v1beta1/ca", nil)
@@ -111,7 +111,7 @@ func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
 	return caData, nil
 }
 
-// JoinEtcd calls the etcd join API
+// JoinEtcd calls the etcd join API.
 func (j *JoinClient) JoinEtcd(peerAddress string) (v1beta1.EtcdResponse, error) {
 	var etcdResponse v1beta1.EtcdResponse
 	etcdRequest := v1beta1.EtcdRequest{

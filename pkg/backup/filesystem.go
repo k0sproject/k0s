@@ -66,8 +66,7 @@ func (d FileSystemStep) Restore(restoreFrom, restoreTo string) error {
 	return err
 }
 
-// NewFileSystemStep constructor
+// NewFileSystemStep constructor.
 func NewFileSystemStep(path string) FileSystemStep {
 	return FileSystemStep{path: path}
-
 }

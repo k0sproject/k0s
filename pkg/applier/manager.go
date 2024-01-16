@@ -38,7 +38,7 @@ type Manager struct {
 	K0sVars           *config.CfgVars
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	// client               kubernetes.Interface
+	// client               kubernetes.Interface.
 	applier       Applier
 	bundlePath    string
 	cancelWatcher context.CancelFunc
@@ -55,7 +55,7 @@ type stack = struct {
 	*StackApplier
 }
 
-// Init initializes the Manager
+// Init initializes the Manager.
 func (m *Manager) Init(ctx context.Context) error {
 	err := dir.Init(m.K0sVars.ManifestsDir, constant.ManifestsDirMode)
 	if err != nil {
@@ -83,12 +83,12 @@ func (m *Manager) Init(ctx context.Context) error {
 	return err
 }
 
-// Run runs the Manager
+// Run runs the Manager.
 func (m *Manager) Start(_ context.Context) error {
 	return nil
 }
 
-// Stop stops the Manager
+// Stop stops the Manager.
 func (m *Manager) Stop() error {
 	if m.cancelWatcher != nil {
 		m.cancelWatcher()

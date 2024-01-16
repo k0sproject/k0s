@@ -62,10 +62,12 @@ var cmDefaultArgs = stringmap.StringMap{
 
 const kubeControllerManagerComponent = "kube-controller-manager"
 
-var _ manager.Component = (*Manager)(nil)
-var _ manager.Reconciler = (*Manager)(nil)
+var (
+	_ manager.Component  = (*Manager)(nil)
+	_ manager.Reconciler = (*Manager)(nil)
+)
 
-// Init extracts the needed binaries
+// Init extracts the needed binaries.
 func (a *Manager) Init(_ context.Context) error {
 	var err error
 	// controller manager running as api-server user as they both need access to same sa.key
@@ -82,10 +84,10 @@ func (a *Manager) Init(_ context.Context) error {
 	return assets.Stage(a.K0sVars.BinDir, kubeControllerManagerComponent, constant.BinDirMode)
 }
 
-// Run runs kube Manager
+// Run runs kube Manager.
 func (a *Manager) Start(_ context.Context) error { return nil }
 
-// Reconcile detects changes in configuration and applies them to the component
+// Reconcile detects changes in configuration and applies them to the component.
 func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logger := logrus.WithField("component", kubeControllerManagerComponent)
 	logger.Info("Starting reconcile")
@@ -165,7 +167,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	return a.supervisor.Supervise()
 }
 
-// Stop stops Manager
+// Stop stops Manager.
 func (a *Manager) Stop() error {
 	if a.supervisor != nil {
 		return a.supervisor.Stop()

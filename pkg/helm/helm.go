@@ -65,7 +65,7 @@ var getters = getter.Providers{
 	},
 }
 
-// NewCommands builds new Commands instance with default values
+// NewCommands builds new Commands instance with default values.
 func NewCommands(k0sVars *config.CfgVars) *Commands {
 	return &Commands{
 		repoFile:     k0sVars.HelmRepositoryConfig,
@@ -129,7 +129,7 @@ func (hc *Commands) AddRepository(repoCfg v1beta1.Repository) error {
 		return fmt.Errorf("can't add repository: %q is not a valid chart repository or cannot be reached: %v", "repo", err)
 	}
 	f.Update(&c)
-	if err := f.WriteFile(hc.repoFile, 0644); err != nil {
+	if err := f.WriteFile(hc.repoFile, 0o644); err != nil {
 		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
 
@@ -201,8 +201,8 @@ func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 	return true
 }
 
-// InstallChart installs a helm chart
-// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
+// InstallChart installs a helm chart.
+// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe.
 func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
@@ -251,7 +251,7 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 }
 
 // UpgradeChart upgrades a helm chart.
-// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
+// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe.
 func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
@@ -308,7 +308,7 @@ func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
 }
 
 // UninstallRelease uninstalls a release.
-// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
+// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe.
 func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string) error {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {

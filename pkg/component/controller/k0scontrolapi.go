@@ -35,13 +35,13 @@ type K0SControlAPI struct {
 
 var _ manager.Component = (*K0SControlAPI)(nil)
 
-// Init does currently nothing
+// Init does currently nothing.
 func (m *K0SControlAPI) Init(_ context.Context) error {
 	// We need to create a serving cert for the api
 	return nil
 }
 
-// Run runs k0s control api as separate process
+// Run runs k0s control api as separate process.
 func (m *K0SControlAPI) Start(_ context.Context) error {
 	// TODO: Make the api process to use some other user
 
@@ -63,7 +63,7 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 	return m.supervisor.Supervise()
 }
 
-// Stop stops k0s api
+// Stop stops k0s api.
 func (m *K0SControlAPI) Stop() error {
 	return m.supervisor.Stop()
 }

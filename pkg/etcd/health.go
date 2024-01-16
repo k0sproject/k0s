@@ -24,7 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// CheckEtcdReady returns true if etcd responds to the metrics endpoint with a status code of 200
+// CheckEtcdReady returns true if etcd responds to the metrics endpoint with a status code of 200.
 func CheckEtcdReady(ctx context.Context, certDir string, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) error {
 	c, err := NewClient(certDir, etcdCertDir, etcdConf)
 	if err != nil {

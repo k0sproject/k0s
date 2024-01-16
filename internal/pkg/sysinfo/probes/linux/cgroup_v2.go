@@ -172,7 +172,6 @@ func eBPFProgramUnsupported(err error) bool {
 //
 // https://github.com/torvalds/linux/blob/v5.3/Documentation/admin-guide/cgroup-v2.rst#core-interface-files
 func (g *cgroupV2) detectFreezerController() (cgroupControllerAvailable, error) {
-
 	// Detect the freezer controller by checking k0s's cgroup for the existence
 	// of the cgroup.freeze file.
 	// https://github.com/torvalds/linux/blob/v5.3/Documentation/admin-guide/cgroup-v2.rst#processes

@@ -23,7 +23,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
-// GetImageURIs returns all image tags
+// GetImageURIs returns all image tags.
 func GetImageURIs(spec *v1beta1.ClusterSpec, all bool) []string {
 	pauseImage := v1beta1.ImageSpec{
 		Image:   constant.KubePauseContainerImage,

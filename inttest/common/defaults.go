@@ -24,11 +24,13 @@ const (
 	TargetK0sVersion = "v1.24.4+k0s.0"
 )
 
-type K0sVersion string
-type K0sVersionedPlatformResourceMap map[K0sVersion]PlatformedResourceMap
-type PlatformedResourceMap map[string]ResourceMap
-type ResourceMap map[string]AttributeMap
-type AttributeMap map[string]string
+type (
+	K0sVersion                      string
+	K0sVersionedPlatformResourceMap map[K0sVersion]PlatformedResourceMap
+	PlatformedResourceMap           map[string]ResourceMap
+	ResourceMap                     map[string]AttributeMap
+	AttributeMap                    map[string]string
+)
 
 var Versions = K0sVersionedPlatformResourceMap{
 	"v1.24.4+k0s.0": {

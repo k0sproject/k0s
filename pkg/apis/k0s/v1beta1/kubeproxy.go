@@ -63,7 +63,7 @@ type KubeProxyIPVSConfiguration struct {
 	UDPTimeout    metav1.Duration `json:"udpTimeout,omitempty"`
 }
 
-// DefaultKubeProxy creates the default config for kube-proxy
+// DefaultKubeProxy creates the default config for kube-proxy.
 func DefaultKubeProxy() *KubeProxy {
 	return &KubeProxy{
 		Disabled:           false,
@@ -96,7 +96,7 @@ func DefaultKubeProxyIPVS() *KubeProxyIPVSConfiguration {
 	}
 }
 
-// Validate validates kube proxy config
+// Validate validates kube proxy config.
 func (k *KubeProxy) Validate() []error {
 	if k.Disabled {
 		return nil

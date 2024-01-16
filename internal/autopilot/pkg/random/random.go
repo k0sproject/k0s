@@ -20,9 +20,8 @@ import (
 
 var letters = "abcdefghijklmnopqrstuvwxyz0123456789"
 
-// String generates a random string with given length
+// String generates a random string with given length.
 func String(length int) string {
-
 	bytes := make([]byte, length)
 	if _, err := rand.Read(bytes); err != nil {
 		// Not much we can do on broken system

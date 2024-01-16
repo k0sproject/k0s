@@ -34,8 +34,10 @@ import (
 )
 
 // TODO: move to K0sVars
-const containerdCRIConfigPathPosix = "/run/k0s/containerd-cri.toml"
-const containerdCRIConfigPathWindows = "C:\\var\\lib\\k0s\\run\\containerd-cri.toml"
+const (
+	containerdCRIConfigPathPosix   = "/run/k0s/containerd-cri.toml"
+	containerdCRIConfigPathWindows = "C:\\var\\lib\\k0s\\run\\containerd-cri.toml"
+)
 
 type CRIConfigurer struct {
 	loadPath       string
@@ -53,7 +55,6 @@ func NewConfigurer(pauseImage *v1beta1.ImageSpec, importsPath string) *CRIConfig
 	}
 	if runtime.GOOS == "windows" {
 		c.criRuntimePath = containerdCRIConfigPathWindows
-
 	} else {
 		c.criRuntimePath = containerdCRIConfigPathPosix
 	}
@@ -105,7 +106,7 @@ func (c *CRIConfigurer) HandleImports() ([]string, error) {
 		}
 	}
 	// Write the CRI config to a file and add it to imports
-	err = os.WriteFile(c.criRuntimePath, []byte(finalConfig), 0644)
+	err = os.WriteFile(c.criRuntimePath, []byte(finalConfig), 0o644)
 	if err != nil {
 		return nil, err
 	}

@@ -27,7 +27,6 @@ import (
 
 // snapshot holds a snapshot of the parts that influence worker configurations.
 type snapshot struct {
-
 	// The snapshot of the cluster configuration.
 	*configSnapshot
 

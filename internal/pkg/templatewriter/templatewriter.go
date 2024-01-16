@@ -35,12 +35,12 @@ type TemplateWriter struct {
 	Path     string
 }
 
-// Write executes the template and writes the results on disk
+// Write executes the template and writes the results on disk.
 func (p *TemplateWriter) Write() error {
 	return file.WriteAtomically(p.Path, constant.CertMode, p.WriteToBuffer)
 }
 
-// WriteToBuffer writes executed template tot he given writer
+// WriteToBuffer writes executed template tot he given writer.
 func (p *TemplateWriter) WriteToBuffer(w io.Writer) error {
 	t, err := template.New(p.Name).Funcs(sprig.TxtFuncMap()).Parse(p.Template)
 	if err != nil {

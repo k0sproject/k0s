@@ -57,7 +57,7 @@ func cleanUpMapValue(v interface{}) interface{} {
 }
 
 // CleanUpGenericMap is a helper to "cleanup" generic yaml parsing where nested maps
-// are unmarshalled with type map[interface{}]interface{}
+// are unmarshalled with type map[interface{}]interface{}.
 func CleanUpGenericMap(in map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	for k, v := range in {

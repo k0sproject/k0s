@@ -56,7 +56,7 @@ func (s *ImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
 	return
 }
 
-// URI build image uri
+// URI build image uri.
 func (s *ImageSpec) URI() string {
 	return fmt.Sprintf("%s:%s", s.Image, s.Version)
 }
@@ -148,7 +148,7 @@ type KubeRouterImageSpec struct {
 	CNIInstaller ImageSpec `json:"cniInstaller"`
 }
 
-// DefaultClusterImages default image settings
+// DefaultClusterImages default image settings.
 func DefaultClusterImages() *ClusterImages {
 	return &ClusterImages{
 		DefaultPullPolicy: "IfNotPresent",

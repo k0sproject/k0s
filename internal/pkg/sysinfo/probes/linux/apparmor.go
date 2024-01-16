@@ -36,8 +36,8 @@ func checkAppArmor() string {
 		return "inactive"
 	}
 	return "unavailable"
-
 }
+
 func (l *LinuxProbes) AssertAppArmor() {
 	l.Set("AppArmor", func(path probes.ProbePath, _ probes.Probe) probes.Probe {
 		return probes.ProbeFn(func(r probes.Reporter) error {

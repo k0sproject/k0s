@@ -42,7 +42,7 @@ type NodeRole struct {
 	k0sVars           *config.CfgVars
 }
 
-// NewNodeRole creates new NodeRole reconciler
+// NewNodeRole creates new NodeRole reconciler.
 func NewNodeRole(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface) *NodeRole {
 	return &NodeRole{
 		log: logrus.WithFields(logrus.Fields{"component": "noderole"}),
@@ -52,12 +52,12 @@ func NewNodeRole(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInt
 	}
 }
 
-// Init no-op
+// Init no-op.
 func (n *NodeRole) Init(_ context.Context) error {
 	return nil
 }
 
-// Run checks and adds labels
+// Run checks and adds labels.
 func (n *NodeRole) Start(ctx context.Context) error {
 	client, err := n.kubeClientFactory.GetClient()
 	if err != nil {
@@ -118,7 +118,7 @@ func (n *NodeRole) addNodeLabel(ctx context.Context, client kubernetes.Interface
 	return client.CoreV1().Nodes().Patch(ctx, node, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
 }
 
-// Stop no-op
+// Stop no-op.
 func (n *NodeRole) Stop() error {
 	return nil
 }

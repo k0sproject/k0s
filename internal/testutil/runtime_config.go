@@ -35,7 +35,7 @@ type ConfigGetter struct {
 	k0sVars *config.CfgVars
 }
 
-// NewConfigGetter sets the parameters required to fetch a fake config for testing
+// NewConfigGetter sets the parameters required to fetch a fake config for testing.
 func NewConfigGetter(t *testing.T, yamlData string, isNodeConfig bool, k0sVars *config.CfgVars) *ConfigGetter {
 	return &ConfigGetter{
 		YamlData:   yamlData,
@@ -45,7 +45,7 @@ func NewConfigGetter(t *testing.T, yamlData string, isNodeConfig bool, k0sVars *
 	}
 }
 
-// FakeRuntimeConfig takes a yaml construct and returns a config object from a fake runtime config path
+// FakeRuntimeConfig takes a yaml construct and returns a config object from a fake runtime config path.
 func (c *ConfigGetter) FakeConfigFromFile() *v1beta1.ClusterConfig {
 	c.k0sVars.RuntimeConfigPath = c.initRuntimeConfig()
 	rtc, err := config.LoadRuntimeConfig(c.k0sVars)

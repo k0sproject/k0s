@@ -21,7 +21,7 @@ import "fmt"
 // StringMap defines map like arguments that can be "evaluated" into args=value pairs
 type StringMap map[string]string
 
-// Merge merges the input from one map with an existing map, so that we can override entries entry in the existing map
+// Merge merges the input from one map with an existing map, so that we can override entries entry in the existing map.
 func Merge(inputMap StringMap, existingMap StringMap) StringMap {
 	newMap := StringMap{}
 	newMap.Merge(existingMap)
@@ -29,7 +29,7 @@ func Merge(inputMap StringMap, existingMap StringMap) StringMap {
 	return newMap
 }
 
-// ToArgs maps the data into cmd arguments like foo=bar baz=baf
+// ToArgs maps the data into cmd arguments like foo=bar baz=baf.
 func (m StringMap) ToArgs() []string {
 	args := make([]string, len(m))
 	idx := 0
@@ -50,7 +50,7 @@ func (m StringMap) ToDashedArgs() []string {
 	return args
 }
 
-// Merge merges two maps together
+// Merge merges two maps together.
 func (m StringMap) Merge(other StringMap) {
 	if len(other) > 0 {
 		for k, v := range other {

@@ -50,11 +50,11 @@ type Supervisor struct {
 	TimeoutRespawn time.Duration
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
-	// ProcFSPath is only used for testing
+	// ProcFSPath is only used for testing.
 	ProcFSPath string
-	// KillFunction is only used for testing
+	// KillFunction is only used for testing.
 	KillFunction func(int, syscall.Signal) error
-	// A function to clean some leftovers before starting or restarting the supervised process
+	// A function to clean some leftovers before starting or restarting the supervised process.
 	CleanBeforeFn func() error
 
 	cmd            *exec.Cmd
@@ -125,7 +125,7 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 	return false
 }
 
-// Supervise Starts supervising the given process
+// Supervise Starts supervising the given process.
 func (s *Supervisor) Supervise() error {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
@@ -229,7 +229,7 @@ func (s *Supervisor) Supervise() error {
 	return <-started
 }
 
-// Stop stops the supervised
+// Stop stops the supervised.
 func (s *Supervisor) Stop() error {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
@@ -298,7 +298,7 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 	return env[:i]
 }
 
-// GetProcess returns the last started process
+// GetProcess returns the last started process.
 func (s *Supervisor) GetProcess() *os.Process {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()

@@ -39,8 +39,10 @@ type LeasePool struct {
 	lostLeaseCallbacks     []func()
 }
 
-var _ Interface = (*LeasePool)(nil)
-var _ manager.Component = (*LeasePool)(nil)
+var (
+	_ Interface         = (*LeasePool)(nil)
+	_ manager.Component = (*LeasePool)(nil)
+)
 
 // NewLeasePool creates a new leader elector using a Kubernetes lease pool.
 func NewLeasePool(kubeClientFactory kubeutil.ClientFactoryInterface) *LeasePool {

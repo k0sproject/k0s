@@ -23,7 +23,6 @@ import (
 // isSignalDataSameCommand determines if the `PlanCommand` and the command specified in the signal data represent
 // the same command.
 func IsSignalDataSameCommand(cmdStatus apv1beta2.PlanCommandStatus, signalData apsigv2.SignalData) bool {
-
 	// As additional commands are implemented, they will need to be reflected here.
 
 	switch {

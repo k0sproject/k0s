@@ -28,7 +28,7 @@ import (
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// NewPlan handles the provider state 'newplan'
+// NewPlan handles the provider state 'newplan'.
 func (kp *k0supdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := kp.logger.WithField("state", "newplan")
 	logger.Info("Processing")

@@ -131,7 +131,7 @@ func createKubeConfig(tokenString, role, joinURL, certPath, outDir string) error
 		return fmt.Errorf("error encoding token: %w", err)
 	}
 
-	err = file.WriteContentAtomically(filepath.Join(outDir, "token_"+tokenString), []byte(encodedToken), 0640)
+	err = file.WriteContentAtomically(filepath.Join(outDir, "token_"+tokenString), []byte(encodedToken), 0o640)
 	if err != nil {
 		return fmt.Errorf("error writing kubeconfig: %w", err)
 	}

@@ -20,38 +20,38 @@ import "encoding/json"
 
 // Calico defines the calico related config options
 type Calico struct {
-	// Enable wireguard-based encryption (default: false)
+	// Enable wireguard-based encryption (default: false).
 	EnableWireguard bool `json:"wireguard"`
 
-	// Environment variables to configure Calico node (see https://docs.projectcalico.org/reference/node/configuration)
+	// Environment variables to configure Calico node (see https://docs.projectcalico.org/reference/node/configuration).
 	EnvVars map[string]string `json:"envVars,omitempty"`
 
-	// The host path for Calicos flex-volume-driver(default: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds)
+	// The host path for Calicos flex-volume-driver(default: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds).
 	FlexVolumeDriverPath string `json:"flexVolumeDriverPath"`
 
-	// Host's IP Auto-detection method for Calico (see https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods)
+	// Host's IP Auto-detection method for Calico (see https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods).
 	IPAutodetectionMethod string `json:"ipAutodetectionMethod,omitempty"`
 
-	// Host's IPv6 Auto-detection method for Calico
+	// Host's IPv6 Auto-detection method for Calico.
 	IPv6AutodetectionMethod string `json:"ipV6AutodetectionMethod,omitempty"`
 
-	// MTU for overlay network (default: 0)
+	// MTU for overlay network (default: 0).
 	MTU int `json:"mtu" yaml:"mtu"`
 
-	// vxlan (default) or ipip
+	// vxlan (default) or ipip.
 	Mode string `json:"mode"`
 
-	// Overlay Type (Always, Never or CrossSubnet)
+	// Overlay Type (Always, Never or CrossSubnet).
 	Overlay string `json:"overlay" validate:"oneof=Always Never CrossSubnet" `
 
-	// The UDP port for VXLAN (default: 4789)
+	// The UDP port for VXLAN (default: 4789).
 	VxlanPort int `json:"vxlanPort"`
 
-	// The virtual network ID for VXLAN (default: 4096)
+	// The virtual network ID for VXLAN (default: 4096).
 	VxlanVNI int `json:"vxlanVNI"`
 }
 
-// DefaultCalico returns sane defaults for calico
+// DefaultCalico returns sane defaults for calico.
 func DefaultCalico() *Calico {
 	return &Calico{
 		Mode:                    "vxlan",
@@ -66,7 +66,7 @@ func DefaultCalico() *Calico {
 	}
 }
 
-// UnmarshalJSON sets in some sane defaults when unmarshaling the data from JSON
+// UnmarshalJSON sets in some sane defaults when unmarshaling the data from JSON.
 func (c *Calico) UnmarshalJSON(data []byte) error {
 	c.Mode = "vxlan"
 	c.VxlanPort = 4789

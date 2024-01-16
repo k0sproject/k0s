@@ -123,7 +123,7 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 	}
 
 	// Ensure that the new file is executable
-	if err := os.Chmod(updateFilenamePath, 0755); err != nil {
+	if err := os.Chmod(updateFilenamePath, 0o755); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to chmod update file '%s': %w", updateFilename, err)
 	}
 

@@ -31,7 +31,6 @@ import (
 )
 
 func NewSysinfoCmd() *cobra.Command {
-
 	var sysinfoSpec sysinfo.K0sSysinfoSpec
 
 	cmd := &cobra.Command{

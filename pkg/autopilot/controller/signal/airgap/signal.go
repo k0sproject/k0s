@@ -53,8 +53,7 @@ func SignalControllerEventFilter(hostname string, handler apsigpred.ErrorHandler
 	)
 }
 
-type signalControllerHandler struct {
-}
+type signalControllerHandler struct{}
 
 // registerSignalController registers the airgap 'signal' controller to the controller-runtime manager.
 //

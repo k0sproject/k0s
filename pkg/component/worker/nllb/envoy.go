@@ -104,7 +104,7 @@ const (
 )
 
 func (e *envoyProxy) init(ctx context.Context) error {
-	if err := dir.Init(e.dir, 0755); err != nil {
+	if err := dir.Init(e.dir, 0o755); err != nil {
 		return err
 	}
 
@@ -234,7 +234,7 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 		envoyBootstrapFile: envoyBootstrapConfig,
 		envoyCDSFile:       envoyClustersConfig,
 	} {
-		err := file.WriteAtomically(filepath.Join(params.configDir, fileName), 0444, func(file io.Writer) error {
+		err := file.WriteAtomically(filepath.Join(params.configDir, fileName), 0o444, func(file io.Writer) error {
 			bufferedWriter := bufio.NewWriter(file)
 			if err := template.Execute(bufferedWriter, data); err != nil {
 				return fmt.Errorf("failed to render template: %w", err)
@@ -314,7 +314,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 						Path: params.configDir,
 						Type: (*corev1.HostPathType)(ptr.To(string(corev1.HostPathDirectory))),
 					},
-				}},
+				},
 			},
 		},
 	}

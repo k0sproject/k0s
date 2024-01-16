@@ -77,7 +77,7 @@ func (s *Status) Init(_ context.Context) error {
 	s.httpserver = http.Server{
 		Handler: mux,
 	}
-	err = dir.Init(s.StatusInformation.K0sVars.RunDir, 0755)
+	err = dir.Init(s.StatusInformation.K0sVars.RunDir, 0o755)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", s.Socket, err)
 	}

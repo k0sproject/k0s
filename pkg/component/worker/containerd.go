@@ -62,11 +62,16 @@ imports = [
 	{{- end }}
 ]
 `
-const confPathPosix = "/etc/k0s/containerd.toml"
-const confPathWindows = "C:\\Program Files\\containerd\\config.toml"
 
-const importsPathPosix = "/etc/k0s/containerd.d/"
-const importsPathWindows = "C:\\etc\\k0s\\containerd.d\\"
+const (
+	confPathPosix   = "/etc/k0s/containerd.toml"
+	confPathWindows = "C:\\Program Files\\containerd\\config.toml"
+)
+
+const (
+	importsPathPosix   = "/etc/k0s/containerd.d/"
+	importsPathWindows = "C:\\etc\\k0s\\containerd.d\\"
+)
 
 // ContainerD implement the component interface to manage containerd as k0s component
 type ContainerD struct {
@@ -189,10 +194,10 @@ func (c *ContainerD) setupConfig() error {
 		logrus.Infof("containerd config file %s is not k0s managed, skipping config generation", c.confPath)
 		return nil
 	}
-	if err := dir.Init(filepath.Dir(c.confPath), 0755); err != nil {
+	if err := dir.Init(filepath.Dir(c.confPath), 0o755); err != nil {
 		return fmt.Errorf("can't create containerd config dir: %w", err)
 	}
-	if err := dir.Init(filepath.Dir(c.importsPath), 0755); err != nil {
+	if err := dir.Init(filepath.Dir(c.importsPath), 0o755); err != nil {
 		return fmt.Errorf("can't create containerd config imports dir: %w", err)
 	}
 	containerDConfigurer := containerd.NewConfigurer(c.Profile.PauseImage, filepath.Join(c.importsPath, "*.toml"))
@@ -214,7 +219,7 @@ func (c *ContainerD) setupConfig() error {
 	if err := tw.WriteToBuffer(output); err != nil {
 		return fmt.Errorf("can't create containerd config: %w", err)
 	}
-	return file.WriteContentAtomically(c.confPath, output.Bytes(), 0644)
+	return file.WriteContentAtomically(c.confPath, output.Bytes(), 0o644)
 }
 
 func (c *ContainerD) watchDropinConfigs(ctx context.Context) {

@@ -175,7 +175,7 @@ func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 		logrus.Warnf("failed to initialize runtime config dir: %v", err)
 	}
 
-	if err := os.WriteFile(k0sVars.RuntimeConfigPath, content, 0600); err != nil {
+	if err := os.WriteFile(k0sVars.RuntimeConfigPath, content, 0o600); err != nil {
 		return nil, fmt.Errorf("failed to write runtime config: %w", err)
 	}
 

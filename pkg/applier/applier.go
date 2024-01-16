@@ -51,7 +51,7 @@ type Applier struct {
 	restClientGetter resource.RESTClientGetter
 }
 
-// NewApplier creates new Applier
+// NewApplier creates new Applier.
 func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface) Applier {
 	name := filepath.Base(dir)
 	log := logrus.WithFields(logrus.Fields{
@@ -92,7 +92,7 @@ func (a *Applier) lazyInit() error {
 	return nil
 }
 
-// Apply resources
+// Apply resources.
 func (a *Applier) Apply(ctx context.Context) error {
 	err := a.lazyInit()
 	if err != nil {
@@ -126,7 +126,7 @@ func (a *Applier) Apply(ctx context.Context) error {
 	return err
 }
 
-// Delete deletes the entire stack by applying it with empty set of resources
+// Delete deletes the entire stack by applying it with empty set of resources.
 func (a *Applier) Delete(ctx context.Context) error {
 	err := a.lazyInit()
 	if err != nil {

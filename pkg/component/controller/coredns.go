@@ -269,8 +269,10 @@ spec:
 
 const HostsPerExtraReplica = 10.0
 
-var _ manager.Component = (*CoreDNS)(nil)
-var _ manager.Reconciler = (*CoreDNS)(nil)
+var (
+	_ manager.Component  = (*CoreDNS)(nil)
+	_ manager.Reconciler = (*CoreDNS)(nil)
+)
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
@@ -296,7 +298,7 @@ type coreDNSConfig struct {
 	DisablePodDisruptionBudget bool
 }
 
-// NewCoreDNS creates new instance of CoreDNS component
+// NewCoreDNS creates new instance of CoreDNS component.
 func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) (*CoreDNS, error) {
 	manifestDir := path.Join(k0sVars.ManifestsDir, "coredns")
 
@@ -314,12 +316,12 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 	}, nil
 }
 
-// Init does nothing
+// Init does nothing.
 func (c *CoreDNS) Init(_ context.Context) error {
 	return dir.Init(c.manifestDir, constant.ManifestsDirMode)
 }
 
-// Run runs the CoreDNS reconciler component
+// Run runs the CoreDNS reconciler component.
 func (c *CoreDNS) Start(ctx context.Context) error {
 	ctx, c.stopFunc = context.WithCancel(ctx)
 
@@ -388,7 +390,6 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		config.DisablePodDisruptionBudget = true
 
 	} else if config.Replicas == 2 || config.Replicas == 3 {
-
 		// Set maxUnavailable=1 only for deployments with two or three replicas.
 		// Use the Kubernetes defaults (maxUnavailable=25%, rounded down to get
 		// absolute values) for all other cases. For single replica deployments,
@@ -398,7 +399,6 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		// deployments with 8 or more replicas, this would artificially
 		// constrain the rolling update speed.
 		config.MaxUnavailableReplicas = ptr.To(uint(1))
-
 	}
 
 	return config, nil
@@ -414,7 +414,7 @@ func replicaCount(nodeCount int) int {
 	return 1 + extraReplicas
 }
 
-// Stop stops the CoreDNS reconciler
+// Stop stops the CoreDNS reconciler.
 func (c *CoreDNS) Stop() error {
 	if c.stopFunc != nil {
 		logrus.Debug("closing coreDNS component context")
@@ -423,7 +423,7 @@ func (c *CoreDNS) Stop() error {
 	return nil
 }
 
-// Reconcile detects changes in configuration and applies them to the component
+// Reconcile detects changes in configuration and applies them to the component.
 func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: CoreDNS")
 	cfg, err := c.getConfig(ctx, clusterConfig)

@@ -23,7 +23,7 @@ type DualStack struct {
 	IPv6ServiceCIDR string `json:"IPv6serviceCIDR,omitempty"`
 }
 
-// DefaultDualStack builds default values
+// DefaultDualStack builds default values.
 func DefaultDualStack() DualStack {
 	return DualStack{}
 }

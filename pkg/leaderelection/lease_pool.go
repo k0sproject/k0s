@@ -56,7 +56,7 @@ type LeaseConfiguration struct {
 // A LeaseOpt is a function that modifies a LeaseConfiguration
 type LeaseOpt func(config LeaseConfiguration) LeaseConfiguration
 
-// WithDuration sets the duration of the lease (for new leases)
+// WithDuration sets the duration of the lease (for new leases).
 func WithDuration(duration time.Duration) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.duration = duration
@@ -64,7 +64,7 @@ func WithDuration(duration time.Duration) LeaseOpt {
 	}
 }
 
-// WithRenewDeadline sets the renew deadline of the lease
+// WithRenewDeadline sets the renew deadline of the lease.
 func WithRenewDeadline(deadline time.Duration) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.renewDeadline = deadline
@@ -72,7 +72,7 @@ func WithRenewDeadline(deadline time.Duration) LeaseOpt {
 	}
 }
 
-// WithRetryPeriod specifies the retry period of the lease
+// WithRetryPeriod specifies the retry period of the lease.
 func WithRetryPeriod(retryPeriod time.Duration) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.retryPeriod = retryPeriod
@@ -80,7 +80,7 @@ func WithRetryPeriod(retryPeriod time.Duration) LeaseOpt {
 	}
 }
 
-// WithLogger allows the consumer to pass a different logrus entry with additional context
+// WithLogger allows the consumer to pass a different logrus entry with additional context.
 func WithLogger(logger logrus.FieldLogger) LeaseOpt {
 	if logger == nil {
 		logger = logrus.StandardLogger()
@@ -91,7 +91,7 @@ func WithLogger(logger logrus.FieldLogger) LeaseOpt {
 	}
 }
 
-// WithContext allows the consumer to pass its own context, for example a cancelable context
+// WithContext allows the consumer to pass its own context, for example a cancelable context.
 func WithContext(ctx context.Context) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.ctx = ctx
@@ -99,7 +99,7 @@ func WithContext(ctx context.Context) LeaseOpt {
 	}
 }
 
-// WithIdentity sets the identity of the lease holder
+// WithIdentity sets the identity of the lease holder.
 func WithIdentity(identity string) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.identity = identity
@@ -107,7 +107,7 @@ func WithIdentity(identity string) LeaseOpt {
 	}
 }
 
-// WithNamespace specifies which namespace the lease should be created in, defaults to kube-node-lease
+// WithNamespace specifies which namespace the lease should be created in, defaults to kube-node-lease.
 func WithNamespace(namespace string) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.namespace = namespace
@@ -115,9 +115,8 @@ func WithNamespace(namespace string) LeaseOpt {
 	}
 }
 
-// NewLeasePool creates a new LeasePool struct to interact with a lease
+// NewLeasePool creates a new LeasePool struct to interact with a lease.
 func NewLeasePool(ctx context.Context, client kubernetes.Interface, name string, opts ...LeaseOpt) (*LeasePool, error) {
-
 	leaseConfig := LeaseConfiguration{
 		log:           logrus.StandardLogger(),
 		duration:      60 * time.Second,
@@ -131,7 +130,6 @@ func NewLeasePool(ctx context.Context, client kubernetes.Interface, name string,
 	// we default to the machine ID unless the user explicitly set an identity
 	if leaseConfig.identity == "" {
 		machineID, err := machineid.Generate()
-
 		if err != nil {
 			return nil, err
 		}
@@ -166,7 +164,7 @@ func WithOutputChannels(channels *LeaseEvents) WatchOpt {
 	}
 }
 
-// Watch is the primary function of LeasePool, and starts the leader election process
+// Watch is the primary function of LeasePool, and starts the leader election process.
 func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, error) {
 	if p.events != nil {
 		return p.events, nil, nil

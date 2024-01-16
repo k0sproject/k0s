@@ -18,7 +18,7 @@ package probes
 
 import "github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 
-// RequireMachineID requires a Machine ID
+// RequireMachineID requires a Machine ID.
 func RequireMachineID(parent ParentProbe) {
 	parent.Set("machine-id", func(path ProbePath, _ Probe) Probe {
 		return ProbeFn(func(r Reporter) error {

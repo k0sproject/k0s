@@ -27,7 +27,7 @@ import (
 
 type SignalNodeCommandBuilder func() apsigv2.Command
 
-// UpdateSignalNode builds a signalling update request, and adds it to the provided node
+// UpdateSignalNode builds a signalling update request, and adds it to the provided node.
 func UpdateSignalNode(node crcli.Object, planID string, cb SignalNodeCommandBuilder) error {
 	signalData := apsigv2.SignalData{
 		PlanID:  planID,
