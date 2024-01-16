@@ -51,7 +51,6 @@ updates:
 
       # runc/containerd
       - dependency-name: github.com/containerd/containerd
-      - dependency-name: github.com/opencontainers/runc
 
   - package-ecosystem: github-actions
     directory: /
