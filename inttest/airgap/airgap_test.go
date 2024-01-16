@@ -21,12 +21,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/airgap"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+
+	"github.com/stretchr/testify/suite"
 )
 
 const k0sConfig = `
@@ -40,10 +42,11 @@ type AirgapSuite struct {
 }
 
 func (s *AirgapSuite) TestK0sGetsUp() {
+	ctx := s.Context()
 	err := (&common.Airgap{
 		SSH:  s.SSH,
 		Logf: s.T().Logf,
-	}).LockdownMachines(s.Context(),
+	}).LockdownMachines(ctx,
 		s.ControllerNode(0), s.WorkerNode(0),
 	)
 	s.Require().NoError(err)
@@ -62,47 +65,37 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 		s.Equal("bar", labels["k0sproject.io/foo"])
 	}
 
-	s.AssertSomeKubeSystemPods(kc)
+	s.Require().NoError(common.WaitForKubeRouterReady(ctx, kc), "While waiting for kube-router to become ready")
+	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc), "While waiting for CoreDNS to become ready")
+	s.Require().NoError(common.WaitForPodLogs(ctx, kc, "kube-system"), "While waiting for some pod logs")
 
-	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
-
-	// at that moment we can assume that all pods has at least started
-	events, err := kc.CoreV1().Events("kube-system").List(s.Context(), v1.ListOptions{
-		Limit: 100,
+	// At that moment we can assume that all pods have at least started
+	// We're interested only in image pull events
+	events, err := kc.CoreV1().Events("").List(ctx, metav1.ListOptions{
+		FieldSelector: fields.AndSelectors(
+			fields.OneTermEqualSelector("involvedObject.kind", "Pod"),
+			fields.OneTermEqualSelector("reason", "Pulled"),
+		).String(),
 	})
 	s.Require().NoError(err)
-	imagesUsed := 0
-	var pulledImagesMessages []string
+
 	for _, event := range events.Items {
-		if event.Source.Component == "kubelet" && event.Reason == "Pulled" {
-			// We're interested only in image pull events
-			s.T().Logf(event.Message)
-			if strings.Contains(event.Message, "already present on machine") {
-				imagesUsed++
-			}
-			if strings.Contains(event.Message, "Pulling image") {
-				pulledImagesMessages = append(pulledImagesMessages, event.Message)
-			}
+		if !strings.HasSuffix(event.Message, "already present on machine") {
+			s.Fail("Unexpected Pulled event", event.Message)
+		} else {
+			s.T().Log("Observed Pulled event:", event.Message)
 		}
 	}
-	s.T().Logf("Used %d images from airgap bundle", imagesUsed)
-	if len(pulledImagesMessages) > 0 {
-		s.T().Logf("Image pulls messages")
-		for _, message := range pulledImagesMessages {
-			s.T().Logf(message)
-		}
-		s.Fail("Require all images be installed from bundle")
-	}
+
 	// Check that all the images have io.cri-containerd.pinned=pinned label
-	ssh, err := s.SSH(s.Context(), s.WorkerNode(0))
+	ssh, err := s.SSH(ctx, s.WorkerNode(0))
 	s.Require().NoError(err)
+	defer ssh.Disconnect()
 	for _, i := range airgap.GetImageURIs(v1beta1.DefaultClusterSpec(), true) {
-		output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
+		output, err := ssh.ExecWithOutput(ctx, fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
 		s.Require().NoError(err)
 		s.Require().Contains(output, "io.cri-containerd.pinned=pinned", "expected %s image to have io.cri-containerd.pinned=pinned label", i)
 	}
-
 }
 
 func TestAirgapSuite(t *testing.T) {

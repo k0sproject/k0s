@@ -16,10 +16,18 @@ package airgap
 
 import (
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/k0sproject/k0s/pkg/airgap"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	"github.com/k0sproject/k0s/pkg/constant"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
@@ -46,6 +54,9 @@ func (s *airgapSuite) SetupTest() {
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, cClient, "plans"))
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, cClient, "controlnodes"))
 
+	wClient, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+
 	// Create a worker join token
 	workerJoinToken, err := s.GetJoinToken("worker")
 	s.Require().NoError(err)
@@ -53,21 +64,30 @@ func (s *airgapSuite) SetupTest() {
 	// Start the workers using the join token
 	s.Require().NoError(s.RunWorkersWithToken(workerJoinToken))
 
-	wClient, err := s.KubeClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-
 	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), wClient))
+
+	// Wait until all the cluster components are up.
+	s.Require().NoError(common.WaitForKubeRouterReady(ctx, wClient), "While waiting for kube-router to become ready")
+	s.Require().NoError(common.WaitForCoreDNSReady(ctx, wClient), "While waiting for CoreDNS to become ready")
+	s.Require().NoError(common.WaitForPodLogs(ctx, wClient, "kube-system"), "While waiting for some pod logs")
+
+	// Check that none of the images in the airgap bundle are pinned.
+	// This will happen as soon as k0s imports them after the Autopilot update.
+	ssh, err := s.SSH(ctx, s.WorkerNode(0))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	for _, i := range airgap.GetImageURIs(v1beta1.DefaultClusterSpec(), true) {
+		if strings.HasPrefix(i, constant.KubePauseContainerImage+":") {
+			continue // The pause image is pinned by containerd itself
+		}
+		output, err := ssh.ExecWithOutput(ctx, fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
+		if s.NoError(err, "Failed to check %s", i) {
+			s.NotContains(output, "io.cri-containerd.pinned=pinned", "%s is already pinned", i)
+		}
+	}
 }
 
 func (s *airgapSuite) TestApply() {
-	err := (&common.Airgap{
-		SSH:  s.SSH,
-		Logf: s.T().Logf,
-	}).LockdownMachines(s.Context(),
-		s.ControllerNode(0), s.WorkerNode(0),
-	)
-	s.Require().NoError(err)
-
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: Plan
@@ -110,8 +130,22 @@ spec:
                   - worker0
 `
 
+	ctx := s.Context()
+
+	// The container images have already been pulled by the cluster.
+	// Airgapping is kind of cosmetic here.
+	err := (&common.Airgap{
+		SSH:  s.SSH,
+		Logf: s.T().Logf,
+	}).LockdownMachines(ctx,
+		s.ControllerNode(0), s.WorkerNode(0),
+	)
+	s.Require().NoError(err)
+
 	manifestFile := "/tmp/happy.yaml"
 	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
+
+	updateStart := time.Now()
 
 	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
 	s.T().Logf("kubectl apply output: '%s'", out)
@@ -122,15 +156,52 @@ spec:
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	_, err = aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanCompleted)
+	_, err = aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
-
-	// We are not confirming the image importing functionality of k0s, but we can get a pretty good idea if it worked.
 
 	// Does the bundle exist on the worker, in the proper directory?
 	lsout, err := s.RunCommandWorker(0, "ls /var/lib/k0s/images/bundle.tar")
 	s.NoError(err)
 	s.NotEmpty(lsout)
+
+	// Wait until all the cluster components are up.
+	kc, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.Require().NoError(common.WaitForKubeRouterReady(ctx, kc), "While waiting for kube-router to become ready")
+	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc), "While waiting for CoreDNS to become ready")
+	s.Require().NoError(common.WaitForPodLogs(ctx, kc, "kube-system"), "While waiting for some pod logs")
+
+	// At that moment we can assume that all pods have at least started.
+	// Inspect the Pulled events if there are some unexpected image pulls.
+	events, err := kc.CoreV1().Events("").List(ctx, metav1.ListOptions{
+		FieldSelector: fields.AndSelectors(
+			fields.OneTermEqualSelector("involvedObject.kind", "Pod"),
+			fields.OneTermEqualSelector("reason", "Pulled"),
+		).String(),
+	})
+	s.Require().NoError(err)
+
+	for _, event := range events.Items {
+		if event.LastTimestamp.After(updateStart) {
+			if !strings.HasSuffix(event.Message, "already present on machine") {
+				s.Fail("Unexpected Pulled event", event.Message)
+			} else {
+				s.T().Log("Observed Pulled event:", event.Message)
+			}
+		}
+	}
+
+	// Check that all the images in the airgap bundle have been pinned by k0s.
+	// This proves that k0s has processed the image bundle.
+	ssh, err := s.SSH(ctx, s.WorkerNode(0))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	for _, i := range airgap.GetImageURIs(v1beta1.DefaultClusterSpec(), true) {
+		output, err := ssh.ExecWithOutput(ctx, fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
+		if s.NoError(err, "Failed to check %s", i) {
+			s.Contains(output, "io.cri-containerd.pinned=pinned", "%s is not pinned", i)
+		}
+	}
 }
 
 // TestAirgapSuite sets up a suite using 3 controllers for quorum, and runs various
