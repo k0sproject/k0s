@@ -125,22 +125,6 @@ func TestContainerdModuleVersions(t *testing.T) {
 	)
 }
 
-func TestRuncModuleVersions(t *testing.T) {
-	runcVersion := getVersion(t, "runc")
-
-	checkPackageModules(t,
-		func(modulePath string) bool {
-			return modulePath == "github.com/opencontainers/runc"
-		},
-		func(t *testing.T, pkgPath string, module *packages.Module) bool {
-			return !assert.Equal(t, "v"+runcVersion, module.Version,
-				"Module version for package %s doesn't match: %+#v",
-				pkgPath, module,
-			)
-		},
-	)
-}
-
 func getVersion(t *testing.T, component string) string {
 	cmd := exec.Command("./vars.sh", component+"_version")
 	cmd.Dir = filepath.Join("..", "..")
