@@ -235,23 +235,14 @@ jobs:
           chmod +x k0s
           ./k0s sysinfo
 
-      - name: Cache airgap image bundle
-        id: cache-airgap-image-bundle
+      - name: Download airgap image bundle
         if: contains(matrix.smoke-suite, 'airgap')
-        uses: actions/cache@v3
+        uses: actions/download-artifact@v4
         with:
-          key: ${{ needs.build-airgap-image-bundle.outputs.cache-key }}
-          path: airgap-image-bundle-linux-amd64.tar
+          name: airgap-image-bundle-linux-amd64
 
       - name: Run inttest
-        env:
-          NEEDS_AIRGAP_IMAGE_BUNDLE: ${{ contains(matrix.smoke-suite, 'airgap') }}
-        run: |
-          [ "$NEEDS_AIRGAP_IMAGE_BUNDLE" != true ] || [ -f airgap-image-bundle-linux-amd64.tar ] || {
-            echo Airgap image bundle file missing!
-            exit 1
-          }
-          make -C inttest ${{ matrix.smoke-suite }}
+        run: make -C inttest ${{ matrix.smoke-suite }}
 
       - name: Collect k0s logs and support bundle
         if: failure()
