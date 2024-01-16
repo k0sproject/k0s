@@ -609,11 +609,6 @@ jobs:
 
           terraform apply -auto-approve
 
-      - name: Set k0sctl version
-        run: |
-          version=$(cd hack/tool; go list -m -f '{{.Version}}' github.com/k0sproject/k0sctl)
-          echo "K0SCTL_VERSION=${version}" >> $GITHUB_ENV
-
       - name: Create k0s Cluster using k0sctl
         id: k0sctl
         run: |

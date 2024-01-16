@@ -81,9 +81,15 @@ jobs:
 
       - name: "Workflow run :: Prepare"
         working-directory: ./
+        env:
+          K0SCTL_VERSION: ${{ inputs.k0sctl-version }}
         run: |
           kubernetesVersion="$(./vars.sh kubernetes_version)"
+          k0sctlVersion="${K0SCTL_VERSION:-$(./vars.sh FROM=hack/tool k0sctl_version)}"
+
+          set -x
           echo KUBERNETES_VERSION="$kubernetesVersion" >>"$GITHUB_ENV"
+          echo K0SCTL_VERSION="$k0sctlVersion" >>"$GITHUB_ENV"
 
       - name: "Terraform :: Requisites :: Download k0s"
         if: inputs.k0s-version == ''
@@ -91,17 +97,6 @@ jobs:
         with:
           name: k0s-linux-amd64
           path: ${{ github.workspace }}/.cache
-
-      - name: Set k0sctl version
-        run: |
-          if [ -z "${{ inputs.k0sctl-version }}" ]; then
-            version=$(grep k0sproject/k0sctl hack/tool/go.mod|cut -d" " -f2)
-            echo "Detected k0sctl dependency version ${version}"
-          else
-            version="${{ inputs.k0sctl-version }}"
-            echo "Using given k0sctl version ${version}"
-          fi
-          echo "K0SCTL_VERSION=${version}" >> $GITHUB_ENV
 
       - name: "Terraform :: Requisites :: Prepare"
         env:
