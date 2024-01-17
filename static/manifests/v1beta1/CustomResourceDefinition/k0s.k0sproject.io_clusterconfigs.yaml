@@ -43,29 +43,29 @@ spec:
                 description: APISpec defines the settings for the K0s API
                 properties:
                   address:
-                    description: Local address on which to bind an API
+                    description: Local address on which to bind an API.
                     type: string
                   externalAddress:
                     description: The loadbalancer address (for k0s controllers running
-                      behind a loadbalancer)
+                      behind a loadbalancer).
                     type: string
                   extraArgs:
                     additionalProperties:
                       type: string
                     description: Map of key-values (strings) for any extra arguments
-                      to pass down to Kubernetes api-server process
+                      to pass down to Kubernetes api-server process.
                     type: object
                   k0sApiPort:
                     description: 'Custom port for k0s-api server to listen on (default:
-                      9443)'
+                      9443).'
                     type: integer
                   port:
                     description: 'Custom port for kube-api server to listen on (default:
-                      6443)'
+                      6443).'
                     type: integer
                   sans:
                     description: List of additional addresses to push to API servers
-                      serving the certificate
+                      serving the certificate.
                     items:
                       type: string
                     type: array
@@ -77,7 +77,7 @@ spec:
                     additionalProperties:
                       type: string
                     description: Map of key-values (strings) for any extra arguments
-                      you want to pass down to the Kubernetes controller manager process
+                      you want to pass down to the Kubernetes controller manager process.
                     type: object
                 type: object
               extensions:
@@ -156,15 +156,15 @@ spec:
                   properties:
                     components:
                       description: Components to use feature gate on, if empty `KubernetesComponents`
-                        is used as the list
+                        is used as the list.
                       items:
                         type: string
                       type: array
                     enabled:
-                      description: Enabled or disabled
+                      description: Enabled or disabled.
                       type: boolean
                     name:
-                      description: Name of the feature gate
+                      description: Name of the feature gate.
                       type: string
                   type: object
                 type: array
@@ -326,41 +326,41 @@ spec:
                         additionalProperties:
                           type: string
                         description: Environment variables to configure Calico node
-                          (see https://docs.projectcalico.org/reference/node/configuration)
+                          (see https://docs.projectcalico.org/reference/node/configuration).
                         type: object
                       flexVolumeDriverPath:
                         description: 'The host path for Calicos flex-volume-driver(default:
-                          /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds)'
+                          /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds).'
                         type: string
                       ipAutodetectionMethod:
                         description: Host's IP Auto-detection method for Calico (see
-                          https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods)
+                          https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods).
                         type: string
                       ipV6AutodetectionMethod:
-                        description: Host's IPv6 Auto-detection method for Calico
+                        description: Host's IPv6 Auto-detection method for Calico.
                         type: string
                       mode:
-                        description: vxlan (default) or ipip
+                        description: vxlan (default) or ipip.
                         type: string
                       mtu:
-                        description: 'MTU for overlay network (default: 0)'
+                        description: 'MTU for overlay network (default: 0).'
                         type: integer
                       overlay:
-                        description: Overlay Type (Always, Never or CrossSubnet)
+                        description: Overlay Type (Always, Never or CrossSubnet).
                         type: string
                       vxlanPort:
-                        description: 'The UDP port for VXLAN (default: 4789)'
+                        description: 'The UDP port for VXLAN (default: 4789).'
                         type: integer
                       vxlanVNI:
-                        description: 'The virtual network ID for VXLAN (default: 4096)'
+                        description: 'The virtual network ID for VXLAN (default: 4096).'
                         type: integer
                       wireguard:
                         description: 'Enable wireguard-based encryption (default:
-                          false)'
+                          false).'
                         type: boolean
                     type: object
                   clusterDomain:
-                    description: Cluster Domain
+                    description: Cluster Domain.
                     type: string
                   dualStack:
                     description: DualStack defines network configuration for ipv4\ipv6
@@ -433,20 +433,20 @@ spec:
                       options
                     properties:
                       autoMTU:
-                        description: 'Auto-detection of used MTU (default: true)'
+                        description: 'Auto-detection of used MTU (default: true).'
                         type: boolean
                       extraArgs:
                         additionalProperties:
                           type: string
                         description: |-
-                          ExtraArgs are extra arguments to pass to kube-router
-                          Can be also used to override the default k0s managed kube-router arguments
+                          ExtraArgs are extra arguments to pass to kube-router.
+                          Can be also used to override the default k0s managed kube-router arguments.
                         type: object
                       hairpin:
                         default: Enabled
                         description: |-
-                          Admits three values: "Enabled" enables it globally, "Allowed" allows but services must be annotated explicitly and "Disabled"
-                          Defaults to "Enabled"
+                          Admits three values: "Enabled" enables it globally, "Allowed" allows but services must be annotated explicitly and "Disabled".
+                          Defaults to "Enabled".
                         enum:
                         - Enabled
                         - Allowed
@@ -455,29 +455,29 @@ spec:
                       hairpinMode:
                         description: 'DEPRECATED: Use hairpin instead. Activates Hairpin
                           Mode (allow a Pod behind a Service to communicate to its
-                          own ClusterIP:Port)'
+                          own ClusterIP:Port).'
                         type: boolean
                       ipMasq:
                         description: 'IP masquerade for traffic originating from the
-                          pod network, and destined outside of it (default: false)'
+                          pod network, and destined outside of it (default: false).'
                         type: boolean
                       metricsPort:
                         description: 'Kube-router metrics server port. Set to 0 to
-                          disable metrics  (default: 8080)'
+                          disable metrics  (default: 8080).'
                         type: integer
                       mtu:
                         description: Override MTU setting (autoMTU must be set to
-                          false)
+                          false).
                         type: integer
                       peerRouterASNs:
                         description: |-
-                          Comma-separated list of global peer addresses
-                          DEPRECATED: Use extraArgs with peerRouterASNs instead
+                          Comma-separated list of global peer addresses.
+                          DEPRECATED: Use extraArgs with peerRouterASNs instead.
                         type: string
                       peerRouterIPs:
                         description: |-
-                          Comma-separated list of global peer ASNs
-                          DEPRECATED: Use extraArgs with peerRouterIPs instead
+                          Comma-separated list of global peer ASNs.
+                          DEPRECATED: Use extraArgs with peerRouterIPs instead.
                         type: string
                     type: object
                   nodeLocalLoadBalancing:
@@ -548,14 +548,14 @@ spec:
                         type: string
                     type: object
                   podCIDR:
-                    description: Pod network CIDR to use in the cluster
+                    description: Pod network CIDR to use in the cluster.
                     type: string
                   provider:
                     description: 'Network provider (valid values: calico, kuberouter,
-                      or custom)'
+                      or custom).'
                     type: string
                   serviceCIDR:
-                    description: Network CIDR to use for cluster VIP services
+                    description: Network CIDR to use for cluster VIP services.
                     type: string
                 type: object
               scheduler:
@@ -565,7 +565,7 @@ spec:
                     additionalProperties:
                       type: string
                     description: Map of key-values (strings) for any extra arguments
-                      you want to pass down to Kubernetes scheduler process
+                      you want to pass down to Kubernetes scheduler process.
                     type: object
                 type: object
               storage:
@@ -635,10 +635,10 @@ spec:
                   properties:
                     name:
                       description: String; name to use as profile selector for the
-                        worker process
+                        worker process.
                       type: string
                     values:
-                      description: Worker Mapping object
+                      description: Worker Mapping object.
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
                   type: object
