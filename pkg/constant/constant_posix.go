@@ -26,5 +26,4 @@ const (
 	KubePauseContainerImage        = "registry.k8s.io/pause"
 	KubePauseContainerImageVersion = "3.9"
 	K0sConfigPathDefault           = "/etc/k0s/k0s.yaml"
-	RuntimeConfigPathDefault       = "/run/k0s/k0s.yaml"
 )
