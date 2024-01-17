@@ -54,6 +54,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          k0sSortVersion=$(./vars.sh FROM=. k0s_sort_version)
+          mkdir -p build/cache/bin
+          curl -sSLo build/cache/bin/k0s_sort --retry 5 --retry-all-errors "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
+          chmod +x build/cache/bin/k0s_sort
+          export PATH="$(realpath build/cache/bin):$PATH"
+
           set -x
           k8sVersion="$(./vars.sh kubernetes_version)"
           majorVersion="${k8sVersion%%.*}"

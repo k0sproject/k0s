@@ -27,17 +27,16 @@ jobs:
           cache: pip
           cache-dependency-path: docs/requirements.txt
 
-      - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: Install dependencies
         run: |
           pip install --disable-pip-version-check -r docs/requirements_pip.txt
           pip --version
           pip install --disable-pip-version-check -r docs/requirements.txt
-          go install github.com/k0sproject/version/cmd/k0s_sort@v0.4.2
+
+          mkdir -p build/cache/bin
+          curl -sSLo build/cache/bin/k0s_sort --retry 5 --retry-all-errors "https://github.com/k0sproject/version/releases/download/$K0S_SORT_VERSION/k0s_sort-linux-amd64"
+          chmod +x build/cache/bin/k0s_sort
+          printf '%s\n' "$(realpath build/cache/bin)" >>"$GITHUB_PATH"
 
       - name: Generate docs
         env:

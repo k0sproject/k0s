@@ -10,11 +10,8 @@ TESTS=${1:-check-ap-ha3x3}
 VERSIONS="$2"
 ARCH=${TARGET_ARCH:-amd64}
 
-go install github.com/k0sproject/version/cmd/k0s_sort@v0.4.2
-GOBIN="$(go env GOPATH)/bin"
-
 if [[ -z "$VERSIONS" ]]; then
-  RELEASE=$(gh release list -L 100 -R k0sproject/k0s | grep "+k0s." | grep -v Draft | cut -f 1 | $GOBIN/k0s_sort | tail -1)
+  RELEASE=$(gh release list -L 100 -R k0sproject/k0s | grep "+k0s." | grep -v Draft | cut -f 1 | k0s_sort -l)
   VERSIONS=$RELEASE
 fi
 

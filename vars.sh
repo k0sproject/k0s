@@ -54,8 +54,14 @@ done
 [ -n "$var" ] || fail Makefile variable not given
 [ -n "$from" ] || from=embedded-bins
 
-if [ "$var" = k0sctl_version ]; then
-  version_from_go_mod github.com/k0sproject/k0sctl <"$from"/go.mod
+case "$var" in
+k0sctl_version) pkg=github.com/k0sproject/k0sctl ;;
+k0s_sort_version) pkg=github.com/k0sproject/version ;;
+*) pkg='' ;;
+esac
+
+if [ -n "$pkg" ]; then
+  version_from_go_mod "$pkg" <"$from"/go.mod
   exit 0
 fi
 
