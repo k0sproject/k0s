@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+#shellcheck disable=SC3043
 
 set -eu
 
@@ -10,6 +11,18 @@ print_usage() {
   echo
   echo "  $0 go_version"
   echo "  $0 FROM=docs python_version"
+}
+
+version_from_go_mod() {
+  local pkg version rest
+  while read -r pkg version rest; do
+    if [ "$pkg" = "$1" ]; then
+      printf %s "$version"
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 fail() {
@@ -40,6 +53,11 @@ done
 
 [ -n "$var" ] || fail Makefile variable not given
 [ -n "$from" ] || from=embedded-bins
+
+if [ "$var" = k0sctl_version ]; then
+  version_from_go_mod github.com/k0sproject/k0sctl <"$from"/go.mod
+  exit 0
+fi
 
 exec make --no-print-directory -r -s -f - <<EOF
 include $from/Makefile.variables
