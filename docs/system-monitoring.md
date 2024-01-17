@@ -11,6 +11,50 @@ You can read more about metrics for Kubernetes system components [here](https://
 sudo k0s install controller --enable-metrics-scraper
 ```
 
+Once enabled, a new set of objects will appear in the cluster:
+
+```shell
+❯ ~ kubectl get all -n k0s-system
+NAME                                   READY   STATUS    RESTARTS   AGE
+pod/k0s-pushgateway-6c5d8c54cf-bh8sb   1/1     Running   0          43h
+
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/k0s-pushgateway   ClusterIP   10.100.11.116   <none>        9091/TCP   43h
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/k0s-pushgateway   1/1     1            1           43h
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/k0s-pushgateway-6c5d8c54cf   1         1         1       43h
+```
+
+That's not enough to start scraping these additional metrics. For Prometheus
+Operator](https://prometheus-operator.dev/) based solutions, you can create a
+`ServiceMonitor` for it like this:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: k0s
+  namespace: k0s-system
+spec:
+  endpoints:
+  - port: http
+  selector:
+    matchLabels:
+      app: k0s-observability
+      component: pushgateway
+      k0s.k0sproject.io/stack: metrics
+```
+
+Note that it won't clear alerts like "KubeControllerManagerDown" or
+"KubeSchedulerDown" as they are based on Prometheus' internal "up" metrics. But
+you can get rid of these alerts by modifying them to detect a working component
+like this:
+
+absent(apiserver_audit_event_total{job="kube-scheduler"})
+
 ## Jobs
 
 The list of components which is scrapped by k0s:
