@@ -87,9 +87,9 @@ func (fgs FeatureGates) AsSliceOfStrings(component string) []string {
 type FeatureGate struct {
 	// Name of the feature gate.
 	Name string `json:"name,omitempty"`
-	// Enabled or disabled.
+	// A flag indicating if the feature gate is enabled.
 	Enabled bool `json:"enabled,omitempty"`
-	// Components to use feature gate on, if empty `KubernetesComponents` is used as the list.
+	// A list of Components to use the feature gate on, (default: `KubernetesComponents`).
 	Components []string `json:"components,omitempty"`
 }
 

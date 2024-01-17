@@ -32,20 +32,20 @@ var _ Validateable = (*APISpec)(nil)
 
 // APISpec defines the settings for the K0s API
 type APISpec struct {
-	// Local address on which to bind an API.
+	// The local bind address for API servers.
 	Address string `json:"address"`
 
-	// The loadbalancer address (for k0s controllers running behind a loadbalancer).
+	// The external loadbalancer address for k0s controllers.
 	ExternalAddress string `json:"externalAddress,omitempty"`
-	// Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.
+	// Key-value pairs of additional arguments for kube-API server.
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
-	// Custom port for k0s-api server to listen on (default: 9443).
+	// The listening port for k0s-API server (default: 9443).
 	K0sAPIPort int `json:"k0sApiPort,omitempty"`
 
-	// Custom port for kube-api server to listen on (default: 6443).
+	// The listening port for kube-API server (default: 6443).
 	Port int `json:"port"`
 
-	// List of additional addresses to push to API servers serving the certificate.
+	// A list of additional SANs for the API server's TLS certificate.
 	SANs []string `json:"sans"`
 }
 

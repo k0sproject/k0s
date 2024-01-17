@@ -38,11 +38,11 @@ type Calico struct {
 	// MTU for overlay network (default: 0).
 	MTU int `json:"mtu" yaml:"mtu"`
 
-	// vxlan (default) or ipip.
+	// Calico networking mode, one of vxlan or ipip (default: vxlan).
 	Mode string `json:"mode"`
 
 	// Overlay Type (Always, Never or CrossSubnet).
-	Overlay string `json:"overlay" validate:"oneof=Always Never CrossSubnet" `
+	Overlay string `json:"overlay" validate:"oneof=Always Never CrossSubnet"`
 
 	// The UDP port for VXLAN (default: 4789).
 	VxlanPort int `json:"vxlanPort"`

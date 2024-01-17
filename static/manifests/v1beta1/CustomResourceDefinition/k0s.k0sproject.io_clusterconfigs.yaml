@@ -43,29 +43,28 @@ spec:
                 description: APISpec defines the settings for the K0s API
                 properties:
                   address:
-                    description: Local address on which to bind an API.
+                    description: The local bind address for API servers.
                     type: string
                   externalAddress:
-                    description: The loadbalancer address (for k0s controllers running
-                      behind a loadbalancer).
+                    description: The external loadbalancer address for k0s controllers.
                     type: string
                   extraArgs:
                     additionalProperties:
                       type: string
-                    description: Map of key-values (strings) for any extra arguments
-                      to pass down to Kubernetes api-server process.
+                    description: Key-value pairs of additional arguments for kube-API
+                      server.
                     type: object
                   k0sApiPort:
-                    description: 'Custom port for k0s-api server to listen on (default:
+                    description: 'The listening port for k0s-API server (default:
                       9443).'
                     type: integer
                   port:
-                    description: 'Custom port for kube-api server to listen on (default:
+                    description: 'The listening port for kube-API server (default:
                       6443).'
                     type: integer
                   sans:
-                    description: List of additional addresses to push to API servers
-                      serving the certificate.
+                    description: A list of additional SANs for the API server's TLS
+                      certificate.
                     items:
                       type: string
                     type: array
@@ -155,13 +154,13 @@ spec:
                   description: FeatureGate specifies single feature gate
                   properties:
                     components:
-                      description: Components to use feature gate on, if empty `KubernetesComponents`
-                        is used as the list.
+                      description: 'A list of Components to use the feature gate on,
+                        (default: `KubernetesComponents`).'
                       items:
                         type: string
                       type: array
                     enabled:
-                      description: Enabled or disabled.
+                      description: A flag indicating if the feature gate is enabled.
                       type: boolean
                     name:
                       description: Name of the feature gate.
@@ -340,7 +339,8 @@ spec:
                         description: Host's IPv6 Auto-detection method for Calico.
                         type: string
                       mode:
-                        description: vxlan (default) or ipip.
+                        description: 'Calico networking mode, one of vxlan or ipip
+                          (default: vxlan).'
                         type: string
                       mtu:
                         description: 'MTU for overlay network (default: 0).'
