@@ -96,7 +96,6 @@ const (
 
 	/* Controller component names */
 
-	APIConfigComponentName             = "api-config" // Deprecated: just don't use dynamic config
 	APIEndpointReconcilerComponentName = "endpoint-reconciler"
 	ControlAPIComponentName            = "control-api"
 	CoreDNSComponentname               = "coredns"
