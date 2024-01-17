@@ -66,10 +66,9 @@ func NewAPICmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "api",
 		Short: "Run the controller API",
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			logrus.SetOutput(cmd.OutOrStdout())
 			k0slog.SetInfoLevel()
-			return config.CallParentPersistentPreRun(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)

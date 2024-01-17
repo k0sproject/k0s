@@ -125,10 +125,6 @@ func hookKubectlPluginHandler(kubectlCmd *cobra.Command) {
 		logs.InitLogs()
 		cobra.OnFinalize(logs.FlushLogs)
 
-		if err := config.CallParentPersistentPreRun(kubectlCmd, args); err != nil {
-			return err
-		}
-
 		if err := fallbackToK0sKubeconfig(cmd); err != nil {
 			return err
 		}
