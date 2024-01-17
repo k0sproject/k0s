@@ -1971,6 +1971,42 @@ You can read more about metrics for Kubernetes system components <a href="https:
 <p><strong>Note:</strong> the mechanism is an opt-in feature, you can enable it on installation:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--enable-metrics-scraper
 </code></pre></div>
+<p>Once enabled, a new set of objects will appear in the cluster:</p>
+<div class="highlight"><pre><span></span><code>❯<span class="w"> </span>~<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>all<span class="w"> </span>-n<span class="w"> </span>k0s-system
+NAME<span class="w">                                   </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
+pod/k0s-pushgateway-6c5d8c54cf-bh8sb<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>43h
+
+NAME<span class="w">                      </span>TYPE<span class="w">        </span>CLUSTER-IP<span class="w">      </span>EXTERNAL-IP<span class="w">   </span>PORT<span class="o">(</span>S<span class="o">)</span><span class="w">    </span>AGE
+service/k0s-pushgateway<span class="w">   </span>ClusterIP<span class="w">   </span><span class="m">10</span>.100.11.116<span class="w">   </span>&lt;none&gt;<span class="w">        </span><span class="m">9091</span>/TCP<span class="w">   </span>43h
+
+NAME<span class="w">                              </span>READY<span class="w">   </span>UP-TO-DATE<span class="w">   </span>AVAILABLE<span class="w">   </span>AGE
+deployment.apps/k0s-pushgateway<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span><span class="m">1</span><span class="w">            </span><span class="m">1</span><span class="w">           </span>43h
+
+NAME<span class="w">                                         </span>DESIRED<span class="w">   </span>CURRENT<span class="w">   </span>READY<span class="w">   </span>AGE
+replicaset.apps/k0s-pushgateway-6c5d8c54cf<span class="w">   </span><span class="m">1</span><span class="w">         </span><span class="m">1</span><span class="w">         </span><span class="m">1</span><span class="w">       </span>43h
+</code></pre></div>
+<p>That's not enough to start scraping these additional metrics. For Prometheus
+Operator](https://prometheus-operator.dev/) based solutions, you can create a
+<code>ServiceMonitor</code> for it like this:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monitoring.coreos.com/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ServiceMonitor</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-system</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">endpoints</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http</span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-observability</span>
+<span class="w">      </span><span class="nt">component</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pushgateway</span>
+<span class="w">      </span><span class="nt">k0s.k0sproject.io/stack</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metrics</span>
+</code></pre></div>
+<p>Note that it won't clear alerts like "KubeControllerManagerDown" or
+"KubeSchedulerDown" as they are based on Prometheus' internal "up" metrics. But
+you can get rid of these alerts by modifying them to detect a working component
+like this:</p>
+<p>absent(apiserver_audit_event_total{job="kube-scheduler"})</p>
 <h2 id="jobs">Jobs<a class="headerlink" href="#jobs" title="Permanent link">#</a></h2>
 <p>The list of components which is scrapped by k0s:</p>
 <ul>
