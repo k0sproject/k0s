@@ -195,7 +195,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 			_, err = clients.AppsV1().DaemonSets("kube-system").Create(ctx, &dummyDaemons, metav1.CreateOptions{})
 			s.Require().NoError(err)
 
-			s.NoError(common.WaitForDaemonSet(s.Context(), clients, name))
+			s.NoError(common.WaitForDaemonSet(s.Context(), clients, name, "kube-system"))
 			s.T().Logf("Dummy DaemonSet %s is ready", name)
 		})
 
@@ -303,7 +303,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	for _, daemonSet := range []string{"kube-proxy", "konnectivity-agent"} {
 		daemonSet := daemonSet
 		eg.Go(func() error {
-			if err := common.WaitForDaemonSet(ctx, clients, daemonSet); err != nil {
+			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, "kube-system"); err != nil {
 				return fmt.Errorf("%s is not ready: %w", daemonSet, err)
 			}
 			s.T().Log(daemonSet, "is ready")

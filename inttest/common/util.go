@@ -60,7 +60,7 @@ func Poll(ctx context.Context, condition wait.ConditionWithContextFunc) error {
 // WaitForKubeRouterReady waits to see all kube-router pods healthy as long as
 // the context isn't canceled.
 func WaitForKubeRouterReady(ctx context.Context, kc *kubernetes.Clientset) error {
-	return WaitForDaemonSet(ctx, kc, "kube-router")
+	return WaitForDaemonSet(ctx, kc, "kube-router", "kube-system")
 }
 
 // WaitForCoreDNSReady waits to see all coredns pods healthy as long as the context isn't canceled.
@@ -146,10 +146,10 @@ func WaitForNodeReadyStatus(ctx context.Context, clients kubernetes.Interface, n
 		})
 }
 
-// WaitForDaemonset waits for the DaemonlSet with the given name to have
+// WaitForDaemonSet waits for the DaemonlSet with the given name to have
 // as many ready replicas as defined in the spec.
-func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string) error {
-	return watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
+func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string, namespace string) error {
+	return watch.DaemonSets(kc.AppsV1().DaemonSets(namespace)).
 		WithObjectName(name).
 		WithErrorCallback(RetryWatchErrors(logfFrom(ctx))).
 		Until(ctx, func(ds *appsv1.DaemonSet) (bool, error) {
