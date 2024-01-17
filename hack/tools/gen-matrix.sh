@@ -5,7 +5,7 @@
 #  ./gen-matrix.sh 1.24.2 1.24.3
 # Output: ["v1.24.2+k0s.0", "v1.24.3+k0s.0"]
 
-set -e -o pipefail
+set -euo pipefail
 
 list_k0s_releases() {
   # shellcheck disable=SC2016
@@ -13,12 +13,8 @@ list_k0s_releases() {
   VERSION_PREFIX="v$1" gh api -X GET /repos/k0sproject/k0s/releases -F per_page=100 --paginate --jq "$query"
 }
 
-k0s_sort() {
-  go run github.com/k0sproject/version/cmd/k0s_sort@v0.4.2
-}
-
 latest_release() {
-  list_k0s_releases "$1" | k0s_sort | tail -1
+  list_k0s_releases "$1" | k0s_sort -l
 }
 
 json_print_latest_releases() {
