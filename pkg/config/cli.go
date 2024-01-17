@@ -27,7 +27,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/exp/slices"
@@ -95,18 +94,6 @@ func (o *ControllerOptions) Normalize() error {
 	// Normalize component names
 	var disabledComponents []string
 	for _, disabledComponent := range o.DisableComponents {
-		switch disabledComponent {
-		case constant.APIConfigComponentName:
-			logrus.Warnf("Usage of deprecated component name %q, please switch to %q",
-				constant.APIConfigComponentName, "--enable-dynamic-config=false",
-			)
-			if o.EnableDynamicConfig {
-				logrus.Warnf("Cannot disable component %q, because %q is selected",
-					constant.APIConfigComponentName, "--enable-dynamic-config",
-				)
-			}
-		}
-
 		if !slices.Contains(availableComponents, disabledComponent) {
 			return fmt.Errorf("unknown component %s", disabledComponent)
 		}
