@@ -67,7 +67,7 @@ io.containerd.snapshotter.v1    zfs                      linux/amd64    ok
 ...
 ```
 
-- create a containerd config according to the [documentation](/runtime): `$ containerd config default > /etc/k0s/containerd.toml`
+- create a containerd config according to the [documentation](runtime.md): `$ containerd config default > /etc/k0s/containerd.toml`
 - modify the line in `/etc/k0s/containerd.toml`:
 
 ```toml
