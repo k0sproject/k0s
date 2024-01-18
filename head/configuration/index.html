@@ -2416,6 +2416,42 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <td><code>kine.dataSource</code></td>
 <td><a href="https://github.com/k3s-io/kine">kine</a> datasource URL.</td>
 </tr>
+<tr>
+<td><code>etcd.externalCluster</code></td>
+<td>Configuration when etcd is externally managed, i.e. running on dedicated nodes. See <a href="#specstorageetcdexternalcluster"><code>spec.storage.etcd.externalCluster</code></a></td>
+</tr>
+</tbody>
+</table>
+<h4 id="specstorageetcdexternalcluster"><code>spec.storage.etcd.externalCluster</code><a class="headerlink" href="#specstorageetcdexternalcluster" title="Permanent link">#</a></h4>
+<p>k0s can also work with externally managed Etcd cluster. If this is configured, k0s will NOT set up etcd, it has to be managed manually.</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>endpoints</code></td>
+<td>Array of Etcd endpoints to use.</td>
+</tr>
+<tr>
+<td><code>etcdPrefix</code></td>
+<td>Prefix to use for this cluster. The same external Etcd cluster can be used for several k0s clusters, each prefixed with unique prefix to store data with.</td>
+</tr>
+<tr>
+<td><code>caFile</code></td>
+<td>CaFile is the host path to a file with Etcd cluster CA certificate.</td>
+</tr>
+<tr>
+<td><code>clientCertFile</code></td>
+<td>ClientCertFile is the host path to a file with TLS certificate for etcd client.</td>
+</tr>
+<tr>
+<td><code>clientKeyFile</code></td>
+<td>ClientKeyFile is the host path to a file with TLS key for etcd client.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="specnetwork"><code>spec.network</code><a class="headerlink" href="#specnetwork" title="Permanent link">#</a></h3>
