@@ -21,7 +21,7 @@ require (
 	github.com/containerd/cgroups/v3 v3.0.3
 	github.com/containerd/containerd v1.7.12
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/evanphx/json-patch v5.6.0+incompatible
+	github.com/evanphx/json-patch v5.7.0+incompatible
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-logr/logr v1.4.1
 	github.com/go-openapi/jsonpointer v0.20.2
@@ -63,7 +63,7 @@ require (
 	golang.org/x/sys v0.16.0
 	golang.org/x/tools v0.17.0
 	google.golang.org/grpc v1.60.1
-	helm.sh/helm/v3 v3.13.3
+	helm.sh/helm/v3 v3.14.0
 )
 
 // Kubernetes
