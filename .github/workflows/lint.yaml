@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 0
 
       - name: Go caches
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: ${{ runner.os }}-lint-go-caches-${{ hashFiles('go.sum') }}
           path: |

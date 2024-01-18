@@ -40,7 +40,7 @@ jobs:
           echo executable-suffix="$executableSuffix" >>"$GITHUB_OUTPUT"
 
       - name: "Cache :: embedded binaries"
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}
           path: |
@@ -51,7 +51,7 @@ jobs:
             pkg/assets/zz_generated_offsets_${{ inputs.target-os }}.go
 
       - name: "Cache :: GOCACHE"
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
@@ -60,7 +60,7 @@ jobs:
             build/cache/go/build
 
       - name: "Cache :: GOMODCACHE"
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gomodcache-${{ hashFiles('go.sum') }}
           path: |

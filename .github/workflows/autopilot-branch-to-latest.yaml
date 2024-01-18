@@ -60,7 +60,7 @@ jobs:
         docker save tool:latest | gzip > tool-latest.tar.gz
 
     - name: Cache Tool Image
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         key: tool-${{ github.sha }}-${{ github.run_id }}
         path: tool-latest.tar.gz
@@ -83,7 +83,7 @@ jobs:
         terraform_version: ${{ env.TERRAFORM_VERSION }}
 
     - name: Cache Tool Image (restore)
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         key: tool-${{ github.sha }}-${{ github.run_id }}
         path: tool-latest.tar.gz
@@ -116,7 +116,7 @@ jobs:
         echo "vpcid=$(terraform output -raw vpc_id)" >> $GITHUB_OUTPUT
 
     - name: Cache Infrastructure Terraform
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         key: terraform-${{ github.sha }}-${{ github.run_id }}
         path: ${{ env.TOOL_DATADIR }}/terraform.tfstate
@@ -202,7 +202,7 @@ jobs:
         terraform_version: ${{ env.TERRAFORM_VERSION }}
 
     - name: Cache Tool Image (restore)
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         key: tool-${{ github.sha }}-${{ github.run_id }}
         path: tool-latest.tar.gz
@@ -245,7 +245,7 @@ jobs:
         persist-credentials: false
 
     - name: Cache Tool Image (restore)
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         key: tool-${{ github.sha }}-${{ github.run_id }}
         path: tool-latest.tar.gz
@@ -256,7 +256,7 @@ jobs:
         rm tool-latest.tar.gz
 
     - name: Cache Infrastructure Terraform (restore)
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         key: terraform-${{ github.sha }}-${{ github.run_id }}
         path: ${{ env.TOOL_DATADIR }}/terraform.tfstate
