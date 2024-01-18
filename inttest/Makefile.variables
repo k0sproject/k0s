@@ -32,6 +32,7 @@ smoketests := \
 	check-disabledcomponents \
 	check-dualstack \
 	check-dualstack-dynamicconfig \
+	check-dualstack-kuberouter \
 	check-embedded-binaries \
 	check-externaletcd \
 	check-extraargs \

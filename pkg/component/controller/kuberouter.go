@@ -117,7 +117,9 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"run-firewall":         "true",
 		"run-service-proxy":    "false",
 		"bgp-graceful-restart": "true",
+		"enable-ipv4":          "true",
 		// Args from config values
+		"enable-ipv6":  fmt.Sprintf("%t", clusterConfig.Spec.Network.DualStack.Enabled),
 		"auto-mtu":     fmt.Sprintf("%t", clusterConfig.Spec.Network.KubeRouter.AutoMTU),
 		"metrics-port": fmt.Sprintf("%d", clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode": fmt.Sprintf("%t", globalHairpin),
