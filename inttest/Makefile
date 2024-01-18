@@ -24,7 +24,7 @@ bootloose_alpine_build_cmdline := \
 	--build-arg ALPINE_VERSION=$(alpine_patch_version) \
 	--build-arg ETCD_VERSION=$(etcd_version) \
 	--build-arg HELM_VERSION=$(helm_version) \
-	--build-arg KUBE_VERSION=$(kubernetes_version) \
+	--build-arg KUBERNETES_VERSION=$(kubernetes_version) \
 	-t bootloose-alpine \
 	-f bootloose-alpine/Dockerfile \
 	bootloose-alpine

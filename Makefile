@@ -285,6 +285,7 @@ docs-serve-dev: DOCS_DEV_PORT ?= 8000
 docs-serve-dev:
 	$(MAKE) -C docs .docker-image.serve-dev.stamp
 	docker run --rm \
+	  -e KUBERNETES_VERSION='$(kubernetes_version)' \
 	  -v "$(CURDIR):/k0s:ro" \
 	  -p '$(DOCS_DEV_PORT):8000' \
 	  k0sdocs.docker-image.serve-dev

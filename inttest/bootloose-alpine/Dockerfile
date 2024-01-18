@@ -6,7 +6,7 @@ FROM docker.io/library/alpine:$ALPINE_VERSION
 ARG TARGETARCH
 ARG CRI_DOCKERD_VERSION=0.3.8
 ARG ETCD_VERSION
-ARG KUBE_VERSION
+ARG KUBERNETES_VERSION
 ARG TROUBLESHOOT_VERSION=v0.78.1
 ARG HELM_VERSION
 
@@ -38,7 +38,7 @@ RUN sed -i -e 's/^\(tty[0-9]\)/# \1/' /etc/inittab
 RUN sed -i -e 's/^root:!:/root::/' /etc/shadow
 
 # Put kubectl into place to ease up debugging
-RUN curl -Lo /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v$KUBE_VERSION/bin/linux/$TARGETARCH/kubectl \
+RUN curl -Lo /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v$KUBERNETES_VERSION/bin/linux/$TARGETARCH/kubectl \
   && chmod +x /usr/local/bin/kubectl
 ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
 
