@@ -522,7 +522,7 @@ they need to fulfill their need for the control plane. Disabling the system
 components happens through a command line flag for the controller process:
 
 ```text
---disable-components strings                     disable components (valid items: autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,worker-config)
+--disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,worker-config)
 ```
 
 **Note:** As of k0s 1.26, the kubelet-config component has been replaced by the

@@ -263,11 +263,13 @@ func (c *command) start(ctx context.Context) error {
 	}
 	nodeComponents.Add(ctx, leaderElector)
 
-	nodeComponents.Add(ctx, &applier.Manager{
-		K0sVars:           c.K0sVars,
-		KubeClientFactory: adminClientFactory,
-		LeaderElector:     leaderElector,
-	})
+	if !slices.Contains(c.DisableComponents, constant.ApplierManagerComponentName) {
+		nodeComponents.Add(ctx, &applier.Manager{
+			K0sVars:           c.K0sVars,
+			KubeClientFactory: adminClientFactory,
+			LeaderElector:     leaderElector,
+		})
+	}
 
 	if !c.SingleNode && !slices.Contains(c.DisableComponents, constant.ControlAPIComponentName) {
 		nodeComponents.Add(ctx, &controller.K0SControlAPI{

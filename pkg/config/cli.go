@@ -168,6 +168,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 }
 
 var availableComponents = []string{
+	constant.ApplierManagerComponentName,
 	constant.AutopilotComponentName,
 	constant.ControlAPIComponentName,
 	constant.CoreDNSComponentname,
