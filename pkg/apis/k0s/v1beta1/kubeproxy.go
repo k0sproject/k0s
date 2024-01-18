@@ -41,7 +41,7 @@ type KubeProxy struct {
 }
 
 // KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
-// @see https://github.com/kubernetes/kube-proxy/blob/v0.28.5/config/v1alpha1/types.go#L27-L42
+// @see https://github.com/kubernetes/kube-proxy/blob/v0.28.6/config/v1alpha1/types.go#L27-L42
 type KubeProxyIPTablesConfiguration struct {
 	MasqueradeBit      *int32          `json:"masqueradeBit,omitempty"`
 	MasqueradeAll      bool            `json:"masqueradeAll,omitempty"`
@@ -51,7 +51,7 @@ type KubeProxyIPTablesConfiguration struct {
 }
 
 // KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
-// @see https://github.com/kubernetes/kube-proxy/blob/v0.28.5/config/v1alpha1/types.go#L46-L70
+// @see https://github.com/kubernetes/kube-proxy/blob/v0.28.6/config/v1alpha1/types.go#L46-L70
 type KubeProxyIPVSConfiguration struct {
 	SyncPeriod    metav1.Duration `json:"syncPeriod,omitempty"`
 	MinSyncPeriod metav1.Duration `json:"minSyncPeriod,omitempty"`
