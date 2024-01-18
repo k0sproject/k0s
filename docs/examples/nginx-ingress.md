@@ -268,4 +268,4 @@ For more information about NGINX Ingress Controller installation, take a look at
 
 ## Alternative examples for Ingress Controllers on k0s
 
-[Traefik Ingress](../traefik-ingress)
+[Traefik Ingress](traefik-ingress.md)

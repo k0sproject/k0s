@@ -13,7 +13,7 @@ with the cluster using management tools such as [Lens](https://k8slens.dev/) or
 `kubectl`), but rather makes the cluster itself internally resilient to
 controller node outages.
 
-[externally managed load balancer]: ../high-availability/#load-balancer
+[externally managed load balancer]: high-availability.md#load-balancer
 
 ## Technical functionality
 
@@ -37,7 +37,7 @@ following:
 * The cluster doesn't use an externally managed load balancer, i.e. the cluster
   configuration doesn't specify a non-empty
   [`spec.api.externalAddress`][specapi].
-* K0s isn't running as a [single node](../k0s-single-node/), i.e. it isn't
+* K0s isn't running as a [single node](k0s-single-node.md), i.e. it isn't
   started using the `--single` flag.
 * The cluster should have multiple controller nodes. Node-local load balancing
   also works with a single controller node, but is only useful in conjunction
@@ -53,7 +53,7 @@ spec:
       type: EnvoyProxy
 ```
 
-Or alternatively, if using [`k0sctl`](../k0sctl-install/), add the following to
+Or alternatively, if using [`k0sctl`](k0sctl-install.md), add the following to
 the k0sctl configuration (`k0sctl.yaml`):
 
 ```yaml
@@ -71,7 +71,7 @@ All newly added worker nodes will then use node-local load balancing. The k0s
 worker process on worker nodes that are already running must be restarted for
 the new configuration to take effect.
 
-[specapi]: ../configuration/#specapi
+[specapi]: configuration.md#specapi
 
 ## Full example using `k0sctl`
 
