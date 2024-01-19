@@ -1,8 +1,5 @@
 # Node-local load balancing
 
-**Note:** This feature is experimental! Expect instabilities and/or breaking
-changes.
-
 For clusters that don't have an [externally managed load balancer] for the k0s
 control plane, there is another option to get a highly available control plane,
 at least from within the cluster. K0s calls this "node-local load balancing". In
