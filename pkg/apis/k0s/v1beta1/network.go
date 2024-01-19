@@ -36,9 +36,9 @@ type Network struct {
 	KubeProxy  *KubeProxy  `json:"kubeProxy"`
 	KubeRouter *KubeRouter `json:"kuberouter"`
 
-	// nodeLocalLoadBalancing defines the configuration options related to k0s's
+	// NodeLocalLoadBalancing defines the configuration options related to k0s's
 	// node-local load balancing feature.
-	// NOTE: This feature is experimental, and currently unsupported on ARMv7!
+	// NOTE: This feature is currently unsupported on ARMv7!
 	// +optional
 	NodeLocalLoadBalancing *NodeLocalLoadBalancing `json:"nodeLocalLoadBalancing,omitempty"`
 

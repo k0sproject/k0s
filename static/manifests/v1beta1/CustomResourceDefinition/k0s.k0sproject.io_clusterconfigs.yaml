@@ -482,9 +482,9 @@ spec:
                     type: object
                   nodeLocalLoadBalancing:
                     description: |-
-                      nodeLocalLoadBalancing defines the configuration options related to k0s's
+                      NodeLocalLoadBalancing defines the configuration options related to k0s's
                       node-local load balancing feature.
-                      NOTE: This feature is experimental, and currently unsupported on ARMv7!
+                      NOTE: This feature is currently unsupported on ARMv7!
                     properties:
                       enabled:
                         description: |-

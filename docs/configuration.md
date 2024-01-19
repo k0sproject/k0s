@@ -278,9 +278,6 @@ ipvs:
 
 Configuration options related to k0s's [node-local load balancing] feature.
 
-**Note:** This feature is experimental! Expect instabilities and/or breaking
-changes.
-
 | Element          | Description                                                                                                                   |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `enabled`        | Indicates if node-local load balancing should be used to access Kubernetes API servers from worker nodes. Default: `false`.   |

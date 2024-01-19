@@ -29,7 +29,7 @@ import (
 
 // NodeLocalLoadBalancing defines the configuration options related to k0s's
 // node-local load balancing feature.
-// NOTE: This feature is experimental, and currently unsupported on ARMv7!
+// NOTE: This feature is currently unsupported on ARMv7!
 type NodeLocalLoadBalancing struct {
 	// enabled indicates if node-local load balancing should be used to access
 	// Kubernetes API servers from worker nodes.
