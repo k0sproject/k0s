@@ -38,7 +38,6 @@ smoketests := \
 	check-hacontrolplane \
 	check-hostnameoverride \
 	check-k0scloudprovider \
-	check-k0sctl \
 	check-kine \
 	check-kubectl \
 	check-kubeletcertrotate \

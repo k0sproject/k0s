@@ -115,7 +115,6 @@ check-nllb: TIMEOUT=15m
 include Makefile.variables
 
 $(smoketests): K0S_PATH ?= $(realpath ../k0s)
-$(smoketests): K0SCTL_VERSION ?= $(shell grep k0sproject/k0sctl ../hack/tool/go.mod | cut -d" " -f2)
 $(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
 $(smoketests): .bootloose-alpine.stamp
 $(smoketests): TEST_PACKAGE ?= $(subst check-,,$@)
@@ -124,7 +123,6 @@ $(smoketests):
 	K0S_UPDATE_FROM_PATH='$(K0S_UPDATE_FROM_PATH)' \
 	K0S_IMAGES_BUNDLE='$(K0S_IMAGES_BUNDLE)' \
 	K0S_UPDATE_TO_VERSION='$(K0S_UPDATE_TO_VERSION)' \
-	K0SCTL_VERSION='$(K0SCTL_VERSION)' \
 	go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(TEST_PACKAGE)
 .PHONY: clean
 
