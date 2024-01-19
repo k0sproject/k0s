@@ -47,7 +47,7 @@ jobs:
 
       - name: "Cache :: Airgap image bundle"
         id: cache-airgap-image-bundle
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: ${{ steps.cache-airgap-image-bundle-calc-key.outputs.cache-key }}
           path: airgap-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
