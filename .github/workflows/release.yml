@@ -26,7 +26,7 @@ jobs:
           echo TAG_NAME="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
-        uses: shogo82148/actions-create-release@v1.5.2
+        uses: shogo82148/actions-create-release@v1.6.0
         with:
           release_name: ${{ steps.branch_name.outputs.TAG_NAME }}
           draft: true # So we can manually edit before publishing
