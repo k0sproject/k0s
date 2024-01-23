@@ -70,7 +70,7 @@ func (s *networkSuite) TestK0sGetsUp() {
 		daemonSetName = "kube-router"
 	}
 	s.T().Log("waiting to see CNI pods ready")
-	s.NoError(common.WaitForDaemonSet(s.Context(), kc, daemonSetName), fmt.Sprintf("%s did not start", daemonSetName))
+	s.NoError(common.WaitForDaemonSet(s.Context(), kc, daemonSetName, "kube-system"), fmt.Sprintf("%s did not start", daemonSetName))
 
 	restConfig, err := s.GetKubeConfig("controller0")
 	s.Require().NoError(err)

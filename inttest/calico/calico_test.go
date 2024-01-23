@@ -67,7 +67,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see calico pods ready")
-	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node"), "calico did not start")
+	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node", "kube-system"), "calico did not start")
 	s.NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
 
 	createdTargetPod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{

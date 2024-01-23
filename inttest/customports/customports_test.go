@@ -131,7 +131,7 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.T().Log("waiting to see CNI pods ready")
 	s.Require().NoError(common.WaitForKubeRouterReady(s.Context(), kc), "calico did not start")
 	s.T().Log("waiting to see konnectivity-agent pods ready")
-	s.Require().NoError(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent"), "konnectivity-agent did not start")
+	s.Require().NoError(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent", "kube-system"), "konnectivity-agent did not start")
 
 	s.T().Log("waiting to get logs from pods")
 	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))

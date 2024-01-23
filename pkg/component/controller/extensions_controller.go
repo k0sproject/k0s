@@ -86,15 +86,9 @@ func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0
 	ec.L.Info("Extensions reconciliation started")
 	defer ec.L.Info("Extensions reconciliation finished")
 
-	helmSettings := clusterConfig.Spec.Extensions.Helm
-	var err error
-	switch clusterConfig.Spec.Extensions.Storage.Type {
-	case k0sAPI.OpenEBSLocal:
-		helmSettings, err = addOpenEBSHelmExtension(helmSettings, clusterConfig.Spec.Extensions.Storage)
-		if err != nil {
-			ec.L.WithError(err).Error("Can't add openebs helm extension")
-		}
-	default:
+	helmSettings, err := ec.configureStorage(clusterConfig)
+	if err != nil {
+		return fmt.Errorf("cannot configure storage: %w", err)
 	}
 
 	if err := ec.reconcileHelmExtensions(helmSettings); err != nil {
@@ -102,6 +96,24 @@ func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0
 	}
 
 	return nil
+}
+
+func (ec *ExtensionsController) configureStorage(clusterConfig *k0sAPI.ClusterConfig) (*k0sAPI.HelmExtensions, error) {
+	helmSettings := clusterConfig.Spec.Extensions.Helm
+	if clusterConfig.Spec.Extensions.Storage.Type != k0sAPI.OpenEBSLocal {
+		return helmSettings, nil
+	}
+
+	for _, chart := range helmSettings.Charts {
+		if chart.ChartName == "openebs-internal/openebs" {
+			return nil, fmt.Errorf("openebs-internal/openebs is defined in spec.extensions.helm.charts and spec.extensions.storage.type is set to openebs_local_storage. https://docs.k0sproject.io/stable/examples/openebs")
+		}
+	}
+	helmSettings, err := addOpenEBSHelmExtension(helmSettings, clusterConfig.Spec.Extensions.Storage)
+	if err != nil {
+		return nil, fmt.Errorf("can't add openebs helm extension")
+	}
+	return helmSettings, nil
 }
 
 func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions, storageExtension *k0sAPI.StorageExtension) (*k0sAPI.HelmExtensions, error) {

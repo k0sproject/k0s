@@ -486,7 +486,7 @@ In the runtime the image names are calculated as `my.own.repo/calico/kube-contro
 `spec.extensions.storage` controls bundled storage provider.
 The default value `external` makes no storage deployed.
 
-To enable [embedded host-local storage provider](storage.md#bundled-openebs-storage) use the following configuration:
+To enable [embedded host-local storage provider](examples/openebs.md) use the following configuration:
 
 ```yaml
 spec:
@@ -522,7 +522,7 @@ they need to fulfill their need for the control plane. Disabling the system
 components happens through a command line flag for the controller process:
 
 ```text
---disable-components strings                     disable components (valid items: autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,worker-config)
+--disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,worker-config)
 ```
 
 **Note:** As of k0s 1.26, the kubelet-config component has been replaced by the

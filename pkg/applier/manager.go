@@ -61,7 +61,7 @@ func (m *Manager) Init(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
 	}
-	m.log = logrus.WithField("component", "applier-manager")
+	m.log = logrus.WithField("component", constant.ApplierManagerComponentName)
 	m.stacks = make(map[string]stack)
 	m.bundlePath = m.K0sVars.ManifestsDir
 
@@ -97,7 +97,7 @@ func (m *Manager) Stop() error {
 }
 
 func (m *Manager) runWatchers(ctx context.Context) error {
-	log := logrus.WithField("component", "applier-manager")
+	log := logrus.WithField("component", constant.ApplierManagerComponentName)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
