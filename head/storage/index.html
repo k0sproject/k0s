@@ -982,30 +982,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#bundled-openebs-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Bundled OpenEBS storage
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Bundled OpenEBS storage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example usage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#csi" class="md-nav__link">
     <span class="md-ellipsis">
       CSI
@@ -1035,6 +1011,30 @@
       Example storage solutions
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bundled-openebs-storage-deprecated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bundled OpenEBS storage (deprecated)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bundled OpenEBS storage (deprecated)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1597,6 +1597,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/openebs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenEBS storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1971,30 +1992,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#bundled-openebs-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Bundled OpenEBS storage
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Bundled OpenEBS storage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example usage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#csi" class="md-nav__link">
     <span class="md-ellipsis">
       CSI
@@ -2027,6 +2024,30 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#bundled-openebs-storage-deprecated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bundled OpenEBS storage (deprecated)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bundled OpenEBS storage (deprecated)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2043,11 +2064,36 @@
 
 
 <h1 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h1>
-<p>k0s supports any volume provider that implements the <a href="https://github.com/container-storage-interface/spec">CSI specification</a>. For convenience, k0s comes bundled in with support for <a href="https://openebs.io/docs/concepts/localpv">OpenEBS local path provisioner</a>.</p>
-<p>The choise of which CSI provider to use depends heavily on the use case and infrastructure you're running on and the use case you have.</p>
-<h2 id="bundled-openebs-storage">Bundled OpenEBS storage<a class="headerlink" href="#bundled-openebs-storage" title="Permanent link">#</a></h2>
-<p>K0s comes out with bundled OpenEBS installation which can be enabled by using <a href="../configuration/">configuration file</a></p>
-<p>Use following configuration as an example:</p>
+<h2 id="csi">CSI<a class="headerlink" href="#csi" title="Permanent link">#</a></h2>
+<p>k0s supports a wide range of different storage options by utilizing Container Storage Interface (CSI). All Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.</p>
+<p>When the storage solution implements CSI, kubernetes can communicate with the storage to create and configure persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the <a href="https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/">Kubernetes Blog</a>.</p>
+<p><img alt="k0s storage" src="../img/k0s_storage.png" /></p>
+<h3 id="installing-3rd-party-storage-solutions">Installing 3rd party storage solutions<a class="headerlink" href="#installing-3rd-party-storage-solutions" title="Permanent link">#</a></h3>
+<p>Follow your storage driver's installation instructions. Note that by default the Kubelet installed by k0s uses a slightly different path for its working directory (<code>/varlib/k0s/kubelet</code> instead of <code>/var/lib/kubelet</code>). Consult the CSI driver's configuration documentation on how to customize this path. The actual path can differ if you defined the flag <code>--data-dir</code>.</p>
+<h2 id="example-storage-solutions">Example storage solutions<a class="headerlink" href="#example-storage-solutions" title="Permanent link">#</a></h2>
+<p>Different Kubernetes storage solutions are explained in the <a href="https://kubernetes.io/docs/concepts/storage/volumes/">official Kubernetes storage documentation</a>. All of them can be used with k0s. Here are some popular ones:</p>
+<ul>
+<li>Rook-Ceph (Open Source)</li>
+<li>MinIO (Open Source)</li>
+<li>Gluster (Open Source)</li>
+<li>Longhorn (Open Source)</li>
+<li>Amazon EBS</li>
+<li>Google Persistent Disk</li>
+<li>Azure Disk</li>
+<li>Portworx</li>
+</ul>
+<p>If you are looking for a fault-tolerant storage with data replication, you can find a k0s tutorial for configuring Ceph storage with Rook <a href="../examples/rook-ceph/">in here</a>.</p>
+<h2 id="bundled-openebs-storage-deprecated">Bundled OpenEBS storage (deprecated)<a class="headerlink" href="#bundled-openebs-storage-deprecated" title="Permanent link">#</a></h2>
+<p>Bundled OpenEBS was deprecated in favor of running it <a href="../examples/openebs/">as a helm extension</a>,
+this documentation is maintained as a reference for existing installations.</p>
+<p>This was done for three reasons:</p>
+<ol>
+<li>By installing it as a helm extension, users have more control and flexibility without adding complexity.</li>
+<li>It allows users to choose the OpenEBS version independent of their k0s version.</li>
+<li>It makes the k0s configuration more consistent.</li>
+</ol>
+<p>For new installations or to migrate existing installations, please refer to the <a href="../examples/openebs/">OpenEBS extension page</a>.</p>
+<p>The OpenEBS extension is enabled by setting <a href="../configuration/#specextensionsstorage"><code>spec.extensions.storage.type</code></a> to<code>`openebs_local_storage</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">storage</span><span class="p">:</span>
@@ -2119,25 +2165,6 @@ nginx-d95bcb7db-gzsdt<span class="w">   </span><span class="m">1</span>/1<span c
 <div class="highlight"><pre><span></span><code>NAME<span class="w">                                       </span>CAPACITY<span class="w">   </span>ACCESS<span class="w"> </span>MODES<span class="w">   </span>RECLAIM<span class="w"> </span>POLICY<span class="w">   </span>STATUS<span class="w">   </span>CLAIM<span class="w">               </span>STORAGECLASS<span class="w">       </span>REASON<span class="w">   </span>AGE
 pvc-9a7fae2d-eb03-42c3-aaa9-1a807d5df12f<span class="w">   </span>5Gi<span class="w">        </span>RWO<span class="w">            </span>Delete<span class="w">           </span>Bound<span class="w">    </span>default/nginx-pvc<span class="w">   </span>openebs-hostpath<span class="w">            </span>30s
 </code></pre></div>
-<h2 id="csi">CSI<a class="headerlink" href="#csi" title="Permanent link">#</a></h2>
-<p>k0s supports a wide range of different storage options by utilizing Container Storage Interface (CSI). All Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.</p>
-<p>When the storage solution implements Container Storage Interface (CSI), containers can communicate with the storage for creation and configuration of persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the <a href="https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/">Kubernetes Blog</a>.</p>
-<p><img alt="k0s storage" src="../img/k0s_storage.png" /></p>
-<h3 id="installing-3rd-party-storage-solutions">Installing 3rd party storage solutions<a class="headerlink" href="#installing-3rd-party-storage-solutions" title="Permanent link">#</a></h3>
-<p>Follow your storage driver's installation instructions. Note that the Kubelet installed by k0s uses a slightly different path for its working directory (<code>/varlib/k0s/kubelet</code> instead of <code>/var/lib/kubelet</code>). Consult the CSI driver's configuration documentation on how to customize this path.</p>
-<h2 id="example-storage-solutions">Example storage solutions<a class="headerlink" href="#example-storage-solutions" title="Permanent link">#</a></h2>
-<p>Different Kubernetes storage solutions are explained in the <a href="https://kubernetes.io/docs/concepts/storage/volumes/">official Kubernetes storage documentation</a>. All of them can be used with k0s. Here are some popular ones:</p>
-<ul>
-<li>Rook-Ceph (Open Source)</li>
-<li>MinIO (Open Source)</li>
-<li>Gluster (Open Source)</li>
-<li>Longhorn (Open Source)</li>
-<li>Amazon EBS</li>
-<li>Google Persistent Disk</li>
-<li>Azure Disk</li>
-<li>Portworx</li>
-</ul>
-<p>If you are looking for a fault-tolerant storage with data replication, you can find a k0s tutorial for configuring Ceph storage with Rook <a href="../examples/rook-ceph/">in here</a>.</p>
 
 
 
