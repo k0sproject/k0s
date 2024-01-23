@@ -97,7 +97,6 @@ jobs:
             /k0s/k0s --output-file /k0s/k0s.sig
 
       - name: Upload Release Assets - Binary
-        id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -106,7 +105,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -121,7 +119,6 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        id: upload-release-asset-images
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -184,7 +181,6 @@ jobs:
           docker system prune --all --volumes --force
 
       - name: Upload Release Assets
-        id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -193,7 +189,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -272,7 +267,6 @@ jobs:
           path: tests/*.log
 
       - name: Upload Release Assets - Binary
-        id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -281,7 +275,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -296,7 +289,6 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        id: upload-release-asset-images
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -380,7 +372,6 @@ jobs:
           path: tests/*.log
 
       - name: Upload Release Assets - Binary
-        id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -389,7 +380,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -404,7 +394,6 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        id: upload-release-asset-images
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -537,7 +526,6 @@ jobs:
           make sign-pub-key
 
       - name: Upload Release Assets - SBOM
-        id: upload-release-asset-images
         uses: shogo82148/actions-upload-release-asset@v1.7.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
@@ -610,7 +598,6 @@ jobs:
           terraform apply -auto-approve
 
       - name: Create k0s Cluster using k0sctl
-        id: k0sctl
         run: |
           # download k0sctl
           curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
