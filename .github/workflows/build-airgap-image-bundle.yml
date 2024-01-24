@@ -64,4 +64,4 @@ jobs:
         with:
           name: airgap-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: airgap-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
-          compression: 0
+          compression-level: 0
