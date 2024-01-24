@@ -87,14 +87,9 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          echo $COSIGN_KEY | base64 -d > cosign.key
-          docker run --rm \
-            -v "$(CURDIR):/k0s" \
-            gcr.io/projectsigstore/cosign:v2.2.0 \
-            sign-blob \
-            --key /k0s/cosign.key \
-            --tlog-upload=false \
-            /k0s/k0s --output-file /k0s/k0s.sig
+          curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.0/cosign-linux-amd64
+          chmod +x ./cosign
+          ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false k0s | tee k0s.sig
 
       - name: Upload Release Assets - Binary
         uses: shogo82148/actions-upload-release-asset@v1.7.2
@@ -167,14 +162,9 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          echo $COSIGN_KEY | base64 -d > cosign.key
-          docker run --rm \
-            -v "$(CURDIR):/k0s" \
-            gcr.io/projectsigstore/cosign:v2.2.0 \
-            sign-blob \
-            --key /k0s/cosign.key \
-            --tlog-upload=false \
-            /k0s/k0s.exe --output-file /k0s/k0s.exe.sig
+          curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.0/cosign-linux-amd64
+          chmod +x ./cosign
+          ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false k0s.exe | tee k0s.exe.sig
 
       - name: Clean Docker
         run: |
@@ -239,14 +229,9 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          echo $COSIGN_KEY | base64 -d > cosign.key
-          docker run --rm \
-            -v "$(CURDIR):/k0s" \
-            gcr.io/projectsigstore/cosign:v2.2.0 \
-            sign-blob \
-            --key /k0s/cosign.key \
-            --tlog-upload=false \
-            /k0s/k0s --output-file /k0s/k0s.sig
+          curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.0/cosign-linux-arm64
+          chmod +x ./cosign
+          ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false k0s | tee k0s.sig
 
       - name: Set up Go for smoke tests
         uses: actions/setup-go@v3
@@ -344,14 +329,9 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          echo $COSIGN_KEY | base64 -d > cosign.key
-          docker run --rm \
-            -v "$(CURDIR):/k0s" \
-            gcr.io/projectsigstore/cosign:v2.2.0 \
-            sign-blob \
-            --key /k0s/cosign.key \
-            --tlog-upload=false \
-            /k0s/k0s --output-file /k0s/k0s.sig
+          curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.0/cosign-linux-arm
+          chmod +x ./cosign
+          ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false k0s | tee k0s.sig
 
       - name: Set up Go for smoke tests
         uses: actions/setup-go@v3
