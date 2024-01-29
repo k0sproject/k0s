@@ -410,7 +410,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download assets for generating checksums
-        uses: robinraju/release-downloader@v1.8
+        uses: robinraju/release-downloader@v1.9
         with:
           releaseId: ${{ needs.release.outputs.release_id }}
           filename: "*"
