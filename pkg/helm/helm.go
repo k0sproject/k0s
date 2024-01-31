@@ -190,15 +190,8 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 			return filename, fmt.Errorf("can't locate chart `%s-%s`: %v", name, version, err)
 		}
 		return lname, nil
-	} else if true {
-		return filename, fmt.Errorf("can't locate chart `%s-%s`: %v", name, version, err)
 	}
-
-	atVersion := ""
-	if version != "" {
-		atVersion = fmt.Sprintf(" at version %q", version)
-	}
-	return filename, fmt.Errorf("failed to download %q%s (hint: running `helm repo update` may help)", name, atVersion)
+	return filename, fmt.Errorf("can't locate chart `%s-%s`: %v", name, version, err)
 }
 
 func (hc *Commands) isInstallable(chart *chart.Chart) bool {
