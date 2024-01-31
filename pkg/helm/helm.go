@@ -191,7 +191,7 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 		}
 		return lname, nil
 	}
-	return filename, fmt.Errorf("can't locate chart `%s-%s`: %v", name, version, err)
+	return filename, fmt.Errorf("can't locate chart `%s-%s`: %w", name, version, err)
 }
 
 func (hc *Commands) isInstallable(chart *chart.Chart) bool {
