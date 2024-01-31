@@ -187,7 +187,7 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 	if err == nil {
 		lname, err := filepath.Abs(filename)
 		if err != nil {
-			return filename, fmt.Errorf("can't locate chart `%s-%s`: %v", name, version, err)
+			return filename, fmt.Errorf("can't locate chart `%s-%s`: %w", name, version, err)
 		}
 		return lname, nil
 	}
