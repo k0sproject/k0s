@@ -125,7 +125,7 @@ Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest). For
 example:
 
 ```shell
-wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.26.13+k0s.0/k0s-v1.26.13+k0s.0-arm64 # replace version number!
+wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.26.13+k0s.1/k0s-v1.26.13+k0s.1-arm64 # replace version number!
 sudo install /tmp/k0s /usr/local/bin/k0s
 ```
 
@@ -142,7 +142,7 @@ At this point you can run `k0s`:
 
 ```console
 ubuntu@ubuntu:~$ k0s version
-v1.26.13+k0s.0
+v1.26.13+k0s.1
 ```
 
 To check if k0s's [system requirements](system-requirements.md) and [external
@@ -445,7 +445,7 @@ As this is a worker node, we cannot access the Kubernetes API via the builtin
 
 ```console
 ubuntu@ubuntu:~$ sudo k0s status
-Version: v1.26.13+k0s.0
+Version: v1.26.13+k0s.1
 Process ID: 1631
 Role: worker
 Workloads: true
