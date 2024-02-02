@@ -7,12 +7,16 @@ on:
       - release-*
     paths:
       - '**.md'
+      - .github/workflows/docs.yml
+      - .github/workflows/markdownlint-config.jsonc
   pull_request:
     branches:
       - main
       - release-*
     paths:
       - '**.md'
+      - .github/workflows/docs.yml
+      - .github/workflows/markdownlint-config.jsonc
 jobs:
   lint:
     name: Lint markdown
@@ -21,5 +25,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: articulate/actions-markdownlint@v1
         with:
-          config: .github/workflows/markdownlint-config.json
+          config: .github/workflows/markdownlint-config.jsonc
           ignore: autopilot
+          version: 0.39.0
