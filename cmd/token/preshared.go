@@ -17,22 +17,23 @@ limitations under the License.
 package token
 
 import (
+	"bufio"
 	"bytes"
-	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
-	fakeclientset "k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/testing"
-	"sigs.k8s.io/yaml"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
+
+	"github.com/spf13/cobra"
 )
 
 func preSharedCmd() *cobra.Command {
@@ -85,43 +86,24 @@ func preSharedCmd() *cobra.Command {
 }
 
 func createSecret(role string, validity time.Duration, outDir string) (string, error) {
-	fakeClient := fakeclientset.NewSimpleClientset()
-
-	manager, err := token.NewManagerForClient(fakeClient)
+	secret, token, err := token.RandomBootstrapSecret(role, validity)
 	if err != nil {
-		return "", fmt.Errorf("error creating token manager: %w", err)
+		return "", fmt.Errorf("failed to generate bootstrap secret: %w", err)
 	}
 
-	t, err := manager.Create(context.Background(), validity, role)
-	if err != nil {
-		return "", fmt.Errorf("error creating token: %w", err)
+	if err := file.WriteAtomically(filepath.Join(outDir, secret.Name+".yaml"), 0640, func(unbuffered io.Writer) error {
+		serializer := json.NewYAMLSerializer(json.DefaultMetaFactory, scheme.Scheme, scheme.Scheme)
+		encoder := scheme.Codecs.EncoderForVersion(serializer, corev1.SchemeGroupVersion)
+		w := bufio.NewWriter(unbuffered)
+		if err := encoder.Encode(secret, w); err != nil {
+			return err
+		}
+		return w.Flush()
+	}); err != nil {
+		return "", fmt.Errorf("failed to save bootstrap secret: %w", err)
 	}
 
-	// Get created Secret from the fake client and write it as a file
-	for _, action := range fakeClient.Actions() {
-		a, ok := action.(testing.CreateActionImpl)
-		if !ok {
-			continue
-		}
-
-		secret, ok := a.GetObject().(*v1.Secret)
-		if !ok {
-			continue
-		}
-		secret.APIVersion = "v1"
-		secret.Kind = "Secret"
-
-		b, err := yaml.Marshal(secret)
-		if err != nil {
-			return "", fmt.Errorf("error marshailling secret: %w", err)
-		}
-
-		err = file.WriteContentAtomically(filepath.Join(outDir, secret.Name+".yaml"), b, 0640)
-		if err != nil {
-			return "", fmt.Errorf("error writing secret: %w", err)
-		}
-	}
-	return t, nil
+	return token, nil
 }
 
 func createKubeConfig(tokenString, role, joinURL, certPath, outDir string) error {
