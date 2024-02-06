@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/internal/pkg/random"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
@@ -66,19 +65,21 @@ type Manager struct {
 	client kubernetes.Interface
 }
 
-func RandomBootstrapSecret(role string, valid time.Duration) (*corev1.Secret, string, error) {
-	tokenID := random.String(6)
-	tokenSecret := random.String(16)
+func RandomBootstrapSecret(role string, valid time.Duration) (*corev1.Secret, *BootstrapToken, error) {
+	token, err := randomToken()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate bootstrap token: %w", err)
+	}
 
 	s := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("bootstrap-token-%s", tokenID),
+			Name:      fmt.Sprintf("bootstrap-token-%s", token.ID()),
 			Namespace: "kube-system",
 		},
 		Type: corev1.SecretTypeBootstrapToken,
 		StringData: map[string]string{
-			"token-id":     tokenID,
-			"token-secret": tokenSecret,
+			"token-id":     token.ID(),
+			"token-secret": token.secret(),
 
 			// This "usage-" is shared for all roles of the token which allows
 			// them to execute calls to the k0s API. This is done because we
@@ -105,22 +106,22 @@ func RandomBootstrapSecret(role string, valid time.Duration) (*corev1.Secret, st
 		s.StringData["usage-bootstrap-signing"] = "false"
 		s.StringData["usage-controller-join"] = "true"
 	default:
-		return nil, "", fmt.Errorf("unsupported role %q", role)
+		return nil, nil, fmt.Errorf("unsupported role %q", role)
 	}
 
-	return &s, fmt.Sprintf("%s.%s", tokenID, tokenSecret), nil
+	return &s, token, nil
 }
 
 // Create creates a new bootstrap token
-func (m *Manager) Create(ctx context.Context, valid time.Duration, role string) (string, error) {
+func (m *Manager) Create(ctx context.Context, valid time.Duration, role string) (*BootstrapToken, error) {
 	secret, token, err := RandomBootstrapSecret(role, valid)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	_, err = m.client.CoreV1().Secrets("kube-system").Create(ctx, secret, metav1.CreateOptions{})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	return token, nil

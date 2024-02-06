@@ -61,7 +61,7 @@ func CreateKubeletBootstrapToken(ctx context.Context, api *v1beta1.APISpec, k0sV
 	return JoinEncode(bytes.NewReader(kubeconfig))
 }
 
-func GenerateKubeconfig(joinURL string, caCert []byte, userName string, token string) ([]byte, error) {
+func GenerateKubeconfig(joinURL string, caCert []byte, userName string, token *BootstrapToken) ([]byte, error) {
 	const k0sContextName = "k0s"
 	kubeconfig, err := clientcmd.Write(clientcmdapi.Config{
 		Clusters: map[string]*clientcmdapi.Cluster{k0sContextName: {
@@ -74,7 +74,7 @@ func GenerateKubeconfig(joinURL string, caCert []byte, userName string, token st
 		}},
 		CurrentContext: k0sContextName,
 		AuthInfos: map[string]*clientcmdapi.AuthInfo{userName: {
-			Token: token,
+			Token: token.token(),
 		}},
 	})
 	return kubeconfig, err
@@ -101,10 +101,10 @@ func loadCACert(k0sVars *config.CfgVars) ([]byte, error) {
 	return caCert, nil
 }
 
-func loadToken(ctx context.Context, k0sVars *config.CfgVars, role string, expiry time.Duration) (string, error) {
+func loadToken(ctx context.Context, k0sVars *config.CfgVars, role string, expiry time.Duration) (*BootstrapToken, error) {
 	manager, err := NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	return manager.Create(ctx, expiry, role)
 }

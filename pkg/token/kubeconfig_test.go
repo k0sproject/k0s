@@ -41,10 +41,11 @@ preferences: {}
 users:
 - name: the user
   user:
-    token: the token
+    token: abcdef.0123456789abcdef
 `
 
-	kubeconfig, err := GenerateKubeconfig("the join URL", []byte("the cert"), "the user", "the token")
+	tok := BootstrapToken{'a', 'b', 'c', 'd', 'e', 'f', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
+	kubeconfig, err := GenerateKubeconfig("the join URL", []byte("the cert"), "the user", &tok)
 	require.NoError(t, err)
 	assert.Equal(t, expected, string(kubeconfig))
 }
