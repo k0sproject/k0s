@@ -111,7 +111,7 @@ const (
 	NetworkProviderComponentName       = "network-provider"
 	SystemRbacComponentName            = "system-rbac"
 	NodeRoleComponentName              = "node-role"
-	WindowsNodeComponentName           = "windows-node-role"
+	WindowsNodeComponentName           = "windows-node"
 	AutopilotComponentName             = "autopilot"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
