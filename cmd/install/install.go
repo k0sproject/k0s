@@ -66,12 +66,12 @@ func (c *command) setup(role string, args []string, installFlags *installFlags) 
 
 	if role == "controller" {
 		if err := install.CreateControllerUsers(nodeConfig, c.K0sVars); err != nil {
-			return fmt.Errorf("failed to create controller users: %v", err)
+			return fmt.Errorf("failed to create controller users: %w", err)
 		}
 	}
 	err = install.EnsureService(args, installFlags.envVars, installFlags.force)
 	if err != nil {
-		return fmt.Errorf("failed to install k0s service: %v", err)
+		return fmt.Errorf("failed to install k0s service: %w", err)
 	}
 	return nil
 }

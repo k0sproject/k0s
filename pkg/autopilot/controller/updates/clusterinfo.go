@@ -84,7 +84,7 @@ func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, er
 		"kube-system",
 		metav1.GetOptions{})
 	if err != nil {
-		return ci, fmt.Errorf("can't find kube-system namespace: %v", err)
+		return ci, fmt.Errorf("can't find kube-system namespace: %w", err)
 	}
 
 	ci.ClusterID = fmt.Sprintf("kube-system:%s", ns.UID)
@@ -123,7 +123,7 @@ func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, er
 	// Collect control plane node count
 	ci.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(ctx, kc)
 	if err != nil {
-		return ci, fmt.Errorf("can't collect control plane nodes count: %v", err)
+		return ci, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
 
 	return ci, nil

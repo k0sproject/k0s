@@ -33,10 +33,10 @@ import (
 
 func createMockProcess(procFSPath string, pid string, cmdline []byte, k0smanaged bool) error {
 	if err := os.Mkdir(filepath.Join(procFSPath, pid), 0700); err != nil {
-		return fmt.Errorf("Failed to create fake proc dir: %v", err)
+		return fmt.Errorf("Failed to create fake proc dir: %w", err)
 	}
 	if err := ioutil.WriteFile(filepath.Join(procFSPath, pid, "cmdline"), cmdline, 0700); err != nil {
-		return fmt.Errorf("Failed to write cmdline: %v", err)
+		return fmt.Errorf("Failed to write cmdline: %w", err)
 	}
 
 	var env []byte
@@ -46,7 +46,7 @@ func createMockProcess(procFSPath string, pid string, cmdline []byte, k0smanaged
 		env = []byte("ENV1=A\x00ENV3=B\x00")
 	}
 	if err := ioutil.WriteFile(filepath.Join(procFSPath, pid, "environ"), env, 0700); err != nil {
-		return fmt.Errorf("Failed to write environ: %v", err)
+		return fmt.Errorf("Failed to write environ: %w", err)
 	}
 	return nil
 }

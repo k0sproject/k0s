@@ -157,7 +157,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 	// let's make sure run-dir exists
 	if err := dir.Init(c.K0sVars.RunDir, constant.RunDirMode); err != nil {
-		return fmt.Errorf("failed to initialize dir: %v", err)
+		return fmt.Errorf("failed to initialize dir: %w", err)
 	}
 
 	rtc, err := config.NewRuntimeConfig(c.K0sVars)
@@ -180,7 +180,7 @@ func (c *command) start(ctx context.Context) error {
 	if c.TokenArg != "" && c.needToJoin() {
 		joinClient, err = joinController(ctx, c.TokenArg, c.K0sVars.CertRootDir)
 		if err != nil {
-			return fmt.Errorf("failed to join controller: %v", err)
+			return fmt.Errorf("failed to join controller: %w", err)
 		}
 	}
 

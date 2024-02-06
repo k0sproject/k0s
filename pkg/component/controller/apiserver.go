@@ -90,7 +90,7 @@ func (a *APIServer) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.ApiserverUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("running kube-apiserver as root: %w", err))
+		logrus.Warn("running kube-apiserver as root: ", err)
 	}
 	return assets.Stage(a.K0sVars.BinDir, kubeAPIComponentName, constant.BinDirMode)
 }

@@ -130,7 +130,7 @@ func EnsureService(args []string, envVars []string, force bool) error {
 	logrus.Infof("Installing %s service", svcConfig.Name)
 	err = s.Install()
 	if err != nil {
-		return fmt.Errorf("failed to install service: %v", err)
+		return fmt.Errorf("failed to install service: %w", err)
 	}
 	return nil
 }

@@ -66,7 +66,7 @@ func (c *command) reset() error {
 	// Get Cleanup Config
 	cfg, err := cleanup.NewConfig(c.K0sVars, c.CfgFile, c.WorkerOptions.CriSocket)
 	if err != nil {
-		return fmt.Errorf("failed to configure cleanup: %v", err)
+		return fmt.Errorf("failed to configure cleanup: %w", err)
 	}
 
 	err = cfg.Cleanup()

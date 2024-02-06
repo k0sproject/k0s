@@ -66,7 +66,7 @@ func (c *containers) Run() error {
 }
 
 func removeMount(path string) error {
-	var msg []string
+	var errs []error
 
 	mounter := mount.New("")
 	procMounts, err := mounter.List()
@@ -77,19 +77,17 @@ func removeMount(path string) error {
 		if strings.Contains(v.Path, path) {
 			logrus.Debugf("Unmounting: %s", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
-				msg = append(msg, err.Error())
+				errs = append(errs, err)
 			}
 
 			logrus.Debugf("Removing: %s", v.Path)
 			if err := os.RemoveAll(v.Path); err != nil {
-				msg = append(msg, err.Error())
+				errs = append(errs, err)
 			}
 		}
 	}
-	if len(msg) > 0 {
-		return fmt.Errorf("%v", strings.Join(msg, "\n"))
-	}
-	return nil
+
+	return errors.Join(errs...)
 }
 
 func (c *containers) isCustomCriUsed() bool {
@@ -135,7 +133,7 @@ func (c *containers) stopContainerd() {
 }
 
 func (c *containers) stopAllContainers() error {
-	var msg []error
+	var errs []error
 	logrus.Debugf("trying to list all pods")
 
 	var pods []string
@@ -153,10 +151,10 @@ func (c *containers) stopAllContainers() error {
 	}
 	if len(pods) > 0 {
 		if err := removeMount("kubelet/pods"); err != nil {
-			msg = append(msg, err)
+			errs = append(errs, err)
 		}
 		if err := removeMount("run/netns"); err != nil {
-			msg = append(msg, err)
+			errs = append(errs, err)
 		}
 	}
 
@@ -169,14 +167,12 @@ func (c *containers) stopAllContainers() error {
 				// since we're deleting the API pod itself. so we're ignoring this error
 				logrus.Debugf("ignoring container stop err: %v", err.Error())
 			} else {
-				fmtError := fmt.Errorf("failed to stop running pod %v: err: %v", pod, err)
-				logrus.Debug(fmtError)
-				msg = append(msg, fmtError)
+				errs = append(errs, fmt.Errorf("failed to stop running pod %s: %w", pod, err))
 			}
 		}
 		err = c.Config.containerRuntime.RemoveContainer(pod)
 		if err != nil {
-			msg = append(msg, fmt.Errorf("failed to remove pod %v: err: %v", pod, err))
+			errs = append(errs, fmt.Errorf("failed to remove pod %s: %w", pod, err))
 		}
 	}
 
@@ -185,8 +181,8 @@ func (c *containers) stopAllContainers() error {
 		logrus.Info("successfully removed k0s containers!")
 	}
 
-	if len(msg) > 0 {
-		return fmt.Errorf("errors occurred while removing pods: %v", msg)
+	if len(errs) > 0 {
+		return fmt.Errorf("errors occurred while removing pods: %w", errors.Join(errs...))
 	}
 	return nil
 }

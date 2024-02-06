@@ -57,7 +57,7 @@ func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars *
 
 	cfg, err := k0sVars.NodeConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get config: %v", err)
+		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 
 	configClient, err := kubeClientFactory.GetConfigClient()

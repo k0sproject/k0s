@@ -152,7 +152,7 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	if sh.client == nil {
 		kubeClient, err := sh.buildWorkerSideKubeAPIClient(ctx)
 		if err != nil {
-			status.WorkerToAPIConnectionStatus.Message = fmt.Errorf("failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: %v", err).Error()
+			status.WorkerToAPIConnectionStatus.Message = fmt.Sprintf("failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: %s", err.Error())
 			return status
 		}
 		sh.client = kubeClient

@@ -174,7 +174,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 
 	prober, err := NewReadyProber(logger, c.autopilotClientFactory, mgr.GetConfig(), 1*time.Minute)
 	if err != nil {
-		logger.WithError(err).Error("unable to create controller prober: %w")
+		logger.WithError(err).Error("unable to create controller prober")
 		return err
 	}
 

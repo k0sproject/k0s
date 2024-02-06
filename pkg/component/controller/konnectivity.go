@@ -69,27 +69,27 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 	k.uid, err = users.GetUID(constant.KonnectivityServerUser)
 	if err != nil {
 		k.EmitWithPayload("error getting UID for", err)
-		logrus.Warning(fmt.Errorf("running konnectivity as root: %w", err))
+		logrus.Warn("running konnectivity as root: ", err)
 	}
 	err = dir.Init(k.K0sVars.KonnectivitySocketDir, 0755)
 	if err != nil {
 		k.EmitWithPayload("failed to initialize socket directory", err)
-		return fmt.Errorf("failed to initialize directory %s: %v", k.K0sVars.KonnectivitySocketDir, err)
+		return fmt.Errorf("failed to initialize directory %s: %w", k.K0sVars.KonnectivitySocketDir, err)
 	}
 
 	err = os.Chown(k.K0sVars.KonnectivitySocketDir, k.uid, -1)
 	if err != nil && os.Geteuid() == 0 {
 		k.EmitWithPayload("failed to chown socket directory", err)
-		return fmt.Errorf("failed to chown %s: %v", k.K0sVars.KonnectivitySocketDir, err)
+		return fmt.Errorf("failed to chown %s: %w", k.K0sVars.KonnectivitySocketDir, err)
 	}
 
 	k.log = logrus.WithFields(logrus.Fields{"component": "konnectivity"})
 	if err := assets.Stage(k.K0sVars.BinDir, "konnectivity-server", constant.BinDirMode); err != nil {
 		k.EmitWithPayload("failed to stage konnectivity-server", err)
-		return fmt.Errorf("failed to stage konnectivity-server binary %v", err)
+		return fmt.Errorf("failed to stage konnectivity-server binary %w", err)
 
 	}
-	defer k.Emit("succesfully initialized konnectivity component")
+	defer k.Emit("successfully initialized konnectivity component")
 
 	k.clusterConfig = k0scontext.GetNodeConfig(ctx)
 

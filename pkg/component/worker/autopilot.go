@@ -69,7 +69,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 
 		return true, nil
 	}); err != nil {
-		return fmt.Errorf("unable to create autopilot client: %v", err)
+		return fmt.Errorf("unable to create autopilot client: %w", err)
 	}
 
 	// Without the config, there is nothing that we can do.

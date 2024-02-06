@@ -83,7 +83,7 @@ func (a *OCIBundleReconciler) Start(ctx context.Context) error {
 	}, retry.Context(ctx), retry.Delay(time.Second*5))
 	if err != nil {
 		a.EmitWithPayload("can't connect to containerd socket", map[string]interface{}{"socket": sock, "error": err})
-		return fmt.Errorf("can't connect to containerd socket %s: %v", sock, err)
+		return fmt.Errorf("can't connect to containerd socket %s: %w", sock, err)
 	}
 	defer client.Close()
 
@@ -102,12 +102,12 @@ func (a *OCIBundleReconciler) Start(ctx context.Context) error {
 func (a OCIBundleReconciler) unpackBundle(ctx context.Context, client *containerd.Client, bundlePath string) error {
 	r, err := os.Open(bundlePath)
 	if err != nil {
-		return fmt.Errorf("can't open bundle file %s: %v", bundlePath, err)
+		return fmt.Errorf("can't open bundle file %s: %w", bundlePath, err)
 	}
 	defer r.Close()
 	images, err := client.Import(ctx, r)
 	if err != nil {
-		return fmt.Errorf("can't import bundle: %v", err)
+		return fmt.Errorf("can't import bundle: %w", err)
 	}
 	is := client.ImageService()
 	for _, i := range images {

@@ -106,12 +106,12 @@ func (s *Supervisor) maybeKillPidFile(check <-chan time.Time, deadline <-chan ti
 	if os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("failed to read pid file %s: %v", s.PidFile, err)
+		return fmt.Errorf("failed to read pid file %s: %w", s.PidFile, err)
 	}
 
 	p, err := strconv.Atoi(strings.TrimSuffix(string(pid), "\n"))
 	if err != nil {
-		return fmt.Errorf("failed to parse pid file %s: %v", s.PidFile, err)
+		return fmt.Errorf("failed to parse pid file %s: %w", s.PidFile, err)
 	}
 
 	return s.killPid(p, check, deadline)
@@ -122,7 +122,7 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("failed to read process %d cmdline: %v", pid, err)
+		return false, fmt.Errorf("failed to read process %d cmdline: %w", pid, err)
 	}
 
 	// only kill process if it has the expected cmd
@@ -136,7 +136,7 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("failed to read process %d environ: %v", pid, err)
+		return false, fmt.Errorf("failed to read process %d environ: %w", pid, err)
 	}
 
 	for _, e := range strings.Split(string(env), "\x00") {

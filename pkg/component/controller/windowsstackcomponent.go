@@ -101,14 +101,14 @@ func (n *WindowsStackComponent) Start(ctx context.Context) error {
 func (n *WindowsStackComponent) handleWindowsNode(ctx context.Context, cfg windowsStackRenderingContext) error {
 	client, err := n.kubeClientFactory.GetClient()
 	if err != nil {
-		return fmt.Errorf("failed to get kube client: %v", err)
+		return fmt.Errorf("failed to get kube client: %w", err)
 	}
 	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{
 		LabelSelector: "kubernetes.io/os=windows",
 	})
 	if err != nil {
 		n.log.Errorf("failed to get node list: %v", err)
-		return fmt.Errorf("failed to get node list: %v", err)
+		return fmt.Errorf("failed to get node list: %w", err)
 	}
 
 	if len(nodes.Items) == 0 {
@@ -119,7 +119,7 @@ func (n *WindowsStackComponent) handleWindowsNode(ctx context.Context, cfg windo
 	n.log.Infof("found %d windows nodes", len(nodes.Items))
 	if err := n.createWindowsStack(n.prevRenderingContext); err != nil {
 		n.log.Errorf("failed to create windows stack: %v", err)
-		return fmt.Errorf("failed to create windows stack: %v", err)
+		return fmt.Errorf("failed to create windows stack: %w", err)
 	}
 	n.log.Infof("successfully created windows stack")
 	return nil
@@ -136,7 +136,7 @@ func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.Cluste
 	}
 	newConfig, err := n.makeRenderingContext(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to make calico rendering context: %v", err)
+		return fmt.Errorf("failed to make calico rendering context: %w", err)
 	}
 	if !reflect.DeepEqual(newConfig, n.prevRenderingContext) {
 		n.prevRenderingContext = newConfig
@@ -147,7 +147,7 @@ func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.Cluste
 func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig) (windowsStackRenderingContext, error) {
 	dns, err := cfg.Spec.Network.DNSAddress()
 	if err != nil {
-		return windowsStackRenderingContext{}, fmt.Errorf("failed to parse dns address: %v", err)
+		return windowsStackRenderingContext{}, fmt.Errorf("failed to parse dns address: %w", err)
 	}
 
 	return windowsStackRenderingContext{
@@ -175,12 +175,12 @@ func (n *WindowsStackComponent) Stop() error {
 func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderingContext) error {
 	manifestDirectories, err := static.AssetDir("manifests/windows")
 	if err != nil {
-		return fmt.Errorf("error retrieving manifests: %v", err)
+		return fmt.Errorf("error retrieving manifests: %w", err)
 	}
 	for _, dir := range manifestDirectories {
 		manifestPaths, err := static.AssetDir(fmt.Sprintf("manifests/windows/%s", dir))
 		if err != nil {
-			return fmt.Errorf("error retrieving manifests: %s. will retry", err.Error())
+			return fmt.Errorf("error retrieving manifests: %w, will retry", err)
 		}
 		tryAndLog := func(name string, e error) {
 			n.log.Debugf("writing manifest %s", name)
@@ -195,7 +195,7 @@ func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderi
 			n.log.Debugf("Reading manifest template %s", manifestName)
 			contents, err := static.Asset(fmt.Sprintf("manifests/windows/%s/%s", dir, filename))
 			if err != nil {
-				return fmt.Errorf("can't unpack manifest %s: %v", manifestName, err)
+				return fmt.Errorf("can't unpack manifest %s: %w", manifestName, err)
 			}
 
 			tw := templatewriter.TemplateWriter{

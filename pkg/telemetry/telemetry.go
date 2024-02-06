@@ -68,11 +68,11 @@ func (c Component) collectTelemetry(ctx context.Context) (telemetryData, error) 
 	data.ClusterID, err = c.getClusterID(ctx)
 
 	if err != nil {
-		return data, fmt.Errorf("can't collect cluster ID: %v", err)
+		return data, fmt.Errorf("can't collect cluster ID: %w", err)
 	}
 	wds, sums, err := c.getWorkerData(ctx)
 	if err != nil {
-		return data, fmt.Errorf("can't collect workers count: %v", err)
+		return data, fmt.Errorf("can't collect workers count: %w", err)
 	}
 
 	data.WorkerNodesCount = len(wds)
@@ -81,7 +81,7 @@ func (c Component) collectTelemetry(ctx context.Context) (telemetryData, error) 
 	data.CPUTotal = sums.cpuTotal
 	data.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(ctx, c.kubernetesClient)
 	if err != nil {
-		return data, fmt.Errorf("can't collect control plane nodes count: %v", err)
+		return data, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
 	return data, nil
 }
@@ -99,7 +99,7 @@ func (c Component) getClusterID(ctx context.Context) (string, error) {
 		"kube-system",
 		metav1.GetOptions{})
 	if err != nil {
-		return "", fmt.Errorf("can't find kube-system namespace: %v", err)
+		return "", fmt.Errorf("can't find kube-system namespace: %w", err)
 	}
 
 	return fmt.Sprintf("kube-system:%s", ns.UID), nil

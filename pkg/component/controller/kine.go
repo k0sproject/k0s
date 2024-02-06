@@ -59,7 +59,7 @@ func (k *Kine) Init(_ context.Context) error {
 	var err error
 	k.uid, err = users.GetUID(constant.KineUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("running kine as root: %w", err))
+		logrus.Warn("running kine as root: ", err)
 	}
 
 	kineSocketDir := filepath.Dir(k.K0sVars.KineSocketPath)
@@ -68,7 +68,7 @@ func (k *Kine) Init(_ context.Context) error {
 		return fmt.Errorf("failed to create %s: %w", kineSocketDir, err)
 	}
 	if err := os.Chown(kineSocketDir, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
-		logrus.Warningf("failed to chown %s", kineSocketDir)
+		logrus.Warn("failed to chown ", kineSocketDir)
 	}
 
 	dsURL, err := url.Parse(k.Config.DataSource)

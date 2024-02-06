@@ -67,12 +67,12 @@ func (s *sqliteStep) Backup() (StepResult, error) {
 	logrus.Debugf("exporting kine db to %v", path)
 	_, err = os.Create(path)
 	if err != nil {
-		return StepResult{}, fmt.Errorf("failed to create kine backup: %v", err)
+		return StepResult{}, fmt.Errorf("failed to create kine backup: %w", err)
 	}
 	// create a hot backup of the kine db
 	err = kineDB.Backup(path)
 	if err != nil {
-		return StepResult{}, fmt.Errorf("failed to back-up kine db: %v", err)
+		return StepResult{}, fmt.Errorf("failed to back-up kine db: %w", err)
 	}
 	return StepResult{filesForBackup: []string{path}}, nil
 }
@@ -102,7 +102,7 @@ func (s *sqliteStep) Restore(restoreFrom string, _ string) error {
 func (s *sqliteStep) getKineDBPath() (string, error) {
 	u, err := url.Parse(s.dataSource)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse Kind datasource string: %v", err)
+		return "", fmt.Errorf("failed to parse Kind datasource string: %w", err)
 	}
 	return u.Path, nil
 }

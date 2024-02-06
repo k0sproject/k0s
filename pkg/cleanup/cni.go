@@ -34,7 +34,7 @@ func (c *cni) Name() string {
 
 // Run removes found CNI leftovers
 func (c *cni) Run() error {
-	var msg []error
+	var errs []error
 
 	files := []string{
 		"/etc/cni/net.d/10-calico.conflist",
@@ -44,11 +44,11 @@ func (c *cni) Run() error {
 	for _, f := range files {
 		if err := os.Remove(f); err != nil && !errors.Is(err, fs.ErrNotExist) {
 			logrus.Debug("failed to remove", f, err)
-			msg = append(msg, err)
+			errs = append(errs, err)
 		}
 	}
-	if len(msg) > 0 {
-		return fmt.Errorf("error occured while removing CNI leftovers: %v", msg)
+	if len(errs) > 0 {
+		return fmt.Errorf("errors occurred while removing CNI leftovers: %w", errors.Join(errs...))
 	}
 	return nil
 }

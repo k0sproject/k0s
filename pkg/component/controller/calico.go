@@ -139,7 +139,7 @@ func (c *Calico) dumpCRDs() error {
 func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 	manifestDirectories, err := static.AssetDir("manifests/calico")
 	if err != nil {
-		return fmt.Errorf("error retrieving calico manifests: %w. will retry", err)
+		return fmt.Errorf("error retrieving calico manifests: %w, will retry", err)
 	}
 
 	for _, dir := range manifestDirectories {
@@ -149,12 +149,12 @@ func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 		}
 		manifestPaths, err := static.AssetDir(fmt.Sprintf("manifests/calico/%s", dir))
 		if err != nil {
-			return fmt.Errorf("error retrieving calico manifests: %w. will retry", err)
+			return fmt.Errorf("error retrieving calico manifests: %w, will retry", err)
 		}
 
 		tryAndLog := func(name string, e error) {
 			if e != nil {
-				c.log.Errorf("failed to write manifest %s: %w, will re-try", name, e)
+				c.log.Errorf("failed to write manifest %s: %v, will retry", name, e)
 			}
 		}
 

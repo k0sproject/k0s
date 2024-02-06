@@ -656,7 +656,7 @@ func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 	tokenCmd := fmt.Sprintf("%s token create --role=%s %s 2>/dev/null", s.K0sFullPath, role, strings.Join(extraArgs, " "))
 	token, err := ssh.ExecWithOutput(s.Context(), tokenCmd)
 	if err != nil {
-		return "", fmt.Errorf("can't get join token: %v", err)
+		return "", fmt.Errorf("can't get join token: %w", err)
 	}
 	outputParts := strings.Split(token, "\n")
 	// in case of no k0s.conf given, there might be warnings on the first few lines
@@ -678,7 +678,7 @@ func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
 
 		_, err = sshWorker.ExecWithOutput(ctx, fmt.Sprintf("k0s ctr images import %s", s.K0smotronImageBundleMountPoints[0]))
 		if err != nil {
-			return fmt.Errorf("failed to import k0smotron images: %v", err)
+			return fmt.Errorf("failed to import k0smotron images: %w", err)
 		}
 	}
 	return nil
