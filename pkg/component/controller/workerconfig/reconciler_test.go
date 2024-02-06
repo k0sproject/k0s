@@ -38,7 +38,7 @@ import (
 
 	k8stesting "k8s.io/client-go/testing"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
@@ -374,17 +374,17 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 
 	configMaps := map[string]func(t *testing.T, expected *kubeletConfig){
 		"worker-config-default-1.29": func(t *testing.T, expected *kubeletConfig) {
-			expected.CgroupsPerQOS = pointer.Bool(true)
+			expected.CgroupsPerQOS = ptr.To(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
 		"worker-config-default-windows-1.29": func(t *testing.T, expected *kubeletConfig) {
-			expected.CgroupsPerQOS = pointer.Bool(false)
+			expected.CgroupsPerQOS = ptr.To(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
 		"worker-config-profile_XXX-1.29": func(t *testing.T, expected *kubeletConfig) {
-			expected.Authentication.Anonymous.Enabled = pointer.Bool(true)
+			expected.Authentication.Anonymous.Enabled = ptr.To(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
@@ -747,8 +747,8 @@ func makeKubeletConfig(t *testing.T, mods ...func(*kubeletConfig)) string {
 		},
 		ClusterDNS:         []string{"99.99.99.10"},
 		ClusterDomain:      "test.local",
-		EventRecordQPS:     pointer.Int32(0),
-		FailSwapOn:         pointer.Bool(false),
+		EventRecordQPS:     ptr.To(int32(0)),
+		FailSwapOn:         ptr.To(false),
 		RotateCertificates: true,
 		ServerTLSBootstrap: true,
 		TLSMinVersion:      "VersionTLS12",

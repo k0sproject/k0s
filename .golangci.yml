@@ -43,6 +43,11 @@ linters-settings:
               Usages of the k8s cloud provider are only allowed from within the
               k0s cloud provider package. This is to ensure that it's not
               leaking global flags into k0s.
+      deprecations:
+        list-mode: lax
+        deny:
+          - pkg: k8s.io/utils/pointer
+            desc: Use k8s.io/utils/ptr.
   golint:
     min-confidence: 0
   goheader:
