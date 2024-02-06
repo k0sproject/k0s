@@ -1150,9 +1150,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      General Usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bash" class="md-nav__link">
     <span class="md-ellipsis">
-      Bash
+      bash
     </span>
   </a>
   
@@ -1161,7 +1179,7 @@
         <li class="md-nav__item">
   <a href="#zsh" class="md-nav__link">
     <span class="md-ellipsis">
-      Zsh
+      zsh
     </span>
   </a>
   
@@ -1170,7 +1188,16 @@
         <li class="md-nav__item">
   <a href="#fish" class="md-nav__link">
     <span class="md-ellipsis">
-      Fish
+      fish
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#powershell" class="md-nav__link">
+    <span class="md-ellipsis">
+      powershell
     </span>
   </a>
   
@@ -1962,9 +1989,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      General Usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bash" class="md-nav__link">
     <span class="md-ellipsis">
-      Bash
+      bash
     </span>
   </a>
   
@@ -1973,7 +2018,7 @@
         <li class="md-nav__item">
   <a href="#zsh" class="md-nav__link">
     <span class="md-ellipsis">
-      Zsh
+      zsh
     </span>
   </a>
   
@@ -1982,7 +2027,16 @@
         <li class="md-nav__item">
   <a href="#fish" class="md-nav__link">
     <span class="md-ellipsis">
-      Fish
+      fish
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#powershell" class="md-nav__link">
+    <span class="md-ellipsis">
+      powershell
     </span>
   </a>
   
@@ -2004,28 +2058,74 @@
 
 
 <h1 id="enabling-shell-completion">Enabling Shell Completion<a class="headerlink" href="#enabling-shell-completion" title="Permanent link">#</a></h1>
-<p>Generate the k0s completion script using the <code>k0s completion &lt;shell_name&gt;</code> command, for Bash, Zsh, fish, or PowerShell.</p>
-<p>Sourcing the completion script in your shell enables k0s autocompletion.</p>
-<h2 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;source &lt;(k0s completion bash)&#39;</span><span class="w"> </span>&gt;&gt;~/.bashrc
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">#</a></h2>
+<p>Shell completion enhances the user experience by providing auto-completion for
+commands in the terminal. K0s supports shell completion for the following
+shells:</p>
+<ul>
+<li><code>bash</code>, <a href="https://www.gnu.org/software/bash/">GNU Bash</a></li>
+<li><code>zsh</code>, <a href="https://www.zsh.org/">the Z-shell</a></li>
+<li><code>fish</code>, <a href="(https://fishshell.com/)">the friendly interactive shell</a></li>
+<li><code>powershell</code>, <a href="https://learn.microsoft.com/powershell/">Microsoft PowerShell</a></li>
+</ul>
+<h2 id="general-usage">General Usage<a class="headerlink" href="#general-usage" title="Permanent link">#</a></h2>
+<p>To generate a completion script for your shell, use the following command: <code>k0s
+completion &lt;shell_name&gt;</code>. Sourcing the completion script in your shell enables
+k0s autocompletion.</p>
+<h2 id="bash">bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h2>
+<p>One-shot usage: <code>source &lt;(k0s completion bash)</code>.</p>
+<p>This is a recipe to load completions for each new shell. Adjust to your personal
+needs:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>~/.bash_completion.d
+k0s<span class="w"> </span>completion<span class="w"> </span>bash<span class="w"> </span>&gt;~/.bash_completion.d/k0s
+
+cat<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39; &gt;~/.bashrc</span>
+<span class="s">for compFile in ~/.bash_completion.d/*; do</span>
+<span class="s">  [ ! -f &quot;$compFile&quot; ] || source -- &quot;$compFile&quot;</span>
+<span class="s">done</span>
+<span class="s">unset compFile</span>
+<span class="s">EOF</span>
 </code></pre></div>
-<p>To load completions for each session, execute once:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>completion<span class="w"> </span>bash<span class="w"> </span>&gt;<span class="w"> </span>/etc/bash_completion.d/k0s
+<p>Then restart the shell or source <code>~/.bashrc</code>.</p>
+<h2 id="zsh">zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h2>
+<p>One-shot usage: <code>source &lt;(k0s completion bash)</code>.</p>
+<p>Following a recipe to load completions for each new shell. Adjust to your
+personal needs. If shell completion is not already enabled in your zsh
+environment you will need to enable it:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;autoload -Uz compinit; compinit&quot;</span><span class="w"> </span>&gt;&gt;~/.zshrc
 </code></pre></div>
-<h2 id="zsh">Zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h2>
-<p>If shell completion is not already enabled in Zsh environment you will need to enable it:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;autoload -U compinit; compinit&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.zshrc
+<p>Place the completion script in a custom <code>site-functions</code> folder:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>--<span class="w"> </span>~/.local/share/zsh/site-functions
+k0s<span class="w"> </span>completion<span class="w"> </span>zsh<span class="w"> </span>&gt;~/.local/share/zsh/site-functions/_k0s
 </code></pre></div>
-<p>To load completions for each session, execute once:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>completion<span class="w"> </span>zsh<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">fpath</span><span class="p">[1]</span><span class="si">}</span><span class="s2">/_k0s&quot;</span>
+<p>Edit <code>~/.zshrc</code> and add the line <code>fpath+=(~/.local/share/zsh/site-functions)</code>
+somewhere before <code>compinit</code> is called. After that, restart the shell.</p>
+<p>When using <a href="https://ohmyz.sh/">Oh My ZSH!</a>, you can create a <a href="https://github.com/ohmyzsh/ohmyzsh/wiki/Customization#overriding-and-adding-plugins">custom plugin</a>:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>--<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ZSH_CUSTOM</span><span class="s2">/plugins/k0s&quot;</span>
+cat<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39; &gt;&quot;$ZSH_CUSTOM/plugins/k0s/k0s.plugin.zsh&quot;</span>
+<span class="s">k0s completion zsh &gt;| &quot;$ZSH_CACHE_DIR/completions/_k0s&quot; &amp;|</span>
+<span class="s">EOF</span>
+omz<span class="w"> </span>plugin<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>k0s
 </code></pre></div>
-<p><strong>Note</strong>: You must start a new shell for the setup to take effect.</p>
-<h2 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>completion<span class="w"> </span>fish<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nb">source</span>
+<p>Then restart the shell.</p>
+<h2 id="fish">fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h2>
+<p>One-shot usage: <code>k0s completion fish | source</code>.</p>
+<p>This is a recipe to load completions for each new shell. Adjust to your personal
+needs:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>--<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">XDG_CONFIG_HOME</span><span class="k">:-</span><span class="nv">$HOME</span><span class="p">/.config</span><span class="si">}</span><span class="s2">/fish/completions&quot;</span>
+k0s<span class="w"> </span>completion<span class="w"> </span>fish<span class="w"> </span>&gt;<span class="s2">&quot;</span><span class="si">${</span><span class="nv">XDG_CONFIG_HOME</span><span class="k">:-</span><span class="nv">$HOME</span><span class="p">/.config</span><span class="si">}</span><span class="s2">/fish/completions/k0s.fish&quot;</span>
 </code></pre></div>
-<p>To load completions for each session, execute once:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>completion<span class="w"> </span>fish<span class="w"> </span>&gt;<span class="w"> </span>~/.config/fish/completions/k0s.fish
+<p>Then restart the shell.</p>
+<h2 id="powershell">powershell<a class="headerlink" href="#powershell" title="Permanent link">#</a></h2>
+<p>Save the completion script into a file:</p>
+<div class="highlight"><pre><span></span><code><span class="n">k0s</span> <span class="n">completion</span> <span class="n">powershell</span> <span class="p">&gt;</span> <span class="n">C</span><span class="p">:\</span><span class="n">path</span><span class="p">\</span><span class="n">to</span><span class="p">\</span><span class="n">k0s</span><span class="p">.</span><span class="n">ps1</span>
 </code></pre></div>
+<p>You can import it like so:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">Import-Module</span> <span class="n">C</span><span class="p">:\</span><span class="n">path</span><span class="p">\</span><span class="n">to</span><span class="p">\</span><span class="n">k0s</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
+<p>To automatically load the module for each new shell session, add the above line
+to your shell profile. You can find the path to your profile via <code>Write-Output
+$profile</code>.</p>
 
 
 
