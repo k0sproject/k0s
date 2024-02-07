@@ -21,8 +21,9 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/sirupsen/logrus"
@@ -110,12 +111,10 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		s.keepResource(resource)
 	}
 
-	var err error
 	if prune {
-		err = s.prune(ctx, mapper)
+		return s.prune(ctx, mapper)
 	}
-
-	return err
+	return nil
 }
 
 func (s *Stack) keepResource(resource *unstructured.Unstructured) {
@@ -125,16 +124,16 @@ func (s *Stack) keepResource(resource *unstructured.Unstructured) {
 }
 
 func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
-	pruneableResources, err := s.findPruneableResources(ctx, mapper)
+	prunableResources, err := s.findPrunableResources(ctx, mapper)
 	if err != nil {
 		return err
 	}
-	if len(pruneableResources) == 0 {
+	if len(prunableResources) == 0 {
 		return nil
 	}
 
 	s.log.Debug("starting to delete resources, namespaced resources first")
-	for _, resource := range pruneableResources {
+	for _, resource := range prunableResources {
 		resourceID := generateResourceID(resource)
 		if resource.GetNamespace() != "" {
 			s.log.Debugf("deleting resource %s", resourceID)
@@ -144,7 +143,7 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 			}
 		}
 	}
-	for _, resource := range pruneableResources {
+	for _, resource := range prunableResources {
 		resourceID := generateResourceID(resource)
 		if resource.GetNamespace() == "" {
 			s.log.Debugf("deleting resource %s", resourceID)
@@ -154,7 +153,7 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 			}
 		}
 	}
-	s.log.Debug("resources pruned succesfully")
+	s.log.Debug("resources pruned successfully")
 	s.keepResources = []string{}
 
 	return nil
@@ -170,8 +169,7 @@ var ignoredResources = []string{
 	"discovery.k8s.io/v1:EndpointSlice",
 }
 
-func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]unstructured.Unstructured, error) {
-	var pruneableResources []unstructured.Unstructured
+func (s *Stack) findPrunableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]unstructured.Unstructured, error) {
 	apiResourceLists, err := s.Discovery.ServerPreferredResources()
 	if err != nil {
 		// Client-Go emits an error when an API service is registered but unimplemented.
@@ -214,27 +212,40 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 
 	s.log.Debug("starting to find prunable resources")
 	start := time.Now()
-	wg := sync.WaitGroup{}
-	mu := sync.Mutex{} // The shield against concurrent appends for pruneable resources
 
 	// Let's parallelize each group-version-kind finding
+	prunableResourcesCh := make(chan []unstructured.Unstructured, len(groupVersionKinds))
+	eg, ctx := errgroup.WithContext(ctx)
+
 	for _, groupVersionKind := range groupVersionKinds {
-		wg.Add(1)
-		go func(groupVersionKind *schema.GroupVersionKind) {
-			defer wg.Done()
-			pruneableForGvk := s.findPruneableResourceForGroupVersionKind(ctx, mapper, groupVersionKind)
-			if len(pruneableForGvk) > 0 {
-				mu.Lock()
-				pruneableResources = append(pruneableResources, pruneableForGvk...)
-				mu.Unlock()
+		gvk := groupVersionKind
+		eg.Go(func() error {
+			prunableForGVK, err := s.findPrunableResourceForGroupVersionKind(ctx, mapper, gvk)
+			if err != nil {
+				return fmt.Errorf("error finding prunable resources for %s: %w", gvk, err)
 			}
-			s.log.Debugf("found %d prunable resources for kind %s", len(pruneableForGvk), groupVersionKind)
-		}(groupVersionKind)
+			s.log.Debugf("found %d prunable resources for kind %s", len(prunableForGVK), gvk)
+
+			if len(prunableForGVK) > 0 {
+				prunableResourcesCh <- prunableForGVK
+			}
+			return nil
+		})
 	}
-	wg.Wait()
-	s.log.Debugf("found %d prunable resources", len(pruneableResources))
+
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
+	close(prunableResourcesCh)
+
+	var prunableResources []unstructured.Unstructured
+	for resources := range prunableResourcesCh {
+		prunableResources = append(prunableResources, resources...)
+	}
+
+	s.log.Debugf("found %d prunable resources", len(prunableResources))
 	s.log.Debugf("finding prunable resources took %s", time.Since(start).String())
-	return pruneableResources, nil
+	return prunableResources, nil
 }
 
 func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, resource unstructured.Unstructured) error {
@@ -268,42 +279,40 @@ func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper
 	return drClient, nil
 }
 
-func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind) []unstructured.Unstructured {
+func (s *Stack) findPrunableResourceForGroupVersionKind(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind) ([]unstructured.Unstructured, error) {
 	groupKind := schema.GroupKind{
 		Group: groupVersionKind.Group,
 		Kind:  groupVersionKind.Kind,
 	}
-	mapping, _ := mapper.RESTMapping(groupKind, groupVersionKind.Version)
-	// FIXME error handling...
-	if mapping != nil {
-		// We're running this with full admin rights, we should have capability to get stuff with single call
-		drClient := s.Client.Resource(mapping.Resource)
-		return s.getPruneableResources(ctx, drClient)
+	mapping, err := mapper.RESTMapping(groupKind, groupVersionKind.Version)
+	if err != nil {
+		return nil, fmt.Errorf("error identifying resource mapping for %s: %w", groupKind, err)
 	}
-
-	return nil
+	// We're running this with full admin rights, we should have capability to get stuff with single call
+	drClient := s.Client.Resource(mapping.Resource)
+	return s.getPrunableResources(ctx, drClient)
 }
 
-func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.ResourceInterface) []unstructured.Unstructured {
-	var pruneableResources []unstructured.Unstructured
+func (s *Stack) getPrunableResources(ctx context.Context, drClient dynamic.ResourceInterface) ([]unstructured.Unstructured, error) {
 	listOpts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", NameLabel, s.Name),
 	}
 	resourceList, err := drClient.List(ctx, listOpts)
 	if err != nil {
-		// FIXME why no error propagation !??!
-		return nil
+		return nil, fmt.Errorf("error listing resources for pruning: %w", err)
 	}
+
+	var prunableResources []unstructured.Unstructured
 	for _, resource := range resourceList.Items {
 		// We need to filter out objects that do not actually have the stack label set
 		// There are some cases where we get "extra" results, e.g.: https://github.com/kubernetes-sigs/metrics-server/issues/604
 		if !s.isInStack(resource) && len(resource.GetOwnerReferences()) == 0 && resource.GetLabels()[NameLabel] == s.Name {
 			s.log.Debugf("adding prunable resource: %s", generateResourceID(resource))
-			pruneableResources = append(pruneableResources, resource)
+			prunableResources = append(prunableResources, resource)
 		}
 	}
 
-	return pruneableResources
+	return prunableResources, nil
 }
 
 func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
