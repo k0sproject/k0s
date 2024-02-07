@@ -19,6 +19,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -29,7 +30,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"golang.org/x/exp/slices"
 )
 
 var (

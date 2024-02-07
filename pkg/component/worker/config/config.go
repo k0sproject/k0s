@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -30,7 +31,6 @@ import (
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 
 	"go.uber.org/multierr"
-	"golang.org/x/exp/slices"
 	"sigs.k8s.io/yaml"
 )
 

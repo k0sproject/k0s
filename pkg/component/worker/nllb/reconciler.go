@@ -25,6 +25,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,7 +40,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"golang.org/x/exp/slices"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -320,8 +321,8 @@ func (r *Reconciler) runReconcileLoop(ctx context.Context) {
 			}
 
 			desiredAPIServers = slices.Clone(profile.APIServerAddresses)
-			slices.SortFunc(desiredAPIServers, func(l, r k0snet.HostPort) bool {
-				return l.String() < r.String()
+			slices.SortFunc(desiredAPIServers, func(l, r k0snet.HostPort) int {
+				return strings.Compare(l.String(), r.String())
 			})
 
 		case <-ticker.C:

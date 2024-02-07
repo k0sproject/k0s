@@ -17,12 +17,12 @@ limitations under the License.
 package workerconfig
 
 import (
+	"slices"
+
 	"github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
-
-	"golang.org/x/exp/slices"
 )
 
 // snapshot holds a snapshot of the parts that influence worker configurations.
