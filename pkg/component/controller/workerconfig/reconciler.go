@@ -24,6 +24,7 @@ import (
 	"math"
 	"net"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -52,7 +53,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
-	"golang.org/x/exp/slices"
 	"sigs.k8s.io/yaml"
 )
 
@@ -492,10 +492,10 @@ func (r *Reconciler) generateResources(snapshot *snapshot) (resources, error) {
 	}
 
 	// Ensure a stable order, so that reflect.DeepEqual on slices will work.
-	slices.SortFunc(objects, func(l, r resource) bool {
+	slices.SortFunc(objects, func(l, r resource) int {
 		x := strings.Join([]string{l.GetObjectKind().GroupVersionKind().Kind, l.GetNamespace(), l.GetName()}, "/")
 		y := strings.Join([]string{r.GetObjectKind().GroupVersionKind().Kind, r.GetNamespace(), r.GetName()}, "/")
-		return x < y
+		return strings.Compare(x, y)
 	})
 
 	resources, err := applier.ToUnstructuredSlice(nil, objects...)

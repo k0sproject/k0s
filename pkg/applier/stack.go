@@ -21,12 +21,12 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
