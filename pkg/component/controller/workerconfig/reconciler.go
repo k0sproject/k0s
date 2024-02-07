@@ -48,7 +48,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
@@ -510,11 +510,11 @@ func (r *Reconciler) buildConfigMaps(snapshot *snapshot) ([]*corev1.ConfigMap, e
 	workerProfiles := make(map[string]*workerconfig.Profile)
 
 	workerProfile := r.buildProfile(snapshot)
-	workerProfile.KubeletConfiguration.CgroupsPerQOS = pointer.Bool(true)
+	workerProfile.KubeletConfiguration.CgroupsPerQOS = ptr.To(true)
 	workerProfiles["default"] = workerProfile
 
 	workerProfile = r.buildProfile(snapshot)
-	workerProfile.KubeletConfiguration.CgroupsPerQOS = pointer.Bool(false)
+	workerProfile.KubeletConfiguration.CgroupsPerQOS = ptr.To(false)
 	workerProfiles["default-windows"] = workerProfile
 
 	for _, profile := range snapshot.profiles {
@@ -605,10 +605,10 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			ClusterDomain:      r.clusterDomain,
 			TLSMinVersion:      "VersionTLS12",
 			TLSCipherSuites:    cipherSuites,
-			FailSwapOn:         pointer.Bool(false),
+			FailSwapOn:         ptr.To(false),
 			RotateCertificates: true,
 			ServerTLSBootstrap: true,
-			EventRecordQPS:     pointer.Int32(0),
+			EventRecordQPS:     ptr.To(int32(0)),
 		},
 		PauseImage:             snapshot.pauseImage.DeepCopy(),
 		NodeLocalLoadBalancing: snapshot.nodeLocalLoadBalancing.DeepCopy(),

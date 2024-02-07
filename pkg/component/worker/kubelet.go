@@ -42,7 +42,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
@@ -236,8 +236,8 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 	preparedConfig.VolumePluginDir = kubeletConfigData.VolumePluginDir               // k.K0sVars.KubeletVolumePluginDir
 	preparedConfig.KubeReservedCgroup = kubeletConfigData.KubeReservedCgroup
 	preparedConfig.KubeletCgroups = kubeletConfigData.KubeletCgroups
-	preparedConfig.ResolverConfig = pointer.String(kubeletConfigData.ResolvConf)
-	preparedConfig.CgroupsPerQOS = pointer.Bool(kubeletConfigData.CgroupsPerQOS)
+	preparedConfig.ResolverConfig = ptr.To(kubeletConfigData.ResolvConf)
+	preparedConfig.CgroupsPerQOS = ptr.To(kubeletConfigData.CgroupsPerQOS)
 	preparedConfig.StaticPodURL = kubeletConfigData.StaticPodURL
 
 	if k.CRISocket == "" && runtime.GOOS != "windows" {

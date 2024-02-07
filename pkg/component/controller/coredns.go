@@ -31,7 +31,7 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -397,7 +397,7 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		// to 7 replicas, it would be the same as the default, and for
 		// deployments with 8 or more replicas, this would artificially
 		// constrain the rolling update speed.
-		config.MaxUnavailableReplicas = pointer.Uint(1)
+		config.MaxUnavailableReplicas = ptr.To(uint(1))
 
 	}
 

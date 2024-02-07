@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 type VersionedResource interface {
@@ -259,7 +259,7 @@ func (w *Watcher[T]) list(ctx context.Context, condition Condition[T]) (*startWa
 	resourceVersion, items, err := w.List(ctx, metav1.ListOptions{
 		FieldSelector:  w.fieldSelector,
 		LabelSelector:  w.labelSelector,
-		TimeoutSeconds: pointer.Int64(maxListDurationSecs),
+		TimeoutSeconds: ptr.To(int64(maxListDurationSecs)),
 	})
 	if err != nil {
 		return nil, err
@@ -289,7 +289,7 @@ func (w *Watcher[T]) watch(ctx context.Context, resourceVersion string, conditio
 		AllowWatchBookmarks: true,
 		FieldSelector:       w.fieldSelector,
 		LabelSelector:       w.labelSelector,
-		TimeoutSeconds:      pointer.Int64(maxWatchDurationSecs),
+		TimeoutSeconds:      ptr.To(int64(maxWatchDurationSecs)),
 	})
 	if err != nil {
 		return nil, err

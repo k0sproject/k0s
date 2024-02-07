@@ -38,7 +38,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
@@ -276,7 +276,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 		Spec: corev1.PodSpec{
 			HostNetwork: true,
 			SecurityContext: &corev1.PodSecurityContext{
-				RunAsNonRoot: pointer.Bool(true),
+				RunAsNonRoot: ptr.To(true),
 			},
 			Containers: []corev1.Container{{
 				Name:            "nllb",
@@ -284,9 +284,9 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 				ImagePullPolicy: podParams.pullPolicy,
 				Ports:           ports,
 				SecurityContext: &corev1.SecurityContext{
-					ReadOnlyRootFilesystem:   pointer.Bool(true),
-					Privileged:               pointer.Bool(false),
-					AllowPrivilegeEscalation: pointer.Bool(false),
+					ReadOnlyRootFilesystem:   ptr.To(true),
+					Privileged:               ptr.To(false),
+					AllowPrivilegeEscalation: ptr.To(false),
 					Capabilities: &corev1.Capabilities{
 						Drop: []corev1.Capability{"ALL"},
 					},
@@ -312,7 +312,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 				VolumeSource: corev1.VolumeSource{
 					HostPath: &corev1.HostPathVolumeSource{
 						Path: params.configDir,
-						Type: (*corev1.HostPathType)(pointer.String(string(corev1.HostPathDirectory))),
+						Type: (*corev1.HostPathType)(ptr.To(string(corev1.HostPathDirectory))),
 					},
 				}},
 			},

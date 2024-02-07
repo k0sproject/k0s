@@ -31,7 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiwatch "k8s.io/apimachinery/pkg/watch"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 func TestWatcher(t *testing.T) {
@@ -237,7 +237,7 @@ func TestWatcher(t *testing.T) {
 		provider.watch = func(opts metav1.ListOptions) error {
 			assert.Equal(t, t.Name(), opts.ResourceVersion)
 			assert.True(t, opts.AllowWatchBookmarks)
-			assert.Equal(t, opts.TimeoutSeconds, pointer.Int64(120))
+			assert.Equal(t, opts.TimeoutSeconds, ptr.To(int64(120)))
 
 			provider.ch = openEventChanWith(
 				apiwatch.Event{

@@ -31,7 +31,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	fakecoordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1/fake"
 	k8stesting "k8s.io/client-go/testing"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
@@ -176,10 +176,10 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 			Name: "test",
 		},
 		Spec: coordinationv1.LeaseSpec{
-			HolderIdentity:       pointer.String("pool1"),
+			HolderIdentity:       ptr.To("pool1"),
 			AcquireTime:          &now,
 			RenewTime:            &now,
-			LeaseDurationSeconds: pointer.Int32(60 * 60), // block lease for a very long time
+			LeaseDurationSeconds: ptr.To(int32((1 * time.Hour).Seconds())), // block lease for a very long time
 		},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)

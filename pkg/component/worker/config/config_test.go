@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	logsv1 "k8s.io/component-base/logs/api/v1"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -151,7 +151,7 @@ var roundtripTests = []roundtripTest{
 					},
 					ImagePullPolicy:            corev1.PullAlways,
 					APIServerBindPort:          4711,
-					KonnectivityServerBindPort: pointer.Int32(1337),
+					KonnectivityServerBindPort: ptr.To(int32(1337)),
 				},
 			},
 			Konnectivity: Konnectivity{AgentPort: 1337},
