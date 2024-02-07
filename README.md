@@ -12,10 +12,6 @@
 ![k0s-logo-dark](docs/img/k0s-logo-full-color-dark.svg#gh-dark-mode-only)
 ![k0s-logo-light](docs/img/k0s-logo-full-color-light.svg#gh-light-mode-only)
 
-## Help Shape the Future of k0s Kubernetes: Participate in our 2023 Users Survey
-
-As we continue to strive towards making k0s the best Kubernetes distribution for you, we believe in the importance of listening to your experiences, feedback, and insights. That’s why we’ve rolled out the “k0s Kubernetes Users Survey 2023,” and we’re inviting you to share your thoughts! Read more at https://medium.com/k0sproject/help-shape-the-future-of-k0s-kubernetes-participate-in-our-2023-users-survey-9549d3a72e87. For the hasty ones, direct link to the survey is https://forms.gle/yNoVKJJYnUUyrqCR6.
-
 ## What happened to Github stargazers?
 
 In September 2022 we made a human error while creating some build automation scripts&tools for the repo. Our automation accidentally changed the repo to a private one for few minutes. That itself is not a big deal and everything was restored quickly. But the nasty side effect is that it also removed all the stargazers at that point. :(
