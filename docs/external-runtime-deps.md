@@ -150,6 +150,31 @@ Optional cgroup controllers:
 [cgroup v1]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/
 [cgroup v2]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html
 
+### No integration with Name Service Switch (NSS) APIs
+
+The k0s Linux binaries are by default statically linked against [musl libc].
+This includes the binaries distributed on the GitHub releases pages. Static
+linking ensures that k0s can run seamlessly across a wide range of Linux
+environments by not requiring a specific standard C library to be installed on
+the host system. However, this design choice means that k0s cannot use [glibc's
+NSS APIs], which require dynamic linking.
+
+This limitation is particularly relevant when a system uses NSS plugins, such as
+[nss-myhostname], for resolving network names like `localhost`. Systems lacking
+a dedicated stub resolver capable of handling `localhost` DNS queries
+specifically will encounter issues running k0s. To mitigate this, users are
+advised to either activate a stub DNS resolver, such as `systemd-resolved`, or
+to manually add `localhost` entries to the `/etc/hosts` file as shown below:
+
+```text
+127.0.0.1 localhost
+::1 localhost
+```
+
+[musl libc]: https://musl.libc.org/
+[glibc's NSS APIs]: https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html
+[nss-myhostname]: https://www.freedesktop.org/software/systemd/man/latest/nss-myhostname.html
+
 ### External hard dependencies
 
 There are very few external tools that are needed or used.
