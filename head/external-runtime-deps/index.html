@@ -679,6 +679,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#no-integration-with-name-service-switch-nss-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      No integration with Name Service Switch (NSS) APIs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#external-hard-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       External hard dependencies
@@ -2050,6 +2059,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#no-integration-with-name-service-switch-nss-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      No integration with Name Service Switch (NSS) APIs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#external-hard-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       External hard dependencies
@@ -2249,6 +2267,22 @@ and, if enabled as a module, to load the <code>configs</code> module: <code>modp
    containerd and cri-o will use blkio to track disk I/O and throttling in both
    cgroup v1 and v2.</li>
 </ul>
+<h3 id="no-integration-with-name-service-switch-nss-apis">No integration with Name Service Switch (NSS) APIs<a class="headerlink" href="#no-integration-with-name-service-switch-nss-apis" title="Permanent link">#</a></h3>
+<p>The k0s Linux binaries are by default statically linked against <a href="https://musl.libc.org/">musl libc</a>.
+This includes the binaries distributed on the GitHub releases pages. Static
+linking ensures that k0s can run seamlessly across a wide range of Linux
+environments by not requiring a specific standard C library to be installed on
+the host system. However, this design choice means that k0s cannot use <a href="https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html">glibc's
+NSS APIs</a>, which require dynamic linking.</p>
+<p>This limitation is particularly relevant when a system uses NSS plugins, such as
+<a href="https://www.freedesktop.org/software/systemd/man/latest/nss-myhostname.html">nss-myhostname</a>, for resolving network names like <code>localhost</code>. Systems lacking
+a dedicated stub resolver capable of handling <code>localhost</code> DNS queries
+specifically will encounter issues running k0s. To mitigate this, users are
+advised to either activate a stub DNS resolver, such as <code>systemd-resolved</code>, or
+to manually add <code>localhost</code> entries to the <code>/etc/hosts</code> file as shown below:</p>
+<div class="highlight"><pre><span></span><code>127.0.0.1 localhost
+::1 localhost
+</code></pre></div>
 <h3 id="external-hard-dependencies">External hard dependencies<a class="headerlink" href="#external-hard-dependencies" title="Permanent link">#</a></h3>
 <p>There are very few external tools that are needed or used.</p>
 <h4 id="mountumount">mount/umount<a class="headerlink" href="#mountumount" title="Permanent link">#</a></h4>
