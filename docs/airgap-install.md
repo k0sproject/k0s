@@ -7,10 +7,15 @@ You can install k0s in an environment with restricted Internet access. Airgap in
 
 ## Prerequisites
 
-In order to create your own image bundle, you need
+In order to create your own image bundle, you need:
 
-- A working cluster with at least one controller, to be used to build the image bundle. For more information, refer to the [Quick Start Guide](install.md).
-- The containerd CLI management tool `ctr`, installed on the worker machine (refer to the ContainerD [getting-started](https://containerd.io/docs/getting-started/) guide).
+- A working cluster with at least one controller that will be used to build the
+  image bundle. See the [Quick Start Guide] for more information.
+- The containerd CLI management tool `ctr`, installed on the worker node. See
+  the [containerd Getting Started Guide] for more information.
+
+[Quick Start Guide]: install.md
+[containerd Getting Started Guide]: https://github.com/containerd/containerd/blob/v1.7.13/docs/getting-started.md
 
 ## 1. Create your own image bundle (optional)
 

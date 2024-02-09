@@ -85,7 +85,7 @@ Following chapters provide some examples how to configure different runtimes for
 
     Refer to the [gVisor install docs](https://gvisor.dev/docs/user_guide/install/) for more information.
 
-2. Prepare the config for `k0s` managed containerD, to utilize gVisor as additional runtime:
+2. Prepare the config for `k0s` managed containerd, to utilize gVisor as additional runtime:
 
     ```shell
     cat <<EOF | sudo tee /etc/k0s/containerd.d/gvisor.toml

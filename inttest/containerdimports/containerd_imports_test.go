@@ -28,11 +28,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ContainerDImportsSuite struct {
+type ContainerdImportsSuite struct {
 	common.BootlooseSuite
 }
 
-func (s *ContainerDImportsSuite) TestK0sGetsUp() {
+func (s *ContainerdImportsSuite) TestK0sGetsUp() {
 	ctx := s.Context()
 	ssh, err := s.SSH(ctx, s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -55,7 +55,7 @@ func (s *ContainerDImportsSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see kube-router pods ready")
 	s.NoError(common.WaitForKubeRouterReady(ctx, kc), "kube-router did not start")
 
-	s.addContainerDRuntime()
+	s.addContainerdRuntime()
 	s.T().Log("Creating new RuntimeClass for foo runtime")
 	runtimeClassName := "foo"
 
@@ -107,7 +107,7 @@ func (s *ContainerDImportsSuite) TestK0sGetsUp() {
 
 }
 
-func (s *ContainerDImportsSuite) addContainerDRuntime() {
+func (s *ContainerdImportsSuite) addContainerdRuntime() {
 	ctx := s.Context()
 	s.T().Log("Setting up alternative runtime and config")
 	workerSSH, err := s.SSH(ctx, s.WorkerNode(0))
@@ -121,8 +121,8 @@ func (s *ContainerDImportsSuite) addContainerDRuntime() {
 	s.PutFile(s.WorkerNode(0), "/etc/k0s/containerd.d/foo.toml", fooRuntimeConfig)
 }
 
-func TestContainerDImportsSuite(t *testing.T) {
-	s := ContainerDImportsSuite{
+func TestContainerdImportsSuite(t *testing.T) {
+	s := ContainerdImportsSuite{
 		common.BootlooseSuite{
 			LaunchMode:      common.LaunchModeOpenRC, // so we can easily restart k0s
 			ControllerCount: 1,
