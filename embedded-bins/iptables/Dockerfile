@@ -22,6 +22,8 @@ RUN strip /usr/local/sbin/xtables-nft-multi
 RUN scanelf -Rn /usr/local && file /usr/local/sbin/*
 
 FROM scratch
+ARG VERSION
+
 COPY --from=build /usr/local/sbin/xtables-legacy-multi \
 	/bin/xtables-legacy-multi
 COPY --from=build /usr/local/sbin/xtables-nft-multi \
