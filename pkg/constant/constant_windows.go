@@ -17,22 +17,12 @@ limitations under the License.
 package constant
 
 const (
-	// DataDirDefault folder contains all k0s state
+	// DataDirDefault is the default directory containing k0s state.
 	DataDirDefault = "C:\\var\\lib\\k0s"
-	// CertRootDir defines the root location for all pki related artifacts
-	CertRootDir = "C:\\var\\lib\\k0s\\pki"
-	// BinDir defines the location for all pki related binaries
-	BinDir = "C:\\var\\lib\\k0s\\bin"
-	// RunDir run directory
-	RunDir = "C:\\run\\k0s"
-	// ManifestsDir stack applier directory
-	ManifestsDir = "C:\\var\\lib\\k0s\\manifests"
+
 	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables
 	KubeletVolumePluginDir = "C:\\usr\\libexec\\k0s\\kubelet-plugins\\volume\\exec"
 
-	KineSocket                     = "kine\\kine.sock:2379"
-	KubePauseContainerImage        = "registry.k8s.io/pause"
-	KubePauseContainerImageVersion = "3.9"
-	K0sConfigPathDefault           = "C:\\etc\\k0s\\k0s.yaml"
-	RuntimeConfigPathDefault       = RunDir + "\\k0s.yaml"
+	KineSocket           = "kine\\kine.sock:2379"
+	K0sConfigPathDefault = "C:\\etc\\k0s\\k0s.yaml"
 )
