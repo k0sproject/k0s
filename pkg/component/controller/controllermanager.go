@@ -46,7 +46,7 @@ type Manager struct {
 	ExtraArgs             string
 
 	supervisor     *supervisor.Supervisor
-	uid, gid       int
+	uid            int
 	previousConfig stringmap.StringMap
 }
 
@@ -160,7 +160,6 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		DataDir: a.K0sVars.DataDir,
 		Args:    args.ToDashedArgs(),
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 	a.previousConfig = args
 	return a.supervisor.Supervise()

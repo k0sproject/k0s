@@ -54,7 +54,6 @@ type Etcd struct {
 
 	supervisor supervisor.Supervisor
 	uid        int
-	gid        int
 	ctx        context.Context
 }
 
@@ -87,7 +86,7 @@ func (e *Etcd) Init(_ context.Context) error {
 	}
 
 	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
-		err = chown(f, e.uid, e.gid)
+		err = chown(f, e.uid, -1)
 		if err != nil && os.Geteuid() == 0 {
 			return err
 		}
@@ -125,7 +124,7 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 			return nil, err
 		}
 		for _, f := range []string{filepath.Dir(etcdCaCertKey), etcdCaCertKey, etcdCaCert} {
-			if err := os.Chown(f, e.uid, e.gid); err != nil && os.Geteuid() == 0 {
+			if err := os.Chown(f, e.uid, -1); err != nil && os.Geteuid() == 0 {
 				return nil, err
 			}
 		}
@@ -223,7 +222,6 @@ func (e *Etcd) Start(ctx context.Context) error {
 		DataDir:       e.K0sVars.DataDir,
 		Args:          args.ToArgs(),
 		UID:           e.uid,
-		GID:           e.gid,
 		KeepEnvPrefix: true,
 	}
 

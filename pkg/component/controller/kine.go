@@ -42,7 +42,6 @@ import (
 // Kine implement the component interface to run kine
 type Kine struct {
 	Config       *v1beta1.KineConfig
-	gid          int
 	K0sVars      *config.CfgVars
 	supervisor   supervisor.Supervisor
 	uid          int
@@ -68,7 +67,7 @@ func (k *Kine) Init(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", kineSocketDir, err)
 	}
-	if err := os.Chown(kineSocketDir, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
+	if err := os.Chown(kineSocketDir, k.uid, -1); err != nil && os.Geteuid() == 0 {
 		logrus.Warningf("failed to chown %s", kineSocketDir)
 	}
 
@@ -82,11 +81,11 @@ func (k *Kine) Init(_ context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to create dir %s: %w", filepath.Dir(dsURL.Path), err)
 		}
-		err = os.Chown(filepath.Dir(dsURL.Path), k.uid, k.gid)
+		err = os.Chown(filepath.Dir(dsURL.Path), k.uid, -1)
 		if err != nil && os.Geteuid() == 0 {
 			return fmt.Errorf("failed to chown dir %s: %w", filepath.Dir(dsURL.Path), err)
 		}
-		if err := os.Chown(dsURL.Path, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
+		if err := os.Chown(dsURL.Path, k.uid, -1); err != nil && os.Geteuid() == 0 {
 			logrus.Warningf("datasource file %s does not exist", dsURL.Path)
 		}
 	}
@@ -122,7 +121,6 @@ func (k *Kine) Start(ctx context.Context) error {
 			fmt.Sprintf("--listen-address=unix://%s", k.K0sVars.KineSocketPath),
 		},
 		UID: k.uid,
-		GID: k.gid,
 	}
 
 	return k.supervisor.Supervise()
