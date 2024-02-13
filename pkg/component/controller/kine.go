@@ -59,6 +59,7 @@ func (k *Kine) Init(_ context.Context) error {
 	var err error
 	k.uid, err = users.GetUID(constant.KineUser)
 	if err != nil {
+		k.uid = 0
 		logrus.Warning(fmt.Errorf("running kine as root: %w", err))
 	}
 

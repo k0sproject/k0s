@@ -105,7 +105,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
 	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
 
-	uid, _ := users.GetUID(ownerName)
+	uid, err := users.GetUID(ownerName)
+	if err != nil {
+		uid = 0
+		logrus.WithError(err).Warnf("failed to get uid for user %s, using uid 0", ownerName)
+	}
 
 	// if regenerateCert returns true, it means we need to create the certs
 	if m.regenerateCert(certReq, keyFile, certFile) {
@@ -173,8 +177,12 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	}
 
 	// certs exist, let's just verify their permissions
-	_ = os.Chown(keyFile, uid, -1)
-	_ = os.Chown(certFile, uid, -1)
+	if err = os.Chown(keyFile, uid, -1); err != nil {
+		logrus.WithError(err).Warnf("failed to chown key file %s to %d", keyFile, uid)
+	}
+	if err = os.Chown(certFile, uid, -1); err != nil {
+		logrus.WithError(err).Warnf("failed to chown cert file %s to %d", certFile, uid)
+	}
 
 	cert, err := os.ReadFile(certFile)
 	if err != nil {

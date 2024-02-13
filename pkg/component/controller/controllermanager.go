@@ -71,6 +71,7 @@ func (a *Manager) Init(_ context.Context) error {
 	// controller manager running as api-server user as they both need access to same sa.key
 	a.uid, err = users.GetUID(constant.ApiserverUser)
 	if err != nil {
+		a.uid = 0
 		logrus.Warning(fmt.Errorf("running kube-controller-manager as root: %w", err))
 	}
 

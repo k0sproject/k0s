@@ -72,6 +72,7 @@ func (e *Etcd) Init(_ context.Context) error {
 
 	e.uid, err = users.GetUID(constant.EtcdUser)
 	if err != nil {
+		e.uid = 0
 		logrus.Warning(fmt.Errorf("running etcd as root: %w", err))
 	}
 

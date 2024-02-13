@@ -54,6 +54,7 @@ func (a *Scheduler) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.SchedulerUser)
 	if err != nil {
+		a.uid = 0
 		logrus.Warning(fmt.Errorf("running kube-scheduler as root: %w", err))
 	}
 	return assets.Stage(a.K0sVars.BinDir, kubeSchedulerComponentName, constant.BinDirMode)

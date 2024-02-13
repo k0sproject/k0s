@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/sirupsen/logrus"
 
 	"go.uber.org/multierr"
 )
@@ -42,8 +43,12 @@ func Exists(fileName string) bool {
 // Chown changes file/dir mode
 func Chown(file, owner string, permissions os.FileMode) error {
 	// Chown the file properly for the owner
-	uid, _ := users.GetUID(owner)
-	err := os.Chown(file, uid, -1)
+	uid, err := users.GetUID(owner)
+	if err != nil {
+		uid = 0
+		logrus.WithError(err).Warnf("failed to get uid for %s, using uid 0", owner)
+	}
+	err = os.Chown(file, uid, -1)
 	if err != nil && os.Geteuid() == 0 {
 		return err
 	}
