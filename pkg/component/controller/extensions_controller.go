@@ -44,6 +44,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
+	apiretry "k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
@@ -289,8 +290,13 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 		timeout = defaultTimeout
 	}
 	defer func() {
-		if err != nil {
-			cr.updateStatus(ctx, chart, chartRelease, err)
+		if err == nil {
+			return
+		}
+		if err := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
+			return cr.updateStatus(ctx, chart, chartRelease, err)
+		}); err != nil {
+			cr.L.WithError(err).Error("Failed to update status for chart release, give up", chart.Name)
 		}
 	}()
 	if chart.Status.ReleaseName == "" {
@@ -323,7 +329,11 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 			}
 		}
 	}
-	cr.updateStatus(ctx, chart, chartRelease, nil)
+	if err := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
+		return cr.updateStatus(ctx, chart, chartRelease, nil)
+	}); err != nil {
+		cr.L.WithError(err).Error("Failed to update status for chart release, give up", chart.Name)
+	}
 	return nil
 }
 
@@ -334,26 +344,36 @@ func (cr *ChartReconciler) chartNeedsUpgrade(chart v1beta1.Chart) bool {
 		chart.Status.ValuesHash == chart.Spec.HashValues())
 }
 
-func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart, chartRelease *release.Release, err error) {
-
-	chart.Spec.YamlValues()
+// updateStatus updates the status of the chart with the given release information. This function
+// starts by fetching an updated version of the chart from the api as the install may take a while
+// to complete and the chart may have been updated in the meantime. If returns the error returned
+// by the Update operation. Moreover, if the chart has indeed changed in the meantime we already
+// have an event for it so we will see it again soon.
+func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart, chartRelease *release.Release, err error) error {
+	nsn := types.NamespacedName{Namespace: chart.Namespace, Name: chart.Name}
+	var updchart v1beta1.Chart
+	if err := cr.Get(ctx, nsn, &updchart); err != nil {
+		return fmt.Errorf("can't get updated version of chart %s: %w", chart.Name, err)
+	}
+	chart.Spec.YamlValues() // XXX what is this function for ?
 	if chartRelease != nil {
-		chart.Status.ReleaseName = chartRelease.Name
-		chart.Status.Version = chartRelease.Chart.Metadata.Version
-		chart.Status.AppVersion = chartRelease.Chart.AppVersion()
-		chart.Status.Revision = int64(chartRelease.Version)
-		chart.Status.Namespace = chartRelease.Namespace
+		updchart.Status.ReleaseName = chartRelease.Name
+		updchart.Status.Version = chartRelease.Chart.Metadata.Version
+		updchart.Status.AppVersion = chartRelease.Chart.AppVersion()
+		updchart.Status.Revision = int64(chartRelease.Version)
+		updchart.Status.Namespace = chartRelease.Namespace
 	}
-	chart.Status.Updated = time.Now().String()
+	updchart.Status.Updated = time.Now().String()
+	updchart.Status.Error = ""
 	if err != nil {
-		chart.Status.Error = err.Error()
-	} else {
-		chart.Status.Error = ""
+		updchart.Status.Error = err.Error()
 	}
-	chart.Status.ValuesHash = chart.Spec.HashValues()
-	if updErr := cr.Client.Status().Update(ctx, &chart); updErr != nil {
+	updchart.Status.ValuesHash = chart.Spec.HashValues()
+	if updErr := cr.Client.Status().Update(ctx, &updchart); updErr != nil {
 		cr.L.WithError(updErr).Error("Failed to update status for chart release", chart.Name)
+		return updErr
 	}
+	return nil
 }
 
 func (ec *ExtensionsController) addRepo(repo k0sAPI.Repository) error {
