@@ -106,10 +106,10 @@ type PlanList struct {
 // PlanSpec describes the behavior of the `Plan`
 type PlanSpec struct {
 	// ID is a user-provided identifier for this plan.
-	ID string `json:"id"`
+	ID string `json:"id,omitempty"`
 
 	// Timestamp is a user-provided time that the plan was created.
-	Timestamp string `json:"timestamp"`
+	Timestamp string `json:"timestamp,omitempty"`
 
 	// Commands are a collection of all of the commands that need to be executed
 	// in order for this plan to transition to Completed.
