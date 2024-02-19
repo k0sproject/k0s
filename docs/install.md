@@ -61,7 +61,7 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
     ```shell
     $ sudo k0s status
-    Version: v1.26.13+k0s.1
+    Version: v1.26.13+k0s.0
     Process ID: 436
     Role: controller
     Workloads: true
