@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag (e.g."v1.27.10+k0s.1")'
+        description: 'Version tag (e.g."v1.27.10+k0s.0")'
         required: true
 
 env:
