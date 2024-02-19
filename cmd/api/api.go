@@ -19,9 +19,7 @@ package api
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -32,14 +30,12 @@ import (
 
 	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
 	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -50,16 +46,6 @@ import (
 type command struct {
 	*config.CLIOptions
 	client kubernetes.Interface
-}
-
-const (
-	workerRole     = "worker"
-	controllerRole = "controller"
-)
-
-var allowedUsageByRole = map[string]string{
-	workerRole:     "usage-bootstrap-api-worker-calls",
-	controllerRole: "usage-controller-join",
 }
 
 func NewAPICmd() *cobra.Command {
@@ -102,16 +88,13 @@ func (c *command) start() (err error) {
 		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		mux.Handle(prefix+"/etcd/members", mw.AllowMethods(http.MethodPost)(
-			c.controllerHandler(c.etcdHandler())))
+			c.authMiddleware(c.etcdHandler(), "usage-controller-join")))
 	}
 
 	if storage.IsJoinable() {
 		mux.Handle(prefix+"/ca", mw.AllowMethods(http.MethodGet)(
-			c.controllerHandler(c.caHandler())))
+			c.authMiddleware(c.caHandler(), "usage-controller-join")))
 	}
-	mux.Handle(prefix+"/calico/kubeconfig", mw.AllowMethods(http.MethodGet)(
-		c.workerHandler(c.kubeConfigHandler(nodeConfig.Spec.API.APIAddressURL())),
-	))
 
 	srv := &http.Server{
 		Handler: mux,
@@ -186,69 +169,6 @@ func (c *command) etcdHandler() http.Handler {
 	})
 }
 
-func (c *command) kubeConfigHandler(apiAddress string) http.Handler {
-	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-		tpl := `apiVersion: v1
-kind: Config
-clusters:
-- name: kubernetes
-  cluster:
-    certificate-authority-data: {{ .Ca }}
-    server: {{ .Server }}
-contexts:
-- name: calico-windows@kubernetes
-  context:
-    cluster: kubernetes
-    namespace: kube-system
-    user: calico-windows
-current-context: calico-windows@kubernetes
-users:
-- name: calico-windows
-  user:
-    token: {{ .Token }}
-`
-		l, err := c.client.CoreV1().Secrets("kube-system").List(context.Background(), metav1.ListOptions{})
-		if err != nil {
-			sendError(err, resp)
-			return
-		}
-		found := false
-		var secretWithToken corev1.Secret
-		for _, secret := range l.Items {
-			if !strings.HasPrefix(secret.Name, "calico-node-token") {
-				continue
-			}
-			found = true
-			secretWithToken = secret
-			break
-		}
-		if !found {
-			sendError(errors.New("no calico-node-token secret found"), resp)
-			return
-		}
-
-		tw := templatewriter.TemplateWriter{
-			Name:     "kube-config",
-			Template: tpl,
-			Data: struct {
-				Server    string
-				Ca        string
-				Token     string
-				Namespace string
-			}{
-				Server:    apiAddress,
-				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
-				Token:     string(secretWithToken.Data["token"]),
-				Namespace: string(secretWithToken.Data["namespace"]),
-			},
-		}
-		if err := tw.WriteToBuffer(resp); err != nil {
-			sendError(err, resp)
-			return
-		}
-	})
-}
-
 func (c *command) caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		caResp := v1beta1.CaResponse{}
@@ -294,7 +214,7 @@ func (c *command) caHandler() http.Handler {
 // We need to validate:
 //   - that we find a secret with the ID
 //   - that the token matches whats inside the secret
-func (c *command) isValidToken(ctx context.Context, token string, role string) bool {
+func (c *command) isValidToken(ctx context.Context, token string, usage string) bool {
 	parts := strings.Split(token, ".")
 	logrus.Debugf("token parts: %v", parts)
 	if len(parts) != 2 {
@@ -312,7 +232,7 @@ func (c *command) isValidToken(ctx context.Context, token string, role string) b
 		return false
 	}
 
-	usageValue, ok := secret.Data[allowedUsageByRole[role]]
+	usageValue, ok := secret.Data[usage]
 	if !ok || string(usageValue) != "true" {
 		return false
 	}
@@ -320,7 +240,7 @@ func (c *command) isValidToken(ctx context.Context, token string, role string) b
 	return true
 }
 
-func (c *command) authMiddleware(next http.Handler, role string) http.Handler {
+func (c *command) authMiddleware(next http.Handler, usage string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
@@ -331,7 +251,7 @@ func (c *command) authMiddleware(next http.Handler, role string) http.Handler {
 		parts := strings.Split(auth, "Bearer ")
 		if len(parts) == 2 {
 			token := parts[1]
-			if !c.isValidToken(r.Context(), token, role) {
+			if !c.isValidToken(r.Context(), token, usage) {
 				sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
 				return
 			}
@@ -342,12 +262,4 @@ func (c *command) authMiddleware(next http.Handler, role string) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func (c *command) controllerHandler(next http.Handler) http.Handler {
-	return c.authMiddleware(next, controllerRole)
-}
-
-func (c *command) workerHandler(next http.Handler) http.Handler {
-	return c.authMiddleware(next, workerRole)
 }
