@@ -79,12 +79,6 @@ func RandomBootstrapSecret(role string, valid time.Duration) (*corev1.Secret, st
 		StringData: map[string]string{
 			"token-id":     tokenID,
 			"token-secret": tokenSecret,
-
-			// This "usage-" is shared for all roles of the token which allows
-			// them to execute calls to the k0s API. This is done because we
-			// need to call the k0s API from windows workers during the join
-			// step.
-			"usage-bootstrap-api-auth": "true",
 		},
 	}
 
