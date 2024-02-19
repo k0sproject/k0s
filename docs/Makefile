@@ -18,7 +18,7 @@ TARGET_VERSION ?= latest
 # gives: "Error: The 'docs_dir' should not be the parent directory of the config file."
 # even if docs_dir is "."
 docs: .require-mkdocs cli
-	cd .. && KUBE_VERSION=$(kubernetes_version) mkdocs build --strict
+	cd .. && KUBERNETES_VERSION=$(kubernetes_version) mkdocs build --strict
 
 .PHONY: .require-mkdocs
 .require-mkdocs:
@@ -75,10 +75,9 @@ cli:
 	sed $(sedopt) '/\[k0s kubectl /d' cli/k0s_kubectl.md
 	ln -s k0s.md cli/README.md
 
-.docker-image.serve-dev.stamp: Dockerfile.serve-dev requirements_pip.txt requirements.txt Makefile.variables
+.docker-image.serve-dev.stamp: Dockerfile.serve-dev requirements_pip.txt requirements.txt Makefile.variables ../embedded-bins/Makefile.variables
 	docker build \
 	  --build-arg PYTHON_IMAGE_VERSION=$(python_version)-alpine$(alpine_version) \
-	  --build-arg KUBE_VERSION=$(kubernetes_version) \
 	  -t 'k0sdocs$(basename $@)' -f '$<' .
 	touch -- '$@'
 

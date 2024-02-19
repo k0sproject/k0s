@@ -135,7 +135,7 @@ markdown_extensions:
   - footnotes
 
 extra:
-  k8s_version: !!python/object/apply:os.getenv ["KUBE_VERSION"]
+  k8s_version: !!python/object/apply:os.getenv ["KUBERNETES_VERSION"]
   generator: false
   social:
     - icon: fontawesome/brands/github
