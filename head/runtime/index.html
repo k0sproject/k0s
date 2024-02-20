@@ -2131,7 +2131,7 @@
 <p>Refer to the <a href="https://gvisor.dev/docs/user_guide/install/">gVisor install docs</a> for more information.</p>
 </li>
 <li>
-<p>Prepare the config for <code>k0s</code> managed containerD, to utilize gVisor as additional runtime:</p>
+<p>Prepare the config for <code>k0s</code> managed containerd, to utilize gVisor as additional runtime:</p>
 <div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.d/gvisor.toml</span>
 <span class="s">version = 2</span>
 
