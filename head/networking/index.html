@@ -2118,11 +2118,9 @@
 <h3 id="kube-router">Kube-router<a class="headerlink" href="#kube-router" title="Permanent link">#</a></h3>
 <p>Kube-router is built into k0s, and so by default the distribution uses it for network provision. Kube-router uses the standard Linux networking stack and toolset, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.</p>
 <ul>
-<li>Supports armv7 (among many other archs)</li>
 <li>Uses bit less resources (~15%)</li>
 <li>Does NOT support dual-stack (IPv4/IPv6) networking</li>
 <li>Does NOT support Windows nodes</li>
-<li>Does NOT activate hairpin mode by default</li>
 </ul>
 <h3 id="calico">Calico<a class="headerlink" href="#calico" title="Permanent link">#</a></h3>
 <p>In addition to Kube-router, k0s also offers <a href="https://www.projectcalico.org/">Calico</a> as an alternative, built-in network provider. Calico is a layer 3 container networking solution that routes packets to pods. It supports, for example, pod-specific network policies that help to secure kubernetes clusters in demanding use cases. Calico uses the vxlan overlay network by default, and you can configure it to support ipip (IP-in-IP).</p>
