@@ -30,7 +30,7 @@ func TestAvailableComponents_SortedAndUnique(t *testing.T) {
 
 	assert.Equal(t, expected, availableComponents, "Available components aren't sorted")
 
-	slices.Compact(expected)
+	expected = slices.Compact(expected)
 	assert.Equal(t, expected, availableComponents, "Available components contain duplicates")
 }
 
