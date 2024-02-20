@@ -21,25 +21,26 @@ import (
 	"path/filepath"
 	"testing"
 
-	srvconfig "github.com/containerd/containerd/services/server/config"
+	serverconfig "github.com/containerd/containerd/services/server/config"
 	"github.com/sirupsen/logrus"
+
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestConfigurer_HandleImports(t *testing.T) {
-	t.Run("should merge CRI configs", func(t *testing.T) {
-		tmp := t.TempDir()
-		testLoadPath := filepath.Join(tmp, "*.toml")
+	t.Run("should merge CRI config snippets", func(t *testing.T) {
+		importsPath := t.TempDir()
 		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
 		criRuntimeConfig := `
 [plugins]
   [plugins."io.containerd.grpc.v1.cri".containerd]
     snapshotter = "zfs"
 `
-		err := os.WriteFile(filepath.Join(tmp, "foo.toml"), []byte(criRuntimeConfig), 0644)
+		err := os.WriteFile(filepath.Join(importsPath, "foo.toml"), []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
 		c := configurer{
-			loadPath:       testLoadPath,
+			loadPath:       filepath.Join(importsPath, "*.toml"),
 			criRuntimePath: criRuntimePath,
 			log:            logrus.New().WithField("test", t.Name()),
 		}
@@ -50,11 +51,11 @@ func TestConfigurer_HandleImports(t *testing.T) {
 
 		// Dump the config for inspection
 		b, _ := os.ReadFile(criRuntimePath)
-		t.Logf("cri config:\n%s", string(b))
+		t.Logf("CRI config:\n%s", string(b))
 
 		// Load the criRuntimeConfig and verify the settings are correct
-		containerdConfig := &srvconfig.Config{}
-		err = srvconfig.LoadConfig(criRuntimePath, containerdConfig)
+		containerdConfig := &serverconfig.Config{}
+		err = serverconfig.LoadConfig(criRuntimePath, containerdConfig)
 		require.NoError(t, err)
 
 		criConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
@@ -63,39 +64,39 @@ func TestConfigurer_HandleImports(t *testing.T) {
 	})
 
 	t.Run("should have single import for CRI if there's nothing in imports dir", func(t *testing.T) {
-		testLoadPath := filepath.Join(t.TempDir(), "*.toml")
 		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
 		c := configurer{
-			loadPath:       testLoadPath,
+			loadPath:       filepath.Join(t.TempDir(), "*.toml"),
 			criRuntimePath: criRuntimePath,
 			log:            logrus.New().WithField("test", t.Name()),
 		}
 		imports, err := c.handleImports()
-		require.NoError(t, err)
-		require.Len(t, imports, 1)
-		require.Equal(t, escapedPath(criRuntimePath), imports[0])
+		assert.NoError(t, err)
+		if assert.Len(t, imports, 1) {
+			assert.Equal(t, escapedPath(criRuntimePath), imports[0])
+		}
 	})
 
 	t.Run("should have two imports when one non CRI snippet", func(t *testing.T) {
-		tmp := t.TempDir()
-		testLoadPath := filepath.Join(tmp, "*.toml")
+		importsPath := t.TempDir()
 		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
 		criRuntimeConfig := `
 foo = "bar"
 version = 2
 `
-		nonCriConfigPath := filepath.Join(tmp, "foo.toml")
+		nonCriConfigPath := filepath.Join(importsPath, "foo.toml")
 		err := os.WriteFile(nonCriConfigPath, []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
 		c := configurer{
-			loadPath:       testLoadPath,
+			loadPath:       filepath.Join(importsPath, "*.toml"),
 			criRuntimePath: criRuntimePath,
 			log:            logrus.New().WithField("test", t.Name()),
 		}
 		imports, err := c.handleImports()
-		require.NoError(t, err)
-		require.Len(t, imports, 2)
-		require.Contains(t, imports, escapedPath(criRuntimePath))
-		require.Contains(t, imports, escapedPath(nonCriConfigPath))
+		assert.NoError(t, err)
+		if assert.Len(t, imports, 2) {
+			assert.Contains(t, imports, escapedPath(criRuntimePath))
+			assert.Contains(t, imports, escapedPath(nonCriConfigPath))
+		}
 	})
 }
