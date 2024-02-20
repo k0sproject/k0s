@@ -18,6 +18,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -129,7 +130,11 @@ func (c *Command) Start(ctx context.Context) error {
 
 	var staticPods worker.StaticPods
 
-	if !c.SingleNode && workerConfig.NodeLocalLoadBalancing.IsEnabled() {
+	if workerConfig.NodeLocalLoadBalancing.IsEnabled() {
+		if c.SingleNode {
+			return errors.New("node-local load balancing cannot be used in a single-node cluster")
+		}
+
 		sp := worker.NewStaticPods()
 		reconciler, err := nllb.NewReconciler(c.K0sVars, sp, c.WorkerProfile, *workerConfig.DeepCopy())
 		if err != nil {
