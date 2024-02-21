@@ -13,4 +13,4 @@ endif
 endif
 
 image:
-	docker build --build-arg ARCH=${HOST_ARCH} --build-arg HARDWARE=${HOST_HARDWARE} -t tool -f ./Dockerfile .
+	docker build --progress=plain --build-arg ARCH=${HOST_ARCH} --build-arg HARDWARE=${HOST_HARDWARE} -t tool -f ./Dockerfile .
