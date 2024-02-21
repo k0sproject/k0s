@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build unix
 
 /*
 Copyright 2021 k0s authors

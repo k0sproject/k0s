@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build unix
 
 /*
 Copyright 2020 k0s authors
@@ -16,27 +16,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package supervisor
+package constant
 
-import (
-	"os"
-	"syscall"
+const (
+	// DataDirDefault is the default directory containing k0s state.
+	DataDirDefault = "/var/lib/k0s"
+
+	// KubeletVolumePluginDir defines the location for kubelet volume plugin executables.
+	KubeletVolumePluginDir = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
+
+	KineSocket           = "kine/kine.sock:2379"
+	K0sConfigPathDefault = "/etc/k0s/k0s.yaml"
 )
-
-// DetachAttr creates the proper syscall attributes to run the managed processes
-func DetachAttr(uid, gid int) *syscall.SysProcAttr {
-	var creds *syscall.Credential
-
-	if os.Geteuid() == 0 {
-		creds = &syscall.Credential{
-			Uid: uint32(uid),
-			Gid: uint32(gid),
-		}
-	}
-
-	return &syscall.SysProcAttr{
-		Setpgid:    true,
-		Pgid:       0,
-		Credential: creds,
-	}
-}

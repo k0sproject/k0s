@@ -1,7 +1,7 @@
-//go:build !windows
+//go:build unix
 
 /*
-Copyright 2023 k0s authors
+Copyright 2020 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,23 +16,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package config
+package supervisor
 
 import (
-	"fmt"
 	"os"
 	"syscall"
 )
 
-func checkPid(pid int) error {
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return fmt.Errorf("failed to find process: %w", err)
+// DetachAttr creates the proper syscall attributes to run the managed processes
+func DetachAttr(uid, gid int) *syscall.SysProcAttr {
+	var creds *syscall.Credential
+
+	if os.Geteuid() == 0 {
+		creds = &syscall.Credential{
+			Uid: uint32(uid),
+			Gid: uint32(gid),
+		}
 	}
 
-	if err := proc.Signal(syscall.Signal(0)); err != nil {
-		return fmt.Errorf("failed to signal process: %w", err)
+	return &syscall.SysProcAttr{
+		Setpgid:    true,
+		Pgid:       0,
+		Credential: creds,
 	}
-
-	return nil
 }
