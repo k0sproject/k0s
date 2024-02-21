@@ -102,7 +102,7 @@ type Chart struct {
 
 // ManifestFileName returns filename to use for the crd manifest
 func (c Chart) ManifestFileName() string {
-	return fmt.Sprintf("%d_helm_extension_%s.yaml", c.Order, c.Name)
+	return fmt.Sprintf("%09d_helm_extension_%s.yaml", c.Order, c.Name)
 }
 
 // Validate performs validation
