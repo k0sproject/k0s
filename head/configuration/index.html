@@ -2910,7 +2910,7 @@ The default value <code>external</code> makes no storage deployed.</p>
 users to build a minimal Kubernetes control plane and use what ever components
 they need to fulfill their need for the control plane. Disabling the system
 components happens through a command line flag for the controller process:</p>
-<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,worker-config)
+<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
 </code></pre></div>
 <p><strong>Note:</strong> As of k0s 1.26, the kubelet-config component has been replaced by the
 worker-config component. k0s will issue a warning when the old component name is
