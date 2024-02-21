@@ -55,7 +55,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.12
 	go.etcd.io/etcd/etcdutl/v3 v3.5.12
 	go.uber.org/multierr v1.11.0
-	go.uber.org/zap v1.26.0
+	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.19.0
 	golang.org/x/mod v0.15.0
 	golang.org/x/sync v0.6.0
