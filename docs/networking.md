@@ -13,11 +13,9 @@ k0s supports two Container Network Interface (CNI) providers out-of-box, [Kube-r
 
 Kube-router is built into k0s, and so by default the distribution uses it for network provision. Kube-router uses the standard Linux networking stack and toolset, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.
 
-- Supports armv7 (among many other archs)
 - Uses bit less resources (~15%)
 - Does NOT support dual-stack (IPv4/IPv6) networking
 - Does NOT support Windows nodes
-- Does NOT activate hairpin mode by default
 
 ### Calico
 
