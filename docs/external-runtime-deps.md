@@ -224,22 +224,6 @@ are not detected.
 External `/usr/bin/id` will be executed as a fallback if local user lookup
 fails, in case NSS is used.
 
-### Other dependencies in previous versions of k0s
-
-- up until k0s v1.21.9+k0s.0: `iptables`  
-  Required for worker nodes. Resolved by @ncopa in [#1046] by adding `iptables`
-  and friends to k0s's embedded binaries.
-
-- up until k0s v1.21.7+k0s.0: `find`, `du` and `nice`  
-  Required for worker nodes. Resolved upstream by @ncopa in
-  [kubernetes/kubernetes#96115], contained in Kubernetes 1.21.8 ([5b13c8f68d4])
-  and 1.22.0 ([d45ba645a8f]).
-
-[#1046]: https://github.com/k0sproject/k0s/pull/1046
-[kubernetes/kubernetes#96115]: https://github.com/kubernetes/kubernetes/pull/96115
-[5b13c8f68d4]: https://github.com/kubernetes/kubernetes/commit/5b13c8f68d48740261fa4c96ecb0a504982088a8
-[d45ba645a8f]: https://github.com/kubernetes/kubernetes/commit/d45ba645a8f7b288284890a051c73bbae717da4b
-
 ## Windows specific
 <!--
 The kubernetes/system-validators require certain Windows versions starting with
