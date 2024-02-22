@@ -124,12 +124,6 @@ func escapedPath(s string) string {
 	return s
 }
 
-// We need to use custom struct so we can unmarshal the CRI plugin config only
-type config struct {
-	Version int
-	Plugins map[string]interface{} `toml:"plugins"`
-}
-
 // generateDefaultCRIConfig generates the default CRI config and writes it to the given writer
 // It uses the containerd containerd package to generate the config so we can keep it in sync with containerd
 func (c *CRIConfigurer) generateDefaultCRIConfig(w io.Writer) error {
@@ -140,7 +134,11 @@ func (c *CRIConfigurer) generateDefaultCRIConfig(w io.Writer) error {
 		criPluginConfig.CniConfig.NetworkPluginBinDir = "c:\\opt\\cni\\bin"
 		criPluginConfig.CniConfig.NetworkPluginConfDir = "c:\\opt\\cni\\conf"
 	}
-	containerdConfig := config{
+	// We need to use custom struct so we can unmarshal the CRI plugin config only
+	containerdConfig := struct {
+		Version int
+		Plugins map[string]interface{} `toml:"plugins"`
+	}{
 		Version: 2,
 		Plugins: map[string]interface{}{
 			"io.containerd.grpc.v1.cri": criPluginConfig,
