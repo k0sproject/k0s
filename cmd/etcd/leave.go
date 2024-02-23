@@ -64,13 +64,13 @@ func etcdLeaveCmd() *cobra.Command {
 			if err := etcdClient.DeleteMember(ctx, peerID); err != nil {
 				logrus.
 					WithField("peerURL", peerURL).
-					WithField("peerID", peerID).
+					WithField("peerID", fmt.Sprintf("%x", peerID)).
 					Errorf("Failed to delete node from cluster")
 				return err
 			}
 
 			logrus.
-				WithField("peerID", peerID).
+				WithField("peerID", fmt.Sprintf("%x", peerID)).
 				Info("Successfully deleted")
 			return nil
 		},
