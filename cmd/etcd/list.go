@@ -30,7 +30,8 @@ import (
 func etcdListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "member-list",
-		Short: "Returns etcd cluster members list",
+		Short: "List etcd cluster members (JSON encoded)",
+		Args:  cobra.NoArgs,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			// ensure logs don't mess up the output
 			logrus.SetOutput(cmd.ErrOrStderr())
