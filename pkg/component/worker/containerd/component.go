@@ -195,7 +195,7 @@ func (c *Component) setupConfig() error {
 		return fmt.Errorf("can't create containerd config imports dir: %w", err)
 	}
 
-	configurer := &CRIConfigurer{
+	configurer := &configurer{
 		loadPath:       filepath.Join(c.importsPath, "*.toml"),
 		pauseImage:     c.Profile.PauseImage.URI(),
 		log:            logrus.WithField("component", "containerd"),
@@ -205,7 +205,7 @@ func (c *Component) setupConfig() error {
 		configurer.criRuntimePath = `C:\var\lib\k0s\run\containerd-cri.toml`
 	}
 
-	imports, err := configurer.HandleImports()
+	imports, err := configurer.handleImports()
 	if err != nil {
 		return fmt.Errorf("can't handle imports: %w", err)
 	}

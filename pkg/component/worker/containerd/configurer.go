@@ -32,7 +32,7 @@ import (
 	criconfig "github.com/containerd/containerd/pkg/cri/config"
 )
 
-type CRIConfigurer struct {
+type configurer struct {
 	loadPath       string
 	pauseImage     string
 	criRuntimePath string
@@ -40,11 +40,11 @@ type CRIConfigurer struct {
 	log *logrus.Entry
 }
 
-// HandleImports Resolves containerd imports from the import glob path.
+// Resolves containerd imports from the import glob path.
 // If the partial config has CRI plugin enabled, it will add to the runc CRI config (single file).
 // if no CRI plugin is found, it will add the file as-is to imports list returned.
 // Once all files are processed the concatenated CRI config file is written and added to the imports list.
-func (c *CRIConfigurer) HandleImports() ([]string, error) {
+func (c *configurer) handleImports() ([]string, error) {
 	var imports []string
 	var criConfigBuffer bytes.Buffer
 
@@ -106,7 +106,7 @@ func escapedPath(s string) string {
 
 // generateDefaultCRIConfig generates the default CRI config and writes it to the given writer
 // It uses the containerd containerd package to generate the config so we can keep it in sync with containerd
-func (c *CRIConfigurer) generateDefaultCRIConfig(w io.Writer) error {
+func (c *configurer) generateDefaultCRIConfig(w io.Writer) error {
 	criPluginConfig := criconfig.DefaultConfig()
 	// Set pause image
 	criPluginConfig.SandboxImage = c.pauseImage
@@ -132,7 +132,7 @@ func (c *CRIConfigurer) generateDefaultCRIConfig(w io.Writer) error {
 	return nil
 }
 
-func (c *CRIConfigurer) hasCRIPluginConfig(data []byte) (bool, error) {
+func (c *configurer) hasCRIPluginConfig(data []byte) (bool, error) {
 	var tomlConfig map[string]interface{}
 	if err := toml.Unmarshal(data, &tomlConfig); err != nil {
 		return false, err
