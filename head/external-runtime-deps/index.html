@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../img/k0s_social.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.10">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.11">
     
     
       
@@ -696,15 +696,6 @@
   <a href="#external-soft-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       External soft dependencies
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#other-dependencies-in-previous-versions-of-k0s" class="md-nav__link">
-    <span class="md-ellipsis">
-      Other dependencies in previous versions of k0s
     </span>
   </a>
   
@@ -2067,15 +2058,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#other-dependencies-in-previous-versions-of-k0s" class="md-nav__link">
-    <span class="md-ellipsis">
-      Other dependencies in previous versions of k0s
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -2293,18 +2275,6 @@ are not detected.</p>
 <h4 id="id">id<a class="headerlink" href="#id" title="Permanent link">#</a></h4>
 <p>External <code>/usr/bin/id</code> will be executed as a fallback if local user lookup
 fails, in case NSS is used.</p>
-<h3 id="other-dependencies-in-previous-versions-of-k0s">Other dependencies in previous versions of k0s<a class="headerlink" href="#other-dependencies-in-previous-versions-of-k0s" title="Permanent link">#</a></h3>
-<ul>
-<li>up until k0s v1.21.9+k0s.0: <code>iptables</code><br />
-  Required for worker nodes. Resolved by @ncopa in <a href="https://github.com/k0sproject/k0s/pull/1046">#1046</a> by adding <code>iptables</code>
-  and friends to k0s's embedded binaries.</li>
-</ul>
-<ul>
-<li>up until k0s v1.21.7+k0s.0: <code>find</code>, <code>du</code> and <code>nice</code><br />
-  Required for worker nodes. Resolved upstream by @ncopa in
-  <a href="https://github.com/kubernetes/kubernetes/pull/96115">kubernetes/kubernetes#96115</a>, contained in Kubernetes 1.21.8 (<a href="https://github.com/kubernetes/kubernetes/commit/5b13c8f68d48740261fa4c96ecb0a504982088a8">5b13c8f68d4</a>)
-  and 1.22.0 (<a href="https://github.com/kubernetes/kubernetes/commit/d45ba645a8f7b288284890a051c73bbae717da4b">d45ba645a8f</a>).</li>
-</ul>
 <h2 id="windows-specific">Windows specific<a class="headerlink" href="#windows-specific" title="Permanent link">#</a></h2>
 <!--
 The kubernetes/system-validators require certain Windows versions starting with
