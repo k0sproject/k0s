@@ -363,7 +363,7 @@ func hasSystemdResolvedNameserver(resolvConfPath string) (bool, error) {
 	// by whitespace, then try to parse the next bytes as IP address,
 	// disregarding anything after any additional whitespace.
 	// https://sourceware.org/git/?p=glibc.git;a=blob;f=resolv/res_init.c;h=cce842fa9311c5bdba629f5e78c19746f75ef18e;hb=refs/tags/glibc-2.37#l396
-	// https://git.etalabs.net/cgit/musl/tree/src/network/resolvconf.c?h=v1.2.3#n62
+	// https://git.musl-libc.org/cgit/musl/tree/src/network/resolvconf.c?h=v1.2.3#n62
 
 	nameserverLine := regexp.MustCompile(`^nameserver\s+(\S+)`)
 
