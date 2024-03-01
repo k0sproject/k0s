@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package worker
+package containerd
 
 func winExecute(args ...string) error {
 	panic("Invariant broken: this function should never be called on non-winodws platforms")

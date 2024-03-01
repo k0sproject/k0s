@@ -22,21 +22,24 @@ import (
 	"testing"
 
 	srvconfig "github.com/containerd/containerd/services/server/config"
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 const testImportsPath = "/etc/k0s/containerd.d/"
 
-func TestCRIConfigurer_hasCRIPluginConfig(t *testing.T) {
+func TestConfigurer_hasCRIPluginConfig(t *testing.T) {
 	t.Run("should return true if config has cri plugin configs", func(t *testing.T) {
 		cfg := `
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
     endpoint = ["https://registry-1.docker.io"]
 `
-		c := NewConfigurer(&v1beta1.DefaultClusterImages().Pause, testImportsPath)
+
+		c := configurer{
+			loadPath: testImportsPath,
+			log:      logrus.New().WithField("test", t.Name()),
+		}
 		hasCRIPluginConfig, err := c.hasCRIPluginConfig([]byte(cfg))
 		require.NoError(t, err)
 		require.True(t, hasCRIPluginConfig)
@@ -47,7 +50,11 @@ func TestCRIConfigurer_hasCRIPluginConfig(t *testing.T) {
 timeout = 3
 version = 2
 `
-		c := NewConfigurer(&v1beta1.DefaultClusterImages().Pause, testImportsPath)
+
+		c := configurer{
+			loadPath: testImportsPath,
+			log:      logrus.New().WithField("test", t.Name()),
+		}
 		hasCRIPluginConfig, err := c.hasCRIPluginConfig([]byte(cfg))
 		require.NoError(t, err)
 		require.False(t, hasCRIPluginConfig)
@@ -55,7 +62,7 @@ version = 2
 
 }
 
-func TestCRIConfigurer_HandleImports(t *testing.T) {
+func TestConfigurer_HandleImports(t *testing.T) {
 	t.Run("should merge CRI configs", func(t *testing.T) {
 		tmp := t.TempDir()
 		testLoadPath := filepath.Join(tmp, "*.toml")
@@ -67,12 +74,12 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 `
 		err := os.WriteFile(filepath.Join(tmp, "foo.toml"), []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
-		c := CRIConfigurer{
+		c := configurer{
 			loadPath:       testLoadPath,
 			criRuntimePath: criRuntimePath,
 			log:            logrus.New().WithField("test", t.Name()),
 		}
-		_, err = c.HandleImports()
+		_, err = c.handleImports()
 		require.NoError(t, err)
 
 		// Dump the config for inspection
@@ -92,12 +99,12 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 	t.Run("should have single import for CRI if there's nothing in imports dir", func(t *testing.T) {
 		testLoadPath := filepath.Join(t.TempDir(), "*.toml")
 		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
-		c := CRIConfigurer{
+		c := configurer{
 			loadPath:       testLoadPath,
 			criRuntimePath: criRuntimePath,
 			log:            logrus.New().WithField("test", t.Name()),
 		}
-		imports, err := c.HandleImports()
+		imports, err := c.handleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 1)
 		require.Equal(t, escapedPath(criRuntimePath), imports[0])
@@ -114,12 +121,12 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 `
 		err := os.WriteFile(filepath.Join(tmp, "foo.toml"), []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
-		c := CRIConfigurer{
+		c := configurer{
 			loadPath:       testLoadPath,
 			criRuntimePath: criRuntimePath,
 			log:            logrus.New().WithField("test", t.Name()),
 		}
-		imports, err := c.HandleImports()
+		imports, err := c.handleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 1)
 		require.Contains(t, imports, escapedPath(criRuntimePath))
@@ -145,12 +152,12 @@ version = 2
 		nonCriConfigPath := filepath.Join(tmp, "foo.toml")
 		err := os.WriteFile(nonCriConfigPath, []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
-		c := CRIConfigurer{
+		c := configurer{
 			loadPath:       testLoadPath,
 			criRuntimePath: criRuntimePath,
 			log:            logrus.New().WithField("test", t.Name()),
 		}
-		imports, err := c.HandleImports()
+		imports, err := c.handleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 2)
 		require.Contains(t, imports, escapedPath(criRuntimePath))

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package worker
+package containerd
 
 import (
 	"bufio"
@@ -41,7 +41,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
-	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/debounce"
@@ -68,8 +67,8 @@ const confPathWindows = "C:\\Program Files\\containerd\\config.toml"
 const importsPathPosix = "/etc/k0s/containerd.d/"
 const importsPathWindows = "C:\\etc\\k0s\\containerd.d\\"
 
-// Containerd implements the component interface to manage containerd as a k0s component.
-type Containerd struct {
+// Component implements the component interface to manage containerd as a k0s component.
+type Component struct {
 	supervisor    supervisor.Supervisor
 	LogLevel      string
 	K0sVars       *config.CfgVars
@@ -80,8 +79,8 @@ type Containerd struct {
 	importsPath   string
 }
 
-func NewContainerd(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Containerd {
-	c := &Containerd{
+func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
+	c := &Component{
 		LogLevel: logLevel,
 		K0sVars:  vars,
 		Profile:  profile,
@@ -99,10 +98,10 @@ func NewContainerd(logLevel string, vars *config.CfgVars, profile *workerconfig.
 	return c
 }
 
-var _ manager.Component = (*Containerd)(nil)
+var _ manager.Component = (*Component)(nil)
 
 // Init extracts the needed binaries
-func (c *Containerd) Init(ctx context.Context) error {
+func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
 	for _, bin := range c.binaries {
 		b := bin
@@ -116,7 +115,7 @@ func (c *Containerd) Init(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (c *Containerd) windowsInit() error {
+func (c *Component) windowsInit() error {
 	if runtime.GOOS != "windows" {
 		return nil
 	}
@@ -127,7 +126,7 @@ func (c *Containerd) windowsInit() error {
 }
 
 // Run runs containerd.
-func (c *Containerd) Start(ctx context.Context) error {
+func (c *Component) Start(ctx context.Context) error {
 	logrus.Info("Starting containerd")
 
 	if err := c.setupConfig(); err != nil {
@@ -162,21 +161,21 @@ func (c *Containerd) Start(ctx context.Context) error {
 	return nil
 }
 
-func (c *Containerd) windowsStart(_ context.Context) error {
+func (c *Component) windowsStart(_ context.Context) error {
 	if err := winExecute("Start-Service containerd"); err != nil {
 		return fmt.Errorf("failed to start Windows Service %q: %w", "containerd", err)
 	}
 	return nil
 }
 
-func (c *Containerd) windowsStop() error {
+func (c *Component) windowsStop() error {
 	if err := winExecute("Stop-Service containerd"); err != nil {
 		return fmt.Errorf("failed to stop Windows Service %q: %w", "containerd", err)
 	}
 	return nil
 }
 
-func (c *Containerd) setupConfig() error {
+func (c *Component) setupConfig() error {
 	// Check if the config file is user managed
 	// If it is, we should not touch it
 
@@ -195,9 +194,18 @@ func (c *Containerd) setupConfig() error {
 	if err := dir.Init(filepath.Dir(c.importsPath), 0755); err != nil {
 		return fmt.Errorf("can't create containerd config imports dir: %w", err)
 	}
-	containerdConfigurer := containerd.NewConfigurer(c.Profile.PauseImage, filepath.Join(c.importsPath, "*.toml"))
 
-	imports, err := containerdConfigurer.HandleImports()
+	configurer := &configurer{
+		loadPath:       filepath.Join(c.importsPath, "*.toml"),
+		pauseImage:     c.Profile.PauseImage.URI(),
+		log:            logrus.WithField("component", "containerd"),
+		criRuntimePath: "/run/k0s/containerd-cri.toml",
+	}
+	if runtime.GOOS == "windows" {
+		configurer.criRuntimePath = `C:\var\lib\k0s\run\containerd-cri.toml`
+	}
+
+	imports, err := configurer.handleImports()
 	if err != nil {
 		return fmt.Errorf("can't handle imports: %w", err)
 	}
@@ -217,7 +225,7 @@ func (c *Containerd) setupConfig() error {
 	return file.WriteContentAtomically(c.confPath, output.Bytes(), 0644)
 }
 
-func (c *Containerd) watchDropinConfigs(ctx context.Context) {
+func (c *Component) watchDropinConfigs(ctx context.Context) {
 	log := logrus.WithField("component", "containerd")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -265,7 +273,7 @@ func (c *Containerd) watchDropinConfigs(ctx context.Context) {
 	}
 }
 
-func (c *Containerd) restart() {
+func (c *Component) restart() {
 	log := logrus.WithFields(logrus.Fields{"component": "containerd", "phase": "restart"})
 
 	log.Info("restart requested")
@@ -293,7 +301,7 @@ func (c *Containerd) restart() {
 }
 
 // Stop stops containerd.
-func (c *Containerd) Stop() error {
+func (c *Component) Stop() error {
 	if runtime.GOOS == "windows" {
 		return c.windowsStop()
 	}

@@ -34,6 +34,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
+	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/component/worker/nllb"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
@@ -148,7 +149,7 @@ func (c *Command) Start(ctx context.Context) error {
 	}
 
 	if c.CriSocket == "" {
-		componentManager.Add(ctx, worker.NewContainerd(c.Logging["containerd"], c.K0sVars, workerConfig))
+		componentManager.Add(ctx, containerd.NewComponent(c.Logging["containerd"], c.K0sVars, workerConfig))
 	}
 
 	componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
