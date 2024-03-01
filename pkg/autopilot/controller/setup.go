@@ -88,7 +88,6 @@ func (sc *setupController) Run(ctx context.Context) error {
 		}
 
 		return nil
-
 	}); err != nil {
 		return fmt.Errorf("failed to create controlnode '%s' after max attempts: %w", hostname, err)
 	}

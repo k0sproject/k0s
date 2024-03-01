@@ -56,7 +56,7 @@ func tokenListCmd() *cobra.Command {
 				return nil
 			}
 
-			//fmt.Fprintf(cmd.OutOrStdout(), "Tokens: %v \n", tokens)
+			// fmt.Fprintf(cmd.OutOrStdout(), "Tokens: %v \n", tokens)
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
 			table.SetHeader([]string{"ID", "Role", "Expires at"})
 			table.SetAutoWrapText(false)

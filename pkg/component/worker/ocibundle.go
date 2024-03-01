@@ -43,7 +43,7 @@ type OCIBundleReconciler struct {
 
 var _ manager.Component = (*OCIBundleReconciler)(nil)
 
-// NewOCIBundleReconciler builds new reconciler
+// NewOCIBundleReconciler builds new reconciler.
 func NewOCIBundleReconciler(vars *config.CfgVars) *OCIBundleReconciler {
 	return &OCIBundleReconciler{
 		k0sVars:      vars,

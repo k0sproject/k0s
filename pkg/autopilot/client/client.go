@@ -47,7 +47,7 @@ func NewClientFactory(config *rest.Config) (FactoryInterface, error) {
 	return &clientFactory{restConfig: config}, nil
 }
 
-// GetClient returns the core kubernetes clientset
+// GetClient returns the core kubernetes clientset.
 func (cf *clientFactory) GetClient() (kubernetes.Interface, error) {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()
@@ -67,7 +67,7 @@ func (cf *clientFactory) GetClient() (kubernetes.Interface, error) {
 	return cf.client, nil
 }
 
-// GetAutopilotClient returns the clientset for autopilot
+// GetAutopilotClient returns the clientset for autopilot.
 func (cf *clientFactory) GetAutopilotClient() (apclient.Interface, error) {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()
@@ -87,7 +87,7 @@ func (cf *clientFactory) GetAutopilotClient() (apclient.Interface, error) {
 	return cf.clientAutopilot, nil
 }
 
-// GetExtensionClient returns the clientset for kubernetes extensions
+// GetExtensionClient returns the clientset for kubernetes extensions.
 func (cf *clientFactory) GetExtensionClient() (extclient.ApiextensionsV1Interface, error) {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()

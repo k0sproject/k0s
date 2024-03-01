@@ -45,12 +45,14 @@ type ControllerDelegate interface {
 	K0sUpdateReady(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus
 }
 
-type createObjectFunc func() crcli.Object
-type createObjectListFunc func() crcli.ObjectList
-type objectListToPlanCommandTargetStatusFunc func(list crcli.ObjectList, status apv1beta2.PlanCommandTargetStateType) []apv1beta2.PlanCommandTargetStatus
-type createNamespacedNameFunc func(name string) types.NamespacedName
-type deepCopyFunc func(obj crcli.Object) crcli.Object
-type k0sUpdateReadyFunc func(apv1beta2.PlanCommandK0sUpdateStatus, crcli.Object) K0sUpdateReadyStatus
+type (
+	createObjectFunc                        func() crcli.Object
+	createObjectListFunc                    func() crcli.ObjectList
+	objectListToPlanCommandTargetStatusFunc func(list crcli.ObjectList, status apv1beta2.PlanCommandTargetStateType) []apv1beta2.PlanCommandTargetStatus
+	createNamespacedNameFunc                func(name string) types.NamespacedName
+	deepCopyFunc                            func(obj crcli.Object) crcli.Object
+	k0sUpdateReadyFunc                      func(apv1beta2.PlanCommandK0sUpdateStatus, crcli.Object) K0sUpdateReadyStatus
+)
 
 type controllerDelegate struct {
 	name                                string
@@ -62,17 +64,17 @@ type controllerDelegate struct {
 	deepCopy                            deepCopyFunc
 }
 
-// Name returns the name of the delegate
+// Name returns the name of the delegate.
 func (d controllerDelegate) Name() string {
 	return d.name
 }
 
-// CreateObject creates a new instance of the type supported by the delegate
+// CreateObject creates a new instance of the type supported by the delegate.
 func (d controllerDelegate) CreateObject() crcli.Object {
 	return d.createObject()
 }
 
-// CreateObjectList creates a new instance of the list type supported by the delegate
+// CreateObjectList creates a new instance of the list type supported by the delegate.
 func (d controllerDelegate) CreateObjectList() crcli.ObjectList {
 	return d.createObjectList()
 }
@@ -82,7 +84,7 @@ func (d controllerDelegate) K0sUpdateReady(status apv1beta2.PlanCommandK0sUpdate
 	return d.k0sUpdateReady(status, obj)
 }
 
-// ObjectListToPlanCommandTargetStatus converts an ObjectList to a slice of PlanCommandTargetStatus
+// ObjectListToPlanCommandTargetStatus converts an ObjectList to a slice of PlanCommandTargetStatus.
 func (d controllerDelegate) ObjectListToPlanCommandTargetStatus(list crcli.ObjectList, status apv1beta2.PlanCommandTargetStateType) []apv1beta2.PlanCommandTargetStatus {
 	return d.objectListToPlanCommandTargetStatus(list, status)
 }
@@ -92,7 +94,7 @@ func (d controllerDelegate) CreateNamespacedName(name string) types.NamespacedNa
 	return d.createNamespacedName(name)
 }
 
-// DeepCopy creates a deep-copy of the object provided
+// DeepCopy creates a deep-copy of the object provided.
 func (d controllerDelegate) DeepCopy(obj crcli.Object) crcli.Object {
 	return d.deepCopy(obj)
 }

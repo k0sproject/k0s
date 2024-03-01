@@ -30,28 +30,28 @@ const (
 const (
 
 	// DataDirMode is the expected directory permissions for DataDirDefault
-	DataDirMode = 0755
+	DataDirMode = 0o755
 	// EtcdDataDirMode is the expected directory permissions for EtcdDataDir. see https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
-	EtcdDataDirMode = 0700
+	EtcdDataDirMode = 0o700
 	// CertRootDirMode is the expected directory permissions for CertRootDir.
-	CertRootDirMode = 0751
+	CertRootDirMode = 0o751
 	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
-	EtcdCertDirMode = 0711
+	EtcdCertDirMode = 0o711
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
-	CertMode = 0644
+	CertMode = 0o644
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
 	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
-	CertSecureMode = 0640
+	CertSecureMode = 0o640
 	// BinDirMode is the expected directory permissions for BinDir
-	BinDirMode = 0755
+	BinDirMode = 0o755
 	// RunDirMode is the expected permissions of RunDir
-	RunDirMode = 0755
+	RunDirMode = 0o755
 	// PidFileMode is the expected file permissions for pid files
-	PidFileMode = 0644
+	PidFileMode = 0o644
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
-	ManifestsDirMode = 0755
+	ManifestsDirMode = 0o755
 	// KineDBDirMode is the expected directory permissions for the Kine DB
-	KineDBDirMode = 0750
+	KineDBDirMode = 0o750
 
 	/* User accounts for services */
 

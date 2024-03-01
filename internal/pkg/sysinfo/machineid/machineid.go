@@ -49,7 +49,7 @@ func (id *MachineID) String() string {
 	return fmt.Sprintf("%q (from %s)", id.id, id.source)
 }
 
-// Generate returns protected id for the current machine
+// Generate returns protected id for the current machine.
 func Generate() (*MachineID, error) {
 	id, err := machineid.ProtectedID("k0sproject-k0s")
 	if err != nil {

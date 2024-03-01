@@ -48,5 +48,4 @@ func NewStopCmd() *cobra.Command {
 			return svc.Stop()
 		},
 	}
-
 }

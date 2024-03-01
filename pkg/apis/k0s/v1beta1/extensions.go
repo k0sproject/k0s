@@ -46,7 +46,7 @@ type RepositoriesSettings []Repository
 // ChartsSettings charts settings
 type ChartsSettings []Chart
 
-// Validate performs validation
+// Validate performs validation.
 func (rs RepositoriesSettings) Validate() []error {
 	var errs []error
 	for _, r := range rs {
@@ -60,7 +60,7 @@ func (rs RepositoriesSettings) Validate() []error {
 	return nil
 }
 
-// Validate performs validation
+// Validate performs validation.
 func (cs ChartsSettings) Validate() []error {
 	var errs []error
 	for _, c := range cs {
@@ -74,7 +74,7 @@ func (cs ChartsSettings) Validate() []error {
 	return nil
 }
 
-// Validate performs validation
+// Validate performs validation.
 func (he HelmExtensions) Validate() []error {
 	var errs []error
 	if rErrs := he.Repositories.Validate(); rErrs != nil {
@@ -100,12 +100,12 @@ type Chart struct {
 	Order     int           `json:"order"`
 }
 
-// ManifestFileName returns filename to use for the crd manifest
+// ManifestFileName returns filename to use for the crd manifest.
 func (c Chart) ManifestFileName() string {
 	return fmt.Sprintf("%d_helm_extension_%s.yaml", c.Order, c.Name)
 }
 
-// Validate performs validation
+// Validate performs validation.
 func (c Chart) Validate() error {
 	if c.Name == "" {
 		return errors.New("chart must have Name field not empty")
@@ -134,7 +134,7 @@ type Repository struct {
 	Password string `json:"password"`
 }
 
-// Validate performs validation
+// Validate performs validation.
 func (r Repository) Validate() error {
 	if r.Name == "" {
 		return errors.New("repository must have Name field not empty")
@@ -145,7 +145,7 @@ func (r Repository) Validate() error {
 	return nil
 }
 
-// Validate stub for Validateable interface
+// Validate stub for Validateable interface.
 func (e *ClusterExtensions) Validate() []error {
 	if e == nil {
 		return nil
@@ -167,7 +167,7 @@ func DefaultStorageExtension() *StorageExtension {
 	}
 }
 
-// DefaultExtensions default values
+// DefaultExtensions default values.
 func DefaultExtensions() *ClusterExtensions {
 	return &ClusterExtensions{
 		Storage: DefaultStorageExtension(),

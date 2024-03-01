@@ -157,7 +157,7 @@ func (r *Reconciler) Init(ctx context.Context) error {
 	if r.state != reconcilerCreated {
 		return fmt.Errorf("cannot initialize, not created: %s", r.state)
 	}
-	if err := dir.Init(r.runtimeDir, 0700); err != nil {
+	if err := dir.Init(r.runtimeDir, 0o700); err != nil {
 		return err
 	}
 	if err := r.loadBalancer.init(ctx); err != nil {

@@ -156,6 +156,7 @@ func (p *Prober) healthCheckLoop(ctx context.Context) {
 		}
 	}
 }
+
 func (p *Prober) checkComponentsHealth(ctx context.Context, at time.Time) {
 	for name, component := range p.withHealthComponents {
 		p.Lock()
@@ -210,7 +211,6 @@ func (p *Prober) Register(name string, component any) {
 		p.withEventComponents[name] = withEvents
 		p.spawnEventCollector(name, withEvents)
 	}
-
 }
 
 // ProbeError is a string that implements the error interface.

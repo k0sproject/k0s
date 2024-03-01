@@ -89,7 +89,6 @@ func (c *Client) ListMembers(ctx context.Context) (map[string]string, error) {
 
 // AddMember add new member to etcd cluster
 func (c *Client) AddMember(ctx context.Context, name, peerAddress string) ([]string, error) {
-
 	addResp, err := c.client.MemberAdd(ctx, []string{peerAddress})
 	if err != nil {
 		// TODO we should try to detect possible double add for a peer
@@ -150,14 +149,11 @@ func (c *Client) Health(ctx context.Context) error {
 	}
 
 	return err
-
 }
 
 // Write tries to write a new value with a given key and returns indicator if write operation succeed.
 func (c *Client) Write(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
-
 	leaseResp, err := c.client.Lease.Grant(ctx, int64(ttl.Seconds()))
-
 	if err != nil {
 		return false, fmt.Errorf("can't get TTL lease: %w", err)
 	}

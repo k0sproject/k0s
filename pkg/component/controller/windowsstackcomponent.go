@@ -62,7 +62,7 @@ type windowsStackRenderingContext struct {
 	KubeProxyVersion string
 }
 
-// NewWindowsStackComponent creates new WindowsStackComponent reconciler
+// NewWindowsStackComponent creates new WindowsStackComponent reconciler.
 func NewWindowsStackComponent(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, saver manifestsSaver) *WindowsStackComponent {
 	return &WindowsStackComponent{
 		log:               logrus.WithFields(logrus.Fields{"component": "WindowsNodeController"}),
@@ -72,14 +72,13 @@ func NewWindowsStackComponent(k0sVars *config.CfgVars, clientFactory k8sutil.Cli
 	}
 }
 
-// Init no-op
+// Init no-op.
 func (n *WindowsStackComponent) Init(_ context.Context) error {
 	return nil
 }
 
-// Run checks and adds labels
+// Run checks and adds labels.
 func (n *WindowsStackComponent) Start(ctx context.Context) error {
-
 	go func() {
 		timer := time.NewTicker(1 * time.Minute)
 		defer timer.Stop()
@@ -144,6 +143,7 @@ func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.Cluste
 
 	return nil
 }
+
 func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig) (windowsStackRenderingContext, error) {
 	dns, err := cfg.Spec.Network.DNSAddress()
 	if err != nil {
@@ -165,7 +165,7 @@ func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig)
 	}, nil
 }
 
-// Stop no-op
+// Stop no-op.
 func (n *WindowsStackComponent) Stop() error {
 	return nil
 }

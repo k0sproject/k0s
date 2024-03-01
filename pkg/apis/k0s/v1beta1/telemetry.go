@@ -23,14 +23,14 @@ type ClusterTelemetry struct {
 	Enabled bool `json:"enabled"`
 }
 
-// DefaultClusterTelemetry default settings
+// DefaultClusterTelemetry default settings.
 func DefaultClusterTelemetry() *ClusterTelemetry {
 	return &ClusterTelemetry{
 		Enabled: true,
 	}
 }
 
-// Validate stub for Validateable interface
+// Validate stub for Validateable interface.
 func (c *ClusterTelemetry) Validate() []error {
 	return nil
 }

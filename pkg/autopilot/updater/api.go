@@ -97,7 +97,6 @@ func compareSegment(v, o uint64) int {
 }
 
 func comparePrerelease(v, o string) int {
-
 	// split the prelease versions by their part. The separator, per the spec,
 	// is a .
 	sparts := strings.Split(v, ".")
@@ -189,5 +188,4 @@ func comparePrePart(s, o string) int {
 		return 1
 	}
 	return -1
-
 }

@@ -22,7 +22,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 )
 
-// Split splits arbitrary set of flags into StringMap struct
+// Split splits arbitrary set of flags into StringMap struct.
 func Split(input string) stringmap.StringMap {
 	mArgs := stringmap.StringMap{}
 	args := strings.Fields(input)

@@ -38,7 +38,7 @@ func sanitizeExtractPath(dstDir string, filePath string) (string, error) {
 	return dstFile, nil
 }
 
-// Extract the given tar.gz archive to given dst path
+// Extract the given tar.gz archive to given dst path.
 func Extract(input io.Reader, dst string) error {
 	gzr, err := gzip.NewReader(input)
 	if err != nil {

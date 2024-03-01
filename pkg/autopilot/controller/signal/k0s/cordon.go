@@ -92,7 +92,7 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 		)
 }
 
-// Reconcile for the 'cordoning' reconciler will cordon and drain a node
+// Reconcile for the 'cordoning' reconciler will cordon and drain a node.
 func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
@@ -157,7 +157,7 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 			return fmt.Errorf("failed to cast signalNode to *corev1.Node")
 		}
 	} else {
-		//otherwise get node from client
+		// otherwise get node from client
 		if err := r.client.Get(ctx, crcli.ObjectKey{Name: signalNode.GetName()}, node); err != nil {
 			return fmt.Errorf("failed to get node: %w", err)
 		}

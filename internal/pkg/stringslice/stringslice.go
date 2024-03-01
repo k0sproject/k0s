@@ -16,7 +16,7 @@ limitations under the License.
 
 package stringslice
 
-// Unique returns only the unique items from given input slice
+// Unique returns only the unique items from given input slice.
 func Unique(input []string) []string {
 	m := make(map[string]bool)
 	result := make([]string, 0, len(input))

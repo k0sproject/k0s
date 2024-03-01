@@ -52,7 +52,6 @@ type CertificateManager struct {
 // That's why instead of just returnning the parsed certificate each time
 // loadFromFilesystem checks based on the md5 hashsum of the certificate content
 func (c *CertificateManager) loadFromFilesystem() error {
-
 	raw, err := os.ReadFile(c.config.CertFile)
 	if err != nil {
 		return fmt.Errorf("can't hash certificate: %w", err)
@@ -108,8 +107,8 @@ func (c *CertificateManager) GetRestConfig() (*rest.Config, error) {
 	return transportConfig, nil
 }
 
-// TODO Do we need to implement these? In kubelet these are the bits that actually talk with API to get client certs
-// So AFAIK we don't
+// TODO Do we need to implement these? In kubelet these are the bits that actually talk with API to get client certs.
+// So AFAIK we don't.
 func (c *CertificateManager) Start()              {}
 func (c *CertificateManager) Stop()               {}
 func (c *CertificateManager) ServerHealthy() bool { return true }

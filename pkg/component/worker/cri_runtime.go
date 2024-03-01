@@ -21,8 +21,10 @@ import (
 	"strings"
 )
 
-type RuntimeType = string
-type RuntimeSocket = string
+type (
+	RuntimeType   = string
+	RuntimeSocket = string
+)
 
 func SplitRuntimeConfig(rtConfig string) (RuntimeType, RuntimeSocket, error) {
 	runtimeConfig := strings.SplitN(rtConfig, ":", 2)

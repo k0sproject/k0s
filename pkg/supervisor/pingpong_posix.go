@@ -45,7 +45,7 @@ func makePingPong(t *testing.T) *pingPong {
 	}
 
 	for _, path := range []string{pp.ping, pp.pong} {
-		err := syscall.Mkfifo(path, 0600)
+		err := syscall.Mkfifo(path, 0o600)
 		require.NoError(t, err, "Mkfifo failed for %s", path)
 	}
 

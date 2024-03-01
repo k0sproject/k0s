@@ -79,7 +79,7 @@ func (c *K0sCloudProvider) Start(_ context.Context) error {
 	return nil
 }
 
-// Stop will stop the k0s-cloud-provider command goroutine (if running)
+// Stop will stop the k0s-cloud-provider command goroutine (if running).
 func (c *K0sCloudProvider) Stop() error {
 	close(c.stopCh)
 

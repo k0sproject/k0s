@@ -93,7 +93,6 @@ func NewStatusSubCmdComponents() *cobra.Command {
 	}
 	cmd.Flags().IntVar(&maxCount, "max-count", 1, "how many latest probes to show")
 	return cmd
-
 }
 
 func printStatus(w io.Writer, status *status.K0sStatus, output string) {

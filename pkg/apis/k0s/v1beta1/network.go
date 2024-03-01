@@ -42,17 +42,17 @@ type Network struct {
 	// +optional
 	NodeLocalLoadBalancing *NodeLocalLoadBalancing `json:"nodeLocalLoadBalancing,omitempty"`
 
-	// Pod network CIDR to use in the cluster
+	// Pod network CIDR to use in the cluster.
 	PodCIDR string `json:"podCIDR"`
-	// Network provider (valid values: calico, kuberouter, or custom)
+	// Network provider (valid values: calico, kuberouter, or custom).
 	Provider string `json:"provider"`
-	// Network CIDR to use for cluster VIP services
+	// Network CIDR to use for cluster VIP services.
 	ServiceCIDR string `json:"serviceCIDR,omitempty"`
-	// Cluster Domain
+	// Cluster Domain.
 	ClusterDomain string `json:"clusterDomain,omitempty"`
 }
 
-// DefaultNetwork creates the Network config struct with sane default values
+// DefaultNetwork creates the Network config struct with sane default values.
 func DefaultNetwork() *Network {
 	return &Network{
 		PodCIDR:                "10.244.0.0/16",
@@ -66,7 +66,7 @@ func DefaultNetwork() *Network {
 	}
 }
 
-// Validate validates all the settings make sense and should work
+// Validate validates all the settings make sense and should work.
 func (n *Network) Validate() []error {
 	if n == nil {
 		return nil
@@ -166,7 +166,7 @@ func (n *Network) InternalAPIAddresses() ([]string, error) {
 	return stringifiedAddresses, nil
 }
 
-// UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
+// UnmarshalJSON sets in some sane defaults when unmarshaling the data from json.
 func (n *Network) UnmarshalJSON(data []byte) error {
 	n.Provider = "kuberouter"
 
@@ -199,7 +199,7 @@ func (n *Network) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// BuildServiceCIDR returns actual argument value for service cidr
+// BuildServiceCIDR returns actual argument value for service cidr.
 func (n *Network) BuildServiceCIDR(addr string) string {
 	if !n.DualStack.Enabled {
 		return n.ServiceCIDR
@@ -214,7 +214,7 @@ func (n *Network) BuildServiceCIDR(addr string) string {
 	return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR
 }
 
-// BuildPodCIDR returns actual argument value for pod cidr
+// BuildPodCIDR returns actual argument value for pod cidr.
 func (n *Network) BuildPodCIDR() string {
 	if n.DualStack.Enabled {
 		return n.DualStack.IPv6PodCIDR + "," + n.PodCIDR

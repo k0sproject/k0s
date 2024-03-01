@@ -40,7 +40,7 @@ const (
 	//
 	// (The constant has been aliased from k8s.io/cloud-provider, as importing
 	// that package directly calls some init functions that register unwanted
-	// global CLI flags. This package's init function suppresses those flags.)
+	// global CLI flags. This package's init function suppresses those flags.).
 	DefaultBindPort = cloudprovider.CloudControllerManagerPort
 )
 
@@ -59,7 +59,7 @@ type Config struct {
 
 // NewCommand creates a new k0s-cloud-provider based on a configuration.
 // The command itself is a specialization of the sample code available from
-// `k8s.io/cloud-provider/app`
+// `k8s.io/cloud-provider/app`.
 func NewCommand(c Config) (Command, error) {
 	ccmo, err := options.NewCloudControllerManagerOptions()
 	if err != nil {

@@ -47,7 +47,7 @@ func WithReadyForUpdateFunc(f k0sUpdateReadyFunc) ControllerDelegateOption {
 }
 
 // ControlNodeControllerDelegate creates a `ControllerDelegate` for use with
-// `apv1beta2.ControlNode` objects
+// `apv1beta2.ControlNode` objects.
 func ControlNodeControllerDelegate(opts ...ControllerDelegateOption) ControllerDelegate {
 	delegate := controllerDelegate{
 		"ControlNode",
@@ -93,7 +93,7 @@ func ControlNodeControllerDelegate(opts ...ControllerDelegateOption) ControllerD
 	return delegate
 }
 
-// NodeControllerDelegate creates a `ControllerDelegate` for use with `v1.Node` objects
+// NodeControllerDelegate creates a `ControllerDelegate` for use with `v1.Node` objects.
 func NodeControllerDelegate(opts ...ControllerDelegateOption) ControllerDelegate {
 	delegate := controllerDelegate{
 		"Node",

@@ -45,7 +45,7 @@ type Konnectivity struct {
 	K0sVars    *config.CfgVars
 	LogLevel   string
 	SingleNode bool
-	// used for lease lock
+	// used for lease lock.
 	KubeClientFactory          kubeutil.ClientFactoryInterface
 	NodeConfig                 *v1beta1.ClusterConfig
 	K0sControllersLeaseCounter *K0sControllersLeaseCounter
@@ -71,7 +71,7 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 		k.EmitWithPayload("error getting UID for", err)
 		logrus.Warning(fmt.Errorf("running konnectivity as root: %w", err))
 	}
-	err = dir.Init(k.K0sVars.KonnectivitySocketDir, 0755)
+	err = dir.Init(k.K0sVars.KonnectivitySocketDir, 0o755)
 	if err != nil {
 		k.EmitWithPayload("failed to initialize socket directory", err)
 		return fmt.Errorf("failed to initialize directory %s: %v", k.K0sVars.KonnectivitySocketDir, err)
@@ -202,7 +202,7 @@ func (k *Konnectivity) runServer(ctx context.Context, count int) error {
 	return nil
 }
 
-// Stop stops
+// Stop stops.
 func (k *Konnectivity) Stop() error {
 	if k.stopFunc != nil {
 		logrus.Debug("closing konnectivity component context")

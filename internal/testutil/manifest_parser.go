@@ -39,5 +39,4 @@ func ParseManifests(data []byte) ([]*unstructured.Unstructured, error) {
 	}
 
 	return resources, nil
-
 }

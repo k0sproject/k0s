@@ -64,10 +64,9 @@ func (ci *ClusterInfo) AsMap() map[string]string {
 		"K0S_CNIProvider":            ci.CNIProvider,
 		"K0S_Arch":                   ci.Arch,
 	}
-
 }
 
-// CollectData collects the cluster information
+// CollectData collects the cluster information.
 func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, error) {
 	ci := &ClusterInfo{}
 	ci.K0sVersion = build.Version

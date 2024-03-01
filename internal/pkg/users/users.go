@@ -24,7 +24,7 @@ import (
 	"strings"
 )
 
-// GetUID returns uid of given username and logs a warning if its missing
+// GetUID returns uid of given username and logs a warning if its missing.
 func GetUID(name string) (int, error) {
 	entry, err := user.Lookup(name)
 	if err == nil {

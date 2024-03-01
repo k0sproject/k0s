@@ -45,5 +45,4 @@ func NewStartCmd() *cobra.Command {
 			return svc.Start()
 		},
 	}
-
 }

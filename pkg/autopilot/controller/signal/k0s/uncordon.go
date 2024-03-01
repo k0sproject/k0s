@@ -92,7 +92,7 @@ func registerUnCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 		)
 }
 
-// Reconcile for the 'cordoning' reconciler will cordon and drain a node
+// Reconcile for the 'cordoning' reconciler will cordon and drain a node.
 func (r *uncordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
@@ -157,7 +157,7 @@ func (r *uncordoning) unCordonNode(ctx context.Context, signalNode crcli.Object)
 			return fmt.Errorf("failed to convert signalNode to Node")
 		}
 	} else {
-		//otherwise get node from client
+		// otherwise get node from client
 		if err := r.client.Get(ctx, crcli.ObjectKey{Name: signalNode.GetName()}, node); err != nil {
 			return fmt.Errorf("failed to get node: %w", err)
 		}

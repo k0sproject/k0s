@@ -58,10 +58,12 @@ type Etcd struct {
 	ctx        context.Context
 }
 
-var _ manager.Component = (*Etcd)(nil)
-var _ manager.Ready = (*Etcd)(nil)
+var (
+	_ manager.Component = (*Etcd)(nil)
+	_ manager.Ready     = (*Etcd)(nil)
+)
 
-// Init extracts the needed binaries
+// Init extracts the needed binaries.
 func (e *Etcd) Init(_ context.Context) error {
 	var err error
 
@@ -132,7 +134,7 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 	return etcdResponse.InitialCluster, nil
 }
 
-// Run runs etcd if external cluster is not configured
+// Run runs etcd if external cluster is not configured.
 func (e *Etcd) Start(ctx context.Context) error {
 	e.ctx = ctx
 	if e.Config.IsExternalClusterUsed() {
@@ -229,7 +231,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 	return e.supervisor.Supervise()
 }
 
-// Stop stops etcd
+// Stop stops etcd.
 func (e *Etcd) Stop() error {
 	return e.supervisor.Stop()
 }
@@ -300,7 +302,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 	return eg.Wait()
 }
 
-// Health-check interface
+// Health-check interface.
 func (e *Etcd) Ready() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
 	ctx, cancel := context.WithTimeout(e.ctx, 1*time.Second)

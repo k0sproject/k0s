@@ -27,12 +27,12 @@ import (
 
 type cni struct{}
 
-// Name returns the name of the step
+// Name returns the name of the step.
 func (c *cni) Name() string {
 	return "CNI leftovers cleanup step"
 }
 
-// Run removes found CNI leftovers
+// Run removes found CNI leftovers.
 func (c *cni) Run() error {
 	var msg []error
 

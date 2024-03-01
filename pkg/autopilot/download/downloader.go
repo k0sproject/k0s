@@ -57,7 +57,6 @@ func NewDownloader(config Config, logger *logrus.Entry) Downloader {
 func (d *downloader) Download(ctx context.Context) error {
 	// Setup the library for downloading HTTP content ..
 	dlreq, err := grab.NewRequest(d.config.DownloadDir, d.config.URL)
-
 	if err != nil {
 		return fmt.Errorf("invalid download request: %w", err)
 	}

@@ -44,7 +44,7 @@ type K0sControllersLeaseCounter struct {
 
 var _ manager.Component = (*K0sControllersLeaseCounter)(nil)
 
-// Init initializes the component needs
+// Init initializes the component needs.
 func (l *K0sControllersLeaseCounter) Init(_ context.Context) error {
 	l.subscribers = make([]chan int, 0)
 
@@ -99,7 +99,7 @@ func (l *K0sControllersLeaseCounter) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops the component
+// Stop stops the component.
 func (l *K0sControllersLeaseCounter) Stop() error {
 	if l.leaseCancel != nil {
 		l.leaseCancel()

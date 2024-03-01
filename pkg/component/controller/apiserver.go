@@ -55,8 +55,10 @@ type APIServer struct {
 	uid                       int
 }
 
-var _ manager.Component = (*APIServer)(nil)
-var _ manager.Ready = (*APIServer)(nil)
+var (
+	_ manager.Component = (*APIServer)(nil)
+	_ manager.Ready     = (*APIServer)(nil)
+)
 
 const kubeAPIComponentName = "kube-apiserver"
 
@@ -85,7 +87,7 @@ type egressSelectorConfig struct {
 	UDSName string
 }
 
-// Init extracts needed binaries
+// Init extracts needed binaries.
 func (a *APIServer) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.ApiserverUser)
@@ -95,7 +97,7 @@ func (a *APIServer) Init(_ context.Context) error {
 	return assets.Stage(a.K0sVars.BinDir, kubeAPIComponentName, constant.BinDirMode)
 }
 
-// Run runs kube api
+// Run runs kube api.
 func (a *APIServer) Start(_ context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 	args := stringmap.StringMap{
@@ -199,12 +201,12 @@ func (a *APIServer) writeKonnectivityConfig() error {
 	return nil
 }
 
-// Stop stops APIServer
+// Stop stops APIServer.
 func (a *APIServer) Stop() error {
 	return a.supervisor.Stop()
 }
 
-// Health-check interface
+// Health-check interface.
 func (a *APIServer) Ready() error {
 	// Load client cert so the api can authenitcate the request.
 	certFile := path.Join(a.K0sVars.CertRootDir, "admin.crt")

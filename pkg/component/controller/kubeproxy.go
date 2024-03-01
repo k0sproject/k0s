@@ -45,8 +45,10 @@ type KubeProxy struct {
 	previousConfig proxyConfig
 }
 
-var _ manager.Component = (*KubeProxy)(nil)
-var _ manager.Reconciler = (*KubeProxy)(nil)
+var (
+	_ manager.Component  = (*KubeProxy)(nil)
+	_ manager.Reconciler = (*KubeProxy)(nil)
+)
 
 // NewKubeProxy creates new KubeProxy component
 func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) *KubeProxy {

@@ -42,8 +42,10 @@ type KubeRouter struct {
 	previousConfig kubeRouterConfig
 }
 
-var _ manager.Component = (*KubeRouter)(nil)
-var _ manager.Reconciler = (*KubeRouter)(nil)
+var (
+	_ manager.Component  = (*KubeRouter)(nil)
+	_ manager.Reconciler = (*KubeRouter)(nil)
+)
 
 type kubeRouterConfig struct {
 	MTU               int

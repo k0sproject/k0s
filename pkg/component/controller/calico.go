@@ -38,8 +38,10 @@ import (
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
-var _ manager.Component = (*Calico)(nil)
-var _ manager.Reconciler = (*Calico)(nil)
+var (
+	_ manager.Component  = (*Calico)(nil)
+	_ manager.Reconciler = (*Calico)(nil)
+)
 
 var calicoCRDOnce sync.Once
 
@@ -78,7 +80,7 @@ type calicoConfig struct {
 	PullPolicy                 string
 }
 
-// NewCalico creates new Calico reconciler component
+// NewCalico creates new Calico reconciler component.
 func NewCalico(k0sVars *config.CfgVars, crdSaver manifestsSaver, manifestsSaver manifestsSaver) *Calico {
 	return &Calico{
 		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
@@ -90,12 +92,12 @@ func NewCalico(k0sVars *config.CfgVars, crdSaver manifestsSaver, manifestsSaver 
 	}
 }
 
-// Init does nothing
+// Init does nothing.
 func (c *Calico) Init(_ context.Context) error {
 	return nil
 }
 
-// Run nothing really running, all logic based on reactive reconcile
+// Run nothing really running, all logic based on reactive reconcile.
 func (c *Calico) Start(_ context.Context) error {
 	return nil
 }
@@ -207,12 +209,12 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 	return config, nil
 }
 
-// Stop stops the calico reconciler
+// Stop stops the calico reconciler.
 func (c *Calico) Stop() error {
 	return nil
 }
 
-// Reconcile detects changes in configuration and applies them to the component
+// Reconcile detects changes in configuration and applies them to the component.
 func (c *Calico) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
 	c.log.Debug("reconcile method called for: Calico")
 	if cfg.Spec.Network.Provider != "calico" {

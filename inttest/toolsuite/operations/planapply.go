@@ -100,7 +100,7 @@ func savePlan(planFile string, plan *apv1beta2.Plan) error {
 		return fmt.Errorf("failed to marshal plan for save: %w", err)
 	}
 
-	return os.WriteFile(planFile, data, 0644)
+	return os.WriteFile(planFile, data, 0o644)
 }
 
 // applyPlan uses 'kubectl' to apply a plan using the kubeconfig available

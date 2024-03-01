@@ -32,7 +32,7 @@ type FsManifestsSaver struct {
 	dir string
 }
 
-// Save saves given manifest under the given path
+// Save saves given manifest under the given path.
 func (f FsManifestsSaver) Save(dst string, content []byte) error {
 	target := filepath.Join(f.dir, dst)
 
@@ -48,7 +48,7 @@ func hash(data []byte) string {
 	return fmt.Sprintf("%x", md5.Sum(data))
 }
 
-// NewManifestsSaver builds new filesystem manifests saver
+// NewManifestsSaver builds new filesystem manifests saver.
 func NewManifestsSaver(manifest string, dataDir string) (*FsManifestsSaver, error) {
 	manifestDir := filepath.Join(dataDir, "manifests", manifest)
 	err := dir.Init(manifestDir, constant.ManifestsDirMode)

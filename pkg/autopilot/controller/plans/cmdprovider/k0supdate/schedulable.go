@@ -28,7 +28,7 @@ import (
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Schedulable handles the provider state 'schedulable'
+// Schedulable handles the provider state 'schedulable'.
 func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := kp.logger.WithField("state", "schedulable")
 	logger.Info("Processing")
@@ -116,7 +116,7 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 // first entry that has the status `PendingSignal`. The plan targets are either a 'controller',
 // or a 'worker', and have a label indicating this. If none remain, nil is returned.
 func findNextSchedulableTarget(logger *logrus.Entry, cmd *apv1beta2.PlanCommandK0sUpdateStatus) (*apv1beta2.PlanCommandTargetStatus, string, int) {
-	var targets = []struct {
+	targets := []struct {
 		nodes []apv1beta2.PlanCommandTargetStatus
 		label string
 	}{

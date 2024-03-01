@@ -26,7 +26,7 @@ import (
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 )
 
-// SchedulableWait handles the provider state 'schedulablewait'
+// SchedulableWait handles the provider state 'schedulablewait'.
 func (kp *k0supdate) SchedulableWait(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := kp.logger.WithField("state", "schedulablewait")
 	logger.Info("Processing")
@@ -82,7 +82,7 @@ func (kp *k0supdate) SchedulableWait(ctx context.Context, planID string, cmd apv
 // reconcileSignalNodeStatus performs a reconciliation of the status of every signal node (controller/worker)
 // defined in the update status, ensuring that signal nodes marked as 'Completed' are updated in the plan status.
 func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, planID string, cmdStatus *apv1beta2.PlanCommandStatus) error {
-	var targets = []struct {
+	targets := []struct {
 		nodes []apv1beta2.PlanCommandTargetStatus
 		label string
 	}{

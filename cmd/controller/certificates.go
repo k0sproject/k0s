@@ -45,7 +45,7 @@ type Certificates struct {
 	K0sVars     *config.CfgVars
 }
 
-// Init initializes the certificate component
+// Init initializes the certificate component.
 func (c *Certificates) Init(ctx context.Context) error {
 	eg, _ := errgroup.WithContext(ctx)
 	// Common CA

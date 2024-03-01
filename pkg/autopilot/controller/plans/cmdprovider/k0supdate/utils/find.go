@@ -35,7 +35,7 @@ func FindPending(nodes []apv1beta2.PlanCommandTargetStatus) []apv1beta2.PlanComm
 }
 
 // findNextPendingRandom finds a random `PlanCommandTargetStatus` in the provided slice that
-// has the status of `PendingSignal`
+// has the status of `PendingSignal`.
 func FindNextPendingRandom(nodes []apv1beta2.PlanCommandTargetStatus) (*apv1beta2.PlanCommandTargetStatus, error) {
 	count := int64(len(nodes))
 	if count > 0 {

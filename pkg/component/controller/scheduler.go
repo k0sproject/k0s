@@ -44,12 +44,14 @@ type Scheduler struct {
 	previousConfig stringmap.StringMap
 }
 
-var _ manager.Component = (*Scheduler)(nil)
-var _ manager.Reconciler = (*Scheduler)(nil)
+var (
+	_ manager.Component  = (*Scheduler)(nil)
+	_ manager.Reconciler = (*Scheduler)(nil)
+)
 
 const kubeSchedulerComponentName = "kube-scheduler"
 
-// Init extracts the needed binaries
+// Init extracts the needed binaries.
 func (a *Scheduler) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.SchedulerUser)
@@ -59,12 +61,12 @@ func (a *Scheduler) Init(_ context.Context) error {
 	return assets.Stage(a.K0sVars.BinDir, kubeSchedulerComponentName, constant.BinDirMode)
 }
 
-// Run runs kube scheduler
+// Run runs kube scheduler.
 func (a *Scheduler) Start(_ context.Context) error {
 	return nil
 }
 
-// Stop stops Scheduler
+// Stop stops Scheduler.
 func (a *Scheduler) Stop() error {
 	if a.supervisor != nil {
 		return a.supervisor.Stop()
@@ -72,7 +74,7 @@ func (a *Scheduler) Stop() error {
 	return nil
 }
 
-// Reconcile detects changes in configuration and applies them to the component
+// Reconcile detects changes in configuration and applies them to the component.
 func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: Scheduler")
 

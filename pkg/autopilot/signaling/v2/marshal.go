@@ -45,8 +45,10 @@ func Marshal(m map[string]string, value interface{}) {
 	}
 }
 
-type UnmarshalFieldTypeCollector func() reflect.Type
-type UnmarshalFieldValueCollector func() reflect.Value
+type (
+	UnmarshalFieldTypeCollector  func() reflect.Type
+	UnmarshalFieldValueCollector func() reflect.Value
+)
 
 // Unmarshal uses reflection semantics to turn the marshalled map of values
 // back into a structure of unknown type. By relying on two reflection helper

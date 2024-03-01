@@ -25,7 +25,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 )
 
-// GetFile gets file from the controller with given index
+// GetFile gets file from the controller with given index.
 func (s *BootlooseSuite) GetFileFromController(controllerIdx int, path string) string {
 	sshCon, err := s.SSH(s.Context(), s.ControllerNode(controllerIdx))
 	s.Require().NoError(err)
@@ -51,12 +51,12 @@ func (s *BootlooseSuite) WriteFileContent(node, path string, content []byte) {
 	s.WriteFile(node, path, bytes.NewReader(content))
 }
 
-// PutFile writes content to file on given node
+// PutFile writes content to file on given node.
 func (s *BootlooseSuite) PutFile(node, path, content string) {
 	s.WriteFileContent(node, path, []byte(content))
 }
 
-// PutFileTemplate writes content to file on given node using templated data
+// PutFileTemplate writes content to file on given node using templated data.
 func (s *BootlooseSuite) PutFileTemplate(node string, filename string, template string, data interface{}) {
 	tw := templatewriter.TemplateWriter{
 		Name:     filepath.Base(filename),
@@ -70,7 +70,7 @@ func (s *BootlooseSuite) PutFileTemplate(node string, filename string, template 
 	s.WriteFile(node, filename, &buf)
 }
 
-// Mkdir makes directory
+// Mkdir makes directory.
 func (s *BootlooseSuite) MakeDir(node, path string) {
 	ssh, err := s.SSH(s.Context(), node)
 	s.Require().NoError(err)

@@ -231,7 +231,7 @@ func storeInCacheDir(cacheDir string, profile storedWorkerProfile) error {
 	if err != nil {
 		return err
 	}
-	return file.WriteContentAtomically(filepath.Join(cacheDir, cacheFileName), bytes, 0644)
+	return file.WriteContentAtomically(filepath.Join(cacheDir, cacheFileName), bytes, 0o644)
 }
 
 func loadConcurrently(ctx context.Context, addresses []string, loadWorkerConfig func(context.Context, string) (map[string]string, error)) (map[string]string, error) {

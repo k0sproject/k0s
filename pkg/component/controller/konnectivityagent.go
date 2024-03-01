@@ -52,8 +52,10 @@ type KonnectivityAgent struct {
 	*prober.EventEmitter
 }
 
-var _ manager.Component = (*KonnectivityAgent)(nil)
-var _ manager.Reconciler = (*KonnectivityAgent)(nil)
+var (
+	_ manager.Component  = (*KonnectivityAgent)(nil)
+	_ manager.Reconciler = (*KonnectivityAgent)(nil)
+)
 
 func (k *KonnectivityAgent) Init(_ context.Context) error {
 	k.log = logrus.WithFields(logrus.Fields{"component": "konnectivity-agent"})

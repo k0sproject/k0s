@@ -75,7 +75,7 @@ type ClusterConfig struct {
 	Status *ClusterConfigStatus `json:"status,omitempty"`
 }
 
-// StripDefaults returns a copy of the config where the default values a nilled out
+// StripDefaults returns a copy of the config where the default values a nilled out.
 func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	copy := c.DeepCopy()
 	if reflect.DeepEqual(copy.Spec.API, DefaultAPISpec()) {
@@ -116,7 +116,7 @@ func (*InstallSpec) Validate() []error { return nil }
 
 // ControllerManagerSpec defines the fields for the ControllerManager
 type ControllerManagerSpec struct {
-	// Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process
+	// Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process.
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
@@ -132,7 +132,7 @@ func (c *ControllerManagerSpec) Validate() []error { return nil }
 
 // SchedulerSpec defines the fields for the Scheduler
 type SchedulerSpec struct {
-	// Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process
+	// Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process.
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
@@ -160,12 +160,12 @@ func init() {
 
 var _ Validateable = (*ControllerManagerSpec)(nil)
 
-// IsZero needed to omit empty object from yaml output
+// IsZero needed to omit empty object from yaml output.
 func (c *ControllerManagerSpec) IsZero() bool {
 	return len(c.ExtraArgs) == 0
 }
 
-// IsZero needed to omit empty object from yaml output
+// IsZero needed to omit empty object from yaml output.
 func (s *SchedulerSpec) IsZero() bool {
 	return len(s.ExtraArgs) == 0
 }
@@ -182,7 +182,7 @@ func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfi
 	return config, nil
 }
 
-// ConfigFromReader reads the configuration from any reader (can be stdin, file reader, etc)
+// ConfigFromReader reads the configuration from any reader (can be stdin, file reader, etc).
 func ConfigFromReader(r io.Reader, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
 	input, err := io.ReadAll(r)
 	if err != nil {
@@ -191,7 +191,7 @@ func ConfigFromReader(r io.Reader, defaultStorage ...*StorageSpec) (*ClusterConf
 	return ConfigFromString(string(input), defaultStorage...)
 }
 
-// DefaultClusterConfig sets the default ClusterConfig values, when none are given
+// DefaultClusterConfig sets the default ClusterConfig values, when none are given.
 func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
 	clusterSpec := DefaultClusterSpec(defaultStorage...)
 	return &ClusterConfig{
@@ -204,7 +204,7 @@ func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
 	}
 }
 
-// UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
+// UnmarshalJSON sets in some sane defaults when unmarshaling the data from json.
 func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if c.Kind == "" {
 		c.Kind = "ClusterConfig"
@@ -272,7 +272,7 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// DefaultClusterSpec default settings
+// DefaultClusterSpec default settings.
 func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
 	var storage *StorageSpec
 	if defaultStorage == nil || defaultStorage[0] == nil {
@@ -370,7 +370,7 @@ func (s *ClusterSpec) overrideImageRepositories() {
 	}
 }
 
-// Validate validates cluster config
+// Validate validates cluster config.
 func (c *ClusterConfig) Validate() (errs []error) {
 	if c == nil {
 		return nil
@@ -384,13 +384,13 @@ func (c *ClusterConfig) Validate() (errs []error) {
 }
 
 // HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
-// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
+// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR.
 // This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
-// - APISpec
-// - StorageSpec
-// - Network.ServiceCIDR
-// - Network.ClusterDomain
-// - Install
+// - APISpec.
+// - StorageSpec.
+// - Network.ServiceCIDR.
+// - Network.ClusterDomain.
+// - Install.
 func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 	c = c.DeepCopy()
 	if c != nil && c.Spec != nil {
@@ -406,7 +406,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 	return c
 }
 
-// CRValidator is used to make sure a config CR is created with correct values
+// CRValidator is used to make sure a config CR is created with correct values.
 func (c *ClusterConfig) CRValidator() *ClusterConfig {
 	copy := c.DeepCopy()
 	copy.ObjectMeta.Name = "k0s"

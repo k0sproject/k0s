@@ -50,8 +50,10 @@ type Kine struct {
 	ctx          context.Context
 }
 
-var _ manager.Component = (*Kine)(nil)
-var _ manager.Ready = (*Kine)(nil)
+var (
+	_ manager.Component = (*Kine)(nil)
+	_ manager.Ready     = (*Kine)(nil)
+)
 
 // Init extracts the needed binaries
 func (k *Kine) Init(_ context.Context) error {
@@ -63,7 +65,7 @@ func (k *Kine) Init(_ context.Context) error {
 	}
 
 	kineSocketDir := filepath.Dir(k.K0sVars.KineSocketPath)
-	err = dir.Init(kineSocketDir, 0755)
+	err = dir.Init(kineSocketDir, 0o755)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", kineSocketDir, err)
 	}
@@ -132,8 +134,10 @@ func (k *Kine) Stop() error {
 	return k.supervisor.Stop()
 }
 
-const hcKey = "/k0s-health-check"
-const hcValue = "value"
+const (
+	hcKey   = "/k0s-health-check"
+	hcValue = "value"
+)
 
 func (k *Kine) Ready() error {
 	ok, err := k.bypassClient.Write(k.ctx, hcKey, hcValue, 64*time.Second)

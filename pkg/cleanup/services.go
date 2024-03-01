@@ -30,12 +30,12 @@ type services struct {
 	Config *Config
 }
 
-// Name returns the name of the step
+// Name returns the name of the step.
 func (s *services) Name() string {
 	return "uninstall service step"
 }
 
-// Run uninstalls k0s services that are found on the host
+// Run uninstalls k0s services that are found on the host.
 func (s *services) Run() error {
 	var msg []string
 

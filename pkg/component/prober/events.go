@@ -37,12 +37,12 @@ type EventEmitter struct {
 	events chan Event
 }
 
-// Emit emits an event
+// Emit emits an event.
 func (e *EventEmitter) Emit(message string) {
 	e.EmitWithPayload(message, nil)
 }
 
-// EmitWithPayload emits an event with a payload
+// EmitWithPayload emits an event with a payload.
 func (e *EventEmitter) EmitWithPayload(message string, payload interface{}) {
 	evt := Event{
 		At:      time.Now(),
@@ -59,12 +59,12 @@ func (e *EventEmitter) EmitWithPayload(message string, payload interface{}) {
 	}
 }
 
-// Events returns the channel where events are emitted
+// Events returns the channel where events are emitted.
 func (e *EventEmitter) Events() chan Event {
 	return e.events
 }
 
-// NewEventEmitter creates a new EventEmitter
+// NewEventEmitter creates a new EventEmitter.
 func NewEventEmitter() *EventEmitter {
 	return &EventEmitter{
 		events: make(chan Event, 10), // TODO: make queue size configurable

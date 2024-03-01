@@ -78,7 +78,7 @@ type kubeletConfig struct {
 	StaticPodURL       string
 }
 
-// Init extracts the needed binaries
+// Init extracts the needed binaries.
 func (k *Kubelet) Init(_ context.Context) error {
 	cmds := []string{"kubelet", "xtables-legacy-multi", "xtables-nft-multi"}
 
@@ -131,7 +131,7 @@ func (k *Kubelet) Init(_ context.Context) error {
 	return nil
 }
 
-// Run runs kubelet
+// Run runs kubelet.
 func (k *Kubelet) Start(ctx context.Context) error {
 	cmd := "kubelet"
 
@@ -217,7 +217,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		logrus.Warnf("failed to prepare local kubelet config: %s", err.Error())
 		return err
 	}
-	err = file.WriteContentAtomically(kubeletConfigPath, []byte(kubeletconfig), 0644)
+	err = file.WriteContentAtomically(kubeletConfigPath, []byte(kubeletconfig), 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}
@@ -225,7 +225,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	return k.supervisor.Supervise()
 }
 
-// Stop stops kubelet
+// Stop stops kubelet.
 func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }

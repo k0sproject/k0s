@@ -38,7 +38,7 @@ type SonobuoyConfig struct {
 }
 
 // SonobuoyOperation builds a ClusterOperation that runs a Sonobuoy k8s conformance test
-// using the clusters k0s.kubeconfig. Results are stored in the data directory as `results.tar.gz`
+// using the clusters k0s.kubeconfig. Results are stored in the data directory as `results.tar.gz`.
 func SonobuoyOperation(config SonobuoyConfig) ts.ClusterOperation {
 	return func(ctx context.Context, data ts.ClusterData) error {
 		sonobuoyBinary, cleanup, err := downloadSonobuoy(ctx, config.Version, sonobuoyOs, sonobuoyArch)

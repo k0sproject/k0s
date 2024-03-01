@@ -56,7 +56,7 @@ type APIEndpointReconciler struct {
 	stopCh chan struct{}
 }
 
-// NewEndpointReconciler creates new endpoint reconciler
+// NewEndpointReconciler creates new endpoint reconciler.
 func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface, resolver resolver) *APIEndpointReconciler {
 	return &APIEndpointReconciler{
 		logger:            logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
@@ -69,14 +69,13 @@ func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector lead
 	}
 }
 
-// Init initializes the APIEndpointReconciler
+// Init initializes the APIEndpointReconciler.
 func (a *APIEndpointReconciler) Init(_ context.Context) error {
 	return nil
 }
 
-// Run runs the main loop for reconciling the externalAddress
+// Run runs the main loop for reconciling the externalAddress.
 func (a *APIEndpointReconciler) Start(ctx context.Context) error {
-
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
@@ -97,7 +96,7 @@ func (a *APIEndpointReconciler) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops the reconciler
+// Stop stops the reconciler.
 func (a *APIEndpointReconciler) Stop() error {
 	close(a.stopCh)
 	return nil

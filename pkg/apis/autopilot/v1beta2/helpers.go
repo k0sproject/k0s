@@ -27,12 +27,12 @@ func NewPlanCommandTargetStatus(name string, status PlanCommandTargetStateType) 
 	}
 }
 
-// String provides string representation for PlanStateType
+// String provides string representation for PlanStateType.
 func (t PlanStateType) String() string {
 	return string(t)
 }
 
-// String provides string representation for PlanCommandTargetStateType
+// String provides string representation for PlanCommandTargetStateType.
 func (t PlanCommandTargetStateType) String() string {
 	return string(t)
 }

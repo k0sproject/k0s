@@ -44,12 +44,14 @@ type Component struct {
 	stopCh chan struct{}
 }
 
-var _ manager.Component = (*Component)(nil)
-var _ manager.Reconciler = (*Component)(nil)
+var (
+	_ manager.Component  = (*Component)(nil)
+	_ manager.Reconciler = (*Component)(nil)
+)
 
 var interval = time.Minute * 10
 
-// Init set up for external service clients (segment, k8s api)
+// Init set up for external service clients (segment, k8s api).
 func (c *Component) Init(_ context.Context) error {
 	c.log = logrus.WithField("component", "telemetry")
 
@@ -73,12 +75,12 @@ func (c *Component) retrieveKubeClient(ch chan struct{}) {
 	close(ch)
 }
 
-// Run runs work cycle
+// Run runs work cycle.
 func (c *Component) Start(_ context.Context) error {
 	return nil
 }
 
-// Run does nothing
+// Run does nothing.
 func (c *Component) Stop() error {
 	if segmentToken == "" {
 		c.log.Info("no token, telemetry is disabled")
@@ -93,7 +95,7 @@ func (c *Component) Stop() error {
 	return nil
 }
 
-// Reconcile detects changes in configuration and applies them to the component
+// Reconcile detects changes in configuration and applies them to the component.
 func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: Telemetry")
 	if !clusterCfg.Spec.Telemetry.Enabled {

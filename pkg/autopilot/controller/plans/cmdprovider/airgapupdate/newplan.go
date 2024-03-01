@@ -22,7 +22,7 @@ import (
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 )
 
-// NewPlan handles the provider state 'newplan'
+// NewPlan handles the provider state 'newplan'.
 func (aup *airgapupdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := aup.logger.WithField("state", "newplan")
 	logger.Info("Processing")

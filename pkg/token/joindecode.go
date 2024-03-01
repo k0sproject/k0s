@@ -25,7 +25,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-// DecodeJoinToken decodes an token string that is encoded with JoinEncode
+// DecodeJoinToken decodes an token string that is encoded with JoinEncode.
 func DecodeJoinToken(token string) ([]byte, error) {
 	gzData, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {

@@ -49,7 +49,7 @@ func getHostnameFromAwsMeta(url string) string {
 		URL(url).
 		ToString(&s).
 		Fetch(ctx)
-	// if status code is 2XX and no transport error, we assume we are running on ec2
+		// if status code is 2XX and no transport error, we assume we are running on ec2
 	if err != nil {
 		return ""
 	}

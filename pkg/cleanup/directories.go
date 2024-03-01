@@ -30,12 +30,12 @@ type directories struct {
 	Config *Config
 }
 
-// Name returns the name of the step
+// Name returns the name of the step.
 func (d *directories) Name() string {
 	return "remove directories step"
 }
 
-// Run removes all kubelet mounts and deletes generated dataDir and runDir
+// Run removes all kubelet mounts and deletes generated dataDir and runDir.
 func (d *directories) Run() error {
 	// unmount any leftover overlays (such as in alpine)
 	mounter := mount.New("")

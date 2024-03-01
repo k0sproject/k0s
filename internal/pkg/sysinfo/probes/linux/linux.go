@@ -94,7 +94,6 @@ func (f unameField) String() string {
 		return fmt.Sprintf("%q (truncated)", f.value)
 	}
 	return f.value
-
 }
 
 // uname represents data as returned by the uname syscall.

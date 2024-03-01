@@ -40,11 +40,13 @@ import (
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-type subControllerStartFunc func(ctx context.Context, event LeaseEventStatus) (context.CancelFunc, *errgroup.Group)
-type subControllerStartRoutineFunc func(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error
-type subControllerStopFunc func(cancel context.CancelFunc, g *errgroup.Group, event LeaseEventStatus)
-type leaseWatcherCreatorFunc func(*logrus.Entry, apcli.FactoryInterface) (LeaseWatcher, error)
-type setupFunc func(ctx context.Context, cf apcli.FactoryInterface) error
+type (
+	subControllerStartFunc        func(ctx context.Context, event LeaseEventStatus) (context.CancelFunc, *errgroup.Group)
+	subControllerStartRoutineFunc func(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error
+	subControllerStopFunc         func(cancel context.CancelFunc, g *errgroup.Group, event LeaseEventStatus)
+	leaseWatcherCreatorFunc       func(*logrus.Entry, apcli.FactoryInterface) (LeaseWatcher, error)
+	setupFunc                     func(ctx context.Context, cf apcli.FactoryInterface) error
+)
 
 type rootController struct {
 	cfg                    aproot.RootConfig
@@ -236,9 +238,9 @@ func (c *rootController) startSubControllers(ctx context.Context, event LeaseEve
 
 	ctx, cancel := context.WithCancel(ctx)
 
-	//wg := sync.WaitGroup{}
+	// wg := sync.WaitGroup{}
 	g, ctx := errgroup.WithContext(ctx)
-	//wg.Add(1)
+	// wg.Add(1)
 
 	g.Go(func() error {
 		logger.Info("Starting controller-runtime subhandlers")
