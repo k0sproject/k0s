@@ -22,14 +22,10 @@ The k0s containers are published both on Docker Hub and GitHub. For reasons of s
 You can run your own k0s in Docker:
 
 ```sh
-docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0
+docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 --cgroupns=host docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 -- k0s controller --enable-worker
 ```
 
-**Note:** If you are using Docker Desktop as the runtime, starting from 4.3.0 version it's using cgroups v2 in the VM that runs the engine. This means you have to add some extra flags to the above command to get kubelet and containerd to properly work with cgroups v2:
-
-```sh
---cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw
-```
+**Note:** This command starts k0s with a worker. You may disable the worker by running it without the flag `--enable-worker`
 
 ### 2. (Optional) Create additional workers
 
@@ -46,7 +42,7 @@ For each required worker:
 2. Run the container to create and join the new worker:
 
     ```sh
-    docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 k0s worker $token
+    docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s --cgroupns=host  docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 k0s worker $token
     ```
 
 ### 3. Access your cluster
@@ -72,11 +68,9 @@ services:
     command: k0s controller --config=/etc/k0s/config.yaml --enable-worker
     hostname: k0s
     privileged: true
+    cgroup: host
     volumes:
       - "/var/lib/k0s"
-    tmpfs:
-      - /run
-      - /var/run
     ports:
       - "6443:6443"
     network_mode: "bridge"
