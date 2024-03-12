@@ -1,7 +1,7 @@
-//go:build !windows
+//go:build unix
 
 /*
-Copyright 2020 k0s authors
+Copyright 2023 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,15 +16,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package constant
+package config
 
-const (
-	// DataDirDefault is the default directory containing k0s state.
-	DataDirDefault = "/var/lib/k0s"
-
-	// KubeletVolumePluginDir defines the location for kubelet volume plugin executables.
-	KubeletVolumePluginDir = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
-
-	KineSocket           = "kine/kine.sock:2379"
-	K0sConfigPathDefault = "/etc/k0s/k0s.yaml"
+import (
+	"fmt"
+	"os"
+	"syscall"
 )
+
+func checkPid(pid int) error {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return fmt.Errorf("failed to find process: %w", err)
+	}
+
+	if err := proc.Signal(syscall.Signal(0)); err != nil {
+		return fmt.Errorf("failed to signal process: %w", err)
+	}
+
+	return nil
+}
