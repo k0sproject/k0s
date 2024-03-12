@@ -17,9 +17,7 @@ limitations under the License.
 package containerd
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -46,12 +44,10 @@ type configurer struct {
 // Once all files are processed the concatenated CRI config file is written and added to the imports list.
 func (c *configurer) handleImports() ([]string, error) {
 	var imports []string
-	var criConfigBuffer bytes.Buffer
 
-	// Add default runc based CRI config
-	err := c.generateDefaultCRIConfig(&criConfigBuffer)
+	defaultConfig, err := generateDefaultCRIConfig(c.pauseImage)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate containerd default CRI config: %w", err)
 	}
 
 	files, err := filepath.Glob(c.loadPath)
@@ -60,7 +56,8 @@ func (c *configurer) handleImports() ([]string, error) {
 		return nil, err
 	}
 
-	finalConfig := criConfigBuffer.String()
+	// Start with the the default config.
+	finalConfig := string(defaultConfig)
 	for _, file := range files {
 		data, err := os.ReadFile(file)
 		if err != nil {
@@ -104,12 +101,14 @@ func escapedPath(s string) string {
 	return s
 }
 
-// generateDefaultCRIConfig generates the default CRI config and writes it to the given writer
-// It uses the containerd containerd package to generate the config so we can keep it in sync with containerd
-func (c *configurer) generateDefaultCRIConfig(w io.Writer) error {
+// Returns the default containerd config, including only the CRI plugin
+// configuration, using the given image for sandbox containers. Uses the
+// containerd package to generate all the rest, so this will be in sync with
+// containerd's defaults for the CRI plugin.
+func generateDefaultCRIConfig(sandboxContainerImage string) ([]byte, error) {
 	criPluginConfig := criconfig.DefaultConfig()
 	// Set pause image
-	criPluginConfig.SandboxImage = c.pauseImage
+	criPluginConfig.SandboxImage = sandboxContainerImage
 	if runtime.GOOS == "windows" {
 		criPluginConfig.CniConfig.NetworkPluginBinDir = "c:\\opt\\cni\\bin"
 		criPluginConfig.CniConfig.NetworkPluginConfDir = "c:\\opt\\cni\\conf"
@@ -125,11 +124,7 @@ func (c *configurer) generateDefaultCRIConfig(w io.Writer) error {
 		},
 	}
 
-	err := toml.NewEncoder(w).Encode(containerdConfig)
-	if err != nil {
-		return fmt.Errorf("failed to generate containerd default CRI config: %w", err)
-	}
-	return nil
+	return toml.Marshal(containerdConfig)
 }
 
 func (c *configurer) hasCRIPluginConfig(data []byte) (bool, error) {
