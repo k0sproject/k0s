@@ -21,15 +21,45 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
+
 	"github.com/stretchr/testify/require"
 )
 
 func Test_isK0sManagedConfig(t *testing.T) {
 
 	t.Run("should return true if file does not exist", func(t *testing.T) {
-		isManaged, err := isK0sManagedConfig("non-existent.toml")
+		isManaged, err := isK0sManagedConfig(filepath.Join(t.TempDir(), "non-existent.toml"))
 		require.NoError(t, err)
 		require.True(t, isManaged)
+	})
+
+	t.Run("should return true for generated default config", func(t *testing.T) {
+		defaultConfigPath := filepath.Join(t.TempDir(), "default.toml")
+
+		underTest := Component{
+			confPath:/* this is where the config file is written to: */ defaultConfigPath,
+			importsPath:/* some empty dir: */ t.TempDir(),
+			Profile:/* some non-nil pause image: */ &workerconfig.Profile{PauseImage: &v1beta1.ImageSpec{}},
+		}
+		err := underTest.setupConfig()
+
+		require.NoError(t, err)
+		require.FileExists(t, defaultConfigPath, "The generated config file is missing.")
+
+		isManaged, err := isK0sManagedConfig(defaultConfigPath)
+		require.NoError(t, err)
+		require.True(t, isManaged, "The generated config file should qualify as k0s-managed, but doesn't.")
+	})
+
+	t.Run("should return false if file has no marker", func(t *testing.T) {
+		unmanagedPath := filepath.Join(t.TempDir(), "unmanaged.toml")
+		require.NoError(t, os.WriteFile(unmanagedPath, []byte(" # k0s_managed=true"), 0644))
+
+		isManaged, err := isK0sManagedConfig(unmanagedPath)
+		require.NoError(t, err)
+		require.False(t, isManaged)
 	})
 
 	t.Run("should return true if md5 matches with pre 1.27 default config", func(t *testing.T) {
