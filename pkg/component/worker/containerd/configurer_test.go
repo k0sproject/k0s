@@ -26,42 +26,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testImportsPath = "/etc/k0s/containerd.d/"
-
-func TestConfigurer_hasCRIPluginConfig(t *testing.T) {
-	t.Run("should return true if config has cri plugin configs", func(t *testing.T) {
-		cfg := `
-[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-    endpoint = ["https://registry-1.docker.io"]
-`
-
-		c := configurer{
-			loadPath: testImportsPath,
-			log:      logrus.New().WithField("test", t.Name()),
-		}
-		hasCRIPluginConfig, err := c.hasCRIPluginConfig([]byte(cfg))
-		require.NoError(t, err)
-		require.True(t, hasCRIPluginConfig)
-	})
-
-	t.Run("should return false if config has no cri plugin configs", func(t *testing.T) {
-		cfg := `
-timeout = 3
-version = 2
-`
-
-		c := configurer{
-			loadPath: testImportsPath,
-			log:      logrus.New().WithField("test", t.Name()),
-		}
-		hasCRIPluginConfig, err := c.hasCRIPluginConfig([]byte(cfg))
-		require.NoError(t, err)
-		require.False(t, hasCRIPluginConfig)
-	})
-
-}
-
 func TestConfigurer_HandleImports(t *testing.T) {
 	t.Run("should merge CRI configs", func(t *testing.T) {
 		tmp := t.TempDir()
