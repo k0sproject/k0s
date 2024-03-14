@@ -18,10 +18,8 @@ package cleanup
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"os/exec"
-	"strings"
 
 	"github.com/k0sproject/k0s/pkg/install"
 )
@@ -37,17 +35,15 @@ func (s *services) Name() string {
 
 // Run uninstalls k0s services that are found on the host
 func (s *services) Run() error {
-	var msg []string
+	var errs []error
 
 	for _, role := range []string{"controller", "worker"} {
 		if err := install.UninstallService(role); err != nil && !(errors.Is(err, fs.ErrNotExist) || isExitCode(err, 1)) {
-			msg = append(msg, err.Error())
+			errs = append(errs, err)
 		}
 	}
-	if len(msg) > 0 {
-		return fmt.Errorf("%v", strings.Join(msg, "\n"))
-	}
-	return nil
+
+	return errors.Join(errs...)
 }
 
 func isExitCode(err error, exitcode int) bool {

@@ -48,11 +48,11 @@ func etcdListCmd() *cobra.Command {
 			ctx := cmd.Context()
 			etcdClient, err := etcd.NewClient(opts.K0sVars.CertRootDir, opts.K0sVars.EtcdCertDir, nodeConfig.Spec.Storage.Etcd)
 			if err != nil {
-				return fmt.Errorf("can't list etcd cluster members: %v", err)
+				return fmt.Errorf("can't list etcd cluster members: %w", err)
 			}
 			members, err := etcdClient.ListMembers(ctx)
 			if err != nil {
-				return fmt.Errorf("can't list etcd cluster members: %v", err)
+				return fmt.Errorf("can't list etcd cluster members: %w", err)
 			}
 			return json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]interface{}{"members": members})
 		},

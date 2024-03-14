@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -71,13 +70,13 @@ func (a *Manager) Init(_ context.Context) error {
 	// controller manager running as api-server user as they both need access to same sa.key
 	a.uid, err = users.GetUID(constant.ApiserverUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("running kube-controller-manager as root: %w", err))
+		logrus.Warn("running kube-controller-manager as root: ", err)
 	}
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
 	if err := os.Chown(path.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
-		logrus.Warning(fmt.Errorf("failed to change permissions for the ca.key: %w", err))
+		logrus.Warn("failed to change permissions for the ca.key: ", err)
 	}
 	return assets.Stage(a.K0sVars.BinDir, kubeControllerManagerComponent, constant.BinDirMode)
 }

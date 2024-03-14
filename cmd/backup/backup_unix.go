@@ -72,11 +72,11 @@ func (c *command) backup(savePath string, out io.Writer) error {
 	}
 
 	if savePath != "-" && !dir.IsDirectory(savePath) {
-		return fmt.Errorf("the save-path directory (%v) does not exist", savePath)
+		return fmt.Errorf("the save-path directory (%s) does not exist", savePath)
 	}
 
 	if !dir.IsDirectory(c.K0sVars.DataDir) {
-		return fmt.Errorf("cannot find data-dir (%v). check your environment and/or command input and try again", c.K0sVars.DataDir)
+		return fmt.Errorf("cannot find data-dir (%s). check your environment and/or command input and try again", c.K0sVars.DataDir)
 	}
 
 	status, err := status.GetStatusInfo(c.K0sVars.StatusSocketPath)

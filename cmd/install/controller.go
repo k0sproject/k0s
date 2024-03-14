@@ -46,7 +46,7 @@ With the controller subcommand you can setup a single node cluster by running:
 
 			nodeConfig, err := c.K0sVars.NodeConfig()
 			if err != nil {
-				return fmt.Errorf("failed to load node config: %v", err)
+				return fmt.Errorf("failed to load node config: %w", err)
 			}
 
 			if errs := nodeConfig.Validate(); len(errs) > 0 {

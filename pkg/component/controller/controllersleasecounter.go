@@ -57,7 +57,7 @@ func (l *K0sControllersLeaseCounter) Start(ctx context.Context) error {
 	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
 	client, err := l.KubeClientFactory.GetClient()
 	if err != nil {
-		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
+		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
 	}
 
 	// hostname used to make the lease names be clear to which controller they belong to

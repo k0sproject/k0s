@@ -428,7 +428,7 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 	logrus.Debug("reconcile method called for: CoreDNS")
 	cfg, err := c.getConfig(ctx, clusterConfig)
 	if err != nil {
-		return fmt.Errorf("error calculating coredns configs: %v. will retry", err)
+		return fmt.Errorf("error calculating coredns configs: %w, will retry", err)
 	}
 	if reflect.DeepEqual(c.previousConfig, cfg) {
 		c.log.Infof("current cfg matches existing, not gonna do anything")
@@ -442,7 +442,7 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 	}
 	err = tw.Write()
 	if err != nil {
-		return fmt.Errorf("error writing coredns manifests: %v. will retry", err)
+		return fmt.Errorf("error writing coredns manifests: %w, will retry", err)
 	}
 	c.previousConfig = cfg
 	c.lastKnownClusterConfig = clusterConfig

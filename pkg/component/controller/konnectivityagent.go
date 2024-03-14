@@ -176,7 +176,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent() error {
 	err = tw.Write()
 	if err != nil {
 		k.EmitWithPayload("failed to write konnectivity agent manifest", err)
-		return fmt.Errorf("failed to write konnectivity agent manifest: %v", err)
+		return fmt.Errorf("failed to write konnectivity agent manifest: %w", err)
 	}
 	k.previousConfig = cfg
 	k.Emit("wrote konnectivity agent new manifest")

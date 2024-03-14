@@ -17,6 +17,7 @@ limitations under the License.
 package cleanup
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 
@@ -74,7 +75,7 @@ func NewConfig(k0sVars *config.CfgVars, cfgFile string, criSocketPath string) (*
 }
 
 func (c *Config) Cleanup() error {
-	var msg []error
+	var errs []error
 	cleanupSteps := []Step{
 		&containers{Config: c},
 		&users{Config: c},
@@ -89,11 +90,11 @@ func (c *Config) Cleanup() error {
 		err := step.Run()
 		if err != nil {
 			logrus.Debug(err)
-			msg = append(msg, err)
+			errs = append(errs, err)
 		}
 	}
-	if len(msg) > 0 {
-		return fmt.Errorf("errors received during clean-up: %v", msg)
+	if len(errs) > 0 {
+		return fmt.Errorf("errors occurred during clean-up: %w", errors.Join(errs...))
 	}
 	return nil
 }

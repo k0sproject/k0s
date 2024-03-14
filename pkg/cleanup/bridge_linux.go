@@ -38,7 +38,7 @@ func (b *bridge) Run() error {
 
 	lnks, err := netlink.LinkList()
 	if err != nil {
-		return fmt.Errorf("failed to get link list from netlink: %v", err)
+		return fmt.Errorf("failed to get link list from netlink: %w", err)
 	}
 
 	for _, l := range lnks {

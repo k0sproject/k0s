@@ -66,13 +66,12 @@ func (e *Etcd) Init(_ context.Context) error {
 	var err error
 
 	if err = detectUnsupportedEtcdArch(); err != nil {
-		logrus.Error(fmt.Errorf("missing environment variable: %w", err))
-		return err
+		return fmt.Errorf("missing environment variable: %w", err)
 	}
 
 	e.uid, err = users.GetUID(constant.EtcdUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("running etcd as root: %w", err))
+		logrus.Warn("running etcd as root: ", err)
 	}
 
 	err = dir.Init(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
@@ -310,10 +309,10 @@ func (e *Etcd) Ready() error {
 }
 
 func detectUnsupportedEtcdArch() error {
-	// https://github.com/etcd-io/etcd/blob/v3.5.2/server/etcdmain/etcd.go#L467-L472
+	// https://github.com/etcd-io/etcd/blob/v3.5.12/server/etcdmain/etcd.go#L467-L472
 	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
 		if os.Getenv("ETCD_UNSUPPORTED_ARCH") != runtime.GOARCH {
-			return fmt.Errorf("running ETCD on %s requires ETCD_UNSUPPORTED_ARCH=%s ", runtime.GOARCH, runtime.GOARCH)
+			return fmt.Errorf("running etcd on %s requires ETCD_UNSUPPORTED_ARCH=%s", runtime.GOARCH, runtime.GOARCH)
 		}
 	}
 	return nil

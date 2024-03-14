@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -54,7 +53,7 @@ func (a *Scheduler) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.SchedulerUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("running kube-scheduler as root: %w", err))
+		logrus.Warn("running kube-scheduler as root: ", err)
 	}
 	return assets.Stage(a.K0sVars.BinDir, kubeSchedulerComponentName, constant.BinDirMode)
 }

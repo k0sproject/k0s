@@ -50,17 +50,17 @@ func (c CRD) Start(_ context.Context) error {
 	for _, bundle := range c.bundles {
 		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))
 		if err != nil {
-			return fmt.Errorf("can't unbundle CRD `%s` manifests: %v", bundle, err)
+			return fmt.Errorf("can't unbundle CRD `%s` manifests: %w", bundle, err)
 		}
 
 		for _, filename := range crds {
 			manifestName := fmt.Sprintf("%s-crd-%s", bundle, filename)
 			content, err := static.Asset(fmt.Sprintf("manifests/%s/CustomResourceDefinition/%s", bundle, filename))
 			if err != nil {
-				return fmt.Errorf("failed to fetch crd `%s`: %v", filename, err)
+				return fmt.Errorf("failed to fetch crd `%s`: %w", filename, err)
 			}
 			if err := c.saver.Save(manifestName, content); err != nil {
-				return fmt.Errorf("failed to save CRD `%s` manifest `%s` to FS: %v", bundle, manifestName, err)
+				return fmt.Errorf("failed to save CRD `%s` manifest `%s` to FS: %w", bundle, manifestName, err)
 			}
 		}
 

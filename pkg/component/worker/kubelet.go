@@ -173,7 +173,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	if runtime.GOOS == "windows" {
 		node, err := node.GetNodename("")
 		if err != nil {
-			return fmt.Errorf("can't get hostname: %v", err)
+			return fmt.Errorf("can't get hostname: %w", err)
 		}
 		kubeletConfigData.CgroupsPerQOS = false
 		kubeletConfigData.ResolvConf = ""
@@ -258,7 +258,7 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 		for _, taint := range k.Taints {
 			parsedTaint, err := parseTaint(taint)
 			if err != nil {
-				return "", fmt.Errorf("can't parse taints for profile config map: %v", err)
+				return "", fmt.Errorf("can't parse taints for profile config map: %w", err)
 			}
 			taints = append(taints, parsedTaint)
 		}
@@ -267,7 +267,7 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 
 	preparedConfigBytes, err := yaml.Marshal(preparedConfig)
 	if err != nil {
-		return "", fmt.Errorf("can't marshal kubelet config: %v", err)
+		return "", fmt.Errorf("can't marshal kubelet config: %w", err)
 	}
 	return string(preparedConfigBytes), nil
 }
@@ -291,21 +291,21 @@ func parseTaint(st string) (corev1.Taint, error) {
 
 		partsKV := strings.Split(parts[0], "=")
 		if len(partsKV) > 2 {
-			return taint, fmt.Errorf("invalid taint spec: %v", st)
+			return taint, fmt.Errorf("invalid taint spec: %s", st)
 		}
 		key = partsKV[0]
 		if len(partsKV) == 2 {
 			value = partsKV[1]
 			if errs := validation.IsValidLabelValue(value); len(errs) > 0 {
-				return taint, fmt.Errorf("invalid taint spec: %v, %s", st, strings.Join(errs, "; "))
+				return taint, fmt.Errorf("invalid taint spec: %s, %s", st, strings.Join(errs, "; "))
 			}
 		}
 	default:
-		return taint, fmt.Errorf("invalid taint spec: %v", st)
+		return taint, fmt.Errorf("invalid taint spec: %s", st)
 	}
 
 	if errs := validation.IsQualifiedName(key); len(errs) > 0 {
-		return taint, fmt.Errorf("invalid taint spec: %v, %s", st, strings.Join(errs, "; "))
+		return taint, fmt.Errorf("invalid taint spec: %s, %s", st, strings.Join(errs, "; "))
 	}
 
 	taint.Key = key
@@ -317,7 +317,7 @@ func parseTaint(st string) (corev1.Taint, error) {
 
 func validateTaintEffect(effect corev1.TaintEffect) error {
 	if effect != corev1.TaintEffectNoSchedule && effect != corev1.TaintEffectPreferNoSchedule && effect != corev1.TaintEffectNoExecute {
-		return fmt.Errorf("invalid taint effect: %v, unsupported taint effect", effect)
+		return fmt.Errorf("invalid taint effect: %s, unsupported taint effect", effect)
 	}
 
 	return nil

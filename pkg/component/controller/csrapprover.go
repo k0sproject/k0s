@@ -74,7 +74,7 @@ func (a *CSRApprover) Init(_ context.Context) error {
 	var err error
 	a.clientset, err = a.KubeClientFactory.GetClient()
 	if err != nil {
-		return fmt.Errorf("can't create kubernetes rest client for CSR check: %v", err)
+		return fmt.Errorf("can't create kubernetes rest client for CSR check: %w", err)
 	}
 
 	return nil

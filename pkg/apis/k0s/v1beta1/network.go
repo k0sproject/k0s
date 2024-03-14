@@ -159,7 +159,7 @@ func (n *Network) InternalAPIAddresses() ([]string, error) {
 	for i, ip := range parsedCIDRs {
 		apiIP, err := utilnet.GetIndexedIP(ip, 1)
 		if err != nil {
-			return nil, fmt.Errorf("can't build internal API address: %v", err)
+			return nil, fmt.Errorf("can't build internal API address: %w", err)
 		}
 		stringifiedAddresses[i] = apiIP.String()
 	}

@@ -104,7 +104,7 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 				err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
 			if err != nil {
-				return fmt.Errorf("can't update resource:%v", err)
+				return fmt.Errorf("can't update resource: %w", err)
 			}
 		}
 		s.keepResource(resource)

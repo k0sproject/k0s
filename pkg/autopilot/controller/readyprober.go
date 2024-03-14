@@ -108,7 +108,7 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 
 	address := controlnode.Status.GetInternalIP()
 	if address == "" {
-		return fmt.Errorf("no internal IP address found for %v", target.Name)
+		return fmt.Errorf("no internal IP address found for %s", target.Name)
 	}
 
 	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig, false /* followNonLocalRedirects */)
@@ -120,13 +120,13 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 	// The body content is not interesting at the moment.
 	res, _, err := probe.Probe(req, p.timeout)
 	if err != nil {
-		return fmt.Errorf("failed to HTTP probe '%v/%v': %w", target.Name, address, err)
+		return fmt.Errorf("failed to HTTP probe '%s/%s': %w", target.Name, address, err)
 	}
 
 	if res != k8sprobe.Success {
-		return fmt.Errorf("failed to probe '%v/%v': result=%v", target.Name, address, res)
+		return fmt.Errorf("failed to probe '%s/%s': result=%v", target.Name, address, res)
 	}
 
-	p.log.Infof("Probing %v done: %v", target.Name, res)
+	p.log.Infof("Probing %s done: %v", target.Name, res)
 	return nil
 }
