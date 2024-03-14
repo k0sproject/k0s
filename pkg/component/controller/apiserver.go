@@ -50,7 +50,6 @@ type APIServer struct {
 	Storage                   manager.Component
 	EnableKonnectivity        bool
 	DisableEndpointReconciler bool
-	gid                       int
 	supervisor                supervisor.Supervisor
 	uid                       int
 }
@@ -90,6 +89,7 @@ func (a *APIServer) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.ApiserverUser)
 	if err != nil {
+		a.uid = 0
 		logrus.Warning(fmt.Errorf("running kube-apiserver as root: %w", err))
 	}
 	return assets.Stage(a.K0sVars.BinDir, kubeAPIComponentName, constant.BinDirMode)
@@ -170,7 +170,6 @@ func (a *APIServer) Start(_ context.Context) error {
 		DataDir: a.K0sVars.DataDir,
 		Args:    apiServerArgs,
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 
 	etcdArgs, err := getEtcdArgs(a.ClusterConfig.Spec.Storage, a.K0sVars)

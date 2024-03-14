@@ -68,6 +68,7 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 	var err error
 	k.uid, err = users.GetUID(constant.KonnectivityServerUser)
 	if err != nil {
+		k.uid = 0
 		k.EmitWithPayload("error getting UID for", err)
 		logrus.Warning(fmt.Errorf("running konnectivity as root: %w", err))
 	}

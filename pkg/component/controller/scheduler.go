@@ -35,7 +35,6 @@ import (
 
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
-	gid            int
 	K0sVars        *config.CfgVars
 	LogLevel       string
 	SingleNode     bool
@@ -54,6 +53,7 @@ func (a *Scheduler) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.SchedulerUser)
 	if err != nil {
+		a.uid = 0
 		logrus.Warning(fmt.Errorf("running kube-scheduler as root: %w", err))
 	}
 	return assets.Stage(a.K0sVars.BinDir, kubeSchedulerComponentName, constant.BinDirMode)
@@ -120,7 +120,6 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 		DataDir: a.K0sVars.DataDir,
 		Args:    args.ToDashedArgs(),
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 	a.previousConfig = args
 	return a.supervisor.Supervise()

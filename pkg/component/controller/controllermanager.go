@@ -46,7 +46,7 @@ type Manager struct {
 	ExtraArgs             string
 
 	supervisor     *supervisor.Supervisor
-	uid, gid       int
+	uid            int
 	previousConfig stringmap.StringMap
 }
 
@@ -71,6 +71,7 @@ func (a *Manager) Init(_ context.Context) error {
 	// controller manager running as api-server user as they both need access to same sa.key
 	a.uid, err = users.GetUID(constant.ApiserverUser)
 	if err != nil {
+		a.uid = 0
 		logrus.Warning(fmt.Errorf("running kube-controller-manager as root: %w", err))
 	}
 
@@ -159,7 +160,6 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		DataDir: a.K0sVars.DataDir,
 		Args:    args.ToDashedArgs(),
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 	a.previousConfig = args
 	return a.supervisor.Supervise()
