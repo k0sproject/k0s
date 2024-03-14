@@ -33,6 +33,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -79,10 +80,10 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 	var impersonateGroup []string
 	cfg := &genericclioptions.ConfigFlags{
 		Insecure:         &insecure,
-		Timeout:          stringptr("0"),
-		KubeConfig:       stringptr(hc.kubeConfig),
-		CacheDir:         stringptr(hc.helmCacheDir),
-		Namespace:        stringptr(namespace),
+		Timeout:          ptr.To("0"),
+		KubeConfig:       ptr.To(hc.kubeConfig),
+		CacheDir:         ptr.To(hc.helmCacheDir),
+		Namespace:        ptr.To(namespace),
 		ImpersonateGroup: &impersonateGroup,
 	}
 	actionConfig := &action.Configuration{}
@@ -292,10 +293,6 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	}
 
 	return chartRelease, nil
-}
-
-func stringptr(s string) *string {
-	return &s
 }
 
 func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
