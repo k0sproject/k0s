@@ -68,4 +68,9 @@ RUN if [ "$TARGETARCH" != arm ]; then \
       && rm -rf /tmp/cri-dockerd \
       && chmod 755 /usr/local/bin/cri-dockerd; \
   fi
+
+RUN for u in etcd kube-apiserver kube-scheduler konnectivity-server; do \
+    adduser --system --shell /sbin/nologin --no-create-home --home /var/lib/k0s --disabled-password --gecos '' "$u"; \
+  done
+
 ADD cri-dockerd.sh /etc/init.d/cri-dockerd

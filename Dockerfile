@@ -3,7 +3,10 @@ ARG ALPINE_VERSION
 FROM docker.io/library/${ARCH}alpine:$ALPINE_VERSION
 ARG TARGETARCH
 
-RUN apk add --no-cache iptables tini
+RUN apk add --no-cache iptables tini \
+  && for u in etcd kube-apiserver kube-scheduler konnectivity-server; do \
+    adduser --system --shell /sbin/nologin --no-create-home --home /var/lib/k0s --disabled-password --gecos '' "$u"; \
+  done
 
 ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
 
