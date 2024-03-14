@@ -55,7 +55,6 @@ var cmDefaultArgs = stringmap.StringMap{
 	"bind-address":                    "127.0.0.1",
 	"cluster-name":                    "k0s",
 	"controllers":                     "*,bootstrapsigner,tokencleaner",
-	"enable-hostpath-provisioner":     "true",
 	"leader-elect":                    "true",
 	"use-service-account-credentials": "true",
 }
