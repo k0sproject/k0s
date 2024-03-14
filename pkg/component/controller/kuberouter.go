@@ -117,7 +117,9 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"run-firewall":         "true",
 		"run-service-proxy":    "false",
 		"bgp-graceful-restart": "true",
+		"enable-ipv4":          "true",
 		// Args from config values
+		"enable-ipv6":  fmt.Sprintf("%t", clusterConfig.Spec.Network.DualStack.Enabled),
 		"auto-mtu":     fmt.Sprintf("%t", clusterConfig.Spec.Network.KubeRouter.AutoMTU),
 		"metrics-port": fmt.Sprintf("%d", clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode": fmt.Sprintf("%t", globalHairpin),
@@ -177,6 +179,7 @@ func (k *KubeRouter) Start(_ context.Context) error {
 	return nil
 }
 
+// from https://github.com/cloudnativelabs/kube-router/blob/master/daemonset/
 const kubeRouterTemplate = `---
 apiVersion: v1
 kind: ConfigMap
@@ -272,6 +275,7 @@ spec:
           - mountPath: /etc/kube-router
             name: kube-router-cfg
       hostNetwork: true
+      hostPID: true
       tolerations:
       - effect: NoSchedule
         operator: Exists
@@ -313,6 +317,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: KUBE_ROUTER_CNI_CONF_FILE
           value: /etc/cni/net.d/10-kuberouter.conflist
         livenessProbe:
@@ -373,6 +381,28 @@ rules:
     - extensions
     resources:
       - networkpolicies
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "coordination.k8s.io"
+    resources:
+      - leases
+    verbs:
+      - get
+      - create
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - services/status
+    verbs:
+      - update
+  - apiGroups:
+      - "discovery.k8s.io"
+    resources:
+      - endpointslices
     verbs:
       - get
       - list

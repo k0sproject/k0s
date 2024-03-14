@@ -131,6 +131,27 @@ func (k *Kubelet) Init(_ context.Context) error {
 	return nil
 }
 
+func getIPs(hostname string) (net.IP, net.IP, error) {
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var ipv4, ipv6 net.IP
+	for _, ip := range ips {
+		if ipv4 == nil && ip.To4() != nil {
+			ipv4 = ip
+		} else if ipv6 == nil && ip.To16() != nil && ip.To4() == nil {
+			ipv6 = ip
+		}
+
+		if ipv4 != nil && ipv6 != nil {
+			break
+		}
+	}
+	return ipv4, ipv6, nil
+}
+
 // Run runs kubelet
 func (k *Kubelet) Start(ctx context.Context) error {
 	cmd := "kubelet"
@@ -170,15 +191,21 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		args["--node-labels"] = strings.Join(k.Labels, ",")
 	}
 
+	nodename, err := node.GetNodename("")
+	if err != nil {
+		return fmt.Errorf("can't get hostname: %v", err)
+	}
+
+	ipv4, ipv6, err := getIPs(nodename)
+	if err == nil && ipv4 != nil && ipv6 != nil {
+		args["--node-ip"] = ipv4.String() + "," + ipv6.String()
+	}
+
 	if runtime.GOOS == "windows" {
-		node, err := node.GetNodename("")
-		if err != nil {
-			return fmt.Errorf("can't get hostname: %v", err)
-		}
 		kubeletConfigData.CgroupsPerQOS = false
 		kubeletConfigData.ResolvConf = ""
 		args["--enforce-node-allocatable"] = ""
-		args["--hostname-override"] = node
+		args["--hostname-override"] = nodename
 		args["--hairpin-mode"] = "promiscuous-bridge"
 		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
 	} else {
