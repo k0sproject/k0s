@@ -2,8 +2,6 @@ module github.com/k0sproject/k0s
 
 go 1.21.0
 
-toolchain go1.21.7
-
 // k0s
 require (
 	github.com/BurntSushi/toml v1.2.1
