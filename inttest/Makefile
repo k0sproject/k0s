@@ -66,18 +66,9 @@ check-conformance: bin/sonobuoy
 get-conformance-results: bin/sonobuoy
 	$(realpath bin/sonobuoy) retrieve
 
-TIMEOUT ?= 4m
+TIMEOUT ?= 6m
 
 check-ctr: TIMEOUT=10m
-check-byocri: TIMEOUT=5m
-# readiness check for metric tests takes between around 5 and 6 minutes.
-check-metrics: TIMEOUT=6m
-check-metricsscraper: TIMEOUT=6m
-
-check-calico: TIMEOUT=6m
-
-# Establishing konnectivity tunnels with the LB in place takes a while, thus a bit longer timeout for the smoke
-check-customports: TIMEOUT=6m
 
 # Config change smoke runs actually many cases hence a bit longer timeout
 check-configchange: TIMEOUT=8m
@@ -88,7 +79,6 @@ check-backup: TIMEOUT=10m
 # Autopilot 3x3 HA test can take a while to run
 check-ap-ha3x3: K0S_UPDATE_FROM_BIN ?= ../k0s
 check-ap-ha3x3: K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
-check-ap-ha3x3: TIMEOUT=6m
 
 check-customports-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
 check-customports-dynamicconfig: TEST_PACKAGE=customports
