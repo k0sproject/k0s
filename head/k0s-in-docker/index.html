@@ -2151,11 +2151,9 @@
 <h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
 <h3 id="1-initiate-k0s">1. Initiate k0s<a class="headerlink" href="#1-initiate-k0s" title="Permanent link">#</a></h3>
 <p>You can run your own k0s in Docker:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>docker.io/k0sproject/k0s:v1.29.2-k0s.0
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w"> </span>docker.io/k0sproject/k0s:v1.29.2-k0s.0<span class="w"> </span>--<span class="w"> </span>k0s<span class="w"> </span>controller<span class="w"> </span>--enable-worker
 </code></pre></div>
-<p><strong>Note:</strong> If you are using Docker Desktop as the runtime, starting from 4.3.0 version it's using cgroups v2 in the VM that runs the engine. This means you have to add some extra flags to the above command to get kubelet and containerd to properly work with cgroups v2:</p>
-<div class="highlight"><pre><span></span><code>--cgroupns<span class="o">=</span>host<span class="w"> </span>-v<span class="w"> </span>/sys/fs/cgroup:/sys/fs/cgroup:rw
-</code></pre></div>
+<p><strong>Note:</strong> This command starts k0s with a worker. You may disable the worker by running it without the flag <code>--enable-worker</code></p>
 <h3 id="2-optional-create-additional-workers">2. (Optional) Create additional workers<a class="headerlink" href="#2-optional-create-additional-workers" title="Permanent link">#</a></h3>
 <p>You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.</p>
 <p>For each required worker:</p>
@@ -2167,7 +2165,7 @@
 </li>
 <li>
 <p>Run the container to create and join the new worker:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-worker1<span class="w"> </span>--hostname<span class="w"> </span>k0s-worker1<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>docker.io/k0sproject/k0s:v1.29.2-k0s.0<span class="w"> </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="nv">$token</span>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-worker1<span class="w"> </span>--hostname<span class="w"> </span>k0s-worker1<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w">  </span>docker.io/k0sproject/k0s:v1.29.2-k0s.0<span class="w"> </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="nv">$token</span>
 </code></pre></div>
 </li>
 </ol>
@@ -2186,11 +2184,9 @@
 <span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s controller --config=/etc/k0s/config.yaml --enable-worker</span>
 <span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
 <span class="w">    </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">cgroup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">host</span>
 <span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s&quot;</span>
-<span class="w">    </span><span class="nt">tmpfs</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/run</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run</span>
 <span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;6443:6443&quot;</span>
 <span class="w">    </span><span class="nt">network_mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bridge&quot;</span>
