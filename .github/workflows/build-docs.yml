@@ -11,6 +11,9 @@ on:
       - CODE_OF_CONDUCT.md
       - docs/**
 
+env:
+  MAKEFLAGS: -j
+
 jobs:
   build:
     name: Build docs

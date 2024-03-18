@@ -50,6 +50,7 @@ env:
   # This is hopefully somewhat physically close to where the hosted GitHub runners live.
   # https://github.com/orgs/community/discussions/24969#discussioncomment-3246032
   AWS_REGION: us-east-1
+  MAKEFLAGS: -j
 
 jobs:
   e2e-tests:

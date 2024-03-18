@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  MAKEFLAGS: -j
+
 jobs:
   sbom-upload:
     runs-on: ubuntu-latest

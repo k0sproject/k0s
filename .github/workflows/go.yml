@@ -28,6 +28,9 @@ on:
       - '.github/workflows/mkdocs-set-default-version.yml'
       - 'mkdocs.yml'
 
+env:
+  MAKEFLAGS: -j
+
 jobs:
   prepare:
     name: Prepare

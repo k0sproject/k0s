@@ -112,50 +112,61 @@ $(K0S_GO_BUILD_CACHE):
 go.sum: go.mod .k0sbuild.docker-image.k0s
 	$(GO) mod tidy && touch -c -- '$@'
 
-codegen_targets += pkg/apis/helm/v1beta1/.controller-gen.stamp
+controllergen_targets += pkg/apis/helm/v1beta1/.controller-gen.stamp
 pkg/apis/helm/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/helm/v1beta1/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/helm/v1beta1/.controller-gen.stamp: gen_output_dir = helm
 
-codegen_targets += pkg/apis/k0s/v1beta1/.controller-gen.stamp
+controllergen_targets += pkg/apis/k0s/v1beta1/.controller-gen.stamp
 pkg/apis/k0s/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/k0s/v1beta1/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/k0s/v1beta1/.controller-gen.stamp: gen_output_dir = v1beta1
 
-codegen_targets += pkg/apis/autopilot/v1beta2/.controller-gen.stamp
+controllergen_targets += pkg/apis/autopilot/v1beta2/.controller-gen.stamp
 pkg/apis/autopilot/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot/v1beta2/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/autopilot/v1beta2/.controller-gen.stamp: gen_output_dir = autopilot
 
+codegen_targets += $(controllergen_targets)
 pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/manifests/$(gen_output_dir)/CustomResourceDefinition'
-	rm -f -- '$(dir $@)'zz_*.go
-	CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
-	  crd \
-	  paths="./$(dir $@)..." \
-	  output:crd:artifacts:config=./static/manifests/$(gen_output_dir)/CustomResourceDefinition \
-	  object:headerFile=hack/tools/boilerplate.go.txt
+	mkdir -p 'static/manifests/$(gen_output_dir)'
+	gendir="$$(mktemp -d .controller-gen.XXXXXX.tmp)" \
+	  && trap "rm -rf -- $$gendir" INT EXIT \
+	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
+	    paths="./$(dir $@)..." \
+	    object:headerFile=hack/tools/boilerplate.go.txt output:object:dir="$$gendir" \
+	    crd output:crd:dir='static/manifests/$(gen_output_dir)/CustomResourceDefinition' \
+	  && mv -f -- "$$gendir"/zz_generated.deepcopy.go '$(dir $@).'
 	touch -- '$@'
 
 clientset_input_dirs := pkg/apis/autopilot/v1beta2 pkg/apis/k0s/v1beta1 pkg/apis/helm/v1beta1
 codegen_targets += pkg/client/clientset/.client-gen.stamp
 pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name \*.go -not -name \*_test.go -not -name zz_\*)
 pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
-	rm -rf -- '$(dir $@)'
-	CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/client-gen@v$(kubernetes_version:1.%=0.%) \
-	  --go-header-file=hack/tools/boilerplate.go.txt \
-	  --input-base='' \
-	  --input=$(subst $(space),$(comma),$(clientset_input_dirs:%=github.com/k0sproject/k0s/%)) \
-	  --output-package=github.com/k0sproject/k0s/$(patsubst %/,%,$(dir $(patsubst %/,%,$(dir $@)))) \
-	  --clientset-name=$(notdir $(patsubst %/,%,$(dir $@))) \
-	  --output-base=. \
-	  --trim-path-prefix=github.com/k0sproject/k0s
+	gendir="$$(mktemp -d .client-gen.XXXXXX.tmp)" \
+	  && trap "rm -rf -- $$gendir" INT EXIT \
+	  && CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/client-gen@v$(kubernetes_version:1.%=0.%) \
+	    --go-header-file=hack/tools/boilerplate.go.txt \
+	    --input-base='' \
+	    --input=$(subst $(space),$(comma),$(clientset_input_dirs:%=github.com/k0sproject/k0s/%)) \
+	    --output-package=github.com/k0sproject/k0s/pkg/client \
+	    --clientset-name=clientset \
+	    --output-base="$$gendir/out" \
+	    --trim-path-prefix=github.com/k0sproject/k0s \
+	  && { [ ! -e pkg/client/clientset ] || mv -- pkg/client/clientset "$$gendir/old"; } \
+	  && mv -f -- "$$gendir/out/github.com/k0sproject/k0s/pkg/client/clientset" pkg/client/.
 	touch -- '$@'
 
 codegen_targets += static/zz_generated_assets.go
-static_asset_dirs := static/manifests static/misc
+static/zz_generated_assets.go: $(controllergen_targets) # to generate the CRDs into static/manifests/*/CustomResourceDefinition
+static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows static/misc -type f)
 static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
-static/zz_generated_assets.go: $(shell find $(static_asset_dirs) -type f)
-	-rm -f -- '$@'
-	CGO_ENABLED=0 $(GO) install github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version)
-	$(GO_ENV) go-bindata -o '$@' -pkg static -prefix static $(patsubst %,%/...,$(static_asset_dirs))
+	CGO_ENABLED=0 $(GO) run github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version) \
+	  -o '$@' -pkg static -prefix static \
+	  static/manifests/helm/CustomResourceDefinition/... \
+	  static/manifests/v1beta1/CustomResourceDefinition/... \
+	  static/manifests/autopilot/CustomResourceDefinition/... \
+	  static/manifests/calico/... \
+	  static/manifests/windows/... \
+	  static/misc/...
 
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 BUILD_GO_TAGS += noembedbins
