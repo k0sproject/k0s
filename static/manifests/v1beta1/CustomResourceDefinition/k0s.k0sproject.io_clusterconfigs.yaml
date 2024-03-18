@@ -362,6 +362,62 @@ spec:
                   clusterDomain:
                     description: Cluster Domain
                     type: string
+                  controlPlaneLoadBalancing:
+                    description: |-
+                      ControlPlaneLoadBalancing defines the configuration options related to k0s's
+                      control plane load balancing feature.
+                    properties:
+                      vrrpInstances:
+                        description: VRRPInstances is a list of VRRPInstance
+                        items:
+                          description: VRRPInstance defines the configuration options
+                            for a VRRP instance.
+                          properties:
+                            advertInterval:
+                              default: 1
+                              description: |-
+                                AdvertInterval is the advertisement interval in seconds. If not specified,
+                                use 1 second
+                              format: int32
+                              type: integer
+                            authPass:
+                              description: |-
+                                AuthPass is the password for accessing vrrpd. This is not a security
+                                feature but a way to prevent accidental misconfigurations.
+                                Authpass must be 8 characters or less.
+                              type: string
+                            interface:
+                              description: |-
+                                Interface specifies the NIC used by the virtual router. If not specified,
+                                k0s will use the interface that owns the default route.
+                              type: string
+                            name:
+                              default: k0s-vip
+                              description: |-
+                                Name is the name of the VRRP instance. If not specified, defaults to
+                                k0s-vip-<index>.
+                              type: string
+                            virtualIPs:
+                              description: |-
+                                VirtualIP is the list virtual IP address used by the VRRP instance. VirtualIPs
+                                must be a CIDR as defined in RFC 4632 and RFC 4291.
+                              items:
+                                type: string
+                              type: array
+                            virtualRouterID:
+                              default: 51
+                              description: |-
+                                VirtualRouterID is the VRRP router ID. If not specified, defaults to 51.
+                                VirtualRouterID must be in the range of 1-255, all the control plane
+                                nodes must have the same VirtualRouterID.
+                                Two clusters in the same network must not use the same VirtualRouterID.
+                              format: int32
+                              maximum: 255
+                              minimum: 1
+                              type: integer
+                          type: object
+                        type: array
+                    type: object
                   dualStack:
                     description: DualStack defines network configuration for ipv4\ipv6
                       mixed cluster setup

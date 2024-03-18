@@ -31,8 +31,9 @@ var _ Validateable = (*Network)(nil)
 
 // Network defines the network related config options
 type Network struct {
-	Calico     *Calico     `json:"calico"`
-	DualStack  DualStack   `json:"dualStack,omitempty"`
+	Calico    *Calico   `json:"calico"`
+	DualStack DualStack `json:"dualStack,omitempty"`
+
 	KubeProxy  *KubeProxy  `json:"kubeProxy"`
 	KubeRouter *KubeRouter `json:"kuberouter"`
 
@@ -41,6 +42,11 @@ type Network struct {
 	// NOTE: This feature is currently unsupported on ARMv7!
 	// +optional
 	NodeLocalLoadBalancing *NodeLocalLoadBalancing `json:"nodeLocalLoadBalancing,omitempty"`
+
+	// ControlPlaneLoadBalancing defines the configuration options related to k0s's
+	// control plane load balancing feature.
+	// +optional
+	ControlPlaneLoadBalancing *ControlPlaneLoadBalancingSpec `json:"controlPlaneLoadBalancing,omitempty"`
 
 	// Pod network CIDR to use in the cluster
 	PodCIDR string `json:"podCIDR"`
