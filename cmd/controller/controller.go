@@ -224,6 +224,14 @@ func (c *command) start(ctx context.Context) error {
 		nodeComponents.Add(ctx, controllerLeaseCounter)
 	}
 
+	enableCPLB := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.CPLBComponentName)
+	if enableCPLB {
+		nodeComponents.Add(ctx, &controller.Keepalived{
+			K0sVars: c.K0sVars,
+			Config:  nodeConfig.Spec.Network.ControlPlaneLoadBalancing,
+		})
+	}
+
 	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
 	disableEndpointReconciler := !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
 		nodeConfig.Spec.API.ExternalAddress != ""

@@ -84,7 +84,7 @@ func (c *ControlPlaneLoadBalancingSpec) ValidateVRRPInstances(getDefaultNICFn fu
 		}
 
 		if vi.Interface == "" {
-			nic, err := getDefaultNIC()
+			nic, err := getDefaultNICFn()
 			if err != nil {
 				return fmt.Errorf("failed to get default NIC: %v", err)
 			}

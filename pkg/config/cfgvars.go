@@ -46,6 +46,7 @@ type CfgVars struct {
 	EtcdCertDir                string // EtcdCertDir contains etcd certificates
 	EtcdDataDir                string // EtcdDataDir contains etcd state
 	KineSocketPath             string // The unix socket path for kine
+	KeepalivedConfigFile       string // location for keepalived data
 	KonnectivitySocketDir      string // location of konnectivity's socket path
 	KubeletAuthConfigPath      string // KubeletAuthConfigPath defines the default kubelet auth config path
 	KubeletVolumePluginDir     string // location for kubelet plugins volume executables
@@ -169,6 +170,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		EtcdCertDir:                filepath.Join(certDir, "etcd"),
 		EtcdDataDir:                filepath.Join(dataDir, "etcd"),
 		KineSocketPath:             filepath.Join(runDir, constant.KineSocket),
+		KeepalivedConfigFile:       filepath.Join(dataDir, "keepalived", "keepalived.conf"),
 		KonnectivitySocketDir:      filepath.Join(runDir, "konnectivity-server"),
 		KubeletAuthConfigPath:      filepath.Join(dataDir, "kubelet.conf"),
 		KubeletVolumePluginDir:     constant.KubeletVolumePluginDir,
