@@ -54,10 +54,12 @@ One goal of k0s is to allow for the deployment of an isolated control plane, whi
 | TCP      | 10250 | kubelet        | controller, worker => host `*` | Authenticated kubelet API for the controller node `kube-apiserver` (and `heapster`/`metrics-server` addons) using TLS client certs
 | TCP      | 9443  | k0s-api        | controller <-> controller      | k0s controller join API, TLS with token auth
 | TCP      | 8132  | konnectivity   | worker <-> controller          | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
+| TCP      | 112   | keepalived     | controller <-> controller      | Only required for control plane load balancing vrrpInstances for ip address 224.0.0.18. 224.0.0.18 is a multicast IP address defined in [RFC 3768].
 
 You also need enable all traffic to and from the [podCIDR and serviceCIDR] subnets on nodes with a worker role.
 
 [podCIDR and serviceCIDR]: configuration.md#specnetwork
+[RFC 3768]: https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2
 
 ## iptables
 

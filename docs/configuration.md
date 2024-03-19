@@ -300,6 +300,29 @@ node-local load balancing.
 | `apiServerBindPort`          | Port number on which to bind the Envoy load balancer for the Kubernetes API server to on a worker's loopback interface.  Default: `7443`. |
 | `konnectivityServerBindPort` | Port number on which to bind the Envoy load balancer for the konnectivity server to on a worker's loopback interface. Default: `7132`.    |
 
+##### `spec.network.controlPlaneLoadBalancing`
+
+Configuration options related to k0s's [control plane load balancing] feature
+
+| Element         | Description                                                                                                |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| `vrrpInstances` | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs |
+
+[control plane load balancing]: cplb.md
+
+##### `spec.network.controlPlaneLoadBalancing.VRRPInstances`
+
+Configuration options required for using VRRP to configure VIPs in control plane load balancing.
+
+| Element           | Description                                                                                                       |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `name`            | The name of the VRRP instance. If omitted it generates a predictive name shared across all nodes.                |
+| `virtualIPs`      | A list of the CIDRs handled by the VRRP instance.                                                                 |
+| `interface`       | The interface used by each VRRPInstance. If undefined k0s will try to auto detect it based on the default gateway |
+| `virtualRouterId` | Virtual router ID for the instance. Default: `51`                                                                 |
+| `advertInterval`  | Advertisement interval in seconds. Default: `1`.                                                                  |
+| `authPass`        | The password used for accessing vrrpd. This field is mandatory and must be under 8 characters long                |
+
 ### `spec.controllerManager`
 
 | Element     | Description                                                                                                             |
