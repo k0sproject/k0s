@@ -52,6 +52,8 @@ const (
 	ManifestsDirMode = 0755
 	// KineDBDirMode is the expected directory permissions for the Kine DB
 	KineDBDirMode = 0750
+	// keepalived is the expected directory permissions for the Keepalived directory
+	KeepalivedDirMode = 0600
 
 	/* User accounts for services */
 
@@ -65,6 +67,8 @@ const (
 	SchedulerUser = "kube-scheduler"
 	// KonnectivityServerUser deinfes the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
+	// KeepalivedUser defines the user to use for running keepalived
+	KeepalivedUser = "keepalived"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
 	KubernetesMajorMinorVersion = "1.29"
@@ -104,6 +108,7 @@ const (
 	CoreDNSComponentname               = "coredns"
 	CsrApproverComponentName           = "csr-approver"
 	HelmComponentName                  = "helm"
+	CPLBComponentName                  = "cplb"
 	KonnectivityServerComponentName    = "konnectivity-server"
 	KubeControllerManagerComponentName = "kube-controller-manager"
 	KubeProxyComponentName             = "kube-proxy"

@@ -22,6 +22,7 @@ smoketests := \
 	check-cnichange \
 	check-configchange \
 	check-containerdimports \
+	check-cplb \
 	check-ctr \
 	check-custom-cidrs \
 	check-customca \

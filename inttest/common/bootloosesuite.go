@@ -1286,22 +1286,22 @@ func newSuiteContext(t *testing.T) (context.Context, context.CancelCauseFunc) {
 
 // GetControllerIPAddress returns controller ip address
 func (s *BootlooseSuite) GetControllerIPAddress(idx int) string {
-	return s.getIPAddress(s.ControllerNode(idx))
+	return s.GetIPAddress(s.ControllerNode(idx))
 }
 
 func (s *BootlooseSuite) GetWorkerIPAddress(idx int) string {
-	return s.getIPAddress(s.WorkerNode(idx))
+	return s.GetIPAddress(s.WorkerNode(idx))
 }
 
 func (s *BootlooseSuite) GetLBAddress() string {
-	return s.getIPAddress(s.LBNode())
+	return s.GetIPAddress(s.LBNode())
 }
 
 func (s *BootlooseSuite) GetExternalEtcdIPAddress() string {
-	return s.getIPAddress(s.ExternalEtcdNode())
+	return s.GetIPAddress(s.ExternalEtcdNode())
 }
 
-func (s *BootlooseSuite) getIPAddress(nodeName string) string {
+func (s *BootlooseSuite) GetIPAddress(nodeName string) string {
 	ssh, err := s.SSH(s.Context(), nodeName)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()

@@ -64,6 +64,9 @@ konnectivity_build_go_ldflags_extra = "-extldflags=-static"
 iptables_version = 1.8.9
 iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 
+keepalived_version = 2.2.8
+keepalived_buildimage = docker.io/library/alpine:$(alpine_patch_version)
+
 clean-iid-files = \
 	for i in $(IID_FILES); do \
 	  [ -f "$$i" ] || continue; \
