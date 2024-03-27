@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for merge conflicts
-        uses: eps1lon/actions-label-merge-conflict@v2.1.0
+        uses: eps1lon/actions-label-merge-conflict@v3.0.0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           dirtyLabel: merge-conflict
