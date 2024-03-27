@@ -68,7 +68,7 @@ Loop:
 			if err == syscall.ESRCH {
 				return nil
 			} else if err != nil {
-				return fmt.Errorf("failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
+				return fmt.Errorf("failed to send SIGTERM to pid %d: %w", s.cmd.Process.Pid, err)
 			}
 		case <-deadline:
 			break Loop
@@ -87,7 +87,7 @@ Loop:
 	if err == syscall.ESRCH {
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("failed to send SIGKILL to pid %d: %s", s.cmd.Process.Pid, err)
+		return fmt.Errorf("failed to send SIGKILL to pid %d: %w", s.cmd.Process.Pid, err)
 	}
 	return nil
 }

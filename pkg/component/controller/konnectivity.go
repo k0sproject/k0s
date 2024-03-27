@@ -104,7 +104,7 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 	// To make the server start, add "dummy" 0 into the channel
 	if err := k.runServer(ctx, 0); err != nil {
 		k.EmitWithPayload("failed to run konnectivity server", err)
-		return fmt.Errorf("failed to run konnectivity server: %s", err)
+		return fmt.Errorf("failed to run konnectivity server: %w", err)
 	}
 
 	go k.watchControllerCountChanges(ctx)
