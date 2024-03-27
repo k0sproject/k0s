@@ -29,9 +29,8 @@ import (
 )
 
 func TestConfigurer_HandleImports(t *testing.T) {
-	t.Run("should merge CRI config snippets", func(t *testing.T) {
+	t.Run("should merge configuration files containing CRI plugin configuration sections", func(t *testing.T) {
 		importsPath := t.TempDir()
-		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
 		criRuntimeConfig := `
 [plugins]
   [plugins."io.containerd.grpc.v1.cri".containerd]
@@ -40,46 +39,42 @@ func TestConfigurer_HandleImports(t *testing.T) {
 		err := os.WriteFile(filepath.Join(importsPath, "foo.toml"), []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
 		c := configurer{
-			loadPath:       filepath.Join(importsPath, "*.toml"),
-			criRuntimePath: criRuntimePath,
-			log:            logrus.New().WithField("test", t.Name()),
+			loadPath: filepath.Join(importsPath, "*.toml"),
+			log:      logrus.New().WithField("test", t.Name()),
 		}
-		imports, err := c.handleImports()
-		require.NoError(t, err)
-		require.Len(t, imports, 1)
-		require.Contains(t, imports, escapedPath(criRuntimePath))
+		criConfig, err := c.handleImports()
+		assert.NoError(t, err)
+		require.NotNil(t, criConfig)
+		assert.Empty(t, criConfig.ImportPaths, "files containing CRI plugin configuration sections should be merged, not imported")
 
 		// Dump the config for inspection
-		b, _ := os.ReadFile(criRuntimePath)
-		t.Logf("CRI config:\n%s", string(b))
+		t.Logf("CRI config:\n%s", criConfig.CRIConfig)
+
+		criConfigPath := filepath.Join(t.TempDir(), "cri.toml")
+		require.NoError(t, os.WriteFile(criConfigPath, []byte(criConfig.CRIConfig), 0644))
 
 		// Load the criRuntimeConfig and verify the settings are correct
-		containerdConfig := &serverconfig.Config{}
-		err = serverconfig.LoadConfig(criRuntimePath, containerdConfig)
-		require.NoError(t, err)
+		var containerdConfig serverconfig.Config
+		require.NoError(t, serverconfig.LoadConfig(criConfigPath, &containerdConfig))
 
-		criConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
-		snapshotter := criConfig.GetPath([]string{"containerd", "snapshotter"})
+		criPluginConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
+		require.NotNil(t, criPluginConfig, "No CRI plugin configuration section found")
+		snapshotter := criPluginConfig.GetPath([]string{"containerd", "snapshotter"})
 		require.Equal(t, "zfs", snapshotter)
 	})
 
-	t.Run("should have single import for CRI if there's nothing in imports dir", func(t *testing.T) {
-		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
+	t.Run("should have no imports if imports dir is empty", func(t *testing.T) {
 		c := configurer{
-			loadPath:       filepath.Join(t.TempDir(), "*.toml"),
-			criRuntimePath: criRuntimePath,
-			log:            logrus.New().WithField("test", t.Name()),
+			loadPath: filepath.Join(t.TempDir(), "*.toml"),
+			log:      logrus.New().WithField("test", t.Name()),
 		}
-		imports, err := c.handleImports()
+		criConfig, err := c.handleImports()
 		assert.NoError(t, err)
-		if assert.Len(t, imports, 1) {
-			assert.Equal(t, escapedPath(criRuntimePath), imports[0])
-		}
+		assert.Empty(t, criConfig.ImportPaths)
 	})
 
-	t.Run("should have two imports when one non CRI snippet", func(t *testing.T) {
+	t.Run("should import configuration files not containing a CRI plugin configuration section", func(t *testing.T) {
 		importsPath := t.TempDir()
-		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
 		criRuntimeConfig := `
 foo = "bar"
 version = 2
@@ -88,15 +83,11 @@ version = 2
 		err := os.WriteFile(nonCriConfigPath, []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
 		c := configurer{
-			loadPath:       filepath.Join(importsPath, "*.toml"),
-			criRuntimePath: criRuntimePath,
-			log:            logrus.New().WithField("test", t.Name()),
+			loadPath: filepath.Join(importsPath, "*.toml"),
+			log:      logrus.New().WithField("test", t.Name()),
 		}
-		imports, err := c.handleImports()
+		criConfig, err := c.handleImports()
 		assert.NoError(t, err)
-		if assert.Len(t, imports, 2) {
-			assert.Contains(t, imports, escapedPath(criRuntimePath))
-			assert.Contains(t, imports, escapedPath(nonCriConfigPath))
-		}
+		assert.Equal(t, []string{nonCriConfigPath}, criConfig.ImportPaths)
 	})
 }
