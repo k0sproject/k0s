@@ -12,9 +12,13 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/containerd_config/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/cplb/">
       
       
+        <link rel="prev" href="../nllb/">
+      
+      
+        <link rel="next" href="../shell-completion/">
       
       
       <link rel="icon" href="../img/k0s_social.png">
@@ -22,7 +26,7 @@
     
     
       
-        <title>Containerd config - Documentation</title>
+        <title>Control plane load balancing - Documentation</title>
       
     
     
@@ -82,6 +86,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#control-plane-load-balancing" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -129,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Containerd config
+              Control plane load balancing
             
           </span>
         </div>
@@ -753,17 +762,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -777,7 +788,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Usage
@@ -1082,10 +1093,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../cplb/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Control plane load balancing
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -1094,6 +1125,62 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#technical-functionality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical functionality
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vrrp-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      VRRP Instances
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-in-a-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enabling in a cluster
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-example-using-k0sctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full example using k0sctl
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1877,6 +1964,52 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#technical-functionality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical functionality
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vrrp-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      VRRP Instances
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-in-a-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enabling in a cluster
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-example-using-k0sctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full example using k0sctl
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1891,9 +2024,295 @@
                   
 
 
-  <h1>Containerd config</h1>
+<h1 id="control-plane-load-balancing">Control plane load balancing<a class="headerlink" href="#control-plane-load-balancing" title="Permanent link">#</a></h1>
+<p>For clusters that don't have an <a href="../high-availability/#load-balancer">externally managed load balancer</a> for the k0s
+control plane, there is another option to get a highly available control plane called control plane load balancing (CPLB).</p>
+<p>CPLB allows automatic assigned of predefined IP addresses using VRRP across masters.</p>
+<h2 id="technical-functionality">Technical functionality<a class="headerlink" href="#technical-functionality" title="Permanent link">#</a></h2>
+<p>The k0s control plane load balancer provides k0s with virtual IPs on each
+controller node. This allows the control plane to be highly available using
+VRRP (Virtual Router Redundancy Protocol) as long as the network
+infrastructure allows multicast and GARP.</p>
+<p><a href="https://www.keepalived.org/">Keepalived</a> is the only load balancer that is
+supported so far and currently there are no plans to support other alternatives.</p>
+<h2 id="vrrp-instances">VRRP Instances<a class="headerlink" href="#vrrp-instances" title="Permanent link">#</a></h2>
+<p>VRRP, or Virtual Router Redundancy Protocol, is a protocol that allows several
+routers to utilize the same virtual IP address. A VRRP instance refers to a
+specific configuration of this protocol.</p>
+<p>Each VRRP instance must have a unique virtualRouterID, at least one IP address,
+one unique password (which is sent in plain text across your network, this is
+to prevent accidental conflicts between VRRP instances) and one network
+interface.</p>
+<p>Except for the network interface, all the fields of a VRRP instance must have
+the same value on all the control plane nodes.</p>
+<p>Usually, users will define multiple VRRP instances when they need k0s to be
+highly available on multiple network interfaces.</p>
+<h2 id="enabling-in-a-cluster">Enabling in a cluster<a class="headerlink" href="#enabling-in-a-cluster" title="Permanent link">#</a></h2>
+<p>In order to use control plane load balancing, the cluster needs to comply with the
+following:</p>
+<ul>
+<li>K0s isn't running as a <a href="../k0s-single-node/">single node</a>, i.e. it isn't
+  started using the <code>--single</code> flag.</li>
+<li>The cluster should have multiple controller nodes. Technically CPLB also works
+  with a single controller node, but is only useful in conjunction with a highly
+  available control plane.</li>
+<li>Unique virtualRouterID and authPass for each VRRP Instance in the same broadcast domain.
+  These do not provide any sort of security against ill-intentioned attacks, they are
+  safety features to prevent accidental conflicts between VRRP instances in the same
+  network segment.</li>
+</ul>
+<p>Add the following to the cluster configuration (<code>k0s.yaml</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">api</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;External address&gt;</span><span class="w"> </span><span class="c1"># This isn&#39;t a requirement, but it&#39;s a common use case.</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP&gt;/&lt;external</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP</span><span class="nv"> </span><span class="s">netmask&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password&gt;</span>
+</code></pre></div>
+<p>Or alternatively, if using <a href="../k0sctl-install/"><code>k0sctl</code></a>, add the following to
+the k0sctl configuration (<code>k0sctl.yaml</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">api</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;External address&gt;</span><span class="w"> </span><span class="c1"># This isn&#39;t a requirement, but it&#39;s a common use case.</span>
+<span class="w">        </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP&gt;/&lt;external</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP</span><span class="nv"> </span><span class="s">netmask&gt;&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">              </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password&gt;</span>
+</code></pre></div>
+<p>Because this is a feature intended to configure the apiserver, CPLB noes not
+support dynamic configuration and in order to make changes you need to restart
+the k0s controllers to make changes.</p>
+<h2 id="full-example-using-k0sctl">Full example using <code>k0sctl</code><a class="headerlink" href="#full-example-using-k0sctl" title="Permanent link">#</a></h2>
+<p>The following example shows a full <code>k0sctl</code> configuration file featuring three
+controllers and three workers with control plane load balancing enabled:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller-0.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller-1.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller-2.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-0.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-1.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-2.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.29.2+k0s.0</span>
+<span class="w">    </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">api</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.122.200</span>
+<span class="w">        </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;192.168.122.200/24&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">              </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Example</span>
+</code></pre></div>
+<p>Save the above configuration into a file called <code>k0sctl.yaml</code> and apply it in
+order to bootstrap the cluster:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>k0sctl<span class="w"> </span>apply
+<span class="go">⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███</span>
+<span class="go">⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███</span>
+<span class="go">⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███</span>
+<span class="go">⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███</span>
+<span class="go">⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████</span>
+<span class="go">k0sctl  Copyright 2023, k0sctl authors.</span>
+<span class="go">Anonymized telemetry of usage will be sent to the authors.</span>
+<span class="go">By continuing to use k0sctl you agree to these terms:</span>
+<span class="go">https://k0sproject.io/licenses/eula</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Connect to hosts&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Detect host operating systems&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Acquire exclusive host lock&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Prepare hosts&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Gather host facts&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: using worker-2.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: using controller-0.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: using controller-2.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: using controller-1.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: using worker-1.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: using worker-0.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: discovered 192.168.122.210 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: discovered 192.168.122.37 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: discovered 192.168.122.87 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: discovered 192.168.122.185 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: discovered 192.168.122.81 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: discovered 192.168.122.219 as private address&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Validate hosts&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Validate facts&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Download k0s binaries to local host&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Upload k0s binaries to hosts&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Install k0s binaries on hosts&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: validating configuration&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: validating configuration&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: validating configuration&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Configure k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: installing new configuration&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: installing new configuration&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: installing new configuration&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Initialize the k0s cluster&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: installing k0s controller&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: waiting for the k0s service to start&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: waiting for kubernetes api to respond&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Install controllers&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: installing k0s controller&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: waiting for the k0s service to start&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: waiting for kubernetes api to respond&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: installing k0s controller&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: waiting for the k0s service to start&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: waiting for kubernetes api to respond&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Install workers&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating a join token for worker 1&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating a join token for worker 2&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating a join token for worker 3&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: installing k0s worker&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: installing k0s worker&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: installing k0s worker&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: waiting for node to become ready&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: waiting for node to become ready&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: waiting for node to become ready&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Release exclusive host lock&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Disconnect from hosts&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Finished in 2m20s&quot;</span>
+<span class="go">level=info msg=&quot;k0s cluster version v1.29.2+k0s.0  is now installed&quot;</span>
+<span class="go">level=info msg=&quot;Tip: To access the cluster you can now fetch the admin kubeconfig using:&quot;</span>
+<span class="go">level=info msg=&quot;     k0sctl kubeconfig&quot;</span>
+</code></pre></div>
+<p>The cluster with the two nodes should be available by now. Setup the kubeconfig
+file in order to interact with it:</p>
+<div class="highlight"><pre><span></span><code>k0sctl<span class="w"> </span>kubeconfig<span class="w"> </span>&gt;<span class="w"> </span>k0s-kubeconfig
+<span class="nb">export</span><span class="w"> </span><span class="nv">KUBECONFIG</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/k0s-kubeconfig
+</code></pre></div>
+<p>All three worker nodes are ready:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+<span class="go">NAME                   STATUS   ROLES           AGE     VERSION</span>
+<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
+<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
+<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
+</code></pre></div>
+<p>Each controller node has a dummy interface with the VIP and /32 netmask,
+but only one has it in the real nic:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span>controller-<span class="o">{</span><span class="m">0</span>..2<span class="o">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$i</span><span class="w"> </span><span class="p">;</span><span class="w"> </span>ssh<span class="w"> </span><span class="nv">$i</span><span class="w"> </span>--<span class="w"> </span>ip<span class="w"> </span>-4<span class="w"> </span>--oneline<span class="w"> </span>addr<span class="w"> </span>show<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-e<span class="w"> </span>eth0<span class="w"> </span>-e<span class="w"> </span>dummyvip0<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<span class="go">controller-0</span>
+<span class="go">2: eth0    inet 192.168.122.37/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2381sec preferred_lft 2381sec</span>
+<span class="go">2: eth0    inet 192.168.122.200/24 scope global secondary eth0\       valid_lft forever preferred_lft forever</span>
+<span class="go">3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever</span>
+<span class="go">controller-1</span>
+<span class="go">2: eth0    inet 192.168.122.185/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2390sec preferred_lft 2390sec</span>
+<span class="go">3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever</span>
+<span class="go">controller-2</span>
+<span class="go">2: eth0    inet 192.168.122.87/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2399sec preferred_lft 2399sec</span>
+<span class="go">3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever</span>
+</code></pre></div>
+<p>The cluster is using control plane load balancing and is able to tolerate the
+outage of one controller node. Shutdown the first controller to simulate a
+failure condition:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>ssh<span class="w"> </span>controller-0<span class="w"> </span><span class="s1">&#39;sudo poweroff&#39;</span>
+<span class="go">Connection to 192.168.122.37 closed by remote host.</span>
+</code></pre></div>
+<p>Control plane load balancing provides high availability, the VIP will have moved to a different node:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span>controller-<span class="o">{</span><span class="m">0</span>..2<span class="o">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$i</span><span class="w"> </span><span class="p">;</span><span class="w"> </span>ssh<span class="w"> </span><span class="nv">$i</span><span class="w"> </span>--<span class="w"> </span>ip<span class="w"> </span>-4<span class="w"> </span>--oneline<span class="w"> </span>addr<span class="w"> </span>show<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-e<span class="w"> </span>eth0<span class="w"> </span>-e<span class="w"> </span>dummyvip0<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<span class="go">controller-1</span>
+<span class="go">2: eth0    inet 192.168.122.185/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2173sec preferred_lft 2173sec</span>
+<span class="go">2: eth0    inet 192.168.122.200/24 scope global secondary eth0\       valid_lft forever preferred_lft forever</span>
+<span class="go">3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever</span>
+<span class="go">controller-2</span>
+<span class="go">2: eth0    inet 192.168.122.87/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2182sec preferred_lft 2182sec</span>
+<span class="go">3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever</span>
+<span class="go">````</span>
 
-<p>See <a href="../runtime/">runtime</a>.</p>
+<span class="go">And the cluster will be working normally:</span>
+
+<span class="go">```console</span>
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+<span class="go">NAME                   STATUS   ROLES           AGE     VERSION</span>
+<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
+<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
+<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
+</code></pre></div>
 
 
 

@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../img/k0s_social.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.14">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.15">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.10ba22f1.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -1279,6 +1279,27 @@
   
   <span class="md-ellipsis">
     Node-local load balancing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cplb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control plane load balancing
   </span>
   
 
@@ -2709,6 +2730,58 @@ node-local load balancing.</p>
 <tr>
 <td><code>konnectivityServerBindPort</code></td>
 <td>Port number on which to bind the Envoy load balancer for the konnectivity server to on a worker's loopback interface. Default: <code>7132</code>.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="specnetworkcontrolplaneloadbalancing"><code>spec.network.controlPlaneLoadBalancing</code><a class="headerlink" href="#specnetworkcontrolplaneloadbalancing" title="Permanent link">#</a></h5>
+<p>Configuration options related to k0s's <a href="../cplb/">control plane load balancing</a> feature</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vrrpInstances</code></td>
+<td>Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs</td>
+</tr>
+</tbody>
+</table>
+<h5 id="specnetworkcontrolplaneloadbalancingvrrpinstances"><code>spec.network.controlPlaneLoadBalancing.VRRPInstances</code><a class="headerlink" href="#specnetworkcontrolplaneloadbalancingvrrpinstances" title="Permanent link">#</a></h5>
+<p>Configuration options required for using VRRP to configure VIPs in control plane load balancing.</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>The name of the VRRP instance. If omitted it generates a predictive name shared across all nodes.</td>
+</tr>
+<tr>
+<td><code>virtualIPs</code></td>
+<td>A list of the CIDRs handled by the VRRP instance.</td>
+</tr>
+<tr>
+<td><code>interface</code></td>
+<td>The interface used by each VRRPInstance. If undefined k0s will try to auto detect it based on the default gateway</td>
+</tr>
+<tr>
+<td><code>virtualRouterId</code></td>
+<td>Virtual router ID for the instance. Default: <code>51</code></td>
+</tr>
+<tr>
+<td><code>advertInterval</code></td>
+<td>Advertisement interval in seconds. Default: <code>1</code>.</td>
+</tr>
+<tr>
+<td><code>authPass</code></td>
+<td>The password used for accessing vrrpd. This field is mandatory and must be under 8 characters long</td>
 </tr>
 </tbody>
 </table>
