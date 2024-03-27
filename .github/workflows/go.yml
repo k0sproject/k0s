@@ -337,6 +337,7 @@ jobs:
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"
+        if: matrix.arch == 'arm'
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
       - name: Set up Docker Context for Buildx
@@ -447,9 +448,9 @@ jobs:
       # post build action. So, as a workaround, ensure that all subdirectories
       # are writable.
       - name: "Post: Fixup directories"
-        if: always()
+        if: always() && matrix.arch == 'arm'
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
       - name: "Docker prune"
-        if: always()
+        if: always() && matrix.arch == 'arm'
         run: docker system prune --force --filter "until=$((24*7))h"
