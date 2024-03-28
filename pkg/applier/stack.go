@@ -72,7 +72,7 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		s.prepareResource(resource)
 		mapping, err := mapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
 		if err != nil {
-			return fmt.Errorf("mapping error: %s", err)
+			return fmt.Errorf("mapping error: %w", err)
 		}
 		var drClient dynamic.ResourceInterface
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
@@ -84,10 +84,10 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		if apiErrors.IsNotFound(err) {
 			_, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
 			if err != nil {
-				return fmt.Errorf("cannot create resource %s: %s", resource.GetName(), err)
+				return fmt.Errorf("cannot create resource %s: %w", resource.GetName(), err)
 			}
 		} else if err != nil {
-			return fmt.Errorf("unknown api error: %s", err)
+			return fmt.Errorf("unknown api error: %w", err)
 		} else { // The resource already exists, we need to update/patch it
 			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
 			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
@@ -247,7 +247,7 @@ func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredD
 		PropagationPolicy: &propagationPolicy,
 	})
 	if err != nil && !apiErrors.IsNotFound(err) && !apiErrors.IsGone(err) {
-		return fmt.Errorf("deleting resource failed: %s", err)
+		return fmt.Errorf("deleting resource failed: %w", err)
 	}
 	return nil
 }
@@ -255,7 +255,7 @@ func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredD
 func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper, resource unstructured.Unstructured) (dynamic.ResourceInterface, error) {
 	mapping, err := mapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
 	if err != nil {
-		return nil, fmt.Errorf("mapping error: %s", err)
+		return nil, fmt.Errorf("mapping error: %w", err)
 	}
 
 	var drClient dynamic.ResourceInterface

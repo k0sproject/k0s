@@ -81,7 +81,7 @@ func (c *command) backup(savePath string, out io.Writer) error {
 
 	status, err := status.GetStatusInfo(c.K0sVars.StatusSocketPath)
 	if err != nil {
-		return fmt.Errorf("unable to detect cluster status %s", err)
+		return fmt.Errorf("unable to detect cluster status %w", err)
 	}
 	logrus.Debugf("detected role for backup operations: %v", status.Role)
 
