@@ -35,6 +35,9 @@ type APISpec struct {
 	// Local address on which to bind an API
 	Address string `json:"address"`
 
+	// The IP address for the Kubernetes API server to listen on.
+	BindAddress string `json:"bindAddress,omitempty"`
+
 	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
 	ExternalAddress string `json:"externalAddress,omitempty"`
 	// Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process
@@ -57,11 +60,12 @@ func DefaultAPISpec() *APISpec {
 	addresses, _ := iface.AllAddresses()
 	publicAddress, _ := iface.FirstPublicAddress()
 	return &APISpec{
-		Port:       defaultKasPort,
-		K0sAPIPort: 9443,
-		SANs:       addresses,
-		Address:    publicAddress,
-		ExtraArgs:  make(map[string]string),
+		Port:        defaultKasPort,
+		K0sAPIPort:  9443,
+		BindAddress: "0.0.0.0",
+		SANs:        addresses,
+		Address:     publicAddress,
+		ExtraArgs:   make(map[string]string),
 	}
 }
 
@@ -100,10 +104,21 @@ func (a *APISpec) getExternalURIForPort(port int) string {
 	return fmt.Sprintf("https://%s:%d", addr, port)
 }
 
+// APIServerAddress returns the address the API is listening on
+func (a *APISpec) APIServerAddress() string {
+	if a.BindAddress == "" {
+		return "localhost"
+	}
+	return a.BindAddress
+}
+
 // Sans return the given SANS plus all local adresses and externalAddress if given
 func (a *APISpec) Sans() []string {
 	sans, _ := iface.AllAddresses()
 	sans = append(sans, a.Address)
+	if a.BindAddress != "" {
+		sans = append(sans, a.BindAddress)
+	}
 	sans = append(sans, a.SANs...)
 	if a.ExternalAddress != "" {
 		sans = append(sans, a.ExternalAddress)
@@ -139,5 +154,10 @@ func (a *APISpec) Validate() []error {
 	if a.ExternalAddress != "" {
 		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalAddress)
 	}
+
+	if a.BindAddress != "" && !govalidator.IsIP(a.BindAddress) {
+		errors = append(errors, field.Invalid(field.NewPath("bindAddress"), a.BindAddress, "invalid IP address"))
+	}
+
 	return errors
 }
