@@ -196,28 +196,39 @@ func (c *Component) setupConfig() error {
 	}
 
 	configurer := &configurer{
-		loadPath:       filepath.Join(c.importsPath, "*.toml"),
-		pauseImage:     c.Profile.PauseImage.URI(),
-		log:            logrus.WithField("component", "containerd"),
-		criRuntimePath: "/run/k0s/containerd-cri.toml",
-	}
-	if runtime.GOOS == "windows" {
-		configurer.criRuntimePath = `C:\var\lib\k0s\run\containerd-cri.toml`
+		loadPath:   filepath.Join(c.importsPath, "*.toml"),
+		pauseImage: c.Profile.PauseImage.URI(),
+		log:        logrus.WithField("component", "containerd"),
 	}
 
-	imports, err := configurer.handleImports()
+	config, err := configurer.handleImports()
 	if err != nil {
 		return fmt.Errorf("can't handle imports: %w", err)
 	}
+
+	criConfigPath := filepath.Join(c.K0sVars.RunDir, "containerd-cri.toml")
+	err = file.WriteContentAtomically(criConfigPath, []byte(config.CRIConfig), 0644)
+	if err != nil {
+		return fmt.Errorf("can't create containerd CRI config: %w", err)
+	}
+
+	var data struct{ Imports []string }
+	data.Imports = append(config.ImportPaths, criConfigPath)
+
+	// double escape for windows because containerd expects
+	// double backslash in the configuration but golang templates
+	// unescape double slash to a single slash
+	if runtime.GOOS == "windows" {
+		for i := range data.Imports {
+			data.Imports[i] = strings.ReplaceAll(data.Imports[i], "\\", "\\\\")
+		}
+	}
+
 	output := bytes.NewBuffer([]byte{})
 	tw := templatewriter.TemplateWriter{
 		Name:     "containerdconfig",
 		Template: confTmpl,
-		Data: struct {
-			Imports []string
-		}{
-			Imports: imports,
-		},
+		Data:     data,
 	}
 	if err := tw.WriteToBuffer(output); err != nil {
 		return fmt.Errorf("can't create containerd config: %w", err)

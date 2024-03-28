@@ -54,9 +54,22 @@ state = "/run/k0s/containerd"
 
 ## k0s managed dynamic runtime configuration
 
-From 1.27.1 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in `/etc/k0s/containerd.d/` where user can drop-in partial containerd configuration snippets.
+As of 1.27.1, k0s allows dynamic configuration of containerd CRI runtimes. This
+works by k0s creating a special directory in `/etc/k0s/containerd.d/` where
+users can place partial containerd configuration files.
 
-k0s will automatically pick up these files and adds these in containerd configuration `imports` list. If k0s sees the configuration drop-ins are CRI related configurations k0s will automatically collect all these into a single file and adds that as a single import file. This is to overcome some hard limitation on containerd 1.X versions. Read more at [containerd#8056](https://github.com/containerd/containerd/pull/8056)
+K0s will automatically pick up these files and add them as containerd
+configuration `imports`. If a partial configuration file contains a CRI plugin
+configuration section, k0s will instead treat such a file as a [merge patch] to
+k0s's default containerd configuration. This is to mitigate [containerd's
+decision] to replace rather than merge individual plugin configuration sections
+from imported configuration files. However, this behavior [may][containerd#7347]
+[change][containerd#9982] in future releases of containerd.
+
+[merge patch]: https://datatracker.ietf.org/doc/html/rfc7396
+[containerd's decision]: https://github.com/containerd/containerd/pull/3574/commits/24b9e2c1a0a72a7ad302cdce7da3abbc4e6295cb
+[containerd#7347]: https://github.com/containerd/containerd/pull/7347
+[containerd#9982]: https://github.com/containerd/containerd/pull/9982
 
 ### Examples
 
@@ -146,7 +159,7 @@ distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
 sudo apt-get update && sudo apt-get install -y nvidia-container-runtime
 ```
 
-Next, drop in the containerd runtime configuration snippet into `/etc/k0s/containerd.d/nvidia.toml`
+Next, drop in the NVIDIA runtime's configuration into into `/etc/k0s/containerd.d/nvidia.toml`:
 
 ```toml
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]

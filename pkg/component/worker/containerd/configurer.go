@@ -17,13 +17,10 @@ limitations under the License.
 package containerd
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/mesosphere/toml-merge/pkg/patch"
 	"github.com/pelletier/go-toml"
@@ -32,84 +29,85 @@ import (
 	criconfig "github.com/containerd/containerd/pkg/cri/config"
 )
 
+// Resolved and merged containerd configuration data.
+type resolvedConfig struct {
+	// Serialized configuration including merged CRI plugin configuration data.
+	CRIConfig string
+
+	// Paths to additional partial configuration files to be imported. Those
+	// files won't contain any CRI plugin configuration data.
+	ImportPaths []string
+}
+
 type configurer struct {
-	loadPath       string
-	pauseImage     string
-	criRuntimePath string
+	loadPath   string
+	pauseImage string
 
 	log *logrus.Entry
 }
 
-// Resolves containerd imports from the import glob path.
-// If the partial config has CRI plugin enabled, it will add to the runc CRI config (single file).
-// if no CRI plugin is found, it will add the file as-is to imports list returned.
-// Once all files are processed the concatenated CRI config file is written and added to the imports list.
-func (c *configurer) handleImports() ([]string, error) {
-	var imports []string
-	var criConfigBuffer bytes.Buffer
+// Resolves partial containerd configuration files from the import glob path. If
+// a file contains a CRI plugin configuration section, it will be merged into
+// k0s's default configuration, if not, it will be added to the list of import
+// paths.
+func (c *configurer) handleImports() (*resolvedConfig, error) {
+	var importPaths []string
 
-	// Add default runc based CRI config
-	err := c.generateDefaultCRIConfig(&criConfigBuffer)
+	defaultConfig, err := generateDefaultCRIConfig(c.pauseImage)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate containerd default CRI config: %w", err)
 	}
 
-	files, err := filepath.Glob(c.loadPath)
-	c.log.Debugf("found containerd config files: %v", files)
+	filePaths, err := filepath.Glob(c.loadPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to look for containerd import files: %w", err)
 	}
+	c.log.Debugf("found containerd config files to import: %v", filePaths)
 
-	finalConfig := criConfigBuffer.String()
-	for _, file := range files {
-		data, err := os.ReadFile(file)
+	// Since the default config contains configuration data for the CRI plugin,
+	// and containerd has decided to replace rather than merge individual plugin
+	// configuration sections from imported config files, we need to manually
+	// take care of merging k0s's defaults with the user overrides. Loop through
+	// all import files and check if they contain any CRI plugin config. If they
+	// do, treat them as merge patches to the default config, if they don't,
+	// just add them as normal imports to be handled by containerd.
+	finalConfig := string(defaultConfig)
+	for _, filePath := range filePaths {
+		c.log.Debugf("Processing containerd configuration file %s", filePath)
+
+		data, err := os.ReadFile(filePath)
 		if err != nil {
 			return nil, err
 		}
-		c.log.Debugf("parsing containerd config file: %s", file)
-		hasCRI, err := c.hasCRIPluginConfig(data)
+
+		hasCRI, err := hasCRIPluginConfig(data)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to check for CRI plugin configuration in %s: %w", filePath, err)
 		}
+
 		if hasCRI {
-			c.log.Infof("found CRI plugin config in %s, merging to CRI config", file)
-			// Merge to the existing CRI config
-			finalConfig, err = patch.TOMLString(finalConfig, patch.FilePatches(file))
+			c.log.Infof("Found CRI plugin configuration in %s, treating as merge patch", filePath)
+			finalConfig, err = patch.TOMLString(finalConfig, patch.FilePatches(filePath))
 			if err != nil {
-				return nil, fmt.Errorf("failed to merge CRI config from %s: %w", file, err)
+				return nil, fmt.Errorf("failed to merge data from %s into containerd configuration: %w", filePath, err)
 			}
 		} else {
-			c.log.Debugf("adding %s as-is to imports", file)
-			// Add file to imports
-			imports = append(imports, escapedPath(file))
+			c.log.Debugf("No CRI plugin configuration found in %s, adding as-is to imports", filePath)
+			importPaths = append(importPaths, filePath)
 		}
 	}
-	// Write the CRI config to a file and add it to imports
-	err = os.WriteFile(c.criRuntimePath, []byte(finalConfig), 0644)
-	if err != nil {
-		return nil, err
-	}
-	imports = append(imports, escapedPath(c.criRuntimePath))
 
-	return imports, nil
+	return &resolvedConfig{CRIConfig: finalConfig, ImportPaths: importPaths}, nil
 }
 
-func escapedPath(s string) string {
-	// double escape for windows because containerd expects
-	// double backslash in the configuration but golang templates
-	// unescape double slash to a single slash
-	if runtime.GOOS == "windows" {
-		return strings.ReplaceAll(s, "\\", "\\\\")
-	}
-	return s
-}
-
-// generateDefaultCRIConfig generates the default CRI config and writes it to the given writer
-// It uses the containerd containerd package to generate the config so we can keep it in sync with containerd
-func (c *configurer) generateDefaultCRIConfig(w io.Writer) error {
+// Returns the default containerd config, including only the CRI plugin
+// configuration, using the given image for sandbox containers. Uses the
+// containerd package to generate all the rest, so this will be in sync with
+// containerd's defaults for the CRI plugin.
+func generateDefaultCRIConfig(sandboxContainerImage string) ([]byte, error) {
 	criPluginConfig := criconfig.DefaultConfig()
 	// Set pause image
-	criPluginConfig.SandboxImage = c.pauseImage
+	criPluginConfig.SandboxImage = sandboxContainerImage
 	if runtime.GOOS == "windows" {
 		criPluginConfig.CniConfig.NetworkPluginBinDir = "c:\\opt\\cni\\bin"
 		criPluginConfig.CniConfig.NetworkPluginConfDir = "c:\\opt\\cni\\conf"
@@ -125,23 +123,14 @@ func (c *configurer) generateDefaultCRIConfig(w io.Writer) error {
 		},
 	}
 
-	err := toml.NewEncoder(w).Encode(containerdConfig)
-	if err != nil {
-		return fmt.Errorf("failed to generate containerd default CRI config: %w", err)
-	}
-	return nil
+	return toml.Marshal(containerdConfig)
 }
 
-func (c *configurer) hasCRIPluginConfig(data []byte) (bool, error) {
-	var tomlConfig map[string]interface{}
-	if err := toml.Unmarshal(data, &tomlConfig); err != nil {
-		return false, err
+func hasCRIPluginConfig(data []byte) (bool, error) {
+	tree, err := toml.LoadBytes(data)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse TOML: %w", err)
 	}
-	c.log.Debugf("parsed containerd config: %+v", tomlConfig)
-	if _, ok := tomlConfig["plugins"]; ok {
-		if _, ok := tomlConfig["plugins"].(map[string]interface{})["io.containerd.grpc.v1.cri"]; ok {
-			return true, nil
-		}
-	}
-	return false, nil
+
+	return tree.HasPath([]string{"plugins", "io.containerd.grpc.v1.cri"}), nil
 }
