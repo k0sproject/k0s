@@ -24,25 +24,26 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"testing"
+	"time"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/stretchr/testify/assert"
+
+	authorizationv1 "k8s.io/api/authorization/v1"
 	certv1 "k8s.io/api/certificates/v1"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestBasicCRSApprover(t *testing.T) {
-	fakeFactory := testutil.NewFakeClientFactory()
-
-	client, err := fakeFactory.GetClient()
-	assert.NoError(t, err)
-
-	ctx := context.TODO()
-
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
@@ -50,47 +51,102 @@ func TestBasicCRSApprover(t *testing.T) {
 
 	req := pemWithPrivateKey(privateKey)
 
-	csrReq := &certv1.CertificateSigningRequest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "csrapprover_test",
+	for i, test := range []struct {
+		name                             string
+		startControllerBeforeCreatingCSR bool
+	}{
+		{
+			name:                             "existing CSRs are approved",
+			startControllerBeforeCreatingCSR: false,
 		},
-		Spec: certv1.CertificateSigningRequestSpec{
-			Request:    req,
-			SignerName: "kubernetes.io/kubelet-serving",
+		{
+			name:                             "newly-created CSRs are approved",
+			startControllerBeforeCreatingCSR: true,
 		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fakeFactory := testutil.NewFakeClientFactory()
+			client, err := fakeFactory.GetClient()
+			assert.NoError(t, err)
+
+			config := &v1beta1.ClusterConfig{
+				Spec: &v1beta1.ClusterSpec{
+					API: &v1beta1.APISpec{
+						Address:         "1.2.3.4",
+						ExternalAddress: "get.k0s.sh",
+					},
+				},
+			}
+			ctx := context.TODO()
+
+			c := NewCSRApprover(config, &leaderelector.Dummy{Leader: true}, fakeFactory, 10*time.Minute)
+			assert.NoError(t, c.Init(ctx))
+
+			csrReq := &certv1.CertificateSigningRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: fmt.Sprintf("csrapprover-test-%d", i+1),
+				},
+				Spec: certv1.CertificateSigningRequestSpec{
+					Request:    req,
+					SignerName: "kubernetes.io/kubelet-serving",
+					Usages:     []certv1.KeyUsage{"digital signature", "key encipherment", "server auth"},
+				},
+			}
+
+			fakeClient, ok := client.(*fake.Clientset)
+			assert.True(t, ok, "expected Clientset to be of type %T; got %T", &fake.Clientset{}, client)
+			fakeClient.PrependReactor("create", "subjectaccessreviews", func(action k8stesting.Action) (bool, runtime.Object, error) {
+				createAction, ok := action.(k8stesting.CreateActionImpl)
+				if !ok {
+					return false, nil, fmt.Errorf("expected action to be of type %T; got %T", &k8stesting.CreateActionImpl{}, action)
+				}
+				sar, ok := createAction.Object.(*authorizationv1.SubjectAccessReview)
+				if !ok {
+					return false, nil, fmt.Errorf("expected resource to be of type %T; got %T", &authorizationv1.SubjectAccessReview{}, createAction.Object)
+				}
+				sar.Status.Allowed = true
+				return true, sar, nil
+			})
+
+			var newCSR *certv1.CertificateSigningRequest
+			createCSR := func() {
+				t.Helper()
+				newCSR, err = client.CertificatesV1().CertificateSigningRequests().Create(ctx, csrReq, metav1.CreateOptions{})
+				assert.NoError(t, err)
+			}
+			if test.startControllerBeforeCreatingCSR {
+				assert.NoError(t, c.Start(ctx))
+				createCSR()
+			} else {
+				createCSR()
+				assert.NoError(t, c.Start(ctx))
+			}
+
+			assert.EventuallyWithT(t, func(c *assert.CollectT) {
+				csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, newCSR.Name, metav1.GetOptions{})
+				assert.NoError(c, err)
+				assert.NotNil(c, csr, "could not find CSR")
+				assert.NotEmpty(c, csr.Status.Conditions, "expected to find at least one element in status.conditions")
+
+				for _, condition := range csr.Status.Conditions {
+					assert.True(c, condition.Type == certv1.CertificateApproved && condition.Reason == "Autoapproved by K0s CSRApprover" && condition.Status == core.ConditionTrue,
+						"expected CSR to be approved")
+				}
+			}, 2*time.Second, 1*time.Millisecond)
+
+			assert.NoError(t, c.Stop())
+		})
 	}
 
-	newCsr, err := client.CertificatesV1().CertificateSigningRequests().Create(ctx, csrReq, metav1.CreateOptions{})
-	assert.NoError(t, err)
-
-	config := &v1beta1.ClusterConfig{
-		Spec: &v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{
-				Address:         "1.2.3.4",
-				ExternalAddress: "get.k0s.sh",
-			},
-		},
-	}
-	c := NewCSRApprover(config, &leaderelector.Dummy{Leader: true}, fakeFactory)
-
-	assert.NoError(t, c.Init(ctx))
-	assert.NoError(t, c.approveCSR(ctx))
-
-	csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, newCsr.Name, metav1.GetOptions{})
-	assert.NoError(t, err)
-	assert.NotNil(t, csr)
-	assert.True(t, csr.Name == newCsr.Name)
-	for _, c := range csr.Status.Conditions {
-		assert.True(t, c.Type == certv1.CertificateApproved && c.Reason == "Autoapproved by K0S CSRApprover" && c.Status == core.ConditionTrue)
-	}
 }
 
 func pemWithPrivateKey(pk crypto.PrivateKey) []byte {
 	template := &x509.CertificateRequest{
 		Subject: pkix.Name{
-			CommonName:   "something",
-			Organization: []string{"test"},
+			CommonName:   "system:node:worker",
+			Organization: []string{"system:nodes"},
 		},
+		DNSNames: []string{"worker-1"},
 	}
 	return pemWithTemplate(template, pk)
 }
