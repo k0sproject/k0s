@@ -135,10 +135,11 @@ spec:
 	s.Require().NoError(err)
 	defer sshController.Disconnect()
 
-	if version, err := s.GetK0sVersion(s.ControllerNode(0)); s.NoError(err, "Failed to get the base k0s version") {
-		hasOldStack := version != s.k0sUpdateVersion && (strings.HasPrefix(version, "v1.27.") || strings.HasPrefix(version, "v1.28."))
+	var hasOldStack bool
+	if version, err := s.GetK0sVersion(s.ControllerNode(0)); s.NoError(err, "Failed to get the base k0s version, assuming no old stack!") {
+		hasOldStack = version != s.k0sUpdateVersion && strings.HasPrefix(version, "v1.29.")
 		s.T().Logf("Base k0s version: %q, has old stack: %v", version, hasOldStack)
-		s.checkKubeletConfigStackResources(ctx, sshController, hasOldStack)
+		s.checkKubeletConfigStackResources(ctx, sshController, strings.HasPrefix(version, "v1.28."))
 	}
 
 	sshWorker, err := s.SSH(ctx, s.WorkerNode(0))
@@ -201,12 +202,23 @@ spec:
 	}
 
 	for idx := 0; idx < s.ControllerCount; idx++ {
-		func() {
-			ssh, err := s.SSH(ctx, s.ControllerNode(idx))
-			s.Require().NoError(err)
-			defer ssh.Disconnect()
-			s.checkKubeletConfigComponentFolders(ctx, ssh)
-		}()
+		node := s.ControllerNode(idx)
+		if hasOldStack {
+			s.Run("kubelet-config_component_removal/"+node, func() {
+				ssh, err := s.SSH(ctx, node)
+				s.Require().NoError(err)
+				defer ssh.Disconnect()
+				s.checkKubeletConfigComponentFolders(ctx, ssh)
+			})
+		} else {
+			s.Run("kubelet-config_component_nonexistence/"+node, func() {
+				ssh, err := s.SSH(ctx, node)
+				s.Require().NoError(err)
+				defer ssh.Disconnect()
+				err = ssh.Exec(ctx, "[ ! -d /var/lib/k0s/manifests/kubelet ]", common.SSHStreams{})
+				s.NoError(err, "Failed to verify if kubelet manifest folder doesn't exist")
+			})
+		}
 	}
 
 	s.checkKubeletConfigStackResources(ctx, sshController, false)
