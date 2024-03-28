@@ -127,10 +127,6 @@ func ToConfigMapData(profile *Profile) (map[string]string, error) {
 
 	data := make(map[string]string)
 
-	if profile == nil {
-		return data, nil
-	}
-
 	var errs error
 	forEachConfigMapEntry(profile, func(fieldName string, ptr any) {
 		if reflect.ValueOf(ptr).Elem().IsZero() {
