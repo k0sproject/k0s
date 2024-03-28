@@ -143,7 +143,8 @@ pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -ty
 pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	gendir="$$(mktemp -d .client-gen.XXXXXX.tmp)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
-	  && CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/client-gen@v$(kubernetes_version:1.%=0.%) \
+	  && `# FIXME hotfix for https://github.com/kubernetes/kubernetes/issues/123933` \
+	  && CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/client-gen@v0.30.0-alpha.3 \
 	    --go-header-file=hack/tools/boilerplate.go.txt \
 	    --input-base='' \
 	    --input=$(subst $(space),$(comma),$(clientset_input_dirs:%=github.com/k0sproject/k0s/%)) \
