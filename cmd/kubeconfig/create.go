@@ -38,13 +38,13 @@ clusters:
 - cluster:
     server: {{.JoinURL}}
     certificate-authority-data: {{.CACert}}
-  name: k0s
+  name: {{.Name}}
 contexts:
 - context:
-    cluster: k0s
+    cluster: {{.Name}}
     user: {{.User}}
-  name: k0s
-current-context: k0s
+  name: {{.Name}}
+current-context: {{.Name}}
 kind: Config
 preferences: {}
 users:
@@ -115,12 +115,14 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				ClientKey  string
 				User       string
 				JoinURL    string
+				Name       string
 			}{
 				CACert:     base64.StdEncoding.EncodeToString(caCert),
 				ClientCert: base64.StdEncoding.EncodeToString([]byte(userCert.Cert)),
 				ClientKey:  base64.StdEncoding.EncodeToString([]byte(userCert.Key)),
 				User:       username,
 				JoinURL:    clusterAPIURL,
+				Name:       nodeConfig.Name,
 			}
 
 			var buf bytes.Buffer

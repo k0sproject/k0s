@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,6 +33,10 @@ import (
 )
 
 const k0sPartialConfig = `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: test-cluster
 spec:
   api:
     sans:
@@ -51,6 +56,23 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)
+
+	s.T().Run("kubeconfig", func(t *testing.T) {
+		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
+		require.NoError(t, err, "failed to SSH into controller")
+		defer ssh.Disconnect()
+
+		out, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("'%s' kubeconfig create foo", s.K0sFullPath))
+		require.NoError(t, err, "failed to create kubeconfig")
+		// Parse the kubeconfig
+		kc, err := clientcmd.Load([]byte(out))
+		require.NoError(t, err)
+		// Assert that cluster and context name is propagated correctly
+		assert.Equal(t, "test-cluster", kc.CurrentContext)
+		assert.Equal(t, "test-cluster", kc.Contexts["test-cluster"].Cluster)
+		assert.NotEmpty(t, kc.Clusters["test-cluster"].Server)
+
+	})
 
 	s.AssertSomeKubeSystemPods(kc)
 
