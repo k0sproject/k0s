@@ -29,7 +29,7 @@ nav:
       - Upgrade: upgrade.md
       - Backup/Restore: backup.md
       - Remove/Replace a controller: remove_controller.md
-      - Uninstall: reset.md
+      - Reset (Uninstall): reset.md
   - Usage:
       - Configuration Options: configuration.md
       - Dynamic Configuration: dynamic-configuration.md
