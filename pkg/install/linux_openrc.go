@@ -17,6 +17,9 @@ limitations under the License.
 package install
 
 const openRCScript = `#!/sbin/openrc-run
+if [ -f "/etc/conf.d/{{.Name}}" ]; then
+  . /etc/conf.d/{{.Name}}
+fi
 {{- if .Option.Environment}}{{range .Option.Environment}}
 export {{.}}{{end}}{{- end}}
 supervisor=supervise-daemon
@@ -24,7 +27,7 @@ name="{{.DisplayName}}"
 description="{{.Description}}"
 command={{.Path|cmdEscape}}
 {{- if .Arguments }}
-command_args="{{range .Arguments}}'{{.}}' {{end}}"
+command_args="{{range .Arguments}}'{{.}}' {{end}} ${K0S_EXTRA_ARGS}"
 {{- end }}
 name=$(basename $(readlink -f $command))
 supervise_daemon_args="--stdout /var/log/${name}.log --stderr /var/log/${name}.err"
