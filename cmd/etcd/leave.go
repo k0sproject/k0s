@@ -18,32 +18,41 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
+	"net/url"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func etcdLeaveCmd() *cobra.Command {
-	var etcdPeerAddress string
+	var peerAddressArg string
 
 	cmd := &cobra.Command{
 		Use:   "leave",
-		Short: "Sign off a given etc node from etcd cluster",
+		Short: "Leave the etcd cluster, or remove a specific peer",
+		Args:  cobra.NoArgs, // accept peer address via flag, not via arg
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := config.GetCmdOpts()
 			ctx := context.Background()
-			if etcdPeerAddress == "" {
-				etcdPeerAddress = c.NodeConfig.Spec.Storage.Etcd.PeerAddress
-			}
-			if etcdPeerAddress == "" {
-				return fmt.Errorf("can't leave etcd cluster: peer address is empty, check the config file or use cli argument")
+
+			peerAddress := c.NodeConfig.Spec.Storage.Etcd.PeerAddress
+			if peerAddressArg == "" {
+				if peerAddress == "" {
+					return fmt.Errorf("can't leave etcd cluster: this node doesn't have an etcd peer address, check the k0s configuration or use --peer-address")
+				}
+			} else {
+				peerAddress = peerAddressArg
 			}
 
-			peerURL := fmt.Sprintf("https://%s:2380", etcdPeerAddress)
+			peerURL := (&url.URL{Scheme: "https", Host: net.JoinHostPort(peerAddress, "2380")}).String()
 			etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir, c.NodeConfig.Spec.Storage.Etcd)
 			if err != nil {
 				return fmt.Errorf("can't connect to the etcd: %v", err)
@@ -58,19 +67,38 @@ func etcdLeaveCmd() *cobra.Command {
 			if err := etcdClient.DeleteMember(ctx, peerID); err != nil {
 				logrus.
 					WithField("peerURL", peerURL).
-					WithField("peerID", peerID).
+					WithField("peerID", fmt.Sprintf("%x", peerID)).
 					Errorf("Failed to delete node from cluster")
 				return err
 			}
 
 			logrus.
-				WithField("peerID", peerID).
+				WithField("peerID", fmt.Sprintf("%x", peerID)).
 				Info("Successfully deleted")
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&etcdPeerAddress, "peer-address", "", "etcd peer address")
+	cmd.Flags().AddFlag(&pflag.Flag{
+		Name:  "peer-address",
+		Usage: "etcd peer address to remove (default <this node's peer address>)",
+		Value: (*ipOrDNSName)(&peerAddressArg),
+	})
+
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
+}
+
+type ipOrDNSName string
+
+func (i *ipOrDNSName) Type() string   { return "ip-or-dns-name" }
+func (i *ipOrDNSName) String() string { return string(*i) }
+
+func (i *ipOrDNSName) Set(value string) error {
+	if !govalidator.IsIP(value) && !govalidator.IsDNSName(value) {
+		return errors.New("neither an IP address nor a DNS name")
+	}
+
+	*i = ipOrDNSName(value)
+	return nil
 }
