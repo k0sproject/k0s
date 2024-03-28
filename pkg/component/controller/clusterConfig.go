@@ -121,7 +121,7 @@ func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 					r.log.Debug("config source closed channel")
 					return
 				}
-				err := multierr.Combine(cfg.Validate()...)
+				err := multierr.Combine(cfg.Validate(true)...)
 				if err != nil {
 					err = fmt.Errorf("failed to validate cluster configuration: %w", err)
 				} else {
