@@ -23,7 +23,9 @@ spec:
       labels:
         k8s-app: calico-node
       annotations:
+        {{- if ne .DisablePrometheusScrapeAnnotation true }}
         prometheus.io/scrape: 'true'
+        {{- end }}
         prometheus.io/port: '9091'
     spec:
       nodeSelector:

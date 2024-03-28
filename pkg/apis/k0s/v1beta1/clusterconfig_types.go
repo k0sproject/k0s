@@ -51,6 +51,7 @@ type ClusterSpec struct {
 	Extensions        *ClusterExtensions     `json:"extensions,omitempty"`
 	Konnectivity      *KonnectivitySpec      `json:"konnectivity,omitempty"`
 	FeatureGates      FeatureGates           `json:"featureGates,omitempty"`
+	CoreDNS           *CoreDNSSpec           `json:"coredns,omitempty"`
 }
 
 // ClusterConfigStatus defines the observed state of ClusterConfig
@@ -101,6 +102,9 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	}
 	if reflect.DeepEqual(copy.Spec.Konnectivity, DefaultKonnectivitySpec()) {
 		copy.Spec.Konnectivity = nil
+	}
+	if reflect.DeepEqual(copy.Spec.CoreDNS, DefaultCoreDNSSpec()) {
+		copy.Spec.CoreDNS = nil
 	}
 	return copy
 }
@@ -292,6 +296,7 @@ func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
 		Images:            DefaultClusterImages(),
 		Telemetry:         DefaultClusterTelemetry(),
 		Konnectivity:      DefaultKonnectivitySpec(),
+		CoreDNS:           DefaultCoreDNSSpec(),
 	}
 
 	spec.overrideImageRepositories()

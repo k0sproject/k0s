@@ -137,7 +137,9 @@ spec:
       labels:
         k8s-app: kube-dns
       annotations:
+        {{- if ne .DisablePrometheusScrapeAnnotation true }}
         prometheus.io/scrape: 'true'
+        {{- end }}
         prometheus.io/port: '9153'
     spec:
       serviceAccountName: coredns
@@ -245,8 +247,10 @@ metadata:
   name: kube-dns
   namespace: kube-system
   annotations:
-    prometheus.io/port: "9153"
+    {{- if ne .DisablePrometheusScrapeAnnotation true }}
     prometheus.io/scrape: "true"
+    {{- end }}
+    prometheus.io/port: "9153"
   labels:
     k8s-app: kube-dns
     kubernetes.io/cluster-service: "true"
@@ -286,14 +290,15 @@ type CoreDNS struct {
 }
 
 type coreDNSConfig struct {
-	Replicas                   int
-	ClusterDNSIP               string
-	ClusterDomain              string
-	Image                      string
-	PullPolicy                 string
-	MaxUnavailableReplicas     *uint
-	DisablePodAntiAffinity     bool
-	DisablePodDisruptionBudget bool
+	Replicas                          int
+	ClusterDNSIP                      string
+	ClusterDomain                     string
+	Image                             string
+	PullPolicy                        string
+	MaxUnavailableReplicas            *uint
+	DisablePodAntiAffinity            bool
+	DisablePodDisruptionBudget        bool
+	DisablePrometheusScrapeAnnotation bool
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
@@ -366,11 +371,12 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 	nodeCount := len(nodes.Items)
 
 	config := coreDNSConfig{
-		Replicas:      replicaCount(nodeCount),
-		ClusterDomain: nodeConfig.Spec.Network.ClusterDomain,
-		ClusterDNSIP:  dns,
-		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
-		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,
+		Replicas:                          replicaCount(nodeCount),
+		ClusterDomain:                     nodeConfig.Spec.Network.ClusterDomain,
+		ClusterDNSIP:                      dns,
+		Image:                             clusterConfig.Spec.Images.CoreDNS.URI(),
+		PullPolicy:                        clusterConfig.Spec.Images.DefaultPullPolicy,
+		DisablePrometheusScrapeAnnotation: clusterConfig.Spec.CoreDNS.DisablePrometheusScrapeAnnotation,
 	}
 
 	if config.Replicas <= 1 {
