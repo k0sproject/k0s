@@ -285,8 +285,6 @@ spec:
                 type: string
             required:
             - commands
-            - id
-            - timestamp
             type: object
           status:
             description: Status is the most recently observed status of the plan.
