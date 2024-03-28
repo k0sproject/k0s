@@ -774,6 +774,28 @@ func (s *BootlooseSuite) StopController(name string) error {
 	return s.launchDelegate.StopController(s.Context(), ssh)
 }
 
+func (s *BootlooseSuite) RestartController(name string) error {
+	ssh, err := s.SSH(s.Context(), name)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	s.T().Log("killing k0s")
+	err = s.launchDelegate.StopController(s.Context(), ssh)
+	if err != nil {
+		return err
+	}
+	return s.launchDelegate.StartController(s.Context(), ssh)
+}
+
+// Resets the given node
+func (s *BootlooseSuite) ResetNode(name string) error {
+	ssh, err := s.SSH(s.Context(), name)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s reset --debug", s.K0sFullPath))
+	s.Require().NoError(err)
+	return err
+}
+
 func (s *BootlooseSuite) StartController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
