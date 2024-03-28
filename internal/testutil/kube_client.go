@@ -18,6 +18,7 @@ package testutil
 
 import (
 	"fmt"
+
 	"k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,8 +33,12 @@ import (
 	restfake "k8s.io/client-go/rest/fake"
 	kubetesting "k8s.io/client-go/testing"
 
+	etcdMemberClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	cfgClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
+
+var _ kubeutil.ClientFactoryInterface = (*FakeClientFactory)(nil)
 
 // NewFakeClientFactory creates new client factory which uses internally only the kube fake client interface
 func NewFakeClientFactory(objects ...runtime.Object) FakeClientFactory {
@@ -88,4 +93,8 @@ func (f FakeClientFactory) GetRESTClient() (rest.Interface, error) {
 }
 func (f FakeClientFactory) GetRESTConfig() *rest.Config {
 	return &rest.Config{}
+}
+
+func (f FakeClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) {
+	return nil, fmt.Errorf("NOT IMPLEMENTED")
 }

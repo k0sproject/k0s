@@ -58,3 +58,4 @@ smoketests := \
 	check-singlenode \
 	check-statussocket \
 	check-upgrade \
+	check-etcdmember \

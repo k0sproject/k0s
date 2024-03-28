@@ -43,6 +43,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
+	etcdmemberclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
@@ -774,6 +775,18 @@ func (s *BootlooseSuite) StopController(name string) error {
 	return s.launchDelegate.StopController(s.Context(), ssh)
 }
 
+func (s *BootlooseSuite) RestartController(name string) error {
+	ssh, err := s.SSH(s.Context(), name)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	s.T().Log("killing k0s")
+	err = s.launchDelegate.StopController(s.Context(), ssh)
+	if err != nil {
+		return err
+	}
+	return s.launchDelegate.StartController(s.Context(), ssh)
+}
+
 func (s *BootlooseSuite) StartController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
@@ -894,6 +907,16 @@ func (s *BootlooseSuite) ExtensionsClient(node string, k0sKubeconfigArgs ...stri
 	}
 
 	return extclient.NewForConfig(cfg)
+}
+
+// EtcdMemberClient return a client for accessing etcd member CRDs
+func (s *BootlooseSuite) EtcdMemberClient(node string, k0sKubeconfigArgs ...string) (*etcdmemberclient.EtcdV1beta1Client, error) {
+	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	return etcdmemberclient.NewForConfig(cfg)
 }
 
 // WaitForNodeReady wait that we see the given node in "Ready" state in kubernetes API
