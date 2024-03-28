@@ -22,7 +22,7 @@ import (
 
 var segmentToken = ""
 
-const heartbeatEvent = "cluster-heartbeat"
+const heartbeatEvent = "cluster-heartbeat-v2"
 
 // Analytics is the interface used for our analytics client.
 type analyticsClient interface {
