@@ -33,14 +33,11 @@ jobs:
           token: ${{ secrets.GH_BACKPORT_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create backport PRs
-        # should be kept in sync with `version`
-        uses: zeebe-io/backport-action@v2.5.0
+        uses: korthout/backport-action@v2.5.0
         with:
-          # Config README: https://github.com/zeebe-io/backport-action#backport-action
+          # Inputs documented here: https://github.com/korthout/backport-action?tab=readme-ov-file#inputs
           github_token: ${{ secrets.GH_BACKPORT_TOKEN }}
           github_workspace: ${{ github.workspace }}
-          # should be kept in sync with `uses`
-          version: v0.0.8
 
           # Regex pattern to match github labels
           # The capture group catches the target branch
