@@ -216,6 +216,7 @@ func (c *command) start(ctx context.Context) error {
 	nodeComponents.Add(ctx, storageBackend)
 
 	controllerLeaseCounter := &controller.K0sControllersLeaseCounter{
+		InvocationID:      c.K0sVars.InvocationID,
 		ClusterConfig:     nodeConfig,
 		KubeClientFactory: adminClientFactory,
 	}
@@ -265,7 +266,7 @@ func (c *command) start(ctx context.Context) error {
 
 	// One leader elector per controller
 	if !c.SingleNode {
-		leaderElector = leaderelector.NewLeasePool(adminClientFactory)
+		leaderElector = leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory)
 	} else {
 		leaderElector = &leaderelector.Dummy{Leader: true}
 	}

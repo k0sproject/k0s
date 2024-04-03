@@ -20,7 +20,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -99,14 +98,6 @@ func WithContext(ctx context.Context) LeaseOpt {
 	}
 }
 
-// WithIdentity sets the identity of the lease holder
-func WithIdentity(identity string) LeaseOpt {
-	return func(config LeaseConfiguration) LeaseConfiguration {
-		config.identity = identity
-		return config
-	}
-}
-
 // WithNamespace specifies which namespace the lease should be created in, defaults to kube-node-lease
 func WithNamespace(namespace string) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
@@ -116,7 +107,7 @@ func WithNamespace(namespace string) LeaseOpt {
 }
 
 // NewLeasePool creates a new LeasePool struct to interact with a lease
-func NewLeasePool(ctx context.Context, client kubernetes.Interface, name string, opts ...LeaseOpt) (*LeasePool, error) {
+func NewLeasePool(ctx context.Context, client kubernetes.Interface, name, identity string, opts ...LeaseOpt) (*LeasePool, error) {
 
 	leaseConfig := LeaseConfiguration{
 		log:           logrus.StandardLogger(),
@@ -126,17 +117,7 @@ func NewLeasePool(ctx context.Context, client kubernetes.Interface, name string,
 		ctx:           ctx,
 		namespace:     "kube-node-lease",
 		name:          name,
-	}
-
-	// we default to the machine ID unless the user explicitly set an identity
-	if leaseConfig.identity == "" {
-		machineID, err := machineid.Generate()
-
-		if err != nil {
-			return nil, err
-		}
-
-		leaseConfig.identity = machineID.ID()
+		identity:      identity,
 	}
 
 	for _, opt := range opts {

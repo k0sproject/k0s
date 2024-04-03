@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -151,7 +150,7 @@ func (c Component) sendTelemetry(ctx context.Context) {
 
 	c.log.WithField("data", data).WithField("hostdata", hostData).Info("sending telemetry")
 	if err := c.analyticsClient.Enqueue(analytics.Track{
-		AnonymousId: machineID(),
+		AnonymousId: "(removed)",
 		Event:       heartbeatEvent,
 		Properties:  data.asProperties(),
 		Context:     &hostData,
@@ -168,9 +167,4 @@ func (c Component) addCustomData(ctx context.Context, analyticCtx *analytics.Con
 	for k, v := range cm.Data {
 		analyticCtx.Extra[fmt.Sprintf("custom.%s", k)] = v
 	}
-}
-
-func machineID() string {
-	id, _ := machineid.Generate()
-	return id.ID()
 }

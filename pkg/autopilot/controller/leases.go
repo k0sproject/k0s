@@ -34,7 +34,7 @@ const (
 
 // LeaseWatcher outlines the lease operations for the autopilot configuration.
 type LeaseWatcher interface {
-	StartWatcher(ctx context.Context, namespace string, name string) (<-chan LeaseEventStatus, <-chan error)
+	StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan LeaseEventStatus, <-chan error)
 }
 
 // NewLeaseWatcher creates a new `LeaseWatcher` using the appropriate clientset
@@ -57,7 +57,7 @@ type leaseWatcher struct {
 
 var _ LeaseWatcher = (*leaseWatcher)(nil)
 
-func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name string) (<-chan LeaseEventStatus, <-chan error) {
+func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan LeaseEventStatus, <-chan error) {
 	leaseEventStatusCh := make(chan LeaseEventStatus, 10)
 	errorCh := make(chan error, 10)
 
@@ -83,7 +83,7 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 					leaderelection.WithNamespace(namespace),
 				}
 
-				leasePool, err := leaderelection.NewLeasePool(ctx, lw.client, name, leasePoolOpts...)
+				leasePool, err := leaderelection.NewLeasePool(ctx, lw.client, name, identity, leasePoolOpts...)
 				if err != nil {
 					errorCh <- fmt.Errorf("failed to create lease pool: %w", err)
 					cancel()

@@ -2,11 +2,6 @@
 
 set -eu
 
-# Ensure we have some semi-random machine-id
-if [ ! -f /etc/machine-id ]; then
-  head -c16 /dev/urandom | hexdump -v -e '16/1 "%02x""\n"' >/etc/machine-id
-fi
-
 # DNS fixup adapted from kind
 # https://github.com/kubernetes-sigs/kind/blob/7568bf728147c1253e651f25edfd0e0a75534b8a/images/base/files/usr/local/bin/entrypoint#L447-L487
 

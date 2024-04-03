@@ -151,7 +151,6 @@ setup, you can invoke `k0s sysinfo`:
 
 ```console
 ubuntu@ubuntu:~$ k0s sysinfo
-Machine ID: "d84cde1f38844d1425dc04c454c5aa95e41fb11115bbb141c016f4cd3dea4f51" (from machine) (pass)
 Total memory: 3.7 GiB (pass)
 Disk space available for /var/lib/k0s: 24.3 GiB (pass)
 Operating system: Linux (pass)

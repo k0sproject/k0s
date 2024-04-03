@@ -51,6 +51,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 	}
 
 	autopilotRoot, err := apcont.NewRootController(aproot.RootConfig{
+		InvocationID:        a.K0sVars.InvocationID,
 		KubeConfig:          a.K0sVars.AdminKubeConfigPath,
 		K0sDataDir:          a.K0sVars.DataDir,
 		Mode:                "controller",

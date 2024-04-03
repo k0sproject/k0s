@@ -39,7 +39,7 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 
 	fakeClient := fake.NewSimpleClientset()
 
-	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
+	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", identity, WithNamespace("test"))
 	require.NoError(t, err)
 
 	output := &LeaseEvents{
@@ -78,7 +78,7 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 
 	fakeClient := fake.NewSimpleClientset()
 
-	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
+	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", identity, WithNamespace("test"))
 	require.NoError(t, err)
 
 	output := &LeaseEvents{
@@ -115,8 +115,8 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 		}
 	}()
 
-	pool, err := NewLeasePool(context.TODO(), fakeClient, "test",
-		WithIdentity(identity), WithNamespace("test"),
+	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", identity,
+		WithNamespace("test"),
 		WithRetryPeriod(10*time.Millisecond),
 	)
 	require.NoError(t, err)
@@ -150,14 +150,14 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
 
-	pool1, err := NewLeasePool(context.TODO(), fakeClient, "test",
-		WithIdentity("pool1"), WithNamespace("test"),
+	pool1, err := NewLeasePool(context.TODO(), fakeClient, "test", "pool1",
+		WithNamespace("test"),
 		WithRetryPeriod(10*time.Millisecond),
 	)
 	require.NoError(t, err)
 
-	pool2, err := NewLeasePool(context.TODO(), fakeClient, "test",
-		WithIdentity("pool2"), WithNamespace("test"),
+	pool2, err := NewLeasePool(context.TODO(), fakeClient, "test", "pool2",
+		WithNamespace("test"),
 		WithRetryPeriod(10*time.Millisecond),
 	)
 	require.NoError(t, err)

@@ -33,6 +33,7 @@ import (
 // K0sControllersLeaseCounter implements a component that manages a lease per controller.
 // The per-controller leases are used to determine the amount of currently running controllers
 type K0sControllersLeaseCounter struct {
+	InvocationID      string
 	ClusterConfig     *v1beta1.ClusterConfig
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
@@ -62,13 +63,13 @@ func (l *K0sControllersLeaseCounter) Start(ctx context.Context) error {
 
 	// hostname used to make the lease names be clear to which controller they belong to
 	// follow kubelet convention for naming so we e.g. use lowercase hostname etc.
-	holderIdentity, err := node.GetNodename("")
+	nodeName, err := node.GetNodename("")
 	if err != nil {
 		return nil
 	}
-	leaseID := fmt.Sprintf("k0s-ctrl-%s", holderIdentity)
+	leaseName := fmt.Sprintf("k0s-ctrl-%s", nodeName)
 
-	leasePool, err := leaderelection.NewLeasePool(ctx, client, leaseID,
+	leasePool, err := leaderelection.NewLeasePool(ctx, client, leaseName, l.InvocationID,
 		leaderelection.WithLogger(log),
 		leaderelection.WithContext(ctx))
 	if err != nil {

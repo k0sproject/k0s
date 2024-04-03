@@ -40,7 +40,7 @@ func TestLeasesInitialPending(t *testing.T) {
 	leaseWatcher, err := NewLeaseWatcher(logger, clientFactory)
 	assert.NoError(t, err)
 
-	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(ctx, constant.AutopilotNamespace, fmt.Sprintf("%s-lease", constant.AutopilotNamespace))
+	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(ctx, constant.AutopilotNamespace, fmt.Sprintf("%s-lease", constant.AutopilotNamespace), t.Name())
 	assert.NotNil(t, errorCh)
 	assert.NotNil(t, leaseEventStatusCh)
 
