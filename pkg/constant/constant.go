@@ -72,6 +72,8 @@ const (
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
 	KubernetesMajorMinorVersion = "1.29"
+	// Indicates if k0s is using a Kubernetes pre-release or a GA version.
+	KubernetesPreRelease = false
 
 	/* Image Constants */
 
