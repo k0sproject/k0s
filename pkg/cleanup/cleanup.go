@@ -43,11 +43,9 @@ type containerdConfig struct {
 }
 
 func NewConfig(k0sVars *config.CfgVars, criSocketFlag string) (*Config, error) {
-	runDir := "/run/k0s" // https://github.com/k0sproject/k0s/pull/591/commits/c3f932de85a0b209908ad39b817750efc4987395
-
 	var containerdCfg *containerdConfig
 
-	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, runDir)
+	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, k0sVars.RunDir)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +60,7 @@ func NewConfig(k0sVars *config.CfgVars, criSocketFlag string) (*Config, error) {
 		containerd:       containerdCfg,
 		containerRuntime: runtime.NewContainerRuntime(runtimeEndpoint),
 		dataDir:          k0sVars.DataDir,
-		runDir:           runDir,
+		runDir:           k0sVars.DataDir,
 		k0sVars:          k0sVars,
 	}, nil
 }
