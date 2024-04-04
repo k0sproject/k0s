@@ -18,6 +18,7 @@ package byocri
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/avast/retry-go"
@@ -31,21 +32,51 @@ type BYOCRISuite struct {
 	common.BootlooseSuite
 }
 
-func (s *BYOCRISuite) TestK0sGetsUp() {
+func (s *BYOCRISuite) TestBringYourOwnCRI() {
+	ctx := s.Context()
+	workerNode := s.WorkerNode(0)
 
-	s.NoError(s.InitController(0))
-	s.Require().NoError(s.runDockerWorker())
+	if ok := s.Run("k0s gets up", func() {
+		s.NoError(s.InitController(0))
+		s.Require().NoError(s.runDockerWorker())
 
-	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.Require().NoError(err)
+		kc, err := s.KubeClient(s.ControllerNode(0))
+		s.Require().NoError(err)
 
-	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
-	s.NoError(err)
+		err = s.WaitForNodeReady(workerNode, kc)
+		s.NoError(err)
 
-	s.AssertSomeKubeSystemPods(kc)
+		s.AssertSomeKubeSystemPods(kc)
 
-	s.T().Log("waiting to see CNI pods ready")
-	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
+		s.T().Log("waiting to see CNI pods ready")
+		s.NoError(common.WaitForKubeRouterReady(ctx, kc), "CNI did not start")
+	}); !ok {
+		return
+	}
+
+	s.Run("k0s reset terminates Docker containers", func() {
+		ssh, err := s.SSH(ctx, workerNode)
+		s.Require().NoError(err)
+		defer ssh.Disconnect()
+
+		var containerIDs strings.Builder
+		if s.NoError(ssh.Exec(ctx, "docker ps -q", common.SSHStreams{Out: &containerIDs}), "Failed to get running Docker containers") {
+			s.NotEmpty(containerIDs.String(), "Expected some running Docker containers")
+		}
+
+		s.NoError(s.StopWorker(workerNode), "Failed to stop k0s")
+
+		resetCmd := "k0s reset --debug --cri-socket remote:unix:///var/run/cri-dockerd.sock"
+		streams, flushStreams := common.TestLogStreams(s.T(), "reset")
+		err = ssh.Exec(ctx, resetCmd, streams)
+		flushStreams()
+		s.NoError(err, "k0s reset didn't exit cleanly")
+
+		containerIDs.Reset()
+		if s.NoError(ssh.Exec(ctx, "docker ps -q", common.SSHStreams{Out: &containerIDs}), "Failed to get running Docker containers") {
+			s.Empty(containerIDs.String(), "Expected no running Docker containers")
+		}
+	})
 }
 
 func (s *BYOCRISuite) runDockerWorker() error {

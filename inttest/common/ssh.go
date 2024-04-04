@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"testing"
 
 	"github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
@@ -190,6 +191,16 @@ func (c *SSHConnection) Exec(ctx context.Context, cmd string, streams SSHStreams
 
 	case <-ctx.Done():
 		return ctx.Err()
+	}
+}
+
+// Returns SSH streams that log lines to the test log.
+func TestLogStreams(t *testing.T, prefix string) (_ SSHStreams, flush func()) {
+	out := LineWriter{WriteLine: func(line []byte) { t.Logf("%s stdout: %s", prefix, string(line)) }}
+	err := LineWriter{WriteLine: func(line []byte) { t.Logf("%s stderr: %s", prefix, string(line)) }}
+	return SSHStreams{Out: &out, Err: &err}, func() {
+		out.Flush()
+		err.Flush()
 	}
 }
 

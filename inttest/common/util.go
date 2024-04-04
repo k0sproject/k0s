@@ -345,3 +345,44 @@ func logfFrom(ctx context.Context) LogfFn {
 	}
 	return logrus.Infof
 }
+
+type LineWriter struct {
+	WriteLine func([]byte)
+	buf       []byte
+}
+
+// Write implements [io.Writer].
+func (s *LineWriter) Write(in []byte) (int, error) {
+	s.buf = append(s.buf, in...)
+	s.logLines()
+	return len(in), nil
+}
+
+// Logs each complete line and discards the used data.
+func (s *LineWriter) logLines() {
+	var off int
+	for {
+		n := bytes.IndexByte(s.buf[off:], '\n')
+		if n < 0 {
+			break
+		}
+
+		s.WriteLine(s.buf[off : off+n])
+		off += n + 1
+	}
+
+	// Move the unprocessed data to the beginning of the buffer and reset the length.
+	if off > 0 {
+		len := copy(s.buf, s.buf[off:])
+		s.buf = s.buf[:len]
+	}
+}
+
+// Logs any remaining data in the buffer that doesn't end with a newline.
+func (s *LineWriter) Flush() {
+	if len(s.buf) > 0 {
+		s.WriteLine(s.buf)
+		// Reset the length and keep the underlying array.
+		s.buf = s.buf[:0]
+	}
+}
