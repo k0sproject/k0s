@@ -19,49 +19,33 @@ package cleanup
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/worker"
+	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
+	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
-
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/container/runtime"
+
 	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
-	containerd       *containerdConfig
-	containerRuntime runtime.ContainerRuntime
-	dataDir          string
-	k0sVars          *config.CfgVars
-	runDir           string
+	debug         bool
+	criSocketFlag string
+	dataDir       string
+	k0sVars       *config.CfgVars
+	runDir        string
 }
 
-type containerdConfig struct {
-	binPath    string
-	cmd        *exec.Cmd
-	socketPath string
-}
-
-func NewConfig(k0sVars *config.CfgVars, criSocketFlag string) (*Config, error) {
-	var containerdCfg *containerdConfig
-
-	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, k0sVars.RunDir)
-	if err != nil {
-		return nil, err
-	}
-	if criSocketFlag == "" {
-		containerdCfg = &containerdConfig{
-			binPath:    fmt.Sprintf("%s/%s", k0sVars.DataDir, "bin/containerd"),
-			socketPath: runtimeEndpoint.Path,
-		}
-	}
-
+func NewConfig(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*Config, error) {
 	return &Config{
-		containerd:       containerdCfg,
-		containerRuntime: runtime.NewContainerRuntime(runtimeEndpoint),
-		dataDir:          k0sVars.DataDir,
-		runDir:           k0sVars.DataDir,
-		k0sVars:          k0sVars,
+		debug:         debug,
+		criSocketFlag: criSocketFlag,
+		dataDir:       k0sVars.DataDir,
+		k0sVars:       k0sVars,
+		runDir:        k0sVars.RunDir,
 	}, nil
 }
 
@@ -71,9 +55,32 @@ func (c *Config) Cleanup() error {
 		logrus.Errorf("failed to get cluster setup: %v", err)
 	}
 
+	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(c.criSocketFlag, c.k0sVars.RunDir)
+	if err != nil {
+		return err
+	}
+
+	containerRuntime := runtime.NewContainerRuntime(runtimeEndpoint)
+	var managedContainerd *containerd.Component
+	if c.criSocketFlag == "" {
+		logLevel := "error"
+		if c.debug {
+			logLevel = "debug"
+		}
+		managedContainerd = containerd.NewComponent(logLevel, c.k0sVars, &workerconfig.Profile{
+			PauseImage: &k0sv1beta1.ImageSpec{
+				Image:   constant.KubePauseContainerImage,
+				Version: constant.KubePauseContainerImageVersion,
+			},
+		})
+	}
+
 	var errs []error
 	cleanupSteps := []Step{
-		&containers{Config: c},
+		&containers{
+			managedContainerd: managedContainerd,
+			containerRuntime:  containerRuntime,
+		},
 		&users{
 			systemUsers: cfg.Spec.Install.SystemUsers,
 		},
