@@ -17,6 +17,7 @@ limitations under the License.
 package worker
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -24,38 +25,34 @@ import (
 	"strings"
 )
 
-type RuntimeType = string
 type RuntimeEndpoint = url.URL
 
 // Parses the CRI runtime flag and returns the parsed values.
 // If the flag is empty, provide k0s's defaults.
-func GetContainerRuntimeEndpoint(criSocketFlag, k0sRunDir string) (RuntimeType, *RuntimeEndpoint, error) {
+func GetContainerRuntimeEndpoint(criSocketFlag, k0sRunDir string) (*RuntimeEndpoint, error) {
 	switch {
 	case criSocketFlag != "":
 		return parseCRISocketFlag(criSocketFlag)
 	case runtime.GOOS == "windows":
-		return "", &url.URL{Scheme: "npipe", Path: "//./pipe/containerd-containerd"}, nil
+		return &url.URL{Scheme: "npipe", Path: "//./pipe/containerd-containerd"}, nil
 	default:
 		socketPath := filepath.Join(k0sRunDir, "containerd.sock")
-		return "", &url.URL{Scheme: "unix", Path: filepath.ToSlash(socketPath)}, nil
+		return &url.URL{Scheme: "unix", Path: filepath.ToSlash(socketPath)}, nil
 	}
 }
 
-func parseCRISocketFlag(criSocketFlag string) (RuntimeType, *RuntimeEndpoint, error) {
-	runtimeConfig := strings.SplitN(criSocketFlag, ":", 2)
-	if len(runtimeConfig) != 2 {
-		return "", nil, fmt.Errorf("cannot parse CRI socket flag")
+func parseCRISocketFlag(criSocketFlag string) (*RuntimeEndpoint, error) {
+	runtimeType, runtimeEndpoint, ok := strings.Cut(criSocketFlag, ":")
+	if !ok {
+		return nil, errors.New("CRI socket flag must be of the form <type>:<url>")
 	}
-	runtimeType := runtimeConfig[0]
-	runtimeEndpoint := runtimeConfig[1]
-	if runtimeType != "docker" && runtimeType != "remote" {
-		return "", nil, fmt.Errorf("unknown runtime type %s, must be either of remote or docker", runtimeType)
+	if runtimeType != "remote" {
+		return nil, fmt.Errorf(`unknown runtime type %q, only "remote" is supported`, runtimeType)
 	}
-
 	parsedRuntimeEndpoint, err := url.Parse(runtimeEndpoint)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to parse runtime endpoint: %w", err)
+		return nil, fmt.Errorf("failed to parse runtime endpoint: %w", err)
 	}
 
-	return runtimeType, parsedRuntimeEndpoint, nil
+	return parsedRuntimeEndpoint, nil
 }

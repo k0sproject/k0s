@@ -24,9 +24,6 @@ type ContainerRuntime interface {
 	StopContainer(id string) error
 }
 
-func NewContainerRuntime(runtimeType string, runtimeEndpoint *url.URL) ContainerRuntime {
-	if runtimeType == "docker" {
-		return &DockerRuntime{runtimeEndpoint.String()}
-	}
+func NewContainerRuntime(runtimeEndpoint *url.URL) ContainerRuntime {
 	return &CRIRuntime{runtimeEndpoint.String()}
 }

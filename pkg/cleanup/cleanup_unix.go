@@ -48,11 +48,11 @@ func NewConfig(k0sVars *config.CfgVars, cfgFile string, criSocketFlag string) (*
 
 	var containerdCfg *containerdConfig
 
-	runtimeType, runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, runDir)
+	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, runDir)
 	if err != nil {
 		return nil, err
 	}
-	if runtimeType == "" {
+	if criSocketFlag == "" {
 		containerdCfg = &containerdConfig{
 			binPath:    fmt.Sprintf("%s/%s", k0sVars.DataDir, "bin/containerd"),
 			socketPath: runtimeEndpoint.Path,
@@ -62,7 +62,7 @@ func NewConfig(k0sVars *config.CfgVars, cfgFile string, criSocketFlag string) (*
 	return &Config{
 		cfgFile:          cfgFile,
 		containerd:       containerdCfg,
-		containerRuntime: runtime.NewContainerRuntime(runtimeType, runtimeEndpoint),
+		containerRuntime: runtime.NewContainerRuntime(runtimeEndpoint),
 		dataDir:          k0sVars.DataDir,
 		runDir:           runDir,
 		k0sVars:          k0sVars,
