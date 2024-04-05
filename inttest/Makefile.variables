@@ -54,6 +54,7 @@ smoketests := \
 	check-noderole-single \
 	check-openebs\
 	check-psp \
+	check-reset \
 	check-singlenode \
 	check-statussocket \
 	check-upgrade \

@@ -96,8 +96,8 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.StopController(s.ControllerNode(0)))
 	_ = s.StopController(s.ControllerNode(1)) // No error check as k0s might have actually exited since etcd is not really happy
 
-	s.Require().NoError(s.Reset(s.ControllerNode(0)))
-	s.Require().NoError(s.Reset(s.ControllerNode(1)))
+	s.reset(s.ControllerNode(0))
+	s.reset(s.ControllerNode(1))
 
 	s.Require().NoError(s.restoreFunc())
 	s.Require().NoError(s.InitController(0, "--enable-worker"))
@@ -120,6 +120,13 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().Equal(snapshot, snapshotAfterBackup)
 
 	s.Require().NoError(s.VerifyFileSystemRestore())
+}
+
+func (s *BackupSuite) reset(name string) {
+	ssh, err := s.SSH(s.Context(), name)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	s.Require().NoError(ssh.Exec(s.Context(), "k0s reset --debug", common.SSHStreams{}))
 }
 
 type snapshot struct {
