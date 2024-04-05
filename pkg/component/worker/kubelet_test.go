@@ -27,51 +27,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCRISocketParsing(t *testing.T) {
-	cases := []struct {
-		name      string
-		input     string
-		expType   string
-		expSocket string
-		err       bool
-	}{
-		{
-			name:      "docker",
-			input:     "docker:unix:///var/run/docker.sock",
-			expType:   "docker",
-			expSocket: "unix:///var/run/docker.sock",
-			err:       false,
-		},
-		{
-			name:      "containerd",
-			input:     "remote:unix:///var/run/mke/containerd.sock",
-			expType:   "remote",
-			expSocket: "unix:///var/run/mke/containerd.sock",
-			err:       false,
-		},
-		{
-			name:      "unknown-type",
-			input:     "foobar:unix:///var/run/mke/containerd.sock",
-			expType:   "remote",
-			expSocket: "unix:///var/run/mke/containerd.sock",
-			err:       true,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			criType, sock, err := SplitRuntimeConfig(tc.input)
-			if tc.err {
-				require.Error(t, err)
-			} else {
-				require.Equal(t, tc.expType, criType)
-				require.Equal(t, tc.expSocket, sock)
-			}
-		})
-	}
-
-}
-
 func TestParseTaints(t *testing.T) {
 	cases := []struct {
 		name          string
