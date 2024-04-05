@@ -189,7 +189,7 @@ EOF
 
 **Warning**: You can use your own CRI runtime with k0s (for example, `docker`). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.
 
-Use the option `--cri-socket` to run a k0s worker with a custom CRI runtime. the option takes input in the form of `<type>:<socket_path>` (the only supported type is `remote`).
+Use the option `--cri-socket` to run a k0s worker with a custom CRI runtime. the option takes input in the form of `<type>:<url>` (the only supported type is `remote`).
 
 ### Using Docker as the container runtime
 

@@ -16,15 +16,17 @@ limitations under the License.
 
 package runtime
 
+import "net/url"
+
 type ContainerRuntime interface {
 	ListContainers() ([]string, error)
 	RemoveContainer(id string) error
 	StopContainer(id string) error
 }
 
-func NewContainerRuntime(runtimeType string, criSocketPath string) ContainerRuntime {
+func NewContainerRuntime(runtimeType string, runtimeEndpoint *url.URL) ContainerRuntime {
 	if runtimeType == "docker" {
-		return &DockerRuntime{criSocketPath}
+		return &DockerRuntime{runtimeEndpoint.String()}
 	}
-	return &CRIRuntime{criSocketPath}
+	return &CRIRuntime{runtimeEndpoint.String()}
 }
