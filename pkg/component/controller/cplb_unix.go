@@ -69,7 +69,8 @@ func (k *Keepalived) Init(_ context.Context) error {
 	var err error
 	k.uid, err = users.GetUID(constant.KeepalivedUser)
 	if err != nil {
-		k.log.Warnf("Unable to get %s UID running keepalived as root: %v", constant.KeepalivedUser, err)
+		k.uid = users.RootUID
+		k.log.WithError(err).Warn("Running keepalived as root")
 	}
 
 	k.configFilePath = filepath.Join(k.K0sVars.RunDir, "keepalived.conf")
