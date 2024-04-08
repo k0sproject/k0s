@@ -29,8 +29,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
-func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
+// EnsureControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
+func EnsureControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
 	var errs []error
 	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
 		if err := EnsureUser(userName, k0sVars.DataDir); err != nil {

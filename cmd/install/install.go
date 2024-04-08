@@ -65,7 +65,7 @@ func (c *command) setup(role string, args []string, installFlags *installFlags) 
 	}
 
 	if role == "controller" {
-		if err := install.CreateControllerUsers(nodeConfig, c.K0sVars); err != nil {
+		if err := install.EnsureControllerUsers(nodeConfig, c.K0sVars); err != nil {
 			return fmt.Errorf("failed to create controller users: %w", err)
 		}
 	}
