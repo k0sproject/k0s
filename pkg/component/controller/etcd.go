@@ -72,7 +72,8 @@ func (e *Etcd) Init(_ context.Context) error {
 
 	e.uid, err = users.GetUID(constant.EtcdUser)
 	if err != nil {
-		logrus.Warn("running etcd as root: ", err)
+		e.uid = users.RootUID
+		logrus.WithError(err).Warn("Running etcd as root")
 	}
 
 	err = dir.Init(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
@@ -260,6 +261,12 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
+	etcdUID, err := users.GetUID(constant.EtcdUser)
+	if err != nil {
+		etcdUID = users.RootUID
+		logrus.WithError(err).Warn("Files with key material for etcd user will be owned by root")
+	}
+
 	eg, _ := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
@@ -275,7 +282,14 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 				"localhost",
 			},
 		}
-		_, err := e.CertManager.EnsureCertificate(etcdCertReq, constant.ApiserverUser)
+
+		uid, err := users.GetUID(constant.ApiserverUser)
+		if err != nil {
+			uid = users.RootUID
+			logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")
+		}
+
+		_, err = e.CertManager.EnsureCertificate(etcdCertReq, uid)
 		return err
 	})
 
@@ -292,7 +306,8 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 				"localhost",
 			},
 		}
-		_, err := e.CertManager.EnsureCertificate(etcdCertReq, constant.EtcdUser)
+
+		_, err = e.CertManager.EnsureCertificate(etcdCertReq, etcdUID)
 		return err
 	})
 
@@ -307,12 +322,12 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 				e.Config.PeerAddress,
 			},
 		}
-		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, constant.EtcdUser)
+		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, etcdUID)
 		return err
 	})
 
 	eg.Go(func() error {
-		return e.CertManager.CreateKeyPair("etcd/jwt", e.K0sVars, constant.EtcdUser)
+		return e.CertManager.CreateKeyPair("etcd/jwt", e.K0sVars, etcdUID)
 	})
 
 	return eg.Wait()
