@@ -21,12 +21,11 @@ import (
 	"fmt"
 	"os/exec"
 	"os/user"
-	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -34,7 +33,7 @@ import (
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
-	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
+	users := getUserNames(clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
 	for _, v := range users {
 		if err := EnsureUser(v, k0sVars.DataDir); err != nil {
@@ -49,7 +48,7 @@ func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
-	cfgUsers := getUserList(*clusterConfig.Spec.Install.SystemUsers)
+	cfgUsers := getUserNames(clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
 	for _, v := range cfgUsers {
 		if _, err := users.GetUID(v); err == nil {
@@ -112,12 +111,15 @@ func deleteUser(userName string) error {
 }
 
 // get user list
-func getUserList(sysUsers v1beta1.SystemUser) []string {
-	v := reflect.ValueOf(sysUsers)
-	values := make([]string, v.NumField())
-
-	for i := 0; i < v.NumField(); i++ {
-		values[i] = v.Field(i).String()
+func getUserNames(users *v1beta1.SystemUser) []string {
+	userNames := []string{
+		users.Etcd,
+		users.Kine,
+		users.Konnectivity,
+		users.KubeAPIServer,
+		users.KubeScheduler,
 	}
-	return stringslice.Unique(values)
+
+	slices.Sort(userNames)
+	return slices.Compact(userNames)
 }
