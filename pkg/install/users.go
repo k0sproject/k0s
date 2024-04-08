@@ -32,10 +32,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-func GetControllerUsers(clusterConfig *v1beta1.ClusterConfig) []string {
-	return getUserList(*clusterConfig.Spec.Install.SystemUsers)
-}
-
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
 	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
