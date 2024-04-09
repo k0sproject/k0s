@@ -67,7 +67,7 @@ func (k *Keepalived) Init(_ context.Context) error {
 	k.log = logrus.WithField("component", "CPLB")
 
 	var err error
-	k.uid, err = users.GetUID(constant.KeepalivedUser)
+	k.uid, err = users.LookupUID(constant.KeepalivedUser)
 	if err != nil {
 		k.uid = users.RootUID
 		k.log.WithError(err).Warn("Running keepalived as root")

@@ -27,8 +27,8 @@ import (
 
 const RootUID = 0 // User ID of the root user
 
-// GetUID returns uid of given username and logs a warning if its missing
-func GetUID(name string) (int, error) {
+// LookupUID returns uid of given username and logs a warning if its missing
+func LookupUID(name string) (int, error) {
 	var uid string
 
 	if entry, err := user.Lookup(name); err != nil {
