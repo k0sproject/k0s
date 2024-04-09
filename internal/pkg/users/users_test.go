@@ -30,12 +30,12 @@ func TestGetUID(t *testing.T) {
 		t.Skip("No numeric user IDs on Windows")
 	}
 
-	uid, err := GetUID("root")
+	uid, err := LookupUID("root")
 	if assert.NoError(t, err, "Failed to get UID for root user") {
 		assert.Equal(t, 0, uid, "root's UID is not 0?")
 	}
 
-	uid, err = GetUID("some-non-existing-user")
+	uid, err = LookupUID("some-non-existing-user")
 	if assert.Error(t, err, "Got a UID for some-non-existing-user?") {
 		assert.ErrorIs(t, err, user.UnknownUserError("some-non-existing-user"))
 		var exitErr *exec.ExitError
