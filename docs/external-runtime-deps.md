@@ -204,8 +204,8 @@ are not detected.
 
 #### id
 
-External `/usr/bin/id` will be executed as a fallback if local user lookup
-fails, in case NSS is used.
+External `id` will be executed as a fallback if local user lookup fails, in case
+NSS is used.
 
 ## Windows specific
 <!--
