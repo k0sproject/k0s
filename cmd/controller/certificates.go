@@ -67,7 +67,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 	// Changing the URL here also requires changes in the "k0s kubeconfig admin" subcommand.
 	kubeConfigAPIUrl := fmt.Sprintf("https://localhost:%d", c.ClusterSpec.API.Port)
 
-	apiServerUID, err := users.GetUID(constant.ApiserverUser)
+	apiServerUID, err := users.LookupUID(constant.ApiserverUser)
 	if err != nil {
 		apiServerUID = users.RootUID
 		logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")
@@ -124,7 +124,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CAKey:  caCertKey,
 		}
 
-		uid, err := users.GetUID(constant.KonnectivityServerUser)
+		uid, err := users.LookupUID(constant.KonnectivityServerUser)
 		if err != nil {
 			uid = users.RootUID
 			logrus.WithError(err).Warn("Files with key material for konnectivity-server user will be owned by root")
@@ -163,7 +163,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CAKey:  caCertKey,
 		}
 
-		uid, err := users.GetUID(constant.SchedulerUser)
+		uid, err := users.LookupUID(constant.SchedulerUser)
 		if err != nil {
 			uid = users.RootUID
 			logrus.WithError(err).Warn("Files with key material for kube-scheduler user will be owned by root")

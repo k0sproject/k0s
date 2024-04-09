@@ -34,7 +34,7 @@ func EnsureControllerUsers(systemUsers *v1beta1.SystemUser, homeDir string) erro
 	var shell string
 	var errs []error
 	for _, userName := range getControllerUserNames(systemUsers) {
-		_, err := users.GetUID(userName)
+		_, err := users.LookupUID(userName)
 		if errors.Is(err, user.UnknownUserError(userName)) {
 			if shell == "" {
 				shell, err = nologinShell()
@@ -60,7 +60,7 @@ func EnsureControllerUsers(systemUsers *v1beta1.SystemUser, homeDir string) erro
 func DeleteControllerUsers(systemUsers *v1beta1.SystemUser) error {
 	var errs []error
 	for _, userName := range getControllerUserNames(systemUsers) {
-		if _, err := users.GetUID(userName); err == nil {
+		if _, err := users.LookupUID(userName); err == nil {
 			logrus.Debugf("Deleting user %q", userName)
 
 			if err := deleteUser(userName); err != nil {

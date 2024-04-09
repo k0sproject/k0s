@@ -67,7 +67,7 @@ var _ manager.Reconciler = (*Manager)(nil)
 func (a *Manager) Init(_ context.Context) error {
 	var err error
 	// controller manager running as api-server user as they both need access to same sa.key
-	a.uid, err = users.GetUID(constant.ApiserverUser)
+	a.uid, err = users.LookupUID(constant.ApiserverUser)
 	if err != nil {
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes controller manager as root")

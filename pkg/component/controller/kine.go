@@ -58,7 +58,7 @@ var _ manager.Ready = (*Kine)(nil)
 func (k *Kine) Init(_ context.Context) error {
 	logrus.Infof("initializing kine")
 	var err error
-	k.uid, err = users.GetUID(constant.KineUser)
+	k.uid, err = users.LookupUID(constant.KineUser)
 	if err != nil {
 		k.uid = users.RootUID
 		logrus.WithError(err).Warn("Running kine as root")

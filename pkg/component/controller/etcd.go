@@ -69,7 +69,7 @@ func (e *Etcd) Init(_ context.Context) error {
 		return fmt.Errorf("missing environment variable: %w", err)
 	}
 
-	e.uid, err = users.GetUID(constant.EtcdUser)
+	e.uid, err = users.LookupUID(constant.EtcdUser)
 	if err != nil {
 		e.uid = users.RootUID
 		logrus.WithError(err).Warn("Running etcd as root")
@@ -264,7 +264,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
-	etcdUID, err := users.GetUID(constant.EtcdUser)
+	etcdUID, err := users.LookupUID(constant.EtcdUser)
 	if err != nil {
 		etcdUID = users.RootUID
 		logrus.WithError(err).Warn("Files with key material for etcd user will be owned by root")
@@ -286,7 +286,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			},
 		}
 
-		uid, err := users.GetUID(constant.ApiserverUser)
+		uid, err := users.LookupUID(constant.ApiserverUser)
 		if err != nil {
 			uid = users.RootUID
 			logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")

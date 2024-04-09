@@ -64,7 +64,7 @@ var _ prober.Healthz = (*Konnectivity)(nil)
 // Init ...
 func (k *Konnectivity) Init(ctx context.Context) error {
 	var err error
-	k.uid, err = users.GetUID(constant.KonnectivityServerUser)
+	k.uid, err = users.LookupUID(constant.KonnectivityServerUser)
 	if err != nil {
 		k.uid = users.RootUID
 		k.EmitWithPayload("error getting UID for", err)

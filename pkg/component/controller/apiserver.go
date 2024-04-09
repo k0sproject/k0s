@@ -88,7 +88,7 @@ type egressSelectorConfig struct {
 // Init extracts needed binaries
 func (a *APIServer) Init(_ context.Context) error {
 	var err error
-	a.uid, err = users.GetUID(constant.ApiserverUser)
+	a.uid, err = users.LookupUID(constant.ApiserverUser)
 	if err != nil {
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes API server as root")
