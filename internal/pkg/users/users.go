@@ -17,27 +17,47 @@ limitations under the License.
 package users
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"os/exec"
 	"os/user"
 	"strconv"
-	"strings"
 )
 
 const RootUID = 0 // User ID of the root user
 
 // GetUID returns uid of given username and logs a warning if its missing
 func GetUID(name string) (int, error) {
-	entry, err := user.Lookup(name)
-	if err == nil {
-		return strconv.Atoi(entry.Uid)
-	}
-	if errors.Is(err, user.UnknownUserError(name)) {
-		// fallback to call external `id` in case NSS is used
-		out, err := exec.Command("/usr/bin/id", "-u", name).CombinedOutput()
-		if err == nil {
-			return strconv.Atoi(strings.TrimSuffix(string(out), "\n"))
+	var uid string
+
+	if entry, err := user.Lookup(name); err != nil {
+		if !errors.Is(err, user.UnknownUserError(name)) {
+			return 0, err
 		}
+
+		// fallback to call external `id` in case NSS is used
+		out, idErr := exec.Command("/usr/bin/id", "-u", name).Output()
+		if idErr != nil {
+			var exitErr *exec.ExitError
+			if errors.As(idErr, &exitErr) {
+				return 0, fmt.Errorf("%w (%w: %s)", err, idErr, bytes.TrimSpace(exitErr.Stderr))
+			}
+			return 0, fmt.Errorf("%w (%w)", err, idErr)
+		}
+
+		uid = string(bytes.TrimSpace(out))
+	} else {
+		uid = entry.Uid
 	}
-	return 0, err
+
+	parsedUID, err := strconv.Atoi(uid)
+	if err != nil {
+		return 0, fmt.Errorf("UID %q is not a decimal integer: %w", uid, err)
+	}
+	if parsedUID < 0 {
+		return 0, fmt.Errorf("UID is negative: %d", parsedUID)
+	}
+
+	return parsedUID, nil
 }
