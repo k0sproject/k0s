@@ -37,7 +37,7 @@ func GetUID(name string) (int, error) {
 		}
 
 		// fallback to call external `id` in case NSS is used
-		out, idErr := exec.Command("/usr/bin/id", "-u", name).Output()
+		out, idErr := exec.Command("id", "-u", name).Output()
 		if idErr != nil {
 			var exitErr *exec.ExitError
 			if errors.As(idErr, &exitErr) {
