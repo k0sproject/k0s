@@ -26,16 +26,14 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
 )
 
-// EnsureControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
-func EnsureControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
-	homeDir := k0sVars.DataDir
-
+// Ensures that all controller users exist and creates any missing users with
+// the given home directory.
+func EnsureControllerUsers(systemUsers *v1beta1.SystemUser, homeDir string) error {
 	var shell string
 	var errs []error
-	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
+	for _, userName := range getControllerUserNames(systemUsers) {
 		_, err := users.GetUID(userName)
 		if errors.Is(err, user.UnknownUserError(userName)) {
 			if shell == "" {
@@ -58,10 +56,10 @@ func EnsureControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config
 	return errors.Join(errs...)
 }
 
-// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
-func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
+// Deletes existing controller users.
+func DeleteControllerUsers(systemUsers *v1beta1.SystemUser) error {
 	var errs []error
-	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
+	for _, userName := range getControllerUserNames(systemUsers) {
 		if _, err := users.GetUID(userName); err == nil {
 			logrus.Debugf("Deleting user %q", userName)
 

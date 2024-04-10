@@ -36,7 +36,7 @@ func (u *users) Run() error {
 	if err != nil {
 		logrus.Errorf("failed to get cluster setup: %v", err)
 	}
-	if err := install.DeleteControllerUsers(cfg); err != nil {
+	if err := install.DeleteControllerUsers(cfg.Spec.Install.SystemUsers); err != nil {
 		// don't fail, just notify on delete error
 		logrus.Warnf("failed to delete controller users: %v", err)
 	}
