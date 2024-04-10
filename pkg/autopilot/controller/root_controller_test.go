@@ -49,7 +49,7 @@ func NewFakeLeaseWatcher() (LeaseWatcher, chan LeaseEventStatus) {
 }
 
 // StartWatcher for the fake LeaseWatcher just propagates the premade lease event channel
-func (lw *fakeLeaseWatcher) StartWatcher(ctx context.Context, namespace string, name string) (<-chan LeaseEventStatus, <-chan error) {
+func (lw *fakeLeaseWatcher) StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan LeaseEventStatus, <-chan error) {
 	return lw.leaseEventStatusCh, lw.errorsCh
 }
 

@@ -55,9 +55,6 @@ func (s *K0sSysinfoSpec) RunPreFlightChecks(lenient bool) error {
 func (s *K0sSysinfoSpec) NewSysinfoProbes() probes.Probes {
 	p := probes.NewRootProbes()
 
-	// https://docs.k0sproject.io/main/external-runtime-deps/#a-unique-machine-id-for-multi-node-setups
-	probes.RequireMachineID(p)
-
 	// https://docs.k0sproject.io/main/system-requirements/#minimum-memory-and-cpu-requirements
 	if s.ControllerRoleEnabled {
 		probes.AssertTotalMemory(p, 1*probes.Gi)

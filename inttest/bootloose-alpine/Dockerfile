@@ -24,7 +24,6 @@ RUN apk add --no-cache \
   inotify-tools
 # enable syslog and sshd
 RUN rc-update add syslog boot
-RUN rc-update add machine-id boot
 RUN rc-update add sshd default
 RUN rc-update add local default
 RUN rc-update add nginx default

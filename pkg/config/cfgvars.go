@@ -17,6 +17,8 @@ limitations under the License.
 package config
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -39,6 +41,7 @@ const (
 // Some of the variables are duplicates of the ones in the CLIOptions struct
 // for historical and convenience reasons.
 type CfgVars struct {
+	InvocationID               string // Unique ID for this invocation of k0s
 	AdminKubeConfigPath        string // The cluster admin kubeconfig location
 	BinDir                     string // location for all pki related binaries
 	CertRootDir                string // CertRootDir defines the root location for all pki related artifacts
@@ -161,7 +164,13 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 	certDir := filepath.Join(dataDir, "pki")
 	helmHome := filepath.Join(dataDir, "helmhome")
 
+	var invocationID [16]byte
+	if _, err := rand.Read(invocationID[:]); err != nil {
+		return nil, err
+	}
+
 	vars := &CfgVars{
+		InvocationID:               hex.EncodeToString(invocationID[:]),
 		AdminKubeConfigPath:        filepath.Join(certDir, "admin.conf"),
 		BinDir:                     filepath.Join(dataDir, "bin"),
 		OCIBundleDir:               filepath.Join(dataDir, "images"),

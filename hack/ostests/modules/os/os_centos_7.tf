@@ -34,13 +34,6 @@ locals {
       default = {
         ami_id = one(data.aws_ami.centos_7.*.id)
 
-        user_data = format("#cloud-config\n%s", jsonencode({
-          bootcmd = [
-            "rm /etc/machine-id",
-            "systemd-machine-id-setup",
-          ]
-        })),
-
         connection = {
           type     = "ssh"
           username = "centos"

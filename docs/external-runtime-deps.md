@@ -15,23 +15,6 @@ available on Linux):
 k0s sysinfo
 ```
 
-## A unique machine ID for multi-node setups
-
-Whenever k0s is run in a multi-node setup (i.e. the `--single` command line flag
-isn't used), k0s requires a [machine ID]: a unique host identifier that is
-somewhat stable across reboots. For Linux, this ID is read from the files
-`/var/lib/dbus/machine-id` or `/etc/machine-id`. For Windows, it's taken from
-the registry key `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\MachineGuid`.
-If neither of the OS specific sources yield a result, k0s will fallback to use a
-machine ID based on the hostname.
-
-When running k0s on top of virtualized or containerized environments, you need
-to [ensure][ensure-unique-id] that hosts get their own unique IDs, even if they
-have been created from the same image.
-
-[machine ID]: https://github.com/denisbrodbeck/machineid/blob/v1.0.1/README.md#what-you-get
-[ensure-unique-id]: https://github.com/denisbrodbeck/machineid/blob/v1.0.1/README.md#unique-key-reliability
-
 ## Linux specific
 <!--
 This piece of documentation is best-effort and considered to be augmented and

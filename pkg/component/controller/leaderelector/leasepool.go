@@ -30,6 +30,7 @@ import (
 type LeasePool struct {
 	log *logrus.Entry
 
+	invocationID      string
 	stopCh            chan struct{}
 	leaderStatus      atomic.Value
 	kubeClientFactory kubeutil.ClientFactoryInterface
@@ -43,10 +44,11 @@ var _ Interface = (*LeasePool)(nil)
 var _ manager.Component = (*LeasePool)(nil)
 
 // NewLeasePool creates a new leader elector using a Kubernetes lease pool.
-func NewLeasePool(kubeClientFactory kubeutil.ClientFactoryInterface) *LeasePool {
+func NewLeasePool(invocationID string, kubeClientFactory kubeutil.ClientFactoryInterface) *LeasePool {
 	d := atomic.Value{}
 	d.Store(false)
 	return &LeasePool{
+		invocationID:      invocationID,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
 		log:               logrus.WithFields(logrus.Fields{"component": "poolleaderelector"}),
@@ -63,7 +65,7 @@ func (l *LeasePool) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
 	}
-	leasePool, err := leaderelection.NewLeasePool(ctx, client, "k0s-endpoint-reconciler",
+	leasePool, err := leaderelection.NewLeasePool(ctx, client, "k0s-endpoint-reconciler", l.invocationID,
 		leaderelection.WithLogger(l.log),
 		leaderelection.WithContext(ctx))
 	if err != nil {

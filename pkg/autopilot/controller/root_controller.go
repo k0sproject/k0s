@@ -97,7 +97,10 @@ func (c *rootController) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to setup lease watcher: %w", err)
 	}
 
-	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(ctx, apconst.AutopilotNamespace, fmt.Sprintf("%s-controller", apconst.AutopilotNamespace))
+	leaseName := fmt.Sprintf("%s-controller", apconst.AutopilotNamespace)
+	leaseIdentity := c.cfg.InvocationID
+
+	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(ctx, apconst.AutopilotNamespace, leaseName, leaseIdentity)
 
 	var lastLeaseEventStatus LeaseEventStatus
 	var subControllerCancel context.CancelFunc

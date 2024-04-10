@@ -27,7 +27,6 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
-	"github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
@@ -102,7 +101,7 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 	k.serverCountChan = k.K0sControllersLeaseCounter.Subscribe()
 
 	// To make the server start, add "dummy" 0 into the channel
-	if err := k.runServer(ctx, 0); err != nil {
+	if err := k.runServer(0); err != nil {
 		k.EmitWithPayload("failed to run konnectivity server", err)
 		return fmt.Errorf("failed to run konnectivity server: %w", err)
 	}
@@ -112,11 +111,7 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 	return nil
 }
 
-func (k *Konnectivity) defaultArgs() stringmap.StringMap {
-	machineID, err := machineid.Generate()
-	if err != nil {
-		logrus.Errorf("failed to fetch machine ID for konnectivity-server")
-	}
+func (k *Konnectivity) serverArgs(count int) []string {
 	return stringmap.StringMap{
 		"--uds-name":                 filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
 		"--cluster-cert":             filepath.Join(k.K0sVars.CertRootDir, "server.crt"),
@@ -134,10 +129,11 @@ func (k *Konnectivity) defaultArgs() stringmap.StringMap {
 		"--v":                        k.LogLevel,
 		"--enable-profiling":         "false",
 		"--delete-existing-uds-file": "true",
-		"--server-id":                machineID.ID(),
+		"--server-count":             strconv.Itoa(count),
+		"--server-id":                k.K0sVars.InvocationID,
 		"--proxy-strategies":         "destHost,default",
 		"--cipher-suites":            constant.AllowedTLS12CipherSuiteNames(),
-	}
+	}.ToArgs()
 }
 
 // runs the supervisor and restarts if the calculated server count changes
@@ -157,7 +153,7 @@ func (k *Konnectivity) watchControllerCountChanges(ctx context.Context) {
 			}
 			// restart only if the count actually changes and we've got the global config
 			if count != k.serverCount {
-				if err := k.runServer(ctx, count); err != nil {
+				if err := k.runServer(count); err != nil {
 					k.EmitWithPayload("failed to run konnectivity server", err)
 					logrus.Errorf("failed to run konnectivity server: %s", err)
 					continue
@@ -168,10 +164,7 @@ func (k *Konnectivity) watchControllerCountChanges(ctx context.Context) {
 	}
 }
 
-func (k *Konnectivity) runServer(ctx context.Context, count int) error {
-	args := k.defaultArgs()
-	args["--server-count"] = strconv.Itoa(count)
-
+func (k *Konnectivity) runServer(count int) error {
 	// Stop supervisor
 	if k.supervisor != nil {
 		k.EmitWithPayload("restarting konnectivity server due to server count change",
@@ -186,7 +179,7 @@ func (k *Konnectivity) runServer(ctx context.Context, count int) error {
 		BinPath: assets.BinPath("konnectivity-server", k.K0sVars.BinDir),
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
-		Args:    args.ToArgs(),
+		Args:    k.serverArgs(count),
 		UID:     k.uid,
 	}
 	err := k.supervisor.Supervise()
