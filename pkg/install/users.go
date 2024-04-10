@@ -31,9 +31,16 @@ import (
 
 // EnsureControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func EnsureControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
+	homeDir := k0sVars.DataDir
+
 	var errs []error
 	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
-		if err := EnsureUser(userName, k0sVars.DataDir); err != nil {
+		_, err := users.GetUID(userName)
+		if errors.Is(err, user.UnknownUserError(userName)) {
+			logrus.Infof("Creating user %q", userName)
+			err = createUser(userName, homeDir)
+		}
+		if err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -55,17 +62,6 @@ func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 	}
 
 	return errors.Join(errs...)
-}
-
-// EnsureUser checks if a user exists, and creates it, if it doesn't
-// TODO: we should also consider modifying the user, if the user exists, but with wrong settings
-func EnsureUser(name string, homeDir string) error {
-	_, err := users.GetUID(name)
-	if errors.Is(err, user.UnknownUserError(name)) {
-		logrus.Infof("Creating user %q", name)
-		return createUser(name, homeDir)
-	}
-	return err
 }
 
 // nologinShell returns the path to /sbin/nologin, /bin/false or equivalent or an error if neither is available
