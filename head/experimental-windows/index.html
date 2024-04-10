@@ -2148,7 +2148,7 @@
 <p><strong>Note</strong>: The k0s.exe supervises kubelet.exe and kube-proxy.exe.</p>
 <p>During the first run, the calico install script is created as <code>C:\bootstrap.ps1</code>. This bootstrap script downloads the calico binaries, builds pause container and sets up vSwitch settings.</p>
 <p>Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--cri-socket<span class="o">=</span>docker:tcp://127.0.0.1:2375<span class="w"> </span>--cidr-range<span class="o">=</span>&lt;cidr_range&gt;<span class="w"> </span>--cluster-dns<span class="o">=</span>&lt;clusterdns&gt;<span class="w"> </span>--api-server<span class="o">=</span>&lt;k0s<span class="w"> </span>api&gt;<span class="w"> </span>&lt;token&gt;
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--cri-socket<span class="o">=</span>remote:npipe:////./pipe/containerd-containerd<span class="w"> </span>--cidr-range<span class="o">=</span>&lt;cidr_range&gt;<span class="w"> </span>--cluster-dns<span class="o">=</span>&lt;clusterdns&gt;<span class="w"> </span>--api-server<span class="o">=</span>&lt;k0s<span class="w"> </span>api&gt;<span class="w"> </span>&lt;token&gt;
 </code></pre></div>
 <p>You must initiate the Cluster control with the correct config.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>

@@ -2231,7 +2231,7 @@ sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"
 <p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2">here</a>.</p>
 <h2 id="using-custom-cri-runtimes">Using custom CRI runtimes<a class="headerlink" href="#using-custom-cri-runtimes" title="Permanent link">#</a></h2>
 <p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
-<p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;socket_path&gt;</code> (for <code>type</code>, use <code>docker</code> for a pure Docker setup and <code>remote</code> for anything else).</p>
+<p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;url&gt;</code> (the only supported type is <code>remote</code>).</p>
 <h3 id="using-docker-as-the-container-runtime">Using Docker as the container runtime<a class="headerlink" href="#using-docker-as-the-container-runtime" title="Permanent link">#</a></h3>
 <p>As of Kubernetes 1.24, the use of Docker as a container runtime is <a href="https://kubernetes.io/blog/2020/12/02/dockershim-faq/">no longer
 supported</a> out of the box. However, Mirantis provides
@@ -2255,17 +2255,17 @@ need to be taken:</p>
   <code>--cri-socket</code> flag pointing to cri-dockerd's socket, which is typically
   located at <code>/var/run/cri-dockerd.sock</code>. For instance, the commands to start a
   node would be as follows:</p>
-<div class="highlight"><pre><span></span><code>k0s worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+<div class="highlight"><pre><span></span><code>k0s worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
 </code></pre></div>
 <p>or, respectively</p>
-<div class="highlight"><pre><span></span><code><span class="go">k0s controller --enable-worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock</span>
+<div class="highlight"><pre><span></span><code><span class="go">k0s controller --enable-worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock</span>
 </code></pre></div>
 <p>When running k0s <a href="../cli/k0s_install/">as a service</a>, consider reinstalling the
 service with the appropriate flags:</p>
-<div class="highlight"><pre><span></span><code><span class="go">sudo k0s install --force worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock</span>
+<div class="highlight"><pre><span></span><code><span class="go">sudo k0s install --force worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock</span>
 </code></pre></div>
 <p>or, respectively</p>
-<div class="highlight"><pre><span></span><code><span class="go">sudo k0s install --force controller --enable-worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock</span>
+<div class="highlight"><pre><span></span><code><span class="go">sudo k0s install --force controller --enable-worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock</span>
 </code></pre></div>
 </li>
 </ol>
