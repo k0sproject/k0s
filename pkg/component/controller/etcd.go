@@ -71,6 +71,7 @@ func (e *Etcd) Init(_ context.Context) error {
 
 	e.uid, err = users.LookupUID(constant.EtcdUser)
 	if err != nil {
+		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.EtcdUser, err)
 		e.uid = users.RootUID
 		logrus.WithError(err).Warn("Running etcd as root, files with key material for etcd user will be owned by root")
 	}
@@ -282,6 +283,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 
 		uid, err := users.LookupUID(constant.ApiserverUser)
 		if err != nil {
+			err = fmt.Errorf("failed to lookup UID for %q: %w", constant.ApiserverUser, err)
 			uid = users.RootUID
 			logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")
 		}

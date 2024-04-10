@@ -66,6 +66,7 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 	var err error
 	k.uid, err = users.LookupUID(constant.KonnectivityServerUser)
 	if err != nil {
+		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.KonnectivityServerUser, err)
 		k.uid = users.RootUID
 		k.EmitWithPayload("error getting UID for", err)
 		logrus.WithError(err).Warn("Running konnectivity as root")

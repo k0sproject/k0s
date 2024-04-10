@@ -19,7 +19,6 @@ package install
 import (
 	"errors"
 	"os/exec"
-	"os/user"
 	"slices"
 
 	"github.com/sirupsen/logrus"
@@ -35,7 +34,7 @@ func EnsureControllerUsers(systemUsers *v1beta1.SystemUser, homeDir string) erro
 	var errs []error
 	for _, userName := range getControllerUserNames(systemUsers) {
 		_, err := users.LookupUID(userName)
-		if errors.Is(err, user.UnknownUserError(userName)) {
+		if errors.Is(err, users.ErrNotExist) {
 			if shell == "" {
 				shell, err = nologinShell()
 				if err != nil {

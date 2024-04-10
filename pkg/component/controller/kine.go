@@ -60,6 +60,7 @@ func (k *Kine) Init(_ context.Context) error {
 	var err error
 	k.uid, err = users.LookupUID(constant.KineUser)
 	if err != nil {
+		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.KineUser, err)
 		k.uid = users.RootUID
 		logrus.WithError(err).Warn("Running kine as root")
 	}

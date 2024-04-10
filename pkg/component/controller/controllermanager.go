@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -69,6 +70,7 @@ func (a *Manager) Init(_ context.Context) error {
 	// controller manager running as api-server user as they both need access to same sa.key
 	a.uid, err = users.LookupUID(constant.ApiserverUser)
 	if err != nil {
+		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.ApiserverUser, err)
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes controller manager as root")
 	}
