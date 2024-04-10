@@ -15,7 +15,7 @@ During the first run, the calico install script is created as `C:\bootstrap.ps1`
 Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).
 
 ```shell
-k0s worker --cri-socket=docker:tcp://127.0.0.1:2375 --cidr-range=<cidr_range> --cluster-dns=<clusterdns> --api-server=<k0s api> <token>
+k0s worker --cri-socket=remote:npipe:////./pipe/containerd-containerd --cidr-range=<cidr_range> --cluster-dns=<clusterdns> --api-server=<k0s api> <token>
 ```
 
 You must initiate the Cluster control with the correct config.

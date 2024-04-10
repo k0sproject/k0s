@@ -189,7 +189,7 @@ EOF
 
 **Warning**: You can use your own CRI runtime with k0s (for example, `docker`). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.
 
-Use the option `--cri-socket` to run a k0s worker with a custom CRI runtime. the option takes input in the form of `<type>:<socket_path>` (for `type`, use `docker` for a pure Docker setup and `remote` for anything else).
+Use the option `--cri-socket` to run a k0s worker with a custom CRI runtime. the option takes input in the form of `<type>:<url>` (the only supported type is `remote`).
 
 ### Using Docker as the container runtime
 
@@ -216,25 +216,25 @@ need to be taken:
   located at `/var/run/cri-dockerd.sock`. For instance, the commands to start a
   node would be as follows:
   
-      k0s worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+      k0s worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
   
   or, respectively
 
   ```console
-  k0s controller --enable-worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+  k0s controller --enable-worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
   ```
 
   When running k0s [as a service](cli/k0s_install.md), consider reinstalling the
   service with the appropriate flags:
 
   ```console
-  sudo k0s install --force worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+  sudo k0s install --force worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
   ```
 
   or, respectively
 
   ```console
-  sudo k0s install --force controller --enable-worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+  sudo k0s install --force controller --enable-worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
   ```
 
 In scenarios where Docker is managed via systemd, it is crucial that the

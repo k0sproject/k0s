@@ -17,23 +17,42 @@ limitations under the License.
 package worker
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
-type RuntimeType = string
-type RuntimeSocket = string
+type RuntimeEndpoint = url.URL
 
-func SplitRuntimeConfig(rtConfig string) (RuntimeType, RuntimeSocket, error) {
-	runtimeConfig := strings.SplitN(rtConfig, ":", 2)
-	if len(runtimeConfig) != 2 {
-		return "", "", fmt.Errorf("cannot parse CRI socket path")
+// Parses the CRI runtime flag and returns the parsed values.
+// If the flag is empty, provide k0s's defaults.
+func GetContainerRuntimeEndpoint(criSocketFlag, k0sRunDir string) (*RuntimeEndpoint, error) {
+	switch {
+	case criSocketFlag != "":
+		return parseCRISocketFlag(criSocketFlag)
+	case runtime.GOOS == "windows":
+		return &url.URL{Scheme: "npipe", Path: "//./pipe/containerd-containerd"}, nil
+	default:
+		socketPath := filepath.Join(k0sRunDir, "containerd.sock")
+		return &url.URL{Scheme: "unix", Path: filepath.ToSlash(socketPath)}, nil
 	}
-	runtimeType := runtimeConfig[0]
-	runtimeSocket := runtimeConfig[1]
-	if runtimeType != "docker" && runtimeType != "remote" {
-		return "", "", fmt.Errorf("unknown runtime type %s, must be either of remote or docker", runtimeType)
+}
+
+func parseCRISocketFlag(criSocketFlag string) (*RuntimeEndpoint, error) {
+	runtimeType, runtimeEndpoint, ok := strings.Cut(criSocketFlag, ":")
+	if !ok {
+		return nil, errors.New("CRI socket flag must be of the form <type>:<url>")
+	}
+	if runtimeType != "remote" {
+		return nil, fmt.Errorf(`unknown runtime type %q, only "remote" is supported`, runtimeType)
+	}
+	parsedRuntimeEndpoint, err := url.Parse(runtimeEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse runtime endpoint: %w", err)
 	}
 
-	return runtimeType, runtimeSocket, nil
+	return parsedRuntimeEndpoint, nil
 }

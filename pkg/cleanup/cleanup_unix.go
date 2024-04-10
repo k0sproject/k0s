@@ -43,31 +43,26 @@ type containerdConfig struct {
 	socketPath string
 }
 
-func NewConfig(k0sVars *config.CfgVars, cfgFile string, criSocketPath string) (*Config, error) {
+func NewConfig(k0sVars *config.CfgVars, cfgFile string, criSocketFlag string) (*Config, error) {
 	runDir := "/run/k0s" // https://github.com/k0sproject/k0s/pull/591/commits/c3f932de85a0b209908ad39b817750efc4987395
 
-	var err error
 	var containerdCfg *containerdConfig
-	var runtimeType string
 
-	if criSocketPath == "" {
-		criSocketPath = fmt.Sprintf("unix://%s/containerd.sock", runDir)
+	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, runDir)
+	if err != nil {
+		return nil, err
+	}
+	if criSocketFlag == "" {
 		containerdCfg = &containerdConfig{
 			binPath:    fmt.Sprintf("%s/%s", k0sVars.DataDir, "bin/containerd"),
-			socketPath: fmt.Sprintf("%s/containerd.sock", runDir),
-		}
-		runtimeType = "cri"
-	} else {
-		runtimeType, criSocketPath, err = worker.SplitRuntimeConfig(criSocketPath)
-		if err != nil {
-			return nil, err
+			socketPath: runtimeEndpoint.Path,
 		}
 	}
 
 	return &Config{
 		cfgFile:          cfgFile,
 		containerd:       containerdCfg,
-		containerRuntime: runtime.NewContainerRuntime(runtimeType, criSocketPath),
+		containerRuntime: runtime.NewContainerRuntime(runtimeEndpoint),
 		dataDir:          k0sVars.DataDir,
 		runDir:           runDir,
 		k0sVars:          k0sVars,

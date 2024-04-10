@@ -240,18 +240,11 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 	preparedConfig.CgroupsPerQOS = ptr.To(kubeletConfigData.CgroupsPerQOS)
 	preparedConfig.StaticPodURL = kubeletConfigData.StaticPodURL
 
-	if k.CRISocket == "" && runtime.GOOS != "windows" {
-		socketPath := filepath.Join(k.K0sVars.RunDir, "containerd.sock")
-		preparedConfig.ContainerRuntimeEndpoint = "unix://" + filepath.ToSlash(socketPath)
-	} else if k.CRISocket == "" && runtime.GOOS == "windows" {
-		preparedConfig.ContainerRuntimeEndpoint = "npipe:////./pipe/containerd-containerd"
-	} else {
-		_, runtimeEndpoint, err := SplitRuntimeConfig(k.CRISocket)
-		if err != nil {
-			return "", err
-		}
-		preparedConfig.ContainerRuntimeEndpoint = runtimeEndpoint
+	containerRuntimeEndpoint, err := GetContainerRuntimeEndpoint(k.CRISocket, k.K0sVars.RunDir)
+	if err != nil {
+		return "", err
 	}
+	preparedConfig.ContainerRuntimeEndpoint = containerRuntimeEndpoint.String()
 
 	if len(k.Taints) > 0 {
 		var taints []corev1.Taint
