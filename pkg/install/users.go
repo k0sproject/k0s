@@ -18,11 +18,9 @@ package install
 
 import (
 	"errors"
-	"fmt"
 	"os/exec"
 	"os/user"
 	"slices"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -33,35 +31,30 @@ import (
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
-	var messages []string
+	var errs []error
 	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
 		if err := EnsureUser(userName, k0sVars.DataDir); err != nil {
-			messages = append(messages, err.Error())
+			errs = append(errs, err)
 		}
 	}
-	if len(messages) > 0 {
-		return fmt.Errorf(strings.Join(messages, "\n"))
-	}
-	return nil
+
+	return errors.Join(errs...)
 }
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
-	var messages []string
+	var errs []error
 	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
 		if _, err := users.GetUID(userName); err == nil {
-			logrus.Debugf("deleting user: %s", userName)
+			logrus.Debugf("Deleting user %q", userName)
 
 			if err := deleteUser(userName); err != nil {
-				messages = append(messages, err.Error())
+				errs = append(errs, err)
 			}
 		}
 	}
-	if len(messages) > 0 {
-		// don't fail the command, just notify on errors
-		return fmt.Errorf(strings.Join(messages, "\n"))
-	}
-	return nil
+
+	return errors.Join(errs...)
 }
 
 // EnsureUser checks if a user exists, and creates it, if it doesn't
@@ -69,7 +62,7 @@ func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 func EnsureUser(name string, homeDir string) error {
 	_, err := users.GetUID(name)
 	if errors.Is(err, user.UnknownUserError(name)) {
-		logrus.Infof("creating user: %s", name)
+		logrus.Infof("Creating user %q", name)
 		return createUser(name, homeDir)
 	}
 	return err
