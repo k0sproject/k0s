@@ -33,12 +33,22 @@ import (
 func EnsureControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
 	homeDir := k0sVars.DataDir
 
+	var shell string
 	var errs []error
 	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
 		_, err := users.GetUID(userName)
 		if errors.Is(err, user.UnknownUserError(userName)) {
+			if shell == "" {
+				shell, err = nologinShell()
+				if err != nil {
+					// error out early, k0s won't be able to create any users anyways
+					errs = append(errs, err)
+					break
+				}
+			}
+
 			logrus.Infof("Creating user %q", userName)
-			err = createUser(userName, homeDir)
+			err = createUser(userName, homeDir, shell)
 		}
 		if err != nil {
 			errs = append(errs, err)
@@ -75,13 +85,8 @@ func nologinShell() (string, error) {
 }
 
 // CreateUser creates a system user with either `adduser` or `useradd` command
-func createUser(userName string, homeDir string) error {
-	shell, err := nologinShell()
-	if err != nil {
-		return err
-	}
-
-	_, err = exec.Command("useradd", `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
+func createUser(userName, homeDir, shell string) error {
+	_, err := exec.Command("useradd", `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
 	if errors.Is(err, exec.ErrNotFound) {
 		_, err = exec.Command("adduser", `--disabled-password`, `--gecos`, `""`, `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
 	}
