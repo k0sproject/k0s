@@ -72,7 +72,7 @@ func (e *Etcd) Init(_ context.Context) error {
 	e.uid, err = users.LookupUID(constant.EtcdUser)
 	if err != nil {
 		e.uid = users.RootUID
-		logrus.WithError(err).Warn("Running etcd as root")
+		logrus.WithError(err).Warn("Running etcd as root, files with key material for etcd user will be owned by root")
 	}
 
 	err = dir.Init(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
@@ -264,12 +264,6 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
-	etcdUID, err := users.LookupUID(constant.EtcdUser)
-	if err != nil {
-		etcdUID = users.RootUID
-		logrus.WithError(err).Warn("Files with key material for etcd user will be owned by root")
-	}
-
 	eg, _ := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
@@ -310,7 +304,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			},
 		}
 
-		_, err = e.CertManager.EnsureCertificate(etcdCertReq, etcdUID)
+		_, err := e.CertManager.EnsureCertificate(etcdCertReq, e.uid)
 		return err
 	})
 
@@ -325,12 +319,12 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 				e.Config.PeerAddress,
 			},
 		}
-		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, etcdUID)
+		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, e.uid)
 		return err
 	})
 
 	eg.Go(func() error {
-		return e.CertManager.CreateKeyPair("etcd/jwt", e.K0sVars, etcdUID)
+		return e.CertManager.CreateKeyPair("etcd/jwt", e.K0sVars, e.uid)
 	})
 
 	return eg.Wait()
