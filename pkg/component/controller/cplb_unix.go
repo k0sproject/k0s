@@ -69,6 +69,7 @@ func (k *Keepalived) Init(_ context.Context) error {
 	var err error
 	k.uid, err = users.LookupUID(constant.KeepalivedUser)
 	if err != nil {
+		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.KeepalivedUser, err)
 		k.uid = users.RootUID
 		k.log.WithError(err).Warn("Running keepalived as root")
 	}

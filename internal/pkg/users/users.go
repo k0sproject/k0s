@@ -38,9 +38,11 @@ const (
 	RootUID = 0 // User ID of the root user
 )
 
+var ErrNotExist = errors.New("user does not exist")
+
 // Lookup looks up a user's UID by username. If the user cannot be found, the
-// returned error is of type [user.UnknownUserError]. If an error is returned,
-// the returned UID will be [UnknownUID].
+// returned error is [ErrNotExist]. If an error is returned, the returned UID
+// will be [UnknownUID].
 func LookupUID(name string) (int, error) {
 	var uid string
 
@@ -48,6 +50,8 @@ func LookupUID(name string) (int, error) {
 		if !errors.Is(err, user.UnknownUserError(name)) {
 			return UnknownUID, err
 		}
+
+		err = ErrNotExist
 
 		// fallback to call external `id` in case NSS is used
 		out, idErr := exec.Command("id", "-u", name).Output()

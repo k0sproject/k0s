@@ -18,7 +18,6 @@ package users
 
 import (
 	"os/exec"
-	"os/user"
 	"runtime"
 	"testing"
 
@@ -37,7 +36,7 @@ func TestGetUID(t *testing.T) {
 
 	uid, err = LookupUID("some-non-existing-user")
 	if assert.Error(t, err, "Got a UID for some-non-existing-user?") {
-		assert.ErrorIs(t, err, user.UnknownUserError("some-non-existing-user"))
+		assert.ErrorIs(t, err, ErrNotExist)
 		var exitErr *exec.ExitError
 		assert.ErrorAs(t, err, &exitErr, "expected external `id` to return an error")
 		assert.Equal(t, UnknownUID, uid)

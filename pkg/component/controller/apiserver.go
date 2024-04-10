@@ -90,6 +90,7 @@ func (a *APIServer) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.LookupUID(constant.ApiserverUser)
 	if err != nil {
+		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.ApiserverUser, err)
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes API server as root")
 	}
