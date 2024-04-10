@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -53,6 +54,7 @@ func (a *Scheduler) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.LookupUID(constant.SchedulerUser)
 	if err != nil {
+		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.SchedulerUser, err)
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running kube-scheduler as root")
 	}
