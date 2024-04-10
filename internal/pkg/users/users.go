@@ -25,15 +25,28 @@ import (
 	"strconv"
 )
 
-const RootUID = 0 // User ID of the root user
+const (
+	// An unknown (i.e. invalid) user ID. It's distinct from a UID's zero value,
+	// which happens to be [RootUID]. Assuming root may or may not be a good
+	// default, depending on the use case. Setting file ownership to root is a
+	// restrictive and safe default, running programs as root is not. Therefore,
+	// this is the preferred return value for UIDs in case of error; callers
+	// must then explicitly decide on the fallback instead of accidentally
+	// assuming root.
+	UnknownUID = -1
 
-// LookupUID returns uid of given username and logs a warning if its missing
+	RootUID = 0 // User ID of the root user
+)
+
+// Lookup looks up a user's UID by username. If the user cannot be found, the
+// returned error is of type [user.UnknownUserError]. If an error is returned,
+// the returned UID will be [UnknownUID].
 func LookupUID(name string) (int, error) {
 	var uid string
 
 	if entry, err := user.Lookup(name); err != nil {
 		if !errors.Is(err, user.UnknownUserError(name)) {
-			return 0, err
+			return UnknownUID, err
 		}
 
 		// fallback to call external `id` in case NSS is used
@@ -42,9 +55,9 @@ func LookupUID(name string) (int, error) {
 			var exitErr *exec.ExitError
 			if errors.As(idErr, &exitErr) {
 				firstLine, _, _ := bytes.Cut(exitErr.Stderr, []byte{'\n'})
-				return 0, fmt.Errorf("%w (%w: %s)", err, idErr, string(firstLine))
+				return UnknownUID, fmt.Errorf("%w (%w: %s)", err, idErr, string(firstLine))
 			}
-			return 0, fmt.Errorf("%w (%w)", err, idErr)
+			return UnknownUID, fmt.Errorf("%w (%w)", err, idErr)
 		}
 
 		uid = string(bytes.TrimSuffix(out, []byte{'\n'}))
@@ -54,10 +67,10 @@ func LookupUID(name string) (int, error) {
 
 	parsedUID, err := strconv.Atoi(uid)
 	if err != nil {
-		return 0, fmt.Errorf("UID %q is not a decimal integer: %w", uid, err)
+		return UnknownUID, fmt.Errorf("UID %q is not a decimal integer: %w", uid, err)
 	}
 	if parsedUID < 0 {
-		return 0, fmt.Errorf("UID is negative: %d", parsedUID)
+		return UnknownUID, fmt.Errorf("UID is negative: %d", parsedUID)
 	}
 
 	return parsedUID, nil
