@@ -40,6 +40,6 @@ func TestGetUID(t *testing.T) {
 		assert.ErrorIs(t, err, user.UnknownUserError("some-non-existing-user"))
 		var exitErr *exec.ExitError
 		assert.ErrorAs(t, err, &exitErr, "expected external `id` to return an error")
-		assert.Zero(t, uid)
+		assert.Equal(t, UnknownUID, uid)
 	}
 }
