@@ -33,10 +33,9 @@ import (
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
-	users := getUserNames(clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
-	for _, v := range users {
-		if err := EnsureUser(v, k0sVars.DataDir); err != nil {
+	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
+		if err := EnsureUser(userName, k0sVars.DataDir); err != nil {
 			messages = append(messages, err.Error())
 		}
 	}
@@ -48,13 +47,12 @@ func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
-	cfgUsers := getUserNames(clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
-	for _, v := range cfgUsers {
-		if _, err := users.GetUID(v); err == nil {
-			logrus.Debugf("deleting user: %s", v)
+	for _, userName := range getControllerUserNames(clusterConfig.Spec.Install.SystemUsers) {
+		if _, err := users.GetUID(userName); err == nil {
+			logrus.Debugf("deleting user: %s", userName)
 
-			if err := deleteUser(v); err != nil {
+			if err := deleteUser(userName); err != nil {
 				messages = append(messages, err.Error())
 			}
 		}
@@ -110,8 +108,8 @@ func deleteUser(userName string) error {
 	return err
 }
 
-// get user list
-func getUserNames(users *v1beta1.SystemUser) []string {
+// Returns the controller user names.
+func getControllerUserNames(users *v1beta1.SystemUser) []string {
 	userNames := []string{
 		users.Etcd,
 		users.Kine,
