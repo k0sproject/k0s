@@ -151,6 +151,11 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 			if err != nil {
 				return err
 			}
+			// Delete the token file, as it shouldn't be needed after the worker has joined.
+			_, err = ssh.ExecWithOutput(s.Context(), "rm -f /etc/k0s.token")
+			if err != nil {
+				return err
+			}
 			_, err = ssh.ExecWithOutput(s.Context(), "service k0sworker restart")
 			if err != nil {
 				return err
