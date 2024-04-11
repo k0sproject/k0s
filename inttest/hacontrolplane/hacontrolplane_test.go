@@ -109,6 +109,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	defer sshC1.Disconnect()
 	_, err = sshC1.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
+	// Delete the token file, as it shouldn't be needed after the controller has joined.
 	_, err = sshC1.ExecWithOutput(s.Context(), "rm -f /etc/k0s.token")
 	s.Require().NoError(err)
 	s.NoError(s.InitController(1, "--token-file=/etc/k0s.token"))
