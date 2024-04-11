@@ -4,14 +4,6 @@ run:
 
   build-tags:
     - hack
-  skip-dirs-use-default: false
-  skip-dirs:
-    - build
-    - docs
-    - embedded-bins
-    - examples
-  skip-files:
-    - "zz_*"
   tests: true
   modules-download-mode: readonly
   allow-parallel-runners: true
@@ -48,8 +40,6 @@ linters-settings:
         deny:
           - pkg: k8s.io/utils/pointer
             desc: Use k8s.io/utils/ptr.
-  golint:
-    min-confidence: 0
   goheader:
     template-path: .go-header.txt
     values:
@@ -65,6 +55,14 @@ linters-settings:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-dirs-use-default: false
+  exclude-dirs:
+    - build
+    - docs
+    - embedded-bins
+    - examples
+  exclude-files:
+    - "zz_*"
   exclude-rules:
     # https://github.com/denis-tingaikin/go-header/issues/18
     # This means that the header checks are ineffective for all files with build tags.
