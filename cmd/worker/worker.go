@@ -69,17 +69,10 @@ func NewWorkerCmd() *cobra.Command {
 			}
 
 			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
-			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
+			if c.TokenArg != "" && c.TokenFile != "" {
 				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
 			}
 
-			if len(c.TokenFile) > 0 {
-				bytes, err := os.ReadFile(c.TokenFile)
-				if err != nil {
-					return err
-				}
-				c.TokenArg = string(bytes)
-			}
 			cmd.SilenceUsage = true
 
 			if err := (&sysinfo.K0sSysinfoSpec{

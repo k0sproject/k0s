@@ -70,9 +70,20 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars constant.CfgVars, w
 
 	// 3: A join token has been given.
 	// Bootstrap the kubelet kubeconfig via the embedded bootstrap config.
-	case workerOpts.TokenArg != "":
+	case workerOpts.TokenArg != "" || workerOpts.TokenFile != "":
+		var tokenData string
+		if workerOpts.TokenArg != "" {
+			tokenData = workerOpts.TokenArg
+		} else {
+			data, err := os.ReadFile(workerOpts.TokenFile)
+			if err != nil {
+				return fmt.Errorf("failed to read token file: %w", err)
+			}
+			tokenData = string(data)
+		}
+
 		// Join token given, so use that.
-		kubeconfig, err := token.DecodeJoinToken(workerOpts.TokenArg)
+		kubeconfig, err := token.DecodeJoinToken(tokenData)
 		if err != nil {
 			return fmt.Errorf("failed to decode join token: %w", err)
 		}
@@ -180,7 +191,6 @@ func writeKubeletBootstrapKubeconfig(kubeconfig []byte) (string, error) {
 
 	_, err = bootstrapFile.Write(kubeconfig)
 	err = multierr.Append(err, bootstrapFile.Close())
-
 	if err != nil {
 		if rmErr := os.Remove(bootstrapFile.Name()); rmErr != nil && !os.IsNotExist(rmErr) {
 			err = multierr.Append(err, rmErr)
