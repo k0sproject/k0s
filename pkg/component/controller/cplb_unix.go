@@ -110,8 +110,8 @@ func (k *Keepalived) Start(_ context.Context) error {
 		Name:    "keepalived",
 		BinPath: assets.BinPath("keepalived", k.K0sVars.BinDir),
 		Args:    args,
-		RunDir:  filepath.Dir(k.K0sVars.KeepalivedConfigFile),
-		DataDir: filepath.Dir(k.K0sVars.KeepalivedConfigFile),
+		RunDir:  k.K0sVars.RunDir,
+		DataDir: k.K0sVars.DataDir,
 		UID:     k.uid,
 	}
 	return k.supervisor.Supervise()
