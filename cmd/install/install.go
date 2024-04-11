@@ -19,9 +19,7 @@ package install
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
 
@@ -72,35 +70,6 @@ func (c *command) setup(role string, args []string, installFlags *installFlags) 
 	err = install.EnsureService(args, installFlags.envVars, installFlags.force)
 	if err != nil {
 		return fmt.Errorf("failed to install k0s service: %w", err)
-	}
-	return nil
-}
-
-// This command converts the file paths in the command struct to absolute paths.
-// For flags passed to service init file, see the [cmdFlagsToArgs] func.
-func (c *command) convertFileParamsToAbsolute() (err error) {
-	// don't convert if cfgFile is empty
-
-	if c.K0sVars.StartupConfigPath != "" {
-		c.K0sVars.StartupConfigPath, err = filepath.Abs(c.K0sVars.StartupConfigPath)
-		if err != nil {
-			return err
-		}
-	}
-	if c.K0sVars.DataDir != "" {
-		c.K0sVars.DataDir, err = filepath.Abs(c.K0sVars.DataDir)
-		if err != nil {
-			return err
-		}
-	}
-	if c.TokenFile != "" {
-		c.TokenFile, err = filepath.Abs(c.TokenFile)
-		if err != nil {
-			return err
-		}
-		if !file.Exists(c.TokenFile) {
-			return fmt.Errorf("%s does not exist", c.TokenFile)
-		}
 	}
 	return nil
 }

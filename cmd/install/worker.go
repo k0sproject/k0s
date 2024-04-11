@@ -36,9 +36,6 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 				return err
 			}
 			c := (*command)(opts)
-			if err := c.convertFileParamsToAbsolute(); err != nil {
-				return err
-			}
 
 			flagsAndVals := []string{"worker"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)

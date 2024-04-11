@@ -53,9 +53,6 @@ With the controller subcommand you can setup a single node cluster by running:
 				return fmt.Errorf("invalid node config: %w", errors.Join(errs...))
 			}
 
-			if err := c.convertFileParamsToAbsolute(); err != nil {
-				return err
-			}
 			flagsAndVals := []string{"controller"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
 			if err := c.setup("controller", flagsAndVals, installFlags); err != nil {
