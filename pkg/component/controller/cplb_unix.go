@@ -29,7 +29,6 @@ import (
 	"slices"
 	"text/template"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
@@ -48,6 +47,7 @@ type Keepalived struct {
 	uid             int
 	supervisor      *supervisor.Supervisor
 	log             *logrus.Entry
+	configFilePath  string
 }
 
 // Init extracts the needed binaries and creates the directories
@@ -63,15 +63,7 @@ func (k *Keepalived) Init(_ context.Context) error {
 		k.log.Warnf("Unable to get %s UID running keepalived as root: %v", constant.KeepalivedUser, err)
 	}
 
-	basepath := filepath.Dir(k.K0sVars.KeepalivedConfigFile)
-	if err = dir.Init(basepath, constant.KeepalivedDirMode); err != nil {
-		return fmt.Errorf("failed to create keepalived data dir: %w", err)
-	}
-
-	if err = os.Chown(basepath, k.uid, -1); err != nil {
-		return fmt.Errorf("failed to chown keepalived data dir: %w", err)
-	}
-
+	k.configFilePath = filepath.Join(k.K0sVars.RunDir, "keepalived.conf")
 	return assets.Stage(k.K0sVars.BinDir, "keepalived", constant.BinDirMode)
 }
 
@@ -96,7 +88,7 @@ func (k *Keepalived) Start(_ context.Context) error {
 	args := []string{
 		"--dont-fork",
 		"--use-file",
-		k.K0sVars.KeepalivedConfigFile,
+		k.configFilePath,
 		"--no-syslog",
 		"--log-console",
 	}
@@ -274,7 +266,7 @@ func (*Keepalived) getLinkAddresses(link netlink.Link) ([]netlink.Addr, []string
 }
 
 func (k *Keepalived) generateKeepalivedTemplate() error {
-	f, err := os.OpenFile(k.K0sVars.KeepalivedConfigFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fs.FileMode(0500))
+	f, err := os.OpenFile(k.configFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fs.FileMode(0500))
 	if err != nil {
 		return fmt.Errorf("failed to open keepalived config file: %w", err)
 	}
@@ -293,10 +285,10 @@ func (k *Keepalived) generateKeepalivedTemplate() error {
 	}
 
 	// TODO: Do we really need to this every single time?
-	if err = os.Chown(k.K0sVars.KeepalivedConfigFile, k.uid, -1); err != nil {
+	if err = os.Chown(k.configFilePath, k.uid, -1); err != nil {
 		return fmt.Errorf("failed to chown keepalived config file: %w", err)
 	}
-	if err = os.Chmod(k.K0sVars.KeepalivedConfigFile, fs.FileMode(0400)); err != nil {
+	if err = os.Chmod(k.configFilePath, fs.FileMode(0400)); err != nil {
 		return fmt.Errorf("failed to chmod keepalived config file: %w", err)
 	}
 	return nil
