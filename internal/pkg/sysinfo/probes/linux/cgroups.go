@@ -19,6 +19,7 @@ limitations under the License.
 package linux
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -80,8 +81,9 @@ func (c *CgroupsProbes) probe(reporter probes.Reporter) error {
 }
 
 func reportCgroupSystemErr(reporter probes.Reporter, d probes.ProbeDesc, err error) error {
-	if detectionFailed, ok := err.(cgroupFsDetectionFailed); ok {
-		return reporter.Reject(d, detectionFailed, "")
+	var detectionFailedErr cgroupFsDetectionFailed
+	if errors.As(err, &detectionFailedErr) {
+		return reporter.Reject(d, detectionFailedErr, "")
 	}
 
 	return reporter.Error(d, err)
