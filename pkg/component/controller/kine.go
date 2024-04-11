@@ -54,7 +54,7 @@ var _ manager.Ready = (*Kine)(nil)
 
 // Init extracts the needed binaries
 func (k *Kine) Init(_ context.Context) error {
-	logrus.Infof("initializing kine with config: %+v", k.Config)
+	logrus.Infof("initializing kine")
 	var err error
 	k.uid, err = users.GetUID(constant.KineUser)
 	if err != nil {
