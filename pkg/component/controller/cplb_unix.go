@@ -19,16 +19,18 @@ limitations under the License.
 package controller
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
 	"slices"
 	"text/template"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
@@ -266,31 +268,25 @@ func (*Keepalived) getLinkAddresses(link netlink.Link) ([]netlink.Addr, []string
 }
 
 func (k *Keepalived) generateKeepalivedTemplate() error {
-	f, err := os.OpenFile(k.configFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fs.FileMode(0500))
-	if err != nil {
-		return fmt.Errorf("failed to open keepalived config file: %w", err)
-	}
-	defer f.Close()
-
-	template, err := template.New("keepalived").Parse(keepalivedConfigTemplate)
-	if err != nil {
-		return fmt.Errorf("failed to parse keepalived template: %w", err)
-	}
-
+	template := template.Must(template.New("keepalived").Parse(keepalivedConfigTemplate))
 	kc := keepalivedConfig{
 		VRRPInstances: k.Config.VRRPInstances,
 	}
-	if err = template.Execute(f, kc); err != nil {
-		return fmt.Errorf("failed to execute keepalived template: %w", err)
+
+	if err := file.WriteAtomically(k.configFilePath, 0400, func(file io.Writer) error {
+		if err := file.(*os.File).Chown(k.uid, -1); err != nil {
+			return err
+		}
+
+		w := bufio.NewWriter(file)
+		if err := template.Execute(w, kc); err != nil {
+			return err
+		}
+		return w.Flush()
+	}); err != nil {
+		return fmt.Errorf("failed to write keepalived config file: %w", err)
 	}
 
-	// TODO: Do we really need to this every single time?
-	if err = os.Chown(k.configFilePath, k.uid, -1); err != nil {
-		return fmt.Errorf("failed to chown keepalived config file: %w", err)
-	}
-	if err = os.Chmod(k.configFilePath, fs.FileMode(0400)); err != nil {
-		return fmt.Errorf("failed to chmod keepalived config file: %w", err)
-	}
 	return nil
 }
 
