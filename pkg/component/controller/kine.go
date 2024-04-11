@@ -104,7 +104,6 @@ func (k *Kine) Init(_ context.Context) error {
 // Run runs kine
 func (k *Kine) Start(ctx context.Context) error {
 	logrus.Info("Starting kine")
-	logrus.Debugf("datasource: %s", k.Config.DataSource)
 	k.ctx = ctx
 
 	k.supervisor = supervisor.Supervisor{
