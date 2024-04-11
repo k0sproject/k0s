@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -70,7 +71,7 @@ func NewRootCmd() *cobra.Command {
 				go func() {
 					log := logrus.WithField("debug_server", config.DebugListenOn)
 					log.Debug("Starting debug server")
-					if err := http.ListenAndServe(config.DebugListenOn, nil); err != http.ErrServerClosed {
+					if err := http.ListenAndServe(config.DebugListenOn, nil); !errors.Is(err, http.ErrServerClosed) {
 						log.WithError(err).Debug("Failed to start debug server")
 					} else {
 						log.Debug("Debug server closed")

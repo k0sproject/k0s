@@ -19,6 +19,7 @@ package etcd
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"time"
 
@@ -145,7 +146,7 @@ func (c *Client) Health(ctx context.Context) error {
 	_, err := c.client.Get(ctx, "health")
 
 	// permission denied is OK since proposal goes through consensus to get it
-	if err == nil || err == rpctypes.ErrPermissionDenied {
+	if err == nil || errors.Is(err, rpctypes.ErrPermissionDenied) {
 		return nil
 	}
 

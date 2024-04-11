@@ -19,6 +19,7 @@ limitations under the License.
 package supervisor
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -65,7 +66,7 @@ Loop:
 			}
 
 			err = s.KillFunction(pid, syscall.SIGTERM)
-			if err == syscall.ESRCH {
+			if errors.Is(err, syscall.ESRCH) {
 				return nil
 			} else if err != nil {
 				return fmt.Errorf("failed to send SIGTERM to pid %d: %w", s.cmd.Process.Pid, err)
@@ -84,7 +85,7 @@ Loop:
 	}
 
 	err = s.KillFunction(pid, syscall.SIGKILL)
-	if err == syscall.ESRCH {
+	if errors.Is(err, syscall.ESRCH) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to send SIGKILL to pid %d: %w", s.cmd.Process.Pid, err)

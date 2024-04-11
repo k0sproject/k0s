@@ -17,6 +17,7 @@ limitations under the License.
 package supervisor
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -198,7 +199,7 @@ func TestStopWhileRespawn(t *testing.T) {
 			// causes EINVAL being returned instead of ErrProcessDone, probably
 			// due to the wrong order of internal checks (i.e. the process
 			// handle is checked before the done flag).
-			if err == os.ErrProcessDone || err == syscall.EINVAL {
+			if errors.Is(err, os.ErrProcessDone) || errors.Is(err, syscall.EINVAL) {
 				break
 			}
 		}
