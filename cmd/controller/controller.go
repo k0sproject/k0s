@@ -92,20 +92,13 @@ func NewControllerCmd() *cobra.Command {
 			if len(args) > 0 {
 				c.TokenArg = args[0]
 			}
-			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
+			if c.TokenArg != "" && c.TokenFile != "" {
 				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
 			}
 			if err := c.ControllerOptions.Normalize(); err != nil {
 				return err
 			}
 
-			if len(c.TokenFile) > 0 {
-				bytes, err := os.ReadFile(c.TokenFile)
-				if err != nil {
-					return err
-				}
-				c.TokenArg = string(bytes)
-			}
 			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
 
 			if err := (&sysinfo.K0sSysinfoSpec{
@@ -177,8 +170,18 @@ func (c *command) start(ctx context.Context) error {
 
 	var joinClient *token.JoinClient
 
-	if c.TokenArg != "" && c.needToJoin() {
-		joinClient, err = joinController(ctx, c.TokenArg, c.K0sVars.CertRootDir)
+	if (c.TokenArg != "" || c.TokenFile != "") && c.needToJoin() {
+		var tokenData string
+		if c.TokenArg != "" {
+			tokenData = c.TokenArg
+		} else {
+			data, err := os.ReadFile(c.TokenFile)
+			if err != nil {
+				return fmt.Errorf("read token file %q: %w", c.TokenFile, err)
+			}
+			tokenData = string(data)
+		}
+		joinClient, err = joinController(ctx, tokenData, c.K0sVars.CertRootDir)
 		if err != nil {
 			return fmt.Errorf("failed to join controller: %v", err)
 		}
@@ -238,7 +241,6 @@ func (c *command) start(ctx context.Context) error {
 			EventEmitter:               prober.NewEventEmitter(),
 			K0sControllersLeaseCounter: controllerLeaseCounter,
 		})
-
 	}
 
 	nodeComponents.Add(ctx, &controller.APIServer{
