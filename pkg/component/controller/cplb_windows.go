@@ -27,8 +27,9 @@ import (
 // Keepalived doesn't work on windows, so we cannot implement it at all.
 // Just create the interface so that the CI doesn't complain.
 type Keepalived struct {
-	K0sVars *config.CfgVars
-	Config  *k0sAPI.ControlPlaneLoadBalancingSpec
+	K0sVars         *config.CfgVars
+	Config          *k0sAPI.ControlPlaneLoadBalancingSpec
+	DetailedLogging bool
 }
 
 func (k *Keepalived) Init(_ context.Context) error {

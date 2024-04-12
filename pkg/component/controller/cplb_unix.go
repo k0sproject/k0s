@@ -42,11 +42,12 @@ import (
 
 // Keepalived is the controller for the keepalived process in the control plane load balancing
 type Keepalived struct {
-	K0sVars    *config.CfgVars
-	Config     *k0sAPI.ControlPlaneLoadBalancingSpec
-	uid        int
-	supervisor *supervisor.Supervisor
-	log        *logrus.Entry
+	K0sVars         *config.CfgVars
+	Config          *k0sAPI.ControlPlaneLoadBalancingSpec
+	DetailedLogging bool
+	uid             int
+	supervisor      *supervisor.Supervisor
+	log             *logrus.Entry
 }
 
 // Init extracts the needed binaries and creates the directories
@@ -92,15 +93,23 @@ func (k *Keepalived) Start(_ context.Context) error {
 
 	}
 
+	args := []string{
+		"--dont-fork",
+		"--use-file",
+		k.K0sVars.KeepalivedConfigFile,
+		"--no-syslog",
+		"--log-console",
+	}
+
+	if k.DetailedLogging {
+		args = append(args, "--log-detail")
+	}
+
 	k.log.Infoln("Starting keepalived")
 	k.supervisor = &supervisor.Supervisor{
 		Name:    "keepalived",
 		BinPath: assets.BinPath("keepalived", k.K0sVars.BinDir),
-		Args: []string{
-			"--dont-fork",
-			"--use-file",
-			k.K0sVars.KeepalivedConfigFile,
-		},
+		Args:    args,
 		RunDir:  filepath.Dir(k.K0sVars.KeepalivedConfigFile),
 		DataDir: filepath.Dir(k.K0sVars.KeepalivedConfigFile),
 		UID:     k.uid,
