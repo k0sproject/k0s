@@ -76,7 +76,8 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	s.NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 	token, err := s.GetJoinToken("controller")
 	s.Require().NoError(err)
-	s.NoError(s.InitController(1, token))
+	s.PutFile(s.ControllerNode(1), "/etc/k0s.token", token)
+	s.NoError(s.InitController(1, "--token-file=/etc/k0s.token"))
 	s.NoError(s.WaitJoinAPI(s.ControllerNode(1)))
 
 	ca0 := s.GetFileFromController(0, "/var/lib/k0s/pki/ca.crt")
@@ -108,7 +109,10 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	defer sshC1.Disconnect()
 	_, err = sshC1.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
-	s.NoError(s.InitController(1, token))
+	// Delete the token file, as it shouldn't be needed after the controller has joined.
+	_, err = sshC1.ExecWithOutput(s.Context(), "rm -f /etc/k0s.token")
+	s.Require().NoError(err)
+	s.NoError(s.InitController(1, "--token-file=/etc/k0s.token"))
 	s.NoError(s.WaitJoinAPI(s.ControllerNode(1)))
 
 	// Make one member leave the etcd cluster
