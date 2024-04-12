@@ -228,8 +228,9 @@ func (c *command) start(ctx context.Context) error {
 	enableCPLB := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.CPLBComponentName)
 	if enableCPLB {
 		nodeComponents.Add(ctx, &controller.Keepalived{
-			K0sVars: c.K0sVars,
-			Config:  nodeConfig.Spec.Network.ControlPlaneLoadBalancing,
+			K0sVars:         c.K0sVars,
+			Config:          nodeConfig.Spec.Network.ControlPlaneLoadBalancing,
+			DetailedLogging: c.Debug,
 		})
 	}
 
