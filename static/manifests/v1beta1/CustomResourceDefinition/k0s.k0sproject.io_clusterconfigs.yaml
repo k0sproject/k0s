@@ -367,8 +367,15 @@ spec:
                       ControlPlaneLoadBalancing defines the configuration options related to k0s's
                       control plane load balancing feature.
                     properties:
+                      enabled:
+                        description: |-
+                          Indicates if control plane load balancing should be enabled.
+                          Default: false
+                        type: boolean
                       vrrpInstances:
-                        description: VRRPInstances is a list of VRRPInstance
+                        description: |-
+                          Configuration options related to the VRRP. This is an array which allows
+                          to configure multiple virtual IPs.
                         items:
                           description: VRRPInstance defines the configuration options
                             for a VRRP instance.

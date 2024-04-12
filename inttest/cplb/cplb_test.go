@@ -37,6 +37,7 @@ spec:
     externalAddress: %s
   network:
     controlPlaneLoadBalancing:
+      enabled: true
       vrrpInstances:
       - virtualIPs: ["%s/24"]
         authPass: "123456"

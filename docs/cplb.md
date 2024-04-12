@@ -55,6 +55,7 @@ spec:
     externalAddress: <External address> # This isn't a requirement, but it's a common use case.
   network:
     controlPlaneLoadBalancing:
+      enabled: true
       vrrpInstances:
       - virtualIPs: ["<External address IP>/<external address IP netmask"]
         authPass: <password>
@@ -72,6 +73,7 @@ spec:
           externalAddress: <External address> # This isn't a requirement, but it's a common use case.
         network:
           controlPlaneLoadBalancing:
+            enabled: true
             vrrpInstances:
             - virtualIPs: ["<External address IP>/<external address IP netmask>"]
               authPass: <password>
@@ -143,6 +145,7 @@ spec:
           externalAddress: 192.168.122.200
         network:
           controlPlaneLoadBalancing:
+            enabled: true
             vrrpInstances:
             - virtualIPs: ["192.168.122.200/24"]
               authPass: Example
@@ -274,9 +277,9 @@ All three worker nodes are ready:
 ```console
 $ kubectl get nodes
 NAME                   STATUS   ROLES           AGE     VERSION
-worker-0.k0s.lab       Ready    <none>          8m51s   v1.29.2+k0s
-worker-1.k0s.lab       Ready    <none>          8m51s   v1.29.2+k0s
-worker-2.k0s.lab       Ready    <none>          8m51s   v1.29.2+k0s
+worker-0.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
+worker-1.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
+worker-2.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
 ```
 
 Each controller node has a dummy interface with the VIP and /32 netmask,
@@ -323,7 +326,7 @@ And the cluster will be working normally:
 ```console
 $ kubectl get nodes
 NAME                   STATUS   ROLES           AGE     VERSION
-worker-0.k0s.lab       Ready    <none>          8m51s   v1.29.2+k0s
-worker-1.k0s.lab       Ready    <none>          8m51s   v1.29.2+k0s
-worker-2.k0s.lab       Ready    <none>          8m51s   v1.29.2+k0s
+worker-0.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
+worker-1.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
+worker-2.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
 ```

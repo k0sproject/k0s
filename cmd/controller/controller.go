@@ -228,11 +228,14 @@ func (c *command) start(ctx context.Context) error {
 		nodeComponents.Add(ctx, controllerLeaseCounter)
 	}
 
-	enableCPLB := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.CPLBComponentName)
-	if enableCPLB {
+	if cplb := nodeConfig.Spec.Network.ControlPlaneLoadBalancing; cplb != nil && cplb.Enabled {
+		if c.SingleNode {
+			return errors.New("control plane load balancing cannot be used in a single-node cluster")
+		}
+
 		nodeComponents.Add(ctx, &controller.Keepalived{
 			K0sVars:         c.K0sVars,
-			Config:          nodeConfig.Spec.Network.ControlPlaneLoadBalancing,
+			Config:          cplb,
 			DetailedLogging: c.Debug,
 		})
 	}
