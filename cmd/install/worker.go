@@ -37,8 +37,12 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 			}
 			c := (*command)(opts)
 
-			flagsAndVals := []string{"worker"}
-			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
+			flagsAndVals, err := cmdFlagsToArgs(cmd)
+			if err != nil {
+				return err
+			}
+
+			flagsAndVals = append([]string{"worker"}, flagsAndVals...)
 			if err := c.setup("worker", flagsAndVals, installFlags); err != nil {
 				return err
 			}
