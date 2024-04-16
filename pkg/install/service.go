@@ -17,6 +17,7 @@ limitations under the License.
 package install
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -53,7 +54,7 @@ func InstalledService() (service.Service, error) {
 		}
 		_, err = s.Status()
 
-		if err != nil && err == service.ErrNotInstalled {
+		if err != nil && errors.Is(err, service.ErrNotInstalled) {
 			continue
 		}
 		if err != nil {
@@ -123,7 +124,7 @@ func EnsureService(args []string, envVars []string, force bool) error {
 	if force {
 		logrus.Infof("Uninstalling %s service", svcConfig.Name)
 		err = s.Uninstall()
-		if err != nil && err != service.ErrNotInstalled {
+		if err != nil && !errors.Is(err, service.ErrNotInstalled) {
 			logrus.Warnf("failed to uninstall service: %v", err)
 		}
 	}

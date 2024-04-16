@@ -206,8 +206,9 @@ func (k *kConfigProbe) DisplayName() string {
 func (k *kConfigProbe) Probe(reporter probes.Reporter) error {
 	option, err := k.probeConfig(k.kConfig)
 	if err != nil {
-		if err, notFound := err.(*noKConfigsFound); notFound {
-			return reporter.Warn(k, err, "")
+		var notFoundErr *noKConfigsFound
+		if errors.As(err, &notFoundErr) {
+			return reporter.Warn(k, notFoundErr, "")
 		}
 		return reporter.Error(k, err)
 	}

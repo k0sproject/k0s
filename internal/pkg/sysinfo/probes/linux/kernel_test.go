@@ -117,8 +117,9 @@ func TestKConfigProber(t *testing.T) {
 
 		option, err := probeKConfig(ensureKConfig("I_CERTAINLY_DONT_EXIST"))
 		assert.Equal(t, option, kConfigUnknown)
-		if _, ok := err.(*noKConfigsFound); ok {
-			t.Log("system doesn't expose its kernel config")
+		var notFoundErr *noKConfigsFound
+		if errors.As(err, &notFoundErr) {
+			t.Logf("System doesn't seem to expose its kernel config: %v", err)
 		} else {
 			assert.NoError(t, err)
 		}

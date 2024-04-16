@@ -19,6 +19,7 @@ package status
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -104,7 +105,7 @@ func removeLeftovers(socket string) {
 // Start runs the component
 func (s *Status) Start(_ context.Context) error {
 	go func() {
-		if err := s.httpserver.Serve(s.listener); err != nil && err != http.ErrServerClosed {
+		if err := s.httpserver.Serve(s.listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.L.Errorf("failed to start status server at %s: %s", s.Socket, err)
 		}
 	}()
@@ -115,7 +116,7 @@ func (s *Status) Start(_ context.Context) error {
 func (s *Status) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := s.httpserver.Shutdown(ctx); err != nil && err != context.Canceled {
+	if err := s.httpserver.Shutdown(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
 	// Unix socket doesn't need to be explicitly removed because it's hadled

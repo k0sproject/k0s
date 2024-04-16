@@ -65,11 +65,11 @@ func (k *Keepalived) Init(_ context.Context) error {
 
 	basepath := filepath.Dir(k.K0sVars.KeepalivedConfigFile)
 	if err = dir.Init(basepath, constant.KeepalivedDirMode); err != nil {
-		return fmt.Errorf("failed to create keepalived data dir: %v", err)
+		return fmt.Errorf("failed to create keepalived data dir: %w", err)
 	}
 
 	if err = os.Chown(basepath, k.uid, -1); err != nil {
-		return fmt.Errorf("failed to chown keepalived data dir: %v", err)
+		return fmt.Errorf("failed to chown keepalived data dir: %w", err)
 	}
 
 	return assets.Stage(k.K0sVars.BinDir, "keepalived", constant.BinDirMode)
@@ -82,14 +82,14 @@ func (k *Keepalived) Start(_ context.Context) error {
 	}
 
 	if err := k.configureDummy(); err != nil {
-		return fmt.Errorf("failed to configure dummy interface: %v", err)
+		return fmt.Errorf("failed to configure dummy interface: %w", err)
 	}
 
 	if err := k.Config.ValidateVRRPInstances(nil); err != nil {
-		return fmt.Errorf("failed to validate VRRP instances: %v", err)
+		return fmt.Errorf("failed to validate VRRP instances: %w", err)
 	}
 	if err := k.generateKeepalivedTemplate(); err != nil {
-		return fmt.Errorf("failed to generate keepalived template: %v", err)
+		return fmt.Errorf("failed to generate keepalived template: %w", err)
 
 	}
 
@@ -123,7 +123,7 @@ func (k *Keepalived) Stop() error {
 	k.log.Infof("Stopping keepalived")
 	if err := k.supervisor.Stop(); err != nil {
 		// Failed to stop keepalived. Don't delete the VIP, just in case.
-		return fmt.Errorf("failed to stop keepalived: %v", err)
+		return fmt.Errorf("failed to stop keepalived: %w", err)
 	}
 
 	k.log.Infof("Deleting dummy interface")
@@ -159,7 +159,7 @@ func (k *Keepalived) configureDummy() error {
 		// If the dummy interface fails, attempt to define the addresses just
 		// in case.
 		if err := k.ensureLinkAddresses(dummyLinkName, vips); err != nil {
-			return fmt.Errorf("failed to ensure link addresses: %v", err)
+			return fmt.Errorf("failed to ensure link addresses: %w", err)
 		}
 	}
 	return nil
@@ -183,7 +183,7 @@ func (k *Keepalived) ensureDummyInterface(linkName string) error {
 
 	// This happens if the interface exists but it's not a dummy interface
 	if err = netlink.LinkDel(link); err != nil {
-		return fmt.Errorf("failed to delete %s: %v", linkName, err)
+		return fmt.Errorf("failed to delete %s: %w", linkName, err)
 	}
 
 	return k.createDummyInterface(linkName)
@@ -201,12 +201,12 @@ func (k *Keepalived) createDummyInterface(linkName string) error {
 func (k *Keepalived) ensureLinkAddresses(linkName string, expectedAddresses []string) error {
 	link, err := netlink.LinkByName(linkName)
 	if err != nil {
-		return fmt.Errorf("failed to get link by name %s: %v", linkName, err)
+		return fmt.Errorf("failed to get link by name %s: %w", linkName, err)
 	}
 
 	linkAddrs, strAddrs, err := k.getLinkAddresses(link)
 	if err != nil {
-		return fmt.Errorf("failed to get addresses for link %s: %v", linkName, err)
+		return fmt.Errorf("failed to get addresses for link %s: %w", linkName, err)
 	}
 
 	// Remove unexpected addresses
@@ -216,7 +216,7 @@ func (k *Keepalived) ensureLinkAddresses(linkName string, expectedAddresses []st
 		if !slices.Contains(expectedAddresses, strAddrs[i]) {
 			k.log.Infof("Deleting address %s from link %s", strAddr, linkName)
 			if err = netlink.AddrDel(link, &linkAddr); err != nil {
-				return fmt.Errorf("failed to delete address %s from link %s: %v", linkAddr.IPNet.String(), linkName, err)
+				return fmt.Errorf("failed to delete address %s from link %s: %w", linkAddr.IPNet.String(), linkName, err)
 			}
 		}
 	}
@@ -225,7 +225,7 @@ func (k *Keepalived) ensureLinkAddresses(linkName string, expectedAddresses []st
 	for _, addr := range expectedAddresses {
 		if !slices.Contains(strAddrs, addr) {
 			if err = k.setLinkIP(addr, linkName, link); err != nil {
-				return fmt.Errorf("failed to add address %s to link %s: %v", addr, linkName, err)
+				return fmt.Errorf("failed to add address %s to link %s: %w", addr, linkName, err)
 			}
 		}
 	}
@@ -236,7 +236,7 @@ func (k *Keepalived) ensureLinkAddresses(linkName string, expectedAddresses []st
 func (k *Keepalived) setLinkIP(addr string, linkName string, link netlink.Link) error {
 	ipAddr, _, err := net.ParseCIDR(addr)
 	if err != nil {
-		return fmt.Errorf("failed to parse CIDR %s: %v", addr, err)
+		return fmt.Errorf("failed to parse CIDR %s: %w", addr, err)
 	}
 
 	var mask net.IPMask
@@ -255,7 +255,7 @@ func (k *Keepalived) setLinkIP(addr string, linkName string, link netlink.Link) 
 
 	k.log.Infof("Adding address %s to link %s", addr, linkName)
 	if err := netlink.AddrAdd(link, linkAddr); err != nil {
-		return fmt.Errorf("failed to add address %s to link %s: %v", addr, linkName, err)
+		return fmt.Errorf("failed to add address %s to link %s: %w", addr, linkName, err)
 	}
 	return nil
 }
@@ -263,7 +263,7 @@ func (k *Keepalived) setLinkIP(addr string, linkName string, link netlink.Link) 
 func (*Keepalived) getLinkAddresses(link netlink.Link) ([]netlink.Addr, []string, error) {
 	linkAddrs, err := netlink.AddrList(link, netlink.FAMILY_ALL)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list addresses for link %s: %v", link.Attrs().Name, err)
+		return nil, nil, fmt.Errorf("failed to list addresses for link %s: %w", link.Attrs().Name, err)
 	}
 
 	strAddrs := make([]string, len(linkAddrs))
@@ -276,28 +276,28 @@ func (*Keepalived) getLinkAddresses(link netlink.Link) ([]netlink.Addr, []string
 func (k *Keepalived) generateKeepalivedTemplate() error {
 	f, err := os.OpenFile(k.K0sVars.KeepalivedConfigFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fs.FileMode(0500))
 	if err != nil {
-		return fmt.Errorf("failed to open keepalived config file: %v", err)
+		return fmt.Errorf("failed to open keepalived config file: %w", err)
 	}
 	defer f.Close()
 
 	template, err := template.New("keepalived").Parse(keepalivedConfigTemplate)
 	if err != nil {
-		return fmt.Errorf("failed to parse keepalived template: %v", err)
+		return fmt.Errorf("failed to parse keepalived template: %w", err)
 	}
 
 	kc := keepalivedConfig{
 		VRRPInstances: k.Config.VRRPInstances,
 	}
 	if err = template.Execute(f, kc); err != nil {
-		return fmt.Errorf("failed to execute keepalived template: %v", err)
+		return fmt.Errorf("failed to execute keepalived template: %w", err)
 	}
 
 	// TODO: Do we really need to this every single time?
 	if err = os.Chown(k.K0sVars.KeepalivedConfigFile, k.uid, -1); err != nil {
-		return fmt.Errorf("failed to chown keepalived config file: %v", err)
+		return fmt.Errorf("failed to chown keepalived config file: %w", err)
 	}
 	if err = os.Chmod(k.K0sVars.KeepalivedConfigFile, fs.FileMode(0400)); err != nil {
-		return fmt.Errorf("failed to chmod keepalived config file: %v", err)
+		return fmt.Errorf("failed to chmod keepalived config file: %w", err)
 	}
 	return nil
 }

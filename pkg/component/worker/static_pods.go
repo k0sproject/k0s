@@ -362,7 +362,7 @@ func (s *staticPods) Start(ctx context.Context) error {
 	srv.Addr = addr
 
 	// Fire up the goroutine to accept HTTP connections.
-	notClosed := func(err error) bool { return err != http.ErrServerClosed }
+	notClosed := func(err error) bool { return !errors.Is(err, http.ErrServerClosed) }
 	s.stopped.Add(1)
 	go func() {
 		defer s.stopped.Done()

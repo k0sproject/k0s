@@ -16,7 +16,10 @@ limitations under the License.
 
 package probes
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // AssertTotalMemory asserts a minimum amount of system RAM.
 func AssertTotalMemory(parent ParentProbe, min uint64) {
@@ -39,7 +42,8 @@ type assertTotalMem struct {
 func (a *assertTotalMem) Probe(reporter Reporter) error {
 	desc := NewProbeDesc("Total memory", a.path)
 	if totalMemory, err := a.probeTotalMemory(); err != nil {
-		if unsupportedErr, unsupported := err.(probeUnsupported); unsupported {
+		var unsupportedErr probeUnsupported
+		if errors.As(err, &unsupportedErr) {
 			return reporter.Warn(desc, unsupportedErr, "")
 		}
 		return reporter.Error(desc, err)
