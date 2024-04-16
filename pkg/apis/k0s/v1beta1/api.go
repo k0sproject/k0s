@@ -97,6 +97,9 @@ func (a *APISpec) K0sControlPlaneAPIAddress() string {
 
 func (a *APISpec) getExternalURIForPort(port int) string {
 	addr := a.Address
+	if a.BindAddress != "" {
+		addr = a.BindAddress
+	}
 	if a.ExternalAddress != "" {
 		addr = a.ExternalAddress
 	}
