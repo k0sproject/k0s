@@ -189,6 +189,7 @@ k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
 
 k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
+	rm -f -- '$@'
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
 ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
 	cat -- bindata_$(TARGET_OS) >>$@
