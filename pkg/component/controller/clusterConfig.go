@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -32,12 +33,11 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sirupsen/logrus"
-	"go.uber.org/multierr"
 )
 
 // ClusterConfigReconciler reconciles a ClusterConfig object
@@ -89,7 +89,7 @@ func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 					r.log.Debug("Cluster configuration created")
 					return true, nil
 				}
-				if errors.IsAlreadyExists(err) {
+				if apierrors.IsAlreadyExists(err) {
 					// An already existing configuration is just fine.
 					r.log.Debug("Cluster configuration already exists")
 					return true, nil
@@ -121,7 +121,7 @@ func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 					r.log.Debug("config source closed channel")
 					return
 				}
-				err := multierr.Combine(cfg.Validate()...)
+				err := errors.Join(cfg.Validate()...)
 				if err != nil {
 					err = fmt.Errorf("failed to validate cluster configuration: %w", err)
 				} else {

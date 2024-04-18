@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
-	"go.uber.org/multierr"
 
 	"k8s.io/client-go/util/jsonpath"
 
@@ -84,7 +83,7 @@ func TestWriteEnvoyConfigFiles(t *testing.T) {
 				for i, ep := range eps {
 					host, herr := evalJSONPath[string](ep, ".endpoint.address.socket_address.address")
 					port, perr := evalJSONPath[float64](ep, ".endpoint.address.socket_address.port_value")
-					if assert.NoError(t, multierr.Append(herr, perr), "For endpoint %d", i) {
+					if assert.NoError(t, errors.Join(herr, perr), "For endpoint %d", i) {
 						iport := int64(port)
 						if assert.Equal(t, float64(iport), port, "Port is not an integer for endpoint %d", i) {
 							addrs = append(addrs, fmt.Sprintf("%s:%d", host, iport))

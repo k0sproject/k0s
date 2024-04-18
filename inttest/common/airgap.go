@@ -18,13 +18,12 @@ package common
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"strings"
-
-	"go.uber.org/multierr"
 )
 
 type Airgap struct {
@@ -63,13 +62,15 @@ func tryBlockIPv6() error {
 
 	err = exec.Command("modprobe", "ip6table_filter").Run()
 	if err != nil && os.Geteuid() != 0 {
+		errs := []error{err}
 		for _, cmd := range []string{"sudo", "doas"} {
-			userErr := exec.Command(cmd, "-n", "modprobe", "ip6table_filter").Run()
-			if userErr == nil {
+			err := exec.Command(cmd, "-n", "modprobe", "ip6table_filter").Run()
+			if err == nil {
 				return nil
 			}
-			err = multierr.Append(err, userErr)
+			errs = append(errs, err)
 		}
+		err = errors.Join(errs...)
 	}
 
 	return err

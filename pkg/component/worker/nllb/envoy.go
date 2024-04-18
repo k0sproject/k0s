@@ -41,7 +41,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
-	"go.uber.org/multierr"
 )
 
 // envoyProxy is a load balancer [backend] that's managing a static Envoy pod to
@@ -229,7 +228,7 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 		UpstreamServers:            filesParams.apiServers,
 	}
 
-	var errs error
+	var errs []error
 	for fileName, template := range map[string]*template.Template{
 		envoyBootstrapFile: envoyBootstrapConfig,
 		envoyCDSFile:       envoyClustersConfig,
@@ -242,11 +241,11 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 			return bufferedWriter.Flush()
 		})
 		if err != nil {
-			errs = multierr.Append(errs, fmt.Errorf("failed to write %s: %w", fileName, err))
+			errs = append(errs, fmt.Errorf("failed to write %s: %w", fileName, err))
 		}
 	}
 
-	return errs
+	return errors.Join(errs...)
 }
 
 func (e *envoyProxy) provision() error {

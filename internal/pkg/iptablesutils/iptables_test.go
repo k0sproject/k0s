@@ -30,7 +30,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/multierr"
 )
 
 func TestDetectHostIPTablesMode(t *testing.T) {
@@ -173,7 +172,9 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 		writeXtables(t, binDir, "legacy", "exit 77", "exit 66")
 
 		_, err := iptablesutils.DetectHostIPTablesMode(binDir)
-		errs := multierr.Errors(err)
+		var composite interface{ Unwrap() []error }
+		require.ErrorAs(t, err, &composite, "No wrapped errors")
+		errs := composite.Unwrap()
 		require.Len(t, errs, 3)
 		assert.ErrorIs(t, errs[0], exec.ErrNotFound)
 		assert.ErrorContains(t, errs[1], "99")

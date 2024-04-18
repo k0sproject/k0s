@@ -18,13 +18,12 @@ package common
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"runtime"
 	"strings"
 	"sync"
-
-	"go.uber.org/multierr"
 )
 
 type LaunchMode string
@@ -248,7 +247,7 @@ func (*openRCLaunchDelegate) ReadK0sLogs(ctx context.Context, conn *SSHConnectio
 
 	wg.Wait()
 
-	return multierr.Append(outErr, errErr)
+	return errors.Join(outErr, errErr)
 }
 
 // installK0sServiceOpenRC will install an OpenRC k0s-type service (controller/worker)

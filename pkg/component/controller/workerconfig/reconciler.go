@@ -52,7 +52,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
-	"go.uber.org/multierr"
 	"sigs.k8s.io/yaml"
 )
 
@@ -413,7 +412,7 @@ func (r *Reconciler) reconcileAPIServers(ctx context.Context, updates chan<- upd
 }
 
 func extractAPIServerAddresses(endpoints *corev1.Endpoints) ([]k0snet.HostPort, error) {
-	var warnings error
+	var warnings []error
 	apiServers := []k0snet.HostPort{}
 
 	for sIdx, subset := range endpoints.Subsets {
@@ -428,7 +427,7 @@ func extractAPIServerAddresses(endpoints *corev1.Endpoints) ([]k0snet.HostPort, 
 			if port.Port < 0 || port.Port > math.MaxUint16 {
 				path := field.NewPath("subsets").Index(sIdx).Child("ports").Index(pIdx).Child("port")
 				warning := field.Invalid(path, port.Port, "out of range")
-				warnings = multierr.Append(warnings, warning)
+				warnings = append(warnings, warning)
 				continue
 			}
 
@@ -438,7 +437,7 @@ func extractAPIServerAddresses(endpoints *corev1.Endpoints) ([]k0snet.HostPort, 
 		if len(ports) < 1 {
 			path := field.NewPath("subsets").Index(sIdx)
 			warning := field.Forbidden(path, "no suitable TCP/https ports found")
-			warnings = multierr.Append(warnings, warning)
+			warnings = append(warnings, warning)
 			continue
 		}
 
@@ -450,14 +449,14 @@ func extractAPIServerAddresses(endpoints *corev1.Endpoints) ([]k0snet.HostPort, 
 			if host == "" {
 				path := field.NewPath("addresses").Index(aIdx)
 				warning := field.Forbidden(path, "neither ip nor hostname specified")
-				warnings = multierr.Append(warnings, warning)
+				warnings = append(warnings, warning)
 				continue
 			}
 
 			for _, port := range ports {
 				apiServer, err := k0snet.NewHostPort(host, port)
 				if err != nil {
-					warnings = multierr.Append(warnings, fmt.Errorf("%s:%d: %w", host, port, err))
+					warnings = append(warnings, fmt.Errorf("%s:%d: %w", host, port, err))
 					continue
 				}
 
@@ -469,7 +468,11 @@ func extractAPIServerAddresses(endpoints *corev1.Endpoints) ([]k0snet.HostPort, 
 	if len(apiServers) < 1 {
 		// Never update the API servers with an empty list. This cannot
 		// be right in any case, and would never recover.
-		return nil, multierr.Append(errors.New("no API server addresses discovered"), warnings)
+		err := errors.New("no API server addresses discovered")
+		if warnings := errors.Join(warnings...); warnings != nil {
+			err = fmt.Errorf("%w: %w", err, warnings)
+		}
+		return nil, err
 	}
 
 	return apiServers, nil

@@ -39,7 +39,6 @@ import (
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 
 	testifysuite "github.com/stretchr/testify/suite"
-	"go.uber.org/multierr"
 	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/yaml"
 )
@@ -272,7 +271,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 				}
 				return true, logs.Close()
 			}); err != nil {
-				return multierr.Append(fmt.Errorf("failed to get pod logs from %s/%s", kubeSystem, nllbPodName), logsErr)
+				return fmt.Errorf("failed to get pod logs from %s/%s: %w", kubeSystem, nllbPodName, logsErr)
 			}
 
 			s.T().Logf("Got some pod logs from %s/%s", kubeSystem, nllbPodName)

@@ -19,6 +19,7 @@ limitations under the License.
 package supervisor
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,7 +27,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/multierr"
 )
 
 type pingPong struct {
@@ -65,7 +65,7 @@ func (pp *pingPong) awaitPing() (err error) {
 	if err != nil {
 		return err
 	}
-	defer func() { err = multierr.Append(err, f.Close()) }()
+	defer func() { err = errors.Join(err, f.Close()) }()
 
 	// The write will block until the process reads from the FIFO file.
 	if _, err := f.Write([]byte("ping\n")); err != nil {
