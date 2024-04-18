@@ -304,9 +304,10 @@ node-local load balancing.
 
 Configuration options related to k0s's [control plane load balancing] feature
 
-| Element         | Description                                                                                                |
-| --------------- | ---------------------------------------------------------------------------------------------------------- |
-| `vrrpInstances` | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs |
+| Element         | Description                                                                                                 |
+| --------------- | ----------------------------------------------------------------------------------------------------------- |
+| `enabled`       | Indicates if control plane load balancing should be enabled. Default: `false`.                              |
+| `vrrpInstances` | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs. |
 
 [control plane load balancing]: cplb.md
 
@@ -316,7 +317,7 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 | Element           | Description                                                                                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `name`            | The name of the VRRP instance. If omitted it generates a predictive name shared across all nodes.                |
+| `name`            | The name of the VRRP instance. If omitted it generates a predictive name shared across all nodes.                 |
 | `virtualIPs`      | A list of the CIDRs handled by the VRRP instance.                                                                 |
 | `interface`       | The interface used by each VRRPInstance. If undefined k0s will try to auto detect it based on the default gateway |
 | `virtualRouterId` | Virtual router ID for the instance. Default: `51`                                                                 |

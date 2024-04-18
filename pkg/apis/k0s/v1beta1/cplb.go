@@ -29,6 +29,13 @@ const defaultAdvertInterval = 1
 // ControlPlaneLoadBalancingSpec defines the configuration options related to k0s's
 // keepalived feature.
 type ControlPlaneLoadBalancingSpec struct {
+	// Indicates if control plane load balancing should be enabled.
+	// Default: false
+	// +optional
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Configuration options related to the VRRP. This is an array which allows
+	// to configure multiple virtual IPs.
 	VRRPInstances VRRPInstances `json:"vrrpInstances,omitempty"`
 }
 

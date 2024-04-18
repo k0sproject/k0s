@@ -110,7 +110,6 @@ const (
 	CoreDNSComponentname               = "coredns"
 	CsrApproverComponentName           = "csr-approver"
 	HelmComponentName                  = "helm"
-	CPLBComponentName                  = "cplb"
 	KonnectivityServerComponentName    = "konnectivity-server"
 	KubeControllerManagerComponentName = "kube-controller-manager"
 	KubeProxyComponentName             = "kube-proxy"
