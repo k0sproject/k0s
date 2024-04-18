@@ -2067,6 +2067,7 @@ following:</p>
 <span class="w">    </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;External address&gt;</span><span class="w"> </span><span class="c1"># This isn&#39;t a requirement, but it&#39;s a common use case.</span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="nt">vrrpInstances</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP&gt;/&lt;external</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP</span><span class="nv"> </span><span class="s">netmask&quot;</span><span class="p p-Indicator">]</span>
 <span class="w">        </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password&gt;</span>
@@ -2081,6 +2082,7 @@ the k0sctl configuration (<code>k0sctl.yaml</code>):</p>
 <span class="w">          </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;External address&gt;</span><span class="w"> </span><span class="c1"># This isn&#39;t a requirement, but it&#39;s a common use case.</span>
 <span class="w">        </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">            </span><span class="nt">vrrpInstances</span><span class="p">:</span>
 <span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP&gt;/&lt;external</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP</span><span class="nv"> </span><span class="s">netmask&gt;&quot;</span><span class="p p-Indicator">]</span>
 <span class="w">              </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password&gt;</span>
@@ -2147,6 +2149,7 @@ controllers and three workers with control plane load balancing enabled:</p>
 <span class="w">          </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.122.200</span>
 <span class="w">        </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">            </span><span class="nt">vrrpInstances</span><span class="p">:</span>
 <span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;192.168.122.200/24&quot;</span><span class="p p-Indicator">]</span>
 <span class="w">              </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Example</span>
@@ -2269,9 +2272,9 @@ file in order to interact with it:</p>
 <p>All three worker nodes are ready:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 <span class="go">NAME                   STATUS   ROLES           AGE     VERSION</span>
-<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
-<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
-<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
+<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.4+k0s</span>
+<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.4+k0s</span>
+<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.4+k0s</span>
 </code></pre></div>
 <p>Each controller node has a dummy interface with the VIP and /32 netmask,
 but only one has it in the real nic:</p>
@@ -2309,9 +2312,9 @@ failure condition:</p>
 <span class="go">```console</span>
 <span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 <span class="go">NAME                   STATUS   ROLES           AGE     VERSION</span>
-<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
-<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
-<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.2+k0s</span>
+<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.4+k0s</span>
+<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.4+k0s</span>
+<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.29.4+k0s</span>
 </code></pre></div>
 
 
