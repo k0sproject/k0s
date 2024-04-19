@@ -41,6 +41,51 @@ k0s reset
 reboot
 ```
 
+### Declarative Etcd member management
+
+Starting from version 1.30, k0s supports also declarative way to remove a Etcd member. Since in k0s Etcd cluster is setup so that the Etcd API is **NOT** exposed outside of
+the nodes it makes it difficult for external automation like Cluster API, Terraform etc. to handle controller node replacements.
+
+Each controller manages their own `EtcdMember` object.
+
+```shell
+k0s kubectl get etcdmember
+NAME          PEERADDRESS   MEMBERID           JOINED   RECONCILESTATUS
+controller0   172.17.0.2    b8e14bda2255bc24   True     
+controller1   172.17.0.3    cb242476916c8a58   True     
+controller2   172.17.0.4    9c90504b1bc867bb   True 
+```
+
+By marking an `EtcdMember` object to leave the Etcd cluster, k0s itself will handle the interaction with Etcd. For example, in a 3 controller HA setup you can remove a member by flaggin it for leave:
+
+```shell
+kubectl patch etcdmember controller2 -p '{"leave":true}' --type merge
+```
+
+The join/leave status is tracked in the objects conditions which allows you to wait for the leave to actually happen:
+
+```shell
+kubectl wait etcdmember controller2 --for condition=Joined=False
+etcdmember.etcd.k0sproject.io/controller1 condition met
+```
+
+You'll see the node left Etcd cluster:
+
+```shell
+k0s kc get etcdmember
+NAME          PEERADDRESS   MEMBERID           JOINED   RECONCILESTATUS
+controller0   172.17.0.2    b8e14bda2255bc24   True     
+controller1   172.17.0.3    cb242476916c8a58   True     
+controller2   172.17.0.4    9c90504b1bc867bb   False    Success
+```
+
+```shell
+k0s etcd member-list
+{"members":{"controller0":"https://172.17.0.2:2380","controller1":"https://172.17.0.3:2380"}}
+```
+
+The objects for members already left etcd cluster are kept available for tracking purposes. Once the member has left the cluster and the object status reflects that it is safe to remove those.
+
 ## Replace a controller
 
 To replace a controller, you first remove the old controller (like described above) then follow the [manual installation procedure](k0s-multi-node.md) to add the new one.
