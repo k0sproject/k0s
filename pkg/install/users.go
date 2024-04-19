@@ -18,68 +18,58 @@ package install
 
 import (
 	"errors"
-	"fmt"
 	"os/exec"
 	"os/user"
-	"reflect"
-	"strings"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
 )
 
-func GetControllerUsers(clusterConfig *v1beta1.ClusterConfig) []string {
-	return getUserList(*clusterConfig.Spec.Install.SystemUsers)
-}
+// Ensures that all controller users exist and creates any missing users with
+// the given home directory.
+func EnsureControllerUsers(systemUsers *v1beta1.SystemUser, homeDir string) error {
+	var shell string
+	var errs []error
+	for _, userName := range getControllerUserNames(systemUsers) {
+		_, err := users.GetUID(userName)
+		if errors.Is(err, user.UnknownUserError(userName)) {
+			if shell == "" {
+				shell, err = nologinShell()
+				if err != nil {
+					// error out early, k0s won't be able to create any users anyways
+					errs = append(errs, err)
+					break
+				}
+			}
 
-// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
-func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
-	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
-	var messages []string
-	for _, v := range users {
-		if err := EnsureUser(v, k0sVars.DataDir); err != nil {
-			messages = append(messages, err.Error())
+			logrus.Infof("Creating user %q", userName)
+			err = createUser(userName, homeDir, shell)
+		}
+		if err != nil {
+			errs = append(errs, err)
 		}
 	}
-	if len(messages) > 0 {
-		return fmt.Errorf(strings.Join(messages, "\n"))
-	}
-	return nil
+
+	return errors.Join(errs...)
 }
 
-// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
-func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
-	cfgUsers := getUserList(*clusterConfig.Spec.Install.SystemUsers)
-	var messages []string
-	for _, v := range cfgUsers {
-		if _, err := users.GetUID(v); err == nil {
-			logrus.Debugf("deleting user: %s", v)
+// Deletes existing controller users.
+func DeleteControllerUsers(systemUsers *v1beta1.SystemUser) error {
+	var errs []error
+	for _, userName := range getControllerUserNames(systemUsers) {
+		if _, err := users.GetUID(userName); err == nil {
+			logrus.Debugf("Deleting user %q", userName)
 
-			if err := deleteUser(v); err != nil {
-				messages = append(messages, err.Error())
+			if err := deleteUser(userName); err != nil {
+				errs = append(errs, err)
 			}
 		}
 	}
-	if len(messages) > 0 {
-		// don't fail the command, just notify on errors
-		return fmt.Errorf(strings.Join(messages, "\n"))
-	}
-	return nil
-}
 
-// EnsureUser checks if a user exists, and creates it, if it doesn't
-// TODO: we should also consider modifying the user, if the user exists, but with wrong settings
-func EnsureUser(name string, homeDir string) error {
-	_, err := users.GetUID(name)
-	if errors.Is(err, user.UnknownUserError(name)) {
-		logrus.Infof("creating user: %s", name)
-		return createUser(name, homeDir)
-	}
-	return err
+	return errors.Join(errs...)
 }
 
 // nologinShell returns the path to /sbin/nologin, /bin/false or equivalent or an error if neither is available
@@ -93,13 +83,8 @@ func nologinShell() (string, error) {
 }
 
 // CreateUser creates a system user with either `adduser` or `useradd` command
-func createUser(userName string, homeDir string) error {
-	shell, err := nologinShell()
-	if err != nil {
-		return err
-	}
-
-	_, err = exec.Command("useradd", `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
+func createUser(userName, homeDir, shell string) error {
+	_, err := exec.Command("useradd", `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
 	if errors.Is(err, exec.ErrNotFound) {
 		_, err = exec.Command("adduser", `--disabled-password`, `--gecos`, `""`, `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
 	}
@@ -115,13 +100,16 @@ func deleteUser(userName string) error {
 	return err
 }
 
-// get user list
-func getUserList(sysUsers v1beta1.SystemUser) []string {
-	v := reflect.ValueOf(sysUsers)
-	values := make([]string, v.NumField())
-
-	for i := 0; i < v.NumField(); i++ {
-		values[i] = v.Field(i).String()
+// Returns the controller user names.
+func getControllerUserNames(users *v1beta1.SystemUser) []string {
+	userNames := []string{
+		users.Etcd,
+		users.Kine,
+		users.Konnectivity,
+		users.KubeAPIServer,
+		users.KubeScheduler,
 	}
-	return stringslice.Unique(values)
+
+	slices.Sort(userNames)
+	return slices.Compact(userNames)
 }
