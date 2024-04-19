@@ -17,6 +17,7 @@ limitations under the License.
 package install
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -26,8 +27,9 @@ import (
 	"github.com/spf13/pflag"
 )
 
-func cmdFlagsToArgs(cmd *cobra.Command) []string {
+func cmdFlagsToArgs(cmd *cobra.Command) ([]string, error) {
 	var flagsAndVals []string
+	var errs []error
 	// Use visitor to collect all flags and vals into slice
 	cmd.Flags().Visit(func(f *pflag.Flag) {
 		val := f.Value.String()
@@ -35,14 +37,24 @@ func cmdFlagsToArgs(cmd *cobra.Command) []string {
 		case "stringSlice", "stringToString":
 			flagsAndVals = append(flagsAndVals, fmt.Sprintf(`--%s=%s`, f.Name, strings.Trim(val, "[]")))
 		default:
-			if f.Name == "env" || f.Name == "force" {
+			switch f.Name {
+			case "env", "force":
 				return
-			}
-			if f.Name == "data-dir" || f.Name == "token-file" || f.Name == "config" {
-				val, _ = filepath.Abs(val)
+			case "data-dir", "token-file", "config":
+				if absVal, err := filepath.Abs(val); err != nil {
+					err = fmt.Errorf("failed to convert --%s=%s to an absolute path: %w", f.Name, val, err)
+					errs = append(errs, err)
+				} else {
+					val = absVal
+				}
 			}
 			flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, val))
 		}
 	})
-	return flagsAndVals
+
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
+	}
+
+	return flagsAndVals, nil
 }
