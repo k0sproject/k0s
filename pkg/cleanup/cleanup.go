@@ -77,7 +77,10 @@ func (c *Config) Cleanup() error {
 		&services{Config: c},
 		&directories{Config: c},
 		&cni{},
-		&bridge{},
+	}
+
+	if bridge := newBridgeStep(); bridge != nil {
+		cleanupSteps = append(cleanupSteps, bridge)
 	}
 
 	for _, step := range cleanupSteps {

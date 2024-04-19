@@ -18,24 +18,23 @@ package cleanup
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/vishvananda/netlink"
 )
 
-type bridge struct{}
+func newBridgeStep() Step {
+	return linuxBridge{}
+}
+
+type linuxBridge struct{}
 
 // Name returns the name of the step
-func (b *bridge) Name() string {
+func (linuxBridge) Name() string {
 	return "kube-bridge leftovers cleanup step"
 }
 
 // Run removes found kube-bridge leftovers
-func (b *bridge) Run() error {
-	if runtime.GOOS == "windows" {
-		return nil
-	}
-
+func (linuxBridge) Run() error {
 	lnks, err := netlink.LinkList()
 	if err != nil {
 		return fmt.Errorf("failed to get link list from netlink: %w", err)
