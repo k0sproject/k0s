@@ -19,9 +19,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	"errors"
+	"fmt"
+	"runtime"
 )
 
 func getDefaultNIC() (string, error) {
-	return "", errors.New("getDefaultNIC on Windows is not supported")
+	return "", fmt.Errorf("getDefaultNIC on %s is not supported", runtime.GOOS)
 }
