@@ -69,6 +69,14 @@ check out the [Contributing Guide] and the [Code of Conduct].
 [Contributing Guide]: https://docs.k0sproject.io/stable/contributors/overview/
 [Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
 
+### Community hours
+
+We will be holding regular community hours. Everyone in the community is welcome to drop by and ask questions, talk about projects, and chat.
+
+We currently have a monthly office hours call on the last Tuesday of the month.
+
+To see the call details in your local timezone, check out [https://dateful.com/eventlink/2735919704](https://dateful.com/eventlink/2735919704).
+
 ## Motivation
 
 _We have seen a gap between the host OS and Kubernetes that runs on top of it: How to ensure they work together as they are upgraded independent from each other? Who is responsible for vulnerabilities or performance issues originating from the host OS that affect the K8S on top?_

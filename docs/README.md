@@ -57,6 +57,14 @@ check out the [Contributing Guide] and the [Code of Conduct].
 [Contributing Guide]: https://docs.k0sproject.io/stable/contributors/overview/
 [Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
 
+## Community hours
+
+We will be holding regular community hours. Everyone in the community is welcome to drop by and ask questions, talk about projects, and chat.
+
+We currently have a monthly office hours call on the last Tuesday of the month.
+
+To see the call details in your local timezone, check out [https://dateful.com/eventlink/2735919704](https://dateful.com/eventlink/2735919704).
+
 ## Commercial Support
 
 [Mirantis](https://www.mirantis.com/software/k0s/) offers technical support, professional services and training for k0s. The support subscriptions include, for example, prioritized support (Phone, Web, Email) and access to verified extensions on top of your k0s cluster.
