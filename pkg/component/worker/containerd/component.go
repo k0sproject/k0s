@@ -22,6 +22,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -47,10 +48,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-const magicMarker = "# k0s_managed=true"
-
-const confTmpl = `
-# k0s_managed=true
+const confTmpl = `# k0s_managed=true
 # This is a placeholder configuration for k0s managed containerd.
 # If you wish to override the config, remove the first line and replace this file with your custom configuration.
 # For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
@@ -322,11 +320,12 @@ func (c *Component) Stop() error {
 // This is the md5sum of the default k0s containerd config file before 1.27
 const pre1_27ConfigSum = "59039b43303742a5496b13fd57f9beec"
 
-// isK0sManagedConfig checks if the config file is k0s managed
-// - If the config file does not exist, it's k0s managed
-// - If the config file md5sum matches the pre 1.27 config, it's k0s managed
-// - If the config file has the magic marker, it's k0s managed
-func isK0sManagedConfig(path string) (bool, error) {
+// isK0sManagedConfig checks if the config file is k0s managed:
+//   - If the config file doesn't exist, it's k0s managed.
+//   - If the config file's md5sum matches the pre 1.27 config, it's k0s managed.
+//   - If the config file starts with the magic marker line "# k0s_managed=true",
+//     it's k0s managed.
+func isK0sManagedConfig(path string) (_ bool, err error) {
 	// If the file does not exist, it's k0s managed (new install)
 	if !file.Exists(path) {
 		return true, nil
@@ -343,14 +342,17 @@ func isK0sManagedConfig(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer f.Close()
+	defer func() { err = errors.Join(err, f.Close()) }()
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), magicMarker) {
+		switch scanner.Text() {
+		case "": // K0s versions before 1.30 had a leading empty line.
+			continue
+		case "# k0s_managed=true":
 			return true, nil
 		}
 	}
-	return false, nil
+	return false, scanner.Err()
 }
 
 func isPre1_27ManagedConfig(path string) (bool, error) {
