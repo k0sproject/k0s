@@ -48,12 +48,17 @@ func (s *K0sCloudProviderSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
-	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
+	nodeName := s.WorkerNode(0)
+	err = s.WaitForNodeReady(nodeName, kc)
 	s.Require().NoError(err)
 
-	s.testAddAddress(ctx, kc, s.WorkerNode(0), "1.2.3.4")
-	s.testAddAddress(ctx, kc, s.WorkerNode(0), "2041:0000:140F::875B:131B")
-	s.testAddAddress(ctx, kc, s.WorkerNode(0), "GIGO")
+	node, err := kc.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	s.Require().NoError(err)
+	s.Equal("k0s-cloud-provider://"+nodeName, node.Spec.ProviderID)
+
+	s.testAddAddress(ctx, kc, nodeName, "1.2.3.4")
+	s.testAddAddress(ctx, kc, nodeName, "2041:0000:140F::875B:131B")
+	s.testAddAddress(ctx, kc, nodeName, "GIGO")
 }
 
 // testAddAddress adds the provided address to a node and ensures that the

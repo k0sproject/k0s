@@ -56,7 +56,7 @@ func (i *instancesV2) InstanceShutdown(ctx context.Context, node *v1.Node) (bool
 // properties of the node like its name, labels and annotations.
 func (i *instancesV2) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloudprovider.InstanceMetadata, error) {
 	return &cloudprovider.InstanceMetadata{
-		ProviderID:    node.Spec.ProviderID,
+		ProviderID:    Name + "://" + node.Name,
 		InstanceType:  Name,
 		NodeAddresses: i.addressCollector(node),
 	}, nil
