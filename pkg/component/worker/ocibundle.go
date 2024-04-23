@@ -18,6 +18,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,7 +41,6 @@ import (
 type OCIBundleReconciler struct {
 	k0sVars constant.CfgVars
 	log     *logrus.Entry
-	loaded  map[string]time.Time
 	*prober.EventEmitter
 }
 
@@ -52,7 +52,6 @@ func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
 		k0sVars:      vars,
 		log:          logrus.WithField("component", "OCIBundleReconciler"),
 		EventEmitter: prober.NewEventEmitter(),
-		loaded:       make(map[string]time.Time),
 	}
 }
 
@@ -60,71 +59,59 @@ func (a *OCIBundleReconciler) Init(_ context.Context) error {
 	return dir.Init(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
 }
 
-// load loads all OCI bundle files into containerd. Read all files from the oci bundle
-// directory and loads them only once. If the file is already loaded and hasn't changed
-// it will skip it. Errors are logged but not returned, upon failure in one file this
-// function logs the error and moves to the next file.
-func (a *OCIBundleReconciler) load(ctx context.Context) {
+// loadOne connects to containerd and imports the provided OCI bundle.
+func (a *OCIBundleReconciler) loadOne(ctx context.Context, fpath string) error {
+	var client *containerd.Client
+	sock := filepath.Join(a.k0sVars.RunDir, "containerd.sock")
+	if err := retry.Do(func() (err error) {
+		client, err = containerd.New(
+			sock,
+			containerd.WithDefaultNamespace("k8s.io"),
+			containerd.WithDefaultPlatform(
+				platforms.OnlyStrict(platforms.DefaultSpec()),
+			),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to connect to containerd: %w", err)
+		}
+		if _, err = client.ListImages(ctx); err != nil {
+			return fmt.Errorf("failed to communicate with containerd: %w", err)
+		}
+		return nil
+	}, retry.Context(ctx), retry.Delay(time.Second*5)); err != nil {
+		return err
+	}
+	defer client.Close()
+	if err := a.unpackBundle(ctx, client, fpath); err != nil {
+		return fmt.Errorf("failed to process oci bundle: %w", err)
+	}
+	return nil
+}
+
+// loadAll loads all OCI bundle files into containerd. Read all files from the oci bundle
+// directory and loads them one by one. Errors are logged but not returned, upon failure
+// in one file this function logs the error and moves to the next file.
+func (a *OCIBundleReconciler) loadAll(ctx context.Context) {
+	a.log.Info("Loading all OCI bundles")
 	files, err := os.ReadDir(a.k0sVars.OCIBundleDir)
 	if err != nil {
-		a.log.WithError(err).Errorf("can't read bundles directory")
+		a.log.WithError(err).Errorf("Failed to read bundles directory")
 		a.Emit("can't read bundles directory")
 		return
 	}
-
 	a.EmitWithPayload("importing OCI bundles", files)
 	if len(files) == 0 {
 		return
 	}
-
-	var client *containerd.Client
-	sock := filepath.Join(a.k0sVars.RunDir, "containerd.sock")
-	if err := retry.Do(func() error {
-		client, err = containerd.New(
-			sock,
-			containerd.WithDefaultNamespace("k8s.io"),
-			containerd.WithDefaultPlatform(platforms.OnlyStrict(platforms.DefaultSpec())),
-		)
-		if err != nil {
-			a.log.WithError(err).Errorf("can't connect to containerd socket %s", sock)
-			return err
-		}
-
-		if _, err := client.ListImages(ctx); err != nil {
-			a.log.WithError(err).Errorf("can't use containerd client")
-			return err
-		}
-		return nil
-	}, retry.Context(ctx), retry.Delay(time.Second*5)); err != nil {
-		payload := map[string]interface{}{"socket": sock, "error": err}
-		a.EmitWithPayload("can't connect to containerd socket", payload)
-		return
-	}
-	defer client.Close()
-
 	for _, file := range files {
-		payload := map[string]interface{}{"file": file.Name(), "error": err}
 		fpath := filepath.Join(a.k0sVars.OCIBundleDir, file.Name())
-		finfo, err := os.Stat(fpath)
-		if err != nil {
-			a.log.WithError(err).Errorf("can't stat file %s", fpath)
-			a.EmitWithPayload("can't stat file", payload)
+		a.log.Infof("Loading OCI bundle %s", fpath)
+		if err := a.loadOne(ctx, fpath); err != nil {
+			a.log.WithError(err).Errorf("Failed to load OCI bundle %s", fpath)
+			a.EmitWithPayload("failed to load OCI bundle", fpath)
 			continue
 		}
-
-		if when, ok := a.loaded[file.Name()]; ok && when.Equal(finfo.ModTime()) {
-			continue
-		}
-
-		if err := a.unpackBundle(ctx, client, fpath); err != nil {
-			a.EmitWithPayload("unpacking OCI bundle error", payload)
-			a.log.WithError(err).Errorf("can't unpack bundle %s", file.Name())
-			continue
-		}
-
-		// if succeed in loading the bundle, remember the time.
-		a.loaded[file.Name()] = finfo.ModTime()
-		a.EmitWithPayload("unpacked OCI bundle", file.Name())
+		a.log.Infof("OCI bundle %s loaded", fpath)
 	}
 	a.Emit("finished importing OCI bundle")
 }
@@ -135,13 +122,13 @@ func (a *OCIBundleReconciler) load(ctx context.Context) {
 func (a *OCIBundleReconciler) watch(ctx context.Context) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		a.log.WithError(err).Error("failed to create watcher for OCI bundles")
+		a.log.WithError(err).Error("Failed to create watcher for OCI bundles")
 		return
 	}
 	defer watcher.Close()
 
 	if err := watcher.Add(a.k0sVars.OCIBundleDir); err != nil {
-		a.log.WithError(err).Error("failed to watch for OCI bundles")
+		a.log.WithError(err).Error("Failed to watch for OCI bundles")
 		return
 	}
 
@@ -156,9 +143,14 @@ func (a *OCIBundleReconciler) watch(ctx context.Context) {
 				return false
 			}
 		},
-		Callback: func(fsnotify.Event) {
-			a.log.Info("OCI bundle directory changed, reconciling")
-			a.load(ctx)
+		Callback: func(ev fsnotify.Event) {
+			a.log.Infof("Loading OCI bundle %s", ev.Name)
+			if err := a.loadOne(ctx, ev.Name); err != nil {
+				a.log.WithError(err).Errorf("Failed to load OCI bundle %s", ev.Name)
+				a.EmitWithPayload("failed to load OCI bundle", ev.Name)
+				return
+			}
+			a.log.Infof("OCI bundle %s loaded", ev.Name)
 		},
 	}
 
@@ -168,20 +160,24 @@ func (a *OCIBundleReconciler) watch(ctx context.Context) {
 			if !ok {
 				return
 			}
-			a.log.WithError(err).Error("error while watching oci bundle directory")
+			a.log.WithError(err).Error("Error while watching oci bundle directory")
 		}
 	}()
 
-	a.log.Infof("started to watch events on %s", a.k0sVars.OCIBundleDir)
+	a.log.Infof("Started to watch events on %s", a.k0sVars.OCIBundleDir)
 	if err := debouncer.Run(ctx); err != nil {
-		a.log.WithError(err).Warn("oci bundle watch bouncer exited with error")
+		if errors.Is(err, context.Canceled) {
+			a.log.Info("OCI bundle watch bouncer ended")
+			return
+		}
+		a.log.WithError(err).Warn("OCI bundle watch bouncer exited with error")
 	}
 }
 
 // Starts initiate the OCI bundle loader. It does an initial load of the directory and
 // once it is done, it starts a watcher on its own goroutine.
 func (a *OCIBundleReconciler) Start(ctx context.Context) error {
-	a.load(ctx)
+	a.loadAll(ctx)
 	go a.watch(ctx)
 	return nil
 }
