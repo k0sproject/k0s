@@ -230,6 +230,10 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 // Stop stops etcd
 func (e *Etcd) Stop() error {
+	if e.Config.IsExternalClusterUsed() {
+		return nil
+	}
+
 	return e.supervisor.Stop()
 }
 
