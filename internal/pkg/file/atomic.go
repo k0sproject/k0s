@@ -30,6 +30,7 @@ import (
 type atomicOpts struct {
 	target      string
 	permissions fs.FileMode
+	uid, gid    int
 }
 
 func (o *atomicOpts) wantsChmod() bool {
@@ -41,8 +42,10 @@ type AtomicOpener struct{ atomicOpts }
 // Prepares to open a new [Atomic] for the file at the given target path.
 func AtomicWithTarget(target string) *AtomicOpener {
 	return &AtomicOpener{atomicOpts{
-		target,
-		fs.ModeIrregular, // use this as an "unset" marker, see wantsChmod()
+		target:      target,
+		permissions: fs.ModeIrregular, // use this as an "unset" marker, see wantsChmod()
+		uid:         -1,
+		gid:         -1,
 	}}
 }
 
@@ -50,6 +53,22 @@ func AtomicWithTarget(target string) *AtomicOpener {
 // Will rely on the umask if not called.
 func (o *AtomicOpener) WithPermissions(perm os.FileMode) *AtomicOpener {
 	o.permissions = perm.Perm()
+	return o
+}
+
+// The desired owner UID for the target file.
+// Will be owned by the current user if not called.
+// Will have no effect on Windows.
+func (o *AtomicOpener) WithOwner(uid int) *AtomicOpener {
+	o.uid = max(-1, uid)
+	return o
+}
+
+// The desired group ID for the target file.
+// Will be owned by the current user's group if not called.
+// Will have no effect on Windows.
+func (o *AtomicOpener) WithGroup(gid int) *AtomicOpener {
+	o.gid = max(-1, gid)
 	return o
 }
 
@@ -204,6 +223,23 @@ func (f *Atomic) Finish() (err error) {
 
 	if f.wantsChmod() {
 		if err := os.Chmod(f.fd.Name(), f.permissions.Perm()); err != nil {
+			return err
+		}
+	}
+
+	// Apply the owner and group changes, if specified. Since chown is a
+	// privileged operation (i.e. requires CAP_CHOWN on Linux / root on macOS),
+	// it is safe to do this after the permission change. So if this succeeds,
+	// the current process itself is privileged, and it's safe to assume that
+	// its owner and group are privileged, too. Changing the owner and group
+	// information is therefore considered an expansion of access, not a
+	// restriction. Doing it the other way round and changing the owner before
+	// changing permissions would require yet another capability on Linux for
+	// chmod to succeed (CAP_FOWNER).
+	if wantsChown := (f.uid >= 0 || f.gid >= 0); wantsChown {
+		err = os.Chown(f.fd.Name(), f.uid, f.gid)
+		// Ignore errors indicating that os.Chown() is unsupported.
+		if err != nil && !errors.Is(err, errors.ErrUnsupported) {
 			return err
 		}
 	}
