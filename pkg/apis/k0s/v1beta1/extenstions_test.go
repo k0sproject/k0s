@@ -18,8 +18,11 @@ package v1beta1
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestValidation(t *testing.T) {
@@ -106,5 +109,32 @@ func TestValidation(t *testing.T) {
 		assert.Equal(t, chart1.ManifestFileName(), "1_helm_extension_release.yaml")
 		assert.Equal(t, chart2.ManifestFileName(), "2_helm_extension_release.yaml")
 	})
+}
 
+func TestDurationParsing(t *testing.T) {
+	yaml := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  extensions:
+    helm:
+      charts:
+      - name: prometheus-stack
+        chartname: prometheus-community/prometheus
+        version: "14.6.1"
+        timeout: 20m
+`
+
+	c, err := ConfigFromString(yaml)
+	require := require.New(t)
+
+	require.NoError(err)
+
+	chart := c.Spec.Extensions.Helm.Charts[0]
+	expectedDuration := metav1.Duration{
+		Duration: 20 * time.Minute,
+	}
+	require.Equal(expectedDuration, chart.Timeout)
 }
