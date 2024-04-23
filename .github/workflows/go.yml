@@ -236,6 +236,8 @@ jobs:
 
       - name: k0s sysinfo
         run: |
+          ip route
+          ip -6 route
           chmod +x k0s
           ./k0s sysinfo
 
