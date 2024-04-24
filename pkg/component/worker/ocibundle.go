@@ -113,7 +113,7 @@ func (a *OCIBundleReconciler) loadAll(ctx context.Context) {
 		}
 		a.log.Infof("OCI bundle %s loaded", fpath)
 	}
-	a.Emit("finished importing OCI bundle")
+	a.Emit("finished importing OCI bundles")
 }
 
 // watch creates a fs watched on the oci bundle directory. This function calls load() anytime
