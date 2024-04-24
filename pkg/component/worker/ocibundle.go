@@ -89,7 +89,7 @@ func (a *OCIBundleReconciler) loadOne(ctx context.Context, fpath string) error {
 	return nil
 }
 
-// loadAll loads all OCI bundle files into containerd. Read all files from the oci bundle
+// loadAll loads all OCI bundle files into containerd. Read all files from the OCI bundle
 // directory and loads them one by one. Errors are logged but not returned, upon failure
 // in one file this function logs the error and moves to the next file.
 func (a *OCIBundleReconciler) loadAll(ctx context.Context) {
