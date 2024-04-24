@@ -138,11 +138,10 @@ func (a *OCIBundleReconciler) watch(ctx context.Context) {
 		Timeout: 10 * time.Second,
 		Filter: func(item fsnotify.Event) bool {
 			switch item.Op {
-			case fsnotify.Create, fsnotify.Write:
-				return true
-			default:
+			case fsnotify.Remove, fsnotify.Rename:
 				return false
 			}
+			return true
 		},
 		Callback: func(ev fsnotify.Event) {
 			a.log.Infof("Loading OCI bundle %s", ev.Name)
