@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/k0sproject/k0s/internal/testutil"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
 
@@ -40,15 +40,8 @@ type CLITestSuite struct {
 }
 
 func (s *CLITestSuite) TestKubeConfigCreate() {
-	yamlData := `
-apiVersion: k0s.k0sproject.io/v1beta1
-kind: ClusterConfig
-spec:
-  api:
-    externalAddress: 10.0.0.86
-`
-	configGetter := testutil.NewConfigGetter(s.T(), yamlData, false, config.DefaultCfgVars())
-	cfg := configGetter.FakeConfigFromFile()
+	cfg := v1beta1.DefaultClusterConfig()
+	cfg.Spec.API.ExternalAddress = "10.0.0.86"
 
 	caCert := `
 -----BEGIN CERTIFICATE-----
