@@ -43,7 +43,7 @@ func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Write
 	}
 
 	tmpFileName := fd.Name()
-	close := true
+	written, close := false, true
 	defer func() {
 		var errs []error
 		if err != nil {
@@ -56,7 +56,7 @@ func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Write
 			}
 		}
 
-		if err != nil {
+		if !written || err != nil {
 			err := os.Remove(tmpFileName)
 			// Don't propagate any fs.ErrNotExist errors. There is no point in
 			// doing this, since the desired state is already reached: The
@@ -100,6 +100,7 @@ func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Write
 		return err
 	}
 
+	written = true
 	return nil
 }
 

@@ -97,6 +97,19 @@ func TestWriteAtomically(t *testing.T) {
 		assertDirEmpty(t, dir)
 	})
 
+	t.Run("writePanics", func(t *testing.T) {
+		dir := t.TempDir()
+		file := filepath.Join(dir, "file")
+
+		defer func() {
+			assert.Same(t, assert.AnError, recover())
+			assertDirEmpty(t, dir)
+		}()
+
+		_ = WriteAtomically(file, 0644, func(io.Writer) error { panic(assert.AnError) })
+		assert.Fail(t, "Should have panicked!")
+	})
+
 	t.Run("tempFileClosed", func(t *testing.T) {
 		// Prove that multiple errors may be reported.
 		dir := t.TempDir()
