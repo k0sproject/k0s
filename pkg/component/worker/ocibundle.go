@@ -83,7 +83,7 @@ func (a *OCIBundleReconciler) loadOne(ctx context.Context, fpath string) error {
 	}
 	defer client.Close()
 	if err := a.unpackBundle(ctx, client, fpath); err != nil {
-		return fmt.Errorf("failed to process oci bundle: %w", err)
+		return fmt.Errorf("failed to process OCI bundle: %w", err)
 	}
 	return nil
 }
