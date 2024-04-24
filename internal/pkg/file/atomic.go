@@ -36,6 +36,12 @@ import (
 // Note that this function is only best-effort on Windows:
 // https://github.com/golang/go/issues/22397#issuecomment-498856679
 func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Writer) error) (err error) {
+	// Determine the absolute path of the file. This is a safeguard to make this
+	// function robust against intermediary working directory changes.
+	if fileName, err = filepath.Abs(fileName); err != nil {
+		return err
+	}
+
 	var fd *os.File
 	fd, err = os.CreateTemp(filepath.Dir(fileName), fmt.Sprintf(".%s.*.tmp", filepath.Base(fileName)))
 	if err != nil {

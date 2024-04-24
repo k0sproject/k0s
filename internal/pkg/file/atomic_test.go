@@ -27,6 +27,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -108,6 +109,19 @@ func TestWriteAtomically(t *testing.T) {
 
 		_ = WriteAtomically(file, 0644, func(io.Writer) error { panic(assert.AnError) })
 		assert.Fail(t, "Should have panicked!")
+	})
+
+	t.Run("workingDirectoryChanges", func(t *testing.T) {
+		dir := t.TempDir()
+		otherDir := t.TempDir()
+		defer testutil.Chdir(t, dir)()
+
+		assert.NoError(t, WriteAtomically("file", 0644, func(w io.Writer) error {
+			assert.NoError(t, os.Chdir(otherDir))
+			return nil
+		}))
+		assertDirEmpty(t, otherDir)
+		assert.FileExists(t, filepath.Join(dir, "file"))
 	})
 
 	t.Run("tempFileClosed", func(t *testing.T) {
