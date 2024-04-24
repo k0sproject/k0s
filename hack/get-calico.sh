@@ -11,7 +11,7 @@ fi
 
 # on MacOS, we need to use the homebrew coreutils (gnu-utils) version of csplit, named gcsplit by default
 case "$(uname -s)" in
-  darwin*) CSPLIT_BINARY="gcsplit" ;;
+  Darwin*) CSPLIT_BINARY="gcsplit" ;;
 esac
 
 if ! command -v "$CSPLIT_BINARY" > /dev/null; then
