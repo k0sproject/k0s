@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"syscall"
 	"testing"
@@ -92,9 +93,12 @@ func TestWriteAtomically(t *testing.T) {
 	t.Run("writeFails", func(t *testing.T) {
 		dir := t.TempDir()
 		file := filepath.Join(dir, "file")
-		assert.Same(t, assert.AnError, WriteAtomically(file, 0644, func(file io.Writer) error {
+		err := WriteAtomically(file, 0644, func(file io.Writer) error {
 			return assert.AnError
-		}))
+		})
+		if errs := flatten(err); assert.Len(t, errs, 1) {
+			assert.Same(t, assert.AnError, errs[0])
+		}
 		assertDirEmpty(t, dir)
 	})
 
@@ -129,14 +133,14 @@ func TestWriteAtomically(t *testing.T) {
 		dir := t.TempDir()
 		file := filepath.Join(dir, "file")
 
-		errs := unwrap(WriteAtomically(file, 0644, func(file io.Writer) error {
+		errs := flatten(WriteAtomically(file, 0644, func(file io.Writer) error {
 			c, ok := file.(io.Closer)
 			require.True(t, ok, "Not closeable: %T", file)
 			require.NoError(t, c.Close())
 			return nil
 		}))
 
-		assert.Len(t, errs, 2)
+		require.Len(t, errs, 2)
 		var tempPath string
 
 		// The first error should be about the failed attempt to sync the temporary file.
@@ -176,7 +180,7 @@ func TestWriteAtomically(t *testing.T) {
 			return nil
 		})
 
-		assert.Len(t, unwrap(err), 1)
+		assert.Len(t, flatten(err), 1)
 
 		// The error should be about the failed chmod.
 		if err, ok := assertPathError(t, err, "chmod", dir); ok {
@@ -194,7 +198,7 @@ func TestWriteAtomically(t *testing.T) {
 		// Obstruct the file path, so that the rename fails.
 		require.NoError(t, os.Mkdir(file, 0700))
 
-		errs := unwrap(WriteAtomically(file, 0644, func(file io.Writer) error {
+		errs := flatten(WriteAtomically(file, 0644, func(file io.Writer) error {
 			_, err := file.Write([]byte("obstructed"))
 			return err
 		}))
@@ -240,7 +244,7 @@ func TestWriteAtomically(t *testing.T) {
 		require.NoError(t, os.Mkdir(file, 0700))
 
 		var tempPath string
-		errs := unwrap(WriteAtomically(file, 0755, func(file io.Writer) error {
+		errs := flatten(WriteAtomically(file, 0755, func(file io.Writer) error {
 			n, ok := file.(interface{ Name() string })
 			require.True(t, ok, "Doesn't have a name: %T", file)
 			tempPath = n.Name()
@@ -292,12 +296,18 @@ func TestWriteAtomically(t *testing.T) {
 	})
 }
 
-func unwrap(err error) []error {
-	if err, ok := err.(interface{ Unwrap() []error }); ok {
-		if errs := err.Unwrap(); len(errs) > 0 {
-			return errs
+func flatten(err error) []error {
+	errs := []error{err}
+
+	for i := 0; i < len(errs); {
+		if wrapped, ok := errs[i].(interface{ Unwrap() []error }); ok {
+			if unwrapped := wrapped.Unwrap(); len(unwrapped) > 0 {
+				errs = slices.Replace(errs, i, i+1, unwrapped...)
+				continue
+			}
 		}
+		i++
 	}
 
-	return []error{err}
+	return errs
 }

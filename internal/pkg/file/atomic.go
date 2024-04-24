@@ -23,104 +23,252 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 )
 
-// WriteAtomically will atomically create or replace a file. The contents of the
-// file will be those that the write callback writes to the Writer that gets
-// passed in. The Writer will be unbuffered. WriteAtomically will buffer the
-// contents in a hidden (i.e. its name will start with a dot), temporary file
-// (it will have a .tmp extension). When write returns without an error, the
-// temporary file will be renamed to fileName, otherwise it will be deleted
-// without touching the target file.
+// The internal options for atomic file writes.
+type atomicOpts struct {
+	target      string
+	permissions fs.FileMode
+}
+
+func (o *atomicOpts) wantsChmod() bool {
+	return o.permissions.IsRegular()
+}
+
+type AtomicOpener struct{ atomicOpts }
+
+// Prepares to open a new [Atomic] for the file at the given target path.
+func AtomicWithTarget(target string) *AtomicOpener {
+	return &AtomicOpener{atomicOpts{
+		target,
+		fs.ModeIrregular, // use this as an "unset" marker, see wantsChmod()
+	}}
+}
+
+// The desired permissions for the target.
+// Will rely on the umask if not called.
+func (o *AtomicOpener) WithPermissions(perm os.FileMode) *AtomicOpener {
+	o.permissions = perm.Perm()
+	return o
+}
+
+// Open a new [Atomic] for writing. Writes to it will be unbuffered. It will be
+// backed by a hidden (i.e. its name will start with a dot), temporary file (it
+// will have a .tmp extension). If the returned Atomic gets closed without
+// calling [Atomic.Finish] before, the temporary file will be deleted without
+// touching the target. Use like so:
 //
-// Note that this function is only best-effort on Windows:
-// https://github.com/golang/go/issues/22397#issuecomment-498856679
-func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Writer) error) (err error) {
-	// Determine the absolute path of the file. This is a safeguard to make this
-	// function robust against intermediary working directory changes.
-	if fileName, err = filepath.Abs(fileName); err != nil {
-		return err
+//	f, err := file.AtomicWithTarget("foo").Open()
+//	if err != nil {
+//		return err
+//	}
+//	defer f.Close()
+//	_, err = f.Write([]byte("I am atomic!"))
+//	if err != nil {
+//		return err
+//	}
+//	return f.Finish()
+func (o *AtomicOpener) Open() (f *Atomic, err error) {
+	f = &Atomic{atomicOpts: o.atomicOpts}
+
+	// Determine the absolute path of the target. This is a safeguard to make
+	// the Atomic robust against intermediary working directory changes.
+	if f.target, err = filepath.Abs(f.target); err != nil {
+		return nil, err
 	}
 
-	var fd *os.File
-	fd, err = os.CreateTemp(filepath.Dir(fileName), fmt.Sprintf(".%s.*.tmp", filepath.Base(fileName)))
+	// This will actually open the file in read/write mode,
+	// but we're not going to tell anyone about it.
+	f.fd, err = os.CreateTemp(filepath.Dir(f.target), fmt.Sprintf(".%s.*.tmp", filepath.Base(f.target)))
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
+// A writer for atomic file creations or replacements.
+type AtomicWriter interface {
+	io.Writer
+	io.ReaderFrom
+}
+
+// Perform the atomic file creation or replacement. The contents of the file
+// will be those that the write callback writes to the [AtomicWriter] that gets
+// passed in. The writer will be unbuffered. The writer will be backed by a
+// hidden (i.e. its name will start with a dot), temporary file (it will have a
+// .tmp extension). If write returns without an error, the temporary file will
+// be renamed to the target name, otherwise it will be deleted without touching
+// the target.
+//
+// Note that the atomicity aspects are only best-effort on Windows:
+// https://github.com/golang/go/issues/22397#issuecomment-498856679
+func (o *AtomicOpener) Do(write func(unbuffered AtomicWriter) error) (err error) {
+	f, err := o.Open()
 	if err != nil {
 		return err
 	}
+	defer func() { err = errors.Join(err, f.Close()) }()
+	if err := write(f); err != nil {
+		return err
+	}
+	return f.Finish()
+}
 
-	tmpFileName := fd.Name()
-	written, close := false, true
+// Atomically create or replace the target file with the given content.
+// Will delegate to [AtomicOpener.Do].
+func (o *AtomicOpener) Write(content []byte) error {
+	return o.Do(func(w AtomicWriter) error {
+		_, err := w.Write(content)
+		return err
+	})
+}
+
+// Atomically create or replace the target file with the given content.
+// Will delegate to [AtomicOpener.Write].
+func (o *AtomicOpener) WriteString(content string) error {
+	return o.Write([]byte(content))
+}
+
+// A file that will appear atomically at its target path after [Atomic.Finish]
+// has been called.
+//
+// Note that the atomicity aspects are only best-effort on Windows:
+// https://github.com/golang/go/issues/22397#issuecomment-498856679
+type Atomic struct {
+	atomicOpts
+	fd     *os.File
+	closed atomic.Bool
+}
+
+func (f *Atomic) Name() string {
+	return f.target
+}
+
+// Write implements [io.Writer].
+func (f *Atomic) Write(p []byte) (int, error) {
+	if f == nil {
+		return 0, fs.ErrInvalid
+	}
+
+	return f.fd.Write(p)
+}
+
+// ReadFrom implements [io.ReaderFrom].
+func (f *Atomic) ReadFrom(r io.Reader) (int64, error) {
+	if f == nil {
+		return 0, fs.ErrInvalid
+	}
+
+	return f.fd.ReadFrom(r)
+}
+
+// Finishes f by closing it and making it appear atomically at its target path.
+// The temporary file will be renamed to target, unless finishing fails and an
+// error is returned, in which case the temporary file will be deleted without
+// touching the target.
+//
+// Note that the atomicity aspects are only best-effort on Windows:
+// https://github.com/golang/go/issues/22397#issuecomment-498856679
+func (f *Atomic) Finish() (err error) {
+	if f == nil {
+		return fs.ErrInvalid
+	}
+
+	if !f.closed.CompareAndSwap(false, true) {
+		return &fs.PathError{Op: "close", Path: f.target, Err: fs.ErrClosed}
+	}
+
+	close := true
 	defer func() {
-		var errs []error
-		if err != nil {
-			errs = append(errs, err)
-		}
-
+		var closeErr, removeErr error
 		if close {
-			if err := fd.Close(); err != nil {
-				errs = append(errs, err)
-			}
+			closeErr = f.fd.Close()
 		}
-
-		if !written || err != nil {
-			err := os.Remove(tmpFileName)
-			// Don't propagate any fs.ErrNotExist errors. There is no point in
-			// doing this, since the desired state is already reached: The
-			// temporary file is no longer present on the file system.
-			if err != nil && !errors.Is(err, fs.ErrNotExist) {
-				errs = append(errs, err)
-			}
+		if err != nil {
+			removeErr = remove(f.fd)
 		}
-
-		if len(errs) == 1 {
-			err = errs[0]
-		} else {
-			err = errors.Join(errs...)
-		}
+		err = errors.Join(err, closeErr, removeErr)
 	}()
 
-	err = write(fd)
-	if err != nil {
-		return err
-	}
-
 	// https://github.com/google/renameio/blob/v2.0.0/tempfile.go#L150-L157
-	err = fd.Sync()
-	if err != nil {
+	if err = f.fd.Sync(); err != nil {
 		return err
 	}
 
-	err = fd.Close()
-	close = false
-	if err != nil {
+	close = false // If Close() fails or panics, don't try it a second time.
+	if err = f.fd.Close(); err != nil {
 		return err
 	}
 
-	err = os.Chmod(tmpFileName, perm)
-	if err != nil {
+	if f.wantsChmod() {
+		if err := os.Chmod(f.fd.Name(), f.permissions.Perm()); err != nil {
+			return err
+		}
+	}
+
+	if err = os.Rename(f.fd.Name(), f.target); err != nil {
 		return err
 	}
 
-	err = os.Rename(tmpFileName, fileName)
-	if err != nil {
-		return err
-	}
-
-	written = true
 	return nil
 }
 
-// WriteContentAtomically will atomically create or replace a file with the
-// given content. WriteContentAtomically will create a hidden (i.e. its name
-// will start with a dot), temporary file (it will have a .tmp extension) with
-// the given content. Afterwards, the temporary file will be renamed to
-// fileName, otherwise it will be deleted without touching the target file.
+// Closes f and deletes its temporary shadow. The target remains untouched.
+// This is a no-op if f has already been finished/closed.
+func (f *Atomic) Close() (err error) {
+	if f == nil {
+		return fs.ErrInvalid
+	}
+
+	if !f.closed.CompareAndSwap(false, true) {
+		return nil // Already closed, make this a no-op.
+	}
+
+	return errors.Join(f.fd.Close(), remove(f.fd))
+}
+
+func remove(fd *os.File) error {
+	err := os.Remove(fd.Name())
+	// Don't propagate any fs.ErrNotExist errors. There is no point in
+	// doing this, since the desired state is already reached: The
+	// temporary file is no longer present on the file system.
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
+	return nil
+}
+
+// Atomically create or replace a file. The contents of the file will be those
+// that the write callback writes to the [io.Writer] that gets passed in. The
+// [io.Writer] will be unbuffered. WriteAtomically will buffer the contents in a
+// hidden (i.e. its name will start with a dot), temporary file (it will have a
+// .tmp extension). When write returns without an error, the temporary file will
+// be renamed to fileName, otherwise it will be deleted without touching the
+// target file.
 //
-// Note that this function is only best-effort on Windows:
+// Note that the atomicity aspects are only best-effort on Windows:
+// https://github.com/golang/go/issues/22397#issuecomment-498856679
+func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Writer) error) (err error) {
+	return AtomicWithTarget(fileName).WithPermissions(perm).Do(func(unbuffered AtomicWriter) error {
+		// Pass the real file to the callback, so that callers that are cheating
+		// and relied on this implementation detail won't break.
+		fd := unbuffered.(*Atomic).fd
+		return write(fd)
+	})
+}
+
+// Atomically create or replace a file with the given content.
+// WriteContentAtomically will create a hidden (i.e. its name will start with a
+// dot), temporary file (it will have a .tmp extension) with the given content.
+// Afterwards, the temporary file will be renamed to fileName unless there was
+// an error, in which case the temporary file will be deleted without touching
+// the target file.
+//
+// Note that the atomicity aspects are only best-effort on Windows:
 // https://github.com/golang/go/issues/22397#issuecomment-498856679
 func WriteContentAtomically(fileName string, content []byte, perm os.FileMode) error {
-	return WriteAtomically(fileName, perm, func(file io.Writer) error {
-		_, err := file.Write(content)
-		return err
-	})
+	return AtomicWithTarget(fileName).WithPermissions(perm).Write(content)
 }
