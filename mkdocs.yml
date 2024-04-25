@@ -67,6 +67,7 @@ nav:
   - Troubleshooting:
       - FAQ: FAQ.md
       - Common Pitfalls: troubleshooting.md
+      - Support Insights: support-dump.md
   - Reference:
       - Architecture: architecture.md
       - Kube-bench Security Benchmark: cis_benchmark.md
