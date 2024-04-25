@@ -43,7 +43,7 @@ spec:
                 description: APISpec defines the settings for the K0s API
                 properties:
                   address:
-                    description: Local address on which to bind an API
+                    description: Address on which to connect to the API server.
                     type: string
                   externalAddress:
                     description: The loadbalancer address (for k0s controllers running
@@ -56,12 +56,18 @@ spec:
                       to pass down to Kubernetes api-server process
                     type: object
                   k0sApiPort:
+                    default: 9443
                     description: 'Custom port for k0s-api server to listen on (default:
                       9443)'
+                    maximum: 65535
+                    minimum: 1
                     type: integer
                   port:
+                    default: 6443
                     description: 'Custom port for kube-api server to listen on (default:
                       6443)'
+                    maximum: 65535
+                    minimum: 1
                     type: integer
                   sans:
                     description: List of additional addresses to push to API servers

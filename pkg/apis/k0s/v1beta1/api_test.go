@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -30,22 +31,23 @@ func (s *APISuite) TestValidation() {
 	s.T().Run("defaults_are_valid", func(t *testing.T) {
 		a := DefaultAPISpec()
 
-		s.Nil(a.Validate())
+		s.NoError(errors.Join(a.Validate()...))
 	})
 
 	s.T().Run("accepts_ipv6_as_address", func(t *testing.T) {
-		a := APISpec{
-			Address: "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-		}
+		ipV6Addr := "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+		a := APISpec{Address: ipV6Addr}
+		a.setDefaults()
 
-		s.Nil(a.Validate())
-
+		s.Equal(ipV6Addr, a.Address)
+		s.NoError(errors.Join(a.Validate()...))
 	})
 
 	s.T().Run("invalid_api_address", func(t *testing.T) {
 		a := APISpec{
 			Address: "something.that.is.not.valid//(())",
 		}
+		a.setDefaults()
 
 		errors := a.Validate()
 		s.NotNil(errors)
@@ -56,11 +58,11 @@ func (s *APISuite) TestValidation() {
 
 	s.T().Run("invalid_sans_address", func(t *testing.T) {
 		a := APISpec{
-			Address: "1.2.3.4",
 			SANs: []string{
 				"something.that.is.not.valid//(())",
 			},
 		}
+		a.setDefaults()
 
 		errors := a.Validate()
 		s.NotNil(errors)
