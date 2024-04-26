@@ -4,9 +4,9 @@ include hack/tools/Makefile.variables
 
 ifndef HOST_ARCH
 HOST_HARDWARE := $(shell uname -m)
-ifneq (, $(filter $(HOST_HARDWARE), aarch64 arm64 armv8l))
+ifneq (, $(filter $(HOST_HARDWARE), aarch64 arm64))
   HOST_ARCH := arm64
-else ifneq (, $(filter $(HOST_HARDWARE), armv7l arm))
+else ifneq (, $(filter $(HOST_HARDWARE), armv8l armv7l arm))
   HOST_ARCH := arm
 else
   ifeq (, $(filter $(HOST_HARDWARE), x86_64 amd64 x64))
