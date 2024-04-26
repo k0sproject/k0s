@@ -18,6 +18,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -75,10 +76,22 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, wo
 		if workerOpts.TokenArg != "" {
 			tokenData = workerOpts.TokenArg
 		} else {
+			var problem string
 			data, err := os.ReadFile(workerOpts.TokenFile)
-			if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				problem = "not found"
+			} else if err != nil {
 				return fmt.Errorf("failed to read token file: %w", err)
+			} else if len(data) == 0 {
+				problem = "is empty"
 			}
+			if problem != "" {
+				return fmt.Errorf("token file %q %s"+
+					`: obtain a new token via "k0s token create ..." and store it in the file`+
+					` or reinstall this node via "k0s install --force ..." or "k0sctl apply --force ..."`,
+					workerOpts.TokenFile, problem)
+			}
+
 			tokenData = string(data)
 		}
 
