@@ -63,6 +63,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 		return fmt.Errorf("failed to read ca cert: %w", err)
 	}
 	c.CACert = string(cert)
+	// Changing the URL here also requires changes in the "k0s kubeconfig admin" subcommand.
 	kubeConfigAPIUrl := fmt.Sprintf("https://localhost:%d", c.ClusterSpec.API.Port)
 	eg.Go(func() error {
 		// Front proxy CA
@@ -257,6 +258,7 @@ func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
 
 	kubeconfig, err := clientcmd.Write(clientcmdapi.Config{
 		Clusters: map[string]*clientcmdapi.Cluster{clusterName: {
+			// The server URL is replaced in the "k0s kubeconfig admin" subcommand.
 			Server:                   url,
 			CertificateAuthorityData: []byte(caCert),
 		}},

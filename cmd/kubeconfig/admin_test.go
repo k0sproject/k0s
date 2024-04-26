@@ -110,9 +110,8 @@ func TestAdmin_NoAdminConfig(t *testing.T) {
 	assert.Error(t, underTest.Execute())
 
 	assert.Empty(t, stdout.String())
-	msg := "failed to read admin config, check if the control plane is initialized on this node"
-	detail := fmt.Sprintf("open %s: no such file or directory", adminConfPath)
-	assert.Equal(t, "Error: "+msg+": "+detail+"\n", stderr.String())
+	msg := fmt.Sprintf("admin config %q not found, check if the control plane is initialized on this node", adminConfPath)
+	assert.Equal(t, "Error: "+msg+"\n", stderr.String())
 }
 
 func writeYAML(t *testing.T, path string, data any) {
