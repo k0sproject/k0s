@@ -44,14 +44,14 @@ func TestAdmin(t *testing.T) {
 	writeYAML(t, configPath, &v1beta1.ClusterConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String(), Kind: v1beta1.ClusterConfigKind},
 		Spec: &v1beta1.ClusterSpec{API: &v1beta1.APISpec{
-			Port: 6443, ExternalAddress: "not-here.example.com",
+			Port: 65432, ExternalAddress: "not-here.example.com",
 		}},
 	})
 
 	adminConfPath := filepath.Join(dataDir, "admin.conf")
 	require.NoError(t, clientcmd.WriteToFile(api.Config{
 		Clusters: map[string]*api.Cluster{
-			t.Name(): {Server: "https://localhost:6443"},
+			t.Name(): {Server: "https://localhost:65432"},
 		},
 	}, adminConfPath))
 
@@ -81,7 +81,7 @@ func TestAdmin(t *testing.T) {
 	require.NoError(t, err)
 
 	if theCluster, ok := adminConf.Clusters[t.Name()]; assert.True(t, ok) {
-		assert.Equal(t, "https://not-here.example.com:6443", theCluster.Server)
+		assert.Equal(t, "https://not-here.example.com:65432", theCluster.Server)
 	}
 }
 

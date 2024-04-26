@@ -17,9 +17,9 @@ limitations under the License.
 package kubeconfig
 
 import (
+	"bytes"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/sirupsen/logrus"
@@ -54,9 +54,10 @@ func kubeConfigAdminCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
-			newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
-			_, err = cmd.OutOrStdout().Write([]byte(newContent))
+			externalURL := nodeConfig.Spec.API.APIAddressURL()
+			internalURL := fmt.Sprintf("https://localhost:%d", nodeConfig.Spec.API.Port)
+			newContent := bytes.Replace(content, []byte(internalURL), []byte(externalURL), -1)
+			_, err = cmd.OutOrStdout().Write(newContent)
 			return err
 		},
 	}
