@@ -19,9 +19,9 @@ package v1beta1
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"helm.sh/helm/v3/pkg/chartutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ Validateable = (*ClusterExtensions)(nil)
@@ -91,13 +91,15 @@ func (he HelmExtensions) Validate() []error {
 
 // Chart single helm addon
 type Chart struct {
-	Name      string        `json:"name"`
-	ChartName string        `json:"chartname"`
-	Version   string        `json:"version"`
-	Values    string        `json:"values"`
-	TargetNS  string        `json:"namespace"`
-	Timeout   time.Duration `json:"timeout"`
-	Order     int           `json:"order"`
+	Name      string `json:"name"`
+	ChartName string `json:"chartname"`
+	Version   string `json:"version"`
+	Values    string `json:"values"`
+	TargetNS  string `json:"namespace"`
+	// Timeout specifies the timeout for how long to wait for the chart installation to finish.
+	// A duration string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+	Timeout metav1.Duration `json:"timeout"`
+	Order   int             `json:"order"`
 }
 
 // ManifestFileName returns filename to use for the crd manifest

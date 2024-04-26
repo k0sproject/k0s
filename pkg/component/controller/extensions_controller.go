@@ -41,6 +41,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
@@ -147,7 +148,7 @@ func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions, storageExtension *
 		TargetNS:  "openebs",
 		Version:   constant.OpenEBSVersion,
 		Values:    values,
-		Timeout:   time.Duration(time.Minute * 30), // it takes a while to install openebs
+		Timeout:   metav1.Duration{Duration: time.Duration(time.Minute * 30)}, // it takes a while to install openebs
 	})
 	return helmSpec, nil
 }
@@ -391,7 +392,7 @@ metadata:
 spec:
   chartName: {{ .ChartName }}
   releaseName: {{ .Name }}
-  timeout: {{ .Timeout }}
+  timeout: {{ .Timeout.Duration }}
   values: |
 {{ .Values | nindent 4 }}
   version: {{ .Version }}
