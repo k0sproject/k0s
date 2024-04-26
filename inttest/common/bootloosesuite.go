@@ -817,15 +817,15 @@ func (s *BootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 
 	hostURL, err := url.Parse(cfg.Host)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse port value `%s`: %w", cfg.Host, err)
+		return nil, fmt.Errorf("can't parse Kubernetes API server host %q: %w", cfg.Host, err)
 	}
-	port, err := strconv.ParseInt(hostURL.Port(), 10, 32)
+	port, err := strconv.ParseUint(hostURL.Port(), 10, 16)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse port value `%s`: %w", hostURL.Port(), err)
+		return nil, fmt.Errorf("can't parse Kubernetes API server port %q: %w", hostURL.Port(), err)
 	}
 	hostPort, err := machine.HostPort(int(port))
 	if err != nil {
-		return nil, fmt.Errorf("bootloose machine has to have %d port mapped: %w", port, err)
+		return nil, fmt.Errorf("can't find host port for Kubernetes API server port %d: %w", port, err)
 	}
 	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
 	return cfg, nil

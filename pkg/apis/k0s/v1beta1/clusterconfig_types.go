@@ -39,13 +39,13 @@ const (
 
 // ClusterSpec defines the desired state of ClusterConfig
 type ClusterSpec struct {
-	API               *APISpec               `json:"api"`
+	API               *APISpec               `json:"api,omitempty"`
 	ControllerManager *ControllerManagerSpec `json:"controllerManager,omitempty"`
 	Scheduler         *SchedulerSpec         `json:"scheduler,omitempty"`
-	Storage           *StorageSpec           `json:"storage"`
-	Network           *Network               `json:"network"`
+	Storage           *StorageSpec           `json:"storage,omitempty"`
+	Network           *Network               `json:"network,omitempty"`
 	WorkerProfiles    WorkerProfiles         `json:"workerProfiles,omitempty"`
-	Telemetry         *ClusterTelemetry      `json:"telemetry"`
+	Telemetry         *ClusterTelemetry      `json:"telemetry,omitempty"`
 	Install           *InstallSpec           `json:"installConfig,omitempty"`
 	Images            *ClusterImages         `json:"images,omitempty"`
 	Extensions        *ClusterExtensions     `json:"extensions,omitempty"`
