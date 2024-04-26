@@ -67,9 +67,9 @@ func TestWriteAtomically(t *testing.T) {
 	})
 
 	// Several tests about error handling and reporting. Some of them are a bit
-	// contrived and expect the Writer to be a File pointer in order to break
-	// things in ways usual consumers of the API wouldn't be able to do, as the
-	// interface doesn't make any guarantees about the actual type of the
+	// contrived and expect the Writer to be a pointer to Atomic in order to
+	// break things in ways usual consumers of the API wouldn't be able to do,
+	// as the interface doesn't make any guarantees about the actual type of the
 	// Writer.
 
 	assertPathError := func(t *testing.T, err error, op, dir string) (pathErr *os.PathError, ok bool) {
@@ -134,9 +134,9 @@ func TestWriteAtomically(t *testing.T) {
 		file := filepath.Join(dir, "file")
 
 		errs := flatten(WriteAtomically(file, 0644, func(file io.Writer) error {
-			c, ok := file.(io.Closer)
-			require.True(t, ok, "Not closeable: %T", file)
-			require.NoError(t, c.Close())
+			a, ok := file.(*Atomic)
+			require.True(t, ok, "Not an Atomic: %T", file)
+			require.NoError(t, a.fd.Close())
 			return nil
 		}))
 
@@ -169,9 +169,9 @@ func TestWriteAtomically(t *testing.T) {
 
 		var tempPath string
 		err := WriteAtomically(file, 0644, func(file io.Writer) error {
-			n, ok := file.(interface{ Name() string })
-			require.True(t, ok, "Doesn't have a name: %T", file)
-			tempPath = n.Name()
+			a, ok := file.(*Atomic)
+			require.True(t, ok, "Not an Atomic: %T", file)
+			tempPath = a.fd.Name()
 			require.Equal(t, dir, filepath.Dir(tempPath))
 			if runtime.GOOS == "windows" {
 				t.Skip("Cannot remove a file which is still opened on Windows")
@@ -245,9 +245,9 @@ func TestWriteAtomically(t *testing.T) {
 
 		var tempPath string
 		errs := flatten(WriteAtomically(file, 0755, func(file io.Writer) error {
-			n, ok := file.(interface{ Name() string })
-			require.True(t, ok, "Doesn't have a name: %T", file)
-			tempPath = n.Name()
+			a, ok := file.(*Atomic)
+			require.True(t, ok, "Not an Atomic: %T", file)
+			tempPath = a.fd.Name()
 			require.Equal(t, dir, filepath.Dir(tempPath))
 
 			if runtime.GOOS == "windows" {

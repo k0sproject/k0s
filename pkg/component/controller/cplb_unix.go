@@ -23,9 +23,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
-	"os"
 	"path/filepath"
 	"slices"
 	"syscall"
@@ -310,17 +308,16 @@ func (*Keepalived) getLinkAddresses(link netlink.Link) ([]netlink.Addr, []string
 }
 
 func (k *Keepalived) generateKeepalivedTemplate() error {
-	if err := file.WriteAtomically(k.configFilePath, 0400, func(file io.Writer) error {
-		if err := file.(*os.File).Chown(k.uid, -1); err != nil {
-			return err
-		}
-
-		w := bufio.NewWriter(file)
-		if err := keepalivedConfigTemplate.Execute(w, k.keepalivedConfig); err != nil {
-			return err
-		}
-		return w.Flush()
-	}); err != nil {
+	if err := file.AtomicWithTarget(k.configFilePath).
+		WithPermissions(0400).
+		WithOwner(k.uid).
+		Do(func(unbuffered file.AtomicWriter) error {
+			w := bufio.NewWriter(unbuffered)
+			if err := keepalivedConfigTemplate.Execute(w, k.keepalivedConfig); err != nil {
+				return err
+			}
+			return w.Flush()
+		}); err != nil {
 		return fmt.Errorf("failed to write keepalived config file: %w", err)
 	}
 

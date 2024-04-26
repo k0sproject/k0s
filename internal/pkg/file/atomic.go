@@ -289,10 +289,7 @@ func remove(fd *os.File) error {
 // https://github.com/golang/go/issues/22397#issuecomment-498856679
 func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Writer) error) (err error) {
 	return AtomicWithTarget(fileName).WithPermissions(perm).Do(func(unbuffered AtomicWriter) error {
-		// Pass the real file to the callback, so that callers that are cheating
-		// and relied on this implementation detail won't break.
-		fd := unbuffered.(*Atomic).fd
-		return write(fd)
+		return write(unbuffered)
 	})
 }
 
