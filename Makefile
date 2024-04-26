@@ -147,12 +147,11 @@ pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/bo
 	    --go-header-file=hack/tools/boilerplate.go.txt \
 	    --input-base='' \
 	    --input=$(subst $(space),$(comma),$(clientset_input_dirs:%=github.com/k0sproject/k0s/%)) \
-	    --output-package=github.com/k0sproject/k0s/pkg/client \
+	    --output-pkg=github.com/k0sproject/k0s/pkg/client \
 	    --clientset-name=clientset \
-	    --output-base="$$gendir/out" \
-	    --trim-path-prefix=github.com/k0sproject/k0s \
+	    --output-dir="$$gendir/out" \
 	  && { [ ! -e pkg/client/clientset ] || mv -- pkg/client/clientset "$$gendir/old"; } \
-	  && mv -f -- "$$gendir/out/github.com/k0sproject/k0s/pkg/client/clientset" pkg/client/.
+	  && mv -f -- "$$gendir/out/clientset" pkg/client/.
 	touch -- '$@'
 
 codegen_targets += static/zz_generated_assets.go
