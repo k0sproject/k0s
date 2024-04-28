@@ -2165,14 +2165,14 @@
 <h2 id="container-images">Container images<a class="headerlink" href="#container-images" title="Permanent link">#</a></h2>
 <p>The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include:</p>
 <ul>
-<li>docker.io/k0sproject/k0s:v1.29.4-k0s.0</li>
-<li>ghcr.io/k0sproject/k0s:v1.29.4-k0s.0</li>
+<li>docker.io/k0sproject/k0s:v1.30.0-k0s.0</li>
+<li>ghcr.io/k0sproject/k0s:v1.30.0-k0s.0</li>
 </ul>
-<p><strong>Note:</strong> Due to Docker Hub tag validation scheme, we have to use <code>-</code> as the k0s version separator instead of the usual <code>+</code>. So for example k0s version <code>v1.29.4+k0s.0</code> is tagged as <code>docker.io/k0sproject/k0s:v1.29.4-k0s.0</code>.</p>
+<p><strong>Note:</strong> Due to Docker Hub tag validation scheme, we have to use <code>-</code> as the k0s version separator instead of the usual <code>+</code>. So for example k0s version <code>v1.30.0+k0s.0</code> is tagged as <code>docker.io/k0sproject/k0s:v1.30.0-k0s.0</code>.</p>
 <h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
 <h3 id="1-initiate-k0s">1. Initiate k0s<a class="headerlink" href="#1-initiate-k0s" title="Permanent link">#</a></h3>
 <p>You can run your own k0s in Docker:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w"> </span>docker.io/k0sproject/k0s:v1.29.4-k0s.0<span class="w"> </span>--<span class="w"> </span>k0s<span class="w"> </span>controller<span class="w"> </span>--enable-worker
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w"> </span>docker.io/k0sproject/k0s:v1.30.0-k0s.0<span class="w"> </span>--<span class="w"> </span>k0s<span class="w"> </span>controller<span class="w"> </span>--enable-worker
 </code></pre></div>
 <p><strong>Note:</strong> This command starts k0s with a worker. You may disable the worker by running it without the flag <code>--enable-worker</code></p>
 <h3 id="2-optional-create-additional-workers">2. (Optional) Create additional workers<a class="headerlink" href="#2-optional-create-additional-workers" title="Permanent link">#</a></h3>
@@ -2186,7 +2186,7 @@
 </li>
 <li>
 <p>Run the container to create and join the new worker:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-worker1<span class="w"> </span>--hostname<span class="w"> </span>k0s-worker1<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w">  </span>docker.io/k0sproject/k0s:v1.29.4-k0s.0<span class="w"> </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="nv">$token</span>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-worker1<span class="w"> </span>--hostname<span class="w"> </span>k0s-worker1<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w">  </span>docker.io/k0sproject/k0s:v1.30.0-k0s.0<span class="w"> </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="nv">$token</span>
 </code></pre></div>
 </li>
 </ol>
@@ -2201,7 +2201,7 @@
 <span class="nt">services</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
-<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:v1.29.4-k0s.0</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:v1.30.0-k0s.0</span>
 <span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s controller --config=/etc/k0s/config.yaml --enable-worker</span>
 <span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
 <span class="w">    </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
