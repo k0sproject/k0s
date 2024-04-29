@@ -237,6 +237,8 @@ func (c *command) start(ctx context.Context) error {
 			K0sVars:         c.K0sVars,
 			Config:          cplb,
 			DetailedLogging: c.Debug,
+			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
+			APISpec:         nodeConfig.Spec.API,
 		})
 	}
 

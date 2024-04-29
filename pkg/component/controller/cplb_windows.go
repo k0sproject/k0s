@@ -28,8 +28,10 @@ import (
 // Just create the interface so that the CI doesn't complain.
 type Keepalived struct {
 	K0sVars         *config.CfgVars
-	Config          *k0sAPI.ControlPlaneLoadBalancingSpec
+	Config          *k0sAPI.KeepalivedSpec
 	DetailedLogging bool
+	APISpec         *k0sAPI.APISpec
+	KubeConfigPath  string
 }
 
 func (k *Keepalived) Init(_ context.Context) error {

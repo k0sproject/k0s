@@ -28,7 +28,9 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"syscall"
 	"text/template"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/users"
@@ -43,13 +45,18 @@ import (
 
 // Keepalived is the controller for the keepalived process in the control plane load balancing
 type Keepalived struct {
-	K0sVars         *config.CfgVars
-	Config          *k0sAPI.ControlPlaneLoadBalancingSpec
-	DetailedLogging bool
-	uid             int
-	supervisor      *supervisor.Supervisor
-	log             *logrus.Entry
-	configFilePath  string
+	K0sVars          *config.CfgVars
+	Config           *k0sAPI.ControlPlaneLoadBalancingSpec
+	DetailedLogging  bool
+	APISpec          *k0sAPI.APISpec
+	KubeConfigPath   string
+	keepalivedConfig *keepalivedConfig
+	uid              int
+	supervisor       *supervisor.Supervisor
+	log              *logrus.Entry
+	configFilePath   string
+	reconciler       *CPLBReconciler
+	updateCh         <-chan struct{}
 }
 
 // Init extracts the needed binaries and creates the directories
@@ -71,20 +78,45 @@ func (k *Keepalived) Init(_ context.Context) error {
 
 // Start generates the keepalived configuration and starts the keepalived process
 func (k *Keepalived) Start(_ context.Context) error {
-	if k.Config == nil {
+	if k.Config == nil || (len(k.Config.VRRPInstances) == 0 && len(k.Config.VirtualServers) == 0) {
+		k.log.Warn("No VRRP instances or virtual servers defined, skipping keepalived start")
 		return nil
 	}
 
-	if err := k.configureDummy(); err != nil {
-		return fmt.Errorf("failed to configure dummy interface: %w", err)
+	if len(k.Config.VRRPInstances) > 0 {
+		if err := k.configureDummy(); err != nil {
+			return fmt.Errorf("failed to configure dummy interface: %w", err)
+		}
+		if err := k.Config.ValidateVRRPInstances(nil); err != nil {
+			return fmt.Errorf("failed to validate VRRP instances: %w", err)
+		}
 	}
 
-	if err := k.Config.ValidateVRRPInstances(nil); err != nil {
-		return fmt.Errorf("failed to validate VRRP instances: %w", err)
+	if len(k.Config.VirtualServers) > 0 {
+		if k.APISpec.ExternalAddress != "" {
+			return errors.New("externalAddress is not supported with virtual servers")
+		}
+		if err := k.Config.ValidateVirtualServers(); err != nil {
+			return fmt.Errorf("failed to validate virtual servers: %w", err)
+		}
+		k.log.Info("Starting CPLB reconciler")
+		updateCh := make(chan struct{}, 1)
+		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, updateCh)
+		k.updateCh = updateCh
+		if err := k.reconciler.Start(); err != nil {
+			return fmt.Errorf("failed to start CPLB reconciler: %w", err)
+		}
+	}
+
+	// In order to make the code simpler, we always create the keepalived template
+	// without the virtual servers, before starting the reconcile loop
+	k.keepalivedConfig = &keepalivedConfig{
+		VRRPInstances:  k.Config.VRRPInstances,
+		VirtualServers: k.Config.VirtualServers,
+		APIServerPort:  k.APISpec.Port,
 	}
 	if err := k.generateKeepalivedTemplate(); err != nil {
 		return fmt.Errorf("failed to generate keepalived template: %w", err)
-
 	}
 
 	args := []string{
@@ -108,6 +140,10 @@ func (k *Keepalived) Start(_ context.Context) error {
 		DataDir: k.K0sVars.DataDir,
 		UID:     k.uid,
 	}
+
+	if len(k.Config.VirtualServers) > 0 {
+		go k.watchReconcilerUpdates()
+	}
 	return k.supervisor.Supervise()
 }
 
@@ -118,6 +154,11 @@ func (k *Keepalived) Stop() error {
 	if err := k.supervisor.Stop(); err != nil {
 		// Failed to stop keepalived. Don't delete the VIP, just in case.
 		return fmt.Errorf("failed to stop keepalived: %w", err)
+	}
+
+	k.log.Infof("Stopping cplb-reconciler")
+	if k.reconciler != nil {
+		k.reconciler.Stop()
 	}
 
 	k.log.Infof("Deleting dummy interface")
@@ -268,18 +309,13 @@ func (*Keepalived) getLinkAddresses(link netlink.Link) ([]netlink.Addr, []string
 }
 
 func (k *Keepalived) generateKeepalivedTemplate() error {
-	template := template.Must(template.New("keepalived").Parse(keepalivedConfigTemplate))
-	kc := keepalivedConfig{
-		VRRPInstances: k.Config.VRRPInstances,
-	}
-
 	if err := file.WriteAtomically(k.configFilePath, 0400, func(file io.Writer) error {
 		if err := file.(*os.File).Chown(k.uid, -1); err != nil {
 			return err
 		}
 
 		w := bufio.NewWriter(file)
-		if err := template.Execute(w, kc); err != nil {
+		if err := keepalivedConfigTemplate.Execute(w, k.keepalivedConfig); err != nil {
 			return err
 		}
 		return w.Flush()
@@ -290,16 +326,47 @@ func (k *Keepalived) generateKeepalivedTemplate() error {
 	return nil
 }
 
+func (k *Keepalived) watchReconcilerUpdates() {
+	// Wait for the supervisor to start keepalived before
+	// watching for endpoint changes
+	process := k.supervisor.GetProcess()
+	for process == nil {
+		k.log.Info("Waiting for keepalived to start")
+		time.Sleep(5 * time.Second)
+		process = k.supervisor.GetProcess()
+	}
+
+	k.log.Info("started watching cplb-reconciler updates")
+	for range k.updateCh {
+		k.keepalivedConfig.RealServers = k.reconciler.GetIPs()
+		k.log.Infof("cplb-reconciler update, got %s", k.keepalivedConfig.RealServers)
+		if err := k.generateKeepalivedTemplate(); err != nil {
+			k.log.Errorf("failed to generate keepalived template: %v", err)
+			continue
+		}
+
+		process := k.supervisor.GetProcess()
+		if err := process.Signal(syscall.SIGHUP); err != nil {
+			k.log.Errorf("failed to send SIGHUP to keepalived: %v", err)
+		}
+	}
+	k.log.Info("stopped watching cplb-reconciler updates")
+}
+
 // keepalivedConfig contains all the information required by the
 // KeepalivedConfigTemplate.
 // Right now this struct doesn't make sense right now but we need this for the
 // future virtual_server support.
 type keepalivedConfig struct {
-	VRRPInstances []k0sAPI.VRRPInstance
+	VRRPInstances  []k0sAPI.VRRPInstance
+	VirtualServers []k0sAPI.VirtualServer
+	RealServers    []string
+	APIServerPort  int
 }
 
 const dummyLinkName = "dummyvip0"
-const keepalivedConfigTemplate = `
+
+var keepalivedConfigTemplate = template.Must(template.New("keepalived").Parse(`
 {{ range .VRRPInstances }}
 vrrp_instance {{ .Name }} {
 	# All servers must have state BACKUP so that when a new server comes up
@@ -325,4 +392,30 @@ vrrp_instance {{ .Name }} {
     }
 }
 {{ end }}
-`
+
+{{ $APIServerPort := .APIServerPort }}
+{{ $RealServers := .RealServers }}
+{{ if gt (len $RealServers) 0 }}
+{{ range .VirtualServers }}
+virtual_server {{ .IPAddress }} {{ $APIServerPort }} {
+    delay_loop {{ .DelayLoop }}
+    lb_algo {{ .LBAlgo }}
+    lb_kind {{ .LBKind }}
+    persistence_timeout {{ .PersistenceTimeoutSeconds }}
+    protocol TCP
+
+    {{ range $RealServers }}
+    real_server {{ . }} {{ $APIServerPort }} {
+        weight 1
+        TCP_CHECK {
+            warmup 0
+            retry 1
+            connect_timeout 3
+            connect_port {{ $APIServerPort }}
+        }
+    }
+    {{end}}
+}
+{{ end }}
+{{ end }}
+`))

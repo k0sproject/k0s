@@ -302,5 +302,8 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 func (s *Supervisor) GetProcess() *os.Process {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+	if s.cmd == nil {
+		return nil
+	}
 	return s.cmd.Process
 }
