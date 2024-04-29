@@ -150,6 +150,122 @@ func returnNIC() (string, error) {
 	return "fake-nic-0", nil
 }
 
+func (s *CPLBSuite) TestValidateVirtualServers() {
+	tests := []struct {
+		name        string
+		vss         []VirtualServer
+		expectedVSS []VirtualServer
+		wantErr     bool
+	}{
+		{
+			name: "Set expected defaults",
+			vss: []VirtualServer{
+				{
+					IPAddress: "1.2.3.4",
+				},
+				{
+					IPAddress: "1.2.3.5",
+				},
+			},
+			expectedVSS: []VirtualServer{
+				{
+					IPAddress:          "1.2.3.4",
+					DelayLoop:          0,
+					LBAlgo:             RRAlgo,
+					LBKind:             DRLBKind,
+					PersistenceTimeout: 360,
+				},
+				{
+					IPAddress:          "1.2.3.5",
+					DelayLoop:          0,
+					LBAlgo:             RRAlgo,
+					LBKind:             DRLBKind,
+					PersistenceTimeout: 360,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid instance no overrides",
+			vss: []VirtualServer{
+				{
+					IPAddress:          "1.2.3.4",
+					DelayLoop:          1,
+					LBAlgo:             WRRAlgo,
+					LBKind:             NATLBKind,
+					PersistenceTimeout: 100,
+				},
+			},
+			expectedVSS: []VirtualServer{
+				{
+					IPAddress:          "1.2.3.4",
+					DelayLoop:          1,
+					LBAlgo:             WRRAlgo,
+					LBKind:             NATLBKind,
+					PersistenceTimeout: 100,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "empty ip address",
+			vss:     []VirtualServer{{}},
+			wantErr: true,
+		},
+		{
+			name: "invalid IP address",
+			vss: []VirtualServer{{
+				IPAddress: "INVALID",
+			}},
+			wantErr: true,
+		},
+		{
+			name: "invalid LBAlgo",
+			vss: []VirtualServer{{
+				LBAlgo: "invalid",
+			}},
+			wantErr: true,
+		},
+		{
+			name: "invalid LBKind",
+			vss: []VirtualServer{{
+				LBKind: "invalid",
+			}},
+			wantErr: true,
+		},
+		{
+			name: "invalid persistencee timeout",
+			vss: []VirtualServer{{
+				PersistenceTimeout: -1,
+			}},
+			wantErr: true,
+		},
+		{
+			name: "invalid delay loop",
+			vss: []VirtualServer{{
+				DelayLoop: -1,
+			}},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			cplb := &ControlPlaneLoadBalancingSpec{VirtualServers: tt.vss}
+			err := cplb.ValidateVirtualServers()
+			if tt.wantErr {
+				s.Require().Errorf(err, "Test case %s expected error. Got none", tt.name)
+			} else {
+				s.Require().NoErrorf(err, "Tedst case %s expected no error. Got: %v", tt.name, err)
+				for i := range tt.expectedVSS {
+					s.Require().Equal(tt.expectedVSS[i].DelayLoop, cplb.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
+					s.Require().Equal(tt.expectedVSS[i].LBAlgo, cplb.VirtualServers[i].LBAlgo, "LBalgo mismatch")
+					s.Require().Equal(tt.expectedVSS[i].LBKind, cplb.VirtualServers[i].LBKind, "LBKind mismatch")
+					s.Require().Equal(tt.expectedVSS[i].PersistenceTimeout, cplb.VirtualServers[i].PersistenceTimeout, "PersistenceTimeout mismatch")
+				}
+			}
+		})
+	}
+}
 func TestCPLBSuite(t *testing.T) {
 	cplbSuite := &CPLBSuite{}
 

@@ -376,6 +376,54 @@ spec:
                           Indicates if control plane load balancing should be enabled.
                           Default: false
                         type: boolean
+                      virtualServers:
+                        description: |-
+                          Configuration options related to the virtual servers. This is an array
+                          which allows to configure multiple load balancers.
+                        items:
+                          description: VirtualServer defines the configuration options
+                            for a virtual server.
+                          properties:
+                            delayLoop:
+                              description: DelayLoop is the delay timer for check
+                                polling. If not specified, defaults to 0.
+                              type: integer
+                            ipAddress:
+                              description: IPAddress is the virtual IP address used
+                                by the virtual server.
+                              type: string
+                            lbAlgo:
+                              description: |-
+                                LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
+                                Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
+                                details refer to keepalived documentation.
+                              enum:
+                              - rr
+                              - wrr
+                              - lc
+                              - wlc
+                              - lblc
+                              - dh
+                              - sh
+                              - sed
+                              - nq
+                              type: string
+                            lbKind:
+                              description: |-
+                                LBKind is the load balancing kind. If not specified, defaults to DR.
+                                Valid values are NAT DR TUN. For further details refer to keepalived documentation.
+                              enum:
+                              - NAT
+                              - DR
+                              - TUN
+                              type: string
+                            persistenceTimeout:
+                              description: |-
+                                PersistenceTimeout specify a timeout value for persistent connections in
+                                seconds. If not specified, defaults to 360 (6 minutes).
+                              type: integer
+                          type: object
+                        type: array
                       vrrpInstances:
                         description: |-
                           Configuration options related to the VRRP. This is an array which allows
