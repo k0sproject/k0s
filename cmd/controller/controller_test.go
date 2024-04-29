@@ -52,7 +52,7 @@ Flags:
       --cidr-range string                              HACK: cidr range for the windows worker node \(default "10\.96\.0\.0/12"\)
   -c, --config string                                  config file, use '-' to read the config from stdin \(default ".+k0s\.yaml"\)
       --cri-socket string                              container runtime socket to use, default to internal containerd\. Format: \[remote\|docker\]:\[path-to-socket\]
-      --data-dir string                                Data Directory for k0s \(default: .+k0s\)\. DO NOT CHANGE for an existing setup, things will break!
+      --data-dir string                                Data Directory for k0s\. DO NOT CHANGE for an existing setup, things will break! \(default ".+k0s"\)
   -d, --debug                                          Debug logging \(default: false\)
       --debugListenOn string                           Http listenOn for Debug pprof handler \(default ":6060"\)
       --disable-components strings                     disable components \(valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config\)
