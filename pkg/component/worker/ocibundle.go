@@ -45,7 +45,6 @@ type OCIBundleReconciler struct {
 	mtx             sync.Mutex
 	cancel          context.CancelFunc
 	end             chan struct{}
-	watcher         *fsnotify.Watcher
 	*prober.EventEmitter
 }
 
