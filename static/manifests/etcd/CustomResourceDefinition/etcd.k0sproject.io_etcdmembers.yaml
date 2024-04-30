@@ -16,16 +16,16 @@ spec:
   versions:
   - additionalPrinterColumns:
     - jsonPath: .peerAddress
-      name: PeerAddress
+      name: Peer Address
       type: string
     - jsonPath: .memberID
-      name: MemberID
+      name: Member ID
       type: string
     - jsonPath: .status.conditions[?(@.type=="Joined")].status
       name: Joined
       type: string
     - jsonPath: .status.reconcileStatus
-      name: ReconcileStatus
+      name: Reconcile Status
       type: string
     name: v1beta1
     schema:
@@ -77,14 +77,23 @@ spec:
                         last transition.
                       type: string
                     status:
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
                       type: string
                     type:
+                      enum:
+                      - Joined
                       type: string
                   required:
                   - status
                   - type
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               message:
                 type: string
               reconcileStatus:

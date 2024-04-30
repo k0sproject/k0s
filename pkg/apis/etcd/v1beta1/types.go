@@ -46,10 +46,10 @@ func init() {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:name="PeerAddress",type=string,JSONPath=`.peerAddress`
-// +kubebuilder:printcolumn:name="MemberID",type=string,JSONPath=`.memberID`
+// +kubebuilder:printcolumn:name="Peer Address",type=string,JSONPath=`.peerAddress`
+// +kubebuilder:printcolumn:name="Member ID",type=string,JSONPath=`.memberID`
 // +kubebuilder:printcolumn:name="Joined",type=string,JSONPath=`.status.conditions[?(@.type=="Joined")].status`
-// +kubebuilder:printcolumn:name="ReconcileStatus",type=string,JSONPath=`.status.reconcileStatus`
+// +kubebuilder:printcolumn:name="Reconcile Status",type=string,JSONPath=`.status.reconcileStatus`
 // +genclient
 // +genclient:onlyVerbs=create,delete,list,get,watch,update,updateStatus,patch
 // +genclient:nonNamespaced
@@ -71,17 +71,18 @@ type EtcdMember struct {
 }
 
 // +kubebuilder:validation:Enum=Joined;Left
-// +kubebuilder:validation:Enum=Joined;Left
 type JoinStatus string
 
-const JoinStatusJoined JoinStatus = "Joined"
-const JoinStatusLeft JoinStatus = "Left"
+const (
+	JoinStatusJoined JoinStatus = "Joined"
+	JoinStatusLeft   JoinStatus = "Left"
+)
 
 type Status struct {
 	ReconcileStatus string `json:"reconcileStatus,omitempty"`
 	Message         string `json:"message,omitempty"`
-	// JoinStatus      JoinStatus `json:"joinStatus,omitempty"`
-
+	// +listType=map
+	// +listMapKey=type
 	Conditions []JoinCondition `json:"conditions,omitempty"`
 }
 
@@ -91,6 +92,7 @@ const (
 	ConditionTypeJoined ConditionType = "Joined"
 )
 
+// +kubebuilder:validation:Enum=True;False;Unknown
 type ConditionStatus string
 
 // These are valid condition statuses. "ConditionTrue" means a resource is in the condition.
@@ -103,8 +105,10 @@ const (
 )
 
 type JoinCondition struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=Joined
 	Type ConditionType `json:"type"`
-	// +kubebuilder
+	// +kubebuilder:validation:Required
 	Status ConditionStatus `json:"status"`
 	// Last time the condition transitioned from one status to another.
 	// +optional
@@ -164,10 +168,3 @@ type EtcdMemberList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []EtcdMember `json:"items"`
 }
-
-// func foo() {
-// 	p := &corev1.Pod{}
-
-// 	p.Status.Conditions.
-
-// }

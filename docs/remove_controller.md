@@ -43,48 +43,56 @@ reboot
 
 ### Declarative Etcd member management
 
-Starting from version 1.30, k0s supports also declarative way to remove a Etcd member. Since in k0s Etcd cluster is setup so that the Etcd API is **NOT** exposed outside of
-the nodes it makes it difficult for external automation like Cluster API, Terraform etc. to handle controller node replacements.
+Starting from version 1.30, k0s also supports a declarative way to remove an  
+etcd member. Since in k0s the etcd cluster is set up so that the etcd API is  
+**NOT** exposed outside the nodes, it makes it difficult for external automation  
+like Cluster API, Terraform, etc. to handle controller node replacements.
 
 Each controller manages their own `EtcdMember` object.
 
 ```shell
 k0s kubectl get etcdmember
-NAME          PEERADDRESS   MEMBERID           JOINED   RECONCILESTATUS
-controller0   172.17.0.2    b8e14bda2255bc24   True     
-controller1   172.17.0.3    cb242476916c8a58   True     
-controller2   172.17.0.4    9c90504b1bc867bb   True 
+NAME          PEER ADDRESS   MEMBER ID           JOINED   RECONCILE STATUS
+controller0   172.17.0.2     b8e14bda2255bc24    True     
+controller1   172.17.0.3     cb242476916c8a58    True     
+controller2   172.17.0.4     9c90504b1bc867bb    True 
 ```
 
-By marking an `EtcdMember` object to leave the Etcd cluster, k0s itself will handle the interaction with Etcd. For example, in a 3 controller HA setup you can remove a member by flaggin it for leave:
+By marking an `EtcdMember` object to leave the etcd cluster, k0s will handle the  
+interaction with etcd. For example, in a 3 controller HA setup, you can  
+remove a member by flagging it to leave:
 
-```shell
-kubectl patch etcdmember controller2 -p '{"leave":true}' --type merge
+```console
+$ kubectl patch etcdmember controller2 -p '{"leave":true}' --type merge
+etcdmember.etcd.k0sproject.io/controller2 patched
 ```
 
-The join/leave status is tracked in the objects conditions which allows you to wait for the leave to actually happen:
+The join/leave status is tracked in the object's conditions. This allows you to  
+wait for the leave to actually happen:
 
-```shell
-kubectl wait etcdmember controller2 --for condition=Joined=False
-etcdmember.etcd.k0sproject.io/controller1 condition met
+```console
+$ kubectl wait etcdmember controller2 --for condition=Joined=False
+etcdmember.etcd.k0sproject.io/controller2 condition met
 ```
 
-You'll see the node left Etcd cluster:
+You'll see the node left etcd cluster:
 
-```shell
-k0s kc get etcdmember
-NAME          PEERADDRESS   MEMBERID           JOINED   RECONCILESTATUS
-controller0   172.17.0.2    b8e14bda2255bc24   True     
-controller1   172.17.0.3    cb242476916c8a58   True     
-controller2   172.17.0.4    9c90504b1bc867bb   False    Success
+```console
+$ k0s kc get etcdmember
+NAME          PEER ADDRESS   MEMBER ID           JOINED   RECONCILE STATUS
+controller0   172.17.0.2     b8e14bda2255bc24    True     
+controller1   172.17.0.3     cb242476916c8a58   True     
+controller2   172.17.0.4     9c90504b1bc867bb   False    Success
 ```
 
-```shell
-k0s etcd member-list
+```console
+$ k0s etcd member-list
 {"members":{"controller0":"https://172.17.0.2:2380","controller1":"https://172.17.0.3:2380"}}
 ```
 
-The objects for members already left etcd cluster are kept available for tracking purposes. Once the member has left the cluster and the object status reflects that it is safe to remove those.
+The objects for members that have already left the etcd cluster are kept  
+available for tracking purposes. Once the member has left the cluster, the  
+object status will reflect that it is safe to remove it.
 
 ## Replace a controller
 
