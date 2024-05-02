@@ -61,11 +61,12 @@ func TestGetNodename(t *testing.T) {
 }
 
 func startFakeMetadataServer(t *testing.T, listenOn string) {
-	http.HandleFunc("/latest/meta-data/local-hostname", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/latest/meta-data/local-hostname", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte("some-hostname-from-metadata"))
 		assert.NoError(t, err)
 	})
-	server := &http.Server{Addr: listenOn}
+	server := &http.Server{Addr: listenOn, Handler: mux}
 
 	serverError := make(chan error)
 	go func() {
