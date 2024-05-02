@@ -17,16 +17,18 @@ limitations under the License.
 package node
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
 
 func TestGetNodename(t *testing.T) {
 
-	startFakeMetadataServer(":8080")
+	startFakeMetadataServer(t, ":8080")
 	t.Run("should_always_return_override_if_given", func(t *testing.T) {
 		name, err := GetNodename("override")
 		require.Equal(t, "override", name)
@@ -58,12 +60,25 @@ func TestGetNodename(t *testing.T) {
 	})
 }
 
-func startFakeMetadataServer(listenOn string) {
+func startFakeMetadataServer(t *testing.T, listenOn string) {
 	http.HandleFunc("/latest/meta-data/local-hostname", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("some-hostname-from-metadata"))
+		_, err := w.Write([]byte("some-hostname-from-metadata"))
+		assert.NoError(t, err)
 	})
+	server := &http.Server{Addr: listenOn}
 
+	serverError := make(chan error)
 	go func() {
-		_ = http.ListenAndServe(listenOn, nil)
+		defer close(serverError)
+		serverError <- server.ListenAndServe()
 	}()
+
+	t.Cleanup(func() {
+		err := server.Shutdown(context.Background())
+		if !assert.NoError(t, err, "Couldn't shutdown HTTP server") {
+			return
+		}
+
+		assert.ErrorIs(t, <-serverError, http.ErrServerClosed, "HTTP server terminated unexpectedly")
+	})
 }
