@@ -61,7 +61,6 @@ func TestGetNodename(t *testing.T) {
 func startFakeMetadataServer(listenOn string) {
 	http.HandleFunc("/latest/meta-data/local-hostname", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("some-hostname-from-metadata"))
-		w.WriteHeader(http.StatusOK)
 	})
 
 	go func() {
