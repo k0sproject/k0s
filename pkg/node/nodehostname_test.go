@@ -18,6 +18,7 @@ package node
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"testing"
 
@@ -67,11 +68,15 @@ func startFakeMetadataServer(t *testing.T, listenOn string) {
 		assert.NoError(t, err)
 	})
 	server := &http.Server{Addr: listenOn, Handler: mux}
+	listener, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		require.NoError(t, err)
+	}
 
 	serverError := make(chan error)
 	go func() {
 		defer close(serverError)
-		serverError <- server.ListenAndServe()
+		serverError <- server.Serve(listener)
 	}()
 
 	t.Cleanup(func() {
