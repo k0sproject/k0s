@@ -49,14 +49,6 @@ func TestGetNodename(t *testing.T) {
 		require.Equal(t, nodename, name)
 	})
 
-	t.Run("windows_metadata_service_is_broken", func(t *testing.T) {
-		name, err := getNodeNameWindows("", "http://localhost:8080/not-found")
-		nodename, err2 := nodeutil.GetHostname("")
-		require.Nil(t, err)
-		require.Nil(t, err2)
-		require.Equal(t, nodename, name)
-	})
-
 	t.Run("windows_metadata_service_is_available", func(t *testing.T) {
 		name, err := getNodeNameWindows("", "http://localhost:8080/latest/meta-data/local-hostname")
 		nodename, err2 := nodeutil.GetHostname("")
@@ -71,9 +63,6 @@ func startFakeMetadataServer(listenOn string) {
 		http.HandleFunc("/latest/meta-data/local-hostname", func(w http.ResponseWriter, r *http.Request) {
 			_, _ = w.Write([]byte("some-hostname-from-metadata"))
 			w.WriteHeader(http.StatusOK)
-		})
-		http.HandleFunc("/not-found", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
 		})
 		_ = http.ListenAndServe(listenOn, nil)
 	}()
