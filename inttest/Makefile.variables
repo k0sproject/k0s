@@ -34,6 +34,7 @@ smoketests := \
 	check-dualstack \
 	check-dualstack-dynamicconfig \
 	check-embedded-binaries \
+	check-etcdmember \
 	check-externaletcd \
 	check-extraargs \
 	check-hacontrolplane \
@@ -58,4 +59,3 @@ smoketests := \
 	check-singlenode \
 	check-statussocket \
 	check-upgrade \
-	check-etcdmember \
