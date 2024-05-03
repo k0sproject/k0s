@@ -17,13 +17,16 @@ limitations under the License.
 package kubeconfig
 
 import (
+	"errors"
 	"fmt"
-	"os"
-	"strings"
+	"io/fs"
 
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 
+	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -45,18 +48,41 @@ func kubeConfigAdminCmd() *cobra.Command {
 				return err
 			}
 
-			content, err := os.ReadFile(opts.K0sVars.AdminKubeConfigPath)
+			// The admin kubeconfig in k0s' data dir uses the internal cluster
+			// address. This command is intended to provide a kubeconfig that
+			// uses the external address. Load the existing admin kubeconfig and
+			// rewrite it.
+			adminConfig, err := kubernetes.KubeconfigFromFile(opts.K0sVars.AdminKubeConfigPath)()
+			if pathErr := (*fs.PathError)(nil); errors.As(err, &pathErr) &&
+				pathErr.Path == opts.K0sVars.AdminKubeConfigPath &&
+				errors.Is(pathErr.Err, fs.ErrNotExist) {
+				return fmt.Errorf("admin config %q not found, check if the control plane is initialized on this node", pathErr.Path)
+			}
 			if err != nil {
-				return fmt.Errorf("failed to read admin config, check if the control plane is initialized on this node: %w", err)
+				return fmt.Errorf("failed to load admin config: %w", err)
 			}
 
+			// Now replace the internal address with the external one. See
+			// cmd/controller/certificates.go to see how the original kubeconfig
+			// is generated.
 			nodeConfig, err := opts.K0sVars.NodeConfig()
 			if err != nil {
 				return err
 			}
-			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
-			newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
-			_, err = cmd.OutOrStdout().Write([]byte(newContent))
+			internalURL := fmt.Sprintf("https://localhost:%d", nodeConfig.Spec.API.Port)
+			externalURL := nodeConfig.Spec.API.APIAddressURL()
+			for _, c := range adminConfig.Clusters {
+				if c.Server == internalURL {
+					c.Server = externalURL
+				}
+			}
+
+			data, err := clientcmd.Write(*adminConfig)
+			if err != nil {
+				return fmt.Errorf("failed to serialize admin kubeconfig: %w", err)
+			}
+
+			_, err = cmd.OutOrStdout().Write(data)
 			return err
 		},
 	}
