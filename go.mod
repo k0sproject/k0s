@@ -43,7 +43,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
-	github.com/urfave/cli v1.22.14
+	github.com/urfave/cli v1.22.15
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vmware-tanzu/sonobuoy v0.57.1
 	github.com/zcalusic/sysinfo v1.0.2
@@ -116,7 +116,7 @@ require (
 	github.com/containernetworking/plugins v1.2.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/daviddengcn/go-colortext v1.0.0 // indirect
