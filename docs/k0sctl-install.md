@@ -49,7 +49,7 @@ k0sctl is a single binary, the instructions for downloading and installing of wh
           keyPath: ~/.ssh/id_rsa
     ```
 
-2. Provide each host with a valid IP address that is reachable by k0ctl, and the connection details for an SSH connection.
+2. Provide each host with a valid IP address that is reachable by k0sctl, and the connection details for an SSH connection.
 
  **Note**: Refer to the [k0sctl documentation](https://github.com/k0sproject/k0sctl#configuration-file-spec-fields) for k0sctl configuration specifications.
 
