@@ -57,7 +57,7 @@ func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
 		log:             logrus.WithField("component", "OCIBundleReconciler"),
 		EventEmitter:    prober.NewEventEmitter(),
 		alreadyImported: map[string]time.Time{},
-		end:             make(chan struct{}, 1),
+		end:             make(chan struct{}),
 	}
 }
 
@@ -177,11 +177,13 @@ func (a *OCIBundleReconciler) installWatcher(ctx context.Context) error {
 	}()
 
 	go func() {
+		defer close(a.end)
 		a.log.Infof("Started to watch events on %s", a.k0sVars.OCIBundleDir)
 		_ = debouncer.Run(ctx)
-		watcher.Close()
+		if err := watcher.Close(); err != nil {
+			a.log.Errorf("Failed to close watcher: %s", err)
+		}
 		a.log.Info("OCI bundle watch bouncer ended")
-		a.end <- struct{}{}
 	}()
 
 	return nil
