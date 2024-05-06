@@ -61,6 +61,10 @@ updates:
     directory: /docs
     schedule:
       interval: daily
+    groups:
+      mkdocs:
+        patterns:
+          - "mkdocs*"
 
   - package-ecosystem: gomod
     directory: /hack/tool
