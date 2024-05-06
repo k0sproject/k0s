@@ -124,7 +124,12 @@ controllergen_targets += pkg/apis/autopilot/v1beta2/.controller-gen.stamp
 pkg/apis/autopilot/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot/v1beta2/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/autopilot/v1beta2/.controller-gen.stamp: gen_output_dir = autopilot
 
+controllergen_targets += pkg/apis/etcd/v1beta1/.controller-gen.stamp
+pkg/apis/etcd/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/etcd/v1beta1/ -maxdepth 1 -type f -name \*.go)
+pkg/apis/etcd/v1beta1/.controller-gen.stamp: gen_output_dir = etcd
+
 codegen_targets += $(controllergen_targets)
+
 pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/manifests/$(gen_output_dir)/CustomResourceDefinition'
 	mkdir -p 'static/manifests/$(gen_output_dir)'
@@ -137,7 +142,7 @@ pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerpl
 	  && mv -f -- "$$gendir"/zz_generated.deepcopy.go '$(dir $@).'
 	touch -- '$@'
 
-clientset_input_dirs := pkg/apis/autopilot/v1beta2 pkg/apis/k0s/v1beta1 pkg/apis/helm/v1beta1
+clientset_input_dirs := pkg/apis/autopilot/v1beta2 pkg/apis/k0s/v1beta1 pkg/apis/helm/v1beta1 pkg/apis/etcd/v1beta1
 codegen_targets += pkg/client/clientset/.client-gen.stamp
 pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name \*.go -not -name \*_test.go -not -name zz_\*)
 pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
@@ -163,6 +168,7 @@ static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.va
 	  static/manifests/helm/CustomResourceDefinition/... \
 	  static/manifests/v1beta1/CustomResourceDefinition/... \
 	  static/manifests/autopilot/CustomResourceDefinition/... \
+	  static/manifests/etcd/CustomResourceDefinition/... \
 	  static/manifests/calico/... \
 	  static/manifests/windows/... \
 	  static/misc/...

@@ -20,6 +20,7 @@ package fake
 
 import (
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +35,7 @@ var codecs = serializer.NewCodecFactory(scheme)
 
 var localSchemeBuilder = runtime.SchemeBuilder{
 	autopilotv1beta2.AddToScheme,
+	etcdv1beta1.AddToScheme,
 	helmv1beta1.AddToScheme,
 	k0sv1beta1.AddToScheme,
 }

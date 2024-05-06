@@ -18,10 +18,12 @@ package v1beta1
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -328,4 +330,40 @@ func TestStorageSuite(t *testing.T) {
 	storageSuite := &storageSuite{}
 
 	suite.Run(t, storageSuite)
+}
+
+func TestEtcdConfig_GetNodeName(t *testing.T) {
+	require := require.New(t)
+
+	hostname, err := os.Hostname()
+	require.NoError(err)
+
+	tests := []struct {
+		name string
+		e    *EtcdConfig
+		want string
+	}{
+		{
+			name: "no extra args - default to hostname",
+			e:    &EtcdConfig{},
+			want: hostname,
+		},
+		{
+			name: "node name set in extra args",
+			e: &EtcdConfig{
+				ExtraArgs: map[string]string{
+					"name": "node-1",
+				},
+			},
+			want: "node-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, _ := tt.e.GetNodeName()
+			if got != tt.want {
+				t.Errorf("EtcdConfig.GetNodeName() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

@@ -334,6 +334,16 @@ func VerifyKubeletMetrics(ctx context.Context, kc *kubernetes.Clientset, node st
 	})
 }
 
+func ResetNode(name string, suite *BootlooseSuite) error {
+	ssh, err := suite.SSH(suite.Context(), name)
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+	_, err = ssh.ExecWithOutput(suite.Context(), fmt.Sprintf("%s reset --debug", suite.K0sFullPath))
+	return err
+}
+
 // Retrieves the LogfFn stored in context, falling back to use testing.T's Logf
 // if the context has a *testing.T or logrus's Infof as a last resort.
 func logfFrom(ctx context.Context) LogfFn {

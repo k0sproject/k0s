@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -159,6 +160,17 @@ func DefaultEtcdConfig() *EtcdConfig {
 		PeerAddress:     addr,
 		ExtraArgs:       make(map[string]string),
 	}
+}
+
+const etcdNameExtraArg = "name"
+
+// GetNodeName returns the node name for the etcd peer
+func (e *EtcdConfig) GetNodeName() (string, error) {
+	if e.ExtraArgs != nil && e.ExtraArgs[etcdNameExtraArg] != "" {
+		return e.ExtraArgs[etcdNameExtraArg], nil
+	}
+
+	return os.Hostname()
 }
 
 // DefaultKineConfig creates KineConfig with sane defaults

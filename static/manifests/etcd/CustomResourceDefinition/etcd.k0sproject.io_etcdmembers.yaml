@@ -1,0 +1,114 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+  name: etcdmembers.etcd.k0sproject.io
+spec:
+  group: etcd.k0sproject.io
+  names:
+    kind: EtcdMember
+    listKind: EtcdMemberList
+    plural: etcdmembers
+    singular: etcdmember
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.peerAddress
+      name: Peer Address
+      type: string
+    - jsonPath: .status.memberID
+      name: Member ID
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Joined")].status
+      name: Joined
+      type: string
+    - jsonPath: .status.reconcileStatus
+      name: Reconcile Status
+      type: string
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: EtcdMember describes the nodes etcd membership status
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EtcdMemberSpec defines the desired state of EtcdMember
+            properties:
+              leave:
+                description: Leave is a flag to indicate that the member should be
+                  removed from the cluster
+                type: boolean
+            type: object
+          status:
+            properties:
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details about
+                        last transition.
+                      type: string
+                    status:
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      enum:
+                      - Joined
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              memberID:
+                description: |-
+                  MemberID is the unique identifier of the etcd member.
+                  The hex form ID is stored as string
+                pattern: ^[a-fA-F0-9]+$
+                type: string
+              message:
+                type: string
+              peerAddress:
+                description: PeerAddress is the address of the etcd peer
+                type: string
+              reconcileStatus:
+                description: ReconcileStatus is the last status of the reconcile process
+                type: string
+            required:
+            - memberID
+            - peerAddress
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

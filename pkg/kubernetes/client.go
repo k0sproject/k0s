@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"sync"
 
+	etcdMemberClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	cfgClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 
@@ -39,6 +40,7 @@ type ClientFactoryInterface interface {
 	GetConfigClient() (cfgClient.ClusterConfigInterface, error)
 	GetRESTClient() (rest.Interface, error)
 	GetRESTConfig() *rest.Config
+	GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error)
 }
 
 // NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
@@ -54,11 +56,12 @@ func NewAdminClientFactory(kubeconfigPath string) ClientFactoryInterface {
 type ClientFactory struct {
 	configPath string
 
-	client          kubernetes.Interface
-	dynamicClient   dynamic.Interface
-	discoveryClient discovery.CachedDiscoveryInterface
-	restConfig      *rest.Config
-	configClient    cfgClient.ClusterConfigInterface
+	client           kubernetes.Interface
+	dynamicClient    dynamic.Interface
+	discoveryClient  discovery.CachedDiscoveryInterface
+	restConfig       *rest.Config
+	configClient     cfgClient.ClusterConfigInterface
+	etcdMemberClient etcdMemberClient.EtcdMemberInterface
 
 	mutex sync.Mutex
 }
@@ -169,6 +172,27 @@ func (c *ClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, err
 	}
 	c.configClient = configClient.ClusterConfigs(constant.ClusterConfigNamespace)
 	return c.configClient, nil
+}
+
+func (c *ClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	var err error
+	if c.restConfig == nil {
+		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+		}
+	}
+	if c.etcdMemberClient != nil {
+		return c.etcdMemberClient, nil
+	}
+
+	etcdMemberClient, err := etcdMemberClient.NewForConfig(c.restConfig)
+	if err != nil {
+		return nil, err
+	}
+	return etcdMemberClient.EtcdMembers(), nil
 }
 
 func (c *ClientFactory) GetRESTClient() (rest.Interface, error) {

@@ -325,6 +325,19 @@ func (c *command) start(ctx context.Context) error {
 		CertManager: worker.NewCertificateManager(ctx, c.K0sVars.KubeletAuthConfigPath),
 	})
 
+	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+		etcdReconciler, err := controller.NewEtcdMemberReconciler(adminClientFactory, c.K0sVars, nodeConfig.Spec.Storage.Etcd, leaderElector)
+		if err != nil {
+			return err
+		}
+		etcdCRDSaver, err := controller.NewManifestsSaver("etcd-member", c.K0sVars.DataDir)
+		if err != nil {
+			return fmt.Errorf("failed to initialize etcd-member manifests saver: %w", err)
+		}
+		clusterComponents.Add(ctx, controller.NewCRD(etcdCRDSaver, []string{"etcd"}))
+		nodeComponents.Add(ctx, etcdReconciler)
+	}
+
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
 		ClusterSpec: nodeConfig.Spec,
