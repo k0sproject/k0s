@@ -55,3 +55,49 @@ func TestControllerOptions_Normalize(t *testing.T) {
 		assert.Equal(t, expected, underTest.DisableComponents)
 	})
 }
+
+func TestLogLevelsFlagSet(t *testing.T) {
+	t.Run("full_input", func(t *testing.T) {
+		var underTest logLevelsFlag
+		assert.NoError(t, underTest.Set("kubelet=a,kube-scheduler=b,kube-controller-manager=c,kube-apiserver=d,konnectivity-server=e,etcd=f,containerd=g"))
+		assert.Equal(t, logLevelsFlag{
+			Containerd:            "g",
+			Etcd:                  "f",
+			Konnectivity:          "e",
+			KubeAPIServer:         "d",
+			KubeControllerManager: "c",
+			KubeScheduler:         "b",
+			Kubelet:               "a",
+		}, underTest)
+		assert.Equal(t, "[containerd=g,etcd=f,konnectivity-server=e,kube-apiserver=d,kube-controller-manager=c,kube-scheduler=b,kubelet=a]", underTest.String())
+	})
+
+	t.Run("partial_input", func(t *testing.T) {
+		var underTest logLevelsFlag
+		assert.NoError(t, underTest.Set("[kubelet=a,etcd=b]"))
+		assert.Equal(t, logLevelsFlag{
+			Containerd:            "info",
+			Etcd:                  "b",
+			Konnectivity:          "1",
+			KubeAPIServer:         "1",
+			KubeControllerManager: "1",
+			KubeScheduler:         "1",
+			Kubelet:               "a",
+		}, underTest)
+	})
+
+	for _, test := range []struct {
+		name, input, msg string
+	}{
+		{"unknown_component", "random=debug", `unknown component name: "random"`},
+		{"empty_component_name", "=info", "component name cannot be empty"},
+		{"unknown_component_only", "random", `must be of format component=level: "random"`},
+		{"no_equals", "kube-apiserver", `must be of format component=level: "kube-apiserver"`},
+		{"mixed_valid_and_invalid", "containerd=info,random=debug", `unknown component name: "random"`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var underTest logLevelsFlag
+			assert.ErrorContains(t, underTest.Set(test.input), test.msg)
+		})
+	}
+}
