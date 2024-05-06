@@ -46,9 +46,9 @@ import (
 // Keepalived is the controller for the keepalived process in the control plane load balancing
 type Keepalived struct {
 	K0sVars          *config.CfgVars
-	Config           *k0sAPI.ControlPlaneLoadBalancingSpec
+	Config           *k0sAPI.KeepalivedSpec
 	DetailedLogging  bool
-	APISpec          *k0sAPI.APISpec
+	APIPort          int
 	KubeConfigPath   string
 	keepalivedConfig *keepalivedConfig
 	uid              int
@@ -87,18 +87,9 @@ func (k *Keepalived) Start(_ context.Context) error {
 		if err := k.configureDummy(); err != nil {
 			return fmt.Errorf("failed to configure dummy interface: %w", err)
 		}
-		if err := k.Config.ValidateVRRPInstances(nil); err != nil {
-			return fmt.Errorf("failed to validate VRRP instances: %w", err)
-		}
 	}
 
 	if len(k.Config.VirtualServers) > 0 {
-		if k.APISpec.ExternalAddress != "" {
-			return errors.New("externalAddress is not supported with virtual servers")
-		}
-		if err := k.Config.ValidateVirtualServers(); err != nil {
-			return fmt.Errorf("failed to validate virtual servers: %w", err)
-		}
 		k.log.Info("Starting CPLB reconciler")
 		updateCh := make(chan struct{}, 1)
 		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, updateCh)
@@ -113,7 +104,7 @@ func (k *Keepalived) Start(_ context.Context) error {
 	k.keepalivedConfig = &keepalivedConfig{
 		VRRPInstances:  k.Config.VRRPInstances,
 		VirtualServers: k.Config.VirtualServers,
-		APIServerPort:  k.APISpec.Port,
+		APIServerPort:  k.APIPort,
 	}
 	if err := k.generateKeepalivedTemplate(); err != nil {
 		return fmt.Errorf("failed to generate keepalived template: %w", err)

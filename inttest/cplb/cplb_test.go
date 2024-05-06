@@ -38,9 +38,10 @@ spec:
   network:
     controlPlaneLoadBalancing:
       enabled: true
-      vrrpInstances:
-      - virtualIPs: ["%s/24"]
-        authPass: "123456"
+      type: Keepalived
+        vrrpInstances:
+        - virtualIPs: ["%s/24"]
+          authPass: "123456"
 `
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent

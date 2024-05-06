@@ -28,7 +28,6 @@ type CPLBSuite struct {
 }
 
 func (s *CPLBSuite) TestValidateVRRPInstances() {
-
 	tests := []struct {
 		name          string
 		vrrps         []VRRPInstance
@@ -125,21 +124,21 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			elb := &ControlPlaneLoadBalancingSpec{
+			k := &KeepalivedSpec{
 				VRRPInstances: tt.vrrps,
 			}
-			err := elb.ValidateVRRPInstances(returnNIC)
+			err := k.validateVRRPInstances(returnNIC)
 			if tt.wantErr {
-				s.Require().Errorf(err, "Test case %s expected error. Got none", tt.name)
+				s.Require().NotEmpty(err, "Test case %s expected error. Got none", tt.name)
 			} else {
-				s.Require().NoErrorf(err, "Test case %s expected no error. Got: %v", tt.name, err)
-				s.T().Log(elb.VRRPInstances)
-				s.Require().Equal(len(tt.expectedVRRPs), len(elb.VRRPInstances), "Expected and actual VRRPInstances length mismatch")
+				s.Require().Empty(err, "Test case %s expected no errors. Got: %v", tt.name, err)
+				s.T().Log(k.VRRPInstances)
+				s.Require().Equal(len(tt.expectedVRRPs), len(k.VRRPInstances), "Expected and actual VRRPInstances length mismatch")
 				for i := 0; i < len(tt.expectedVRRPs); i++ {
-					s.Require().Equal(tt.expectedVRRPs[i].Name, elb.VRRPInstances[i].Name, "Name mismatch")
-					s.Require().Equal(tt.expectedVRRPs[i].Interface, elb.VRRPInstances[i].Interface, "Interface mismatch")
-					s.Require().Equal(*tt.expectedVRRPs[i].VirtualRouterID, *elb.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
-					s.Require().Equal(*tt.expectedVRRPs[i].AdvertInterval, *elb.VRRPInstances[i].AdvertInterval, "Virtual router ID mismatch")
+					s.Require().Equal(tt.expectedVRRPs[i].Name, k.VRRPInstances[i].Name, "Name mismatch")
+					s.Require().Equal(tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
+					s.Require().Equal(*tt.expectedVRRPs[i].VirtualRouterID, *k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
+					s.Require().Equal(*tt.expectedVRRPs[i].AdvertInterval, *k.VRRPInstances[i].AdvertInterval, "Virtual router ID mismatch")
 				}
 			}
 		})
@@ -169,18 +168,18 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 			},
 			expectedVSS: []VirtualServer{
 				{
-					IPAddress:          "1.2.3.4",
-					DelayLoop:          0,
-					LBAlgo:             RRAlgo,
-					LBKind:             DRLBKind,
-					PersistenceTimeout: 360,
+					IPAddress:                 "1.2.3.4",
+					DelayLoop:                 0,
+					LBAlgo:                    RRAlgo,
+					LBKind:                    DRLBKind,
+					PersistenceTimeoutSeconds: 360,
 				},
 				{
-					IPAddress:          "1.2.3.5",
-					DelayLoop:          0,
-					LBAlgo:             RRAlgo,
-					LBKind:             DRLBKind,
-					PersistenceTimeout: 360,
+					IPAddress:                 "1.2.3.5",
+					DelayLoop:                 0,
+					LBAlgo:                    RRAlgo,
+					LBKind:                    DRLBKind,
+					PersistenceTimeoutSeconds: 360,
 				},
 			},
 			wantErr: false,
@@ -189,20 +188,20 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 			name: "valid instance no overrides",
 			vss: []VirtualServer{
 				{
-					IPAddress:          "1.2.3.4",
-					DelayLoop:          1,
-					LBAlgo:             WRRAlgo,
-					LBKind:             NATLBKind,
-					PersistenceTimeout: 100,
+					IPAddress:                 "1.2.3.4",
+					DelayLoop:                 1,
+					LBAlgo:                    WRRAlgo,
+					LBKind:                    NATLBKind,
+					PersistenceTimeoutSeconds: 100,
 				},
 			},
 			expectedVSS: []VirtualServer{
 				{
-					IPAddress:          "1.2.3.4",
-					DelayLoop:          1,
-					LBAlgo:             WRRAlgo,
-					LBKind:             NATLBKind,
-					PersistenceTimeout: 100,
+					IPAddress:                 "1.2.3.4",
+					DelayLoop:                 1,
+					LBAlgo:                    WRRAlgo,
+					LBKind:                    NATLBKind,
+					PersistenceTimeoutSeconds: 100,
 				},
 			},
 			wantErr: false,
@@ -236,7 +235,7 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 		{
 			name: "invalid persistencee timeout",
 			vss: []VirtualServer{{
-				PersistenceTimeout: -1,
+				PersistenceTimeoutSeconds: -1,
 			}},
 			wantErr: true,
 		},
@@ -250,17 +249,17 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 	}
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			cplb := &ControlPlaneLoadBalancingSpec{VirtualServers: tt.vss}
-			err := cplb.ValidateVirtualServers()
+			k := &KeepalivedSpec{VirtualServers: tt.vss}
+			err := k.validateVirtualServers()
 			if tt.wantErr {
-				s.Require().Errorf(err, "Test case %s expected error. Got none", tt.name)
+				s.Require().NotEmpty(err, "Test case %s expected error. Got none", tt.name)
 			} else {
-				s.Require().NoErrorf(err, "Tedst case %s expected no error. Got: %v", tt.name, err)
+				s.Require().Empty(err, "Tedst case %s expected no error. Got: %v", tt.name, err)
 				for i := range tt.expectedVSS {
-					s.Require().Equal(tt.expectedVSS[i].DelayLoop, cplb.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
-					s.Require().Equal(tt.expectedVSS[i].LBAlgo, cplb.VirtualServers[i].LBAlgo, "LBalgo mismatch")
-					s.Require().Equal(tt.expectedVSS[i].LBKind, cplb.VirtualServers[i].LBKind, "LBKind mismatch")
-					s.Require().Equal(tt.expectedVSS[i].PersistenceTimeout, cplb.VirtualServers[i].PersistenceTimeout, "PersistenceTimeout mismatch")
+					s.Require().Equal(tt.expectedVSS[i].DelayLoop, k.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
+					s.Require().Equal(tt.expectedVSS[i].LBAlgo, k.VirtualServers[i].LBAlgo, "LBalgo mismatch")
+					s.Require().Equal(tt.expectedVSS[i].LBKind, k.VirtualServers[i].LBKind, "LBKind mismatch")
+					s.Require().Equal(tt.expectedVSS[i].PersistenceTimeoutSeconds, k.VirtualServers[i].PersistenceTimeoutSeconds, "PersistenceTimeout mismatch")
 				}
 			}
 		})

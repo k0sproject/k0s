@@ -235,10 +235,10 @@ func (c *command) start(ctx context.Context) error {
 
 		nodeComponents.Add(ctx, &controller.Keepalived{
 			K0sVars:         c.K0sVars,
-			Config:          cplb,
+			Config:          cplb.Keepalived,
 			DetailedLogging: c.Debug,
 			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
-			APISpec:         nodeConfig.Spec.API,
+			APIPort:         nodeConfig.Spec.API.Port,
 		})
 	}
 

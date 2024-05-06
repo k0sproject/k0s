@@ -121,15 +121,6 @@ func (r *CPLBReconciler) maybeUpdateIPs(endpoint *corev1.Endpoints) {
 	}
 }
 
-func (r *CPLBReconciler) updateAddresses(newAddresses []string) {
-	r.addresses = newAddresses
-	r.log.Infof("Updated the list of IPs: %v", r.addresses)
-	select {
-	case r.updateCh <- struct{}{}:
-	default:
-	}
-}
-
 // GetIPs gets a thread-safe copy of the current list of IP addresses
 func (r *CPLBReconciler) GetIPs() []string {
 	r.mu.Lock()
