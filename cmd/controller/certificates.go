@@ -182,6 +182,20 @@ func (c *Certificates) Init(ctx context.Context) error {
 	hostnames = append(hostnames, localIPs...)
 	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
 
+	// Add to SANs the IPs from the control plane load balancer
+	cplb := c.ClusterSpec.Network.ControlPlaneLoadBalancing
+	if cplb != nil && cplb.Enabled && cplb.Keepalived != nil {
+		for _, v := range cplb.Keepalived.VRRPInstances {
+			for _, vip := range v.VirtualIPs {
+				ip, _, err := net.ParseCIDR(vip)
+				if err != nil {
+					return fmt.Errorf("error parsing virtualIP %s: %w", vip, err)
+				}
+				hostnames = append(hostnames, ip.String())
+			}
+		}
+	}
+
 	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddresses()
 	if err != nil {
 		return err

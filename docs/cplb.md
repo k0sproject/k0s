@@ -102,8 +102,6 @@ the k0s controllers to make changes.
 
 The following example shows a full `k0sctl` configuration file featuring three
 controllers and three workers with control plane load balancing enabled.
-Additionally it defines [spec.api.sans](configuration.md#specapi) so that the
-kube-apiserver certificate is valid for the virtual IP:
 
 ```yaml
 apiVersion: k0sctl.k0sproject.io/v1beta1

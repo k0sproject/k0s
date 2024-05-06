@@ -33,9 +33,6 @@ type keepalivedSuite struct {
 
 const haControllerConfig = `
 spec:
-  api:
-    sans:
-    - %s
   network:
     controlPlaneLoadBalancing:
       enabled: true
@@ -60,7 +57,7 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 
 	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb, lb, lb))
+		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb, lb))
 
 		// Note that the token is intentionally empty for the first controller
 		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
