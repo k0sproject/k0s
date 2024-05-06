@@ -63,7 +63,7 @@ interaction with etcd. For example, in a 3 controller HA setup, you can
 remove a member by flagging it to leave:
 
 ```console
-$ kubectl patch etcdmember controller2 -p '{"leave":true}' --type merge
+$ kubectl patch etcdmember controller2 -p '{"spec":{"leave":true}}' --type merge
 etcdmember.etcd.k0sproject.io/controller2 patched
 ```
 
@@ -81,8 +81,8 @@ You'll see the node left etcd cluster:
 $ k0s kc get etcdmember
 NAME          PEER ADDRESS   MEMBER ID           JOINED   RECONCILE STATUS
 controller0   172.17.0.2     b8e14bda2255bc24    True     
-controller1   172.17.0.3     cb242476916c8a58   True     
-controller2   172.17.0.4     9c90504b1bc867bb   False    Success
+controller1   172.17.0.3     cb242476916c8a58    True     
+controller2   172.17.0.4     9c90504b1bc867bb    False    Success
 ```
 
 ```console
@@ -93,6 +93,8 @@ $ k0s etcd member-list
 The objects for members that have already left the etcd cluster are kept  
 available for tracking purposes. Once the member has left the cluster, the  
 object status will reflect that it is safe to remove it.
+
+**Note:** If you re-join same node without removing the corresponding `etcdmember` object the desired state will be updated back to `spec.leave: false` automatically. This is since currently in k0s there's no easy way to prevent a node joining etcd cluster.
 
 ## Replace a controller
 

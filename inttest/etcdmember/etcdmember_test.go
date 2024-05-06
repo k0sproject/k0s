@@ -109,8 +109,8 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 			if err != nil {
 				return err
 			}
-			if em.PeerAddress != s.GetControllerIPAddress(i) {
-				return fmt.Errorf("expected PeerAddress %s, got %s", s.GetControllerIPAddress(i), em.PeerAddress)
+			if em.Status.PeerAddress != s.GetControllerIPAddress(i) {
+				return fmt.Errorf("expected PeerAddress %s, got %s", s.GetControllerIPAddress(i), em.Status.PeerAddress)
 			}
 
 			c := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
@@ -156,8 +156,8 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 
 	// Check the CR is present again
 	em = s.getMember(ctx, "controller2")
-	s.Require().Equal(em.PeerAddress, s.GetControllerIPAddress(2))
-	s.Require().Equal(false, em.Leave)
+	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
+	s.Require().Equal(false, em.Spec.Leave)
 	s.Require().Equal(etcdv1beta1.ConditionTrue, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
 
 	// Check that after restarting the controller, the member is still present
@@ -165,7 +165,7 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	em = &etcdv1beta1.EtcdMember{}
 	err = kc.RESTClient().Get().AbsPath(fmt.Sprintf(basePath, "controller2")).Do(ctx).Into(em)
 	s.Require().NoError(err)
-	s.Require().Equal(em.PeerAddress, s.GetControllerIPAddress(2))
+	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
 
 }
 
@@ -177,7 +177,7 @@ func (s *EtcdMemberSuite) leaveNode(ctx context.Context, name string) {
 
 	// Patch the EtcdMember CR to set the Leave flag
 	path := fmt.Sprintf(basePath, name)
-	patch := []byte(`{"leave":true}`)
+	patch := []byte(`{"spec":{"leave":true}}`)
 	result := kc.RESTClient().Patch("application/merge-patch+json").AbsPath(path).Body(patch).Do(ctx)
 
 	s.Require().NoError(result.Error())

@@ -24,8 +24,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/k0sproject/k0s/inttest/common"
-
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	etcdmemberclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
@@ -105,8 +103,8 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 				log.WithError(e).Error("bailing out watch")
 				return 0, err
 			}).
-			IncludingDeletions().
 			Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
+				lastObservedVersion = member.ResourceVersion
 				e.reconcileMember(ctx, member)
 				// Never stop the watch
 				return false, nil
@@ -139,12 +137,33 @@ func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	var lastObservedVersion string
 	log := logrus.WithField("component", "etcdMemberReconciler")
 	log.Info("waiting to see EtcdMember CRD ready")
 	return watch.FromClient[*crdList, crd](ec.CustomResourceDefinitions()).
 		WithObjectName(fmt.Sprintf("%s.%s", "etcdmembers", "etcd.k0sproject.io")).
-		WithErrorCallback(common.RetryWatchErrors(logrus.Infof)).
+		WithErrorCallback(func(cbErr error) (retryDelay time.Duration, err error) {
+			if retryAfter, e := watch.IsRetryable(err); e == nil {
+				log.WithError(err).Infof(
+					"Transient error while watching etcdmember CRD"+
+						", last observed version is %q"+
+						", starting over after %s ...",
+					lastObservedVersion, retryAfter,
+				)
+				return retryAfter, nil
+			}
+
+			retryAfter := 10 * time.Second
+			log.WithError(err).Errorf(
+				"Failed to watch for etcdmember CRD"+
+					", last observed version is %q"+
+					", starting over after %s ...",
+				lastObservedVersion, retryAfter,
+			)
+			return retryAfter, nil
+		}).
 		Until(ctx, func(item *crd) (bool, error) {
+			lastObservedVersion = item.ResourceVersion
 			for _, cond := range item.Status.Conditions {
 				if cond.Type == extensionsv1.Established {
 					log.Infof("EtcdMember CRD status: %s", cond.Status)
@@ -194,30 +213,20 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context) error {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 				},
-				PeerAddress: e.etcdConfig.PeerAddress,
-				MemberID:    memberIDStr,
-				Leave:       false,
-				Status: etcdv1beta1.Status{
-					Conditions: []etcdv1beta1.JoinCondition{
-						{
-							Type:   etcdv1beta1.ConditionTypeJoined,
-							Status: etcdv1beta1.ConditionTrue,
-						},
-					},
+				Spec: etcdv1beta1.EtcdMemberSpec{
+					Leave: false,
 				},
 			}
+
 			em, err = e.etcdMemberClient.Create(ctx, em, metav1.CreateOptions{})
 			if err != nil {
 				return err
 			}
 			em.Status = etcdv1beta1.Status{
-				Conditions: []etcdv1beta1.JoinCondition{
-					{
-						Type:   etcdv1beta1.ConditionTypeJoined,
-						Status: etcdv1beta1.ConditionTrue,
-					},
-				},
+				PeerAddress: e.etcdConfig.PeerAddress,
+				MemberID:    memberIDStr,
 			}
+			em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
 			_, err = e.etcdMemberClient.UpdateStatus(ctx, em, metav1.UpdateOptions{})
 			if err != nil {
 				log.WithError(err).Error("failed to update member status")
@@ -228,9 +237,9 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context) error {
 		}
 	}
 
-	em.PeerAddress = e.etcdConfig.PeerAddress
-	em.MemberID = memberIDStr
-	em.Leave = false
+	em.Status.PeerAddress = e.etcdConfig.PeerAddress
+	em.Status.MemberID = memberIDStr
+	em.Spec.Leave = false
 
 	log.Debug("EtcdMember object already exists, updating it")
 	// Update the object if it already exists
@@ -238,16 +247,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	em.Status = etcdv1beta1.Status{
-		Conditions: []etcdv1beta1.JoinCondition{
-			{
-				Type:   etcdv1beta1.ConditionTypeJoined,
-				Status: etcdv1beta1.ConditionTrue,
-			},
-		},
-		ReconcileStatus: "",
-		Message:         "",
-	}
+	em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
 	_, err = e.etcdMemberClient.UpdateStatus(ctx, em, metav1.UpdateOptions{})
 	if err != nil {
 		return err
@@ -261,8 +261,8 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 		"component":   "etcdMemberReconciler",
 		"phase":       "reconcile",
 		"name":        member.Name,
-		"memberID":    member.MemberID,
-		"peerAddress": member.PeerAddress,
+		"memberID":    member.Status.MemberID,
+		"peerAddress": member.Status.PeerAddress,
 	})
 
 	if !e.leaderElector.IsLeader() {
@@ -272,7 +272,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 
 	log.Debugf("reconciling EtcdMember: %+v", member)
 
-	if !member.Leave {
+	if !member.Spec.Leave {
 		log.Debug("member not marked for leave, no action needed")
 		return
 	}
@@ -292,7 +292,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	// Verify that the member is actualy still present in etcd
+	// Verify that the member is actually still present in etcd
 	members, err := etcdClient.ListMembers(ctx)
 	if err != nil {
 		member.Status.ReconcileStatus = "Failed"
@@ -315,13 +315,14 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 		}
 	}
 
-	if member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status == etcdv1beta1.ConditionFalse && !ok {
+	joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
+	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !ok {
 		log.Debug("member already left, no action needed")
 		return
 	}
 
 	// Convert the memberID to uint64
-	memberID, err := strconv.ParseUint(member.MemberID, 16, 64)
+	memberID, err := strconv.ParseUint(member.Status.MemberID, 16, 64)
 	if err != nil {
 		log.WithError(err).Error("failed to parse memberID")
 		return
@@ -340,7 +341,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 		return
 	}
 
-	// Peer removed succesfully, update status
+	// Peer removed successfully, update status
 	log.Info("reconcile succeeded")
 	member.Status.ReconcileStatus = "Success"
 	member.Status.Message = "Member removed from cluster"

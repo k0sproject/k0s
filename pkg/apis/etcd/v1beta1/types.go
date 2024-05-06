@@ -46,8 +46,8 @@ func init() {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:name="Peer Address",type=string,JSONPath=`.peerAddress`
-// +kubebuilder:printcolumn:name="Member ID",type=string,JSONPath=`.memberID`
+// +kubebuilder:printcolumn:name="Peer Address",type=string,JSONPath=`.status.peerAddress`
+// +kubebuilder:printcolumn:name="Member ID",type=string,JSONPath=`.status.memberID`
 // +kubebuilder:printcolumn:name="Joined",type=string,JSONPath=`.status.conditions[?(@.type=="Joined")].status`
 // +kubebuilder:printcolumn:name="Reconcile Status",type=string,JSONPath=`.status.reconcileStatus`
 // +genclient
@@ -57,17 +57,9 @@ type EtcdMember struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// PeerAddress is the address of the etcd peer
-	PeerAddress string `json:"peerAddress"`
-	// MemberID is the unique identifier of the etcd member.
-	// The hex form ID is stored as string
-	// +kubebuilder:validation:Pattern="^[a-fA-F0-9]+$"
-	MemberID string `json:"memberID"`
-
-	// Leave is a flag to indicate that the member should be removed from the cluster
-	Leave bool `json:"leave,omitempty"`
-
 	Status Status `json:"status,omitempty"`
+
+	Spec EtcdMemberSpec `json:"spec,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=Joined;Left
@@ -78,7 +70,20 @@ const (
 	JoinStatusLeft   JoinStatus = "Left"
 )
 
+// EtcdMemberSpec defines the desired state of EtcdMember
+type EtcdMemberSpec struct {
+	// Leave is a flag to indicate that the member should be removed from the cluster
+	Leave bool `json:"leave,omitempty"`
+}
+
 type Status struct {
+	// PeerAddress is the address of the etcd peer
+	PeerAddress string `json:"peerAddress"`
+	// MemberID is the unique identifier of the etcd member.
+	// The hex form ID is stored as string
+	// +kubebuilder:validation:Pattern="^[a-fA-F0-9]+$"
+	MemberID string `json:"memberID"`
+	// ReconcileStatus is the last status of the reconcile process
 	ReconcileStatus string `json:"reconcileStatus,omitempty"`
 	Message         string `json:"message,omitempty"`
 	// +listType=map
@@ -132,7 +137,7 @@ func (s *Status) SetCondition(t ConditionType, status ConditionStatus, msg strin
 	for i, j := range s.Conditions {
 		if j.Type == t {
 			jc := &s.Conditions[i]
-			// We found the matchin type, update it
+			// We found the matching type, update it
 			// Also if the status changes, update the timestamp
 			if jc.Status != status {
 				jc.LastTransitionTime = metav1.NewTime(time)

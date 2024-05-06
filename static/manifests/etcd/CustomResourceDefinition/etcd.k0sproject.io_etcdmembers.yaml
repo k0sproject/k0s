@@ -15,10 +15,10 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .peerAddress
+    - jsonPath: .status.peerAddress
       name: Peer Address
       type: string
-    - jsonPath: .memberID
+    - jsonPath: .status.memberID
       name: Member ID
       type: string
     - jsonPath: .status.conditions[?(@.type=="Joined")].status
@@ -47,21 +47,16 @@ spec:
               In CamelCase.
               More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
-          leave:
-            description: Leave is a flag to indicate that the member should be removed
-              from the cluster
-            type: boolean
-          memberID:
-            description: |-
-              MemberID is the unique identifier of the etcd member.
-              The hex form ID is stored as string
-            pattern: ^[a-fA-F0-9]+$
-            type: string
           metadata:
             type: object
-          peerAddress:
-            description: PeerAddress is the address of the etcd peer
-            type: string
+          spec:
+            description: EtcdMemberSpec defines the desired state of EtcdMember
+            properties:
+              leave:
+                description: Leave is a flag to indicate that the member should be
+                  removed from the cluster
+                type: boolean
+            type: object
           status:
             properties:
               conditions:
@@ -94,14 +89,24 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              memberID:
+                description: |-
+                  MemberID is the unique identifier of the etcd member.
+                  The hex form ID is stored as string
+                pattern: ^[a-fA-F0-9]+$
+                type: string
               message:
                 type: string
-              reconcileStatus:
+              peerAddress:
+                description: PeerAddress is the address of the etcd peer
                 type: string
+              reconcileStatus:
+                description: ReconcileStatus is the last status of the reconcile process
+                type: string
+            required:
+            - memberID
+            - peerAddress
             type: object
-        required:
-        - memberID
-        - peerAddress
         type: object
     served: true
     storage: true
