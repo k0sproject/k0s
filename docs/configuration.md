@@ -304,14 +304,24 @@ node-local load balancing.
 
 Configuration options related to k0s's [control plane load balancing] feature
 
-| Element         | Description                                                                                                 |
-| --------------- | ----------------------------------------------------------------------------------------------------------- |
-| `enabled`       | Indicates if control plane load balancing should be enabled. Default: `false`.                              |
-| `vrrpInstances` | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs. |
+| Element      | Description                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| `enabled`    | Indicates if control plane load balancing should be enabled. Default: `false`.              |
+| `type`       | Indicates the backend for CPLB. If this isn't defined to `Keepalived`, CPLB will not start. |
+| `keepalived` | Contains the keepalived configuration.                                                      |
 
 [control plane load balancing]: cplb.md
 
-##### `spec.network.controlPlaneLoadBalancing.VRRPInstances`
+##### `spec.network.controlPlaneLoadBalancing.Keepalived`
+
+Configuration options related to keepalived in [control plane load balancing]
+
+| Element          | Description                                                                                                 |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| `vrrpInstances`  | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs. |
+| `virtualServers` | Configuration options related LoadBalancing. This is an array which allows to configure multiple LBs.       |
+
+##### `spec.network.controlPlaneLoadBalancing.keepalived.vrrpInstances`
 
 Configuration options required for using VRRP to configure VIPs in control plane load balancing.
 
@@ -323,6 +333,18 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `virtualRouterId` | Virtual router ID for the instance. Default: `51`                                                                 |
 | `advertInterval`  | Advertisement interval in seconds. Default: `1`.                                                                  |
 | `authPass`        | The password used for accessing vrrpd. This field is mandatory and must be under 8 characters long                |
+
+##### `spec.network.controlPlaneLoadBalancing.keepalived.virtualServers`
+
+Configuration options required for using VRRP to configure VIPs in control plane load balancing.
+
+| Element           | Description                                                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `ipAddress`          | The load balancer's listen address.                                                                                           |
+| `delayLoop`          | Delay timer for health check polling in seconds. Default: `0`.                                                                |
+| `lbAlgo`             | Algorithm used by keepalived. Supported algorithms: `rr`, `wrr`, `lc`, `wlc`, `lblc`, `dh`, `sh`, `sed`, `nq`. Default: `rr`. |
+| `lbKind`             | Kind of ipvs load balancer. Supported values: `NAT`, `DR`, `TUN`  Default: `DR`.                                              |
+| `persistenceTimeout` | Timeout value for persistent connections in seconds. Default: `360` (6 minutes).                                              |
 
 ### `spec.controllerManager`
 
