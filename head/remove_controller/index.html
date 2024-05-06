@@ -770,6 +770,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Remove a controller">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#declarative-etcd-member-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Declarative Etcd member management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1962,6 +1977,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Remove a controller">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#declarative-etcd-member-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Declarative Etcd member management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2016,6 +2046,43 @@ To <a href="../reset/">reset k0s on the machine</a>, run the following commands:
 k0s<span class="w"> </span>reset
 reboot
 </code></pre></div>
+<h3 id="declarative-etcd-member-management">Declarative Etcd member management<a class="headerlink" href="#declarative-etcd-member-management" title="Permanent link">#</a></h3>
+<p>Starting from version 1.30, k0s also supports a declarative way to remove an<br />
+etcd member. Since in k0s the etcd cluster is set up so that the etcd API is<br />
+<strong>NOT</strong> exposed outside the nodes, it makes it difficult for external automation<br />
+like Cluster API, Terraform, etc. to handle controller node replacements.</p>
+<p>Each controller manages their own <code>EtcdMember</code> object.</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>etcdmember
+NAME<span class="w">          </span>PEER<span class="w"> </span>ADDRESS<span class="w">   </span>MEMBER<span class="w"> </span>ID<span class="w">           </span>JOINED<span class="w">   </span>RECONCILE<span class="w"> </span>STATUS
+controller0<span class="w">   </span><span class="m">172</span>.17.0.2<span class="w">     </span>b8e14bda2255bc24<span class="w">    </span>True<span class="w">     </span>
+controller1<span class="w">   </span><span class="m">172</span>.17.0.3<span class="w">     </span>cb242476916c8a58<span class="w">    </span>True<span class="w">     </span>
+controller2<span class="w">   </span><span class="m">172</span>.17.0.4<span class="w">     </span>9c90504b1bc867bb<span class="w">    </span>True<span class="w"> </span>
+</code></pre></div>
+<p>By marking an <code>EtcdMember</code> object to leave the etcd cluster, k0s will handle the<br />
+interaction with etcd. For example, in a 3 controller HA setup, you can<br />
+remove a member by flagging it to leave:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>patch<span class="w"> </span>etcdmember<span class="w"> </span>controller2<span class="w"> </span>-p<span class="w"> </span><span class="s1">&#39;{&quot;spec&quot;:{&quot;leave&quot;:true}}&#39;</span><span class="w"> </span>--type<span class="w"> </span>merge
+<span class="go">etcdmember.etcd.k0sproject.io/controller2 patched</span>
+</code></pre></div>
+<p>The join/leave status is tracked in the object's conditions. This allows you to<br />
+wait for the leave to actually happen:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span><span class="nb">wait</span><span class="w"> </span>etcdmember<span class="w"> </span>controller2<span class="w"> </span>--for<span class="w"> </span><span class="nv">condition</span><span class="o">=</span><span class="nv">Joined</span><span class="o">=</span>False
+<span class="go">etcdmember.etcd.k0sproject.io/controller2 condition met</span>
+</code></pre></div>
+<p>You'll see the node left etcd cluster:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>etcdmember
+<span class="go">NAME          PEER ADDRESS   MEMBER ID           JOINED   RECONCILE STATUS</span>
+<span class="go">controller0   172.17.0.2     b8e14bda2255bc24    True     </span>
+<span class="go">controller1   172.17.0.3     cb242476916c8a58    True     </span>
+<span class="go">controller2   172.17.0.4     9c90504b1bc867bb    False    Success</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>k0s<span class="w"> </span>etcd<span class="w"> </span>member-list
+<span class="go">{&quot;members&quot;:{&quot;controller0&quot;:&quot;https://172.17.0.2:2380&quot;,&quot;controller1&quot;:&quot;https://172.17.0.3:2380&quot;}}</span>
+</code></pre></div>
+<p>The objects for members that have already left the etcd cluster are kept<br />
+available for tracking purposes. Once the member has left the cluster, the<br />
+object status will reflect that it is safe to remove it.</p>
+<p><strong>Note:</strong> If you re-join same node without removing the corresponding <code>etcdmember</code> object the desired state will be updated back to <code>spec.leave: false</code> automatically. This is since currently in k0s there's no easy way to prevent a node joining etcd cluster.</p>
 <h2 id="replace-a-controller">Replace a controller<a class="headerlink" href="#replace-a-controller" title="Permanent link">#</a></h2>
 <p>To replace a controller, you first remove the old controller (like described above) then follow the <a href="../k0s-multi-node/">manual installation procedure</a> to add the new one.</p>
 
