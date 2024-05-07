@@ -396,6 +396,7 @@ func (c *ClusterConfig) Validate() (errs []error) {
 // - StorageSpec
 // - Network.ServiceCIDR
 // - Network.ClusterDomain
+// - Network.ControlPlaneLoadBalancing
 // - Install
 func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 	c = c.DeepCopy()
@@ -405,6 +406,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 		if c.Spec.Network != nil {
 			c.Spec.Network.ServiceCIDR = ""
 			c.Spec.Network.ClusterDomain = ""
+			c.Spec.Network.ControlPlaneLoadBalancing = nil
 		}
 		c.Spec.Install = nil
 	}
