@@ -340,7 +340,7 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | Element                     | Description                                                                                                                                      |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ipAddress`                 | The load balancer's listen address.                                                                                                              |
-| `delayLoop`                 | Delay timer for check polling. DelayLoop accepts microsecond precision. Further precision will be truncated without warnings. Example: `10s`.    |
+| `delayLoop`                 | Delay timer for check polling. DelayLoop accepts microsecond precision. Further precision will be truncated without warnings. Defaults to `1m`.  |
 | `lbAlgo`                    | Algorithm used by keepalived. Supported algorithms: `rr`, `wrr`, `lc`, `wlc`, `lblc`, `dh`, `sh`, `sed`, `nq`. Default: `rr`.                    |
 | `lbKind`                    | Kind of ipvs load balancer. Supported values: `NAT`, `DR`, `TUN`  Default: `DR`.                                                                 |
 | `persistenceTimeoutSeconds` | Timeout value for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes). |

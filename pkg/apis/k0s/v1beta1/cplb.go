@@ -162,7 +162,8 @@ type VirtualServer struct {
 	IPAddress string `json:"ipAddress"`
 	// DelayLoop is the delay timer for check polling. DelayLoop accepts
 	// microsecond precision. Further precision will be truncated without
-	// warnings.
+	// warnings. Defaults to 1m.
+	// +kubebuilder:default="1m"
 	// +optional
 	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
@@ -252,9 +253,13 @@ func (k *KeepalivedSpec) validateVirtualServers() []error {
 			errs = append(errs, errors.New("PersistenceTimeout must be in the range of 1-2678400"))
 		}
 
-		k.VirtualServers[i].DelayLoop = metav1.Duration{Duration: k.VirtualServers[i].DelayLoop.Truncate(time.Microsecond)}
-		if k.VirtualServers[i].DelayLoop.Duration < time.Duration(0) {
-			errs = append(errs, errors.New("DelayLoop must be a positive"))
+		if k.VirtualServers[i].DelayLoop == (metav1.Duration{}) {
+			k.VirtualServers[i].DelayLoop = metav1.Duration{Duration: 1 * time.Minute}
+		} else {
+			k.VirtualServers[i].DelayLoop.Duration = k.VirtualServers[i].DelayLoop.Truncate(time.Microsecond)
+			if k.VirtualServers[i].DelayLoop.Microseconds() <= 0 {
+				errs = append(errs, errors.New("DelayLoop must be positive"))
+			}
 		}
 	}
 	return errs
