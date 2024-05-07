@@ -41,7 +41,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/supervisor"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Keepalived is the controller for the keepalived process in the control plane load balancing
@@ -322,7 +321,11 @@ func (k *Keepalived) watchReconcilerUpdates() {
 	// Wait for the supervisor to start keepalived before
 	// watching for endpoint changes
 	process := k.supervisor.GetProcess()
-	for process == nil {
+	for i := 0; process == nil; i++ {
+		if i > 3 {
+			k.log.Error("failed to start keepalived, supervisor process is nil")
+			return
+		}
 		k.log.Info("Waiting for keepalived to start")
 		time.Sleep(5 * time.Second)
 		process = k.supervisor.GetProcess()
@@ -358,11 +361,7 @@ type keepalivedConfig struct {
 
 const dummyLinkName = "dummyvip0"
 
-var keepalivedConfigTemplate = template.Must(template.New("keepalived").
-	Funcs(template.FuncMap{
-		"delay_loop_str": delayLoopString,
-	}).
-	Parse(`
+var keepalivedConfigTemplate = template.Must(template.New("keepalived").Parse(`
 {{ range $i, $instance := .VRRPInstances }}
 vrrp_instance k0s-vip-{{$i}} {
 	# All servers must have state BACKUP so that when a new server comes up
@@ -394,7 +393,7 @@ vrrp_instance k0s-vip-{{$i}} {
 {{ if gt (len $RealServers) 0 }}
 {{ range .VirtualServers }}
 virtual_server {{ .IPAddress }} {{ $APIServerPort }} {
-    delay_loop {{ delay_loop_str .DelayLoop }}
+    delay_loop {{ .DelayLoop.Seconds }}
     lb_algo {{ .LBAlgo }}
     lb_kind {{ .LBKind }}
     persistence_timeout {{ .PersistenceTimeoutSeconds }}
@@ -415,7 +414,3 @@ virtual_server {{ .IPAddress }} {{ $APIServerPort }} {
 {{ end }}
 {{ end }}
 `))
-
-func delayLoopString(delayLoop metav1.Duration) string {
-	return fmt.Sprintf("%v", delayLoop.Duration.Seconds())
-}

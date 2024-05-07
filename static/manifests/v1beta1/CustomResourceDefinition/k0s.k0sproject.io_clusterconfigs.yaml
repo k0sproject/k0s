@@ -429,10 +429,13 @@ spec:
                                   - TUN
                                   type: string
                                 persistenceTimeoutSeconds:
+                                  default: 360
                                   description: |-
-                                    PersistenceTimeoutSeconds specify a timeout value for persistent connections in
-                                    seconds. If not specified, defaults to 360 (6 minutes).
-                                    kubebuilder:validation:Minimum=0
+                                    PersistenceTimeoutSeconds specifies a timeout value for persistent
+                                    connections in seconds. PersistentTimeoutSeconds must be in the range of
+                                    1-2678400 (31 days). If not specified, defaults to 360 (6 minutes).
+                                  maximum: 2678400
+                                  minimum: 1
                                   type: integer
                               required:
                               - ipAddress
@@ -491,8 +494,8 @@ spec:
                       type:
                         default: Keepalived
                         description: |-
-                          type indicates the type of the node-local load balancer to deploy on
-                          worker nodes. Currently, the only supported type is "Keepalived".
+                          type indicates the type of the control plane load balancer to deploy on
+                          controller nodes. Currently, the only supported type is "Keepalived".
                         enum:
                         - Keepalived
                         type: string

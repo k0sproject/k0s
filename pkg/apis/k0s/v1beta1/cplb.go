@@ -37,8 +37,8 @@ type ControlPlaneLoadBalancingSpec struct {
 	// +optional
 	Enabled bool `json:"enabled,omitempty"`
 
-	// type indicates the type of the node-local load balancer to deploy on
-	// worker nodes. Currently, the only supported type is "Keepalived".
+	// type indicates the type of the control plane load balancer to deploy on
+	// controller nodes. Currently, the only supported type is "Keepalived".
 	// +kubebuilder:default=Keepalived
 	// +optional
 	Type CPLBType `json:"type,omitempty"`
@@ -48,8 +48,8 @@ type ControlPlaneLoadBalancingSpec struct {
 	Keepalived *KeepalivedSpec `json:"keepalived,omitempty"`
 }
 
-// NllbType describes which type of load balancer should be deployed for the
-// node-local load balancing. The default is [CPLBTypeKeepalived].
+// CPLBType describes which type of load balancer should be deployed for the
+// control plane load balancing. The default is [CPLBTypeKeepalived].
 // +kubebuilder:validation:Enum=Keepalived
 type CPLBType string
 
@@ -176,9 +176,13 @@ type VirtualServer struct {
 	// +kubebuilder:default=DR
 	// +optional
 	LBKind KeepalivedLBKind `json:"lbKind,omitempty"`
-	// PersistenceTimeoutSeconds specify a timeout value for persistent connections in
-	// seconds. If not specified, defaults to 360 (6 minutes).
-	// kubebuilder:validation:Minimum=0
+	// PersistenceTimeoutSeconds specifies a timeout value for persistent
+	// connections in seconds. PersistentTimeoutSeconds must be in the range of
+	// 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes).
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=2678400
+	// +kubebuilder:default=360
+	// +optional
 	PersistenceTimeoutSeconds int `json:"persistenceTimeoutSeconds,omitempty"`
 }
 
@@ -215,7 +219,7 @@ type RealServer struct {
 	Weight int `json:"weight,omitempty"`
 }
 
-// validateVRRPInstances validates existing configuration and sets the default
+// validateVirtualServers validates existing configuration and sets the default
 // values of undefined fields.
 func (k *KeepalivedSpec) validateVirtualServers() []error {
 	errs := []error{}
@@ -251,8 +255,8 @@ func (k *KeepalivedSpec) validateVirtualServers() []error {
 
 		if k.VirtualServers[i].PersistenceTimeoutSeconds == 0 {
 			k.VirtualServers[i].PersistenceTimeoutSeconds = 360
-		} else if k.VirtualServers[i].PersistenceTimeoutSeconds < 0 {
-			errs = append(errs, errors.New("PersistenceTimeout must be a positive integer"))
+		} else if k.VirtualServers[i].PersistenceTimeoutSeconds < 1 || k.VirtualServers[i].PersistenceTimeoutSeconds > 2678400 {
+			errs = append(errs, errors.New("PersistenceTimeout must be in the range of 1-2678400"))
 		}
 
 		k.VirtualServers[i].DelayLoop = metav1.Duration{Duration: k.VirtualServers[i].DelayLoop.Truncate(time.Microsecond)}

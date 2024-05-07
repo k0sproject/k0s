@@ -67,6 +67,7 @@ func (r *CPLBReconciler) Start() error {
 func (r *CPLBReconciler) Stop() {
 	r.log.Info("Stopping CPLB reconciler")
 	r.watchCancelFunc()
+	close(r.updateCh)
 }
 
 func (r *CPLBReconciler) watchAPIServers(ctx context.Context, clientSet kubernetes.Interface) {
