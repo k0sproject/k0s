@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../img/k0s_social.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.18">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.21">
     
     
       
@@ -2027,14 +2027,19 @@
 <h1 id="control-plane-load-balancing">Control plane load balancing<a class="headerlink" href="#control-plane-load-balancing" title="Permanent link">#</a></h1>
 <p>For clusters that don't have an <a href="../high-availability/#load-balancer">externally managed load balancer</a> for the k0s
 control plane, there is another option to get a highly available control plane called control plane load balancing (CPLB).</p>
-<p>CPLB allows automatic assigned of predefined IP addresses using VRRP across masters.</p>
+<p>CPLB has two features that are independent, but normally will be used together: VRRP Instances, which allows
+automatic assignation of predefined IP addresses using VRRP across control plane nodes. VirtualServers allows to
+do Load Balancing to the other control plane nodes.</p>
+<p>This feature is intended to be used for external traffic. This feature is fully compatible with
+<a href="../nllb/">node-local load balancing (NLLB)</a> which means CPLB can be used for external traffic and NLLB for
+internal traffic at the same time.</p>
 <h2 id="technical-functionality">Technical functionality<a class="headerlink" href="#technical-functionality" title="Permanent link">#</a></h2>
-<p>The k0s control plane load balancer provides k0s with virtual IPs on each
-controller node. This allows the control plane to be highly available using
-VRRP (Virtual Router Redundancy Protocol) as long as the network
-infrastructure allows multicast and GARP.</p>
+<p>The k0s control plane load balancer provides k0s with virtual IPs and TCP
+load Balancing on each controller node. This allows the control plane to
+be highly available using VRRP (Virtual Router Redundancy Protocol) and
+IPVS long as the network infrastructure allows multicast and GARP.</p>
 <p><a href="https://www.keepalived.org/">Keepalived</a> is the only load balancer that is
-supported so far and currently there are no plans to support other alternatives.</p>
+supported so far. Currently there are no plans to support other alternatives.</p>
 <h2 id="vrrp-instances">VRRP Instances<a class="headerlink" href="#vrrp-instances" title="Permanent link">#</a></h2>
 <p>VRRP, or Virtual Router Redundancy Protocol, is a protocol that allows several
 routers to utilize the same virtual IP address. A VRRP instance refers to a
@@ -2060,17 +2065,22 @@ following:</p>
   These do not provide any sort of security against ill-intentioned attacks, they are
   safety features to prevent accidental conflicts between VRRP instances in the same
   network segment.</li>
+<li>If <code>VirtualServers</code> are used, the cluster configuration mustn't specify a non-empty
+  <a href="../configuration/#specapi"><code>spec.api.externalAddress</code></a>. If only <code>VRRPInstances</code> are specified, a
+  non-empty <a href="../configuration/#specapi"><code>spec.api.externalAddress</code></a> may be specified.</li>
 </ul>
 <p>Add the following to the cluster configuration (<code>k0s.yaml</code>):</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">api</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;External address&gt;</span><span class="w"> </span><span class="c1"># This isn&#39;t a requirement, but it&#39;s a common use case.</span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP&gt;/&lt;external</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP</span><span class="nv"> </span><span class="s">netmask&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">        </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password&gt;</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP&gt;/&lt;external</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP</span><span class="nv"> </span><span class="s">netmask&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password&gt;</span>
+<span class="w">        </span><span class="nt">virtualServers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ipAddress</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ipAddress&quot;</span>
 </code></pre></div>
 <p>Or alternatively, if using <a href="../k0sctl-install/"><code>k0sctl</code></a>, add the following to
 the k0sctl configuration (<code>k0sctl.yaml</code>):</p>
@@ -2078,21 +2088,23 @@ the k0sctl configuration (<code>k0sctl.yaml</code>):</p>
 <span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">config</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">spec</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">api</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;External address&gt;</span><span class="w"> </span><span class="c1"># This isn&#39;t a requirement, but it&#39;s a common use case.</span>
 <span class="w">        </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
 <span class="w">            </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">            </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP&gt;/&lt;external</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP</span><span class="nv"> </span><span class="s">netmask&gt;&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">              </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password&gt;</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">            </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP&gt;/&lt;external</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">IP</span><span class="nv"> </span><span class="s">netmask&gt;&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">                </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;password&gt;</span>
+<span class="w">              </span><span class="nt">virtualServers</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ipAddress</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">ip</span><span class="nv"> </span><span class="s">address&gt;&quot;</span>
 </code></pre></div>
 <p>Because this is a feature intended to configure the apiserver, CPLB noes not
 support dynamic configuration and in order to make changes you need to restart
 the k0s controllers to make changes.</p>
 <h2 id="full-example-using-k0sctl">Full example using <code>k0sctl</code><a class="headerlink" href="#full-example-using-k0sctl" title="Permanent link">#</a></h2>
 <p>The following example shows a full <code>k0sctl</code> configuration file featuring three
-controllers and three workers with control plane load balancing enabled:</p>
+controllers and three workers with control plane load balancing enabled.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -2146,13 +2158,18 @@ controllers and three workers with control plane load balancing enabled:</p>
 <span class="w">    </span><span class="nt">config</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">spec</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">api</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.122.200</span>
+<span class="w">          </span><span class="nt">sans</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.122.200</span>
 <span class="w">        </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
 <span class="w">            </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">            </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;192.168.122.200/24&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">              </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Example</span>
+<span class="w">            </span><span class="nt">type: Keepalived</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;192.168.122.200/24&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">                </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Example</span>
+<span class="w">              </span><span class="nt">virtualServers</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ipAddress</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">ip</span><span class="nv"> </span><span class="s">address&gt;&quot;</span>
 </code></pre></div>
 <p>Save the above configuration into a file called <code>k0sctl.yaml</code> and apply it in
 order to bootstrap the cluster:</p>
@@ -2305,6 +2322,15 @@ failure condition:</p>
 <span class="go">controller-2</span>
 <span class="go">2: eth0    inet 192.168.122.87/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2182sec preferred_lft 2182sec</span>
 <span class="go">3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever</span>
+
+<span class="gp">$ </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span>controller-<span class="o">{</span><span class="m">0</span>..2<span class="o">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$i</span><span class="w"> </span><span class="p">;</span><span class="w"> </span>ipvsadm<span class="w"> </span>--save<span class="w"> </span>-n<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<span class="go">IP Virtual Server version 1.2.1 (size=4096)</span>
+<span class="go">Prot LocalAddress:Port Scheduler Flags</span>
+<span class="go">  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn</span>
+<span class="go">TCP  192.168.122.200:6443 rr persistent 360</span>
+<span class="go">  -&gt; 192.168.122.185:6443              Route   1      0          0</span>
+<span class="go">  -&gt; 192.168.122.87:6443               Route   1      0          0</span>
+<span class="go">  -&gt; 192.168.122.122:6443              Route   1      0          0</span>
 <span class="go">````</span>
 
 <span class="go">And the cluster will be working normally:</span>
@@ -2408,7 +2434,7 @@ failure condition:</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.3220b9d7.min.js"></script>
+      <script src="../assets/javascripts/bundle.a7c05c9e.min.js"></script>
       
     
   </body>
