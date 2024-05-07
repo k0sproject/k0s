@@ -18,13 +18,12 @@ import (
 	"context"
 	"testing"
 
-	aptcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -55,12 +54,12 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
+				"theOS-theArch": apv1beta2.PlanResourceURL{}, // just needs to exist
 			},
 			true,
 			nil,
@@ -81,7 +80,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
+				"theOS-theArch": apv1beta2.PlanResourceURL{}, // just needs to exist
 			},
 			false,
 			&appc.SignalMissingPlatform,
@@ -98,7 +97,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
@@ -111,21 +110,21 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 		{
 			"HappyNode",
 			"worker0",
-			&v1.Node{},
+			&corev1.Node{},
 			[]crcli.Object{
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
+				"theOS-theArch": apv1beta2.PlanResourceURL{}, // just needs to exist
 			},
 			true,
 			nil,
@@ -133,9 +132,9 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 		{
 			"NodeMissingPlatformNode",
 			"worker0",
-			&v1.Node{},
+			&corev1.Node{},
 			[]crcli.Object{
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
@@ -146,7 +145,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
+				"theOS-theArch": apv1beta2.PlanResourceURL{}, // just needs to exist
 			},
 			false,
 			&appc.SignalMissingPlatform,
@@ -154,16 +153,16 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 		{
 			"NodeMissingPlatformPlan",
 			"worker0",
-			&v1.Node{},
+			&corev1.Node{},
 			[]crcli.Object{
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
@@ -177,7 +176,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	assert.NoError(t, apscheme.AddToScheme(scheme))
-	assert.NoError(t, v1.AddToScheme(scheme))
+	assert.NoError(t, corev1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
