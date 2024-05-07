@@ -30,6 +30,7 @@ type Keepalived struct {
 	K0sVars         *config.CfgVars
 	Config          *k0sAPI.KeepalivedSpec
 	DetailedLogging bool
+	LogConfig       bool
 	APIPort         int
 	KubeConfigPath  string
 }

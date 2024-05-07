@@ -48,6 +48,7 @@ type Keepalived struct {
 	K0sVars          *config.CfgVars
 	Config           *k0sAPI.KeepalivedSpec
 	DetailedLogging  bool
+	LogConfig        bool
 	APIPort          int
 	KubeConfigPath   string
 	keepalivedConfig *keepalivedConfig
@@ -120,6 +121,9 @@ func (k *Keepalived) Start(_ context.Context) error {
 
 	if k.DetailedLogging {
 		args = append(args, "--log-detail")
+	}
+	if k.LogConfig {
+		args = append(args, "--dump-conf")
 	}
 
 	k.log.Infoln("Starting keepalived")
