@@ -212,13 +212,6 @@ const (
 	TUNLBKind KeepalivedLBKind = "TUN"
 )
 
-type RealServer struct {
-	// IPAddress is the IP address of the real server.
-	IPAddress string `json:"ipAddress"`
-	// Weight is the weight of the real server. If not specified, defaults to 1.
-	Weight int `json:"weight,omitempty"`
-}
-
 // validateVirtualServers validates existing configuration and sets the default
 // values of undefined fields.
 func (k *KeepalivedSpec) validateVirtualServers() []error {
