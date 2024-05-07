@@ -376,58 +376,128 @@ spec:
                           Indicates if control plane load balancing should be enabled.
                           Default: false
                         type: boolean
-                      vrrpInstances:
+                      keepalived:
                         description: |-
-                          Configuration options related to the VRRP. This is an array which allows
-                          to configure multiple virtual IPs.
-                        items:
-                          description: VRRPInstance defines the configuration options
-                            for a VRRP instance.
-                          properties:
-                            advertInterval:
-                              default: 1
-                              description: |-
-                                AdvertInterval is the advertisement interval in seconds. If not specified,
-                                use 1 second
-                              format: int32
-                              type: integer
-                            authPass:
-                              description: |-
-                                AuthPass is the password for accessing vrrpd. This is not a security
-                                feature but a way to prevent accidental misconfigurations.
-                                Authpass must be 8 characters or less.
-                              type: string
-                            interface:
-                              description: |-
-                                Interface specifies the NIC used by the virtual router. If not specified,
-                                k0s will use the interface that owns the default route.
-                              type: string
-                            name:
-                              default: k0s-vip
-                              description: |-
-                                Name is the name of the VRRP instance. If not specified, defaults to
-                                k0s-vip-<index>.
-                              type: string
-                            virtualIPs:
-                              description: |-
-                                VirtualIP is the list virtual IP address used by the VRRP instance. VirtualIPs
-                                must be a CIDR as defined in RFC 4632 and RFC 4291.
-                              items:
-                                type: string
-                              type: array
-                            virtualRouterID:
-                              default: 51
-                              description: |-
-                                VirtualRouterID is the VRRP router ID. If not specified, defaults to 51.
-                                VirtualRouterID must be in the range of 1-255, all the control plane
-                                nodes must have the same VirtualRouterID.
-                                Two clusters in the same network must not use the same VirtualRouterID.
-                              format: int32
-                              maximum: 255
-                              minimum: 1
-                              type: integer
-                          type: object
-                        type: array
+                          Keepalived contains configuration options related to the "Keepalived" type
+                          of load balancing.
+                        properties:
+                          virtualServers:
+                            description: |-
+                              Configuration options related to the virtual servers. This is an array
+                              which allows to configure multiple load balancers.
+                            items:
+                              description: VirtualServer defines the configuration
+                                options for a virtual server.
+                              properties:
+                                delayLoop:
+                                  description: |-
+                                    DelayLoop is the delay timer for check polling. DelayLoop accepts
+                                    microsecond precision. Further precision will be truncated without
+                                    warnings.
+                                  type: string
+                                ipAddress:
+                                  description: IPAddress is the virtual IP address
+                                    used by the virtual server.
+                                  minLength: 1
+                                  type: string
+                                lbAlgo:
+                                  default: rr
+                                  description: |-
+                                    LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
+                                    Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
+                                    details refer to keepalived documentation.
+                                  enum:
+                                  - rr
+                                  - wrr
+                                  - lc
+                                  - wlc
+                                  - lblc
+                                  - dh
+                                  - sh
+                                  - sed
+                                  - nq
+                                  type: string
+                                lbKind:
+                                  default: DR
+                                  description: |-
+                                    LBKind is the load balancing kind. If not specified, defaults to DR.
+                                    Valid values are NAT DR TUN. For further details refer to keepalived documentation.
+                                  enum:
+                                  - NAT
+                                  - DR
+                                  - TUN
+                                  type: string
+                                persistenceTimeoutSeconds:
+                                  default: 360
+                                  description: |-
+                                    PersistenceTimeoutSeconds specifies a timeout value for persistent
+                                    connections in seconds. PersistentTimeoutSeconds must be in the range of
+                                    1-2678400 (31 days). If not specified, defaults to 360 (6 minutes).
+                                  maximum: 2678400
+                                  minimum: 1
+                                  type: integer
+                              required:
+                              - ipAddress
+                              type: object
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - ipAddress
+                            x-kubernetes-list-type: map
+                          vrrpInstances:
+                            description: |-
+                              Configuration options related to the VRRP. This is an array which allows
+                              to configure multiple virtual IPs.
+                            items:
+                              description: VRRPInstance defines the configuration
+                                options for a VRRP instance.
+                              properties:
+                                advertInterval:
+                                  default: 1
+                                  description: |-
+                                    AdvertInterval is the advertisement interval in seconds. If not specified,
+                                    use 1 second
+                                  format: int32
+                                  type: integer
+                                authPass:
+                                  description: |-
+                                    AuthPass is the password for accessing vrrpd. This is not a security
+                                    feature but a way to prevent accidental misconfigurations.
+                                    Authpass must be 8 characters or less.
+                                  type: string
+                                interface:
+                                  description: |-
+                                    Interface specifies the NIC used by the virtual router. If not specified,
+                                    k0s will use the interface that owns the default route.
+                                  type: string
+                                virtualIPs:
+                                  description: |-
+                                    VirtualIP is the list virtual IP address used by the VRRP instance. VirtualIPs
+                                    must be a CIDR as defined in RFC 4632 and RFC 4291.
+                                  items:
+                                    type: string
+                                  type: array
+                                virtualRouterID:
+                                  default: 51
+                                  description: |-
+                                    VirtualRouterID is the VRRP router ID. If not specified, defaults to 51.
+                                    VirtualRouterID must be in the range of 1-255, all the control plane
+                                    nodes must have the same VirtualRouterID.
+                                    Two clusters in the same network must not use the same VirtualRouterID.
+                                  format: int32
+                                  maximum: 255
+                                  minimum: 1
+                                  type: integer
+                              type: object
+                            type: array
+                        type: object
+                      type:
+                        default: Keepalived
+                        description: |-
+                          type indicates the type of the control plane load balancer to deploy on
+                          controller nodes. Currently, the only supported type is "Keepalived".
+                        enum:
+                        - Keepalived
+                        type: string
                     type: object
                   dualStack:
                     description: DualStack defines network configuration for ipv4\ipv6

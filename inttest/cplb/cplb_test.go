@@ -33,26 +33,31 @@ type keepalivedSuite struct {
 
 const haControllerConfig = `
 spec:
-  api:
-    externalAddress: %s
   network:
     controlPlaneLoadBalancing:
       enabled: true
-      vrrpInstances:
-      - virtualIPs: ["%s/24"]
-        authPass: "123456"
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["%s/16"]
+          authPass: "123456"
+        virtualServers:
+        - ipAddress: %s
+    nodeLocalLoadBalancing:
+      enabled: true
+      type: EnvoyProxy
 `
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *keepalivedSuite) TestK0sGetsUp() {
-	ipAddress := s.getLBAddress()
+	lb := s.getLBAddress()
 	ctx := s.Context()
 	var joinToken string
 
 	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, ipAddress, ipAddress))
+		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb, lb))
 
 		// Note that the token is intentionally empty for the first controller
 		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
@@ -85,18 +90,22 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 
 	// Verify that all servers have the dummy interface
 	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
-		s.checkDummy(ctx, s.ControllerNode(idx), ipAddress)
+		s.checkDummy(ctx, s.ControllerNode(idx), lb)
 	}
 
 	// Verify that only one controller has the VIP in eth0
 	count := 0
 	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
-		if s.hasVIP(ctx, s.ControllerNode(idx), ipAddress) {
+		if s.hasVIP(ctx, s.ControllerNode(idx), lb) {
 			count++
 		}
 	}
-	s.Require().Equal(1, count, "Expected only one controller to have the VIP")
+	s.Require().Equal(1, count, "Expected exactly one controller to have the VIP")
 
+	// Verify that the real servers are present in the ipvsadm output
+	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+		s.validateRealServers(ctx, s.ControllerNode(idx), lb)
+	}
 }
 
 // getLBAddress returns the IP address of the controller 0 and it adds 100 to
@@ -117,6 +126,27 @@ func (s *keepalivedSuite) getLBAddress() string {
 	}
 
 	return fmt.Sprintf("%s.%d", strings.Join(parts[:3], "."), lastOctet)
+}
+
+// validateRealServers checks that the real servers are present in the
+// ipvsadm output.
+func (s *keepalivedSuite) validateRealServers(ctx context.Context, node string, vip string) {
+	ssh, err := s.SSH(ctx, node)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	servers := []string{}
+	for i := 0; i < s.BootlooseSuite.ControllerCount; i++ {
+		servers = append(servers, s.GetIPAddress(s.ControllerNode(i)))
+	}
+
+	output, err := ssh.ExecWithOutput(ctx, "ipvsadm --save -n")
+	s.Require().NoError(err)
+
+	for _, server := range servers {
+		s.Require().Contains(output, fmt.Sprintf("-a -t %s:6443 -r %s", vip, server), "Controller %s is missing a server in ipvsadm", node)
+	}
+
 }
 
 // checkDummy checks that the dummy interface is present on the given node and
@@ -145,7 +175,7 @@ func (s *keepalivedSuite) hasVIP(ctx context.Context, node string, vip string) b
 	output, err := ssh.ExecWithOutput(ctx, "ip --oneline addr show eth0")
 	s.Require().NoError(err)
 
-	return strings.Contains(output, fmt.Sprintf("inet %s/24", vip))
+	return strings.Contains(output, fmt.Sprintf("inet %s/16", vip))
 }
 
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the

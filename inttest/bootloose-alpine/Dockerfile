@@ -21,7 +21,8 @@ RUN apk add --no-cache \
   curl \
   haproxy \
   nginx \
-  inotify-tools
+  inotify-tools \
+  ipvsadm
 # enable syslog and sshd
 RUN rc-update add syslog boot
 RUN rc-update add sshd default

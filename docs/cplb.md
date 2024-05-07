@@ -3,17 +3,23 @@
 For clusters that don't have an [externally managed load balancer](high-availability.md#load-balancer) for the k0s
 control plane, there is another option to get a highly available control plane called control plane load balancing (CPLB).
 
-CPLB allows automatic assigned of predefined IP addresses using VRRP across masters.
+CPLB has two features that are independent, but normally will be used together: VRRP Instances, which allows
+automatic assignation of predefined IP addresses using VRRP across control plane nodes. VirtualServers allows to
+do Load Balancing to the other control plane nodes.
+
+This feature is intended to be used for external traffic. This feature is fully compatible with
+[node-local load balancing (NLLB)](nllb.md) which means CPLB can be used for external traffic and NLLB for
+internal traffic at the same time.
 
 ## Technical functionality
 
-The k0s control plane load balancer provides k0s with virtual IPs on each
-controller node. This allows the control plane to be highly available using
-VRRP (Virtual Router Redundancy Protocol) as long as the network
-infrastructure allows multicast and GARP.
+The k0s control plane load balancer provides k0s with virtual IPs and TCP
+load Balancing on each controller node. This allows the control plane to
+be highly available using VRRP (Virtual Router Redundancy Protocol) and
+IPVS long as the network infrastructure allows multicast and GARP.
 
 [Keepalived](https://www.keepalived.org/) is the only load balancer that is
-supported so far and currently there are no plans to support other alternatives.
+supported so far. Currently there are no plans to support other alternatives.
 
 ## VRRP Instances
 
@@ -46,19 +52,24 @@ following:
   These do not provide any sort of security against ill-intentioned attacks, they are
   safety features to prevent accidental conflicts between VRRP instances in the same
   network segment.
+* If `VirtualServers` are used, the cluster configuration mustn't specify a non-empty
+  [`spec.api.externalAddress`][specapi]. If only `VRRPInstances` are specified, a
+  non-empty [`spec.api.externalAddress`][specapi] may be specified.
 
 Add the following to the cluster configuration (`k0s.yaml`):
 
 ```yaml
 spec:
-  api:
-    externalAddress: <External address> # This isn't a requirement, but it's a common use case.
   network:
     controlPlaneLoadBalancing:
       enabled: true
-      vrrpInstances:
-      - virtualIPs: ["<External address IP>/<external address IP netmask"]
-        authPass: <password>
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<External address IP>/<external address IP netmask"]
+          authPass: <password>
+        virtualServers:
+        - ipAddress: "ipAddress"
 ```
 
 Or alternatively, if using [`k0sctl`](k0sctl-install.md), add the following to
@@ -69,24 +80,28 @@ spec:
   k0s:
     config:
       spec:
-        api:
-          externalAddress: <External address> # This isn't a requirement, but it's a common use case.
         network:
           controlPlaneLoadBalancing:
             enabled: true
-            vrrpInstances:
-            - virtualIPs: ["<External address IP>/<external address IP netmask>"]
-              authPass: <password>
+            type: Keepalived
+            keepalived:
+              vrrpInstances:
+              - virtualIPs: ["<External address IP>/<external address IP netmask>"]
+                authPass: <password>
+              virtualServers:
+              - ipAddress: "<External ip address>"
 ```
 
 Because this is a feature intended to configure the apiserver, CPLB noes not
 support dynamic configuration and in order to make changes you need to restart
 the k0s controllers to make changes.
 
+[specapi]: configuration.md#specapi
+
 ## Full example using `k0sctl`
 
 The following example shows a full `k0sctl` configuration file featuring three
-controllers and three workers with control plane load balancing enabled:
+controllers and three workers with control plane load balancing enabled.
 
 ```yaml
 apiVersion: k0sctl.k0sproject.io/v1beta1
@@ -142,13 +157,18 @@ spec:
     config:
       spec:
         api:
-          externalAddress: 192.168.122.200
+          sans:
+          - 192.168.122.200
         network:
           controlPlaneLoadBalancing:
             enabled: true
-            vrrpInstances:
-            - virtualIPs: ["192.168.122.200/24"]
-              authPass: Example
+            type: Keepalived:
+            keepalived:
+              vrrpInstances:
+              - virtualIPs: ["192.168.122.200/24"]
+                authPass: Example
+              virtualServers:
+              - ipAddress: "<External ip address>"
 ```
 
 Save the above configuration into a file called `k0sctl.yaml` and apply it in
@@ -319,6 +339,15 @@ controller-1
 controller-2
 2: eth0    inet 192.168.122.87/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2182sec preferred_lft 2182sec
 3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever
+
+$ for i in controller-{0..2} ; do echo $i ; ipvsadm --save -n; done
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.122.200:6443 rr persistent 360
+  -> 192.168.122.185:6443              Route   1      0          0
+  -> 192.168.122.87:6443               Route   1      0          0
+  -> 192.168.122.122:6443              Route   1      0          0
 ````
 
 And the cluster will be working normally:

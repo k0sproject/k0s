@@ -335,6 +335,12 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		errs = append(errs, err)
 	}
 
+	if s.Network != nil && s.Network.ControlPlaneLoadBalancing != nil {
+		for _, err := range s.Network.ControlPlaneLoadBalancing.Validate(s.API.ExternalAddress) {
+			errs = append(errs, fmt.Errorf("controlPlaneLoadBalancing: %w", err))
+		}
+	}
+
 	return
 }
 
@@ -390,6 +396,7 @@ func (c *ClusterConfig) Validate() (errs []error) {
 // - StorageSpec
 // - Network.ServiceCIDR
 // - Network.ClusterDomain
+// - Network.ControlPlaneLoadBalancing
 // - Install
 func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 	c = c.DeepCopy()
@@ -399,6 +406,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 		if c.Spec.Network != nil {
 			c.Spec.Network.ServiceCIDR = ""
 			c.Spec.Network.ClusterDomain = ""
+			c.Spec.Network.ControlPlaneLoadBalancing = nil
 		}
 		c.Spec.Install = nil
 	}
