@@ -80,7 +80,7 @@ const (
 	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
 	KubeProxyImageVersion              = "v1.29.4"
 	CoreDNSImage                       = "quay.io/k0sproject/coredns"
-	CoreDNSImageVersion                = "1.11.1"
+	CoreDNSImageVersion                = "1.11.3"
 	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"
 	EnvoyProxyImageVersion             = "v1.29.3"
 	CalicoImage                        = "quay.io/k0sproject/calico-cni"
