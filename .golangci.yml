@@ -19,13 +19,6 @@ linters:
 linters-settings:
   depguard:
     rules:
-      yaml:
-        list-mode: lax
-        deny:
-          - pkg: gopkg.in/yaml.v2
-            desc: Use sigs.k8s.io/yaml.
-          - pkg: gopkg.in/yaml.v3
-            desc: Use sigs.k8s.io/yaml.
       cloud-provider:
         list-mode: lax
         files:
@@ -36,11 +29,34 @@ linters-settings:
               Usages of the k8s cloud provider are only allowed from within the
               k0s cloud provider package. This is to ensure that it's not
               leaking global flags into k0s.
-      deprecations:
+      replacements:
         list-mode: lax
         deny:
+          - pkg: gopkg.in/yaml.v2
+            desc: Use sigs.k8s.io/yaml.
+          - pkg: gopkg.in/yaml.v3
+            desc: Use sigs.k8s.io/yaml.
           - pkg: k8s.io/utils/pointer
             desc: Use k8s.io/utils/ptr.
+      tests:
+        list-mode: lax
+        files:
+          - "!$test"
+          - "!**/internal/testutil/**"
+          - "!**/inttest/**"
+          - "!**/pkg/supervisor/pingpong*.go" # only used for testing
+        deny:
+          - pkg: github.com/k0sproject/k0s/internal/testutil
+            desc: Usage of test code outside of tests.
+          - pkg: github.com/stretchr/testify
+            desc: Usage of test code outside of tests.
+      inttests:
+        list-mode: lax
+        files:
+          - "!**/inttest/**/*"
+        deny:
+          - pkg: github.com/k0sproject/k0s/inttest
+            desc: Usage of integration test code outside of integration tests.
   goheader:
     template-path: .go-header.txt
     values:

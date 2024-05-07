@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
-	aptcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
@@ -30,7 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -61,24 +60,24 @@ func TestNewPlan(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"theOS-theArch": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -113,21 +112,21 @@ func TestNewPlan(t *testing.T) {
 		{
 			"MissingController",
 			[]crcli.Object{
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"theOS-theArch": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -169,14 +168,14 @@ func TestNewPlan(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"theOS-theArch": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -217,28 +216,25 @@ func TestNewPlan(t *testing.T) {
 						APIVersion: "autopilot.k0sproject.io/v1beta2",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "controller0",
-						Labels: map[string]string{
-							v1.LabelOSStable:   "windows",
-							v1.LabelArchStable: "amd64",
-						},
+						Name:   "controller0",
+						Labels: map[string]string{corev1.LabelOSStable: "anotherOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"theOS-theArch": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -280,27 +276,24 @@ func TestNewPlan(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "worker0",
-						Labels: map[string]string{
-							v1.LabelOSStable:   "windows",
-							v1.LabelArchStable: "amd64",
-						},
+						Name:   "worker0",
+						Labels: map[string]string{corev1.LabelOSStable: "anotherOS", corev1.LabelArchStable: "amd64"},
 					},
 				},
 			},
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"theOS-theArch": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -342,24 +335,24 @@ func TestNewPlan(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"theOS-theArch": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -401,24 +394,24 @@ func TestNewPlan(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
-				&v1.Node{
+				&corev1.Node{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"theOS-theArch": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -451,7 +444,7 @@ func TestNewPlan(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	assert.NoError(t, apscheme.AddToScheme(scheme))
-	assert.NoError(t, v1.AddToScheme(scheme))
+	assert.NoError(t, corev1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

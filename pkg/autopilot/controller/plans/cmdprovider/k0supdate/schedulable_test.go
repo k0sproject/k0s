@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
-	aptcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
@@ -29,6 +28,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimruntime "k8s.io/apimachinery/pkg/runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -60,8 +60,8 @@ func TestSchedulable(t *testing.T) {
 						APIVersion: "autopilot.k0sproject.io/v1beta2",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "controller0",
-						Annotations: aptcomm.LinuxAMD64NodeLabels(),
+						Name:   "controller0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
@@ -69,8 +69,8 @@ func TestSchedulable(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Version: "v99.99.99",
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-amd64",
+						"theOS-theArch": {
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-theOS-theArch",
 							Sha256: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
 						},
 					},
@@ -114,7 +114,7 @@ func TestSchedulable(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.LinuxAMD64NodeLabels(),
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
 					},
 				},
 			},
@@ -122,8 +122,8 @@ func TestSchedulable(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Version: "v99.99.99",
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-amd64",
+						"theOS-theArch": {
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-theOS-theArch",
 							Sha256: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
 						},
 					},
