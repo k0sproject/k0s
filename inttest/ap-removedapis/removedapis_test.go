@@ -15,6 +15,7 @@
 package removedapis
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -50,6 +51,19 @@ func (s *plansRemovedAPIsSuite) SetupTest() {
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "removedcrds"))
 
 	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/removedapis-test/resource.yaml", removedResource)
+	// Wait to see the CR created on API
+	kc, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	apiPath := "/apis/autopilot.k0sproject.io/v1beta1/namespaces/default/removedcrds/removed-resource"
+	s.T().Log("Waiting for the removed resource CR to be created on the API...")
+	err = common.Poll(ctx, func(ctx context.Context) (done bool, err error) {
+		result := kc.RESTClient().Get().AbsPath(apiPath).Do(ctx)
+		if result.Error() != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+	s.Require().NoError(err)
 
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "plans"))
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "controlnodes"))
@@ -102,6 +116,8 @@ spec:
         version: v99.99.99
         platforms:
           linux-amd64:
+            url: http://localhost/dist/k0s
+          linux-arm64:
             url: http://localhost/dist/k0s
         targets:
           controllers:
