@@ -59,7 +59,10 @@ func (r *CPLBReconciler) Start() error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	r.watchCancelFunc = cancel
-	go r.watchAPIServers(ctx, clientset)
+	go func() {
+		defer close(r.updateCh)
+		r.watchAPIServers(ctx, clientset)
+	}()
 
 	return nil
 }
@@ -67,7 +70,6 @@ func (r *CPLBReconciler) Start() error {
 func (r *CPLBReconciler) Stop() {
 	r.log.Info("Stopping CPLB reconciler")
 	r.watchCancelFunc()
-	close(r.updateCh)
 }
 
 func (r *CPLBReconciler) watchAPIServers(ctx context.Context, clientSet kubernetes.Interface) {
