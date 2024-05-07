@@ -465,12 +465,6 @@ spec:
                                     Interface specifies the NIC used by the virtual router. If not specified,
                                     k0s will use the interface that owns the default route.
                                   type: string
-                                name:
-                                  default: k0s-vip
-                                  description: |-
-                                    Name is the name of the VRRP instance. If not specified, defaults to
-                                    k0s-vip-<index>.
-                                  type: string
                                 virtualIPs:
                                   description: |-
                                     VirtualIP is the list virtual IP address used by the VRRP instance. VirtualIPs

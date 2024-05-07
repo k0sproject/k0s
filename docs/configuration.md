@@ -327,7 +327,6 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 | Element           | Description                                                                                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `name`            | The name of the VRRP instance. If omitted it generates a predictive name shared across all nodes.                 |
 | `virtualIPs`      | A list of the CIDRs handled by the VRRP instance.                                                                 |
 | `interface`       | The interface used by each VRRPInstance. If undefined k0s will try to auto detect it based on the default gateway |
 | `virtualRouterId` | Virtual router ID for the instance. Default: `51`                                                                 |

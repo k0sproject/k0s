@@ -69,11 +69,6 @@ type VRRPInstances []VRRPInstance
 
 // VRRPInstance defines the configuration options for a VRRP instance.
 type VRRPInstance struct {
-	// Name is the name of the VRRP instance. If not specified, defaults to
-	// k0s-vip-<index>.
-	//+kubebuilder:default=k0s-vip
-	Name string `json:"name,omitempty"`
-
 	// VirtualIP is the list virtual IP address used by the VRRP instance. VirtualIPs
 	// must be a CIDR as defined in RFC 4632 and RFC 4291.
 	VirtualIPs VirtualIPs `json:"virtualIPs,omitempty"`
@@ -112,10 +107,6 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 		getDefaultNICFn = getDefaultNIC
 	}
 	for i := range k.VRRPInstances {
-		if k.VRRPInstances[i].Name == "" {
-			k.VRRPInstances[i].Name = fmt.Sprintf("k0s-vip-%d", i)
-		}
-
 		if k.VRRPInstances[i].Interface == "" {
 			nic, err := getDefaultNICFn()
 			if err != nil {

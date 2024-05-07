@@ -48,7 +48,6 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			},
 			expectedVRRPs: []VRRPInstance{
 				{
-					Name:            "k0s-vip-0",
 					VirtualRouterID: ptr.To(int32(defaultVirtualRouterID)),
 					Interface:       "fake-nic-0",
 					VirtualIPs:      []string{"192.168.1.1/24"},
@@ -56,7 +55,6 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					AuthPass:        "123456",
 				},
 				{
-					Name:            "k0s-vip-1",
 					VirtualRouterID: ptr.To(int32(defaultVirtualRouterID + 1)),
 					Interface:       "fake-nic-0",
 					VirtualIPs:      []string{"192.168.1.1/24"},
@@ -70,7 +68,6 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			name: "valid instance no overrides",
 			vrrps: []VRRPInstance{
 				{
-					Name:            "test",
 					VirtualRouterID: ptr.To(int32(1)),
 					Interface:       "eth0",
 					VirtualIPs:      []string{"192.168.1.1/24"},
@@ -80,7 +77,6 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			},
 			expectedVRRPs: []VRRPInstance{
 				{
-					Name:            "test",
 					VirtualRouterID: ptr.To(int32(1)),
 					Interface:       "eth0",
 					VirtualIPs:      []string{"192.168.1.1/24"},
@@ -93,7 +89,6 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			name: "No password",
 			vrrps: []VRRPInstance{
 				{
-					Name:            "test",
 					VirtualRouterID: ptr.To(int32(1)),
 					Interface:       "eth0",
 					VirtualIPs:      []string{"192.168.1.1/24"},
@@ -135,7 +130,6 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 				s.T().Log(k.VRRPInstances)
 				s.Require().Equal(len(tt.expectedVRRPs), len(k.VRRPInstances), "Expected and actual VRRPInstances length mismatch")
 				for i := 0; i < len(tt.expectedVRRPs); i++ {
-					s.Require().Equal(tt.expectedVRRPs[i].Name, k.VRRPInstances[i].Name, "Name mismatch")
 					s.Require().Equal(tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
 					s.Require().Equal(*tt.expectedVRRPs[i].VirtualRouterID, *k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
 					s.Require().Equal(*tt.expectedVRRPs[i].AdvertInterval, *k.VRRPInstances[i].AdvertInterval, "Virtual router ID mismatch")
