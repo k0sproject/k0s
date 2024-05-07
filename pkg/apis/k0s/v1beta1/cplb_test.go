@@ -18,8 +18,10 @@ package v1beta1
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 )
 
@@ -163,14 +165,14 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 			expectedVSS: []VirtualServer{
 				{
 					IPAddress:                 "1.2.3.4",
-					DelayLoop:                 0,
+					DelayLoop:                 metav1.Duration{Duration: 0},
 					LBAlgo:                    RRAlgo,
 					LBKind:                    DRLBKind,
 					PersistenceTimeoutSeconds: 360,
 				},
 				{
 					IPAddress:                 "1.2.3.5",
-					DelayLoop:                 0,
+					DelayLoop:                 metav1.Duration{Duration: 0},
 					LBAlgo:                    RRAlgo,
 					LBKind:                    DRLBKind,
 					PersistenceTimeoutSeconds: 360,
@@ -183,7 +185,7 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 			vss: []VirtualServer{
 				{
 					IPAddress:                 "1.2.3.4",
-					DelayLoop:                 1,
+					DelayLoop:                 metav1.Duration{Duration: 1 * time.Second},
 					LBAlgo:                    WRRAlgo,
 					LBKind:                    NATLBKind,
 					PersistenceTimeoutSeconds: 100,
@@ -192,10 +194,29 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 			expectedVSS: []VirtualServer{
 				{
 					IPAddress:                 "1.2.3.4",
-					DelayLoop:                 1,
+					DelayLoop:                 metav1.Duration{Duration: 1 * time.Second},
 					LBAlgo:                    WRRAlgo,
 					LBKind:                    NATLBKind,
 					PersistenceTimeoutSeconds: 100,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "truncate DelayLoop",
+			vss: []VirtualServer{
+				{
+					IPAddress: "1.2.3.4",
+					DelayLoop: metav1.Duration{Duration: 1234567 * time.Nanosecond},
+				},
+			},
+			expectedVSS: []VirtualServer{
+				{
+					IPAddress:                 "1.2.3.4",
+					DelayLoop:                 metav1.Duration{Duration: 1234 * time.Microsecond},
+					LBAlgo:                    RRAlgo,
+					LBKind:                    DRLBKind,
+					PersistenceTimeoutSeconds: 360,
 				},
 			},
 			wantErr: false,
@@ -236,7 +257,7 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 		{
 			name: "invalid delay loop",
 			vss: []VirtualServer{{
-				DelayLoop: -1,
+				DelayLoop: metav1.Duration{Duration: -1},
 			}},
 			wantErr: true,
 		},

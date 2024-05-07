@@ -392,8 +392,10 @@ spec:
                                 delayLoop:
                                   description: |-
                                     DelayLoop is the delay timer for check polling. If not specified, defaults to 0.
+                                    DelayLoop is defined in microseconds. Further precision will be truncated without
+                                    warnings.
                                     kubebuilder:validation:Minimum=0
-                                  type: integer
+                                  type: string
                                 ipAddress:
                                   description: IPAddress is the virtual IP address
                                     used by the virtual server.

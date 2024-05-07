@@ -20,6 +20,9 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Defaults are keepalived's defaults.
@@ -158,8 +161,10 @@ type VirtualServer struct {
 	// +kubebuilder:validation:MinLength=1
 	IPAddress string `json:"ipAddress"`
 	// DelayLoop is the delay timer for check polling. If not specified, defaults to 0.
+	// DelayLoop is defined in microseconds. Further precision will be truncated without
+	// warnings.
 	// kubebuilder:validation:Minimum=0
-	DelayLoop int `json:"delayLoop,omitempty"`
+	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
 	// Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
 	// details refer to keepalived documentation.
@@ -250,8 +255,9 @@ func (k *KeepalivedSpec) validateVirtualServers() []error {
 			errs = append(errs, errors.New("PersistenceTimeout must be a positive integer"))
 		}
 
-		if k.VirtualServers[i].DelayLoop < 0 {
-			errs = append(errs, errors.New("DelayLoop must be a positive integer"))
+		k.VirtualServers[i].DelayLoop = metav1.Duration{Duration: k.VirtualServers[i].DelayLoop.Truncate(time.Microsecond)}
+		if k.VirtualServers[i].DelayLoop.Duration < time.Duration(0) {
+			errs = append(errs, errors.New("DelayLoop must be a positive"))
 		}
 	}
 	return errs
