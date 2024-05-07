@@ -22,7 +22,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 type CPLBSuite struct {
@@ -50,18 +49,18 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			},
 			expectedVRRPs: []VRRPInstance{
 				{
-					VirtualRouterID: ptr.To(int32(defaultVirtualRouterID)),
-					Interface:       "fake-nic-0",
-					VirtualIPs:      []string{"192.168.1.1/24"},
-					AdvertInterval:  ptr.To(int32(defaultAdvertInterval)),
-					AuthPass:        "123456",
+					VirtualRouterID:       defaultVirtualRouterID,
+					Interface:             "fake-nic-0",
+					VirtualIPs:            []string{"192.168.1.1/24"},
+					AdvertIntervalSeconds: defaultAdvertIntervalSeconds,
+					AuthPass:              "123456",
 				},
 				{
-					VirtualRouterID: ptr.To(int32(defaultVirtualRouterID + 1)),
-					Interface:       "fake-nic-0",
-					VirtualIPs:      []string{"192.168.1.1/24"},
-					AdvertInterval:  ptr.To(int32(defaultAdvertInterval)),
-					AuthPass:        "12345678",
+					VirtualRouterID:       defaultVirtualRouterID + 1,
+					Interface:             "fake-nic-0",
+					VirtualIPs:            []string{"192.168.1.1/24"},
+					AdvertIntervalSeconds: defaultAdvertIntervalSeconds,
+					AuthPass:              "12345678",
 				},
 			},
 			wantErr: false,
@@ -70,20 +69,20 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			name: "valid instance no overrides",
 			vrrps: []VRRPInstance{
 				{
-					VirtualRouterID: ptr.To(int32(1)),
-					Interface:       "eth0",
-					VirtualIPs:      []string{"192.168.1.1/24"},
-					AdvertInterval:  ptr.To(int32(1)),
-					AuthPass:        "123456",
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.1/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
 				},
 			},
 			expectedVRRPs: []VRRPInstance{
 				{
-					VirtualRouterID: ptr.To(int32(1)),
-					Interface:       "eth0",
-					VirtualIPs:      []string{"192.168.1.1/24"},
-					AdvertInterval:  ptr.To(int32(1)),
-					AuthPass:        "123456",
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.1/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
 				},
 			},
 			wantErr: false,
@@ -91,10 +90,10 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			name: "No password",
 			vrrps: []VRRPInstance{
 				{
-					VirtualRouterID: ptr.To(int32(1)),
-					Interface:       "eth0",
-					VirtualIPs:      []string{"192.168.1.1/24"},
-					AdvertInterval:  ptr.To(int32(1)),
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.1/24"},
+					AdvertIntervalSeconds: 1,
 				},
 			},
 			wantErr: true,
@@ -133,8 +132,8 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 				s.Require().Equal(len(tt.expectedVRRPs), len(k.VRRPInstances), "Expected and actual VRRPInstances length mismatch")
 				for i := 0; i < len(tt.expectedVRRPs); i++ {
 					s.Require().Equal(tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
-					s.Require().Equal(*tt.expectedVRRPs[i].VirtualRouterID, *k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
-					s.Require().Equal(*tt.expectedVRRPs[i].AdvertInterval, *k.VRRPInstances[i].AdvertInterval, "Virtual router ID mismatch")
+					s.Require().Equal(tt.expectedVRRPs[i].VirtualRouterID, k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
+					s.Require().Equal(tt.expectedVRRPs[i].AdvertIntervalSeconds, k.VRRPInstances[i].AdvertIntervalSeconds, "Advertisement interval mismatch")
 				}
 			}
 		})

@@ -170,11 +170,9 @@ func (k *Keepalived) Stop() error {
 
 // configureDummy creates the dummy interface and sets the virtual IPs on it.
 func (k *Keepalived) configureDummy() error {
-	vips := []string{}
+	var vips []string
 	for _, vi := range k.Config.VRRPInstances {
-		for _, vip := range vi.VirtualIPs {
-			vips = append(vips, vip)
-		}
+		vips = append(vips, vi.VirtualIPs...)
 	}
 
 	if len(vips) > 0 {
@@ -375,7 +373,7 @@ vrrp_instance k0s-vip-{{$i}} {
     # do a failover
     priority 200
 #   advertisement interval, 1 second by default
-    advert_int {{ $instance.AdvertInterval }}
+    advert_int {{ $instance.AdvertIntervalSeconds }}
     authentication {
         auth_type PASS
         auth_pass {{ $instance.AuthPass }}
