@@ -160,10 +160,10 @@ type VirtualServer struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	IPAddress string `json:"ipAddress"`
-	// DelayLoop is the delay timer for check polling. If not specified, defaults to 0.
-	// DelayLoop is defined in microseconds. Further precision will be truncated without
+	// DelayLoop is the delay timer for check polling. DelayLoop accepts
+	// microsecond precision. Further precision will be truncated without
 	// warnings.
-	// kubebuilder:validation:Minimum=0
+	// +optional
 	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
 	// Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
