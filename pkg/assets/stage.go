@@ -17,7 +17,9 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/sirupsen/logrus"
+	"github.com/ulikunitz/xz/lzma"
 )
 
 // Stages the embedded executable with the given name into dir. If the
@@ -87,6 +89,20 @@ func stage(name, path string, perm os.FileMode) error {
 	zipFile.RegisterDecompressor( /* bzip2: */ 12, func(r io.Reader) io.ReadCloser {
 		return io.NopCloser(bzip2.NewReader(r))
 	})
+	zipFile.RegisterDecompressor( /* lzma: */ 14, func(lzmaReader io.Reader) io.ReadCloser {
+		lzmaReader, err := lzma.NewReader(lzmaReader)
+		if err != nil {
+			return io.NopCloser(&deferredReaderError{err})
+		}
+		return io.NopCloser(lzmaReader)
+	})
+	zipFile.RegisterDecompressor(zstd.ZipMethodWinZip, func(r io.Reader) io.ReadCloser {
+		decoder, err := zstd.NewReader(r)
+		if err != nil {
+			return io.NopCloser(&deferredReaderError{err})
+		}
+		return &closingZSTDDecoder{decoder}
+	})
 
 	var (
 		fileToExtract *zip.File
@@ -145,4 +161,17 @@ type notEmbeddedError string
 
 func (e notEmbeddedError) Error() string {
 	return "not an embedded asset: " + string(e)
+}
+
+type deferredReaderError struct{ err error }
+
+func (d *deferredReaderError) Read(p []byte) (n int, err error) { return 0, d.err }
+
+type closingZSTDDecoder struct {
+	*zstd.Decoder
+}
+
+func (d *closingZSTDDecoder) Close() error {
+	d.Decoder.Close()
+	return nil
 }
