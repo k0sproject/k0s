@@ -304,11 +304,11 @@ node-local load balancing.
 
 Configuration options related to k0s's [control plane load balancing] feature
 
-| Element      | Description                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| `enabled`    | Indicates if control plane load balancing should be enabled. Default: `false`.              |
-| `type`       | Indicates the backend for CPLB. If this isn't defined to `Keepalived`, CPLB will not start. |
-| `keepalived` | Contains the keepalived configuration.                                                      |
+| Element      | Description                                                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`    | Indicates if control plane load balancing should be enabled. Default: `false`.                                                 |
+| `type`       | The type of the control plane load balancer to deploy on controller nodes. Currently, the only supported type is `Keepalived`. |
+| `keepalived` | Contains the keepalived configuration.                                                                                         |
 
 [control plane load balancing]: cplb.md
 
@@ -325,13 +325,13 @@ Configuration options related to keepalived in [control plane load balancing]
 
 Configuration options required for using VRRP to configure VIPs in control plane load balancing.
 
-| Element           | Description                                                                                                       |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `virtualIPs`      | A list of the CIDRs handled by the VRRP instance.                                                                 |
-| `interface`       | The interface used by each VRRPInstance. If undefined k0s will try to auto detect it based on the default gateway |
-| `virtualRouterId` | Virtual router ID for the instance. Default: `51`                                                                 |
-| `advertInterval`  | Advertisement interval in seconds. Default: `1`.                                                                  |
-| `authPass`        | The password used for accessing vrrpd. This field is mandatory and must be under 8 characters long                |
+| Element                 | Description                                                                                                                                                                                                                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `virtualIPs`            | VirtualIPs is the list of virtual IP address used by the VRRP instance. Each virtual IP must be a CIDR as defined in RFC 4632 and RFC 4291.A list of the CIDRs handled by the VRRP instance.                                                                                                         |
+| `interface`             | The NIC used by the virtual router. If not specified, k0s will use the interface that owns the default route.                                                                                                                                                                                        |
+| `virtualRouterID`       | The VRRP router ID. If not specified, k0s will automatically number the IDs for each VRRP instance, starting with 51. It must be in the range of 1-255, all the control plane nodes must use the same `virtualRouterID`. Other clusters in the same network must not use the same `virtualRouterID`. |
+| `advertIntervalSeconds` | Advertisement interval in seconds. Defaults to 1 second.                                                                                                                                                                                                                                             |
+| `authPass`              | The password for accessing VRRPD. This is not a security feature but a way to prevent accidental misconfigurations. It must be in the range of 1-8 characters                                                                                                                                        |
 
 ##### `spec.network.controlPlaneLoadBalancing.keepalived.virtualServers`
 
