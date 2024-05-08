@@ -2749,7 +2749,7 @@ node-local load balancing.</p>
 </tr>
 <tr>
 <td><code>type</code></td>
-<td>Indicates the backend for CPLB. If this isn't defined to <code>Keepalived</code>, CPLB will not start.</td>
+<td>The type of the control plane load balancer to deploy on controller nodes. Currently, the only supported type is <code>Keepalived</code>.</td>
 </tr>
 <tr>
 <td><code>keepalived</code></td>
@@ -2789,23 +2789,23 @@ node-local load balancing.</p>
 <tbody>
 <tr>
 <td><code>virtualIPs</code></td>
-<td>A list of the CIDRs handled by the VRRP instance.</td>
+<td>VirtualIPs is the list of virtual IP address used by the VRRP instance. Each virtual IP must be a CIDR as defined in RFC 4632 and RFC 4291.A list of the CIDRs handled by the VRRP instance.</td>
 </tr>
 <tr>
 <td><code>interface</code></td>
-<td>The interface used by each VRRPInstance. If undefined k0s will try to auto detect it based on the default gateway</td>
+<td>The NIC used by the virtual router. If not specified, k0s will use the interface that owns the default route.</td>
 </tr>
 <tr>
-<td><code>virtualRouterId</code></td>
-<td>Virtual router ID for the instance. Default: <code>51</code></td>
+<td><code>virtualRouterID</code></td>
+<td>The VRRP router ID. If not specified, k0s will automatically number the IDs for each VRRP instance, starting with 51. It must be in the range of 1-255, all the control plane nodes must use the same <code>virtualRouterID</code>. Other clusters in the same network must not use the same <code>virtualRouterID</code>.</td>
 </tr>
 <tr>
-<td><code>advertInterval</code></td>
-<td>Advertisement interval in seconds. Default: <code>1</code>.</td>
+<td><code>advertIntervalSeconds</code></td>
+<td>Advertisement interval in seconds. Defaults to 1 second.</td>
 </tr>
 <tr>
 <td><code>authPass</code></td>
-<td>The password used for accessing vrrpd. This field is mandatory and must be under 8 characters long</td>
+<td>The password for accessing VRRPD. This is not a security feature but a way to prevent accidental misconfigurations. It must be in the range of 1-8 characters</td>
 </tr>
 </tbody>
 </table>
