@@ -57,7 +57,8 @@ type Keepalived struct {
 	log              *logrus.Entry
 	configFilePath   string
 	reconciler       *CPLBReconciler
-	updateCh         <-chan struct{}
+	updateCh         chan struct{}
+	reconcilerDone   chan struct{}
 }
 
 // Init extracts the needed binaries and creates the directories
@@ -136,8 +137,13 @@ func (k *Keepalived) Start(_ context.Context) error {
 		UID:     k.uid,
 	}
 
-	if len(k.Config.VirtualServers) > 0 {
-		go k.watchReconcilerUpdates()
+	if k.reconciler != nil {
+		reconcilerDone := make(chan struct{})
+		k.reconcilerDone = reconcilerDone
+		go func() {
+			defer close(reconcilerDone)
+			k.watchReconcilerUpdates()
+		}()
 	}
 	return k.supervisor.Supervise()
 }
@@ -145,15 +151,17 @@ func (k *Keepalived) Start(_ context.Context) error {
 // Stops keepalived and cleans up the virtual IPs. This is done so that if the
 // k0s controller is stopped, it can still reach the other APIservers on the VIP
 func (k *Keepalived) Stop() error {
+	if k.reconciler != nil {
+		k.log.Infof("Stopping cplb-reconciler")
+		k.reconciler.Stop()
+		close(k.updateCh)
+		<-k.reconcilerDone
+	}
+
 	k.log.Infof("Stopping keepalived")
 	if err := k.supervisor.Stop(); err != nil {
 		// Failed to stop keepalived. Don't delete the VIP, just in case.
 		return fmt.Errorf("failed to stop keepalived: %w", err)
-	}
-
-	k.log.Infof("Stopping cplb-reconciler")
-	if k.reconciler != nil {
-		k.reconciler.Stop()
 	}
 
 	k.log.Infof("Deleting dummy interface")
