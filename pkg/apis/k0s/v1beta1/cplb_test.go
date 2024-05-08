@@ -165,14 +165,14 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 			expectedVSS: []VirtualServer{
 				{
 					IPAddress:                 "1.2.3.4",
-					DelayLoop:                 metav1.Duration{Duration: 0},
+					DelayLoop:                 metav1.Duration{Duration: time.Minute},
 					LBAlgo:                    RRAlgo,
 					LBKind:                    DRLBKind,
 					PersistenceTimeoutSeconds: 360,
 				},
 				{
 					IPAddress:                 "1.2.3.5",
-					DelayLoop:                 metav1.Duration{Duration: 0},
+					DelayLoop:                 metav1.Duration{Duration: time.Minute},
 					LBAlgo:                    RRAlgo,
 					LBKind:                    DRLBKind,
 					PersistenceTimeoutSeconds: 360,

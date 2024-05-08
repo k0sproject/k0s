@@ -390,10 +390,11 @@ spec:
                                 options for a virtual server.
                               properties:
                                 delayLoop:
+                                  default: 1m
                                   description: |-
                                     DelayLoop is the delay timer for check polling. DelayLoop accepts
                                     microsecond precision. Further precision will be truncated without
-                                    warnings.
+                                    warnings. Defaults to 1m.
                                   type: string
                                 ipAddress:
                                   description: IPAddress is the virtual IP address
