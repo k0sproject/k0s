@@ -280,11 +280,10 @@ func (k *KeepalivedSpec) validateVirtualServers() []error {
 }
 
 // Validate validates the ControlPlaneLoadBalancingSpec
-func (c *ControlPlaneLoadBalancingSpec) Validate(externalAddress string) []error {
+func (c *ControlPlaneLoadBalancingSpec) Validate(externalAddress string) (errs []error) {
 	if c == nil {
 		return nil
 	}
-	errs := []error{}
 
 	switch c.Type {
 	case CPLBTypeKeepalived:
@@ -294,11 +293,20 @@ func (c *ControlPlaneLoadBalancingSpec) Validate(externalAddress string) []error
 		errs = append(errs, fmt.Errorf("unsupported CPLB type: %s. Only allowed value: %s", c.Type, CPLBTypeKeepalived))
 	}
 
-	errs = append(errs, c.Keepalived.validateVRRPInstances(nil)...)
-	errs = append(errs, c.Keepalived.validateVirtualServers()...)
+	return append(errs, c.Keepalived.Validate(externalAddress)...)
+}
+
+// Validate validates the KeepalivedSpec
+func (k *KeepalivedSpec) Validate(externalAddress string) (errs []error) {
+	if k == nil {
+		return nil
+	}
+
+	errs = append(errs, k.validateVRRPInstances(nil)...)
+	errs = append(errs, k.validateVirtualServers()...)
 	// CPLB reconciler relies in watching kubernetes.default.svc endpoints
-	if externalAddress != "" && len(c.Keepalived.VirtualServers) > 0 {
-		errs = append(errs, errors.New(".spec.api.externalAddress and VRRPInstances cannot be used together"))
+	if externalAddress != "" && len(k.VirtualServers) > 0 {
+		errs = append(errs, errors.New(".spec.api.externalAddress and virtual servers cannot be used together"))
 	}
 
 	return errs
