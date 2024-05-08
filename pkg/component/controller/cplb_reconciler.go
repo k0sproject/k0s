@@ -35,12 +35,12 @@ import (
 // "default" namespace. It notifies changes though the updateCh channel provided
 // in the constructor.
 type CPLBReconciler struct {
-	log             *logrus.Entry
-	kubeconfigPath  string
-	addresses       []string
-	mu              sync.RWMutex
-	updateCh        chan<- struct{}
-	watchCancelFunc context.CancelFunc
+	log            *logrus.Entry
+	kubeconfigPath string
+	addresses      []string
+	mu             sync.RWMutex
+	updateCh       chan<- struct{}
+	stop           func()
 }
 
 func NewCPLBReconciler(kubeconfigPath string, updateCh chan<- struct{}) *CPLBReconciler {
@@ -58,18 +58,22 @@ func (r *CPLBReconciler) Start() error {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	r.watchCancelFunc = cancel
+	done := make(chan struct{})
+
 	go func() {
-		defer close(r.updateCh)
+		defer close(done)
 		r.watchAPIServers(ctx, clientset)
 	}()
+
+	r.stop = func() { cancel(); <-done }
 
 	return nil
 }
 
 func (r *CPLBReconciler) Stop() {
-	r.log.Info("Stopping CPLB reconciler")
-	r.watchCancelFunc()
+	r.log.Debug("Stopping")
+	r.stop()
+	r.log.Info("Stopped")
 }
 
 func (r *CPLBReconciler) watchAPIServers(ctx context.Context, clientSet kubernetes.Interface) {

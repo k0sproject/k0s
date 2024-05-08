@@ -57,7 +57,7 @@ type Keepalived struct {
 	log              *logrus.Entry
 	configFilePath   string
 	reconciler       *CPLBReconciler
-	updateCh         <-chan struct{}
+	updateCh         chan struct{}
 }
 
 // Init extracts the needed binaries and creates the directories
@@ -136,7 +136,7 @@ func (k *Keepalived) Start(_ context.Context) error {
 		UID:     k.uid,
 	}
 
-	if len(k.Config.VirtualServers) > 0 {
+	if k.reconciler != nil {
 		go k.watchReconcilerUpdates()
 	}
 	return k.supervisor.Supervise()
@@ -154,6 +154,7 @@ func (k *Keepalived) Stop() error {
 	k.log.Infof("Stopping cplb-reconciler")
 	if k.reconciler != nil {
 		k.reconciler.Stop()
+		close(k.updateCh)
 	}
 
 	k.log.Infof("Deleting dummy interface")
