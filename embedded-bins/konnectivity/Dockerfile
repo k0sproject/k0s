@@ -14,9 +14,11 @@ ARG TARGET_OS \
   BUILD_GO_LDFLAGS \
   BUILD_GO_LDFLAGS_EXTRA
 
-RUN go install github.com/golang/mock/mockgen@v1.4.4 && \
-    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28 && \
-    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2 && \ 
+# for mockgen and protoc-gen-* versions, see:
+# https://github.com/kubernetes-sigs/apiserver-network-proxy/tree/release-0.30?tab=readme-ov-file#mockgen
+RUN go install go.uber.org/mock/mockgen@v0.4.0 && \
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1 && \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2 && \
     make gen && \
     CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
     GOOS=linux \
