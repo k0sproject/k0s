@@ -17,16 +17,20 @@ limitations under the License.
 package node
 
 import (
+	"context"
+	"net"
 	"net/http"
+	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
 
 func TestGetNodename(t *testing.T) {
 
-	startFakeMetadataServer(":8080")
+	baseURL := startFakeMetadataServer(t)
 	t.Run("should_always_return_override_if_given", func(t *testing.T) {
 		name, err := GetNodename("override")
 		require.Equal(t, "override", name)
@@ -42,15 +46,7 @@ func TestGetNodename(t *testing.T) {
 	})
 
 	t.Run("windows_no_metadata_service_available", func(t *testing.T) {
-		name, err := getNodeNameWindows("", "http://localhost:8080")
-		nodename, err2 := nodeutil.GetHostname("")
-		require.Nil(t, err)
-		require.Nil(t, err2)
-		require.Equal(t, nodename, name)
-	})
-
-	t.Run("windows_metadata_service_is_broken", func(t *testing.T) {
-		name, err := getNodeNameWindows("", "http://localhost:8080/not-found")
+		name, err := getNodeNameWindows("", baseURL)
 		nodename, err2 := nodeutil.GetHostname("")
 		require.Nil(t, err)
 		require.Nil(t, err2)
@@ -58,7 +54,7 @@ func TestGetNodename(t *testing.T) {
 	})
 
 	t.Run("windows_metadata_service_is_available", func(t *testing.T) {
-		name, err := getNodeNameWindows("", "http://localhost:8080/latest/meta-data/local-hostname")
+		name, err := getNodeNameWindows("", baseURL+"/latest/meta-data/local-hostname")
 		nodename, err2 := nodeutil.GetHostname("")
 		require.Nil(t, err)
 		require.Nil(t, err2)
@@ -66,15 +62,32 @@ func TestGetNodename(t *testing.T) {
 	})
 }
 
-func startFakeMetadataServer(listenOn string) {
+func startFakeMetadataServer(t *testing.T) string {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/latest/meta-data/local-hostname", func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte("some-hostname-from-metadata"))
+		assert.NoError(t, err)
+	})
+	server := &http.Server{Addr: "localhost:0", Handler: mux}
+	listener, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	serverError := make(chan error)
 	go func() {
-		http.HandleFunc("/latest/meta-data/local-hostname", func(w http.ResponseWriter, r *http.Request) {
-			_, _ = w.Write([]byte("some-hostname-from-metadata"))
-			w.WriteHeader(http.StatusOK)
-		})
-		http.HandleFunc("/not-found", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
-		})
-		_ = http.ListenAndServe(listenOn, nil)
+		defer close(serverError)
+		serverError <- server.Serve(listener)
 	}()
+
+	t.Cleanup(func() {
+		err := server.Shutdown(context.Background())
+		if !assert.NoError(t, err, "Couldn't shutdown HTTP server") {
+			return
+		}
+
+		assert.ErrorIs(t, <-serverError, http.ErrServerClosed, "HTTP server terminated unexpectedly")
+	})
+
+	return (&url.URL{Scheme: "http", Host: listener.Addr().String()}).String()
 }
