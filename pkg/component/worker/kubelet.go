@@ -64,6 +64,7 @@ type Kubelet struct {
 	Taints              []string
 	ExtraArgs           string
 	IPTablesMode        string
+	DualStackEnabled    bool
 }
 
 var _ manager.Component = (*Kubelet)(nil)
@@ -197,11 +198,13 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to get hostname: %w", err)
 	}
 
-	ipv4, ipv6, err := getIPs(ctx, nodename)
-	if err != nil {
-		logrus.WithError(err).Infof("failed to get ip address of node %s", nodename)
-	} else if err == nil && ipv4 != nil && ipv6 != nil {
-		args["--node-ip"] = ipv4.String() + "," + ipv6.String()
+	if k.DualStackEnabled && extras["--node-ip"] == "" {
+		ipv4, ipv6, err := getIPs(ctx, nodename)
+		if err != nil {
+			logrus.WithError(err).Infof("failed to get ip address of node %s", nodename)
+		} else if err == nil && ipv4 != nil && ipv6 != nil {
+			args["--node-ip"] = ipv4.String() + "," + ipv6.String()
+		}
 	}
 
 	if runtime.GOOS == "windows" {

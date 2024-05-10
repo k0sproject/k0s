@@ -39,6 +39,7 @@ type Profile struct {
 	NodeLocalLoadBalancing *v1beta1.NodeLocalLoadBalancing
 	Konnectivity           Konnectivity
 	PauseImage             *v1beta1.ImageSpec
+	DualStackEnabled       bool
 }
 
 func (p *Profile) DeepCopy() *Profile {
@@ -154,6 +155,7 @@ func forEachConfigMapEntry(profile *Profile, f func(fieldName string, ptr any)) 
 		"nodeLocalLoadBalancing": &profile.NodeLocalLoadBalancing,
 		"konnectivity":           &profile.Konnectivity,
 		"pauseImage":             &profile.PauseImage,
+		"dualStackEnabled":       &profile.DualStackEnabled,
 	} {
 		f(fieldName, ptr)
 	}
