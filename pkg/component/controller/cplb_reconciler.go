@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -77,29 +76,34 @@ func (r *CPLBReconciler) Stop() {
 }
 
 func (r *CPLBReconciler) watchAPIServers(ctx context.Context, clientSet kubernetes.Interface) {
-	for {
-		select {
-		default:
-			err := watch.Endpoints(clientSet.CoreV1().Endpoints("default")).
-				WithObjectName("kubernetes").
-				Until(ctx, func(endpoints *corev1.Endpoints) (bool, error) {
-					r.maybeUpdateIPs(endpoints)
-					return false, nil
-				})
-			// Log any reconciliation errors, but only if they don't
-			// indicate that the reconciler has been stopped.
-			if err != nil && !errors.Is(err, ctx.Err()) {
-				r.log.WithError(err).Error("Failed to reconcile API server addresses")
+	var lastObservedVersion string
+	_ = watch.Endpoints(clientSet.CoreV1().Endpoints("default")).
+		WithObjectName("kubernetes").
+		WithErrorCallback(func(err error) (time.Duration, error) {
+			if retryAfter, e := watch.IsRetryable(err); e == nil {
+				r.log.WithError(err).Infof(
+					"Transient error while watching API server endpoints"+
+						", last observed version is %q, starting over in %s ...",
+					lastObservedVersion, retryAfter,
+				)
+				return retryAfter, nil
 			}
 
-			// After a watch error wait 5 seconds before retrying
-			time.Sleep(5 * time.Second)
-
-		case <-ctx.Done():
-			r.log.Info("Stopped watching kubernetes endpoints")
-			return
-		}
-	}
+			retryAfter := 10 * time.Second
+			r.log.WithError(err).Errorf(
+				"Failed to watch API server endpoints"+
+					", last observed version is %q, starting over in %s ...",
+				lastObservedVersion, retryAfter,
+			)
+			return retryAfter, nil
+		}).
+		Until(ctx, func(endpoints *corev1.Endpoints) (bool, error) {
+			if lastObservedVersion != endpoints.ResourceVersion {
+				lastObservedVersion = endpoints.ResourceVersion
+				r.maybeUpdateIPs(endpoints)
+			}
+			return false, nil
+		})
 }
 
 // maybeUpdateIPs updates the list of IP addresses if the new list has
