@@ -1691,6 +1691,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#iptables-veresion-mismatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      iptables veresion mismatch
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#profiling" class="md-nav__link">
     <span class="md-ellipsis">
       Profiling
@@ -2076,6 +2085,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#iptables-veresion-mismatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      iptables veresion mismatch
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#profiling" class="md-nav__link">
     <span class="md-ellipsis">
       Profiling
@@ -2204,6 +2222,12 @@ with etcd itself is not fully supported on ARM either.</p>
 <p>With this config you can start your controller as usual. Any workers will need to be started with</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--profile<span class="w"> </span>coreos<span class="w"> </span><span class="o">[</span>TOKEN<span class="o">]</span>
 </code></pre></div>
+<h2 id="iptables-veresion-mismatch">iptables veresion mismatch<a class="headerlink" href="#iptables-veresion-mismatch" title="Permanent link">#</a></h2>
+<p>If the running kernel has firewall rules created using an iptables version
+newer than the version shipped with k0s, the Kubernetes network will <a href="https://www.mirantis.com/blog/networking-problems-after-installing-kubernetes-1-25-or-after-upgrading-your-host-os-this-might-be-your-problem">not
+work</a>.</p>
+<p>To solve this, make sure that the iptables version used on host is same version
+as bundled with k0s. The k0s version is found in  <code>/var/lib/k0s/bin</code>.</p>
 <h2 id="profiling">Profiling<a class="headerlink" href="#profiling" title="Permanent link">#</a></h2>
 <p>We drop any debug related information and symbols from the compiled binary by utilzing <code>-w -s</code> linker flags.</p>
 <p>To keep those symbols use <code>DEBUG</code> env variable:</p>
