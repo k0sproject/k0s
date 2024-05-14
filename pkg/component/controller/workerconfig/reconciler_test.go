@@ -29,6 +29,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/constant"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -405,7 +406,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		})
 	}
 
-	const rbacName = "system:bootstrappers:worker-config"
+	const rbacName = "system:bootstrappers:worker-config-" + constant.KubernetesMajorMinorVersion
 
 	t.Run("Role", func(t *testing.T) {
 		role := findResource(t, "Expected to find a Role named "+rbacName,
@@ -730,6 +731,7 @@ func requireKubelet(t *testing.T, resources []*unstructured.Unstructured, name s
 }
 
 func findResource(t *testing.T, failureMessage string, resources resources, probe func(*unstructured.Unstructured) bool) *unstructured.Unstructured {
+	t.Helper()
 	for _, resource := range resources {
 		if probe(resource) {
 			return resource
