@@ -19,6 +19,7 @@ package metricsscraper
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"slices"
 	"testing"
 	"time"
@@ -35,7 +36,19 @@ type MetricsScraperSuite struct {
 }
 
 func (s *MetricsScraperSuite) TestK0sGetsUp() {
-	s.NoError(s.InitController(0, "--enable-worker", "--enable-metrics-scraper"))
+	flags := []string{"--enable-metrics-scraper"}
+	expectedJobs := []string{"kube-controller-manager", "kube-scheduler"}
+	if _, singleNode := os.LookupEnv("K0S_SINGLENODE"); singleNode {
+		flags = append(flags, "--single")
+		expectedJobs = append(expectedJobs, "kine")
+	} else {
+		flags = append(flags, "--enable-worker")
+		expectedJobs = append(expectedJobs, "etcd")
+	}
+
+	s.T().Log("Initializing controller with flags:", flags)
+
+	s.NoError(s.InitController(0, flags...))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -47,7 +60,7 @@ func (s *MetricsScraperSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.waitForPushgateway())
 
 	s.T().Logf("Waiting for metrics")
-	s.Require().NoError(s.waitForMetrics("kube-scheduler", "kube-controller-manager", "etcd"))
+	s.Require().NoError(s.waitForMetrics(expectedJobs...))
 }
 
 func (s *MetricsScraperSuite) waitForPushgateway() error {
