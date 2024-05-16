@@ -205,7 +205,7 @@ func (m *Metrics) newKineJob() (*job, error) {
 
 	return &job{
 		log:          m.log.WithField("metrics_job", "kine"),
-		scrapeURL:    "http://localhost:8080/metrics",
+		scrapeURL:    "http://localhost:2380/metrics",
 		name:         "kine",
 		hostname:     m.hostname,
 		scrapeClient: httpClient,
