@@ -142,7 +142,7 @@ func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
 	log.Info("waiting to see EtcdMember CRD ready")
 	return watch.FromClient[*crdList, crd](ec.CustomResourceDefinitions()).
 		WithObjectName(fmt.Sprintf("%s.%s", "etcdmembers", "etcd.k0sproject.io")).
-		WithErrorCallback(func(cbErr error) (retryDelay time.Duration, err error) {
+		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryAfter, e := watch.IsRetryable(err); e == nil {
 				log.WithError(err).Infof(
 					"Transient error while watching etcdmember CRD"+
