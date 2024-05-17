@@ -225,7 +225,7 @@ ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmdEscape}}{{end}}
 {{- if .Option.Environment}}{{range .Option.Environment}}
 Environment="{{.}}"{{end}}{{- end}}
 
-RestartSec=120
+RestartSec=10
 Delegate=yes
 KillMode=process
 LimitCORE=infinity
