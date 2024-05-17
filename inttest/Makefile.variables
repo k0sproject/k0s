@@ -46,6 +46,7 @@ smoketests := \
 	check-kuberouter \
 	check-metrics \
 	check-metricsscraper \
+	check-metricsscraper-singlenode \
 	check-multicontroller \
 	check-network-conformance-calico \
 	check-network-conformance-kuberouter \

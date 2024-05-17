@@ -99,6 +99,9 @@ check-network-conformance-calico: TIMEOUT=15m
 check-network-conformance-calico: export K0S_NETWORK_CONFORMANCE_CNI=calico
 check-network-conformance-calico: TEST_PACKAGE=network-conformance
 
+check-metricsscraper-singlenode: export K0S_SINGLENODE=1
+check-metricsscraper-singlenode: TEST_PACKAGE=metricsscraper
+
 check-nllb: TIMEOUT=15m
 
 check-openebs: TIMEOUT=7m
