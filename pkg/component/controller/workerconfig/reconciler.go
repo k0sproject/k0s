@@ -143,7 +143,7 @@ func (r *Reconciler) Init(context.Context) error {
 			return err
 		}
 		return (&applier.Stack{
-			Name:      "k0s-" + constant.WorkerConfigComponentName,
+			Name:      fmt.Sprintf("k0s-%s-%s", constant.WorkerConfigComponentName, constant.KubernetesMajorMinorVersion),
 			Client:    dynamicClient,
 			Discovery: discoveryClient,
 			Resources: resources,
@@ -550,7 +550,7 @@ func buildRBACResources(configMaps []*corev1.ConfigMap) []resource {
 	sort.Strings(configMapNames)
 
 	meta := metav1.ObjectMeta{
-		Name:      fmt.Sprintf("system:bootstrappers:%s", constant.WorkerConfigComponentName),
+		Name:      fmt.Sprintf("system:bootstrappers:%s-%s", constant.WorkerConfigComponentName, constant.KubernetesMajorMinorVersion),
 		Namespace: "kube-system",
 		Labels:    applier.CommonLabels(constant.WorkerConfigComponentName),
 	}
