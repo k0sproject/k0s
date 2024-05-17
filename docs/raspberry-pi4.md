@@ -293,7 +293,7 @@ When the cluster is up, try to have a look:
 
 ```console
 ubuntu@ubuntu:~$ sudo k0s kc get nodes -owide
-NAME     STATUS   ROLES           AGE     VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+NAME     STATUS   ROLES           AGE     VERSION        INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
 ubuntu   Ready    control-plane   4m41s   v{{{ extra.k8s_version }}}+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.8
 ubuntu@ubuntu:~$ sudo k0s kc get pod -owide -A
 NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE     IP             NODE     NOMINATED NODE   READINESS GATES
@@ -502,7 +502,7 @@ Using the above kubeconfig, you can now access and use the cluster:
 
 ```console
 ubuntu@ubuntu:~$ KUBECONFIG=/path/to/kubeconfig kubectl get nodes,deployments,pods -owide -A
-NAME          STATUS   ROLES    AGE    VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+NAME          STATUS   ROLES    AGE    VERSION        INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
 node/ubuntu   Ready    <none>   5m1s   v{{{ extra.k8s_version }}}+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.8
 
 NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR
