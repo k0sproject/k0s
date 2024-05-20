@@ -135,29 +135,29 @@ func TestGetEnv(t *testing.T) {
 }
 
 func TestRespawn(t *testing.T) {
-	pingPong := makePingPong(t)
+	pingPong := NewPingPong(t)
 
 	s := Supervisor{
 		Name:           t.Name(),
-		BinPath:        pingPong.binPath(),
+		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
-		Args:           pingPong.binArgs(),
+		Args:           pingPong.BinArgs(),
 		TimeoutRespawn: 1 * time.Millisecond,
 	}
 	require.NoError(t, s.Supervise())
 	t.Cleanup(func() { assert.NoError(t, s.Stop(), "Failed to stop") })
 
 	// wait til process starts up
-	require.NoError(t, pingPong.awaitPing())
+	require.NoError(t, pingPong.AwaitPing())
 
 	// save the pid
 	process := s.GetProcess()
 
 	// send pong to unblock the process so it can exit
-	require.NoError(t, pingPong.sendPong())
+	require.NoError(t, pingPong.SendPong())
 
 	// wait til the respawned process pings again
-	require.NoError(t, pingPong.awaitPing())
+	require.NoError(t, pingPong.AwaitPing())
 
 	// test that a new process got respawned
 	assert.NotEqual(t, process.Pid, s.GetProcess().Pid, "Respawn failed")

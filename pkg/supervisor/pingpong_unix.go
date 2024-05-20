@@ -29,16 +29,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type pingPong struct {
+type PingPong struct {
 	shellPath, ping, pong string
 }
 
-func makePingPong(t *testing.T) *pingPong {
+func NewPingPong(t *testing.T) *PingPong {
 	shellPath, err := exec.LookPath("sh")
 	require.NoError(t, err)
 
 	tmpDir := t.TempDir()
-	pp := pingPong{
+	pp := PingPong{
 		shellPath,
 		filepath.Join(tmpDir, "pipe.ping"),
 		filepath.Join(tmpDir, "pipe.pong"),
@@ -52,15 +52,15 @@ func makePingPong(t *testing.T) *pingPong {
 	return &pp
 }
 
-func (pp *pingPong) binPath() string {
+func (pp *PingPong) BinPath() string {
 	return pp.shellPath
 }
 
-func (pp *pingPong) binArgs() []string {
+func (pp *PingPong) BinArgs() []string {
 	return []string{"-euc", `cat -- "$1" && echo pong >"$2"`, "--", pp.ping, pp.pong}
 }
 
-func (pp *pingPong) awaitPing() (err error) {
+func (pp *PingPong) AwaitPing() (err error) {
 	f, err := os.OpenFile(pp.ping, os.O_WRONLY, 0)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (pp *pingPong) awaitPing() (err error) {
 	return nil
 }
 
-func (pp *pingPong) sendPong() (err error) {
+func (pp *PingPong) SendPong() (err error) {
 	// Read from the FIFO file to unblock the process.
 	_, err = os.ReadFile(pp.pong)
 	return err
