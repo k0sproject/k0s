@@ -50,10 +50,6 @@ type Supervisor struct {
 	TimeoutRespawn time.Duration
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
-	// ProcFSPath is only used for testing
-	ProcFSPath string
-	// KillFunction is only used for testing
-	KillFunction func(int, syscall.Signal) error
 	// A function to clean some leftovers before starting or restarting the supervised process
 	CleanBeforeFn func() error
 
@@ -143,7 +139,7 @@ func (s *Supervisor) Supervise() error {
 		s.TimeoutRespawn = 5 * time.Second
 	}
 
-	if err := s.maybeKillPidFile(nil, nil); err != nil {
+	if err := s.maybeKillPidFile(); err != nil {
 		return err
 	}
 
