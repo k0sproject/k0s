@@ -51,7 +51,7 @@ func (s *quorumSuite) SetupTest() {
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 
 		// Note that the token is intentionally empty for the first controller
-		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
+		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", "--enable-worker", joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
 
 		client, err := s.ExtensionsClient(s.ControllerNode(0))
@@ -95,11 +95,7 @@ spec:
         targets:
           controllers:
             discovery:
-              static:
-                nodes:
-                  - controller0
-                  - controller1
-                  - controller2
+              selector: {}
 `
 
 	manifestFile := "/tmp/happy.yaml"
