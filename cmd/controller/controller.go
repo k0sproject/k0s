@@ -228,24 +228,26 @@ func (c *command) start(ctx context.Context) error {
 		nodeComponents.Add(ctx, controllerLeaseCounter)
 	}
 
+	disableEndpointReconciler := !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
+		nodeConfig.Spec.API.ExternalAddress != ""
+
 	if cplb := nodeConfig.Spec.Network.ControlPlaneLoadBalancing; cplb != nil && cplb.Enabled {
 		if c.SingleNode {
 			return errors.New("control plane load balancing cannot be used in a single-node cluster")
 		}
 
 		nodeComponents.Add(ctx, &controller.Keepalived{
-			K0sVars:         c.K0sVars,
-			Config:          cplb.Keepalived,
-			DetailedLogging: c.Debug,
-			LogConfig:       c.Debug,
-			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
-			APIPort:         nodeConfig.Spec.API.Port,
+			K0sVars:               c.K0sVars,
+			Config:                cplb.Keepalived,
+			DetailedLogging:       c.Debug,
+			LogConfig:             c.Debug,
+			KubeConfigPath:        c.K0sVars.AdminKubeConfigPath,
+			APIPort:               nodeConfig.Spec.API.Port,
+			HasEndpointReconciler: disableEndpointReconciler,
 		})
 	}
 
 	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
-	disableEndpointReconciler := !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
-		nodeConfig.Spec.API.ExternalAddress != ""
 
 	if enableKonnectivity {
 		nodeComponents.Add(ctx, &controller.Konnectivity{

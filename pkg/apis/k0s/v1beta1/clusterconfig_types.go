@@ -336,7 +336,7 @@ func (s *ClusterSpec) Validate() (errs []error) {
 	}
 
 	if s.Network != nil && s.Network.ControlPlaneLoadBalancing != nil {
-		for _, err := range s.Network.ControlPlaneLoadBalancing.Validate(s.API.ExternalAddress) {
+		for _, err := range s.Network.ControlPlaneLoadBalancing.Validate() {
 			errs = append(errs, fmt.Errorf("controlPlaneLoadBalancing: %w", err))
 		}
 	}

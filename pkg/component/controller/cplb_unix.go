@@ -45,20 +45,21 @@ import (
 
 // Keepalived is the controller for the keepalived process in the control plane load balancing
 type Keepalived struct {
-	K0sVars          *config.CfgVars
-	Config           *k0sAPI.KeepalivedSpec
-	DetailedLogging  bool
-	LogConfig        bool
-	APIPort          int
-	KubeConfigPath   string
-	keepalivedConfig *keepalivedConfig
-	uid              int
-	supervisor       *supervisor.Supervisor
-	log              *logrus.Entry
-	configFilePath   string
-	reconciler       *CPLBReconciler
-	updateCh         chan struct{}
-	reconcilerDone   chan struct{}
+	K0sVars               *config.CfgVars
+	Config                *k0sAPI.KeepalivedSpec
+	DetailedLogging       bool
+	LogConfig             bool
+	APIPort               int
+	KubeConfigPath        string
+	HasEndpointReconciler bool
+	keepalivedConfig      *keepalivedConfig
+	uid                   int
+	supervisor            *supervisor.Supervisor
+	log                   *logrus.Entry
+	configFilePath        string
+	reconciler            *CPLBReconciler
+	updateCh              chan struct{}
+	reconcilerDone        chan struct{}
 }
 
 // Init extracts the needed binaries and creates the directories
@@ -92,6 +93,9 @@ func (k *Keepalived) Start(_ context.Context) error {
 	}
 
 	if len(k.Config.VirtualServers) > 0 {
+		if k.HasEndpointReconciler {
+			return errors.New("virtual servers are not supported with the endpoint-reconciler enabled.")
+		}
 		k.log.Info("Starting CPLB reconciler")
 		updateCh := make(chan struct{}, 1)
 		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, updateCh)

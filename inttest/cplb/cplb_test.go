@@ -33,6 +33,8 @@ type keepalivedSuite struct {
 
 const haControllerConfig = `
 spec:
+  api:
+    externalAddress: %s
   network:
     controlPlaneLoadBalancing:
       enabled: true
@@ -43,9 +45,6 @@ spec:
           authPass: "123456"
         virtualServers:
         - ipAddress: %s
-    nodeLocalLoadBalancing:
-      enabled: true
-      type: EnvoyProxy
 `
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -57,10 +56,10 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 
 	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb, lb))
+		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb, lb, lb))
 
 		// Note that the token is intentionally empty for the first controller
-		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
+		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server,endpoint-reconciler", joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
 
 		// With the primary controller running, create the join token for subsequent controllers.
