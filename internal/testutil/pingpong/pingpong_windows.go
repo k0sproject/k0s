@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package supervisor
+package pingpong
 
 import (
 	_ "embed"
@@ -42,7 +42,7 @@ type PingPong struct {
 	pong      string
 }
 
-func NewPingPong(t *testing.T) *PingPong {
+func New(t *testing.T) *PingPong {
 	shellPath, err := exec.LookPath("powershell")
 	require.NoError(t, err)
 

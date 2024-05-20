@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package supervisor
+package pingpong
 
 import (
 	"errors"
@@ -33,7 +33,7 @@ type PingPong struct {
 	shellPath, ping, pong string
 }
 
-func NewPingPong(t *testing.T) *PingPong {
+func New(t *testing.T) *PingPong {
 	shellPath, err := exec.LookPath("sh")
 	require.NoError(t, err)
 

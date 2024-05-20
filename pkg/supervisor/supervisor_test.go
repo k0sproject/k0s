@@ -29,6 +29,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/testutil/pingpong"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -135,7 +136,7 @@ func TestGetEnv(t *testing.T) {
 }
 
 func TestRespawn(t *testing.T) {
-	pingPong := NewPingPong(t)
+	pingPong := pingpong.New(t)
 
 	s := Supervisor{
 		Name:           t.Name(),
