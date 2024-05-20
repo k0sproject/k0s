@@ -250,11 +250,6 @@ func (r *Reconciler) runReconcileLoop(ctx context.Context, updates <-chan update
 			return fmt.Errorf("%w while processing reconciliation", errStoppedConcurrently)
 		}
 
-		if !r.leaderElector.IsLeader() {
-			r.log.Debug("Skipping reconciliation, not the leader")
-			return nil
-		}
-
 		if desiredState.configSnapshot == nil || len(desiredState.apiServers) < 1 {
 			r.log.Debug("Skipping reconciliation, snapshot not yet complete")
 			return nil

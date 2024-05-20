@@ -46,19 +46,23 @@ func (s *quorumSuite) SetupTest() {
 	var joinToken string
 
 	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+		s.T().Log("WaitForSSH on controller", idx)
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 
+		s.T().Log("init controller", idx)
 		// Note that the token is intentionally empty for the first controller
-		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", "--enable-worker", joinToken))
+		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--enable-worker", joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
 
 		client, err := s.ExtensionsClient(s.ControllerNode(0))
 		s.Require().NoError(err)
 
+		s.T().Log("check crds on controller", idx)
 		s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "plans"))
 		s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "controlnodes"))
+		s.T().Log("crds are present on controller", idx)
 
 		// With the primary controller running, create the join token for subsequent controllers.
 		if idx == 0 {
@@ -94,6 +98,9 @@ spec:
             url: http://localhost/dist/k0s
         targets:
           controllers:
+            discovery:
+              selector: {}
+          workers:
             discovery:
               selector: {}
 `
