@@ -36,6 +36,8 @@ import (
 var script []byte
 
 type PingPong struct {
+	IgnoreGracefulShutdownRequest bool // Has no effect on Windows.
+
 	shellPath string
 	shellArgs []string
 	ping      net.Listener
@@ -61,8 +63,10 @@ func New(t *testing.T) *PingPong {
 	t.Cleanup(func() { assert.NoError(t, ping.Close(), "Failed to close ping pipe") })
 
 	return &PingPong{
-		shellPath, []string{"-noprofile", "-noninteractive", scriptPath, namespace},
-		ping, pongPath,
+		shellPath: shellPath,
+		shellArgs: []string{"-noprofile", "-noninteractive", scriptPath, namespace},
+		ping:      ping,
+		pong:      pongPath,
 	}
 }
 

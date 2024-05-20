@@ -19,7 +19,9 @@ limitations under the License.
 package pingpong
 
 import (
+	_ "embed"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,8 +31,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//go:embed pingpong.sh
+var script []byte
+
 type PingPong struct {
-	shellPath, ping, pong string
+	IgnoreGracefulShutdownRequest bool // If set, SIGTERM won't terminate the program.
+
+	shellPath, pipe, script string
 }
 
 func New(t *testing.T) *PingPong {
@@ -39,16 +46,15 @@ func New(t *testing.T) *PingPong {
 
 	tmpDir := t.TempDir()
 	pp := PingPong{
-		shellPath,
-		filepath.Join(tmpDir, "pipe.ping"),
-		filepath.Join(tmpDir, "pipe.pong"),
+		shellPath: shellPath,
+		pipe:      filepath.Join(tmpDir, "pingpong"),
+		script:    filepath.Join(tmpDir, "pingpong.sh"),
 	}
 
-	for _, path := range []string{pp.ping, pp.pong} {
-		err := syscall.Mkfifo(path, 0600)
-		require.NoError(t, err, "Mkfifo failed for %s", path)
-	}
-
+	err = syscall.Mkfifo(pp.pipe, 0600)
+	require.NoError(t, err, "mkfifo failed for %s", pp.pipe)
+	err = os.WriteFile(pp.script, script, 0700)
+	require.NoError(t, err, "Failed to write script file")
 	return &pp
 }
 
@@ -57,26 +63,32 @@ func (pp *PingPong) BinPath() string {
 }
 
 func (pp *PingPong) BinArgs() []string {
-	return []string{"-euc", `cat -- "$1" && echo pong >"$2"`, "--", pp.ping, pp.pong}
+	var ignoreSIGTERM string
+	if pp.IgnoreGracefulShutdownRequest {
+		ignoreSIGTERM = "1"
+	}
+
+	return []string{pp.script, pp.pipe, ignoreSIGTERM}
 }
 
 func (pp *PingPong) AwaitPing() (err error) {
-	f, err := os.OpenFile(pp.ping, os.O_WRONLY, 0)
+	// The open for reading call will block until the
+	// script tries to open the file for writing.
+	f, err := os.OpenFile(pp.pipe, os.O_RDONLY, 0)
 	if err != nil {
 		return err
 	}
-	defer func() { err = errors.Join(err, f.Close()) }()
-
-	// The write will block until the process reads from the FIFO file.
-	if _, err := f.Write([]byte("ping\n")); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = io.Copy(io.Discard, f)
+	return errors.Join(err, f.Close())
 }
 
-func (pp *PingPong) SendPong() (err error) {
-	// Read from the FIFO file to unblock the process.
-	_, err = os.ReadFile(pp.pong)
-	return err
+func (pp *PingPong) SendPong() error {
+	// The open for writing call will block until the
+	// script tries to open the file for reading.
+	f, err := os.OpenFile(pp.pipe, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString("pong\n")
+	return errors.Join(err, f.Close())
 }
