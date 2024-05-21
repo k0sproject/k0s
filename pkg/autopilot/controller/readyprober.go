@@ -81,7 +81,12 @@ func (p readyProber) Probe() error {
 		target := target
 		g.Go(func() error {
 			return func(target apv1beta2.PlanCommandTargetStatus) error {
-				return p.probeOne(target)
+				err := p.probeOne(target)
+				if err != nil {
+					p.log.Errorf("Failed to probe %s: %v", target.Name, err)
+					return err
+				}
+				return nil
 			}(target)
 		})
 	}
