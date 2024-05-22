@@ -22,12 +22,14 @@ import (
 	"testing"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/yaml"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -105,6 +107,17 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 		t.Run(("etcdIsRunning"), func(t *testing.T) {
 			_, err = ssh.ExecWithOutput(s.Context(), "test -e /var/lib/k0s/bin/etcd && ps xa | grep etcd")
 			assert.NoError(t, err)
+		})
+
+		t.Run("no kube-bridge address in default config", func(t *testing.T) {
+			cfg, err := ssh.ExecWithOutput(s.Context(), "k0s config create")
+			assert.NoError(t, err)
+			config := &v1beta1.ClusterConfig{}
+			assert.NoError(t, yaml.Unmarshal([]byte(cfg), config))
+
+			assert.NotEqual(t, "10.244.0.1", config.Spec.API.Address)
+			assert.NotEqual(t, "10.244.0.1", config.Spec.Storage.Etcd.PeerAddress)
+
 		})
 	})
 }
