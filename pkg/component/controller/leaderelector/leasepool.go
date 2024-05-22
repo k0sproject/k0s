@@ -32,7 +32,7 @@ type LeasePool struct {
 
 	invocationID      string
 	stopCh            chan struct{}
-	leaderStatus      atomic.Value
+	leaderStatus      atomic.Bool
 	kubeClientFactory kubeutil.ClientFactoryInterface
 	leaseCancel       context.CancelFunc
 
@@ -41,19 +41,18 @@ type LeasePool struct {
 	name                   string
 }
 
-var _ Interface = (*LeasePool)(nil)
-var _ manager.Component = (*LeasePool)(nil)
+var (
+	_ Interface         = (*LeasePool)(nil)
+	_ manager.Component = (*LeasePool)(nil)
+)
 
 // NewLeasePool creates a new leader elector using a Kubernetes lease pool.
 func NewLeasePool(invocationID string, kubeClientFactory kubeutil.ClientFactoryInterface, name string) *LeasePool {
-	d := atomic.Value{}
-	d.Store(false)
 	return &LeasePool{
 		invocationID:      invocationID,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
 		log:               logrus.WithFields(logrus.Fields{"component": "poolleaderelector"}),
-		leaderStatus:      d,
 		name:              name,
 	}
 }
@@ -120,5 +119,5 @@ func (l *LeasePool) Stop() error {
 }
 
 func (l *LeasePool) IsLeader() bool {
-	return l.leaderStatus.Load().(bool)
+	return l.leaderStatus.Load()
 }
