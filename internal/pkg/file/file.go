@@ -25,8 +25,6 @@ import (
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
-
-	"go.uber.org/multierr"
 )
 
 // Exists checks if a file exists and is not a directory before we
@@ -60,7 +58,7 @@ func Copy(src, dst string) (err error) {
 	if err != nil {
 		return err
 	}
-	defer multierr.AppendInvoke(&err, multierr.Close(in))
+	defer func() { err = errors.Join(err, in.Close()) }()
 
 	sourceFileStat, err := in.Stat()
 	if err != nil {
@@ -97,18 +95,31 @@ func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Write
 	tmpFileName := fd.Name()
 	close := true
 	defer func() {
-		remove := err != nil
-		if close {
-			err = multierr.Append(err, fd.Close())
+		var errs []error
+		if err != nil {
+			errs = append(errs, err)
 		}
-		if remove {
-			removeErr := os.Remove(tmpFileName)
+
+		if close {
+			if err := fd.Close(); err != nil {
+				errs = append(errs, err)
+			}
+		}
+
+		if err != nil {
+			err := os.Remove(tmpFileName)
 			// Don't propagate any fs.ErrNotExist errors. There is no point in
 			// doing this, since the desired state is already reached: The
 			// temporary file is no longer present on the file system.
-			if removeErr != nil && !errors.Is(err, fs.ErrNotExist) {
-				err = multierr.Append(err, removeErr)
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				errs = append(errs, err)
 			}
+		}
+
+		if len(errs) == 1 {
+			err = errs[0]
+		} else {
+			err = errors.Join(errs...)
 		}
 	}()
 

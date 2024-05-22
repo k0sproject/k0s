@@ -29,7 +29,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/multierr"
 )
 
 func TestWriteAtomically(t *testing.T) {
@@ -103,7 +102,7 @@ func TestWriteAtomically(t *testing.T) {
 		dir := t.TempDir()
 		file := filepath.Join(dir, "file")
 
-		errs := multierr.Errors(WriteAtomically(file, 0644, func(file io.Writer) error {
+		errs := unwrap(WriteAtomically(file, 0644, func(file io.Writer) error {
 			c, ok := file.(io.Closer)
 			require.True(t, ok, "Not closeable: %T", file)
 			require.NoError(t, c.Close())
@@ -150,7 +149,7 @@ func TestWriteAtomically(t *testing.T) {
 			return nil
 		})
 
-		assert.Len(t, multierr.Errors(err), 1)
+		assert.Len(t, unwrap(err), 1)
 
 		// The error should be about the failed chmod.
 		if err, ok := assertPathError(t, err, "chmod", dir); ok {
@@ -168,7 +167,7 @@ func TestWriteAtomically(t *testing.T) {
 		// Obstruct the file path, so that the rename fails.
 		require.NoError(t, os.Mkdir(file, 0700))
 
-		errs := multierr.Errors(WriteAtomically(file, 0644, func(file io.Writer) error {
+		errs := unwrap(WriteAtomically(file, 0644, func(file io.Writer) error {
 			_, err := file.Write([]byte("obstructed"))
 			return err
 		}))
@@ -176,7 +175,7 @@ func TestWriteAtomically(t *testing.T) {
 		require.Len(t, errs, 1)
 
 		var linkErr *os.LinkError
-		if assert.True(t, errors.As(errs[0], &linkErr), "Not a LinkError: %v", linkErr) {
+		if assert.True(t, errors.As(errs[0], &linkErr), "Not a LinkError: %#+v", errs[0]) {
 			assert.Equal(t, "rename", linkErr.Op)
 			assert.Equal(
 				t, dir, filepath.Dir(linkErr.Old),
@@ -214,7 +213,7 @@ func TestWriteAtomically(t *testing.T) {
 		require.NoError(t, os.Mkdir(file, 0700))
 
 		var tempPath string
-		errs := multierr.Errors(WriteAtomically(file, 0755, func(file io.Writer) error {
+		errs := unwrap(WriteAtomically(file, 0755, func(file io.Writer) error {
 			n, ok := file.(interface{ Name() string })
 			require.True(t, ok, "Doesn't have a name: %T", file)
 			tempPath = n.Name()
@@ -306,4 +305,14 @@ func TestExists(t *testing.T) {
 			t.Errorf("test existing tempfile %s: got %t, wanted %t", existingFileName, got, want)
 		}
 	})
+}
+
+func unwrap(err error) []error {
+	if err, ok := err.(interface{ Unwrap() []error }); ok {
+		if errs := err.Unwrap(); len(errs) > 0 {
+			return errs
+		}
+	}
+
+	return []error{err}
 }

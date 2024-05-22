@@ -18,6 +18,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -38,7 +39,6 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
-	"go.uber.org/multierr"
 	"sigs.k8s.io/yaml"
 )
 
@@ -282,5 +282,5 @@ func loadConcurrently(ctx context.Context, addresses []string, loadWorkerConfig 
 		return *workerConfigPtr, nil
 	}
 
-	return nil, multierr.Combine(errs...)
+	return nil, errors.Join(errs...)
 }

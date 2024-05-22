@@ -18,13 +18,13 @@ package iptablesutils
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"go.uber.org/multierr"
 )
 
 const (
@@ -68,12 +68,12 @@ func DetectHostIPTablesMode(k0sBinPath string) (string, error) {
 
 	iptablesPath, err := exec.LookPath("iptables")
 	if err != nil {
-		return "", multierr.Combine(err, nftErr, legacyErr)
+		return "", errors.Join(err, nftErr, legacyErr)
 	}
 
 	out, err := exec.Command(iptablesPath, "--version").CombinedOutput()
 	if err != nil {
-		return "", multierr.Combine(err, nftErr, legacyErr)
+		return "", errors.Join(err, nftErr, legacyErr)
 	}
 
 	outStr := strings.TrimSpace(string(out))
@@ -119,10 +119,7 @@ func findMatchingEntries(k0sBinPath, mode string, entries ...string) (entriesFou
 
 	v4Err, v6Err := findMatches("iptables-save"), findMatches("ip6tables-save")
 	if v4Err != nil && v6Err != nil {
-		return false, 0, multierr.Combine(
-			fmt.Errorf("iptables-save: %w", v4Err),
-			fmt.Errorf("ip6tables-save: %w", v6Err),
-		)
+		return false, 0, fmt.Errorf("iptables-save: %w; ip6tables-save: %w", v4Err, v6Err)
 	}
 
 	return entriesFound, total, nil

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -41,7 +42,6 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
-	"go.uber.org/multierr"
 )
 
 func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, workerOpts *config.WorkerOptions) error {
@@ -202,14 +202,19 @@ func writeKubeletBootstrapKubeconfig(kubeconfig []byte) (string, error) {
 		return "", err
 	}
 
-	_, err = bootstrapFile.Write(kubeconfig)
-	err = multierr.Append(err, bootstrapFile.Close())
-	if err != nil {
-		if rmErr := os.Remove(bootstrapFile.Name()); rmErr != nil && !os.IsNotExist(rmErr) {
-			err = multierr.Append(err, rmErr)
+	_, writeErr := bootstrapFile.Write(kubeconfig)
+	closeErr := bootstrapFile.Close()
+
+	if writeErr != nil || closeErr != nil {
+		rmErr := os.Remove(bootstrapFile.Name())
+		// Don't propagate any fs.ErrNotExist errors. There is no point in doing
+		// this, since the desired state is already reached: The bootstrap file
+		// file is no longer present on the file system.
+		if errors.Is(rmErr, fs.ErrNotExist) {
+			rmErr = nil
 		}
 
-		return "", err
+		return "", errors.Join(writeErr, closeErr, rmErr)
 	}
 
 	return bootstrapFile.Name(), nil

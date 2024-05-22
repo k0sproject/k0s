@@ -61,9 +61,9 @@ func TestFromConfigMapData(t *testing.T) {
 		}
 
 		config, err := FromConfigMapData(data)
-		var composite interface{ Errors() []error }
+		var composite interface{ Unwrap() []error }
 		if assert.ErrorAs(t, err, &composite) {
-			errs := composite.Errors()
+			errs := composite.Unwrap()
 			assert.Len(t, errs, 4)
 			for i, err := range errs {
 				assert.ErrorContains(t, err, "json: cannot unmarshal number into Go value of type", "For error #%d", i+1)

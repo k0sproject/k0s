@@ -62,7 +62,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/multierr"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -444,18 +443,18 @@ func (s *BootlooseSuite) dumpNodeLogs(ctx context.Context, t *testing.T, node, d
 
 		outLog, errLog := log{path: outPath}, log{path: errPath}
 		for _, log := range []*log{&outLog, &errLog} {
-			file, err := os.Create(log.path)
-			if err != nil {
-				t.Logf("Failed to create log file: %s", err.Error())
+			file, createErr := os.Create(log.path)
+			if createErr != nil {
+				t.Log("Failed to create log file:", createErr)
 				continue
 			}
 
-			defer multierr.AppendInvoke(&err, multierr.Close(file))
 			buf := bufio.NewWriter(file)
 			defer func() {
 				if err == nil {
 					err = buf.Flush()
 				}
+				err = errors.Join(err, file.Close())
 			}()
 			log.writer = buf
 		}

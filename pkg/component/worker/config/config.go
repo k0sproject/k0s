@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 
-	"go.uber.org/multierr"
 	"sigs.k8s.io/yaml"
 )
 
@@ -96,18 +95,18 @@ func (k *Konnectivity) Validate(path *field.Path) (errs field.ErrorList) {
 
 func FromConfigMapData(data map[string]string) (*Profile, error) {
 	var config Profile
-	var errs error
+	var errs []error
 	forEachConfigMapEntry(&config, func(fieldName string, ptr any) {
 		data, ok := data[fieldName]
 		if ok {
 			if err := yaml.Unmarshal([]byte(data), ptr); err != nil {
-				errs = multierr.Append(errs, fmt.Errorf("%s: %w", fieldName, err))
+				errs = append(errs, fmt.Errorf("%s: %w", fieldName, err))
 			}
 		}
 	})
 
-	if errs != nil {
-		return nil, errs
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
 	}
 
 	if errs := config.Validate(nil); len(errs) > 0 {
@@ -127,22 +126,22 @@ func ToConfigMapData(profile *Profile) (map[string]string, error) {
 
 	data := make(map[string]string)
 
-	var errs error
+	var errs []error
 	forEachConfigMapEntry(profile, func(fieldName string, ptr any) {
 		if reflect.ValueOf(ptr).Elem().IsZero() {
 			return
 		}
 		bytes, err := json.Marshal(ptr)
 		if err != nil {
-			errs = multierr.Append(errs, fmt.Errorf("%s: %w", fieldName, err))
+			errs = append(errs, fmt.Errorf("%s: %w", fieldName, err))
 			return
 		}
 
 		data[fieldName] = string(bytes)
 	})
 
-	if errs != nil {
-		return nil, errs
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
 	}
 
 	return data, nil

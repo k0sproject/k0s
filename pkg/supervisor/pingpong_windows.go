@@ -17,6 +17,7 @@ limitations under the License.
 package supervisor
 
 import (
+	"errors"
 	"io"
 	"net"
 	"os/exec"
@@ -29,7 +30,6 @@ import (
 	"github.com/Microsoft/go-winio/pkg/guid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/multierr"
 )
 
 type pingPong struct {
@@ -77,7 +77,7 @@ func (pp *pingPong) awaitPing() (err error) {
 	if err != nil {
 		return err
 	}
-	defer func() { err = multierr.Append(err, conn.Close()) }()
+	defer func() { err = errors.Join(err, conn.Close()) }()
 
 	_, err = io.ReadAll(conn)
 	return err
@@ -88,7 +88,7 @@ func (pp *pingPong) sendPong() (err error) {
 	if err != nil {
 		return err
 	}
-	defer func() { err = multierr.Append(err, conn.Close()) }()
+	defer func() { err = errors.Join(err, conn.Close()) }()
 
 	_, err = conn.Write([]byte("pong\n"))
 	return err
