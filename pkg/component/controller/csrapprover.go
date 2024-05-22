@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -53,8 +52,6 @@ var _ manager.Component = (*CSRApprover)(nil)
 
 // NewCSRApprover creates the CSRApprover component
 func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface) *CSRApprover {
-	d := atomic.Value{}
-	d.Store(true)
 	return &CSRApprover{
 		ClusterConfig:     c,
 		leaderElector:     leaderElector,
