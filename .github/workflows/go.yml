@@ -32,293 +32,293 @@ env:
   MAKEFLAGS: -j
 
 jobs:
-  prepare:
-    name: Prepare
-    runs-on: ubuntu-latest
+  # prepare:
+  #   name: Prepare
+  #   runs-on: ubuntu-latest
 
-    outputs:
-      smoketest-matrix: ${{ steps.generate-smoketest-matrix.outputs.smoketests }}
-      autopilot-matrix: ${{ steps.generate-autopilot-matrix.outputs.matrix }}
+  #   outputs:
+  #     smoketest-matrix: ${{ steps.generate-smoketest-matrix.outputs.smoketests }}
+  #     autopilot-matrix: ${{ steps.generate-autopilot-matrix.outputs.matrix }}
 
-    steps:
-      - name: "Workflow run :: Checkout"
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+  #   steps:
+  #     - name: "Workflow run :: Checkout"
+  #       uses: actions/checkout@v4
+  #       with:
+  #         persist-credentials: false
 
-      - name: "Generate :: Smoke test matrix"
-        id: generate-smoketest-matrix
-        run: |
-          ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
-              'split(" ") | [ .[] | select(. != "") ] | "smoketests=" + tojson' >>$GITHUB_OUTPUT
+  #     - name: "Generate :: Smoke test matrix"
+  #       id: generate-smoketest-matrix
+  #       run: |
+  #         ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
+  #             'split(" ") | [ .[] | select(. != "") ] | "smoketests=" + tojson' >>$GITHUB_OUTPUT
 
-      - name: "Generate :: Autopilot test matrix"
-        id: generate-autopilot-matrix
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          k0sSortVersion=$(./vars.sh FROM=. k0s_sort_version)
-          mkdir -p build/cache/bin
-          curl -sSLo build/cache/bin/k0s_sort --retry 5 --retry-all-errors "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
-          chmod +x build/cache/bin/k0s_sort
-          export PATH="$(realpath build/cache/bin):$PATH"
+  #     - name: "Generate :: Autopilot test matrix"
+  #       id: generate-autopilot-matrix
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: |
+  #         k0sSortVersion=$(./vars.sh FROM=. k0s_sort_version)
+  #         mkdir -p build/cache/bin
+  #         curl -sSLo build/cache/bin/k0s_sort --retry 5 --retry-all-errors "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
+  #         chmod +x build/cache/bin/k0s_sort
+  #         export PATH="$(realpath build/cache/bin):$PATH"
 
-          set -x
-          k8sVersion="$(./vars.sh kubernetes_version)"
-          majorVersion="${k8sVersion%%.*}"
-          minorVersion=${k8sVersion#$majorVersion.}
-          minorVersion="${minorVersion%%.*}"
+  #         set -x
+  #         k8sVersion="$(./vars.sh kubernetes_version)"
+  #         majorVersion="${k8sVersion%%.*}"
+  #         minorVersion=${k8sVersion#$majorVersion.}
+  #         minorVersion="${minorVersion%%.*}"
 
-          {
-            printf matrix=
-            hack/tools/gen-matrix.sh "$majorVersion.$(($minorVersion - 1))" "$majorVersion.$minorVersion"
-          } >> "$GITHUB_OUTPUT"
+  #         {
+  #           printf matrix=
+  #           hack/tools/gen-matrix.sh "$majorVersion.$(($minorVersion - 1))" "$majorVersion.$minorVersion"
+  #         } >> "$GITHUB_OUTPUT"
 
-  build-k0s:
-    strategy:
-      matrix:
-        target-os: [linux, windows]
-        target-arch: [amd64]
+  # build-k0s:
+  #   strategy:
+  #     matrix:
+  #       target-os: [linux, windows]
+  #       target-arch: [amd64]
 
-    name: "Build :: k0s :: ${{ matrix.target-os }}-${{ matrix.target-arch }}"
-    uses: ./.github/workflows/build-k0s.yml
-    with:
-      target-os: ${{ matrix.target-os }}
-      target-arch: ${{ matrix.target-arch }}
+  #   name: "Build :: k0s :: ${{ matrix.target-os }}-${{ matrix.target-arch }}"
+  #   uses: ./.github/workflows/build-k0s.yml
+  #   with:
+  #     target-os: ${{ matrix.target-os }}
+  #     target-arch: ${{ matrix.target-arch }}
 
-  build-airgap-image-bundle:
-    name: "Build :: Airgap image bundle"
-    needs: [build-k0s]
-    uses: ./.github/workflows/build-airgap-image-bundle.yml
-    with:
-      target-os: linux
-      target-arch: amd64
+  # build-airgap-image-bundle:
+  #   name: "Build :: Airgap image bundle"
+  #   needs: [build-k0s]
+  #   uses: ./.github/workflows/build-airgap-image-bundle.yml
+  #   with:
+  #     target-os: linux
+  #     target-arch: amd64
 
-  generate-sbom:
-    name: "Build :: SBOM"
-    needs: [build-k0s]
+  # generate-sbom:
+  #   name: "Build :: SBOM"
+  #   needs: [build-k0s]
 
-    runs-on: ubuntu-22.04
+  #   runs-on: ubuntu-22.04
 
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v4
 
-      - name: Generate SBOM
-        run: |
-          make bindata
-          mkdir -p sbom && chmod 777 sbom
-          make sbom/spdx.json
+  #     - name: Generate SBOM
+  #       run: |
+  #         make bindata
+  #         mkdir -p sbom && chmod 777 sbom
+  #         make sbom/spdx.json
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: spdx.json
-          path: sbom/spdx.json
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: spdx.json
+  #         path: sbom/spdx.json
 
 
-  unittests-k0s-linux-amd64:
-    name: "Unit tests :: linux-amd64"
-    runs-on: ubuntu-22.04
+  # unittests-k0s-linux-amd64:
+  #   name: "Unit tests :: linux-amd64"
+  #   runs-on: ubuntu-22.04
 
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+  #   steps:
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v4
+  #       with:
+  #         persist-credentials: false
 
-      - name: Cache GOCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-
-            build-k0s-linux-amd64-gocache-${{ github.ref_name }}-
-          path: |
-            build/cache/go/build
+  #     - name: Cache GOCACHE
+  #       uses: actions/cache@v4
+  #       with:
+  #         key: unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
+  #         restore-keys: |
+  #           unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-
+  #           build-k0s-linux-amd64-gocache-${{ github.ref_name }}-
+  #         path: |
+  #           build/cache/go/build
 
-      - name: Cache GOMODCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            build-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            build/cache/go/mod
+  #     - name: Cache GOMODCACHE
+  #       uses: actions/cache@v4
+  #       with:
+  #         key: unittests-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
+  #         restore-keys: |
+  #           build-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
+  #         path: |
+  #           build/cache/go/mod
 
-      - name: Run unit tests
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-        run: make check-unit
+  #     - name: Run unit tests
+  #       env:
+  #         EMBEDDED_BINS_BUILDMODE: none
+  #       run: make check-unit
 
-  unittests-k0s-windows-amd64:
-    name: "Unit tests :: windows-amd64"
-    runs-on: windows-2022
+  # unittests-k0s-windows-amd64:
+  #   name: "Unit tests :: windows-amd64"
+  #   runs-on: windows-2022
 
-    defaults:
-      run:
-        shell: bash
+  #   defaults:
+  #     run:
+  #       shell: bash
 
-    steps:
-      - name: Check out
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+  #   steps:
+  #     - name: Check out
+  #       uses: actions/checkout@v4
+  #       with:
+  #         persist-credentials: false
 
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
+  #     - name: Prepare build environment
+  #       run: .github/workflows/prepare-build-env.sh
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
 
-      - name: Cache GOCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-
-          path: |
-            ~\AppData\Local\go-build
+  #     - name: Cache GOCACHE
+  #       uses: actions/cache@v4
+  #       with:
+  #         key: unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
+  #         restore-keys: |
+  #           unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-
+  #         path: |
+  #           ~\AppData\Local\go-build
 
-      - name: Cache GOMODCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            build-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            ~\go\pkg\mod
+  #     - name: Cache GOMODCACHE
+  #       uses: actions/cache@v4
+  #       with:
+  #         key: unittests-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
+  #         restore-keys: |
+  #           build-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
+  #         path: |
+  #           ~\go\pkg\mod
 
-      - name: Run unit tests
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-          TARGET_OS: windows
-          GO: go
-          GO_ENV: ''
-        run: |
-          make --touch .k0sbuild.docker-image.k0s
-          make check-unit
+  #     - name: Run unit tests
+  #       env:
+  #         EMBEDDED_BINS_BUILDMODE: none
+  #         TARGET_OS: windows
+  #         GO: go
+  #         GO_ENV: ''
+  #       run: |
+  #         make --touch .k0sbuild.docker-image.k0s
+  #         make check-unit
 
-  smoketests:
-    strategy:
-      fail-fast: false
-      matrix:
-        smoke-suite: ${{ fromJson(needs.prepare.outputs.smoketest-matrix) }}
+  # smoketests:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       smoke-suite: ${{ fromJson(needs.prepare.outputs.smoketest-matrix) }}
 
-    name: "Smoke tests :: ${{ matrix.smoke-suite }}"
-    needs: [prepare, build-k0s, build-airgap-image-bundle]
-    runs-on: ubuntu-22.04
+  #   name: "Smoke tests :: ${{ matrix.smoke-suite }}"
+  #   needs: [prepare, build-k0s, build-airgap-image-bundle]
+  #   runs-on: ubuntu-22.04
 
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v4
 
-      - name: Reclaim runner disk space
-        run: .github/workflows/reclaim-runner-disk-space.bash
+  #     - name: Reclaim runner disk space
+  #       run: .github/workflows/reclaim-runner-disk-space.bash
 
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
+  #     - name: Prepare build environment
+  #       run: .github/workflows/prepare-build-env.sh
 
-      - name: Prepare docker for ipv6 dualstack tests
-        if: contains(matrix.smoke-suite, 'dualstack')
-        run: .github/workflows/prepare-docker-ipv6.sh
+  #     - name: Prepare docker for ipv6 dualstack tests
+  #       if: contains(matrix.smoke-suite, 'dualstack')
+  #       run: .github/workflows/prepare-docker-ipv6.sh
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
 
-      - name: Download compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: k0s-linux-amd64
+  #     - name: Download compiled executable
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: k0s-linux-amd64
 
-      - name: k0s sysinfo
-        run: |
-          chmod +x k0s
-          ./k0s sysinfo
+  #     - name: k0s sysinfo
+  #       run: |
+  #         chmod +x k0s
+  #         ./k0s sysinfo
 
-      - name: Download airgap image bundle
-        if: contains(matrix.smoke-suite, 'airgap')
-        uses: actions/download-artifact@v4
-        with:
-          name: airgap-image-bundle-linux-amd64
+  #     - name: Download airgap image bundle
+  #       if: contains(matrix.smoke-suite, 'airgap')
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: airgap-image-bundle-linux-amd64
 
-      - name: Run inttest
-        run: make -C inttest ${{ matrix.smoke-suite }}
+  #     - name: Run inttest
+  #       run: make -C inttest ${{ matrix.smoke-suite }}
 
-      - name: Collect k0s logs and support bundle
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: smoketests-${{ matrix.smoke-suite }}-files
-          path: |
-            /tmp/*.log
-            /tmp/support-bundle.tar.gz
+  #     - name: Collect k0s logs and support bundle
+  #       if: failure()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: smoketests-${{ matrix.smoke-suite }}-files
+  #         path: |
+  #           /tmp/*.log
+  #           /tmp/support-bundle.tar.gz
 
-      - name: Collect sonobuoy results
-        if: failure() && contains(matrix.smoke-suite, 'conformance')
-        uses: actions/upload-artifact@v4
-        with:
-          name: smoketests-${{ matrix.smoke-suite }}-sonobuoy-results
-          path: /tmp/*_sonobuoy_*.tar.gz
+  #     - name: Collect sonobuoy results
+  #       if: failure() && contains(matrix.smoke-suite, 'conformance')
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: smoketests-${{ matrix.smoke-suite }}-sonobuoy-results
+  #         path: /tmp/*_sonobuoy_*.tar.gz
 
-  autopilot-tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        version: ${{fromJson(needs.prepare.outputs.autopilot-matrix)}}
+  # autopilot-tests:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       version: ${{fromJson(needs.prepare.outputs.autopilot-matrix)}}
 
-    name: "Autopilot tests :: ${{ matrix.version }}"
-    needs: [prepare, build-k0s]
-    runs-on: ubuntu-22.04
+  #   name: "Autopilot tests :: ${{ matrix.version }}"
+  #   needs: [prepare, build-k0s]
+  #   runs-on: ubuntu-22.04
 
-    env:
-      K0S_VERSION: ${{ matrix.version }}
+  #   env:
+  #     K0S_VERSION: ${{ matrix.version }}
 
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v4
 
-      - name: Reclaim runner disk space
-        run: .github/workflows/reclaim-runner-disk-space.bash
+  #     - name: Reclaim runner disk space
+  #       run: .github/workflows/reclaim-runner-disk-space.bash
 
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
+  #     - name: Prepare build environment
+  #       run: .github/workflows/prepare-build-env.sh
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
 
-      - name: Download compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: k0s-linux-amd64
+  #     - name: Download compiled executable
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: k0s-linux-amd64
 
-      - name: Download latest release
-        run: |
-          curl -L -o "k0s-$K0S_VERSION" "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64"
-          chmod +x "k0s-$K0S_VERSION"
+  #     - name: Download latest release
+  #       run: |
+  #         curl -L -o "k0s-$K0S_VERSION" "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64"
+  #         chmod +x "k0s-$K0S_VERSION"
 
-      - name: k0s sysinfo
-        run: |
-          chmod +x k0s
-          ./k0s sysinfo
+  #     - name: k0s sysinfo
+  #       run: |
+  #         chmod +x k0s
+  #         ./k0s sysinfo
 
-      - name: Run inttest
-        run: |
-          make -C inttest check-ap-ha3x3 K0S_UPDATE_FROM_BIN="../k0s-$K0S_VERSION"
+  #     - name: Run inttest
+  #       run: |
+  #         make -C inttest check-ap-ha3x3 K0S_UPDATE_FROM_BIN="../k0s-$K0S_VERSION"
 
-      - name: Collect k0s logs and support bundle
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: autopilot-tests-${{ matrix.version }}-files
-          path: |
-            /tmp/*.log
-            /tmp/support-bundle.tar.gz
+  #     - name: Collect k0s logs and support bundle
+  #       if: failure()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: autopilot-tests-${{ matrix.version }}-files
+  #         path: |
+  #           /tmp/*.log
+  #           /tmp/support-bundle.tar.gz
 
   smoketest-arm:
     name: Smoke test on armv7/arm64
@@ -328,11 +328,9 @@ jobs:
       matrix:
         arch:
           - arm # this is armv7
-          - arm64
+          # - arm64
     runs-on:
-      - self-hosted
-      - linux
-      - ${{ matrix.arch }}
+      - armv7-test
 
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
