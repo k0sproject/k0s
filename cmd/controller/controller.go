@@ -275,7 +275,9 @@ func (c *command) start(ctx context.Context) error {
 
 	// One leader elector per controller
 	if !c.SingleNode {
-		leaderElector = leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory)
+		// The name used to be hardcoded in the component itself
+		// At some point we need to rename this.
+		leaderElector = leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory, "k0s-endpoint-reconciler")
 	} else {
 		leaderElector = &leaderelector.Dummy{Leader: true}
 	}
@@ -497,7 +499,12 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.WorkerConfigComponentName) {
-		reconciler, err := workerconfig.NewReconciler(c.K0sVars, nodeConfig.Spec, adminClientFactory, leaderElector, enableKonnectivity)
+		// Create new dedicated leasepool for worker config reconciler
+		leaseName := fmt.Sprintf("k0s-%s-%s", constant.WorkerConfigComponentName, constant.KubernetesMajorMinorVersion)
+		workerConfigLeasePool := leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory, leaseName)
+		clusterComponents.Add(ctx, workerConfigLeasePool)
+
+		reconciler, err := workerconfig.NewReconciler(c.K0sVars, nodeConfig.Spec, adminClientFactory, workerConfigLeasePool, enableKonnectivity)
 		if err != nil {
 			return err
 		}
