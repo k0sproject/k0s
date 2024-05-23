@@ -64,8 +64,8 @@ func FirstPublicAddress() (string, error) {
 	}
 	ipv6addr := ""
 	for _, i := range ifs {
-		if i.Name == "vxlan.calico" {
-			// Skip calico interface
+		if i.Name == "vxlan.calico" || i.Name == "kube-bridge" {
+			// Skip calico and kube-router interfaces
 			continue
 		}
 		addresses, err := i.Addrs()
