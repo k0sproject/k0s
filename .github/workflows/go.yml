@@ -423,6 +423,12 @@ jobs:
       - name: Create airgap image bundle if not cached
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
         run: make airgap-image-bundle-linux-${{ matrix.arch }}.tar
+      
+      - name: Upload compiled executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-bundle-${{ matrix.arch }}
+          path: airgap-image-bundle-linux-${{ matrix.arch }}.tar
 
       - name: Run airgap test
         run: |
