@@ -74,7 +74,7 @@ func (a *OCIBundleReconciler) loadOne(ctx context.Context, fpath string) error {
 			sock,
 			containerd.WithDefaultNamespace("k8s.io"),
 			containerd.WithDefaultPlatform(
-				platforms.OnlyStrict(platforms.DefaultSpec()),
+				platforms.Only(platforms.DefaultSpec()),
 			),
 		)
 		if err != nil {
