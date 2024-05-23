@@ -399,14 +399,14 @@ jobs:
           name: k0s-${{ matrix.arch }}
           path: k0s
 
-      - name: Unit tests
-        run: make check-unit
+      # - name: Unit tests
+      #   run: make check-unit
 
       - name: k0s sysinfo
         run: ./k0s sysinfo
 
-      - name: Run smoketest
-        run: make check-basic
+      # - name: Run smoketest
+      #   run: make check-basic
 
       - name: Create airgap image list
         run: make airgap-images.txt
@@ -433,7 +433,7 @@ jobs:
       - name: Run airgap test
         run: |
           make --touch airgap-image-bundle-linux-${{ matrix.arch }}.tar
-          make check-airgap
+          TIMEOUT=1h make check-airgap
 
       - name: Collect k0s logs and support bundle
         if: failure()

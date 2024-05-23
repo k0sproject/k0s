@@ -74,10 +74,7 @@ func (a *OCIBundleReconciler) loadOne(ctx context.Context, fpath string) error {
 		client, err = containerd.New(
 			sock,
 			containerd.WithDefaultNamespace("k8s.io"),
-			containerd.WithDefaultPlatform(
-				platforms.OnlyStrict(platforms.DefaultSpec()),
-			),
-		)
+			containerd.WithDefaultPlatform(platforms.Only(platforms.DefaultSpec())))
 		if err != nil {
 			return fmt.Errorf("failed to connect to containerd: %w", err)
 		}
