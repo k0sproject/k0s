@@ -268,8 +268,8 @@ check-unit: .k0sbuild.docker-image.k0s go.sum bindata
 
 .PHONY: clean-gocache
 clean-gocache:
-	-find $(K0S_GO_BUILD_CACHE)/go/mod -type d -exec chmod u+w '{}' \;
-	rm -rf $(K0S_GO_BUILD_CACHE)/go
+	-chmod -R u+w -- '$(K0S_GO_BUILD_CACHE)/go/mod'
+	rm -rf -- '$(K0S_GO_BUILD_CACHE)/go'
 
 .PHONY: clean-docker-image
 clean-docker-image: IID_FILES = .k0sbuild.docker-image.k0s
