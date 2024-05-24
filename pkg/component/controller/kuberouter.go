@@ -215,6 +215,7 @@ spec:
     spec:
       priorityClassName: system-node-critical
       serviceAccountName: kube-router
+      minReadySeconds: 5
       initContainers:
         - name: install-cni-bins
           image: {{ .CNIInstallerImage }}
@@ -300,12 +301,25 @@ spec:
               fieldPath: spec.nodeName
         - name: KUBE_ROUTER_CNI_CONF_FILE
           value: /etc/cni/net.d/10-kuberouter.conflist
+        ports:
+        - name: healthz
+          containerPort: 20244
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 20244
-          initialDelaySeconds: 10
+            port: healthz
+          initialDelaySeconds: 300
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: healthz
           periodSeconds: 3
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 3
         resources:
           requests:
             cpu: 250m
