@@ -18,7 +18,7 @@ k0s/containerd uses OCI (Open Container Initiative) bundles for airgap installat
 
 k0s offers two methods for creating OCI bundles, one using Docker and the other using a previously set up k0s worker.
 
-**Note:** When importing the image bundle k0s uses containerd "loose" [platform matching](https://pkg.go.dev/github.com/containerd/containerd/platforms#Only). For arm/v8, it will also match arm/v7, arm/v6 and arm/v5. This means that your bundle can contain multi arch images and the import will be done using platfomr compatibility.
+**Note:** When importing the image bundle k0s uses containerd "loose" [platform matching](https://pkg.go.dev/github.com/containerd/containerd/platforms#Only). For arm/v8, it will also match arm/v7, arm/v6 and arm/v5. This means that your bundle can contain multi arch images and the import will be done using platform compatibility.
 
 ### Docker
 
