@@ -45,8 +45,7 @@ func (s *APISuite) TestValidation() {
 
 	s.Run("invalid_api_address", func() {
 		a := APISpec{
-			Address:     "something.that.is.not.valid//(())",
-			BindAddress: "0.0.0.0",
+			Address: "something.that.is.not.valid//(())",
 		}
 		a.setDefaults()
 
@@ -59,7 +58,6 @@ func (s *APISuite) TestValidation() {
 
 	s.Run("invalid_sans_address", func() {
 		a := APISpec{
-			BindAddress: "0.0.0.0",
 			SANs: []string{
 				"something.that.is.not.valid//(())",
 			},
@@ -71,18 +69,6 @@ func (s *APISuite) TestValidation() {
 		if s.Len(errors, 1) {
 			s.ErrorContains(errors[0], `sans[0]: Invalid value: "something.that.is.not.valid//(())": invalid IP address / DNS name`)
 		}
-	})
-
-	s.T().Run("invalid_api_bind_address", func(t *testing.T) {
-		a := APISpec{
-			Address:     "1.2.3.4",
-			BindAddress: "something.that.is.not.valid//(())",
-		}
-
-		errors := a.Validate()
-		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "invalid IP address")
 	})
 }
 

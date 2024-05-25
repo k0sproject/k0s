@@ -53,6 +53,7 @@ func (s *suite) TestCustomizedBindAddress() {
 					API: func() *v1beta1.APISpec {
 						apiSpec := v1beta1.DefaultAPISpec()
 						apiSpec.Address = s.GetIPAddress(s.ControllerNode(i))
+						apiSpec.OnlyBindToAddress = true
 						return apiSpec
 					}(),
 					WorkerProfiles: v1beta1.WorkerProfiles{
@@ -172,7 +173,7 @@ func TestCustomizedBindAddressSuite(t *testing.T) {
 	s := suite{
 		common.BootlooseSuite{
 			ControllerCount: 3,
-			WorkerCount:     2,
+			WorkerCount:     1,
 		},
 	}
 	testifysuite.Run(t, &s)
