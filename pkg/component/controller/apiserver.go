@@ -125,8 +125,8 @@ func (a *APIServer) Start(_ context.Context) error {
 		"enable-admission-plugins":         "NodeRestriction",
 	}
 
-	if a.ClusterConfig.Spec.API.BindAddress != "" {
-		args["bind-address"] = a.ClusterConfig.Spec.API.BindAddress
+	if a.ClusterConfig.Spec.API.OnlyToBindAddress {
+		args["bind-address"] = a.ClusterConfig.Spec.API.Address
 	}
 
 	apiAudiences := []string{"https://kubernetes.default.svc"}
@@ -233,7 +233,7 @@ func (a *APIServer) Ready() error {
 		TLSClientConfig: tlsConfig,
 	}
 	client := &http.Client{Transport: tr}
-	resp, err := client.Get(fmt.Sprintf("https://%s:%d/readyz?verbose", a.ClusterConfig.Spec.API.APIServerAddress(), a.ClusterConfig.Spec.API.Port))
+	resp, err := client.Get(fmt.Sprintf("https://%s:%d/readyz?verbose", a.ClusterConfig.Spec.API.Address, a.ClusterConfig.Spec.API.Port))
 	if err != nil {
 		return err
 	}

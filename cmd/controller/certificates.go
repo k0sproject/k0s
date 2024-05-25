@@ -64,7 +64,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 	}
 	c.CACert = string(cert)
 	// Changing the URL here also requires changes in the "k0s kubeconfig admin" subcommand.
-	kubeConfigAPIUrl := fmt.Sprintf("https://%s:%d", c.ClusterSpec.API.APIServerAddress(), c.ClusterSpec.API.Port)
+	kubeConfigAPIUrl := fmt.Sprintf("https://%s:%d", c.ClusterSpec.API.Address, c.ClusterSpec.API.Port)
 	eg.Go(func() error {
 		// Front proxy CA
 		if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {
