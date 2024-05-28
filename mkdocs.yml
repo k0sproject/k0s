@@ -70,6 +70,7 @@ nav:
       - Support Insights: support-dump.md
   - Reference:
       - Architecture: architecture.md
+      - Command Line: cli/README.md
       - Kube-bench Security Benchmark: cis_benchmark.md
   - Releases & Support: releases.md
   - Commercial support: commercial-support.md
