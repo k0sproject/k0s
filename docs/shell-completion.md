@@ -8,7 +8,7 @@ shells:
 
 - `bash`, [GNU Bash](https://www.gnu.org/software/bash/)
 - `zsh`, [the Z-shell](https://www.zsh.org/)
-- `fish`, [the friendly interactive shell]((https://fishshell.com/))
+- `fish`, [the friendly interactive shell](https://fishshell.com/)
 - `powershell`, [Microsoft PowerShell](https://learn.microsoft.com/powershell/)
 
 ## General Usage
