@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -36,6 +37,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
+	"k8s.io/utils/ptr"
 )
 
 // Stack is a k8s resource bundle
@@ -70,9 +72,9 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 
 	for _, resource := range sortedResources {
 		s.prepareResource(resource)
-		mapping, err := mapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
+		mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
 		if err != nil {
-			return fmt.Errorf("mapping error: %w", err)
+			return err
 		}
 		var drClient dynamic.ResourceInterface
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
@@ -124,7 +126,7 @@ func (s *Stack) keepResource(resource *unstructured.Unstructured) {
 	s.keepResources = append(s.keepResources, resourceID)
 }
 
-func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
+func (s *Stack) prune(ctx context.Context, mapper meta.ResettableRESTMapper) error {
 	pruneableResources, err := s.findPruneableResources(ctx, mapper)
 	if err != nil {
 		return err
@@ -170,7 +172,7 @@ var ignoredResources = []string{
 	"discovery.k8s.io/v1:EndpointSlice",
 }
 
-func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]unstructured.Unstructured, error) {
+func (s *Stack) findPruneableResources(ctx context.Context, mapper meta.ResettableRESTMapper) ([]unstructured.Unstructured, error) {
 	var pruneableResources []unstructured.Unstructured
 	apiResourceLists, err := s.Discovery.ServerPreferredResources()
 	if err != nil {
@@ -237,7 +239,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 	return pruneableResources, nil
 }
 
-func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, resource unstructured.Unstructured) error {
+func (s *Stack) deleteResource(ctx context.Context, mapper meta.ResettableRESTMapper, resource unstructured.Unstructured) error {
 	propagationPolicy := metav1.DeletePropagationForeground
 	drClient, err := s.clientForResource(mapper, resource)
 	if err != nil {
@@ -252,8 +254,28 @@ func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredD
 	return nil
 }
 
-func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper, resource unstructured.Unstructured) (dynamic.ResourceInterface, error) {
-	mapping, err := mapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
+func getRESTMapping(mapper meta.ResettableRESTMapper, gvk *schema.GroupVersionKind) (*meta.RESTMapping, error) {
+	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+
+	// If the error indicates that the resource's kind is unknown, it may be
+	// that the corresponding CRD has already been applied, but the RESTMapper
+	// is still operating on stale cached data. Force a reset of the mapper and
+	// retry the call once.
+	var noMatchErr *meta.NoKindMatchError
+	if errors.As(err, &noMatchErr) {
+		mapper.Reset()
+		mapping, err = mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("mapping error: %w", err)
+	}
+
+	return mapping, nil
+}
+
+func (s *Stack) clientForResource(mapper meta.ResettableRESTMapper, resource unstructured.Unstructured) (dynamic.ResourceInterface, error) {
+	mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
 	if err != nil {
 		return nil, fmt.Errorf("mapping error: %w", err)
 	}
@@ -268,12 +290,8 @@ func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper
 	return drClient, nil
 }
 
-func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind) []unstructured.Unstructured {
-	groupKind := schema.GroupKind{
-		Group: groupVersionKind.Group,
-		Kind:  groupVersionKind.Kind,
-	}
-	mapping, _ := mapper.RESTMapping(groupKind, groupVersionKind.Version)
+func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper meta.ResettableRESTMapper, groupVersionKind *schema.GroupVersionKind) []unstructured.Unstructured {
+	mapping, _ := getRESTMapping(mapper, groupVersionKind)
 	// FIXME error handling...
 	if mapping != nil {
 		// We're running this with full admin rights, we should have capability to get stuff with single call

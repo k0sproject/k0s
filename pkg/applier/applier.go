@@ -118,7 +118,6 @@ func (a *Applier) Apply(ctx context.Context) error {
 	err = stack.Apply(ctx, true)
 	if err != nil {
 		a.log.WithError(err).Warn("stack apply failed")
-		a.discoveryClient.Invalidate()
 	} else {
 		a.log.Debug("successfully applied stack")
 	}
