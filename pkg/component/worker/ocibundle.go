@@ -18,17 +18,14 @@ package worker
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
-
-	"github.com/avast/retry-go"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/platforms"
-	"github.com/fsnotify/fsnotify"
-	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -36,6 +33,18 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/debounce"
+
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/content"
+	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/images/archive"
+	"github.com/containerd/containerd/platforms"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+
+	"github.com/avast/retry-go"
+	"github.com/fsnotify/fsnotify"
+	"github.com/sirupsen/logrus"
 )
 
 // OCIBundleReconciler tries to import OCI bundle into the running containerd instance
@@ -75,7 +84,7 @@ func (a *OCIBundleReconciler) loadOne(ctx context.Context, fpath string) error {
 			sock,
 			containerd.WithDefaultNamespace("k8s.io"),
 			containerd.WithDefaultPlatform(
-				platforms.OnlyStrict(platforms.DefaultSpec()),
+				platforms.Only(platforms.DefaultSpec()),
 			),
 		)
 		if err != nil {
@@ -208,7 +217,7 @@ func (a *OCIBundleReconciler) unpackBundle(ctx context.Context, client *containe
 		return fmt.Errorf("can't open bundle file %s: %v", bundlePath, err)
 	}
 	defer r.Close()
-	images, err := client.Import(ctx, r)
+	images, err := importBundle(ctx, client, r)
 	if err != nil {
 		return fmt.Errorf("can't import bundle: %v", err)
 	}
@@ -236,3 +245,99 @@ func (a *OCIBundleReconciler) Stop() error {
 	a.log.Info("OCI bundle loader stopped")
 	return nil
 }
+
+// SPDX-SnippetBegin
+// SPDX-SnippetCopyrightText: The containerd Authors.
+// SPDX-SnippetCopyrightText: 2024 k0s authors
+// SDPX—SnippetName: Adapted version of containerd.Client.Import
+// SPDX-SnippetComment: Includes changes from https://github.com/containerd/containerd/pull/9554/commits/61a7c4999c78e70f0be672c587feed501f9144f2#diff-ba1db69d961491f72eaba3134ca05b5d8c93626791299eadee38bb9f6cd71db3R175-R180
+
+// importBundle imports an image from a Tar stream using reader.
+// Caller needs to specify importer. Future version may use oci.v1 as the default.
+// Note that unreferenced blobs may be imported to the content store as well.
+func importBundle(ctx context.Context, c *containerd.Client, reader io.Reader) (_ []images.Image, err error) {
+	ctx, done, err := c.WithLease(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { err = errors.Join(err, done(ctx)) }()
+
+	index, err := archive.ImportIndex(ctx, c.ContentStore(), reader)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		imgs []images.Image
+		cs   = c.ContentStore()
+		is   = c.ImageService()
+	)
+
+	var platformMatcher = platforms.Only(platforms.DefaultSpec())
+
+	var handler images.HandlerFunc = func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+		// Only save images at top level
+		if desc.Digest != index.Digest {
+			// Don't set labels on missing content.
+			children, err := images.Children(ctx, cs, desc)
+
+			// Without this the importing would fail if the bundle does not images for compatible architectures
+			// because the image manifest still refers to those. E.g. on arm64 containerd would stil try to unpack arm/v8&arm/v7
+			// images but would fail as those are not present on k0s airgap bundles.
+			if errdefs.IsNotFound(err) {
+				return nil, images.ErrSkipDesc
+			}
+			return children, err
+		}
+
+		p, err := content.ReadBlob(ctx, cs, desc)
+		if err != nil {
+			return nil, err
+		}
+
+		var idx ocispec.Index
+		if err := json.Unmarshal(p, &idx); err != nil {
+			return nil, err
+		}
+
+		for _, m := range idx.Manifests {
+			name := m.Annotations[images.AnnotationImageName]
+			if name == "" {
+				name = m.Annotations[ocispec.AnnotationRefName]
+			}
+			if name != "" {
+				imgs = append(imgs, images.Image{
+					Name:   name,
+					Target: m,
+				})
+			}
+		}
+
+		return idx.Manifests, nil
+	}
+
+	handler = images.FilterPlatforms(handler, platformMatcher)
+	handler = images.SetChildrenLabels(cs, handler)
+	if err := images.WalkNotEmpty(ctx, handler, index); err != nil {
+		return nil, err
+	}
+
+	for i := range imgs {
+		img, err := is.Update(ctx, imgs[i], "target")
+		if err != nil {
+			if !errdefs.IsNotFound(err) {
+				return nil, err
+			}
+
+			img, err = is.Create(ctx, imgs[i])
+			if err != nil {
+				return nil, err
+			}
+		}
+		imgs[i] = img
+	}
+
+	return imgs, nil
+}
+
+// SPDX-SnippetEnd
