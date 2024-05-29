@@ -18,6 +18,7 @@ package helm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,6 +29,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
@@ -74,6 +76,14 @@ func NewCommands(k0sVars constant.CfgVars) *Commands {
 }
 
 func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error) {
+	// Construct new helm env so we get the retrying roundtripper etc. setup
+	// See https://github.com/helm/helm/pull/11426/commits/b5378b3a5dd435e5c364ac0cfa717112ad686bd0
+	helmEnv := cli.New()
+	helmFlags, ok := helmEnv.RESTClientGetter().(*genericclioptions.ConfigFlags)
+	if !ok {
+		return nil, errors.New("failed to construct Helm REST client")
+	}
+
 	insecure := false
 	var impersonateGroup []string
 	cfg := &genericclioptions.ConfigFlags{
@@ -83,6 +93,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 		CacheDir:         stringptr(hc.helmCacheDir),
 		Namespace:        stringptr(namespace),
 		ImpersonateGroup: &impersonateGroup,
+		WrapConfigFn:     helmFlags.WrapConfigFn, // This contains the retrying round tripper
 	}
 	actionConfig := &action.Configuration{}
 	if err := actionConfig.Init(cfg, namespace, "secret", logFn); err != nil {
