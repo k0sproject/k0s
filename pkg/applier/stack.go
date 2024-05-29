@@ -27,7 +27,10 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
+	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -95,9 +98,13 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		}
 		serverResource, err := drClient.Get(ctx, resource.GetName(), metav1.GetOptions{})
 		if apiErrors.IsNotFound(err) {
-			_, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
+			created, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
 			if err != nil {
 				return fmt.Errorf("cannot create resource %s: %w", resource.GetName(), err)
+			}
+			if isCRD(created) {
+				s.waitForCRD(ctx, created.GetName())
+				mapper.Reset() // so that the created CRD gets rediscovered
 			}
 		} else if err != nil {
 			return fmt.Errorf("unknown api error: %w", err)
@@ -111,13 +118,17 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			if serverResource.GetAnnotations()[LastConfigAnnotation] == "" {
 				s.log.Debug("doing plain update as no last-config label present")
 				resource.SetResourceVersion(serverResource.GetResourceVersion())
-				_, err = drClient.Update(ctx, resource, metav1.UpdateOptions{})
+				resource, err = drClient.Update(ctx, resource, metav1.UpdateOptions{})
 			} else {
 				s.log.Debug("patching resource")
-				err = s.patchResource(ctx, drClient, serverResource, resource)
+				resource, err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
 			if err != nil {
 				return fmt.Errorf("can't update resource: %w", err)
+			}
+			if isCRD(resource) {
+				s.waitForCRD(ctx, resource.GetName())
+				mapper.Reset() // so that the changed CRD gets rediscovered
 			}
 		}
 		s.keepResource(resource)
@@ -128,6 +139,29 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 	}
 
 	return err
+}
+
+// waitForCRD waits 5 seconds for a CRD to become established on a best-effort basis.
+func (s *Stack) waitForCRD(ctx context.Context, crdName string) {
+	client, err := extensionsclient.NewForConfig(s.Clients.GetRESTConfig())
+	if err != nil {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	_ = watch.CRDs(client.CustomResourceDefinitions()).
+		WithObjectName(crdName).
+		WithErrorCallback(watch.IsRetryable).
+		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
+			for _, cond := range item.Status.Conditions {
+				if cond.Type == extensionsv1.Established {
+					return cond.Status == extensionsv1.ConditionTrue, nil
+				}
+			}
+			return false, nil
+		})
 }
 
 func (s *Stack) keepResource(resource *unstructured.Unstructured) {
@@ -359,23 +393,23 @@ func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
 	return false
 }
 
-func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) error {
+func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	original := serverResource.GetAnnotations()[LastConfigAnnotation]
 	if original == "" {
-		return fmt.Errorf("%s does not have last-applied-configuration", localResource.GetSelfLink())
+		return nil, fmt.Errorf("%s does not have last-applied-configuration", localResource.GetSelfLink())
 	}
 	modified, _ := localResource.MarshalJSON()
 
 	patch, err := jsonpatch.CreateMergePatch([]byte(original), modified)
 	if err != nil {
-		return fmt.Errorf("failed to create jsonpatch data: %w", err)
+		return nil, fmt.Errorf("failed to create jsonpatch data: %w", err)
 	}
-	_, err = drClient.Patch(ctx, localResource.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
+	resource, err := drClient.Patch(ctx, localResource.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to patch resource: %w", err)
+		return nil, fmt.Errorf("failed to patch resource: %w", err)
 	}
 
-	return nil
+	return resource, nil
 }
 
 func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
@@ -396,6 +430,11 @@ func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
 	annotations[ChecksumAnnotation] = checksum
 	annotations[LastConfigAnnotation] = string(lastAppliedConfig)
 	resource.SetAnnotations(annotations)
+}
+
+func isCRD(resource *unstructured.Unstructured) bool {
+	gvk := resource.GroupVersionKind()
+	return gvk.Group == extensionsv1.GroupName && gvk.Kind == "CustomResourceDefinition"
 }
 
 func generateResourceID(resource unstructured.Unstructured) string {
