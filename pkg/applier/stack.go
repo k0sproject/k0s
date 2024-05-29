@@ -84,11 +84,13 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		}
 	}
 
+	var errs []error
 	for _, resource := range sortedResources {
 		s.prepareResource(resource)
 		mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
 		if err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 		var drClient dynamic.ResourceInterface
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
@@ -100,14 +102,18 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		if apiErrors.IsNotFound(err) {
 			created, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
 			if err != nil {
-				return fmt.Errorf("cannot create resource %s: %w", resource.GetName(), err)
+				err = fmt.Errorf("cannot create resource %s: %w", resource.GetName(), err)
+				errs = append(errs, err)
+				continue
 			}
 			if isCRD(created) {
 				s.waitForCRD(ctx, created.GetName())
 				mapper.Reset() // so that the created CRD gets rediscovered
 			}
 		} else if err != nil {
-			return fmt.Errorf("unknown api error: %w", err)
+			err = fmt.Errorf("unknown api error: %w", err)
+			errs = append(errs, err)
+			continue
 		} else { // The resource already exists, we need to update/patch it
 			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
 			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
@@ -124,7 +130,9 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 				resource, err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
 			if err != nil {
-				return fmt.Errorf("can't update resource: %w", err)
+				err = fmt.Errorf("can't update resource: %w", err)
+				errs = append(errs, err)
+				continue
 			}
 			if isCRD(resource) {
 				s.waitForCRD(ctx, resource.GetName())
@@ -134,11 +142,15 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		s.keepResource(resource)
 	}
 
-	if prune {
-		err = s.prune(ctx, mapper)
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
-	return err
+	if !prune {
+		return nil
+	}
+
+	return s.prune(ctx, mapper)
 }
 
 // waitForCRD waits 5 seconds for a CRD to become established on a best-effort basis.
