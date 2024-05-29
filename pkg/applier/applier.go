@@ -149,6 +149,7 @@ func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, erro
 	}
 
 	objects, err := resource.NewBuilder(a.restClientGetter).
+		Local(). // don't fail on unknown CRDs
 		Unstructured().
 		Path(false, files...).
 		Flatten().
