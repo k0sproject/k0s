@@ -26,8 +26,8 @@ import (
 	"sync"
 	"time"
 
-	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
+
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +38,9 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/utils/ptr"
+
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/sirupsen/logrus"
 )
 
 // Stack is a k8s resource bundle
@@ -45,8 +48,7 @@ type Stack struct {
 	Name          string
 	Resources     []*unstructured.Unstructured
 	keepResources []string
-	Client        dynamic.Interface
-	Discovery     discovery.CachedDiscoveryInterface
+	Clients       kubernetes.ClientFactoryInterface
 
 	log *logrus.Entry
 }
@@ -56,8 +58,17 @@ type Stack struct {
 func (s *Stack) Apply(ctx context.Context, prune bool) error {
 	s.log = logrus.WithField("stack", s.Name)
 
+	discoveryClient, err := s.Clients.GetDiscoveryClient()
+	if err != nil {
+		return err
+	}
+	dynamicClient, err := s.Clients.GetDynamicClient()
+	if err != nil {
+		return err
+	}
+
 	s.log.Debugf("applying with %d resources", len(s.Resources))
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(s.Discovery)
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
 	var sortedResources []*unstructured.Unstructured
 	for _, resource := range s.Resources {
 		if resource.GetNamespace() == "" {
@@ -78,9 +89,9 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		}
 		var drClient dynamic.ResourceInterface
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-			drClient = s.Client.Resource(mapping.Resource).Namespace(resource.GetNamespace())
+			drClient = dynamicClient.Resource(mapping.Resource).Namespace(resource.GetNamespace())
 		} else {
-			drClient = s.Client.Resource(mapping.Resource)
+			drClient = dynamicClient.Resource(mapping.Resource)
 		}
 		serverResource, err := drClient.Get(ctx, resource.GetName(), metav1.GetOptions{})
 		if apiErrors.IsNotFound(err) {
@@ -112,7 +123,6 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		s.keepResource(resource)
 	}
 
-	var err error
 	if prune {
 		err = s.prune(ctx, mapper)
 	}
@@ -174,7 +184,13 @@ var ignoredResources = []string{
 
 func (s *Stack) findPruneableResources(ctx context.Context, mapper meta.ResettableRESTMapper) ([]unstructured.Unstructured, error) {
 	var pruneableResources []unstructured.Unstructured
-	apiResourceLists, err := s.Discovery.ServerPreferredResources()
+
+	client, err := s.Clients.GetDiscoveryClient()
+	if err != nil {
+		return nil, err
+	}
+
+	apiResourceLists, err := client.ServerPreferredResources()
 	if err != nil {
 		// Client-Go emits an error when an API service is registered but unimplemented.
 		// We trap that error here but since the discovery client continues
@@ -280,11 +296,16 @@ func (s *Stack) clientForResource(mapper meta.ResettableRESTMapper, resource uns
 		return nil, fmt.Errorf("mapping error: %w", err)
 	}
 
+	client, err := s.Clients.GetDynamicClient()
+	if err != nil {
+		return nil, err
+	}
+
 	var drClient dynamic.ResourceInterface
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		drClient = s.Client.Resource(mapping.Resource).Namespace(resource.GetNamespace())
+		drClient = client.Resource(mapping.Resource).Namespace(resource.GetNamespace())
 	} else {
-		drClient = s.Client.Resource(mapping.Resource)
+		drClient = client.Resource(mapping.Resource)
 	}
 
 	return drClient, nil
@@ -294,8 +315,12 @@ func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, ma
 	mapping, _ := getRESTMapping(mapper, groupVersionKind)
 	// FIXME error handling...
 	if mapping != nil {
+		client, err := s.Clients.GetDynamicClient()
+		if err != nil {
+			return nil
+		}
 		// We're running this with full admin rights, we should have capability to get stuff with single call
-		drClient := s.Client.Resource(mapping.Resource)
+		drClient := client.Resource(mapping.Resource)
 		return s.getPruneableResources(ctx, drClient)
 	}
 

@@ -25,8 +25,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/sirupsen/logrus"
 )
@@ -43,10 +41,8 @@ type Applier struct {
 	Name string
 	Dir  string
 
-	log             *logrus.Entry
-	clientFactory   kubernetes.ClientFactoryInterface
-	client          dynamic.Interface
-	discoveryClient discovery.CachedDiscoveryInterface
+	log           *logrus.Entry
+	clientFactory kubernetes.ClientFactoryInterface
 
 	restClientGetter resource.RESTClientGetter
 }
@@ -70,35 +66,8 @@ func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface)
 	}
 }
 
-func (a *Applier) lazyInit() error {
-	if a.client == nil {
-		c, err := a.clientFactory.GetDynamicClient()
-		if err != nil {
-			return err
-		}
-
-		a.client = c
-	}
-
-	if a.discoveryClient == nil {
-		c, err := a.clientFactory.GetDiscoveryClient()
-		if err != nil {
-			return err
-		}
-
-		a.discoveryClient = c
-	}
-
-	return nil
-}
-
 // Apply resources
 func (a *Applier) Apply(ctx context.Context) error {
-	err := a.lazyInit()
-	if err != nil {
-		return err
-	}
-
 	files, err := FindManifestFilesInDir(a.Dir)
 	if err != nil {
 		return err
@@ -111,8 +80,7 @@ func (a *Applier) Apply(ctx context.Context) error {
 	stack := Stack{
 		Name:      a.Name,
 		Resources: resources,
-		Client:    a.client,
-		Discovery: a.discoveryClient,
+		Clients:   a.clientFactory,
 	}
 	a.log.Debug("applying stack")
 	err = stack.Apply(ctx, true)
@@ -127,18 +95,9 @@ func (a *Applier) Apply(ctx context.Context) error {
 
 // Delete deletes the entire stack by applying it with empty set of resources
 func (a *Applier) Delete(ctx context.Context) error {
-	err := a.lazyInit()
-	if err != nil {
-		return err
-	}
-	stack := Stack{
-		Name:      a.Name,
-		Client:    a.client,
-		Discovery: a.discoveryClient,
-	}
+	stack := Stack{Name: a.Name, Clients: a.clientFactory}
 	logrus.Debugf("about to delete a stack %s with empty apply", a.Name)
-	err = stack.Apply(ctx, true)
-	return err
+	return stack.Apply(ctx, true)
 }
 
 func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, error) {
