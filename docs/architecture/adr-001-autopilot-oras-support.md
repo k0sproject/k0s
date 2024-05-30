@@ -1,0 +1,100 @@
+# ADR 1: Add Support for ORAS Protocol and Basic Authentication in Autopilot for Artifact Retrieval
+
+## Context
+
+Registries are increasingly being used as generic artifact stores, expanding beyond their traditional role of hosting container images. To align with this trend, it is beneficial for Autopilot to support pulling artifacts directly from registries. Currently, Autopilot's capabilities are limited to downloading artifacts via the HTTP[S] protocols.
+
+Enhancing Autopilot to pull artifacts directly from registries will streamline workflows and improve efficiency by allowing integration and deployment of diverse artifacts without relying solely on HTTP[S] endpoints. This update will enable Autopilot to handle registry-specific protocols and authentication mechanisms, aligning it with modern deployment practices.
+
+## Decision
+
+Implement support in Autopilot for pulling artifacts, such as k0s binaries and image bundles, directly from a registry using the [ORAS](https://oras.land/docs/) protocol. Additionally, add support for basic authentication to ensure secure access to artifacts over HTTP.
+
+## Solution
+
+Starting with the current `PlanResourceURL` struct:
+
+```go
+type PlanResourceURL struct {
+        // URL is the URL of a downloadable resource.
+        URL string `json:"url"`
+
+        // Sha256 provides an optional SHA256 hash of the URL's content for verification.
+        Sha256 string `json:"sha256,omitempty"`
+}
+```
+
+We must specify to Autopilot where to access credentials for remote artifact pulls. This will be achieved by adjusting the struct as follows:
+
+```go
+type PlanResourceURL struct {
+        // URL is the URL of a downloadable resource.
+        URL string `json:"url"`
+
+        // Sha256 provides an optional SHA256 hash of the URL's content for verification.
+        Sha256 string `json:"sha256,omitempty"`
+
+        // ArtifactPullSecrets holds a reference to a secret where Docker or Basic Auth
+        // credentials are stored. We use these credentials when pulling the artifacts from
+        // the URL.
+        ArtifactPullSecret *ArtifactPullSecret `json:"artifactPullSecret,omitempty"`
+
+        // Insecure indicates whether certificates in the remote URL (if using TLS) can
+        // be ignored, aka InsecureSkipVerify.
+        Insecure bool  `json:"insecure,omitempty"`
+}
+```
+
+The `ArtifactPullSecret` property will be added and its struct will be defined as follow:
+
+```go
+type ArtifactPullSecret struct {
+      // Namespace of the secret.
+      Namespace string `json:"namespace"`
+
+      // Name of the secret.
+      Name string `json:"name"`
+}
+```
+
+The secret pointed to by the provided `ArtifactPullSecret` property is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` (see below) or of type `kubernetes.io/basic-auth` if protocols `http://` or `https://` are used .
+
+Example configuration for ORAS:
+
+```yaml
+url: oci://my.registry/binaries/k0s:v1.30.1+k0s.0
+sha256: e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99
+artifactPullSecret:
+  namespace: kube-system
+  name: artifacts-registry
+```
+
+Example configuration for HTTPS:
+
+```yaml
+url: https://my.file.server/binaries/k0s-v1.30.1+k0s.0
+sha256: e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99
+artifactPullSecret:
+  namespace: kube-system
+  name: artifacts-basic-auth
+```
+
+### Additional Details
+
+- The `Insecure` property is equivalent of defining `InsecureSkipVerify` on a Go HTTP client.
+- The `Insecure` property will be valid for both `oci://` and `https://` protocols.
+- If no protocol is defined, HTTP is used.
+- If no `ArtifactPullSecret` is defined, access will be anonymous (no authentication).
+
+## Status
+
+Proposed
+
+## Consequences
+
+- Users will have an additional protocol to be aware of.
+- Introduction of a new type (`ArtifactPullSecret`) when ideally existing types could be reused.
+- If the Secret referenced by `ArtifactPullSecret` does not exist, the download will fail.
+- Users need to be notified about different failure types (e.g., unreadable secret, invalid secret).
+- Additional configuration is required to handle basic authentication, ensuring secure access to resources.
+- We will allow downloads from remote places using self-signed certificates if requested to.
