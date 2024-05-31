@@ -83,7 +83,7 @@ terraform apply
 * `oracle_9_1`: Oracle Linux Server 9.1
 * `rhel_7`: Red Hat Enterprise Linux Server 7.9 (Maipo)
 * `rhel_8`: Red Hat Enterprise Linux 8.6 (Ootpa)
-* `rhel_9`: Red Hat Enterprise Linux 9.0 (Plow)
+* `rhel_9`: Red Hat Enterprise Linux 9.3 (Plow)
 * `rocky_8`: Rocky Linux 8.7 (Green Obsidian)
 * `rocky_9`: Rocky Linux 9.2 (Blue Onyx)
 * `ubuntu_2004`: Ubuntu 20.04 LTS
