@@ -55,6 +55,11 @@ func (a *Airgap) LockdownMachines(ctx context.Context, nodes ...string) error {
 }
 
 func tryBlockIPv6() error {
+	// Check if ip6table_filter module is already loaded
+	if _, err := os.ReadFile("/sys/module/ip6table_filter/refcnt"); err == nil {
+		return nil
+	}
+
 	_, err := exec.LookPath("modprobe")
 	if err != nil {
 		return err
