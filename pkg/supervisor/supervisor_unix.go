@@ -69,7 +69,7 @@ Loop:
 			if errors.Is(err, syscall.ESRCH) {
 				return nil
 			} else if err != nil {
-				return fmt.Errorf("failed to send SIGTERM to pid %d: %w", s.cmd.Process.Pid, err)
+				return fmt.Errorf("failed to send SIGTERM: %w", err)
 			}
 		case <-deadline:
 			break Loop
@@ -88,7 +88,7 @@ Loop:
 	if errors.Is(err, syscall.ESRCH) {
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("failed to send SIGKILL to pid %d: %w", s.cmd.Process.Pid, err)
+		return fmt.Errorf("failed to send SIGKILL: %w", err)
 	}
 	return nil
 }
@@ -115,7 +115,11 @@ func (s *Supervisor) maybeKillPidFile(check <-chan time.Time, deadline <-chan ti
 		return fmt.Errorf("failed to parse pid file %s: %w", s.PidFile, err)
 	}
 
-	return s.killPid(p, check, deadline)
+	if err := s.killPid(p, check, deadline); err != nil {
+		return fmt.Errorf("failed to kill process with PID %d: %w", p, err)
+	}
+
+	return nil
 }
 
 func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
@@ -123,7 +127,7 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("failed to read process %d cmdline: %w", pid, err)
+		return false, fmt.Errorf("failed to read process cmdline: %w", err)
 	}
 
 	// only kill process if it has the expected cmd
@@ -137,7 +141,7 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("failed to read process %d environ: %w", pid, err)
+		return false, fmt.Errorf("failed to read process environ: %w", err)
 	}
 
 	for _, e := range strings.Split(string(env), "\x00") {
