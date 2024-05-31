@@ -26,7 +26,6 @@ import (
 	"syscall"
 
 	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
-	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -74,7 +73,6 @@ func NewWorkerCmd() *cobra.Command {
 				c.TokenArg = args[0]
 			}
 
-			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
 			if c.TokenArg != "" && c.TokenFile != "" {
 				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
 			}
@@ -141,7 +139,7 @@ func (c *Command) Start(ctx context.Context) error {
 	}
 
 	if c.CriSocket == "" {
-		componentManager.Add(ctx, containerd.NewComponent(c.Logging["containerd"], c.K0sVars, workerConfig))
+		componentManager.Add(ctx, containerd.NewComponent(c.LogLevels.Containerd, c.K0sVars, workerConfig))
 	}
 
 	componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
@@ -156,7 +154,7 @@ func (c *Command) Start(ctx context.Context) error {
 		StaticPods:          staticPods,
 		Kubeconfig:          kubeletKubeconfigPath,
 		Configuration:       *workerConfig.KubeletConfiguration.DeepCopy(),
-		LogLevel:            c.Logging["kubelet"],
+		LogLevel:            c.LogLevels.Kubelet,
 		Labels:              c.Labels,
 		Taints:              c.Taints,
 		ExtraArgs:           c.KubeletExtraArgs,
