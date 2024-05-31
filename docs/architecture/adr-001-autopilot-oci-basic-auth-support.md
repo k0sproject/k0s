@@ -1,4 +1,4 @@
-# ADR 1: Add Support for ORAS Protocol and Basic Authentication in Autopilot for Artifact Retrieval
+# ADR 1: Add Support for OCI Registry and Basic Authentication
 
 ## Context
 
@@ -8,7 +8,7 @@ Enhancing Autopilot to pull artifacts directly from registries will streamline w
 
 ## Decision
 
-Implement support in Autopilot for pulling artifacts, such as k0s binaries and image bundles, directly from a registry using the [ORAS](https://oras.land/docs/) protocol. Additionally, add support for basic authentication to ensure secure access to artifacts over HTTP.
+Implement support in Autopilot for pulling artifacts, such as k0s binaries and image bundles, directly from a registry using the [ORAS](https://oras.land/docs/) client. Additionally, add support for basic authentication to ensure secure access to artifacts over HTTP.
 
 ## Solution
 
@@ -59,7 +59,7 @@ type ArtifactPullSecret struct {
 
 The secret pointed to by the provided `ArtifactPullSecret` property is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` (see below) or of type `kubernetes.io/basic-auth` if protocols `http://` or `https://` are used .
 
-Example configuration for ORAS:
+Example configuration for OCI:
 
 ```yaml
 url: oci://my.registry/binaries/k0s:v1.30.1+k0s.0
