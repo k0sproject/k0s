@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/static"
@@ -30,14 +31,36 @@ var _ manager.Component = (*CRD)(nil)
 type CRD struct {
 	saver  manifestsSaver
 	bundle string
+
+	crdOpts
 }
 
+type crdOpts struct {
+	assetsDir string
+}
+
+type CRDOption func(*crdOpts)
+
 // NewCRD build new CRD
-func NewCRD(s manifestsSaver, bundle string) *CRD {
-	return &CRD{
-		saver:  s,
-		bundle: bundle,
+func NewCRD(s manifestsSaver, bundle string, opts ...CRDOption) *CRD {
+	var options crdOpts
+	for _, opt := range opts {
+		opt(&options)
 	}
+
+	if options.assetsDir == "" {
+		options.assetsDir = bundle
+	}
+
+	return &CRD{
+		saver:   s,
+		bundle:  bundle,
+		crdOpts: options,
+	}
+}
+
+func WithCRDAssetsDir(assetsDir string) CRDOption {
+	return func(opts *crdOpts) { opts.assetsDir = assetsDir }
 }
 
 // Init  (c CRD) Init(_ context.Context) error {
@@ -47,14 +70,15 @@ func (c CRD) Init(_ context.Context) error {
 
 // Run unpacks manifests from bindata
 func (c CRD) Start(_ context.Context) error {
-	crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", c.bundle))
+	crdAssetsPath := path.Join("manifests", c.assetsDir, "CustomResourceDefinition")
+	crds, err := static.AssetDir(crdAssetsPath)
 	if err != nil {
 		return fmt.Errorf("can't unbundle CRD `%s` manifests: %w", c.bundle, err)
 	}
 
 	for _, filename := range crds {
 		manifestName := fmt.Sprintf("%s-crd-%s", c.bundle, filename)
-		content, err := static.Asset(fmt.Sprintf("manifests/%s/CustomResourceDefinition/%s", c.bundle, filename))
+		content, err := static.Asset(path.Join(crdAssetsPath, filename))
 		if err != nil {
 			return fmt.Errorf("failed to fetch crd `%s`: %w", filename, err)
 		}
