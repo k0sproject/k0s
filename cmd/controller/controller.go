@@ -336,7 +336,7 @@ func (c *command) start(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to initialize etcd-member manifests saver: %w", err)
 		}
-		clusterComponents.Add(ctx, controller.NewCRD(etcdCRDSaver, []string{"etcd"}))
+		clusterComponents.Add(ctx, controller.NewCRD(etcdCRDSaver, "etcd"))
 		nodeComponents.Add(ctx, etcdReconciler)
 	}
 
@@ -393,7 +393,7 @@ func (c *command) start(ctx context.Context) error {
 			return fmt.Errorf("failed to initialize api-config manifests saver: %w", err)
 		}
 
-		clusterComponents.Add(ctx, controller.NewCRD(apiConfigSaver, []string{"v1beta1"}))
+		clusterComponents.Add(ctx, controller.NewCRD(apiConfigSaver, "v1beta1"))
 	}
 
 	cfgReconciler, err := controller.NewClusterConfigReconciler(
@@ -413,7 +413,7 @@ func (c *command) start(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to initialize helm manifests saver: %w", err)
 		}
-		clusterComponents.Add(ctx, controller.NewCRD(helmSaver, []string{"helm"}))
+		clusterComponents.Add(ctx, controller.NewCRD(helmSaver, "helm"))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
 			helmSaver,
 			c.K0sVars,
@@ -429,7 +429,7 @@ func (c *command) start(ctx context.Context) error {
 			logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 			return err
 		}
-		clusterComponents.Add(ctx, controller.NewCRD(manifestsSaver, []string{"autopilot"}))
+		clusterComponents.Add(ctx, controller.NewCRD(manifestsSaver, "autopilot"))
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) && nodeConfig.Spec.API.ExternalAddress != "" {
