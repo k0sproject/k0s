@@ -1,4 +1,4 @@
-# ADR 1: Add Support for OCI Registry and Basic Authentication
+# ADR 1: Add Support for OCI Registry and HTTP Authentication
 
 ## Context
 
@@ -6,9 +6,11 @@ Registries are increasingly being used as generic artifact stores, expanding bey
 
 Enhancing Autopilot to pull artifacts directly from registries will streamline workflows and improve efficiency by allowing integration and deployment of diverse artifacts without relying solely on HTTP[S] endpoints. This update will enable Autopilot to handle registry-specific protocols and authentication mechanisms, aligning it with modern deployment practices.
 
+Currently, Autopilot does not support the retrieval of artifacts via the HTTP protocol when authentication is required. Implementing this feature to accommodate such authentication methods would be a valuable enhancement.
+
 ## Decision
 
-Implement support in Autopilot for pulling artifacts, such as k0s binaries and image bundles, directly from a registry using the [ORAS](https://oras.land/docs/) client. Additionally, add support for basic authentication to ensure secure access to artifacts over HTTP.
+Implement support in Autopilot for pulling artifacts, such as k0s binaries and image bundles, directly from a registry using the [ORAS](https://oras.land/docs/) client. Additionally, add support for HTTP authentication to ensure secure access to artifacts.
 
 ## Solution
 
@@ -57,7 +59,7 @@ type ArtifactPullSecret struct {
 }
 ```
 
-The secret pointed to by the provided `ArtifactPullSecret` property is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` (see below) or of type `kubernetes.io/basic-auth` if protocols `http://` or `https://` are used .
+The secret pointed to by the provided `ArtifactPullSecret` property is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` (see below) or of type `Opaque` if protocols `http://` or `https://` are used.
 
 Example configuration for OCI:
 
@@ -79,6 +81,31 @@ artifactPullSecret:
   name: artifacts-basic-auth
 ```
 
+### Secrets Layout
+
+For secrets of type `kubernetes.io/dockerconfigjson` the format is the default for Docker authentications, equal to what is used in a Pod's pull secret. For further details you can refer to the [official documentation](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
+
+When it comes to the `Opaque` secret layout (used for HTTP requests) Autopilot will accept the following entries:
+
+- `username` and `password`: if both are set then Autopilot will attempt to pull the artifacts using [Basic Authentication](https://www.ibm.com/docs/en/cics-ts/6.1?topic=concepts-http-basic-authentication).
+- `authorization`: if this property is set then the `Authorization` [header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization) will be set to its value when pulling the artifacts.
+
+No other property will be parsed and used. For sake of defining the expected behaviour in case of conflicting configurations:
+
+> In the case where the three properties are set (`username`, `password`, and `authorization`) Autopilot will ignore `username` and `password`, i.e. `authorization`  takes precedence over username and password.
+
+The `authorization` entry is used as is, its content is placed directly into the `Authorization` header. For example a secret like the following will make Autopilot to set the `Authorization` header to `Bearer abc123def456ghi789jkl0`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: creds
+  namespace: kube-system
+data:
+  authorization: "Bearer abc123def456ghi789jkl0"
+```
+
 ### Additional Details
 
 - The `Insecure` property is equivalent of defining `InsecureSkipVerify` on a Go HTTP client.
@@ -96,5 +123,5 @@ Proposed
 - Introduction of a new type (`ArtifactPullSecret`) when ideally existing types could be reused.
 - If the Secret referenced by `ArtifactPullSecret` does not exist, the download will fail.
 - Users need to be notified about different failure types (e.g., unreadable secret, invalid secret).
-- Additional configuration is required to handle basic authentication, ensuring secure access to resources.
+- Additional configuration is required to handle authentication, ensuring secure access to resources.
 - We will allow downloads from remote places using self-signed certificates if requested to.
