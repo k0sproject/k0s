@@ -113,19 +113,19 @@ go.sum: go.mod .k0sbuild.docker-image.k0s
 	$(GO) mod tidy && touch -c -- '$@'
 
 controllergen_targets += pkg/apis/helm/v1beta1/.controller-gen.stamp
-pkg/apis/helm/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/helm/v1beta1/ -maxdepth 1 -type f -name \*.go)
+pkg/apis/helm/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/helm/v1beta1/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
 pkg/apis/helm/v1beta1/.controller-gen.stamp: gen_output_dir = helm
 
 controllergen_targets += pkg/apis/k0s/v1beta1/.controller-gen.stamp
-pkg/apis/k0s/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/k0s/v1beta1/ -maxdepth 1 -type f -name \*.go)
+pkg/apis/k0s/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/k0s/v1beta1/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
 pkg/apis/k0s/v1beta1/.controller-gen.stamp: gen_output_dir = v1beta1
 
 controllergen_targets += pkg/apis/autopilot/v1beta2/.controller-gen.stamp
-pkg/apis/autopilot/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot/v1beta2/ -maxdepth 1 -type f -name \*.go)
+pkg/apis/autopilot/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot/v1beta2/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
 pkg/apis/autopilot/v1beta2/.controller-gen.stamp: gen_output_dir = autopilot
 
 controllergen_targets += pkg/apis/etcd/v1beta1/.controller-gen.stamp
-pkg/apis/etcd/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/etcd/v1beta1/ -maxdepth 1 -type f -name \*.go)
+pkg/apis/etcd/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/etcd/v1beta1/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
 pkg/apis/etcd/v1beta1/.controller-gen.stamp: gen_output_dir = etcd
 
 codegen_targets += $(controllergen_targets)
@@ -144,7 +144,7 @@ pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerpl
 
 clientset_input_dirs := pkg/apis/autopilot/v1beta2 pkg/apis/k0s/v1beta1 pkg/apis/helm/v1beta1 pkg/apis/etcd/v1beta1
 codegen_targets += pkg/client/clientset/.client-gen.stamp
-pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name \*.go -not -name \*_test.go -not -name zz_\*)
+pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
 pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	gendir="$$(mktemp -d .client-gen.XXXXXX.tmp)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
