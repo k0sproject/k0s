@@ -112,21 +112,13 @@ $(K0S_GO_BUILD_CACHE):
 go.sum: go.mod .k0sbuild.docker-image.k0s
 	$(GO) mod tidy && touch -c -- '$@'
 
-controllergen_targets += pkg/apis/helm/v1beta1/.controller-gen.stamp
-pkg/apis/helm/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/helm/v1beta1/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
+# List of all the custom APIs that k0s defines.
+api_group_versions := $(foreach path,$(wildcard pkg/apis/*/v*/doc.go),$(path:pkg/apis/%/doc.go=%))
 
-controllergen_targets += pkg/apis/k0s/v1beta1/.controller-gen.stamp
-pkg/apis/k0s/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/k0s/v1beta1/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
-
-controllergen_targets += pkg/apis/autopilot/v1beta2/.controller-gen.stamp
-pkg/apis/autopilot/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot/v1beta2/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
-
-controllergen_targets += pkg/apis/etcd/v1beta1/.controller-gen.stamp
-pkg/apis/etcd/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/etcd/v1beta1/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
-
-codegen_targets += $(controllergen_targets)
-
-pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
+# Run controller-gen for all API group versions.
+codegen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp)
+$(foreach gv,$(api_group_versions),$(eval pkg/apis/$(gv)/.controller-gen.stamp: $$(shell find pkg/apis/$(gv)/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')))
+$(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/manifests/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))CustomResourceDefinition'
 	mkdir -p 'static/manifests/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
 	gendir="$$(mktemp -d .controller-gen.XXXXXX.tmp)" \
@@ -138,7 +130,8 @@ pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerpl
 	  && mv -f -- "$$gendir"/zz_generated.deepcopy.go '$(dir $@).'
 	touch -- '$@'
 
-clientset_input_dirs := pkg/apis/autopilot/v1beta2 pkg/apis/k0s/v1beta1 pkg/apis/helm/v1beta1 pkg/apis/etcd/v1beta1
+# Generate the k0s client-go clientset based on all custom API group versions.
+clientset_input_dirs := $(foreach gv,$(api_group_versions),pkg/apis/$(gv))
 codegen_targets += pkg/client/clientset/.client-gen.stamp
 pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
 pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
@@ -156,15 +149,12 @@ pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/bo
 	touch -- '$@'
 
 codegen_targets += static/zz_generated_assets.go
-static/zz_generated_assets.go: $(controllergen_targets) # to generate the CRDs into static/manifests/*/CustomResourceDefinition
+static/zz_generated_assets.go: $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp) # to generate the CRDs into static/manifests/*/CustomResourceDefinition
 static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows static/misc -type f)
 static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
 	CGO_ENABLED=0 $(GO) run github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version) \
 	  -o '$@' -pkg static -prefix static \
-	  static/manifests/helm/CustomResourceDefinition/... \
-	  static/manifests/k0s/CustomResourceDefinition/... \
-	  static/manifests/autopilot/CustomResourceDefinition/... \
-	  static/manifests/etcd/CustomResourceDefinition/... \
+	  $(foreach gv,$(api_group_versions),static/manifests/$(dir $(gv))CustomResourceDefinition/...) \
 	  static/manifests/calico/... \
 	  static/manifests/windows/... \
 	  static/misc/...
