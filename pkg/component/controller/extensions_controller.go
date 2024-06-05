@@ -31,6 +31,7 @@ import (
 	helmapi "github.com/k0sproject/k0s/pkg/apis/helm"
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -46,6 +47,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
 	apiretry "k8s.io/client-go/util/retry"
+	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
@@ -417,7 +419,8 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		Kind:  "Chart",
 	}
 
-	mgr, err := crman.New(clientConfig, crman.Options{
+	mgr, err := controllerruntime.NewManager(clientConfig, crman.Options{
+		Scheme: k0sscheme.Scheme,
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
@@ -437,11 +440,6 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		return nil
 	}, retry.Context(ctx)); err != nil {
 		return fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registred, check CRD registration reconciler: %w", err)
-	}
-	// examples say to not use GetScheme in production, but it is unclear at the moment
-	// which scheme should be in use
-	if err := v1beta1.AddToScheme(mgr.GetScheme()); err != nil {
-		return fmt.Errorf("can't register Chart crd: %w", err)
 	}
 
 	if err := builder.
