@@ -1,0 +1,40 @@
+name: DCO
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release-*
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: DCO check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout k0s
+        uses: actions/checkout@v4
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download DCO check script
+        env:
+          # https://github.com/christophebedard/dco-check/releases/tag/0.4.0
+          DCO_CHECK_VERSION: 30353d8deedf393cf55ba33355e71da7fdd095c7
+        run: |
+          curl 'https://raw.githubusercontent.com/christophebedard/dco-check/${{ env.DCO_CHECK_VERSION }}/dco_check/dco_check.py' \
+            --retry 5 --retry-all-errors --proto '=https' --tlsv1.2 -sSLfo dco_check.py
+
+      - name: Run DCO check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DCO_CHECK_VERBOSE: "true"
+        run: python3 dco_check.py
