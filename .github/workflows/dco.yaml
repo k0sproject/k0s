@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  check:
     name: DCO check
     runs-on: ubuntu-latest
     steps:
@@ -37,4 +37,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DCO_CHECK_VERBOSE: "true"
+          DCO_CHECK_EXCLUDE_PATTERN: dependabot\[bot\]@users\.noreply\.github\.com
         run: python3 dco_check.py
