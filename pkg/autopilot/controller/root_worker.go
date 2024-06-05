@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"time"
 
-	apscheme "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
@@ -58,6 +57,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 	logger := w.log
 
 	managerOpts := crman.Options{
+		Scheme:                 scheme,
 		Port:                   w.cfg.ManagerPort,
 		MetricsBindAddress:     w.cfg.MetricsBindAddr,
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
@@ -77,10 +77,6 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		}),
 	); err != nil {
 		logger.WithError(err).Fatal("unable to start controller manager")
-	}
-
-	if err := apscheme.AddToScheme(mgr.GetScheme()); err != nil {
-		logger.WithError(err).Fatal("unable to register autopilot scheme")
 	}
 
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
