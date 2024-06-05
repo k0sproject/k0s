@@ -23,7 +23,6 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
-	apscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -60,6 +59,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 	logger := w.log
 
 	managerOpts := crman.Options{
+		Scheme: scheme,
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: w.cfg.ManagerPort,
 		}),
@@ -83,10 +83,6 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		}),
 	); err != nil {
 		logger.WithError(err).Fatal("unable to start controller manager")
-	}
-
-	if err := apscheme.AddToScheme(mgr.GetScheme()); err != nil {
-		logger.WithError(err).Fatal("unable to register autopilot scheme")
 	}
 
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
