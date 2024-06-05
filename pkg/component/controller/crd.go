@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/static"
@@ -28,16 +29,38 @@ var _ manager.Component = (*CRD)(nil)
 
 // CRD unpacks bundled CRD definitions to the filesystem
 type CRD struct {
-	saver   manifestsSaver
-	bundles []string
+	saver  manifestsSaver
+	bundle string
+
+	crdOpts
 }
 
+type crdOpts struct {
+	assetsDir string
+}
+
+type CRDOption func(*crdOpts)
+
 // NewCRD build new CRD
-func NewCRD(s manifestsSaver, bundles []string) *CRD {
+func NewCRD(s manifestsSaver, bundle string, opts ...CRDOption) *CRD {
+	var options crdOpts
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	if options.assetsDir == "" {
+		options.assetsDir = bundle
+	}
+
 	return &CRD{
 		saver:   s,
-		bundles: bundles,
+		bundle:  bundle,
+		crdOpts: options,
 	}
+}
+
+func WithCRDAssetsDir(assetsDir string) CRDOption {
+	return func(opts *crdOpts) { opts.assetsDir = assetsDir }
 }
 
 // Init  (c CRD) Init(_ context.Context) error {
@@ -47,23 +70,21 @@ func (c CRD) Init(_ context.Context) error {
 
 // Run unpacks manifests from bindata
 func (c CRD) Start(_ context.Context) error {
-	for _, bundle := range c.bundles {
-		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))
+	crdAssetsPath := path.Join("manifests", c.assetsDir, "CustomResourceDefinition")
+	crds, err := static.AssetDir(crdAssetsPath)
+	if err != nil {
+		return fmt.Errorf("can't unbundle CRD `%s` manifests: %w", c.bundle, err)
+	}
+
+	for _, filename := range crds {
+		manifestName := fmt.Sprintf("%s-crd-%s", c.bundle, filename)
+		content, err := static.Asset(path.Join(crdAssetsPath, filename))
 		if err != nil {
-			return fmt.Errorf("can't unbundle CRD `%s` manifests: %w", bundle, err)
+			return fmt.Errorf("failed to fetch crd `%s`: %w", filename, err)
 		}
-
-		for _, filename := range crds {
-			manifestName := fmt.Sprintf("%s-crd-%s", bundle, filename)
-			content, err := static.Asset(fmt.Sprintf("manifests/%s/CustomResourceDefinition/%s", bundle, filename))
-			if err != nil {
-				return fmt.Errorf("failed to fetch crd `%s`: %w", filename, err)
-			}
-			if err := c.saver.Save(manifestName, content); err != nil {
-				return fmt.Errorf("failed to save CRD `%s` manifest `%s` to FS: %w", bundle, manifestName, err)
-			}
+		if err := c.saver.Save(manifestName, content); err != nil {
+			return fmt.Errorf("failed to save CRD `%s` manifest `%s` to FS: %w", c.bundle, manifestName, err)
 		}
-
 	}
 
 	return nil
