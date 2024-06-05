@@ -27,7 +27,6 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 	apupdate "github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
-	apscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
@@ -148,6 +147,7 @@ func (c *rootController) Run(ctx context.Context) error {
 // and starts it in a goroutine.
 func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error {
 	managerOpts := crman.Options{
+		Scheme: scheme,
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: c.cfg.ManagerPort,
 		}),
@@ -160,11 +160,6 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	mgr, err := cr.NewManager(c.autopilotClientFactory.RESTConfig(), managerOpts)
 	if err != nil {
 		logger.WithError(err).Error("unable to start controller manager")
-		return err
-	}
-
-	if err := apscheme.AddToScheme(mgr.GetScheme()); err != nil {
-		logger.WithError(err).Error("unable to register autopilot scheme")
 		return err
 	}
 
