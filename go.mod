@@ -54,7 +54,7 @@ require (
 	golang.org/x/crypto v0.23.0
 	golang.org/x/mod v0.17.0
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.20.0
+	golang.org/x/sys v0.21.0
 	golang.org/x/tools v0.21.0
 	google.golang.org/grpc v1.64.0
 	helm.sh/helm/v3 v3.14.4
