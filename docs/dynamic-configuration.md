@@ -16,6 +16,7 @@ In the [k0s configuration options](configuration.md) there are some options that
 
 - `spec.api` - these options configure how the local Kubernetes API server is setup
 - `spec.storage` - these options configure how the local storage (etcd or sqlite) is setup
+- `spec.network.controlPlaneLoadBalancing` - these options configure how [Control Plane Load Balancing](cplb.md) is setup.
 
 In case of HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.
 
@@ -50,6 +51,12 @@ As with any Kubernetes cluster there are certain things that just cannot be chan
 - `network.podCIDR`
 - `network.serviceCIDR`
 - `network.provider`
+- `network.controlPlaneLoadBalancing`
+
+During the manual installation of control plane nodes with `k0s install`, all these
+non-changeable options must be defined in the configuration file. This is necessary
+because these fields can be used before the dynamic configuration reconciler is
+initialized. Both k0sctl and k0smotron handle this without user intervention.
 
 ## Configuration status
 
