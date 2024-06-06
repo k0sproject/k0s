@@ -19,27 +19,8 @@ package v1beta1
 import (
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/apis/etcd"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/scheme"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-var (
-	// GroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: etcd.GroupName, Version: Version}
-
-	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
-	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
-
-	// AddToScheme adds the types in this group-version to the given scheme.
-	AddToScheme = SchemeBuilder.AddToScheme
-)
-
-func init() {
-	SchemeBuilder.Register(&EtcdMember{}, &EtcdMemberList{})
-}
 
 // EtcdMember describes the nodes etcd membership status
 //

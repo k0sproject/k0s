@@ -14,5 +14,3 @@
 
 // Package k0s contains API Schema definitions for the etcd.k0sproject.io API group.
 package etcd
-
-const GroupName = "etcd.k0sproject.io"

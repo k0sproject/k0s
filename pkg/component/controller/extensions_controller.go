@@ -28,7 +28,6 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/bombsimon/logrusr/v4"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	helmapi "github.com/k0sproject/k0s/pkg/apis/helm"
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
@@ -415,7 +414,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
 	gk := schema.GroupKind{
-		Group: helmapi.GroupName,
+		Group: v1beta1.GroupName,
 		Kind:  "Chart",
 	}
 

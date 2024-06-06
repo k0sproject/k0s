@@ -19,5 +19,3 @@ limitations under the License.
 
 // Package v1beta1 is the v1beta1 version of the API.
 package v1beta1
-
-const Version = "v1beta1"

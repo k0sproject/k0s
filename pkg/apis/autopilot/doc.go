@@ -15,5 +15,3 @@
 // Package autopilot contains API Schema definitions for the
 // autopilot.k0sproject.io API group.
 package autopilot
-
-const GroupName = "autopilot.k0sproject.io"

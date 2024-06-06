@@ -17,5 +17,3 @@
 
 // Package k0s contains API Schema definitions for the etcd.k0sproject.io API group.
 package v1beta1
-
-const Version = "v1beta1"
