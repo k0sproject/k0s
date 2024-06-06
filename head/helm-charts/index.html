@@ -2106,13 +2106,12 @@
 <h2 id="helm-charts-in-k0s-configuration">Helm charts in k0s configuration<a class="headerlink" href="#helm-charts-in-k0s-configuration" title="Permanent link">#</a></h2>
 <p>Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file.</p>
 <h3 id="wait-for-install">Wait for install<a class="headerlink" href="#wait-for-install" title="Permanent link">#</a></h3>
-<p>Each chart is proccesed the same way CLI tool does with following options:</p>
+<p>Each chart is processed the same way CLI tool does with following options:</p>
 <ul>
 <li><code>--wait</code></li>
 <li><code>--wait-for-jobs</code></li>
-<li><code>--timeout 10m</code></li>
 </ul>
-<p>It is possible to customize timeout by using <code>.Timeout</code> field.</p>
+<p>It is possible to customize the timeout by using the `timeout' field.</p>
 <h3 id="chart-configuration">Chart configuration<a class="headerlink" href="#chart-configuration" title="Permanent link">#</a></h3>
 <table>
 <thead>
@@ -2140,7 +2139,7 @@
 </tr>
 <tr>
 <td>timeout</td>
-<td>10m</td>
+<td>-</td>
 <td>timeout to wait for release install</td>
 </tr>
 <tr>
