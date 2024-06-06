@@ -113,6 +113,15 @@ func (s *DualstackSuite) SetupSuite() {
 	err = s.WaitForNodeReady(s.WorkerNode(1), client)
 	s.Require().NoError(err)
 
+	for i := 0; i < s.WorkerCount; i++ {
+		ssh, err := s.SSH(s.Context(), s.WorkerNode(i))
+		s.Require().NoError(err)
+		defer ssh.Disconnect()
+		output, err := ssh.ExecWithOutput(s.Context(), "cat /proc/sys/net/ipv6/conf/all/disable_ipv6")
+		s.Require().NoError(err)
+		s.T().Logf("worker%d: /proc/sys/net/ipv6/conf/all/disable_ipv6=%s", i, output)
+	}
+
 	kc, err := s.KubeClient("controller0", "")
 	s.Require().NoError(err)
 	restConfig, err := s.GetKubeConfig("controller0", "")
