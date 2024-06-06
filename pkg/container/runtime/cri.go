@@ -32,7 +32,7 @@ type CRIRuntime struct {
 	criSocketPath string
 }
 
-func (cri *CRIRuntime) ListContainers() ([]string, error) {
+func (cri *CRIRuntime) ListContainers(ctx context.Context) ([]string, error) {
 	client, conn, err := getRuntimeClient(cri.criSocketPath)
 	defer closeConnection(conn)
 	if err != nil {
@@ -43,7 +43,7 @@ func (cri *CRIRuntime) ListContainers() ([]string, error) {
 	}
 	request := &pb.ListPodSandboxRequest{}
 	logrus.Debugf("ListPodSandboxRequest: %v", request)
-	r, err := client.ListPodSandbox(context.Background(), request)
+	r, err := client.ListPodSandbox(ctx, request)
 	logrus.Debugf("ListPodSandboxResponse: %v", r)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (cri *CRIRuntime) ListContainers() ([]string, error) {
 	return pods, nil
 }
 
-func (cri *CRIRuntime) RemoveContainer(id string) error {
+func (cri *CRIRuntime) RemoveContainer(ctx context.Context, id string) error {
 	client, conn, err := getRuntimeClient(cri.criSocketPath)
 	defer closeConnection(conn)
 	if err != nil {
@@ -66,7 +66,7 @@ func (cri *CRIRuntime) RemoveContainer(id string) error {
 	}
 	request := &pb.RemovePodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("RemovePodSandboxRequest: %v", request)
-	r, err := client.RemovePodSandbox(context.Background(), request)
+	r, err := client.RemovePodSandbox(ctx, request)
 	logrus.Debugf("RemovePodSandboxResponse: %v", r)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (cri *CRIRuntime) RemoveContainer(id string) error {
 	return nil
 }
 
-func (cri *CRIRuntime) StopContainer(id string) error {
+func (cri *CRIRuntime) StopContainer(ctx context.Context, id string) error {
 	client, conn, err := getRuntimeClient(cri.criSocketPath)
 	defer closeConnection(conn)
 	if err != nil {
@@ -86,7 +86,7 @@ func (cri *CRIRuntime) StopContainer(id string) error {
 	}
 	request := &pb.StopPodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("StopPodSandboxRequest: %v", request)
-	r, err := client.StopPodSandbox(context.Background(), request)
+	r, err := client.StopPodSandbox(ctx, request)
 	logrus.Debugf("StopPodSandboxResponse: %v", r)
 	if err != nil {
 		return fmt.Errorf("failed to stop pod sandbox: %w", err)
@@ -105,10 +105,9 @@ func getRuntimeClient(addr string) (pb.RuntimeServiceClient, *grpc.ClientConn, e
 }
 
 func getRuntimeClientConnection(addr string) (*grpc.ClientConn, error) {
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		errMsg := fmt.Errorf("connect endpoint %s, make sure you are running as root and the endpoint has been started: %w", addr, err)
-		logrus.Error(errMsg)
+		return nil, fmt.Errorf("connect endpoint %s, make sure you are running as root and the endpoint has been started: %w", addr, err)
 	} else {
 		logrus.Debugf("connected successfully using endpoint: %s", addr)
 	}

@@ -17,6 +17,7 @@ limitations under the License.
 package cleanup
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -134,20 +135,20 @@ func (c *containers) stopContainerd() {
 
 func (c *containers) stopAllContainers() error {
 	var errs []error
-	logrus.Debugf("trying to list all pods")
 
 	var pods []string
+	ctx := context.TODO()
 	err := retry.Do(func() error {
+		logrus.Debugf("trying to list all pods")
 		var err error
-		pods, err = c.Config.containerRuntime.ListContainers()
+		pods, err = c.Config.containerRuntime.ListContainers(ctx)
 		if err != nil {
 			return err
 		}
 		return nil
-	})
+	}, retry.Context(ctx), retry.LastErrorOnly(true))
 	if err != nil {
-		logrus.Debugf("failed at listing pods %v", err)
-		return err
+		return fmt.Errorf("failed at listing pods %w", err)
 	}
 	if len(pods) > 0 {
 		if err := removeMount("kubelet/pods"); err != nil {
@@ -160,7 +161,7 @@ func (c *containers) stopAllContainers() error {
 
 	for _, pod := range pods {
 		logrus.Debugf("stopping container: %v", pod)
-		err := c.Config.containerRuntime.StopContainer(pod)
+		err := c.Config.containerRuntime.StopContainer(ctx, pod)
 		if err != nil {
 			if strings.Contains(err.Error(), "443: connect: connection refused") {
 				// on a single node instance, we will see "connection refused" error. this is to be expected
@@ -170,13 +171,13 @@ func (c *containers) stopAllContainers() error {
 				errs = append(errs, fmt.Errorf("failed to stop running pod %s: %w", pod, err))
 			}
 		}
-		err = c.Config.containerRuntime.RemoveContainer(pod)
+		err = c.Config.containerRuntime.RemoveContainer(ctx, pod)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to remove pod %s: %w", pod, err))
 		}
 	}
 
-	pods, err = c.Config.containerRuntime.ListContainers()
+	pods, err = c.Config.containerRuntime.ListContainers(ctx)
 	if err == nil && len(pods) == 0 {
 		logrus.Info("successfully removed k0s containers!")
 	}
