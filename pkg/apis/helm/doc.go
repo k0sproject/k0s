@@ -16,5 +16,3 @@ limitations under the License.
 
 // Package helm contains API Schema definitions for the helm.k0sproject.io API group.
 package helm
-
-const GroupName = "helm.k0sproject.io"

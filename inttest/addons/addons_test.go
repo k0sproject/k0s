@@ -28,6 +28,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -124,9 +125,7 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 		return true, nil
 	}))
 
-	helmScheme, err := v1beta1.SchemeBuilder.Build()
-	as.Require().NoError(err)
-	chartClient, err := client.New(cfg, client.Options{Scheme: helmScheme})
+	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
 	as.Require().NoError(err)
 
 	as.T().Logf("Expecting chart %s/%s to be deleted", chart.Namespace, chart.Name)
@@ -179,9 +178,7 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
 
-	scheme, err := v1beta1.SchemeBuilder.Build()
-	as.Require().NoError(err)
-	crClient, err := client.New(cfg, client.Options{Scheme: scheme})
+	crClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
 	as.Require().NoError(err)
 
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
@@ -243,9 +240,7 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
 
-	helmScheme, err := v1beta1.SchemeBuilder.Build()
-	as.Require().NoError(err)
-	chartClient, err := client.New(cfg, client.Options{Scheme: helmScheme})
+	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
 	as.Require().NoError(err)
 	var chart v1beta1.Chart
 	var lastResourceVersion string

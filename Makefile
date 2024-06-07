@@ -115,10 +115,14 @@ go.sum: go.mod .k0sbuild.docker-image.k0s
 # List of all the custom APIs that k0s defines.
 api_group_versions := $(foreach path,$(wildcard pkg/apis/*/v*/doc.go),$(path:pkg/apis/%/doc.go=%))
 
-# Run controller-gen for all API group versions.
-codegen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp)
-$(foreach gv,$(api_group_versions),$(eval pkg/apis/$(gv)/.controller-gen.stamp: $$(shell find pkg/apis/$(gv)/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')))
-$(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
+# Declare the requisites for the generators operating on API group versions.
+api_group_version_targets := .controller-gen.stamp zz_generated.register.go
+$(foreach gv,$(api_group_versions),$(eval $(foreach t,$(api_group_version_targets),pkg/apis/$(gv)/$(t)): $$(shell find pkg/apis/$(gv)/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')))
+
+# Run controller-gen for each API group version.
+controller_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp)
+codegen_targets := $(controller_gen_targets)
+$(controller_gen_targets): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/manifests/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))CustomResourceDefinition'
 	mkdir -p 'static/manifests/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
 	gendir="$$(mktemp -d .controller-gen.XXXXXX.tmp)" \
@@ -129,6 +133,20 @@ $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp): .k0sbu
 	    crd output:crd:dir='static/manifests/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))CustomResourceDefinition' \
 	  && mv -f -- "$$gendir"/zz_generated.deepcopy.go '$(dir $@).'
 	touch -- '$@'
+
+# Run register-gen for each API group version.
+register_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/zz_generated.register.go)
+codegen_targets += $(register_gen_targets)
+$(register_gen_targets): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
+	CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/register-gen@v$(kubernetes_version:1.%=0.%) \
+	  --go-header-file=hack/tools/boilerplate.go.txt \
+	  --output-file='_$(notdir $@).tmp' \
+	  'github.com/k0sproject/k0s/$(dir $@)' || { \
+	    ret=$$?; \
+	    rm -f -- '$(dir $@)_$(notdir $@).tmp'; \
+	    exit $$ret; \
+	  }
+	mv -- '$(dir $@)_$(notdir $@).tmp' '$@'
 
 # Generate the k0s client-go clientset based on all custom API group versions.
 clientset_input_dirs := $(foreach gv,$(api_group_versions),pkg/apis/$(gv))
@@ -149,7 +167,7 @@ pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/bo
 	touch -- '$@'
 
 codegen_targets += static/zz_generated_assets.go
-static/zz_generated_assets.go: $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp) # to generate the CRDs into static/manifests/*/CustomResourceDefinition
+static/zz_generated_assets.go: $(controller_gen_targets) # to generate the CRDs into static/manifests/*/CustomResourceDefinition
 static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows static/misc -type f)
 static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
 	CGO_ENABLED=0 $(GO) run github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version) \

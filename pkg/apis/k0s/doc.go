@@ -14,5 +14,3 @@
 
 // Package k0s contains API Schema definitions for the k0s.k0sproject.io API group.
 package k0s
-
-const GroupName = "k0s.k0sproject.io"
