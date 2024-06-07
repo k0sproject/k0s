@@ -66,6 +66,12 @@ decision] to replace rather than merge individual plugin configuration sections
 from imported configuration files. However, this behavior [may][containerd#7347]
 [change][containerd#9982] in future releases of containerd.
 
+Please note, that in order for drop-ins in `/etc/k0s/containerd.d` to take effect on running configuration, `/etc/k0s/containerd.toml` needs to be k0s managed. 
+
+If you change `/etc/k0s/containerd.toml` (by accident or on purpose), it automatically becomes "not k0s managed". To make it "k0s managed" again, remove it and restart k0s service on the node, it'll be recreated by k0s. 
+
+To confirm that drop-ins are applied to running configuration, check the content of `/run/k0s/containerd-cri.toml`, drop-in specific configuration should be present in this file.
+
 [merge patch]: https://datatracker.ietf.org/doc/html/rfc7396
 [containerd's decision]: https://github.com/containerd/containerd/pull/3574/commits/24b9e2c1a0a72a7ad302cdce7da3abbc4e6295cb
 [containerd#7347]: https://github.com/containerd/containerd/pull/7347
@@ -148,42 +154,28 @@ Following chapters provide some examples how to configure different runtimes for
     [    0.000000] Starting gVisor...
     ```
 
-#### Using `nvidia-container-runtime`
+#### Using nvidia-container-runtime
 
-First, install the NVIDIA runtime components:
-
-```shell
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
-   && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
-   && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt-get update && sudo apt-get install -y nvidia-container-runtime
-```
-
-Next, drop in the NVIDIA runtime's configuration into into `/etc/k0s/containerd.d/nvidia.toml`:
-
-```toml
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
-    privileged_without_host_devices = false
-    runtime_engine = ""
-    runtime_root = ""
-    runtime_type = "io.containerd.runc.v1"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
-    BinaryName = "/usr/bin/nvidia-container-runtime"
-```
-
-Create the needed `RuntimeClass`:
+First, deploy the NVIDIA GPU operator Helm chart with the following commands on top of your k0s cluster:
 
 ```shell
-cat <<EOF | kubectl apply -f -
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: nvidia
-handler: nvidia
-EOF
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+helm repo update
+helm install nvidia-gpu-operator -n nvidia-gpu-operator \
+  --create-namespace \ 
+  --set operator.defaultRuntime=containerd \
+  --set toolkit.env[0].name=CONTAINERD_CONFIG \ 
+  --set toolkit.env[0].value=/etc/k0s/containerd.d/nvidia.toml \ 
+  --set toolkit.env[1].name=CONTAINERD_SOCKET \
+  --set toolkit.env[1].value=/run/k0s/containerd.sock \ 
+  --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS \
+  --set toolkit.env[2].value=nvidia \
+  nvidia/gpu-operator 
 ```
 
-**Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2).
+With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime. 
+
+**Note** Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available [here](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html).
 
 ## Using custom CRI runtimes
 
