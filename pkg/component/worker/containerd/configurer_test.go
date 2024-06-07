@@ -57,6 +57,7 @@ func TestConfigurer_HandleImports(t *testing.T) {
 		var containerdConfig serverconfig.Config
 		require.NoError(t, serverconfig.LoadConfig(criConfigPath, &containerdConfig))
 
+		assert.Equal(t, 2, containerdConfig.Version)
 		criPluginConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
 		require.NotNil(t, criPluginConfig, "No CRI plugin configuration section found")
 		snapshotter := criPluginConfig.GetPath([]string{"containerd", "snapshotter"})
