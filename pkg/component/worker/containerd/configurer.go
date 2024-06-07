@@ -25,8 +25,6 @@ import (
 	"github.com/mesosphere/toml-merge/pkg/patch"
 	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
-
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
 )
 
 // Resolved and merged containerd configuration data.
@@ -100,30 +98,29 @@ func (c *configurer) handleImports() (*resolvedConfig, error) {
 	return &resolvedConfig{CRIConfig: finalConfig, ImportPaths: importPaths}, nil
 }
 
-// Returns the default containerd config, including only the CRI plugin
-// configuration, using the given image for sandbox containers. Uses the
-// containerd package to generate all the rest, so this will be in sync with
-// containerd's defaults for the CRI plugin.
+// Returns the default containerd config, including only k0s's defaults for the
+// CRI plugin configuration, using the given image for sandbox containers.
 func generateDefaultCRIConfig(sandboxContainerImage string) ([]byte, error) {
-	criPluginConfig := criconfig.DefaultConfig()
-	// Set pause image
-	criPluginConfig.SandboxImage = sandboxContainerImage
-	if runtime.GOOS == "windows" {
-		criPluginConfig.CniConfig.NetworkPluginBinDir = "c:\\opt\\cni\\bin"
-		criPluginConfig.CniConfig.NetworkPluginConfDir = "c:\\opt\\cni\\conf"
-	}
-	// We need to use custom struct so we can unmarshal the CRI plugin config only
-	containerdConfig := struct {
-		Version int                    `toml:"version"`
-		Plugins map[string]interface{} `toml:"plugins"`
-	}{
-		Version: 2,
-		Plugins: map[string]interface{}{
-			"io.containerd.grpc.v1.cri": criPluginConfig,
-		},
+	criPluginConfig := map[string]any{
+		// Set pause image
+		"sandbox_image": sandboxContainerImage,
 	}
 
-	return toml.Marshal(containerdConfig)
+	if runtime.GOOS == "windows" {
+		// The default config for Windows uses %ProgramFiles%/containerd/cni/{bin,conf}.
+		// Maybe k0s can use the default in the future, so there's no need for this override.
+		criPluginConfig["cni"] = map[string]any{
+			"bin_dir":  `c:\opt\cni\bin`,
+			"conf_dir": `c:\opt\cni\conf`,
+		}
+	}
+
+	return toml.Marshal(map[string]any{
+		"version": 2,
+		"plugins": map[string]any{
+			"io.containerd.grpc.v1.cri": criPluginConfig,
+		},
+	})
 }
 
 func hasCRIPluginConfig(data []byte) (bool, error) {
