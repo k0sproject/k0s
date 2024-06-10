@@ -28,17 +28,16 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
@@ -48,16 +47,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-const confTmpl = `# k0s_managed=true
+const containerdTomlHeader = `# k0s_managed=true
 # This is a placeholder configuration for k0s managed containerd.
 # If you wish to override the config, remove the first line and replace this file with your custom configuration.
 # For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
-version = 2
-imports = [
-	{{- range $i := .Imports }}
-	"{{ $i }}",
-	{{- end }}
-]
 `
 const confPathPosix = "/etc/k0s/containerd.toml"
 const confPathWindows = "C:\\Program Files\\containerd\\config.toml"
@@ -205,33 +198,32 @@ func (c *Component) setupConfig() error {
 	}
 
 	criConfigPath := filepath.Join(c.K0sVars.RunDir, "containerd-cri.toml")
-	err = file.WriteContentAtomically(criConfigPath, []byte(config.CRIConfig), 0644)
-	if err != nil {
+
+	if err = file.AtomicWithTarget(criConfigPath).
+		WithPermissions(0644).
+		WriteString(config.CRIConfig); err != nil {
 		return fmt.Errorf("can't create containerd CRI config: %w", err)
 	}
 
-	var data struct{ Imports []string }
-	data.Imports = append(config.ImportPaths, criConfigPath)
-
-	// double escape for windows because containerd expects
-	// double backslash in the configuration but golang templates
-	// unescape double slash to a single slash
-	if runtime.GOOS == "windows" {
-		for i := range data.Imports {
-			data.Imports[i] = strings.ReplaceAll(data.Imports[i], "\\", "\\\\")
-		}
-	}
-
-	output := bytes.NewBuffer([]byte{})
-	tw := templatewriter.TemplateWriter{
-		Name:     "containerdconfig",
-		Template: confTmpl,
-		Data:     data,
-	}
-	if err := tw.WriteToBuffer(output); err != nil {
+	if err := file.AtomicWithTarget(c.confPath).
+		WithPermissions(0644).
+		Do(func(f file.AtomicWriter) error {
+			w := bufio.NewWriter(f)
+			if _, err := w.WriteString(containerdTomlHeader); err != nil {
+				return err
+			}
+			if err := toml.NewEncoder(w).Encode(map[string]any{
+				"version": 2,
+				"imports": append(config.ImportPaths, criConfigPath),
+			}); err != nil {
+				return err
+			}
+			return w.Flush()
+		}); err != nil {
 		return fmt.Errorf("can't create containerd config: %w", err)
 	}
-	return file.WriteContentAtomically(c.confPath, output.Bytes(), 0644)
+
+	return nil
 }
 
 func (c *Component) watchDropinConfigs(ctx context.Context) {

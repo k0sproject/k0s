@@ -109,21 +109,18 @@ func generateDefaultCRIConfig(sandboxContainerImage string) ([]byte, error) {
 	// Set pause image
 	criPluginConfig.SandboxImage = sandboxContainerImage
 	if runtime.GOOS == "windows" {
-		criPluginConfig.CniConfig.NetworkPluginBinDir = "c:\\opt\\cni\\bin"
-		criPluginConfig.CniConfig.NetworkPluginConfDir = "c:\\opt\\cni\\conf"
-	}
-	// We need to use custom struct so we can unmarshal the CRI plugin config only
-	containerdConfig := struct {
-		Version int                    `toml:"version"`
-		Plugins map[string]interface{} `toml:"plugins"`
-	}{
-		Version: 2,
-		Plugins: map[string]interface{}{
-			"io.containerd.grpc.v1.cri": criPluginConfig,
-		},
+		// The default config for Windows uses %ProgramFiles%/containerd/cni/{bin,conf}.
+		// Maybe k0s can use the default in the future, so there's no need for this override.
+		criPluginConfig.CniConfig.NetworkPluginBinDir = `c:\opt\cni\bin`
+		criPluginConfig.CniConfig.NetworkPluginConfDir = `c:\opt\cni\conf`
 	}
 
-	return toml.Marshal(containerdConfig)
+	return toml.Marshal(map[string]any{
+		"version": 2,
+		"plugins": map[string]any{
+			"io.containerd.grpc.v1.cri": criPluginConfig,
+		},
+	})
 }
 
 func hasCRIPluginConfig(data []byte) (bool, error) {
