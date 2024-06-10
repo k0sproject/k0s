@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../img/k0s_social.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.25">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.26">
     
     
       
@@ -203,7 +203,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -2113,6 +2113,7 @@
 <ul>
 <li><code>spec.api</code> - these options configure how the local Kubernetes API server is setup</li>
 <li><code>spec.storage</code> - these options configure how the local storage (etcd or sqlite) is setup</li>
+<li><code>spec.network.controlPlaneLoadBalancing</code> - these options configure how <a href="../cplb/">Control Plane Load Balancing</a> is setup.</li>
 </ul>
 <p>In case of HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.</p>
 <h2 id="configuration-location">Configuration location<a class="headerlink" href="#configuration-location" title="Permanent link">#</a></h2>
@@ -2134,7 +2135,12 @@
 <li><code>network.podCIDR</code></li>
 <li><code>network.serviceCIDR</code></li>
 <li><code>network.provider</code></li>
+<li><code>network.controlPlaneLoadBalancing</code></li>
 </ul>
+<p>During the manual installation of control plane nodes with <code>k0s install</code>, all these
+non-changeable options must be defined in the configuration file. This is necessary
+because these fields can be used before the dynamic configuration reconciler is
+initialized. Both k0sctl and k0smotron handle this without user intervention.</p>
 <h2 id="configuration-status">Configuration status<a class="headerlink" href="#configuration-status" title="Permanent link">#</a></h2>
 <p>The dynamic configuration reconciler operator will write status events for all the changes it detects. To see all dynamic config related events, use:</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>config<span class="w"> </span>status
@@ -2236,7 +2242,7 @@
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.081f42fc.min.js"></script>
+      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>
