@@ -107,10 +107,15 @@ func (c *Component) Init(ctx context.Context) error {
 			return assets.Stage(c.K0sVars.BinDir, b, constant.BinDirMode)
 		})
 	}
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
 	if err := c.windowsInit(); err != nil {
 		return fmt.Errorf("windows init failed: %w", err)
 	}
-	return g.Wait()
+
+	return nil
 }
 
 func (c *Component) windowsInit() error {
