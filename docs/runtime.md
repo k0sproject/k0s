@@ -66,9 +66,9 @@ decision] to replace rather than merge individual plugin configuration sections
 from imported configuration files. However, this behavior [may][containerd#7347]
 [change][containerd#9982] in future releases of containerd.
 
-Please note, that in order for drop-ins in `/etc/k0s/containerd.d` to take effect on running configuration, `/etc/k0s/containerd.toml` needs to be k0s managed. 
+Please note, that in order for drop-ins in `/etc/k0s/containerd.d` to take effect on running configuration, `/etc/k0s/containerd.toml` needs to be k0s managed.
 
-If you change `/etc/k0s/containerd.toml` (by accident or on purpose), it automatically becomes "not k0s managed". To make it "k0s managed" again, remove it and restart k0s service on the node, it'll be recreated by k0s. 
+If you change the first magic line (`# k0s_managed=true`) in the `/etc/k0s/containerd.toml` (by accident or on purpose), it automatically becomes "not k0s managed". To make it "k0s managed" again, remove `/etc/k0s/containerd.toml` and restart k0s service on the node, it'll be recreated by k0s.
 
 To confirm that drop-ins are applied to running configuration, check the content of `/run/k0s/containerd-cri.toml`, drop-in specific configuration should be present in this file.
 
@@ -162,18 +162,18 @@ First, deploy the NVIDIA GPU operator Helm chart with the following commands on 
 helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 helm repo update
 helm install nvidia-gpu-operator -n nvidia-gpu-operator \
-  --create-namespace \ 
+  --create-namespace \
   --set operator.defaultRuntime=containerd \
-  --set toolkit.env[0].name=CONTAINERD_CONFIG \ 
-  --set toolkit.env[0].value=/etc/k0s/containerd.d/nvidia.toml \ 
+  --set toolkit.env[0].name=CONTAINERD_CONFIG \
+  --set toolkit.env[0].value=/etc/k0s/containerd.d/nvidia.toml \
   --set toolkit.env[1].name=CONTAINERD_SOCKET \
-  --set toolkit.env[1].value=/run/k0s/containerd.sock \ 
+  --set toolkit.env[1].value=/run/k0s/containerd.sock \
   --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS \
   --set toolkit.env[2].value=nvidia \
-  nvidia/gpu-operator 
+  nvidia/gpu-operator
 ```
 
-With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime. 
+With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime.
 
 **Note** Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available [here](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html).
 
