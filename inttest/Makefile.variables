@@ -59,5 +59,6 @@ smoketests := \
 	check-psp \
 	check-reset \
 	check-singlenode \
+	check-stackapplier \
 	check-statussocket \
 	check-upgrade \

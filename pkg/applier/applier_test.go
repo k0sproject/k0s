@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package applier
+package applier_test
 
 import (
 	"context"
@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	kubeutil "github.com/k0sproject/k0s/internal/testutil"
+	"github.com/k0sproject/k0s/pkg/applier"
 )
 
 func TestApplierAppliesAllManifestsInADirectory(t *testing.T) {
@@ -116,40 +117,40 @@ spec:
 		},
 	}
 
-	a := NewApplier(dir, fakes)
+	a := applier.NewApplier(dir, fakes)
 
 	ctx := context.Background()
 	err := a.Apply(ctx)
 	assert.NoError(t, err)
 	gv, _ := schema.ParseResourceArg("configmaps.v1.")
-	r, err := a.client.Resource(*gv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
+	r, err := fakes.DynamicClient.Resource(*gv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
 	if assert.NoError(t, err) {
 		assert.Equal(t, "applier", r.GetLabels()["component"])
 	}
 	podgv, _ := schema.ParseResourceArg("pods.v1.")
-	r, err = a.client.Resource(*podgv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
+	r, err = fakes.DynamicClient.Resource(*podgv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
 	if assert.NoError(t, err) {
 		assert.Equal(t, "Pod", r.GetKind())
 		assert.Equal(t, "applier", r.GetLabels()["component"])
 	}
 	deployGV, _ := schema.ParseResourceArg("deployments.v1.apps")
-	_, err = a.client.Resource(*deployGV).Namespace("kube-system").Get(ctx, "nginx", metav1.GetOptions{})
+	_, err = fakes.DynamicClient.Resource(*deployGV).Namespace("kube-system").Get(ctx, "nginx", metav1.GetOptions{})
 	assert.NoError(t, err)
 
 	// Attempt to delete the stack with a different applier
-	a2 := NewApplier(dir, fakes)
+	a2 := applier.NewApplier(dir, fakes)
 	assert.NoError(t, a2.Delete(ctx))
 	// Check that the resources are deleted
-	_, err = a.client.Resource(*gv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
+	_, err = fakes.DynamicClient.Resource(*gv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
 	assert.True(t, errors.IsNotFound(err))
 
-	_, err = a.client.Resource(*podgv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
+	_, err = fakes.DynamicClient.Resource(*podgv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
 	assert.True(t, errors.IsNotFound(err))
 
-	_, err = a.client.Resource(*deployGV).Namespace("kube-system").Get(ctx, "nginx", metav1.GetOptions{})
+	_, err = fakes.DynamicClient.Resource(*deployGV).Namespace("kube-system").Get(ctx, "nginx", metav1.GetOptions{})
 	assert.True(t, errors.IsNotFound(err))
 
 	gvNS, _ := schema.ParseResourceArg("namespaces.v1.")
-	_, err = a.client.Resource(*gvNS).Get(ctx, "kube-system", metav1.GetOptions{})
+	_, err = fakes.DynamicClient.Resource(*gvNS).Get(ctx, "kube-system", metav1.GetOptions{})
 	assert.True(t, errors.IsNotFound(err))
 }

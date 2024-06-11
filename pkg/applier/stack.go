@@ -20,13 +20,17 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
 	"time"
 
-	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+
+	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +40,10 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
+	"k8s.io/utils/ptr"
+
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/sirupsen/logrus"
 )
 
 // Stack is a k8s resource bundle
@@ -43,8 +51,7 @@ type Stack struct {
 	Name          string
 	Resources     []*unstructured.Unstructured
 	keepResources []string
-	Client        dynamic.Interface
-	Discovery     discovery.CachedDiscoveryInterface
+	Clients       kubernetes.ClientFactoryInterface
 
 	log *logrus.Entry
 }
@@ -54,8 +61,17 @@ type Stack struct {
 func (s *Stack) Apply(ctx context.Context, prune bool) error {
 	s.log = logrus.WithField("stack", s.Name)
 
+	discoveryClient, err := s.Clients.GetDiscoveryClient()
+	if err != nil {
+		return err
+	}
+	dynamicClient, err := s.Clients.GetDynamicClient()
+	if err != nil {
+		return err
+	}
+
 	s.log.Debugf("applying with %d resources", len(s.Resources))
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(s.Discovery)
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
 	var sortedResources []*unstructured.Unstructured
 	for _, resource := range s.Resources {
 		if resource.GetNamespace() == "" {
@@ -68,26 +84,36 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		}
 	}
 
+	var errs []error
 	for _, resource := range sortedResources {
 		s.prepareResource(resource)
-		mapping, err := mapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
+		mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
 		if err != nil {
-			return fmt.Errorf("mapping error: %w", err)
+			errs = append(errs, err)
+			continue
 		}
 		var drClient dynamic.ResourceInterface
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-			drClient = s.Client.Resource(mapping.Resource).Namespace(resource.GetNamespace())
+			drClient = dynamicClient.Resource(mapping.Resource).Namespace(resource.GetNamespace())
 		} else {
-			drClient = s.Client.Resource(mapping.Resource)
+			drClient = dynamicClient.Resource(mapping.Resource)
 		}
 		serverResource, err := drClient.Get(ctx, resource.GetName(), metav1.GetOptions{})
 		if apiErrors.IsNotFound(err) {
-			_, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
+			created, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
 			if err != nil {
-				return fmt.Errorf("cannot create resource %s: %w", resource.GetName(), err)
+				err = fmt.Errorf("cannot create resource %s: %w", resource.GetName(), err)
+				errs = append(errs, err)
+				continue
+			}
+			if isCRD(created) {
+				s.waitForCRD(ctx, created.GetName())
+				mapper.Reset() // so that the created CRD gets rediscovered
 			}
 		} else if err != nil {
-			return fmt.Errorf("unknown api error: %w", err)
+			err = fmt.Errorf("unknown api error: %w", err)
+			errs = append(errs, err)
+			continue
 		} else { // The resource already exists, we need to update/patch it
 			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
 			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
@@ -98,24 +124,56 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			if serverResource.GetAnnotations()[LastConfigAnnotation] == "" {
 				s.log.Debug("doing plain update as no last-config label present")
 				resource.SetResourceVersion(serverResource.GetResourceVersion())
-				_, err = drClient.Update(ctx, resource, metav1.UpdateOptions{})
+				resource, err = drClient.Update(ctx, resource, metav1.UpdateOptions{})
 			} else {
 				s.log.Debug("patching resource")
-				err = s.patchResource(ctx, drClient, serverResource, resource)
+				resource, err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
 			if err != nil {
-				return fmt.Errorf("can't update resource: %w", err)
+				err = fmt.Errorf("can't update resource: %w", err)
+				errs = append(errs, err)
+				continue
+			}
+			if isCRD(resource) {
+				s.waitForCRD(ctx, resource.GetName())
+				mapper.Reset() // so that the changed CRD gets rediscovered
 			}
 		}
 		s.keepResource(resource)
 	}
 
-	var err error
-	if prune {
-		err = s.prune(ctx, mapper)
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
-	return err
+	if !prune {
+		return nil
+	}
+
+	return s.prune(ctx, mapper)
+}
+
+// waitForCRD waits 5 seconds for a CRD to become established on a best-effort basis.
+func (s *Stack) waitForCRD(ctx context.Context, crdName string) {
+	client, err := extensionsclient.NewForConfig(s.Clients.GetRESTConfig())
+	if err != nil {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	_ = watch.CRDs(client.CustomResourceDefinitions()).
+		WithObjectName(crdName).
+		WithErrorCallback(watch.IsRetryable).
+		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
+			for _, cond := range item.Status.Conditions {
+				if cond.Type == extensionsv1.Established {
+					return cond.Status == extensionsv1.ConditionTrue, nil
+				}
+			}
+			return false, nil
+		})
 }
 
 func (s *Stack) keepResource(resource *unstructured.Unstructured) {
@@ -124,7 +182,7 @@ func (s *Stack) keepResource(resource *unstructured.Unstructured) {
 	s.keepResources = append(s.keepResources, resourceID)
 }
 
-func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
+func (s *Stack) prune(ctx context.Context, mapper meta.ResettableRESTMapper) error {
 	pruneableResources, err := s.findPruneableResources(ctx, mapper)
 	if err != nil {
 		return err
@@ -170,9 +228,15 @@ var ignoredResources = []string{
 	"discovery.k8s.io/v1:EndpointSlice",
 }
 
-func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]unstructured.Unstructured, error) {
+func (s *Stack) findPruneableResources(ctx context.Context, mapper meta.ResettableRESTMapper) ([]unstructured.Unstructured, error) {
 	var pruneableResources []unstructured.Unstructured
-	apiResourceLists, err := s.Discovery.ServerPreferredResources()
+
+	client, err := s.Clients.GetDiscoveryClient()
+	if err != nil {
+		return nil, err
+	}
+
+	apiResourceLists, err := client.ServerPreferredResources()
 	if err != nil {
 		// Client-Go emits an error when an API service is registered but unimplemented.
 		// We trap that error here but since the discovery client continues
@@ -237,7 +301,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 	return pruneableResources, nil
 }
 
-func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, resource unstructured.Unstructured) error {
+func (s *Stack) deleteResource(ctx context.Context, mapper meta.ResettableRESTMapper, resource unstructured.Unstructured) error {
 	propagationPolicy := metav1.DeletePropagationForeground
 	drClient, err := s.clientForResource(mapper, resource)
 	if err != nil {
@@ -252,32 +316,57 @@ func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredD
 	return nil
 }
 
-func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper, resource unstructured.Unstructured) (dynamic.ResourceInterface, error) {
-	mapping, err := mapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
+func getRESTMapping(mapper meta.ResettableRESTMapper, gvk *schema.GroupVersionKind) (*meta.RESTMapping, error) {
+	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+
+	// If the error indicates that the resource's kind is unknown, it may be
+	// that the corresponding CRD has already been applied, but the RESTMapper
+	// is still operating on stale cached data. Force a reset of the mapper and
+	// retry the call once.
+	var noMatchErr *meta.NoKindMatchError
+	if errors.As(err, &noMatchErr) {
+		mapper.Reset()
+		mapping, err = mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("mapping error: %w", err)
 	}
 
+	return mapping, nil
+}
+
+func (s *Stack) clientForResource(mapper meta.ResettableRESTMapper, resource unstructured.Unstructured) (dynamic.ResourceInterface, error) {
+	mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
+	if err != nil {
+		return nil, fmt.Errorf("mapping error: %w", err)
+	}
+
+	client, err := s.Clients.GetDynamicClient()
+	if err != nil {
+		return nil, err
+	}
+
 	var drClient dynamic.ResourceInterface
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		drClient = s.Client.Resource(mapping.Resource).Namespace(resource.GetNamespace())
+		drClient = client.Resource(mapping.Resource).Namespace(resource.GetNamespace())
 	} else {
-		drClient = s.Client.Resource(mapping.Resource)
+		drClient = client.Resource(mapping.Resource)
 	}
 
 	return drClient, nil
 }
 
-func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind) []unstructured.Unstructured {
-	groupKind := schema.GroupKind{
-		Group: groupVersionKind.Group,
-		Kind:  groupVersionKind.Kind,
-	}
-	mapping, _ := mapper.RESTMapping(groupKind, groupVersionKind.Version)
+func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper meta.ResettableRESTMapper, groupVersionKind *schema.GroupVersionKind) []unstructured.Unstructured {
+	mapping, _ := getRESTMapping(mapper, groupVersionKind)
 	// FIXME error handling...
 	if mapping != nil {
+		client, err := s.Clients.GetDynamicClient()
+		if err != nil {
+			return nil
+		}
 		// We're running this with full admin rights, we should have capability to get stuff with single call
-		drClient := s.Client.Resource(mapping.Resource)
+		drClient := client.Resource(mapping.Resource)
 		return s.getPruneableResources(ctx, drClient)
 	}
 
@@ -316,23 +405,23 @@ func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
 	return false
 }
 
-func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) error {
+func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	original := serverResource.GetAnnotations()[LastConfigAnnotation]
 	if original == "" {
-		return fmt.Errorf("%s does not have last-applied-configuration", localResource.GetSelfLink())
+		return nil, fmt.Errorf("%s does not have last-applied-configuration", localResource.GetSelfLink())
 	}
 	modified, _ := localResource.MarshalJSON()
 
 	patch, err := jsonpatch.CreateMergePatch([]byte(original), modified)
 	if err != nil {
-		return fmt.Errorf("failed to create jsonpatch data: %w", err)
+		return nil, fmt.Errorf("failed to create jsonpatch data: %w", err)
 	}
-	_, err = drClient.Patch(ctx, localResource.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
+	resource, err := drClient.Patch(ctx, localResource.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to patch resource: %w", err)
+		return nil, fmt.Errorf("failed to patch resource: %w", err)
 	}
 
-	return nil
+	return resource, nil
 }
 
 func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
@@ -353,6 +442,11 @@ func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
 	annotations[ChecksumAnnotation] = checksum
 	annotations[LastConfigAnnotation] = string(lastAppliedConfig)
 	resource.SetAnnotations(annotations)
+}
+
+func isCRD(resource *unstructured.Unstructured) bool {
+	gvk := resource.GroupVersionKind()
+	return gvk.Group == extensionsv1.GroupName && gvk.Kind == "CustomResourceDefinition"
 }
 
 func generateResourceID(resource unstructured.Unstructured) string {

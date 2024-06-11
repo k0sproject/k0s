@@ -133,18 +133,9 @@ func (r *Reconciler) Init(context.Context) error {
 
 	clientFactory := r.clientFactory
 	apply := func(ctx context.Context, resources resources) error {
-		dynamicClient, err := clientFactory.GetDynamicClient()
-		if err != nil {
-			return err
-		}
-		discoveryClient, err := clientFactory.GetDiscoveryClient()
-		if err != nil {
-			return err
-		}
 		return (&applier.Stack{
 			Name:      fmt.Sprintf("k0s-%s-%s", constant.WorkerConfigComponentName, constant.KubernetesMajorMinorVersion),
-			Client:    dynamicClient,
-			Discovery: discoveryClient,
+			Clients:   clientFactory,
 			Resources: resources,
 		}).Apply(ctx, true)
 	}

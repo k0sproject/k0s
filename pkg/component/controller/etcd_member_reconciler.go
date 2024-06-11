@@ -125,11 +125,6 @@ func (e *EtcdMemberReconciler) Stop() error {
 	return nil
 }
 
-type (
-	crd     = extensionsv1.CustomResourceDefinition
-	crdList = extensionsv1.CustomResourceDefinitionList
-)
-
 func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
 	rc := e.clientFactory.GetRESTConfig()
 
@@ -140,7 +135,7 @@ func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
 	var lastObservedVersion string
 	log := logrus.WithField("component", "etcdMemberReconciler")
 	log.Info("waiting to see EtcdMember CRD ready")
-	return watch.FromClient[*crdList, crd](ec.CustomResourceDefinitions()).
+	return watch.CRDs(ec.CustomResourceDefinitions()).
 		WithObjectName(fmt.Sprintf("%s.%s", "etcdmembers", "etcd.k0sproject.io")).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryAfter, e := watch.IsRetryable(err); e == nil {
@@ -162,7 +157,7 @@ func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
 			)
 			return retryAfter, nil
 		}).
-		Until(ctx, func(item *crd) (bool, error) {
+		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
 			lastObservedVersion = item.ResourceVersion
 			for _, cond := range item.Status.Conditions {
 				if cond.Type == extensionsv1.Established {
