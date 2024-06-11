@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -32,7 +33,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,15 +61,20 @@ var _ manager.Component = (*Metrics)(nil)
 var _ manager.Reconciler = (*Metrics)(nil)
 
 // NewMetrics creates new Metrics reconciler
-func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface, storageType v1beta1.StorageType) (*Metrics, error) {
+func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubeutil.ClientFactoryInterface, storageType v1beta1.StorageType) (*Metrics, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
 	}
 
-	restClient, err := clientCF.GetRESTClient()
-	if err != nil {
+	var restClient rest.Interface
+	if client, err := clientCF.GetDiscoveryClient(); err != nil {
 		return nil, fmt.Errorf("error getting REST client for metrics: %w", err)
+	} else {
+		restClient = client.RESTClient()
+	}
+	if restClient == nil {
+		return nil, errors.New("no REST client for metrics")
 	}
 
 	return &Metrics{

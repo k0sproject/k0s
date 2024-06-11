@@ -17,7 +17,6 @@ limitations under the License.
 package testutil
 
 import (
-	"errors"
 	"reflect"
 	"strings"
 
@@ -99,10 +98,6 @@ func (f *FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInter
 
 func (f *FakeClientFactory) GetConfigClient() (k0sv1beta1.ClusterConfigInterface, error) {
 	return f.ConfigClient, nil
-}
-
-func (f *FakeClientFactory) GetRESTClient() (rest.Interface, error) {
-	return nil, errors.ErrUnsupported
 }
 
 func (f FakeClientFactory) GetRESTConfig() *rest.Config {

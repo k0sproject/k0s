@@ -38,7 +38,6 @@ type ClientFactoryInterface interface {
 	GetDynamicClient() (dynamic.Interface, error)
 	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
 	GetConfigClient() (cfgClient.ClusterConfigInterface, error)
-	GetRESTClient() (rest.Interface, error)
 	GetRESTConfig() *rest.Config
 	GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error)
 }
@@ -193,14 +192,6 @@ func (c *ClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterf
 		return nil, err
 	}
 	return etcdMemberClient.EtcdMembers(), nil
-}
-
-func (c *ClientFactory) GetRESTClient() (rest.Interface, error) {
-	cs, ok := c.client.(*kubernetes.Clientset)
-	if !ok {
-		return nil, fmt.Errorf("error converting interface")
-	}
-	return cs.RESTClient(), nil
 }
 
 func (c *ClientFactory) GetRESTConfig() *rest.Config {
