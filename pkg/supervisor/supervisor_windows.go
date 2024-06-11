@@ -16,14 +16,10 @@ limitations under the License.
 
 package supervisor
 
-import (
-	"time"
-)
-
 // maybeKillPidFile checks kills the process in the pidFile if it's has
 // the same binary as the supervisor's. This function does not delete
 // the old pidFile as this is done by the caller.
-func (s *Supervisor) maybeKillPidFile(check <-chan time.Time, deadline <-chan time.Time) error {
+func (s *Supervisor) maybeKillPidFile() error {
 	s.log.Warnf("maybeKillPidFile is not implemented on Windows")
 	return nil
 }

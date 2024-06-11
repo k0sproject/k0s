@@ -14,17 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package supervisor
+package pingpong
 
 import (
+	_ "embed"
 	"errors"
 	"io"
 	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
-
-	"github.com/k0sproject/k0s/internal/pkg/file"
 
 	"github.com/Microsoft/go-winio"
 	"github.com/Microsoft/go-winio/pkg/guid"
@@ -32,20 +32,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type pingPong struct {
+//go:embed pingpong.ps1
+var script []byte
+
+type PingPong struct {
+	IgnoreGracefulShutdownRequest bool // Has no effect on Windows.
+
 	shellPath string
 	shellArgs []string
 	ping      net.Listener
 	pong      string
 }
 
-func makePingPong(t *testing.T) *pingPong {
+func New(t *testing.T) *PingPong {
 	shellPath, err := exec.LookPath("powershell")
 	require.NoError(t, err)
 
-	// We need that copy, otherwise tests get cached.
 	scriptPath := filepath.Join(t.TempDir(), "pingpong.ps1")
-	require.NoError(t, file.Copy("pingpong.ps1", scriptPath))
+	require.NoError(t, os.WriteFile(scriptPath, script, 0700))
 
 	guid, err := guid.NewV4()
 	require.NoError(t, err)
@@ -58,21 +62,23 @@ func makePingPong(t *testing.T) *pingPong {
 	require.NoError(t, err, "Failed to listen ping pipe")
 	t.Cleanup(func() { assert.NoError(t, ping.Close(), "Failed to close ping pipe") })
 
-	return &pingPong{
-		shellPath, []string{"-noprofile", "-noninteractive", scriptPath, namespace},
-		ping, pongPath,
+	return &PingPong{
+		shellPath: shellPath,
+		shellArgs: []string{"-noprofile", "-noninteractive", scriptPath, namespace},
+		ping:      ping,
+		pong:      pongPath,
 	}
 }
 
-func (pp *pingPong) binPath() string {
+func (pp *PingPong) BinPath() string {
 	return pp.shellPath
 }
 
-func (pp *pingPong) binArgs() []string {
+func (pp *PingPong) BinArgs() []string {
 	return pp.shellArgs
 }
 
-func (pp *pingPong) awaitPing() (err error) {
+func (pp *PingPong) AwaitPing() (err error) {
 	conn, err := pp.ping.Accept()
 	if err != nil {
 		return err
@@ -83,7 +89,7 @@ func (pp *pingPong) awaitPing() (err error) {
 	return err
 }
 
-func (pp *pingPong) sendPong() (err error) {
+func (pp *PingPong) SendPong() (err error) {
 	conn, err := winio.DialPipe(pp.pong, nil)
 	if err != nil {
 		return err

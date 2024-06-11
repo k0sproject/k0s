@@ -50,10 +50,6 @@ type Supervisor struct {
 	TimeoutRespawn time.Duration
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
-	// ProcFSPath is only used for testing
-	ProcFSPath string
-	// KillFunction is only used for testing
-	KillFunction func(int, syscall.Signal) error
 	// A function to clean some leftovers before starting or restarting the supervised process
 	CleanBeforeFn func() error
 
@@ -75,11 +71,6 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 		waitresult <- s.cmd.Wait()
 	}()
 
-	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
-	err := os.WriteFile(s.PidFile, pidbuf, constant.PidFileMode)
-	if err != nil {
-		s.log.Warnf("Failed to write file %s: %v", s.PidFile, err)
-	}
 	defer os.Remove(s.PidFile)
 
 	select {
@@ -148,7 +139,7 @@ func (s *Supervisor) Supervise() error {
 		s.TimeoutRespawn = 5 * time.Second
 	}
 
-	if err := s.maybeKillPidFile(nil, nil); err != nil {
+	if err := s.maybeKillPidFile(); err != nil {
 		return err
 	}
 
@@ -202,6 +193,10 @@ func (s *Supervisor) Supervise() error {
 					return
 				}
 			} else {
+				err := os.WriteFile(s.PidFile, []byte(strconv.Itoa(s.cmd.Process.Pid)+"\n"), constant.PidFileMode)
+				if err != nil {
+					s.log.Warnf("Failed to write file %s: %v", s.PidFile, err)
+				}
 				if restarts == 0 {
 					s.log.Infof("Started successfully, go nuts pid %d", s.cmd.Process.Pid)
 					started <- nil
