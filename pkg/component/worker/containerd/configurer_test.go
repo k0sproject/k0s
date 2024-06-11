@@ -39,8 +39,9 @@ func TestConfigurer_HandleImports(t *testing.T) {
 		err := os.WriteFile(filepath.Join(importsPath, "foo.toml"), []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
 		c := configurer{
-			loadPath: filepath.Join(importsPath, "*.toml"),
-			log:      logrus.New().WithField("test", t.Name()),
+			loadPath:   filepath.Join(importsPath, "*.toml"),
+			pauseImage: "pause:42",
+			log:        logrus.New().WithField("test", t.Name()),
 		}
 		criConfig, err := c.handleImports()
 		assert.NoError(t, err)
@@ -60,8 +61,10 @@ func TestConfigurer_HandleImports(t *testing.T) {
 		assert.Equal(t, 2, containerdConfig.Version)
 		criPluginConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
 		require.NotNil(t, criPluginConfig, "No CRI plugin configuration section found")
+		sandboxImage := criPluginConfig.Get("sandbox_image")
+		assert.Equal(t, "pause:42", sandboxImage, "Custom pause image not found in CRI configuration")
 		snapshotter := criPluginConfig.GetPath([]string{"containerd", "snapshotter"})
-		require.Equal(t, "zfs", snapshotter)
+		assert.Equal(t, "zfs", snapshotter, "Overridden snapshotter not found in CRI configuration")
 	})
 
 	t.Run("should have no imports if imports dir is empty", func(t *testing.T) {
