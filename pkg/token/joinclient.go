@@ -97,9 +97,6 @@ func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
 		return caData, fmt.Errorf("unexpected response status: %s", resp.Status)
 	}
 	logrus.Info("got valid CA response")
-	if resp.Body == nil {
-		return caData, fmt.Errorf("response body is nil")
-	}
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return caData, err
