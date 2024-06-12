@@ -17,6 +17,7 @@ limitations under the License.
 package common
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
@@ -33,21 +34,20 @@ type Airgap struct {
 }
 
 func (a *Airgap) LockdownMachines(ctx context.Context, nodes ...string) error {
-	blockIPv6 := true
-	if err := tryBlockIPv6(); err != nil {
-		a.Logf("Not blocking IPv6: %s", err.Error())
-		blockIPv6 = false
-	}
-
-	cidrs, err := getPrivateCIDRs()
+	v4CIDRs, v6CIDRs, err := getPrivateCIDRs()
 	if err != nil {
 		return err
 	}
 
-	a.Logf("Allowed CIDRs: %v", cidrs)
+	if err := tryBlockIPv6(); err != nil {
+		a.Logf("Not blocking IPv6: %v", err)
+		v6CIDRs = ""
+	}
+
+	a.Logf("Allowed CIDRs: %v %v", v4CIDRs, v6CIDRs)
 
 	for _, node := range nodes {
-		if err := a.airgapMachine(ctx, node, cidrs, blockIPv6); err != nil {
+		if err := a.airgapMachine(ctx, node, v4CIDRs, v6CIDRs); err != nil {
 			return err
 		}
 	}
@@ -56,6 +56,12 @@ func (a *Airgap) LockdownMachines(ctx context.Context, nodes ...string) error {
 }
 
 func tryBlockIPv6() error {
+	if initState, err := os.ReadFile("/sys/module/ip6table_filter/initstate"); err == nil {
+		if bytes.Equal(bytes.TrimSpace(initState), []byte("live")) {
+			return nil
+		}
+	}
+
 	_, err := exec.LookPath("modprobe")
 	if err != nil {
 		return err
@@ -75,17 +81,32 @@ func tryBlockIPv6() error {
 	return err
 }
 
-func getPrivateCIDRs() (string, error) {
-	cidrs := []net.IPNet{
+func getPrivateCIDRs() (string, string, error) {
+	v4CIDRs := []net.IPNet{
 		{IP: net.IP{127, 0, 0, 0}, Mask: net.IPv4Mask(255, 0, 0, 0)},
 		{IP: net.IP{10, 0, 0, 0}, Mask: net.IPv4Mask(255, 0, 0, 0)},
 		{IP: net.IP{172, 16, 0, 0}, Mask: net.IPv4Mask(255, 240, 0, 0)},
 		{IP: net.IP{192, 168, 0, 0}, Mask: net.IPv4Mask(255, 255, 0, 0)},
 	}
 
+	v6CIDRs := []net.IPNet{
+		{ // Unique Local Addresses
+			IP:   net.IP{0xfc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			Mask: net.CIDRMask(7, 8*net.IPv6len),
+		},
+		{ // Link-Local Addresses
+			IP:   net.IP{0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			Mask: net.CIDRMask(10, 8*net.IPv6len),
+		},
+		{ // Loopback address
+			IP:   net.IPv6loopback,
+			Mask: net.CIDRMask(8*net.IPv6len, 8*net.IPv6len),
+		},
+	}
+
 	localAddrs, err := net.InterfaceAddrs()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 localAddrs:
@@ -95,45 +116,66 @@ localAddrs:
 			continue
 		}
 
-		ip := ipnet.IP.To4()
-		if ip == nil {
-			continue
-		}
-
-		for _, cidr := range cidrs {
-			if cidr.Contains(ip) {
-				continue localAddrs
+		if ip := ipnet.IP.To4(); ip != nil {
+			for _, cidr := range v4CIDRs {
+				if cidr.Contains(ip) {
+					continue localAddrs
+				}
 			}
+
+			v4CIDRs = append(v4CIDRs, net.IPNet{
+				IP:   ip,
+				Mask: net.IPv4Mask(255, 255, 255, 255),
+			})
+		} else if ip := ipnet.IP.To16(); ip != nil {
+			for _, cidr := range v6CIDRs {
+				if cidr.Contains(ip) {
+					continue localAddrs
+				}
+			}
+
+			v6CIDRs = append(v6CIDRs, net.IPNet{
+				IP:   ip,
+				Mask: net.CIDRMask(8*net.IPv6len, 8*net.IPv6len),
+			})
 		}
-
-		cidrs = append(cidrs, net.IPNet{
-			IP:   ip,
-			Mask: net.IPv4Mask(255, 255, 255, 255),
-		})
 	}
 
-	var cidrStrings []string
-	for _, cidr := range cidrs {
-		cidrStrings = append(cidrStrings, cidr.String())
+	var v4CIDRStrings, v6CIDRStrings []string
+	for _, cidr := range v4CIDRs {
+		v4CIDRStrings = append(v4CIDRStrings, cidr.String())
+	}
+	for _, cidr := range v6CIDRs {
+		v6CIDRStrings = append(v6CIDRStrings, cidr.String())
 	}
 
-	return strings.Join(cidrStrings, " "), nil
+	return strings.Join(v4CIDRStrings, " "), strings.Join(v6CIDRStrings, " "), nil
 }
 
-func (a *Airgap) airgapMachine(ctx context.Context, name, cidrs string, blockIPv6 bool) error {
+func (a *Airgap) airgapMachine(ctx context.Context, name, v4CIDRs, v6CIDRs string) error {
 	const airgapScript = `
-		ip6tables='%s'
-		apk add --no-cache iptables $ip6tables
-		for cidr in %s; do
-			iptables -A INPUT -s $cidr -j ACCEPT
-			iptables -A OUTPUT -d $cidr -j ACCEPT
-		done
-		iptables -A INPUT -j REJECT
-		iptables -A OUTPUT -j REJECT
-		if [ -n "$ip6tables" ]; then
+		v4Cidrs='%s'
+		v6Cidrs='%s'
+		if [ -n "$v4Cidrs" ]; then
+			apk add --no-cache iptables
+			for cidr in $v4Cidrs; do
+				iptables -A INPUT -s $cidr -j ACCEPT
+				iptables -A OUTPUT -d $cidr -j ACCEPT
+			done
+			iptables -A INPUT -j REJECT
+			iptables -A OUTPUT -j REJECT
+		fi
+
+		if [ -n "$v6Cidrs" ]; then
+			apk add --no-cache ip6tables
+			for cidr in $v6Cidrs; do
+				ip6tables -A INPUT -s $cidr -j ACCEPT
+				ip6tables -A OUTPUT -d $cidr -j ACCEPT
+			done
 			ip6tables -A INPUT -j REJECT
 			ip6tables -A OUTPUT -j REJECT
 		fi
+
 		if curl -v github.com 1>&2; then
 			echo Internet connectivity not properly disrupted! Aborting ...
 			exit 1
@@ -148,12 +190,7 @@ func (a *Airgap) airgapMachine(ctx context.Context, name, cidrs string, blockIPv
 	}
 	defer ssh.Disconnect()
 
-	var ip6tables string
-	if blockIPv6 {
-		ip6tables = "ip6tables"
-	}
-
 	return ssh.Exec(ctx, "sh -e -", SSHStreams{
-		In: strings.NewReader(fmt.Sprintf(airgapScript, ip6tables, cidrs)),
+		In: strings.NewReader(fmt.Sprintf(airgapScript, v4CIDRs, v6CIDRs)),
 	})
 }
