@@ -1,17 +1,9 @@
 # options for analysis running
 run:
-  timeout: 8m
+  timeout: 15m
 
   build-tags:
     - hack
-  skip-dirs-use-default: false
-  skip-dirs:
-    - build
-    - docs
-    - embedded-bins
-    - examples
-  skip-files:
-    - "zz_*"
   tests: true
   modules-download-mode: readonly
   allow-parallel-runners: true
@@ -25,27 +17,47 @@ linters:
 
 linters-settings:
   depguard:
-    packages:
-      - gopkg.in/yaml*
-    additional-guards:
-      # Only allow usages of the k8s cloud provider from within the k0s cloud
-      # provider package. This is to ensure that it's not leaking global flags
-      # into k0s.
-      - packages:
-          - k8s.io/cloud-provider*
-        ignore-file-rules:
-          - "**/pkg/k0scloudprovider/*.go"
-  golint:
-    min-confidence: 0
+    rules:
+      yaml:
+        list-mode: lax
+        deny:
+          - pkg: gopkg.in/yaml.v2
+            desc: Use sigs.k8s.io/yaml.
+          - pkg: gopkg.in/yaml.v3
+            desc: Use sigs.k8s.io/yaml.
+      cloud-provider:
+        list-mode: lax
+        files:
+          - "!**/pkg/k0scloudprovider/*.go"
+        deny:
+          - pkg: k8s.io/cloud-provider
+            desc: >-
+              Usages of the k8s cloud provider are only allowed from within the
+              k0s cloud provider package. This is to ensure that it's not
+              leaking global flags into k0s.
   goheader:
     template-path: .go-header.txt
     values:
       regexp:
         year: 202[0-9]
 
+  revive:
+    rules:
+      # This forbids to name variables "close", which seems natural for "close" functions.
+      - name: redefines-builtin-id
+        disabled: true
+
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-dirs-use-default: false
+  exclude-dirs:
+    - build
+    - docs
+    - embedded-bins
+    - examples
+  exclude-files:
+    - "zz_*"
   exclude-rules:
     # https://github.com/denis-tingaikin/go-header/issues/18
     # This means that the header checks are ineffective for all files with build tags.
