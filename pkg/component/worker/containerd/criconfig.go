@@ -126,7 +126,7 @@ func escapedPath(s string) string {
 
 // We need to use custom struct so we can unmarshal the CRI plugin config only
 type config struct {
-	Version int
+	Version int                    `toml:"version"`
 	Plugins map[string]interface{} `toml:"plugins"`
 }
 
