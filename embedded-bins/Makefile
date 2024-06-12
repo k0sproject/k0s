@@ -65,7 +65,7 @@ $(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
 $(bindir)/containerd.exe $(bindir)/containerd-shim-runhcs-v1.exe: .container.containerd.windows
 
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
-	tardir=$$(mktemp -d -- '$(notdir $@).XXXXXX.tmp') \
+	tardir=$$(mktemp -d -- '.$(notdir $@).XXXXXX.tmp') \
 	  && trap "rm -rf -- $$tardir" INT EXIT \
 	  && docker export "$$(cat $<)" \
 	  | tar -C "$$tardir" -x bin/$(notdir $@) \
