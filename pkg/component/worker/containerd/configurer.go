@@ -25,8 +25,6 @@ import (
 	"github.com/mesosphere/toml-merge/pkg/patch"
 	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
-
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
 )
 
 // Resolved and merged containerd configuration data.
@@ -40,8 +38,9 @@ type resolvedConfig struct {
 }
 
 type configurer struct {
-	loadPath   string
-	pauseImage string
+	defaultConfig []byte
+	loadPath      string
+	pauseImage    string
 
 	log *logrus.Entry
 }
@@ -53,11 +52,6 @@ type configurer struct {
 func (c *configurer) handleImports() (*resolvedConfig, error) {
 	var importPaths []string
 
-	defaultConfig, err := generateDefaultCRIConfig(c.pauseImage)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate containerd default CRI config: %w", err)
-	}
-
 	filePaths, err := filepath.Glob(c.loadPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to look for containerd import files: %w", err)
@@ -67,11 +61,44 @@ func (c *configurer) handleImports() (*resolvedConfig, error) {
 	// Since the default config contains configuration data for the CRI plugin,
 	// and containerd has decided to replace rather than merge individual plugin
 	// configuration sections from imported config files, we need to manually
-	// take care of merging k0s's defaults with the user overrides. Loop through
-	// all import files and check if they contain any CRI plugin config. If they
-	// do, treat them as merge patches to the default config, if they don't,
-	// just add them as normal imports to be handled by containerd.
-	finalConfig := string(defaultConfig)
+	// take care of merging containerd defaults with k0s's defaults with the
+	// user overrides.
+
+	// Start with the k0s CRI plugin defaults.
+	finalConfig, err := patch.TOMLString(string(c.defaultConfig), func() ([]*toml.Tree, error) {
+		criPluginConfig := map[string]any{
+			// Set pause image
+			"sandbox_image": c.pauseImage,
+		}
+
+		if runtime.GOOS == "windows" {
+			// The default config for Windows uses %ProgramFiles%/containerd/cni/{bin,conf}.
+			// Maybe k0s can use the default in the future, so there's no need for this override.
+			criPluginConfig["cni"] = map[string]any{
+				"bin_dir":  `c:\opt\cni\bin`,
+				"conf_dir": `c:\opt\cni\conf`,
+			}
+		}
+
+		tree, err := toml.TreeFromMap(map[string]any{
+			"plugins": map[string]any{
+				"io.containerd.grpc.v1.cri": criPluginConfig,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return []*toml.Tree{tree}, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge k0s defaults into containerd configuration: %w", err)
+	}
+
+	// Now loop through all import files and check if they contain any CRI
+	// plugin config. If they do, treat them as merge patches to the default
+	// config, if they don't, just add them as normal imports to be handled by
+	// containerd.
 	for _, filePath := range filePaths {
 		c.log.Debugf("Processing containerd configuration file %s", filePath)
 
@@ -98,29 +125,6 @@ func (c *configurer) handleImports() (*resolvedConfig, error) {
 	}
 
 	return &resolvedConfig{CRIConfig: finalConfig, ImportPaths: importPaths}, nil
-}
-
-// Returns the default containerd config, including only the CRI plugin
-// configuration, using the given image for sandbox containers. Uses the
-// containerd package to generate all the rest, so this will be in sync with
-// containerd's defaults for the CRI plugin.
-func generateDefaultCRIConfig(sandboxContainerImage string) ([]byte, error) {
-	criPluginConfig := criconfig.DefaultConfig()
-	// Set pause image
-	criPluginConfig.SandboxImage = sandboxContainerImage
-	if runtime.GOOS == "windows" {
-		// The default config for Windows uses %ProgramFiles%/containerd/cni/{bin,conf}.
-		// Maybe k0s can use the default in the future, so there's no need for this override.
-		criPluginConfig.CniConfig.NetworkPluginBinDir = `c:\opt\cni\bin`
-		criPluginConfig.CniConfig.NetworkPluginConfDir = `c:\opt\cni\conf`
-	}
-
-	return toml.Marshal(map[string]any{
-		"version": 2,
-		"plugins": map[string]any{
-			"io.containerd.grpc.v1.cri": criPluginConfig,
-		},
-	})
 }
 
 func hasCRIPluginConfig(data []byte) (bool, error) {
