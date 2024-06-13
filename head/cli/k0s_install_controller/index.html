@@ -2030,7 +2030,7 @@ With the controller subcommand you can setup a single node cluster by running:
       --kube-controller-manager-extra-args string      extra args for kube-controller-manager
       --kubelet-extra-args string                      extra args for kubelet
       --labels strings                                 Node labels, list of key=value pairs
-  -l, --logging stringToString                         Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
+  -l, --logging stringToString                         Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
       --no-taints                                      disable default taints for controller node
       --profile string                                 worker profile to use on the node (default &quot;default&quot;)
       --single                                         enable single node (implies --enable-worker, default false)
