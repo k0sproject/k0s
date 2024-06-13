@@ -19,23 +19,23 @@ package token
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
+
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 // JoinClient is the client we can use to call k0s join APIs
 type JoinClient struct {
-	joinAddress   string
-	httpClient    http.Client
-	bearerToken   string
 	joinTokenType string
+	joinAddress   string
+	restClient    *rest.RESTClient
 }
 
 // JoinClientFromToken creates a new join api client from a token
@@ -45,35 +45,27 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 		return nil, fmt.Errorf("failed to decode token: %w", err)
 	}
 
-	clientConfig, err := clientcmd.NewClientConfigFromBytes(tokenBytes)
-	if err != nil {
-		return nil, err
-	}
-	config, err := clientConfig.ClientConfig()
+	kubeconfig, err := clientcmd.Load(tokenBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	raw, err := clientConfig.RawConfig()
+	restConfig, err := kubernetes.ClientConfig(func() (*api.Config, error) { return kubeconfig, nil })
 	if err != nil {
 		return nil, err
 	}
 
-	ca := x509.NewCertPool()
-	ca.AppendCertsFromPEM(config.CAData)
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: false,
-		RootCAs:            ca,
+	restConfig = dynamic.ConfigFor(restConfig)
+	restClient, err := rest.UnversionedRESTClientFor(restConfig)
+	if err != nil {
+		return nil, err
 	}
-	tr := &http.Transport{TLSClientConfig: tlsConfig}
-	c := &JoinClient{
-		httpClient:  http.Client{Transport: tr},
-		bearerToken: config.BearerToken,
-	}
-	c.joinAddress = config.Host
-	c.joinTokenType = GetTokenType(&raw)
 
-	return c, nil
+	return &JoinClient{
+		joinAddress:   restConfig.Host,
+		joinTokenType: GetTokenType(kubeconfig),
+		restClient:    restClient,
+	}, nil
 }
 
 func (j *JoinClient) Address() string {
@@ -87,62 +79,28 @@ func (j *JoinClient) JoinTokenType() string {
 // GetCA calls the CA sync API
 func (j *JoinClient) GetCA(ctx context.Context) (v1beta1.CaResponse, error) {
 	var caData v1beta1.CaResponse
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, j.joinAddress+"/v1beta1/ca", nil)
-	if err != nil {
-		return caData, fmt.Errorf("failed to create join request: %w", err)
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", j.bearerToken))
 
-	resp, err := j.httpClient.Do(req)
-	if err != nil {
-		return caData, err
+	b, err := j.restClient.Get().AbsPath("v1beta1", "ca").Do(ctx).Raw()
+	if err == nil {
+		err = json.Unmarshal(b, &caData)
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return caData, fmt.Errorf("unexpected response status: %s", resp.Status)
-	}
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return caData, err
-	}
-	err = json.Unmarshal(b, &caData)
-	if err != nil {
-		return caData, err
-	}
-	return caData, nil
+	return caData, err
 }
 
 // JoinEtcd calls the etcd join API
 func (j *JoinClient) JoinEtcd(ctx context.Context, etcdRequest v1beta1.EtcdRequest) (v1beta1.EtcdResponse, error) {
 	var etcdResponse v1beta1.EtcdResponse
+
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(etcdRequest); err != nil {
 		return etcdResponse, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, j.joinAddress+"/v1beta1/etcd/members", buf)
-	if err != nil {
-		return etcdResponse, fmt.Errorf("failed to create join request: %w", err)
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", j.bearerToken))
-	resp, err := j.httpClient.Do(req)
-	if err != nil {
-		return etcdResponse, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return etcdResponse, fmt.Errorf("unexpected response status when trying to join etcd cluster: %s", resp.Status)
+	b, err := j.restClient.Post().AbsPath("v1beta1", "etcd", "members").Body(buf).Do(ctx).Raw()
+	if err == nil {
+		err = json.Unmarshal(b, &etcdResponse)
 	}
 
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return etcdResponse, err
-	}
-	err = json.Unmarshal(b, &etcdResponse)
-	if err != nil {
-		return etcdResponse, err
-	}
-
-	return etcdResponse, nil
+	return etcdResponse, err
 }
