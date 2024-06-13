@@ -160,9 +160,13 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 	logrus.Info("Starting etcd")
 
-	name, err := os.Hostname()
-	if err != nil {
+	var name string
+	if etcdName, ok := e.Config.ExtraArgs["name"]; ok {
+		name = etcdName
+	} else if hostName, err := os.Hostname(); err != nil {
 		return err
+	} else {
+		name = hostName
 	}
 
 	peerURL := fmt.Sprintf("https://%s:2380", e.Config.PeerAddress)
