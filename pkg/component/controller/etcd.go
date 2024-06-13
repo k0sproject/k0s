@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/client/pkg/v3/tlsutil"
 	"golang.org/x/sync/errgroup"
@@ -93,19 +94,29 @@ func (e *Etcd) Init(_ context.Context) error {
 	return assets.Stage(e.K0sVars.BinDir, "etcd", constant.BinDirMode)
 }
 
-func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]string, error) {
+func (e *Etcd) syncEtcdConfig(ctx context.Context, peerURL, etcdCaCert, etcdCaCertKey string) ([]string, error) {
+	logrus.Info("Synchronizing etcd config with existing cluster via ", e.JoinClient.Address())
+
 	var etcdResponse v1beta1.EtcdResponse
 	var err error
-	for i := 0; i < 20; i++ {
-		logrus.Debugf("trying to sync etcd config")
-		etcdResponse, err = e.JoinClient.JoinEtcd(peerURL)
-		if err == nil {
-			break
+	retryErr := retry.Do(
+		func() error {
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			etcdResponse, err = e.JoinClient.JoinEtcd(ctx, peerURL)
+			return err
+		},
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.OnRetry(func(attempt uint, err error) {
+			logrus.WithError(err).Debug("Failed to synchronize etcd config in attempt #", attempt+1, ", retrying after backoff")
+		}),
+	)
+	if retryErr != nil {
+		if err != nil {
+			retryErr = err
 		}
-		time.Sleep(500 * time.Millisecond)
-	}
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to synchronize etcd config with existing cluster via %s: %w", e.JoinClient.Address(), retryErr)
 	}
 
 	logrus.Debugf("got cluster info: %v", etcdResponse.InitialCluster)
@@ -179,7 +190,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 	if file.Exists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 	} else if e.JoinClient != nil {
-		initialCluster, err := e.syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey)
+		initialCluster, err := e.syncEtcdConfig(ctx, peerURL, etcdCaCert, etcdCaCertKey)
 		if err != nil {
 			return fmt.Errorf("failed to sync etcd config: %w", err)
 		}

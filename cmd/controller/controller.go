@@ -691,16 +691,29 @@ func joinController(ctx context.Context, tokenArg string, certRootDir string) (*
 		return nil, fmt.Errorf("wrong token type %s, expected type: controller-bootstrap", joinClient.JoinTokenType())
 	}
 
+	logrus.Info("Joining existing cluster via ", joinClient.Address())
+
 	var caData v1beta1.CaResponse
-	err = retry.Do(func() error {
-		caData, err = joinClient.GetCA()
+	retryErr := retry.Do(
+		func() error {
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			caData, err = joinClient.GetCA(ctx)
+			return err
+		},
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.OnRetry(func(attempt uint, err error) {
+			logrus.WithError(err).Debug("Failed to join in attempt #", attempt+1, ", retrying after backoff")
+		}),
+	)
+	if retryErr != nil {
 		if err != nil {
-			return fmt.Errorf("failed to sync CA: %w", err)
+			retryErr = err
 		}
-		return nil
-	}, retry.Context(ctx))
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to join existing cluster via %s: %w", joinClient.Address(), retryErr)
 	}
+
+	logrus.Info("Got valid CA response, storing certificates")
 	return joinClient, writeCerts(caData, certRootDir)
 }
