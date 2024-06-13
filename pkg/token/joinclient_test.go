@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"testing"
 
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,7 @@ func TestJoinClient_Cancellation(t *testing.T) {
 			return err
 		}},
 		{"JoinEtcd", func(ctx context.Context, c *token.JoinClient) error {
-			_, err := c.JoinEtcd(ctx, "")
+			_, err := c.JoinEtcd(ctx, k0sv1beta1.EtcdRequest{})
 			return err
 		}},
 	} {

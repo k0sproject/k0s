@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"k8s.io/client-go/tools/clientcmd"
@@ -115,17 +114,8 @@ func (j *JoinClient) GetCA(ctx context.Context) (v1beta1.CaResponse, error) {
 }
 
 // JoinEtcd calls the etcd join API
-func (j *JoinClient) JoinEtcd(ctx context.Context, peerAddress string) (v1beta1.EtcdResponse, error) {
+func (j *JoinClient) JoinEtcd(ctx context.Context, etcdRequest v1beta1.EtcdRequest) (v1beta1.EtcdResponse, error) {
 	var etcdResponse v1beta1.EtcdResponse
-	etcdRequest := v1beta1.EtcdRequest{
-		PeerAddress: peerAddress,
-	}
-	name, err := os.Hostname()
-	if err != nil {
-		return etcdResponse, err
-	}
-	etcdRequest.Node = name
-
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(etcdRequest); err != nil {
 		return etcdResponse, err
