@@ -27,7 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/containerd/containerd/reference/docker"
+	"github.com/distribution/reference"
 )
 
 // ImageSpec container image settings
@@ -48,7 +48,7 @@ func (s *ImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
 		errs = append(errs, field.Invalid(path.Child("image"), s.Image, "must not have leading or trailing whitespace"))
 	}
 
-	versionRe := regexp.MustCompile(`^` + docker.TagRegexp.String() + `$`)
+	versionRe := regexp.MustCompile(`^` + reference.TagRegexp.String() + `$`)
 	if !versionRe.MatchString(s.Version) {
 		errs = append(errs, field.Invalid(path.Child("version"), s.Version, "must match regular expression: "+versionRe.String()))
 	}
