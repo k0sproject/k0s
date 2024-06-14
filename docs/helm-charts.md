@@ -13,13 +13,12 @@ Adding Helm charts into the k0s configuration file gives you a declarative way i
 
 ### Wait for install
 
-Each chart is proccesed the same way CLI tool does with following options:
+Each chart is processed the same way CLI tool does with following options:
 
 - `--wait`
 - `--wait-for-jobs`
-- `--timeout 10m`
 
-It is possible to customize timeout by using `.Timeout` field.
+It is possible to customize the timeout by using the `timeout' field.
 
 ### Chart configuration
 
@@ -28,7 +27,7 @@ It is possible to customize timeout by using `.Timeout` field.
 | name      | -             | Release name                                                         |
 | chartname | -             | chartname in form "repository/chartname" or path to tgz file         |
 | version   | -             | version to install                                                   |
-| timeout   | 10m           | timeout to wait for release install                                  |
+| timeout   | -             | timeout to wait for release install                                  |
 | values    | -             | yaml as a string, custom chart values                                |
 | namespace | -             | namespace to install chart into                                      |
 | order     | 0             | order to apply manifest. For equal values, alphanum ordering is used |
