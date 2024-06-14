@@ -36,9 +36,9 @@ type PlanResourceURL struct {
         // Sha256 provides an optional SHA256 hash of the URL's content for verification.
         Sha256 string `json:"sha256,omitempty"`
 
-        // ArtifactPullSecrets holds a reference to a secret where Docker or Basic Auth
-        // credentials are stored. We use these credentials when pulling the artifacts from
-        // the URL.
+        // ArtifactPullSecrets holds a reference to a secret where the credentials are
+        // stored. We use these credentials when pulling the artifacts from the provided
+        // URL using any of the supported protocols (http, https, and oci).
         ArtifactPullSecret *ArtifactPullSecret `json:"artifactPullSecret,omitempty"`
 
         // Insecure indicates whether certificates in the remote URL (if using TLS) can
@@ -59,7 +59,7 @@ type ArtifactPullSecret struct {
 }
 ```
 
-The secret pointed to by the provided `ArtifactPullSecret` property is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` (see below) or of type `Opaque` if protocols `http://` or `https://` are used.
+The secret pointed by the provided `ArtifactPullSecret` will be used for pulling artifacts using either HTTP[S] or OCI protocols and is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` or of type `Opaque` if protocols `http://` or `https://` are used (see below for details on the Secret layout).
 
 Example configuration for OCI:
 
@@ -79,6 +79,16 @@ sha256: e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99
 artifactPullSecret:
   namespace: kube-system
   name: artifacts-basic-auth
+```
+
+Example configuration for HTTP:
+
+```yaml
+url: http://my.file.server/binaries/k0s-v1.30.1+k0s.0
+sha256: e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99
+artifactPullSecret:
+  namespace: kube-system
+  name: artifacts-token-based-auth
 ```
 
 ### Secrets Layout
