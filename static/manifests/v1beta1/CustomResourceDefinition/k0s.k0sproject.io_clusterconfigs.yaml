@@ -381,7 +381,7 @@ spec:
                       iptables:
                         description: |-
                           KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.29.5/config/v1alpha1/types.go#L27-L48
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.29.6/config/v1alpha1/types.go#L27-L48
                         properties:
                           localhostNodePorts:
                             type: boolean
@@ -398,7 +398,7 @@ spec:
                       ipvs:
                         description: |-
                           KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.29.5/config/v1alpha1/types.go#L52-L78
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.29.6/config/v1alpha1/types.go#L52-L78
                         properties:
                           excludeCIDRs:
                             items:
