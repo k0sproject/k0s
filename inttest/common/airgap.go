@@ -154,10 +154,10 @@ localAddrs:
 
 func (a *Airgap) airgapMachine(ctx context.Context, name, v4CIDRs, v6CIDRs string) error {
 	const airgapScript = `
+		apk add --no-cache %s
 		v4Cidrs='%s'
 		v6Cidrs='%s'
 		if [ -n "$v4Cidrs" ]; then
-			apk add --no-cache iptables
 			for cidr in $v4Cidrs; do
 				iptables -A INPUT -s $cidr -j ACCEPT
 				iptables -A OUTPUT -d $cidr -j ACCEPT
@@ -167,7 +167,6 @@ func (a *Airgap) airgapMachine(ctx context.Context, name, v4CIDRs, v6CIDRs strin
 		fi
 
 		if [ -n "$v6Cidrs" ]; then
-			apk add --no-cache ip6tables
 			for cidr in $v6Cidrs; do
 				ip6tables -A INPUT -s $cidr -j ACCEPT
 				ip6tables -A OUTPUT -d $cidr -j ACCEPT
@@ -182,6 +181,18 @@ func (a *Airgap) airgapMachine(ctx context.Context, name, v4CIDRs, v6CIDRs strin
 		fi
 	`
 
+	var packages []string
+	if v4CIDRs != "" {
+		packages = append(packages, "iptables")
+	}
+	if v6CIDRs != "" {
+		packages = append(packages, "ip6tables")
+	}
+
+	if len(packages) < 1 {
+		return nil
+	}
+
 	a.Logf("Airgapping %s", name)
 
 	ssh, err := a.SSH(ctx, name)
@@ -191,6 +202,6 @@ func (a *Airgap) airgapMachine(ctx context.Context, name, v4CIDRs, v6CIDRs strin
 	defer ssh.Disconnect()
 
 	return ssh.Exec(ctx, "sh -e -", SSHStreams{
-		In: strings.NewReader(fmt.Sprintf(airgapScript, v4CIDRs, v6CIDRs)),
+		In: strings.NewReader(fmt.Sprintf(airgapScript, strings.Join(packages, " "), v4CIDRs, v6CIDRs)),
 	})
 }
