@@ -28,7 +28,6 @@ import (
 	helmapi "github.com/k0sproject/k0s/pkg/apis/helm"
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -38,6 +37,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
@@ -375,8 +375,13 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		Kind:  "Chart",
 	}
 
+	scheme := runtime.NewScheme()
+	if err := v1beta1.AddToScheme(scheme); err != nil {
+		return err
+	}
+
 	mgr, err := controllerruntime.NewManager(clientConfig, crman.Options{
-		Scheme: k0sscheme.Scheme,
+		Scheme: scheme,
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
