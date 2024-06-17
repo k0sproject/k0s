@@ -18,6 +18,7 @@ package token
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -27,7 +28,6 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -74,16 +74,23 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 	c.joinAddress = config.Host
 	c.joinTokenType = GetTokenType(&raw)
 
-	logrus.Info("initialized join client successfully")
 	return c, nil
 }
 
+func (j *JoinClient) Address() string {
+	return j.joinAddress
+}
+
+func (j *JoinClient) JoinTokenType() string {
+	return j.joinTokenType
+}
+
 // GetCA calls the CA sync API
-func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
+func (j *JoinClient) GetCA(ctx context.Context) (v1beta1.CaResponse, error) {
 	var caData v1beta1.CaResponse
-	req, err := http.NewRequest(http.MethodGet, j.joinAddress+"/v1beta1/ca", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, j.joinAddress+"/v1beta1/ca", nil)
 	if err != nil {
-		return caData, err
+		return caData, fmt.Errorf("failed to create join request: %w", err)
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", j.bearerToken))
 
@@ -95,10 +102,6 @@ func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		return caData, fmt.Errorf("unexpected response status: %s", resp.Status)
-	}
-	logrus.Info("got valid CA response")
-	if resp.Body == nil {
-		return caData, fmt.Errorf("response body is nil")
 	}
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -112,7 +115,7 @@ func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
 }
 
 // JoinEtcd calls the etcd join API
-func (j *JoinClient) JoinEtcd(peerAddress string) (v1beta1.EtcdResponse, error) {
+func (j *JoinClient) JoinEtcd(ctx context.Context, peerAddress string) (v1beta1.EtcdResponse, error) {
 	var etcdResponse v1beta1.EtcdResponse
 	etcdRequest := v1beta1.EtcdRequest{
 		PeerAddress: peerAddress,
@@ -128,9 +131,9 @@ func (j *JoinClient) JoinEtcd(peerAddress string) (v1beta1.EtcdResponse, error) 
 		return etcdResponse, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, j.joinAddress+"/v1beta1/etcd/members", buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, j.joinAddress+"/v1beta1/etcd/members", buf)
 	if err != nil {
-		return etcdResponse, err
+		return etcdResponse, fmt.Errorf("failed to create join request: %w", err)
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", j.bearerToken))
 	resp, err := j.httpClient.Do(req)
@@ -152,8 +155,4 @@ func (j *JoinClient) JoinEtcd(peerAddress string) (v1beta1.EtcdResponse, error) 
 	}
 
 	return etcdResponse, nil
-}
-
-func (j *JoinClient) JoinTokenType() string {
-	return j.joinTokenType
 }
