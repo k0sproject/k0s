@@ -43,8 +43,6 @@ type Applier struct {
 
 	log           *logrus.Entry
 	clientFactory kubernetes.ClientFactoryInterface
-
-	restClientGetter resource.RESTClientGetter
 }
 
 // NewApplier creates new Applier
@@ -55,14 +53,11 @@ func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface)
 		"bundle":    name,
 	})
 
-	clientGetter := kubernetes.NewRESTClientGetter(kubeClientFactory, log)
-
 	return Applier{
-		log:              log,
-		Dir:              dir,
-		Name:             name,
-		clientFactory:    kubeClientFactory,
-		restClientGetter: clientGetter,
+		log:           log,
+		Dir:           dir,
+		Name:          name,
+		clientFactory: kubeClientFactory,
 	}
 }
 
@@ -106,8 +101,7 @@ func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, erro
 		return resources, nil
 	}
 
-	objects, err := resource.NewBuilder(a.restClientGetter).
-		Local(). // don't fail on unknown CRDs
+	objects, err := resource.NewLocalBuilder().
 		Unstructured().
 		Path(false, files...).
 		Flatten().
