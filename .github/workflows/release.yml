@@ -483,7 +483,7 @@ jobs:
           echo "ALPINE_PATCH_VERSION=$alpinePatchVersion" >>"$GITHUB_ENV"
 
       - name: Build image and push to Docker Hub and GitHub image registry
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64,linux/arm/v7
