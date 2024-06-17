@@ -57,8 +57,8 @@ LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnect
 LD_FLAGS += -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)"
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)
 LD_FLAGS += -X k8s.io/component-base/version.gitVersion=v$(kubernetes_version)
-LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(shell echo '$(kubernetes_version)' | cut -d. -f1)
-LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(shell echo '$(kubernetes_version)' | cut -d. -f2)
+LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(word 1,$(subst ., ,$(kubernetes_version)))
+LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(word 2,$(subst ., ,$(kubernetes_version)))
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit=not_available
 LD_FLAGS += -X github.com/containerd/containerd/version.Version=$(containerd_version)
