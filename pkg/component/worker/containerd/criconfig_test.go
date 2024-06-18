@@ -23,6 +23,7 @@ import (
 
 	srvconfig "github.com/containerd/containerd/services/server/config"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,6 +82,7 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 		err = srvconfig.LoadConfig(criRuntimePath, containerdConfig)
 		require.NoError(t, err)
 
+		assert.Equal(t, 2, containerdConfig.Version)
 		criConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
 		snapshotter := criConfig.GetPath([]string{"containerd", "snapshotter"})
 		require.Equal(t, "zfs", snapshotter)
