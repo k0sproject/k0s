@@ -88,6 +88,7 @@ func (s *plansRemovedAPIsSuite) TestApply() {
 	plan, err := aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanWarning)
 	if s.NoError(err) && s.Len(plan.Status.Commands, 1) {
 		s.Equal(appc.PlanWarning, plan.Status.Commands[0].State)
+		s.Equal("removedcrds.autopilot.k0sproject.io v1beta1 has been removed in Kubernetes v99.99.99, but there are 1 such resources in the cluster", plan.Status.Commands[0].Description)
 	}
 }
 

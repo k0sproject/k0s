@@ -91,9 +91,7 @@ func CanUpdate(log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInt
 				}
 			}
 			if found > 0 {
-				err = fmt.Errorf("%s is removed in Kubernetes %s. There are %d resources of the type in the cluster", gvk.String(), semver.MajorMinor(newVersion), found)
-				logrus.Error(err)
-				return err
+				return fmt.Errorf("%s.%s %s has been removed in Kubernetes %s, but there are %d such resources in the cluster", ar.Name, gv.Group, gv.Version, removedInVersion, found)
 			}
 		}
 	}
