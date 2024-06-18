@@ -17,6 +17,7 @@ limitations under the License.
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -28,7 +29,7 @@ type DockerRuntime struct {
 	criSocketPath string
 }
 
-func (d *DockerRuntime) ListContainers() ([]string, error) {
+func (d *DockerRuntime) ListContainers(context.Context) ([]string, error) {
 	out, err := exec.Command("docker", "--host", d.criSocketPath, "ps", "-a", "--filter", "name=k8s_", "-q").CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list containers: output: %s: %w", string(out), err)
@@ -36,7 +37,7 @@ func (d *DockerRuntime) ListContainers() ([]string, error) {
 	return strings.Fields(string(out)), nil
 }
 
-func (d *DockerRuntime) RemoveContainer(id string) error {
+func (d *DockerRuntime) RemoveContainer(_ context.Context, id string) error {
 	out, err := exec.Command("docker", "--host", d.criSocketPath, "rm", "--volumes", id).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to remove container %s: output: %s: %w", id, string(out), err)
@@ -44,7 +45,7 @@ func (d *DockerRuntime) RemoveContainer(id string) error {
 	return nil
 }
 
-func (d *DockerRuntime) StopContainer(id string) error {
+func (d *DockerRuntime) StopContainer(_ context.Context, id string) error {
 	out, err := exec.Command("docker", "--host", d.criSocketPath, "stop", id).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to stop running container %s: output: %s: %w", id, string(out), err)

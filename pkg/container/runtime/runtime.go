@@ -16,10 +16,14 @@ limitations under the License.
 
 package runtime
 
+import (
+	"context"
+)
+
 type ContainerRuntime interface {
-	ListContainers() ([]string, error)
-	RemoveContainer(id string) error
-	StopContainer(id string) error
+	ListContainers(ctx context.Context) ([]string, error)
+	RemoveContainer(ctx context.Context, id string) error
+	StopContainer(ctx context.Context, id string) error
 }
 
 func NewContainerRuntime(runtimeType string, criSocketPath string) ContainerRuntime {
