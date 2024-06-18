@@ -19,6 +19,7 @@ package iface
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -64,8 +65,21 @@ func FirstPublicAddress() (string, error) {
 	}
 	ipv6addr := ""
 	for _, i := range ifs {
-		if i.Name == "vxlan.calico" || i.Name == "kube-bridge" {
-			// Skip calico and kube-router interfaces
+		switch {
+		// Skip calico CNI interface
+		case i.Name == "vxlan.calico":
+			continue
+		// Skip kube-router CNI interface
+		case i.Name == "kube-bridge":
+			continue
+		// Skip k0s CPLB interface
+		case i.Name == "dummyvip0":
+			continue
+		// Skip kube-router pod CNI interfaces
+		case strings.HasPrefix(i.Name, "veth"):
+			continue
+		// Skip calico pod CNI interfaces
+		case strings.HasPrefix(i.Name, "cali"):
 			continue
 		}
 		addresses, err := i.Addrs()
