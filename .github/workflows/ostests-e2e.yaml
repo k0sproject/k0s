@@ -210,7 +210,7 @@ jobs:
         if: always() && (steps.e2e-retrieve-parallel.conclusion == 'success' || steps.e2e-retrieve-serial.conclusion == 'success')
         uses: actions/upload-artifact@v4
         with:
-          name: ostests-e2e-${{ inputs.os }}-${{ inputs.network-provider }}-sonobuoy-results
+          name: ostests-e2e-${{ inputs.os }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-sonobuoy-results
           path: |
             inttest/sonobuoy-e2e-parallel.tar.gz
             inttest/sonobuoy-e2e-serial.tar.gz
@@ -233,5 +233,5 @@ jobs:
         if: always() && steps.tf-init.conclusion == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: ostests-e2e-${{ inputs.os }}-${{ inputs.network-provider }}-k0sctl-logs
+          name: ostests-e2e-${{ inputs.os }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-k0sctl-logs
           path: ~/.cache/k0sctl/k0sctl.log
