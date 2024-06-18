@@ -74,28 +74,26 @@ func CanUpdate(log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInt
 			gvk := gv.WithKind(ar.Kind)
 
 			removedInVersion, ok := removedAPIs[gvk]
-			if !ok {
+			if !ok || semver.Compare(newVersion, removedInVersion) < 0 {
 				continue
 			}
 
-			if semver.Compare(newVersion, removedInVersion) >= 0 {
-				res := resourceBuilder.ResourceTypeOrNameArgs(true, ar.Kind).Do()
-				infos, err := res.Infos()
-				if err != nil {
-					return err
-				}
+			res := resourceBuilder.ResourceTypeOrNameArgs(true, ar.Kind).Do()
+			infos, err := res.Infos()
+			if err != nil {
+				return err
+			}
 
-				found := 0
-				for _, i := range infos {
-					if gvk == i.Mapping.GroupVersionKind {
-						found++
-					}
+			found := 0
+			for _, i := range infos {
+				if gvk == i.Mapping.GroupVersionKind {
+					found++
 				}
-				if found > 0 {
-					err = fmt.Errorf("%s is removed in Kubernetes %s. There are %d resources of the type in the cluster", gvk.String(), semver.MajorMinor(newVersion), found)
-					logrus.Error(err)
-					return err
-				}
+			}
+			if found > 0 {
+				err = fmt.Errorf("%s is removed in Kubernetes %s. There are %d resources of the type in the cluster", gvk.String(), semver.MajorMinor(newVersion), found)
+				logrus.Error(err)
+				return err
 			}
 		}
 	}
