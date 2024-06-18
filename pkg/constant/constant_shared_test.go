@@ -18,6 +18,7 @@ package constant
 
 import (
 	"crypto/tls"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -37,7 +38,8 @@ func TestConstants(t *testing.T) {
 		{"KubeProxyImageVersion", KubeProxyImageVersion, "kubernetes"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, "v"+getVersion(t, test.varName), test.constant)
+			expected := fmt.Sprintf("^v%s($|-)", regexp.QuoteMeta(getVersion(t, test.varName)))
+			assert.Regexp(t, expected, test.constant)
 		})
 	}
 
