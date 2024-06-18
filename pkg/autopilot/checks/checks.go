@@ -55,7 +55,12 @@ func CanUpdate(log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInt
 		Latest()
 
 	for _, r := range resources {
-		gv, _ := schema.ParseGroupVersion(r.GroupVersion)
+		gv, err := schema.ParseGroupVersion(r.GroupVersion)
+		if err != nil {
+			log.WithError(err).Warn("Skipping API version ", r.GroupVersion)
+			continue
+		}
+
 		for _, ar := range r.APIResources {
 			gv := gv // Copy over the default GroupVersion from the list
 			// Apply resource-specific overrides
