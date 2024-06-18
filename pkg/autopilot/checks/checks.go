@@ -57,11 +57,16 @@ func CanUpdate(log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInt
 	for _, r := range resources {
 		gv, _ := schema.ParseGroupVersion(r.GroupVersion)
 		for _, ar := range r.APIResources {
-			gvk := schema.GroupVersionKind{
-				Group:   gv.Group,
-				Version: gv.Version,
-				Kind:    ar.Kind,
+			gv := gv // Copy over the default GroupVersion from the list
+			// Apply resource-specific overrides
+			if ar.Group != "" {
+				gv.Group = ar.Group
 			}
+			if ar.Version != "" {
+				gv.Version = ar.Version
+			}
+
+			gvk := gv.WithKind(ar.Kind)
 
 			removedInVersion, ok := removedAPIs[gvk]
 			if !ok {
