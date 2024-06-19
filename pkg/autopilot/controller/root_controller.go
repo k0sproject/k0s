@@ -20,7 +20,6 @@ import (
 	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	apscheme "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -143,6 +142,7 @@ func (c *rootController) Run(ctx context.Context) error {
 // and starts it in a goroutine.
 func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error {
 	managerOpts := crman.Options{
+		Scheme:                 scheme,
 		Port:                   c.cfg.ManagerPort,
 		MetricsBindAddress:     c.cfg.MetricsBindAddr,
 		HealthProbeBindAddress: c.cfg.HealthProbeBindAddr,
@@ -151,11 +151,6 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	mgr, err := cr.NewManager(c.autopilotClientFactory.RESTConfig(), managerOpts)
 	if err != nil {
 		logger.WithError(err).Error("unable to start controller manager")
-		return err
-	}
-
-	if err := apscheme.AddToScheme(mgr.GetScheme()); err != nil {
-		logger.WithError(err).Error("unable to register autopilot scheme")
 		return err
 	}
 

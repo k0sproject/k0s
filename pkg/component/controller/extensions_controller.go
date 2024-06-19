@@ -35,10 +35,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
 	apiretry "k8s.io/client-go/util/retry"
+	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/config"
@@ -370,7 +372,13 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		Kind:  "Chart",
 	}
 
-	mgr, err := ctrlManager.New(clientConfig, ctrlManager.Options{
+	scheme := runtime.NewScheme()
+	if err := v1beta1.AddToScheme(scheme); err != nil {
+		return err
+	}
+
+	mgr, err := controllerruntime.NewManager(clientConfig, ctrlManager.Options{
+		Scheme:             scheme,
 		MetricsBindAddress: "0",
 		Logger:             logrusr.New(ec.L),
 		Controller:         config.Controller{},
@@ -388,11 +396,6 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		return nil
 	}, retry.Context(ctx)); err != nil {
 		return fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registred, check CRD registration reconciler: %w", err)
-	}
-	// examples say to not use GetScheme in production, but it is unclear at the moment
-	// which scheme should be in use
-	if err := v1beta1.AddToScheme(mgr.GetScheme()); err != nil {
-		return fmt.Errorf("can't register Chart crd: %w", err)
 	}
 
 	if err := builder.
