@@ -127,29 +127,31 @@ spec:
                           properties:
                             caFile:
                               description: CA bundle file to use when verifying HTTPS-enabled
-                                servers
+                                servers.
                               type: string
                             certFile:
                               description: The TLS certificate file to use for HTTPS
-                                client authentication
+                                client authentication.
                               type: string
                             insecure:
+                              description: Whether to skip TLS certificate checks
+                                when connecting to the repository.
                               type: boolean
                             keyfile:
                               description: The TLS key file to use for HTTPS client
-                                authentication
+                                authentication.
                               type: string
                             name:
-                              description: The repository name
+                              description: The repository name.
                               type: string
                             password:
-                              description: Password for Basic HTTP authentication
+                              description: Password for Basic HTTP authentication.
                               type: string
                             url:
-                              description: The repository URL
+                              description: The repository URL.
                               type: string
                             username:
-                              description: Username for Basic HTTP authentication
+                              description: Username for Basic HTTP authentication.
                               type: string
                           type: object
                         type: array

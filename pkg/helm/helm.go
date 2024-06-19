@@ -128,7 +128,7 @@ func (hc *Commands) AddRepository(repoCfg v1beta1.Repository) error {
 		CertFile:              repoCfg.CertFile,
 		KeyFile:               repoCfg.KeyFile,
 		CAFile:                repoCfg.CAFile,
-		InsecureSkipTLSverify: true,
+		InsecureSkipTLSverify: repoCfg.IsInsecure(),
 	}
 
 	r, err := repo.NewChartRepository(&c, getters)
