@@ -152,6 +152,7 @@ setup, you can invoke `k0s sysinfo`:
 ```console
 ubuntu@ubuntu:~$ k0s sysinfo
 Total memory: 3.7 GiB (pass)
+File system of /var/lib: ext4 (pass)
 Disk space available for /var/lib/k0s: 24.3 GiB (pass)
 Operating system: Linux (pass)
   Linux kernel release: 5.15.0-1013-raspi (pass)
