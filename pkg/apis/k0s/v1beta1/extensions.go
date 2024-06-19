@@ -123,18 +123,27 @@ func (c Chart) Validate() error {
 
 // Repository describes single repository entry. Fields map to the CLI flags for the "helm add" command
 type Repository struct {
-	Name     string `json:"name"`
-	URL      string `json:"url"`
-	CAFile   string `json:"caFile"`
-	CertFile string `json:"certFile"`
-	Insecure bool   `json:"insecure"`
-	KeyFile  string `json:"keyfile"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	// The repository name
+	// +kubebuilder:Validation:Required
+	Name string `json:"name"`
+	// The repository URL
+	// +kubebuilder:Validation:Required
+	URL string `json:"url"`
+	// CA bundle file to use when verifying HTTPS-enabled servers
+	CAFile string `json:"caFile,omitempty"`
+	// The TLS certificate file to use for HTTPS client authentication
+	CertFile string `json:"certFile,omitempty"`
+	Insecure bool `json:"insecure,omitempty"`
+	// The TLS key file to use for HTTPS client authentication
+	KeyFile string `json:"keyfile,omitempty"`
+	// Username for Basic HTTP authentication
+	Username string `json:"username,omitempty"`
+	// Password for Basic HTTP authentication
+	Password string `json:"password,omitempty"`
 }
 
 // Validate performs validation
-func (r Repository) Validate() error {
+func (r *Repository) Validate() error {
 	if r.Name == "" {
 		return errors.New("repository must have Name field not empty")
 	}
