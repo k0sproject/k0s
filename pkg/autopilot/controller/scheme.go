@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	autopilotv1beta2sscheme "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
 	k0sscheme "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -28,4 +29,5 @@ var scheme = runtime.NewScheme()
 func init() {
 	utilruntime.Must(k8sscheme.AddToScheme(scheme))
 	utilruntime.Must(k0sscheme.AddToScheme(scheme))
+	utilruntime.Must(autopilotv1beta2sscheme.AddToScheme(scheme))
 }
