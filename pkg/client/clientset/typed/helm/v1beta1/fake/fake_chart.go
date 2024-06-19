@@ -40,22 +40,24 @@ var chartsKind = v1beta1.SchemeGroupVersion.WithKind("Chart")
 
 // Get takes name of the chart, and returns the corresponding chart object, and an error if there is any.
 func (c *FakeCharts) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Chart, err error) {
+	emptyResult := &v1beta1.Chart{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(chartsResource, c.ns, name), &v1beta1.Chart{})
+		Invokes(testing.NewGetAction(chartsResource, c.ns, name), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Chart), err
 }
 
 // List takes label and field selectors, and returns the list of Charts that match those selectors.
 func (c *FakeCharts) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.ChartList, err error) {
+	emptyResult := &v1beta1.ChartList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(chartsResource, chartsKind, c.ns, opts), &v1beta1.ChartList{})
+		Invokes(testing.NewListAction(chartsResource, chartsKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -80,22 +82,24 @@ func (c *FakeCharts) Watch(ctx context.Context, opts v1.ListOptions) (watch.Inte
 
 // Create takes the representation of a chart and creates it.  Returns the server's representation of the chart, and an error, if there is any.
 func (c *FakeCharts) Create(ctx context.Context, chart *v1beta1.Chart, opts v1.CreateOptions) (result *v1beta1.Chart, err error) {
+	emptyResult := &v1beta1.Chart{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(chartsResource, c.ns, chart), &v1beta1.Chart{})
+		Invokes(testing.NewCreateAction(chartsResource, c.ns, chart), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Chart), err
 }
 
 // Update takes the representation of a chart and updates it. Returns the server's representation of the chart, and an error, if there is any.
 func (c *FakeCharts) Update(ctx context.Context, chart *v1beta1.Chart, opts v1.UpdateOptions) (result *v1beta1.Chart, err error) {
+	emptyResult := &v1beta1.Chart{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(chartsResource, c.ns, chart), &v1beta1.Chart{})
+		Invokes(testing.NewUpdateAction(chartsResource, c.ns, chart), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.Chart), err
 }
