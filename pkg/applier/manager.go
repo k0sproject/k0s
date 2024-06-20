@@ -29,7 +29,6 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -41,7 +40,7 @@ import (
 
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
-	K0sVars           *config.CfgVars
+	ManifestsDir      string
 	IgnoredStacks     []string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
@@ -62,12 +61,12 @@ type stack = struct {
 
 // Init initializes the Manager
 func (m *Manager) Init(ctx context.Context) error {
-	err := dir.Init(m.K0sVars.ManifestsDir, constant.ManifestsDirMode)
+	err := dir.Init(m.ManifestsDir, constant.ManifestsDirMode)
 	if err != nil {
-		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
+		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.ManifestsDir, err)
 	}
 	m.log = logrus.WithField("component", constant.ApplierManagerComponentName)
-	m.bundleDir = m.K0sVars.ManifestsDir
+	m.bundleDir = m.ManifestsDir
 
 	m.LeaderElector.AddAcquiredLeaseCallback(func() {
 		ctx, cancel := context.WithCancelCause(ctx)

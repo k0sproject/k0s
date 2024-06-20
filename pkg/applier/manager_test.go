@@ -30,7 +30,6 @@ import (
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
@@ -49,19 +48,18 @@ import (
 )
 
 func TestManager_AppliesStacks(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+	manifestsDir := t.TempDir()
 	leaderElector := leaderelector.Dummy{Leader: true}
 	clients := testutil.NewFakeClientFactory()
 
 	underTest := applier.Manager{
-		K0sVars:           k0sVars,
+		ManifestsDir:      manifestsDir,
 		KubeClientFactory: clients,
 		LeaderElector:     &leaderElector,
 	}
 
 	// A stack that exists on disk before the manager is started.
-	before := filepath.Join(k0sVars.ManifestsDir, "before")
+	before := filepath.Join(manifestsDir, "before")
 	require.NoError(t, os.MkdirAll(before, constant.ManifestsDirMode))
 	require.NoError(t, os.WriteFile(filepath.Join(before, "before.yaml"), []byte(`
 apiVersion: v1
@@ -89,7 +87,7 @@ data: {}
 	)
 
 	// A stack that is created on disk after the manager has started.
-	after := filepath.Join(k0sVars.ManifestsDir, "after")
+	after := filepath.Join(manifestsDir, "after")
 	require.NoError(t, os.MkdirAll(after, constant.ManifestsDirMode))
 	require.NoError(t, os.WriteFile(filepath.Join(after, "after.yaml"), []byte(`
 apiVersion: v1
@@ -111,19 +109,18 @@ data: {}
 }
 
 func TestManager_IgnoresStacks(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+	manifestsDir := t.TempDir()
 	leaderElector := leaderelector.Dummy{Leader: true}
 	clients := testutil.NewFakeClientFactory()
 
 	underTest := applier.Manager{
-		K0sVars:           k0sVars,
+		ManifestsDir:      manifestsDir,
 		IgnoredStacks:     []string{"ignored"},
 		KubeClientFactory: clients,
 		LeaderElector:     &leaderElector,
 	}
 
-	ignored := filepath.Join(k0sVars.ManifestsDir, "ignored")
+	ignored := filepath.Join(manifestsDir, "ignored")
 	require.NoError(t, os.MkdirAll(ignored, constant.ManifestsDirMode))
 	require.NoError(t, os.WriteFile(filepath.Join(ignored, "ignored.yaml"), []byte(`
 apiVersion: v1
@@ -144,6 +141,7 @@ data: {}
 
 	var content []byte
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
+		var err error
 		content, err = os.ReadFile(filepath.Join(ignored, "ignored.txt"))
 		assert.NoError(t, err)
 	}, 10*time.Second, 100*time.Millisecond)
@@ -169,16 +167,12 @@ func TestManager(t *testing.T) {
 
 	dir := t.TempDir()
 
-	cfg := &config.CfgVars{
-		ManifestsDir: dir,
-	}
-
 	fakes := kubeutil.NewFakeClientFactory()
 
 	le := new(mockLeaderElector)
 
 	manager := &applier.Manager{
-		K0sVars:           cfg,
+		ManifestsDir:      dir,
 		KubeClientFactory: fakes,
 		LeaderElector:     le,
 	}
