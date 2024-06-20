@@ -40,12 +40,10 @@ type Network struct {
 	// NodeLocalLoadBalancing defines the configuration options related to k0s's
 	// node-local load balancing feature.
 	// NOTE: This feature is currently unsupported on ARMv7!
-	// +optional
 	NodeLocalLoadBalancing *NodeLocalLoadBalancing `json:"nodeLocalLoadBalancing,omitempty"`
 
 	// ControlPlaneLoadBalancing defines the configuration options related to k0s's
 	// control plane load balancing feature.
-	// +optional
 	ControlPlaneLoadBalancing *ControlPlaneLoadBalancingSpec `json:"controlPlaneLoadBalancing,omitempty"`
 
 	// Pod network CIDR to use in the cluster

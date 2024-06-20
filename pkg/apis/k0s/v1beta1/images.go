@@ -75,7 +75,6 @@ type ClusterImages struct {
 
 	Repository string `json:"repository,omitempty"`
 
-	// +optional
 	// +kubebuilder:default=IfNotPresent
 	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
 	DefaultPullPolicy string `json:"default_pull_policy,omitempty"`

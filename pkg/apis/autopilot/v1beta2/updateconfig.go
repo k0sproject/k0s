@@ -52,7 +52,6 @@ type UpdateSpec struct {
 	// UpdateStrategy defines the update strategy to use for this update config
 	UpgradeStrategy UpgradeStrategy `json:"upgradeStrategy,omitempty"`
 	// PlanSpec defines the plan spec to use for this update config
-	// +kubebuilder:Validation:Required
 	PlanSpec AutopilotPlanSpec `json:"planSpec,omitempty"`
 }
 
@@ -94,7 +93,6 @@ type UpgradeStrategy struct {
 	// +kubebuilder:validation:Enum=periodic;cron
 	Type string `json:"type,omitempty"`
 	// Cron defines the cron expression for the cron upgrade strategy
-	// +kubebuilder:validation:Optional
 	//+kubebuilder:deprecatedversion:warning="Cron is deprecated and will be removed in 1.29"
 	Cron string `json:"cron,omitempty"`
 	// Periodic defines the periodic upgrade strategy
