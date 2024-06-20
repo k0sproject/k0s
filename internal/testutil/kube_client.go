@@ -41,7 +41,7 @@ import (
 var _ kubeutil.ClientFactoryInterface = (*FakeClientFactory)(nil)
 
 // NewFakeClientFactory creates new client factory which uses internally only the kube fake client interface
-func NewFakeClientFactory(objects ...runtime.Object) FakeClientFactory {
+func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
 	rawDiscovery := &discoveryfake.FakeDiscovery{Fake: &kubetesting.Fake{}}
 
 	// Remember to list all "xyzList" types for resource types we use with the fake client
@@ -55,7 +55,7 @@ func NewFakeClientFactory(objects ...runtime.Object) FakeClientFactory {
 		{Group: "apps", Version: "v1", Resource: "deployments"}:                               "DeploymentList",
 	}
 
-	return FakeClientFactory{
+	return &FakeClientFactory{
 		Client:          fake.NewSimpleClientset(objects...),
 		DynamicClient:   dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), gvkLists),
 		DiscoveryClient: memory.NewMemCacheClient(rawDiscovery),
@@ -72,29 +72,29 @@ type FakeClientFactory struct {
 	RESTClient      rest.Interface
 }
 
-func (f FakeClientFactory) GetClient() (kubernetes.Interface, error) {
+func (f *FakeClientFactory) GetClient() (kubernetes.Interface, error) {
 	return f.Client, nil
 }
 
-func (f FakeClientFactory) GetDynamicClient() (dynamic.Interface, error) {
+func (f *FakeClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	return f.DynamicClient, nil
 }
 
-func (f FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+func (f *FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	return f.DiscoveryClient, nil
 }
 
-func (f FakeClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
+func (f *FakeClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
 	return nil, fmt.Errorf("NOT IMPLEMENTED")
 }
 
-func (f FakeClientFactory) GetRESTClient() (rest.Interface, error) {
+func (f *FakeClientFactory) GetRESTClient() (rest.Interface, error) {
 	return f.RESTClient, nil
 }
-func (f FakeClientFactory) GetRESTConfig() *rest.Config {
+func (f *FakeClientFactory) GetRESTConfig() *rest.Config {
 	return &rest.Config{}
 }
 
-func (f FakeClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) {
+func (f *FakeClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) {
 	return nil, fmt.Errorf("NOT IMPLEMENTED")
 }
