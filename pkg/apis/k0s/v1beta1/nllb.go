@@ -40,7 +40,6 @@ type NodeLocalLoadBalancing struct {
 	// type indicates the type of the node-local load balancer to deploy on
 	// worker nodes. Currently, the only supported type is "EnvoyProxy".
 	// +kubebuilder:default=EnvoyProxy
-	// +optional
 	Type NllbType `json:"type,omitempty"`
 
 	// envoyProxy contains configuration options related to the "EnvoyProxy" type
@@ -115,20 +114,17 @@ func (n *NodeLocalLoadBalancing) IsEnabled() bool {
 // backing implementation for node-local load balancing.
 type EnvoyProxy struct {
 	// image specifies the OCI image that's being used for the Envoy Pod.
-	// +optional
 	Image *ImageSpec `json:"image,omitempty"`
 
 	// imagePullPolicy specifies the pull policy being used for the Envoy Pod.
 	// Defaults to the default image pull policy.
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
-	// +optional
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 
 	// apiServerBindPort is the port number on which to bind the Envoy load
 	// balancer for the Kubernetes API server to on a worker's loopback
 	// interface. This must be a valid port number, 0 < x < 65536.
 	// Default: 7443
-	// +optional
 	// +kubebuilder:default=7443
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
@@ -138,7 +134,6 @@ type EnvoyProxy struct {
 	// load balancer for the konnectivity server to on a worker's loopback
 	// interface. This must be a valid port number, 0 < x < 65536.
 	// Default: 7132
-	// +optional
 	// +kubebuilder:default=7132
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535

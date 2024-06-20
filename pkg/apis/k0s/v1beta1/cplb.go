@@ -43,12 +43,10 @@ type ControlPlaneLoadBalancingSpec struct {
 	// type indicates the type of the control plane load balancer to deploy on
 	// controller nodes. Currently, the only supported type is "Keepalived".
 	// +kubebuilder:default=Keepalived
-	// +optional
 	Type CPLBType `json:"type,omitempty"`
 
 	// Keepalived contains configuration options related to the "Keepalived" type
 	// of load balancing.
-	// +optional
 	Keepalived *KeepalivedSpec `json:"keepalived,omitempty"`
 }
 
@@ -95,14 +93,12 @@ type VRRPInstance struct {
 	// network must not use the same VirtualRouterID.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=255
-	// +optional
 	VirtualRouterID int32 `json:"virtualRouterID,omitempty"`
 
 	// AdvertIntervalSeconds is the advertisement interval in seconds. Defaults to 1
 	// second.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default=1
-	// +optional
 	AdvertIntervalSeconds int32 `json:"advertIntervalSeconds,omitempty"`
 
 	// AuthPass is the password for accessing VRRPD. This is not a security
@@ -178,18 +174,15 @@ type VirtualServer struct {
 	// microsecond precision. Further precision will be truncated without
 	// warnings. Defaults to 1m.
 	// +kubebuilder:default="1m"
-	// +optional
 	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
 	// Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
 	// details refer to keepalived documentation.
 	// +kubebuilder:default=rr
-	// +optional
 	LBAlgo KeepalivedLBAlgo `json:"lbAlgo,omitempty"`
 	// LBKind is the load balancing kind. If not specified, defaults to DR.
 	// Valid values are NAT DR TUN. For further details refer to keepalived documentation.
 	// +kubebuilder:default=DR
-	// +optional
 	LBKind KeepalivedLBKind `json:"lbKind,omitempty"`
 	// PersistenceTimeoutSeconds specifies a timeout value for persistent
 	// connections in seconds. PersistentTimeoutSeconds must be in the range of
@@ -197,7 +190,6 @@ type VirtualServer struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=2678400
 	// +kubebuilder:default=360
-	// +optional
 	PersistenceTimeoutSeconds int `json:"persistenceTimeoutSeconds,omitempty"`
 }
 
