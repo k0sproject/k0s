@@ -70,6 +70,7 @@ func (s *K0sSysinfoSpec) NewSysinfoProbes() probes.Probes {
 	if s.WorkerRoleEnabled {
 		minFreeDiskSpace = minFreeDiskSpace + 1300*probes.Mi
 	}
+	probes.AssertFileSystem(p, s.DataDir)
 	probes.AssertFreeDiskSpace(p, s.DataDir, minFreeDiskSpace)
 	probes.RequireNameResolution(p, net.LookupIP, "localhost")
 
