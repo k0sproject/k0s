@@ -94,7 +94,7 @@ func (e *Etcd) Init(_ context.Context) error {
 	return assets.Stage(e.K0sVars.BinDir, "etcd", constant.BinDirMode)
 }
 
-func (e *Etcd) syncEtcdConfig(ctx context.Context, peerURL, etcdCaCert, etcdCaCertKey string) ([]string, error) {
+func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdRequest, etcdCaCert, etcdCaCertKey string) ([]string, error) {
 	logrus.Info("Synchronizing etcd config with existing cluster via ", e.JoinClient.Address())
 
 	var etcdResponse v1beta1.EtcdResponse
@@ -103,7 +103,7 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, peerURL, etcdCaCert, etcdCaCe
 		func() error {
 			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
-			etcdResponse, err = e.JoinClient.JoinEtcd(ctx, peerURL)
+			etcdResponse, err = e.JoinClient.JoinEtcd(ctx, etcdRequest)
 			return err
 		},
 		retry.Context(ctx),
@@ -190,7 +190,11 @@ func (e *Etcd) Start(ctx context.Context) error {
 	if file.Exists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 	} else if e.JoinClient != nil {
-		initialCluster, err := e.syncEtcdConfig(ctx, peerURL, etcdCaCert, etcdCaCertKey)
+		etcdRequest := v1beta1.EtcdRequest{
+			Node:        name,
+			PeerAddress: peerURL,
+		}
+		initialCluster, err := e.syncEtcdConfig(ctx, etcdRequest, etcdCaCert, etcdCaCertKey)
 		if err != nil {
 			return fmt.Errorf("failed to sync etcd config: %w", err)
 		}
