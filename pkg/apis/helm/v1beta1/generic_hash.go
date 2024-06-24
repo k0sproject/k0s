@@ -38,6 +38,10 @@ func cleanUpInterfaceMap(in map[string]interface{}) map[string]interface{} {
 
 // Cleans up the value in the map, recurses in case of arrays and maps
 func cleanUpMapValue(v interface{}) interface{} {
+	// Keep null values as nil to avoid type mismatches
+	if v == nil {
+		return nil
+	}
 	switch v := v.(type) {
 	case []interface{}:
 		return cleanUpInterfaceArray(v)
