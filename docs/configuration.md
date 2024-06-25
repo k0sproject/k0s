@@ -52,7 +52,6 @@ metadata:
 spec:
   api:
     address: 192.168.68.104
-    externalAddress: my-lb-address.example.com
     k0sApiPort: 9443
     port: 6443
     sans:
@@ -60,8 +59,8 @@ spec:
   controllerManager: {}
   extensions:
     helm:
-      concurrencyLevel: 5
       charts: null
+      concurrencyLevel: 5
       repositories: null
     storage:
       create_default_storage_class: false
@@ -81,6 +80,15 @@ spec:
     clusterDomain: cluster.local
     dualStack: {}
     kubeProxy:
+      iptables:
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+      ipvs:
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+        tcpFinTimeout: 0s
+        tcpTimeout: 0s
+        udpTimeout: 0s
       metricsBindAddress: 0.0.0.0:10249
       mode: iptables
     kuberouter:
@@ -91,7 +99,6 @@ spec:
       mtu: 0
       peerRouterASNs: ""
       peerRouterIPs: ""
-      extraArgs:
     nodeLocalLoadBalancing:
       enabled: false
       envoyProxy:
@@ -109,15 +116,6 @@ spec:
     type: etcd
   telemetry:
     enabled: true
-  featureGates:
-    - name: feature_XXX
-      enabled: true
-      components: ["kubelet", "kube-api", "kube-scheduler"]
-    - name: feature_YYY
-      enabled: true
-    -
-      name: feature_ZZZ
-      enabled: false
 ```
 
 ## `spec` Key Detail
