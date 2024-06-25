@@ -17,13 +17,16 @@ limitations under the License.
 package testutil
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 	"strings"
 
+	"github.com/k0sproject/k0s/internal/testutil/fakeclient"
+	k0sfake "github.com/k0sproject/k0s/pkg/client/clientset/fake"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -36,10 +39,9 @@ import (
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/fake"
+	kubernetesfake "k8s.io/client-go/kubernetes/fake"
 	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	restfake "k8s.io/client-go/rest/fake"
 )
 
 var _ kubeutil.ClientFactoryInterface = (*FakeClientFactory)(nil)
@@ -58,21 +60,29 @@ func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
 	// Create a fake discovery client backed by the dynamic fake client.
 	fakeDiscovery := &discoveryfake.FakeDiscovery{Fake: &fakeDynamic.Fake}
 
+	// In order for the typed clients to share the same view of the world as the
+	// dynamic client, they all must share the same (wrapped) object tracker. We
+	// create typed clients using the dynamic client's object tracker and
+	// transform between typed and unstructured objects.
+	tracker := fakeclient.TypedObjectTrackerFrom(scheme, fakeDynamic)
+	kubeClients := fakeclient.NewClientset[kubernetesfake.Clientset](fakeDiscovery, tracker)
+	k0sClients := fakeclient.NewClientset[k0sfake.Clientset](fakeDiscovery, tracker)
+
 	return &FakeClientFactory{
-		Client:          fake.NewSimpleClientset(objects...),
-		DynamicClient:   fakeDynamic,
-		DiscoveryClient: memory.NewMemCacheClient(fakeDiscovery),
-		RawDiscovery:    fakeDiscovery,
-		RESTClient:      &restfake.RESTClient{},
+		DynamicClient:    fakeDynamic,
+		Client:           kubeClients,
+		DiscoveryClient:  memory.NewMemCacheClient(fakeDiscovery),
+		ConfigClient:     k0sClients.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace),
+		EtcdMemberClient: k0sClients.EtcdV1beta1().EtcdMembers(),
 	}
 }
 
 type FakeClientFactory struct {
-	Client          kubernetes.Interface
-	DynamicClient   dynamic.Interface
-	DiscoveryClient discovery.CachedDiscoveryInterface
-	RawDiscovery    *discoveryfake.FakeDiscovery
-	RESTClient      rest.Interface
+	DynamicClient    *dynamicfake.FakeDynamicClient
+	Client           kubernetes.Interface
+	DiscoveryClient  discovery.CachedDiscoveryInterface
+	ConfigClient     k0sv1beta1.ClusterConfigInterface
+	EtcdMemberClient etcdv1beta1.EtcdMemberInterface
 }
 
 func (f *FakeClientFactory) GetClient() (kubernetes.Interface, error) {
@@ -88,18 +98,19 @@ func (f *FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInter
 }
 
 func (f *FakeClientFactory) GetConfigClient() (k0sv1beta1.ClusterConfigInterface, error) {
-	return nil, fmt.Errorf("NOT IMPLEMENTED")
+	return f.ConfigClient, nil
 }
 
 func (f *FakeClientFactory) GetRESTClient() (rest.Interface, error) {
-	return f.RESTClient, nil
+	return nil, errors.ErrUnsupported
 }
-func (f *FakeClientFactory) GetRESTConfig() *rest.Config {
+
+func (f FakeClientFactory) GetRESTConfig() *rest.Config {
 	return &rest.Config{}
 }
 
-func (f *FakeClientFactory) GetEtcdMemberClient() (etcdv1beta1.EtcdMemberInterface, error) {
-	return nil, fmt.Errorf("NOT IMPLEMENTED")
+func (f FakeClientFactory) GetEtcdMemberClient() (etcdv1beta1.EtcdMemberInterface, error) {
+	return f.EtcdMemberClient, nil
 }
 
 // Extracts all kinds from scheme and builds API resource lists for fake discovery clients.
