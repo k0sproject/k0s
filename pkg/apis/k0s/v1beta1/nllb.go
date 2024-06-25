@@ -35,7 +35,7 @@ type NodeLocalLoadBalancing struct {
 	// Kubernetes API servers from worker nodes.
 	// Default: false
 	// +optional
-	Enabled bool `json:"enabled,omitempty"`
+	Enabled bool `json:"enabled"`
 
 	// type indicates the type of the node-local load balancer to deploy on
 	// worker nodes. Currently, the only supported type is "EnvoyProxy".

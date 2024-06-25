@@ -17,12 +17,12 @@ limitations under the License.
 package config
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
@@ -39,12 +39,19 @@ func NewCreateCmd() *cobra.Command {
 				config.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
 			}
 
-			cfg, err := yaml.Marshal(config)
+			var u unstructured.Unstructured
+			if err := k0sscheme.Scheme.Convert(config, &u, nil); err != nil {
+				return err
+			}
+			unstructured.RemoveNestedField(u.Object, "metadata", "creationTimestamp")
+
+			cfg, err := yaml.Marshal(&u)
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "%s", cfg)
-			return nil
+
+			_, err = cmd.OutOrStdout().Write(cfg)
+			return err
 		},
 	}
 	cmd.Flags().BoolVar(&includeImages, "include-images", false, "include the default images in the output")
