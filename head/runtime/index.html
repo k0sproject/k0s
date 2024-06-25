@@ -2179,6 +2179,9 @@ k0s's default containerd configuration. This is to mitigate <a href="https://git
 decision</a> to replace rather than merge individual plugin configuration sections
 from imported configuration files. However, this behavior <a href="https://github.com/containerd/containerd/pull/7347">may</a>
 <a href="https://github.com/containerd/containerd/pull/9982">change</a> in future releases of containerd.</p>
+<p>Please note, that in order for drop-ins in <code>/etc/k0s/containerd.d</code> to take effect on running configuration, <code>/etc/k0s/containerd.toml</code> needs to be k0s managed.</p>
+<p>If you change the first magic line (<code># k0s_managed=true</code>) in the <code>/etc/k0s/containerd.toml</code> (by accident or on purpose), it automatically becomes "not k0s managed". To make it "k0s managed" again, remove <code>/etc/k0s/containerd.toml</code> and restart k0s service on the node, it'll be recreated by k0s.</p>
+<p>To confirm that drop-ins are applied to running configuration, check the content of <code>/run/k0s/containerd-cri.toml</code>, drop-in specific configuration should be present in this file.</p>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
 <p>Following chapters provide some examples how to configure different runtimes for containerd using k0s managed drop-in configurations.</p>
 <h4 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h4>
@@ -2245,32 +2248,23 @@ from imported configuration files. However, this behavior <a href="https://githu
 </code></pre></div>
 </li>
 </ol>
-<h4 id="using-nvidia-container-runtime">Using <code>nvidia-container-runtime</code><a class="headerlink" href="#using-nvidia-container-runtime" title="Permanent link">#</a></h4>
-<p>First, install the NVIDIA runtime components:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">distribution</span><span class="o">=</span><span class="k">$(</span>.<span class="w"> </span>/etc/os-release<span class="p">;</span><span class="nb">echo</span><span class="w"> </span><span class="nv">$ID$VERSION_ID</span><span class="k">)</span><span class="w"> </span><span class="se">\</span>
-<span class="w">   </span><span class="o">&amp;&amp;</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>-L<span class="w"> </span>https://nvidia.github.io/nvidia-docker/gpgkey<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>apt-key<span class="w"> </span>add<span class="w"> </span>-<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span><span class="o">&amp;&amp;</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>-L<span class="w"> </span>https://nvidia.github.io/nvidia-docker/<span class="nv">$distribution</span>/nvidia-docker.list<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/apt/sources.list.d/nvidia-docker.list
-sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>nvidia-container-runtime
+<h4 id="using-nvidia-container-runtime">Using nvidia-container-runtime<a class="headerlink" href="#using-nvidia-container-runtime" title="Permanent link">#</a></h4>
+<p>First, deploy the NVIDIA GPU operator Helm chart with the following commands on top of your k0s cluster:</p>
+<div class="highlight"><pre><span></span><code>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>nvidia<span class="w"> </span>https://helm.ngc.nvidia.com/nvidia
+helm<span class="w"> </span>repo<span class="w"> </span>update
+helm<span class="w"> </span>install<span class="w"> </span>nvidia-gpu-operator<span class="w"> </span>-n<span class="w"> </span>nvidia-gpu-operator<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--create-namespace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>operator.defaultRuntime<span class="o">=</span>containerd<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>toolkit.env<span class="o">[</span><span class="m">0</span><span class="o">]</span>.name<span class="o">=</span>CONTAINERD_CONFIG<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>toolkit.env<span class="o">[</span><span class="m">0</span><span class="o">]</span>.value<span class="o">=</span>/etc/k0s/containerd.d/nvidia.toml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>toolkit.env<span class="o">[</span><span class="m">1</span><span class="o">]</span>.name<span class="o">=</span>CONTAINERD_SOCKET<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>toolkit.env<span class="o">[</span><span class="m">1</span><span class="o">]</span>.value<span class="o">=</span>/run/k0s/containerd.sock<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>toolkit.env<span class="o">[</span><span class="m">2</span><span class="o">]</span>.name<span class="o">=</span>CONTAINERD_RUNTIME_CLASS<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>toolkit.env<span class="o">[</span><span class="m">2</span><span class="o">]</span>.value<span class="o">=</span>nvidia<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>nvidia/gpu-operator
 </code></pre></div>
-<p>Next, drop in the NVIDIA runtime's configuration into into <code>/etc/k0s/containerd.d/nvidia.toml</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">.containerd.runtimes.nvidia]</span>
-<span class="w">    </span><span class="n">privileged_without_host_devices</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="w">    </span><span class="n">runtime_engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
-<span class="w">    </span><span class="n">runtime_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
-<span class="w">    </span><span class="n">runtime_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;io.containerd.runc.v1&quot;</span>
-<span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">.containerd.runtimes.nvidia.options]</span>
-<span class="w">    </span><span class="n">BinaryName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/usr/bin/nvidia-container-runtime&quot;</span>
-</code></pre></div>
-<p>Create the needed <code>RuntimeClass</code>:</p>
-<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | kubectl apply -f -</span>
-<span class="s">apiVersion: node.k8s.io/v1</span>
-<span class="s">kind: RuntimeClass</span>
-<span class="s">metadata:</span>
-<span class="s">  name: nvidia</span>
-<span class="s">handler: nvidia</span>
-<span class="s">EOF</span>
-</code></pre></div>
-<p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2">here</a>.</p>
+<p>With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime.</p>
+<p><strong>Note</strong> Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available <a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html">here</a>.</p>
 <h2 id="using-custom-cri-runtimes">Using custom CRI runtimes<a class="headerlink" href="#using-custom-cri-runtimes" title="Permanent link">#</a></h2>
 <p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
 <p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;url&gt;</code> (the only supported type is <code>remote</code>).</p>
