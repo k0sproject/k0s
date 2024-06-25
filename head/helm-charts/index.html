@@ -1056,6 +1056,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#repository-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repository configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#chart-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       Chart configuration
@@ -2050,6 +2059,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#repository-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repository configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#chart-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       Chart configuration
@@ -2112,6 +2130,58 @@
 <li><code>--wait-for-jobs</code></li>
 </ul>
 <p>It is possible to customize the timeout by using the `timeout' field.</p>
+<h3 id="repository-configuration">Repository configuration<a class="headerlink" href="#repository-configuration" title="Permanent link">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td><em>(required)</em></td>
+<td>The repository name</td>
+</tr>
+<tr>
+<td>url</td>
+<td><em>(required)</em></td>
+<td>The repository URL</td>
+</tr>
+<tr>
+<td>insecure</td>
+<td>true</td>
+<td>Whether to skip TLS certificate checks when connecting to the repository</td>
+</tr>
+<tr>
+<td>caFile</td>
+<td>-</td>
+<td>CA bundle file to use when verifying HTTPS-enabled servers</td>
+</tr>
+<tr>
+<td>certFile</td>
+<td>-</td>
+<td>The TLS certificate file to use for HTTPS client authentication</td>
+</tr>
+<tr>
+<td>keyfile</td>
+<td>-</td>
+<td>The TLS key file to use for HTTPS client authentication</td>
+</tr>
+<tr>
+<td>username</td>
+<td>-</td>
+<td>Username for Basic HTTP authentication</td>
+</tr>
+<tr>
+<td>password</td>
+<td>-</td>
+<td>Password for Basic HTTP authentication</td>
+</tr>
+</tbody>
+</table>
 <h3 id="chart-configuration">Chart configuration<a class="headerlink" href="#chart-configuration" title="Permanent link">#</a></h3>
 <table>
 <thead>
