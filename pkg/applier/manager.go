@@ -150,7 +150,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 				if dir.IsDirectory(event.Name) {
 					m.createStack(ctx, stacks, event.Name)
 				}
-			case fsnotify.Remove:
+			case fsnotify.Remove, fsnotify.Rename:
 				m.removeStack(ctx, stacks, event.Name)
 			}
 
