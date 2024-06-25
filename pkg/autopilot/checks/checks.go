@@ -15,19 +15,22 @@
 package checks
 
 import (
+	"context"
 	"fmt"
-
-	"github.com/sirupsen/logrus"
-	"golang.org/x/mod/semver"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/cli-runtime/pkg/resource"
-	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/static"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/metadata"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/mod/semver"
+	"sigs.k8s.io/yaml"
 )
 
-func CanUpdate(log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInterface, newVersion string) error {
+func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInterface, newVersion string) error {
 	removedAPIs, err := GetRemovedAPIsList()
 	if err != nil {
 		return err
@@ -46,46 +49,42 @@ func CanUpdate(log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInt
 		}
 	}
 
-	restClientGetter := kubernetes.NewRESTClientGetter(clientFactory, log)
-	resourceBuilder := resource.NewBuilder(restClientGetter).
-		Unstructured().
-		ContinueOnError().
-		Flatten().
-		AllNamespaces(true).
-		Latest()
+	metaClient, err := metadata.NewForConfig(clientFactory.GetRESTConfig())
+	if err != nil {
+		return err
+	}
 
 	for _, r := range resources {
-		gv, _ := schema.ParseGroupVersion(r.GroupVersion)
+		gv, err := schema.ParseGroupVersion(r.GroupVersion)
+		if err != nil {
+			log.WithError(err).Warn("Skipping API version ", r.GroupVersion)
+			continue
+		}
+
 		for _, ar := range r.APIResources {
-			gvk := schema.GroupVersionKind{
-				Group:   gv.Group,
-				Version: gv.Version,
-				Kind:    ar.Kind,
+			gv := gv // Copy over the default GroupVersion from the list
+			// Apply resource-specific overrides
+			if ar.Group != "" {
+				gv.Group = ar.Group
+			}
+			if ar.Version != "" {
+				gv.Version = ar.Version
 			}
 
-			removedInVersion, ok := removedAPIs[gvk]
-			if !ok {
+			removedInVersion, ok := removedAPIs[gv.WithKind(ar.Kind)]
+			if !ok || semver.Compare(newVersion, removedInVersion) < 0 {
 				continue
 			}
 
-			if semver.Compare(newVersion, removedInVersion) >= 0 {
-				res := resourceBuilder.ResourceTypeOrNameArgs(true, ar.Kind).Do()
-				infos, err := res.Infos()
-				if err != nil {
-					return err
-				}
+			metas, err := metaClient.Resource(gv.WithResource(ar.Name)).
+				Namespace(metav1.NamespaceAll).
+				List(ctx, metav1.ListOptions{})
+			if err != nil {
+				return err
+			}
 
-				found := 0
-				for _, i := range infos {
-					if gvk == i.Mapping.GroupVersionKind {
-						found++
-					}
-				}
-				if found > 0 {
-					err = fmt.Errorf("%s is removed in Kubernetes %s. There are %d resources of the type in the cluster", gvk.String(), semver.MajorMinor(newVersion), found)
-					logrus.Error(err)
-					return err
-				}
+			if found := len(metas.Items); found > 0 {
+				return fmt.Errorf("%s.%s %s has been removed in Kubernetes %s, but there are %d such resources in the cluster", ar.Name, gv.Group, gv.Version, removedInVersion, found)
 			}
 		}
 	}
