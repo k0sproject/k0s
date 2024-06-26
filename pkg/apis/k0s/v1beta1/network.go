@@ -104,8 +104,8 @@ func (n *Network) Validate() []error {
 	}
 
 	if n.DualStack.Enabled {
-		if n.Provider == "calico" && n.Calico.Mode != "bird" {
-			errors = append(errors, field.Forbidden(field.NewPath("calico", "mode"), "dual-stack for calico is only supported for mode `bird`"))
+		if n.Provider == "calico" && n.Calico.Mode != CalicoModeBIRD {
+			errors = append(errors, field.Forbidden(field.NewPath("calico", "mode"), fmt.Sprintf("dual-stack for calico is only supported for mode `%s`", CalicoModeBIRD)))
 		}
 		_, _, err := net.ParseCIDR(n.DualStack.IPv6PodCIDR)
 		if err != nil {
@@ -118,6 +118,9 @@ func (n *Network) Validate() []error {
 	}
 
 	errors = append(errors, n.KubeProxy.Validate()...)
+	for _, err := range n.Calico.Validate(field.NewPath("calico")) {
+		errors = append(errors, err)
+	}
 	for _, err := range n.NodeLocalLoadBalancing.Validate(field.NewPath("nodeLocalLoadBalancing")) {
 		errors = append(errors, err)
 	}
