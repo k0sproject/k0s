@@ -88,7 +88,7 @@ func (n *WindowsStackComponent) Start(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-timer.C:
-				if err := n.handleWindowsNode(ctx, n.prevRenderingContext); err != nil {
+				if err := n.handleWindowsNode(ctx); err != nil {
 					n.log.Errorf("failed to handle windows node: %v", err)
 				}
 			}
@@ -98,7 +98,7 @@ func (n *WindowsStackComponent) Start(ctx context.Context) error {
 	return nil
 }
 
-func (n *WindowsStackComponent) handleWindowsNode(ctx context.Context, cfg windowsStackRenderingContext) error {
+func (n *WindowsStackComponent) handleWindowsNode(ctx context.Context) error {
 	client, err := n.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("failed to get kube client: %w", err)
