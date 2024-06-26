@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -68,7 +69,7 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
+	verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
 }
 
 func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
@@ -96,7 +97,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
+	verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
 }
 
 func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
@@ -132,7 +133,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
+	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
 	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
 }
 
@@ -168,13 +169,12 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
+	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
 	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
 }
 
-func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, fakeFactory testutil.FakeClientFactory) *corev1.Endpoints {
-	fakeClient, _ := fakeFactory.GetClient()
-	ep, err := fakeClient.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
+func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, clients kubernetes.Interface) *corev1.Endpoints {
+	ep, err := clients.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAddresses, endpointAddressesToStrings(ep.Subsets[0].Addresses))
 
