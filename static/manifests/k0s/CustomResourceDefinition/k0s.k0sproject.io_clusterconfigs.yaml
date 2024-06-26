@@ -447,7 +447,13 @@ spec:
                         type: string
                       mode:
                         default: vxlan
-                        description: vxlan (default) or ipip
+                        description: |-
+                          Indicates the Calico backend to use. Either `bird` or `vxlan`.
+                          The deprecated legacy value `ipip` is also accepted.
+                        enum:
+                        - bird
+                        - vxlan
+                        - ipip
                         type: string
                       mtu:
                         default: 1450
@@ -455,7 +461,9 @@ spec:
                         type: integer
                       overlay:
                         default: Always
-                        description: Overlay Type (Always, Never or CrossSubnet)
+                        description: |-
+                          Overlay Type (Always, Never or CrossSubnet).
+                          Will be ignored in vxlan mode.
                         type: string
                       vxlanPort:
                         default: 4789

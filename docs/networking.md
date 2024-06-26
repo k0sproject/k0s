@@ -28,7 +28,12 @@ Kube-router is built into k0s, and so by default the distribution uses it for ne
 
 ### Calico
 
-In addition to Kube-router, k0s also offers [Calico] as an alternative, built-in network provider. Calico is a layer 3 container networking solution that routes packets to pods. It supports, for example, pod-specific network policies that help to secure kubernetes clusters in demanding use cases. Calico uses the vxlan overlay network by default, and you can configure it to support ipip (IP-in-IP).
+In addition to kube-router, k0s also offers [Calico] as an alternative,
+integrated network provider. Calico is a layer 3 container networking solution
+that routes packets to pods. For example, it supports pod-specific network
+policies that help secure Kubernetes clusters in demanding use cases. Calico in
+k0s uses VXLAN by default. However, IP in IP is also supported via the `bird`
+mode.
 
 - Uses bit more resources
 - Supports Windows nodes
