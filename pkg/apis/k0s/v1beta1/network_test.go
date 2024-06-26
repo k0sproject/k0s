@@ -128,7 +128,7 @@ spec:
 	s.NotNil(n.Calico)
 	s.Equal(4789, n.Calico.VxlanPort)
 	s.Equal(0, n.Calico.MTU)
-	s.Equal("vxlan", n.Calico.Mode)
+	s.Equal(CalicoModeVXLAN, n.Calico.Mode)
 }
 
 func (s *NetworkSuite) TestKubeRouterDefaultsAfterMashaling() {
@@ -242,7 +242,7 @@ func (s *NetworkSuite) TestValidation() {
 	s.T().Run("invalid_ipv6_service_cidr", func(t *testing.T) {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()
-		n.Calico.Mode = "bird"
+		n.Calico.Mode = CalicoModeBIRD
 		n.DualStack = DefaultDualStack()
 		n.DualStack.Enabled = true
 		n.KubeProxy.Mode = "ipvs"
@@ -258,7 +258,7 @@ func (s *NetworkSuite) TestValidation() {
 	s.T().Run("invalid_ipv6_pod_cidr", func(t *testing.T) {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()
-		n.Calico.Mode = "bird"
+		n.Calico.Mode = CalicoModeBIRD
 		n.DualStack = DefaultDualStack()
 		n.DualStack.IPv6PodCIDR = "foobar"
 		n.DualStack.IPv6ServiceCIDR = "fd00::/108"
@@ -284,7 +284,7 @@ func (s *NetworkSuite) TestValidation() {
 	s.T().Run("valid_proxy_disabled_for_dualstack", func(t *testing.T) {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()
-		n.Calico.Mode = "bird"
+		n.Calico.Mode = CalicoModeBIRD
 		n.DualStack = DefaultDualStack()
 		n.DualStack.Enabled = true
 		n.KubeProxy.Disabled = true

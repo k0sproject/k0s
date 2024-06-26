@@ -16,7 +16,12 @@ limitations under the License.
 
 package v1beta1
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"slices"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
+)
 
 // Calico defines the calico related config options
 type Calico struct {
@@ -38,10 +43,11 @@ type Calico struct {
 	// MTU for overlay network (default: 0)
 	MTU int `json:"mtu" yaml:"mtu"`
 
-	// vxlan (default) or ipip
-	Mode string `json:"mode"`
+	// +kubebuilder:default=vxlan
+	Mode CalicoMode `json:"mode"`
 
-	// Overlay Type (Always, Never or CrossSubnet)
+	// Overlay Type (Always, Never or CrossSubnet).
+	// Will be ignored in vxlan mode.
 	Overlay string `json:"overlay" validate:"oneof=Always Never CrossSubnet" `
 
 	// The UDP port for VXLAN (default: 4789)
@@ -51,10 +57,21 @@ type Calico struct {
 	VxlanVNI int `json:"vxlanVNI"`
 }
 
+// Indicates the Calico backend to use. Either `bird` or `vxlan`.
+// The deprecated legacy value `ipip` is also accepted.
+// +kubebuilder:validation:Enum=bird;vxlan;ipip
+type CalicoMode string
+
+const (
+	CalicoModeBIRD  CalicoMode = "bird"
+	CalicoModeVXLAN CalicoMode = "vxlan"
+	CalicoModeIPIP  CalicoMode = "ipip" // Deprecated: Use [CalicoModeBIRD] instead.
+)
+
 // DefaultCalico returns sane defaults for calico
 func DefaultCalico() *Calico {
 	return &Calico{
-		Mode:                    "vxlan",
+		Mode:                    CalicoModeVXLAN,
 		VxlanPort:               4789,
 		VxlanVNI:                4096,
 		MTU:                     0,
@@ -68,7 +85,7 @@ func DefaultCalico() *Calico {
 
 // UnmarshalJSON sets in some sane defaults when unmarshaling the data from JSON
 func (c *Calico) UnmarshalJSON(data []byte) error {
-	c.Mode = "vxlan"
+	c.Mode = CalicoModeVXLAN
 	c.VxlanPort = 4789
 	c.VxlanVNI = 4096
 	c.MTU = 1450
@@ -81,4 +98,20 @@ func (c *Calico) UnmarshalJSON(data []byte) error {
 	type calico Calico
 	jc := (*calico)(c)
 	return json.Unmarshal(data, jc)
+}
+
+func (c *Calico) Validate(path *field.Path) (errs field.ErrorList) {
+	if c == nil {
+		return
+	}
+
+	if c.Mode == "" {
+		errs = append(errs, field.Required(path.Child("mode"), ""))
+	} else if allowed := []CalicoMode{
+		CalicoModeBIRD, CalicoModeVXLAN, CalicoModeIPIP,
+	}; !slices.Contains(allowed, c.Mode) {
+		errs = append(errs, field.NotSupported(path.Child("mode"), c.Mode, allowed))
+	}
+
+	return
 }

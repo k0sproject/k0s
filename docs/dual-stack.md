@@ -20,7 +20,8 @@ spec:
 
 ## CNI Settings: Calico
 
-For cross-pod connectivity, use BIRD for the backend. Calico does not support tunneling for the IPv6, and thus VXLAN and IPIP backends do not work.
+For cross-pod connectivity, use the `bird` mode. Calico does not support IPv6
+tunneling, so the `vxlan` mode will not work.
 
 **Note**: In any Calico mode other than cross-pod, the pods can only reach pods on the same node.
 
