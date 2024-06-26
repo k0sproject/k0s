@@ -42,7 +42,7 @@ type PlanResourceURL struct {
         ArtifactPullSecret *ArtifactPullSecret `json:"artifactPullSecret,omitempty"`
 
         // Insecure indicates whether certificates in the remote URL (if using TLS) can
-        // be ignored, aka InsecureSkipVerify.
+        // be ignored, aka insecureSkipTLSVerify.
         Insecure bool  `json:"insecure,omitempty"`
 }
 ```
