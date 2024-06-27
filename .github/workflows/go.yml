@@ -50,7 +50,7 @@ jobs:
         id: generate-smoketest-matrix
         run: |
           ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
-              'split(" ") | [ .[] | select(. != "") ] | "smoketests=" + tojson' >>$GITHUB_OUTPUT
+              'split(" ") | [ .[] | select(startswith("check-")) | .[6:] ] | "smoketests=" + tojson' >>$GITHUB_OUTPUT
 
       - name: "Generate :: Autopilot test matrix"
         id: generate-autopilot-matrix

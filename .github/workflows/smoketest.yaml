@@ -58,7 +58,9 @@ jobs:
           name: airgap-image-bundle-linux-amd64
 
       - name: Run inttest
-        run: make -C inttest ${{ inputs.name }}
+        env:
+          SMOKETEST_NAME: check-${{ inputs.name }}
+        run: make -C inttest "$SMOKETEST_NAME"
 
       - name: Collect k0s logs and support bundle
         if: failure()
