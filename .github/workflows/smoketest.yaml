@@ -62,7 +62,7 @@ jobs:
           SMOKETEST_NAME: check-${{ inputs.name }}
         run: make -C inttest "$SMOKETEST_NAME"
 
-      - name: Collect k0s logs and support bundle
+      - name: Collect k0s logs, support bundle and conformance test results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -70,10 +70,4 @@ jobs:
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz
-
-      - name: Collect sonobuoy results
-        if: failure() && contains(inputs.name, 'conformance')
-        uses: actions/upload-artifact@v4
-        with:
-          name: smoketest-${{ inputs.name }}-sonobuoy-results
-          path: /tmp/*_sonobuoy_*.tar.gz
+            /tmp/*_sonobuoy_*.tar.gz
