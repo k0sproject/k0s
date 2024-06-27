@@ -111,6 +111,14 @@ jobs:
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
 
+      - name: Upload Release Assets - Airgap Image List
+        uses: shogo82148/actions-upload-release-asset@v1.7.5
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./airgap-images.txt
+          asset_name: airgap-images-list.txt
+          asset_content_type: text/plain
+
       - name: Upload Release Assets - Signature
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
