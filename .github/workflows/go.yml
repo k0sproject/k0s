@@ -222,55 +222,14 @@ jobs:
           - controllerworker
           - ha3x3
 
-    name: "Autopilot tests :: ${{ matrix.version }} :: ${{ matrix.smoke-suite }}"
+    name: "Autopilot test :: ${{ matrix.version }} :: ${{ matrix.smoke-suite }}"
     needs: [prepare, build-k0s]
-    runs-on: ubuntu-22.04
 
-    env:
-      K0S_VERSION: ${{ matrix.version }}
-
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Reclaim runner disk space
-        run: .github/workflows/reclaim-runner-disk-space.bash
-
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Download compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: k0s-linux-amd64
-
-      - name: Download latest release
-        run: |
-          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo "k0s-$K0S_VERSION" "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64"
-          chmod +x "k0s-$K0S_VERSION"
-
-      - name: k0s sysinfo
-        run: |
-          chmod +x k0s
-          ./k0s sysinfo
-
-      - name: Run inttest
-        run: |
-          make -C inttest check-ap-${{ matrix.smoke-suite }} K0S_UPDATE_FROM_BIN="../k0s-$K0S_VERSION"
-
-      - name: Collect k0s logs and support bundle
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: autopilot-tests-${{ matrix.version }}-${{ matrix.smoke-suite }}-files
-          path: |
-            /tmp/*.log
-            /tmp/support-bundle.tar.gz
+    uses: ./.github/workflows/smoketest.yaml
+    with:
+      name: ap-${{ matrix.smoke-suite }}
+      job-name: autopilot-test
+      k0s-reference-version: ${{ matrix.version }}
 
   smoketest-arm:
     name: Smoke test on armv7/arm64

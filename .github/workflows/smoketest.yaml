@@ -10,13 +10,24 @@ on:
         type: string
         required: true
         description: The integration test name to be executed.
+      job-name:
+        type: string
+        default: smoketest
+        description: >-
+          The name to use for the test job.
+          Will be used as a prefix for artifact uploads.
+      k0s-reference-version:
+        type: string
+        description: >-
+          The k0s release version to be used as a reference.
+          Mostly used for Autopilot upgrade checks.
 
 permissions:
   contents: read
 
 jobs:
   smoketest:
-    name: Smoke test
+    name: ${{ inputs.job-name }}
     runs-on: ubuntu-22.04
 
     steps:
@@ -57,6 +68,16 @@ jobs:
         with:
           name: airgap-image-bundle-linux-amd64
 
+      - name: Download k0s reference release
+        if: inputs.k0s-reference-version != ''
+        env:
+          K0S_VERSION: ${{ inputs.k0s-reference-version }}
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSLo "k0s-$K0S_VERSION" --retry 5 --retry-all-errors "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64"
+          chmod +x "k0s-$K0S_VERSION"
+          k0sRealPath="$(realpath "k0s-$K0S_VERSION")"
+          echo K0S_UPDATE_FROM_PATH="$k0sRealPath" >>"$GITHUB_ENV"
+
       - name: Run inttest
         env:
           SMOKETEST_NAME: check-${{ inputs.name }}
@@ -66,7 +87,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: smoketest-${{ inputs.name }}-files
+          name: ${{ inputs.job-name }}-${{ inputs.name }}-files
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz
