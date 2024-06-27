@@ -137,7 +137,7 @@ jobs:
         id: k0sctl
         run: |
           # download k0sctl
-          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo k0sctl "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64"
           chmod +x ./k0sctl
           ./k0sctl apply -c k0sctl.yaml
 

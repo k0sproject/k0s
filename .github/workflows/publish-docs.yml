@@ -38,7 +38,7 @@ jobs:
 
           k0sSortVersion=$(./vars.sh FROM=. k0s_sort_version)
           mkdir -p build/cache/bin
-          curl -sSLo build/cache/bin/k0s_sort --retry 5 --retry-all-errors "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo build/cache/bin/k0s_sort --retry 5 --retry-all-errors "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
           chmod +x build/cache/bin/k0s_sort
           printf '%s\n' "$(realpath build/cache/bin)" >>"$GITHUB_PATH"
 

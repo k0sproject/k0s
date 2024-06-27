@@ -108,7 +108,7 @@ jobs:
           jq --version
 
           mkdir -p "$(dirname -- "$TF_VAR_k0sctl_executable_path")"
-          curl -sSLo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64"
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64"
           chmod +x -- "$TF_VAR_k0sctl_executable_path"
           "$TF_VAR_k0sctl_executable_path" version
 

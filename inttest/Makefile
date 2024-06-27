@@ -4,7 +4,7 @@ K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
 sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v${sonobuoy_version}/sonobuoy_${sonobuoy_version}_$(OS)_$(ARCH).tar.gz
 
-curl = curl -L --silent
+curl = curl --proto '=https' --tlsv1.2 -sSL
 
 bins = bin/sonobuoy
 

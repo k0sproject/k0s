@@ -66,7 +66,7 @@ func (s *controllerworkerSuite) SetupTest() {
 		defer ssh.Disconnect()
 		s.PutFile(nodeName, "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, address, address))
 		// Install older version of k0s
-		downloadCmd := fmt.Sprintf("curl -sSfL get.k0s.sh | K0S_VERSION=%s sh", oldVersion)
+		downloadCmd := fmt.Sprintf("curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | K0S_VERSION=%s sh", oldVersion)
 		out, err := ssh.ExecWithOutput(ctx, downloadCmd)
 		if err != nil {
 			s.T().Logf("error getting k0s: %s", out)
