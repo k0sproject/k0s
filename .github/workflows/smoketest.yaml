@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024 k0s authors
+
+name: Smoke test
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        type: string
+        required: true
+        description: The integration test name to be executed.
+
+permissions:
+  contents: read
+
+jobs:
+  smoketest:
+    name: Smoke test
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Reclaim runner disk space
+        run: .github/workflows/reclaim-runner-disk-space.bash
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Prepare Docker for ipv6 dual-stack tests
+        if: contains(inputs.name, 'dualstack')
+        run: .github/workflows/prepare-docker-ipv6.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Download compiled executable
+        uses: actions/download-artifact@v4
+        with:
+          name: k0s-linux-amd64
+
+      - name: k0s sysinfo
+        run: |
+          chmod +x k0s
+          ./k0s sysinfo
+
+      - name: Download airgap image bundle
+        if: contains(inputs.name, 'airgap')
+        uses: actions/download-artifact@v4
+        with:
+          name: airgap-image-bundle-linux-amd64
+
+      - name: Run inttest
+        run: make -C inttest ${{ inputs.name }}
+
+      - name: Collect k0s logs and support bundle
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoketest-${{ inputs.name }}-files
+          path: |
+            /tmp/*.log
+            /tmp/support-bundle.tar.gz
+
+      - name: Collect sonobuoy results
+        if: failure() && contains(inputs.name, 'conformance')
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoketest-${{ inputs.name }}-sonobuoy-results
+          path: /tmp/*_sonobuoy_*.tar.gz

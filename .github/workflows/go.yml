@@ -206,63 +206,12 @@ jobs:
       matrix:
         smoke-suite: ${{ fromJson(needs.prepare.outputs.smoketest-matrix) }}
 
-    name: "Smoke tests :: ${{ matrix.smoke-suite }}"
+    name: "Smoke test :: ${{ matrix.smoke-suite }}"
     needs: [prepare, build-k0s, build-airgap-image-bundle]
-    runs-on: ubuntu-22.04
 
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Reclaim runner disk space
-        run: .github/workflows/reclaim-runner-disk-space.bash
-
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Prepare docker for ipv6 dual-stack tests
-        if: contains(matrix.smoke-suite, 'dualstack')
-        run: .github/workflows/prepare-docker-ipv6.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Download compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: k0s-linux-amd64
-
-      - name: k0s sysinfo
-        run: |
-          chmod +x k0s
-          ./k0s sysinfo
-
-      - name: Download airgap image bundle
-        if: contains(matrix.smoke-suite, 'airgap')
-        uses: actions/download-artifact@v4
-        with:
-          name: airgap-image-bundle-linux-amd64
-
-      - name: Run inttest
-        run: make -C inttest ${{ matrix.smoke-suite }}
-
-      - name: Collect k0s logs and support bundle
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: smoketests-${{ matrix.smoke-suite }}-files
-          path: |
-            /tmp/*.log
-            /tmp/support-bundle.tar.gz
-
-      - name: Collect sonobuoy results
-        if: failure() && contains(matrix.smoke-suite, 'conformance')
-        uses: actions/upload-artifact@v4
-        with:
-          name: smoketests-${{ matrix.smoke-suite }}-sonobuoy-results
-          path: /tmp/*_sonobuoy_*.tar.gz
+    uses: ./.github/workflows/smoketest.yaml
+    with:
+      name: ${{ matrix.smoke-suite }}
 
   autopilot-tests:
     strategy:
