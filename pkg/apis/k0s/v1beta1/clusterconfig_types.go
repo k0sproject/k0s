@@ -59,8 +59,6 @@ type ClusterConfigStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:validation:Optional
-
 // ClusterConfig is the Schema for the clusterconfigs API
 //
 // +kubebuilder:object:root=true

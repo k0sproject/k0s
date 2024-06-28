@@ -16,31 +16,41 @@ limitations under the License.
 
 package v1beta1
 
+import "k8s.io/utils/ptr"
+
 // KubeRouter defines the kube-router related config options
 type KubeRouter struct {
 	// Auto-detection of used MTU (default: true)
-	AutoMTU bool `json:"autoMTU"`
+	// +kubebuilder:default=true
+	AutoMTU *bool `json:"autoMTU,omitempty"`
 	// Override MTU setting (autoMTU must be set to false)
-	MTU int `json:"mtu"`
+	MTU int `json:"mtu,omitempty"`
 	// Kube-router metrics server port. Set to 0 to disable metrics  (default: 8080)
-	MetricsPort int `json:"metricsPort"`
+	MetricsPort int `json:"metricsPort,omitempty"`
 	// Admits three values: "Enabled" enables it globally, "Allowed" allows but services must be annotated explicitly and "Disabled"
 	// Defaults to "Enabled"
 	// +kubebuilder:default=Enabled
-	Hairpin Hairpin `json:"hairpin"`
-	// DEPRECATED: Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
+	Hairpin Hairpin `json:"hairpin,omitempty"`
+	// Deprecated: Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
+	//+kubebuilder:deprecatedversion:warning="Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)"
 	HairpinMode bool `json:"hairpinMode,omitempty"`
 	// IP masquerade for traffic originating from the pod network, and destined outside of it (default: false)
-	IPMasq bool `json:"ipMasq"`
+	IPMasq bool `json:"ipMasq,omitempty"`
 	// Comma-separated list of global peer addresses
-	// DEPRECATED: Use extraArgs with peerRouterASNs instead
-	PeerRouterASNs string `json:"peerRouterASNs"`
+	// Deprecated: Use extraArgs with peerRouterASNs instead
+	//+kubebuilder:deprecatedversion:warning="Use extraArgs with peerRouterASNs instead"
+	PeerRouterASNs string `json:"peerRouterASNs,omitempty"`
 	// Comma-separated list of global peer ASNs
-	// DEPRECATED: Use extraArgs with peerRouterIPs instead
-	PeerRouterIPs string `json:"peerRouterIPs"`
+	// Deprecated: Use extraArgs with peerRouterIPs instead
+	//+kubebuilder:deprecatedversion:warning="Use extraArgs with peerRouterIPs instead"
+	PeerRouterIPs string `json:"peerRouterIPs,omitempty"`
 	// ExtraArgs are extra arguments to pass to kube-router
 	// Can be also used to override the default k0s managed kube-router arguments
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+}
+
+func (k *KubeRouter) IsAutoMTU() bool {
+	return k == nil || k.AutoMTU == nil || *k.AutoMTU
 }
 
 // +kubebuilder:validation:Enum=Enabled;Allowed;Disabled
@@ -58,7 +68,7 @@ const (
 func DefaultKubeRouter() *KubeRouter {
 	return &KubeRouter{
 		MTU:         0,
-		AutoMTU:     true,
+		AutoMTU:     ptr.To(true),
 		MetricsPort: 8080,
 		Hairpin:     HairpinEnabled,
 	}

@@ -18,7 +18,9 @@ package v1beta1
 
 // DualStack defines network configuration for ipv4\ipv6 mixed cluster setup
 type DualStack struct {
-	Enabled         bool   `json:"enabled,omitempty"`
+	// +kubebuilder:default=false
+	// +optional
+	Enabled         bool   `json:"enabled"`
 	IPv6PodCIDR     string `json:"IPv6podCIDR,omitempty"`
 	IPv6ServiceCIDR string `json:"IPv6serviceCIDR,omitempty"`
 }

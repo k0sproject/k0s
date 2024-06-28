@@ -93,7 +93,7 @@ type UpgradeStrategy struct {
 	// +kubebuilder:validation:Enum=periodic;cron
 	Type string `json:"type,omitempty"`
 	// Cron defines the cron expression for the cron upgrade strategy
-	//+kubebuilder:deprecatedversion:warning="Cron is deprecated and will be removed in 1.29"
+	// Deprecated: Cron is deprecated and will eventually be ignored
 	Cron string `json:"cron,omitempty"`
 	// Periodic defines the periodic upgrade strategy
 	Periodic PeriodicUpgradeStrategy `json:"periodic,omitempty"`

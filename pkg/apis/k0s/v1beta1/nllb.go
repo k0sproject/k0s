@@ -34,6 +34,7 @@ type NodeLocalLoadBalancing struct {
 	// enabled indicates if node-local load balancing should be used to access
 	// Kubernetes API servers from worker nodes.
 	// Default: false
+	// +kubebuilder:default=false
 	// +optional
 	Enabled bool `json:"enabled"`
 

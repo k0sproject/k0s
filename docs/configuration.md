@@ -59,11 +59,8 @@ spec:
   controllerManager: {}
   extensions:
     helm:
-      charts: null
       concurrencyLevel: 5
-      repositories: null
     storage:
-      create_default_storage_class: false
       type: external_storage
   installConfig:
     users:
@@ -76,9 +73,9 @@ spec:
     adminPort: 8133
     agentPort: 8132
   network:
-    calico: null
     clusterDomain: cluster.local
-    dualStack: {}
+    dualStack:
+      enabled: false
     kubeProxy:
       iptables:
         minSyncPeriod: 0s
@@ -94,11 +91,7 @@ spec:
     kuberouter:
       autoMTU: true
       hairpin: Enabled
-      ipMasq: false
       metricsPort: 8080
-      mtu: 0
-      peerRouterASNs: ""
-      peerRouterIPs: ""
     nodeLocalLoadBalancing:
       enabled: false
       envoyProxy:
@@ -111,7 +104,6 @@ spec:
   scheduler: {}
   storage:
     etcd:
-      externalCluster: null
       peerAddress: 192.168.68.104
     type: etcd
   telemetry:
