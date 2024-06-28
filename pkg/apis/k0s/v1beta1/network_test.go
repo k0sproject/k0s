@@ -27,33 +27,33 @@ type NetworkSuite struct {
 }
 
 func (s *NetworkSuite) TestAddresses() {
-	s.T().Run("DNS_default_service_cidr", func(t *testing.T) {
+	s.Run("DNS_default_service_cidr", func() {
 		n := DefaultNetwork()
 		dns, err := n.DNSAddress()
 		s.Require().NoError(err)
 		s.Equal("10.96.0.10", dns)
 	})
-	s.T().Run("DNS_uses_non_default_service_cidr", func(t *testing.T) {
+	s.Run("DNS_uses_non_default_service_cidr", func() {
 		n := DefaultNetwork()
 		n.ServiceCIDR = "10.96.0.248/29"
 		dns, err := n.DNSAddress()
 		s.Require().NoError(err)
 		s.Equal("10.96.0.250", dns)
 	})
-	s.T().Run("Internal_api_address_default", func(t *testing.T) {
+	s.Run("Internal_api_address_default", func() {
 		n := DefaultNetwork()
 		api, err := n.InternalAPIAddresses()
 		s.Require().NoError(err)
 		s.Equal([]string{"10.96.0.1"}, api)
 	})
-	s.T().Run("Internal_api_address_non_default_single_stack", func(t *testing.T) {
+	s.Run("Internal_api_address_non_default_single_stack", func() {
 		n := DefaultNetwork()
 		n.ServiceCIDR = "10.96.0.248/29"
 		api, err := n.InternalAPIAddresses()
 		s.Require().NoError(err)
 		s.Equal([]string{"10.96.0.249"}, api)
 	})
-	s.T().Run("Internal_api_address_non_default_dual_stack", func(t *testing.T) {
+	s.Run("Internal_api_address_non_default_dual_stack", func() {
 		n := DefaultNetwork()
 		n.ServiceCIDR = "10.96.0.248/29"
 		n.DualStack.Enabled = true
@@ -63,18 +63,18 @@ func (s *NetworkSuite) TestAddresses() {
 		s.Equal([]string{"10.96.0.249", "fd00::1"}, api)
 	})
 
-	s.T().Run("BuildServiceCIDR ordering", func(t *testing.T) {
-		t.Run("single_stack_default", func(t *testing.T) {
+	s.Run("BuildServiceCIDR ordering", func() {
+		s.Run("single_stack_default", func() {
 			n := DefaultNetwork()
 			s.Equal(n.ServiceCIDR, n.BuildServiceCIDR("10.96.0.249"))
 		})
-		t.Run("dual_stack_api_listens_on_ipv4", func(t *testing.T) {
+		s.Run("dual_stack_api_listens_on_ipv4", func() {
 			n := DefaultNetwork()
 			n.DualStack.Enabled = true
 			n.DualStack.IPv6ServiceCIDR = "fd00::/108"
 			s.Equal(n.ServiceCIDR+","+n.DualStack.IPv6ServiceCIDR, n.BuildServiceCIDR("10.96.0.249"))
 		})
-		t.Run("dual_stack_api_listens_on_ipv6", func(t *testing.T) {
+		s.Run("dual_stack_api_listens_on_ipv6", func() {
 			n := DefaultNetwork()
 			n.DualStack.Enabled = true
 			n.DualStack.IPv6ServiceCIDR = "fd00::/108"
@@ -194,13 +194,13 @@ spec:
 }
 
 func (s *NetworkSuite) TestValidation() {
-	s.T().Run("defaults_are_valid", func(t *testing.T) {
+	s.Run("defaults_are_valid", func() {
 		n := DefaultNetwork()
 
 		s.Nil(n.Validate())
 	})
 
-	s.T().Run("invalid_provider", func(t *testing.T) {
+	s.Run("invalid_provider", func() {
 		n := DefaultNetwork()
 		n.Provider = "foobar"
 
@@ -209,7 +209,7 @@ func (s *NetworkSuite) TestValidation() {
 		s.Len(errors, 1)
 	})
 
-	s.T().Run("invalid_pod_cidr", func(t *testing.T) {
+	s.Run("invalid_pod_cidr", func() {
 		n := DefaultNetwork()
 		n.PodCIDR = "foobar"
 
@@ -219,7 +219,7 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
-	s.T().Run("invalid_service_cidr", func(t *testing.T) {
+	s.Run("invalid_service_cidr", func() {
 		n := DefaultNetwork()
 		n.ServiceCIDR = "foobar"
 
@@ -229,7 +229,7 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
-	s.T().Run("invalid_cluster_domain", func(t *testing.T) {
+	s.Run("invalid_cluster_domain", func() {
 		n := DefaultNetwork()
 		n.ClusterDomain = ".invalid-cluster-domain"
 
@@ -239,7 +239,7 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
-	s.T().Run("invalid_ipv6_service_cidr", func(t *testing.T) {
+	s.Run("invalid_ipv6_service_cidr", func() {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()
 		n.Calico.Mode = "bird"
@@ -255,7 +255,7 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
-	s.T().Run("invalid_ipv6_pod_cidr", func(t *testing.T) {
+	s.Run("invalid_ipv6_pod_cidr", func() {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()
 		n.Calico.Mode = "bird"
@@ -271,7 +271,7 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
-	s.T().Run("invalid_mode_for_kube_proxy", func(t *testing.T) {
+	s.Run("invalid_mode_for_kube_proxy", func() {
 		n := DefaultNetwork()
 		n.KubeProxy.Mode = "foobar"
 
@@ -281,7 +281,7 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
-	s.T().Run("valid_proxy_disabled_for_dualstack", func(t *testing.T) {
+	s.Run("valid_proxy_disabled_for_dualstack", func() {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()
 		n.Calico.Mode = "bird"

@@ -28,13 +28,13 @@ type APISuite struct {
 }
 
 func (s *APISuite) TestValidation() {
-	s.T().Run("defaults_are_valid", func(t *testing.T) {
+	s.Run("defaults_are_valid", func() {
 		a := DefaultAPISpec()
 
 		s.NoError(errors.Join(a.Validate()...))
 	})
 
-	s.T().Run("accepts_ipv6_as_address", func(t *testing.T) {
+	s.Run("accepts_ipv6_as_address", func() {
 		ipV6Addr := "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
 		a := APISpec{Address: ipV6Addr}
 		a.setDefaults()
@@ -43,7 +43,7 @@ func (s *APISuite) TestValidation() {
 		s.NoError(errors.Join(a.Validate()...))
 	})
 
-	s.T().Run("invalid_api_address", func(t *testing.T) {
+	s.Run("invalid_api_address", func() {
 		a := APISpec{
 			Address: "something.that.is.not.valid//(())",
 		}
@@ -56,7 +56,7 @@ func (s *APISuite) TestValidation() {
 		}
 	})
 
-	s.T().Run("invalid_sans_address", func(t *testing.T) {
+	s.Run("invalid_sans_address", func() {
 		a := APISpec{
 			SANs: []string{
 				"something.that.is.not.valid//(())",

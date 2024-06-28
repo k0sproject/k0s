@@ -23,8 +23,6 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -57,11 +55,11 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 	err = common.WaitForPod(s.Context(), kc, "hairpin-pod", "default")
 	s.Require().NoError(err)
 
-	s.T().Run("check hairpin mode", func(t *testing.T) {
+	s.Run("check hairpin mode", func() {
 		// All done via SSH as it's much simpler :)
 		// e.g. execing via client-go is super complex and would require too much wiring
 		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
-		require.NoError(t, err)
+		s.Require().NoError(err)
 		defer ssh.Disconnect()
 
 		const curl = "k0s kc exec -n default hairpin-pod -c curl -- curl"
@@ -78,16 +76,16 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 				"pod can reach itself via service name",
 			},
 		} {
-			t.Run(test.desc, func(t *testing.T) {
+			s.Run(test.desc, func() {
 				err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
 					output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s --connect-timeout 5 -sS http://%s", curl, test.dnsName))
 					if err != nil {
-						t.Log(output)
+						s.T().Log(output)
 						return false, nil
 					}
-					return assert.Contains(t, output, "Thank you for using nginx."), nil
+					return s.Contains(output, "Thank you for using nginx."), nil
 				})
-				require.NoError(t, err)
+				s.Require().NoError(err)
 			})
 		}
 	})

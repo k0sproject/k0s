@@ -175,7 +175,7 @@ func (s *storageSuite) TestValidation() {
 	}
 
 	for _, tt := range validStorageSpecs {
-		s.T().Run(tt.desc, func(t *testing.T) {
+		s.Run(tt.desc, func() {
 			s.Nil(tt.spec.Validate())
 		})
 	}
@@ -230,7 +230,7 @@ func (s *storageSuite) TestValidation() {
 	}
 
 	for _, tt := range singleValidationErrorCases {
-		s.T().Run(tt.desc, func(t *testing.T) {
+		s.Run(tt.desc, func() {
 			errs := tt.spec.Validate()
 			s.NotNil(errs)
 			s.Len(errs, 1)
@@ -238,7 +238,7 @@ func (s *storageSuite) TestValidation() {
 		})
 	}
 
-	s.T().Run("external_cluster_endpoints_and_etcd_prefix_cannot_be_empty", func(t *testing.T) {
+	s.Run("external_cluster_endpoints_and_etcd_prefix_cannot_be_empty", func() {
 		spec := &StorageSpec{
 			Type: EtcdStorageType,
 			Etcd: &EtcdConfig{
@@ -319,7 +319,7 @@ func (s *storageSuite) TestIsTLSEnabled() {
 	}
 
 	for _, tt := range storageSpecs {
-		s.T().Run(tt.desc, func(t *testing.T) {
+		s.Run(tt.desc, func() {
 			result := tt.spec.Etcd.IsTLSEnabled()
 			s.Equal(result, tt.expectedResult)
 		})

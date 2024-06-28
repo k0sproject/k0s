@@ -137,7 +137,7 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
 
 	// https://github.com/k0sproject/k0s/issues/1202
-	s.T().Run("kubeconfigIncludesExternalAddress", func(t *testing.T) {
+	s.Run("kubeconfigIncludesExternalAddress", func() {
 		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()

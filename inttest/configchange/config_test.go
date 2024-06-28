@@ -97,7 +97,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	defer eventWatch.Stop()
 
-	s.T().Run("changing cni should fail", func(t *testing.T) {
+	s.Run("changing cni should fail", func() {
 		originalConfig, err := cfgClient.Get(s.Context(), "k0s", metav1.GetOptions{})
 		s.Require().NoError(err)
 		newConfig := originalConfig.DeepCopy()
@@ -116,7 +116,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		s.Equal("cannot change CNI provider from kuberouter to calico", event.Message)
 	})
 
-	s.T().Run("setting bad ip address should fail", func(t *testing.T) {
+	s.Run("setting bad ip address should fail", func() {
 		originalConfig, err := cfgClient.Get(context.Background(), "k0s", metav1.GetOptions{})
 		s.Require().NoError(err)
 		newConfig := originalConfig.DeepCopy()
@@ -134,7 +134,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		s.Equal("FailedReconciling", event.Reason)
 	})
 
-	s.T().Run("changing kuberouter MTU should work", func(t *testing.T) {
+	s.Run("changing kuberouter MTU should work", func() {
 		originalConfig, err := cfgClient.Get(context.Background(), "k0s", metav1.GetOptions{})
 		s.Require().NoError(err)
 		newConfig := originalConfig.DeepCopy()

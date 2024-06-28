@@ -77,7 +77,7 @@ func (s *suite) TestStackApplier() {
 		species := client.Resource(sgv.WithResource("species"))
 		assert.NoError(t, watch.Unstructured(species).
 			WithObjectName("hobbit").
-			WithErrorCallback(retryWatchErrors(s.T().Logf)).
+			WithErrorCallback(retryWatchErrors(t.Logf)).
 			Until(ctx, func(item *unstructured.Unstructured) (bool, error) {
 				speciesName, found, err := unstructured.NestedString(item.Object, "spec", "characteristics")
 				if assert.NoError(t, err) && assert.True(t, found, "no characteristics found: %v", item.Object) {
@@ -97,7 +97,7 @@ func (s *suite) TestStackApplier() {
 		characters := client.Resource(sgv.WithResource("characters"))
 		assert.NoError(t, watch.Unstructured(characters.Namespace("shire")).
 			WithObjectName("frodo").
-			WithErrorCallback(retryWatchErrors(s.T().Logf)).
+			WithErrorCallback(retryWatchErrors(t.Logf)).
 			Until(ctx, func(item *unstructured.Unstructured) (bool, error) {
 				speciesName, found, err := unstructured.NestedString(item.Object, "spec", "speciesRef", "name")
 				if assert.NoError(t, err) && assert.True(t, found, "no species found: %v", item.Object) {

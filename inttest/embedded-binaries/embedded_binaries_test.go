@@ -49,7 +49,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	defer sshC1.Disconnect()
 
-	s.T().Run("controller0", func(t *testing.T) {
+	s.Run("controller0", func() {
 		var testCases = []struct {
 			cmd        string
 			checkError bool
@@ -70,7 +70,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 		}
 
 		for _, tc := range testCases {
-			t.Run(tc.cmd, func(_ *testing.T) {
+			s.Run(tc.cmd, func() {
 				out, err := sshC0.ExecWithOutput(s.Context(), fmt.Sprintf("/var/lib/k0s/bin/%s", tc.cmd))
 				if tc.checkError {
 					s.Require().NoError(err, tc.cmd, out)
@@ -82,7 +82,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 		}
 	})
 
-	s.T().Run("controller1", func(t *testing.T) {
+	s.Run("controller1", func() {
 		var testCases = []struct {
 			cmd        string
 			checkError bool
@@ -92,7 +92,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 		}
 
 		for _, tc := range testCases {
-			t.Run("", func(_ *testing.T) {
+			s.Run("", func() {
 				out, err := sshC1.ExecWithOutput(s.Context(), fmt.Sprintf("/var/lib/k0s/bin/%s", tc.cmd))
 				if tc.checkError {
 					s.Require().NoError(err, tc.cmd, out)
