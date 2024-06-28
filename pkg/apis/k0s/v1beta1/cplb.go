@@ -38,7 +38,7 @@ type ControlPlaneLoadBalancingSpec struct {
 	// Default: false
 	// +kubebuilder:default=false
 	// +optional
-	Enabled bool `json:"enabled,omitempty"`
+	Enabled bool `json:"enabled"`
 
 	// type indicates the type of the control plane load balancer to deploy on
 	// controller nodes. Currently, the only supported type is "Keepalived".
@@ -78,7 +78,6 @@ type VRRPInstance struct {
 	// VirtualIPs is the list of virtual IP address used by the VRRP instance.
 	// Each virtual IP must be a CIDR as defined in RFC 4632 and RFC 4291.
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:Required
 	// +listType=set
 	VirtualIPs []string `json:"virtualIPs"`
 
@@ -106,7 +105,6 @@ type VRRPInstance struct {
 	// AuthPass must be 8 characters or less.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=8
-	// +kubebuilder:validation:Required
 	AuthPass string `json:"authPass"`
 }
 
@@ -167,7 +165,6 @@ type VirtualServers []VirtualServer
 // VirtualServer defines the configuration options for a virtual server.
 type VirtualServer struct {
 	// IPAddress is the virtual IP address used by the virtual server.
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	IPAddress string `json:"ipAddress"`
 	// DelayLoop is the delay timer for check polling. DelayLoop accepts

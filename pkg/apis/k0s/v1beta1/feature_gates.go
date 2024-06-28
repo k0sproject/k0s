@@ -35,6 +35,8 @@ var KubernetesComponents = []string{
 }
 
 // FeatureGates collection of feature gate specs
+// +listType=map
+// +listMapKey=name
 type FeatureGates []FeatureGate
 
 // Validate validates all profiles
@@ -86,10 +88,15 @@ func (fgs FeatureGates) AsSliceOfStrings(component string) []string {
 // FeatureGate specifies single feature gate
 type FeatureGate struct {
 	// Name of the feature gate
-	Name string `json:"name,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
 	// Enabled or disabled
-	Enabled bool `json:"enabled,omitempty"`
-	// Components to use feature gate on, if empty `KubernetesComponents` is used as the list
+	Enabled bool `json:"enabled"`
+	// Components to use feature gate on
+	// Default: kube-apiserver, kube-controller-manager, kubelet, kube-scheduler, kube-proxy
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:default={kube-apiserver,kube-controller-manager,kubelet,kube-scheduler,kube-proxy}
+	// +listType=set
 	Components []string `json:"components,omitempty"`
 }
 

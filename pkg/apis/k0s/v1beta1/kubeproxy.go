@@ -32,12 +32,12 @@ const (
 
 // KubeProxy defines the configuration for kube-proxy
 type KubeProxy struct {
-	Disabled           bool                            `json:"disabled,omitempty"`
-	Mode               string                          `json:"mode,omitempty"`
-	MetricsBindAddress string                          `json:"metricsBindAddress,omitempty"`
-	IPTables           *KubeProxyIPTablesConfiguration `json:"iptables,omitempty"`
-	IPVS               *KubeProxyIPVSConfiguration     `json:"ipvs,omitempty"`
-	NodePortAddresses  []string                        `json:"nodePortAddresses,omitempty"`
+	Disabled           bool                           `json:"disabled,omitempty"`
+	Mode               string                         `json:"mode,omitempty"`
+	MetricsBindAddress string                         `json:"metricsBindAddress,omitempty"`
+	IPTables           KubeProxyIPTablesConfiguration `json:"iptables,omitempty"`
+	IPVS               KubeProxyIPVSConfiguration     `json:"ipvs,omitempty"`
+	NodePortAddresses  []string                       `json:"nodePortAddresses,omitempty"`
 }
 
 // KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
@@ -66,33 +66,8 @@ type KubeProxyIPVSConfiguration struct {
 // DefaultKubeProxy creates the default config for kube-proxy
 func DefaultKubeProxy() *KubeProxy {
 	return &KubeProxy{
-		Disabled:           false,
 		Mode:               "iptables",
 		MetricsBindAddress: "0.0.0.0:10249",
-		IPTables:           DefaultKubeProxyIPTables(),
-		IPVS:               DefaultKubeProxyIPVS(),
-	}
-}
-
-func DefaultKubeProxyIPTables() *KubeProxyIPTablesConfiguration {
-	return &KubeProxyIPTablesConfiguration{
-		MasqueradeAll: false,
-		SyncPeriod:    metav1.Duration{Duration: 0},
-		MinSyncPeriod: metav1.Duration{Duration: 0},
-		MasqueradeBit: nil,
-	}
-}
-
-func DefaultKubeProxyIPVS() *KubeProxyIPVSConfiguration {
-	return &KubeProxyIPVSConfiguration{
-		ExcludeCIDRs:  nil,
-		Scheduler:     "",
-		SyncPeriod:    metav1.Duration{Duration: 0},
-		MinSyncPeriod: metav1.Duration{Duration: 0},
-		StrictARP:     false,
-		TCPFinTimeout: metav1.Duration{Duration: 0},
-		TCPTimeout:    metav1.Duration{Duration: 0},
-		UDPTimeout:    metav1.Duration{Duration: 0},
 	}
 }
 

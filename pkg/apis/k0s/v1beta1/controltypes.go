@@ -28,7 +28,9 @@ type CaResponse struct {
 
 // EtcdRequest defines the etcd control api request structure
 type EtcdRequest struct {
-	Node        string `json:"node"`
+	// +kubebuilder:validation:MinLength=1
+	Node string `json:"node"`
+	// +kubebuilder:validation:MinLength=1
 	PeerAddress string `json:"peerAddress"`
 }
 

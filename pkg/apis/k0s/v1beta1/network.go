@@ -31,11 +31,11 @@ var _ Validateable = (*Network)(nil)
 
 // Network defines the network related config options
 type Network struct {
-	Calico    *Calico   `json:"calico"`
+	Calico    *Calico   `json:"calico,omitempty"`
 	DualStack DualStack `json:"dualStack,omitempty"`
 
-	KubeProxy  *KubeProxy  `json:"kubeProxy"`
-	KubeRouter *KubeRouter `json:"kuberouter"`
+	KubeProxy  *KubeProxy  `json:"kubeProxy,omitempty"`
+	KubeRouter *KubeRouter `json:"kuberouter,omitempty"`
 
 	// NodeLocalLoadBalancing defines the configuration options related to k0s's
 	// node-local load balancing feature.
@@ -47,12 +47,17 @@ type Network struct {
 	ControlPlaneLoadBalancing *ControlPlaneLoadBalancingSpec `json:"controlPlaneLoadBalancing,omitempty"`
 
 	// Pod network CIDR to use in the cluster
-	PodCIDR string `json:"podCIDR"`
+	// +kubebuilder:default="10.244.0.0/16"
+	PodCIDR string `json:"podCIDR,omitempty"`
 	// Network provider (valid values: calico, kuberouter, or custom)
-	Provider string `json:"provider"`
+	// +kubebuilder:validation:Enum=kuberouter;calico;custom
+	// +kubebuilder:default=kuberouter
+	Provider string `json:"provider,omitempty"`
 	// Network CIDR to use for cluster VIP services
+	// +kubebuilder:default="10.96.0.0/12"
 	ServiceCIDR string `json:"serviceCIDR,omitempty"`
 	// Cluster Domain
+	// +kubebuilder:default="cluster.local"
 	ClusterDomain string `json:"clusterDomain,omitempty"`
 }
 
@@ -191,13 +196,6 @@ func (n *Network) UnmarshalJSON(data []byte) error {
 
 	if n.KubeProxy == nil {
 		n.KubeProxy = DefaultKubeProxy()
-	} else {
-		if n.KubeProxy.IPTables == nil {
-			n.KubeProxy.IPTables = DefaultKubeProxyIPTables()
-		}
-		if n.KubeProxy.IPVS == nil {
-			n.KubeProxy.IPVS = DefaultKubeProxyIPVS()
-		}
 	}
 
 	return nil

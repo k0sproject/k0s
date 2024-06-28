@@ -120,7 +120,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"enable-ipv4":          "true",
 		// Args from config values
 		"enable-ipv6":  fmt.Sprintf("%t", clusterConfig.Spec.Network.DualStack.Enabled),
-		"auto-mtu":     fmt.Sprintf("%t", clusterConfig.Spec.Network.KubeRouter.AutoMTU),
+		"auto-mtu":     fmt.Sprintf("%t", clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
 		"metrics-port": fmt.Sprintf("%d", clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode": fmt.Sprintf("%t", globalHairpin),
 	}
@@ -137,7 +137,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	args.Merge(clusterConfig.Spec.Network.KubeRouter.ExtraArgs)
 
 	cfg := kubeRouterConfig{
-		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.AutoMTU,
+		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.IsAutoMTU(),
 		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,
 		MetricsPort:       clusterConfig.Spec.Network.KubeRouter.MetricsPort,
 		IPMasq:            clusterConfig.Spec.Network.KubeRouter.IPMasq,

@@ -32,6 +32,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 )
 
 func TestKubeRouterConfig(t *testing.T) {
@@ -41,7 +42,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.AutoMTU = false
+	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
 	cfg.Spec.Network.KubeRouter.MTU = 1450
 	cfg.Spec.Network.KubeRouter.PeerRouterASNs = "12345,67890"
 	cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
@@ -165,7 +166,7 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.AutoMTU = false
+	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
 	cfg.Spec.Network.KubeRouter.MTU = 1234
 	saver := inMemorySaver{}
 	kr := NewKubeRouter(k0sVars, saver)

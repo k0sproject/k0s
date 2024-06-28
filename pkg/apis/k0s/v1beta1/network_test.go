@@ -19,6 +19,8 @@ package v1beta1
 import (
 	"testing"
 
+	"k8s.io/utils/ptr"
+
 	"github.com/stretchr/testify/suite"
 )
 
@@ -127,7 +129,7 @@ spec:
 	s.Equal("calico", n.Provider)
 	s.NotNil(n.Calico)
 	s.Equal(4789, n.Calico.VxlanPort)
-	s.Equal(0, n.Calico.MTU)
+	s.Equal(1450, n.Calico.MTU)
 	s.Equal("vxlan", n.Calico.Mode)
 }
 
@@ -151,7 +153,7 @@ spec:
 	s.NotNil(n.KubeRouter)
 	s.Nil(n.Calico)
 
-	s.True(n.KubeRouter.AutoMTU)
+	s.Equal(ptr.To(true), n.KubeRouter.AutoMTU)
 	s.Equal(0, n.KubeRouter.MTU)
 	s.Empty(n.KubeRouter.PeerRouterASNs)
 	s.Empty(n.KubeRouter.PeerRouterIPs)

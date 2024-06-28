@@ -32,7 +32,10 @@ import (
 
 // ImageSpec container image settings
 type ImageSpec struct {
-	Image   string `json:"image"`
+	// +kubebuilder:validation:MinLength=1
+	Image string `json:"image"`
+
+	// +kubebuilder:validation:Pattern="[\\w][\\w.-]{0,127}"
 	Version string `json:"version"`
 }
 
@@ -63,15 +66,15 @@ func (s *ImageSpec) URI() string {
 
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
-	Konnectivity  ImageSpec `json:"konnectivity"`
-	PushGateway   ImageSpec `json:"pushgateway"`
-	MetricsServer ImageSpec `json:"metricsserver"`
-	KubeProxy     ImageSpec `json:"kubeproxy"`
-	CoreDNS       ImageSpec `json:"coredns"`
-	Pause         ImageSpec `json:"pause"`
+	Konnectivity  ImageSpec `json:"konnectivity,omitempty"`
+	PushGateway   ImageSpec `json:"pushgateway,omitempty"`
+	MetricsServer ImageSpec `json:"metricsserver,omitempty"`
+	KubeProxy     ImageSpec `json:"kubeproxy,omitempty"`
+	CoreDNS       ImageSpec `json:"coredns,omitempty"`
+	Pause         ImageSpec `json:"pause,omitempty"`
 
-	Calico     CalicoImageSpec     `json:"calico"`
-	KubeRouter KubeRouterImageSpec `json:"kuberouter"`
+	Calico     CalicoImageSpec     `json:"calico,omitempty"`
+	KubeRouter KubeRouterImageSpec `json:"kuberouter,omitempty"`
 
 	Repository string `json:"repository,omitempty"`
 
@@ -136,15 +139,15 @@ func (ci *ClusterImages) overrideImageRepositories() {
 
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
-	CNI             ImageSpec `json:"cni"`
-	Node            ImageSpec `json:"node"`
-	KubeControllers ImageSpec `json:"kubecontrollers"`
+	CNI             ImageSpec `json:"cni,omitempty"`
+	Node            ImageSpec `json:"node,omitempty"`
+	KubeControllers ImageSpec `json:"kubecontrollers,omitempty"`
 }
 
 // KubeRouterImageSpec config group for kube-router related images
 type KubeRouterImageSpec struct {
-	CNI          ImageSpec `json:"cni"`
-	CNIInstaller ImageSpec `json:"cniInstaller"`
+	CNI          ImageSpec `json:"cni,omitempty"`
+	CNIInstaller ImageSpec `json:"cniInstaller,omitempty"`
 }
 
 // DefaultClusterImages default image settings

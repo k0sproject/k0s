@@ -26,6 +26,8 @@ import (
 var _ Validateable = (*WorkerProfiles)(nil)
 
 // WorkerProfiles profiles collection
+// +listType=map
+// +listMapKey=name
 type WorkerProfiles []WorkerProfile
 
 // Validate validates all profiles
