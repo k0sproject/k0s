@@ -24,7 +24,6 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -77,9 +76,9 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 		assert.Equal(t, "", out)
 	})
 
-	s.T().Run("k0sStart", func(t *testing.T) {
-		assert := assert.New(t)
-		require := require.New(t)
+	s.Run("k0sStart", func() {
+		assert := s.Assertions
+		require := s.Require()
 
 		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s start")
 		require.NoError(err)
@@ -124,8 +123,8 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	_, err = ssh.ExecWithOutput(s.Context(), "while pidof k0s containerd kubelet; do sleep 0.1s; done")
 	s.Require().NoError(err)
 
-	s.T().Run("k0sReset", func(t *testing.T) {
-		assert := assert.New(t)
+	s.Run("k0sReset", func() {
+		assert := s.Assertions
 		resetOutput, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s reset --debug")
 		s.T().Logf("Reset executed with output:\n%s", resetOutput)
 

@@ -175,15 +175,15 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 	}
 
 	for _, command := range commands {
-		s.T().Run(command.name, func(t *testing.T) {
-			execTest(t, fmt.Sprintf(command.cmdline, "/usr/local/bin/k0s"), command.check)
+		s.Run(command.name, func() {
+			execTest(s.T(), fmt.Sprintf(command.cmdline, "/usr/local/bin/k0s"), command.check)
 		})
 	}
 
 	for _, callingConvention := range kubectlCallingConventions {
 		for _, command := range kubectlCommands {
-			s.T().Run(fmt.Sprint(callingConvention.name, "_", command.name), func(t *testing.T) {
-				execTest(t, fmt.Sprintf(command.cmdline, callingConvention.cmdline), command.check)
+			s.Run(fmt.Sprint(callingConvention.name, "_", command.name), func() {
+				execTest(s.T(), fmt.Sprintf(command.cmdline, callingConvention.cmdline), command.check)
 			})
 		}
 	}
