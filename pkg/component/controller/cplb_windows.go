@@ -27,12 +27,13 @@ import (
 // Keepalived doesn't work on windows, so we cannot implement it at all.
 // Just create the interface so that the CI doesn't complain.
 type Keepalived struct {
-	K0sVars         *config.CfgVars
-	Config          *k0sAPI.KeepalivedSpec
-	DetailedLogging bool
-	LogConfig       bool
-	APIPort         int
-	KubeConfigPath  string
+	K0sVars               *config.CfgVars
+	Config                *k0sAPI.KeepalivedSpec
+	DetailedLogging       bool
+	LogConfig             bool
+	APIPort               int
+	KubeConfigPath        string
+	HasEndpointReconciler bool
 }
 
 func (k *Keepalived) Init(_ context.Context) error {
