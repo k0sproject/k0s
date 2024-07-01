@@ -34,6 +34,11 @@ on:
             "rocky_8", "rocky_9",
             "ubuntu_2004", "ubuntu_2204", "ubuntu_2304"
           ]
+      arch:
+        type: string
+        description: The processor architecture to test.
+        required: true
+        default: amd64
       network-providers:
         type: string
         description: The k0s network providers to test.
@@ -53,20 +58,22 @@ on:
             "ipvs"
           ]
 
+run-name: "OS tests :: ${{ inputs.arch }}"
+
 jobs:
   build:
     name: Build
     if: inputs.k0s-version == ''
     uses: ./.github/workflows/build-k0s.yml
-    with: { target-os: linux, target-arch: amd64 }
+    with: { target-os: linux, target-arch: "${{ inputs.arch }}" }
 
   e2e-tests:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(github.event.inputs.oses) }}
-        network-provider: ${{ fromJSON(github.event.inputs.network-providers) }}
-        kube-proxy-mode: ${{ fromJSON(github.event.inputs.kube-proxy-modes) }}
+        os: ${{ fromJSON(inputs.oses) }}
+        network-provider: ${{ fromJSON(inputs.network-providers) }}
+        kube-proxy-mode: ${{ fromJSON(inputs.kube-proxy-modes) }}
 
     name: "${{ matrix.os }} :: ${{ matrix.network-provider }} :: ${{ matrix.kube-proxy-mode }}"
     needs: build
@@ -77,6 +84,7 @@ jobs:
       e2e-concurrency-level: ${{ fromJSON(inputs.e2e-concurrency-level) }} # infamous GH workflows bug that looses type information (actions/runner#2206)
       e2e-focus: ${{ inputs.e2e-focus }}
       os: ${{ matrix.os }}
+      arch: ${{ inputs.arch }}
       network-provider: ${{ matrix.network-provider }}
       kube-proxy-mode: ${{ matrix.kube-proxy-mode }}
     secrets:
