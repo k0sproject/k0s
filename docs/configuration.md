@@ -63,9 +63,6 @@ spec:
       concurrencyLevel: 5
       charts: null
       repositories: null
-    storage:
-      create_default_storage_class: false
-      type: external_storage
   installConfig:
     users:
       etcdUser: etcd
@@ -525,20 +522,6 @@ In the runtime the image names are calculated as `my.own.repo/calico/kube-contro
 ### `spec.extensions.helm`
 
 `spec.extensions.helm` is the config file key in which you configure the list of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap (for more information, refer to [Helm Charts](helm-charts.md)).
-
-### `spec.extensions.storage`
-
-`spec.extensions.storage` controls bundled storage provider.
-The default value `external` makes no storage deployed.
-
-To enable [embedded host-local storage provider](examples/openebs.md) use the following configuration:
-
-```yaml
-spec:
-  extensions:
-    storage:
-      type: openebs_local_storage
-```
 
 ### `spec.konnectivity`
 
