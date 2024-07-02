@@ -159,6 +159,7 @@ func (c *Command) Start(ctx context.Context) error {
 		Taints:              c.Taints,
 		ExtraArgs:           c.KubeletExtraArgs,
 		IPTablesMode:        c.WorkerOptions.IPTablesMode,
+		DualStackEnabled:    workerConfig.DualStackEnabled,
 	})
 
 	certManager := worker.NewCertificateManager(ctx, kubeletKubeconfigPath)

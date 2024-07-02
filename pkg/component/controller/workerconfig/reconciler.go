@@ -610,6 +610,7 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			Enabled:   r.konnectivityEnabled,
 			AgentPort: snapshot.konnectivityAgentPort,
 		},
+		DualStackEnabled: snapshot.dualStackEnabled,
 	}
 
 	if workerProfile.NodeLocalLoadBalancing != nil &&
