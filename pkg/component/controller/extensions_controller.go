@@ -19,6 +19,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -35,7 +36,7 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
@@ -152,9 +153,10 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExt
 		return nil
 	}
 
+	var errs []error
 	for _, repo := range helmSpec.Repositories {
 		if err := ec.addRepo(repo); err != nil {
-			return fmt.Errorf("can't init repository %q: %w", repo.URL, err)
+			errs = append(errs, fmt.Errorf("can't init repository %q: %w", repo.URL, err))
 		}
 	}
 
@@ -172,13 +174,16 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExt
 		}
 		buf := bytes.NewBuffer([]byte{})
 		if err := tw.WriteToBuffer(buf); err != nil {
-			return fmt.Errorf("can't create chart CR instance %q: %w", chart.ChartName, err)
+			errs = append(errs, fmt.Errorf("can't create chart CR instance %q: %w", chart.ChartName, err))
+			continue
 		}
 		if err := ec.saver.Save(chart.ManifestFileName(), buf.Bytes()); err != nil {
-			return fmt.Errorf("can't save addon CRD manifest for chart CR instance %q: %w", chart.ChartName, err)
+			errs = append(errs, fmt.Errorf("can't save addon CRD manifest for chart CR instance %q: %w", chart.ChartName, err))
+			continue
 		}
 	}
-	return nil
+
+	return errors.Join(errs...)
 }
 
 type ChartReconciler struct {
@@ -198,7 +203,7 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	var chartInstance v1beta1.Chart
 
 	if err := cr.Client.Get(ctx, req.NamespacedName, &chartInstance); err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
