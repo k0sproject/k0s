@@ -19,6 +19,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -204,8 +205,12 @@ func (a *OCIBundleReconciler) unpinOne(ctx context.Context, image images.Image, 
 	// if any of the registered sources is still present, we can't unpin the image.
 	// we just update the image label to remove references to the bundles that no
 	// longer exist.
-	if sources.Exist() {
-		sources.Refresh()
+	if exists, err := sources.Exist(); err != nil {
+		return fmt.Errorf("failed to check if sources exist: %w", err)
+	} else if exists {
+		if err := sources.Refresh(); err != nil {
+			return fmt.Errorf("failed to refresh image sources: %w", err)
+		}
 		if err := SetImageSources(&image, sources); err != nil {
 			return fmt.Errorf("failed to reset image sources: %w", err)
 		}
@@ -337,26 +342,39 @@ type ImageSources map[string]time.Time
 
 // Refresh removes from the list of source paths all the paths that no longer exists
 // or have been modified.
-func (i *ImageSources) Refresh() {
+func (i *ImageSources) Refresh() error {
 	newmap := map[string]time.Time{}
 	for path, modtime := range *i {
 		finfo, err := os.Stat(path)
-		if err == nil && finfo.ModTime().Equal(modtime) {
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return fmt.Errorf("failed to stat %s: %w", path, err)
+		}
+		if finfo.ModTime().Equal(modtime) {
 			newmap[path] = modtime
 		}
 	}
 	*i = newmap
+	return nil
 }
 
 // Exist returns true if a given bundle source file still exists in the node fs.
-func (i *ImageSources) Exist() bool {
+func (i *ImageSources) Exist() (bool, error) {
 	for path, modtime := range *i {
 		finfo, err := os.Stat(path)
-		if err == nil && finfo.ModTime().Equal(modtime) {
-			return true
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return false, fmt.Errorf("failed to stat %s: %w", path, err)
+		}
+		if finfo.ModTime().Equal(modtime) {
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 // GetImageSources parses the image source label and returns the ImageSources. if
@@ -397,7 +415,9 @@ func AddToImageSources(image *images.Image, path string, modtime time.Time) erro
 	if err != nil {
 		return fmt.Errorf("failed to get image sources: %w", err)
 	}
-	paths.Refresh()
+	if err := paths.Refresh(); err != nil {
+		return fmt.Errorf("failed to refresh image sources: %w", err)
+	}
 	paths[path] = modtime
 	return SetImageSources(image, paths)
 }
