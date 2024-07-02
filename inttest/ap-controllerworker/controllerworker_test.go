@@ -31,7 +31,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type controllerworkerSuite struct {
@@ -46,8 +45,6 @@ spec:
     etcd:
       peerAddress: %s
 `
-
-const oldVersion = "v1.29.4+k0s.0"
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
@@ -65,14 +62,7 @@ func (s *controllerworkerSuite) SetupTest() {
 		require.NoError(err)
 		defer ssh.Disconnect()
 		s.PutFile(nodeName, "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, address, address))
-		// Install older version of k0s
-		downloadCmd := fmt.Sprintf("curl -sSfL get.k0s.sh | K0S_VERSION=%s sh", oldVersion)
-		out, err := ssh.ExecWithOutput(ctx, downloadCmd)
-		if err != nil {
-			s.T().Logf("error getting k0s: %s", out)
-		}
-		require.NoError(err)
-		s.T().Logf("downloaded succesfully: %s", out)
+
 		// Note that the token is intentionally empty for the first controller
 		args := []string{
 			"--debug",
@@ -84,7 +74,7 @@ func (s *controllerworkerSuite) SetupTest() {
 			s.PutFile(nodeName, "/tmp/token", joinToken)
 			args = append(args, "--token-file=/tmp/token")
 		}
-		out, err = ssh.ExecWithOutput(ctx, "k0s install controller "+strings.Join(args, " "))
+		out, err := ssh.ExecWithOutput(ctx, "cp -f /dist/k0s /usr/local/bin/k0s && /usr/local/bin/k0s install controller "+strings.Join(args, " "))
 		if err != nil {
 			s.T().Logf("error installing k0s: %s", out)
 		}
@@ -96,10 +86,6 @@ func (s *controllerworkerSuite) SetupTest() {
 		kc, err := s.KubeClient(nodeName)
 		require.NoError(err)
 		require.NoError(s.WaitForNodeReady(nodeName, kc))
-
-		node, err := kc.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
-		require.NoError(err)
-		require.Equal("v1.29.4+k0s", node.Status.NodeInfo.KubeletVersion)
 
 		client, err := s.ExtensionsClient(s.ControllerNode(0))
 		s.Require().NoError(err)
@@ -185,7 +171,8 @@ spec:
 	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
 		nodeName, require := s.ControllerNode(idx), s.Require()
 		require.NoError(s.WaitForNodeReady(nodeName, kc))
-		// Wait till we see kubelet reporting the expected version
+		// Wait till we see kubelet reporting the expected version.
+		// This is only bullet proof if upgrading to _another_ Kubernetes version.
 		err := watch.Nodes(kc.CoreV1().Nodes()).
 			WithObjectName(nodeName).
 			WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
