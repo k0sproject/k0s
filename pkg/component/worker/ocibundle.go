@@ -180,7 +180,7 @@ func (a *OCIBundleReconciler) unpinAll(ctx context.Context) error {
 
 	for _, image := range images {
 		if err := a.unpinOne(ctx, image, isvc); err != nil {
-			return fmt.Errorf("failed to unpin %s: %w", image.Name, err)
+			a.log.WithError(err).Errorf("Failed to unpin image %s", image.Name)
 		}
 	}
 	return nil
