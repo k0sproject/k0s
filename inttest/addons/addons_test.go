@@ -21,14 +21,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
+	"github.com/k0sproject/k0s/pkg/constant"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -55,7 +59,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	fileAddonName := "tgz-addon"
 	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 	as.pullHelmChart(as.ControllerNode(0))
-	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml"))
+	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml", "--enable-dynamic-config"))
 	as.NoError(as.RunWorkers())
 	kc, err := as.KubeClient(as.ControllerNode(0))
 	as.Require().NoError(err)
@@ -66,6 +70,8 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.waitForTestRelease(fileAddonName, "0.6.0", "kube-system", 1)
 
 	as.AssertSomeKubeSystemPods(kc)
+
+	as.Run("Rename chart in Helm extension", func() { as.renameChart(ctx) })
 
 	values := map[string]interface{}{
 		"replicaCount": 2,
@@ -94,7 +100,47 @@ func (as *AddonsSuite) pullHelmChart(node string) {
 	as.Require().NoError(err)
 }
 
-func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
+func (as *AddonsSuite) renameChart(ctx context.Context) {
+	restConfig, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+	k0sClients, err := k0sclientset.NewForConfig(restConfig)
+	as.Require().NoError(err)
+
+	configs := k0sClients.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace)
+	cfg, err := configs.Get(ctx, constant.ClusterConfigObjectName, metav1.GetOptions{})
+	as.Require().NoError(err)
+
+	i := slices.IndexFunc(cfg.Spec.Extensions.Helm.Charts, func(c k0sv1beta1.Chart) bool {
+		return c.Name == "tgz-addon"
+	})
+	as.Require().GreaterOrEqual(i, 0, "Didn't find tgz-addon in %v", cfg.Spec.Extensions.Helm.Charts)
+	cfg.Spec.Extensions.Helm.Charts[i].Name = "tgz-renamed-addon"
+
+	cfg, err = configs.Update(ctx, cfg, metav1.UpdateOptions{FieldManager: as.T().Name()})
+	as.Require().NoError(err)
+	if data, err := yaml.Marshal(cfg); as.NoError(err) {
+		as.T().Logf("%s", data)
+	}
+
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 350*time.Millisecond, true, func(ctx context.Context) (bool, error) {
+		charts, err := k0sClients.HelmV1beta1().Charts(constant.ClusterConfigNamespace).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		hasChart := func(name string) bool {
+			return slices.IndexFunc(charts.Items, func(c helmv1beta1.Chart) bool {
+				return c.Name == name
+			}) >= 0
+		}
+
+		return !hasChart("k0s-addon-chart-tgz-addon") && hasChart("k0s-addon-chart-tgz-renamed-addon"), nil
+	}), "While waiting for Chart resource to be swapped")
+
+	as.waitForTestRelease("tgz-renamed-addon", "0.6.0", "kube-system", 1)
+}
+
+func (as *AddonsSuite) deleteRelease(chart *helmv1beta1.Chart) {
 	ctx := as.Context()
 	as.T().Logf("Deleting chart %s/%s", chart.Namespace, chart.Name)
 	ssh, err := as.SSH(ctx, as.ControllerNode(0))
@@ -131,7 +177,7 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 	as.T().Logf("Expecting chart %s/%s to be deleted", chart.Namespace, chart.Name)
 	var lastResourceVersion string
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
-		var found v1beta1.Chart
+		var found helmv1beta1.Chart
 		err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
 		switch {
 		case err == nil:
@@ -153,13 +199,13 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 }
 
 func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
-	spec := v1beta1.ChartSpec{
+	spec := helmv1beta1.ChartSpec{
 		ChartName:   "whatever",
 		ReleaseName: "nonexistent",
 		Namespace:   "default",
 		Version:     "1",
 	}
-	status := v1beta1.ChartStatus{
+	status := helmv1beta1.ChartStatus{
 		ReleaseName: spec.ReleaseName,
 		Namespace:   spec.Namespace,
 		Version:     spec.Version,
@@ -167,7 +213,7 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 		Revision:    1,
 		ValuesHash:  spec.HashValues(),
 	}
-	chart := &v1beta1.Chart{
+	chart := &helmv1beta1.Chart{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bogus",
 			Namespace:  "kube-system",
@@ -212,7 +258,7 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 	as.T().Logf("Expecting bogus chart %s/%s to be deleted", chart.Namespace, chart.Name)
 	var lastResourceVersion string
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
-		var found v1beta1.Chart
+		var found helmv1beta1.Chart
 		err := crClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
 		switch {
 		case err == nil:
@@ -233,7 +279,7 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 	}))
 }
 
-func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespace string, rev int64) *v1beta1.Chart {
+func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespace string, rev int64) *helmv1beta1.Chart {
 	ctx := as.Context()
 	as.T().Logf("waiting to see %s release ready in kube API, generation %d", addonName, rev)
 
@@ -242,7 +288,7 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 
 	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
 	as.Require().NoError(err)
-	var chart v1beta1.Chart
+	var chart helmv1beta1.Chart
 	var lastResourceVersion string
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		err = chartClient.Get(pollCtx, client.ObjectKey{

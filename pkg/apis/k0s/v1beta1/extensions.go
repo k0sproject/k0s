@@ -18,7 +18,6 @@ package v1beta1
 
 import (
 	"errors"
-	"fmt"
 
 	"helm.sh/helm/v3/pkg/chartutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -100,11 +99,6 @@ type Chart struct {
 	// A duration string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	Timeout metav1.Duration `json:"timeout"`
 	Order   int             `json:"order"`
-}
-
-// ManifestFileName returns filename to use for the crd manifest
-func (c Chart) ManifestFileName() string {
-	return fmt.Sprintf("%d_helm_extension_%s.yaml", c.Order, c.Name)
 }
 
 // Validate performs validation
