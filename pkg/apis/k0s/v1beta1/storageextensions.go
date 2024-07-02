@@ -20,8 +20,10 @@ import "fmt"
 
 // StorageExtenstion specifies cluster default storage
 type StorageExtension struct {
-	Type                      string `json:"type"`
-	CreateDefaultStorageClass bool   `json:"create_default_storage_class"`
+	// +kubebuilder:validation:Enum=external_storage;openebs_local_storage
+	Type string `json:"type"`
+	// +optional
+	CreateDefaultStorageClass bool `json:"create_default_storage_class,omitempty"`
 }
 
 var _ Validateable = (*StorageExtension)(nil)

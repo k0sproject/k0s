@@ -29,14 +29,12 @@ type KonnectivitySpec struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
 	// +kubebuilder:default=8133
-	// +optional
 	AdminPort int32 `json:"adminPort,omitempty"`
 
 	// agent port to listen on (default 8132)
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
 	// +kubebuilder:default=8132
-	// +optional
 	AgentPort int32 `json:"agentPort,omitempty"`
 }
 

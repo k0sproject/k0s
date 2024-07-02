@@ -91,16 +91,12 @@ const (
 )
 
 type JoinCondition struct {
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Enum=Joined
-	Type ConditionType `json:"type"`
-	// +kubebuilder:validation:Required
+	Type   ConditionType   `json:"type"`
 	Status ConditionStatus `json:"status"`
 	// Last time the condition transitioned from one status to another.
-	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 	// Human-readable message indicating details about last transition.
-	// +optional
 	Message string `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
 }
 

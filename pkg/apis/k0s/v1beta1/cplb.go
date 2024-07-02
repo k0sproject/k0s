@@ -38,17 +38,15 @@ type ControlPlaneLoadBalancingSpec struct {
 	// Default: false
 	// +kubebuilder:default=false
 	// +optional
-	Enabled bool `json:"enabled,omitempty"`
+	Enabled bool `json:"enabled"`
 
 	// type indicates the type of the control plane load balancer to deploy on
 	// controller nodes. Currently, the only supported type is "Keepalived".
 	// +kubebuilder:default=Keepalived
-	// +optional
 	Type CPLBType `json:"type,omitempty"`
 
 	// Keepalived contains configuration options related to the "Keepalived" type
 	// of load balancing.
-	// +optional
 	Keepalived *KeepalivedSpec `json:"keepalived,omitempty"`
 }
 
@@ -80,7 +78,6 @@ type VRRPInstance struct {
 	// VirtualIPs is the list of virtual IP address used by the VRRP instance.
 	// Each virtual IP must be a CIDR as defined in RFC 4632 and RFC 4291.
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:Required
 	// +listType=set
 	VirtualIPs []string `json:"virtualIPs"`
 
@@ -95,14 +92,12 @@ type VRRPInstance struct {
 	// network must not use the same VirtualRouterID.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=255
-	// +optional
 	VirtualRouterID int32 `json:"virtualRouterID,omitempty"`
 
 	// AdvertIntervalSeconds is the advertisement interval in seconds. Defaults to 1
 	// second.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default=1
-	// +optional
 	AdvertIntervalSeconds int32 `json:"advertIntervalSeconds,omitempty"`
 
 	// AuthPass is the password for accessing VRRPD. This is not a security
@@ -110,7 +105,6 @@ type VRRPInstance struct {
 	// AuthPass must be 8 characters or less.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=8
-	// +kubebuilder:validation:Required
 	AuthPass string `json:"authPass"`
 }
 
@@ -171,25 +165,21 @@ type VirtualServers []VirtualServer
 // VirtualServer defines the configuration options for a virtual server.
 type VirtualServer struct {
 	// IPAddress is the virtual IP address used by the virtual server.
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	IPAddress string `json:"ipAddress"`
 	// DelayLoop is the delay timer for check polling. DelayLoop accepts
 	// microsecond precision. Further precision will be truncated without
 	// warnings. Defaults to 1m.
 	// +kubebuilder:default="1m"
-	// +optional
 	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
 	// Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
 	// details refer to keepalived documentation.
 	// +kubebuilder:default=rr
-	// +optional
 	LBAlgo KeepalivedLBAlgo `json:"lbAlgo,omitempty"`
 	// LBKind is the load balancing kind. If not specified, defaults to DR.
 	// Valid values are NAT DR TUN. For further details refer to keepalived documentation.
 	// +kubebuilder:default=DR
-	// +optional
 	LBKind KeepalivedLBKind `json:"lbKind,omitempty"`
 	// PersistenceTimeoutSeconds specifies a timeout value for persistent
 	// connections in seconds. PersistentTimeoutSeconds must be in the range of
@@ -197,7 +187,6 @@ type VirtualServer struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=2678400
 	// +kubebuilder:default=360
-	// +optional
 	PersistenceTimeoutSeconds int `json:"persistenceTimeoutSeconds,omitempty"`
 }
 

@@ -244,8 +244,9 @@ spec:
                   this update config
                 properties:
                   cron:
-                    description: Cron defines the cron expression for the cron upgrade
-                      strategy
+                    description: |-
+                      Cron defines the cron expression for the cron upgrade strategy
+                      Deprecated: Cron is deprecated and will eventually be ignored
                     type: string
                   periodic:
                     description: Periodic defines the periodic upgrade strategy
