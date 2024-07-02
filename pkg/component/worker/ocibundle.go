@@ -43,7 +43,7 @@ import (
 const (
 	// Follows a list of labels we use to control imported images.
 	ImagePinnedLabel      = "io.cri-containerd.pinned"
-	ImageSourcePathsLabel = "k0sproject.ocibundle.paths"
+	ImageSourcePathsLabel = "io.k0sproject.ocibundle-paths"
 )
 
 // OCIBundleReconciler tries to import OCI bundle into the running containerd instance
@@ -174,7 +174,7 @@ func (a *OCIBundleReconciler) unpinAll(ctx context.Context) error {
 	isvc := client.ImageService()
 	images, err := isvc.List(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to list images")
+		return fmt.Errorf("failed to list images: %w", err)
 	}
 
 	for _, image := range images {
