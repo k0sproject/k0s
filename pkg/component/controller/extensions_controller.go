@@ -90,16 +90,17 @@ func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0
 	ec.L.Info("Extensions reconciliation started")
 	defer ec.L.Info("Extensions reconciliation finished")
 
+	var errs []error
 	helmSettings, err := ec.configureStorage(clusterConfig)
 	if err != nil {
-		return fmt.Errorf("cannot configure storage: %w", err)
+		errs = append(errs, fmt.Errorf("cannot configure storage: %w", err))
 	}
 
 	if err := ec.reconcileHelmExtensions(helmSettings); err != nil {
-		return fmt.Errorf("can't reconcile helm based extensions: %w", err)
+		errs = append(errs, fmt.Errorf("can't reconcile helm based extensions: %w", err))
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (ec *ExtensionsController) configureStorage(clusterConfig *k0sAPI.ClusterConfig) (*k0sAPI.HelmExtensions, error) {
@@ -171,9 +172,10 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExt
 		return nil
 	}
 
+	var errs []error
 	for _, repo := range helmSpec.Repositories {
 		if err := ec.addRepo(repo); err != nil {
-			return fmt.Errorf("can't init repository %q: %w", repo.URL, err)
+			errs = append(errs, fmt.Errorf("can't init repository %q: %w", repo.URL, err))
 		}
 	}
 
@@ -191,13 +193,16 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExt
 		}
 		buf := bytes.NewBuffer([]byte{})
 		if err := tw.WriteToBuffer(buf); err != nil {
-			return fmt.Errorf("can't create chart CR instance %q: %w", chart.ChartName, err)
+			errs = append(errs, fmt.Errorf("can't create chart CR instance %q: %w", chart.ChartName, err))
+			continue
 		}
 		if err := ec.saver.Save(chart.ManifestFileName(), buf.Bytes()); err != nil {
-			return fmt.Errorf("can't save addon CRD manifest for chart CR instance %q: %w", chart.ChartName, err)
+			errs = append(errs, fmt.Errorf("can't save addon CRD manifest for chart CR instance %q: %w", chart.ChartName, err))
+			continue
 		}
 	}
-	return nil
+
+	return errors.Join(errs...)
 }
 
 type ChartReconciler struct {
