@@ -26,6 +26,13 @@ data "aws_ami" "ubuntu_2004" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Ubuntu 20.04 LTS."
+    }
+  }
 }
 
 locals {

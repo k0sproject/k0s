@@ -20,6 +20,10 @@ on:
         type: string
         description: The operating system to test.
         required: true
+      arch:
+        type: string
+        description: The processor architecture to test.
+        default: amd64
       network-provider:
         type: string
         description: The k0s network provider to test.
@@ -96,11 +100,12 @@ jobs:
         if: inputs.k0s-version == ''
         uses: actions/download-artifact@v4
         with:
-          name: k0s-linux-amd64
+          name: k0s-linux-${{ inputs.arch }}
           path: ${{ github.workspace }}/.cache
 
       - name: "Terraform :: Requisites :: Prepare"
         env:
+          OSTESTS_ARCH: ${{ inputs.arch }}
           K0S_VERSION: ${{ inputs.k0s-version }}
           K0S_EXECUTABLE_PATH: ${{ github.workspace }}/.cache/k0s
         run: |
@@ -118,6 +123,9 @@ jobs:
             echo TF_VAR_k0s_executable_path="$K0S_EXECUTABLE_PATH" >>"$GITHUB_ENV"
           fi
 
+          if [ "$OSTESTS_ARCH" != amd64 ]; then
+            echo TF_VAR_arch="$OSTESTS_ARCH" >>"$GITHUB_ENV"
+          fi
           echo TF_VAR_k0s_version="$K0S_VERSION" >>"$GITHUB_ENV"
 
       - name: "Terraform :: Setup"
@@ -210,7 +218,7 @@ jobs:
         if: always() && (steps.e2e-retrieve-parallel.conclusion == 'success' || steps.e2e-retrieve-serial.conclusion == 'success')
         uses: actions/upload-artifact@v4
         with:
-          name: ostests-e2e-${{ inputs.os }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-sonobuoy-results
+          name: ostests-e2e-${{ inputs.os }}-${{ inputs.arch }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-sonobuoy-results
           path: |
             inttest/sonobuoy-e2e-parallel.tar.gz
             inttest/sonobuoy-e2e-serial.tar.gz
@@ -233,5 +241,5 @@ jobs:
         if: always() && steps.tf-init.conclusion == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: ostests-e2e-${{ inputs.os }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-k0sctl-logs
+          name: ostests-e2e-${{ inputs.os }}-${{ inputs.arch }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-k0sctl-logs
           path: ~/.cache/k0sctl/k0sctl.log

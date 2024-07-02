@@ -28,6 +28,13 @@ data "aws_ami" "alpine_3_17" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Alpine Linux 3.17."
+    }
+  }
 }
 
 locals {

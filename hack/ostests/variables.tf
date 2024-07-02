@@ -35,6 +35,12 @@ variable "os" {
   description = "The underlying OS for the to-be-provisioned cluster."
 }
 
+variable "arch" {
+  type        = string
+  description = "The underlying processor architecture for the to-be-provisioned cluster."
+  default     = "x86_64"
+}
+
 variable "k0sctl_skip" {
   type        = bool
   description = "Skip k0s provisoning altogether."

@@ -27,6 +27,13 @@ data "aws_ami" "oracle_8_7" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Oracle Linux Server 8.7."
+    }
+  }
 }
 
 locals {

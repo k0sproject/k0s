@@ -26,6 +26,13 @@ data "aws_ami" "centos_7" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for CentOS Linux 7 (Core)."
+    }
+  }
 }
 
 locals {

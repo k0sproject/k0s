@@ -18,13 +18,28 @@ env:
 jobs:
   build:
     name: ${{ inputs.target-os }}-${{ inputs.target-arch }}
-    runs-on: ubuntu-22.04
+    runs-on: >-
+      ${{
+           inputs.target-arch == 'arm'   && fromJSON('["self-hosted", "linux", "arm"]')
+        || inputs.target-arch == 'arm64' && fromJSON('["self-hosted", "linux", "arm64"]')
+        || 'ubuntu-22.04'
+      }}
 
     env:
       TARGET_OS: ${{ inputs.target-os }}
       TARGET_ARCH: ${{ inputs.target-arch }}
 
     steps:
+      - name: Set up Docker Context for Buildx
+        if: inputs.target-arch != 'amd64'
+        run: docker context create builders
+
+      - name: Set up Docker Buildx
+        if: inputs.target-arch != 'amd64'
+        uses: docker/setup-buildx-action@v3
+        with:
+          endpoint: builders
+
       - name: "Build :: Checkout"
         uses: actions/checkout@v4
         with:

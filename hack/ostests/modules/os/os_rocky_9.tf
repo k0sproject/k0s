@@ -26,6 +26,13 @@ data "aws_ami" "rocky_9" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Rocky Linux 9.2 (Blue Onyx)."
+    }
+  }
 }
 
 locals {
