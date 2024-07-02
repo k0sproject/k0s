@@ -356,13 +356,22 @@ spec:
                         description: Host's IPv6 Auto-detection method for Calico
                         type: string
                       mode:
-                        description: vxlan (default) or ipip
+                        default: vxlan
+                        description: |-
+                          Indicates the Calico backend to use. Either `bird` or `vxlan`.
+                          The deprecated legacy value `ipip` is also accepted.
+                        enum:
+                        - bird
+                        - vxlan
+                        - ipip
                         type: string
                       mtu:
                         description: 'MTU for overlay network (default: 0)'
                         type: integer
                       overlay:
-                        description: Overlay Type (Always, Never or CrossSubnet)
+                        description: |-
+                          Overlay Type (Always, Never or CrossSubnet).
+                          Will be ignored in vxlan mode.
                         type: string
                       vxlanPort:
                         description: 'The UDP port for VXLAN (default: 4789)'

@@ -53,13 +53,20 @@ type Calico struct {
 	k0sVars    *config.CfgVars
 }
 
+type calicoMode string
+
+const (
+	calicoModeBIRD  calicoMode = "bird"
+	calicoModeVXLAN calicoMode = "vxlan"
+)
+
 type manifestsSaver interface {
 	Save(dst string, content []byte) error
 }
 
 type calicoConfig struct {
 	MTU                  int
-	Mode                 string
+	Mode                 calicoMode
 	VxlanPort            int
 	VxlanVNI             int
 	ClusterCIDRIPv4      string
@@ -186,7 +193,6 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 	}
 	config := calicoConfig{
 		MTU:                        clusterConfig.Spec.Network.Calico.MTU,
-		Mode:                       clusterConfig.Spec.Network.Calico.Mode,
 		VxlanPort:                  clusterConfig.Spec.Network.Calico.VxlanPort,
 		VxlanVNI:                   clusterConfig.Spec.Network.Calico.VxlanVNI,
 		EnableWireguard:            clusterConfig.Spec.Network.Calico.EnableWireguard,
@@ -202,6 +208,15 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		IPAutodetectionMethod:      clusterConfig.Spec.Network.Calico.IPAutodetectionMethod,
 		IPV6AutodetectionMethod:    ipv6AutoDetectionMethod,
 		PullPolicy:                 clusterConfig.Spec.Images.DefaultPullPolicy,
+	}
+
+	switch clusterConfig.Spec.Network.Calico.Mode {
+	case v1beta1.CalicoModeBIRD, v1beta1.CalicoModeIPIP:
+		config.Mode = calicoModeBIRD
+	case v1beta1.CalicoModeVXLAN:
+		config.Mode = calicoModeVXLAN
+	default:
+		return config, fmt.Errorf("unsupported mode: %q", clusterConfig.Spec.Network.Calico.Mode)
 	}
 
 	return config, nil
@@ -231,7 +246,7 @@ func (c *Calico) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error 
 	})
 	newConfig, err := c.getConfig(cfg)
 	if err != nil {
-		return err
+		return fmt.Errorf("while generating Calico configuration: %w", err)
 	}
 	if !reflect.DeepEqual(newConfig, c.prevConfig) {
 		if err := c.processConfigChanges(newConfig); err != nil {
