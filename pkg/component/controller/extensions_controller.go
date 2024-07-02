@@ -17,11 +17,14 @@ limitations under the License.
 package controller
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -59,24 +62,24 @@ import (
 
 // Helm watch for Chart crd
 type ExtensionsController struct {
-	saver         manifestsSaver
 	L             *logrus.Entry
 	helm          *helm.Commands
 	kubeConfig    string
 	leaderElector leaderelector.Interface
+	manifestsDir  string
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(s manifestsSaver, k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
+func NewExtensionsController(k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
-		saver:         s,
 		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
 		helm:          helm.NewCommands(k0sVars),
 		kubeConfig:    k0sVars.AdminKubeConfigPath,
 		leaderElector: leaderElector,
+		manifestsDir:  filepath.Join(k0sVars.ManifestsDir, "helm"),
 	}
 }
 
@@ -178,8 +181,13 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.Hel
 		}
 	}
 
+	var fileNamesToKeep []string
 	for _, chart := range helmSpec.Charts {
+		fileName := chartManifestFileName(&chart)
+		fileNamesToKeep = append(fileNamesToKeep, fileName)
+
 		tw := templatewriter.TemplateWriter{
+			Path:     filepath.Join(ec.manifestsDir, fileName),
 			Name:     "addon_crd_manifest",
 			Template: chartCrdTemplate,
 			Data: struct {
@@ -190,15 +198,35 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.Hel
 				Finalizer: finalizerName,
 			},
 		}
-		buf := bytes.NewBuffer([]byte{})
-		if err := tw.WriteToBuffer(buf); err != nil {
-			errs = append(errs, fmt.Errorf("can't create chart CR instance %q: %w", chart.ChartName, err))
+		if err := tw.Write(); err != nil {
+			errs = append(errs, fmt.Errorf("can't write file for Helm chart manifest %q: %w", chart.ChartName, err))
 			continue
 		}
-		if err := ec.saver.Save(chartManifestFileName(&chart), buf.Bytes()); err != nil {
-			errs = append(errs, fmt.Errorf("can't save addon CRD manifest for chart CR instance %q: %w", chart.ChartName, err))
-			continue
+
+		ec.L.Infof("Wrote Helm chart manifest file %q", tw.Path)
+	}
+
+	if err := filepath.WalkDir(ec.manifestsDir, func(path string, entry fs.DirEntry, err error) error {
+		switch {
+		case !entry.Type().IsRegular():
+			ec.L.Debugf("Keeping %v as it is not a regular file", entry)
+		case slices.Contains(fileNamesToKeep, entry.Name()):
+			ec.L.Debugf("Keeping %v as it belongs to a known Helm extension", entry)
+		case !isChartManifestFileName(entry.Name()):
+			ec.L.Debugf("Keeping %v as it is not a Helm chart manifest file", entry)
+		default:
+			if err := os.Remove(path); err != nil {
+				if !errors.Is(err, os.ErrNotExist) {
+					errs = append(errs, fmt.Errorf("failed to remove Helm chart manifest file, the Chart resource will remain in the cluster: %w", err))
+				}
+			} else {
+				ec.L.Infof("Removed Helm chart manifest file %q", path)
+			}
 		}
+
+		return nil
+	}); err != nil {
+		errs = append(errs, fmt.Errorf("failed to walk Helm chart manifest directory: %w", err))
 	}
 
 	return errors.Join(errs...)
@@ -207,6 +235,11 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.Hel
 // Determines the file name to use when storing a chart as a manifest on disk.
 func chartManifestFileName(c *k0sv1beta1.Chart) string {
 	return fmt.Sprintf("%d_helm_extension_%s.yaml", c.Order, c.Name)
+}
+
+// Determines if the given file name is in the format for chart manifest file names.
+func isChartManifestFileName(fileName string) bool {
+	return regexp.MustCompile(`^-?[0-9]+_helm_extension_.+\.yaml$`).MatchString(fileName)
 }
 
 type ChartReconciler struct {

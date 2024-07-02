@@ -223,4 +223,5 @@ func TestChartManifestFileName(t *testing.T) {
 	assert.Equal(t, chartManifestFileName(&chart), "0_helm_extension_release.yaml")
 	assert.Equal(t, chartManifestFileName(&chart1), "1_helm_extension_release.yaml")
 	assert.Equal(t, chartManifestFileName(&chart2), "2_helm_extension_release.yaml")
+	assert.True(t, isChartManifestFileName("0_helm_extension_release.yaml"))
 }
