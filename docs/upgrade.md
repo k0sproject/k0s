@@ -22,7 +22,7 @@ sudo k0s stop
 Now you can replace the old k0s binary file. The easiest way is to use the download script. It will download the latest k0s binary and replace the old binary with it. You can also do this manually without the download script.
 
 ```shell
-curl -sSLf https://get.k0s.sh | sudo sh
+curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
 ```
 
 Then you can start the service (with the upgraded k0s) and your upgrade is done.

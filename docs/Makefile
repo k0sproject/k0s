@@ -49,7 +49,7 @@ k0s k0s.exe::
 	touch -- '$@.etag'
 	@downloadUrl="$$($(MAKE) --no-print-directory -s '.$@-download-url')" \
 	  && echo "Download URL for $@ $(TARGET_VERSION): $$downloadUrl" \
-	  && curl -Lo '$@.tmp' --etag-compare '$@.etag' --etag-save '$@.etag.tmp' -- "$$downloadUrl"
+	  && curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -Lfo '$@.tmp' --etag-compare '$@.etag' --etag-save '$@.etag.tmp' -- "$$downloadUrl"
 	if [ -f '$@.tmp' ]; then \
 	  mv -- '$@.tmp' '$@' && touch -r '$@' -- '$@.etag.tmp'; \
 	fi

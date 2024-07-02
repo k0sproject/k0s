@@ -135,7 +135,7 @@ Use the k0s download script (as one command) to download the latest stable k0s
 and make it executable in `/usr/bin/k0s`.
 
 ```shell
-curl -sSLf https://get.k0s.sh | sudo sh
+curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
 ```
 
 At this point you can run `k0s`:
