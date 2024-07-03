@@ -41,9 +41,9 @@ type PlanResourceURL struct {
         // URL using any of the supported protocols (http, https, and oci).
         ArtifactPullSecret *ArtifactPullSecret `json:"artifactPullSecret,omitempty"`
 
-        // Insecure indicates whether certificates in the remote URL (if using TLS) can
-        // be ignored, aka InsecureSkipVerify.
-        Insecure bool  `json:"insecure,omitempty"`
+        // InsecureSkipTLSVerify indicates whether certificates in the remote URL (if using
+        // TLS) can be ignored.
+        InsecureSkipTLSVerify bool  `json:"insecureSkipTLSVerify,omitempty"`
 }
 ```
 
@@ -118,8 +118,8 @@ data:
 
 ### Additional Details
 
-- The `Insecure` property is equivalent of defining `InsecureSkipVerify` on a Go HTTP client.
-- The `Insecure` property will be valid for both `oci://` and `https://` protocols.
+- The `InsecureSkipTLSVerify` property is equivalent of defining `InsecureSkipTLSVerify` on a Go HTTP client.
+- The `InsecureSkipTLSVerify` property will be valid for both `oci://` and `https://` protocols.
 - If no protocol is defined, HTTP is used.
 - If no `ArtifactPullSecret` is defined, access will be anonymous (no authentication).
 
