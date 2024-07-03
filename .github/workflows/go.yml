@@ -269,8 +269,11 @@ jobs:
       fail-fast: false
       matrix:
         version: ${{fromJson(needs.prepare.outputs.autopilot-matrix)}}
+        smoke-suite:
+          - controllerworker
+          - ha3x3
 
-    name: "Autopilot tests :: ${{ matrix.version }}"
+    name: "Autopilot tests :: ${{ matrix.version }} :: ${{ matrix.smoke-suite }}"
     needs: [prepare, build-k0s]
     runs-on: ubuntu-22.04
 
@@ -309,13 +312,13 @@ jobs:
 
       - name: Run inttest
         run: |
-          make -C inttest check-ap-ha3x3 K0S_UPDATE_FROM_BIN="../k0s-$K0S_VERSION"
+          make -C inttest check-ap-${{ matrix.smoke-suite }} K0S_UPDATE_FROM_BIN="../k0s-$K0S_VERSION"
 
       - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: autopilot-tests-${{ matrix.version }}-files
+          name: autopilot-tests-${{ matrix.version }}-${{ matrix.smoke-suite }}-files
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz
