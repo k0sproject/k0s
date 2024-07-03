@@ -26,6 +26,13 @@ data "aws_ami" "rhel_7" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Red Hat Enterprise Linux Server 7.9 (Maipo)."
+    }
+  }
 }
 
 locals {

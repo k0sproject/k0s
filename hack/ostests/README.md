@@ -49,6 +49,7 @@ other ways described [here][tf-config].
 
 ```shell
 export TF_VAR_os=alpine_3_17
+export TF_VAR_arch=x86_64
 export TF_VAR_k0s_version=stable
 export TF_VAR_k0s_network_provider=calico
 export TF_VAR_k0s_kube_proxy_mode=ipvs
@@ -89,6 +90,14 @@ terraform apply
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2304`: Ubuntu 23.04
+
+### `arch`: Node architecture
+
+The underlying processor architecture for the to-be-provisioned cluster. Note
+that not all operating systems support all architectures.
+
+* `x86_64`
+* `arm64`
 
 ### `k0sctl_skip`: Skip k0s provisioning altogether
 

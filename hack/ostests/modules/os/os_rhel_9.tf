@@ -26,6 +26,13 @@ data "aws_ami" "rhel_9" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.arch == "x86_64"
+      error_message = "Unsupported architecture for Red Hat Enterprise Linux 9.0 (Plow)."
+    }
+  }
 }
 
 locals {

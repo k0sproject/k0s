@@ -9,8 +9,9 @@ resource "aws_key_pair" "ssh" {
 
 locals {
   default_node_config = {
-    instance_type = "t3a.small"
-  }
+    x86_64 = { instance_type = "t3a.small" }
+    arm64  = { instance_type = "t4g.small" }
+  }[var.os.arch]
 
   node_roles = {
     controller = {
