@@ -132,13 +132,12 @@ func (k *Kubelet) Init(_ context.Context) error {
 	return nil
 }
 
-func getIPs(ctx context.Context, hostname string) (net.IP, net.IP, error) {
+func lookupHostname(ctx context.Context, hostname string) (ipv4 net.IP, ipv6 net.IP, _ error) {
 	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, hostname)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var ipv4, ipv6 net.IP
 	for _, addr := range ipaddrs {
 		if ipv4 == nil && addr.IP.To4() != nil {
 			ipv4 = addr.IP
@@ -195,14 +194,18 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	extras := flags.Split(k.ExtraArgs)
 	nodename, err := node.GetNodename(extras["--hostname-override"])
 	if err != nil {
-		return fmt.Errorf("failed to get hostname: %w", err)
+		return fmt.Errorf("failed to get nodename: %w", err)
 	}
 
 	if k.DualStackEnabled && extras["--node-ip"] == "" {
-		ipv4, ipv6, err := getIPs(ctx, nodename)
+		// Kubelet uses hostname lookup to autodetect the ip address, but
+		// will only pick one for a single family. Do something similar as
+		// kubelet but for both ipv6 and ipv6.
+		// https://github.com/kubernetes/kubernetes/blob/0cc57258c3f8545c8250f0e7a1307fd01b0d283d/pkg/kubelet/nodestatus/setters.go#L196
+		ipv4, ipv6, err := lookupHostname(ctx, nodename)
 		if err != nil {
-			logrus.WithError(err).Infof("failed to get ip address of node %s", nodename)
-		} else if err == nil && ipv4 != nil && ipv6 != nil {
+			logrus.WithError(err).Errorf("failed to lookup %q", nodename)
+		} else if ipv4 != nil && ipv6 != nil {
 			args["--node-ip"] = ipv4.String() + "," + ipv6.String()
 		}
 	}
