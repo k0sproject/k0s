@@ -415,7 +415,6 @@ func (c *command) start(ctx context.Context) error {
 		}
 		clusterComponents.Add(ctx, controller.NewCRD(helmSaver, "helm"))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
-			helmSaver,
 			c.K0sVars,
 			adminClientFactory,
 			leaderElector,
