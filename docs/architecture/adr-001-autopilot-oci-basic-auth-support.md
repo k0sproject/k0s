@@ -39,7 +39,7 @@ type PlanResourceURL struct {
         // ArtifactPullSecrets holds a reference to a secret where the credentials are
         // stored. We use these credentials when pulling the artifacts from the provided
         // URL using any of the supported protocols (http, https, and oci).
-        ArtifactPullSecret *ArtifactPullSecret `json:"artifactPullSecret,omitempty"`
+        ArtifactPullSecret *corev1.SecretReference `json:"artifactPullSecret,omitempty"`
 
         // InsecureSkipTLSVerify indicates whether certificates in the remote URL (if using
         // TLS) can be ignored.
@@ -47,19 +47,7 @@ type PlanResourceURL struct {
 }
 ```
 
-The `ArtifactPullSecret` property will be added and its struct will be defined as follow:
-
-```go
-type ArtifactPullSecret struct {
-      // Namespace of the secret.
-      Namespace string `json:"namespace"`
-
-      // Name of the secret.
-      Name string `json:"name"`
-}
-```
-
-The secret pointed by the provided `ArtifactPullSecret` will be used for pulling artifacts using either HTTP[S] or OCI protocols and is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` or of type `Opaque` if protocols `http://` or `https://` are used (see below for details on the Secret layout).
+`ArtifactPullSecret` property is of type `SecretReference` as defined by `k8s.io/api/core/v1` package. The secret pointed by the provided `ArtifactPullSecret` will be used for pulling artifacts using either HTTP[S] or OCI protocols and is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` or of type `Opaque` if protocols `http://` or `https://` are used (see below for details on the Secret layout).
 
 Example configuration for OCI:
 
@@ -130,7 +118,6 @@ Proposed
 ## Consequences
 
 - Users will have an additional protocol to be aware of.
-- Introduction of a new type (`ArtifactPullSecret`) when ideally existing types could be reused.
 - If the Secret referenced by `ArtifactPullSecret` does not exist, the download will fail.
 - Users need to be notified about different failure types (e.g., unreadable secret, invalid secret).
 - Additional configuration is required to handle authentication, ensuring secure access to resources.
