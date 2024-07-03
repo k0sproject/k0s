@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -63,6 +64,12 @@ type ExtensionsController struct {
 	kubeConfig    string
 	leaderElector leaderelector.Interface
 	manifestsDir  string
+	startChan     chan struct{}
+	mux           sync.Mutex
+	mgr           crman.Manager
+	mgrCtx        context.Context
+	mgrCancelFn   context.CancelFunc
+	controllerCtx context.Context
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
@@ -407,9 +414,76 @@ func (ec *ExtensionsController) Init(_ context.Context) error {
 
 // Run
 func (ec *ExtensionsController) Start(ctx context.Context) error {
+	ec.L.Debug("Starting")
+	ec.startChan = make(chan struct{}, 1)
+
+	// Do the first validation before setting callbacks
+	ec.mgrCtx, ec.mgrCancelFn = context.WithCancel(ctx)
+	var err error
+	ec.mgr, err = ec.instantiateManager(ec.mgrCtx)
+	if err != nil {
+		ec.L.WithError(err).Error("Can't instantiate controller-runtime manager")
+		ec.mgrCancelFn()
+		return err
+	}
+
+	ec.leaderElector.AddLostLeaseCallback(ec.leaseLost)
+
+	ec.leaderElector.AddAcquiredLeaseCallback(ec.leaseAcquired)
+
+	// It's possible that by the time we added the callback, we are already the leader,
+	// If this is true the callback will not be called, so we need to check if we are
+	// the leader and notify the channel manually
+	if ec.leaderElector.IsLeader() {
+		ec.leaseAcquired()
+	}
+
+	go ec.watchStartChan()
+	return nil
+}
+
+func (ec *ExtensionsController) leaseLost() {
+	ec.mux.Lock()
+	defer ec.mux.Unlock()
+	ec.L.Warn("Lost leader lease, stopping controller-manager")
+	ec.mgrCancelFn()
+	ec.mgr = nil
+}
+
+func (ec *ExtensionsController) watchStartChan() {
+	ec.L.Debug("Watching start channel")
+	for range ec.startChan {
+		ec.L.Info("Acquired leader lease")
+		ec.mux.Lock()
+		if ec.mgr == nil {
+			ec.L.Info("Instantiating controller-runtime manager")
+			ec.mgrCtx, ec.mgrCancelFn = context.WithCancel(ec.controllerCtx)
+			var err error
+			ec.mgr, err = ec.instantiateManager(ec.controllerCtx)
+			if err != nil {
+				ec.L.WithError(err).Error("Can't instantiate controller-runtime manager")
+				ec.mux.Unlock()
+				return
+			}
+		}
+		ec.mux.Unlock()
+		ec.startControllerManager()
+	}
+	ec.L.Info("Start channel closed, stopping controller-manager")
+}
+
+func (ec *ExtensionsController) leaseAcquired() {
+	ec.L.Info("Acquired leader lease")
+	select {
+	case ec.startChan <- struct{}{}:
+	default:
+	}
+}
+
+func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.Manager, error) {
 	clientConfig, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
 	if err != nil {
-		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
+		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
 	gk := schema.GroupKind{
 		Group: helmv1beta1.SchemeGroupVersion.Group,
@@ -423,7 +497,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		Controller:         config.Controller{},
 	})
 	if err != nil {
-		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
+		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
 	if err := retry.Do(func() error {
 		_, err := mgr.GetRESTMapper().RESTMapping(gk)
@@ -434,7 +508,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		ec.L.Info("Extensions CRD is ready, going nuts")
 		return nil
 	}, retry.Context(ctx)); err != nil {
-		return fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registred, check CRD registration reconciler: %w", err)
+		return nil, fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registered, check CRD registration reconciler: %w", err)
 	}
 
 	if err := builder.
@@ -454,19 +528,25 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 			helm:          ec.helm,
 			L:             ec.L.WithField("extensions_type", "helm"),
 		}); err != nil {
-		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
+		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
+	return mgr, nil
+}
 
+func (ec *ExtensionsController) startControllerManager() {
 	go func() {
-		if err := mgr.Start(ctx); err != nil {
+		ec.L.Info("Starting controller-manager")
+		if err := ec.mgr.Start(ec.mgrCtx); err != nil {
 			ec.L.WithError(err).Error("Controller manager working loop exited")
 		}
 	}()
-
-	return nil
 }
 
 // Stop
 func (ec *ExtensionsController) Stop() error {
+	ec.L.Info("Stopping extensions controller")
+	ec.mgrCancelFn()
+	close(ec.startChan)
+	ec.L.Debug("Stopped extensions controller")
 	return nil
 }
