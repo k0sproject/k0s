@@ -1,16 +1,8 @@
 # OpenEBS
 
-This tutorial covers the installation of OpenEBS as a Helm extension, both from
-scratch and how to migrate it from a storage extension.
-
-## Installing OpenEBS from scratch
-
-**WARNING**: Do not configure OpenEBS as both a storage extension and a Helm
-extension. It's considered an invalid configuration and k0s will entirely ignore
-the configuration to prevent accidental upgrades or downgrades. The chart
-objects defined in the API will still behave normally.
-
-OpenEBS can be installed as a helm chart by adding it as an extension to your configuration:
+This tutorial covers the installation of OpenEBS as a Helm extension. OpenEBS
+can be installed as a helm chart by adding it as an extension to your
+configuration:
 
 ```yaml
   extensions:
@@ -32,69 +24,6 @@ OpenEBS can be installed as a helm chart by adding it as an extension to your co
 ```
 
 If you want OpenEBS to be your default storage class, set `isDefaultClass` to `true`.
-
-## Migrating bundled OpenEBS to helm extension
-
-The bundled OpenEBS extension is already a helm extension installed as a
-`chart.helm.k0sproject.io`. For this reason, all we have to do is to remove the
-manifests and to clean up the object. However, this must be done in a specific order
-to prevent data loss.
-
-**WARNING**: Not following the steps in the precise order presented by the
-documentation may provoke data loss.
-
-The first step to perform the migration is to disable the `applier-manager`
-component on all controllers. For each controller, restart the controller
-with the flag `--disable-components=applier-manager`. If you already had this flag,
-set it to `--disable-components=<previous value>,applier-manager`.
-
-Once the `applier-manager` is disabled in every running controller, you need to modify
-the configuration to use `external_storage` instead of `openebs_local_storage`.
-
-If you are using [dynamic configuration](../dynamic-configuration.md), you can
-change it with this command:
-
-```shell
-kubectl patch clusterconfig -n kube-system  k0s --patch '{"spec":{"extensions":{"storage":{"type":"external_storage"}}}}' --type=merge
-```
-
-If you are using a static configuration file, replace `spec.extensions.storage.type`
-from `openebs_local_storage` to `external_storage` in all control plane nodes and
-restart all the control plane nodes one by one.
-
-When the configuration is set to `external_storage` and the servers are
-restarted, you must manage the it as a chart object in the API:
-
-```shell
-kubectl get chart -n kube-system k0s-addon-chart-openebs -o yaml
-```
-
-First, remove the labels and annotations related to the stack applier:
-
-```shell
-k0s kc annotate -n kube-system chart k0s-addon-chart-openebs k0s.k0sproject.io/stack-checksum-
-k0s kc label -n kube-system chart k0s-addon-chart-openebs k0s.k0sproject.io/stack-
-```
-
-After the annotations and labels are removed, remove the manifest file **on each
-controller**. This file is located in
-`<k0s-data-dir>/manifests/helm/<number>_helm_extension_openebs.yaml`, which in
-most installations defaults to
-`/var/lib/k0s/manifests/helm/0_helm_extension_openebs.yaml`.
-
-**WARNING**: Not removing the old manifest file from all controllers may cause
-the manifest to be reapplied, reverting your changes and potentially casuing
-data loss.
-
-Finally, we want to re-enable the `applier-manager` and restart all controllers
-without the `--disable-components=applier-manager` flag.
-
-Once the migration is coplete, you'll be able to update the OpenEBS chart.
-Let's take v3.9.0 as an example:
-
-```shell
-kubectl patch chart -n kube-system k0s-addon-chart-openebs --patch '{"spec":{"version":"3.9.0"}}' --type=merge
-```
 
 ## Usage
 

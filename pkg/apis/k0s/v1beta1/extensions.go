@@ -27,9 +27,22 @@ var _ Validateable = (*ClusterExtensions)(nil)
 
 // ClusterExtensions specifies cluster extensions
 type ClusterExtensions struct {
-	//+kubebuilder:deprecatedversion:warning="storage is deprecated and will be ignored in 1.30. https://docs.k0sproject.io/stable/examples/openebs".
-	Storage *StorageExtension `json:"storage"`
-	Helm    *HelmExtensions   `json:"helm"`
+	// Deprecated: storage is deprecated and will be ignored starting from k0s
+	// 1.31 and onwards: https://docs.k0sproject.io/stable/examples/openebs
+	// +optional
+	Storage *StorageExtension `json:"storage,omitempty"`
+
+	Helm *HelmExtensions `json:"helm"`
+}
+
+// Deprecated: No-op; kept for backwards compatibility.
+type StorageExtension struct {
+	// Deprecated: No-op; kept for backwards compatibility.
+	// +optional
+	Type string `json:"type,omitempty"`
+	// Deprecated: No-op; kept for backwards compatibility.
+	// +optional
+	CreateDefaultStorageClass bool `json:"create_default_storage_class"`
 }
 
 // HelmExtensions specifies settings for cluster helm based extensions
@@ -166,23 +179,12 @@ func (e *ClusterExtensions) Validate() []error {
 	if e.Helm != nil {
 		errs = append(errs, e.Helm.Validate()...)
 	}
-	if e.Storage != nil {
-		errs = append(errs, e.Storage.Validate()...)
-	}
 	return errs
-}
-
-func DefaultStorageExtension() *StorageExtension {
-	return &StorageExtension{
-		Type:                      ExternalStorage,
-		CreateDefaultStorageClass: false,
-	}
 }
 
 // DefaultExtensions default values
 func DefaultExtensions() *ClusterExtensions {
 	return &ClusterExtensions{
-		Storage: DefaultStorageExtension(),
 		Helm: &HelmExtensions{
 			ConcurrencyLevel: 5,
 		},

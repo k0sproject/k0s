@@ -107,8 +107,6 @@ check-metricsscraper-singlenode: TEST_PACKAGE=metricsscraper
 
 check-nllb: TIMEOUT=15m
 
-check-openebs: TIMEOUT=7m
-
 .PHONY: $(smoketests)
 include Makefile.variables
 
