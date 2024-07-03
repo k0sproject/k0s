@@ -170,8 +170,9 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		args["--node-labels"] = strings.Join(k.Labels, ",")
 	}
 
+	extras := flags.Split(k.ExtraArgs)
 	if runtime.GOOS == "windows" {
-		node, err := node.GetNodename("")
+		node, err := node.GetNodename(extras["--hostname-override"])
 		if err != nil {
 			return fmt.Errorf("can't get hostname: %w", err)
 		}
@@ -200,7 +201,6 @@ func (k *Kubelet) Start(ctx context.Context) error {
 
 	// Handle the extra args as last so they can be used to override some k0s "hardcodings"
 	if k.ExtraArgs != "" {
-		extras := flags.Split(k.ExtraArgs)
 		args.Merge(extras)
 	}
 	logrus.Debugf("starting kubelet with args: %v", args)
