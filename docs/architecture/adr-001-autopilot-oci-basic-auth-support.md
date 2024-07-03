@@ -36,10 +36,10 @@ type PlanResourceURL struct {
         // Sha256 provides an optional SHA256 hash of the URL's content for verification.
         Sha256 string `json:"sha256,omitempty"`
 
-        // ArtifactPullSecrets holds a reference to a secret where the credentials are
-        // stored. We use these credentials when pulling the artifacts from the provided
-        // URL using any of the supported protocols (http, https, and oci).
-        ArtifactPullSecret *corev1.SecretReference `json:"artifactPullSecret,omitempty"`
+        // SecretRef holds a reference to a secret where the credentials are stored. We
+        // use these credentials when pulling the artifacts from the provided URL using
+        // any of the supported protocols (http, https, and oci).
+        SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
 
         // InsecureSkipTLSVerify indicates whether certificates in the remote URL (if using
         // TLS) can be ignored.
@@ -47,7 +47,7 @@ type PlanResourceURL struct {
 }
 ```
 
-`ArtifactPullSecret` property is of type `SecretReference` as defined by `k8s.io/api/core/v1` package. The secret pointed by the provided `ArtifactPullSecret` will be used for pulling artifacts using either HTTP[S] or OCI protocols and is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` or of type `Opaque` if protocols `http://` or `https://` are used (see below for details on the Secret layout).
+`SecretRef` property is of type `SecretReference` as defined by `k8s.io/api/core/v1` package. The secret pointed by the provided `SecretRef` will be used for pulling artifacts using either HTTP[S] or OCI protocols and is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in use is `oci://` or of type `Opaque` if protocols `http://` or `https://` are used (see below for details on the Secret layout).
 
 Example configuration for OCI:
 
@@ -109,7 +109,7 @@ data:
 - The `InsecureSkipTLSVerify` property is equivalent of defining `InsecureSkipTLSVerify` on a Go HTTP client.
 - The `InsecureSkipTLSVerify` property will be valid for both `oci://` and `https://` protocols.
 - If no protocol is defined, HTTPS is used.
-- If no `ArtifactPullSecret` is defined, access will be anonymous (no authentication).
+- If no `SecretRef` is defined, access will be anonymous (no authentication).
 
 ## Status
 
@@ -118,7 +118,7 @@ Proposed
 ## Consequences
 
 - Users will have an additional protocol to be aware of.
-- If the Secret referenced by `ArtifactPullSecret` does not exist, the download will fail.
+- If the Secret referenced by `SecretRef` does not exist, the download will fail.
 - Users need to be notified about different failure types (e.g., unreadable secret, invalid secret).
 - Additional configuration is required to handle authentication, ensuring secure access to resources.
 - We will allow downloads from remote places using self-signed certificates if requested to.
