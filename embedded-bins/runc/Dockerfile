@@ -7,7 +7,7 @@ RUN apk add build-base git \
 ENV GOPATH=/go
 
 ARG LIBSECCOMP_VERSION=2.5.5
-RUN curl -L https://github.com/seccomp/libseccomp/releases/download/v$LIBSECCOMP_VERSION/libseccomp-$LIBSECCOMP_VERSION.tar.gz \
+RUN curl --proto '=https' --tlsv1.2 -L https://github.com/seccomp/libseccomp/releases/download/v$LIBSECCOMP_VERSION/libseccomp-$LIBSECCOMP_VERSION.tar.gz \
 	| tar -C / -zx
 
 RUN cd /libseccomp-$LIBSECCOMP_VERSION && ./configure --sysconfdir=/etc --enable-static

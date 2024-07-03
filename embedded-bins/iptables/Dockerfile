@@ -7,7 +7,7 @@ RUN apk add build-base curl pkgconf \
 	libnftnl-dev
 
 ARG VERSION
-RUN curl -L https://www.netfilter.org/projects/iptables/files/iptables-$VERSION.tar.xz \
+RUN curl --proto '=https' --tlsv1.2 -L https://www.netfilter.org/projects/iptables/files/iptables-$VERSION.tar.xz \
 	| tar -C / -Jx
 
 ARG TARGET_OS

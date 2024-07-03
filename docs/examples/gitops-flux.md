@@ -17,7 +17,7 @@ Let's start by installing k0s. Any k0s deployment option will do, but to keep th
 Run these three commands to download k0s, install and start it:
 
   ```shell
-  curl -sSLf https://get.k0s.sh | sudo sh
+  curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
   sudo k0s install controller --single
   sudo k0s start
   ```
@@ -42,7 +42,7 @@ To proceed with Flux, install the Flux CLI, which is used for configuring Flux t
 or
 
   ```shell
-  curl -s https://fluxcd.io/install.sh | sudo bash
+  curl --proto '=https' --tlsv1.2 -sSf https://fluxcd.io/install.sh | sudo bash
   ```
 
 For more details of the Flux installation, check the [Flux documentation](https://fluxcd.io/docs/get-started/).

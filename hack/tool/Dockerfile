@@ -9,11 +9,11 @@ RUN go build -o /tool
 FROM builder AS builder-terraform
 ARG ARCH
 ENV TERRAFORM_VERSION=1.3.3
-RUN curl -Lo /terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip && unzip /terraform.zip
+RUN curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -Lfo /terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip && unzip /terraform.zip
 
 FROM builder AS builder-aws
 ARG HARDWARE
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-${HARDWARE}.zip" -o "/tmp/awscliv2.zip" && \
+RUN curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -fo "/tmp/awscliv2.zip" "https://awscli.amazonaws.com/awscli-exe-linux-${HARDWARE}.zip" && \
     cd /tmp && \
     unzip awscliv2.zip && \
     ./aws/install && \

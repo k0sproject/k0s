@@ -17,7 +17,7 @@ You can speed up the use of the `k0s` command by enabling [shell completion](she
 Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.
 
 ```shell
-curl -sSLf https://get.k0s.sh | sudo sh
+curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
 ```
 
 The download script accepts the following environment variables:
@@ -30,7 +30,7 @@ The download script accepts the following environment variables:
 **Note**: If you require environment variables and use sudo, you can do:
 
 ```shell
-curl -sSLf https://get.k0s.sh | sudo K0S_VERSION=v{{{ extra.k8s_version }}}+k0s.0 sh
+curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo K0S_VERSION=v{{{ extra.k8s_version }}}+k0s.0 sh
 ```
 
 ### 2. Bootstrap a controller node

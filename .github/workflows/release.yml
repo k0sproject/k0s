@@ -100,7 +100,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
           cat k0s.sig
@@ -192,7 +192,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.exe.sig k0s.exe
           cat k0s.exe.sig
@@ -260,7 +260,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-arm64
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-arm64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
           cat k0s.sig
@@ -347,7 +347,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-arm
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-arm
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
           cat k0s.sig
@@ -601,7 +601,7 @@ jobs:
       - name: Create k0s Cluster using k0sctl
         run: |
           # download k0sctl
-          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
           chmod +x ./k0sctl
           ./k0sctl apply -c k0sctl.yaml
 
