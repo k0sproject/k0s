@@ -32,9 +32,10 @@ smoketests := \
 	check-customports-dynamicconfig \
 	check-defaultstorage \
 	check-disabledcomponents \
-	check-dualstack \
-	check-dualstack-dynamicconfig \
+	check-dualstack-calico \
+	check-dualstack-calico-dynamicconfig \
 	check-dualstack-kuberouter \
+	check-dualstack-kuberouter-dynamicconfig \
 	check-embedded-binaries \
 	check-etcdmember \
 	check-externaletcd \
