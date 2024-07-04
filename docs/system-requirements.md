@@ -31,13 +31,15 @@ k0s controller node measured memory consumption can be found below on this page.
 
 It's recommended to use an SSD for [optimal storage performance](https://etcd.io/docs/current/op-guide/performance/) (cluster latency and throughput are sensitive to storage).
 
+For worker nodes it is required that there is at least 15% relative disk space free.
+
 The specific storage consumption for k0s is as follows:
 
-| Role                 | Storage (k0s part) |
-|----------------------|--------------------|
-| Controller node      | ~0.5 GB            |
-| Worker node          | ~1.3 GB            |
-| Controller + worker  | ~1.7 GB            |
+| Role                 | Usage (k0s part) | Minimum required |
+|----------------------|------------------|------------------|
+| Controller node      | ~0.5 GB          | ~0.5 GB          |
+| Worker node          | ~1.3 GB          | ~1.6 GB          |
+| Controller + worker  | ~1.7 GB          | ~2.0 GB          |
 
 **Note**: The operating system and application requirements must be considered in addition to the k0s part.
 

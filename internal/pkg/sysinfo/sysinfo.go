@@ -72,6 +72,10 @@ func (s *K0sSysinfoSpec) NewSysinfoProbes() probes.Probes {
 	}
 	probes.AssertFileSystem(p, s.DataDir)
 	probes.AssertFreeDiskSpace(p, s.DataDir, minFreeDiskSpace)
+	if s.WorkerRoleEnabled {
+		// https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/#hard-eviction-thresholds
+		probes.AssertRelativeFreeDiskSpace(p, s.DataDir, 15)
+	}
 	probes.RequireNameResolution(p, net.LookupIP, "localhost")
 
 	s.addHostSpecificProbes(p)

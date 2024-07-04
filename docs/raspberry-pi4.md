@@ -153,7 +153,8 @@ setup, you can invoke `k0s sysinfo`:
 ubuntu@ubuntu:~$ k0s sysinfo
 Total memory: 3.7 GiB (pass)
 File system of /var/lib: ext4 (pass)
-Disk space available for /var/lib/k0s: 24.3 GiB (pass)
+Disk space available for /var/lib/k0s: 83.6 GiB (pass)
+Relative disk space available for /var/lib/k0s: 20% (pass)
 Operating system: Linux (pass)
   Linux kernel release: 5.15.0-1013-raspi (pass)
   Max. file descriptors per process: current: 1024 / max: 1048576 (warning: < 65536)
