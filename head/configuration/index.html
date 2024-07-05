@@ -1236,7 +1236,7 @@
         
   
   <span class="md-ellipsis">
-    IPv4/IPv6 Dual-Stack
+    IPv4/IPv6 dual-stack networking
   </span>
   
 
@@ -2615,10 +2615,10 @@ FELIX_PROMETHEUSMETRICSENABLED:<span class="w"> </span><span class="s2">&quot;tr
 FELIX_FEATUREDETECTOVERRIDE:<span class="w"> </span><span class="s2">&quot;ChecksumOffloadBroken=true&quot;</span>
 </code></pre></div>
 <p><code>FELIX_FEATUREDETECTOVERRIDE: ChecksumOffloadBroken=true</code> disables VXLAN offloading because of <a href="https://github.com/projectcalico/calico/issues/4727">projectcalico/calico#4727</a>.</p>
-<p>In SingleStack mode there are additional vars:</p>
+<p>In single-stack mode, there are additional vars:</p>
 <div class="highlight"><pre><span></span><code>FELIX_IPV6SUPPORT:<span class="w"> </span><span class="s2">&quot;false&quot;</span>
 </code></pre></div>
-<p>In DualStack mode there are additional vars:</p>
+<p>In dual-stack mode, there are additional vars:</p>
 <div class="highlight"><pre><span></span><code>CALICO_IPV6POOL_NAT_OUTGOING:<span class="w"> </span><span class="s2">&quot;true&quot;</span>
 FELIX_IPV6SUPPORT:<span class="w"> </span><span class="s2">&quot;true&quot;</span>
 IP6:<span class="w"> </span><span class="s2">&quot;autodetect&quot;</span>

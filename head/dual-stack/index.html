@@ -26,7 +26,7 @@
     
     
       
-        <title>IPv4/IPv6 Dual-Stack - Documentation</title>
+        <title>IPv4/IPv6 dual-stack networking - Documentation</title>
       
     
     
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#dual-stack-networking" class="md-skip">
+        <a href="#ipv4ipv6-dual-stack-networking" class="md-skip">
           Skip to content
         </a>
       
@@ -138,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              IPv4/IPv6 Dual-Stack
+              IPv4/IPv6 dual-stack networking
             
           </span>
         </div>
@@ -1046,7 +1046,7 @@
           
   
   <span class="md-ellipsis">
-    IPv4/IPv6 Dual-Stack
+    IPv4/IPv6 dual-stack networking
   </span>
   
 
@@ -1057,7 +1057,7 @@
         
   
   <span class="md-ellipsis">
-    IPv4/IPv6 Dual-Stack
+    IPv4/IPv6 dual-stack networking
   </span>
   
 
@@ -1079,18 +1079,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#cni-settings-calico" class="md-nav__link">
+  <a href="#enabling-dual-stack-using-the-default-cni-kube-router" class="md-nav__link">
     <span class="md-ellipsis">
-      CNI Settings: Calico
+      Enabling dual-stack using the default CNI (kube-router)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#cni-settings-external-cni" class="md-nav__link">
+  <a href="#using-calico-as-the-cni-provider" class="md-nav__link">
     <span class="md-ellipsis">
-      CNI Settings: External CNI
+      Using Calico as the CNI provider
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-cni-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom CNI providers
     </span>
   </a>
   
@@ -2007,18 +2016,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#cni-settings-calico" class="md-nav__link">
+  <a href="#enabling-dual-stack-using-the-default-cni-kube-router" class="md-nav__link">
     <span class="md-ellipsis">
-      CNI Settings: Calico
+      Enabling dual-stack using the default CNI (kube-router)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#cni-settings-external-cni" class="md-nav__link">
+  <a href="#using-calico-as-the-cni-provider" class="md-nav__link">
     <span class="md-ellipsis">
-      CNI Settings: External CNI
+      Using Calico as the CNI provider
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-cni-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom CNI providers
     </span>
   </a>
   
@@ -2048,32 +2066,53 @@
                   
 
 
-<h1 id="dual-stack-networking">Dual-stack Networking<a class="headerlink" href="#dual-stack-networking" title="Permanent link">#</a></h1>
-<p><strong>Note:</strong> Dual stack networking setup requires that you configure Calico or a custom CNI as the CNI provider.</p>
-<p>Use the following <code>k0s.yaml</code> as a template to enable dual-stack networking. This configuration will set up bundled calico CNI, enable feature gates for the Kubernetes components, and set up <code>kubernetes-controller-manager</code>.</p>
+<h1 id="ipv4ipv6-dual-stack-networking">IPv4/IPv6 dual-stack networking<a class="headerlink" href="#ipv4ipv6-dual-stack-networking" title="Permanent link">#</a></h1>
+<p>Enabling dual-stack networking in k0s allows your cluster to handle both IPv4 and
+IPv6 addresses. Follow the configuration examples below to set up dual-stack mode.</p>
+<h2 id="enabling-dual-stack-using-the-default-cni-kube-router">Enabling dual-stack using the default CNI (kube-router)<a class="headerlink" href="#enabling-dual-stack-using-the-default-cni-kube-router" title="Permanent link">#</a></h2>
+<p>In order to enable dual-stack networking using the default CNI provider, use the
+following example configuration:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;10.244.0.0/16&quot;</span>
-<span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;10.96.0.0/12&quot;</span>
-<span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calico</span>
-<span class="w">    </span><span class="nt">calico</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bird&quot;</span>
+<span class="w">    </span><span class="c1"># kube-router is the default CNI provider</span>
+<span class="w">    </span><span class="c1"># provider: kube-router</span>
+<span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.244.0.0/16</span>
+<span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span>
 <span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="nt">IPv6podCIDR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fd00::/108&quot;</span>
-<span class="w">      </span><span class="nt">IPv6serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fd01::/108&quot;</span>
+<span class="w">      </span><span class="nt">IPv6podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd00::/108</span>
+<span class="w">      </span><span class="nt">IPv6serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd01::/108</span>
 </code></pre></div>
-<h2 id="cni-settings-calico">CNI Settings: Calico<a class="headerlink" href="#cni-settings-calico" title="Permanent link">#</a></h2>
-<p>For cross-pod connectivity, use BIRD for the backend. Calico does not support tunneling for the IPv6, and thus VXLAN and IPIP backends do not work.</p>
-<p><strong>Note</strong>: In any Calico mode other than cross-pod, the pods can only reach pods on the same node.</p>
-<h2 id="cni-settings-external-cni">CNI Settings: External CNI<a class="headerlink" href="#cni-settings-external-cni" title="Permanent link">#</a></h2>
-<p>Although the <code>k0s.yaml</code> dualStack section enables all of the neccessary feature gates for the Kubernetes components, for use with an external CNI it must be set up to support IPv6.</p>
+<p>This configuration will set up all Kubernetes components and kube-router
+accordingly for dual-stack networking.</p>
+<h2 id="using-calico-as-the-cni-provider">Using Calico as the CNI provider<a class="headerlink" href="#using-calico-as-the-cni-provider" title="Permanent link">#</a></h2>
+<p>Calico does not support IPv6 tunneling in the default <code>vxlan</code> mode, so if you
+prefer to use Calico as your CNI provider, make sure to select <code>bird</code> mode. Use
+the following example configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calico</span>
+<span class="w">    </span><span class="nt">calico</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bird</span>
+<span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.244.0.0/16</span>
+<span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span>
+<span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">IPv6podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd00::/108</span>
+<span class="w">      </span><span class="nt">IPv6serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd01::/108</span>
+</code></pre></div>
+<h2 id="custom-cni-providers">Custom CNI providers<a class="headerlink" href="#custom-cni-providers" title="Permanent link">#</a></h2>
+<p>While the dual-stack configuration section configures all components managed by
+k0s for dual-stack operation, the custom CNI provider must also be configured
+accordingly. Refer to the documentation for your specific CNI provider to ensure
+a proper dual-stack setup that matches that of k0s.</p>
 <h2 id="additional-resources">Additional Resources<a class="headerlink" href="#additional-resources" title="Permanent link">#</a></h2>
+<p>For more detailed information and troubleshooting, refer to the following resources:</p>
 <ul>
 <li><a href="https://kubernetes.io/docs/concepts/services-networking/dual-stack/">https://kubernetes.io/docs/concepts/services-networking/dual-stack/</a></li>
 <li><a href="https://kubernetes.io/docs/tasks/network/validate-dual-stack/">https://kubernetes.io/docs/tasks/network/validate-dual-stack/</a></li>
-<li><a href="https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/">https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/</a></li>
-<li><a href="https://docs.projectcalico.org/networking/ipv6">https://docs.projectcalico.org/networking/ipv6</a></li>
+<li><a href="https://www.tigera.io/blog/dual-stack-operation-with-calico-on-kubernetes/">https://www.tigera.io/blog/dual-stack-operation-with-calico-on-kubernetes/</a></li>
+<li><a href="https://docs.tigera.io/calico/3.27/networking/ipam/ipv6#enable-dual-stack">https://docs.tigera.io/calico/3.27/networking/ipam/ipv6#enable-dual-stack</a></li>
 </ul>
 
 
