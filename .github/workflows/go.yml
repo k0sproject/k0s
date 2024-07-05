@@ -220,7 +220,7 @@ jobs:
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
-      - name: Prepare docker for ipv6 dualstack tests
+      - name: Prepare docker for ipv6 dual-stack tests
         if: contains(matrix.smoke-suite, 'dualstack')
         run: .github/workflows/prepare-docker-ipv6.sh
 

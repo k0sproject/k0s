@@ -42,7 +42,7 @@ nav:
       - Manifest Deployer: manifests.md
       - Helm Charts: helm-charts.md
       - Cloud Providers: cloud-providers.md
-      - IPv4/IPv6 Dual-Stack: dual-stack.md
+      - IPv4/IPv6 dual-stack networking: dual-stack.md
       - Control Plane High Availability: high-availability.md
       - Node-local load balancing: nllb.md
       - Control plane load balancing: cplb.md
