@@ -102,7 +102,7 @@ func (n *Network) Validate() []error {
 
 	if n.DualStack.Enabled {
 		if n.Provider == "calico" && n.Calico.Mode != "bird" {
-			errors = append(errors, field.Forbidden(field.NewPath("calico", "mode"), "dual stack for calico is only supported for mode `bird`"))
+			errors = append(errors, field.Forbidden(field.NewPath("calico", "mode"), "dual-stack for calico is only supported for mode `bird`"))
 		}
 		_, _, err := net.ParseCIDR(n.DualStack.IPv6PodCIDR)
 		if err != nil {

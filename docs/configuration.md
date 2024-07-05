@@ -209,13 +209,13 @@ FELIX_FEATUREDETECTOVERRIDE: "ChecksumOffloadBroken=true"
 
 `FELIX_FEATUREDETECTOVERRIDE: ChecksumOffloadBroken=true` disables VXLAN offloading because of [projectcalico/calico#4727](https://github.com/projectcalico/calico/issues/4727).
 
-In SingleStack mode there are additional vars:
+In single-stack mode, there are additional vars:
 
 ```shell
 FELIX_IPV6SUPPORT: "false"
 ```
 
-In DualStack mode there are additional vars:
+In dual-stack mode, there are additional vars:
 
 ```shell
 CALICO_IPV6POOL_NAT_OUTGOING: "true"

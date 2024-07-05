@@ -349,7 +349,7 @@ func (s *staticPods) Start(ctx context.Context) error {
 	}
 
 	// Open a TCP port to listen for incoming HTTP requests.
-	listener, err := net.Listen("tcp", "127.0.0.1:") // FIXME: Support IPv6 / dual stack?
+	listener, err := net.Listen("tcp", "127.0.0.1:") // FIXME: Support IPv6 / dual-stack?
 	if err != nil {
 		s.transition(staticPodsStarting, staticPodsInitialized)
 		return err

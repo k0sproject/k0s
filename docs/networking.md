@@ -24,7 +24,6 @@ You can opt-out of having k0s manage the network setup and choose instead to use
 Kube-router is built into k0s, and so by default the distribution uses it for network provision. Kube-router uses the standard Linux networking stack and toolset, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.
 
 - Uses bit less resources (~15%)
-- Does NOT support dual-stack (IPv4/IPv6) networking
 - Does NOT support Windows nodes
 
 ### Calico
@@ -32,7 +31,6 @@ Kube-router is built into k0s, and so by default the distribution uses it for ne
 In addition to Kube-router, k0s also offers [Calico] as an alternative, built-in network provider. Calico is a layer 3 container networking solution that routes packets to pods. It supports, for example, pod-specific network policies that help to secure kubernetes clusters in demanding use cases. Calico uses the vxlan overlay network by default, and you can configure it to support ipip (IP-in-IP).
 
 - Uses bit more resources
-- Supports dual-stack (IPv4/IPv6) networking
 - Supports Windows nodes
 
 ## Controller-Worker communication
