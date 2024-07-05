@@ -91,7 +91,13 @@ func (s *DualstackSuite) SetupSuite() {
 	s.Require().True(isDockerIPv6Enabled, "Please enable IPv6 in docker before running this test")
 	s.BootlooseSuite.SetupSuite()
 
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithDualStack)
+	k0sConfig := k0sConfigWithCalicoDualStack
+
+	if os.Getenv("K0S_NETWORK") == "kube-router" {
+		s.T().Log("Using kube-router network")
+		k0sConfig = k0sConfigWithKuberouterDualStack
+	}
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
 	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
 		s.T().Log("Enabling dynamic config for controller")
@@ -106,6 +112,15 @@ func (s *DualstackSuite) SetupSuite() {
 
 	err = s.WaitForNodeReady(s.WorkerNode(1), client)
 	s.Require().NoError(err)
+
+	for i := 0; i < s.WorkerCount; i++ {
+		ssh, err := s.SSH(s.Context(), s.WorkerNode(i))
+		s.Require().NoError(err)
+		defer ssh.Disconnect()
+		output, err := ssh.ExecWithOutput(s.Context(), "cat /proc/sys/net/ipv6/conf/all/disable_ipv6")
+		s.Require().NoError(err)
+		s.T().Logf("worker%d: /proc/sys/net/ipv6/conf/all/disable_ipv6=%s", i, output)
+	}
 
 	kc, err := s.KubeClient("controller0", "")
 	s.Require().NoError(err)
@@ -191,7 +206,7 @@ func TestDualStack(t *testing.T) {
 
 }
 
-const k0sConfigWithDualStack = `
+const k0sConfigWithCalicoDualStack = `
 spec:
   network:
     kubeProxy:
@@ -199,6 +214,17 @@ spec:
     provider: calico
     calico:
       mode: "bird"
+    dualStack:
+      enabled: true
+      IPv6podCIDR: "fd00::/108"
+      IPv6serviceCIDR: "fd01::/108"
+    podCIDR: 10.244.0.0/16
+    serviceCIDR: 10.96.0.0/12`
+
+const k0sConfigWithKuberouterDualStack = `
+spec:
+  network:
+    provider: kuberouter
     dualStack:
       enabled: true
       IPv6podCIDR: "fd00::/108"

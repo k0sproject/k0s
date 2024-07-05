@@ -88,8 +88,19 @@ check-customports-dynamicconfig: TEST_PACKAGE=customports
 
 check-kubeletcertrotate: TIMEOUT=15m
 
-check-dualstack-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
-check-dualstack-dynamicconfig: TEST_PACKAGE=dualstack
+check-dualstack-calico: export K0S_NETWORK=calico
+check-dualstack-calico: TEST_PACKAGE=dualstack
+
+check-dualstack-calico-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
+check-dualstack-calico-dynamicconfig: export K0S_NETWORK=calico
+check-dualstack-calico-dynamicconfig: TEST_PACKAGE=dualstack
+
+check-dualstack-kuberouter: export K0S_NETWORK=kube-router
+check-dualstack-kuberouter: TEST_PACKAGE=dualstack
+
+check-dualstack-kuberouter-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
+check-dualstack-kuberouter-dynamicconfig: export K0S_NETWORK=kuberouter
+check-dualstack-kuberouter-dynamicconfig: TEST_PACKAGE=dualstack
 
 check-ap-updater: .update-server.stamp
 check-ap-updater-periodic: .update-server.stamp

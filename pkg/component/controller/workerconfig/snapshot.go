@@ -43,6 +43,7 @@ type snapshot struct {
 // configSnapshot holds a snapshot of the parts of the cluster config spec that
 // influence worker configurations.
 type configSnapshot struct {
+	dualStackEnabled       bool
 	nodeLocalLoadBalancing *v1beta1.NodeLocalLoadBalancing
 	konnectivityAgentPort  uint16
 	defaultImagePullPolicy corev1.PullPolicy
@@ -91,6 +92,7 @@ func takeConfigSnapshot(spec *v1beta1.ClusterSpec) configSnapshot {
 	}
 
 	return configSnapshot{
+		spec.Network.DualStack.Enabled,
 		spec.Network.NodeLocalLoadBalancing.DeepCopy(),
 		konnectivityAgentPort,
 		corev1.PullPolicy(spec.Images.DefaultPullPolicy),
