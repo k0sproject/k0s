@@ -63,6 +63,14 @@ func (c *command) reset() error {
 		logrus.Fatal("k0s seems to be running! please stop k0s before reset.")
 	}
 
+	nodeCfg, err := c.K0sVars.NodeConfig()
+	if err != nil {
+		return err
+	}
+	if nodeCfg.Spec.Storage.Kine != nil && nodeCfg.Spec.Storage.Kine.DataSource != "" {
+		logrus.Warn("Kine dataSource is configured. k0s will not reset the data source if it points to an external database. If you plan to continue using the data source, you should reset it to avoid conflicts.")
+	}
+
 	// Get Cleanup Config
 	cfg, err := cleanup.NewConfig(c.K0sVars, c.CfgFile, c.WorkerOptions.CriSocket)
 	if err != nil {
