@@ -66,6 +66,7 @@ nav:
       - OpenEBS storage: examples/openebs.md
   - Troubleshooting:
       - FAQ: FAQ.md
+      - Logs: logs.md
       - Common Pitfalls: troubleshooting.md
       - Support Insights: support-dump.md
   - Reference:
