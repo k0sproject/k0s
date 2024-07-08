@@ -17,11 +17,14 @@ limitations under the License.
 package controller
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"regexp"
 	"slices"
 	"time"
 
@@ -29,8 +32,8 @@ import (
 	"github.com/bombsimon/logrusr/v4"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	helmapi "github.com/k0sproject/k0s/pkg/apis/helm"
-	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
-	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -60,24 +63,24 @@ import (
 
 // Helm watch for Chart crd
 type ExtensionsController struct {
-	saver         manifestsSaver
 	L             *logrus.Entry
 	helm          *helm.Commands
 	kubeConfig    string
 	leaderElector leaderelector.Interface
+	manifestsDir  string
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(s manifestsSaver, k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
+func NewExtensionsController(k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
-		saver:         s,
 		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
 		helm:          helm.NewCommands(k0sVars),
 		kubeConfig:    k0sVars.AdminKubeConfigPath,
 		leaderElector: leaderElector,
+		manifestsDir:  filepath.Join(k0sVars.ManifestsDir, "helm"),
 	}
 }
 
@@ -86,25 +89,26 @@ const (
 )
 
 // Run runs the extensions controller
-func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0sAPI.ClusterConfig) error {
+func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0sv1beta1.ClusterConfig) error {
 	ec.L.Info("Extensions reconciliation started")
 	defer ec.L.Info("Extensions reconciliation finished")
 
+	var errs []error
 	helmSettings, err := ec.configureStorage(clusterConfig)
 	if err != nil {
-		return fmt.Errorf("cannot configure storage: %w", err)
+		errs = append(errs, fmt.Errorf("cannot configure storage: %w", err))
 	}
 
 	if err := ec.reconcileHelmExtensions(helmSettings); err != nil {
-		return fmt.Errorf("can't reconcile helm based extensions: %w", err)
+		errs = append(errs, fmt.Errorf("can't reconcile helm based extensions: %w", err))
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
-func (ec *ExtensionsController) configureStorage(clusterConfig *k0sAPI.ClusterConfig) (*k0sAPI.HelmExtensions, error) {
+func (ec *ExtensionsController) configureStorage(clusterConfig *k0sv1beta1.ClusterConfig) (*k0sv1beta1.HelmExtensions, error) {
 	helmSettings := clusterConfig.Spec.Extensions.Helm
-	if clusterConfig.Spec.Extensions.Storage.Type != k0sAPI.OpenEBSLocal {
+	if clusterConfig.Spec.Extensions.Storage.Type != k0sv1beta1.OpenEBSLocal {
 		return helmSettings, nil
 	}
 
@@ -120,7 +124,7 @@ func (ec *ExtensionsController) configureStorage(clusterConfig *k0sAPI.ClusterCo
 	return helmSettings, nil
 }
 
-func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions, storageExtension *k0sAPI.StorageExtension) (*k0sAPI.HelmExtensions, error) {
+func addOpenEBSHelmExtension(helmSpec *k0sv1beta1.HelmExtensions, storageExtension *k0sv1beta1.StorageExtension) (*k0sv1beta1.HelmExtensions, error) {
 	openEBSValues := map[string]interface{}{
 		"localprovisioner": map[string]interface{}{
 			"hostpathClass": map[string]interface{}{
@@ -135,16 +139,16 @@ func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions, storageExtension *
 		return nil, err
 	}
 	if helmSpec == nil {
-		helmSpec = &k0sAPI.HelmExtensions{
-			Repositories: k0sAPI.RepositoriesSettings{},
-			Charts:       k0sAPI.ChartsSettings{},
+		helmSpec = &k0sv1beta1.HelmExtensions{
+			Repositories: k0sv1beta1.RepositoriesSettings{},
+			Charts:       k0sv1beta1.ChartsSettings{},
 		}
 	}
-	helmSpec.Repositories = append(helmSpec.Repositories, k0sAPI.Repository{
+	helmSpec.Repositories = append(helmSpec.Repositories, k0sv1beta1.Repository{
 		Name: "openebs-internal",
 		URL:  constant.OpenEBSRepository,
 	})
-	helmSpec.Charts = append(helmSpec.Charts, k0sAPI.Chart{
+	helmSpec.Charts = append(helmSpec.Charts, k0sv1beta1.Chart{
 		Name:      "openebs",
 		ChartName: "openebs-internal/openebs",
 		TargetNS:  "openebs",
@@ -166,38 +170,77 @@ func yamlifyValues(values map[string]interface{}) (string, error) {
 // reconcileHelmExtensions creates instance of Chart CR for each chart of the config file
 // it also reconciles repositories settings
 // the actual helm install/update/delete management is done by ChartReconciler structure
-func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExtensions) error {
+func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.HelmExtensions) error {
 	if helmSpec == nil {
 		return nil
 	}
 
+	var errs []error
 	for _, repo := range helmSpec.Repositories {
 		if err := ec.addRepo(repo); err != nil {
-			return fmt.Errorf("can't init repository %q: %w", repo.URL, err)
+			errs = append(errs, fmt.Errorf("can't init repository %q: %w", repo.URL, err))
 		}
 	}
 
+	var fileNamesToKeep []string
 	for _, chart := range helmSpec.Charts {
+		fileName := chartManifestFileName(&chart)
+		fileNamesToKeep = append(fileNamesToKeep, fileName)
+
 		tw := templatewriter.TemplateWriter{
+			Path:     filepath.Join(ec.manifestsDir, fileName),
 			Name:     "addon_crd_manifest",
 			Template: chartCrdTemplate,
 			Data: struct {
-				k0sAPI.Chart
+				k0sv1beta1.Chart
 				Finalizer string
 			}{
 				Chart:     chart,
 				Finalizer: finalizerName,
 			},
 		}
-		buf := bytes.NewBuffer([]byte{})
-		if err := tw.WriteToBuffer(buf); err != nil {
-			return fmt.Errorf("can't create chart CR instance %q: %w", chart.ChartName, err)
+		if err := tw.Write(); err != nil {
+			errs = append(errs, fmt.Errorf("can't write file for Helm chart manifest %q: %w", chart.ChartName, err))
+			continue
 		}
-		if err := ec.saver.Save(chart.ManifestFileName(), buf.Bytes()); err != nil {
-			return fmt.Errorf("can't save addon CRD manifest for chart CR instance %q: %w", chart.ChartName, err)
-		}
+
+		ec.L.Infof("Wrote Helm chart manifest file %q", tw.Path)
 	}
-	return nil
+
+	if err := filepath.WalkDir(ec.manifestsDir, func(path string, entry fs.DirEntry, err error) error {
+		switch {
+		case !entry.Type().IsRegular():
+			ec.L.Debugf("Keeping %v as it is not a regular file", entry)
+		case slices.Contains(fileNamesToKeep, entry.Name()):
+			ec.L.Debugf("Keeping %v as it belongs to a known Helm extension", entry)
+		case !isChartManifestFileName(entry.Name()):
+			ec.L.Debugf("Keeping %v as it is not a Helm chart manifest file", entry)
+		default:
+			if err := os.Remove(path); err != nil {
+				if !errors.Is(err, os.ErrNotExist) {
+					errs = append(errs, fmt.Errorf("failed to remove Helm chart manifest file, the Chart resource will remain in the cluster: %w", err))
+				}
+			} else {
+				ec.L.Infof("Removed Helm chart manifest file %q", path)
+			}
+		}
+
+		return nil
+	}); err != nil {
+		errs = append(errs, fmt.Errorf("failed to walk Helm chart manifest directory: %w", err))
+	}
+
+	return errors.Join(errs...)
+}
+
+// Determines the file name to use when storing a chart as a manifest on disk.
+func chartManifestFileName(c *k0sv1beta1.Chart) string {
+	return fmt.Sprintf("%d_helm_extension_%s.yaml", c.Order, c.Name)
+}
+
+// Determines if the given file name is in the format for chart manifest file names.
+func isChartManifestFileName(fileName string) bool {
+	return regexp.MustCompile(`^-?[0-9]+_helm_extension_.+\.yaml$`).MatchString(fileName)
 }
 
 type ChartReconciler struct {
@@ -214,7 +257,7 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	cr.L.Tracef("Got helm chart reconciliation request: %s", req)
 	defer cr.L.Tracef("Finished processing helm chart reconciliation request: %s", req)
 
-	var chartInstance v1beta1.Chart
+	var chartInstance helmv1beta1.Chart
 
 	if err := cr.Client.Get(ctx, req.NamespacedName, &chartInstance); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -249,14 +292,14 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	return reconcile.Result{}, nil
 }
 
-func (cr *ChartReconciler) uninstall(ctx context.Context, chart v1beta1.Chart) error {
+func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Chart) error {
 	if err := cr.helm.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
 		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
 }
 
-func removeFinalizer(ctx context.Context, c client.Client, chart *v1beta1.Chart) error {
+func removeFinalizer(ctx context.Context, c client.Client, chart *helmv1beta1.Chart) error {
 	idx := slices.Index(chart.Finalizers, finalizerName)
 	if idx < 0 {
 		return nil
@@ -280,7 +323,7 @@ func removeFinalizer(ctx context.Context, c client.Client, chart *v1beta1.Chart)
 
 const defaultTimeout = time.Duration(10 * time.Minute)
 
-func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1beta1.Chart) error {
+func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) error {
 	var err error
 	var chartRelease *release.Release
 	timeout, err := time.ParseDuration(chart.Spec.Timeout)
@@ -340,7 +383,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 	return nil
 }
 
-func (cr *ChartReconciler) chartNeedsUpgrade(chart v1beta1.Chart) bool {
+func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
 	return !(chart.Status.Namespace == chart.Spec.Namespace &&
 		chart.Status.ReleaseName == chart.Spec.ReleaseName &&
 		chart.Status.Version == chart.Spec.Version &&
@@ -352,9 +395,9 @@ func (cr *ChartReconciler) chartNeedsUpgrade(chart v1beta1.Chart) bool {
 // to complete and the chart may have been updated in the meantime. If returns the error returned
 // by the Update operation. Moreover, if the chart has indeed changed in the meantime we already
 // have an event for it so we will see it again soon.
-func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart, chartRelease *release.Release, err error) error {
+func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.Chart, chartRelease *release.Release, err error) error {
 	nsn := types.NamespacedName{Namespace: chart.Namespace, Name: chart.Name}
-	var updchart v1beta1.Chart
+	var updchart helmv1beta1.Chart
 	if err := cr.Get(ctx, nsn, &updchart); err != nil {
 		return fmt.Errorf("can't get updated version of chart %s: %w", chart.Name, err)
 	}
@@ -379,7 +422,7 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart
 	return nil
 }
 
-func (ec *ExtensionsController) addRepo(repo k0sAPI.Repository) error {
+func (ec *ExtensionsController) addRepo(repo k0sv1beta1.Repository) error {
 	return ec.helm.AddRepository(repo)
 }
 
@@ -444,7 +487,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 
 	if err := builder.
 		ControllerManagedBy(mgr).
-		For(&v1beta1.Chart{},
+		For(&helmv1beta1.Chart{},
 			builder.WithPredicates(predicate.And(
 				predicate.GenerationChangedPredicate{},
 				predicate.NewPredicateFuncs(func(object client.Object) bool {
