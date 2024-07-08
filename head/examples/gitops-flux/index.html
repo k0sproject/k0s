@@ -2150,7 +2150,7 @@
 <h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
 <p>Let's start by installing k0s. Any k0s deployment option will do, but to keep things simple, this <a href="../../install/">Quick Start Guide</a> gets you started with a single node k0s cluster.</p>
 <p>Run these three commands to download k0s, install and start it:</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-sSLf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single
 sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
@@ -2164,7 +2164,7 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>start
 <div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>fluxcd/tap/flux
 </code></pre></div>
 <p>or</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>https://fluxcd.io/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>bash
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://fluxcd.io/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>bash
 </code></pre></div>
 <p>For more details of the Flux installation, check the <a href="https://fluxcd.io/docs/get-started/">Flux documentation</a>.</p>
 <h2 id="configure-flux-for-a-github-repository">Configure Flux for a GitHub repository<a class="headerlink" href="#configure-flux-for-a-github-repository" title="Permanent link">#</a></h2>
