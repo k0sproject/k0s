@@ -25,7 +25,7 @@ DIR="static/manifests/calico"
 
 mkdir -p $DIR
 
-curl --silent -L "https://raw.githubusercontent.com/projectcalico/calico/v$CALICO_VERSION/manifests/calico.yaml" \
+curl --proto '=https' --tlsv1.2 -sSL "https://raw.githubusercontent.com/projectcalico/calico/v$CALICO_VERSION/manifests/calico.yaml" \
   | $CSPLIT_BINARY --digits=2 --quiet --prefix=$DIR/ -- - "/---/" "{*}"
 
 for f in "$DIR"/*; do

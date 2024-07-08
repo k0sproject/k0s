@@ -7,7 +7,7 @@ RUN apk add build-base curl \
 	libnl3-dev libnl3-static
 
 ARG VERSION
-RUN curl -L https://www.keepalived.org/software/keepalived-$VERSION.tar.gz \
+RUN curl --proto '=https' --tlsv1.2 -L https://www.keepalived.org/software/keepalived-$VERSION.tar.gz \
 	| tar -C / -zx
 
 RUN cd /keepalived-$VERSION \

@@ -59,7 +59,7 @@ jobs:
         run: |
           k0sSortVersion=$(./vars.sh FROM=. k0s_sort_version)
           mkdir -p build/cache/bin
-          curl -sSLo build/cache/bin/k0s_sort --retry 5 --retry-all-errors "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo build/cache/bin/k0s_sort "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
           chmod +x build/cache/bin/k0s_sort
           export PATH="$(realpath build/cache/bin):$PATH"
 
@@ -302,7 +302,7 @@ jobs:
 
       - name: Download latest release
         run: |
-          curl -L -o "k0s-$K0S_VERSION" "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64"
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo "k0s-$K0S_VERSION" "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64"
           chmod +x "k0s-$K0S_VERSION"
 
       - name: k0s sysinfo
