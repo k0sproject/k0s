@@ -20,6 +20,19 @@ Each chart is processed the same way CLI tool does with following options:
 
 It is possible to customize the timeout by using the `timeout' field.
 
+### Repository configuration
+
+| Field    | Default value | Description                                                              |
+|----------|---------------|--------------------------------------------------------------------------|
+| name     | _(required)_  | The repository name                                                      |
+| url      | _(required)_  | The repository URL                                                       |
+| insecure | true          | Whether to skip TLS certificate checks when connecting to the repository |
+| caFile   | -             | CA bundle file to use when verifying HTTPS-enabled servers               |
+| certFile | -             | The TLS certificate file to use for HTTPS client authentication          |
+| keyfile  | -             | The TLS key file to use for HTTPS client authentication                  |
+| username | -             | Username for Basic HTTP authentication                                   |
+| password | -             | Password for Basic HTTP authentication                                   |
+
 ### Chart configuration
 
 | Field     | Default value | Description                                                          |
