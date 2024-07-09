@@ -27,28 +27,28 @@ import (
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/pkg/node"
 
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/sirupsen/logrus"
 )
 
 // K0sControllersLeaseCounter implements a component that manages a lease per controller.
 // The per-controller leases are used to determine the amount of currently running controllers
 type K0sControllersLeaseCounter struct {
-	InvocationID      string
-	ClusterConfig     *v1beta1.ClusterConfig
-	KubeClientFactory kubeutil.ClientFactoryInterface
+	InvocationID          string
+	ClusterConfig         *v1beta1.ClusterConfig
+	KubeClientFactory     kubeutil.ClientFactoryInterface
+	UpdateControllerCount func(uint)
 
 	cancelFunc  context.CancelFunc
 	leaseCancel context.CancelFunc
-
-	subscribers []chan int
 }
 
 var _ manager.Component = (*K0sControllersLeaseCounter)(nil)
 
 // Init initializes the component needs
 func (l *K0sControllersLeaseCounter) Init(_ context.Context) error {
-	l.subscribers = make([]chan int, 0)
-
 	return nil
 }
 
@@ -95,7 +95,7 @@ func (l *K0sControllersLeaseCounter) Start(ctx context.Context) error {
 		}
 	}()
 
-	go l.runLeaseCounter(ctx)
+	go l.runLeaseCounter(ctx, client)
 
 	return nil
 }
@@ -112,53 +112,21 @@ func (l *K0sControllersLeaseCounter) Stop() error {
 	return nil
 }
 
-// Check the numbers of controller every 10 secs and notify the subscribers
-func (l *K0sControllersLeaseCounter) runLeaseCounter(ctx context.Context) {
+// Updates the number of active controller leases every 10 secs.
+func (l *K0sControllersLeaseCounter) runLeaseCounter(ctx context.Context, clients kubernetes.Interface) {
 	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
-	log.Debug("starting controller lease counter every 10 secs")
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("stopping controller lease counter")
+	log.Debug("Starting controller lease counter every 10 secs")
+
+	wait.UntilWithContext(ctx, func(ctx context.Context) {
+		log.Debug("Counting active controller leases")
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		count, err := kubeutil.CountActiveControllerLeases(ctx, clients)
+		if err != nil {
+			log.WithError(err).Error("Failed to count controller lease holders")
 			return
-		case <-ticker.C:
-			log.Debug("counting controller lease holders")
-			count, err := l.countLeaseHolders(ctx)
-			if err != nil {
-				log.Errorf("failed to count controller leases: %s", err)
-			}
-			l.notifySubscribers(count)
 		}
-	}
-}
 
-func (l *K0sControllersLeaseCounter) countLeaseHolders(ctx context.Context) (int, error) {
-	client, err := l.KubeClientFactory.GetClient()
-	if err != nil {
-		return 0, err
-	}
-
-	return kubeutil.GetControlPlaneNodeCount(ctx, client)
-}
-
-// Notify the subscribers about the current controller count
-func (l *K0sControllersLeaseCounter) notifySubscribers(count int) {
-	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
-	log.Debugf("notifying subscribers (%d) about controller count: %d", len(l.subscribers), count)
-	for _, ch := range l.subscribers {
-		// Use non-blocking send to avoid blocking the loop
-		select {
-		case ch <- count:
-		case <-time.After(5 * time.Second):
-			log.Warn("timeout when sending count to subsrciber")
-		}
-	}
-}
-
-func (l *K0sControllersLeaseCounter) Subscribe() <-chan int {
-	ch := make(chan int, 1)
-	l.subscribers = append(l.subscribers, ch)
-	return ch
+		l.UpdateControllerCount(count)
+	}, 10*time.Second)
 }
