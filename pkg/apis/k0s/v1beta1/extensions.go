@@ -123,18 +123,34 @@ func (c Chart) Validate() error {
 
 // Repository describes single repository entry. Fields map to the CLI flags for the "helm add" command
 type Repository struct {
-	Name     string `json:"name"`
-	URL      string `json:"url"`
-	CAFile   string `json:"caFile"`
-	CertFile string `json:"certFile"`
-	Insecure bool   `json:"insecure"`
-	KeyFile  string `json:"keyfile"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	// The repository name.
+	// +kubebuilder:Validation:Required
+	Name string `json:"name"`
+	// The repository URL.
+	// +kubebuilder:Validation:Required
+	URL string `json:"url"`
+	// Whether to skip TLS certificate checks when connecting to the repository.
+	Insecure *bool `json:"insecure,omitempty"`
+	// CA bundle file to use when verifying HTTPS-enabled servers.
+	CAFile string `json:"caFile,omitempty"`
+	// The TLS certificate file to use for HTTPS client authentication.
+	CertFile string `json:"certFile,omitempty"`
+	// The TLS key file to use for HTTPS client authentication.
+	KeyFile string `json:"keyfile,omitempty"`
+	// Username for Basic HTTP authentication.
+	Username string `json:"username,omitempty"`
+	// Password for Basic HTTP authentication.
+	Password string `json:"password,omitempty"`
+}
+
+func (r *Repository) IsInsecure() bool {
+	// This defaults to true when not explicitly set to false.
+	// Better have this the other way round in the next API version.
+	return r == nil || r.Insecure == nil || *r.Insecure
 }
 
 // Validate performs validation
-func (r Repository) Validate() error {
+func (r *Repository) Validate() error {
 	if r.Name == "" {
 		return errors.New("repository must have Name field not empty")
 	}
