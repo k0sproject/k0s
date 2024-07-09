@@ -91,6 +91,7 @@ func (a *OCIBundleReconciler) loadOne(ctx context.Context, fpath string) error {
 			return fmt.Errorf("failed to connect to containerd: %w", err)
 		}
 		if _, err = client.ListImages(ctx); err != nil {
+			_ = client.Close()
 			return fmt.Errorf("failed to communicate with containerd: %w", err)
 		}
 		return nil
