@@ -24,8 +24,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -98,25 +96,6 @@ spec:
 	require.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-deploy.yaml", dir), []byte(templateDeployment), 0400))
 
 	fakes := kubeutil.NewFakeClientFactory()
-	verbs := []string{"get", "list", "delete", "create"}
-	fakes.RawDiscovery.Resources = []*metav1.APIResourceList{
-		{
-			GroupVersion: corev1.SchemeGroupVersion.String(),
-			APIResources: []metav1.APIResource{
-				{Name: "nodes", Namespaced: false, Kind: "Node", Verbs: verbs},
-				{Name: "pods", Namespaced: true, Kind: "Pod", Verbs: verbs},
-				{Name: "configmaps", Namespaced: true, Kind: "ConfigMap", Verbs: verbs},
-				{Name: "namespaces", Namespaced: false, Kind: "Namespace", Verbs: verbs},
-			},
-		},
-		{
-			GroupVersion: appsv1.SchemeGroupVersion.String(),
-			APIResources: []metav1.APIResource{
-				{Name: "deployments", Namespaced: true, Kind: "Deployment", Verbs: verbs},
-			},
-		},
-	}
-
 	a := applier.NewApplier(dir, fakes)
 
 	ctx := context.Background()
