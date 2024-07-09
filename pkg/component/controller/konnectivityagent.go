@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -32,11 +33,10 @@ import (
 )
 
 type KonnectivityAgent struct {
-	K0sVars                    *config.CfgVars
-	APIServerHost              string
-	K0sControllersLeaseCounter *K0sControllersLeaseCounter
+	K0sVars       *config.CfgVars
+	APIServerHost string
+	ServerCount   func() (uint, <-chan struct{})
 
-	serverCountChan  <-chan int
 	configChangeChan chan *v1beta1.ClusterConfig
 	log              *logrus.Entry
 	previousConfig   konnectivityAgentConfig
@@ -55,26 +55,33 @@ func (k *KonnectivityAgent) Init(_ context.Context) error {
 }
 
 func (k *KonnectivityAgent) Start(ctx context.Context) error {
-	// Subscribe to ctrl count changes
-	k.serverCountChan = k.K0sControllersLeaseCounter.Subscribe()
 
 	go func() {
-		var (
-			clusterConfig *v1beta1.ClusterConfig
-			serverCount   int
-		)
+		serverCount, serverCountChanged := k.ServerCount()
 
+		var clusterConfig *v1beta1.ClusterConfig
+		var retry <-chan time.Time
 		for {
 			select {
 			case config := <-k.configChangeChan:
 				clusterConfig = config
 
-			case count := <-k.serverCountChan:
-				serverCount = count
+			case <-serverCountChanged:
+				prevServerCount := serverCount
+				serverCount, serverCountChanged = k.ServerCount()
+				// write only if the server count actually changed
+				if serverCount == prevServerCount {
+					continue
+				}
+
+			case <-retry:
+				k.log.Info("Retrying to write konnectivity agent manifest")
 
 			case <-ctx.Done():
 				return
 			}
+
+			retry = nil
 
 			if clusterConfig == nil {
 				k.log.Info("Cluster configuration has not yet been reconciled")
@@ -83,6 +90,8 @@ func (k *KonnectivityAgent) Start(ctx context.Context) error {
 
 			if err := k.writeKonnectivityAgent(clusterConfig, serverCount); err != nil {
 				k.log.Errorf("failed to write konnectivity agent manifest: %v", err)
+				retry = time.After(10 * time.Second)
+				continue
 			}
 		}
 	}()
@@ -101,7 +110,7 @@ func (k *KonnectivityAgent) Stop() error {
 	return nil
 }
 
-func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.ClusterConfig, serverCount int) error {
+func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.ClusterConfig, serverCount uint) error {
 	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
 	err := dir.Init(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
@@ -183,7 +192,7 @@ type konnectivityAgentConfig struct {
 	ProxyServerPort      uint16
 	AgentPort            uint16
 	Image                string
-	ServerCount          int
+	ServerCount          uint
 	PullPolicy           string
 	HostNetwork          bool
 	BindToNodeIP         bool
