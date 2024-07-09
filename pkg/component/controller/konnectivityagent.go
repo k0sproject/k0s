@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"sync"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -37,13 +36,10 @@ type KonnectivityAgent struct {
 	APIServerHost              string
 	K0sControllersLeaseCounter *K0sControllersLeaseCounter
 
-	serverCount       int
-	serverCountChan   <-chan int
-	configChangeChan  chan *v1beta1.ClusterConfig
-	clusterConfig     *v1beta1.ClusterConfig
-	log               *logrus.Entry
-	previousConfig    konnectivityAgentConfig
-	agentManifestLock sync.Mutex
+	serverCountChan  <-chan int
+	configChangeChan chan *v1beta1.ClusterConfig
+	log              *logrus.Entry
+	previousConfig   konnectivityAgentConfig
 	*prober.EventEmitter
 }
 
@@ -63,23 +59,34 @@ func (k *KonnectivityAgent) Start(ctx context.Context) error {
 	k.serverCountChan = k.K0sControllersLeaseCounter.Subscribe()
 
 	go func() {
+		var (
+			clusterConfig *v1beta1.ClusterConfig
+			serverCount   int
+		)
+
 		for {
 			select {
+			case config := <-k.configChangeChan:
+				clusterConfig = config
+
+			case count := <-k.serverCountChan:
+				serverCount = count
+
 			case <-ctx.Done():
 				return
-			case count := <-k.serverCountChan:
-				k.serverCount = count
-				if err := k.writeKonnectivityAgent(); err != nil {
-					k.log.Errorf("failed to write konnectivity agent manifest: %v", err)
-				}
-			case clusterConfig := <-k.configChangeChan:
-				k.clusterConfig = clusterConfig
-				if err := k.writeKonnectivityAgent(); err != nil {
-					k.log.Errorf("failed to write konnectivity agent manifest: %v", err)
-				}
+			}
+
+			if clusterConfig == nil {
+				k.log.Info("Cluster configuration has not yet been reconciled")
+				continue
+			}
+
+			if err := k.writeKonnectivityAgent(clusterConfig, serverCount); err != nil {
+				k.log.Errorf("failed to write konnectivity agent manifest: %v", err)
 			}
 		}
 	}()
+
 	return nil
 }
 
@@ -94,14 +101,7 @@ func (k *KonnectivityAgent) Stop() error {
 	return nil
 }
 
-func (k *KonnectivityAgent) writeKonnectivityAgent() error {
-	k.agentManifestLock.Lock()
-	defer k.agentManifestLock.Unlock()
-
-	if k.clusterConfig == nil {
-		return fmt.Errorf("cluster config is not reconciled yet")
-	}
-
+func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.ClusterConfig, serverCount int) error {
 	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
 	err := dir.Init(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
@@ -111,14 +111,14 @@ func (k *KonnectivityAgent) writeKonnectivityAgent() error {
 		// Since the konnectivity server runs with hostNetwork=true this is the
 		// IP address of the master machine
 		ProxyServerHost: k.APIServerHost,
-		ProxyServerPort: uint16(k.clusterConfig.Spec.Konnectivity.AgentPort),
-		Image:           k.clusterConfig.Spec.Images.Konnectivity.URI(),
-		ServerCount:     k.serverCount,
-		PullPolicy:      k.clusterConfig.Spec.Images.DefaultPullPolicy,
+		ProxyServerPort: uint16(clusterConfig.Spec.Konnectivity.AgentPort),
+		Image:           clusterConfig.Spec.Images.Konnectivity.URI(),
+		ServerCount:     serverCount,
+		PullPolicy:      clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
-	if k.clusterConfig.Spec.Network != nil {
-		nllb := k.clusterConfig.Spec.Network.NodeLocalLoadBalancing
+	if clusterConfig.Spec.Network != nil {
+		nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 		if nllb.IsEnabled() {
 			switch nllb.Type {
 			case v1beta1.NllbTypeEnvoyProxy:
@@ -152,7 +152,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent() error {
 					cfg.ProxyServerPort = uint16(*v1beta1.DefaultEnvoyProxy().KonnectivityServerBindPort)
 				}
 			default:
-				return fmt.Errorf("unsupported node-local load balancer type: %q", k.clusterConfig.Spec.Network.NodeLocalLoadBalancing.Type)
+				return fmt.Errorf("unsupported node-local load balancer type: %q", clusterConfig.Spec.Network.NodeLocalLoadBalancing.Type)
 			}
 		}
 	}
