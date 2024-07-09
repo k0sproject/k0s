@@ -29,17 +29,12 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 )
 
 type KonnectivityAgent struct {
-	K0sVars    *config.CfgVars
-	LogLevel   string
-	SingleNode bool
-	// used for lease lock
-	KubeClientFactory          kubeutil.ClientFactoryInterface
-	NodeConfig                 *v1beta1.ClusterConfig
+	K0sVars                    *config.CfgVars
+	APIServerHost              string
 	K0sControllersLeaseCounter *K0sControllersLeaseCounter
 
 	serverCount       int
@@ -115,7 +110,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent() error {
 	cfg := konnectivityAgentConfig{
 		// Since the konnectivity server runs with hostNetwork=true this is the
 		// IP address of the master machine
-		ProxyServerHost: k.NodeConfig.Spec.API.APIAddress(), // TODO: should it be an APIAddress?
+		ProxyServerHost: k.APIServerHost,
 		ProxyServerPort: uint16(k.clusterConfig.Spec.Konnectivity.AgentPort),
 		Image:           k.clusterConfig.Spec.Images.Konnectivity.URI(),
 		ServerCount:     k.serverCount,

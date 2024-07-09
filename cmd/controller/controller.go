@@ -249,11 +249,8 @@ func (c *command) start(ctx context.Context) error {
 
 	if enableKonnectivity {
 		nodeComponents.Add(ctx, &controller.Konnectivity{
-			SingleNode:                 c.SingleNode,
-			LogLevel:                   c.Logging[constant.KonnectivityServerComponentName],
 			K0sVars:                    c.K0sVars,
-			KubeClientFactory:          adminClientFactory,
-			NodeConfig:                 nodeConfig,
+			LogLevel:                   c.Logging[constant.KonnectivityServerComponentName],
 			EventEmitter:               prober.NewEventEmitter(),
 			K0sControllersLeaseCounter: controllerLeaseCounter,
 		})
@@ -520,11 +517,8 @@ func (c *command) start(ctx context.Context) error {
 
 	if enableKonnectivity {
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
-			SingleNode:                 c.SingleNode,
-			LogLevel:                   c.Logging[constant.KonnectivityServerComponentName],
 			K0sVars:                    c.K0sVars,
-			KubeClientFactory:          adminClientFactory,
-			NodeConfig:                 nodeConfig,
+			APIServerHost:              nodeConfig.Spec.API.APIAddress(),
 			EventEmitter:               prober.NewEventEmitter(),
 			K0sControllersLeaseCounter: controllerLeaseCounter,
 		})
