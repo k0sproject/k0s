@@ -35,9 +35,9 @@ func validConfig() []byte {
 
 func invalidConfig() []byte {
 	config := v1beta1.DefaultClusterConfig()
-	config.Spec.Extensions.Storage.Type = "external_storage"
-	//  CreateDefaultStorageClass is not supported with external_storage
-	config.Spec.Extensions.Storage.CreateDefaultStorageClass = true
+	// NLLB cannot be used with external address
+	config.Spec.Network.NodeLocalLoadBalancing.Enabled = true
+	config.Spec.API.ExternalAddress = "k0s.example.com"
 	cfg, _ := yaml.Marshal(config)
 	return cfg
 }
@@ -50,7 +50,7 @@ func TestValidateCmd(t *testing.T) {
 		errOut := bytes.NewBuffer(nil)
 		cmd.SetErr(errOut)
 		assert.Error(t, cmd.Execute())
-		assert.Contains(t, errOut.String(), "default storage class for external_storage")
+		assert.Contains(t, errOut.String(), "node-local load balancing cannot be used in conjunction with an external Kubernetes API server address")
 		errOut.Reset()
 		cmd.SetIn(bytes.NewReader(validConfig()))
 		assert.NoError(t, cmd.Execute())

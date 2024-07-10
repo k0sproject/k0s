@@ -30,7 +30,6 @@ smoketests := \
 	check-customdomain \
 	check-customports \
 	check-customports-dynamicconfig \
-	check-defaultstorage \
 	check-disabledcomponents \
 	check-dualstack-calico \
 	check-dualstack-calico-dynamicconfig \
@@ -57,7 +56,6 @@ smoketests := \
 	check-noderole \
 	check-noderole-no-taints \
 	check-noderole-single \
-	check-openebs\
 	check-psp \
 	check-reset \
 	check-singlenode \

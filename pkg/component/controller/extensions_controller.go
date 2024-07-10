@@ -37,14 +37,12 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
@@ -57,7 +55,6 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/yaml"
 )
 
 // Helm watch for Chart crd
@@ -91,79 +88,7 @@ const (
 func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0sv1beta1.ClusterConfig) error {
 	ec.L.Info("Extensions reconciliation started")
 	defer ec.L.Info("Extensions reconciliation finished")
-
-	var errs []error
-	helmSettings, err := ec.configureStorage(clusterConfig)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("cannot configure storage: %w", err))
-	}
-
-	if err := ec.reconcileHelmExtensions(helmSettings); err != nil {
-		errs = append(errs, fmt.Errorf("can't reconcile helm based extensions: %w", err))
-	}
-
-	return errors.Join(errs...)
-}
-
-func (ec *ExtensionsController) configureStorage(clusterConfig *k0sv1beta1.ClusterConfig) (*k0sv1beta1.HelmExtensions, error) {
-	helmSettings := clusterConfig.Spec.Extensions.Helm
-	if clusterConfig.Spec.Extensions.Storage.Type != k0sv1beta1.OpenEBSLocal {
-		return helmSettings, nil
-	}
-
-	for _, chart := range helmSettings.Charts {
-		if chart.ChartName == "openebs-internal/openebs" {
-			return nil, fmt.Errorf("openebs-internal/openebs is defined in spec.extensions.helm.charts and spec.extensions.storage.type is set to openebs_local_storage. https://docs.k0sproject.io/stable/examples/openebs")
-		}
-	}
-	helmSettings, err := addOpenEBSHelmExtension(helmSettings, clusterConfig.Spec.Extensions.Storage)
-	if err != nil {
-		return nil, fmt.Errorf("can't add openebs helm extension")
-	}
-	return helmSettings, nil
-}
-
-func addOpenEBSHelmExtension(helmSpec *k0sv1beta1.HelmExtensions, storageExtension *k0sv1beta1.StorageExtension) (*k0sv1beta1.HelmExtensions, error) {
-	openEBSValues := map[string]interface{}{
-		"localprovisioner": map[string]interface{}{
-			"hostpathClass": map[string]interface{}{
-				"enabled":        true,
-				"isDefaultClass": storageExtension.CreateDefaultStorageClass,
-			},
-		},
-	}
-	values, err := yamlifyValues(openEBSValues)
-	if err != nil {
-		logrus.Errorf("can't yamlify openebs values: %v", err)
-		return nil, err
-	}
-	if helmSpec == nil {
-		helmSpec = &k0sv1beta1.HelmExtensions{
-			Repositories: k0sv1beta1.RepositoriesSettings{},
-			Charts:       k0sv1beta1.ChartsSettings{},
-		}
-	}
-	helmSpec.Repositories = append(helmSpec.Repositories, k0sv1beta1.Repository{
-		Name: "openebs-internal",
-		URL:  constant.OpenEBSRepository,
-	})
-	helmSpec.Charts = append(helmSpec.Charts, k0sv1beta1.Chart{
-		Name:      "openebs",
-		ChartName: "openebs-internal/openebs",
-		TargetNS:  "openebs",
-		Version:   constant.OpenEBSVersion,
-		Values:    values,
-		Timeout:   metav1.Duration{Duration: time.Duration(time.Minute * 30)}, // it takes a while to install openebs
-	})
-	return helmSpec, nil
-}
-
-func yamlifyValues(values map[string]interface{}) (string, error) {
-	bytes, err := yaml.Marshal(values)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
+	return ec.reconcileHelmExtensions(clusterConfig.Spec.Extensions.Helm)
 }
 
 // reconcileHelmExtensions creates instance of Chart CR for each chart of the config file

@@ -136,69 +136,6 @@ func TestChartNeedsUpgrade(t *testing.T) {
 	}
 }
 
-func addHelmExtension(config *k0sv1beta1.ClusterConfig) *k0sv1beta1.ClusterConfig {
-	config.Spec.Extensions.Storage.Type = k0sv1beta1.OpenEBSLocal
-	return config
-}
-
-func addStorageExtension(config *k0sv1beta1.ClusterConfig) *k0sv1beta1.ClusterConfig {
-	config.Spec.Extensions.Helm, _ = addOpenEBSHelmExtension(config.Spec.Extensions.Helm, config.Spec.Extensions.Storage)
-	return config
-}
-
-func TestConfigureStorage(t *testing.T) {
-	var testCases = []struct {
-		description     string
-		clusterConfig   *k0sv1beta1.ClusterConfig
-		expectedErr     bool
-		expectedOpenEBS bool
-	}{
-		{
-			"no_openebs",
-			k0sv1beta1.DefaultClusterConfig(),
-			false,
-			false,
-		},
-		{
-			"openebs_helm_extension",
-			addHelmExtension(k0sv1beta1.DefaultClusterConfig()),
-			false,
-			true,
-		},
-		{
-			"openebs_storage_extension",
-			addStorageExtension(k0sv1beta1.DefaultClusterConfig()),
-			false,
-			true,
-		},
-		{
-			"openebs_both",
-			addStorageExtension(addHelmExtension(k0sv1beta1.DefaultClusterConfig())),
-			true,
-			false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.description, func(t *testing.T) {
-			ec := ExtensionsController{}
-			helmSettings, err := ec.configureStorage(tc.clusterConfig)
-
-			if tc.expectedErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-
-			if tc.expectedOpenEBS {
-				assert.Equal(t, 1, len(helmSettings.Charts))
-				assert.Equal(t, "openebs", helmSettings.Charts[0].Name)
-			}
-		})
-	}
-
-}
-
 func TestChartManifestFileName(t *testing.T) {
 	chart := k0sv1beta1.Chart{
 		Name:      "release",

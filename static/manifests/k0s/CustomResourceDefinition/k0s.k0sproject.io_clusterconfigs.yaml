@@ -157,11 +157,15 @@ spec:
                         type: array
                     type: object
                   storage:
-                    description: StorageExtenstion specifies cluster default storage
+                    description: |-
+                      Deprecated: storage is deprecated and will be ignored starting from k0s
+                      1.31 and onwards: https://docs.k0sproject.io/stable/examples/openebs
                     properties:
                       create_default_storage_class:
+                        description: 'Deprecated: No-op; kept for backwards compatibility.'
                         type: boolean
                       type:
+                        description: 'Deprecated: No-op; kept for backwards compatibility.'
                         type: string
                     type: object
                 type: object
