@@ -1006,30 +1006,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#bundled-openebs-storage-deprecated" class="md-nav__link">
-    <span class="md-ellipsis">
-      Bundled OpenEBS storage (deprecated)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Bundled OpenEBS storage (deprecated)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example usage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2090,30 +2066,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#bundled-openebs-storage-deprecated" class="md-nav__link">
-    <span class="md-ellipsis">
-      Bundled OpenEBS storage (deprecated)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Bundled OpenEBS storage (deprecated)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example usage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2149,88 +2101,6 @@
 <li>Portworx</li>
 </ul>
 <p>If you are looking for a fault-tolerant storage with data replication, you can find a k0s tutorial for configuring Ceph storage with Rook <a href="../examples/rook-ceph/">in here</a>.</p>
-<h2 id="bundled-openebs-storage-deprecated">Bundled OpenEBS storage (deprecated)<a class="headerlink" href="#bundled-openebs-storage-deprecated" title="Permanent link">#</a></h2>
-<p>Bundled OpenEBS was deprecated in favor of running it <a href="../examples/openebs/">as a helm extension</a>,
-this documentation is maintained as a reference for existing installations.</p>
-<p>This was done for three reasons:</p>
-<ol>
-<li>By installing it as a helm extension, users have more control and flexibility without adding complexity.</li>
-<li>It allows users to choose the OpenEBS version independent of their k0s version.</li>
-<li>It makes the k0s configuration more consistent.</li>
-</ol>
-<p>For new installations or to migrate existing installations, please refer to the <a href="../examples/openebs/">OpenEBS extension page</a>.</p>
-<p>The OpenEBS extension is enabled by setting <a href="../configuration/#specextensionsstorage"><code>spec.extensions.storage.type</code></a> to<code>`openebs_local_storage</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">storage</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs_local_storage</span>
-</code></pre></div>
-<p>The cluster will have two storage classes available for you to use:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>storageclass
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>NAME<span class="w">               </span>PROVISIONER<span class="w">        </span>RECLAIMPOLICY<span class="w">   </span>VOLUMEBINDINGMODE<span class="w">      </span>ALLOWVOLUMEEXPANSION<span class="w">   </span>AGE
-openebs-device<span class="w">     </span>openebs.io/local<span class="w">   </span>Delete<span class="w">          </span>WaitForFirstConsumer<span class="w">   </span><span class="nb">false</span><span class="w">                  </span>24s
-openebs-hostpath<span class="w">   </span>openebs.io/local<span class="w">   </span>Delete<span class="w">          </span>WaitForFirstConsumer<span class="w">   </span><span class="nb">false</span><span class="w">                  </span>24s
-</code></pre></div>
-<p>The <code>openebs-hostpath</code> is the storage class that maps to the <code>/var/openebs/local</code></p>
-<p>The <code>openebs-device</code> is not configured and could be configured by <a href="../manifests/">manifest deployer</a> accordingly to the <a href="https://docs.openebs.io/">OpenEBS documentation</a></p>
-<h3 id="example-usage">Example usage<a class="headerlink" href="#example-usage" title="Permanent link">#</a></h3>
-<p>Use following manifests as an example of pod with mounted volume:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PersistentVolumeClaim</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx-pvc</span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">accessModes</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ReadWriteOnce</span>
-<span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs-hostpath</span>
-<span class="w">  </span><span class="nt">resources</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">requests</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5Gi</span>
-<span class="nn">---</span>
-<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
-<span class="w">  </span><span class="nt">strategy</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Recreate</span>
-<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
-<span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span><span class="w"> </span>
-<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
-<span class="w">        </span><span class="nt">volumeMounts</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
-<span class="w">          </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/nginx</span>
-<span class="w">      </span><span class="nt">volumes</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
-<span class="w">        </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx-pvc</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>nginx.yaml
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>persistentvolumeclaim/nginx-pvc<span class="w"> </span>created
-deployment.apps/nginx<span class="w"> </span>created
-bash-5.1#<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>pods
-NAME<span class="w">                    </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
-nginx-d95bcb7db-gzsdt<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>30s
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pv
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>NAME<span class="w">                                       </span>CAPACITY<span class="w">   </span>ACCESS<span class="w"> </span>MODES<span class="w">   </span>RECLAIM<span class="w"> </span>POLICY<span class="w">   </span>STATUS<span class="w">   </span>CLAIM<span class="w">               </span>STORAGECLASS<span class="w">       </span>REASON<span class="w">   </span>AGE
-pvc-9a7fae2d-eb03-42c3-aaa9-1a807d5df12f<span class="w">   </span>5Gi<span class="w">        </span>RWO<span class="w">            </span>Delete<span class="w">           </span>Bound<span class="w">    </span>default/nginx-pvc<span class="w">   </span>openebs-hostpath<span class="w">            </span>30s
-</code></pre></div>
 
 
 

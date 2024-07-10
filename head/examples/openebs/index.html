@@ -1562,24 +1562,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installing-openebs-from-scratch" class="md-nav__link">
-    <span class="md-ellipsis">
-      Installing OpenEBS from scratch
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migrating-bundled-openebs-to-helm-extension" class="md-nav__link">
-    <span class="md-ellipsis">
-      Migrating bundled OpenEBS to helm extension
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       Usage
@@ -2043,24 +2025,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installing-openebs-from-scratch" class="md-nav__link">
-    <span class="md-ellipsis">
-      Installing OpenEBS from scratch
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migrating-bundled-openebs-to-helm-extension" class="md-nav__link">
-    <span class="md-ellipsis">
-      Migrating bundled OpenEBS to helm extension
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       Usage
@@ -2100,14 +2064,9 @@
 
 
 <h1 id="openebs">OpenEBS<a class="headerlink" href="#openebs" title="Permanent link">#</a></h1>
-<p>This tutorial covers the installation of OpenEBS as a Helm extension, both from
-scratch and how to migrate it from a storage extension.</p>
-<h2 id="installing-openebs-from-scratch">Installing OpenEBS from scratch<a class="headerlink" href="#installing-openebs-from-scratch" title="Permanent link">#</a></h2>
-<p><strong>WARNING</strong>: Do not configure OpenEBS as both a storage extension and a Helm
-extension. It's considered an invalid configuration and k0s will entirely ignore
-the configuration to prevent accidental upgrades or downgrades. The chart
-objects defined in the API will still behave normally.</p>
-<p>OpenEBS can be installed as a helm chart by adding it as an extension to your configuration:</p>
+<p>This tutorial covers the installation of OpenEBS as a Helm extension. OpenEBS
+can be installed as a helm chart by adding it as an extension to your
+configuration:</p>
 <div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">helm</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">repositories</span><span class="p">:</span>
@@ -2126,48 +2085,6 @@ objects defined in the API will still behave normally.</p>
 <span class="w">              </span><span class="no">isDefaultClass: false</span>
 </code></pre></div>
 <p>If you want OpenEBS to be your default storage class, set <code>isDefaultClass</code> to <code>true</code>.</p>
-<h2 id="migrating-bundled-openebs-to-helm-extension">Migrating bundled OpenEBS to helm extension<a class="headerlink" href="#migrating-bundled-openebs-to-helm-extension" title="Permanent link">#</a></h2>
-<p>The bundled OpenEBS extension is already a helm extension installed as a
-<code>chart.helm.k0sproject.io</code>. For this reason, all we have to do is to remove the
-manifests and to clean up the object. However, this must be done in a specific order
-to prevent data loss.</p>
-<p><strong>WARNING</strong>: Not following the steps in the precise order presented by the
-documentation may provoke data loss.</p>
-<p>The first step to perform the migration is to disable the <code>applier-manager</code>
-component on all controllers. For each controller, restart the controller
-with the flag <code>--disable-components=applier-manager</code>. If you already had this flag,
-set it to <code>--disable-components=&lt;previous value&gt;,applier-manager</code>.</p>
-<p>Once the <code>applier-manager</code> is disabled in every running controller, you need to modify
-the configuration to use <code>external_storage</code> instead of <code>openebs_local_storage</code>.</p>
-<p>If you are using <a href="../../dynamic-configuration/">dynamic configuration</a>, you can
-change it with this command:</p>
-<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>patch<span class="w"> </span>clusterconfig<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w">  </span>k0s<span class="w"> </span>--patch<span class="w"> </span><span class="s1">&#39;{&quot;spec&quot;:{&quot;extensions&quot;:{&quot;storage&quot;:{&quot;type&quot;:&quot;external_storage&quot;}}}}&#39;</span><span class="w"> </span>--type<span class="o">=</span>merge
-</code></pre></div>
-<p>If you are using a static configuration file, replace <code>spec.extensions.storage.type</code>
-from <code>openebs_local_storage</code> to <code>external_storage</code> in all control plane nodes and
-restart all the control plane nodes one by one.</p>
-<p>When the configuration is set to <code>external_storage</code> and the servers are
-restarted, you must manage the it as a chart object in the API:</p>
-<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>chart<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>k0s-addon-chart-openebs<span class="w"> </span>-o<span class="w"> </span>yaml
-</code></pre></div>
-<p>First, remove the labels and annotations related to the stack applier:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kc<span class="w"> </span>annotate<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>chart<span class="w"> </span>k0s-addon-chart-openebs<span class="w"> </span>k0s.k0sproject.io/stack-checksum-
-k0s<span class="w"> </span>kc<span class="w"> </span>label<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>chart<span class="w"> </span>k0s-addon-chart-openebs<span class="w"> </span>k0s.k0sproject.io/stack-
-</code></pre></div>
-<p>After the annotations and labels are removed, remove the manifest file <strong>on each
-controller</strong>. This file is located in
-<code>&lt;k0s-data-dir&gt;/manifests/helm/&lt;number&gt;_helm_extension_openebs.yaml</code>, which in
-most installations defaults to
-<code>/var/lib/k0s/manifests/helm/0_helm_extension_openebs.yaml</code>.</p>
-<p><strong>WARNING</strong>: Not removing the old manifest file from all controllers may cause
-the manifest to be reapplied, reverting your changes and potentially casuing
-data loss.</p>
-<p>Finally, we want to re-enable the <code>applier-manager</code> and restart all controllers
-without the <code>--disable-components=applier-manager</code> flag.</p>
-<p>Once the migration is coplete, you'll be able to update the OpenEBS chart.
-Let's take v3.9.0 as an example:</p>
-<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>patch<span class="w"> </span>chart<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>k0s-addon-chart-openebs<span class="w"> </span>--patch<span class="w"> </span><span class="s1">&#39;{&quot;spec&quot;:{&quot;version&quot;:&quot;3.9.0&quot;}}&#39;</span><span class="w"> </span>--type<span class="o">=</span>merge
-</code></pre></div>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">#</a></h2>
 <p>Once installed, the cluster will have two storage classes available for you to use:</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>storageclass
