@@ -26,7 +26,6 @@ import (
 
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -37,8 +36,7 @@ type Component struct {
 	Version           string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	kubernetesClient kubernetes.Interface
-	analyticsClient  analyticsClient
+	analyticsClient analyticsClient
 
 	log    *logrus.Entry
 	stopCh chan struct{}
@@ -61,16 +59,6 @@ func (c *Component) Init(_ context.Context) error {
 	c.analyticsClient = newSegmentClient(segmentToken)
 	c.log.Info("segment client has been init")
 	return nil
-}
-
-func (c *Component) retrieveKubeClient(ch chan struct{}) {
-	client, err := c.KubeClientFactory.GetClient()
-	if err != nil {
-		c.log.WithError(err).Warning("can't init kube client")
-		return
-	}
-	c.kubernetesClient = client
-	close(ch)
 }
 
 // Run runs work cycle
@@ -108,22 +96,22 @@ func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterCo
 		return nil
 	}
 	c.clusterConfig = clusterCfg
-	initedCh := make(chan struct{})
-	wait.Until(func() {
-		c.retrieveKubeClient(initedCh)
-	}, time.Second, initedCh)
-	go c.run(ctx)
+	clients, err := c.KubeClientFactory.GetClient()
+	if err != nil {
+		return err
+	}
+	go c.run(ctx, clients)
 	return nil
 }
 
-func (c *Component) run(ctx context.Context) {
+func (c *Component) run(ctx context.Context, clients kubernetes.Interface) {
 	c.stopCh = make(chan struct{})
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			c.sendTelemetry(ctx)
+			c.sendTelemetry(ctx, clients)
 		case <-c.stopCh:
 			return
 		}
