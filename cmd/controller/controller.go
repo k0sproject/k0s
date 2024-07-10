@@ -193,9 +193,11 @@ func (c *command) start(ctx context.Context) error {
 		return err
 	}
 	logrus.Infof("DNS address: %s", dnsAddress)
-	var storageBackend manager.Component
 
-	switch nodeConfig.Spec.Storage.Type {
+	var storageBackend manager.Component
+	storageType := nodeConfig.Spec.Storage.Type
+
+	switch storageType {
 	case v1beta1.KineStorageType:
 		storageBackend = &controller.Kine{
 			Config:  nodeConfig.Spec.Storage.Kine,
@@ -548,6 +550,7 @@ func (c *command) start(ctx context.Context) error {
 	if telemetry.IsEnabled() {
 		clusterComponents.Add(ctx, &telemetry.Component{
 			K0sVars:           c.K0sVars,
+			StorageType:       storageType,
 			KubeClientFactory: adminClientFactory,
 		})
 	} else {

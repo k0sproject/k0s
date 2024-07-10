@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -66,7 +65,7 @@ func (c *Component) collectTelemetry(ctx context.Context, clients kubernetes.Int
 	var err error
 	data := telemetryData{}
 
-	data.StorageType = c.getStorageType()
+	data.StorageType = c.StorageType
 	data.ClusterID, err = getClusterID(ctx, clients)
 
 	if err != nil {
@@ -86,14 +85,6 @@ func (c *Component) collectTelemetry(ctx context.Context, clients kubernetes.Int
 		return data, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
 	return data, nil
-}
-
-func (c *Component) getStorageType() string {
-	switch c.clusterConfig.Spec.Storage.Type {
-	case v1beta1.EtcdStorageType, v1beta1.KineStorageType:
-		return c.clusterConfig.Spec.Storage.Type
-	}
-	return "unknown"
 }
 
 func getClusterID(ctx context.Context, clients kubernetes.Interface) (string, error) {

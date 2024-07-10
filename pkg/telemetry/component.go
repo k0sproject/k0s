@@ -33,8 +33,8 @@ import (
 
 // Component is a telemetry component for k0s component manager
 type Component struct {
-	clusterConfig     *v1beta1.ClusterConfig
 	K0sVars           *config.CfgVars
+	StorageType       string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	log    *logrus.Entry
@@ -75,7 +75,6 @@ func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterCo
 		// We must have the worker stuff already running, do nothing
 		return nil
 	}
-	c.clusterConfig = clusterCfg
 	clients, err := c.KubeClientFactory.GetClient()
 	if err != nil {
 		return err
