@@ -49,7 +49,6 @@ type LeaseConfiguration struct {
 	renewDeadline time.Duration
 	retryPeriod   time.Duration
 	log           logrus.FieldLogger
-	ctx           context.Context
 }
 
 // A LeaseOpt is a function that modifies a LeaseConfiguration
@@ -90,14 +89,6 @@ func WithLogger(logger logrus.FieldLogger) LeaseOpt {
 	}
 }
 
-// WithContext allows the consumer to pass its own context, for example a cancelable context
-func WithContext(ctx context.Context) LeaseOpt {
-	return func(config LeaseConfiguration) LeaseConfiguration {
-		config.ctx = ctx
-		return config
-	}
-}
-
 // WithNamespace specifies which namespace the lease should be created in, defaults to kube-node-lease
 func WithNamespace(namespace string) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
@@ -107,14 +98,13 @@ func WithNamespace(namespace string) LeaseOpt {
 }
 
 // NewLeasePool creates a new LeasePool struct to interact with a lease
-func NewLeasePool(ctx context.Context, client kubernetes.Interface, name, identity string, opts ...LeaseOpt) (*LeasePool, error) {
+func NewLeasePool(client kubernetes.Interface, name, identity string, opts ...LeaseOpt) (*LeasePool, error) {
 
 	leaseConfig := LeaseConfiguration{
 		log:           logrus.StandardLogger(),
 		duration:      60 * time.Second,
 		renewDeadline: 15 * time.Second,
 		retryPeriod:   5 * time.Second,
-		ctx:           ctx,
 		namespace:     "kube-node-lease",
 		name:          name,
 		identity:      identity,
@@ -148,9 +138,9 @@ func WithOutputChannels(channels *LeaseEvents) WatchOpt {
 }
 
 // Watch is the primary function of LeasePool, and starts the leader election process
-func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, error) {
+func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, error) {
 	if p.events != nil {
-		return p.events, nil, nil
+		return p.events, nil
 	}
 
 	watchOptions := watchOptions{
@@ -195,13 +185,11 @@ func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, e
 	}
 	le, err := leaderelection.NewLeaderElector(lec)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if lec.WatchDog != nil {
 		lec.WatchDog.SetLeaderElection(le)
 	}
-
-	ctx, cancel := context.WithCancel(p.config.ctx)
 
 	go func() {
 		for ctx.Err() == nil {
@@ -209,5 +197,5 @@ func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, e
 		}
 	}()
 
-	return p.events, cancel, nil
+	return p.events, nil
 }
