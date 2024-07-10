@@ -547,7 +547,6 @@ func (c *command) start(ctx context.Context) error {
 
 	if telemetry.IsEnabled() {
 		clusterComponents.Add(ctx, &telemetry.Component{
-			Version:           build.Version,
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
 		})

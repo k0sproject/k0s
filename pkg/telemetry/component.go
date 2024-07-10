@@ -35,7 +35,6 @@ import (
 type Component struct {
 	clusterConfig     *v1beta1.ClusterConfig
 	K0sVars           *config.CfgVars
-	Version           string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	log    *logrus.Entry

@@ -21,13 +21,15 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/segmentio/analytics-go"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/build"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/segmentio/analytics-go"
 )
 
 type telemetryData struct {
@@ -141,7 +143,7 @@ func (c *Component) sendTelemetry(ctx context.Context, analyticsClient analytics
 		Extra: map[string]interface{}{"direct": true},
 	}
 
-	hostData.App.Version = c.Version
+	hostData.App.Version = build.Version
 	hostData.App.Name = "k0s"
 	hostData.App.Namespace = "k0s"
 	hostData.Extra["cpuArch"] = runtime.GOARCH
