@@ -130,7 +130,7 @@ func getWorkerData(ctx context.Context, clients kubernetes.Interface) ([]workerD
 	return wds, workerSums{cpuTotal: cpuTotal, memTotal: memTotal}, nil
 }
 
-func (c *Component) sendTelemetry(ctx context.Context, clients kubernetes.Interface) {
+func (c *Component) sendTelemetry(ctx context.Context, analyticsClient analytics.Client, clients kubernetes.Interface) {
 	data, err := c.collectTelemetry(ctx, clients)
 	if err != nil {
 		c.log.WithError(err).Warning("can't prepare telemetry data")
@@ -150,7 +150,7 @@ func (c *Component) sendTelemetry(ctx context.Context, clients kubernetes.Interf
 	addCustomData(ctx, &hostData, clients)
 
 	c.log.WithField("data", data).WithField("hostdata", hostData).Info("sending telemetry")
-	if err := c.analyticsClient.Enqueue(analytics.Track{
+	if err := analyticsClient.Enqueue(analytics.Track{
 		AnonymousId: "(removed)",
 		Event:       heartbeatEvent,
 		Properties:  data.asProperties(),

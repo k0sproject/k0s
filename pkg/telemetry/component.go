@@ -38,8 +38,6 @@ type Component struct {
 	Version           string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	analyticsClient analytics.Client
-
 	log    *logrus.Entry
 	stopCh chan struct{}
 }
@@ -50,11 +48,8 @@ var _ manager.Reconciler = (*Component)(nil)
 var interval = time.Minute * 10
 
 // Init set up for external service clients (segment, k8s api)
-func (c *Component) Init(_ context.Context) error {
+func (c *Component) Init(context.Context) error {
 	c.log = logrus.WithField("component", "telemetry")
-
-	c.analyticsClient = analytics.New(segmentToken)
-	c.log.Info("segment client has been init")
 	return nil
 }
 
@@ -67,9 +62,6 @@ func (c *Component) Start(_ context.Context) error {
 func (c *Component) Stop() error {
 	if c.stopCh != nil {
 		close(c.stopCh)
-	}
-	if c.analyticsClient != nil {
-		_ = c.analyticsClient.Close()
 	}
 	return nil
 }
@@ -96,11 +88,19 @@ func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterCo
 func (c *Component) run(ctx context.Context, clients kubernetes.Interface) {
 	c.stopCh = make(chan struct{})
 	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
+	analyticsClient := analytics.New(segmentToken)
+
+	defer func() {
+		ticker.Stop()
+		if err := analyticsClient.Close(); err != nil {
+			c.log.WithError(err).Debug("Failed to close analytics client")
+		}
+	}()
+
 	for {
 		select {
 		case <-ticker.C:
-			c.sendTelemetry(ctx, clients)
+			c.sendTelemetry(ctx, analyticsClient, clients)
 		case <-c.stopCh:
 			return
 		}
