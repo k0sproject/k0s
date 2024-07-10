@@ -35,7 +35,6 @@ import (
 var _ certificate.Manager = (*CertificateManager)(nil)
 
 type CertificateManager struct {
-	ctx                     context.Context
 	config                  *rest.Config
 	kubeletClientConfigPath string
 
@@ -91,7 +90,7 @@ func (c *CertificateManager) Current() *tls.Certificate {
 	return c.currentCertificate
 }
 
-func (c *CertificateManager) GetRestConfig() (*rest.Config, error) {
+func (c *CertificateManager) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	restConfig, err := clientcmd.BuildConfigFromFlags("", c.kubeletClientConfigPath)
 	if err != nil {
 		return nil, err
@@ -101,7 +100,7 @@ func (c *CertificateManager) GetRestConfig() (*rest.Config, error) {
 		return nil, err
 	}
 	transportConfig := rest.AnonymousClientConfig(restConfig)
-	if _, err := k8skubeletcert.UpdateTransport(c.ctx.Done(), transportConfig, c, 0); err != nil {
+	if _, err := k8skubeletcert.UpdateTransport(ctx.Done(), transportConfig, c, 0); err != nil {
 		return nil, err
 	}
 
@@ -114,9 +113,8 @@ func (c *CertificateManager) Start()              {}
 func (c *CertificateManager) Stop()               {}
 func (c *CertificateManager) ServerHealthy() bool { return true }
 
-func NewCertificateManager(ctx context.Context, kubeletClientConfigPath string) *CertificateManager {
+func NewCertificateManager(kubeletClientConfigPath string) *CertificateManager {
 	return &CertificateManager{
-		ctx:                     ctx,
 		kubeletClientConfigPath: kubeletClientConfigPath,
 	}
 }

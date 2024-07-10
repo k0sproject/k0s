@@ -47,7 +47,6 @@ type Kine struct {
 	supervisor   supervisor.Supervisor
 	uid          int
 	bypassClient *etcd.Client
-	ctx          context.Context
 }
 
 var _ manager.Component = (*Kine)(nil)
@@ -105,7 +104,6 @@ func (k *Kine) Init(_ context.Context) error {
 // Run runs kine
 func (k *Kine) Start(ctx context.Context) error {
 	logrus.Info("Starting kine")
-	k.ctx = ctx
 
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kine",
@@ -137,7 +135,10 @@ const hcKey = "/k0s-health-check"
 const hcValue = "value"
 
 func (k *Kine) Ready() error {
-	ok, err := k.bypassClient.Write(k.ctx, hcKey, hcValue, 64*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+	defer cancel()
+
+	ok, err := k.bypassClient.Write(ctx, hcKey, hcValue, 64*time.Second)
 	if err != nil {
 		return fmt.Errorf("kine-etcd-health: %w", err)
 	}
@@ -145,7 +146,7 @@ func (k *Kine) Ready() error {
 		logrus.Warningf("kine-etcd-health: health-check value was not written")
 	}
 
-	v, err := k.bypassClient.Read(k.ctx, hcKey)
+	v, err := k.bypassClient.Read(ctx, hcKey)
 	if err != nil {
 		return fmt.Errorf("kine-etcd-health read: %w", err)
 	}
