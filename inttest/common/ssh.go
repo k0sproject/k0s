@@ -80,11 +80,7 @@ func (c *SSHConnection) Connect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	client, err := ssh.NewClient(conn, chans, reqs), nil
-	if err != nil {
-		return err
-	}
-	c.client = client
+	c.client = ssh.NewClient(conn, chans, reqs)
 
 	return nil
 }
