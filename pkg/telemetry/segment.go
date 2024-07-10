@@ -24,9 +24,14 @@ var segmentToken = ""
 
 const heartbeatEvent = "cluster-heartbeat"
 
+func IsEnabled() bool {
+	return segmentToken != ""
+}
+
 func NewDefaultSegmentClient() analytics.Client {
-	if segmentToken == "" {
+	if !IsEnabled() {
 		return nil
 	}
+
 	return analytics.New(segmentToken)
 }

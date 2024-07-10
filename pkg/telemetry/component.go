@@ -53,11 +53,6 @@ var interval = time.Minute * 10
 func (c *Component) Init(_ context.Context) error {
 	c.log = logrus.WithField("component", "telemetry")
 
-	if segmentToken == "" {
-		c.log.Info("no token, telemetry is disabled")
-		return nil
-	}
-
 	c.analyticsClient = analytics.New(segmentToken)
 	c.log.Info("segment client has been init")
 	return nil
@@ -70,10 +65,6 @@ func (c *Component) Start(_ context.Context) error {
 
 // Run does nothing
 func (c *Component) Stop() error {
-	if segmentToken == "" {
-		c.log.Info("no token, telemetry is disabled")
-		return nil
-	}
 	if c.stopCh != nil {
 		close(c.stopCh)
 	}
@@ -91,10 +82,6 @@ func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterCo
 	}
 	if c.stopCh != nil {
 		// We must have the worker stuff already running, do nothing
-		return nil
-	}
-	if segmentToken == "" {
-		c.log.Info("no token, telemetry is disabled")
 		return nil
 	}
 	c.clusterConfig = clusterCfg
