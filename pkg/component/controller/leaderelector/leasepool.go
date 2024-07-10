@@ -61,19 +61,20 @@ func (l *LeasePool) Init(_ context.Context) error {
 	return nil
 }
 
-func (l *LeasePool) Start(ctx context.Context) error {
+func (l *LeasePool) Start(context.Context) error {
 	client, err := l.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
 	}
-	leasePool, err := leaderelection.NewLeasePool(ctx, client, l.name, l.invocationID,
-		leaderelection.WithLogger(l.log),
-		leaderelection.WithContext(ctx))
+	leasePool, err := leaderelection.NewLeasePool(client, l.name, l.invocationID,
+		leaderelection.WithLogger(l.log))
 	if err != nil {
 		return err
 	}
-	events, cancel, err := leasePool.Watch()
+	ctx, cancel := context.WithCancel(context.Background())
+	events, err := leasePool.Watch(ctx)
 	if err != nil {
+		cancel()
 		return err
 	}
 	l.leaseCancel = cancel
