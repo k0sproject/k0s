@@ -116,7 +116,7 @@ func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterCo
 	return nil
 }
 
-func (c Component) run(ctx context.Context) {
+func (c *Component) run(ctx context.Context) {
 	c.stopCh = make(chan struct{})
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()

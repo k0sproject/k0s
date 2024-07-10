@@ -59,7 +59,7 @@ func (td telemetryData) asProperties() analytics.Properties {
 	}
 }
 
-func (c Component) collectTelemetry(ctx context.Context) (telemetryData, error) {
+func (c *Component) collectTelemetry(ctx context.Context) (telemetryData, error) {
 	var err error
 	data := telemetryData{}
 
@@ -85,7 +85,7 @@ func (c Component) collectTelemetry(ctx context.Context) (telemetryData, error) 
 	return data, nil
 }
 
-func (c Component) getStorageType() string {
+func (c *Component) getStorageType() string {
 	switch c.clusterConfig.Spec.Storage.Type {
 	case v1beta1.EtcdStorageType, v1beta1.KineStorageType:
 		return c.clusterConfig.Spec.Storage.Type
@@ -93,7 +93,7 @@ func (c Component) getStorageType() string {
 	return "unknown"
 }
 
-func (c Component) getClusterID(ctx context.Context) (string, error) {
+func (c *Component) getClusterID(ctx context.Context) (string, error) {
 	ns, err := c.kubernetesClient.CoreV1().Namespaces().Get(ctx,
 		"kube-system",
 		metav1.GetOptions{})
@@ -104,7 +104,7 @@ func (c Component) getClusterID(ctx context.Context) (string, error) {
 	return fmt.Sprintf("kube-system:%s", ns.UID), nil
 }
 
-func (c Component) getWorkerData(ctx context.Context) ([]workerData, workerSums, error) {
+func (c *Component) getWorkerData(ctx context.Context) ([]workerData, workerSums, error) {
 	nodes, err := c.kubernetesClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, workerSums{}, err
@@ -129,7 +129,7 @@ func (c Component) getWorkerData(ctx context.Context) ([]workerData, workerSums,
 	return wds, workerSums{cpuTotal: cpuTotal, memTotal: memTotal}, nil
 }
 
-func (c Component) sendTelemetry(ctx context.Context) {
+func (c *Component) sendTelemetry(ctx context.Context) {
 	data, err := c.collectTelemetry(ctx)
 	if err != nil {
 		c.log.WithError(err).Warning("can't prepare telemetry data")
@@ -159,7 +159,7 @@ func (c Component) sendTelemetry(ctx context.Context) {
 	}
 }
 
-func (c Component) addCustomData(ctx context.Context, analyticCtx *analytics.Context) {
+func (c *Component) addCustomData(ctx context.Context, analyticCtx *analytics.Context) {
 	cm, err := c.kubernetesClient.CoreV1().ConfigMaps("kube-system").Get(ctx, "k0s-telemetry", metav1.GetOptions{})
 	if err != nil {
 		return
