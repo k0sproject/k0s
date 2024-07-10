@@ -24,19 +24,9 @@ var segmentToken = ""
 
 const heartbeatEvent = "cluster-heartbeat"
 
-// Analytics is the interface used for our analytics client.
-type analyticsClient interface {
-	Enqueue(msg analytics.Message) error
-	Close() error
-}
-
-func NewDefaultSegmentClient() analyticsClient {
+func NewDefaultSegmentClient() analytics.Client {
 	if segmentToken == "" {
 		return nil
 	}
-	return newSegmentClient(segmentToken)
-}
-
-func newSegmentClient(segmentToken string) analyticsClient {
 	return analytics.New(segmentToken)
 }

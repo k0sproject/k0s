@@ -23,10 +23,12 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
-
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/sirupsen/logrus"
+
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/segmentio/analytics-go"
+	"github.com/sirupsen/logrus"
 )
 
 // Component is a telemetry component for k0s component manager
@@ -36,7 +38,7 @@ type Component struct {
 	Version           string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	analyticsClient analyticsClient
+	analyticsClient analytics.Client
 
 	log    *logrus.Entry
 	stopCh chan struct{}
@@ -56,7 +58,7 @@ func (c *Component) Init(_ context.Context) error {
 		return nil
 	}
 
-	c.analyticsClient = newSegmentClient(segmentToken)
+	c.analyticsClient = analytics.New(segmentToken)
 	c.log.Info("segment client has been init")
 	return nil
 }
