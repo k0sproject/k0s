@@ -80,32 +80,7 @@ func (r *ClusterConfigReconciler) Init(context.Context) error { return nil }
 
 func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 	if r.configSource.NeedToStoreInitialConfig() {
-		// We need to wait until the cluster configuration exists or we succeed in creating it.
-		err := wait.PollImmediateWithContext(ctx, 1*time.Second, 20*time.Second, func(ctx context.Context) (bool, error) {
-			var err error
-			if r.leaderElector.IsLeader() {
-				err = r.createClusterConfig(ctx)
-				if err == nil {
-					r.log.Debug("Cluster configuration created")
-					return true, nil
-				}
-				if apierrors.IsAlreadyExists(err) {
-					// An already existing configuration is just fine.
-					r.log.Debug("Cluster configuration already exists")
-					return true, nil
-				}
-			} else {
-				err = r.clusterConfigExists(ctx)
-				if err == nil {
-					r.log.Debug("Cluster configuration exists")
-					return true, nil
-				}
-			}
-
-			r.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
-			return false, nil
-		})
-		if err != nil {
+		if err := r.ensureClusterConfigExistence(ctx); err != nil {
 			return fmt.Errorf("failed to ensure the existence of the cluster configuration: %w", err)
 		}
 	}
@@ -192,6 +167,34 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1be
 	if err != nil {
 		r.log.Error("failed to create event for config reconcile:", err)
 	}
+}
+
+func (r *ClusterConfigReconciler) ensureClusterConfigExistence(ctx context.Context) error {
+	// We need to wait until the cluster configuration exists or we succeed in creating it.
+	return wait.PollImmediateWithContext(ctx, 1*time.Second, 20*time.Second, func(ctx context.Context) (bool, error) {
+		var err error
+		if r.leaderElector.IsLeader() {
+			err = r.createClusterConfig(ctx)
+			if err == nil {
+				r.log.Debug("Cluster configuration created")
+				return true, nil
+			}
+			if apierrors.IsAlreadyExists(err) {
+				// An already existing configuration is just fine.
+				r.log.Debug("Cluster configuration already exists")
+				return true, nil
+			}
+		} else {
+			err = r.clusterConfigExists(ctx)
+			if err == nil {
+				r.log.Debug("Cluster configuration exists")
+				return true, nil
+			}
+		}
+
+		r.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
+		return false, nil
+	})
 }
 
 func (r *ClusterConfigReconciler) clusterConfigExists(ctx context.Context) error {
