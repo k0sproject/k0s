@@ -46,7 +46,6 @@ type ClusterConfigReconciler struct {
 	ComponentManager  *manager.Manager
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	configClient  k0sclient.ClusterConfigInterface
 	leaderElector leaderelector.Interface
 	log           *logrus.Entry
 	configSource  clusterconfig.ConfigSource
@@ -60,11 +59,6 @@ func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars *
 		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 
-	configClient, err := kubeClientFactory.GetConfigClient()
-	if err != nil {
-		return nil, err
-	}
-
 	return &ClusterConfigReconciler{
 		ComponentManager:  mgr,
 		YamlConfig:        cfg,
@@ -72,7 +66,6 @@ func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars *
 		leaderElector:     leaderElector,
 		log:               logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
 		configSource:      configSource,
-		configClient:      configClient,
 	}, nil
 }
 
@@ -80,7 +73,18 @@ func (r *ClusterConfigReconciler) Init(context.Context) error { return nil }
 
 func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 	if r.configSource.NeedToStoreInitialConfig() {
-		if err := r.ensureClusterConfigExistence(ctx); err != nil {
+		configClient, err := r.KubeClientFactory.GetConfigClient()
+		if err != nil {
+			return err
+		}
+
+		initializer := ClusterConfigInitializer{
+			log:           r.log,
+			configClient:  configClient,
+			leaderElector: r.leaderElector,
+			initialConfig: r.YamlConfig,
+		}
+		if err := initializer.ensureClusterConfigExistence(ctx); err != nil {
 			return fmt.Errorf("failed to ensure the existence of the cluster configuration: %w", err)
 		}
 	}
@@ -169,45 +173,52 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1be
 	}
 }
 
-func (r *ClusterConfigReconciler) ensureClusterConfigExistence(ctx context.Context) error {
+type ClusterConfigInitializer struct {
+	log           logrus.FieldLogger
+	configClient  k0sclient.ClusterConfigInterface
+	leaderElector leaderelector.Interface
+	initialConfig *v1beta1.ClusterConfig
+}
+
+func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Context) error {
 	// We need to wait until the cluster configuration exists or we succeed in creating it.
 	return wait.PollImmediateWithContext(ctx, 1*time.Second, 20*time.Second, func(ctx context.Context) (bool, error) {
 		var err error
-		if r.leaderElector.IsLeader() {
-			err = r.createClusterConfig(ctx)
+		if i.leaderElector.IsLeader() {
+			err = i.createClusterConfig(ctx)
 			if err == nil {
-				r.log.Debug("Cluster configuration created")
+				i.log.Debug("Cluster configuration created")
 				return true, nil
 			}
 			if apierrors.IsAlreadyExists(err) {
 				// An already existing configuration is just fine.
-				r.log.Debug("Cluster configuration already exists")
+				i.log.Debug("Cluster configuration already exists")
 				return true, nil
 			}
 		} else {
-			err = r.clusterConfigExists(ctx)
+			err = i.clusterConfigExists(ctx)
 			if err == nil {
-				r.log.Debug("Cluster configuration exists")
+				i.log.Debug("Cluster configuration exists")
 				return true, nil
 			}
 		}
 
-		r.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
+		i.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
 		return false, nil
 	})
 }
 
-func (r *ClusterConfigReconciler) clusterConfigExists(ctx context.Context) error {
+func (i *ClusterConfigInitializer) clusterConfigExists(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	_, err := r.configClient.Get(ctx, constant.ClusterConfigObjectName, metav1.GetOptions{})
+	_, err := i.configClient.Get(ctx, constant.ClusterConfigObjectName, metav1.GetOptions{})
 	return err
 }
 
-func (r *ClusterConfigReconciler) createClusterConfig(ctx context.Context) error {
+func (i *ClusterConfigInitializer) createClusterConfig(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	clusterWideConfig := r.YamlConfig.GetClusterWideConfig().StripDefaults().CRValidator()
-	_, err := r.configClient.Create(ctx, clusterWideConfig, metav1.CreateOptions{})
+	clusterWideConfig := i.initialConfig.GetClusterWideConfig().StripDefaults().CRValidator()
+	_, err := i.configClient.Create(ctx, clusterWideConfig, metav1.CreateOptions{})
 	return err
 }
