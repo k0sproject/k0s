@@ -30,11 +30,11 @@ type staticSource struct {
 	resultChan   chan *v1beta1.ClusterConfig
 }
 
-func NewStaticSource(staticConfig *v1beta1.ClusterConfig) (ConfigSource, error) {
+func NewStaticSource(staticConfig *v1beta1.ClusterConfig) ConfigSource {
 	return &staticSource{
 		staticConfig: staticConfig,
 		resultChan:   make(chan *v1beta1.ClusterConfig),
-	}, nil
+	}
 }
 
 func (s *staticSource) Release(context.Context) {
