@@ -41,20 +41,20 @@ import (
 
 // ClusterConfigReconciler reconciles a ClusterConfig object
 type ClusterConfigReconciler struct {
-	ComponentManager  *manager.Manager
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	log          *logrus.Entry
+	reconciler   manager.Reconciler
 	configSource clusterconfig.ConfigSource
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(mgr *manager.Manager, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) *ClusterConfigReconciler {
+func NewClusterConfigReconciler(reconciler manager.Reconciler, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) *ClusterConfigReconciler {
 	return &ClusterConfigReconciler{
-		ComponentManager:  mgr,
 		KubeClientFactory: kubeClientFactory,
 		log:               logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
 		configSource:      configSource,
+		reconciler:        reconciler,
 	}
 }
 
@@ -76,7 +76,7 @@ func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 				if err != nil {
 					err = fmt.Errorf("failed to validate cluster configuration: %w", err)
 				} else {
-					err = r.ComponentManager.Reconcile(ctx, cfg)
+					err = r.reconciler.Reconcile(ctx, cfg)
 				}
 				r.reportStatus(statusCtx, cfg, err)
 				if err != nil {
