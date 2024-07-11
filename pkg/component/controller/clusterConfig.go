@@ -28,7 +28,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -42,53 +41,26 @@ import (
 
 // ClusterConfigReconciler reconciles a ClusterConfig object
 type ClusterConfigReconciler struct {
-	YamlConfig        *v1beta1.ClusterConfig
 	ComponentManager  *manager.Manager
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	leaderElector leaderelector.Interface
-	log           *logrus.Entry
-	configSource  clusterconfig.ConfigSource
+	log          *logrus.Entry
+	configSource clusterconfig.ConfigSource
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars *config.CfgVars, mgr *manager.Manager, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) (*ClusterConfigReconciler, error) {
-
-	cfg, err := k0sVars.NodeConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get config: %w", err)
-	}
-
+func NewClusterConfigReconciler(mgr *manager.Manager, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) *ClusterConfigReconciler {
 	return &ClusterConfigReconciler{
 		ComponentManager:  mgr,
-		YamlConfig:        cfg,
 		KubeClientFactory: kubeClientFactory,
-		leaderElector:     leaderElector,
 		log:               logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
 		configSource:      configSource,
-	}, nil
+	}
 }
 
 func (r *ClusterConfigReconciler) Init(context.Context) error { return nil }
 
 func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
-	if r.configSource.NeedToStoreInitialConfig() {
-		configClient, err := r.KubeClientFactory.GetConfigClient()
-		if err != nil {
-			return err
-		}
-
-		initializer := ClusterConfigInitializer{
-			log:           r.log,
-			configClient:  configClient,
-			leaderElector: r.leaderElector,
-			initialConfig: r.YamlConfig,
-		}
-		if err := initializer.ensureClusterConfigExistence(ctx); err != nil {
-			return fmt.Errorf("failed to ensure the existence of the cluster configuration: %w", err)
-		}
-	}
-
 	go func() {
 		statusCtx := ctx
 		r.log.Debug("start listening changes from config source")
@@ -178,6 +150,34 @@ type ClusterConfigInitializer struct {
 	configClient  k0sclient.ClusterConfigInterface
 	leaderElector leaderelector.Interface
 	initialConfig *v1beta1.ClusterConfig
+}
+
+// Init implements manager.Component.
+func (*ClusterConfigInitializer) Init(context.Context) error { return nil }
+
+// Start implements manager.Component.
+func (i *ClusterConfigInitializer) Start(ctx context.Context) error {
+	if err := i.ensureClusterConfigExistence(ctx); err != nil {
+		return fmt.Errorf("failed to ensure the existence of the cluster configuration: %w", err)
+	}
+	return nil
+}
+
+// Stop implements manager.Component.
+func (*ClusterConfigInitializer) Stop() error { return nil }
+
+func NewClusterConfigInitializer(kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, initialConfig *v1beta1.ClusterConfig) (*ClusterConfigInitializer, error) {
+	configClient, err := kubeClientFactory.GetConfigClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ClusterConfigInitializer{
+		log:           logrus.WithField("component", "clusterConfigInitializer"),
+		configClient:  configClient,
+		leaderElector: leaderElector,
+		initialConfig: initialConfig,
+	}, nil
 }
 
 func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Context) error {

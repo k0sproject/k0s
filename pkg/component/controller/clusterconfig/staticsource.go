@@ -47,7 +47,3 @@ func (s *staticSource) ResultChan() <-chan *v1beta1.ClusterConfig {
 }
 
 func (*staticSource) Stop() {}
-
-func (s *staticSource) NeedToStoreInitialConfig() bool {
-	return false
-}
