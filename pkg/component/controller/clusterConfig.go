@@ -182,8 +182,7 @@ func NewClusterConfigInitializer(kubeClientFactory kubeutil.ClientFactoryInterfa
 
 func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Context) error {
 	// We need to wait until the cluster configuration exists or we succeed in creating it.
-	return wait.PollImmediateWithContext(ctx, 1*time.Second, 20*time.Second, func(ctx context.Context) (bool, error) {
-		var err error
+	return wait.PollUntilContextTimeout(ctx, 1*time.Second, 20*time.Second, true, func(ctx context.Context) (_ bool, err error) {
 		if i.leaderElector.IsLeader() {
 			err = i.createClusterConfig(ctx)
 			if err == nil {
