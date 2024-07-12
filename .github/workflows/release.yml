@@ -78,12 +78,14 @@ jobs:
       - name: Create airgap image bundle
         run: make airgap-image-bundle-linux-amd64.tar
 
-      - name: Collect smoke test logs
+      - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: logs
-          path: tests/*.log
+          name: logs-x64
+          path: |
+            /tmp/*.log
+            /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
         id: upload-release-asset
@@ -215,12 +217,14 @@ jobs:
       - name: Create airgap image bundle
         run: make airgap-image-bundle-linux-arm64.tar
 
-      - name: Collect smoke test logs
+      - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: logs
-          path: tests/*.log
+          name: logs-arm64
+          path: |
+            /tmp/*.log
+            /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
         id: upload-release-asset
@@ -309,12 +313,14 @@ jobs:
       - name: Create airgap image bundle
         run: make airgap-image-bundle-linux-arm.tar
 
-      - name: Collect smoke test logs
+      - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: logs
-          path: tests/*.log
+          name: logs-armv7
+          path: |
+            /tmp/*.log
+            /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
         id: upload-release-asset
