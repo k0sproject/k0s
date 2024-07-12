@@ -26,6 +26,7 @@ import (
 	"github.com/bombsimon/logrusr/v2"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
+	helmscheme "github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1/clientset/scheme"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -35,7 +36,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
@@ -372,13 +372,8 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		Kind:  "Chart",
 	}
 
-	scheme := runtime.NewScheme()
-	if err := v1beta1.AddToScheme(scheme); err != nil {
-		return err
-	}
-
 	mgr, err := controllerruntime.NewManager(clientConfig, ctrlManager.Options{
-		Scheme:             scheme,
+		Scheme:             helmscheme.Scheme,
 		MetricsBindAddress: "0",
 		Logger:             logrusr.New(ec.L),
 		Controller:         config.Controller{},
