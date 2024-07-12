@@ -21,13 +21,14 @@ import "encoding/json"
 // Calico defines the calico related config options
 type Calico struct {
 	// Enable wireguard-based encryption (default: false)
-	EnableWireguard bool `json:"wireguard"`
+	EnableWireguard bool `json:"wireguard,omitempty"`
 
 	// Environment variables to configure Calico node (see https://docs.projectcalico.org/reference/node/configuration)
 	EnvVars map[string]string `json:"envVars,omitempty"`
 
 	// The host path for Calicos flex-volume-driver(default: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds)
-	FlexVolumeDriverPath string `json:"flexVolumeDriverPath"`
+	// +kubebuilder:default="/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds"
+	FlexVolumeDriverPath string `json:"flexVolumeDriverPath,omitempty"`
 
 	// Host's IP Auto-detection method for Calico (see https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods)
 	IPAutodetectionMethod string `json:"ipAutodetectionMethod,omitempty"`
@@ -35,34 +36,36 @@ type Calico struct {
 	// Host's IPv6 Auto-detection method for Calico
 	IPv6AutodetectionMethod string `json:"ipV6AutodetectionMethod,omitempty"`
 
-	// MTU for overlay network (default: 0)
-	MTU int `json:"mtu" yaml:"mtu"`
+	// MTU for overlay network (default: 1450)
+	// +kubebuilder:default=1450
+	MTU int `json:"mtu,omitempty"`
 
 	// vxlan (default) or ipip
-	Mode string `json:"mode"`
+	// +kubebuilder:default=vxlan
+	Mode string `json:"mode,omitempty"`
 
 	// Overlay Type (Always, Never or CrossSubnet)
-	Overlay string `json:"overlay" validate:"oneof=Always Never CrossSubnet" `
+	// +kubebuilder:default=Always
+	Overlay string `json:"overlay,omitempty"`
 
 	// The UDP port for VXLAN (default: 4789)
-	VxlanPort int `json:"vxlanPort"`
+	// +kubebuilder:default=4789
+	VxlanPort int `json:"vxlanPort,omitempty"`
 
 	// The virtual network ID for VXLAN (default: 4096)
-	VxlanVNI int `json:"vxlanVNI"`
+	// +kubebuilder:default=4096
+	VxlanVNI int `json:"vxlanVNI,omitempty"`
 }
 
 // DefaultCalico returns sane defaults for calico
 func DefaultCalico() *Calico {
 	return &Calico{
-		Mode:                    "vxlan",
-		VxlanPort:               4789,
-		VxlanVNI:                4096,
-		MTU:                     0,
-		EnableWireguard:         false,
-		FlexVolumeDriverPath:    "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
-		Overlay:                 "Always",
-		IPAutodetectionMethod:   "",
-		IPv6AutodetectionMethod: "",
+		Mode:                 "vxlan",
+		VxlanPort:            4789,
+		VxlanVNI:             4096,
+		MTU:                  1450,
+		FlexVolumeDriverPath: "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
+		Overlay:              "Always",
 	}
 }
 
@@ -72,11 +75,8 @@ func (c *Calico) UnmarshalJSON(data []byte) error {
 	c.VxlanPort = 4789
 	c.VxlanVNI = 4096
 	c.MTU = 1450
-	c.EnableWireguard = false
 	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 	c.Overlay = "Always"
-	c.IPAutodetectionMethod = ""
-	c.IPv6AutodetectionMethod = ""
 
 	type calico Calico
 	jc := (*calico)(c)

@@ -59,14 +59,12 @@ type ClusterConfigStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:validation:Optional
+// ClusterConfig is the Schema for the clusterconfigs API
+//
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // +genclient
 // +genclient:onlyVerbs=create,delete,list,get,watch,update
-// +groupName=k0s.k0sproject.io
-
-// ClusterConfig is the Schema for the clusterconfigs API
 type ClusterConfig struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	metav1.TypeMeta   `json:",omitempty,inline"`

@@ -16,17 +16,24 @@ limitations under the License.
 
 package v1beta1
 
+import "k8s.io/utils/ptr"
+
 var _ Validateable = (*ClusterTelemetry)(nil)
 
 // ClusterTelemetry holds telemetry related settings
 type ClusterTelemetry struct {
-	Enabled bool `json:"enabled"`
+	// +kubebuilder:default=true
+	Enabled *bool `json:"enabled,omitempty"`
+}
+
+func (t *ClusterTelemetry) IsEnabled() bool {
+	return t == nil || t.Enabled == nil || *t.Enabled
 }
 
 // DefaultClusterTelemetry default settings
 func DefaultClusterTelemetry() *ClusterTelemetry {
 	return &ClusterTelemetry{
-		Enabled: true,
+		Enabled: ptr.To(true),
 	}
 }
 

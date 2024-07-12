@@ -99,10 +99,15 @@ spec:
                           description: Chart single helm addon
                           properties:
                             chartname:
+                              minLength: 1
                               type: string
                             name:
+                              maxLength: 53
+                              minLength: 1
+                              pattern: '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'
                               type: string
                             namespace:
+                              minLength: 1
                               type: string
                             order:
                               type: integer
@@ -115,6 +120,10 @@ spec:
                               type: string
                             version:
                               type: string
+                          required:
+                          - chartname
+                          - name
+                          - namespace
                           type: object
                         type: array
                       concurrencyLevel:
@@ -143,16 +152,21 @@ spec:
                               type: string
                             name:
                               description: The repository name.
+                              minLength: 1
                               type: string
                             password:
                               description: Password for Basic HTTP authentication.
                               type: string
                             url:
                               description: The repository URL.
+                              minLength: 1
                               type: string
                             username:
                               description: Username for Basic HTTP authentication.
                               type: string
+                          required:
+                          - name
+                          - url
                           type: object
                         type: array
                     type: object
@@ -175,19 +189,35 @@ spec:
                   description: FeatureGate specifies single feature gate
                   properties:
                     components:
-                      description: Components to use feature gate on, if empty `KubernetesComponents`
-                        is used as the list
+                      default:
+                      - kube-apiserver
+                      - kube-controller-manager
+                      - kubelet
+                      - kube-scheduler
+                      - kube-proxy
+                      description: |-
+                        Components to use feature gate on
+                        Default: kube-apiserver, kube-controller-manager, kubelet, kube-scheduler, kube-proxy
                       items:
                         type: string
+                      minItems: 1
                       type: array
+                      x-kubernetes-list-type: set
                     enabled:
                       description: Enabled or disabled
                       type: boolean
                     name:
                       description: Name of the feature gate
+                      minLength: 1
                       type: string
+                  required:
+                  - enabled
+                  - name
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
               images:
                 description: ClusterImages sets docker images for addon components
                 properties:
@@ -199,34 +229,54 @@ spec:
                         description: ImageSpec container image settings
                         properties:
                           image:
+                            minLength: 1
                             type: string
                           version:
+                            pattern: '[\w][\w.-]{0,127}'
                             type: string
+                        required:
+                        - image
+                        - version
                         type: object
                       kubecontrollers:
                         description: ImageSpec container image settings
                         properties:
                           image:
+                            minLength: 1
                             type: string
                           version:
+                            pattern: '[\w][\w.-]{0,127}'
                             type: string
+                        required:
+                        - image
+                        - version
                         type: object
                       node:
                         description: ImageSpec container image settings
                         properties:
                           image:
+                            minLength: 1
                             type: string
                           version:
+                            pattern: '[\w][\w.-]{0,127}'
                             type: string
+                        required:
+                        - image
+                        - version
                         type: object
                     type: object
                   coredns:
                     description: ImageSpec container image settings
                     properties:
                       image:
+                        minLength: 1
                         type: string
                       version:
+                        pattern: '[\w][\w.-]{0,127}'
                         type: string
+                    required:
+                    - image
+                    - version
                     type: object
                   default_pull_policy:
                     default: IfNotPresent
@@ -239,17 +289,27 @@ spec:
                     description: ImageSpec container image settings
                     properties:
                       image:
+                        minLength: 1
                         type: string
                       version:
+                        pattern: '[\w][\w.-]{0,127}'
                         type: string
+                    required:
+                    - image
+                    - version
                     type: object
                   kubeproxy:
                     description: ImageSpec container image settings
                     properties:
                       image:
+                        minLength: 1
                         type: string
                       version:
+                        pattern: '[\w][\w.-]{0,127}'
                         type: string
+                    required:
+                    - image
+                    - version
                     type: object
                   kuberouter:
                     description: KubeRouterImageSpec config group for kube-router
@@ -259,42 +319,67 @@ spec:
                         description: ImageSpec container image settings
                         properties:
                           image:
+                            minLength: 1
                             type: string
                           version:
+                            pattern: '[\w][\w.-]{0,127}'
                             type: string
+                        required:
+                        - image
+                        - version
                         type: object
                       cniInstaller:
                         description: ImageSpec container image settings
                         properties:
                           image:
+                            minLength: 1
                             type: string
                           version:
+                            pattern: '[\w][\w.-]{0,127}'
                             type: string
+                        required:
+                        - image
+                        - version
                         type: object
                     type: object
                   metricsserver:
                     description: ImageSpec container image settings
                     properties:
                       image:
+                        minLength: 1
                         type: string
                       version:
+                        pattern: '[\w][\w.-]{0,127}'
                         type: string
+                    required:
+                    - image
+                    - version
                     type: object
                   pause:
                     description: ImageSpec container image settings
                     properties:
                       image:
+                        minLength: 1
                         type: string
                       version:
+                        pattern: '[\w][\w.-]{0,127}'
                         type: string
+                    required:
+                    - image
+                    - version
                     type: object
                   pushgateway:
                     description: ImageSpec container image settings
                     properties:
                       image:
+                        minLength: 1
                         type: string
                       version:
+                        pattern: '[\w][\w.-]{0,127}'
                         type: string
+                    required:
+                    - image
+                    - version
                     type: object
                   repository:
                     type: string
@@ -349,6 +434,7 @@ spec:
                           (see https://docs.projectcalico.org/reference/node/configuration)
                         type: object
                       flexVolumeDriverPath:
+                        default: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds
                         description: 'The host path for Calicos flex-volume-driver(default:
                           /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds)'
                         type: string
@@ -360,18 +446,23 @@ spec:
                         description: Host's IPv6 Auto-detection method for Calico
                         type: string
                       mode:
+                        default: vxlan
                         description: vxlan (default) or ipip
                         type: string
                       mtu:
-                        description: 'MTU for overlay network (default: 0)'
+                        default: 1450
+                        description: 'MTU for overlay network (default: 1450)'
                         type: integer
                       overlay:
+                        default: Always
                         description: Overlay Type (Always, Never or CrossSubnet)
                         type: string
                       vxlanPort:
+                        default: 4789
                         description: 'The UDP port for VXLAN (default: 4789)'
                         type: integer
                       vxlanVNI:
+                        default: 4096
                         description: 'The virtual network ID for VXLAN (default: 4096)'
                         type: integer
                       wireguard:
@@ -380,6 +471,7 @@ spec:
                         type: boolean
                     type: object
                   clusterDomain:
+                    default: cluster.local
                     description: Cluster Domain
                     type: string
                   controlPlaneLoadBalancing:
@@ -535,6 +627,7 @@ spec:
                       IPv6serviceCIDR:
                         type: string
                       enabled:
+                        default: false
                         type: boolean
                     type: object
                   kubeProxy:
@@ -597,6 +690,7 @@ spec:
                       options
                     properties:
                       autoMTU:
+                        default: true
                         description: 'Auto-detection of used MTU (default: true)'
                         type: boolean
                       extraArgs:
@@ -617,7 +711,7 @@ spec:
                         - Disabled
                         type: string
                       hairpinMode:
-                        description: 'DEPRECATED: Use hairpin instead. Activates Hairpin
+                        description: 'Deprecated: Use hairpin instead. Activates Hairpin
                           Mode (allow a Pod behind a Service to communicate to its
                           own ClusterIP:Port)'
                         type: boolean
@@ -636,12 +730,12 @@ spec:
                       peerRouterASNs:
                         description: |-
                           Comma-separated list of global peer addresses
-                          DEPRECATED: Use extraArgs with peerRouterASNs instead
+                          Deprecated: Use extraArgs with peerRouterASNs instead
                         type: string
                       peerRouterIPs:
                         description: |-
                           Comma-separated list of global peer ASNs
-                          DEPRECATED: Use extraArgs with peerRouterIPs instead
+                          Deprecated: Use extraArgs with peerRouterIPs instead
                         type: string
                     type: object
                   nodeLocalLoadBalancing:
@@ -651,6 +745,7 @@ spec:
                       NOTE: This feature is currently unsupported on ARMv7!
                     properties:
                       enabled:
+                        default: false
                         description: |-
                           enabled indicates if node-local load balancing should be used to access
                           Kubernetes API servers from worker nodes.
@@ -677,9 +772,14 @@ spec:
                               used for the Envoy Pod.
                             properties:
                               image:
+                                minLength: 1
                                 type: string
                               version:
+                                pattern: '[\w][\w.-]{0,127}'
                                 type: string
+                            required:
+                            - image
+                            - version
                             type: object
                           imagePullPolicy:
                             description: |-
@@ -712,13 +812,20 @@ spec:
                         type: string
                     type: object
                   podCIDR:
+                    default: 10.244.0.0/16
                     description: Pod network CIDR to use in the cluster
                     type: string
                   provider:
+                    default: kuberouter
                     description: 'Network provider (valid values: calico, kuberouter,
                       or custom)'
+                    enum:
+                    - kuberouter
+                    - calico
+                    - custom
                     type: string
                   serviceCIDR:
+                    default: 10.96.0.0/12
                     description: Network CIDR to use for cluster VIP services
                     type: string
                 type: object
@@ -759,11 +866,14 @@ spec:
                               connect by k0s
                             items:
                               type: string
+                            minItems: 1
                             type: array
                           etcdPrefix:
                             description: EtcdPrefix is a prefix to prepend to all
                               resource paths in etcd
                             type: string
+                        required:
+                        - endpoints
                         type: object
                       extraArgs:
                         additionalProperties:
@@ -783,13 +893,18 @@ spec:
                         type: string
                     type: object
                   type:
+                    default: etcd
                     description: Type of the data store (valid values:etcd or kine)
+                    enum:
+                    - etcd
+                    - kine
                     type: string
                 type: object
               telemetry:
                 description: ClusterTelemetry holds telemetry related settings
                 properties:
                   enabled:
+                    default: true
                     type: boolean
                 type: object
               workerProfiles:
@@ -805,8 +920,13 @@ spec:
                       description: Worker Mapping object
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
+                  required:
+                  - name
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
             type: object
           status:
             description: ClusterConfigStatus defines the observed state of ClusterConfig

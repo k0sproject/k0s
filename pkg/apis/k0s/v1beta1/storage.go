@@ -42,17 +42,19 @@ var _ Validateable = (*StorageSpec)(nil)
 
 // StorageSpec defines the storage related config options
 type StorageSpec struct {
-	Etcd *EtcdConfig `json:"etcd"`
+	Etcd *EtcdConfig `json:"etcd,omitempty"`
 	Kine *KineConfig `json:"kine,omitempty"`
 
 	// Type of the data store (valid values:etcd or kine)
-	Type string `json:"type"`
+	// +kubebuilder:validation:Enum=etcd;kine
+	// +kubebuilder:default="etcd"
+	Type string `json:"type,omitempty"`
 }
 
 // KineConfig defines the Kine related config options
 type KineConfig struct {
 	// kine datasource URL
-	DataSource string `json:"dataSource"`
+	DataSource string `json:"dataSource,omitempty"`
 }
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
@@ -121,10 +123,10 @@ func (s *StorageSpec) Validate() []error {
 // EtcdConfig defines etcd related config options
 type EtcdConfig struct {
 	// ExternalCluster defines external etcd cluster related config options
-	ExternalCluster *ExternalCluster `json:"externalCluster"`
+	ExternalCluster *ExternalCluster `json:"externalCluster,omitempty"`
 
 	// Node address used for etcd cluster peering
-	PeerAddress string `json:"peerAddress"`
+	PeerAddress string `json:"peerAddress,omitempty"`
 
 	// Map of key-values (strings) for any extra arguments you want to pass down to the etcd process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
@@ -133,19 +135,20 @@ type EtcdConfig struct {
 // ExternalCluster defines external etcd cluster related config options
 type ExternalCluster struct {
 	// Endpoints of external etcd cluster used to connect by k0s
+	// +kubebuilder:validation:MinItems=1
 	Endpoints []string `json:"endpoints"`
 
 	// EtcdPrefix is a prefix to prepend to all resource paths in etcd
-	EtcdPrefix string `json:"etcdPrefix"`
+	EtcdPrefix string `json:"etcdPrefix,omitempty"`
 
 	// CaFile is the host path to a file with CA certificate
-	CaFile string `json:"caFile"`
+	CaFile string `json:"caFile,omitempty"`
 
 	// ClientCertFile is the host path to a file with TLS certificate for etcd client
-	ClientCertFile string `json:"clientCertFile"`
+	ClientCertFile string `json:"clientCertFile,omitempty"`
 
 	// ClientKeyFile is the host path to a file with TLS key for etcd client
-	ClientKeyFile string `json:"clientKeyFile"`
+	ClientKeyFile string `json:"clientKeyFile,omitempty"`
 }
 
 // DefaultEtcdConfig creates EtcdConfig with sane defaults

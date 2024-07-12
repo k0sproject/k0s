@@ -26,6 +26,8 @@ import (
 var _ Validateable = (*WorkerProfiles)(nil)
 
 // WorkerProfiles profiles collection
+// +listType=map
+// +listMapKey=name
 type WorkerProfiles []WorkerProfile
 
 // Validate validates all profiles
@@ -45,9 +47,7 @@ type WorkerProfile struct {
 	Name string `json:"name"`
 	// Worker Mapping object
 	// +kubebuilder:validation:type=object
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Optional
-	Config *runtime.RawExtension `json:"values"`
+	Config *runtime.RawExtension `json:"values,omitempty"`
 }
 
 var lockedFields = map[string]struct{}{

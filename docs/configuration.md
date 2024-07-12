@@ -52,7 +52,6 @@ metadata:
 spec:
   api:
     address: 192.168.68.104
-    externalAddress: my-lb-address.example.com
     k0sApiPort: 9443
     port: 6443
     sans:
@@ -61,8 +60,6 @@ spec:
   extensions:
     helm:
       concurrencyLevel: 5
-      charts: null
-      repositories: null
   installConfig:
     users:
       etcdUser: etcd
@@ -74,21 +71,25 @@ spec:
     adminPort: 8133
     agentPort: 8132
   network:
-    calico: null
     clusterDomain: cluster.local
-    dualStack: {}
+    dualStack:
+      enabled: false
     kubeProxy:
+      iptables:
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+      ipvs:
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+        tcpFinTimeout: 0s
+        tcpTimeout: 0s
+        udpTimeout: 0s
       metricsBindAddress: 0.0.0.0:10249
       mode: iptables
     kuberouter:
       autoMTU: true
       hairpin: Enabled
-      ipMasq: false
       metricsPort: 8080
-      mtu: 0
-      peerRouterASNs: ""
-      peerRouterIPs: ""
-      extraArgs:
     nodeLocalLoadBalancing:
       enabled: false
       envoyProxy:
@@ -101,20 +102,10 @@ spec:
   scheduler: {}
   storage:
     etcd:
-      externalCluster: null
       peerAddress: 192.168.68.104
     type: etcd
   telemetry:
     enabled: true
-  featureGates:
-    - name: feature_XXX
-      enabled: true
-      components: ["kubelet", "kube-api", "kube-scheduler"]
-    - name: feature_YYY
-      enabled: true
-    -
-      name: feature_ZZZ
-      enabled: false
 ```
 
 ## `spec` Key Detail

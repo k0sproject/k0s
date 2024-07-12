@@ -32,24 +32,22 @@ type ClusterExtensions struct {
 	// +optional
 	Storage *StorageExtension `json:"storage,omitempty"`
 
-	Helm *HelmExtensions `json:"helm"`
+	Helm *HelmExtensions `json:"helm,omitempty"`
 }
 
 // Deprecated: No-op; kept for backwards compatibility.
 type StorageExtension struct {
 	// Deprecated: No-op; kept for backwards compatibility.
-	// +optional
 	Type string `json:"type,omitempty"`
 	// Deprecated: No-op; kept for backwards compatibility.
-	// +optional
-	CreateDefaultStorageClass bool `json:"create_default_storage_class"`
+	CreateDefaultStorageClass bool `json:"create_default_storage_class,omitempty"`
 }
 
 // HelmExtensions specifies settings for cluster helm based extensions
 type HelmExtensions struct {
-	ConcurrencyLevel int                  `json:"concurrencyLevel"`
-	Repositories     RepositoriesSettings `json:"repositories"`
-	Charts           ChartsSettings       `json:"charts"`
+	ConcurrencyLevel int                  `json:"concurrencyLevel,omitempty"`
+	Repositories     RepositoriesSettings `json:"repositories,omitempty"`
+	Charts           ChartsSettings       `json:"charts,omitempty"`
 }
 
 // RepositoriesSettings repository settings
@@ -103,15 +101,20 @@ func (he HelmExtensions) Validate() []error {
 
 // Chart single helm addon
 type Chart struct {
-	Name      string `json:"name"`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=53
+	// +kubebuilder:validation:Pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+	Name string `json:"name"`
+	// +kubebuilder:validation:MinLength=1
 	ChartName string `json:"chartname"`
-	Version   string `json:"version"`
-	Values    string `json:"values"`
-	TargetNS  string `json:"namespace"`
+	Version   string `json:"version,omitempty"`
+	Values    string `json:"values,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	TargetNS string `json:"namespace"`
 	// Timeout specifies the timeout for how long to wait for the chart installation to finish.
 	// A duration string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-	Timeout metav1.Duration `json:"timeout"`
-	Order   int             `json:"order"`
+	Timeout metav1.Duration `json:"timeout,omitempty"`
+	Order   int             `json:"order,omitempty"`
 }
 
 // Validate performs validation
@@ -134,10 +137,10 @@ func (c Chart) Validate() error {
 // Repository describes single repository entry. Fields map to the CLI flags for the "helm add" command
 type Repository struct {
 	// The repository name.
-	// +kubebuilder:Validation:Required
+	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 	// The repository URL.
-	// +kubebuilder:Validation:Required
+	// +kubebuilder:validation:MinLength=1
 	URL string `json:"url"`
 	// Whether to skip TLS certificate checks when connecting to the repository.
 	Insecure *bool `json:"insecure,omitempty"`
