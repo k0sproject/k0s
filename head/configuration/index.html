@@ -2356,7 +2356,6 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">api</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span>
-<span class="w">    </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-lb-address.example.com</span>
 <span class="w">    </span><span class="nt">k0sApiPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9443</span>
 <span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6443</span>
 <span class="w">    </span><span class="nt">sans</span><span class="p">:</span>
@@ -2365,8 +2364,6 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">helm</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">concurrencyLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
-<span class="w">      </span><span class="nt">charts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
-<span class="w">      </span><span class="nt">repositories</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">  </span><span class="nt">installConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">users</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">etcdUser</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">etcd</span>
@@ -2378,21 +2375,25 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="w">    </span><span class="nt">adminPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8133</span>
 <span class="w">    </span><span class="nt">agentPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8132</span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">calico</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">    </span><span class="nt">clusterDomain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cluster.local</span>
-<span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">    </span><span class="nt">kubeProxy</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">iptables</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<span class="w">        </span><span class="nt">syncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<span class="w">      </span><span class="nt">ipvs</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<span class="w">        </span><span class="nt">syncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<span class="w">        </span><span class="nt">tcpFinTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<span class="w">        </span><span class="nt">tcpTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<span class="w">        </span><span class="nt">udpTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">      </span><span class="nt">metricsBindAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:10249</span>
 <span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iptables</span>
 <span class="w">    </span><span class="nt">kuberouter</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">autoMTU</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="nt">hairpin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enabled</span>
-<span class="w">      </span><span class="nt">ipMasq</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">      </span><span class="nt">metricsPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8080</span>
-<span class="w">      </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
-<span class="w">      </span><span class="nt">peerRouterASNs</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
-<span class="w">      </span><span class="nt">peerRouterIPs</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
-<span class="w">      </span><span class="nt">extraArgs</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">nodeLocalLoadBalancing</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">      </span><span class="nt">envoyProxy</span><span class="p">:</span>
@@ -2405,20 +2406,10 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="w">  </span><span class="nt">scheduler</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
 <span class="w">  </span><span class="nt">storage</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">etcd</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">externalCluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">      </span><span class="nt">peerAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">etcd</span>
 <span class="w">  </span><span class="nt">telemetry</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">  </span><span class="nt">featureGates</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature_XXX</span>
-<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kube-api&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kube-scheduler&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature_YYY</span>
-<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">    </span><span class="p p-Indicator">-</span>
-<span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature_ZZZ</span>
-<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <h2 id="spec-key-detail"><code>spec</code> Key Detail<a class="headerlink" href="#spec-key-detail" title="Permanent link">#</a></h2>
 <h3 id="specapi"><code>spec.api</code><a class="headerlink" href="#specapi" title="Permanent link">#</a></h3>
