@@ -56,7 +56,6 @@ type Etcd struct {
 	supervisor supervisor.Supervisor
 	uid        int
 	gid        int
-	ctx        context.Context
 }
 
 var _ manager.Component = (*Etcd)(nil)
@@ -144,7 +143,6 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 
 // Run runs etcd if external cluster is not configured
 func (e *Etcd) Start(ctx context.Context) error {
-	e.ctx = ctx
 	if e.Config.IsExternalClusterUsed() {
 		return nil
 	}
@@ -325,7 +323,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 // Health-check interface
 func (e *Etcd) Ready() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
-	ctx, cancel := context.WithTimeout(e.ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
 	defer cancel()
 	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
 	return err

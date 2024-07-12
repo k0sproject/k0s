@@ -52,7 +52,7 @@ type Status struct {
 }
 
 type certManager interface {
-	GetRestConfig() (*rest.Config, error)
+	GetRestConfig(ctx context.Context) (*rest.Config, error)
 }
 
 var _ manager.Component = (*Status)(nil)
@@ -173,7 +173,7 @@ func (sh *statusHandler) buildWorkerSideKubeAPIClient(ctx context.Context) (kube
 	timeout, cancel := context.WithTimeout(ctx, defaultPollTimeout)
 	defer cancel()
 	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
-		if restConfig, err = sh.Status.CertManager.GetRestConfig(); err != nil {
+		if restConfig, err = sh.Status.CertManager.GetRestConfig(ctx); err != nil {
 			return false, nil
 		}
 		return true, nil

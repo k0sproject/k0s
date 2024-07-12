@@ -324,7 +324,7 @@ func (c *command) start(ctx context.Context) error {
 			ClusterConfig: nodeConfig,
 		},
 		Socket:      c.K0sVars.StatusSocketPath,
-		CertManager: worker.NewCertificateManager(ctx, c.K0sVars.KubeletAuthConfigPath),
+		CertManager: worker.NewCertificateManager(c.K0sVars.KubeletAuthConfigPath),
 	})
 
 	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {

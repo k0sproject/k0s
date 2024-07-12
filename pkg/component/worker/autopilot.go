@@ -62,7 +62,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 	// needed by autopilot.
 	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
 		log.Debugf("Attempting to load autopilot client config")
-		if restConfig, err = a.CertManager.GetRestConfig(); err != nil {
+		if restConfig, err = a.CertManager.GetRestConfig(ctx); err != nil {
 			log.WithError(err).Warnf("Failed to load autopilot client config, retrying in %v", defaultPollDuration)
 			return false, nil
 		}

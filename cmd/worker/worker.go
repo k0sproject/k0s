@@ -162,7 +162,7 @@ func (c *Command) Start(ctx context.Context) error {
 		DualStackEnabled:    workerConfig.DualStackEnabled,
 	})
 
-	certManager := worker.NewCertificateManager(ctx, kubeletKubeconfigPath)
+	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
 
 	// if running inside a controller, status component is already running
 	if !c.SingleNode && !c.EnableWorker {
