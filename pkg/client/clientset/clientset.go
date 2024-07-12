@@ -23,6 +23,7 @@ import (
 	"net/http"
 
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/client/clientset/typed/autopilot/v1beta2"
+	helmv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
@@ -32,6 +33,7 @@ import (
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	AutopilotV1beta2() autopilotv1beta2.AutopilotV1beta2Interface
+	HelmV1beta1() helmv1beta1.HelmV1beta1Interface
 	K0sV1beta1() k0sv1beta1.K0sV1beta1Interface
 }
 
@@ -39,12 +41,18 @@ type Interface interface {
 type Clientset struct {
 	*discovery.DiscoveryClient
 	autopilotV1beta2 *autopilotv1beta2.AutopilotV1beta2Client
+	helmV1beta1      *helmv1beta1.HelmV1beta1Client
 	k0sV1beta1       *k0sv1beta1.K0sV1beta1Client
 }
 
 // AutopilotV1beta2 retrieves the AutopilotV1beta2Client
 func (c *Clientset) AutopilotV1beta2() autopilotv1beta2.AutopilotV1beta2Interface {
 	return c.autopilotV1beta2
+}
+
+// HelmV1beta1 retrieves the HelmV1beta1Client
+func (c *Clientset) HelmV1beta1() helmv1beta1.HelmV1beta1Interface {
+	return c.helmV1beta1
 }
 
 // K0sV1beta1 retrieves the K0sV1beta1Client
@@ -100,6 +108,10 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
+	cs.helmV1beta1, err = helmv1beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	if err != nil {
+		return nil, err
+	}
 	cs.k0sV1beta1, err = k0sv1beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
@@ -126,6 +138,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
 	cs.autopilotV1beta2 = autopilotv1beta2.New(c)
+	cs.helmV1beta1 = helmv1beta1.New(c)
 	cs.k0sV1beta1 = k0sv1beta1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
