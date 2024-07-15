@@ -48,7 +48,7 @@ Select the desired cluster configuration for Terraform. Again, just an example,
 other ways described [here][tf-config].
 
 ```shell
-export TF_VAR_os=alpine_3_17
+export TF_VAR_os=alpine_3_20
 export TF_VAR_arch=x86_64
 export TF_VAR_k0s_version=stable
 export TF_VAR_k0s_network_provider=calico
@@ -69,7 +69,7 @@ terraform apply
 ### `os`: Operating system stack
 
 * `al2023`: Amazon Linux 2023
-* `alpine_3_17`: Alpine Linux 3.17
+* `alpine_3_20`: Alpine Linux 3.17
 * `alpine_3_20`: Alpine Linux 3.20
 * `centos_7`: CentOS Linux 7 (Core)
 * `centos_8`: CentOS Stream 8
@@ -109,7 +109,7 @@ Assuming the AWS credentials are available, it can be used like this:
 
 ```sh
 terraform init
-export TF_VAR_os=alpine_3_17
+export TF_VAR_os=alpine_3_20
 export TF_VAR_k0sctl_skip=true
 terraform apply
 terraform output -json | jq -r '
@@ -166,7 +166,7 @@ workflow] that exposes more knobs and can be triggered manually, e.g. via [gh]:
 
 ```console
 $ gh workflow run ostests-matrix.yaml --ref some/experimental/branch \
-  -f oses='["alpine_3_17"]' \
+  -f oses='["alpine_3_20"]' \
   -f network-providers='["calico"]'
 ✓ Created workflow_dispatch event for ostests-matrix.yaml at some/experimental/branch
 
