@@ -19,9 +19,12 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -61,6 +64,8 @@ type Konnectivity struct {
 }
 
 var _ manager.Component = (*Konnectivity)(nil)
+var _ manager.Ready = (*Konnectivity)(nil)
+var _ prober.Healthz = (*Konnectivity)(nil)
 
 // Init ...
 func (k *Konnectivity) Init(ctx context.Context) error {
@@ -121,6 +126,8 @@ func (k *Konnectivity) serverArgs(count int) []string {
 		"--server-port":              "0",
 		"--agent-port":               fmt.Sprintf("%d", k.clusterConfig.Spec.Konnectivity.AgentPort),
 		"--admin-port":               fmt.Sprintf("%d", k.clusterConfig.Spec.Konnectivity.AdminPort),
+		"--health-bind-address":      "localhost",
+		"--health-port":              "8092",
 		"--agent-namespace":          "kube-system",
 		"--agent-service-account":    "konnectivity-agent",
 		"--authentication-audience":  "system:konnectivity-server",
@@ -195,6 +202,22 @@ func (k *Konnectivity) runServer(count int) error {
 	return nil
 }
 
+// Ready implements manager.Ready.
+func (k *Konnectivity) Ready() error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+	defer cancel()
+	// This is somehow flipped: Check healthz instead of readyz.
+	return k.health(ctx, "/healthz")
+}
+
+// Healthy implements prober.Healthz.
+func (k *Konnectivity) Healthy() error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+	defer cancel()
+	// This is somehow flipped: Check readyz instead of healthz.
+	return k.health(ctx, "/readyz")
+}
+
 // Stop stops
 func (k *Konnectivity) Stop() error {
 	if k.stopFunc != nil {
@@ -208,9 +231,26 @@ func (k *Konnectivity) Stop() error {
 	return k.supervisor.Stop()
 }
 
-func (k *Konnectivity) Healthy() error {
-	if k.clusterConfig == nil {
-		return fmt.Errorf("cluster config not yet available")
+func (k *Konnectivity) health(ctx context.Context, path string) error {
+	client := http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return fmt.Errorf("no redirects allowed: %s", req.URL)
+		},
+	}
+
+	endpoint := url.URL{Scheme: "http", Host: "localhost:8092", Path: path}
+	req, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req.WithContext(ctx))
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("unexpected HTTP response status: %s", resp.Status)
 	}
 
 	return nil
