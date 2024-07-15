@@ -4,6 +4,7 @@ locals {
   os = {
     al2023      = local.os_al2023
     alpine_3_17 = local.os_alpine_3_17
+    alpine_3_20 = local.os_alpine_3_20
     centos_7    = local.os_centos_7
     centos_8    = local.os_centos_8
     centos_9    = local.os_centos_9

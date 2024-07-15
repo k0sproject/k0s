@@ -43,8 +43,8 @@ locals {
       default = {
         ami_id = one(data.aws_ami.alpine_3_17.*.id)
 
-        user_data    = templatefile("${path.module}/os_alpine_3_17_userdata.tftpl", { worker = true })
-        ready_script = file("${path.module}/os_alpine_3_17_ready.sh")
+        user_data    = templatefile("${path.module}/os_alpine_userdata.tftpl", { worker = true })
+        ready_script = file("${path.module}/os_alpine_ready.sh")
 
         connection = {
           type     = "ssh"
@@ -52,7 +52,7 @@ locals {
         }
       }
       controller = {
-        user_data = templatefile("${path.module}/os_alpine_3_17_userdata.tftpl", { worker = false })
+        user_data = templatefile("${path.module}/os_alpine_userdata.tftpl", { worker = false })
       }
     }
   }

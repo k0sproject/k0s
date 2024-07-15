@@ -70,6 +70,7 @@ terraform apply
 
 * `al2023`: Amazon Linux 2023
 * `alpine_3_17`: Alpine Linux 3.17
+* `alpine_3_20`: Alpine Linux 3.20
 * `centos_7`: CentOS Linux 7 (Core)
 * `centos_8`: CentOS Stream 8
 * `centos_9`: CentOS Stream 9
