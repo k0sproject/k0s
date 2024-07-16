@@ -118,6 +118,9 @@ jobs:
           "$TF_VAR_k0sctl_executable_path" version
 
           if [ -z "$K0S_VERSION" ]; then
+            if [ "$OSTESTS_ARCH" != amd64 ]; then
+              docker run --privileged --rm tonistiigi/binfmt --install "$OSTESTS_ARCH"
+            fi
             chmod +x -- "$K0S_EXECUTABLE_PATH"
             K0S_VERSION="$("$K0S_EXECUTABLE_PATH" version)"
             echo TF_VAR_k0s_executable_path="$K0S_EXECUTABLE_PATH" >>"$GITHUB_ENV"
