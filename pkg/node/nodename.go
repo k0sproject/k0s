@@ -28,8 +28,12 @@ import (
 
 // GetNodename returns the node name for the node taking OS, cloud provider and override into account
 func GetNodename(override string) (string, error) {
+	return getNodename(context.TODO(), override)
+}
+
+func getNodename(ctx context.Context, override string) (string, error) {
 	if runtime.GOOS == "windows" {
-		return getNodeNameWindows(override, awsMetaInformationHostnameURL)
+		return getNodeNameWindows(ctx, override, awsMetaInformationHostnameURL)
 	}
 	nodeName, err := nodeutil.GetHostname(override)
 	if err != nil {
@@ -40,8 +44,8 @@ func GetNodename(override string) (string, error) {
 
 const awsMetaInformationHostnameURL = "http://169.254.169.254/latest/meta-data/local-hostname"
 
-func getHostnameFromAwsMeta(url string) string {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+func getHostnameFromAwsMeta(ctx context.Context, url string) string {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
 	var s string
@@ -56,14 +60,14 @@ func getHostnameFromAwsMeta(url string) string {
 	return s
 }
 
-func getNodeNameWindows(override string, metadataURL string) (string, error) {
+func getNodeNameWindows(ctx context.Context, override string, metadataURL string) (string, error) {
 	// if we have explicit hostnameOverride, we use it as is even on windows
 	if override != "" {
 		return nodeutil.GetHostname(override)
 	}
 
 	// we need to check if we have EC2 dns name available
-	if h := getHostnameFromAwsMeta(metadataURL); h != "" {
+	if h := getHostnameFromAwsMeta(ctx, metadataURL); h != "" {
 		return h, nil
 	}
 	// otherwise we use the k8s hostname helper
