@@ -30,38 +30,38 @@ import (
 )
 
 func TestGetNodename(t *testing.T) {
+	kubeHostname, err := nodeutil.GetHostname("")
+	require.NoError(t, err)
 
 	baseURL := startFakeMetadataServer(t)
 	t.Run("should_always_return_override_if_given", func(t *testing.T) {
 		name, err := GetNodename("override")
-		require.Equal(t, "override", name)
-		require.NoError(t, err)
+		if assert.NoError(t, err) {
+			assert.Equal(t, "override", name)
+		}
 	})
 
 	t.Run("should_call_kubernetes_hostname_helper_on_linux", func(t *testing.T) {
 		name, err := GetNodename("")
-		name2, err2 := nodeutil.GetHostname("")
-		require.Equal(t, name, name2)
-		require.NoError(t, err)
-		require.NoError(t, err2)
+		if assert.NoError(t, err) {
+			assert.Equal(t, kubeHostname, name)
+		}
 	})
 
 	t.Run("windows_no_metadata_service_available", func(t *testing.T) {
 		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL))
 		name, err := getNodeNameWindows(ctx, "")
-		nodename, err2 := nodeutil.GetHostname("")
-		require.NoError(t, err)
-		require.NoError(t, err2)
-		require.Equal(t, nodename, name)
+		if assert.NoError(t, err) {
+			assert.Equal(t, kubeHostname, name)
+		}
 	})
 
 	t.Run("windows_metadata_service_is_available", func(t *testing.T) {
 		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL+"/latest/meta-data/local-hostname"))
 		name, err := getNodeNameWindows(ctx, "")
-		nodename, err2 := nodeutil.GetHostname("")
-		require.NoError(t, err)
-		require.NoError(t, err2)
-		require.NotEqual(t, nodename, name)
+		if assert.NoError(t, err) {
+			assert.Equal(t, "some-hostname-from-metadata", name)
+		}
 	})
 }
 
