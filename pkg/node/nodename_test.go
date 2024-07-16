@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	nodeutil "k8s.io/component-helpers/node/util"
@@ -46,7 +47,8 @@ func TestGetNodename(t *testing.T) {
 	})
 
 	t.Run("windows_no_metadata_service_available", func(t *testing.T) {
-		name, err := getNodeNameWindows("", baseURL)
+		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL))
+		name, err := getNodeNameWindows(ctx, "")
 		nodename, err2 := nodeutil.GetHostname("")
 		require.NoError(t, err)
 		require.NoError(t, err2)
@@ -54,7 +56,8 @@ func TestGetNodename(t *testing.T) {
 	})
 
 	t.Run("windows_metadata_service_is_available", func(t *testing.T) {
-		name, err := getNodeNameWindows("", baseURL+"/latest/meta-data/local-hostname")
+		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL+"/latest/meta-data/local-hostname"))
+		name, err := getNodeNameWindows(ctx, "")
 		nodename, err2 := nodeutil.GetHostname("")
 		require.NoError(t, err)
 		require.NoError(t, err2)
