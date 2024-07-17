@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -133,4 +134,31 @@ func TestChartNeedsUpgrade(t *testing.T) {
 			assert.Equal(t, tc.expected, actual)
 		})
 	}
+}
+
+func TestChartManifestFileName(t *testing.T) {
+	chart := k0sv1beta1.Chart{
+		Name:      "release",
+		ChartName: "k0s/chart",
+		TargetNS:  "default",
+	}
+
+	chart1 := k0sv1beta1.Chart{
+		Name:      "release",
+		ChartName: "k0s/chart",
+		TargetNS:  "default",
+		Order:     1,
+	}
+
+	chart2 := k0sv1beta1.Chart{
+		Name:      "release",
+		ChartName: "k0s/chart",
+		TargetNS:  "default",
+		Order:     2,
+	}
+
+	assert.Equal(t, chartManifestFileName(&chart), "0_helm_extension_release.yaml")
+	assert.Equal(t, chartManifestFileName(&chart1), "1_helm_extension_release.yaml")
+	assert.Equal(t, chartManifestFileName(&chart2), "2_helm_extension_release.yaml")
+	assert.True(t, isChartManifestFileName("0_helm_extension_release.yaml"))
 }
