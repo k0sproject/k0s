@@ -46,7 +46,8 @@ has_date_copyright(){
 for i in $(find cmd hack internal inttest pkg static -type f -name '*.go' -not -name 'zz_generated*'); do
     case "$i" in
     pkg/apis/k0s.k0sproject.io/clientset/* | \
-        pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/*)
+        pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/* | \
+        pkg/apis/helm.k0sproject.io/v1beta1/clientset/*)
         if ! has_basic_copyright "$i"; then
           echo "ERROR: $i doesn't have a proper copyright notice" 1>&2
           RESULT=1
