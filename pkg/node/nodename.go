@@ -36,8 +36,9 @@ func GetNodename(override string) (string, error) {
 type nodenameURL string
 
 func getNodename(ctx context.Context, override string) (string, error) {
-	if runtime.GOOS == "windows" {
-		return getNodeNameWindows(ctx, override)
+	if override == "" && runtime.GOOS == "windows" {
+		// we need to check if we have EC2 dns name available
+		override = getHostnameFromAwsMeta(ctx)
 	}
 	nodeName, err := nodeutil.GetHostname(override)
 	if err != nil {
@@ -63,18 +64,4 @@ func getHostnameFromAwsMeta(ctx context.Context) string {
 		return ""
 	}
 	return s
-}
-
-func getNodeNameWindows(ctx context.Context, override string) (string, error) {
-	// if we have explicit hostnameOverride, we use it as is even on windows
-	if override != "" {
-		return nodeutil.GetHostname(override)
-	}
-
-	// we need to check if we have EC2 dns name available
-	if h := getHostnameFromAwsMeta(ctx); h != "" {
-		return h, nil
-	}
-	// otherwise we use the k8s hostname helper
-	return nodeutil.GetHostname(override)
 }
