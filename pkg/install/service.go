@@ -93,7 +93,7 @@ func EnsureService(args []string, envVars []string, force bool) error {
 			"LaunchdConfig":  launchdConfig,
 		}
 	case "linux-openrc":
-		deps = []string{"need net", "use dns", "after firewall"}
+		deps = []string{"need cgroups", "need net", "use dns", "after firewall"}
 		svcConfig.Option = map[string]interface{}{
 			"OpenRCScript": openRCScript,
 		}
