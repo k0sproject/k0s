@@ -3039,10 +3039,10 @@ by k0s.</p>
 <span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calico/kube-controllers</span>
 <span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
 <span class="w">  </span><span class="nt">metricsserver</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.k8s.io/metrics-server/metrics-server</span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v0.7.1</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/k0sproject/metrics-server</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v0.7.1-0</span>
 </code></pre></div>
-<p>In the runtime the image names are calculated as <code>my.own.repo/calico/kube-controllers:v3.16.2</code> and <code>my.own.repo/metrics-server/metrics-server:v0.7.1</code>. This only affects the the imgages pull location, and thus omitting an image specification here will not disable component deployment.</p>
+<p>In the runtime the image names are calculated as <code>my.own.repo/calico/kube-controllers:v3.16.2</code> and <code>my.own.repo/k0sproject/metrics-server:v0.7.1-0</code>. This only affects the the imgages pull location, and thus omitting an image specification here will not disable component deployment.</p>
 <h3 id="specextensionshelm"><code>spec.extensions.helm</code><a class="headerlink" href="#specextensionshelm" title="Permanent link">#</a></h3>
 <p><code>spec.extensions.helm</code> is the config file key in which you configure the list of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap (for more information, refer to <a href="../helm-charts/">Helm Charts</a>).</p>
 <h3 id="speckonnectivity"><code>spec.konnectivity</code><a class="headerlink" href="#speckonnectivity" title="Permanent link">#</a></h3>
