@@ -335,7 +335,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   autopilot-smoketest:
-    name: Autopilot smoke test
+    name: "Autopilot smoke tests :: ${{ matrix.smoke-suite }}"
     needs:
     - build
     - autopilot-smoketest-matrix
@@ -345,7 +345,8 @@ jobs:
       matrix:
         version: ${{fromJson(needs.autopilot-smoketest-matrix.outputs.matrix)}}
         smoke-suite:
-          - check-ap-ha3x3
+          - controllerworker
+          - ha3x3
 
     steps:
       - name: Check out code into the Go module directory
@@ -368,7 +369,6 @@ jobs:
           name: k0s
 
       - name: Download latest release
-        if: matrix.smoke-suite == 'check-ap-ha3x3'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -382,7 +382,7 @@ jobs:
 
       - name: Run inttest
         run: |
-          make -C inttest ${{ matrix.smoke-suite }} K0S_UPDATE_FROM_BIN=../k0s-${{ matrix.version }}
+          make -C inttest check-ap-${{ matrix.smoke-suite }} K0S_UPDATE_FROM_BIN=../k0s-${{ matrix.version }}
 
       - name: Collect k0s logs and support bundle
         if: failure()
