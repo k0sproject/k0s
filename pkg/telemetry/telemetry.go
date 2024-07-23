@@ -21,12 +21,14 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/segmentio/analytics-go"
+	"github.com/k0sproject/k0s/pkg/build"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/segmentio/analytics-go"
 )
 
 type telemetryData struct {
@@ -59,17 +61,17 @@ func (td telemetryData) asProperties() analytics.Properties {
 	}
 }
 
-func (c Component) collectTelemetry(ctx context.Context) (telemetryData, error) {
+func (c *Component) collectTelemetry(ctx context.Context, clients kubernetes.Interface) (telemetryData, error) {
 	var err error
 	data := telemetryData{}
 
-	data.StorageType = c.getStorageType()
-	data.ClusterID, err = c.getClusterID(ctx)
+	data.StorageType = c.StorageType
+	data.ClusterID, err = getClusterID(ctx, clients)
 
 	if err != nil {
 		return data, fmt.Errorf("can't collect cluster ID: %w", err)
 	}
-	wds, sums, err := c.getWorkerData(ctx)
+	wds, sums, err := getWorkerData(ctx, clients)
 	if err != nil {
 		return data, fmt.Errorf("can't collect workers count: %w", err)
 	}
@@ -78,23 +80,15 @@ func (c Component) collectTelemetry(ctx context.Context) (telemetryData, error) 
 	data.WorkerData = wds
 	data.MEMTotal = sums.memTotal
 	data.CPUTotal = sums.cpuTotal
-	data.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(ctx, c.kubernetesClient)
+	data.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(ctx, clients)
 	if err != nil {
 		return data, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
 	return data, nil
 }
 
-func (c Component) getStorageType() string {
-	switch c.clusterConfig.Spec.Storage.Type {
-	case v1beta1.EtcdStorageType, v1beta1.KineStorageType:
-		return c.clusterConfig.Spec.Storage.Type
-	}
-	return "unknown"
-}
-
-func (c Component) getClusterID(ctx context.Context) (string, error) {
-	ns, err := c.kubernetesClient.CoreV1().Namespaces().Get(ctx,
+func getClusterID(ctx context.Context, clients kubernetes.Interface) (string, error) {
+	ns, err := clients.CoreV1().Namespaces().Get(ctx,
 		"kube-system",
 		metav1.GetOptions{})
 	if err != nil {
@@ -104,8 +98,8 @@ func (c Component) getClusterID(ctx context.Context) (string, error) {
 	return fmt.Sprintf("kube-system:%s", ns.UID), nil
 }
 
-func (c Component) getWorkerData(ctx context.Context) ([]workerData, workerSums, error) {
-	nodes, err := c.kubernetesClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+func getWorkerData(ctx context.Context, clients kubernetes.Interface) ([]workerData, workerSums, error) {
+	nodes, err := clients.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, workerSums{}, err
 	}
@@ -129,8 +123,8 @@ func (c Component) getWorkerData(ctx context.Context) ([]workerData, workerSums,
 	return wds, workerSums{cpuTotal: cpuTotal, memTotal: memTotal}, nil
 }
 
-func (c Component) sendTelemetry(ctx context.Context) {
-	data, err := c.collectTelemetry(ctx)
+func (c *Component) sendTelemetry(ctx context.Context, analyticsClient analytics.Client, clients kubernetes.Interface) {
+	data, err := c.collectTelemetry(ctx, clients)
 	if err != nil {
 		c.log.WithError(err).Warning("can't prepare telemetry data")
 		return
@@ -140,16 +134,16 @@ func (c Component) sendTelemetry(ctx context.Context) {
 		Extra: map[string]interface{}{"direct": true},
 	}
 
-	hostData.App.Version = c.Version
+	hostData.App.Version = build.Version
 	hostData.App.Name = "k0s"
 	hostData.App.Namespace = "k0s"
 	hostData.Extra["cpuArch"] = runtime.GOARCH
 
 	addSysInfo(&hostData)
-	c.addCustomData(ctx, &hostData)
+	addCustomData(ctx, &hostData, clients)
 
 	c.log.WithField("data", data).WithField("hostdata", hostData).Info("sending telemetry")
-	if err := c.analyticsClient.Enqueue(analytics.Track{
+	if err := analyticsClient.Enqueue(analytics.Track{
 		AnonymousId: "(removed)",
 		Event:       heartbeatEvent,
 		Properties:  data.asProperties(),
@@ -159,8 +153,8 @@ func (c Component) sendTelemetry(ctx context.Context) {
 	}
 }
 
-func (c Component) addCustomData(ctx context.Context, analyticCtx *analytics.Context) {
-	cm, err := c.kubernetesClient.CoreV1().ConfigMaps("kube-system").Get(ctx, "k0s-telemetry", metav1.GetOptions{})
+func addCustomData(ctx context.Context, analyticCtx *analytics.Context, clients kubernetes.Interface) {
+	cm, err := clients.CoreV1().ConfigMaps("kube-system").Get(ctx, "k0s-telemetry", metav1.GetOptions{})
 	if err != nil {
 		return
 	}

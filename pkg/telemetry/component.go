@@ -18,30 +18,31 @@ package telemetry
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
-
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/sirupsen/logrus"
+
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/segmentio/analytics-go"
+	"github.com/sirupsen/logrus"
 )
 
 // Component is a telemetry component for k0s component manager
 type Component struct {
-	clusterConfig     *v1beta1.ClusterConfig
 	K0sVars           *config.CfgVars
-	Version           string
+	StorageType       string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	kubernetesClient kubernetes.Interface
-	analyticsClient  analyticsClient
+	log *logrus.Entry
 
-	log    *logrus.Entry
-	stopCh chan struct{}
+	mu   sync.Mutex
+	stop func()
 }
 
 var _ manager.Component = (*Component)(nil)
@@ -50,82 +51,80 @@ var _ manager.Reconciler = (*Component)(nil)
 var interval = time.Minute * 10
 
 // Init set up for external service clients (segment, k8s api)
-func (c *Component) Init(_ context.Context) error {
+func (c *Component) Init(context.Context) error {
 	c.log = logrus.WithField("component", "telemetry")
-
-	if segmentToken == "" {
-		c.log.Info("no token, telemetry is disabled")
-		return nil
-	}
-
-	c.analyticsClient = newSegmentClient(segmentToken)
-	c.log.Info("segment client has been init")
 	return nil
 }
 
-func (c *Component) retrieveKubeClient(ch chan struct{}) {
-	client, err := c.KubeClientFactory.GetClient()
-	if err != nil {
-		c.log.WithError(err).Warning("can't init kube client")
-		return
-	}
-	c.kubernetesClient = client
-	close(ch)
-}
-
-// Run runs work cycle
-func (c *Component) Start(_ context.Context) error {
+func (c *Component) Start(context.Context) error {
 	return nil
 }
 
-// Run does nothing
 func (c *Component) Stop() error {
-	if segmentToken == "" {
-		c.log.Info("no token, telemetry is disabled")
-		return nil
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.stop != nil {
+		c.stop()
+		c.stop = nil
 	}
-	if c.stopCh != nil {
-		close(c.stopCh)
-	}
-	if c.analyticsClient != nil {
-		_ = c.analyticsClient.Close()
-	}
+
 	return nil
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterConfig) error {
-	logrus.Debug("reconcile method called for: Telemetry")
+func (c *Component) Reconcile(_ context.Context, clusterCfg *v1beta1.ClusterConfig) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if !clusterCfg.Spec.Telemetry.IsEnabled() {
-		return c.Stop()
-	}
-	if c.stopCh != nil {
-		// We must have the worker stuff already running, do nothing
+		if c.stop == nil {
+			c.log.Debug("Telemetry remains disabled")
+		} else {
+			c.stop()
+			c.stop = nil
+		}
+
 		return nil
 	}
-	if segmentToken == "" {
-		c.log.Info("no token, telemetry is disabled")
-		return nil
+
+	if c.stop != nil {
+		return nil // already running
 	}
-	c.clusterConfig = clusterCfg
-	initedCh := make(chan struct{})
-	wait.Until(func() {
-		c.retrieveKubeClient(initedCh)
-	}, time.Second, initedCh)
-	go c.run(ctx)
+
+	clients, err := c.KubeClientFactory.GetClient()
+	if err != nil {
+		return err
+	}
+
+	c.stop = c.start(clients)
+
 	return nil
 }
 
-func (c Component) run(ctx context.Context) {
-	c.stopCh = make(chan struct{})
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			c.sendTelemetry(ctx)
-		case <-c.stopCh:
-			return
+func (c *Component) start(clients kubernetes.Interface) (stop func()) {
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+		c.log.Info("Starting to collect telemetry")
+		c.run(ctx, clients)
+		c.log.Info("Stopped to collect telemetry")
+	}()
+
+	return func() { cancel(); <-done }
+}
+
+func (c *Component) run(ctx context.Context, clients kubernetes.Interface) {
+	analyticsClient := analytics.New(segmentToken)
+	defer func() {
+		if err := analyticsClient.Close(); err != nil {
+			c.log.WithError(err).Debug("Failed to close analytics client")
 		}
-	}
+	}()
+
+	wait.UntilWithContext(ctx, func(ctx context.Context) {
+		c.sendTelemetry(ctx, analyticsClient, clients)
+	}, interval)
 }
