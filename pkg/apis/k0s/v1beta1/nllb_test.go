@@ -100,7 +100,7 @@ spec:
 		},
 		{
 			"version", `"*"`,
-			`network: nodeLocalLoadBalancing.envoyProxy.image.version: Invalid value: "*": must match regular expression: ^[\w][\w.-]{0,127}$`,
+			`network: nodeLocalLoadBalancing.envoyProxy.image.version: Invalid value: "*": must match regular expression: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$`,
 		},
 	} {
 		t.Run(test.field+"_invalid", func(t *testing.T) {

@@ -18,10 +18,12 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -63,6 +65,31 @@ func TestEmptyClusterSpec(t *testing.T) {
 
 	errs := underTest.Validate()
 	assert.Nil(t, errs)
+}
+
+func TestClusterSpecCustomImages(t *testing.T) {
+	underTest := ClusterConfig{
+		Spec: &ClusterSpec{
+			Images: &ClusterImages{
+				DefaultPullPolicy: string(corev1.PullIfNotPresent),
+				Konnectivity: ImageSpec{
+					Image:   "foo",
+					Version: "v1",
+				},
+				PushGateway: ImageSpec{
+					Image:   "bar",
+					Version: "v2@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+				},
+				MetricsServer: ImageSpec{
+					Image:   "baz",
+					Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+				},
+			},
+		},
+	}
+
+	errs := underTest.Validate()
+	assert.Nil(t, errs, fmt.Sprintf("%v", errs))
 }
 
 func TestEtcdDefaults(t *testing.T) {
