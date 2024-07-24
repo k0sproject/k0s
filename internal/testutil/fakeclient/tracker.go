@@ -88,20 +88,12 @@ var _ testing.ObjectTracker = (*TransformingObjectTracker)(nil)
 
 // Add implements testing.ObjectTracker.
 func (t *TransformingObjectTracker) Add(obj runtime.Object) error {
-	internal, err := t.Internalize(obj)
-	if err != nil {
-		return fmt.Errorf("failed to internalize object: %w", err)
-	}
-	return t.Inner.Add(internal)
+	return t.internalized(obj, t.Inner.Add)
 }
 
 // Create implements testing.ObjectTracker.
 func (t *TransformingObjectTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
-	internal, err := t.Internalize(obj)
-	if err != nil {
-		return fmt.Errorf("failed to internalize object: %w", err)
-	}
-	return t.Inner.Create(gvr, internal, ns)
+	return t.internalized(obj, func(obj runtime.Object) error { return t.Inner.Create(gvr, obj, ns) })
 }
 
 // Delete implements testing.ObjectTracker.
@@ -141,11 +133,7 @@ func (t *TransformingObjectTracker) List(gvr schema.GroupVersionResource, gvk sc
 
 // Update implements testing.ObjectTracker.
 func (t *TransformingObjectTracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
-	internal, err := t.Internalize(obj)
-	if err != nil {
-		return fmt.Errorf("failed to internalize object: %w", err)
-	}
-	return t.Inner.Update(gvr, internal, ns)
+	return t.internalized(obj, func(obj runtime.Object) error { return t.Inner.Update(gvr, obj, ns) })
 }
 
 // Watch implements testing.ObjectTracker.
@@ -182,6 +170,14 @@ func (t *TransformingObjectTracker) Watch(gvr schema.GroupVersionResource, ns st
 	}()
 
 	return &watcher{external, w.Stop}, nil
+}
+
+func (t *TransformingObjectTracker) internalized(obj runtime.Object, f func(runtime.Object) error) error {
+	internal, err := t.Internalize(obj)
+	if err != nil {
+		return fmt.Errorf("failed to internalize object: %w", err)
+	}
+	return f(internal)
 }
 
 type watcher struct {
