@@ -67,7 +67,7 @@ func TestTLSCipherSuites(t *testing.T) {
 func TestKubernetesModuleVersions(t *testing.T) {
 	kubernetesVersion := getVersion(t, "kubernetes")
 
-	checkPackageModules(t,
+	assertPackageModules(t,
 		func(modulePath string) bool {
 			switch modulePath {
 			// Don't report any version mismatches on the following modules.
@@ -99,7 +99,7 @@ func TestEtcdModuleVersions(t *testing.T) {
 	etcdVersionParts := strings.Split(etcdVersion, ".")
 	require.GreaterOrEqual(t, len(etcdVersionParts), 1, "failed to spilt etcd version %q", etcdVersion)
 
-	checkPackageModules(t,
+	assertPackageModules(t,
 		func(modulePath string) bool {
 			return strings.HasPrefix(modulePath, "go.etcd.io/etcd/") &&
 				strings.HasSuffix(modulePath, "/v"+etcdVersionParts[0])
@@ -115,7 +115,7 @@ func TestEtcdModuleVersions(t *testing.T) {
 func TestContainerdModuleVersions(t *testing.T) {
 	containerdVersion := getVersion(t, "containerd")
 
-	checkPackageModules(t,
+	assertPackageModules(t,
 		func(modulePath string) bool {
 			return modulePath == "github.com/containerd/containerd"
 		},
@@ -140,7 +140,12 @@ func getVersion(t *testing.T, component string) string {
 	return string(trailingNewlines.ReplaceAll(out, []byte{}))
 }
 
-func checkPackageModules(t *testing.T, filter func(modulePath string) bool, check func(t *testing.T, pkgPath string, module *packages.Module) bool) {
+func assertPackageModules(t *testing.T, filter func(modulePath string) bool, check func(t *testing.T, pkgPath string, module *packages.Module) bool) {
+	numMatched := checkPackageModules(t, filter, check)
+	assert.NotZero(t, numMatched, "Not a single package passed the filter.")
+}
+
+func checkPackageModules(t *testing.T, filter func(modulePath string) bool, check func(t *testing.T, pkgPath string, module *packages.Module) bool) (numMatched uint) {
 	pkgs, err := packages.Load(&packages.Config{
 		Mode: packages.NeedName | packages.NeedModule | packages.NeedImports | packages.NeedDeps,
 		Logf: t.Logf,
@@ -148,7 +153,6 @@ func checkPackageModules(t *testing.T, filter func(modulePath string) bool, chec
 	require.NoError(t, err)
 
 	failedModules := make(map[string]bool)
-	checkCalledAtLeastOnce := false
 
 	packages.Visit(pkgs, func(p *packages.Package) bool {
 		if p.Module != nil && filter(p.Module.Path) {
@@ -158,7 +162,7 @@ func checkPackageModules(t *testing.T, filter func(modulePath string) bool, chec
 			}
 
 			if !failedModules[actual.Path] {
-				checkCalledAtLeastOnce = true
+				numMatched++
 				if !check(t, p.PkgPath, actual) {
 					failedModules[actual.Path] = true
 				}
@@ -168,5 +172,5 @@ func checkPackageModules(t *testing.T, filter func(modulePath string) bool, chec
 		return true
 	}, nil)
 
-	assert.True(t, checkCalledAtLeastOnce, "Not a single package passed the filter.")
+	return
 }
