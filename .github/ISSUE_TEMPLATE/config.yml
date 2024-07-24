@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & Discussion
+    url: https://forums.k8slens.dev/c/k0s
+    about: Ask questions, engage in technical discussions, contribute expertise and feedback!
