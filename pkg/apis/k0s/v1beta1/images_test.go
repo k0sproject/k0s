@@ -23,6 +23,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 )
 
@@ -115,5 +116,55 @@ func TestOverrideFunction(t *testing.T) {
 
 	for _, tc := range testCases {
 		assert.Equal(t, tc.Output, overrideRepository(repository, tc.Input))
+	}
+}
+
+func TestImageSpec_Validate(t *testing.T) {
+	validTestCases := []struct {
+		Image   string
+		Version string
+	}{
+		{"my.registry/repo/image", "v1.0.0"},
+		{"my.registry/repo/image", "latest"},
+		{"my.registry/repo/image", "v1.0.0-rc1"},
+		{"my.registry/repo/image", "v1.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+	}
+	for _, tc := range validTestCases {
+		t.Run(tc.Image+":"+tc.Version+"_valid", func(t *testing.T) {
+			s := &ImageSpec{
+				Image:   tc.Image,
+				Version: tc.Version,
+			}
+			errs := s.Validate(field.NewPath("image"))
+			assert.Empty(t, errs)
+		})
+	}
+
+	errVersionRe := `must match regular expression: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$`
+
+	invalidTestCases := []struct {
+		Image   string
+		Version string
+		Errs    field.ErrorList
+	}{
+		{
+			"my.registry/repo/image", "",
+			field.ErrorList{field.Invalid(field.NewPath("image").Child("version"), "", errVersionRe)},
+		},
+		// digest only is currently not supported
+		{
+			"my.registry/repo/image", "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+			field.ErrorList{field.Invalid(field.NewPath("image").Child("version"), "sha256:0000000000000000000000000000000000000000000000000000000000000000", errVersionRe)},
+		},
+	}
+	for _, tc := range invalidTestCases {
+		t.Run(tc.Image+":"+tc.Version+"_valid", func(t *testing.T) {
+			s := &ImageSpec{
+				Image:   tc.Image,
+				Version: tc.Version,
+			}
+			errs := s.Validate(field.NewPath("image"))
+			assert.Equal(t, tc.Errs, errs)
+		})
 	}
 }
