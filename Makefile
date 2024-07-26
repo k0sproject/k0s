@@ -328,7 +328,7 @@ sign-sbom: sbom/spdx.json
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  gcr.io/projectsigstore/cosign:v2.2.3 \
+	  gcr.io/projectsigstore/cosign:v2.3.0 \
 	  sign-blob \
 	  --key /k0s/cosign.key \
 	  --tlog-upload=false \
@@ -340,6 +340,6 @@ sign-pub-key:
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  gcr.io/projectsigstore/cosign:v2.2.3 \
+	  gcr.io/projectsigstore/cosign:v2.3.0 \
 	  public-key \
 	  --key /k0s/cosign.key --output-file /out/cosign.pub
