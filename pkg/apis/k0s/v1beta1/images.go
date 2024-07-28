@@ -116,6 +116,17 @@ func (ci *ClusterImages) Validate(path *field.Path) (errs field.ErrorList) {
 		}))
 	}
 
+	errs = append(errs, ci.Konnectivity.Validate(path.Child("konnectivity"))...)
+	errs = append(errs, ci.PushGateway.Validate(path.Child("pushgateway"))...)
+	errs = append(errs, ci.MetricsServer.Validate(path.Child("metricsserver"))...)
+	errs = append(errs, ci.KubeProxy.Validate(path.Child("kubeproxy"))...)
+	errs = append(errs, ci.CoreDNS.Validate(path.Child("coredns"))...)
+	errs = append(errs, ci.Pause.Validate(path.Child("pause"))...)
+	errs = append(errs, ci.Calico.CNI.Validate(path.Child("calico").Child("cni"))...)
+	errs = append(errs, ci.Calico.Node.Validate(path.Child("calico").Child("node"))...)
+	errs = append(errs, ci.Calico.KubeControllers.Validate(path.Child("calico").Child("kubecontrollers"))...)
+	errs = append(errs, ci.KubeRouter.CNI.Validate(path.Child("kuberouter").Child("cni"))...)
+	errs = append(errs, ci.KubeRouter.CNIInstaller.Validate(path.Child("kuberouter").Child("cniInstaller"))...)
 	return
 }
 

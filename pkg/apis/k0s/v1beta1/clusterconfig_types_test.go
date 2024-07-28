@@ -68,28 +68,45 @@ func TestEmptyClusterSpec(t *testing.T) {
 }
 
 func TestClusterSpecCustomImages(t *testing.T) {
-	underTest := ClusterConfig{
+	defaultTestCase := ClusterConfig{
 		Spec: &ClusterSpec{
-			Images: &ClusterImages{
-				DefaultPullPolicy: string(corev1.PullIfNotPresent),
-				Konnectivity: ImageSpec{
-					Image:   "foo",
-					Version: "v1",
-				},
-				PushGateway: ImageSpec{
-					Image:   "bar",
-					Version: "v2@sha256:0000000000000000000000000000000000000000000000000000000000000000",
-				},
-				MetricsServer: ImageSpec{
-					Image:   "baz",
-					Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-				},
-			},
+			Images: DefaultClusterImages(),
 		},
 	}
-
-	errs := underTest.Validate()
+	errs := defaultTestCase.Validate()
 	assert.Nil(t, errs, fmt.Sprintf("%v", errs))
+
+	validTestCase := ClusterConfig{
+		Spec: &ClusterSpec{
+			Images: DefaultClusterImages(),
+		},
+	}
+	validTestCase.Spec.Images.DefaultPullPolicy = string(corev1.PullIfNotPresent)
+	validTestCase.Spec.Images.Konnectivity = ImageSpec{
+		Image:   "foo",
+		Version: "v1",
+	}
+	validTestCase.Spec.Images.PushGateway = ImageSpec{
+		Image:   "bar",
+		Version: "v2@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+	}
+
+	errs = validTestCase.Validate()
+	assert.Nil(t, errs, fmt.Sprintf("%v", errs))
+
+	invalidTestCase := ClusterConfig{
+		Spec: &ClusterSpec{
+			Images: DefaultClusterImages(),
+		},
+	}
+	invalidTestCase.Spec.Images.MetricsServer = ImageSpec{
+		Image: "baz",
+		// digest only is currently not supported
+		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+	}
+
+	errs = invalidTestCase.Validate()
+	assert.Len(t, errs, 1)
 }
 
 func TestEtcdDefaults(t *testing.T) {
