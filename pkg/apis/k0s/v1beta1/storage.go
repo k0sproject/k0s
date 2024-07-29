@@ -181,16 +181,22 @@ func DefaultKineConfig(dataDir string) *KineConfig {
 }
 
 func (k *KineConfig) IsJoinable() bool {
-	if strings.HasPrefix(k.DataSource, "sqlite:") {
-		return false
-	}
+	if scheme, _, found := strings.Cut(k.DataSource, ":"); found {
+		switch scheme {
+		case "", "sqlite":
+			return false
 
-	if strings.HasPrefix(k.DataSource, "mysql:") {
-		return true
-	}
+		case "nats":
+			if u, err := url.Parse(k.DataSource); err == nil {
+				if q, err := url.ParseQuery(u.RawQuery); err == nil {
+					return q.Has("noEmbed")
+				}
+			}
+			return false
 
-	if strings.HasPrefix(k.DataSource, "postgres:") {
-		return true
+		default:
+			return true
+		}
 	}
 
 	return false
