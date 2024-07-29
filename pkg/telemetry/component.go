@@ -36,7 +36,7 @@ import (
 // Component is a telemetry component for k0s component manager
 type Component struct {
 	K0sVars           *config.CfgVars
-	StorageType       string
+	StorageType       v1beta1.StorageType
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	log *logrus.Entry

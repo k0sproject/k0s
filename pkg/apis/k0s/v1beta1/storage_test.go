@@ -112,7 +112,7 @@ spec:
 `
 	c, err := ConfigFromString(yaml)
 	assert.NoError(t, err)
-	assert.Equal(t, "kine", c.Spec.Storage.Type)
+	assert.Equal(t, KineStorageType, c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)
 
 	expectedPath := "/var/lib/k0s/db/state.db"

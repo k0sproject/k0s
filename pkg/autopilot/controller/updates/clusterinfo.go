@@ -34,7 +34,7 @@ import (
 // ClusterInfo holds cluster related information that the update server can use to determine which updates to push to clusters
 type ClusterInfo struct {
 	K0sVersion             string
-	StorageType            string
+	StorageType            v1beta1.StorageType
 	ClusterID              string
 	ControlPlaneNodesCount int
 	WorkerData             WorkerData
@@ -56,7 +56,7 @@ func (ci *ClusterInfo) AsMap() map[string]string {
 	}
 	workerData := base64.StdEncoding.EncodeToString(wd)
 	return map[string]string{
-		"K0S_StorageType":            ci.StorageType,
+		"K0S_StorageType":            string(ci.StorageType),
 		"K0S_ClusterID":              ci.ClusterID,
 		"K0S_ControlPlaneNodesCount": fmt.Sprintf("%d", ci.ControlPlaneNodesCount),
 		"K0S_WorkerData":             workerData,

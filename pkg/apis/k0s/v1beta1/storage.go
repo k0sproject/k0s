@@ -32,12 +32,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
-// supported storage types
-const (
-	EtcdStorageType = "etcd"
-	KineStorageType = "kine"
-)
-
 var _ Validateable = (*StorageSpec)(nil)
 
 // StorageSpec defines the storage related config options
@@ -46,10 +40,20 @@ type StorageSpec struct {
 	Kine *KineConfig `json:"kine,omitempty"`
 
 	// Type of the data store (valid values:etcd or kine)
-	// +kubebuilder:validation:Enum=etcd;kine
 	// +kubebuilder:default="etcd"
-	Type string `json:"type,omitempty"`
+	Type StorageType `json:"type,omitempty"`
 }
+
+// StorageType describes which type of bacing storage should be used for the
+// Kubernetes API server. The default is [NllbTypeEnvoyProxy].
+// +kubebuilder:validation:Enum=etcd;kine
+type StorageType string
+
+// supported storage types
+const (
+	EtcdStorageType StorageType = "etcd"
+	KineStorageType StorageType = "kine"
+)
 
 // KineConfig defines the Kine related config options
 type KineConfig struct {

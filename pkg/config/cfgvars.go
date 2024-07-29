@@ -41,26 +41,26 @@ const (
 // Some of the variables are duplicates of the ones in the CLIOptions struct
 // for historical and convenience reasons.
 type CfgVars struct {
-	InvocationID               string // Unique ID for this invocation of k0s
-	AdminKubeConfigPath        string // The cluster admin kubeconfig location
-	BinDir                     string // location for all pki related binaries
-	CertRootDir                string // CertRootDir defines the root location for all pki related artifacts
-	DataDir                    string // Data directory containing k0s state
-	EtcdCertDir                string // EtcdCertDir contains etcd certificates
-	EtcdDataDir                string // EtcdDataDir contains etcd state
-	KineSocketPath             string // The unix socket path for kine
-	KonnectivitySocketDir      string // location of konnectivity's socket path
-	KubeletAuthConfigPath      string // KubeletAuthConfigPath defines the default kubelet auth config path
-	KubeletVolumePluginDir     string // location for kubelet plugins volume executables
-	ManifestsDir               string // location for all stack manifests
-	RunDir                     string // location of supervised pid files and sockets
-	KonnectivityKubeConfigPath string // location for konnectivity kubeconfig
-	OCIBundleDir               string // location for OCI bundles
-	DefaultStorageType         string // Default backend storage
-	RuntimeConfigPath          string // A static copy of the config loaded at startup
-	StatusSocketPath           string // The unix socket path for k0s status API
-	StartupConfigPath          string // The path to the config file used at startup
-	EnableDynamicConfig        bool   // EnableDynamicConfig enables dynamic config
+	InvocationID               string              // Unique ID for this invocation of k0s
+	AdminKubeConfigPath        string              // The cluster admin kubeconfig location
+	BinDir                     string              // location for all pki related binaries
+	CertRootDir                string              // CertRootDir defines the root location for all pki related artifacts
+	DataDir                    string              // Data directory containing k0s state
+	EtcdCertDir                string              // EtcdCertDir contains etcd certificates
+	EtcdDataDir                string              // EtcdDataDir contains etcd state
+	KineSocketPath             string              // The unix socket path for kine
+	KonnectivitySocketDir      string              // location of konnectivity's socket path
+	KubeletAuthConfigPath      string              // KubeletAuthConfigPath defines the default kubelet auth config path
+	KubeletVolumePluginDir     string              // location for kubelet plugins volume executables
+	ManifestsDir               string              // location for all stack manifests
+	RunDir                     string              // location of supervised pid files and sockets
+	KonnectivityKubeConfigPath string              // location for konnectivity kubeconfig
+	OCIBundleDir               string              // location for OCI bundles
+	DefaultStorageType         v1beta1.StorageType // Default backend storage
+	RuntimeConfigPath          string              // A static copy of the config loaded at startup
+	StatusSocketPath           string              // The unix socket path for k0s status API
+	StartupConfigPath          string              // The path to the config file used at startup
+	EnableDynamicConfig        bool                // EnableDynamicConfig enables dynamic config
 
 	// Helm config
 	HelmHome             string

@@ -51,7 +51,7 @@ metadata:
 
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
-	assert.Equal(t, "etcd", c.Spec.Storage.Type)
+	assert.Equal(t, EtcdStorageType, c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
 	assert.NoError(t, err)
 	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
@@ -131,7 +131,7 @@ spec:
 
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
-	assert.Equal(t, "etcd", c.Spec.Storage.Type)
+	assert.Equal(t, EtcdStorageType, c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
 	assert.NoError(t, err)
 	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
