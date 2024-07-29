@@ -18,7 +18,6 @@ package v1beta1
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
@@ -74,7 +73,7 @@ func TestClusterSpecCustomImages(t *testing.T) {
 		},
 	}
 	errs := defaultTestCase.Validate()
-	assert.Nil(t, errs, fmt.Sprintf("%v", errs))
+	assert.Nilf(t, errs, "%v", errs)
 
 	validTestCase := ClusterConfig{
 		Spec: &ClusterSpec{
@@ -92,7 +91,7 @@ func TestClusterSpecCustomImages(t *testing.T) {
 	}
 
 	errs = validTestCase.Validate()
-	assert.Nil(t, errs, fmt.Sprintf("%v", errs))
+	assert.Nilf(t, errs, "%v", errs)
 
 	invalidTestCase := ClusterConfig{
 		Spec: &ClusterSpec{
@@ -104,9 +103,19 @@ func TestClusterSpecCustomImages(t *testing.T) {
 		// digest only is currently not supported
 		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
 	}
+	invalidTestCase.Spec.Images.Calico.CNI = ImageSpec{
+		Image: "qux",
+		// digest only is currently not supported
+		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+	}
+	invalidTestCase.Spec.Images.KubeRouter.CNI = ImageSpec{
+		Image: "quux",
+		// digest only is currently not supported
+		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+	}
 
 	errs = invalidTestCase.Validate()
-	assert.Len(t, errs, 1)
+	assert.Len(t, errs, 3)
 }
 
 func TestEtcdDefaults(t *testing.T) {
