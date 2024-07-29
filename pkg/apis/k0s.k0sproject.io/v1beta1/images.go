@@ -48,7 +48,8 @@ func (s *ImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
 		errs = append(errs, field.Invalid(path.Child("image"), s.Image, "must not have leading or trailing whitespace"))
 	}
 
-	versionRe := regexp.MustCompile(`^` + docker.TagRegexp.String() + `$`)
+	// Validate the image contains a tag and optional digest
+	versionRe := regexp.MustCompile(`^` + docker.TagRegexp.String() + `(?:@` + docker.DigestRegexp.String() + `)?$`)
 	if !versionRe.MatchString(s.Version) {
 		errs = append(errs, field.Invalid(path.Child("version"), s.Version, "must match regular expression: "+versionRe.String()))
 	}
