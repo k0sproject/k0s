@@ -67,20 +67,11 @@ func DefaultStorageSpec() *StorageSpec {
 
 // IsJoinable returns true only if the storage config is such that another controller can join the cluster
 func (s *StorageSpec) IsJoinable() bool {
-	if s.Type == EtcdStorageType {
+	switch s.Type {
+	case EtcdStorageType:
 		return !s.Etcd.IsExternalClusterUsed()
-	}
-
-	if strings.HasPrefix(s.Kine.DataSource, "sqlite:") {
-		return false
-	}
-
-	if strings.HasPrefix(s.Kine.DataSource, "mysql:") {
-		return true
-	}
-
-	if strings.HasPrefix(s.Kine.DataSource, "postgres:") {
-		return true
+	case KineStorageType:
+		return s.Kine.IsJoinable()
 	}
 
 	return false
@@ -187,6 +178,22 @@ func DefaultKineConfig(dataDir string) *KineConfig {
 			RawQuery: "mode=rwc&_journal=WAL&cache=shared",
 		}).String(),
 	}
+}
+
+func (k *KineConfig) IsJoinable() bool {
+	if strings.HasPrefix(k.DataSource, "sqlite:") {
+		return false
+	}
+
+	if strings.HasPrefix(k.DataSource, "mysql:") {
+		return true
+	}
+
+	if strings.HasPrefix(k.DataSource, "postgres:") {
+		return true
+	}
+
+	return false
 }
 
 // GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist
