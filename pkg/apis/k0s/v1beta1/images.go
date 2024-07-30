@@ -116,6 +116,14 @@ func (ci *ClusterImages) Validate(path *field.Path) (errs field.ErrorList) {
 		}))
 	}
 
+	errs = append(errs, ci.Konnectivity.Validate(path.Child("konnectivity"))...)
+	errs = append(errs, ci.PushGateway.Validate(path.Child("pushgateway"))...)
+	errs = append(errs, ci.MetricsServer.Validate(path.Child("metricsserver"))...)
+	errs = append(errs, ci.KubeProxy.Validate(path.Child("kubeproxy"))...)
+	errs = append(errs, ci.CoreDNS.Validate(path.Child("coredns"))...)
+	errs = append(errs, ci.Pause.Validate(path.Child("pause"))...)
+	errs = append(errs, ci.Calico.Validate(path.Child("calico"))...)
+	errs = append(errs, ci.KubeRouter.Validate(path.Child("kuberouter"))...)
 	return
 }
 
@@ -145,10 +153,29 @@ type CalicoImageSpec struct {
 	KubeControllers ImageSpec `json:"kubecontrollers,omitempty"`
 }
 
+func (s *CalicoImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
+	if s == nil {
+		return
+	}
+	errs = append(errs, s.CNI.Validate(path.Child("cni"))...)
+	errs = append(errs, s.Node.Validate(path.Child("node"))...)
+	errs = append(errs, s.KubeControllers.Validate(path.Child("kubecontrollers"))...)
+	return
+}
+
 // KubeRouterImageSpec config group for kube-router related images
 type KubeRouterImageSpec struct {
 	CNI          ImageSpec `json:"cni,omitempty"`
 	CNIInstaller ImageSpec `json:"cniInstaller,omitempty"`
+}
+
+func (s *KubeRouterImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
+	if s == nil {
+		return
+	}
+	errs = append(errs, s.CNI.Validate(path.Child("cni"))...)
+	errs = append(errs, s.CNIInstaller.Validate(path.Child("cniInstaller"))...)
+	return
 }
 
 // DefaultClusterImages default image settings
