@@ -7,7 +7,9 @@
     <meta http-equiv="refresh" content="1; url=stable/" />
   </noscript>
   <script>
-    window.location.replace("stable/" + window.location.hash);
+    window.location.replace(
+      "stable/" + window.location.search + window.location.hash
+    );
   </script>
 </head>
 <body>
