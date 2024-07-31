@@ -1,6 +1,6 @@
 alpine_version = 3.17
 alpine_patch_version = $(alpine_version).4
-golang_buildimage=docker.io/library/golang:$(go_version)-alpine3.18
+golang_buildimage=docker.io/library/golang:$(go_version)-alpine3.19
 go_version = 1.22.3
 
 runc_version = 1.1.13
@@ -36,7 +36,11 @@ kine_version = 0.9.9
 kine_buildimage = $(golang_buildimage)
 #kine_build_go_tags =
 #kine_build_go_cgo_enabled =
-kine_build_go_cgo_cflags = "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1" # Flags taken from https://github.com/k3s-io/kine/blob/v0.9.9/scripts/build#L22
+kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1 # Flags taken from https://github.com/k3s-io/kine/blob/v0.9.9/scripts/build#L22
+# See https://github.com/mattn/go-sqlite3/issues/1164#issuecomment-1635253695
+# Remove when https://github.com/mattn/go-sqlite3/issues/1164 is released
+kine_build_go_cgo_cflags += -D_LARGEFILE64_SOURCE
+
 #kine_build_go_flags =
 kine_build_go_ldflags = "-w -s"
 kine_build_go_ldflags_extra = "-extldflags=-static"
