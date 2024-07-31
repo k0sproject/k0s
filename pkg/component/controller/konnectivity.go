@@ -176,9 +176,7 @@ func (k *Konnectivity) runServer(count int) error {
 	if k.supervisor != nil {
 		k.EmitWithPayload("restarting konnectivity server due to server count change",
 			map[string]interface{}{"serverCount": count})
-		if err := k.supervisor.Stop(); err != nil {
-			k.log.Errorf("failed to stop supervisor: %s", err)
-		}
+		k.supervisor.Stop()
 	}
 
 	k.supervisor = &supervisor.Supervisor{
@@ -228,7 +226,8 @@ func (k *Konnectivity) Stop() error {
 		return nil
 	}
 	logrus.Debug("about to stop konnectivity supervisor")
-	return k.supervisor.Stop()
+	k.supervisor.Stop()
+	return nil
 }
 
 func (k *Konnectivity) health(ctx context.Context, path string) error {

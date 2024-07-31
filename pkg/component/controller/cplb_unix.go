@@ -157,10 +157,7 @@ func (k *Keepalived) Stop() error {
 	}
 
 	k.log.Infof("Stopping keepalived")
-	if err := k.supervisor.Stop(); err != nil {
-		// Failed to stop keepalived. Don't delete the VIP, just in case.
-		return fmt.Errorf("failed to stop keepalived: %w", err)
-	}
+	k.supervisor.Stop()
 
 	k.log.Infof("Deleting dummy interface")
 	link, err := netlink.LinkByName(dummyLinkName)

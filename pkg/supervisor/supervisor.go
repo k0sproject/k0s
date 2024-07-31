@@ -225,12 +225,12 @@ func (s *Supervisor) Supervise() error {
 }
 
 // Stop stops the supervised
-func (s *Supervisor) Stop() error {
+func (s *Supervisor) Stop() {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
 	if s.cancel == nil || s.log == nil {
 		s.log.Warn("Not started")
-		return nil
+		return
 	}
 	s.log.Debug("Sending stop message")
 
@@ -240,7 +240,6 @@ func (s *Supervisor) Stop() error {
 	if s.done != nil {
 		<-s.done
 	}
-	return nil
 }
 
 // Prepare the env for exec:

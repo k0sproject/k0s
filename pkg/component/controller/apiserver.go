@@ -201,7 +201,8 @@ func (a *APIServer) writeKonnectivityConfig() error {
 
 // Stop stops APIServer
 func (a *APIServer) Stop() error {
-	return a.supervisor.Stop()
+	a.supervisor.Stop()
+	return nil
 }
 
 // Health-check interface

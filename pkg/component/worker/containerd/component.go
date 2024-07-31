@@ -311,7 +311,8 @@ func (c *Component) Stop() error {
 	if runtime.GOOS == "windows" {
 		return c.windowsStop()
 	}
-	return c.supervisor.Stop()
+	c.supervisor.Stop()
+	return nil
 }
 
 // This is the md5sum of the default k0s containerd config file before 1.27

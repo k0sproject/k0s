@@ -97,7 +97,7 @@ func TestSupervisorStart(t *testing.T) {
 			} else {
 				assert.NoError(t, err, "Failed to start")
 			}
-			assert.NoError(t, s.proc.Stop(), "Failed to stop")
+			s.proc.Stop()
 		})
 	}
 }
@@ -148,7 +148,7 @@ func TestRespawn(t *testing.T) {
 		TimeoutRespawn: 1 * time.Millisecond,
 	}
 	require.NoError(t, s.Supervise())
-	t.Cleanup(func() { assert.NoError(t, s.Stop(), "Failed to stop") })
+	t.Cleanup(s.Stop)
 
 	// wait til process starts up
 	require.NoError(t, pingPong.AwaitPing())
@@ -208,8 +208,8 @@ func TestStopWhileRespawn(t *testing.T) {
 		}
 	}
 
-	// try stop while waiting for respawn
-	assert.NoError(t, s.Stop(), "Failed to stop")
+	// stop while waiting for respawn
+	s.Stop()
 }
 
 func TestMultiThread(t *testing.T) {
@@ -227,13 +227,13 @@ func TestMultiThread(t *testing.T) {
 
 	var wg sync.WaitGroup
 	assert.NoError(t, s.Supervise(), "Failed to start")
-	t.Cleanup(func() { assert.NoError(t, s.Stop(), "Failed to stop") })
+	t.Cleanup(s.Stop)
 
 	for i := 0; i < 255; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_ = s.Stop()
+			s.Stop()
 			_ = s.Supervise()
 		}()
 	}
@@ -268,13 +268,13 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
-	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
+	t.Cleanup(s.Stop)
 
 	// Expect the previous process to be gracefully terminated.
 	assert.NoError(t, prevCmd.Wait())
 
 	// Stop the supervisor and check if the PID file is gone.
-	assert.NoError(t, s.Stop())
+	s.Stop()
 	assert.NoFileExists(t, pidFilePath)
 }
 
@@ -307,14 +307,14 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
-	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
+	t.Cleanup(s.Stop)
 
 	// Expect the previous process to be forcefully terminated.
 	assert.ErrorContains(t, prevCmd.Wait(), "signal: killed")
 
 	// Stop the supervisor and check if the PID file is gone.
 	assert.NoError(t, pingPong.AwaitPing())
-	assert.NoError(t, s.Stop())
+	s.Stop()
 	assert.NoFileExists(t, pidFilePath)
 }
 
@@ -340,7 +340,7 @@ func TestCleanupPIDFile_WrongProcess(t *testing.T) {
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
-	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
+	t.Cleanup(s.Stop)
 
 	// Expect the PID file to be replaced with the new PID.
 	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err, "Failed to read PID file") {
@@ -370,7 +370,7 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
-	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
+	t.Cleanup(s.Stop)
 
 	// Expect the PID file to be replaced with the new PID.
 	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err, "Failed to read PID file") {

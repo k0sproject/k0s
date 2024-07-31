@@ -66,7 +66,7 @@ func (a *Scheduler) Start(_ context.Context) error {
 // Stop stops Scheduler
 func (a *Scheduler) Stop() error {
 	if a.supervisor != nil {
-		return a.supervisor.Stop()
+		a.supervisor.Stop()
 	}
 	return nil
 }
@@ -105,11 +105,8 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 	// Stop in case there's process running already and we need to change the config
 	if a.supervisor != nil {
 		logrus.WithField("component", kubeSchedulerComponentName).Info("reconcile has nothing to do")
-		err := a.supervisor.Stop()
+		a.supervisor.Stop()
 		a.supervisor = nil
-		if err != nil {
-			return err
-		}
 	}
 
 	a.supervisor = &supervisor.Supervisor{
