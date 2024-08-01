@@ -128,7 +128,8 @@ func (k *Kine) Start(ctx context.Context) error {
 
 // Stop stops kine
 func (k *Kine) Stop() error {
-	return k.supervisor.Stop()
+	k.supervisor.Stop()
+	return nil
 }
 
 const hcKey = "/k0s-health-check"

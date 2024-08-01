@@ -65,5 +65,6 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 
 // Stop stops k0s api
 func (m *K0SControlAPI) Stop() error {
-	return m.supervisor.Stop()
+	m.supervisor.Stop()
+	return nil
 }

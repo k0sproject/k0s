@@ -251,7 +251,8 @@ func (e *Etcd) Stop() error {
 		return nil
 	}
 
-	return e.supervisor.Stop()
+	e.supervisor.Stop()
+	return nil
 }
 
 func (e *Etcd) setupCerts(ctx context.Context) error {

@@ -262,7 +262,8 @@ func (k *Kubelet) Start(ctx context.Context) error {
 
 // Stop stops kubelet
 func (k *Kubelet) Stop() error {
-	return k.supervisor.Stop()
+	k.supervisor.Stop()
+	return nil
 }
 
 func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (string, error) {
