@@ -282,6 +282,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 				Image:           podParams.image.URI(),
 				ImagePullPolicy: podParams.pullPolicy,
 				Ports:           ports,
+				Args:            []string{"-c", "/etc/envoy/envoy.yaml", "--use-dynamic-base-id"},
 				SecurityContext: &corev1.SecurityContext{
 					ReadOnlyRootFilesystem:   ptr.To(true),
 					Privileged:               ptr.To(false),
