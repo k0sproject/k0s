@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -67,6 +68,7 @@ type CfgVars struct {
 	HelmRepositoryCache  string
 	HelmRepositoryConfig string
 
+	stdin      io.Reader
 	nodeConfig *v1beta1.ClusterConfig
 	origin     CfgVarsOriginType
 }
@@ -89,11 +91,14 @@ type CfgVarOption func(*CfgVars)
 
 // Command represents cobra.Command
 type command interface {
+	InOrStdin() io.Reader
 	Flags() *pflag.FlagSet
 }
 
 func WithCommand(cmd command) CfgVarOption {
 	return func(c *CfgVars) {
+		c.stdin = cmd.InOrStdin()
+
 		flags := cmd.Flags()
 
 		if f, err := flags.GetString("data-dir"); err == nil && f != "" {
@@ -193,6 +198,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		HelmRepositoryCache:  filepath.Join(helmHome, "cache"),
 		HelmRepositoryConfig: filepath.Join(helmHome, "repositories.yaml"),
 
+		stdin:  os.Stdin,
 		origin: CfgVarsOriginDefault,
 	}
 
@@ -238,17 +244,31 @@ func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 
 	var nodeConfig *v1beta1.ClusterConfig
 
-	cfgContent, err := os.ReadFile(c.StartupConfigPath)
-	if errors.Is(err, os.ErrNotExist) && c.StartupConfigPath == defaultConfigPath {
-		nodeConfig = v1beta1.DefaultClusterConfig(c.defaultStorageSpec())
-	} else if err == nil {
-		cfg, err := v1beta1.ConfigFromString(string(cfgContent), c.defaultStorageSpec())
+	if c.StartupConfigPath == "-" {
+		configReader := c.stdin
+		c.stdin = nil
+		if configReader == nil {
+			return nil, errors.New("stdin already grabbed")
+		}
+
+		var err error
+		nodeConfig, err = v1beta1.ConfigFromReader(configReader, c.defaultStorageSpec())
 		if err != nil {
 			return nil, err
 		}
-		nodeConfig = cfg
 	} else {
-		return nil, err
+		cfgContent, err := os.ReadFile(c.StartupConfigPath)
+		if errors.Is(err, os.ErrNotExist) && c.StartupConfigPath == defaultConfigPath {
+			nodeConfig = v1beta1.DefaultClusterConfig(c.defaultStorageSpec())
+		} else if err == nil {
+			cfg, err := v1beta1.ConfigFromString(string(cfgContent), c.defaultStorageSpec())
+			if err != nil {
+				return nil, err
+			}
+			nodeConfig = cfg
+		} else {
+			return nil, err
+		}
 	}
 
 	if nodeConfig.Spec.Storage.Type == v1beta1.KineStorageType && nodeConfig.Spec.Storage.Kine == nil {
