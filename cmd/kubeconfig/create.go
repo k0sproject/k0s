@@ -90,51 +90,13 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			}
 			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
 
-			caCert, err := os.ReadFile(path.Join(opts.K0sVars.CertRootDir, "ca.crt"))
-			if err != nil {
-				return fmt.Errorf("failed to read cluster ca certificate: %w, check if the control plane is initialized on this node", err)
-			}
-			caCertPath, caCertKey := path.Join(opts.K0sVars.CertRootDir, "ca.crt"), path.Join(opts.K0sVars.CertRootDir, "ca.key")
-			userReq := certificate.Request{
-				Name:   username,
-				CN:     username,
-				O:      groups,
-				CACert: caCertPath,
-				CAKey:  caCertKey,
-			}
-			certManager := certificate.Manager{
-				K0sVars: opts.K0sVars,
-			}
-			userCert, err := certManager.EnsureCertificate(userReq, users.RootUID)
+			kubeconfig, err := createUserKubeconfig(opts.K0sVars, clusterAPIURL, username, groups)
 			if err != nil {
 				return err
 			}
 
-			data := struct {
-				CACert     string
-				ClientCert string
-				ClientKey  string
-				User       string
-				JoinURL    string
-			}{
-				CACert:     base64.StdEncoding.EncodeToString(caCert),
-				ClientCert: base64.StdEncoding.EncodeToString([]byte(userCert.Cert)),
-				ClientKey:  base64.StdEncoding.EncodeToString([]byte(userCert.Key)),
-				User:       username,
-				JoinURL:    clusterAPIURL,
-			}
-
-			var buf bytes.Buffer
-
-			err = userKubeconfigTemplate.Execute(&buf, &data)
-			if err != nil {
-				return err
-			}
-			_, err = cmd.OutOrStdout().Write(buf.Bytes())
-			if err != nil {
-				return err
-			}
-			return nil
+			_, err = cmd.OutOrStdout().Write(kubeconfig)
+			return err
 		},
 	}
 
@@ -142,4 +104,48 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	cmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
+}
+
+func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, groups string) ([]byte, error) {
+	caCert, err := os.ReadFile(path.Join(k0sVars.CertRootDir, "ca.crt"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read cluster ca certificate: %w, check if the control plane is initialized on this node", err)
+	}
+	caCertPath, caCertKey := path.Join(k0sVars.CertRootDir, "ca.crt"), path.Join(k0sVars.CertRootDir, "ca.key")
+	userReq := certificate.Request{
+		Name:   username,
+		CN:     username,
+		O:      groups,
+		CACert: caCertPath,
+		CAKey:  caCertKey,
+	}
+	certManager := certificate.Manager{
+		K0sVars: k0sVars,
+	}
+	userCert, err := certManager.EnsureCertificate(userReq, users.RootUID)
+	if err != nil {
+		return nil, err
+	}
+
+	data := struct {
+		CACert     string
+		ClientCert string
+		ClientKey  string
+		User       string
+		JoinURL    string
+	}{
+		CACert:     base64.StdEncoding.EncodeToString(caCert),
+		ClientCert: base64.StdEncoding.EncodeToString([]byte(userCert.Cert)),
+		ClientKey:  base64.StdEncoding.EncodeToString([]byte(userCert.Key)),
+		User:       username,
+		JoinURL:    clusterAPIURL,
+	}
+
+	var buf bytes.Buffer
+	err = userKubeconfigTemplate.Execute(&buf, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
