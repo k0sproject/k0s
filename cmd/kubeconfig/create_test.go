@@ -30,17 +30,11 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// Define the suite, and absorb the built-in basic suite
-// functionality from testify - including a T() method which
-// returns the current testing context
-type CLITestSuite struct {
-	suite.Suite
-}
-
-func (s *CLITestSuite) TestKubeConfigCreate() {
+func TestCreateKubeconfig(t *testing.T) {
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.API.ExternalAddress = "10.0.0.86"
 
@@ -66,9 +60,9 @@ nzXu8A==
 -----END CERTIFICATE-----
 `
 
-	tmpDir := s.T().TempDir()
+	tmpDir := t.TempDir()
 	caCertPath := filepath.Join(tmpDir, "ca-cert")
-	s.Require().NoError(os.WriteFile(caCertPath, []byte(caCert), 0644))
+	require.NoError(t, os.WriteFile(caCertPath, []byte(caCert), 0644))
 
 	caCertKey := `
 -----BEGIN RSA PRIVATE KEY-----
@@ -100,7 +94,7 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 -----END RSA PRIVATE KEY-----
 `
 	caKeyPath := filepath.Join(tmpDir, "ca-key")
-	s.Require().NoError(os.WriteFile(caKeyPath, []byte(caCertKey), 0644))
+	require.NoError(t, os.WriteFile(caKeyPath, []byte(caCertKey), 0644))
 
 	userReq := certificate.Request{
 		Name:   "test-user",
@@ -110,17 +104,17 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 		CAKey:  caKeyPath,
 	}
 
-	k0sVars, err := config.NewCfgVars(nil, s.T().TempDir())
-	s.Require().NoError(err)
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 
 	certManager := certificate.Manager{
 		K0sVars: k0sVars,
 	}
 
-	s.Require().NoError(os.MkdirAll(k0sVars.CertRootDir, 0755))
+	require.NoError(t, os.MkdirAll(k0sVars.CertRootDir, 0755))
 
 	userCert, err := certManager.EnsureCertificate(userReq, users.RootUID)
-	s.Require().NoError(err)
+	require.NoError(t, err)
 	clusterAPIURL := cfg.Spec.API.APIAddressURL()
 
 	data := struct {
@@ -138,16 +132,12 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 	}
 
 	var buf bytes.Buffer
-	s.Require().NoError(userKubeconfigTemplate.Execute(&buf, &data))
+	require.NoError(t, userKubeconfigTemplate.Execute(&buf, &data))
 
 	kubeconfigPath := filepath.Join(tmpDir, "kubeconfig")
-	s.Require().NoError(os.WriteFile(kubeconfigPath, buf.Bytes(), 0644))
+	require.NoError(t, os.WriteFile(kubeconfigPath, buf.Bytes(), 0644))
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	s.Require().NoError(err)
-	s.Equal("https://10.0.0.86:6443", config.Host)
-}
-
-func TestCLITestSuite(t *testing.T) {
-	suite.Run(t, new(CLITestSuite))
+	require.NoError(t, err)
+	assert.Equal(t, "https://10.0.0.86:6443", config.Host)
 }
