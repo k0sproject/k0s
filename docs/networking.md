@@ -91,3 +91,14 @@ public (active)
   icmp-blocks: 
   rich rules:
 ```
+
+Basic single node firewalld setup:
+
+```sh
+# Allow traffic from podCIDR
+$ firewall-cmd --add-source=10.244.0.0/16 --permanent
+# Allow kubelet API traffic
+$ firewall-cmd --add-port=10250/tcp --permanent
+# Apply firewall changes
+$ firewall-cmd --reload
+```
