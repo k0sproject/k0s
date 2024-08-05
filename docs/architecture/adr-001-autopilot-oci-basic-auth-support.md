@@ -76,7 +76,7 @@ Example configuration for OCI:
 ```yaml
 url: oci://my.registry/binaries/k0s:v1.30.1+k0s.0
 sha256: e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99
-artifactPullSecret:
+secretRef:
   namespace: kube-system
   name: artifacts-registry
 ```
@@ -86,7 +86,7 @@ Example configuration for HTTPS:
 ```yaml
 url: https://my.file.server/binaries/k0s-v1.30.1+k0s.0
 sha256: e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99
-artifactPullSecret:
+secretRef:
   namespace: kube-system
   name: artifacts-basic-auth
 ```
@@ -96,7 +96,7 @@ Example configuration for HTTP:
 ```yaml
 url: http://my.file.server/binaries/k0s-v1.30.1+k0s.0
 sha256: e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99
-artifactPullSecret:
+secretRef:
   namespace: kube-system
   name: artifacts-token-based-auth
 ```
