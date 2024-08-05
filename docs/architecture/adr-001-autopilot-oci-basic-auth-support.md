@@ -145,7 +145,8 @@ data:
   `InsecureSkipTLSVerify` on a Go HTTP client.
 - The `InsecureSkipTLSVerify` property will be valid for both `oci://` and
   `https://` protocols.
-- If no protocol is defined, HTTPS is used.
+- If a protocol is not specified or an incorrect one is provided, an error
+  state should be activated.
 - If no `SecretRef` is defined, access will be anonymous (no authentication).
 
 ## Status
