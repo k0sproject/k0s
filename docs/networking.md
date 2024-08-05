@@ -91,3 +91,14 @@ public (active)
   icmp-blocks: 
   rich rules:
 ```
+
+Getting started with firewalld:
+```sh
+# Add podCIDR and serviceCIDR IPv4 ranges
+$ firewall-cmd --add-source=10.244.0.0/16 --add-source=10.96.0.0/12
+# Add ports via --add-port=$port/$protocol (optionally: --zone=...)
+# Note: port/protocol list below is not complete, port list depends on node type and selected k8s features/addons.
+$ firewall-cmd --add-port=8132/tcp --add-port=10250/tcp #...
+# Make currently active runtime configuration permanent
+$ firewall-cmd --runtime-to-permanent
+```
