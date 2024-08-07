@@ -22,20 +22,15 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
-
-	"k8s.io/utils/strings/slices"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/pkg/constant"
-)
 
-// supported storage types
-const (
-	EtcdStorageType = "etcd"
-	KineStorageType = "kine"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/sirupsen/logrus"
 )
 
 var _ Validateable = (*StorageSpec)(nil)
@@ -46,10 +41,20 @@ type StorageSpec struct {
 	Kine *KineConfig `json:"kine,omitempty"`
 
 	// Type of the data store (valid values:etcd or kine)
-	// +kubebuilder:validation:Enum=etcd;kine
 	// +kubebuilder:default="etcd"
-	Type string `json:"type,omitempty"`
+	Type StorageType `json:"type,omitempty"`
 }
+
+// StorageType describes which type of bacing storage should be used for the
+// Kubernetes API server. The default is [NllbTypeEnvoyProxy].
+// +kubebuilder:validation:Enum=etcd;kine
+type StorageType string
+
+// supported storage types
+const (
+	EtcdStorageType StorageType = "etcd"
+	KineStorageType StorageType = "kine"
+)
 
 // KineConfig defines the Kine related config options
 type KineConfig struct {
@@ -102,6 +107,12 @@ func (s *StorageSpec) Validate() []error {
 	}
 
 	var errors []error
+
+	if s.Type == "" {
+		errors = append(errors, field.Required(field.NewPath("type"), ""))
+	} else if types := []StorageType{EtcdStorageType, KineStorageType}; !slices.Contains(types, s.Type) {
+		errors = append(errors, field.NotSupported(field.NewPath("type"), s.Type, types))
+	}
 
 	if s.Etcd != nil && s.Etcd.ExternalCluster != nil {
 		errors = append(errors, validateRequiredProperties(s.Etcd.ExternalCluster)...)

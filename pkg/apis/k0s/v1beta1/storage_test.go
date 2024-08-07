@@ -150,7 +150,7 @@ spec:
 `
 	c, err := ConfigFromString(yaml)
 	assert.NoError(t, err)
-	assert.Equal(t, "kine", c.Spec.Storage.Type)
+	assert.Equal(t, KineStorageType, c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)
 
 	expectedPath := "/var/lib/k0s/db/state.db"
@@ -210,6 +210,12 @@ func (s *storageSuite) TestValidation() {
 				},
 			},
 		},
+		{
+			desc: "kine_is_valid",
+			spec: &StorageSpec{
+				Type: KineStorageType,
+			},
+		},
 	}
 
 	for _, tt := range validStorageSpecs {
@@ -223,6 +229,18 @@ func (s *storageSuite) TestValidation() {
 		spec           *StorageSpec
 		expectedErrMsg string
 	}{
+		{
+			desc:           "type_is_required",
+			spec:           &StorageSpec{},
+			expectedErrMsg: "type: Required value",
+		},
+		{
+			desc: "unknown_types_are_rejected",
+			spec: &StorageSpec{
+				Type: StorageType("bogus"),
+			},
+			expectedErrMsg: `type: Unsupported value: "bogus": supported values: "etcd", "kine"`,
+		},
 		{
 			desc: "external_cluster_endpoints_cannot_be_null",
 			spec: &StorageSpec{

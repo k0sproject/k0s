@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -32,7 +33,7 @@ import (
 )
 
 type telemetryData struct {
-	StorageType            string
+	StorageType            v1beta1.StorageType
 	ClusterID              string
 	WorkerNodesCount       int
 	ControlPlaneNodesCount int
@@ -51,7 +52,7 @@ type workerSums struct {
 
 func (td telemetryData) asProperties() analytics.Properties {
 	return analytics.Properties{
-		"storageType":            td.StorageType,
+		"storageType":            string(td.StorageType),
 		"clusterID":              td.ClusterID,
 		"workerNodesCount":       td.WorkerNodesCount,
 		"controlPlaneNodesCount": td.ControlPlaneNodesCount,

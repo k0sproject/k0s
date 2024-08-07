@@ -80,7 +80,7 @@ func TestWithCommand_DefaultsAndOverrides(t *testing.T) {
 	testCases := []struct {
 		name                string
 		flagValue           any
-		expectedStorageType string
+		expectedStorageType v1beta1.StorageType
 	}{
 		{
 			name:                "single flag is set to false",

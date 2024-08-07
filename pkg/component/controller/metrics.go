@@ -49,7 +49,7 @@ type Metrics struct {
 	K0sVars     *config.CfgVars
 	saver       manifestsSaver
 	restClient  rest.Interface
-	storageType string
+	storageType v1beta1.StorageType
 
 	clusterConfig *v1beta1.ClusterConfig
 	tickerDone    context.CancelFunc
@@ -60,7 +60,7 @@ var _ manager.Component = (*Metrics)(nil)
 var _ manager.Reconciler = (*Metrics)(nil)
 
 // NewMetrics creates new Metrics reconciler
-func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface, storageType string) (*Metrics, error) {
+func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface, storageType v1beta1.StorageType) (*Metrics, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
