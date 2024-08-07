@@ -97,7 +97,3 @@ func (a apiConfigSource) Stop() {
 		close(a.resultChan)
 	}
 }
-
-func (a *apiConfigSource) NeedToStoreInitialConfig() bool {
-	return true
-}

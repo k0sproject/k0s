@@ -29,6 +29,4 @@ type ConfigSource interface {
 	ResultChan() <-chan *v1beta1.ClusterConfig
 	// Stop stops sending config events
 	Stop()
-	// NeedToStoreInitialConfig tells the configsource user if the initial config should be stored in the api or not
-	NeedToStoreInitialConfig() bool
 }

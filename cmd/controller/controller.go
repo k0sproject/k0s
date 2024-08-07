@@ -379,36 +379,36 @@ func (c *command) start(ctx context.Context) error {
 	var configSource clusterconfig.ConfigSource
 	// For backwards compatibility, use file as config source by default
 	if c.EnableDynamicConfig {
-		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
-	} else {
-		configSource, err = clusterconfig.NewStaticSource(nodeConfig)
-	}
-	if err != nil {
-		return err
-	}
-	defer configSource.Stop()
-
-	// The CRDs are only required if the config is stored in the cluster.
-	if configSource.NeedToStoreInitialConfig() {
+		// The CRDs are only required if the config is stored in the cluster.
 		apiConfigSaver, err := controller.NewManifestsSaver("api-config", c.K0sVars.DataDir)
 		if err != nil {
 			return fmt.Errorf("failed to initialize api-config manifests saver: %w", err)
 		}
 
 		clusterComponents.Add(ctx, controller.NewCRD(apiConfigSaver, "v1beta1", controller.WithCRDAssetsDir("k0s")))
+
+		initializer, err := controller.NewClusterConfigInitializer(adminClientFactory, leaderElector, nodeConfig)
+		if err != nil {
+			return fmt.Errorf("failed to create cluster config initializer: %w", err)
+		}
+
+		clusterComponents.Add(ctx, initializer)
+
+		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
+		if err != nil {
+			return err
+		}
+	} else {
+		configSource = clusterconfig.NewStaticSource(nodeConfig)
 	}
 
-	cfgReconciler, err := controller.NewClusterConfigReconciler(
-		leaderElector,
-		c.K0sVars,
+	defer configSource.Stop()
+
+	clusterComponents.Add(ctx, controller.NewClusterConfigReconciler(
 		clusterComponents,
 		adminClientFactory,
 		configSource,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to initialize cluster-config reconciler: %w", err)
-	}
-	clusterComponents.Add(ctx, cfgReconciler)
+	))
 
 	if !slices.Contains(c.DisableComponents, constant.HelmComponentName) {
 		helmSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
