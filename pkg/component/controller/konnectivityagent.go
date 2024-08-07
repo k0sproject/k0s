@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"sync"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -29,26 +29,17 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 )
 
 type KonnectivityAgent struct {
-	K0sVars    *config.CfgVars
-	LogLevel   string
-	SingleNode bool
-	// used for lease lock
-	KubeClientFactory          kubeutil.ClientFactoryInterface
-	NodeConfig                 *v1beta1.ClusterConfig
-	K0sControllersLeaseCounter *K0sControllersLeaseCounter
+	K0sVars       *config.CfgVars
+	APIServerHost string
+	ServerCount   func() (uint, <-chan struct{})
 
-	serverCount       int
-	serverCountChan   <-chan int
-	configChangeChan  chan *v1beta1.ClusterConfig
-	clusterConfig     *v1beta1.ClusterConfig
-	log               *logrus.Entry
-	previousConfig    konnectivityAgentConfig
-	agentManifestLock sync.Mutex
+	configChangeChan chan *v1beta1.ClusterConfig
+	log              *logrus.Entry
+	previousConfig   konnectivityAgentConfig
 	*prober.EventEmitter
 }
 
@@ -64,27 +55,47 @@ func (k *KonnectivityAgent) Init(_ context.Context) error {
 }
 
 func (k *KonnectivityAgent) Start(ctx context.Context) error {
-	// Subscribe to ctrl count changes
-	k.serverCountChan = k.K0sControllersLeaseCounter.Subscribe()
 
 	go func() {
+		serverCount, serverCountChanged := k.ServerCount()
+
+		var clusterConfig *v1beta1.ClusterConfig
+		var retry <-chan time.Time
 		for {
 			select {
+			case config := <-k.configChangeChan:
+				clusterConfig = config
+
+			case <-serverCountChanged:
+				prevServerCount := serverCount
+				serverCount, serverCountChanged = k.ServerCount()
+				// write only if the server count actually changed
+				if serverCount == prevServerCount {
+					continue
+				}
+
+			case <-retry:
+				k.log.Info("Retrying to write konnectivity agent manifest")
+
 			case <-ctx.Done():
 				return
-			case count := <-k.serverCountChan:
-				k.serverCount = count
-				if err := k.writeKonnectivityAgent(); err != nil {
-					k.log.Errorf("failed to write konnectivity agent manifest: %v", err)
-				}
-			case clusterConfig := <-k.configChangeChan:
-				k.clusterConfig = clusterConfig
-				if err := k.writeKonnectivityAgent(); err != nil {
-					k.log.Errorf("failed to write konnectivity agent manifest: %v", err)
-				}
+			}
+
+			retry = nil
+
+			if clusterConfig == nil {
+				k.log.Info("Cluster configuration has not yet been reconciled")
+				continue
+			}
+
+			if err := k.writeKonnectivityAgent(clusterConfig, serverCount); err != nil {
+				k.log.Errorf("failed to write konnectivity agent manifest: %v", err)
+				retry = time.After(10 * time.Second)
+				continue
 			}
 		}
 	}()
+
 	return nil
 }
 
@@ -99,14 +110,7 @@ func (k *KonnectivityAgent) Stop() error {
 	return nil
 }
 
-func (k *KonnectivityAgent) writeKonnectivityAgent() error {
-	k.agentManifestLock.Lock()
-	defer k.agentManifestLock.Unlock()
-
-	if k.clusterConfig == nil {
-		return fmt.Errorf("cluster config is not reconciled yet")
-	}
-
+func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.ClusterConfig, serverCount uint) error {
 	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
 	err := dir.Init(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
@@ -115,15 +119,15 @@ func (k *KonnectivityAgent) writeKonnectivityAgent() error {
 	cfg := konnectivityAgentConfig{
 		// Since the konnectivity server runs with hostNetwork=true this is the
 		// IP address of the master machine
-		ProxyServerHost: k.NodeConfig.Spec.API.APIAddress(), // TODO: should it be an APIAddress?
-		ProxyServerPort: uint16(k.clusterConfig.Spec.Konnectivity.AgentPort),
-		Image:           k.clusterConfig.Spec.Images.Konnectivity.URI(),
-		ServerCount:     k.serverCount,
-		PullPolicy:      k.clusterConfig.Spec.Images.DefaultPullPolicy,
+		ProxyServerHost: k.APIServerHost,
+		ProxyServerPort: uint16(clusterConfig.Spec.Konnectivity.AgentPort),
+		Image:           clusterConfig.Spec.Images.Konnectivity.URI(),
+		ServerCount:     serverCount,
+		PullPolicy:      clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
-	if k.clusterConfig.Spec.Network != nil {
-		nllb := k.clusterConfig.Spec.Network.NodeLocalLoadBalancing
+	if clusterConfig.Spec.Network != nil {
+		nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 		if nllb.IsEnabled() {
 			switch nllb.Type {
 			case v1beta1.NllbTypeEnvoyProxy:
@@ -157,7 +161,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent() error {
 					cfg.ProxyServerPort = uint16(*v1beta1.DefaultEnvoyProxy().KonnectivityServerBindPort)
 				}
 			default:
-				return fmt.Errorf("unsupported node-local load balancer type: %q", k.clusterConfig.Spec.Network.NodeLocalLoadBalancing.Type)
+				return fmt.Errorf("unsupported node-local load balancer type: %q", clusterConfig.Spec.Network.NodeLocalLoadBalancing.Type)
 			}
 		}
 	}
@@ -188,7 +192,7 @@ type konnectivityAgentConfig struct {
 	ProxyServerPort      uint16
 	AgentPort            uint16
 	Image                string
-	ServerCount          int
+	ServerCount          uint
 	PullPolicy           string
 	HostNetwork          bool
 	BindToNodeIP         bool

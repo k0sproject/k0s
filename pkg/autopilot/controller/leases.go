@@ -61,7 +61,7 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 	leaseEventStatusCh := make(chan LeaseEventStatus, 10)
 	errorCh := make(chan error, 10)
 
-	go func(ctx context.Context) {
+	go func() {
 		defer close(leaseEventStatusCh)
 		defer close(errorCh)
 
@@ -76,21 +76,19 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 				return
 
 			default:
-				ctx, cancel := context.WithCancel(ctx)
 
 				leasePoolOpts := []leaderelection.LeaseOpt{
-					leaderelection.WithContext(ctx),
 					leaderelection.WithNamespace(namespace),
 				}
 
-				leasePool, err := leaderelection.NewLeasePool(ctx, lw.client, name, identity, leasePoolOpts...)
+				leasePool, err := leaderelection.NewLeasePool(lw.client, name, identity, leasePoolOpts...)
 				if err != nil {
 					errorCh <- fmt.Errorf("failed to create lease pool: %w", err)
-					cancel()
 					return
 				}
 
-				events, _, err := leasePool.Watch()
+				ctx, cancel := context.WithCancel(ctx)
+				events, err := leasePool.Watch(ctx)
 				if err != nil {
 					errorCh <- fmt.Errorf("failed to watch lease pool: %w", err)
 					cancel()
@@ -103,7 +101,7 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 				cancel()
 			}
 		}
-	}(ctx)
+	}()
 
 	return leaseEventStatusCh, errorCh
 }

@@ -39,7 +39,7 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 
 	fakeClient := fake.NewSimpleClientset()
 
-	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", identity, WithNamespace("test"))
+	pool, err := NewLeasePool(fakeClient, "test", identity, WithNamespace("test"))
 	require.NoError(t, err)
 
 	output := &LeaseEvents{
@@ -47,9 +47,10 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 		LostLease:     make(chan struct{}, 1),
 	}
 
-	events, cancel, err := pool.Watch(WithOutputChannels(output))
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	events, err := pool.Watch(ctx, WithOutputChannels(output))
 	require.NoError(t, err)
-	defer cancel()
 
 	done := make(chan struct{})
 	failed := make(chan struct{})
@@ -78,7 +79,7 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 
 	fakeClient := fake.NewSimpleClientset()
 
-	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", identity, WithNamespace("test"))
+	pool, err := NewLeasePool(fakeClient, "test", identity, WithNamespace("test"))
 	require.NoError(t, err)
 
 	output := &LeaseEvents{
@@ -86,7 +87,9 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 		LostLease:     make(chan struct{}, 1),
 	}
 
-	events, cancel, err := pool.Watch(WithOutputChannels(output))
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	events, err := pool.Watch(ctx, WithOutputChannels(output))
 	require.NoError(t, err)
 
 	<-events.AcquiredLease
@@ -115,7 +118,7 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 		}
 	}()
 
-	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", identity,
+	pool, err := NewLeasePool(fakeClient, "test", identity,
 		WithNamespace("test"),
 		WithRetryPeriod(10*time.Millisecond),
 	)
@@ -127,9 +130,10 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 	}
 
 	givenLeaderElectorError(nil)
-	events, cancel, err := pool.Watch(WithOutputChannels(output))
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	events, err := pool.Watch(ctx, WithOutputChannels(output))
 	require.NoError(t, err)
-	defer cancel()
 
 	<-events.AcquiredLease
 	t.Log("Acquired lease, disrupting leader election and waiting to loose the lease")
@@ -150,13 +154,13 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
 
-	pool1, err := NewLeasePool(context.TODO(), fakeClient, "test", "pool1",
+	pool1, err := NewLeasePool(fakeClient, "test", "pool1",
 		WithNamespace("test"),
 		WithRetryPeriod(10*time.Millisecond),
 	)
 	require.NoError(t, err)
 
-	pool2, err := NewLeasePool(context.TODO(), fakeClient, "test", "pool2",
+	pool2, err := NewLeasePool(fakeClient, "test", "pool2",
 		WithNamespace("test"),
 		WithRetryPeriod(10*time.Millisecond),
 	)
@@ -185,15 +189,18 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	require.NoError(t, err)
 	t.Log("Pre-created acquired lease for first identity")
 
-	events1, cancel1, err := pool1.Watch(WithOutputChannels(&LeaseEvents{
+	ctx1, cancel1 := context.WithCancel(context.TODO())
+	t.Cleanup(cancel1)
+	events1, err := pool1.Watch(ctx1, WithOutputChannels(&LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}))
 	require.NoError(t, err)
-	defer cancel1()
 	t.Log("Started first lease pool")
 
-	events2, cancel2, err := pool2.Watch(WithOutputChannels(&LeaseEvents{
+	ctx2, cancel2 := context.WithCancel(context.TODO())
+	t.Cleanup(cancel2)
+	events2, err := pool2.Watch(ctx2, WithOutputChannels(&LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}))
