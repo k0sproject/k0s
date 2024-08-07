@@ -20,13 +20,12 @@ package v1beta1
 
 import (
 	"context"
-	"time"
 
 	v1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // ChartsGetter has a method to return a ChartInterface.
@@ -48,97 +47,18 @@ type ChartInterface interface {
 
 // charts implements ChartInterface
 type charts struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*v1beta1.Chart, *v1beta1.ChartList]
 }
 
 // newCharts returns a Charts
 func newCharts(c *HelmV1beta1Client, namespace string) *charts {
 	return &charts{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*v1beta1.Chart, *v1beta1.ChartList](
+			"charts",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *v1beta1.Chart { return &v1beta1.Chart{} },
+			func() *v1beta1.ChartList { return &v1beta1.ChartList{} }),
 	}
-}
-
-// Get takes name of the chart, and returns the corresponding chart object, and an error if there is any.
-func (c *charts) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Chart, err error) {
-	result = &v1beta1.Chart{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("charts").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of Charts that match those selectors.
-func (c *charts) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.ChartList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1beta1.ChartList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("charts").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested charts.
-func (c *charts) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("charts").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a chart and creates it.  Returns the server's representation of the chart, and an error, if there is any.
-func (c *charts) Create(ctx context.Context, chart *v1beta1.Chart, opts v1.CreateOptions) (result *v1beta1.Chart, err error) {
-	result = &v1beta1.Chart{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("charts").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(chart).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a chart and updates it. Returns the server's representation of the chart, and an error, if there is any.
-func (c *charts) Update(ctx context.Context, chart *v1beta1.Chart, opts v1.UpdateOptions) (result *v1beta1.Chart, err error) {
-	result = &v1beta1.Chart{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("charts").
-		Name(chart.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(chart).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the chart and deletes it. Returns an error if one occurs.
-func (c *charts) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("charts").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
 }

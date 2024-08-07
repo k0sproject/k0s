@@ -88,30 +88,22 @@ var _ testing.ObjectTracker = (*TransformingObjectTracker)(nil)
 
 // Add implements testing.ObjectTracker.
 func (t *TransformingObjectTracker) Add(obj runtime.Object) error {
-	internal, err := t.Internalize(obj)
-	if err != nil {
-		return fmt.Errorf("failed to internalize object: %w", err)
-	}
-	return t.Inner.Add(internal)
+	return t.internalized(obj, t.Inner.Add)
 }
 
 // Create implements testing.ObjectTracker.
-func (t *TransformingObjectTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
-	internal, err := t.Internalize(obj)
-	if err != nil {
-		return fmt.Errorf("failed to internalize object: %w", err)
-	}
-	return t.Inner.Create(gvr, internal, ns)
+func (t *TransformingObjectTracker) Create(gvr schema.GroupVersionResource, obj runtime.Object, ns string, opts ...metav1.CreateOptions) error {
+	return t.internalized(obj, func(obj runtime.Object) error { return t.Inner.Create(gvr, obj, ns, opts...) })
 }
 
 // Delete implements testing.ObjectTracker.
-func (t *TransformingObjectTracker) Delete(gvr schema.GroupVersionResource, ns string, name string) error {
-	return t.Inner.Delete(gvr, ns, ns)
+func (t *TransformingObjectTracker) Delete(gvr schema.GroupVersionResource, ns string, name string, opts ...metav1.DeleteOptions) error {
+	return t.Inner.Delete(gvr, ns, ns, opts...)
 }
 
 // Get implements testing.ObjectTracker.
-func (t *TransformingObjectTracker) Get(gvr schema.GroupVersionResource, ns string, name string) (runtime.Object, error) {
-	obj, err := t.Inner.Get(gvr, ns, name)
+func (t *TransformingObjectTracker) Get(gvr schema.GroupVersionResource, ns string, name string, opts ...metav1.GetOptions) (runtime.Object, error) {
+	obj, err := t.Inner.Get(gvr, ns, name, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +117,8 @@ func (t *TransformingObjectTracker) Get(gvr schema.GroupVersionResource, ns stri
 }
 
 // List implements testing.ObjectTracker.
-func (t *TransformingObjectTracker) List(gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, ns string) (runtime.Object, error) {
-	obj, err := t.Inner.List(gvr, gvk, ns)
+func (t *TransformingObjectTracker) List(gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, ns string, opts ...metav1.ListOptions) (runtime.Object, error) {
+	obj, err := t.Inner.List(gvr, gvk, ns, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -140,23 +132,29 @@ func (t *TransformingObjectTracker) List(gvr schema.GroupVersionResource, gvk sc
 }
 
 // Update implements testing.ObjectTracker.
-func (t *TransformingObjectTracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string) error {
-	internal, err := t.Internalize(obj)
-	if err != nil {
-		return fmt.Errorf("failed to internalize object: %w", err)
-	}
-	return t.Inner.Update(gvr, internal, ns)
+func (t *TransformingObjectTracker) Update(gvr schema.GroupVersionResource, obj runtime.Object, ns string, opts ...metav1.UpdateOptions) error {
+	return t.internalized(obj, func(obj runtime.Object) error { return t.Inner.Update(gvr, obj, ns, opts...) })
+}
+
+// Patch implements testing.ObjectTracker.
+func (t *TransformingObjectTracker) Patch(gvr schema.GroupVersionResource, obj runtime.Object, ns string, opts ...metav1.PatchOptions) error {
+	return t.internalized(obj, func(obj runtime.Object) error { return t.Inner.Patch(gvr, obj, ns, opts...) })
+}
+
+// Apply implements testing.ObjectTracker.
+func (t *TransformingObjectTracker) Apply(gvr schema.GroupVersionResource, applyConfiguration runtime.Object, ns string, opts ...metav1.PatchOptions) error {
+	return t.internalized(applyConfiguration, func(obj runtime.Object) error { return t.Inner.Apply(gvr, applyConfiguration, ns, opts...) })
 }
 
 // Watch implements testing.ObjectTracker.
-func (t *TransformingObjectTracker) Watch(gvr schema.GroupVersionResource, ns string) (watch.Interface, error) {
+func (t *TransformingObjectTracker) Watch(gvr schema.GroupVersionResource, ns string, opts ...metav1.ListOptions) (watch.Interface, error) {
 	w, err := t.Inner.Watch(gvr, ns)
 	if err != nil {
 		return w, err
 	}
 
 	internal := w.ResultChan()
-	external := make(chan watch.Event, cap(internal))
+	external := make(chan watch.Event)
 
 	go func() {
 		defer close(external)
@@ -182,6 +180,14 @@ func (t *TransformingObjectTracker) Watch(gvr schema.GroupVersionResource, ns st
 	}()
 
 	return &watcher{external, w.Stop}, nil
+}
+
+func (t *TransformingObjectTracker) internalized(obj runtime.Object, f func(runtime.Object) error) error {
+	internal, err := t.Internalize(obj)
+	if err != nil {
+		return fmt.Errorf("failed to internalize object: %w", err)
+	}
+	return f(internal)
 }
 
 type watcher struct {
