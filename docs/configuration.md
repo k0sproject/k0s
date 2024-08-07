@@ -484,7 +484,6 @@ If you want the list of default images and their versions to be included, use `k
 - `spec.images.coredns`
 - `spec.images.pause`
 - `spec.images.calico.cni`
-- `spec.images.calico.flexvolume`
 - `spec.images.calico.node`
 - `spec.images.calico.kubecontrollers`
 - `spec.images.kuberouter.cni`
@@ -500,15 +499,20 @@ If `spec.images.default_pull_policy` is set and not empty, it will be used as a 
 ```yaml
 images:
   repository: "my.own.repo"
-  konnectivity:
-    image: calico/kube-controllers
-    version: v3.16.2
+  calico:
+    kubecontrollers:
+      image: quay.io/k0sproject/calico-kube-controllers
+      version: v3.27.3-0
   metricsserver:
     image: quay.io/k0sproject/metrics-server
     version: v0.7.1-0
 ```
 
-In the runtime the image names are calculated as `my.own.repo/calico/kube-controllers:v3.16.2` and `my.own.repo/k0sproject/metrics-server:v0.7.1-0`. This only affects the the imgages pull location, and thus omitting an image specification here will not disable component deployment.
+In the runtime the image names are calculated as
+`my.own.repo/k0sproject/calico-kube-controllers:v3.27.3-0` and
+`my.own.repo/k0sproject/metrics-server:v0.7.1-0`. This only affects the the
+images pull location, and thus omitting an image specification here will not
+disable component deployment.
 
 ### `spec.extensions.helm`
 
