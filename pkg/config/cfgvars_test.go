@@ -17,6 +17,8 @@ limitations under the License.
 package config
 
 import (
+	"bytes"
+	"io"
 	"reflect"
 	"testing"
 
@@ -24,6 +26,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type FakeFlagSet struct {
@@ -31,7 +34,12 @@ type FakeFlagSet struct {
 }
 
 type FakeCommand struct {
+	stdin   io.Reader
 	flagSet *FakeFlagSet
+}
+
+func (f *FakeCommand) InOrStdin() io.Reader {
+	return f.stdin
 }
 
 func (f *FakeCommand) Flags() *pflag.FlagSet {
@@ -61,7 +69,9 @@ func TestWithCommand(t *testing.T) {
 	}
 
 	// Create a fake command that returns the fake flag set
+	in := bytes.NewReader(nil)
 	fakeCmd := &FakeCommand{
+		stdin:   in,
 		flagSet: fakeFlags,
 	}
 
@@ -69,6 +79,7 @@ func TestWithCommand(t *testing.T) {
 	c := &CfgVars{}
 	WithCommand(fakeCmd)(c)
 
+	assert.Same(t, in, c.stdin)
 	assert.Equal(t, "/path/to/data", c.DataDir)
 	assert.Equal(t, "/path/to/config", c.StartupConfigPath)
 	assert.Equal(t, "/path/to/socket", c.StatusSocketPath)
@@ -150,4 +161,26 @@ func TestNodeConfig_Default(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, nodeConfig)
 	assert.True(t, reflect.DeepEqual(v1beta1.DefaultClusterConfig(c.defaultStorageSpec()), nodeConfig))
+}
+
+func TestNodeConfig_Stdin(t *testing.T) {
+	oldDefaultPath := defaultConfigPath
+	defer func() { defaultConfigPath = oldDefaultPath }()
+	defaultConfigPath = "/tmp/k0s.yaml.nonexistent"
+
+	fakeCmd := &FakeCommand{
+		stdin:   bytes.NewReader([]byte(`spec: {network: {provider: calico}}`)),
+		flagSet: &FakeFlagSet{values: map[string]any{"config": "-"}},
+	}
+
+	underTest, err := NewCfgVars(fakeCmd)
+	require.NoError(t, err)
+
+	nodeConfig, err := underTest.NodeConfig()
+	require.NoError(t, err)
+	assert.Equal(t, "calico", nodeConfig.Spec.Network.Provider)
+
+	nodeConfig2, err := underTest.NodeConfig()
+	require.NoError(t, err)
+	assert.Same(t, nodeConfig, nodeConfig2)
 }
