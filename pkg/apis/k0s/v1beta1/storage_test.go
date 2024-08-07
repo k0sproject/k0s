@@ -85,6 +85,36 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "kine-jetstream",
+			storage: StorageSpec{
+				Type: "kine",
+				Kine: &KineConfig{
+					DataSource: "jetstream://",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "kine-nats",
+			storage: StorageSpec{
+				Type: "kine",
+				Kine: &KineConfig{
+					DataSource: "nats://",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "kine-nats-noembed",
+			storage: StorageSpec{
+				Type: "kine",
+				Kine: &KineConfig{
+					DataSource: "nats://?noEmbed",
+				},
+			},
+			want: true,
+		},
+		{
 			name: "kine-unknown",
 			storage: StorageSpec{
 				Type: "kine",
@@ -92,14 +122,22 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 					DataSource: "unknown://foobar",
 				},
 			},
+			want: true,
+		},
+		{
+			name: "kine-none",
+			storage: StorageSpec{
+				Type: "kine",
+				Kine: &KineConfig{
+					DataSource: "",
+				},
+			},
 			want: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.storage.IsJoinable(); got != tt.want {
-				t.Errorf("StorageSpec.IsJoinable() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, tt.storage.IsJoinable())
 		})
 	}
 }
