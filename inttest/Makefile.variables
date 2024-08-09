@@ -15,6 +15,7 @@ smoketests := \
 	check-ap-updater-periodic \
 	check-backup \
 	check-basic \
+	check-bind-address \
 	check-byocri \
 	check-calico \
 	check-capitalhostnames \
