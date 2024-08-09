@@ -17,42 +17,19 @@ limitations under the License.
 package kubeconfig
 
 import (
-	"bytes"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"html/template"
-	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/sirupsen/logrus"
 
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
-
-var userKubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
-apiVersion: v1
-clusters:
-- cluster:
-    server: {{.JoinURL}}
-    certificate-authority-data: {{.CACert}}
-  name: k0s
-contexts:
-- context:
-    cluster: k0s
-    user: {{.User}}
-  name: k0s
-current-context: k0s
-kind: Config
-preferences: {}
-users:
-- name: {{.User}}
-  user:
-    client-certificate-data: {{.ClientCert}}
-    client-key-data: {{.ClientKey}}
-`))
 
 func kubeconfigCreateCmd() *cobra.Command {
 	var groups string
@@ -89,54 +66,57 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			}
 			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
 
-			caCert, err := os.ReadFile(path.Join(opts.K0sVars.CertRootDir, "ca.crt"))
-			if err != nil {
-				return fmt.Errorf("failed to read cluster ca certificate: %w, check if the control plane is initialized on this node", err)
-			}
-			caCertPath, caCertKey := path.Join(opts.K0sVars.CertRootDir, "ca.crt"), path.Join(opts.K0sVars.CertRootDir, "ca.key")
-			userReq := certificate.Request{
-				Name:   username,
-				CN:     username,
-				O:      groups,
-				CACert: caCertPath,
-				CAKey:  caCertKey,
-			}
-			certManager := certificate.Manager{
-				K0sVars: opts.K0sVars,
-			}
-			userCert, err := certManager.EnsureCertificate(userReq, "root")
+			kubeconfig, err := createUserKubeconfig(opts.K0sVars, clusterAPIURL, username, groups)
 			if err != nil {
 				return err
 			}
 
-			data := struct {
-				CACert     string
-				ClientCert string
-				ClientKey  string
-				User       string
-				JoinURL    string
-			}{
-				CACert:     base64.StdEncoding.EncodeToString(caCert),
-				ClientCert: base64.StdEncoding.EncodeToString([]byte(userCert.Cert)),
-				ClientKey:  base64.StdEncoding.EncodeToString([]byte(userCert.Key)),
-				User:       username,
-				JoinURL:    clusterAPIURL,
-			}
-
-			var buf bytes.Buffer
-
-			err = userKubeconfigTemplate.Execute(&buf, &data)
-			if err != nil {
-				return err
-			}
-			_, err = cmd.OutOrStdout().Write(buf.Bytes())
-			if err != nil {
-				return err
-			}
-			return nil
+			_, err = cmd.OutOrStdout().Write(kubeconfig)
+			return err
 		},
 	}
+
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
+}
+
+func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, groups string) ([]byte, error) {
+	userReq := certificate.Request{
+		Name:   username,
+		CN:     username,
+		O:      groups,
+		CACert: filepath.Join(k0sVars.CertRootDir, "ca.crt"),
+		CAKey:  filepath.Join(k0sVars.CertRootDir, "ca.key"),
+	}
+	certManager := certificate.Manager{
+		K0sVars: k0sVars,
+	}
+	userCert, err := certManager.EnsureCertificate(userReq, "root")
+	if err != nil {
+		return nil, fmt.Errorf("failed generate user certificate: %w, check if the control plane is initialized on this node", err)
+	}
+
+	const k0sContextName = "k0s"
+	kubeconfig := clientcmdapi.Config{
+		Clusters: map[string]*clientcmdapi.Cluster{k0sContextName: {
+			Server:               clusterAPIURL,
+			CertificateAuthority: userReq.CACert,
+		}},
+		Contexts: map[string]*clientcmdapi.Context{k0sContextName: {
+			Cluster:  k0sContextName,
+			AuthInfo: username,
+		}},
+		CurrentContext: k0sContextName,
+		AuthInfos: map[string]*clientcmdapi.AuthInfo{username: {
+			ClientCertificateData: []byte(userCert.Cert),
+			ClientKeyData:         []byte(userCert.Key),
+		}},
+	}
+	if err := clientcmdapi.FlattenConfig(&kubeconfig); err != nil {
+		return nil, err
+	}
+
+	return clientcmd.Write(kubeconfig)
 }
