@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -39,7 +40,6 @@ import (
 
 	testifysuite "github.com/stretchr/testify/suite"
 	"go.uber.org/multierr"
-	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/yaml"
 )

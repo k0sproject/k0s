@@ -19,12 +19,12 @@ package cmd_test
 import (
 	"bytes"
 	"io"
+	"slices"
 	"testing"
 
 	"github.com/k0sproject/k0s/cmd"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 )
 
 // TestRootCmd_Flags ensures that no unwanted global flags have been registered
