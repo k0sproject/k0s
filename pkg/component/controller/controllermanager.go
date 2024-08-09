@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -67,9 +68,11 @@ var _ manager.Reconciler = (*Manager)(nil)
 func (a *Manager) Init(_ context.Context) error {
 	var err error
 	// controller manager running as api-server user as they both need access to same sa.key
-	a.uid, err = users.GetUID(constant.ApiserverUser)
+	a.uid, err = users.LookupUID(constant.ApiserverUser)
 	if err != nil {
-		logrus.Warn("running kube-controller-manager as root: ", err)
+		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.ApiserverUser, err)
+		a.uid = users.RootUID
+		logrus.WithError(err).Warn("Running Kubernetes controller manager as root")
 	}
 
 	// controller manager should be the only component that needs access to

@@ -25,6 +25,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/sirupsen/logrus"
@@ -104,7 +105,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			certManager := certificate.Manager{
 				K0sVars: opts.K0sVars,
 			}
-			userCert, err := certManager.EnsureCertificate(userReq, "root")
+			userCert, err := certManager.EnsureCertificate(userReq, users.RootUID)
 			if err != nil {
 				return err
 			}

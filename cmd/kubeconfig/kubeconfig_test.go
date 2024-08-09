@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -118,7 +119,7 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 
 	s.Require().NoError(os.MkdirAll(k0sVars.CertRootDir, 0755))
 
-	userCert, err := certManager.EnsureCertificate(userReq, "root")
+	userCert, err := certManager.EnsureCertificate(userReq, users.RootUID)
 	s.Require().NoError(err)
 	clusterAPIURL := cfg.Spec.API.APIAddressURL()
 
