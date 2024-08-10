@@ -35,19 +35,17 @@ func IsValidLease(lease coordinationv1.Lease) bool {
 	return leaseExpiry.After(time.Now())
 }
 
-func GetControlPlaneNodeCount(ctx context.Context, kubeClient kubernetes.Interface) (int, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	count := 0
+func CountActiveControllerLeases(ctx context.Context, kubeClient kubernetes.Interface) (count uint, _ error) {
 	leases, err := kubeClient.CoordinationV1().Leases("kube-node-lease").List(ctx, v1.ListOptions{})
 	if err != nil {
 		return 0, err
 	}
 	for _, l := range leases.Items {
-		if strings.HasPrefix(l.ObjectMeta.Name, "k0s-ctrl") {
-			if IsValidLease(l) {
-				count++
-			}
+		switch {
+		case !strings.HasPrefix(l.ObjectMeta.Name, "k0s-ctrl-"):
+		case l.Spec.HolderIdentity == nil || *l.Spec.HolderIdentity == "":
+		case IsValidLease(l):
+			count++
 		}
 	}
 

@@ -36,7 +36,7 @@ type telemetryData struct {
 	StorageType            v1beta1.StorageType
 	ClusterID              string
 	WorkerNodesCount       int
-	ControlPlaneNodesCount int
+	ControlPlaneNodesCount uint
 	WorkerData             []workerData
 	CPUTotal               int64
 	MEMTotal               int64
@@ -55,7 +55,7 @@ func (td telemetryData) asProperties() analytics.Properties {
 		"storageType":            string(td.StorageType),
 		"clusterID":              td.ClusterID,
 		"workerNodesCount":       td.WorkerNodesCount,
-		"controlPlaneNodesCount": td.ControlPlaneNodesCount,
+		"controlPlaneNodesCount": int(td.ControlPlaneNodesCount),
 		"workerData":             td.WorkerData,
 		"memTotal":               td.MEMTotal,
 		"cpuTotal":               td.CPUTotal,
@@ -81,7 +81,7 @@ func (c *Component) collectTelemetry(ctx context.Context, clients kubernetes.Int
 	data.WorkerData = wds
 	data.MEMTotal = sums.memTotal
 	data.CPUTotal = sums.cpuTotal
-	data.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(ctx, clients)
+	data.ControlPlaneNodesCount, err = kubeutil.CountActiveControllerLeases(ctx, clients)
 	if err != nil {
 		return data, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
