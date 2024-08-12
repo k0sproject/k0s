@@ -40,10 +40,10 @@ Adding a static IP address to a node using `kubectl`:
 ```shell
 kubectl annotate \
     node <node> \
-    k0sproject.io/node-ip-external=<external IP>
+    k0sproject.io/node-ip-external=<external IP>[,<external IP 2>][,<external IP 3>]
 ```
 
-Both IPv4 and IPv6 addresses are supported.
+Both IPv4 and IPv6 addresses and multiple comma-separated values are supported.
 
 ### Defaults
 

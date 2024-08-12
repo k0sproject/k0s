@@ -17,6 +17,8 @@ limitations under the License.
 package k0scloudprovider
 
 import (
+	"strings"
+
 	v1 "k8s.io/api/core/v1"
 	cloudproviderapi "k8s.io/cloud-provider/api"
 )
@@ -82,6 +84,8 @@ func populateExternalAddress(addrs *[]v1.NodeAddress, node *v1.Node) {
 
 	// Search the nodes annotations for any external IP address definitions.
 	if externalIP, ok := node.Annotations[ExternalIPAnnotation]; ok {
-		*addrs = append(*addrs, v1.NodeAddress{Type: v1.NodeExternalIP, Address: externalIP})
+		for _, addr := range strings.Split(externalIP, ",") {
+			*addrs = append(*addrs, v1.NodeAddress{Type: v1.NodeExternalIP, Address: addr})
+		}
 	}
 }
