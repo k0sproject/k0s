@@ -2311,6 +2311,14 @@ public<span class="w"> </span><span class="o">(</span>active<span class="o">)</s
 <span class="w">  </span>icmp-blocks:<span class="w"> </span>
 <span class="w">  </span>rich<span class="w"> </span>rules:
 </code></pre></div>
+<p>Basic single node firewalld setup:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Allow traffic from podCIDR</span>
+$<span class="w"> </span>firewall-cmd<span class="w"> </span>--add-source<span class="o">=</span><span class="m">10</span>.244.0.0/16<span class="w"> </span>--permanent
+<span class="c1"># Allow kubelet API traffic</span>
+$<span class="w"> </span>firewall-cmd<span class="w"> </span>--add-port<span class="o">=</span><span class="m">10250</span>/tcp<span class="w"> </span>--permanent
+<span class="c1"># Apply firewall changes</span>
+$<span class="w"> </span>firewall-cmd<span class="w"> </span>--reload
+</code></pre></div>
 
 
 

@@ -2526,15 +2526,15 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>podCIDR</code></td>
-<td>Pod network CIDR to use in the cluster.</td>
+<td>Pod network CIDR to use in the cluster. Defaults to <code>10.244.0.0/16</code>.</td>
 </tr>
 <tr>
 <td><code>serviceCIDR</code></td>
-<td>Network CIDR to use for cluster VIP services.</td>
+<td>Network CIDR to use for cluster VIP services. Defaults to <code>10.96.0.0/12</code>.</td>
 </tr>
 <tr>
 <td><code>clusterDomain</code></td>
-<td>Cluster Domain to be passed to the <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration">kubelet</a> and the coredns configuration.</td>
+<td>Cluster Domain to be passed to the <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration">kubelet</a> and the coredns configuration. Defaults to <code>cluster.local</code>.</td>
 </tr>
 </tbody>
 </table>
