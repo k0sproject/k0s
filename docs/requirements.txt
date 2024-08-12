@@ -28,4 +28,4 @@ six==1.16.0
 termcolor==2.4.0
 urllib3==1.26.19
 verspec==0.1.0
-watchdog==4.0.1
+watchdog==4.0.2
