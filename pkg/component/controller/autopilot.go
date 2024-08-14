@@ -34,6 +34,7 @@ var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
 	K0sVars            *config.CfgVars
+	KubeletExtraArgs   string
 	AdminClientFactory kubernetes.ClientFactoryInterface
 	EnableWorker       bool
 }
@@ -54,6 +55,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		InvocationID:        a.K0sVars.InvocationID,
 		KubeConfig:          a.K0sVars.AdminKubeConfigPath,
 		K0sDataDir:          a.K0sVars.DataDir,
+		KubeletExtraArgs:    a.KubeletExtraArgs,
 		Mode:                "controller",
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",

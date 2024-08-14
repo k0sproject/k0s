@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
@@ -157,8 +158,19 @@ func (r *uncordoning) unCordonNode(ctx context.Context, signalNode crcli.Object)
 			return fmt.Errorf("failed to convert signalNode to Node")
 		}
 	} else {
+		nodeName := signalNode.GetName()
+		controlNode, ok := signalNode.(*autopilotv1beta2.ControlNode)
+		if ok {
+			for _, addr := range controlNode.Status.Addresses {
+				if addr.Type == corev1.NodeHostName {
+					nodeName = addr.Address
+					break
+				}
+			}
+		}
+
 		//otherwise get node from client
-		if err := r.client.Get(ctx, crcli.ObjectKey{Name: signalNode.GetName()}, node); err != nil {
+		if err := r.client.Get(ctx, crcli.ObjectKey{Name: nodeName}, node); err != nil {
 			return fmt.Errorf("failed to get node: %w", err)
 		}
 	}
