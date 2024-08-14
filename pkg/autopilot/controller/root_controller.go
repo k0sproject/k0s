@@ -75,7 +75,7 @@ func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker
 	c.stopSubHandler = c.stopSubControllers
 	c.leaseWatcherCreator = NewLeaseWatcher
 	c.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
-		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, enableWorker)
+		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, cfg.KubeletExtraArgs, enableWorker)
 		return setupController.Run(ctx)
 	}
 
