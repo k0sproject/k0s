@@ -2124,9 +2124,9 @@
 <p>Adding a static IP address to a node using <code>kubectl</code>:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>annotate<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>node<span class="w"> </span>&lt;node&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>k0sproject.io/node-ip-external<span class="o">=</span>&lt;external<span class="w"> </span>IP&gt;
+<span class="w">    </span>k0sproject.io/node-ip-external<span class="o">=</span>&lt;external<span class="w"> </span>IP&gt;<span class="o">[</span>,&lt;external<span class="w"> </span>IP<span class="w"> </span><span class="m">2</span>&gt;<span class="o">][</span>,&lt;external<span class="w"> </span>IP<span class="w"> </span><span class="m">3</span>&gt;<span class="o">]</span>
 </code></pre></div>
-<p>Both IPv4 and IPv6 addresses are supported.</p>
+<p>Both IPv4 and IPv6 addresses and multiple comma-separated values are supported.</p>
 <h3 id="defaults">Defaults<a class="headerlink" href="#defaults" title="Permanent link">#</a></h3>
 <p>The default node refresh interval is <code>2m</code>, which can be overridden using the <code>--k0s-cloud-provider-update-frequency=&lt;duration&gt;</code> parameter when launching the controller(s).</p>
 <p>The default port that the cloud provider binds to can be overridden using the <code>--k0s-cloud-provider-port=&lt;int&gt;</code> parameter when launching the controller(s).</p>
