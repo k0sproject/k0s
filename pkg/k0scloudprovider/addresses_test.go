@@ -121,7 +121,7 @@ func TestPopulateInternalAddress(t *testing.T) {
 
 var testDataPopulateExternalAddress = []populateAddressTestData{
 	{
-		name: "Equality",
+		name: "Equality single address",
 		input: &v1.Node{
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
@@ -134,6 +134,23 @@ var testDataPopulateExternalAddress = []populateAddressTestData{
 		},
 		output: []v1.NodeAddress{
 			{Type: v1.NodeExternalIP, Address: "1.2.3.4"},
+		},
+	},
+	{
+		name: "Equality multiple addresses",
+		input: &v1.Node{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					ExternalIPAnnotation: "1.2.3.4,2041:0000:140F::875B:131B",
+				},
+			},
+			Status: v1.NodeStatus{
+				Addresses: []v1.NodeAddress{},
+			},
+		},
+		output: []v1.NodeAddress{
+			{Type: v1.NodeExternalIP, Address: "1.2.3.4"},
+			{Type: v1.NodeExternalIP, Address: "2041:0000:140F::875B:131B"},
 		},
 	},
 	{
