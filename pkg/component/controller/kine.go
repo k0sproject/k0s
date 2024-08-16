@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"strings"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -69,12 +70,11 @@ func (k *Kine) Init(_ context.Context) error {
 	if err := os.Chown(kineSocketDir, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
 		logrus.Warn("failed to chown ", kineSocketDir)
 	}
-
-	dsURL, err := url.Parse(k.Config.DataSource)
-	if err != nil {
-		return err
-	}
-	if dsURL.Scheme == "sqlite" {
+	if strings.HasPrefix(k.Config.DataSource, "sqlite") {
+		dsURL, err := url.Parse(k.Config.DataSource)
+		if err != nil {
+			return err
+		}
 		// Make sure the db basedir exists
 		err = dir.Init(filepath.Dir(dsURL.Path), constant.KineDBDirMode)
 		if err != nil {
