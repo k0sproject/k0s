@@ -94,6 +94,11 @@ spec:
                           properties:
                             chartname:
                               type: string
+                            disableForceUpgrade:
+                              description: DisableForceUpgrade disables the the use
+                                of the "helm upgrade --force" flag when upgrading
+                                the the chart.
+                              type: boolean
                             name:
                               type: string
                             namespace:

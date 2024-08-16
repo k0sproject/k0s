@@ -374,17 +374,19 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]int
 		Name:     "testChartUpdate",
 		Template: chartCrdTemplate,
 		Data: struct {
-			Name      string
-			ChartName string
-			Values    string
-			Version   string
-			TargetNS  string
+			Name                string
+			ChartName           string
+			Values              string
+			Version             string
+			TargetNS            string
+			DisableForceUpgrade bool
 		}{
-			Name:      "test-addon",
-			ChartName: "ealenn/echo-server",
-			Values:    string(valuesBytes),
-			Version:   "0.5.0",
-			TargetNS:  "default",
+			Name:                "test-addon",
+			ChartName:           "ealenn/echo-server",
+			Values:              string(valuesBytes),
+			Version:             "0.5.0",
+			TargetNS:            "default",
+			DisableForceUpgrade: true,
 		},
 	}
 	buf := bytes.NewBuffer([]byte{})
@@ -429,6 +431,7 @@ spec:
             version: "0.0.1"
             values: ""
             namespace: kube-system
+            disableForceUpgrade: true
 `
 
 // TODO: this actually duplicates logic from the controller code
@@ -448,4 +451,5 @@ spec:
 {{ .Values | nindent 4 }}
   version: {{ .Version }}
   namespace: {{ .TargetNS }}
+  disableForceUpgrade: {{ .DisableForceUpgrade }}
 `

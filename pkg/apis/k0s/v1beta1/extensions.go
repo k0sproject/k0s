@@ -96,7 +96,9 @@ type Chart struct {
 	Values    string        `json:"values"`
 	TargetNS  string        `json:"namespace"`
 	Timeout   time.Duration `json:"timeout"`
-	Order     int           `json:"order"`
+	// DisableForceUpgrade disables the the use of the "helm upgrade --force" flag when upgrading the the chart.
+	DisableForceUpgrade bool `json:"disableForceUpgrade,omitempty"`
+	Order               int  `json:"order"`
 }
 
 // Validate performs validation
