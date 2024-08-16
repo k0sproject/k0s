@@ -101,6 +101,11 @@ spec:
                             chartname:
                               minLength: 1
                               type: string
+                            disableForceUpgrade:
+                              description: DisableForceUpgrade disables the the use
+                                of the "helm upgrade --force" flag when upgrading
+                                the the chart.
+                              type: boolean
                             name:
                               maxLength: 53
                               minLength: 1

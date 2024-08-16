@@ -27,13 +27,14 @@ import (
 
 // ChartSpec defines the desired state of Chart
 type ChartSpec struct {
-	ChartName   string `json:"chartName,omitempty"`
-	ReleaseName string `json:"releaseName,omitempty"`
-	Values      string `json:"values,omitempty"`
-	Version     string `json:"version,omitempty"`
-	Namespace   string `json:"namespace,omitempty"`
-	Timeout     string `json:"timeout,omitempty"`
-	Order       int    `json:"order,omitempty"`
+	ChartName           string `json:"chartName,omitempty"`
+	ReleaseName         string `json:"releaseName,omitempty"`
+	Values              string `json:"values,omitempty"`
+	Version             string `json:"version,omitempty"`
+	Namespace           string `json:"namespace,omitempty"`
+	Timeout             string `json:"timeout,omitempty"`
+	DisableForceUpgrade bool   `json:"disableForceUpgrade,omitempty"`
+	Order               int    `json:"order,omitempty"`
 }
 
 // YamlValues returns values as map

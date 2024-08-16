@@ -264,7 +264,7 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 
 // UpgradeChart upgrades a helm chart.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
+func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration, force bool) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
@@ -274,7 +274,7 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	upgrade.Wait = true
 	upgrade.WaitForJobs = true
 	upgrade.Install = true
-	upgrade.Force = true
+	upgrade.Force = force
 	upgrade.Atomic = true
 	upgrade.Timeout = timeout
 	chartDir, err := hc.locateChart(chartName, version)

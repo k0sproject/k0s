@@ -114,7 +114,9 @@ type Chart struct {
 	// Timeout specifies the timeout for how long to wait for the chart installation to finish.
 	// A duration string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	Timeout metav1.Duration `json:"timeout,omitempty"`
-	Order   int             `json:"order,omitempty"`
+	// DisableForceUpgrade disables the the use of the "helm upgrade --force" flag when upgrading the the chart.
+	DisableForceUpgrade bool `json:"disableForceUpgrade,omitempty"`
+	Order               int  `json:"order,omitempty"`
 }
 
 // Validate performs validation

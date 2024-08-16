@@ -41,6 +41,8 @@ spec:
             properties:
               chartName:
                 type: string
+              disableForceUpgrade:
+                type: boolean
               namespace:
                 type: string
               order:
