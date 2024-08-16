@@ -333,6 +333,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			chart.Status.Namespace,
 			chart.Spec.YamlValues(),
 			timeout,
+			!chart.Spec.DisableForceUpgrade,
 		)
 		if err != nil {
 			return fmt.Errorf("can't reconcile upgrade for %q: %w", chart.GetName(), err)
@@ -405,6 +406,7 @@ spec:
 {{ .Values | nindent 4 }}
   version: {{ .Version }}
   namespace: {{ .TargetNS }}
+  disableForceUpgrade: {{ .DisableForceUpgrade }}
 `
 
 const finalizerName = "helm.k0sproject.io/uninstall-helm-release"
