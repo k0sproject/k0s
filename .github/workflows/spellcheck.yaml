@@ -1,0 +1,23 @@
+name: Spellcheck
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - '**.md'
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths:
+      - '**.md'
+jobs:
+  spellcheck:
+    name: Spellcheck markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: matheus23/md-spellcheck-action@v4.2.2
+        with:
+          files-to-check: "*.md"
