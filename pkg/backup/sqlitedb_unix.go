@@ -37,14 +37,12 @@ const kineBackup = "kine-state-backup.db"
 type sqliteStep struct {
 	dataSource string
 	tmpDir     string
-	dataDir    string
 }
 
-func newSqliteStep(tmpDir string, dataSource string, dataDir string) *sqliteStep {
+func newSqliteStep(tmpDir string, dataSource string) *sqliteStep {
 	return &sqliteStep{
 		tmpDir:     tmpDir,
 		dataSource: dataSource,
-		dataDir:    dataDir,
 	}
 }
 
