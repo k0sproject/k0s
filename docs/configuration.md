@@ -168,6 +168,8 @@ k0s can also work with externally managed Etcd cluster. If this is configured, k
 | `ipAutodetectionMethod` | Use to force Calico to pick up the interface for pod network inter-node routing (default: `""`, meaning not set, so that Calico will instead use its defaults). For more information, refer to the [Calico documentation](https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods).                                                                                           |
 | `envVars`               | Map of key-values (strings) for any calico-node [environment variable](https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods).                                                                                                                                                                                                                                              |
 
+TESTING 1 2 3: unwriteable
+
 #### `spec.network.calico.envVars`
 
 Environment variable's value must be string, e.g.:
