@@ -36,6 +36,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -374,19 +375,19 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]int
 		Name:     "testChartUpdate",
 		Template: chartCrdTemplate,
 		Data: struct {
-			Name                string
-			ChartName           string
-			Values              string
-			Version             string
-			TargetNS            string
-			DisableForceUpgrade bool
+			Name         string
+			ChartName    string
+			Values       string
+			Version      string
+			TargetNS     string
+			ForceUpgrade *bool
 		}{
-			Name:                "test-addon",
-			ChartName:           "ealenn/echo-server",
-			Values:              string(valuesBytes),
-			Version:             "0.5.0",
-			TargetNS:            "default",
-			DisableForceUpgrade: true,
+			Name:         "test-addon",
+			ChartName:    "ealenn/echo-server",
+			Values:       string(valuesBytes),
+			Version:      "0.5.0",
+			TargetNS:     "default",
+			ForceUpgrade: ptr.To(false),
 		},
 	}
 	buf := bytes.NewBuffer([]byte{})
@@ -431,7 +432,7 @@ spec:
             version: "0.0.1"
             values: ""
             namespace: kube-system
-            disableForceUpgrade: true
+            forceUpgrade: false
 `
 
 // TODO: this actually duplicates logic from the controller code
@@ -451,5 +452,7 @@ spec:
 {{ .Values | nindent 4 }}
   version: {{ .Version }}
   namespace: {{ .TargetNS }}
-  disableForceUpgrade: {{ .DisableForceUpgrade }}
+{{- if ne .ForceUpgrade nil }}
+  forceUpgrade: {{ .ForceUpgrade }}
+{{- end }}
 `

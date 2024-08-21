@@ -96,9 +96,11 @@ type Chart struct {
 	Values    string        `json:"values"`
 	TargetNS  string        `json:"namespace"`
 	Timeout   time.Duration `json:"timeout"`
-	// DisableForceUpgrade disables the the use of the "helm upgrade --force" flag when upgrading the the chart.
-	DisableForceUpgrade bool `json:"disableForceUpgrade,omitempty"`
-	Order               int  `json:"order"`
+	// When set to false, disables the use of the "--force" flag when upgrading the the chart (default: true).
+	// +kubebuilder:default=true
+	// +optional
+	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
+	Order        int   `json:"order"`
 }
 
 // Validate performs validation
