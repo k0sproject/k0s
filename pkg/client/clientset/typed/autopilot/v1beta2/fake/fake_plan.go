@@ -39,20 +39,22 @@ var plansKind = v1beta2.SchemeGroupVersion.WithKind("Plan")
 
 // Get takes name of the plan, and returns the corresponding plan object, and an error if there is any.
 func (c *FakePlans) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.Plan, err error) {
+	emptyResult := &v1beta2.Plan{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(plansResource, name), &v1beta2.Plan{})
+		Invokes(testing.NewRootGetActionWithOptions(plansResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.Plan), err
 }
 
 // List takes label and field selectors, and returns the list of Plans that match those selectors.
 func (c *FakePlans) List(ctx context.Context, opts v1.ListOptions) (result *v1beta2.PlanList, err error) {
+	emptyResult := &v1beta2.PlanList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(plansResource, plansKind, opts), &v1beta2.PlanList{})
+		Invokes(testing.NewRootListActionWithOptions(plansResource, plansKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -71,25 +73,27 @@ func (c *FakePlans) List(ctx context.Context, opts v1.ListOptions) (result *v1be
 // Watch returns a watch.Interface that watches the requested plans.
 func (c *FakePlans) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(plansResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(plansResource, opts))
 }
 
 // Create takes the representation of a plan and creates it.  Returns the server's representation of the plan, and an error, if there is any.
 func (c *FakePlans) Create(ctx context.Context, plan *v1beta2.Plan, opts v1.CreateOptions) (result *v1beta2.Plan, err error) {
+	emptyResult := &v1beta2.Plan{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(plansResource, plan), &v1beta2.Plan{})
+		Invokes(testing.NewRootCreateActionWithOptions(plansResource, plan, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.Plan), err
 }
 
 // Update takes the representation of a plan and updates it. Returns the server's representation of the plan, and an error, if there is any.
 func (c *FakePlans) Update(ctx context.Context, plan *v1beta2.Plan, opts v1.UpdateOptions) (result *v1beta2.Plan, err error) {
+	emptyResult := &v1beta2.Plan{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(plansResource, plan), &v1beta2.Plan{})
+		Invokes(testing.NewRootUpdateActionWithOptions(plansResource, plan, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.Plan), err
 }

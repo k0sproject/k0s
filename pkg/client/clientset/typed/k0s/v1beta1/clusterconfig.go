@@ -20,13 +20,12 @@ package v1beta1
 
 import (
 	"context"
-	"time"
 
 	v1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // ClusterConfigsGetter has a method to return a ClusterConfigInterface.
@@ -48,97 +47,18 @@ type ClusterConfigInterface interface {
 
 // clusterConfigs implements ClusterConfigInterface
 type clusterConfigs struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*v1beta1.ClusterConfig, *v1beta1.ClusterConfigList]
 }
 
 // newClusterConfigs returns a ClusterConfigs
 func newClusterConfigs(c *K0sV1beta1Client, namespace string) *clusterConfigs {
 	return &clusterConfigs{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*v1beta1.ClusterConfig, *v1beta1.ClusterConfigList](
+			"clusterconfigs",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *v1beta1.ClusterConfig { return &v1beta1.ClusterConfig{} },
+			func() *v1beta1.ClusterConfigList { return &v1beta1.ClusterConfigList{} }),
 	}
-}
-
-// Get takes name of the clusterConfig, and returns the corresponding clusterConfig object, and an error if there is any.
-func (c *clusterConfigs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.ClusterConfig, err error) {
-	result = &v1beta1.ClusterConfig{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("clusterconfigs").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of ClusterConfigs that match those selectors.
-func (c *clusterConfigs) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.ClusterConfigList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1beta1.ClusterConfigList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("clusterconfigs").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested clusterConfigs.
-func (c *clusterConfigs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("clusterconfigs").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a clusterConfig and creates it.  Returns the server's representation of the clusterConfig, and an error, if there is any.
-func (c *clusterConfigs) Create(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.CreateOptions) (result *v1beta1.ClusterConfig, err error) {
-	result = &v1beta1.ClusterConfig{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("clusterconfigs").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(clusterConfig).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a clusterConfig and updates it. Returns the server's representation of the clusterConfig, and an error, if there is any.
-func (c *clusterConfigs) Update(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.UpdateOptions) (result *v1beta1.ClusterConfig, err error) {
-	result = &v1beta1.ClusterConfig{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("clusterconfigs").
-		Name(clusterConfig.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(clusterConfig).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the clusterConfig and deletes it. Returns an error if one occurs.
-func (c *clusterConfigs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("clusterconfigs").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
 }

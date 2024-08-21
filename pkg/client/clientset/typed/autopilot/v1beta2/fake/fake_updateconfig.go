@@ -39,20 +39,22 @@ var updateconfigsKind = v1beta2.SchemeGroupVersion.WithKind("UpdateConfig")
 
 // Get takes name of the updateConfig, and returns the corresponding updateConfig object, and an error if there is any.
 func (c *FakeUpdateConfigs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.UpdateConfig, err error) {
+	emptyResult := &v1beta2.UpdateConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(updateconfigsResource, name), &v1beta2.UpdateConfig{})
+		Invokes(testing.NewRootGetActionWithOptions(updateconfigsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.UpdateConfig), err
 }
 
 // List takes label and field selectors, and returns the list of UpdateConfigs that match those selectors.
 func (c *FakeUpdateConfigs) List(ctx context.Context, opts v1.ListOptions) (result *v1beta2.UpdateConfigList, err error) {
+	emptyResult := &v1beta2.UpdateConfigList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(updateconfigsResource, updateconfigsKind, opts), &v1beta2.UpdateConfigList{})
+		Invokes(testing.NewRootListActionWithOptions(updateconfigsResource, updateconfigsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -71,25 +73,27 @@ func (c *FakeUpdateConfigs) List(ctx context.Context, opts v1.ListOptions) (resu
 // Watch returns a watch.Interface that watches the requested updateConfigs.
 func (c *FakeUpdateConfigs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(updateconfigsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(updateconfigsResource, opts))
 }
 
 // Create takes the representation of a updateConfig and creates it.  Returns the server's representation of the updateConfig, and an error, if there is any.
 func (c *FakeUpdateConfigs) Create(ctx context.Context, updateConfig *v1beta2.UpdateConfig, opts v1.CreateOptions) (result *v1beta2.UpdateConfig, err error) {
+	emptyResult := &v1beta2.UpdateConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(updateconfigsResource, updateConfig), &v1beta2.UpdateConfig{})
+		Invokes(testing.NewRootCreateActionWithOptions(updateconfigsResource, updateConfig, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.UpdateConfig), err
 }
 
 // Update takes the representation of a updateConfig and updates it. Returns the server's representation of the updateConfig, and an error, if there is any.
 func (c *FakeUpdateConfigs) Update(ctx context.Context, updateConfig *v1beta2.UpdateConfig, opts v1.UpdateOptions) (result *v1beta2.UpdateConfig, err error) {
+	emptyResult := &v1beta2.UpdateConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(updateconfigsResource, updateConfig), &v1beta2.UpdateConfig{})
+		Invokes(testing.NewRootUpdateActionWithOptions(updateconfigsResource, updateConfig, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.UpdateConfig), err
 }

@@ -20,13 +20,12 @@ package v1beta2
 
 import (
 	"context"
-	"time"
 
 	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // PlansGetter has a method to return a PlanInterface.
@@ -48,89 +47,18 @@ type PlanInterface interface {
 
 // plans implements PlanInterface
 type plans struct {
-	client rest.Interface
+	*gentype.ClientWithList[*v1beta2.Plan, *v1beta2.PlanList]
 }
 
 // newPlans returns a Plans
 func newPlans(c *AutopilotV1beta2Client) *plans {
 	return &plans{
-		client: c.RESTClient(),
+		gentype.NewClientWithList[*v1beta2.Plan, *v1beta2.PlanList](
+			"plans",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			"",
+			func() *v1beta2.Plan { return &v1beta2.Plan{} },
+			func() *v1beta2.PlanList { return &v1beta2.PlanList{} }),
 	}
-}
-
-// Get takes name of the plan, and returns the corresponding plan object, and an error if there is any.
-func (c *plans) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.Plan, err error) {
-	result = &v1beta2.Plan{}
-	err = c.client.Get().
-		Resource("plans").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of Plans that match those selectors.
-func (c *plans) List(ctx context.Context, opts v1.ListOptions) (result *v1beta2.PlanList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1beta2.PlanList{}
-	err = c.client.Get().
-		Resource("plans").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested plans.
-func (c *plans) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Resource("plans").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a plan and creates it.  Returns the server's representation of the plan, and an error, if there is any.
-func (c *plans) Create(ctx context.Context, plan *v1beta2.Plan, opts v1.CreateOptions) (result *v1beta2.Plan, err error) {
-	result = &v1beta2.Plan{}
-	err = c.client.Post().
-		Resource("plans").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(plan).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a plan and updates it. Returns the server's representation of the plan, and an error, if there is any.
-func (c *plans) Update(ctx context.Context, plan *v1beta2.Plan, opts v1.UpdateOptions) (result *v1beta2.Plan, err error) {
-	result = &v1beta2.Plan{}
-	err = c.client.Put().
-		Resource("plans").
-		Name(plan.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(plan).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the plan and deletes it. Returns an error if one occurs.
-func (c *plans) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return c.client.Delete().
-		Resource("plans").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
 }

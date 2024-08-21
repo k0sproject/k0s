@@ -39,20 +39,22 @@ var controlnodesKind = v1beta2.SchemeGroupVersion.WithKind("ControlNode")
 
 // Get takes name of the controlNode, and returns the corresponding controlNode object, and an error if there is any.
 func (c *FakeControlNodes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.ControlNode, err error) {
+	emptyResult := &v1beta2.ControlNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(controlnodesResource, name), &v1beta2.ControlNode{})
+		Invokes(testing.NewRootGetActionWithOptions(controlnodesResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.ControlNode), err
 }
 
 // List takes label and field selectors, and returns the list of ControlNodes that match those selectors.
 func (c *FakeControlNodes) List(ctx context.Context, opts v1.ListOptions) (result *v1beta2.ControlNodeList, err error) {
+	emptyResult := &v1beta2.ControlNodeList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(controlnodesResource, controlnodesKind, opts), &v1beta2.ControlNodeList{})
+		Invokes(testing.NewRootListActionWithOptions(controlnodesResource, controlnodesKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -71,36 +73,39 @@ func (c *FakeControlNodes) List(ctx context.Context, opts v1.ListOptions) (resul
 // Watch returns a watch.Interface that watches the requested controlNodes.
 func (c *FakeControlNodes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(controlnodesResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(controlnodesResource, opts))
 }
 
 // Create takes the representation of a controlNode and creates it.  Returns the server's representation of the controlNode, and an error, if there is any.
 func (c *FakeControlNodes) Create(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.CreateOptions) (result *v1beta2.ControlNode, err error) {
+	emptyResult := &v1beta2.ControlNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(controlnodesResource, controlNode), &v1beta2.ControlNode{})
+		Invokes(testing.NewRootCreateActionWithOptions(controlnodesResource, controlNode, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.ControlNode), err
 }
 
 // Update takes the representation of a controlNode and updates it. Returns the server's representation of the controlNode, and an error, if there is any.
 func (c *FakeControlNodes) Update(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (result *v1beta2.ControlNode, err error) {
+	emptyResult := &v1beta2.ControlNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(controlnodesResource, controlNode), &v1beta2.ControlNode{})
+		Invokes(testing.NewRootUpdateActionWithOptions(controlnodesResource, controlNode, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.ControlNode), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeControlNodes) UpdateStatus(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (*v1beta2.ControlNode, error) {
+func (c *FakeControlNodes) UpdateStatus(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (result *v1beta2.ControlNode, err error) {
+	emptyResult := &v1beta2.ControlNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(controlnodesResource, "status", controlNode), &v1beta2.ControlNode{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(controlnodesResource, "status", controlNode, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta2.ControlNode), err
 }
