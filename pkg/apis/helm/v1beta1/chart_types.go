@@ -27,14 +27,14 @@ import (
 
 // ChartSpec defines the desired state of Chart
 type ChartSpec struct {
-	ChartName           string `json:"chartName,omitempty"`
-	ReleaseName         string `json:"releaseName,omitempty"`
-	Values              string `json:"values,omitempty"`
-	Version             string `json:"version,omitempty"`
-	Namespace           string `json:"namespace,omitempty"`
-	Timeout             string `json:"timeout,omitempty"`
-	DisableForceUpgrade bool   `json:"disableForceUpgrade,omitempty"`
-	Order               int    `json:"order,omitempty"`
+	ChartName    string `json:"chartName,omitempty"`
+	ReleaseName  string `json:"releaseName,omitempty"`
+	Values       string `json:"values,omitempty"`
+	Version      string `json:"version,omitempty"`
+	Namespace    string `json:"namespace,omitempty"`
+	Timeout      string `json:"timeout,omitempty"`
+	ForceUpgrade *bool  `json:"forceUpgrade,omitempty"`
+	Order        int    `json:"order,omitempty"`
 }
 
 // YamlValues returns values as map
@@ -53,6 +53,13 @@ func (cs ChartSpec) HashValues() string {
 	h := sha256.New()
 	h.Write([]byte(cs.ReleaseName + cs.Values))
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+// ShouldForceUpgrade returns true if the chart should be force upgraded
+func (cs ChartSpec) ShouldForceUpgrade() bool {
+	// This defaults to true when not explicitly set to false.
+	// Better have this the other way round in the next API version.
+	return cs.ForceUpgrade == nil || *cs.ForceUpgrade
 }
 
 // ChartStatus defines the observed state of Chart
