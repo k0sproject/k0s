@@ -46,6 +46,10 @@ spec:
       peerAddress: %s
 `
 
+// TODO: Update this test after the https://github.com/k0sproject/k0s/pull/4860 is merged, backported and released.
+// 	Apply this commit to properly test controller+worker update process:
+//	 https://github.com/makhov/k0s/commit/bf702a829f958b04b7a6119ff03960e90100d4c9
+
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *controllerworkerSuite) SetupTest() {
