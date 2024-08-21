@@ -24,6 +24,7 @@ type RootConfig struct {
 	InvocationID        string
 	KubeConfig          string
 	K0sDataDir          string
+	KubeletExtraArgs    string
 	Mode                string
 	ManagerPort         int
 	MetricsBindAddr     string
