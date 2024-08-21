@@ -17,6 +17,7 @@ package common
 import (
 	"os"
 
+	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/pkg/node"
 )
 
@@ -29,4 +30,17 @@ const (
 // returns.
 func FindEffectiveHostname() (string, error) {
 	return node.GetNodename(os.Getenv(envAutopilotHostname))
+}
+
+func FindKubeletHostname(kubeletExtraArgs string) string {
+	defaultNodename, _ := node.GetNodename("")
+	if kubeletExtraArgs != "" {
+		extras := flags.Split(kubeletExtraArgs)
+		nodeName, ok := extras["--hostname-override"]
+		if ok {
+			return nodeName
+		}
+	}
+
+	return defaultNodename
 }

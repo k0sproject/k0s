@@ -43,21 +43,23 @@ type SetupController interface {
 }
 
 type setupController struct {
-	log           *logrus.Entry
-	clientFactory apcli.FactoryInterface
-	k0sDataDir    string
-	enableWorker  bool
+	log              *logrus.Entry
+	clientFactory    apcli.FactoryInterface
+	k0sDataDir       string
+	enableWorker     bool
+	kubeletExtraArgs string
 }
 
 var _ SetupController = (*setupController)(nil)
 
 // NewSetupController creates a `SetupController`
-func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir string, enableWorker bool) SetupController {
+func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir, kubeletExtraArgs string, enableWorker bool) SetupController {
 	return &setupController{
-		log:           logger.WithField("controller", "setup"),
-		clientFactory: cf,
-		k0sDataDir:    k0sDataDir,
-		enableWorker:  enableWorker,
+		log:              logger.WithField("controller", "setup"),
+		clientFactory:    cf,
+		k0sDataDir:       k0sDataDir,
+		kubeletExtraArgs: kubeletExtraArgs,
+		enableWorker:     enableWorker,
 	}
 }
 
@@ -74,23 +76,28 @@ func (sc *setupController) Run(ctx context.Context) error {
 		}
 	}
 
-	hostname, err := apcomm.FindEffectiveHostname()
+	controlNodeName, err := apcomm.FindEffectiveHostname()
 	if err != nil {
 		return fmt.Errorf("unable to determine hostname for signal node setup: %w", err)
 	}
 
-	logger.Infof("Using effective hostname = '%v'", hostname)
+	kubeletNodeName := controlNodeName
+	if sc.enableWorker {
+		kubeletNodeName = apcomm.FindKubeletHostname(sc.kubeletExtraArgs)
+	}
+
+	logger.Infof("Using effective hostname = '%v', kubelet hostname = '%v'", controlNodeName, kubeletNodeName)
 
 	if err := retry.Do(func() error {
-		logger.Infof("Attempting to create controlnode '%s'", hostname)
-		if err := sc.createControlNode(ctx, sc.clientFactory, hostname); err != nil {
-			return fmt.Errorf("create controlnode '%s' attempt failed, retrying: %w", hostname, err)
+		logger.Infof("Attempting to create controlnode '%s'", controlNodeName)
+		if err := sc.createControlNode(ctx, sc.clientFactory, controlNodeName, kubeletNodeName); err != nil {
+			return fmt.Errorf("create controlnode '%s' attempt failed, retrying: %w", controlNodeName, err)
 		}
 
 		return nil
 
 	}); err != nil {
-		return fmt.Errorf("failed to create controlnode '%s' after max attempts: %w", hostname, err)
+		return fmt.Errorf("failed to create controlnode '%s' after max attempts: %w", controlNodeName, err)
 	}
 
 	return nil
@@ -114,7 +121,7 @@ func createNamespace(ctx context.Context, cf apcli.FactoryInterface, name string
 
 // createControlNode creates a new control node, ignoring errors if one already exists
 // for this physical host.
-func (sc *setupController) createControlNode(ctx context.Context, cf apcli.FactoryInterface, name string) error {
+func (sc *setupController) createControlNode(ctx context.Context, cf apcli.FactoryInterface, name, nodeName string) error {
 	logger := sc.log.WithField("component", "setup")
 	client, err := sc.clientFactory.GetAutopilotClient()
 	if err != nil {
@@ -141,7 +148,7 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 				Name: name,
 				// Create the usual os and arch labels as this describes a controller node
 				Labels: map[string]string{
-					corev1.LabelHostname:   name,
+					corev1.LabelHostname:   nodeName,
 					corev1.LabelOSStable:   runtime.GOOS,
 					corev1.LabelArchStable: runtime.GOARCH,
 				},
@@ -160,7 +167,7 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 		return err
 	}
 
-	addresses, err := getControlNodeAddresses(name)
+	addresses, err := getControlNodeAddresses(nodeName)
 	if err != nil {
 		return err
 	}
