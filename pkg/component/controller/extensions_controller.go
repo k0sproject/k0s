@@ -192,24 +192,13 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.Hel
 		fileName := chartManifestFileName(&chart)
 		fileNamesToKeep = append(fileNamesToKeep, fileName)
 
-		tw := templatewriter.TemplateWriter{
-			Path:     filepath.Join(ec.manifestsDir, fileName),
-			Name:     "addon_crd_manifest",
-			Template: chartCrdTemplate,
-			Data: struct {
-				k0sv1beta1.Chart
-				Finalizer string
-			}{
-				Chart:     chart,
-				Finalizer: finalizerName,
-			},
-		}
-		if err := tw.Write(); err != nil {
+		path, err := ec.writeChartManifestFile(chart, fileName)
+		if err != nil {
 			errs = append(errs, fmt.Errorf("can't write file for Helm chart manifest %q: %w", chart.ChartName, err))
 			continue
 		}
 
-		ec.L.Infof("Wrote Helm chart manifest file %q", tw.Path)
+		ec.L.Infof("Wrote Helm chart manifest file %q", path)
 	}
 
 	if err := filepath.WalkDir(ec.manifestsDir, func(path string, entry fs.DirEntry, err error) error {
@@ -236,6 +225,25 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.Hel
 	}
 
 	return errors.Join(errs...)
+}
+
+func (ec *ExtensionsController) writeChartManifestFile(chart k0sv1beta1.Chart, fileName string) (string, error) {
+	tw := templatewriter.TemplateWriter{
+		Path:     filepath.Join(ec.manifestsDir, fileName),
+		Name:     "addon_crd_manifest",
+		Template: chartCrdTemplate,
+		Data: struct {
+			k0sv1beta1.Chart
+			Finalizer string
+		}{
+			Chart:     chart,
+			Finalizer: finalizerName,
+		},
+	}
+	if err := tw.Write(); err != nil {
+		return "", err
+	}
+	return tw.Path, nil
 }
 
 // Determines the file name to use when storing a chart as a manifest on disk.
@@ -376,7 +384,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			chart.Status.Namespace,
 			chart.Spec.YamlValues(),
 			timeout,
-			!chart.Spec.DisableForceUpgrade,
+			chart.Spec.ShouldForceUpgrade(),
 		)
 		if err != nil {
 			return fmt.Errorf("can't reconcile upgrade for %q: %w", chart.GetName(), err)
@@ -449,7 +457,9 @@ spec:
 {{ .Values | nindent 4 }}
   version: {{ .Version }}
   namespace: {{ .TargetNS }}
-  disableForceUpgrade: {{ .DisableForceUpgrade }}
+{{- if ne .ForceUpgrade nil }}
+  forceUpgrade: {{ .ForceUpgrade }}
+{{- end }}
 `
 
 const finalizerName = "helm.k0sproject.io/uninstall-helm-release"
