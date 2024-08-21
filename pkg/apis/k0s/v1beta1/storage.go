@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
+	"github.com/k0sproject/k0s/pkg/config/kine"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -180,37 +181,37 @@ func (e *EtcdConfig) GetNodeName() (string, error) {
 
 // DefaultKineConfig creates KineConfig with sane defaults
 func DefaultKineConfig(dataDir string) *KineConfig {
-	// https://www.sqlite.org/c3ref/open.html#urifilenamesinsqlite3open
 	return &KineConfig{
-		DataSource: (&url.URL{
-			Scheme:   "sqlite",
+		// https://www.sqlite.org/c3ref/open.html#urifilenamesinsqlite3open
+		DataSource: fmt.Sprintf("sqlite://%s", &url.URL{
+			Scheme:   "file",
 			OmitHost: true,
 			Path:     filepath.ToSlash(filepath.Join(dataDir, "db", "state.db")),
 			RawQuery: "mode=rwc&_journal=WAL&cache=shared",
-		}).String(),
+		}),
 	}
 }
 
 func (k *KineConfig) IsJoinable() bool {
-	if scheme, _, found := strings.Cut(k.DataSource, ":"); found {
-		switch scheme {
-		case "", "sqlite":
-			return false
-
-		case "nats":
-			if u, err := url.Parse(k.DataSource); err == nil {
-				if q, err := url.ParseQuery(u.RawQuery); err == nil {
-					return q.Has("noEmbed")
-				}
-			}
-			return false
-
-		default:
-			return true
-		}
+	backend, dsn, err := kine.SplitDataSource(k.DataSource)
+	if err != nil {
+		return false
 	}
 
-	return false
+	switch backend {
+	case "sqlite":
+		return false
+
+	case "nats":
+		if u, err := url.Parse(dsn); err == nil {
+			if q, err := url.ParseQuery(u.RawQuery); err == nil {
+				return q.Has("noEmbed")
+			}
+		}
+		return false
+	}
+
+	return true
 }
 
 // GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist

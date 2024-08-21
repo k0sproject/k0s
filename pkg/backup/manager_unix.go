@@ -24,7 +24,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -32,6 +31,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/config/kine"
 )
 
 // Manager hold configuration for particular backup-restore process
@@ -80,13 +80,26 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars
 }
 
 func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars, action string, restoredConfigPath string, out io.Writer) {
-	if nodeSpec.Storage.Type == v1beta1.EtcdStorageType && !nodeSpec.Storage.Etcd.IsExternalClusterUsed() {
-		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, nodeSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
-	} else if nodeSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(nodeSpec.Storage.Kine.DataSource, "sqlite:") {
-		bm.Add(newSqliteStep(bm.tmpDir, nodeSpec.Storage.Kine.DataSource))
-	} else {
-		logrus.Warnf("only internal etcd and sqlite %s are supported. Other storage backends must be backed-up/restored manually.", action)
+	switch nodeSpec.Storage.Type {
+	case v1beta1.EtcdStorageType:
+		if nodeSpec.Storage.Etcd.IsExternalClusterUsed() {
+			logrus.Warnf("%s is not supported for an external etcd cluster, it must be done manually", action)
+		} else {
+			bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, nodeSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
+		}
+
+	case v1beta1.KineStorageType:
+		if backend, dsn, err := kine.SplitDataSource(nodeSpec.Storage.Kine.DataSource); err != nil {
+			logrus.WithError(err).Warnf("cannot %s kine data source, it must be done manually", action)
+		} else if backend != "sqlite" {
+			logrus.Warnf("%s is not supported for %q kine data sources, it must be done manually", action, backend)
+		} else if dbPath, err := kine.GetSQLiteFilePath(vars.DataDir, dsn); err != nil {
+			logrus.WithError(err).Warnf("cannot %s SQLite database file, it must be done manually", action)
+		} else {
+			bm.Add(newSqliteStep(bm.tmpDir, dbPath))
+		}
 	}
+
 	bm.dataDir = vars.DataDir
 	for _, path := range []string{
 		vars.CertRootDir,

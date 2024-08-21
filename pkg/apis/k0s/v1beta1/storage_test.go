@@ -153,12 +153,12 @@ spec:
 	assert.Equal(t, KineStorageType, c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)
 
-	expectedPath := "/var/lib/k0s/db/state.db"
+	expectedPath := "file:/var/lib/k0s/db/state.db"
 	if runtime.GOOS == "windows" {
-		expectedPath = "C:/var/lib/k0s/db/state.db"
+		expectedPath = "file:C:/var/lib/k0s/db/state.db"
 	}
 
-	assert.Equal(t, fmt.Sprintf("sqlite:%s?mode=rwc&_journal=WAL&cache=shared", expectedPath), c.Spec.Storage.Kine.DataSource)
+	assert.Equal(t, fmt.Sprintf("sqlite://%s?mode=rwc&_journal=WAL&cache=shared", expectedPath), c.Spec.Storage.Kine.DataSource)
 }
 
 type storageSuite struct {
