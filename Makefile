@@ -291,7 +291,8 @@ clean-airgap-image-bundles:
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/zz_generated_assets.go
 	-rm -rf $(K0S_GO_BUILD_CACHE)
-	-find pkg/apis -type f \( -name .client-gen.stamp -or -name .controller-gen.stamp \) -delete
+	-find pkg/apis -type f -name .controller-gen.stamp -delete
+	-rm pkg/client/clientset/.client-gen.stamp
 	-rm -f hack/.copyright.stamp
 	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
