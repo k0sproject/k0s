@@ -79,6 +79,7 @@ func registerApplyingUpdate(
 	logger.Infof("Registering 'applying-update' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
+		Named(delegate.Name() + "-applying-update").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

@@ -70,6 +70,7 @@ func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred
 	logger.Infof("Registering 'restart' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
+		Named(delegate.Name() + "-restart").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

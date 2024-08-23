@@ -485,6 +485,7 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 
 	if err := builder.
 		ControllerManagedBy(mgr).
+		Named("chart").
 		For(&helmv1beta1.Chart{},
 			builder.WithPredicates(predicate.And(
 				predicate.GenerationChangedPredicate{},

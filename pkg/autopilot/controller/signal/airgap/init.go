@@ -42,11 +42,11 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	}
 
 	if err := registerSignalController(logger, mgr, SignalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "signal")), delegate); err != nil {
-		return fmt.Errorf("unable to register airgap 'signal' controller: %w", err)
+		return fmt.Errorf("unable to register 'airgap-signal' controller: %w", err)
 	}
 
-	if err := registerDownloadController(logger, mgr, SignalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "airgap download")), delegate, k0sDataDir); err != nil {
-		return fmt.Errorf("unable to register airgap 'download' controller: %w", err)
+	if err := registerDownloading(logger, mgr, SignalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "airgap download")), delegate, k0sDataDir); err != nil {
+		return fmt.Errorf("unable to register 'airgap-downloading' controller: %w", err)
 	}
 
 	return nil

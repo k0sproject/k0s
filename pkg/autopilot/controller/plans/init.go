@@ -108,6 +108,7 @@ func registerSchedulableStateController(logger *logrus.Entry, mgr crman.Manager,
 // controller-runtime.
 func registerPlanStateController(name string, logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, handler appc.PlanStateHandler, providers []appc.PlanCommandProvider) error {
 	return cr.NewControllerManagedBy(mgr).
+		Named("planstate-" + name).
 		For(&apv1beta2.Plan{}).
 		WithEventFilter(eventFilter).
 		Complete(

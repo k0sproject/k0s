@@ -65,13 +65,13 @@ type uncordoning struct {
 	clientset *kubernetes.Clientset
 }
 
-// registerUnCordoning registers the 'uncordoning' controller to the
+// registerUncordoning registers the 'uncordoning' controller to the
 // controller-runtime manager.
 //
 // This controller is only interested when autopilot signaling annotations have
 // moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
 // the node.
-func registerUnCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
 	logger.Infof("Registering 'uncordoning' reconciler for '%s'", delegate.Name())
 
 	// create the clientset
@@ -81,6 +81,7 @@ func registerUnCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 	}
 
 	return cr.NewControllerManagedBy(mgr).
+		Named(delegate.Name() + "-uncordoning").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
