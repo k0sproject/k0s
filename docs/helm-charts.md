@@ -11,14 +11,16 @@ k0s supports two methods for deploying applications using Helm charts:
 
 Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file.
 
-### Wait for install
+### Chart install and upgrade options
 
-Each chart is processed the same way CLI tool does with following options:
+Charts are processed the same way CLI tool does with following options by default:
 
+- `--create-namespace`
+- `--force` (only for the `upgrade` command)
 - `--wait`
 - `--wait-for-jobs`
 
-It is possible to customize the timeout by using the `timeout' field.
+See [Chart configuration](#chart-configuration) below for more details on how to configuring these options.
 
 ### Repository configuration
 
