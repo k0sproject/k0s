@@ -42,41 +42,15 @@ type LeaseEvents struct {
 
 // The LeaseConfiguration allows passing through various options to customise the lease.
 type LeaseConfiguration struct {
-	name          string
-	identity      string
-	namespace     string
-	duration      time.Duration
-	renewDeadline time.Duration
-	retryPeriod   time.Duration
-	log           logrus.FieldLogger
+	name        string
+	identity    string
+	namespace   string
+	retryPeriod time.Duration
+	log         logrus.FieldLogger
 }
 
 // A LeaseOpt is a function that modifies a LeaseConfiguration
 type LeaseOpt func(config LeaseConfiguration) LeaseConfiguration
-
-// WithDuration sets the duration of the lease (for new leases)
-func WithDuration(duration time.Duration) LeaseOpt {
-	return func(config LeaseConfiguration) LeaseConfiguration {
-		config.duration = duration
-		return config
-	}
-}
-
-// WithRenewDeadline sets the renew deadline of the lease
-func WithRenewDeadline(deadline time.Duration) LeaseOpt {
-	return func(config LeaseConfiguration) LeaseConfiguration {
-		config.renewDeadline = deadline
-		return config
-	}
-}
-
-// WithRetryPeriod specifies the retry period of the lease
-func WithRetryPeriod(retryPeriod time.Duration) LeaseOpt {
-	return func(config LeaseConfiguration) LeaseConfiguration {
-		config.retryPeriod = retryPeriod
-		return config
-	}
-}
 
 // WithLogger allows the consumer to pass a different logrus entry with additional context
 func WithLogger(logger logrus.FieldLogger) LeaseOpt {
@@ -101,13 +75,11 @@ func WithNamespace(namespace string) LeaseOpt {
 func NewLeasePool(client kubernetes.Interface, name, identity string, opts ...LeaseOpt) (*LeasePool, error) {
 
 	leaseConfig := LeaseConfiguration{
-		log:           logrus.StandardLogger(),
-		duration:      60 * time.Second,
-		renewDeadline: 15 * time.Second,
-		retryPeriod:   5 * time.Second,
-		namespace:     "kube-node-lease",
-		name:          name,
-		identity:      identity,
+		log:         logrus.StandardLogger(),
+		retryPeriod: 5 * time.Second,
+		namespace:   "kube-node-lease",
+		name:        name,
+		identity:    identity,
 	}
 
 	for _, opt := range opts {
@@ -127,15 +99,6 @@ type watchOptions struct {
 
 // WatchOpt is a callback that alters the watchOptions configuration
 type WatchOpt func(options watchOptions) watchOptions
-
-// WithOutputChannels allows us to pass through channels with
-// a size greater than 0, which makes testing a lot easier.
-func WithOutputChannels(channels *LeaseEvents) WatchOpt {
-	return func(options watchOptions) watchOptions {
-		options.channels = channels
-		return options
-	}
-}
 
 // Watch is the primary function of LeasePool, and starts the leader election process
 func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, error) {
@@ -168,8 +131,8 @@ func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, 
 	lec := leaderelection.LeaderElectionConfig{
 		Lock:            lock,
 		ReleaseOnCancel: true,
-		LeaseDuration:   p.config.duration,
-		RenewDeadline:   p.config.renewDeadline,
+		LeaseDuration:   60 * time.Second,
+		RenewDeadline:   15 * time.Second,
 		RetryPeriod:     p.config.retryPeriod,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
