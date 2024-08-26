@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/config/kine"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -70,22 +72,26 @@ func (k *Kine) Init(_ context.Context) error {
 		logrus.Warn("failed to chown ", kineSocketDir)
 	}
 
-	dsURL, err := url.Parse(k.Config.DataSource)
-	if err != nil {
-		return err
-	}
-	if dsURL.Scheme == "sqlite" {
-		// Make sure the db basedir exists
-		err = dir.Init(filepath.Dir(dsURL.Path), constant.KineDBDirMode)
+	if backend, dsn, err := kine.SplitDataSource(k.Config.DataSource); err != nil {
+		return fmt.Errorf("unsupported kine data source: %w", err)
+	} else if backend == "sqlite" {
+		dbPath, err := kine.GetSQLiteFilePath(k.K0sVars.DataDir, dsn)
 		if err != nil {
-			return fmt.Errorf("failed to create dir %s: %w", filepath.Dir(dsURL.Path), err)
-		}
-		err = os.Chown(filepath.Dir(dsURL.Path), k.uid, k.gid)
-		if err != nil && os.Geteuid() == 0 {
-			return fmt.Errorf("failed to chown dir %s: %w", filepath.Dir(dsURL.Path), err)
-		}
-		if err := os.Chown(dsURL.Path, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
-			logrus.Warningf("datasource file %s does not exist", dsURL.Path)
+			logrus.WithError(err).Debug("Skipping SQLite database file initialization")
+		} else {
+			// Make sure the db basedir exists
+			dbDir := filepath.Dir(dbPath)
+			err = dir.Init(dbDir, constant.KineDBDirMode)
+			if err != nil {
+				return fmt.Errorf("failed to initialize SQLite database directory: %w", err)
+			}
+			err = os.Chown(dbDir, k.uid, k.gid)
+			if err != nil && os.Geteuid() == 0 {
+				return fmt.Errorf("failed to change ownership of SQLite database directory: %w", err)
+			}
+			if err := os.Chown(dbPath, k.uid, k.gid); err != nil && !errors.Is(err, os.ErrNotExist) && os.Geteuid() == 0 {
+				logrus.WithError(err).Warn("Failed to change ownership of SQLite database file")
+			}
 		}
 	}
 

@@ -20,7 +20,6 @@ package backup
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 
@@ -35,30 +34,23 @@ import (
 const kineBackup = "kine-state-backup.db"
 
 type sqliteStep struct {
-	dataSource string
-	tmpDir     string
-	dataDir    string
+	dbPath string
+	tmpDir string
 }
 
-func newSqliteStep(tmpDir string, dataSource string, dataDir string) *sqliteStep {
+func newSqliteStep(tmpDir string, dbPath string) *sqliteStep {
 	return &sqliteStep{
-		tmpDir:     tmpDir,
-		dataSource: dataSource,
-		dataDir:    dataDir,
+		tmpDir: tmpDir,
+		dbPath: dbPath,
 	}
 }
 
 func (s *sqliteStep) Name() string {
-	dbPath, _ := s.getKineDBPath()
-	return fmt.Sprintf("sqlite db path %s", dbPath)
+	return fmt.Sprintf("sqlite db path %s", s.dbPath)
 }
 
 func (s *sqliteStep) Backup() (StepResult, error) {
-	dbPath, err := s.getKineDBPath()
-	if err != nil {
-		return StepResult{}, err
-	}
-	kineDB, err := db.Open(dbPath)
+	kineDB, err := db.Open(s.dbPath)
 	if err != nil {
 		return StepResult{}, err
 	}
@@ -82,27 +74,15 @@ func (s *sqliteStep) Restore(restoreFrom string, _ string) error {
 	if !file.Exists(snapshotPath) {
 		return fmt.Errorf("sqlite snapshot not found at %s", snapshotPath)
 	}
-	dbPath, err := s.getKineDBPath()
-	if err != nil {
-		return err
-	}
 
 	// make sure DB dir exists. if not, create it.
-	dbPathDir := filepath.Dir(dbPath)
-	if err = dir.Init(dbPathDir, constant.KineDBDirMode); err != nil {
+	dbPathDir := filepath.Dir(s.dbPath)
+	if err := dir.Init(dbPathDir, constant.KineDBDirMode); err != nil {
 		return err
 	}
-	logrus.Infof("restoring sqlite db to `%s`", dbPath)
-	if err := file.Copy(snapshotPath, dbPath); err != nil {
+	logrus.Infof("restoring sqlite db to `%s`", s.dbPath)
+	if err := file.Copy(snapshotPath, s.dbPath); err != nil {
 		logrus.Errorf("failed to restore snapshot from disk: %v", err)
 	}
 	return nil
-}
-
-func (s *sqliteStep) getKineDBPath() (string, error) {
-	u, err := url.Parse(s.dataSource)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse Kind datasource string: %w", err)
-	}
-	return u.Path, nil
 }
