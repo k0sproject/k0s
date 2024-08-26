@@ -165,16 +165,6 @@ pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/bo
 	  && mv -f -- "$$gendir/out/clientset" pkg/client/.
 	touch -- '$@'
 
-codegen_targets += static/zz_generated_assets.go
-static/zz_generated_assets.go: $(controller_gen_targets) # to generate the CRDs into static/_crds/*
-static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows -type f)
-static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
-	CGO_ENABLED=0 $(GO) run github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version) \
-	  -o '$@' -pkg static -prefix static \
-	  $(foreach gv,$(api_group_versions),static/_crds/$(dir $(gv))...) \
-	  static/manifests/calico/... \
-	  static/manifests/windows/...
-
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 BUILD_GO_TAGS += noembedbins
 else
@@ -195,7 +185,7 @@ k0s: .k0sbuild.docker-image.k0s
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
 
-k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
+k0s.exe k0s: go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/_crds static/manifests/calico static/manifests/windows -type f)
 	rm -f -- '$@'
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
 ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
@@ -214,7 +204,7 @@ codegen: $(codegen_targets)
 
 # bindata contains the parts of codegen which aren't version controlled.
 .PHONY: bindata
-bindata: static/zz_generated_assets.go
+bindata:
 ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
 bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 endif
@@ -287,7 +277,7 @@ clean-airgap-image-bundles:
 
 .PHONY: clean
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
-	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/zz_generated_assets.go
+	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata*
 	-rm -rf $(K0S_GO_BUILD_CACHE)
 	-find pkg/apis -type f -name .controller-gen.stamp -delete
 	-rm pkg/client/clientset/.client-gen.stamp

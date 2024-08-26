@@ -61,7 +61,7 @@ func TestCalicoManifests(t *testing.T) {
 		calico := NewCalico(k0sVars, crdSaver, saver)
 		cfg, err := calico.getConfig(clusterConfig)
 		require.NoError(t, err)
-		_ = calico.processConfigChanges(cfg)
+		require.NoError(t, calico.processConfigChanges(cfg))
 
 		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
 		require.True(t, foundRaw, "must have daemon set for calico")
