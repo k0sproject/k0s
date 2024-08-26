@@ -123,14 +123,13 @@ $(foreach gv,$(api_group_versions),$(eval $(foreach t,$(api_group_version_target
 controller_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp)
 codegen_targets := $(controller_gen_targets)
 $(controller_gen_targets): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
-	rm -rf 'static/manifests/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))CustomResourceDefinition'
-	mkdir -p 'static/manifests/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
+	rm -rf 'static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
 	gendir="$$(mktemp -d .controller-gen.XXXXXX.tmp)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
 	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
 	    paths="./$(dir $@)..." \
 	    object:headerFile=hack/tools/boilerplate.go.txt output:object:dir="$$gendir" \
-	    crd output:crd:dir='static/manifests/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))CustomResourceDefinition' \
+	    crd output:crd:dir='static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))' \
 	  && mv -f -- "$$gendir"/zz_generated.deepcopy.go '$(dir $@).'
 	touch -- '$@'
 
@@ -167,12 +166,12 @@ pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/bo
 	touch -- '$@'
 
 codegen_targets += static/zz_generated_assets.go
-static/zz_generated_assets.go: $(controller_gen_targets) # to generate the CRDs into static/manifests/*/CustomResourceDefinition
+static/zz_generated_assets.go: $(controller_gen_targets) # to generate the CRDs into static/_crds/*
 static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows static/misc -type f)
 static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
 	CGO_ENABLED=0 $(GO) run github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version) \
 	  -o '$@' -pkg static -prefix static \
-	  $(foreach gv,$(api_group_versions),static/manifests/$(dir $(gv))CustomResourceDefinition/...) \
+	  $(foreach gv,$(api_group_versions),static/_crds/$(dir $(gv))...) \
 	  static/manifests/calico/... \
 	  static/manifests/windows/... \
 	  static/misc/...
