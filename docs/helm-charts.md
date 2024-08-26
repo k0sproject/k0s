@@ -16,6 +16,7 @@ Adding Helm charts into the k0s configuration file gives you a declarative way i
 Charts are processed the same way CLI tool does with following options by default:
 
 - `--create-namespace`
+- `--atomic`
 - `--force` (only for the `upgrade` command)
 - `--wait`
 - `--wait-for-jobs`
