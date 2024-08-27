@@ -77,6 +77,7 @@ func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilt
 	logr.Infof("Registering 'signal' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
+		Named(delegate.Name() + "-signal").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

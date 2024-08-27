@@ -37,16 +37,17 @@ type downloadManfiestBuilderAirgap struct {
 
 var _ apsigcomm.DownloadManifestBuilder = (*downloadManfiestBuilderAirgap)(nil)
 
-// registerDownloadController registers the 'downloading' controller to the
+// registerDownloading registers the 'airgap-downloading' controller to the
 // controller-runtime manager.
 //
 // This controller is only interested when autopilot signaling annotations have
 // moved to a `Downloading` status. At this point, it will attempt to download
 // the file provided in the update request.
-func registerDownloadController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, k0sDataDir string) error {
-	logger.Infof("Registering airgap 'downloading' reconciler for '%s'", delegate.Name())
+func registerDownloading(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, k0sDataDir string) error {
+	logger.Infof("Registering 'airgap-downloading' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
+		Named("airgap-downloading").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

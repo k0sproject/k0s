@@ -56,16 +56,19 @@ func SignalControllerEventFilter(hostname string, handler apsigpred.ErrorHandler
 type signalControllerHandler struct {
 }
 
-// registerSignalController registers the airgap 'signal' controller to the controller-runtime manager.
+// registerSignalController registers the 'airgap-signal' controller to the
+// controller-runtime manager.
 //
-// This controller is only interested in changes to its own annotations, and is the main mechanism in
-// identifying incoming autopilot airgap signaling updates.
+// This controller is only interested in changes to its own annotations, and is
+// the main mechanism in identifying incoming autopilot airgap signaling
+// updates.
 func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
 	logr := logger.WithFields(logrus.Fields{"updatetype": "airgap"})
 
-	logr.Infof("Registering 'signal' reconciler for '%s'", delegate.Name())
+	logr.Infof("Registering 'airgap-signal' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
+		Named("airgap-signal").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

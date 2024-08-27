@@ -69,6 +69,7 @@ func registerDownloading(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 	logger.Infof("Registering k0s 'downloading' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
+		Named(delegate.Name() + "-downloading").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

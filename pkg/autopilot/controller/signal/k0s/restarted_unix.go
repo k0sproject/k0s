@@ -64,6 +64,7 @@ func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 	logger.Infof("Registering 'restarted' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
+		Named(delegate.Name() + "-restarted").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

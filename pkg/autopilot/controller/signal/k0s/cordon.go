@@ -81,6 +81,7 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 	}
 
 	return cr.NewControllerManagedBy(mgr).
+		Named(delegate.Name() + "-cordoning").
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

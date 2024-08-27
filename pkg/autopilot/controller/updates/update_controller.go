@@ -41,6 +41,7 @@ type updateController struct {
 
 func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, clientFactory apcli.FactoryInterface, leaderMode bool, clusterID string) error {
 	return cr.NewControllerManagedBy(mgr).
+		Named("updater").
 		For(&apv1beta2.UpdateConfig{}).
 		Complete(
 			&updateController{
