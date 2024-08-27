@@ -261,6 +261,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/head/architecture/adr-001-autopilot-oci-basic-auth-support/</loc>
+         <lastmod>2024-08-27</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/head/cli/</loc>
          <lastmod>2024-08-27</lastmod>
          <changefreq>daily</changefreq>
