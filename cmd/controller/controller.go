@@ -168,7 +168,7 @@ func (c *command) start(ctx context.Context) error {
 
 	var joinClient *token.JoinClient
 
-	if (c.TokenArg != "" || c.TokenFile != "") && c.needToJoin() {
+	if (c.TokenArg != "" || c.TokenFile != "") && c.needToJoin(nodeConfig) {
 		var tokenData string
 		if c.TokenArg != "" {
 			tokenData = c.TokenArg
@@ -655,10 +655,13 @@ func (c *command) startWorker(ctx context.Context, profile string, nodeConfig *v
 }
 
 // If we've got CA in place we assume the node has already joined previously
-func (c *command) needToJoin() bool {
+func (c *command) needToJoin(nodeConfig *v1beta1.ClusterConfig) bool {
 	if file.Exists(filepath.Join(c.K0sVars.CertRootDir, "ca.key")) &&
 		file.Exists(filepath.Join(c.K0sVars.CertRootDir, "ca.crt")) {
 		return false
+	}
+	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+		return !file.Exists(filepath.Join(c.K0sVars.EtcdDataDir, "member", "snap", "db"))
 	}
 	return true
 }
