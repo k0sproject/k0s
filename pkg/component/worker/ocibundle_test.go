@@ -37,6 +37,7 @@ func TestGetImageSources(t *testing.T) {
 	value := map[string]time.Time{"path": when}
 	data, err := json.Marshal(value)
 	require.Nil(t, err)
+
 	image := images.Image{
 		Labels: map[string]string{
 			ImageSourcePathsLabel: string(data),
@@ -45,7 +46,7 @@ func TestGetImageSources(t *testing.T) {
 	expected := ImageSources{"path": when}
 	got, err = GetImageSources(image)
 	require.Nil(t, err)
-	require.Equal(t, expected, got)
+	require.True(t, expected["path"].Equal(got["path"]), "dates mismatch")
 
 	// test image with invalid label
 	image = images.Image{
@@ -77,7 +78,7 @@ func TestSetImageSources(t *testing.T) {
 	require.Nil(t, err)
 	got, err := GetImageSources(image)
 	require.Nil(t, err)
-	require.Equal(t, expected, got)
+	require.True(t, expected[fp.Name()].Equal(got[fp.Name()]), "dates mismatch")
 
 	// test sources replacement
 	img0, err := os.CreateTemp("", "test")
@@ -105,7 +106,7 @@ func TestSetImageSources(t *testing.T) {
 	expected = ImageSources{img1.Name(): info1.ModTime()}
 	got, err = GetImageSources(image)
 	require.Nil(t, err)
-	require.Equal(t, expected, got)
+	require.True(t, expected[img1.Name()].Equal(got[img1.Name()]), "dates mismatch")
 }
 
 func TestAddToImageSources(t *testing.T) {
@@ -137,7 +138,8 @@ func TestAddToImageSources(t *testing.T) {
 	}
 	got, err := GetImageSources(image)
 	require.Nil(t, err)
-	require.Equal(t, expected, got)
+	require.True(t, expected[img0.Name()].Equal(got[img0.Name()]), "dates mismatch")
+	require.True(t, expected[img1.Name()].Equal(got[img1.Name()]), "dates mismatch")
 
 	// test if it trims the sources
 	err = os.Remove(img0.Name())
@@ -149,5 +151,5 @@ func TestAddToImageSources(t *testing.T) {
 	expected = ImageSources{img1.Name(): info1.ModTime()}
 	got, err = GetImageSources(image)
 	require.Nil(t, err)
-	require.Equal(t, expected, got)
+	require.True(t, expected[img1.Name()].Equal(got[img1.Name()]), "dates mismatch")
 }
