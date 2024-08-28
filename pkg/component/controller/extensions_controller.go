@@ -72,9 +72,7 @@ type ExtensionsController struct {
 	startChan     chan struct{}
 	mux           sync.Mutex
 	mgr           crman.Manager
-	mgrCtx        context.Context
 	mgrCancelFn   context.CancelFunc
-	controllerCtx context.Context
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
@@ -464,12 +462,10 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 	ec.startChan = make(chan struct{}, 1)
 
 	// Do the first validation before setting callbacks
-	ec.mgrCtx, ec.mgrCancelFn = context.WithCancel(ctx)
 	var err error
-	ec.mgr, err = ec.instantiateManager(ec.mgrCtx)
+	ec.mgr, err = ec.instantiateManager(ctx)
 	if err != nil {
 		ec.L.WithError(err).Error("Can't instantiate controller-runtime manager")
-		ec.mgrCancelFn()
 		return err
 	}
 
@@ -501,11 +497,12 @@ func (ec *ExtensionsController) watchStartChan() {
 	for range ec.startChan {
 		ec.L.Info("Acquired leader lease")
 		ec.mux.Lock()
+		ctx, cancel := context.WithCancel(context.Background())
+		ec.mgrCancelFn = cancel
 		if ec.mgr == nil {
 			ec.L.Info("Instantiating controller-runtime manager")
-			ec.mgrCtx, ec.mgrCancelFn = context.WithCancel(ec.controllerCtx)
 			var err error
-			ec.mgr, err = ec.instantiateManager(ec.controllerCtx)
+			ec.mgr, err = ec.instantiateManager(ctx)
 			if err != nil {
 				ec.L.WithError(err).Error("Can't instantiate controller-runtime manager")
 				ec.mux.Unlock()
@@ -513,7 +510,7 @@ func (ec *ExtensionsController) watchStartChan() {
 			}
 		}
 		ec.mux.Unlock()
-		ec.startControllerManager()
+		ec.startControllerManager(ctx)
 	}
 	ec.L.Info("Start channel closed, stopping controller-manager")
 }
@@ -581,10 +578,10 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 	return mgr, nil
 }
 
-func (ec *ExtensionsController) startControllerManager() {
+func (ec *ExtensionsController) startControllerManager(ctx context.Context) {
 	go func() {
 		ec.L.Info("Starting controller-manager")
-		if err := ec.mgr.Start(ec.mgrCtx); err != nil {
+		if err := ec.mgr.Start(ctx); err != nil {
 			ec.L.WithError(err).Error("Controller manager working loop exited")
 		}
 	}()
