@@ -252,12 +252,12 @@ spec:
             preStop:
               exec:
                 command:
-                - /bin/calico-node
+                - /usr/bin/calico-node
                 - -shutdown
           livenessProbe:
             exec:
               command:
-              - /bin/calico-node
+              - /usr/bin/calico-node
               - -felix-live
               {{- if eq .Mode "bird" }}
               - -bird-live
@@ -269,7 +269,7 @@ spec:
           readinessProbe:
             exec:
               command:
-              - /bin/calico-node
+              - /usr/bin/calico-node
               - -felix-ready
               {{- if eq .Mode "bird" }}
               - -bird-ready
@@ -311,9 +311,11 @@ spec:
         - name: var-run-calico
           hostPath:
             path: /var/run/calico
+            type: DirectoryOrCreate
         - name: var-lib-calico
           hostPath:
             path: /var/lib/calico
+            type: DirectoryOrCreate
         - name: xtables-lock
           hostPath:
             path: /run/xtables.lock
@@ -335,6 +337,7 @@ spec:
         - name: cni-bin-dir
           hostPath:
             path: /opt/cni/bin
+            type: DirectoryOrCreate
         - name: cni-net-dir
           hostPath:
             path: /etc/cni/net.d
