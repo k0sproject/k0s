@@ -69,7 +69,10 @@ func TestSetImageSources(t *testing.T) {
 	// test setting one source
 	fp, err := os.CreateTemp("", "test")
 	require.Nil(t, err)
-	defer os.Remove(fp.Name())
+	defer func() {
+		_ = fp.Close()
+		_ = os.Remove(fp.Name())
+	}()
 	info, err := fp.Stat()
 	require.Nil(t, err)
 	image = images.Image{}
@@ -83,7 +86,10 @@ func TestSetImageSources(t *testing.T) {
 	// test sources replacement
 	img0, err := os.CreateTemp("", "test")
 	require.Nil(t, err)
-	defer os.Remove(img0.Name())
+	defer func() {
+		_ = img0.Close()
+		_ = os.Remove(img0.Name())
+	}()
 	info0, err := img0.Stat()
 	require.Nil(t, err)
 
@@ -95,7 +101,10 @@ func TestSetImageSources(t *testing.T) {
 
 	img1, err := os.CreateTemp("", "test")
 	require.Nil(t, err)
-	defer os.Remove(img1.Name())
+	defer func() {
+		_ = img1.Close()
+		_ = os.Remove(img1.Name())
+	}()
 	info1, err := img1.Stat()
 	require.Nil(t, err)
 
@@ -113,7 +122,10 @@ func TestAddToImageSources(t *testing.T) {
 	// test replacing sources
 	img0, err := os.CreateTemp("", "test")
 	require.Nil(t, err)
-	defer os.Remove(img0.Name())
+	defer func() {
+		_ = img0.Close()
+		_ = os.Remove(img0.Name())
+	}()
 	info0, err := img0.Stat()
 	require.Nil(t, err)
 
@@ -125,7 +137,10 @@ func TestAddToImageSources(t *testing.T) {
 
 	img1, err := os.CreateTemp("", "test")
 	require.Nil(t, err)
-	defer os.Remove(img1.Name())
+	defer func() {
+		_ = img1.Close()
+		_ = os.Remove(img1.Name())
+	}()
 	info1, err := img1.Stat()
 	require.Nil(t, err)
 
@@ -142,6 +157,8 @@ func TestAddToImageSources(t *testing.T) {
 	require.True(t, expected[img1.Name()].Equal(got[img1.Name()]), "dates mismatch")
 
 	// test if it trims the sources
+	err = img0.Close()
+	require.Nil(t, err)
 	err = os.Remove(img0.Name())
 	require.Nil(t, err)
 
