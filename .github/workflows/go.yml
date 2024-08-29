@@ -240,6 +240,9 @@ jobs:
         arch:
           - arm # this is armv7
           - arm64
+        test:
+          - check-basic
+          - check-calico
     runs-on:
       - self-hosted
       - linux
@@ -319,7 +322,7 @@ jobs:
         run: ./k0s sysinfo
 
       - name: Run smoketest
-        run: make check-basic
+        run: make ${{ matrix.test }}
 
       - name: Create airgap image list
         run: make airgap-images.txt
