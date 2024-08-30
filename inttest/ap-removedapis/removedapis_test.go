@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"testing"
 
-	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
@@ -58,7 +57,7 @@ func (s *plansRemovedAPIsSuite) SetupTest() {
 	s.T().Log("Waiting for the CRDs to be established")
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, extClient, "plans"))
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, extClient, "controlnodes"))
-	s.Require().NoError(aptest.WaitForCRDByName(ctx, extClient, removedCRD.Spec.Names.Plural))
+	s.Require().NoError(aptest.WaitForCRDByGroupName(ctx, extClient, removedCRD.Name))
 
 	// Create a resource for the test CRD
 	dynClient, err := dynamic.NewForConfig(restConfig)
@@ -138,10 +137,10 @@ spec:
 
 var removedCRD = apiextensionsv1.CustomResourceDefinition{
 	ObjectMeta: corev1.ObjectMeta{
-		Name: "removedcrds." + autopilotv1beta2.GroupName,
+		Name: "removedcrds.k0s.k0sproject.example.com",
 	},
 	Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-		Group: autopilotv1beta2.GroupName,
+		Group: "k0s.k0sproject.example.com",
 		Names: apiextensionsv1.CustomResourceDefinitionNames{
 			Kind: "RemovedCRD", Singular: "removedcrd", Plural: "removedcrds",
 		},

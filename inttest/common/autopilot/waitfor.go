@@ -55,9 +55,15 @@ func WaitForPlanState(ctx context.Context, client apclient.Interface, name strin
 }
 
 // WaitForCRDByName waits until the CRD with the given name is established.
+// The given name is suffixed with the autopilot's API group.
 func WaitForCRDByName(ctx context.Context, client extensionsclient.ApiextensionsV1Interface, name string) error {
+	return WaitForCRDByGroupName(ctx, client, fmt.Sprintf("%s.%s", name, apv1beta2.GroupName))
+}
+
+// WaitForCRDByGroupName waits until the CRD with the given name is established.
+func WaitForCRDByGroupName(ctx context.Context, client extensionsclient.ApiextensionsV1Interface, name string) error {
 	return watch.CRDs(client.CustomResourceDefinitions()).
-		WithObjectName(fmt.Sprintf("%s.%s", name, apv1beta2.GroupName)).
+		WithObjectName(name).
 		WithErrorCallback(common.RetryWatchErrors(logrus.Infof)).
 		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
 			for _, cond := range item.Status.Conditions {

@@ -167,14 +167,13 @@ pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/bo
 
 codegen_targets += static/zz_generated_assets.go
 static/zz_generated_assets.go: $(controller_gen_targets) # to generate the CRDs into static/_crds/*
-static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows static/misc -type f)
+static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows -type f)
 static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
 	CGO_ENABLED=0 $(GO) run github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version) \
 	  -o '$@' -pkg static -prefix static \
 	  $(foreach gv,$(api_group_versions),static/_crds/$(dir $(gv))...) \
 	  static/manifests/calico/... \
-	  static/manifests/windows/... \
-	  static/misc/...
+	  static/manifests/windows/...
 
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 BUILD_GO_TAGS += noembedbins
