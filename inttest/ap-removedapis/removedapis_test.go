@@ -15,13 +15,19 @@
 package removedapis
 
 import (
-	"context"
 	"fmt"
 	"testing"
-	"time"
 
+	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	corev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
@@ -37,41 +43,44 @@ type plansRemovedAPIsSuite struct {
 // state which we can run tests against.
 func (s *plansRemovedAPIsSuite) SetupTest() {
 	ctx := s.Context()
-	s.Require().NoError(s.WaitForSSH(s.ControllerNode(0), 2*time.Minute, 1*time.Second))
 
-	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server"))
-	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
+	s.Require().NoError(s.InitController(0, "--single --disable-components=metrics-server"))
 
-	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/removedapis-test")
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/removedapis-test/crd.yaml", removedCRD)
-
-	client, err := s.ExtensionsClient(s.ControllerNode(0))
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "removedcrds"))
-
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/removedapis-test/resource.yaml", removedResource)
-	// Wait to see the CR created on API
-	kc, err := s.KubeClient(s.ControllerNode(0))
+	// Create the test CRD
+	extClient, err := apiextensionsv1client.NewForConfig(restConfig)
 	s.Require().NoError(err)
-	apiPath := "/apis/autopilot.k0sproject.io/v1beta1/namespaces/default/removedcrds/removed-resource"
-	s.T().Log("Waiting for the removed resource CR to be created on the API...")
-	err = common.Poll(ctx, func(ctx context.Context) (done bool, err error) {
-		result := kc.RESTClient().Get().AbsPath(apiPath).Do(ctx)
-		if result.Error() != nil {
-			return false, nil
-		}
-		return true, nil
-	})
+	removedCRD, err := extClient.CustomResourceDefinitions().Create(ctx, &removedCRD, corev1.CreateOptions{})
 	s.Require().NoError(err)
 
-	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "plans"))
-	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "controlnodes"))
+	s.T().Log("Waiting for the CRDs to be established")
+	s.Require().NoError(aptest.WaitForCRDByName(ctx, extClient, "plans"))
+	s.Require().NoError(aptest.WaitForCRDByName(ctx, extClient, "controlnodes"))
+	s.Require().NoError(aptest.WaitForCRDByName(ctx, extClient, removedCRD.Spec.Names.Plural))
+
+	// Create a resource for the test CRD
+	dynClient, err := dynamic.NewForConfig(restConfig)
+	s.Require().NoError(err)
+	_, err = dynClient.Resource(schema.GroupVersionResource{
+		Group:    removedCRD.Spec.Group,
+		Version:  removedCRD.Spec.Versions[0].Name,
+		Resource: removedCRD.Spec.Names.Plural,
+	}).Create(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": removedCRD.Spec.Group + "/" + removedCRD.Spec.Versions[0].Name,
+		"kind":       removedCRD.Spec.Names.Kind,
+		"metadata": corev1.ObjectMeta{
+			Name: "removed-resource",
+		},
+	}}, corev1.CreateOptions{})
+	s.Require().NoError(err)
 }
 
 // TestApply applies a well-formed `plan` yaml, and asserts that all of the correct values
 // across different objects are correct.
 func (s *plansRemovedAPIsSuite) TestApply() {
+	ctx := s.Context()
 
 	manifestFile := "/tmp/plan.yaml"
 	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
@@ -85,10 +94,10 @@ func (s *plansRemovedAPIsSuite) TestApply() {
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanWarning)
+	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanWarning)
 	if s.NoError(err) && s.Len(plan.Status.Commands, 1) {
 		s.Equal(appc.PlanWarning, plan.Status.Commands[0].State)
-		s.Equal("removedcrds.autopilot.k0sproject.io v1beta1 has been removed in Kubernetes v99.99.99, but there are 1 such resources in the cluster", plan.Status.Commands[0].Description)
+		s.Equal(removedCRD.Name+" "+removedCRD.Spec.Versions[0].Name+" has been removed in Kubernetes v99.99.99, but there are 1 such resources in the cluster", plan.Status.Commands[0].Description)
 	}
 }
 
@@ -98,7 +107,6 @@ func TestPlansRemovedAPIsSuite(t *testing.T) {
 	suite.Run(t, &plansRemovedAPIsSuite{
 		common.BootlooseSuite{
 			ControllerCount: 1,
-			WorkerCount:     0,
 			LaunchMode:      common.LaunchModeOpenRC,
 		},
 	})
@@ -128,42 +136,23 @@ spec:
                   - controller0
 `
 
-const removedResource = `
-apiVersion: autopilot.k0sproject.io/v1beta1
-kind: RemovedCRD
-metadata:
-  name: removed-resource
-  namespace: default
-spec:
-  description: |
-    I am a removed resource and should trigger a PlanWarning state.
-`
-
-const removedCRD = `
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: removedcrds.autopilot.k0sproject.io
-spec:
-  group: autopilot.k0sproject.io
-  versions:
-    - name: v1beta1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                description:
-                  type: string
-  scope: Namespaced
-  names:
-    plural: removedcrds
-    singular: removedcrd
-    kind: RemovedCRD
-    shortNames:
-    - rr
-`
+var removedCRD = apiextensionsv1.CustomResourceDefinition{
+	ObjectMeta: corev1.ObjectMeta{
+		Name: "removedcrds." + autopilotv1beta2.GroupName,
+	},
+	Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+		Group: autopilotv1beta2.GroupName,
+		Names: apiextensionsv1.CustomResourceDefinitionNames{
+			Kind: "RemovedCRD", Singular: "removedcrd", Plural: "removedcrds",
+		},
+		Scope: apiextensionsv1.ClusterScoped,
+		Versions: []apiextensionsv1.CustomResourceDefinitionVersion{{
+			Name: "v1beta1", Served: true, Storage: true,
+			Schema: &apiextensionsv1.CustomResourceValidation{
+				OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
+					Type: "object",
+				},
+			},
+		}},
+	},
+}
