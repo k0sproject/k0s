@@ -70,7 +70,7 @@ func (c CRD) Init(_ context.Context) error {
 
 // Run unpacks manifests from bindata
 func (c CRD) Start(_ context.Context) error {
-	crdAssetsPath := path.Join("manifests", c.assetsDir, "CustomResourceDefinition")
+	crdAssetsPath := path.Join("_crds", c.assetsDir)
 	crds, err := static.AssetDir(crdAssetsPath)
 	if err != nil {
 		return fmt.Errorf("can't unbundle CRD `%s` manifests: %w", c.bundle, err)
