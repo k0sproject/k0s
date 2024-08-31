@@ -52,6 +52,9 @@ updates:
       # runc/containerd
       - dependency-name: github.com/containerd/containerd
 
+      # sonobuoy
+      - dependency-name: github.com/vmware-tanzu/sonobuoy
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
