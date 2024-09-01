@@ -125,16 +125,10 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 
 	for {
 		select {
-		case err, ok := <-watcher.Errors:
-			if !ok {
-				return err
-			}
+		case err := <-watcher.Errors:
+			log.WithError(err).Error("Watch error")
 
-			log.Warnf("watch error: %s", err.Error())
-		case event, ok := <-watcher.Events:
-			if !ok {
-				return nil
-			}
+		case event := <-watcher.Events:
 			switch event.Op {
 			case fsnotify.Create:
 				if dir.IsDirectory(event.Name) {
