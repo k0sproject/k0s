@@ -38,12 +38,10 @@ type Manager struct {
 	K0sVars           *config.CfgVars
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	// client               kubernetes.Interface
 	applier       Applier
 	bundlePath    string
 	cancelWatcher context.CancelFunc
 	log           *logrus.Entry
-	stacks        map[string]stack
 
 	LeaderElector leaderelector.Interface
 }
@@ -62,7 +60,6 @@ func (m *Manager) Init(ctx context.Context) error {
 		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
 	}
 	m.log = logrus.WithField("component", constant.ApplierManagerComponentName)
-	m.stacks = make(map[string]stack)
 	m.bundlePath = m.K0sVars.ManifestsDir
 
 	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory)
@@ -120,8 +117,10 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 		return err
 	}
 
+	stacks := make(map[string]stack, len(dirs))
+
 	for _, dir := range dirs {
-		m.createStack(ctx, path.Join(m.bundlePath, dir))
+		m.createStack(ctx, stacks, path.Join(m.bundlePath, dir))
 	}
 
 	for {
@@ -139,11 +138,12 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 			switch event.Op {
 			case fsnotify.Create:
 				if dir.IsDirectory(event.Name) {
-					m.createStack(ctx, event.Name)
+					m.createStack(ctx, stacks, event.Name)
 				}
 			case fsnotify.Remove:
-				m.removeStack(ctx, event.Name)
+				m.removeStack(ctx, stacks, event.Name)
 			}
+
 		case <-ctx.Done():
 			log.Info("manifest watcher done")
 			return nil
@@ -151,15 +151,15 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 	}
 }
 
-func (m *Manager) createStack(ctx context.Context, name string) {
+func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name string) {
 	// safeguard in case the fswatcher would trigger an event for an already existing stack
-	if _, ok := m.stacks[name]; ok {
+	if _, ok := stacks[name]; ok {
 		return
 	}
 
 	stackCtx, cancelStack := context.WithCancel(ctx)
 	stack := stack{cancelStack, NewStackApplier(name, m.KubeClientFactory)}
-	m.stacks[name] = stack
+	stacks[name] = stack
 
 	go func() {
 		log := m.log.WithField("stack", name)
@@ -180,8 +180,8 @@ func (m *Manager) createStack(ctx context.Context, name string) {
 	}()
 }
 
-func (m *Manager) removeStack(ctx context.Context, name string) {
-	stack, ok := m.stacks[name]
+func (m *Manager) removeStack(ctx context.Context, stacks map[string]stack, name string) {
+	stack, ok := stacks[name]
 	if !ok {
 		m.log.
 			WithField("path", name).
@@ -189,7 +189,7 @@ func (m *Manager) removeStack(ctx context.Context, name string) {
 		return
 	}
 
-	delete(m.stacks, name)
+	delete(stacks, name)
 	stack.CancelFunc()
 
 	log := m.log.WithField("stack", name)
