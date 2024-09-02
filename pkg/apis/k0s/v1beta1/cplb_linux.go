@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"errors"
 	"fmt"
+	"net"
 
 	"github.com/vishvananda/netlink"
 )
@@ -30,7 +31,9 @@ func getDefaultNIC() (string, error) {
 	}
 
 	for _, route := range routes {
-		if route.Dst == nil {
+		if route.Dst.IP == nil ||
+			route.Dst.IP.Equal(net.IPv4zero) ||
+			route.Dst.IP.Equal(net.IPv6zero) {
 			link, err := netlink.LinkByIndex(route.LinkIndex)
 			if err != nil {
 				return "", err
