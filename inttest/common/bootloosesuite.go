@@ -103,6 +103,7 @@ type BootlooseSuite struct {
 	K0smotronWorkerCount            int
 	WithUpdateServer                bool
 	BootLooseImage                  string
+	K0smotronNetworks               []string
 
 	ctx      context.Context
 	tearDown func()
@@ -611,6 +612,22 @@ func (s *BootlooseSuite) getControllersIPAddresses() []string {
 	}
 
 	machines, err := s.InspectMachines(upstreams)
+
+	// If a network is supplied, the address will need to be obtained from there.
+	// We only apply this logic in k0smotron as it can cause issues with coreDNS.
+	// More info available in github.com/k0sproject/k0s/pull/3602
+	if len(s.K0smotronNetworks) > 0 {
+		for i := 0; i < s.ControllerCount; i++ {
+			// If a network is supplied, the address will need to be obtained from there.
+			// Note that this currently uses the first network found.
+			if machines[i].Status().IP != "" {
+				addresses[i] = machines[i].Status().IP
+			} else if len(machines[i].Status().RuntimeNetworks) > 0 {
+				addresses[i] = machines[i].Status().RuntimeNetworks[0].IP
+			}
+			upstreams[i] = fmt.Sprintf("controller%d", i)
+		}
+	}
 
 	s.Require().NoError(err)
 
@@ -1195,6 +1212,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					Networks:     s.K0smotronNetworks,
 				},
 			},
 		},
