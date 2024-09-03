@@ -30,6 +30,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 )
@@ -73,7 +75,7 @@ func (m *Manager) Init(ctx context.Context) error {
 		m.stop = func(reason string) { cancel(errors.New(reason)); <-stopped }
 		go func() {
 			defer close(stopped)
-			m.runWatchers(ctx)
+			wait.UntilWithContext(ctx, m.runWatchers, 1*time.Minute)
 		}()
 	})
 	m.LeaderElector.AddLostLeaseCallback(func() {
@@ -113,7 +115,10 @@ func (m *Manager) runWatchers(ctx context.Context) {
 	err = watcher.Add(m.bundleDir)
 	if err != nil {
 		m.log.WithError(err).Error("Failed to watch bundle directory")
+		return
 	}
+
+	m.log.Info("Starting watch loop")
 
 	// Add all directories after the bundle dir has been added to the watcher.
 	// Doing it the other way round introduces a race condition when directories
@@ -125,6 +130,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 		return
 	}
 
+	ctx, cancel := context.WithCancelCause(ctx)
 	stacks := make(map[string]stack, len(dirs))
 
 	for _, dir := range dirs {
@@ -135,6 +141,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 		select {
 		case err := <-watcher.Errors:
 			m.log.WithError(err).Error("Watch error")
+			cancel(err)
 
 		case event := <-watcher.Events:
 			switch event.Op {
@@ -172,20 +179,15 @@ func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name
 	go func() {
 		defer close(stopped)
 		log := m.log.WithField("stack", name)
-		for {
+
+		wait.UntilWithContext(ctx, func(ctx context.Context) {
 			log.Info("Running stack")
 			if err := stack.Run(ctx); err != nil {
 				log.WithError(err).Error("Failed to run stack")
 			}
+		}, 1*time.Minute)
 
-			select {
-			case <-time.After(10 * time.Second):
-				continue
-			case <-ctx.Done():
-				log.Infof("Stack done (%v)", context.Cause(ctx))
-				return
-			}
-		}
+		log.Infof("Stack done (%v)", context.Cause(ctx))
 	}()
 }
 
