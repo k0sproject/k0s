@@ -18,6 +18,7 @@ package applier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"time"
@@ -38,10 +39,10 @@ type Manager struct {
 	K0sVars           *config.CfgVars
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	applier    Applier
-	bundlePath string
-	stop       func()
-	log        *logrus.Entry
+	applier   Applier
+	bundleDir string
+	stop      func(reason string)
+	log       *logrus.Entry
 
 	LeaderElector leaderelector.Interface
 }
@@ -49,7 +50,7 @@ type Manager struct {
 var _ manager.Component = (*Manager)(nil)
 
 type stack = struct {
-	cancel  context.CancelFunc
+	cancel  context.CancelCauseFunc
 	stopped <-chan struct{}
 	*StackApplier
 }
@@ -61,23 +62,23 @@ func (m *Manager) Init(ctx context.Context) error {
 		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
 	}
 	m.log = logrus.WithField("component", constant.ApplierManagerComponentName)
-	m.bundlePath = m.K0sVars.ManifestsDir
+	m.bundleDir = m.K0sVars.ManifestsDir
 
 	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory)
 
 	m.LeaderElector.AddAcquiredLeaseCallback(func() {
-		ctx, cancel := context.WithCancel(ctx)
+		ctx, cancel := context.WithCancelCause(ctx)
 		stopped := make(chan struct{})
 
-		m.stop = func() { cancel(); <-stopped }
+		m.stop = func(reason string) { cancel(errors.New(reason)); <-stopped }
 		go func() {
 			defer close(stopped)
-			_ = m.runWatchers(ctx)
+			m.runWatchers(ctx)
 		}()
 	})
 	m.LeaderElector.AddLostLeaseCallback(func() {
 		if m.stop != nil {
-			m.stop()
+			m.stop("lost leadership")
 		}
 	})
 
@@ -92,45 +93,48 @@ func (m *Manager) Start(_ context.Context) error {
 // Stop stops the Manager
 func (m *Manager) Stop() error {
 	if m.stop != nil {
-		m.stop()
+		m.stop("applier manager is stopping")
 	}
 	return nil
 }
 
-func (m *Manager) runWatchers(ctx context.Context) error {
-	log := logrus.WithField("component", constant.ApplierManagerComponentName)
-
+func (m *Manager) runWatchers(ctx context.Context) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.WithError(err).Error("failed to create watcher")
-		return err
+		m.log.WithError(err).Error("Failed to create watcher")
+		return
 	}
-	defer watcher.Close()
+	defer func() {
+		if err := watcher.Close(); err != nil {
+			m.log.WithError(err).Error("Failed to close watcher")
+		}
+	}()
 
-	err = watcher.Add(m.bundlePath)
+	err = watcher.Add(m.bundleDir)
 	if err != nil {
-		log.Warnf("Failed to start watcher: %s", err.Error())
+		m.log.WithError(err).Error("Failed to watch bundle directory")
 	}
 
 	// Add all directories after the bundle dir has been added to the watcher.
 	// Doing it the other way round introduces a race condition when directories
 	// get created after the initial listing but before the watch starts.
 
-	dirs, err := dir.GetAll(m.bundlePath)
+	dirs, err := dir.GetAll(m.bundleDir)
 	if err != nil {
-		return err
+		m.log.WithError(err).Error("Failed to read bundle directory")
+		return
 	}
 
 	stacks := make(map[string]stack, len(dirs))
 
 	for _, dir := range dirs {
-		m.createStack(ctx, stacks, path.Join(m.bundlePath, dir))
+		m.createStack(ctx, stacks, path.Join(m.bundleDir, dir))
 	}
 
 	for {
 		select {
 		case err := <-watcher.Errors:
-			log.WithError(err).Error("Watch error")
+			m.log.WithError(err).Error("Watch error")
 
 		case event := <-watcher.Events:
 			switch event.Op {
@@ -143,12 +147,12 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 			}
 
 		case <-ctx.Done():
-			log.Info("manifest watcher done")
+			m.log.Infof("Watch loop done (%v)", context.Cause(ctx))
 			for _, stack := range stacks {
 				<-stack.stopped
 			}
 
-			return nil
+			return
 		}
 	}
 }
@@ -159,7 +163,7 @@ func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name
 		return
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancelCause(ctx)
 	stopped := make(chan struct{})
 
 	stack := stack{cancel, stopped, NewStackApplier(name, m.KubeClientFactory)}
@@ -178,7 +182,7 @@ func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name
 			case <-time.After(10 * time.Second):
 				continue
 			case <-ctx.Done():
-				log.Info("Stack done")
+				log.Infof("Stack done (%v)", context.Cause(ctx))
 				return
 			}
 		}
@@ -195,7 +199,7 @@ func (m *Manager) removeStack(ctx context.Context, stacks map[string]stack, name
 	}
 
 	delete(stacks, name)
-	stack.cancel()
+	stack.cancel(errors.New("stack removed"))
 	<-stack.stopped
 
 	log := m.log.WithField("stack", name)
