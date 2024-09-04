@@ -126,10 +126,12 @@ func (l *LeasePool) Stop() error {
 	return nil
 }
 
+// CurrentStatus is this lease pool's [leaderelection.StatusFunc].
 func (l *LeasePool) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
 	return l.status.Peek()
 }
 
+// Deprecated: Use [LeasePool.CurrentStatus] instead.
 func (l *LeasePool) IsLeader() bool {
 	status, _ := l.CurrentStatus()
 	return status == leaderelection.StatusLeading

@@ -31,6 +31,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kube "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -924,5 +925,9 @@ func (e *mockLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 }
 
 func (e *mockLeaderElector) AddLostLeaseCallback(func()) {
+	panic("not expected to be called in tests")
+}
+
+func (e *mockLeaderElector) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
 	panic("not expected to be called in tests")
 }
