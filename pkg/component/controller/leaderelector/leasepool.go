@@ -18,6 +18,7 @@ package leaderelector
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -79,44 +80,25 @@ func (l *LeasePool) Start(context.Context) error {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancelCause(context.Background())
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	go func() { defer wg.Done(); client.Run(ctx, l.status.Set) }()
-	go func() { defer wg.Done(); l.invokeCallbacks(ctx.Done()) }()
+	go func() { defer wg.Done(); l.invokeCallbacks(ctx) }()
 
-	l.stop = func() { cancel(); wg.Wait() }
+	l.stop = func() { cancel(errors.New("lease pool is stopping")); wg.Wait() }
 	return nil
 }
 
-func (l *LeasePool) invokeCallbacks(done <-chan struct{}) {
-	var lastStatus leaderelection.Status
-
-	for {
-		status, statusChanged := l.status.Peek()
-
-		if status != lastStatus {
-			lastStatus = status
-			if status == leaderelection.StatusLeading {
-				l.log.Info("acquired leader lease")
-				runCallbacks(l.acquiredLeaseCallbacks)
-			} else {
-				l.log.Info("lost leader lease")
-				runCallbacks(l.lostLeaseCallbacks)
-			}
-		}
-
-		select {
-		case <-statusChanged:
-		case <-done:
-			l.log.Info("Lease pool is stopping")
-			if status == leaderelection.StatusLeading {
-				runCallbacks(l.lostLeaseCallbacks)
-			}
-			return
-		}
-	}
+func (l *LeasePool) invokeCallbacks(ctx context.Context) {
+	leaderelection.RunLeaderTasks(ctx, l.status.Peek, func(leaderCtx context.Context) {
+		l.log.Info("acquired leader lease")
+		runCallbacks(l.acquiredLeaseCallbacks)
+		<-leaderCtx.Done()
+		l.log.Infof("lost leader lease (%v)", context.Cause(ctx))
+		runCallbacks(l.lostLeaseCallbacks)
+	})
 }
 
 func runCallbacks(callbacks []func()) {
