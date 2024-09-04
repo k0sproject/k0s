@@ -19,11 +19,15 @@ package leaderelector
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
+	"sync"
 
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
+
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,10 +35,9 @@ type LeasePool struct {
 	log *logrus.Entry
 
 	invocationID      string
-	stopCh            chan struct{}
-	leaderStatus      atomic.Bool
+	status            value.Latest[leaderelection.Status]
 	kubeClientFactory kubeutil.ClientFactoryInterface
-	leaseCancel       context.CancelFunc
+	stop              func()
 
 	acquiredLeaseCallbacks []func()
 	lostLeaseCallbacks     []func()
@@ -50,7 +53,6 @@ var (
 func NewLeasePool(invocationID string, kubeClientFactory kubeutil.ClientFactoryInterface, name string) *LeasePool {
 	return &LeasePool{
 		invocationID:      invocationID,
-		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
 		log:               logrus.WithFields(logrus.Fields{"component": "poolleaderelector"}),
 		name:              name,
@@ -62,38 +64,59 @@ func (l *LeasePool) Init(_ context.Context) error {
 }
 
 func (l *LeasePool) Start(context.Context) error {
-	client, err := l.kubeClientFactory.GetClient()
+	kubeClient, err := l.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
 	}
-	leasePool, err := leaderelection.NewLeasePool(client, l.name, l.invocationID,
-		leaderelection.WithLogger(l.log))
-	if err != nil {
-		return err
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	events, err := leasePool.Watch(ctx)
-	if err != nil {
-		cancel()
-		return err
-	}
-	l.leaseCancel = cancel
 
-	go func() {
-		for {
-			select {
-			case <-events.AcquiredLease:
+	client, err := leaderelection.NewClient(&leaderelection.LeaseConfig{
+		Namespace: corev1.NamespaceNodeLease,
+		Name:      l.name,
+		Identity:  l.invocationID,
+		Client:    kubeClient.CoordinationV1(),
+	})
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() { defer wg.Done(); client.Run(ctx, l.status.Set) }()
+	go func() { defer wg.Done(); l.invokeCallbacks(ctx.Done()) }()
+
+	l.stop = func() { cancel(); wg.Wait() }
+	return nil
+}
+
+func (l *LeasePool) invokeCallbacks(done <-chan struct{}) {
+	var lastStatus leaderelection.Status
+
+	for {
+		status, statusChanged := l.status.Peek()
+
+		if status != lastStatus {
+			lastStatus = status
+			if status == leaderelection.StatusLeading {
 				l.log.Info("acquired leader lease")
-				l.leaderStatus.Store(true)
 				runCallbacks(l.acquiredLeaseCallbacks)
-			case <-events.LostLease:
+			} else {
 				l.log.Info("lost leader lease")
-				l.leaderStatus.Store(false)
 				runCallbacks(l.lostLeaseCallbacks)
 			}
 		}
-	}()
-	return nil
+
+		select {
+		case <-statusChanged:
+		case <-done:
+			l.log.Info("Lease pool is stopping")
+			if status == leaderelection.StatusLeading {
+				runCallbacks(l.lostLeaseCallbacks)
+			}
+			return
+		}
+	}
 }
 
 func runCallbacks(callbacks []func()) {
@@ -104,21 +127,28 @@ func runCallbacks(callbacks []func()) {
 	}
 }
 
+// Deprecated: Use [LeasePool.CurrentStatus] instead.
 func (l *LeasePool) AddAcquiredLeaseCallback(fn func()) {
 	l.acquiredLeaseCallbacks = append(l.acquiredLeaseCallbacks, fn)
 }
 
+// Deprecated: Use [LeasePool.CurrentStatus] instead.
 func (l *LeasePool) AddLostLeaseCallback(fn func()) {
 	l.lostLeaseCallbacks = append(l.lostLeaseCallbacks, fn)
 }
 
 func (l *LeasePool) Stop() error {
-	if l.leaseCancel != nil {
-		l.leaseCancel()
+	if l.stop != nil {
+		l.stop()
 	}
 	return nil
 }
 
+func (l *LeasePool) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
+	return l.status.Peek()
+}
+
 func (l *LeasePool) IsLeader() bool {
-	return l.leaderStatus.Load()
+	status, _ := l.CurrentStatus()
+	return status == leaderelection.StatusLeading
 }
