@@ -21,13 +21,12 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/leaderelection"
-	"k8s.io/client-go/tools/leaderelection/resourcelock"
 )
 
 // The LeasePool represents a single lease accessed by multiple clients (considered part of the "pool")
+//
+// Deprecated: Use [Client] instead.
 type LeasePool struct {
 	events *LeaseEvents
 	config LeaseConfiguration
@@ -72,6 +71,8 @@ func WithNamespace(namespace string) LeaseOpt {
 }
 
 // NewLeasePool creates a new LeasePool struct to interact with a lease
+//
+// Deprecated: Use [NewClient] instead.
 func NewLeasePool(client kubernetes.Interface, name, identity string, opts ...LeaseOpt) (*LeasePool, error) {
 
 	leaseConfig := LeaseConfiguration{
@@ -118,44 +119,29 @@ func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, 
 
 	p.events = watchOptions.channels
 
-	lock := &resourcelock.LeaseLock{
-		LeaseMeta: metav1.ObjectMeta{
-			Name:      p.config.name,
-			Namespace: p.config.namespace,
+	client, err := NewClient(&LeaseConfig{
+		Namespace: p.config.namespace,
+		Name:      p.config.name,
+		Identity:  p.config.identity,
+		Client:    p.client.CoordinationV1(),
+		internalConfig: internalConfig{
+			retryPeriod: p.config.retryPeriod,
 		},
-		Client: p.client.CoordinationV1(),
-		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: p.config.identity,
-		},
-	}
-	lec := leaderelection.LeaderElectionConfig{
-		Lock:            lock,
-		ReleaseOnCancel: true,
-		LeaseDuration:   60 * time.Second,
-		RenewDeadline:   15 * time.Second,
-		RetryPeriod:     p.config.retryPeriod,
-		Callbacks: leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(ctx context.Context) {
-				p.config.log.Info("Acquired leader lease")
-				p.events.AcquiredLease <- struct{}{}
-			},
-			OnStoppedLeading: func() {
-				p.config.log.Info("Lost leader lease")
-				p.events.LostLease <- struct{}{}
-			},
-			OnNewLeader: nil,
-		},
-	}
-	le, err := leaderelection.NewLeaderElector(lec)
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	go func() {
-		for ctx.Err() == nil {
-			le.Run(ctx)
+	go client.Run(ctx, func(status Status) {
+		if status == StatusLeading {
+			p.config.log.Info("Acquired leader lease")
+			p.events.AcquiredLease <- struct{}{}
+		} else {
+			p.config.log.Info("Lost leader lease")
+			p.events.LostLease <- struct{}{}
 		}
-	}()
+	})
 
 	return p.events, nil
 }
