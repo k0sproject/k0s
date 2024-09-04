@@ -150,9 +150,6 @@ func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, 
 	if err != nil {
 		return nil, err
 	}
-	if lec.WatchDog != nil {
-		lec.WatchDog.SetLeaderElection(le)
-	}
 
 	go func() {
 		for ctx.Err() == nil {
