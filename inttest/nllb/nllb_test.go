@@ -88,6 +88,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 	s.Run("controller_and_workers_get_up", func() {
 		s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", controllerArgs))
 
+		t := time.Now()
 		s.T().Logf("Starting workers and waiting for cluster to become ready")
 
 		token, err := s.GetJoinToken("worker")
@@ -110,9 +111,11 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 		s.Require().NoError(eg.Wait())
 
 		s.Require().NoError(s.checkClusterReadiness(ctx, clients, 1))
+		s.T().Log(time.Since(t))
 	})
 
 	s.Run("join_new_controllers", func() {
+		t := time.Now()
 		token, err := s.GetJoinToken("controller")
 		s.Require().NoError(err)
 
@@ -126,6 +129,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 		s.Require().NoError(err)
 
 		s.T().Logf("Checking if HA cluster is ready")
+		s.T().Log(time.Since(t))
 		s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount))
 	})
 
@@ -152,26 +156,34 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 			_, err = clients.ServerVersion()
 			s.Require().NoError(err)
 
+			s.T().Log("Stopping controller", controllerName)
+			t := time.Now()
 			err = s.StopController(controllerName)
 			s.Require().NoError(err)
+			s.T().Log(time.Since(t))
 
 			_, err = clients.ServerVersion()
 			s.Require().Error(err)
 		})
 
 		s.Run(fmt.Sprintf("restart_%s_without_%s", workerNameToRestart, controllerName), func() {
+			t := time.Now()
 			err := s.StartWorker(workerNameToRestart)
 			s.Require().NoError(err)
+			s.T().Log(time.Since(t))
 		})
 
 		clients, err := s.KubeClient(s.ControllerNode((i + 1) % s.ControllerCount))
 		s.Require().NoError(err)
 
 		s.Run("cluster_ready_without_"+controllerName, func() {
+			t := time.Now()
 			s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount, controllerName))
+			s.T().Log(time.Since(t))
 		})
 
 		s.Run("workloads_still_runnable_without_"+controllerName, func() {
+			t := time.Now()
 			name := "dummy-" + controllerName
 			pauseImage := (&v1beta1.ImageSpec{Image: constant.KubePauseContainerImage, Version: constant.KubePauseContainerImageVersion}).URI()
 			labels := map[string]string{"dummy": controllerName}
@@ -196,20 +208,26 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 
 			s.NoError(common.WaitForDaemonSet(s.Context(), clients, name, "kube-system"))
 			s.T().Logf("Dummy DaemonSet %s is ready", name)
+			s.T().Log(time.Since(t))
 		})
 
 		s.Run("restart_"+controllerName, func() {
+
+			t := time.Now()
 			s.Require().NoError(s.StartController(controllerName))
 			clients, err := s.KubeClient(controllerName)
 			s.Require().NoError(err)
 			s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount))
+			s.T().Log(time.Since(t))
 		})
 	}
 
 	s.Run("cluster_ready_after_all_controllers_restarted", func() {
+		t := time.Now()
 		clients, err := s.KubeClient(s.ControllerNode(0))
 		s.Require().NoError(err)
 		s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount))
+		s.T().Log(time.Since(t))
 	})
 }
 
