@@ -231,8 +231,8 @@ jobs:
       job-name: autopilot-test
       k0s-reference-version: ${{ matrix.version }}
 
-  smoketest-arm:
-    name: Smoke test on armv7/arm64
+  build-arm:
+    name: build on armv7/arm64
     if: github.repository == 'k0sproject/k0s'
     strategy:
       fail-fast: false
@@ -244,7 +244,6 @@ jobs:
       - self-hosted
       - linux
       - ${{ matrix.arch }}
-
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"
@@ -314,13 +313,7 @@ jobs:
 
       - name: Unit tests
         run: make check-unit
-
-      - name: k0s sysinfo
-        run: ./k0s sysinfo
-
-      - name: Run smoketest
-        run: make check-basic
-
+      
       - name: Create airgap image list
         run: make airgap-images.txt
 
@@ -337,10 +330,79 @@ jobs:
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
         run: make airgap-image-bundle-linux-${{ matrix.arch }}.tar
 
-      - name: Run airgap test
+      - name: Upload airgap bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+          path: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+
+  # TODO We probably want to separate the smoketest into a separate callable workflow which we can call from the build step
+  # This way we could actually fully parallelize the build and smoketest steps. Currently we are limited by the fact that
+  # smoke-test step only start after both arm and armv7 builds have finished.
+  smoketest-arm:
+    name: Smoke test on armv7/arm64 -- ${{ matrix.test }}
+    if: github.repository == 'k0sproject/k0s'
+    needs: [build-arm]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - arm # this is armv7
+          - arm64
+        test:
+          - check-basic
+          - check-calico
+          - check-airgap
+    runs-on:
+      - self-hosted
+      - linux
+      - ${{ matrix.arch }}
+
+    steps:
+
+      - name: Set up Docker Context for Buildx
+        if: matrix.arch != 'arm'
+        run: docker context create builders
+
+      - name: Set up Docker Buildx
+        if: matrix.arch != 'arm'
+        uses: docker/setup-buildx-action@v3
+        with:
+          endpoint: builders
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # for `git describe`
+          persist-credentials: false
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Download compiled binary
+        uses: actions/download-artifact@v4
+        with:
+          name: k0s-${{ matrix.arch }}
+
+      - name: k0s sysinfo
         run: |
-          make --touch airgap-image-bundle-linux-${{ matrix.arch }}.tar
-          make check-airgap
+          chmod +x k0s
+          ./k0s sysinfo
+          
+      - name: Download airgap bundle
+        if: contains(matrix.test, 'airgap')
+        uses: actions/download-artifact@v4
+        with:
+          name: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+
+      - name: Run smoketest
+        run: make -C inttest ${{ matrix.test }}
+
 
       - name: Collect k0s logs and support bundle
         if: failure()
