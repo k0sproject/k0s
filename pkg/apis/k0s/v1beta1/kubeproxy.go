@@ -28,15 +28,19 @@ const (
 	ModeIptables  = "iptables"
 	ModeIPVS      = "ipvs"
 	ModeUSerspace = "userspace"
+	ModeNFT       = "nftables"
 )
 
 // KubeProxy defines the configuration for kube-proxy
 type KubeProxy struct {
-	Disabled           bool                           `json:"disabled,omitempty"`
+	Disabled bool `json:"disabled,omitempty"`
+	// Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs", "userspace" and "nft"
+	// Defaults to "iptables"
 	Mode               string                         `json:"mode,omitempty"`
 	MetricsBindAddress string                         `json:"metricsBindAddress,omitempty"`
 	IPTables           KubeProxyIPTablesConfiguration `json:"iptables,omitempty"`
 	IPVS               KubeProxyIPVSConfiguration     `json:"ipvs,omitempty"`
+	NFTables           KubeProxyNFTablesConfiguration `json:"nftables,omitempty"`
 	NodePortAddresses  []string                       `json:"nodePortAddresses,omitempty"`
 }
 
@@ -63,10 +67,19 @@ type KubeProxyIPVSConfiguration struct {
 	UDPTimeout    metav1.Duration `json:"udpTimeout,omitempty"`
 }
 
+// KubeProxyNFTablesConfiguration contains nftables-related kube-proxy configuration
+// @see https://github.com/kubernetes/kube-proxy/blob/v0.31.0/config/v1alpha1/types.go#L82-L97
+type KubeProxyNFTablesConfiguration struct {
+	SyncPeriod    metav1.Duration `json:"syncPeriod,omitempty"`
+	MasqueradeBit *int32          `json:"masqueradeBit,omitempty"`
+	MasqueradeAll bool            `json:"masqueradeAll,omitempty"`
+	MinSyncPeriod metav1.Duration `json:"minSyncPeriod,omitempty"`
+}
+
 // DefaultKubeProxy creates the default config for kube-proxy
 func DefaultKubeProxy() *KubeProxy {
 	return &KubeProxy{
-		Mode:               "iptables",
+		Mode:               ModeIptables,
 		MetricsBindAddress: "0.0.0.0:10249",
 	}
 }
@@ -77,7 +90,7 @@ func (k *KubeProxy) Validate() []error {
 		return nil
 	}
 	var errors []error
-	if k.Mode != "iptables" && k.Mode != "ipvs" && k.Mode != "userspace" {
+	if k.Mode != ModeIptables && k.Mode != ModeIPVS && k.Mode != ModeUSerspace && k.Mode != ModeNFT {
 		errors = append(errors, fmt.Errorf("unsupported mode %s for kubeProxy config", k.Mode))
 	}
 	return errors

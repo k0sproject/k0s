@@ -113,6 +113,16 @@ check-network-conformance-calico: TIMEOUT=15m
 check-network-conformance-calico: export K0S_NETWORK_CONFORMANCE_CNI=calico
 check-network-conformance-calico: TEST_PACKAGE=network-conformance
 
+check-network-conformance-kuberouter-nft: TIMEOUT=15m
+check-network-conformance-kuberouter-nft: export K0S_NETWORK_CONFORMANCE_CNI=kuberouter
+check-network-conformance-kuberouter-nft: export K0S_NETWORK_CONFORMANCE_PROXY_MODE=nftables
+check-network-conformance-kuberouter-nft: TEST_PACKAGE=network-conformance
+check-network-conformance-calico-nft: TIMEOUT=15m
+check-network-conformance-calico-nft: export K0S_NETWORK_CONFORMANCE_CNI=calico
+check-network-conformance-calico-nft: export K0S_NETWORK_CONFORMANCE_PROXY_MODE=nftables
+check-network-conformance-calico-nft: TEST_PACKAGE=network-conformance
+
+
 check-metricsscraper-singlenode: export K0S_SINGLENODE=1
 check-metricsscraper-singlenode: TEST_PACKAGE=metricsscraper
 

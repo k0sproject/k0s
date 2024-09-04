@@ -162,6 +162,12 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 	}
 	cfg.IPVS = string(ipvs)
 
+	nftables, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NFTables)
+	if err != nil {
+		return proxyConfig{}, err
+	}
+	cfg.NFTables = string(nftables)
+
 	return cfg, nil
 }
 
@@ -175,6 +181,7 @@ type proxyConfig struct {
 	MetricsBindAddress   string
 	IPTables             string
 	IPVS                 string
+	NFTables             string
 	FeatureGates         map[string]bool
 	NodePortAddresses    string
 }
@@ -287,6 +294,7 @@ data:
     hostnameOverride: ""
     iptables: {{ .IPTables }}
     ipvs: {{ .IPVS }}
+    nftables: {{ .NFTables }}
     kind: KubeProxyConfiguration
     metricsBindAddress: {{ .MetricsBindAddress }}
     nodePortAddresses: {{ .NodePortAddresses }}

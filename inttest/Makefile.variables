@@ -51,7 +51,9 @@ smoketests := \
 	check-metricsscraper-singlenode \
 	check-multicontroller \
 	check-network-conformance-calico \
+	check-network-conformance-calico-nft \
 	check-network-conformance-kuberouter \
+	check-network-conformance-kuberouter-nft \
 	check-nllb \
 	check-noderole \
 	check-noderole-no-taints \
