@@ -27,14 +27,17 @@ import (
 
 // ChartSpec defines the desired state of Chart
 type ChartSpec struct {
-	ChartName    string `json:"chartName,omitempty"`
-	ReleaseName  string `json:"releaseName,omitempty"`
-	Values       string `json:"values,omitempty"`
-	Version      string `json:"version,omitempty"`
-	Namespace    string `json:"namespace,omitempty"`
-	Timeout      string `json:"timeout,omitempty"`
-	ForceUpgrade *bool  `json:"forceUpgrade,omitempty"`
-	Order        int    `json:"order,omitempty"`
+	ChartName   string `json:"chartName,omitempty"`
+	ReleaseName string `json:"releaseName,omitempty"`
+	Values      string `json:"values,omitempty"`
+	Version     string `json:"version,omitempty"`
+	Namespace   string `json:"namespace,omitempty"`
+	Timeout     string `json:"timeout,omitempty"`
+	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the the chart (default: true).
+	// +kubebuilder:default=true
+	// +optional
+	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
+	Order        int   `json:"order,omitempty"`
 }
 
 // YamlValues returns values as map
