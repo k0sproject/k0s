@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/static"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,15 +26,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/mod/semver"
-	"sigs.k8s.io/yaml"
 )
 
 func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInterface, newVersion string) error {
-	removedAPIs, err := GetRemovedAPIsList()
-	if err != nil {
-		return err
-	}
-
 	discoveryClient, err := clientFactory.GetDiscoveryClient()
 	if err != nil {
 		return err
@@ -71,8 +64,8 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 				gv.Version = ar.Version
 			}
 
-			removedInVersion, ok := removedAPIs[gv.WithKind(ar.Kind)]
-			if !ok || semver.Compare(newVersion, removedInVersion) < 0 {
+			removedInVersion := removedInVersion(gv.WithKind(ar.Kind))
+			if removedInVersion == "" || semver.Compare(newVersion, removedInVersion) < 0 {
 				continue
 			}
 
@@ -90,35 +83,4 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 	}
 
 	return nil
-}
-
-type APIResource struct {
-	Group     string `yaml:"group" json:"group"`
-	Version   string `yaml:"version" json:"version"`
-	Kind      string `yaml:"kind" json:"kind"`
-	RemovedIn string `yaml:"removed_in" json:"removed_in"`
-}
-
-func GetRemovedAPIsList() (map[schema.GroupVersionKind]string, error) {
-	b, err := static.Asset("misc/api-resources.yaml")
-	if err != nil {
-		return nil, err
-	}
-	var resources []APIResource
-	err = yaml.Unmarshal(b, &resources)
-	if err != nil {
-		return nil, err
-	}
-
-	list := make(map[schema.GroupVersionKind]string)
-	for _, r := range resources {
-		s := schema.GroupVersionKind{
-			Group:   r.Group,
-			Version: r.Version,
-			Kind:    r.Kind,
-		}
-		list[s] = r.RemovedIn
-	}
-
-	return list, nil
 }
