@@ -413,7 +413,11 @@ func (ec *ExtensionsController) leaseLost() {
 	ec.mux.Lock()
 	defer ec.mux.Unlock()
 	ec.L.Warn("Lost leader lease, stopping controller-manager")
-	ec.mgrCancelFn()
+
+	mgrCancelFn := ec.mgrCancelFn
+	if mgrCancelFn != nil {
+		mgrCancelFn()
+	}
 	ec.mgr = nil
 }
 
@@ -423,6 +427,10 @@ func (ec *ExtensionsController) watchStartChan() {
 		ec.L.Info("Acquired leader lease")
 		ec.mux.Lock()
 		ctx, cancel := context.WithCancel(context.Background())
+		// If there is a previous cancel func, call it
+		if ec.mgrCancelFn != nil {
+			ec.mgrCancelFn()
+		}
 		ec.mgrCancelFn = cancel
 		if ec.mgr == nil {
 			ec.L.Info("Instantiating controller-runtime manager")
@@ -516,7 +524,13 @@ func (ec *ExtensionsController) startControllerManager(ctx context.Context) {
 // Stop
 func (ec *ExtensionsController) Stop() error {
 	ec.L.Info("Stopping extensions controller")
-	ec.mgrCancelFn()
+	// We have no guarantees on concurrency here, so use mutex
+	ec.mux.Lock()
+	mgrCancelFn := ec.mgrCancelFn
+	ec.mux.Unlock()
+	if mgrCancelFn != nil {
+		mgrCancelFn()
+	}
 	close(ec.startChan)
 	ec.L.Debug("Stopped extensions controller")
 	return nil
