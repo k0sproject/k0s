@@ -825,6 +825,9 @@ func (s *BootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 		return nil, err
 	}
 	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
+	// The tests are querying the API server quite a lot, so we need to increase the QPS and Burst
+	cfg.QPS = 40.0
+	cfg.Burst = 400.0
 	s.Require().NoError(err)
 
 	hostURL, err := url.Parse(cfg.Host)
