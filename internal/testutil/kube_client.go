@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/testutil/fakeclient"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	k0sfake "github.com/k0sproject/k0s/pkg/client/clientset/fake"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
@@ -68,20 +69,18 @@ func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
 	k0sClients := fakeclient.NewClientset[k0sfake.Clientset](fakeDiscovery, tracker)
 
 	return &FakeClientFactory{
-		DynamicClient:    fakeDynamic,
-		Client:           kubeClients,
-		DiscoveryClient:  memory.NewMemCacheClient(fakeDiscovery),
-		ConfigClient:     k0sClients.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace),
-		EtcdMemberClient: k0sClients.EtcdV1beta1().EtcdMembers(),
+		DynamicClient:   fakeDynamic,
+		Client:          kubeClients,
+		DiscoveryClient: memory.NewMemCacheClient(fakeDiscovery),
+		K0sClient:       k0sClients,
 	}
 }
 
 type FakeClientFactory struct {
-	DynamicClient    *dynamicfake.FakeDynamicClient
-	Client           kubernetes.Interface
-	DiscoveryClient  discovery.CachedDiscoveryInterface
-	ConfigClient     k0sv1beta1.ClusterConfigInterface
-	EtcdMemberClient etcdv1beta1.EtcdMemberInterface
+	DynamicClient   *dynamicfake.FakeDynamicClient
+	Client          kubernetes.Interface
+	DiscoveryClient discovery.CachedDiscoveryInterface
+	K0sClient       k0sclientset.Interface
 }
 
 func (f *FakeClientFactory) GetClient() (kubernetes.Interface, error) {
@@ -96,16 +95,22 @@ func (f *FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInter
 	return f.DiscoveryClient, nil
 }
 
+func (f *FakeClientFactory) GetK0sClient() (k0sclientset.Interface, error) {
+	return f.K0sClient, nil
+}
+
+// Deprecated: Use [FakeClientFactory.GetK0sClient] instead.
 func (f *FakeClientFactory) GetConfigClient() (k0sv1beta1.ClusterConfigInterface, error) {
-	return f.ConfigClient, nil
+	return f.K0sClient.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace), nil
 }
 
 func (f FakeClientFactory) GetRESTConfig() *rest.Config {
 	return &rest.Config{}
 }
 
+// Deprecated: Use [FakeClientFactory.GetK0sClient] instead.
 func (f FakeClientFactory) GetEtcdMemberClient() (etcdv1beta1.EtcdMemberInterface, error) {
-	return f.EtcdMemberClient, nil
+	return f.K0sClient.EtcdV1beta1().EtcdMembers(), nil
 }
 
 // Extracts all kinds from scheme and builds API resource lists for fake discovery clients.

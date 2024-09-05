@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"sync"
 
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	etcdMemberClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	cfgClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -37,9 +38,10 @@ type ClientFactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
 	GetDynamicClient() (dynamic.Interface, error)
 	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
-	GetConfigClient() (cfgClient.ClusterConfigInterface, error)
+	GetK0sClient() (k0sclientset.Interface, error)
+	GetConfigClient() (cfgClient.ClusterConfigInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
 	GetRESTConfig() *rest.Config
-	GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error)
+	GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
 }
 
 // NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
@@ -55,12 +57,11 @@ func NewAdminClientFactory(kubeconfigPath string) ClientFactoryInterface {
 type ClientFactory struct {
 	configPath string
 
-	client           kubernetes.Interface
-	dynamicClient    dynamic.Interface
-	discoveryClient  discovery.CachedDiscoveryInterface
-	restConfig       *rest.Config
-	configClient     cfgClient.ClusterConfigInterface
-	etcdMemberClient etcdMemberClient.EtcdMemberInterface
+	client          kubernetes.Interface
+	dynamicClient   dynamic.Interface
+	discoveryClient discovery.CachedDiscoveryInterface
+	k0sClient       k0sclientset.Interface
+	restConfig      *rest.Config
 
 	mutex sync.Mutex
 }
@@ -151,47 +152,50 @@ func (c *ClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface
 	return c.discoveryClient, nil
 }
 
-func (c *ClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
+func (c *ClientFactory) GetK0sClient() (k0sclientset.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	var err error
+
 	if c.restConfig == nil {
 		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
 		}
 	}
-	if c.configClient != nil {
-		return c.configClient, nil
+
+	if c.k0sClient != nil {
+		return c.k0sClient, nil
 	}
 
-	configClient, err := cfgClient.NewForConfig(c.restConfig)
+	client, err := k0sclientset.NewForConfig(c.restConfig)
 	if err != nil {
 		return nil, err
 	}
-	c.configClient = configClient.ClusterConfigs(constant.ClusterConfigNamespace)
-	return c.configClient, nil
+
+	c.k0sClient = client
+
+	return c.k0sClient, nil
 }
 
-func (c *ClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	var err error
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-	}
-	if c.etcdMemberClient != nil {
-		return c.etcdMemberClient, nil
-	}
-
-	etcdMemberClient, err := etcdMemberClient.NewForConfig(c.restConfig)
+// Deprecated: Use [ClientFactory.GetK0sClient] instead.
+func (c *ClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
+	k0sClient, err := c.GetK0sClient()
 	if err != nil {
 		return nil, err
 	}
-	return etcdMemberClient.EtcdMembers(), nil
+
+	return k0sClient.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace), nil
+}
+
+// Deprecated: Use [ClientFactory.GetK0sClient] instead.
+func (c *ClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) {
+	k0sClient, err := c.GetK0sClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return k0sClient.EtcdV1beta1().EtcdMembers(), nil
 }
 
 func (c *ClientFactory) GetRESTConfig() *rest.Config {
