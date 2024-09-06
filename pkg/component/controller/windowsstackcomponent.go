@@ -51,7 +51,7 @@ type WindowsStackComponent struct {
 type windowsStackRenderingContext struct {
 	CNIBin          string
 	CNIConf         string
-	Mode            string
+	Mode            calicoMode
 	KubeAPIHost     string
 	KubeAPIPort     string
 	IPv4ServiceCIDR string
@@ -88,7 +88,7 @@ func (n *WindowsStackComponent) Start(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-timer.C:
-				if err := n.handleWindowsNode(ctx, n.prevRenderingContext); err != nil {
+				if err := n.handleWindowsNode(ctx); err != nil {
 					n.log.Errorf("failed to handle windows node: %v", err)
 				}
 			}
@@ -98,7 +98,7 @@ func (n *WindowsStackComponent) Start(ctx context.Context) error {
 	return nil
 }
 
-func (n *WindowsStackComponent) handleWindowsNode(ctx context.Context, cfg windowsStackRenderingContext) error {
+func (n *WindowsStackComponent) handleWindowsNode(ctx context.Context) error {
 	client, err := n.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("failed to get kube client: %w", err)
@@ -136,7 +136,7 @@ func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.Cluste
 	}
 	newConfig, err := n.makeRenderingContext(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to make calico rendering context: %w", err)
+		return fmt.Errorf("while generating Calico configuration: %w", err)
 	}
 	if !reflect.DeepEqual(newConfig, n.prevRenderingContext) {
 		n.prevRenderingContext = newConfig
@@ -150,11 +150,10 @@ func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig)
 		return windowsStackRenderingContext{}, fmt.Errorf("failed to parse dns address: %w", err)
 	}
 
-	return windowsStackRenderingContext{
+	config := windowsStackRenderingContext{
 		// template rendering unescapes double backslashes
 		CNIBin:           "c:\\\\opt\\\\cni\\\\bin",
 		CNIConf:          "c:\\\\opt\\\\cni\\\\conf",
-		Mode:             cfg.Spec.Network.Calico.Mode,
 		KubeAPIHost:      cfg.Spec.API.Address,
 		KubeAPIPort:      fmt.Sprintf("%d", cfg.Spec.API.Port),
 		IPv4ServiceCIDR:  cfg.Spec.Network.ServiceCIDR,
@@ -162,7 +161,18 @@ func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig)
 		NodeImage:        "calico/windows:v3.23.5",
 		KubeProxyImage:   "sigwindowstools/kube-proxy",
 		KubeProxyVersion: "v1.27.1-calico-hostprocess",
-	}, nil
+	}
+
+	switch cfg.Spec.Network.Calico.Mode {
+	case v1beta1.CalicoModeBIRD, v1beta1.CalicoModeIPIP:
+		config.Mode = calicoModeBIRD
+	case v1beta1.CalicoModeVXLAN:
+		config.Mode = calicoModeVXLAN
+	default:
+		return config, fmt.Errorf("unsupported mode: %q", cfg.Spec.Network.Calico.Mode)
+	}
+
+	return config, nil
 }
 
 // Stop no-op

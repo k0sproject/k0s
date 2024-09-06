@@ -159,23 +159,16 @@ spec:
             - name: IP6_AUTODETECTION_METHOD
               value: {{ .IPV6AutodetectionMethod }}
             {{ end }}
-            {{- if eq .Mode "ipip" }}
             # Enable IPIP
             - name: CALICO_IPV4POOL_IPIP
-              value: {{ .Overlay }}
+              value: "{{ if eq .Mode "bird" }}{{ .Overlay }}{{ else }}Never{{ end }}"
             # Enable or Disable VXLAN on the default IP pool.
             - name: CALICO_IPV4POOL_VXLAN
-              value: "Never"
+              value: "{{ if eq .Mode "vxlan" }}{{ .Overlay }}{{ else }}Never{{ end }}"
             # Enable or Disable VXLAN on the default IPv6 IP pool.
             - name: CALICO_IPV6POOL_VXLAN
-              value: "Never"
-            {{- else if eq .Mode "vxlan" }}
-            # Disable IPIP
-            - name: CALICO_IPV4POOL_IPIP
-              value: "Never"
-            # Enable VXLAN on the default IP pool.
-            - name: CALICO_IPV4POOL_VXLAN
-              value: {{ .Overlay }}
+              value: "{{ if eq .Mode "vxlan" }}{{ .Overlay }}{{ else }}Never{{ end }}"
+            {{- if eq .Mode "vxlan" }}
             - name: FELIX_VXLANPORT
               value: "{{ .VxlanPort }}"
             - name: FELIX_VXLANVNI

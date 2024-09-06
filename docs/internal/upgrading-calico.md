@@ -30,23 +30,19 @@ That'll make it easier to spot any needed changes.
 
 `static/manifests/calico/DaemonSet/calico-node.yaml`:
 
-- variable-based support for both vxlan and ipip (search for `ipip` to find):
+- variable-based support for both vxlan and bird (search for `.Mode` to find):
 
 ```yaml
-{{- if eq .Mode "ipip" }}
 # Enable IPIP
 - name: CALICO_IPV4POOL_IPIP
-  value: {{ .Overlay }}
+  value: "{{ if eq .Mode "bird" }}{{ .Overlay }}{{ else }}Never{{ end }}"
 # Enable or Disable VXLAN on the default IP pool.
 - name: CALICO_IPV4POOL_VXLAN
-  value: "Never"
-{{- else if eq .Mode "vxlan" }}
-# Disable IPIP
-- name: CALICO_IPV4POOL_IPIP
-  value: "Never"
-# Enable VXLAN on the default IP pool.
-- name: CALICO_IPV4POOL_VXLAN
-  value: {{ .Overlay }}
+  value: "{{ if eq .Mode "vxlan" }}{{ .Overlay }}{{ else }}Never{{ end }}"
+# Enable or Disable VXLAN on the default IPv6 IP pool.
+- name: CALICO_IPV6POOL_VXLAN
+  value: "{{ if eq .Mode "vxlan" }}{{ .Overlay }}{{ else }}Never{{ end }}"
+{{- if eq .Mode "vxlan" }}
 - name: FELIX_VXLANPORT
   value: "{{ .VxlanPort }}"
 - name: FELIX_VXLANVNI
