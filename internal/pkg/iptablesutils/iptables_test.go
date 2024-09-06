@@ -18,6 +18,7 @@ package iptablesutils_test
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -214,5 +215,5 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	logrus.SetLevel(logrus.DebugLevel)
-	m.Run()
+	os.Exit(m.Run())
 }

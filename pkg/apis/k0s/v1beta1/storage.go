@@ -273,7 +273,7 @@ func (e *EtcdConfig) GetKeyFilePath(certDir string) string {
 func validateRequiredProperties(e *ExternalCluster) []error {
 	var errors []error
 
-	if e.Endpoints == nil || len(e.Endpoints) == 0 {
+	if len(e.Endpoints) == 0 {
 		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot be null or empty"))
 	} else if slices.Contains(e.Endpoints, "") {
 		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot contain empty strings"))
