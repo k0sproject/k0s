@@ -17,11 +17,17 @@ limitations under the License.
 package controller
 
 import (
+	"os"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 func TestChartNeedsUpgrade(t *testing.T) {
@@ -161,4 +167,93 @@ func TestChartManifestFileName(t *testing.T) {
 	assert.Equal(t, chartManifestFileName(&chart1), "1_helm_extension_release.yaml")
 	assert.Equal(t, chartManifestFileName(&chart2), "2_helm_extension_release.yaml")
 	assert.True(t, isChartManifestFileName("0_helm_extension_release.yaml"))
+}
+
+func TestExtensionsController_writeChartManifestFile(t *testing.T) {
+	type args struct {
+		chart    k0sv1beta1.Chart
+		fileName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "forceUpgrade is nil should omit from manifest",
+			args: args{
+				chart: k0sv1beta1.Chart{
+					Name:      "release",
+					ChartName: "k0s/chart",
+					Version:   "0.0.1",
+					Values:    "values",
+					TargetNS:  "default",
+					Timeout:   metav1.Duration{Duration: 5 * time.Minute},
+				},
+				fileName: "0_helm_extension_release.yaml",
+			},
+			want: `apiVersion: helm.k0sproject.io/v1beta1
+kind: Chart
+metadata:
+  name: k0s-addon-chart-release
+  namespace: "kube-system"
+  finalizers:
+    - helm.k0sproject.io/uninstall-helm-release
+spec:
+  chartName: k0s/chart
+  releaseName: release
+  timeout: 5m0s
+  values: |
+
+    values
+  version: 0.0.1
+  namespace: default
+`,
+		},
+		{
+			name: "forceUpgrade is false should be included in manifest",
+			args: args{
+				chart: k0sv1beta1.Chart{
+					Name:         "release",
+					ChartName:    "k0s/chart",
+					Version:      "0.0.1",
+					Values:       "values",
+					TargetNS:     "default",
+					Timeout:      metav1.Duration{Duration: 5 * time.Minute},
+					ForceUpgrade: ptr.To(false),
+				},
+				fileName: "0_helm_extension_release.yaml",
+			},
+			want: `apiVersion: helm.k0sproject.io/v1beta1
+kind: Chart
+metadata:
+  name: k0s-addon-chart-release
+  namespace: "kube-system"
+  finalizers:
+    - helm.k0sproject.io/uninstall-helm-release
+spec:
+  chartName: k0s/chart
+  releaseName: release
+  timeout: 5m0s
+  values: |
+
+    values
+  version: 0.0.1
+  namespace: default
+  forceUpgrade: false
+`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ec := &ExtensionsController{
+				manifestsDir: t.TempDir(),
+			}
+			path, err := ec.writeChartManifestFile(tt.args.chart, tt.args.fileName)
+			require.NoError(t, err)
+			contents, err := os.ReadFile(path)
+			require.NoError(t, err)
+			assert.Equal(t, strings.TrimSpace(tt.want), strings.TrimSpace(string(contents)))
+		})
+	}
 }

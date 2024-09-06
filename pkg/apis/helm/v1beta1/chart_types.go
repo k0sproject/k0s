@@ -33,7 +33,11 @@ type ChartSpec struct {
 	Version     string `json:"version,omitempty"`
 	Namespace   string `json:"namespace,omitempty"`
 	Timeout     string `json:"timeout,omitempty"`
-	Order       int    `json:"order,omitempty"`
+	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the the chart (default: true).
+	// +kubebuilder:default=true
+	// +optional
+	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
+	Order        int   `json:"order,omitempty"`
 }
 
 // YamlValues returns values as map
@@ -52,6 +56,13 @@ func (cs ChartSpec) HashValues() string {
 	h := sha256.New()
 	h.Write([]byte(cs.ReleaseName + cs.Values))
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+// ShouldForceUpgrade returns true if the chart should be force upgraded
+func (cs ChartSpec) ShouldForceUpgrade() bool {
+	// This defaults to true when not explicitly set to false.
+	// Better have this the other way round in the next API version.
+	return cs.ForceUpgrade == nil || *cs.ForceUpgrade
 }
 
 // ChartStatus defines the observed state of Chart
