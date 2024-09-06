@@ -38,7 +38,6 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
-	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -100,12 +99,10 @@ func (m *Manager) EnsureCA(name, cn string) error {
 }
 
 // EnsureCertificate creates the specified certificate if it does not already exist
-func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certificate, error) {
+func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, error) {
 
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
 	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
-
-	uid, _ := users.GetUID(ownerName)
 
 	// if regenerateCert returns true, it means we need to create the certs
 	if m.regenerateCert(certReq, keyFile, certFile) {
@@ -160,11 +157,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 			return Certificate{}, err
 		}
 
-		err = os.Chown(keyFile, uid, -1)
+		err = os.Chown(keyFile, ownerID, -1)
 		if err != nil && os.Geteuid() == 0 {
 			return Certificate{}, err
 		}
-		err = os.Chown(certFile, uid, -1)
+		err = os.Chown(certFile, ownerID, -1)
 		if err != nil && os.Geteuid() == 0 {
 			return Certificate{}, err
 		}
@@ -173,8 +170,8 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	}
 
 	// certs exist, let's just verify their permissions
-	_ = os.Chown(keyFile, uid, -1)
-	_ = os.Chown(certFile, uid, -1)
+	_ = os.Chown(keyFile, ownerID, -1)
+	_ = os.Chown(certFile, ownerID, -1)
 
 	cert, err := os.ReadFile(certFile)
 	if err != nil {
@@ -230,12 +227,12 @@ func isManagedByK0s(cert *certinfo.Certificate) bool {
 	return false
 }
 
-func (m *Manager) CreateKeyPair(name string, k0sVars *config.CfgVars, owner string) error {
+func (m *Manager) CreateKeyPair(name string, k0sVars *config.CfgVars, ownerID int) error {
 	keyFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
 	pubFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.pub", name))
 
 	if file.Exists(keyFile) && file.Exists(pubFile) {
-		return file.Chown(keyFile, owner, constant.CertSecureMode)
+		return file.Chown(keyFile, ownerID, constant.CertSecureMode)
 	}
 
 	reader := rand.Reader

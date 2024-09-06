@@ -17,8 +17,11 @@ limitations under the License.
 package users
 
 import (
+	"os/exec"
 	"runtime"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetUID(t *testing.T) {
@@ -26,16 +29,16 @@ func TestGetUID(t *testing.T) {
 		t.Skip("No numeric user IDs on Windows")
 	}
 
-	uid, err := GetUID("root")
-	if err != nil {
-		t.Errorf("failed to find uid for root: %v", err)
-	}
-	if uid != 0 {
-		t.Errorf("root uid is not 0. It is %d", uid)
+	uid, err := LookupUID("root")
+	if assert.NoError(t, err, "Failed to get UID for root user") {
+		assert.Equal(t, 0, uid, "root's UID is not 0?")
 	}
 
-	uid, err = GetUID("some-non-existing-user")
-	if err == nil {
-		t.Errorf("unexpectedly got uid for some-non-existing-user: %d", uid)
+	uid, err = LookupUID("some-non-existing-user")
+	if assert.Error(t, err, "Got a UID for some-non-existing-user?") {
+		assert.ErrorIs(t, err, ErrNotExist)
+		var exitErr *exec.ExitError
+		assert.ErrorAs(t, err, &exitErr, "expected external `id` to return an error")
+		assert.Equal(t, UnknownUID, uid)
 	}
 }
