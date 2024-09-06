@@ -20,6 +20,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/fs"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -183,12 +185,13 @@ func (n *WindowsStackComponent) Stop() error {
 // createWindowsStack creates windows stack
 
 func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderingContext) error {
-	manifestDirectories, err := static.AssetDir("manifests/windows")
+	manifestDirectories, err := fs.ReadDir(static.WindowsManifests, ".")
 	if err != nil {
 		return fmt.Errorf("error retrieving manifests: %w", err)
 	}
-	for _, dir := range manifestDirectories {
-		manifestPaths, err := static.AssetDir(fmt.Sprintf("manifests/windows/%s", dir))
+	for _, entry := range manifestDirectories {
+		dir := entry.Name()
+		manifestPaths, err := fs.ReadDir(static.WindowsManifests, dir)
 		if err != nil {
 			return fmt.Errorf("error retrieving manifests: %w, will retry", err)
 		}
@@ -199,11 +202,12 @@ func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderi
 			}
 		}
 
-		for _, filename := range manifestPaths {
+		for _, entry := range manifestPaths {
+			filename := entry.Name()
 			manifestName := fmt.Sprintf("windows-%s-%s", dir, filename)
 			output := bytes.NewBuffer([]byte{})
 			n.log.Debugf("Reading manifest template %s", manifestName)
-			contents, err := static.Asset(fmt.Sprintf("manifests/windows/%s/%s", dir, filename))
+			contents, err := fs.ReadFile(static.WindowsManifests, path.Join(dir, filename))
 			if err != nil {
 				return fmt.Errorf("can't unpack manifest %s: %w", manifestName, err)
 			}

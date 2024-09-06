@@ -20,6 +20,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/fs"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -111,17 +113,18 @@ func (c *Calico) dumpCRDs() error {
 	var emptyStruct struct{}
 
 	// Write the CRD definitions only at "boot", they do not change during runtime
-	crds, err := static.AssetDir("manifests/calico/CustomResourceDefinition")
+	crds, err := fs.ReadDir(static.CalicoManifests, "CustomResourceDefinition")
 	if err != nil {
 		return err
 	}
 
-	for _, filename := range crds {
+	for _, entry := range crds {
+		filename := entry.Name()
 		manifestName := fmt.Sprintf("calico-crd-%s", filename)
 
 		output := bytes.NewBuffer([]byte{})
 
-		contents, err := static.Asset(fmt.Sprintf("manifests/calico/CustomResourceDefinition/%s", filename))
+		contents, err := fs.ReadFile(static.CalicoManifests, path.Join("CustomResourceDefinition", filename))
 		if err != nil {
 			return fmt.Errorf("failed to fetch crd %s: %w", filename, err)
 		}
@@ -144,17 +147,18 @@ func (c *Calico) dumpCRDs() error {
 }
 
 func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
-	manifestDirectories, err := static.AssetDir("manifests/calico")
+	manifestDirectories, err := fs.ReadDir(static.CalicoManifests, ".")
 	if err != nil {
 		return fmt.Errorf("error retrieving calico manifests: %w, will retry", err)
 	}
 
-	for _, dir := range manifestDirectories {
+	for _, entry := range manifestDirectories {
+		dir := entry.Name()
 		// CRDs are handled separately on boot
 		if dir == "CustomResourceDefinition" {
 			continue
 		}
-		manifestPaths, err := static.AssetDir(fmt.Sprintf("manifests/calico/%s", dir))
+		manifestPaths, err := fs.ReadDir(static.CalicoManifests, dir)
 		if err != nil {
 			return fmt.Errorf("error retrieving calico manifests: %w, will retry", err)
 		}
@@ -165,10 +169,11 @@ func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 			}
 		}
 
-		for _, filename := range manifestPaths {
+		for _, entry := range manifestPaths {
+			filename := entry.Name()
 			manifestName := fmt.Sprintf("calico-%s-%s", dir, filename)
 			output := bytes.NewBuffer([]byte{})
-			contents, err := static.Asset(fmt.Sprintf("manifests/calico/%s/%s", dir, filename))
+			contents, err := fs.ReadFile(static.CalicoManifests, path.Join(dir, filename))
 			if err != nil {
 				return fmt.Errorf("can't find manifest %s: %w", manifestName, err)
 			}

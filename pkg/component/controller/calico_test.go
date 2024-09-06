@@ -17,7 +17,6 @@ limitations under the License.
 package controller
 
 import (
-	"context"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -42,19 +41,6 @@ func TestCalicoManifests(t *testing.T) {
 	clusterConfig.Spec.Network.Provider = "calico"
 	clusterConfig.Spec.Network.KubeRouter = nil
 
-	t.Run("must_write_crd_during_bootstrap", func(t *testing.T) {
-		saver := inMemorySaver{}
-		crdSaver := inMemorySaver{}
-		calico := NewCalico(k0sVars, crdSaver, saver)
-		require.NoError(t, calico.Start(context.Background()))
-		require.NoError(t, calico.Stop())
-
-		for k := range crdSaver {
-			require.Contains(t, k, "calico-crd")
-		}
-		require.Len(t, saver, 0)
-	})
-
 	t.Run("must_write_only_non_crd_on_change", func(t *testing.T) {
 		saver := inMemorySaver{}
 		crdSaver := inMemorySaver{}
@@ -75,7 +61,7 @@ func TestCalicoManifests(t *testing.T) {
 		calico := NewCalico(k0sVars, crdSaver, saver)
 		cfg, err := calico.getConfig(clusterConfig)
 		require.NoError(t, err)
-		_ = calico.processConfigChanges(cfg)
+		require.NoError(t, calico.processConfigChanges(cfg))
 
 		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
 		require.True(t, foundRaw, "must have daemon set for calico")

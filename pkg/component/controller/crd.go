@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"path"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -69,16 +70,16 @@ func (c CRD) Init(_ context.Context) error {
 }
 
 // Run unpacks manifests from bindata
-func (c CRD) Start(_ context.Context) error {
-	crdAssetsPath := path.Join("_crds", c.assetsDir)
-	crds, err := static.AssetDir(crdAssetsPath)
+func (c CRD) Start(context.Context) error {
+	crds, err := fs.ReadDir(static.CRDs, c.assetsDir)
 	if err != nil {
 		return fmt.Errorf("can't unbundle CRD `%s` manifests: %w", c.bundle, err)
 	}
 
-	for _, filename := range crds {
+	for _, entry := range crds {
+		filename := entry.Name()
 		manifestName := fmt.Sprintf("%s-crd-%s", c.bundle, filename)
-		content, err := static.Asset(path.Join(crdAssetsPath, filename))
+		content, err := fs.ReadFile(static.CRDs, path.Join(c.assetsDir, filename))
 		if err != nil {
 			return fmt.Errorf("failed to fetch crd `%s`: %w", filename, err)
 		}

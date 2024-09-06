@@ -2,7 +2,7 @@ ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
-RUN apk add build-base git go-bindata linux-headers rsync grep coreutils bash
+RUN apk add build-base git linux-headers rsync grep coreutils bash
 
 RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
