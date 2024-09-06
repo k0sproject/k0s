@@ -2206,7 +2206,12 @@
 <li>Does NOT support Windows nodes</li>
 </ul>
 <h3 id="calico">Calico<a class="headerlink" href="#calico" title="Permanent link">#</a></h3>
-<p>In addition to Kube-router, k0s also offers <a href="https://www.projectcalico.org/">Calico</a> as an alternative, built-in network provider. Calico is a layer 3 container networking solution that routes packets to pods. It supports, for example, pod-specific network policies that help to secure kubernetes clusters in demanding use cases. Calico uses the vxlan overlay network by default, and you can configure it to support ipip (IP-in-IP).</p>
+<p>In addition to kube-router, k0s also offers <a href="https://www.projectcalico.org/">Calico</a> as an alternative,
+integrated network provider. Calico is a layer 3 container networking solution
+that routes packets to pods. For example, it supports pod-specific network
+policies that help secure Kubernetes clusters in demanding use cases. Calico in
+k0s uses VXLAN by default. However, IP in IP is also supported via the <code>bird</code>
+mode.</p>
 <ul>
 <li>Uses bit more resources</li>
 <li>Supports Windows nodes</li>

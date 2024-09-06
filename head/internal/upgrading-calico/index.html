@@ -2017,22 +2017,18 @@ not the calico originals.</p>
 <p>That'll make it easier to spot any needed changes.</p>
 <p><code>static/manifests/calico/DaemonSet/calico-node.yaml</code>:</p>
 <ul>
-<li>variable-based support for both vxlan and ipip (search for <code>ipip</code> to find):</li>
+<li>variable-based support for both vxlan and bird (search for <code>.Mode</code> to find):</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="p p-Indicator">{{</span><span class="nv">- if eq .Mode &quot;ipip&quot;</span><span class="w"> </span><span class="p p-Indicator">}}</span>
-<span class="c1"># Enable IPIP</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Enable IPIP</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_IPIP</span>
-<span class="w">  </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">.Overlay</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">  </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">if</span><span class="nv"> </span><span class="s">eq</span><span class="nv"> </span><span class="s">.Mode</span><span class="nv"> </span><span class="s">&quot;</span><span class="l l-Scalar l-Scalar-Plain">bird&quot; }}{{ .Overlay }}{{ else }}Never{{ end }}&quot;</span>
 <span class="c1"># Enable or Disable VXLAN on the default IP pool.</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_VXLAN</span>
-<span class="w">  </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Never&quot;</span>
-<span class="p p-Indicator">{{</span><span class="nv">- else if eq .Mode &quot;vxlan&quot;</span><span class="w"> </span><span class="p p-Indicator">}}</span>
-<span class="c1"># Disable IPIP</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_IPIP</span>
-<span class="w">  </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Never&quot;</span>
-<span class="c1"># Enable VXLAN on the default IP pool.</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_VXLAN</span>
-<span class="w">  </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">.Overlay</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">  </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">if</span><span class="nv"> </span><span class="s">eq</span><span class="nv"> </span><span class="s">.Mode</span><span class="nv"> </span><span class="s">&quot;</span><span class="l l-Scalar l-Scalar-Plain">vxlan&quot; }}{{ .Overlay }}{{ else }}Never{{ end }}&quot;</span>
+<span class="c1"># Enable or Disable VXLAN on the default IPv6 IP pool.</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CALICO_IPV6POOL_VXLAN</span>
+<span class="w">  </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">if</span><span class="nv"> </span><span class="s">eq</span><span class="nv"> </span><span class="s">.Mode</span><span class="nv"> </span><span class="s">&quot;</span><span class="l l-Scalar l-Scalar-Plain">vxlan&quot; }}{{ .Overlay }}{{ else }}Never{{ end }}&quot;</span>
+<span class="p p-Indicator">{{</span><span class="nv">- if eq .Mode &quot;vxlan&quot;</span><span class="w"> </span><span class="p p-Indicator">}}</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FELIX_VXLANPORT</span>
 <span class="w">  </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.VxlanPort</span><span class="nv"> </span><span class="s">}}&quot;</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FELIX_VXLANVNI</span>
