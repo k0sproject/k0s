@@ -74,4 +74,18 @@ func TestKubeconfigCreate(t *testing.T) {
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	require.NoError(t, err)
 	assert.Equal(t, "https://10.0.0.86:6443", config.Host)
+
+	// Ensure that the certificates are embedded
+	assert.Empty(t, config.CAFile, "Config should be self-contained")
+	if data, err := os.ReadFile(filepath.Join(k0sVars.CertRootDir, "ca.crt")); assert.NoError(t, err) {
+		assert.Equal(t, data, config.CAData)
+	}
+	assert.Empty(t, config.CertFile, "Config should be self-contained")
+	if data, err := os.ReadFile(filepath.Join(k0sVars.CertRootDir, "test-user.crt")); assert.NoError(t, err) {
+		assert.Equal(t, data, config.CertData)
+	}
+	assert.Empty(t, config.KeyFile, "Config should be self-contained")
+	if data, err := os.ReadFile(filepath.Join(k0sVars.CertRootDir, "test-user.key")); assert.NoError(t, err) {
+		assert.Equal(t, data, config.KeyData)
+	}
 }
