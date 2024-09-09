@@ -561,7 +561,11 @@ func (c *command) start(ctx context.Context) error {
 		EnableWorker:       c.EnableWorker,
 	})
 
-	apClientFactory, err := apclient.NewClientFactory(adminClientFactory.GetRESTConfig())
+	restConfig, err := adminClientFactory.GetRESTConfig()
+	if err != nil {
+		return err
+	}
+	apClientFactory, err := apclient.NewClientFactory(restConfig)
 	if err != nil {
 		return err
 	}

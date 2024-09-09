@@ -66,7 +66,12 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 			}
 
 			if metaClient == nil {
-				if metaClient, err = metadata.NewForConfig(clientFactory.GetRESTConfig()); err != nil {
+				restConfig, err := clientFactory.GetRESTConfig()
+				if err != nil {
+					return err
+				}
+
+				if metaClient, err = metadata.NewForConfig(restConfig); err != nil {
 					return err
 				}
 			}

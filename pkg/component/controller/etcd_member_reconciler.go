@@ -126,8 +126,10 @@ func (e *EtcdMemberReconciler) Stop() error {
 }
 
 func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
-	rc := e.clientFactory.GetRESTConfig()
-
+	rc, err := e.clientFactory.GetRESTConfig()
+	if err != nil {
+		return err
+	}
 	ec, err := extclient.NewForConfig(rc)
 	if err != nil {
 		return err

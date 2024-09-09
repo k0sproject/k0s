@@ -155,7 +155,11 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 
 // waitForCRD waits 5 seconds for a CRD to become established on a best-effort basis.
 func (s *Stack) waitForCRD(ctx context.Context, crdName string) {
-	client, err := extensionsclient.NewForConfig(s.Clients.GetRESTConfig())
+	config, err := s.Clients.GetRESTConfig()
+	if err != nil {
+		return
+	}
+	client, err := extensionsclient.NewForConfig(config)
 	if err != nil {
 		return
 	}

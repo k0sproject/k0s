@@ -40,7 +40,7 @@ type ClientFactoryInterface interface {
 	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
 	GetK0sClient() (k0sclientset.Interface, error)
 	GetConfigClient() (cfgClient.ClusterConfigInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
-	GetRESTConfig() *rest.Config
+	GetRESTConfig() (*rest.Config, error)
 	GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
 }
 
@@ -198,8 +198,12 @@ func (c *ClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterf
 	return k0sClient.EtcdV1beta1().EtcdMembers(), nil
 }
 
-func (c *ClientFactory) GetRESTConfig() *rest.Config {
-	return c.restConfig
+func (c *ClientFactory) GetRESTConfig() (*rest.Config, error) {
+	restConfig := c.restConfig
+	if restConfig == nil {
+		return nil, fmt.Errorf("REST config not yet initialized")
+	}
+	return restConfig, nil
 }
 
 // KubeconfigFromFile returns a [clientcmd.KubeconfigGetter] that tries to load
