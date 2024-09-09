@@ -41,8 +41,7 @@ type K0sControllersLeaseCounter struct {
 	KubeClientFactory     kubeutil.ClientFactoryInterface
 	UpdateControllerCount func(uint)
 
-	cancelFunc  context.CancelFunc
-	leaseCancel context.CancelFunc
+	cancelFunc context.CancelFunc
 }
 
 var _ manager.Component = (*K0sControllersLeaseCounter)(nil)
@@ -53,8 +52,7 @@ func (l *K0sControllersLeaseCounter) Init(_ context.Context) error {
 }
 
 // Run runs the leader elector to keep the lease object up-to-date.
-func (l *K0sControllersLeaseCounter) Start(ctx context.Context) error {
-	ctx, l.cancelFunc = context.WithCancel(ctx)
+func (l *K0sControllersLeaseCounter) Start(context.Context) error {
 	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
 	client, err := l.KubeClientFactory.GetClient()
 	if err != nil {
@@ -69,18 +67,19 @@ func (l *K0sControllersLeaseCounter) Start(ctx context.Context) error {
 	}
 	leaseName := fmt.Sprintf("k0s-ctrl-%s", nodeName)
 
-	leasePool, err := leaderelection.NewLeasePool(ctx, client, leaseName, l.InvocationID,
-		leaderelection.WithLogger(log),
-		leaderelection.WithContext(ctx))
-	if err != nil {
-		return err
-	}
-	events, cancel, err := leasePool.Watch()
+	leasePool, err := leaderelection.NewLeasePool(client, leaseName, l.InvocationID,
+		leaderelection.WithLogger(log))
 	if err != nil {
 		return err
 	}
 
-	l.leaseCancel = cancel
+	ctx, cancel := context.WithCancel(context.Background())
+	events, err := leasePool.Watch(ctx)
+	if err != nil {
+		cancel()
+		return err
+	}
+	l.cancelFunc = cancel
 
 	go func() {
 		for {
@@ -102,10 +101,6 @@ func (l *K0sControllersLeaseCounter) Start(ctx context.Context) error {
 
 // Stop stops the component
 func (l *K0sControllersLeaseCounter) Stop() error {
-	if l.leaseCancel != nil {
-		l.leaseCancel()
-	}
-
 	if l.cancelFunc != nil {
 		l.cancelFunc()
 	}
