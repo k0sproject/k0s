@@ -105,7 +105,7 @@ func (f *FakeClientFactory) GetConfigClient() (k0sv1beta1.ClusterConfigInterface
 }
 
 func (f FakeClientFactory) GetRESTConfig() *rest.Config {
-	return &rest.Config{}
+	panic("GetRESTConfig not implemented for FakeClientFactory")
 }
 
 // Deprecated: Use [FakeClientFactory.GetK0sClient] instead.
