@@ -15,98 +15,45 @@
 package client
 
 import (
-	"sync"
-
 	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
-	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 // FactoryInterface is a collection of kubernetes clientset interfaces.
+// Deprecated: Use [kubeutil.ClientFactoryInterface] instead.
 type FactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
 	GetK0sClient() (apclient.Interface, error)
+	GetAPIExtensionsClient() (apiextensionsclientset.Interface, error)
+	// Deprecated: Use [FactoryInterface.GetAPIExtensionsClient] instead.
 	GetExtensionClient() (extclient.ApiextensionsV1Interface, error)
 	GetRESTConfig() (*rest.Config, error)
+	Unwrap() kubeutil.ClientFactoryInterface
 }
 
-type clientFactory struct {
-	client           kubernetes.Interface
-	clientAutopilot  apclient.Interface
-	clientExtensions extclient.ApiextensionsV1Interface
-	restConfig       *rest.Config
-
-	mutex sync.Mutex
+// Deprecated: Use [kubeutil.ClientFactory] instead.
+type ClientFactory struct {
+	kubeutil.ClientFactoryInterface
 }
 
-var _ FactoryInterface = (*clientFactory)(nil)
+var _ FactoryInterface = (*ClientFactory)(nil)
 
-func NewClientFactory(config *rest.Config) (FactoryInterface, error) {
-	return &clientFactory{restConfig: config}, nil
-}
-
-// GetClient returns the core kubernetes clientset
-func (cf *clientFactory) GetClient() (kubernetes.Interface, error) {
-	cf.mutex.Lock()
-	defer cf.mutex.Unlock()
-	var err error
-
-	if cf.client != nil {
-		return cf.client, nil
-	}
-
-	client, err := kubernetes.NewForConfig(cf.restConfig)
+// Deprecated: Use [ClientFactory.GetAPIExtensionsClient] instead.
+func (f *ClientFactory) GetExtensionClient() (extclient.ApiextensionsV1Interface, error) {
+	client, err := f.GetAPIExtensionsClient()
 	if err != nil {
 		return nil, err
 	}
 
-	cf.client = client
-
-	return cf.client, nil
+	return client.ApiextensionsV1(), nil
 }
 
-// GetK0sClient returns the clientset for autopilot
-func (cf *clientFactory) GetK0sClient() (apclient.Interface, error) {
-	cf.mutex.Lock()
-	defer cf.mutex.Unlock()
-	var err error
-
-	if cf.clientAutopilot != nil {
-		return cf.clientAutopilot, nil
-	}
-
-	client, err := apclient.NewForConfig(cf.restConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	cf.clientAutopilot = client
-
-	return cf.clientAutopilot, nil
-}
-
-// GetExtensionClient returns the clientset for kubernetes extensions
-func (cf *clientFactory) GetExtensionClient() (extclient.ApiextensionsV1Interface, error) {
-	cf.mutex.Lock()
-	defer cf.mutex.Unlock()
-	var err error
-
-	if cf.clientExtensions != nil {
-		return cf.clientExtensions, nil
-	}
-
-	client, err := extclient.NewForConfig(cf.restConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	cf.clientExtensions = client
-
-	return cf.clientExtensions, nil
-}
-
-func (cf *clientFactory) GetRESTConfig() (*rest.Config, error) {
-	return cf.restConfig, nil
+// Implements [FactoryInterface]: Returns the backing client factory.
+func (f *ClientFactory) Unwrap() kubeutil.ClientFactoryInterface {
+	return f.ClientFactoryInterface
 }

@@ -48,13 +48,8 @@ func (a *Autopilot) Init(ctx context.Context) error {
 func (a *Autopilot) Start(ctx context.Context) error {
 	log := logrus.WithFields(logrus.Fields{"component": "autopilot"})
 
-	restConfig, err := a.AdminClientFactory.GetRESTConfig()
-	if err != nil {
-		return fmt.Errorf("creating autopilot client factory error: %w", err)
-	}
-	autopilotClientFactory, err := apcli.NewClientFactory(restConfig)
-	if err != nil {
-		return fmt.Errorf("creating autopilot client factory error: %w", err)
+	autopilotClientFactory := &apcli.ClientFactory{
+		ClientFactoryInterface: a.AdminClientFactory,
 	}
 
 	autopilotRoot, err := apcont.NewRootController(aproot.RootConfig{

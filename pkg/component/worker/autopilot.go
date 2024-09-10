@@ -29,6 +29,7 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -80,10 +81,9 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		return errors.New("unable to create an autopilot client -- timed out")
 	}
 
-	autopilotClientFactory, err := apcli.NewClientFactory(restConfig)
-	if err != nil {
-		return fmt.Errorf("creating autopilot client factory error: %w", err)
-	}
+	autopilotClientFactory := &apcli.ClientFactory{ClientFactoryInterface: &kubernetes.ClientFactory{
+		LoadRESTConfig: func() (*rest.Config, error) { return restConfig, nil },
+	}}
 
 	log.Info("Autopilot client factory created, booting up worker root controller")
 	autopilotRoot, err := apcont.NewRootWorker(aproot.RootConfig{
