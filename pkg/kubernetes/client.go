@@ -17,7 +17,6 @@ limitations under the License.
 package kubernetes
 
 import (
-	"fmt"
 	"sync"
 
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
@@ -44,18 +43,11 @@ type ClientFactoryInterface interface {
 	GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
 }
 
-// NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
-func NewAdminClientFactory(kubeconfigPath string) ClientFactoryInterface {
-	return &ClientFactory{
-		configPath: kubeconfigPath,
-	}
-}
-
 // ClientFactory implements a cached and lazy-loading ClientFactory for all the different types of kube clients we use
 // It's imoplemented as lazy-loading so we can create the factory itself before we have the api, etcd and other components up so we can pass
 // the factory itself to components needing kube clients and creation time.
 type ClientFactory struct {
-	configPath string
+	LoadRESTConfig func() (*rest.Config, error)
 
 	client          kubernetes.Interface
 	dynamicClient   dynamic.Interface
@@ -190,15 +182,10 @@ func (c *ClientFactory) getRESTConfig() (*rest.Config, error) {
 		return c.restConfig, nil
 	}
 
-	config, err := clientcmd.BuildConfigFromFlags("", c.configPath)
+	config, err := c.LoadRESTConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+		return nil, err
 	}
-	// We're always running the client on the same host as the API, no need to compress
-	config.DisableCompression = true
-	// To mitigate stack applier bursts in startup
-	config.QPS = 40.0
-	config.Burst = 400.0
 
 	c.restConfig = config
 
