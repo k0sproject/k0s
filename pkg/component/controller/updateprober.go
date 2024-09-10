@@ -95,7 +95,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 	}
 	u.log.Debug("checking updates")
 	// Check if there's an active UpdateConfig, if there is no need to do this generic polling
-	apClient, err := u.APClientFactory.GetAutopilotClient()
+	apClient, err := u.APClientFactory.GetK0sClient()
 	if err != nil {
 		u.log.Warnf("failed to create k8s client: %s", err.Error())
 	}

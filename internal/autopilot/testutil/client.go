@@ -77,7 +77,7 @@ func (f fakeClientFactory) GetClient() (kubernetes.Interface, error) {
 	return f.client, nil
 }
 
-func (f fakeClientFactory) GetAutopilotClient() (apclient.Interface, error) {
+func (f fakeClientFactory) GetK0sClient() (apclient.Interface, error) {
 	return f.clientAutopilot, nil
 }
 

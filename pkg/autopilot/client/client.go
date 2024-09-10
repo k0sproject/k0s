@@ -27,7 +27,7 @@ import (
 // FactoryInterface is a collection of kubernetes clientset interfaces.
 type FactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
-	GetAutopilotClient() (apclient.Interface, error)
+	GetK0sClient() (apclient.Interface, error)
 	GetExtensionClient() (extclient.ApiextensionsV1Interface, error)
 	RESTConfig() *rest.Config
 }
@@ -67,8 +67,8 @@ func (cf *clientFactory) GetClient() (kubernetes.Interface, error) {
 	return cf.client, nil
 }
 
-// GetAutopilotClient returns the clientset for autopilot
-func (cf *clientFactory) GetAutopilotClient() (apclient.Interface, error) {
+// GetK0sClient returns the clientset for autopilot
+func (cf *clientFactory) GetK0sClient() (apclient.Interface, error) {
 	cf.mutex.Lock()
 	defer cf.mutex.Unlock()
 	var err error
