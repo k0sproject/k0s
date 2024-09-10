@@ -29,7 +29,7 @@ type FactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
 	GetK0sClient() (apclient.Interface, error)
 	GetExtensionClient() (extclient.ApiextensionsV1Interface, error)
-	RESTConfig() *rest.Config
+	GetRESTConfig() (*rest.Config, error)
 }
 
 type clientFactory struct {
@@ -107,6 +107,6 @@ func (cf *clientFactory) GetExtensionClient() (extclient.ApiextensionsV1Interfac
 	return cf.clientExtensions, nil
 }
 
-func (cf *clientFactory) RESTConfig() *rest.Config {
-	return cf.restConfig
+func (cf *clientFactory) GetRESTConfig() (*rest.Config, error) {
+	return cf.restConfig, nil
 }

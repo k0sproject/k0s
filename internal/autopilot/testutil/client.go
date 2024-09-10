@@ -85,6 +85,6 @@ func (f fakeClientFactory) GetExtensionClient() (extclient.ApiextensionsV1Interf
 	return f.clientExtensions, nil
 }
 
-func (f fakeClientFactory) RESTConfig() *rest.Config {
-	return nil
+func (f fakeClientFactory) GetRESTConfig() (*rest.Config, error) {
+	panic("GetRESTConfig not implemented for fakeClientFactory")
 }

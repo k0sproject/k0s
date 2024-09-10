@@ -106,7 +106,12 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		}
 		clusterID := string(ns.UID)
 
-		mgr, err := cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
+		restConfig, err := w.clientFactory.GetRESTConfig()
+		if err != nil {
+			return err
+		}
+
+		mgr, err := cr.NewManager(restConfig, managerOpts)
 		if err != nil {
 			return fmt.Errorf("failed to create controller manager: %w", err)
 		}
