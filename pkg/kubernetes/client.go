@@ -69,113 +69,94 @@ type ClientFactory struct {
 func (c *ClientFactory) GetClient() (kubernetes.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	var err error
-
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-		// We're always running the client on the same host as the API, no need to compress
-		c.restConfig.DisableCompression = true
-		// To mitigate stack applier bursts in startup
-		c.restConfig.QPS = 40.0
-		c.restConfig.Burst = 400.0
-	}
 
 	if c.client != nil {
 		return c.client, nil
 	}
 
-	client, err := kubernetes.NewForConfig(c.restConfig)
+	config, err := c.getRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
 	c.client = client
 
-	return c.client, nil
+	return client, nil
 }
 
 func (c *ClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	var err error
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-		// We're always running the client on the same host as the API, no need to compress
-		c.restConfig.DisableCompression = true
-		// To mitigate stack applier bursts in startup
-		c.restConfig.QPS = 40.0
-		c.restConfig.Burst = 400.0
-	}
 
 	if c.dynamicClient != nil {
 		return c.dynamicClient, nil
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(c.restConfig)
+	config, err := c.getRESTConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	c.dynamicClient = dynamicClient
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
 
-	return c.dynamicClient, nil
+	c.dynamicClient = client
+
+	return client, nil
 }
 
 func (c *ClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	var err error
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-	}
 
 	if c.discoveryClient != nil {
 		return c.discoveryClient, nil
 	}
 
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(c.restConfig)
-	cachedDiscoveryClient := memory.NewMemCacheClient(discoveryClient)
+	config, err := c.getRESTConfig()
 	if err != nil {
 		return nil, err
 	}
-	c.discoveryClient = cachedDiscoveryClient
 
-	return c.discoveryClient, nil
+	client, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	cachedClient := memory.NewMemCacheClient(client)
+
+	c.discoveryClient = cachedClient
+
+	return cachedClient, nil
 }
 
 func (c *ClientFactory) GetK0sClient() (k0sclientset.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	var err error
-
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-	}
 
 	if c.k0sClient != nil {
 		return c.k0sClient, nil
 	}
 
-	client, err := k0sclientset.NewForConfig(c.restConfig)
+	config, err := c.getRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := k0sclientset.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
 	c.k0sClient = client
 
-	return c.k0sClient, nil
+	return client, nil
 }
 
 // Deprecated: Use [ClientFactory.GetK0sClient] instead.
@@ -199,11 +180,29 @@ func (c *ClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterf
 }
 
 func (c *ClientFactory) GetRESTConfig() (*rest.Config, error) {
-	restConfig := c.restConfig
-	if restConfig == nil {
-		return nil, fmt.Errorf("REST config not yet initialized")
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return c.getRESTConfig()
+}
+
+func (c *ClientFactory) getRESTConfig() (*rest.Config, error) {
+	if c.restConfig != nil {
+		return c.restConfig, nil
 	}
-	return restConfig, nil
+
+	config, err := clientcmd.BuildConfigFromFlags("", c.configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+	}
+	// We're always running the client on the same host as the API, no need to compress
+	config.DisableCompression = true
+	// To mitigate stack applier bursts in startup
+	config.QPS = 40.0
+	config.Burst = 400.0
+
+	c.restConfig = config
+
+	return config, err
 }
 
 // KubeconfigFromFile returns a [clientcmd.KubeconfigGetter] that tries to load
