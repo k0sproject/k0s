@@ -158,7 +158,7 @@ spec:
 		expectedPath = "file:C:/var/lib/k0s/db/state.db"
 	}
 
-	assert.Equal(t, fmt.Sprintf("sqlite://%s?mode=rwc&_journal=WAL&cache=shared", expectedPath), c.Spec.Storage.Kine.DataSource)
+	assert.Equal(t, fmt.Sprintf("sqlite://%s?mode=rwc&_journal=WAL", expectedPath), c.Spec.Storage.Kine.DataSource)
 }
 
 type storageSuite struct {

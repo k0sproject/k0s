@@ -187,7 +187,7 @@ func DefaultKineConfig(dataDir string) *KineConfig {
 			Scheme:   "file",
 			OmitHost: true,
 			Path:     filepath.ToSlash(filepath.Join(dataDir, "db", "state.db")),
-			RawQuery: "mode=rwc&_journal=WAL&cache=shared",
+			RawQuery: "mode=rwc&_journal=WAL",
 		}),
 	}
 }
