@@ -185,7 +185,7 @@ k0s: .k0sbuild.docker-image.k0s
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
 
-k0s.exe k0s: go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/_crds static/manifests/calico static/manifests/windows -type f)
+k0s.exe k0s: go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/manifests/calico static/manifests/windows -type f)
 	rm -f -- '$@'
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
 ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
