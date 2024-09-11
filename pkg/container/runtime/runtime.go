@@ -22,6 +22,7 @@ import (
 )
 
 type ContainerRuntime interface {
+	Ping(ctx context.Context) error
 	ListContainers(ctx context.Context) ([]string, error)
 	RemoveContainer(ctx context.Context, id string) error
 	StopContainer(ctx context.Context, id string) error
