@@ -32,6 +32,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
@@ -56,6 +57,8 @@ type rootController struct {
 	stopSubHandler         subControllerStopFunc
 	leaseWatcherCreator    leaseWatcherCreatorFunc
 	setupHandler           setupFunc
+
+	initialized bool
 }
 
 var _ aproot.Root = (*rootController)(nil)
@@ -157,6 +160,16 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		HealthProbeBindAddress: c.cfg.HealthProbeBindAddr,
 	}
 
+	// If this controller is already initialized, this means that all
+	// controller-runtime controllers have already been successfully registered
+	// to another manager. However, controller-runtime maintains a global
+	// checklist of controller names and doesn't currently provide a way to
+	// unregister names from discarded managers. So it's necessary to suppress
+	// the global name check whenever things are restarted for reconfiguration.
+	if c.initialized {
+		managerOpts.Controller.SkipNameValidation = ptr.To(true)
+	}
+
 	mgr, err := cr.NewManager(c.autopilotClientFactory.RESTConfig(), managerOpts)
 	if err != nil {
 		logger.WithError(err).Error("unable to start controller manager")
@@ -216,6 +229,9 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		logger.WithError(err).Error("unable to register 'update' controllers")
 		return err
 	}
+
+	// All the controller-runtime controllers have been registered.
+	c.initialized = true
 
 	// The controller-runtime start blocks until the context is cancelled.
 	if err := mgr.Start(ctx); err != nil {

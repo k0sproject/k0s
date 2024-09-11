@@ -40,20 +40,22 @@ var etcdmembersKind = v1beta1.SchemeGroupVersion.WithKind("EtcdMember")
 
 // Get takes name of the etcdMember, and returns the corresponding etcdMember object, and an error if there is any.
 func (c *FakeEtcdMembers) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.EtcdMember, err error) {
+	emptyResult := &v1beta1.EtcdMember{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(etcdmembersResource, name), &v1beta1.EtcdMember{})
+		Invokes(testing.NewRootGetActionWithOptions(etcdmembersResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.EtcdMember), err
 }
 
 // List takes label and field selectors, and returns the list of EtcdMembers that match those selectors.
 func (c *FakeEtcdMembers) List(ctx context.Context, opts v1.ListOptions) (result *v1beta1.EtcdMemberList, err error) {
+	emptyResult := &v1beta1.EtcdMemberList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(etcdmembersResource, etcdmembersKind, opts), &v1beta1.EtcdMemberList{})
+		Invokes(testing.NewRootListActionWithOptions(etcdmembersResource, etcdmembersKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -72,36 +74,39 @@ func (c *FakeEtcdMembers) List(ctx context.Context, opts v1.ListOptions) (result
 // Watch returns a watch.Interface that watches the requested etcdMembers.
 func (c *FakeEtcdMembers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(etcdmembersResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(etcdmembersResource, opts))
 }
 
 // Create takes the representation of a etcdMember and creates it.  Returns the server's representation of the etcdMember, and an error, if there is any.
 func (c *FakeEtcdMembers) Create(ctx context.Context, etcdMember *v1beta1.EtcdMember, opts v1.CreateOptions) (result *v1beta1.EtcdMember, err error) {
+	emptyResult := &v1beta1.EtcdMember{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(etcdmembersResource, etcdMember), &v1beta1.EtcdMember{})
+		Invokes(testing.NewRootCreateActionWithOptions(etcdmembersResource, etcdMember, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.EtcdMember), err
 }
 
 // Update takes the representation of a etcdMember and updates it. Returns the server's representation of the etcdMember, and an error, if there is any.
 func (c *FakeEtcdMembers) Update(ctx context.Context, etcdMember *v1beta1.EtcdMember, opts v1.UpdateOptions) (result *v1beta1.EtcdMember, err error) {
+	emptyResult := &v1beta1.EtcdMember{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(etcdmembersResource, etcdMember), &v1beta1.EtcdMember{})
+		Invokes(testing.NewRootUpdateActionWithOptions(etcdmembersResource, etcdMember, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.EtcdMember), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeEtcdMembers) UpdateStatus(ctx context.Context, etcdMember *v1beta1.EtcdMember, opts v1.UpdateOptions) (*v1beta1.EtcdMember, error) {
+func (c *FakeEtcdMembers) UpdateStatus(ctx context.Context, etcdMember *v1beta1.EtcdMember, opts v1.UpdateOptions) (result *v1beta1.EtcdMember, err error) {
+	emptyResult := &v1beta1.EtcdMember{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(etcdmembersResource, "status", etcdMember), &v1beta1.EtcdMember{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(etcdmembersResource, "status", etcdMember, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.EtcdMember), err
 }
@@ -115,10 +120,11 @@ func (c *FakeEtcdMembers) Delete(ctx context.Context, name string, opts v1.Delet
 
 // Patch applies the patch and returns the patched etcdMember.
 func (c *FakeEtcdMembers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.EtcdMember, err error) {
+	emptyResult := &v1beta1.EtcdMember{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(etcdmembersResource, name, pt, data, subresources...), &v1beta1.EtcdMember{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(etcdmembersResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1beta1.EtcdMember), err
 }
