@@ -58,7 +58,7 @@ require (
 	golang.org/x/sys v0.25.0
 	golang.org/x/tools v0.25.0
 	google.golang.org/grpc v1.66.2
-	helm.sh/helm/v3 v3.16.0
+	helm.sh/helm/v3 v3.16.1
 )
 
 // Kubernetes
