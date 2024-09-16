@@ -1172,7 +1172,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 		Machines: []config.MachineReplicas{
 			{
 				Count: s.ControllerCount,
-				Spec: config.Machine{
+				Spec: &config.Machine{
 					Image:        s.BootLooseImage,
 					Name:         controllerNodeNameFormat,
 					Privileged:   true,
@@ -1182,7 +1182,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 			},
 			{
 				Count: s.WorkerCount,
-				Spec: config.Machine{
+				Spec: &config.Machine{
 					Image:        s.BootLooseImage,
 					Name:         workerNodeNameFormat,
 					Privileged:   true,
@@ -1192,7 +1192,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 			},
 			{
 				Count: s.K0smotronWorkerCount,
-				Spec: config.Machine{
+				Spec: &config.Machine{
 					Image:        s.BootLooseImage,
 					Name:         k0smotronNodeNameFormat,
 					Privileged:   true,
@@ -1205,7 +1205,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 
 	if s.WithLB {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
-			Spec: config.Machine{
+			Spec: &config.Machine{
 				Name:         lbNodeNameFormat,
 				Image:        defaultBootLooseImage,
 				Privileged:   true,
@@ -1218,7 +1218,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 
 	if s.WithExternalEtcd {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
-			Spec: config.Machine{
+			Spec: &config.Machine{
 				Name:         etcdNodeNameFormat,
 				Image:        defaultBootLooseImage,
 				Privileged:   true,
@@ -1230,7 +1230,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 
 	if s.WithUpdateServer {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
-			Spec: config.Machine{
+			Spec: &config.Machine{
 				Name:       updateServerNodeNameFormat,
 				Image:      "update-server",
 				Privileged: true,
