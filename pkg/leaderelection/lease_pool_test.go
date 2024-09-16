@@ -49,7 +49,7 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	events, err := pool.Watch(ctx, WithOutputChannels(output))
+	events, err := pool.Watch(ctx, withOutputChannels(output))
 	require.NoError(t, err)
 
 	done := make(chan struct{})
@@ -89,7 +89,7 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	events, err := pool.Watch(ctx, WithOutputChannels(output))
+	events, err := pool.Watch(ctx, withOutputChannels(output))
 	require.NoError(t, err)
 
 	<-events.AcquiredLease
@@ -120,7 +120,7 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 
 	pool, err := NewLeasePool(fakeClient, "test", identity,
 		WithNamespace("test"),
-		WithRetryPeriod(10*time.Millisecond),
+		withRetryPeriod(10*time.Millisecond),
 	)
 	require.NoError(t, err)
 
@@ -132,7 +132,7 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 	givenLeaderElectorError(nil)
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
-	events, err := pool.Watch(ctx, WithOutputChannels(output))
+	events, err := pool.Watch(ctx, withOutputChannels(output))
 	require.NoError(t, err)
 
 	<-events.AcquiredLease
@@ -156,13 +156,13 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 
 	pool1, err := NewLeasePool(fakeClient, "test", "pool1",
 		WithNamespace("test"),
-		WithRetryPeriod(10*time.Millisecond),
+		withRetryPeriod(10*time.Millisecond),
 	)
 	require.NoError(t, err)
 
 	pool2, err := NewLeasePool(fakeClient, "test", "pool2",
 		WithNamespace("test"),
-		WithRetryPeriod(10*time.Millisecond),
+		withRetryPeriod(10*time.Millisecond),
 	)
 	require.NoError(t, err)
 
@@ -191,7 +191,7 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 
 	ctx1, cancel1 := context.WithCancel(context.TODO())
 	t.Cleanup(cancel1)
-	events1, err := pool1.Watch(ctx1, WithOutputChannels(&LeaseEvents{
+	events1, err := pool1.Watch(ctx1, withOutputChannels(&LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}))
@@ -200,7 +200,7 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 
 	ctx2, cancel2 := context.WithCancel(context.TODO())
 	t.Cleanup(cancel2)
-	events2, err := pool2.Watch(ctx2, WithOutputChannels(&LeaseEvents{
+	events2, err := pool2.Watch(ctx2, withOutputChannels(&LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}))
@@ -235,4 +235,21 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedEventOrder, receivedEvents)
+}
+
+// withOutputChannels allows us to pass through channels with
+// a size greater than 0, which makes testing a lot easier.
+func withOutputChannels(channels *LeaseEvents) WatchOpt {
+	return func(options watchOptions) watchOptions {
+		options.channels = channels
+		return options
+	}
+}
+
+// withRetryPeriod specifies the retry period of the lease
+func withRetryPeriod(retryPeriod time.Duration) LeaseOpt {
+	return func(config LeaseConfiguration) LeaseConfiguration {
+		config.retryPeriod = retryPeriod
+		return config
+	}
 }
