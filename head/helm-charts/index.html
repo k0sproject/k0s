@@ -1047,9 +1047,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#wait-for-install" class="md-nav__link">
+  <a href="#chart-install-and-upgrade-options" class="md-nav__link">
     <span class="md-ellipsis">
-      Wait for install
+      Chart install and upgrade options
     </span>
   </a>
   
@@ -2071,9 +2071,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#wait-for-install" class="md-nav__link">
+  <a href="#chart-install-and-upgrade-options" class="md-nav__link">
     <span class="md-ellipsis">
-      Wait for install
+      Chart install and upgrade options
     </span>
   </a>
   
@@ -2144,13 +2144,16 @@
 </ul>
 <h2 id="helm-charts-in-k0s-configuration">Helm charts in k0s configuration<a class="headerlink" href="#helm-charts-in-k0s-configuration" title="Permanent link">#</a></h2>
 <p>Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file.</p>
-<h3 id="wait-for-install">Wait for install<a class="headerlink" href="#wait-for-install" title="Permanent link">#</a></h3>
-<p>Each chart is processed the same way CLI tool does with following options:</p>
+<h3 id="chart-install-and-upgrade-options">Chart install and upgrade options<a class="headerlink" href="#chart-install-and-upgrade-options" title="Permanent link">#</a></h3>
+<p>Charts are processed the same way CLI tool does with following options by default:</p>
 <ul>
+<li><code>--create-namespace</code></li>
+<li><code>--atomic</code></li>
+<li><code>--force</code> (only for the <code>upgrade</code> command)</li>
 <li><code>--wait</code></li>
 <li><code>--wait-for-jobs</code></li>
 </ul>
-<p>It is possible to customize the timeout by using the `timeout' field.</p>
+<p>See <a href="#chart-configuration">Chart configuration</a> below for more details on how to configuring these options.</p>
 <h3 id="repository-configuration">Repository configuration<a class="headerlink" href="#repository-configuration" title="Permanent link">#</a></h3>
 <table>
 <thead>
