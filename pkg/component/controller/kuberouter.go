@@ -243,7 +243,6 @@ spec:
     spec:
       priorityClassName: system-node-critical
       serviceAccountName: kube-router
-      minReadySeconds: 5
       initContainers:
         - name: install-cni-bins
           image: {{ .CNIInstallerImage }}
