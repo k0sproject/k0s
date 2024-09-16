@@ -365,19 +365,20 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			return fmt.Errorf("can't reconcile installation for %q: %w", chart.GetName(), err)
 		}
 	} else {
-		if cr.chartNeedsUpgrade(chart) {
-			// update
-			chartRelease, err = cr.helm.UpgradeChart(ctx,
-				chart.Spec.ChartName,
-				chart.Spec.Version,
-				chart.Status.ReleaseName,
-				chart.Status.Namespace,
-				chart.Spec.YamlValues(),
-				timeout,
-			)
-			if err != nil {
-				return fmt.Errorf("can't reconcile upgrade for %q: %w", chart.GetName(), err)
-			}
+		if !cr.chartNeedsUpgrade(chart) {
+			return nil
+		}
+		// update
+		chartRelease, err = cr.helm.UpgradeChart(ctx,
+			chart.Spec.ChartName,
+			chart.Spec.Version,
+			chart.Status.ReleaseName,
+			chart.Status.Namespace,
+			chart.Spec.YamlValues(),
+			timeout,
+		)
+		if err != nil {
+			return fmt.Errorf("can't reconcile upgrade for %q: %w", chart.GetName(), err)
 		}
 	}
 	if err := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
