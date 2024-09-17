@@ -32,6 +32,17 @@ type CRIRuntime struct {
 	criSocketPath string
 }
 
+func (cri *CRIRuntime) Ping(ctx context.Context) error {
+	client, conn, err := getRuntimeClient(cri.criSocketPath)
+	defer closeConnection(conn)
+	if err != nil {
+		return fmt.Errorf("failed to create CRI runtime client: %w", err)
+	}
+
+	_, err = client.Version(ctx, &pb.VersionRequest{})
+	return err
+}
+
 func (cri *CRIRuntime) ListContainers(ctx context.Context) ([]string, error) {
 	client, conn, err := getRuntimeClient(cri.criSocketPath)
 	defer closeConnection(conn)
