@@ -62,6 +62,10 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
+                  onlyBindToAddress:
+                    description: Whether to only bind to the IP given by the address
+                      option.
+                    type: boolean
                   port:
                     default: 6443
                     description: 'Custom port for kube-api server to listen on (default:

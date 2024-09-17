@@ -37,6 +37,10 @@ type APISpec struct {
 	// Address on which to connect to the API server.
 	Address string `json:"address,omitempty"`
 
+	// Whether to only bind to the IP given by the address option.
+	// +optional
+	OnlyBindToAddress bool `json:"onlyBindToAddress,omitempty"`
+
 	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
 	ExternalAddress string `json:"externalAddress,omitempty"`
 
@@ -102,7 +106,7 @@ func (a *APISpec) getExternalURIForPort(port int) string {
 	return fmt.Sprintf("https://%s:%d", addr, port)
 }
 
-// Sans return the given SANS plus all local adresses and externalAddress if given
+// Sans return the given SANS plus all local addresses and externalAddress if given
 func (a *APISpec) Sans() []string {
 	sans, _ := iface.AllAddresses()
 	sans = append(sans, a.Address)
@@ -112,6 +116,10 @@ func (a *APISpec) Sans() []string {
 	}
 
 	return stringslice.Unique(sans)
+}
+
+func isAnyAddress(address string) bool {
+	return address == "0.0.0.0" || address == "::"
 }
 
 // Validate validates APISpec struct
@@ -125,6 +133,9 @@ func (a *APISpec) Validate() []error {
 	if !govalidator.IsIP(a.Address) {
 		errors = append(errors, field.Invalid(field.NewPath("address"), a.Address, "invalid IP address"))
 	}
+	if isAnyAddress(a.Address) {
+		errors = append(errors, field.Invalid(field.NewPath("address"), a.Address, "invalid INADDR_ANY"))
+	}
 
 	validateIPAddressOrDNSName := func(path *field.Path, san string) {
 		if govalidator.IsIP(san) || govalidator.IsDNSName(san) {
@@ -135,6 +146,9 @@ func (a *APISpec) Validate() []error {
 
 	if a.ExternalAddress != "" {
 		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalAddress)
+		if isAnyAddress(a.ExternalAddress) {
+			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.Address, "invalid INADDR_ANY"))
+		}
 	}
 
 	for _, msg := range validation.IsValidPortNum(a.K0sAPIPort) {
