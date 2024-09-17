@@ -47,15 +47,17 @@ func (c CRD) Init(_ context.Context) error {
 
 // Run unpacks manifests from bindata
 func (c CRD) Start(_ context.Context) error {
+	// crdAssetsPath := path.Join("_crds", c.assetsDir)
+
 	for _, bundle := range c.bundles {
-		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))
+		crds, err := static.AssetDir(fmt.Sprintf("_crds/%s", bundle))
 		if err != nil {
 			return fmt.Errorf("can't unbundle CRD `%s` manifests: %w", bundle, err)
 		}
 
 		for _, filename := range crds {
 			manifestName := fmt.Sprintf("%s-crd-%s", bundle, filename)
-			content, err := static.Asset(fmt.Sprintf("manifests/%s/CustomResourceDefinition/%s", bundle, filename))
+			content, err := static.Asset(fmt.Sprintf("_crds/%s/%s", bundle, filename))
 			if err != nil {
 				return fmt.Errorf("failed to fetch crd `%s`: %w", filename, err)
 			}

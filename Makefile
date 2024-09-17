@@ -131,14 +131,13 @@ pkg/apis/etcd/v1beta1/.controller-gen.stamp: gen_output_dir = etcd
 codegen_targets += $(controllergen_targets)
 
 pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
-	rm -rf 'static/manifests/$(gen_output_dir)/CustomResourceDefinition'
-	mkdir -p 'static/manifests/$(gen_output_dir)'
+	rm -rf 'static/_crds/$(gen_output_dir)'
 	gendir="$$(mktemp -d .controller-gen.XXXXXX.tmp)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
 	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
 	    paths="./$(dir $@)..." \
 	    object:headerFile=hack/tools/boilerplate.go.txt output:object:dir="$$gendir" \
-	    crd output:crd:dir='static/manifests/$(gen_output_dir)/CustomResourceDefinition' \
+	    crd output:crd:dir='static/_crds/$(gen_output_dir)' \
 	  && mv -f -- "$$gendir"/zz_generated.deepcopy.go '$(dir $@).'
 	touch -- '$@'
 
@@ -160,15 +159,15 @@ pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/bo
 	touch -- '$@'
 
 codegen_targets += static/zz_generated_assets.go
-static/zz_generated_assets.go: $(controllergen_targets) # to generate the CRDs into static/manifests/*/CustomResourceDefinition
+static/zz_generated_assets.go: $(controllergen_targets) # to generate the CRDs into static/_crds/*
 static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows static/misc -type f)
 static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
 	CGO_ENABLED=0 $(GO) run github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version) \
 	  -o '$@' -pkg static -prefix static \
-	  static/manifests/helm/CustomResourceDefinition/... \
-	  static/manifests/v1beta1/CustomResourceDefinition/... \
-	  static/manifests/autopilot/CustomResourceDefinition/... \
-	  static/manifests/etcd/CustomResourceDefinition/... \
+	  static/_crds/helm/... \
+	  static/_crds/v1beta1/... \
+	  static/_crds/autopilot/... \
+	  static/_crds/etcd/... \
 	  static/manifests/calico/... \
 	  static/manifests/windows/... \
 	  static/misc/...
