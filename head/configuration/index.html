@@ -2422,12 +2422,16 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </thead>
 <tbody>
 <tr>
-<td><code>externalAddress</code></td>
-<td>The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use  when joining new nodes to the cluster.</td>
+<td><code>address</code></td>
+<td>IP Address used by cluster components to talk to the API server. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.</td>
 </tr>
 <tr>
-<td><code>address</code></td>
-<td>Local address on which to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.</td>
+<td><code>onlyBindToAddress</code></td>
+<td>The API server binds too all interfaces by default. With this option set to <code>true</code>, the API server will only listen on the IP address configured by the <code>address</code> option (first non-local address by default). This can be necessary with multi-homed control plane nodes.</td>
+</tr>
+<tr>
+<td><code>externalAddress</code></td>
+<td>The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use when joining new nodes to the cluster.</td>
 </tr>
 <tr>
 <td><code>sans</code></td>
