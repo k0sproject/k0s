@@ -505,13 +505,13 @@ images:
       image: quay.io/k0sproject/calico-kube-controllers
       version: v3.27.3-0
   metricsserver:
-    image: quay.io/k0sproject/metrics-server
-    version: v0.7.1-0
+    image: registry.k8s.io/metrics-server/metrics-server
+    version: v0.7.2
 ```
 
 In the runtime the image names are calculated as
 `my.own.repo/k0sproject/calico-kube-controllers:v3.27.3-0` and
-`my.own.repo/k0sproject/metrics-server:v0.7.1-0`. This only affects the the
+`my.own.repo/metrics-server/metrics-server:v0.7.2`. This only affects the the
 images pull location, and thus omitting an image specification here will not
 disable component deployment.
 
