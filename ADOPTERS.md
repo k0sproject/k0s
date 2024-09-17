@@ -18,6 +18,15 @@ Note the two trailing spaces at the end of the first lines. Those denote a line 
 Try to maintain an alphabetical order. 
 -->
 
+* [k0smotron](https://k0smotron.io/)  
+  Project: Managing hosted k0s clusters and full Cluster API provider for k0s  
+  K0smotron focuses on managing hosted k0s clusters within an existing
+  Kubernetes cluster. It acts as a Cluster API provider, enabling seamless
+  provisioning, scaling, and lifecycle management of k0s control planes. By
+  leveraging the native capabilities of Kubernetes, k0smotron simplifies
+  multi-cluster operations and provides flexibility in connecting worker nodes
+  from different infrastructures.
+
 * [@k0sproject](https://github.com/k0sproject)  
   Project: k0s build and CI infrastructure  
   k0s maintainers use k0s to host build and CI infrastructure, mainly dynamic
