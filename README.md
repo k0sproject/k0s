@@ -77,6 +77,12 @@ We currently have a monthly office hours call on the last Tuesday of the month.
 
 To see the call details in your local timezone, check out [https://dateful.com/eventlink/2735919704](https://dateful.com/eventlink/2735919704).
 
+### Adopters
+
+k0s is used in numerous cases and environments. The range we've seen it being adopted ranges from very small far edge deployments to big data center deployments. Please add your use case to [adopters] list.
+
+[adopters]: ADOPTERS.md
+
 ## Motivation
 
 _We have seen a gap between the host OS and Kubernetes that runs on top of it: How to ensure they work together as they are upgraded independent from each other? Who is responsible for vulnerabilities or performance issues originating from the host OS that affect the K8S on top?_
