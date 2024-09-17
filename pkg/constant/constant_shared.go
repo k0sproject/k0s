@@ -78,7 +78,7 @@ const (
 	MetricsImage                       = "quay.io/k0sproject/metrics-server"
 	MetricsImageVersion                = "v0.7.1-0"
 	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion              = "v1.28.13"
+	KubeProxyImageVersion              = "v1.28.14"
 	CoreDNSImage                       = "quay.io/k0sproject/coredns"
 	CoreDNSImageVersion                = "1.11.3"
 	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"
