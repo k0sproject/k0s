@@ -4,7 +4,7 @@ We're currently working on providing more detailed project governance documentat
 
 ## Maintainers
 
-This is the list of current maintainers os k0s:
+This is the list of current maintainers of k0s:
 
 | Maintainer         | GitHub ID                                                  | Affiliation |
 |--------------------|------------------------------------------------------------|-------------|
