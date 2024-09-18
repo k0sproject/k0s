@@ -40,6 +40,9 @@ Try to maintain an alphabetical order.
   k0s maintainers use k0s to host build and CI infrastructure, mainly dynamic
   Github Runners.
 
+* [KubeArmor](https://docs.kubearmor.io/kubearmor/quick-links/support_matrix)
+  Project: Supported in their security product
+
 * [Mirantis](https://www.mirantis.com/software/k0s/)  
   Project: k0s support  
   Mirantis provides support for various customers utilizing k0s in their
@@ -71,4 +74,7 @@ Try to maintain an alphabetical order.
 In addition, it is being used for novel use cases in the wild:
 
 * [Kubernetes vs Philippine Power Outages - On setting up k0s over Tailscale](https://justrox.me/kubernetes-vs-philippine-power-outages-a-simple-guide-to-k0s-over-tailscale/)
+* New England Research Cloud [provides it as an option vs k3s](https://nerc-project.github.io/nerc-docs/other-tools/kubernetes/k0s/).
+* Amaze Systems [job posting includes requirement for k0s experience](https://www.salary.com/job/amaze-systems-inc/hiring-for-ml-engineer-data-scientist-robotics-software-engineer-boston-ma-onsite-from-day-1/j202305270140264589562).
+* k0s with Traefik for a Tokyo [smart cities project](https://community.traefik.io/t/help-setting-up-with-k0s-via-helm-extensions/20748).
 
