@@ -14,15 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package k0scontext provides utility functions for working with Go contexts
-// and specific keys for storing and retrieving k0s project-related
-// configuration data.
+// Package k0scontext provides various utilities for working with Go contexts.
 //
-// The package also includes functions for setting, retrieving, and checking the
-// presence of values associated with specific types. These functions simplify
-// context-based data management in a type-safe and ergonomic manner. Each
-// distinct type serves as a key for context values, removing the necessity for
-// an extra key constant. The type itself becomes the key.
+// This package also includes functions for setting, retrieving, and checking
+// the presence of values associated with specific types. These functions
+// simplify context-based data management in a type-safe and ergonomic way. Each
+// distinct type serves as a key for context values, so there is no need for
+// additional key constants. The type itself is the key.
 package k0scontext
 
 import (
