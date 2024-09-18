@@ -19,7 +19,6 @@ package install
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/kardianos/service"
@@ -150,37 +149,6 @@ func UninstallService(role string) error {
 	}
 
 	return s.Uninstall()
-}
-
-// GetSysInit returns the sys init platform name, and the stub file path for a system
-func GetSysInit(role string) (sysInitPlatform string, stubFile string, err error) {
-	if role == "controller+worker" {
-		role = "controller"
-	}
-	if sysInitPlatform, err = getSysInitPlatform(); err != nil {
-		return sysInitPlatform, stubFile, err
-	}
-	if sysInitPlatform == "linux-systemd" {
-		stubFile = fmt.Sprintf("/etc/systemd/system/k0s%s.service", role)
-		if _, err := os.Stat(stubFile); err != nil {
-			stubFile = ""
-		}
-	} else if sysInitPlatform == "linux-openrc" {
-		stubFile = fmt.Sprintf("/etc/init.d/k0s%s", role)
-		if _, err := os.Stat(stubFile); err != nil {
-			stubFile = ""
-		}
-	}
-	return sysInitPlatform, stubFile, err
-}
-
-func getSysInitPlatform() (string, error) {
-	prg := &Program{}
-	s, err := service.New(prg, &service.Config{Name: "132"})
-	if err != nil {
-		return "", err
-	}
-	return s.Platform(), nil
 }
 
 func GetServiceConfig(role string) *service.Config {
