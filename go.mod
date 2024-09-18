@@ -46,7 +46,7 @@ require (
 	github.com/urfave/cli v1.22.15
 	github.com/vishvananda/netlink v1.3.0
 	github.com/vmware-tanzu/sonobuoy v0.57.2
-	github.com/zcalusic/sysinfo v1.1.1
+	github.com/zcalusic/sysinfo v1.1.2
 	go.etcd.io/etcd/api/v3 v3.5.16
 	go.etcd.io/etcd/client/pkg/v3 v3.5.16
 	go.etcd.io/etcd/client/v3 v3.5.16
