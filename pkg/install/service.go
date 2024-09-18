@@ -87,11 +87,6 @@ func EnsureService(args []string, envVars []string, force bool) error {
 	// fetch service type
 	svcType := s.Platform()
 	switch svcType {
-	case "darwin-launchd":
-		svcConfig.Option = map[string]interface{}{
-			"EnvironmentMap": prepareEnvVars(envVars),
-			"LaunchdConfig":  launchdConfig,
-		}
 	case "linux-openrc":
 		deps = []string{"need cgroups", "need net", "use dns", "after firewall"}
 		svcConfig.Option = map[string]interface{}{
