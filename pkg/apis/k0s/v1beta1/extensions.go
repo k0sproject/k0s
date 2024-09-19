@@ -130,6 +130,11 @@ type Chart struct {
 // backward compatibility, it is interpreted as nano seconds.
 type BackwardCompatibleDuration metav1.Duration
 
+// MarshalJSON marshals the BackwardCompatibleDuration to JSON.
+func (b BackwardCompatibleDuration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(b.Duration.String())
+}
+
 // UnmarshalJSON attempts unmarshals the provided value into a
 // BackwardCompatibleDuration. This function attempts to unmarshal it as a
 // string first and if that fails it attempts to parse it as an integer.
