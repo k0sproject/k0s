@@ -86,6 +86,34 @@ func TestValidation(t *testing.T) {
 	})
 }
 
+func TestIntegerTimeoutParsing(t *testing.T) {
+	yaml := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  extensions:
+    helm:
+      charts:
+      - name: prometheus-stack
+        chartname: prometheus-community/prometheus
+        version: "14.6.1"
+        timeout: 60000000000
+`
+
+	c, err := ConfigFromString(yaml)
+	require := require.New(t)
+
+	require.NoError(err)
+
+	chart := c.Spec.Extensions.Helm.Charts[0]
+	expectedDuration := BackwardCompatibleDuration(
+		metav1.Duration{Duration: time.Minute},
+	)
+	require.Equal(expectedDuration, chart.Timeout)
+}
+
 func TestDurationParsing(t *testing.T) {
 	yaml := `
 apiVersion: k0s.k0sproject.io/v1beta1
@@ -108,8 +136,8 @@ spec:
 	require.NoError(err)
 
 	chart := c.Spec.Extensions.Helm.Charts[0]
-	expectedDuration := metav1.Duration{
-		Duration: 20 * time.Minute,
-	}
+	expectedDuration := BackwardCompatibleDuration(
+		metav1.Duration{Duration: 20 * time.Minute},
+	)
 	require.Equal(expectedDuration, chart.Timeout)
 }
