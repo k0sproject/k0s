@@ -208,11 +208,11 @@ this has not been tested.
 
 * If a SHA256 hash is provided for the binary, the completed downloaded will be verified against it.
 
-#### `spec.commands[].airgapupdate.targets.workers <object> (optional)`
+#### `spec.commands[].airgapupdate.workers <object> (optional)`
 
 * This object provides the details of how `workers` should be updated.
 
-#### `spec.commands[].airgapupdate.targets.workers.limits.concurrent <int> (optional, default = 1)`
+#### `spec.commands[].airgapupdate.workers.limits.concurrent <int> (optional, default = 1)`
 
 * Specifying a `concurrent` value for worker targets will allow for that number of workers
 to be updated at a time. If no value is provided, `1` is assumed.
