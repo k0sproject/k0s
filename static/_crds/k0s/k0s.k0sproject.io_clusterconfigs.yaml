@@ -697,7 +697,25 @@ spec:
                       metricsBindAddress:
                         type: string
                       mode:
+                        description: |-
+                          Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs", "userspace" and "nft"
+                          Defaults to "iptables"
                         type: string
+                      nftables:
+                        description: |-
+                          KubeProxyNFTablesConfiguration contains nftables-related kube-proxy configuration
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.0/config/v1alpha1/types.go#L82-L97
+                        properties:
+                          masqueradeAll:
+                            type: boolean
+                          masqueradeBit:
+                            format: int32
+                            type: integer
+                          minSyncPeriod:
+                            type: string
+                          syncPeriod:
+                            type: string
+                        type: object
                       nodePortAddresses:
                         items:
                           type: string

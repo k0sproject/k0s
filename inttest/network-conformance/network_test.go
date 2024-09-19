@@ -32,7 +32,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const defaultCNI = "kuberouter"
+const (
+	defaultCNI       = "kuberouter"
+	defaultProxyMode = "iptables"
+)
 
 type networkSuite struct {
 	common.BootlooseSuite
@@ -44,9 +47,15 @@ func (s *networkSuite) TestK0sGetsUp() {
 	if cni == "" {
 		cni = defaultCNI
 	}
+	// Which kube-proxy mode to test: iptables, ipvs, userspace, nft. Default: iptables
+	proxyMode := os.Getenv("K0S_NETWORK_CONFORMANCE_PROXY_MODE")
+	if proxyMode == "" {
+		proxyMode = defaultProxyMode
+	}
+
 	s.T().Logf("Run conformance tests for CNI: %s", cni)
 
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfig, cni))
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfig, cni, proxyMode))
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server"))
 	s.Require().NoError(s.RunWorkers())
 
@@ -153,4 +162,6 @@ const k0sConfig = `
 spec:
   network:
     provider: %s
+    kubeProxy:
+      mode: %s
 `
