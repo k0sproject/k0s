@@ -18,12 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
+	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
@@ -102,30 +102,23 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 	}
 
 	logger := r.log.WithField("signalnode", signalNode.GetName())
+	logger.Info("Applying update")
 
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
 	}
 
-	// Get the filename fragment from the URL
-	updateURL, err := url.Parse(signalData.Command.K0sUpdate.URL)
-	if err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get update request URL: %w", err)
-	}
-
-	// TODO: make the filename part random
-	updateFilename := path.Base(updateURL.Path)
-	updateFilenamePath := path.Join(r.k0sBinaryDir, updateFilename)
+	updateFilenamePath := path.Join(r.k0sBinaryDir, apconst.K0sTempFilename)
 
 	// Ensure that the expected file exists
 	if _, err := os.Stat(updateFilenamePath); errors.Is(err, os.ErrNotExist) {
-		return cr.Result{}, fmt.Errorf("unable to find update file '%s': %w", updateFilename, err)
+		return cr.Result{}, fmt.Errorf("unable to find update file '%s': %w", apconst.K0sTempFilename, err)
 	}
 
 	// Ensure that the new file is executable
 	if err := os.Chmod(updateFilenamePath, 0755); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to chmod update file '%s': %w", updateFilename, err)
+		return cr.Result{}, fmt.Errorf("unable to chmod update file '%s': %w", apconst.K0sTempFilename, err)
 	}
 
 	// Perform the update atomically
