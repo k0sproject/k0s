@@ -56,11 +56,11 @@ Try to maintain an alphabetical order.
 * [Replicated, Inc.](https://www.replicated.com/)  
   Project: Embedded Cluster  
   Contact: [Chris Sanders](https://github.com/chris-sanders)  
-  Replicated builds their [Embedded Cluster][replicated-embedded] project on top
+  Replicated builds their [Embedded Cluster](https://docs.replicated.com/vendor/embedded-overview) project on top
   of k0s. Replicated Embedded Cluster allows you to distribute a Kubernetes
   cluster and your application together as a single appliance, making it easy
   for enterprise users to install, update, and manage the application and the
-  cluster in tandem.  [replicated-embedded]: https://docs.replicated.com/vendor/embedded-overview
+  cluster in tandem.
   
 * [Splunk](https://splunk.com)
   Project: Data Stream Processor
@@ -77,4 +77,3 @@ In addition, it is being used for novel use cases in the wild:
 * New England Research Cloud [provides it as an option vs k3s](https://nerc-project.github.io/nerc-docs/other-tools/kubernetes/k0s/).
 * Amaze Systems [job posting includes requirement for k0s experience](https://www.salary.com/job/amaze-systems-inc/hiring-for-ml-engineer-data-scientist-robotics-software-engineer-boston-ma-onsite-from-day-1/j202305270140264589562).
 * k0s with Traefik for a Tokyo [smart cities project](https://community.traefik.io/t/help-setting-up-with-k0s-via-helm-extensions/20748).
-
