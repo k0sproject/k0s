@@ -251,7 +251,9 @@ func TestExtensionsController_writeChartManifestFile(t *testing.T) {
 					Version:   "0.0.1",
 					Values:    "values",
 					TargetNS:  "default",
-					Timeout:   metav1.Duration{Duration: 5 * time.Minute},
+					Timeout: k0sv1beta1.BackwardCompatibleDuration(
+						metav1.Duration{Duration: 5 * time.Minute},
+					),
 				},
 				fileName: "0_helm_extension_release.yaml",
 			},
@@ -282,8 +284,10 @@ spec:
 					Version:      "0.0.1",
 					Values:       "values",
 					TargetNS:     "default",
-					Timeout:      metav1.Duration{Duration: 5 * time.Minute},
 					ForceUpgrade: ptr.To(false),
+					Timeout: k0sv1beta1.BackwardCompatibleDuration(
+						metav1.Duration{Duration: 5 * time.Minute},
+					),
 				},
 				fileName: "0_helm_extension_release.yaml",
 			},
