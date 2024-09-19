@@ -16,6 +16,8 @@ package k0s
 
 import (
 	"crypto/sha256"
+	"os"
+	"path/filepath"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -88,6 +90,13 @@ func (b downloadManifestBuilderK0s) Build(signalNode crcli.Object, signalData ap
 			ExpectedHash: signalData.Command.K0sUpdate.Sha256,
 			Hasher:       sha256.New(),
 			DownloadDir:  b.k0sBinaryDir,
+			Filename:     filepath.Join(b.k0sBinaryDir, "k0s.tmp"),
+		},
+		// After the download is done, we need to rename the file to the correct name
+		AfterTransferSuccess: func() error {
+			src := filepath.Join(b.k0sBinaryDir, "k0s.tmp")
+			dst := filepath.Join(b.k0sBinaryDir, "k0s")
+			return os.Rename(src, dst)
 		},
 		SuccessState: Cordoning,
 	}

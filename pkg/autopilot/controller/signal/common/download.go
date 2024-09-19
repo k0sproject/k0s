@@ -32,6 +32,8 @@ type DownloadManifest struct {
 	apdl.Config
 
 	SuccessState string
+	// A hook that will be called after the download itself is done succesfully
+	AfterTransferSuccess func() error
 }
 
 type DownloadManifestBuilder interface {
@@ -90,7 +92,12 @@ func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.
 
 	} else {
 		logger.Infof("Download of '%s' successful", manifest.URL)
-
+		// When download is successful, run the post-download hook
+		if manifest.AfterTransferSuccess != nil {
+			if err := manifest.AfterTransferSuccess(); err != nil {
+				return cr.Result{}, fmt.Errorf("failed to run post-download hook: %w", err)
+			}
+		}
 		// When the download is complete move the status to the success state
 		signalData.Status = apsigv2.NewStatus(manifest.SuccessState)
 	}
