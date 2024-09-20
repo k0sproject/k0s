@@ -23,6 +23,7 @@ import (
 	"hash"
 	"io"
 	"path/filepath"
+	"time"
 
 	internalhttp "github.com/k0sproject/k0s/internal/http"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -72,6 +73,12 @@ func (d *downloader) Download(ctx context.Context) (err error) {
 	}
 	defer func() { err = errors.Join(err, target.Close()) }()
 	targets = append(targets, target)
+
+	// Set a very long overall download timeout. This will ensure that the
+	// download will fail at some point, even if the remote server is
+	// artificially slow.
+	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
+	defer cancel()
 
 	// Download from URL into targets.
 	var fileName string
