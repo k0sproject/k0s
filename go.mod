@@ -13,7 +13,6 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bombsimon/logrusr/v4 v4.1.0
 	github.com/carlmjohnson/requests v0.24.2
-	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/cilium/ebpf v0.16.0
 	github.com/cloudflare/cfssl v1.6.4
 	github.com/containerd/cgroups/v3 v3.0.3
