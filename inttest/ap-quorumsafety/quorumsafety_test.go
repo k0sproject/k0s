@@ -99,6 +99,10 @@ metadata:
 
 	// Create + populate the plan
 
+	client, err := s.AutopilotClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.NotEmpty(client)
+
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: Plan
@@ -130,10 +134,6 @@ spec:
 	out, err = s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
 	s.T().Logf("kubectl apply output (plan): '%s'", out)
 	s.Require().NoError(err)
-
-	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-	s.NotEmpty(client)
 
 	// The plan should fail with "InconsistentTargets" due to autopilot detecting that `controller2`
 	// despite existing as a `ControlNode`, does not resolve.

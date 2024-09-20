@@ -126,16 +126,17 @@ spec:
 	s.Require().NoError(err)
 
 	// Save + apply the plan
+
+	apc, err := s.AutopilotClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.NotEmpty(apc)
+
 	manifestFile := "/tmp/plan.yaml"
 	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
 
 	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
 	s.T().Logf("kubectl apply output: '%s'", out)
 	s.Require().NoError(err)
-
-	apc, err := s.AutopilotClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-	s.NotEmpty(apc)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
 	plan, err := aptest.WaitForPlanState(s.Context(), apc, apconst.AutopilotName, appc.PlanCompleted)

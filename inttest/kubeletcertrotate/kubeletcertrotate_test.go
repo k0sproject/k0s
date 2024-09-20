@@ -84,8 +84,12 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 }
 
 func (s *kubeletCertRotateSuite) applyPlan(id string) {
+	client, err := s.AutopilotClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.NotEmpty(client)
+
 	// Ensure that a plan and yaml do not exist (safely)
-	_, err := s.RunCommandController(0, "/usr/local/bin/k0s kubectl delete plan autopilot | true")
+	_, err = s.RunCommandController(0, "/usr/local/bin/k0s kubectl delete plan autopilot | true")
 	s.Require().NoError(err)
 	_, err = s.RunCommandController(0, "rm -f /tmp/happy.yaml")
 	s.Require().NoError(err)
@@ -128,10 +132,6 @@ spec:
 	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
 	s.T().Logf("kubectl apply output: '%s'", out)
 	s.Require().NoError(err)
-
-	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
 	plan, err := aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanCompleted)
