@@ -81,7 +81,7 @@ func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.
 
 	logger.Infof("Starting download of '%s'", manifest.URL)
 
-	httpdl := apdl.NewDownloader(manifest.Config, logger)
+	httpdl := apdl.NewDownloader(manifest.Config)
 	if err := httpdl.Download(ctx); err != nil {
 		logger.Errorf("Unable to download '%s': %v", manifest.URL, err)
 
