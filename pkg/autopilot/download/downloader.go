@@ -22,7 +22,6 @@ import (
 
 	"github.com/cavaliergopher/grab/v3"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/sirupsen/logrus"
 )
 
 type Downloader interface {
@@ -38,16 +37,14 @@ type Config struct {
 
 type downloader struct {
 	config       Config
-	logger       *logrus.Entry
 	httpResponse *grab.Response
 }
 
 var _ Downloader = (*downloader)(nil)
 
-func NewDownloader(config Config, logger *logrus.Entry) Downloader {
+func NewDownloader(config Config) Downloader {
 	return &downloader{
 		config: config,
-		logger: logger.WithField("component", "downloader"),
 	}
 }
 
