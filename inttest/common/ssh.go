@@ -29,6 +29,8 @@ import (
 	"sync"
 	"testing"
 
+	internalio "github.com/k0sproject/k0s/internal/io"
+
 	"github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
 )
@@ -125,7 +127,7 @@ func (c *SSHConnection) ExecWithOutput(ctx context.Context, cmd string) (string,
 	errOnlyWriter, getErrOnlyBuffer := newWriterBuffer()
 	defer errOnlyWriter.Close()
 
-	combinedWriter := writerFunc(func(p []byte) (int, error) {
+	combinedWriter := internalio.WriterFunc(func(p []byte) (int, error) {
 		if n, err := errOnlyWriter.Write(p); err != nil {
 			return n, err
 		}
@@ -235,10 +237,6 @@ func (w *lockWriter) Close() error {
 
 	return nil
 }
-
-type writerFunc func(p []byte) (int, error)
-
-func (f writerFunc) Write(p []byte) (int, error) { return f(p) }
 
 func trimOutput(output []byte) string {
 	if len(output) == 0 {
