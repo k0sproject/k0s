@@ -37,8 +37,7 @@ type Config struct {
 }
 
 type downloader struct {
-	config       Config
-	httpResponse *grab.Response
+	config Config
 }
 
 var _ Downloader = (*downloader)(nil)
@@ -83,11 +82,11 @@ func (d *downloader) Download(ctx context.Context) error {
 	// Set user agent to mitigate 403 errors from GitHub
 	// See https://github.com/cavaliergopher/grab/issues/104
 	client.UserAgent = fmt.Sprintf("k0s/%s", build.Version)
-	d.httpResponse = client.Do(dlreq)
+	httpResponse := client.Do(dlreq)
 
 	select {
-	case <-d.httpResponse.Done:
-		return d.httpResponse.Err()
+	case <-httpResponse.Done:
+		return httpResponse.Err()
 
 	case <-ctx.Done():
 		return fmt.Errorf("download cancelled")
