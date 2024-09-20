@@ -191,6 +191,22 @@ func (f *Atomic) ReadFrom(r io.Reader) (int64, error) {
 // Note that the atomicity aspects are only best-effort on Windows:
 // https://github.com/golang/go/issues/22397#issuecomment-498856679
 func (f *Atomic) Finish() (err error) {
+	return f.finish(f.target)
+}
+
+// Like Finish, but replaces the target base name with the given one.
+// Note that the directory cannot be changed, just the file's base name.
+func (f *Atomic) FinishWithBaseName(baseName string) (err error) {
+	dir := filepath.Dir(f.target)
+	target := filepath.Join(dir, baseName)
+	if filepath.Base(target) != baseName || filepath.Dir(target) != dir {
+		return errors.New("base name is invalid")
+	}
+
+	return f.finish(target)
+}
+
+func (f *Atomic) finish(target string) (err error) {
 	if f == nil {
 		return fs.ErrInvalid
 	}
@@ -244,7 +260,7 @@ func (f *Atomic) Finish() (err error) {
 		}
 	}
 
-	if err = os.Rename(f.fd.Name(), f.target); err != nil {
+	if err = os.Rename(f.fd.Name(), target); err != nil {
 		return err
 	}
 

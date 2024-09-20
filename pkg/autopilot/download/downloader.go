@@ -15,13 +15,17 @@
 package download
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
+	"io"
+	"path/filepath"
 
-	"github.com/cavaliergopher/grab/v3"
-	"github.com/k0sproject/k0s/pkg/build"
+	internalhttp "github.com/k0sproject/k0s/internal/http"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 )
 
 type Downloader interface {
@@ -47,38 +51,47 @@ func NewDownloader(config Config) Downloader {
 	}
 }
 
-// Start begins the download process, starting the downloading functionality
-// on a separate goroutine. Cancelling the context will abort this operation
-// once started.
-func (d *downloader) Download(ctx context.Context) error {
-	// Setup the library for downloading HTTP content ..
-	dlreq, err := grab.NewRequest(d.config.DownloadDir, d.config.URL)
-
-	if err != nil {
-		return fmt.Errorf("invalid download request: %w", err)
-	}
+// Performs the download process.
+func (d *downloader) Download(ctx context.Context) (err error) {
+	var targets []io.Writer
 
 	// If we've been provided a hash and actual value to compare with, use it.
+	var expectedHash []byte
 	if d.config.Hasher != nil && d.config.ExpectedHash != "" {
-		expectedHash, err := hex.DecodeString(d.config.ExpectedHash)
+		expectedHash, err = hex.DecodeString(d.config.ExpectedHash)
 		if err != nil {
 			return fmt.Errorf("invalid update hash: %w", err)
 		}
-
-		dlreq.SetChecksum(d.config.Hasher, expectedHash, true)
+		targets = append(targets, d.config.Hasher)
 	}
 
-	client := grab.NewClient()
-	// Set user agent to mitigate 403 errors from GitHub
-	// See https://github.com/cavaliergopher/grab/issues/104
-	client.UserAgent = fmt.Sprintf("k0s/%s", build.Version)
-	httpResponse := client.Do(dlreq)
-
-	select {
-	case <-httpResponse.Done:
-		return httpResponse.Err()
-
-	case <-ctx.Done():
-		return fmt.Errorf("download cancelled")
+	// Set up target file for download.
+	target, err := file.AtomicWithTarget(filepath.Join(d.config.DownloadDir, "download")).Open()
+	if err != nil {
+		return err
 	}
+	defer func() { err = errors.Join(err, target.Close()) }()
+	targets = append(targets, target)
+
+	// Download from URL into targets.
+	var fileName string
+	if err = internalhttp.Download(ctx, d.config.URL, io.MultiWriter(targets...),
+		internalhttp.StoreSuggestedRemoteFileNameInto(&fileName),
+	); err != nil {
+		return fmt.Errorf("download failed: %w", err)
+	}
+
+	// Check the hash of the downloaded data and fail if it doesn't match.
+	if expectedHash != nil {
+		if downloadedHash := d.config.Hasher.Sum(nil); !bytes.Equal(expectedHash, downloadedHash) {
+			return fmt.Errorf("hash mismatch: expected %x, got %x", expectedHash, downloadedHash)
+		}
+	}
+
+	// All is well. Finish the download.
+	if err := target.FinishWithBaseName(fileName); err != nil {
+		return fmt.Errorf("failed to finish download: %w", err)
+	}
+
+	return nil
 }
