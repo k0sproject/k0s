@@ -22,15 +22,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
+	internalio "github.com/k0sproject/k0s/internal/io"
 	"github.com/k0sproject/k0s/pkg/build"
+	"github.com/k0sproject/k0s/pkg/k0scontext"
 )
 
 type DownloadOption func(*downloadOptions)
 
 // Downloads the contents of the given URL. Writes the HTTP response body to writer.
+// Stalled downloads will be aborted if there's no data transfer for some time.
 func Download(ctx context.Context, url string, target io.Writer, options ...DownloadOption) (err error) {
-	opts := downloadOptions{}
+	opts := downloadOptions{
+		stalenessTimeout: time.Minute,
+	}
 	for _, opt := range options {
 		opt(&opts)
 	}
@@ -48,8 +54,9 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 	}
 	req.Header.Set("User-Agent", "k0s/"+build.Version)
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	// Create a context with an inactivity timeout to cancel the download if it stalls.
+	ctx, cancel, keepAlive := k0scontext.WithInactivityTimeout(ctx, opts.stalenessTimeout)
+	defer cancel(nil)
 
 	// Execute the request.
 	resp, err := client.Do(req.WithContext(ctx))
@@ -73,8 +80,17 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 		return err
 	}
 
+	// Monitor writes. Keep the download context alive as long as data is flowing.
+	writeMonitor := internalio.WriterFunc(func(p []byte) (int, error) {
+		len := len(p)
+		if len > 0 {
+			keepAlive()
+		}
+		return len, nil
+	})
+
 	// Run the actual data transfer.
-	if _, err := io.Copy(target, resp.Body); err != nil {
+	if _, err := io.Copy(io.MultiWriter(writeMonitor, target), resp.Body); err != nil {
 		if cause := context.Cause(ctx); cause != nil && !errors.Is(err, cause) {
 			err = fmt.Errorf("%w (%w)", cause, err)
 		}
@@ -85,6 +101,15 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 	return nil
 }
 
+// Sets the staleness timeout for a download.
+// Defaults to one minute if omitted.
+func WithStalenessTimeout(stalenessTimeout time.Duration) DownloadOption {
+	return func(opts *downloadOptions) {
+		opts.stalenessTimeout = stalenessTimeout
+	}
+}
+
 type downloadOptions struct {
+	stalenessTimeout time.Duration
 	downloadFileNameOptions
 }

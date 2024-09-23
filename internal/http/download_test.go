@@ -27,8 +27,10 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	internalhttp "github.com/k0sproject/k0s/internal/http"
+	internalio "github.com/k0sproject/k0s/internal/io"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,6 +83,34 @@ func TestDownload_ExcessContentLength(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "yolo", downloaded.String())
+}
+
+func TestDownload_CancelDownload(t *testing.T) {
+	ctx, cancel := context.WithCancelCause(context.TODO())
+	t.Cleanup(func() { cancel(nil) })
+
+	baseURL := startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for {
+			if _, err := w.Write([]byte(t.Name())); !assert.NoError(t, err) {
+				return
+			}
+
+			select {
+			case <-r.Context().Done():
+				return
+			case <-time.After(time.Microsecond):
+			}
+		}
+	}))
+
+	err := internalhttp.Download(ctx, baseURL, internalio.WriterFunc(func(p []byte) (int, error) {
+		cancel(assert.AnError)
+		return len(p), nil
+	}))
+
+	assert.ErrorContains(t, err, "while downloading: ")
+	assert.ErrorIs(t, err, assert.AnError)
+	assert.ErrorIs(t, err, context.Canceled)
 }
 
 func TestDownload_RedirectLoop(t *testing.T) {
