@@ -145,9 +145,9 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/k0sproject/k0s
       name: k0s on GitHub
-    - icon: fontawesome/brands/twitter
-      link: https://twitter.com/k0sproject
-      name: k0s on Twitter
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/k0sproject
+      name: k0s on X
     - icon: fontawesome/brands/medium
       link: https://medium.com/k0sproject
       name: k0s on Medium
