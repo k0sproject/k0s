@@ -51,6 +51,10 @@ func (s *platformSelectSuite) SetupTest() {
 // TestApply applies a well-formed `plan` yaml that includes multiple
 // platform definitions, and asserts that the proper binary is downloaded.
 func (s *platformSelectSuite) TestApply() {
+	client, err := s.AutopilotClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.NotEmpty(client)
+
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: Plan
@@ -84,10 +88,6 @@ spec:
 	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
 	s.T().Logf("kubectl apply output: '%s'", out)
 	s.Require().NoError(err)
-
-	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-	s.NotEmpty(client)
 
 	// Its expected that if the wrong platform were to be downloaded, the update wouldn't be successful,
 	// as the binary would fail to run.

@@ -142,6 +142,10 @@ spec:
 	)
 	s.Require().NoError(err)
 
+	client, err := s.AutopilotClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.NotEmpty(client)
+
 	manifestFile := "/tmp/happy.yaml"
 	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
 
@@ -150,10 +154,6 @@ spec:
 	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
 	s.T().Logf("kubectl apply output: '%s'", out)
 	s.Require().NoError(err)
-
-	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
 	_, err = aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)

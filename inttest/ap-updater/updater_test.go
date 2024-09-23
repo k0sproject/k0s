@@ -56,6 +56,10 @@ func (s *plansSingleControllerSuite) SetupTest() {
 // TestApply applies a well-formed `plan` yaml, and asserts that all of the correct values
 // across different objects are correct.
 func (s *plansSingleControllerSuite) TestApply() {
+	client, err := s.AutopilotClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.NotEmpty(client)
+
 	updaterConfig := `
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: UpdateConfig
@@ -89,10 +93,6 @@ spec:
 	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
 	s.T().Logf("kubectl apply output: '%s'", out)
 	s.Require().NoError(err)
-
-	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
 	_, err = aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanCompleted)
