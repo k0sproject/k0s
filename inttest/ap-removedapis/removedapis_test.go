@@ -15,11 +15,11 @@
 package removedapis
 
 import (
-	"fmt"
 	"testing"
 
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -79,20 +79,18 @@ func (s *plansRemovedAPIsSuite) SetupTest() {
 // TestApply applies a well-formed `plan` yaml, and asserts that all of the correct values
 // across different objects are correct.
 func (s *plansRemovedAPIsSuite) TestApply() {
-	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-	s.NotEmpty(client)
-
 	ctx := s.Context()
 
-	manifestFile := "/tmp/plan.yaml"
-	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
-
-	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
-	s.T().Logf("kubectl apply output: '%s'", out)
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
 	s.Require().NoError(err)
 
+	_, err = common.Create(ctx, restConfig, []byte(planTemplate))
+	s.Require().NoError(err)
+	s.T().Logf("Plan created")
+
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
+	client, err := k0sclientset.NewForConfig(restConfig)
+	s.Require().NoError(err)
 	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanWarning)
 	if s.NoError(err) && s.Len(plan.Status.Commands, 1) {
 		s.Equal(appc.PlanWarning, plan.Status.Commands[0].State)

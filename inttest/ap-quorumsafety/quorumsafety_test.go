@@ -21,6 +21,7 @@ import (
 
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
@@ -77,6 +78,10 @@ func (s *quorumSafetySuite) SetupTest() {
 // TestApply applies a well-formed `plan` yaml, and asserts that
 // all of the correct values across different objects + controllers are correct.
 func (s *quorumSafetySuite) TestApply() {
+	ctx := s.Context()
+
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+	s.Require().NoError(err)
 
 	// Create a third node by way of a new `ControlNode` entry that doesen't map to a host.
 	// This will allow autopilot to get past the node tests in newplan (IncompleteTargets)
@@ -91,17 +96,12 @@ metadata:
     kubernetes.io/hostname: controller2
     kubernetes.io/os: linux
 `
-	controller2Filename := "/tmp/controller2.yaml"
-	s.PutFile(s.ControllerNode(0), controller2Filename, controller2Def)
-	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", controller2Filename))
-	s.T().Logf("kubectl apply output (controller2): '%s'", out)
+
+	_, err = common.Create(ctx, restConfig, []byte(controller2Def))
 	s.Require().NoError(err)
+	s.T().Logf("Second ControlNode created")
 
 	// Create + populate the plan
-
-	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.Require().NoError(err)
-	s.NotEmpty(client)
 
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
@@ -128,16 +128,15 @@ spec:
                   - controller2
 `
 
-	manifestFile := "/tmp/happy.yaml"
-	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
-
-	out, err = s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
-	s.T().Logf("kubectl apply output (plan): '%s'", out)
+	_, err = common.Create(ctx, restConfig, []byte(planTemplate))
 	s.Require().NoError(err)
+	s.T().Logf("Plan created")
 
 	// The plan should fail with "InconsistentTargets" due to autopilot detecting that `controller2`
 	// despite existing as a `ControlNode`, does not resolve.
-	_, err = aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanInconsistentTargets)
+	client, err := k0sclientset.NewForConfig(restConfig)
+	s.Require().NoError(err)
+	_, err = aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanInconsistentTargets)
 	s.Require().NoError(err)
 }
 

@@ -23,6 +23,7 @@ import (
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/component/status"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -84,14 +85,13 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 }
 
 func (s *kubeletCertRotateSuite) applyPlan(id string) {
-	client, err := s.AutopilotClient(s.ControllerNode(0))
+	ctx := s.Context()
+
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
 	s.Require().NoError(err)
-	s.NotEmpty(client)
 
 	// Ensure that a plan and yaml do not exist (safely)
 	_, err = s.RunCommandController(0, "/usr/local/bin/k0s kubectl delete plan autopilot | true")
-	s.Require().NoError(err)
-	_, err = s.RunCommandController(0, "rm -f /tmp/happy.yaml")
 	s.Require().NoError(err)
 
 	planTemplate := `
@@ -124,17 +124,16 @@ spec:
                   - worker0
 `
 
-	// Apply the plan
+	// Create the plan
 
-	manifestFile := "/tmp/happy.yaml"
-	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
-
-	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
-	s.T().Logf("kubectl apply output: '%s'", out)
+	_, err = common.Create(ctx, restConfig, []byte(planTemplate))
 	s.Require().NoError(err)
+	s.T().Logf("Plan created")
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanCompleted)
+	client, err := k0sclientset.NewForConfig(restConfig)
+	s.Require().NoError(err)
+	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
 
 	// Ensure all state/status are completed

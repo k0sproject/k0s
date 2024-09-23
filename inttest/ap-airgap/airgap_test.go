@@ -24,6 +24,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -142,20 +143,18 @@ spec:
 	)
 	s.Require().NoError(err)
 
-	client, err := s.AutopilotClient(s.ControllerNode(0))
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
 	s.Require().NoError(err)
-	s.NotEmpty(client)
 
-	manifestFile := "/tmp/happy.yaml"
-	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
+	_, err = common.Create(ctx, restConfig, []byte(planTemplate))
+	s.Require().NoError(err)
+	s.T().Logf("Plan created")
 
 	updateStart := time.Now()
 
-	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
-	s.T().Logf("kubectl apply output: '%s'", out)
-	s.Require().NoError(err)
-
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
+	client, err := k0sclientset.NewForConfig(restConfig)
+	s.Require().NoError(err)
 	_, err = aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
 
