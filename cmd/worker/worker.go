@@ -142,9 +142,9 @@ func (c *Command) Start(ctx context.Context) error {
 
 	if c.CriSocket == "" {
 		componentManager.Add(ctx, containerd.NewComponent(c.Logging["containerd"], c.K0sVars, workerConfig))
+		componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
 	}
 
-	componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
 	if c.WorkerProfile == "default" && runtime.GOOS == "windows" {
 		c.WorkerProfile = "default-windows"
 	}
