@@ -6,7 +6,6 @@ FROM docker.io/library/alpine:$ALPINE_VERSION
 ARG TARGETARCH
 ARG CRI_DOCKERD_VERSION=0.3.15
 ARG ETCD_VERSION
-ARG KUBERNETES_VERSION
 ARG TROUBLESHOOT_VERSION=v0.95.1
 ARG HELM_VERSION
 
@@ -23,6 +22,7 @@ RUN apk add --no-cache \
   nginx \
   inotify-tools \
   ipvsadm
+
 # enable syslog and sshd
 RUN rc-update add syslog boot
 RUN rc-update add sshd default
@@ -36,11 +36,6 @@ RUN sed -Ei -e 's/^[# ](rc_ulimit)=.*/\1="-n 1048576"/' /etc/rc.conf
 RUN sed -i -e 's/^\(tty[0-9]\)/# \1/' /etc/inittab
 # enable root logins
 RUN sed -i -e 's/^root:!:/root::/' /etc/shadow
-
-# Put kubectl into place to ease up debugging
-RUN curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -Lfo /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v$KUBERNETES_VERSION/bin/linux/$TARGETARCH/kubectl \
-  && chmod +x /usr/local/bin/kubectl
-ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
 
 # Install troublbeshoot support bundle
 RUN curl --proto '=https' --tlsv1.2 -L https://github.com/replicatedhq/troubleshoot/releases/download/$TROUBLESHOOT_VERSION/support-bundle_linux_$TARGETARCH.tar.gz \
