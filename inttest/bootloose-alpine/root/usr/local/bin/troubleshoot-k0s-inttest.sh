@@ -11,7 +11,7 @@ export KUBECONFIG="$1/pki/admin.conf"
 
 bundleDir="$(mktemp -d)"
 trap 'rm -rf -- "$bundleDir"' INT EXIT
-kubectl supportbundle \
+kubectl-supportbundle \
   --debug \
   --interactive=false \
   --output="$bundleDir/support-bundle.tar.gz" \
