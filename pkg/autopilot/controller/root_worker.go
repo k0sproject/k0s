@@ -26,7 +26,7 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sretry "k8s.io/client-go/util/retry"
 	cr "sigs.k8s.io/controller-runtime"
@@ -96,15 +96,10 @@ func (w *rootWorker) Run(ctx context.Context) error {
 	}, func(err error) bool {
 		return true
 	}, func() error {
-		cl, err := w.clientFactory.GetClient()
+		clusterID, err := w.getClusterID(ctx)
 		if err != nil {
 			return err
 		}
-		ns, err := cl.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		clusterID := string(ns.UID)
 
 		if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
 			return fmt.Errorf("unable to register indexers: %w", err)
@@ -119,4 +114,18 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		}
 		return nil
 	})
+}
+
+func (w *rootWorker) getClusterID(ctx context.Context) (string, error) {
+	client, err := w.clientFactory.GetClient()
+	if err != nil {
+		return "", err
+	}
+
+	namespace, err := client.CoreV1().Namespaces().Get(ctx, "kube-system", metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return string(namespace.UID), nil
 }
