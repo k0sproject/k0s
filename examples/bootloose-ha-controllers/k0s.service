@@ -1,8 +1,0 @@
-[Unit]
-Description=k0s
-
-[Service]
-ExecStart=/usr/local/bin/k0s server --config /etc/k0s/config.yaml
-
-[Install]
-WantedBy=multi-user.target
