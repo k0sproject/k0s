@@ -19,8 +19,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -135,12 +133,7 @@ spec:
 	s.Require().NoError(err)
 	defer sshController.Disconnect()
 
-	var hasOldStack bool
-	if version, err := s.GetK0sVersion(s.ControllerNode(0)); s.NoError(err, "Failed to get the base k0s version, assuming no old stack!") {
-		hasOldStack = version != s.k0sUpdateVersion && strings.HasPrefix(version, "v1.29.")
-		s.T().Logf("Base k0s version: %q, has old stack: %v", version, hasOldStack)
-		s.checkKubeletConfigStackResources(ctx, sshController, strings.HasPrefix(version, "v1.28."))
-	}
+	s.checkKubeletConfigStackResources(ctx, sshController)
 
 	sshWorker, err := s.SSH(ctx, s.WorkerNode(0))
 	s.Require().NoError(err)
@@ -203,65 +196,24 @@ spec:
 
 	for idx := 0; idx < s.ControllerCount; idx++ {
 		node := s.ControllerNode(idx)
-		if hasOldStack {
-			s.Run("kubelet-config_component_removal/"+node, func() {
-				ssh, err := s.SSH(ctx, node)
-				s.Require().NoError(err)
-				defer ssh.Disconnect()
-				s.checkKubeletConfigComponentFolders(ctx, ssh)
-			})
-		} else {
-			s.Run("kubelet-config_component_nonexistence/"+node, func() {
-				ssh, err := s.SSH(ctx, node)
-				s.Require().NoError(err)
-				defer ssh.Disconnect()
-				err = ssh.Exec(ctx, "[ ! -d /var/lib/k0s/manifests/kubelet ]", common.SSHStreams{})
-				s.NoError(err, "Failed to verify if kubelet manifest folder doesn't exist")
-			})
-		}
+		s.Run("kubelet-config_component_nonexistence/"+node, func() {
+			ssh, err := s.SSH(ctx, node)
+			s.Require().NoError(err)
+			defer ssh.Disconnect()
+			err = ssh.Exec(ctx, "[ ! -d /var/lib/k0s/manifests/kubelet ]", common.SSHStreams{})
+			s.NoError(err, "Failed to verify if kubelet manifest folder doesn't exist")
+		})
 	}
 
-	s.checkKubeletConfigStackResources(ctx, sshController, false)
+	s.checkKubeletConfigStackResources(ctx, sshController)
 }
 
-func (s *ha3x3Suite) checkKubeletConfigComponentFolders(ctx context.Context, ssh *common.SSHConnection) {
-	var foundFiles bytes.Buffer
-	if !s.NoError(
-		ssh.Exec(ctx, "cd /var/lib/k0s/manifests/kubelet && find . -type f -print0", common.SSHStreams{Out: &foundFiles}),
-		"Failed to list kubelet manifest folder",
-	) {
-		return
-	}
-
-	files := strings.Split(strings.TrimSuffix(foundFiles.String(), "\x00"), "\x00")
-
-	// Check that removed.txt is present
-	if idx := slices.Index(files, "./removed.txt"); idx < 0 {
-		s.Failf("No removed.txt in kubelet manifests folder", "%v", files)
-	} else {
-		files = slices.Delete(files, idx, idx+1)
-	}
-
-	// Check that all other files are only disabled yaml files.
-	for _, file := range files {
-		match, err := filepath.Match("./kubelet-config.yaml.*.removed", file)
-		s.Require().NoError(err)
-		if !match {
-			s.Failf("Unknown file in kubelet manifest folder", "%s in %v", file, files)
-		}
-	}
-}
-
-func (s *ha3x3Suite) checkKubeletConfigStackResources(ctx context.Context, ssh *common.SSHConnection, exist bool) {
+func (s *ha3x3Suite) checkKubeletConfigStackResources(ctx context.Context, ssh *common.SSHConnection) {
 	var out bytes.Buffer
 	err := ssh.Exec(ctx, "k0s kc get configmaps,roles,rolebindings -A -l 'k0s.k0sproject.io/stack=kubelet' -oname", common.SSHStreams{Out: &out})
 
 	if s.NoError(err) {
-		if exist {
-			s.NotEmpty(out.String())
-		} else {
-			s.Empty(out.String())
-		}
+		s.Empty(out.String())
 	}
 }
 
