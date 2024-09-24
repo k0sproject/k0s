@@ -86,15 +86,10 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		logger.Debug("Failed to run controller manager, retrying after backoff")
 		return true
 	}, func() error {
-		cl, err := w.clientFactory.GetClient()
+		clusterID, err := w.getClusterID(ctx)
 		if err != nil {
 			return err
 		}
-		ns, err := cl.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		clusterID := string(ns.UID)
 
 		restConfig, err := w.clientFactory.GetRESTConfig()
 		if err != nil {
@@ -123,4 +118,18 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		}
 		return nil
 	})
+}
+
+func (w *rootWorker) getClusterID(ctx context.Context) (string, error) {
+	client, err := w.clientFactory.GetClient()
+	if err != nil {
+		return "", err
+	}
+
+	namespace, err := client.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return string(namespace.UID), nil
 }
