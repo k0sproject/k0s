@@ -38,6 +38,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -259,17 +260,19 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]int
 		Name:     "testChartUpdate",
 		Template: chartCrdTemplate,
 		Data: struct {
-			Name      string
-			ChartName string
-			Values    string
-			Version   string
-			TargetNS  string
+			Name         string
+			ChartName    string
+			Values       string
+			Version      string
+			TargetNS     string
+			ForceUpgrade *bool
 		}{
-			Name:      "test-addon",
-			ChartName: "ealenn/echo-server",
-			Values:    string(valuesBytes),
-			Version:   "0.5.0",
-			TargetNS:  "default",
+			Name:         "test-addon",
+			ChartName:    "ealenn/echo-server",
+			Values:       string(valuesBytes),
+			Version:      "0.5.0",
+			TargetNS:     "default",
+			ForceUpgrade: pointer.Bool(false),
 		},
 	}
 	buf := bytes.NewBuffer([]byte{})
@@ -314,6 +317,7 @@ spec:
             version: "0.0.1"
             values: ""
             namespace: kube-system
+            forceUpgrade: false
 `
 
 // TODO: this actually duplicates logic from the controller code
@@ -333,4 +337,7 @@ spec:
 {{ .Values | nindent 4 }}
   version: {{ .Version }}
   namespace: {{ .TargetNS }}
+{{- if ne .ForceUpgrade nil }}
+  forceUpgrade: {{ .ForceUpgrade }}
+{{- end }}
 `
