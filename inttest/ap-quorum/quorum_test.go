@@ -21,6 +21,7 @@ import (
 
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
@@ -77,9 +78,10 @@ func (s *quorumSuite) SetupTest() {
 // TestApply applies a well-formed `plan` yaml, and asserts that
 // all of the correct values across different objects + controllers are correct.
 func (s *quorumSuite) TestApply() {
-	client, err := s.AutopilotClient(s.ControllerNode(0))
+	ctx := s.Context()
+
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
 	s.Require().NoError(err)
-	s.NotEmpty(client)
 
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
@@ -106,15 +108,14 @@ spec:
                   - controller2
 `
 
-	manifestFile := "/tmp/happy.yaml"
-	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
-
-	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
-	s.T().Logf("kubectl apply output: '%s'", out)
+	_, err = common.Create(ctx, restConfig, []byte(planTemplate))
 	s.Require().NoError(err)
+	s.T().Logf("Plan created")
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanCompleted)
+	client, err := k0sclientset.NewForConfig(restConfig)
+	s.Require().NoError(err)
+	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
 
 	s.Equal(1, len(plan.Status.Commands))

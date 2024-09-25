@@ -38,20 +38,56 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	aggregatorclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 // LogfFn will be used whenever something needs to be logged.
 type LogfFn func(format string, args ...any)
 
-// Poll tries a condition func until it returns true, an error or the specified
+// Creates the resource described by the given manifest.
+func Create(ctx context.Context, restConfig *rest.Config, manifest []byte) (*unstructured.Unstructured, error) {
+	var u unstructured.Unstructured
+	if err := yaml.Unmarshal(manifest, &u); err != nil {
+		return nil, err
+	}
+
+	disco, err := discovery.NewDiscoveryClientForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err := restmapper.GetAPIGroupResources(disco)
+	if err != nil {
+		return nil, err
+	}
+
+	gvk := u.GroupVersionKind()
+	mapper := restmapper.NewDiscoveryRESTMapper(resources)
+	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	dyn, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return dyn.Resource(mapping.Resource).Namespace(u.GetNamespace()).Create(ctx, &u, metav1.CreateOptions{})
+}
+
 // context is canceled or expired.
 func Poll(ctx context.Context, condition wait.ConditionWithContextFunc) error {
 	return wait.PollUntilContextCancel(ctx, 100*time.Millisecond, true, condition)

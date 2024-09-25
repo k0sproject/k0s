@@ -22,6 +22,7 @@ import (
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
@@ -92,6 +93,11 @@ func (s *selectorSuite) SetupTest() {
 // TestSelectors applies a well-formed `plan` yaml that wants to only update a controller statically, and
 // a worker via field/label selector definitions.
 func (s *selectorSuite) TestSelectors() {
+	ctx := s.Context()
+
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+	s.Require().NoError(err)
+
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: Plan
@@ -120,26 +126,21 @@ spec:
                 fields: metadata.name=worker1
 `
 	// Add 'foo=bar' to both 'controller0' and 'worker1'
-	_, err := s.RunCommandController(0, "/usr/local/bin/k0s kubectl label controlnodes controller0 foo=bar")
+	_, err = s.RunCommandController(0, "/usr/local/bin/k0s kubectl label controlnodes controller0 foo=bar")
 	s.Require().NoError(err)
 	_, err = s.RunCommandController(0, "/usr/local/bin/k0s kubectl label nodes worker1 foo=bar")
 	s.Require().NoError(err)
 
-	// Save + apply the plan
+	// Create the plan
 
-	apc, err := s.AutopilotClient(s.ControllerNode(0))
+	_, err = common.Create(ctx, restConfig, []byte(planTemplate))
 	s.Require().NoError(err)
-	s.NotEmpty(apc)
-
-	manifestFile := "/tmp/plan.yaml"
-	s.PutFileTemplate(s.ControllerNode(0), manifestFile, planTemplate, nil)
-
-	out, err := s.RunCommandController(0, fmt.Sprintf("/usr/local/bin/k0s kubectl apply -f %s", manifestFile))
-	s.T().Logf("kubectl apply output: '%s'", out)
-	s.Require().NoError(err)
+	s.T().Logf("Plan created")
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := aptest.WaitForPlanState(s.Context(), apc, apconst.AutopilotName, appc.PlanCompleted)
+	client, err := k0sclientset.NewForConfig(restConfig)
+	s.Require().NoError(err)
+	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
 
 	s.Equal(1, len(plan.Status.Commands))
