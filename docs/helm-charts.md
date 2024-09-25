@@ -35,15 +35,16 @@ It is possible to customize the timeout by using the `timeout' field.
 
 ### Chart configuration
 
-| Field     | Default value | Description                                                          |
-|-----------|---------------|----------------------------------------------------------------------|
-| name      | -             | Release name                                                         |
-| chartname | -             | chartname in form "repository/chartname" or path to tgz file         |
-| version   | -             | version to install                                                   |
-| timeout   | -             | timeout to wait for release install                                  |
-| values    | -             | yaml as a string, custom chart values                                |
-| namespace | -             | namespace to install chart into                                      |
-| order     | 0             | order to apply manifest. For equal values, alphanum ordering is used |
+| Field        | Default value | Description                                                                            |
+|--------------|---------------|----------------------------------------------------------------------------------------|
+| name         | -             | Release name                                                                           |
+| chartname    | -             | chartname in form "repository/chartname" or path to tgz file                           |
+| version      | -             | version to install                                                                     |
+| timeout      | -             | timeout to wait for release install                                                    |
+| values       | -             | yaml as a string, custom chart values                                                  |
+| namespace    | -             | namespace to install chart into                                                        |
+| forceUpgrade | true          | when set to false, disables the use of the "--force" flag when upgrading the the chart |
+| order        | 0             | order to apply manifest. For equal values, alphanum ordering is used                   |
 
 ## Example
 

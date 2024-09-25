@@ -96,7 +96,11 @@ type Chart struct {
 	Values    string        `json:"values"`
 	TargetNS  string        `json:"namespace"`
 	Timeout   time.Duration `json:"timeout"`
-	Order     int           `json:"order"`
+	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the the chart (default: true).
+	// +kubebuilder:default=true
+	// +optional
+	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
+	Order        int   `json:"order"`
 }
 
 // Validate performs validation
