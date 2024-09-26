@@ -18,7 +18,6 @@ package install
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -157,17 +156,4 @@ func GetServiceConfig(role string) *service.Config {
 		DisplayName: k0sDisplayName,
 		Description: k0sDescription,
 	}
-}
-
-func prepareEnvVars(envVars []string) map[string]string {
-	result := make(map[string]string)
-	for _, envVar := range envVars {
-		parts := strings.SplitN(envVar, "=", 1)
-		if len(parts) != 2 {
-			continue
-		}
-
-		result[parts[0]] = parts[1]
-	}
-	return result
 }
