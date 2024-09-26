@@ -16,8 +16,10 @@ package k0s
 
 import (
 	"crypto/sha256"
+	"path/filepath"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
+	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
@@ -87,7 +89,8 @@ func (b downloadManifestBuilderK0s) Build(signalNode crcli.Object, signalData ap
 			URL:          signalData.Command.K0sUpdate.URL,
 			ExpectedHash: signalData.Command.K0sUpdate.Sha256,
 			Hasher:       sha256.New(),
-			DownloadDir:  b.k0sBinaryDir,
+			// Force grab to download the new bin in the same folder of the current one but with '.tmp' suffix
+			Filename: filepath.Join(b.k0sBinaryDir, apconst.K0sTempFilename),
 		},
 		SuccessState: Cordoning,
 	}
