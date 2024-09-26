@@ -34,6 +34,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	helmapi "github.com/k0sproject/k0s/pkg/apis/helm"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
@@ -159,7 +160,9 @@ func addOpenEBSHelmExtension(helmSpec *k0sv1beta1.HelmExtensions, storageExtensi
 		TargetNS:  "openebs",
 		Version:   constant.OpenEBSVersion,
 		Values:    values,
-		Timeout:   metav1.Duration{Duration: time.Duration(time.Minute * 30)}, // it takes a while to install openebs
+		Timeout: v1beta1.BackwardCompatibleDuration(
+			metav1.Duration{Duration: time.Duration(time.Minute * 30)}, // it takes a while to install openebs
+		),
 	})
 	return helmSpec, nil
 }

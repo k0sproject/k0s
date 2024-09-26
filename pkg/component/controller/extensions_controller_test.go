@@ -251,7 +251,9 @@ func TestExtensionsController_writeChartManifestFile(t *testing.T) {
 					Version:   "0.0.1",
 					Values:    "values",
 					TargetNS:  "default",
-					Timeout:   metav1.Duration{Duration: 5 * time.Minute},
+					Timeout: k0sv1beta1.BackwardCompatibleDuration(
+						metav1.Duration{Duration: 5 * time.Minute},
+					),
 				},
 				fileName: "0_helm_extension_release.yaml",
 			},
@@ -277,12 +279,14 @@ spec:
 			name: "forceUpgrade is false should be included in manifest",
 			args: args{
 				chart: k0sv1beta1.Chart{
-					Name:         "release",
-					ChartName:    "k0s/chart",
-					Version:      "0.0.1",
-					Values:       "values",
-					TargetNS:     "default",
-					Timeout:      metav1.Duration{Duration: 5 * time.Minute},
+					Name:      "release",
+					ChartName: "k0s/chart",
+					Version:   "0.0.1",
+					Values:    "values",
+					TargetNS:  "default",
+					Timeout: k0sv1beta1.BackwardCompatibleDuration(
+						metav1.Duration{Duration: 5 * time.Minute},
+					),
 					ForceUpgrade: ptr.To(false),
 				},
 				fileName: "0_helm_extension_release.yaml",
