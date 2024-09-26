@@ -98,7 +98,7 @@ func EnsureService(args []string, envVars []string, force bool) error {
 		}
 	case "unix-systemv":
 		svcConfig.Option = map[string]interface{}{
-			"SystemdScript": sysvScript,
+			"SysVScript": sysvScript,
 		}
 	case "linux-systemd":
 		deps = []string{"After=network-online.target", "Wants=network-online.target"}
