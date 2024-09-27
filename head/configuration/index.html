@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../img/k0s_social.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.37">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.38">
     
     
       
@@ -2682,7 +2682,7 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 </tr>
 <tr>
 <td><code>mode</code></td>
-<td>Kube proxy operating mode, supported modes <code>iptables</code>, <code>ipvs</code>, <code>userspace</code> (default: <code>iptables</code>)</td>
+<td>Kube proxy operating mode, supported modes <code>iptables</code>, <code>ipvs</code>, <code>nftables</code>, <code>userspace</code> (default: <code>iptables</code>)</td>
 </tr>
 <tr>
 <td><code>iptables</code></td>
@@ -2691,6 +2691,10 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 <tr>
 <td><code>ipvs</code></td>
 <td>Kube proxy ipvs settings</td>
+</tr>
+<tr>
+<td><code>nftables</code></td>
+<td>Kube proxy nftables settings</td>
 </tr>
 <tr>
 <td><code>nodePortAddresses</code></td>
@@ -2715,6 +2719,13 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 <span class="w">  </span><span class="nt">tcpFinTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">  </span><span class="nt">tcpTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">  </span><span class="nt">udpTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+</code></pre></div>
+<p>Default kube-proxy nftables settings:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">nftables</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">masqueradeAll</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">masqueradeBit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">  </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<span class="w">  </span><span class="nt">syncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 </code></pre></div>
 <h4 id="specnetworknodelocalloadbalancing"><code>spec.network.nodeLocalLoadBalancing</code><a class="headerlink" href="#specnetworknodelocalloadbalancing" title="Permanent link">#</a></h4>
 <p>Configuration options related to k0s's <a href="../nllb/">node-local load balancing</a> feature.</p>
