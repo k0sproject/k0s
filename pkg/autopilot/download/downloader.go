@@ -15,14 +15,18 @@
 package download
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
+	"io"
+	"path/filepath"
+	"time"
 
-	"github.com/cavaliergopher/grab/v3"
-	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/sirupsen/logrus"
+	internalhttp "github.com/k0sproject/k0s/internal/http"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 )
 
 type Downloader interface {
@@ -38,61 +42,73 @@ type Config struct {
 }
 
 type downloader struct {
-	config       Config
-	logger       *logrus.Entry
-	httpResponse *grab.Response
+	config Config
 }
 
 var _ Downloader = (*downloader)(nil)
 
-func NewDownloader(config Config, logger *logrus.Entry) Downloader {
+func NewDownloader(config Config) Downloader {
 	return &downloader{
 		config: config,
-		logger: logger.WithField("component", "downloader"),
 	}
 }
 
-// Start begins the download process, starting the downloading functionality
-// on a separate goroutine. Cancelling the context will abort this operation
-// once started.
-func (d *downloader) Download(ctx context.Context) error {
-	// Setup the library for downloading HTTP content ..
-	dlreq, err := grab.NewRequest(d.config.DownloadDir, d.config.URL)
-
-	if err != nil {
-		return fmt.Errorf("invalid download request: %w", err)
-	}
+// Performs the download process.
+func (d *downloader) Download(ctx context.Context) (err error) {
+	var targets []io.Writer
 
 	// If we've been provided a hash and actual value to compare with, use it.
+	var expectedHash []byte
 	if d.config.Hasher != nil && d.config.ExpectedHash != "" {
-		expectedHash, err := hex.DecodeString(d.config.ExpectedHash)
+		expectedHash, err = hex.DecodeString(d.config.ExpectedHash)
 		if err != nil {
 			return fmt.Errorf("invalid update hash: %w", err)
 		}
-
-		dlreq.SetChecksum(d.config.Hasher, expectedHash, true)
+		targets = append(targets, d.config.Hasher)
 	}
 
-	// We're never really resuming downloads, so disable this feature.
-	// This also allows to re-download the file if it's already present.
-	dlreq.NoResume = true
-
-	if d.config.Filename != "" {
-		d.logger.Infof("Setting filename to %s", d.config.Filename)
-		dlreq.Filename = d.config.Filename
+	fileName := "download"
+	var downloadOpts []internalhttp.DownloadOption
+	if d.config.Filename == "" {
+		downloadOpts = append(downloadOpts, internalhttp.StoreSuggestedRemoteFileNameInto(&fileName))
+	} else {
+		fileName = filepath.Base(d.config.Filename)
+		if fileName != d.config.Filename {
+			return fmt.Errorf("filename contains path elements: %s", d.config.Filename)
+		}
+		fileName = d.config.Filename
 	}
 
-	client := grab.NewClient()
-	// Set user agent to mitigate 403 errors from GitHub
-	// See https://github.com/cavaliergopher/grab/issues/104
-	client.UserAgent = fmt.Sprintf("k0s/%s", build.Version)
-	d.httpResponse = client.Do(dlreq)
-
-	select {
-	case <-d.httpResponse.Done:
-		return d.httpResponse.Err()
-
-	case <-ctx.Done():
-		return fmt.Errorf("download cancelled")
+	// Set up target file for download.
+	target, err := file.AtomicWithTarget(filepath.Join(d.config.DownloadDir, fileName)).Open()
+	if err != nil {
+		return err
 	}
+	defer func() { err = errors.Join(err, target.Close()) }()
+	targets = append(targets, target)
+
+	// Set a very long overall download timeout. This will ensure that the
+	// download will fail at some point, even if the remote server is
+	// artificially slow.
+	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
+	defer cancel()
+
+	// Download from URL into targets.
+	if err = internalhttp.Download(ctx, d.config.URL, io.MultiWriter(targets...), downloadOpts...); err != nil {
+		return fmt.Errorf("download failed: %w", err)
+	}
+
+	// Check the hash of the downloaded data and fail if it doesn't match.
+	if expectedHash != nil {
+		if downloadedHash := d.config.Hasher.Sum(nil); !bytes.Equal(expectedHash, downloadedHash) {
+			return fmt.Errorf("hash mismatch: expected %x, got %x", expectedHash, downloadedHash)
+		}
+	}
+
+	// All is well. Finish the download.
+	if err := target.FinishWithBaseName(fileName); err != nil {
+		return fmt.Errorf("failed to finish download: %w", err)
+	}
+
+	return nil
 }
