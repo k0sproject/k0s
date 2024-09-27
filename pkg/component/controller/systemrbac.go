@@ -18,12 +18,12 @@ package controller
 
 import (
 	"context"
-	"fmt"
+	_ "embed"
 	"path"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -40,101 +40,18 @@ func NewSystemRBAC(manifestDir string) *SystemRBAC {
 	return &SystemRBAC{manifestDir}
 }
 
-// Init does nothing
-func (s *SystemRBAC) Init(_ context.Context) error {
-	return nil
-}
-
-// Run reconciles the k0s related system RBAC rules
-func (s *SystemRBAC) Start(_ context.Context) error {
+// Writes the bootstrap RBAC manifests into the manifests folder.
+func (s *SystemRBAC) Init(context.Context) error {
 	rbacDir := path.Join(s.manifestDir, "bootstraprbac")
-	err := dir.Init(rbacDir, constant.ManifestsDirMode)
-	if err != nil {
+	if err := dir.Init(rbacDir, constant.ManifestsDirMode); err != nil {
 		return err
 	}
-	tw := templatewriter.TemplateWriter{
-		Name:     "bootstrap-rbac",
-		Template: bootstrapRBACTemplate,
-		Data:     struct{}{},
-		Path:     filepath.Join(rbacDir, "bootstrap-rbac.yaml"),
-	}
-	err = tw.Write()
-	if err != nil {
-		return fmt.Errorf("error writing bootstrap-rbac manifests, will NOT retry: %w", err)
-	}
-	return nil
+
+	return file.WriteContentAtomically(filepath.Join(rbacDir, "bootstrap-rbac.yaml"), systemRBAC, 0644)
 }
 
-// Stop does currently nothing
-func (s *SystemRBAC) Stop() error {
-	return nil
-}
+func (s *SystemRBAC) Start(context.Context) error { return nil }
+func (s *SystemRBAC) Stop() error                 { return nil }
 
-const bootstrapRBACTemplate = `
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: kubelet-bootstrap
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:node-bootstrapper
-subjects:
-- apiGroup: rbac.authorization.k8s.io
-  kind: Group
-  name: system:bootstrappers
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: node-autoapprove-bootstrap
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:certificates.k8s.io:certificatesigningrequests:nodeclient
-subjects:
-- apiGroup: rbac.authorization.k8s.io
-  kind: Group
-  name: system:bootstrappers
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: node-autoapprove-certificate-rotation
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:certificates.k8s.io:certificatesigningrequests:selfnodeclient
-subjects:
-- apiGroup: rbac.authorization.k8s.io
-  kind: Group
-  name: system:nodes
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: system:nodes:autopilot
-rules:
-  - apiGroups: ["autopilot.k0sproject.io"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: [""]
-    resources: ["nodes", "pods", "pods/eviction", "namespaces"]
-    verbs: ["*"]
-  - apiGroups: ["apps"]
-    resources: ["*"]
-    verbs: ["*"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: system:nodes:autopilot
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:nodes:autopilot
-subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: system:nodes
-`
+//go:embed systemrbac.yaml
+var systemRBAC []byte
