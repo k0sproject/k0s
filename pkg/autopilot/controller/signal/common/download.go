@@ -90,7 +90,6 @@ func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.
 
 	} else {
 		logger.Infof("Download of '%s' successful", manifest.URL)
-
 		// When the download is complete move the status to the success state
 		signalData.Status = apsigv2.NewStatus(manifest.SuccessState)
 	}

@@ -34,6 +34,7 @@ type Config struct {
 	ExpectedHash string
 	Hasher       hash.Hash
 	DownloadDir  string
+	Filename     string
 }
 
 type downloader struct {
@@ -70,6 +71,15 @@ func (d *downloader) Download(ctx context.Context) error {
 		}
 
 		dlreq.SetChecksum(d.config.Hasher, expectedHash, true)
+	}
+
+	// We're never really resuming downloads, so disable this feature.
+	// This also allows to re-download the file if it's already present.
+	dlreq.NoResume = true
+
+	if d.config.Filename != "" {
+		d.logger.Infof("Setting filename to %s", d.config.Filename)
+		dlreq.Filename = d.config.Filename
 	}
 
 	client := grab.NewClient()
