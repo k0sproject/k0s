@@ -159,7 +159,9 @@ func addOpenEBSHelmExtension(helmSpec *k0sv1beta1.HelmExtensions, storageExtensi
 		TargetNS:  "openebs",
 		Version:   constant.OpenEBSVersion,
 		Values:    values,
-		Timeout:   metav1.Duration{Duration: time.Duration(time.Minute * 30)}, // it takes a while to install openebs
+		Timeout: k0sv1beta1.BackwardCompatibleDuration(
+			metav1.Duration{Duration: time.Duration(time.Minute * 30)}, // it takes a while to install openebs
+		),
 	})
 	return helmSpec, nil
 }

@@ -17,7 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"errors"
+	"time"
 
 	"helm.sh/helm/v3/pkg/chartutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -97,12 +99,45 @@ type Chart struct {
 	TargetNS  string `json:"namespace"`
 	// Timeout specifies the timeout for how long to wait for the chart installation to finish.
 	// A duration string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-	Timeout metav1.Duration `json:"timeout"`
+	// +kubebuilder:validation:XIntOrString
+	Timeout BackwardCompatibleDuration `json:"timeout,omitempty"`
 	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the the chart (default: true).
 	// +kubebuilder:default=true
 	// +optional
 	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
 	Order        int   `json:"order"`
+}
+
+// BackwardCompatibleDuration is a metav1.Duration with a different JSON
+// unmarshaler. The unmashaler accepts its value as either a string (e.g.
+// 10m15s) or as an integer 64. If the value is of type integer then, for
+// backward compatibility, it is interpreted as nano seconds.
+type BackwardCompatibleDuration metav1.Duration
+
+// MarshalJSON marshals the BackwardCompatibleDuration to JSON.
+func (b BackwardCompatibleDuration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(b.Duration.String())
+}
+
+// UnmarshalJSON attempts unmarshals the provided value into a
+// BackwardCompatibleDuration. This function attempts to unmarshal it as a
+// string first and if that fails it attempts to parse it as an integer.
+func (b *BackwardCompatibleDuration) UnmarshalJSON(data []byte) error {
+	var duration metav1.Duration
+	ustrerr := duration.UnmarshalJSON(data)
+	if ustrerr == nil {
+		*b = BackwardCompatibleDuration(duration)
+		return nil
+	}
+
+	var integer int64
+	if err := json.Unmarshal(data, &integer); err != nil {
+		// we return the error from the first unmarshal attempt.
+		return ustrerr
+	}
+	metadur := metav1.Duration{Duration: time.Duration(integer)}
+	*b = BackwardCompatibleDuration(metadur)
+	return nil
 }
 
 // Validate performs validation
