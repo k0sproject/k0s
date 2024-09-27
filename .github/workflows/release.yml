@@ -602,7 +602,7 @@ jobs:
       - name: Create k0s Cluster using k0sctl
         run: |
           # download k0sctl
-          curl $CURL_OPTS --output k0sctl "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-x64"
+          curl $CURL_OPTS --output k0sctl "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-amd64"
           chmod +x ./k0sctl
           ./k0sctl apply -c k0sctl.yaml
 
