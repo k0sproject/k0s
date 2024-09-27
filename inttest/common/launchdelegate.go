@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -164,7 +165,7 @@ func (o *openRCLaunchDelegate) InitController(ctx context.Context, conn *SSHConn
 	}
 
 	cmd := "/etc/init.d/k0scontroller start"
-	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+	if err := conn.Exec(ctx, cmd, SSHStreams{Out: os.Stderr, Err: os.Stderr}); err != nil {
 		return fmt.Errorf("unable to execute %q: %w", cmd, err)
 	}
 
@@ -256,7 +257,7 @@ func (o *openRCLaunchDelegate) installK0sService(ctx context.Context, conn *SSHC
 	existsCommand := fmt.Sprintf("/usr/bin/file /etc/init.d/k0s%s", k0sType)
 	if _, err := conn.ExecWithOutput(ctx, existsCommand); err != nil {
 		cmd := fmt.Sprintf("%s install %s", o.k0sFullPath, k0sType)
-		if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		if err := conn.Exec(ctx, cmd, SSHStreams{Out: os.Stderr, Err: os.Stderr}); err != nil {
 			return fmt.Errorf("unable to execute %q: %w", cmd, err)
 		}
 	}

@@ -72,6 +72,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	s.T().Run("k0sInstall", func(t *testing.T) {
 		// Install with some arbitrary kubelet flags so we see those get properly passed to the kubelet
 		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server --kubelet-extra-args='--housekeeping-interval=10s --log-flush-frequency=5s'")
+		t.Logf("%s", out)
 		assert.NoError(t, err)
 		assert.Equal(t, "", out)
 	})
@@ -79,8 +80,11 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	s.Run("k0sStart", func() {
 		assert := s.Assertions
 		require := s.Require()
+		out, _ := ssh.ExecWithOutput(s.Context(), "cat /etc/init.d/k0scontroller")
+		s.T().Logf("k0scontroller init script:\n%s", out)
 
-		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s start")
+		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s start")
+		s.T().Logf("%s", out)
 		require.NoError(err)
 
 		require.NoError(s.WaitForKubeAPI(s.ControllerNode(0)))

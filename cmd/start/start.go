@@ -20,9 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/k0sproject/k0s/pkg/install"
-
-	"github.com/kardianos/service"
+	"github.com/k0sproject/k0s/pkg/service"
 	"github.com/spf13/cobra"
 )
 
@@ -34,16 +32,24 @@ func NewStartCmd() *cobra.Command {
 			if os.Geteuid() != 0 {
 				return fmt.Errorf("this command must be run as root")
 			}
-			svc, err := install.InstalledService()
+			svc, err := service.InstalledK0sService()
 			if err != nil {
 				return err
 			}
-			status, _ := svc.Status()
+
+			status, err := svc.Status()
+			if err != nil {
+				return err
+			}
 			if status == service.StatusRunning {
 				return fmt.Errorf("already running")
 			}
-			return svc.Start()
+
+			if err := svc.Start(); err != nil {
+				return fmt.Errorf("failed to start the service: %w", err)
+			}
+
+			return nil
 		},
 	}
-
 }
