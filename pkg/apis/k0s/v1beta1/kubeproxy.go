@@ -42,6 +42,10 @@ type KubeProxy struct {
 	IPVS               KubeProxyIPVSConfiguration     `json:"ipvs,omitempty"`
 	NFTables           KubeProxyNFTablesConfiguration `json:"nftables,omitempty"`
 	NodePortAddresses  []string                       `json:"nodePortAddresses,omitempty"`
+
+	// Map of key-values (strings) for any extra arguments to pass down to kube-proxy process
+	// Any behavior triggered by these parameters is outside k0s support.
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
 // KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration

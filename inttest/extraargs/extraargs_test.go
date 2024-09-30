@@ -46,12 +46,18 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see kube-router pods ready")
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
-	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
-	defer ssh.Disconnect()
+	sshCtrl, err := s.SSH(s.Context(), s.ControllerNode(0))
+	defer sshCtrl.Disconnect()
 	s.NoError(err)
 
-	s.checkFlag(ssh, "/var/lib/k0s/bin/kube-apiserver", "--disable-admission-plugins=PodSecurity")
-	s.checkFlag(ssh, "/var/lib/k0s/bin/etcd", "--logger=zap")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-apiserver", "--disable-admission-plugins=PodSecurity")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/etcd", "--logger=zap")
+
+	sshWorker, err := s.SSH(s.Context(), s.WorkerNode(0))
+	defer sshWorker.Disconnect()
+	s.NoError(err)
+
+	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "--config-sync-period=12m0s")
 
 }
 func (s *ExtraArgsSuite) checkFlag(ssh *common.SSHConnection, processName string, flag string) {
@@ -88,4 +94,8 @@ spec:
     etcd:
       extraArgs:
         logger: zap
+  network:
+    kubeProxy:
+      extraArgs:
+        config-sync-period: 12m0s
 `
