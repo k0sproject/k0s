@@ -20,7 +20,6 @@ const openRCScript = `#!/sbin/openrc-run
 {{- if .Option.Environment}}{{range .Option.Environment}}
 export {{.}}{{end}}{{- end}}
 supervisor=supervise-daemon
-name="{{.DisplayName}}"
 description="{{.Description}}"
 command={{.Path|cmdEscape}}
 {{- if .Arguments }}
