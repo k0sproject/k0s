@@ -19,8 +19,6 @@ package install
 import (
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -88,11 +86,6 @@ func EnsureService(args []string, envVars []string, force bool) error {
 	// fetch service type
 	svcType := s.Platform()
 	switch svcType {
-	case "darwin-launchd":
-		svcConfig.Option = map[string]interface{}{
-			"EnvironmentMap": prepareEnvVars(envVars),
-			"LaunchdConfig":  launchdConfig,
-		}
 	case "linux-openrc":
 		deps = []string{"need cgroups", "need net", "use dns", "after firewall"}
 		svcConfig.Option = map[string]interface{}{
@@ -104,7 +97,7 @@ func EnsureService(args []string, envVars []string, force bool) error {
 		}
 	case "unix-systemv":
 		svcConfig.Option = map[string]interface{}{
-			"SystemdScript": sysvScript,
+			"SysVScript": sysvScript,
 		}
 	case "linux-systemd":
 		deps = []string{"After=network-online.target", "Wants=network-online.target"}
@@ -152,37 +145,6 @@ func UninstallService(role string) error {
 	return s.Uninstall()
 }
 
-// GetSysInit returns the sys init platform name, and the stub file path for a system
-func GetSysInit(role string) (sysInitPlatform string, stubFile string, err error) {
-	if role == "controller+worker" {
-		role = "controller"
-	}
-	if sysInitPlatform, err = getSysInitPlatform(); err != nil {
-		return sysInitPlatform, stubFile, err
-	}
-	if sysInitPlatform == "linux-systemd" {
-		stubFile = fmt.Sprintf("/etc/systemd/system/k0s%s.service", role)
-		if _, err := os.Stat(stubFile); err != nil {
-			stubFile = ""
-		}
-	} else if sysInitPlatform == "linux-openrc" {
-		stubFile = fmt.Sprintf("/etc/init.d/k0s%s", role)
-		if _, err := os.Stat(stubFile); err != nil {
-			stubFile = ""
-		}
-	}
-	return sysInitPlatform, stubFile, err
-}
-
-func getSysInitPlatform() (string, error) {
-	prg := &Program{}
-	s, err := service.New(prg, &service.Config{Name: "132"})
-	if err != nil {
-		return "", err
-	}
-	return s.Platform(), nil
-}
-
 func GetServiceConfig(role string) *service.Config {
 	var k0sDisplayName string
 
@@ -196,58 +158,3 @@ func GetServiceConfig(role string) *service.Config {
 		Description: k0sDescription,
 	}
 }
-
-func prepareEnvVars(envVars []string) map[string]string {
-	result := make(map[string]string)
-	for _, envVar := range envVars {
-		parts := strings.SplitN(envVar, "=", 1)
-		if len(parts) != 2 {
-			continue
-		}
-
-		result[parts[0]] = parts[1]
-	}
-	return result
-}
-
-// Upstream kardianos/service does not support all the options we want to set to the systemd unit, hence we override the template
-// Currently mostly for KillMode=process so we get systemd to only send the sigterm to the main process
-const systemdScript = `[Unit]
-Description={{.Description}}
-Documentation=https://docs.k0sproject.io
-ConditionFileIsExecutable={{.Path|cmdEscape}}
-{{range $i, $dep := .Dependencies}}
-{{$dep}} {{end}}
-
-[Service]
-StartLimitInterval=5
-StartLimitBurst=10
-ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmdEscape}}{{end}}
-{{- if .Option.Environment}}{{range .Option.Environment}}
-Environment="{{.}}"{{end}}{{- end}}
-
-RestartSec=10
-Delegate=yes
-KillMode=process
-LimitCORE=infinity
-TasksMax=infinity
-TimeoutStartSec=0
-
-{{- if .ChRoot}}RootDirectory={{.ChRoot|cmd}}{{- end}}
-
-{{- if .WorkingDirectory}}WorkingDirectory={{.WorkingDirectory|cmdEscape}}{{- end}}
-{{- if .UserName}}User={{.UserName}}{{end}}
-{{- if .ReloadSignal}}ExecReload=/bin/kill -{{.ReloadSignal}} "$MAINPID"{{- end}}
-{{- if .PIDFile}}PIDFile={{.PIDFile|cmd}}{{- end}}
-{{- if and .LogOutput .HasOutputFileSupport -}}
-StandardOutput=file:/var/log/{{.Name}}.out
-StandardError=file:/var/log/{{.Name}}.err
-{{- end}}
-
-{{- if .SuccessExitStatus}}SuccessExitStatus={{.SuccessExitStatus}}{{- end}}
-{{ if gt .LimitNOFILE -1 }}LimitNOFILE={{.LimitNOFILE}}{{- end}}
-{{ if .Restart}}Restart={{.Restart}}{{- end}}
-
-[Install]
-WantedBy=multi-user.target
-`
