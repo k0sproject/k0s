@@ -654,6 +654,13 @@ spec:
                     properties:
                       disabled:
                         type: boolean
+                      extraArgs:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Map of key-values (strings) for any extra arguments to pass down to kube-proxy process
+                          Any behavior triggered by these parameters is outside k0s support.
+                        type: object
                       iptables:
                         description: |-
                           KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration

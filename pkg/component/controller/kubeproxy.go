@@ -26,6 +26,7 @@ import (
 	"reflect"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -132,6 +133,17 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 			k.log.Warnf("Unsupported node-local load balancer type (%q), using %q as control plane endpoint", controlPlaneEndpoint)
 		}
 	}
+	args := stringmap.StringMap{
+		"config":            "/var/lib/kube-proxy/config.conf",
+		"hostname-override": "$(NODE_NAME)",
+	}
+
+	for name, value := range clusterConfig.Spec.Network.KubeProxy.ExtraArgs {
+		if _, ok := args[name]; ok {
+			logrus.Warnf("overriding kube-proxy flag with user provided value: %s", name)
+		}
+		args[name] = value
+	}
 
 	cfg := proxyConfig{
 		ClusterCIDR:          clusterConfig.Spec.Network.BuildPodCIDR(),
@@ -142,6 +154,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
 		MetricsBindAddress:   clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
 		FeatureGates:         clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
+		Args:                 args.ToDashedArgs(),
 	}
 
 	nodePortAddresses, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NodePortAddresses)
@@ -184,6 +197,7 @@ type proxyConfig struct {
 	NFTables             string
 	FeatureGates         map[string]bool
 	NodePortAddresses    string
+	Args                 []string
 }
 
 const proxyTemplate = `
@@ -335,8 +349,10 @@ spec:
         imagePullPolicy: {{ .PullPolicy }}
         command:
         - /usr/local/bin/kube-proxy
-        - --config=/var/lib/kube-proxy/config.conf
-        - --hostname-override=$(NODE_NAME)
+        args:
+        {{ range .Args}}
+        - {{ . }} 
+        {{ end }}
         securityContext:
           privileged: true
         volumeMounts:

@@ -118,7 +118,7 @@ spec:
 | `onlyBindToAddress` | The API server binds too all interfaces by default. With this option set to `true`, the API server will only listen on the IP address configured by the `address` option (first non-local address by default). This can be necessary with multi-homed control plane nodes. |
 | `externalAddress`   | The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use when joining new nodes to the cluster.                                                 |
 | `sans`              | List of additional addresses to push to API servers serving the certificate.                                                                                                                                                                                               |
-| `extraArgs`         | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.                                                                                                                                                                         |
+| `extraArgs`         | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process. Any behavior triggered by these parameters is outside k0s support.                                                                                                      |
 | `port`¹             | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                                                               |
 | `k0sApiPort`¹       | Custom port for k0s-api server to listen on (default: 9443)                                                                                                                                                                                                                |
 
@@ -130,7 +130,7 @@ spec:
 |------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `type`                 | Type of the data store (valid values:`etcd` or `kine`). **Note**: Type `etcd` will cause k0s to create and manage an elastic etcd cluster within the controller nodes. |
 | `etcd.peerAddress`     | Node address used for etcd cluster peering.                                                                                                                            |
-| `etcd.extraArgs`       | Map of key-values (strings) for any extra arguments to pass down to etcd process.                                                                                      |
+| `etcd.extraArgs`       | Map of key-values (strings) for any extra arguments to pass down to etcd process. Any behavior triggered by these parameters is outside k0s support.                   |
 | `kine.dataSource`      | [kine](https://github.com/k3s-io/kine) datasource URL.                                                                                                                 |
 | `etcd.externalCluster` | Configuration when etcd is externally managed, i.e. running on dedicated nodes. See [`spec.storage.etcd.externalCluster`](#specstorageetcdexternalcluster)             |
 
@@ -231,14 +231,16 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 
 #### `spec.network.kubeProxy`
 
-| Element             | Description                                                                                                   |
-|---------------------|---------------------------------------------------------------------------------------------------------------|
-| `disabled`          | Disable kube-proxy altogether (default: `false`).                                                             |
-| `mode`              | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `nftables`, `userspace` (default: `iptables`)  |
-| `iptables`          | Kube proxy iptables settings                                                                                  |
-| `ipvs`              | Kube proxy ipvs settings                                                                                      |
-| `nftables`          | Kube proxy nftables settings                                                                                  |
-| `nodePortAddresses` | Kube proxy [nodePortAddresses](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/) |
+| Element             | Description                                                                                                                                                |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `disabled`          | Disable kube-proxy altogether (default: `false`).                                                                                                          |
+| `mode`              | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `nftables`, `userspace` (default: `iptables`)                                               |
+| `iptables`          | Kube proxy iptables settings                                                                                                                               |
+| `ipvs`              | Kube proxy ipvs settings                                                                                                                                   |
+| `nftables`          | Kube proxy nftables settings                                                                                                                               |
+| `nodePortAddresses` | Kube proxy [nodePortAddresses](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/)                                              |
+| `nodePortAddresses` | Kube proxy [nodePortAddresses](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/)                                              |
+| `extraArgs` .       | Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. Any behavior triggered by these parameters is outside k0s support. |
 
 Default kube-proxy iptables settings:
 
@@ -349,13 +351,13 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 | Element     | Description                                                                                                             |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `extraArgs` | Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process. |
+| `extraArgs` | Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process. Any behavior triggered by these parameters is outside k0s support. |
 
 ### `spec.scheduler`
 
 | Element     | Description                                                                                                |
 | ----------- | ---------------------------------------------------------------------------------------------------------- |
-| `extraArgs` | Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process. |
+| `extraArgs` | Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process. Any behavior triggered by these parameters is outside k0s support. |
 
 ### `spec.workerProfiles`
 
