@@ -2439,7 +2439,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.</td>
+<td>Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process. Any behavior triggered by these parameters is outside k0s support.</td>
 </tr>
 <tr>
 <td><code>port</code>¹</td>
@@ -2471,7 +2471,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>etcd.extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments to pass down to etcd process.</td>
+<td>Map of key-values (strings) for any extra arguments to pass down to etcd process. Any behavior triggered by these parameters is outside k0s support.</td>
 </tr>
 <tr>
 <td><code>kine.dataSource</code></td>
@@ -2700,6 +2700,14 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 <td><code>nodePortAddresses</code></td>
 <td>Kube proxy <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">nodePortAddresses</a></td>
 </tr>
+<tr>
+<td><code>nodePortAddresses</code></td>
+<td>Kube proxy <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">nodePortAddresses</a></td>
+</tr>
+<tr>
+<td><code>extraArgs</code> .</td>
+<td>Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. Any behavior triggered by these parameters is outside k0s support.</td>
+</tr>
 </tbody>
 </table>
 <p>Default kube-proxy iptables settings:</p>
@@ -2900,7 +2908,7 @@ node-local load balancing.</p>
 <tbody>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process.</td>
+<td>Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process. Any behavior triggered by these parameters is outside k0s support.</td>
 </tr>
 </tbody>
 </table>
@@ -2915,7 +2923,7 @@ node-local load balancing.</p>
 <tbody>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process.</td>
+<td>Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process. Any behavior triggered by these parameters is outside k0s support.</td>
 </tr>
 </tbody>
 </table>
