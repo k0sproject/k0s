@@ -18,6 +18,7 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -36,24 +37,42 @@ type DownloadOption func(*downloadOptions)
 func Download(ctx context.Context, url string, target io.Writer, options ...DownloadOption) (err error) {
 	opts := downloadOptions{
 		stalenessTimeout: time.Minute,
+		header:           http.Header{},
 	}
 	for _, opt := range options {
 		opt(&opts)
 	}
 
-	// Prepare the client and the request.
-	client := http.Client{
-		Transport: &http.Transport{
-			// This is a one-shot HTTP client which should release resources immediately.
-			DisableKeepAlives: true,
-			Proxy:             http.ProxyFromEnvironment,
-		},
+	// this transports is, by design, a trimmed down version of http's
+	// DefaultTransport. we do not want to have all those timeouts the
+	// default client brings in.
+	transport := &http.Transport{
+		// This is a one-shot HTTP client which should release resources immediately.
+		DisableKeepAlives: true,
+		Proxy:             http.ProxyFromEnvironment,
 	}
+
+	// if tls check is disabled, we need to disable the transport's TLS checks as well.
+	if opts.insecureSkipTLSVerify {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	// Prepare the client and the request.
+	client := http.Client{Transport: transport}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("invalid download request: %w", err)
 	}
 	req.Header.Set("User-Agent", "k0s/"+build.Version)
+	for header, values := range opts.header {
+		for _, value := range values {
+			req.Header.Add(header, value)
+		}
+	}
+
+	if opts.username != "" && opts.password != "" {
+		req.SetBasicAuth(opts.username, opts.password)
+	}
 
 	// Create a context with an inactivity timeout to cancel the download if it stalls.
 	ctx, cancel, keepAlive := k0scontext.WithInactivityTimeout(ctx, opts.stalenessTimeout)
@@ -110,7 +129,33 @@ func WithStalenessTimeout(stalenessTimeout time.Duration) DownloadOption {
 	}
 }
 
+// WithInsecureSkipTLSVerify sets the insecureSkipTLSVerify option to true.
+func WithInsecureSkipTLSVerify() DownloadOption {
+	return func(opts *downloadOptions) {
+		opts.insecureSkipTLSVerify = true
+	}
+}
+
+// WithBasicAuth sets the username and password for basic auth.
+func WithBasicAuth(username, password string) DownloadOption {
+	return func(opts *downloadOptions) {
+		opts.username = username
+		opts.password = password
+	}
+}
+
+// WithHeader adds a header to the request.
+func WithHeader(header, value string) DownloadOption {
+	return func(opts *downloadOptions) {
+		opts.header.Add(header, value)
+	}
+}
+
 type downloadOptions struct {
-	stalenessTimeout time.Duration
+	stalenessTimeout      time.Duration
+	insecureSkipTLSVerify bool
+	username              string
+	password              string
+	header                http.Header
 	downloadFileNameOptions
 }
