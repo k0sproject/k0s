@@ -42,11 +42,7 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 		}
 	}
 
-	metaClient, err := metadata.NewForConfig(clientFactory.GetRESTConfig())
-	if err != nil {
-		return err
-	}
-
+	var metaClient metadata.Interface
 	for _, r := range resources {
 		gv, err := schema.ParseGroupVersion(r.GroupVersion)
 		if err != nil {
@@ -67,6 +63,17 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 			removedInVersion := removedInVersion(gv.WithKind(ar.Kind))
 			if removedInVersion == "" || semver.Compare(newVersion, removedInVersion) < 0 {
 				continue
+			}
+
+			if metaClient == nil {
+				restConfig, err := clientFactory.GetRESTConfig()
+				if err != nil {
+					return err
+				}
+
+				if metaClient, err = metadata.NewForConfig(restConfig); err != nil {
+					return err
+				}
 			}
 
 			metas, err := metaClient.Resource(gv.WithResource(ar.Name)).

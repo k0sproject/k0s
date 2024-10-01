@@ -58,6 +58,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/rest"
 )
 
 type command config.CLIOptions
@@ -162,7 +163,20 @@ func (c *command) start(ctx context.Context) error {
 	}()
 
 	// common factory to get the admin kube client that's needed in many components
-	adminClientFactory := kubernetes.NewAdminClientFactory(c.K0sVars.AdminKubeConfigPath)
+	adminClientFactory := &kubernetes.ClientFactory{LoadRESTConfig: func() (*rest.Config, error) {
+		config, err := kubernetes.ClientConfig(kubernetes.KubeconfigFromFile(c.K0sVars.AdminKubeConfigPath))
+		if err != nil {
+			return nil, err
+		}
+
+		// We're always running the client on the same host as the API, no need to compress
+		config.DisableCompression = true
+		// To mitigate stack applier bursts in startup
+		config.QPS = 40.0
+		config.Burst = 400.0
+
+		return config, nil
+	}}
 
 	certificateManager := certificate.Manager{K0sVars: c.K0sVars}
 
@@ -561,7 +575,11 @@ func (c *command) start(ctx context.Context) error {
 		EnableWorker:       c.EnableWorker,
 	})
 
-	apClientFactory, err := apclient.NewClientFactory(adminClientFactory.GetRESTConfig())
+	restConfig, err := adminClientFactory.GetRESTConfig()
+	if err != nil {
+		return err
+	}
+	apClientFactory, err := apclient.NewClientFactory(restConfig)
 	if err != nil {
 		return err
 	}

@@ -17,9 +17,9 @@ limitations under the License.
 package kubernetes
 
 import (
-	"fmt"
 	"sync"
 
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	etcdMemberClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	cfgClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -37,31 +37,23 @@ type ClientFactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
 	GetDynamicClient() (dynamic.Interface, error)
 	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
-	GetConfigClient() (cfgClient.ClusterConfigInterface, error)
-	GetRESTClient() (rest.Interface, error)
-	GetRESTConfig() *rest.Config
-	GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error)
-}
-
-// NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
-func NewAdminClientFactory(kubeconfigPath string) ClientFactoryInterface {
-	return &ClientFactory{
-		configPath: kubeconfigPath,
-	}
+	GetK0sClient() (k0sclientset.Interface, error)
+	GetConfigClient() (cfgClient.ClusterConfigInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
+	GetRESTConfig() (*rest.Config, error)
+	GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
 }
 
 // ClientFactory implements a cached and lazy-loading ClientFactory for all the different types of kube clients we use
 // It's imoplemented as lazy-loading so we can create the factory itself before we have the api, etcd and other components up so we can pass
 // the factory itself to components needing kube clients and creation time.
 type ClientFactory struct {
-	configPath string
+	LoadRESTConfig func() (*rest.Config, error)
 
-	client           kubernetes.Interface
-	dynamicClient    dynamic.Interface
-	discoveryClient  discovery.CachedDiscoveryInterface
-	restConfig       *rest.Config
-	configClient     cfgClient.ClusterConfigInterface
-	etcdMemberClient etcdMemberClient.EtcdMemberInterface
+	client          kubernetes.Interface
+	dynamicClient   dynamic.Interface
+	discoveryClient discovery.CachedDiscoveryInterface
+	k0sClient       k0sclientset.Interface
+	restConfig      *rest.Config
 
 	mutex sync.Mutex
 }
@@ -69,142 +61,135 @@ type ClientFactory struct {
 func (c *ClientFactory) GetClient() (kubernetes.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	var err error
-
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-		// We're always running the client on the same host as the API, no need to compress
-		c.restConfig.DisableCompression = true
-		// To mitigate stack applier bursts in startup
-		c.restConfig.QPS = 40.0
-		c.restConfig.Burst = 400.0
-	}
 
 	if c.client != nil {
 		return c.client, nil
 	}
 
-	client, err := kubernetes.NewForConfig(c.restConfig)
+	config, err := c.getRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
 	c.client = client
 
-	return c.client, nil
+	return client, nil
 }
 
 func (c *ClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	var err error
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-		// We're always running the client on the same host as the API, no need to compress
-		c.restConfig.DisableCompression = true
-		// To mitigate stack applier bursts in startup
-		c.restConfig.QPS = 40.0
-		c.restConfig.Burst = 400.0
-	}
 
 	if c.dynamicClient != nil {
 		return c.dynamicClient, nil
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(c.restConfig)
+	config, err := c.getRESTConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	c.dynamicClient = dynamicClient
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
 
-	return c.dynamicClient, nil
+	c.dynamicClient = client
+
+	return client, nil
 }
 
 func (c *ClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	var err error
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-	}
 
 	if c.discoveryClient != nil {
 		return c.discoveryClient, nil
 	}
 
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(c.restConfig)
-	cachedDiscoveryClient := memory.NewMemCacheClient(discoveryClient)
+	config, err := c.getRESTConfig()
 	if err != nil {
 		return nil, err
 	}
-	c.discoveryClient = cachedDiscoveryClient
 
-	return c.discoveryClient, nil
+	client, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	cachedClient := memory.NewMemCacheClient(client)
+
+	c.discoveryClient = cachedClient
+
+	return cachedClient, nil
 }
 
+func (c *ClientFactory) GetK0sClient() (k0sclientset.Interface, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if c.k0sClient != nil {
+		return c.k0sClient, nil
+	}
+
+	config, err := c.getRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := k0sclientset.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	c.k0sClient = client
+
+	return client, nil
+}
+
+// Deprecated: Use [ClientFactory.GetK0sClient] instead.
 func (c *ClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	var err error
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-	}
-	if c.configClient != nil {
-		return c.configClient, nil
-	}
-
-	configClient, err := cfgClient.NewForConfig(c.restConfig)
+	k0sClient, err := c.GetK0sClient()
 	if err != nil {
 		return nil, err
 	}
-	c.configClient = configClient.ClusterConfigs(constant.ClusterConfigNamespace)
-	return c.configClient, nil
+
+	return k0sClient.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace), nil
 }
 
+// Deprecated: Use [ClientFactory.GetK0sClient] instead.
 func (c *ClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterface, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	var err error
-	if c.restConfig == nil {
-		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
-	}
-	if c.etcdMemberClient != nil {
-		return c.etcdMemberClient, nil
-	}
-
-	etcdMemberClient, err := etcdMemberClient.NewForConfig(c.restConfig)
+	k0sClient, err := c.GetK0sClient()
 	if err != nil {
 		return nil, err
 	}
-	return etcdMemberClient.EtcdMembers(), nil
+
+	return k0sClient.EtcdV1beta1().EtcdMembers(), nil
 }
 
-func (c *ClientFactory) GetRESTClient() (rest.Interface, error) {
-	cs, ok := c.client.(*kubernetes.Clientset)
-	if !ok {
-		return nil, fmt.Errorf("error converting interface")
+func (c *ClientFactory) GetRESTConfig() (*rest.Config, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return c.getRESTConfig()
+}
+
+func (c *ClientFactory) getRESTConfig() (*rest.Config, error) {
+	if c.restConfig != nil {
+		return c.restConfig, nil
 	}
-	return cs.RESTClient(), nil
-}
 
-func (c *ClientFactory) GetRESTConfig() *rest.Config {
-	return c.restConfig
+	config, err := c.LoadRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	c.restConfig = config
+
+	return config, err
 }
 
 // KubeconfigFromFile returns a [clientcmd.KubeconfigGetter] that tries to load
