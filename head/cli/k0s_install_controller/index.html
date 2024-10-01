@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../img/k0s_social.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.38">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
     
     
       
@@ -2035,7 +2035,7 @@ With the controller subcommand you can setup a single node cluster by running:
 <div class="highlight"><pre><span></span><code>      --cidr-range string                              HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
   -c, --config string                                  config file, use &#39;-&#39; to read the config from stdin (default &quot;/etc/k0s/k0s.yaml&quot;)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-      --data-dir string                                Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
+      --data-dir string                                Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default &quot;/var/lib/k0s&quot;)
   -d, --debug                                          Debug logging (default: false)
       --debugListenOn string                           Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
       --disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
@@ -2051,7 +2051,7 @@ With the controller subcommand you can setup a single node cluster by running:
       --kube-controller-manager-extra-args string      extra args for kube-controller-manager
       --kubelet-extra-args string                      extra args for kubelet
       --labels strings                                 Node labels, list of key=value pairs
-  -l, --logging stringToString                         Logging Levels for the different components (default [kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1])
+  -l, --logging stringToString                         Logging Levels for the different components (default [containerd=info,etcd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1])
       --no-taints                                      disable default taints for controller node
       --profile string                                 worker profile to use on the node (default &quot;default&quot;)
       --single                                         enable single node (implies --enable-worker, default false)
@@ -2160,7 +2160,7 @@ With the controller subcommand you can setup a single node cluster by running:
     <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d6f25eb3.min.js"></script>
+      <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>
       
     
   </body>
