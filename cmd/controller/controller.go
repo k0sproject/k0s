@@ -348,11 +348,7 @@ func (c *command) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		etcdCRDSaver, err := controller.NewManifestsSaver("etcd-member", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to initialize etcd-member manifests saver: %w", err)
-		}
-		clusterComponents.Add(ctx, controller.NewCRD(etcdCRDSaver, "etcd"))
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "etcd", controller.WithStackName("etcd-member")))
 		nodeComponents.Add(ctx, etcdReconciler)
 	}
 
@@ -394,12 +390,11 @@ func (c *command) start(ctx context.Context) error {
 	// For backwards compatibility, use file as config source by default
 	if c.EnableDynamicConfig {
 		// The CRDs are only required if the config is stored in the cluster.
-		apiConfigSaver, err := controller.NewManifestsSaver("api-config", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to initialize api-config manifests saver: %w", err)
-		}
-
-		clusterComponents.Add(ctx, controller.NewCRD(apiConfigSaver, "v1beta1", controller.WithCRDAssetsDir("k0s")))
+		clusterComponents.Add(ctx, controller.NewCRD(
+			c.K0sVars.ManifestsDir, "v1beta1",
+			controller.WithStackName("api-config"),
+			controller.WithCRDAssetsDir("k0s")),
+		)
 
 		initializer, err := controller.NewClusterConfigInitializer(adminClientFactory, leaderElector, nodeConfig)
 		if err != nil {
@@ -425,11 +420,7 @@ func (c *command) start(ctx context.Context) error {
 	))
 
 	if !slices.Contains(c.DisableComponents, constant.HelmComponentName) {
-		helmSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to initialize helm manifests saver: %w", err)
-		}
-		clusterComponents.Add(ctx, controller.NewCRD(helmSaver, "helm"))
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "helm"))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
 			c.K0sVars,
 			adminClientFactory,
@@ -438,13 +429,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.AutopilotComponentName) {
-		logrus.Debug("starting manifest saver")
-		manifestsSaver, err := controller.NewManifestsSaver("autopilot", c.K0sVars.DataDir)
-		if err != nil {
-			logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
-			return err
-		}
-		clusterComponents.Add(ctx, controller.NewCRD(manifestsSaver, "autopilot"))
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "autopilot"))
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) && nodeConfig.Spec.API.ExternalAddress != "" {
