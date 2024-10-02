@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/strictyaml"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -189,10 +190,13 @@ func ConfigFromReader(r io.Reader, defaultStorage ...*StorageSpec) (*ClusterConf
 func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
 	clusterSpec := DefaultClusterSpec(defaultStorage...)
 	return &ClusterConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "k0s"},
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "k0s.k0sproject.io/v1beta1",
+			APIVersion: GroupVersion.String(),
 			Kind:       "ClusterConfig",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constant.ClusterConfigObjectName,
+			Namespace: constant.ClusterConfigNamespace,
 		},
 		Spec: clusterSpec,
 	}
