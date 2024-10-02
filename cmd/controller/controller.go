@@ -472,11 +472,7 @@ func (c *command) start(ctx context.Context) error {
 		if !slices.Contains(c.DisableComponents, constant.WindowsNodeComponentName) {
 			clusterComponents.Add(ctx, controller.NewWindowsStackComponent(c.K0sVars, adminClientFactory, windowsStackSaver))
 		}
-		kubeRouterSaver, err := controller.NewManifestsSaver("kuberouter", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create kuberouter manifests saver: %w", err)
-		}
-		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, kubeRouterSaver))
+		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars))
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.MetricsServerComponentName) {
