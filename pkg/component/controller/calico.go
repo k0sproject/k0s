@@ -63,10 +63,6 @@ const (
 	calicoModeVXLAN calicoMode = "vxlan"
 )
 
-type manifestsSaver interface {
-	Save(dst string, content []byte) error
-}
-
 type calicoConfig struct {
 	MTU                  int
 	Mode                 calicoMode
