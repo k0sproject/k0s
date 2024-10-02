@@ -503,11 +503,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	if flags.EnableMetricsScraper {
-		metricsSaver, err := controller.NewManifestsSaver("metrics", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create metrics manifests saver: %w", err)
-		}
-		metrics, err := controller.NewMetrics(c.K0sVars, metricsSaver, adminClientFactory, nodeConfig.Spec.Storage.Type)
+		metrics, err := controller.NewMetrics(c.K0sVars, adminClientFactory, nodeConfig.Spec.Storage.Type)
 		if err != nil {
 			return fmt.Errorf("failed to create metrics reconciler: %w", err)
 		}
