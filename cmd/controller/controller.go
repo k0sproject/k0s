@@ -500,13 +500,9 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		if err != nil {
 			return fmt.Errorf("failed to create calico_init manifests saver: %w", err)
 		}
-		windowsStackSaver, err := controller.NewManifestsSaver("windows", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create windows manifests saver: %w", err)
-		}
 		clusterComponents.Add(ctx, controller.NewCalico(c.K0sVars, calicoInitSaver, calicoSaver))
 		if !slices.Contains(flags.DisableComponents, constant.WindowsNodeComponentName) {
-			clusterComponents.Add(ctx, controller.NewWindowsStackComponent(c.K0sVars, adminClientFactory, windowsStackSaver))
+			clusterComponents.Add(ctx, controller.NewWindowsStackComponent(c.K0sVars, adminClientFactory))
 		}
 		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars))
 	}
