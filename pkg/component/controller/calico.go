@@ -19,6 +19,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -36,6 +37,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 )
 
@@ -49,8 +52,6 @@ var calicoCRDOnce sync.Once
 type Calico struct {
 	log logrus.FieldLogger
 
-	crdSaver   manifestsSaver
-	saver      manifestsSaver
 	prevConfig calicoConfig
 	k0sVars    *config.CfgVars
 }
@@ -89,24 +90,25 @@ type calicoConfig struct {
 }
 
 // NewCalico creates new Calico reconciler component
-func NewCalico(k0sVars *config.CfgVars, crdSaver manifestsSaver, manifestsSaver manifestsSaver) *Calico {
+func NewCalico(k0sVars *config.CfgVars) *Calico {
 	return &Calico{
 		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
 
-		crdSaver:   crdSaver,
-		saver:      manifestsSaver,
 		prevConfig: calicoConfig{},
 		k0sVars:    k0sVars,
 	}
 }
 
-// Init does nothing
-func (c *Calico) Init(_ context.Context) error {
-	return nil
+// Init implements [manager.Component].
+func (c *Calico) Init(context.Context) error {
+	return errors.Join(
+		dir.Init(filepath.Join(c.k0sVars.ManifestsDir, "calico_init"), constant.ManifestsDirMode),
+		dir.Init(filepath.Join(c.k0sVars.ManifestsDir, "calico"), constant.ManifestsDirMode),
+	)
 }
 
-// Run nothing really running, all logic based on reactive reconcile
-func (c *Calico) Start(_ context.Context) error {
+// Start implements [manager.Component].
+func (c *Calico) Start(context.Context) error {
 	return nil
 }
 
@@ -139,7 +141,9 @@ func (c *Calico) dumpCRDs() error {
 			return fmt.Errorf("failed to write calico crd manifests %s: %w", manifestName, err)
 		}
 
-		if err := c.crdSaver.Save(manifestName, output.Bytes()); err != nil {
+		if err := file.AtomicWithTarget(filepath.Join(c.k0sVars.ManifestsDir, "calico_init", manifestName)).
+			WithPermissions(constant.CertMode).
+			Write(output.Bytes()); err != nil {
 			return fmt.Errorf("failed to save calico crd manifest %s: %w", manifestName, err)
 		}
 	}
@@ -185,7 +189,9 @@ func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 				Data:     newConfig,
 			}
 			tryAndLog(manifestName, tw.WriteToBuffer(output))
-			tryAndLog(manifestName, c.saver.Save(manifestName, output.Bytes()))
+			tryAndLog(manifestName, file.AtomicWithTarget(filepath.Join(c.k0sVars.ManifestsDir, "calico", manifestName)).
+				WithPermissions(constant.CertMode).
+				Write(output.Bytes()))
 		}
 	}
 
@@ -238,7 +244,7 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 	return config, nil
 }
 
-// Stop stops the calico reconciler
+// Stop implements [manager.Component].
 func (c *Calico) Stop() error {
 	return nil
 }

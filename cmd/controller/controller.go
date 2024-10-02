@@ -491,16 +491,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	if !slices.Contains(flags.DisableComponents, constant.NetworkProviderComponentName) {
 		logrus.Infof("Creating network reconcilers")
-
-		calicoSaver, err := controller.NewManifestsSaver("calico", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create calico manifests saver: %w", err)
-		}
-		calicoInitSaver, err := controller.NewManifestsSaver("calico_init", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create calico_init manifests saver: %w", err)
-		}
-		clusterComponents.Add(ctx, controller.NewCalico(c.K0sVars, calicoInitSaver, calicoSaver))
+		clusterComponents.Add(ctx, controller.NewCalico(c.K0sVars))
 		if !slices.Contains(flags.DisableComponents, constant.WindowsNodeComponentName) {
 			clusterComponents.Add(ctx, controller.NewWindowsStackComponent(c.K0sVars, adminClientFactory))
 		}
