@@ -78,9 +78,9 @@ func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
 
 type FakeClientFactory struct {
 	DynamicClient   *dynamicfake.FakeDynamicClient
-	Client          kubernetes.Interface
+	Client          *kubernetesfake.Clientset
 	DiscoveryClient discovery.CachedDiscoveryInterface
-	K0sClient       k0sclientset.Interface
+	K0sClient       *k0sfake.Clientset
 }
 
 func (f *FakeClientFactory) GetClient() (kubernetes.Interface, error) {
