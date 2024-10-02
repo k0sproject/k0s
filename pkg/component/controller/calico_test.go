@@ -29,13 +29,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type inMemorySaver map[string][]byte
-
-func (i inMemorySaver) Save(dst string, content []byte) error {
-	i[dst] = content
-	return nil
-}
-
 func TestCalicoManifests(t *testing.T) {
 	newTestInstance := func(t *testing.T) *Calico {
 		k0sVars, err := config.NewCfgVars(nil, t.TempDir())
