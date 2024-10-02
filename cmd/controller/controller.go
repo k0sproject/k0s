@@ -300,7 +300,10 @@ func (c *command) start(ctx context.Context) error {
 		nodeComponents.Add(ctx, &applier.Manager{
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
-			LeaderElector:     leaderElector,
+			IgnoredStacks: []string{
+				controller.ClusterConfigStackName,
+			},
+			LeaderElector: leaderElector,
 		})
 	}
 
@@ -393,20 +396,11 @@ func (c *command) start(ctx context.Context) error {
 	var configSource clusterconfig.ConfigSource
 	// For backwards compatibility, use file as config source by default
 	if c.EnableDynamicConfig {
-		// The CRDs are only required if the config is stored in the cluster.
-		apiConfigSaver, err := controller.NewManifestsSaver("api-config", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to initialize api-config manifests saver: %w", err)
-		}
-
-		clusterComponents.Add(ctx, controller.NewCRD(apiConfigSaver, "v1beta1", controller.WithCRDAssetsDir("k0s")))
-
-		initializer, err := controller.NewClusterConfigInitializer(adminClientFactory, leaderElector, nodeConfig)
-		if err != nil {
-			return fmt.Errorf("failed to create cluster config initializer: %w", err)
-		}
-
-		clusterComponents.Add(ctx, initializer)
+		clusterComponents.Add(ctx, controller.NewClusterConfigInitializer(
+			adminClientFactory,
+			leaderElector,
+			nodeConfig,
+		))
 
 		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
 		if err != nil {

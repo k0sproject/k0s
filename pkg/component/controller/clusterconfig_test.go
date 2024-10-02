@@ -44,21 +44,28 @@ func TestClusterConfigInitializer_Create(t *testing.T) {
 	initialConfig := k0sv1beta1.DefaultClusterConfig()
 	initialConfig.ResourceVersion = "42"
 
-	underTest, err := controller.NewClusterConfigInitializer(
+	underTest := controller.NewClusterConfigInitializer(
 		clients, &leaderElector, initialConfig.DeepCopy(),
 	)
-	require.NoError(t, err)
 
 	require.NoError(t, underTest.Init(context.TODO()))
 	require.NoError(t, underTest.Start(context.TODO()))
 	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
+	crds, err := clients.APIExtensionsClient.ApiextensionsV1().
+		CustomResourceDefinitions().
+		List(context.TODO(), metav1.ListOptions{})
+	if assert.NoError(t, err) && assert.Len(t, crds.Items, 1) {
+		crd := crds.Items[0]
+		assert.Equal(t, "clusterconfigs.k0s.k0sproject.io", crd.Name)
+		assert.Equal(t, "api-config", crd.Labels["k0s.k0sproject.io/stack"])
+	}
 	actualConfig, err := clients.K0sClient.K0sV1beta1().
 		ClusterConfigs(constant.ClusterConfigNamespace).
 		Get(context.TODO(), "k0s", metav1.GetOptions{})
-	require.NoError(t, err)
-
-	assert.Equal(t, initialConfig, actualConfig)
+	if assert.NoError(t, err) {
+		assert.Equal(t, initialConfig, actualConfig)
+	}
 }
 
 func TestClusterConfigInitializer_NoConfig(t *testing.T) {
@@ -66,10 +73,9 @@ func TestClusterConfigInitializer_NoConfig(t *testing.T) {
 	leaderElector := leaderelector.Dummy{Leader: false}
 	initialConfig := k0sv1beta1.DefaultClusterConfig()
 
-	underTest, err := controller.NewClusterConfigInitializer(
+	underTest := controller.NewClusterConfigInitializer(
 		clients, &leaderElector, initialConfig.DeepCopy(),
 	)
-	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancelCause(context.TODO())
 	t.Cleanup(func() { cancel(nil) })
@@ -86,14 +92,14 @@ func TestClusterConfigInitializer_NoConfig(t *testing.T) {
 
 	require.NoError(t, underTest.Init(ctx))
 
-	err = underTest.Start(ctx)
+	err := underTest.Start(ctx)
 	assert.ErrorContains(t, err, "failed to ensure the existence of the cluster configuration: aborting test after some retries (")
 	assert.ErrorIs(t, err, abortTest)
 	assert.True(t, apierrors.IsNotFound(err))
 }
 
 func TestClusterConfigInitializer_Exists(t *testing.T) {
-	test := func(t *testing.T, leader bool) {
+	test := func(t *testing.T, leader bool) *testutil.FakeClientFactory {
 		existingConfig := k0sv1beta1.DefaultClusterConfig()
 		existingConfig.ResourceVersion = "42"
 		clients := testutil.NewFakeClientFactory(existingConfig)
@@ -101,10 +107,9 @@ func TestClusterConfigInitializer_Exists(t *testing.T) {
 		initialConfig := existingConfig.DeepCopy()
 		initialConfig.ResourceVersion = "1337"
 
-		underTest, err := controller.NewClusterConfigInitializer(
+		underTest := controller.NewClusterConfigInitializer(
 			clients, &leaderElector, initialConfig,
 		)
-		require.NoError(t, err)
 
 		require.NoError(t, underTest.Init(context.TODO()))
 		require.NoError(t, underTest.Start(context.TODO()))
@@ -113,13 +118,24 @@ func TestClusterConfigInitializer_Exists(t *testing.T) {
 		actualConfig, err := clients.K0sClient.K0sV1beta1().
 			ClusterConfigs(constant.ClusterConfigNamespace).
 			Get(context.TODO(), "k0s", metav1.GetOptions{})
-		require.NoError(t, err)
+		if assert.NoError(t, err) {
+			assert.Equal(t, existingConfig, actualConfig)
+		}
 
-		assert.Equal(t, existingConfig, actualConfig)
+		return clients
 	}
 
 	t.Run("Leader", func(t *testing.T) { test(t, true) })
-	t.Run("Follower", func(t *testing.T) { test(t, false) })
+	t.Run("Follower", func(t *testing.T) {
+		clients := test(t, false)
+
+		crds, err := clients.APIExtensionsClient.ApiextensionsV1().
+			CustomResourceDefinitions().
+			List(context.TODO(), metav1.ListOptions{})
+		if assert.NoError(t, err) {
+			assert.Empty(t, crds.Items, "CRDs shouldn't be applied")
+		}
+	})
 }
 
 func TestMain(m *testing.M) {
