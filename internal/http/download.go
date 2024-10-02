@@ -46,6 +46,7 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 		Transport: &http.Transport{
 			// This is a one-shot HTTP client which should release resources immediately.
 			DisableKeepAlives: true,
+			Proxy:             http.ProxyFromEnvironment,
 		},
 	}
 	req, err := http.NewRequest("GET", url, nil)
