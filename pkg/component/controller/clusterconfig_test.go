@@ -29,6 +29,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8stesting "k8s.io/client-go/testing"
@@ -86,8 +87,9 @@ func TestClusterConfigInitializer_NoConfig(t *testing.T) {
 	require.NoError(t, underTest.Init(ctx))
 
 	err = underTest.Start(ctx)
-	assert.ErrorContains(t, err, "failed to ensure the existence of the cluster configuration: ")
-	assert.ErrorIs(t, err, context.Canceled)
+	assert.ErrorContains(t, err, "failed to ensure the existence of the cluster configuration: aborting test after some retries (")
+	assert.ErrorIs(t, err, abortTest)
+	assert.True(t, apierrors.IsNotFound(err))
 }
 
 func TestClusterConfigInitializer_Exists(t *testing.T) {

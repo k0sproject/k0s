@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -180,9 +181,9 @@ func NewClusterConfigInitializer(kubeClientFactory kubeutil.ClientFactoryInterfa
 	}, nil
 }
 
-func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Context) error {
+func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Context) (err error) {
 	// We need to wait until the cluster configuration exists or we succeed in creating it.
-	return wait.PollUntilContextTimeout(ctx, 1*time.Second, 20*time.Second, true, func(ctx context.Context) (_ bool, err error) {
+	pollErr := wait.PollUntilContextTimeout(ctx, 1*time.Second, 20*time.Second, true, func(ctx context.Context) (bool, error) {
 		if i.leaderElector.IsLeader() {
 			err = i.createClusterConfig(ctx)
 			if err == nil {
@@ -205,6 +206,17 @@ func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Cont
 		i.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
 		return false, nil
 	})
+
+	if pollErr != nil {
+		pollErr = cmp.Or(context.Cause(ctx), pollErr)
+		if err != nil {
+			return fmt.Errorf("%w (%w)", pollErr, err)
+		}
+
+		return pollErr
+	}
+
+	return nil
 }
 
 func (i *ClusterConfigInitializer) clusterConfigExists(ctx context.Context) error {
