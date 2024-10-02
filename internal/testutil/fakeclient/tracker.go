@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
+	"time"
 	"unsafe"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -126,6 +128,16 @@ func (t *TransformingObjectTracker) List(gvr schema.GroupVersionResource, gvk sc
 	external, err := t.Externalize(obj, gvk)
 	if err != nil {
 		return obj, fmt.Errorf("failed to externalize object: %w", err)
+	}
+
+	// Set a fake resource version, so that watches work.
+	if versioned, ok := external.(interface {
+		GetResourceVersion() string
+		SetResourceVersion(string)
+	}); ok {
+		if versioned.GetResourceVersion() == "" {
+			versioned.SetResourceVersion(strconv.FormatInt(time.Now().UnixMilli(), 10))
+		}
 	}
 
 	return external, nil
