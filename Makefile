@@ -69,9 +69,10 @@ endif
 endif
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
+DOCKER = docker
 GOLANG_IMAGE ?= $(golang_buildimage)
 K0S_GO_BUILD_CACHE_VOLUME_PATH=$(realpath $(K0S_GO_BUILD_CACHE))
-GO_ENV ?= docker run --rm \
+GO_ENV ?= $(DOCKER) run --rm \
 	-v '$(K0S_GO_BUILD_CACHE_VOLUME_PATH)':/run/k0s-build \
 	-v '$(CURDIR)':/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
@@ -105,7 +106,7 @@ $(K0S_GO_BUILD_CACHE):
 	mkdir -p -- '$@'
 
 .k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | $(K0S_GO_BUILD_CACHE)
-	docker build --progress=plain --iidfile '$@' \
+	$(DOCKER) build --progress=plain --iidfile '$@' \
 	  --build-arg BUILDIMAGE=$(GOLANG_IMAGE) \
 	  -t k0sbuild.docker-image.k0s - <build/Dockerfile
 
@@ -231,12 +232,12 @@ airgap-image-bundle-linux-arm.tar:   TARGET_PLATFORM := linux/arm/v7
 airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
-	docker run --rm -i --privileged \
+	$(DOCKER) run --rm -i --privileged \
 	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
 	  '$(shell cat .k0sbuild.image-bundler.stamp)' < airgap-images.txt > '$@'
 
 .k0sbuild.image-bundler.stamp: hack/image-bundler/* embedded-bins/Makefile.variables
-	docker build --progress=plain --iidfile '$@' \
+	$(DOCKER) build --progress=plain --iidfile '$@' \
 	  --build-arg ALPINE_VERSION=$(alpine_patch_version) \
 	  -t k0sbuild.image-bundler -- hack/image-bundler
 
@@ -294,7 +295,7 @@ docs:
 docs-serve-dev: DOCS_DEV_PORT ?= 8000
 docs-serve-dev:
 	$(MAKE) -C docs .docker-image.serve-dev.stamp
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  -e KUBERNETES_VERSION='$(kubernetes_version)' \
 	  -v "$(CURDIR):/k0s:ro" \
 	  -p '$(DOCS_DEV_PORT):8000' \
@@ -302,7 +303,7 @@ docs-serve-dev:
 
 sbom/spdx.json: go.mod
 	mkdir -p -- '$(dir $@)'
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
 	  -v "$(CURDIR)/embedded-bins/staging/linux/bin:/k0s/bin" \
 	  -v "$(CURDIR)/syft.yaml:/tmp/syft.yaml" \
@@ -313,7 +314,7 @@ sbom/spdx.json: go.mod
 
 .PHONY: sign-sbom
 sign-sbom: sbom/spdx.json
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
@@ -325,7 +326,7 @@ sign-sbom: sbom/spdx.json
 
 .PHONY: sign-pub-key
 sign-pub-key:
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
