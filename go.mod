@@ -59,6 +59,7 @@ require (
 	golang.org/x/tools v0.25.0
 	google.golang.org/grpc v1.67.1
 	helm.sh/helm/v3 v3.16.1
+	oras.land/oras-go/v2 v2.5.0
 )
 
 // Kubernetes
