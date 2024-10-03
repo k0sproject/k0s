@@ -18,6 +18,7 @@ package http_test
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -29,6 +30,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cloudflare/cfssl/csr"
+	"github.com/cloudflare/cfssl/initca"
 	internalhttp "github.com/k0sproject/k0s/internal/http"
 	internalio "github.com/k0sproject/k0s/internal/io"
 
@@ -50,7 +53,7 @@ func TestDownload_CancelRequest(t *testing.T) {
 }
 
 func TestDownload_NoContent(t *testing.T) {
-	baseURL := startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
@@ -58,7 +61,7 @@ func TestDownload_NoContent(t *testing.T) {
 }
 
 func TestDownload_ShortDownload(t *testing.T) {
-	baseURL := startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Length", "10")
 		_, err := w.Write([]byte("too short")) // this is only 9 bytes
 		assert.NoError(t, err)
@@ -69,7 +72,7 @@ func TestDownload_ShortDownload(t *testing.T) {
 }
 
 func TestDownload_ExcessContentLength(t *testing.T) {
-	baseURL := startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Length", "4")
 		_, err := w.Write([]byte("yolo"))
 		assert.NoError(t, err)
@@ -89,7 +92,7 @@ func TestDownload_CancelDownload(t *testing.T) {
 	ctx, cancel := context.WithCancelCause(context.TODO())
 	t.Cleanup(func() { cancel(nil) })
 
-	baseURL := startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for {
 			if _, err := w.Write([]byte(t.Name())); !assert.NoError(t, err) {
 				return
@@ -119,7 +122,7 @@ func TestDownload_RedirectLoop(t *testing.T) {
 	expectedRequests := uint32(10)
 	var requests atomic.Uint32
 	var baseURL string
-	baseURL = startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	baseURL = startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !assert.LessOrEqual(t, requests.Add(1), expectedRequests, "More requests than anticipated") {
 			w.WriteHeader(http.StatusTooManyRequests)
 			return
@@ -143,7 +146,48 @@ func TestDownload_RedirectLoop(t *testing.T) {
 	assert.ErrorContains(t, err, "stopped after 10 redirects")
 }
 
-func startFakeDownloadServer(t *testing.T, handler http.Handler) string {
+func TestDownload_BasicAuth(t *testing.T) {
+	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if user, pass, _ := r.BasicAuth(); user != "myuser" || pass != "mypassword" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}))
+	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	assert.ErrorContains(t, err, "bad status: 401 Unauthorized")
+	err = internalhttp.Download(context.TODO(), baseURL, io.Discard, internalhttp.WithBasicAuth("myuser", "mypassword"))
+	assert.NoError(t, err)
+}
+
+func TestDownload_InsecureSkipTLSVerify(t *testing.T) {
+	baseURL := startFakeDownloadServer(t, true, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	}))
+	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	assert.ErrorContains(t, err, "tls: failed to verify certificate")
+	err = internalhttp.Download(context.TODO(), baseURL, io.Discard, internalhttp.WithInsecureSkipTLSVerify())
+	assert.NoError(t, err)
+}
+
+func TestDownload_CustomHeaders(t *testing.T) {
+	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-First-Header") != "first-header" || r.Header.Get("X-Second-Header") != "second-header" {
+			http.Error(w, "Bad header", http.StatusBadRequest)
+			return
+		}
+	}))
+	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	assert.ErrorContains(t, err, "bad status: 400 Bad Request")
+	err = internalhttp.Download(
+		context.TODO(),
+		baseURL,
+		io.Discard,
+		internalhttp.WithHeader("X-First-Header", "first-header"),
+		internalhttp.WithHeader("X-Second-Header", "second-header"),
+	)
+	assert.NoError(t, err)
+}
+
+func startFakeDownloadServer(t *testing.T, usetls bool, handler http.Handler) string {
 	server := &http.Server{Addr: "localhost:0", Handler: handler}
 	listener, err := net.Listen("tcp", server.Addr)
 	if err != nil {
@@ -153,7 +197,24 @@ func startFakeDownloadServer(t *testing.T, handler http.Handler) string {
 	serverError := make(chan error)
 	go func() {
 		defer close(serverError)
-		serverError <- server.Serve(listener)
+		if !usetls {
+			serverError <- server.Serve(listener)
+			return
+		}
+
+		addr := listener.Addr().(*net.TCPAddr)
+		certData, _, keyData, err := initca.New(&csr.CertificateRequest{
+			KeyRequest: csr.NewKeyRequest(),
+			CN:         fmt.Sprintf("localhost:%d", addr.Port),
+			Hosts:      []string{addr.IP.String()},
+		})
+		assert.NoError(t, err)
+
+		cert, err := tls.X509KeyPair(certData, keyData)
+		require.NoError(t, err)
+
+		server.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
+		serverError <- server.ServeTLS(listener, "", "")
 	}()
 
 	t.Cleanup(func() {
@@ -165,5 +226,9 @@ func startFakeDownloadServer(t *testing.T, handler http.Handler) string {
 		assert.ErrorIs(t, <-serverError, http.ErrServerClosed, "HTTP server terminated unexpectedly")
 	})
 
-	return (&url.URL{Scheme: "http", Host: listener.Addr().String()}).String()
+	scheme := "http"
+	if usetls {
+		scheme = "https"
+	}
+	return (&url.URL{Scheme: scheme, Host: listener.Addr().String()}).String()
 }

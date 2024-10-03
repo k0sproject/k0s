@@ -377,7 +377,7 @@ func TestDownload_ContentDisposition(t *testing.T) {
 	tests["attwithasciifnescapedchar"].fileName = "f_oo.html"
 	tests["attwithfnrawpctencaq"].fileName = "foo-%_41.html"
 
-	baseURL := startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Disposition", tests[path.Base(r.URL.Path)].header)
 	}))
 
