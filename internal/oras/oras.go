@@ -41,7 +41,7 @@ import (
 // err := oras.Download(ctx, artifact, fp)
 //
 // This function expects only one artifact to be present, if none is found this
-// returns an error. The artifcat is downloaded in a temporary location before
+// returns an error. The artifact is downloaded in a temporary location before
 // being copied to the target.
 func Download(ctx context.Context, url string, target io.Writer, options ...OrasOption) (err error) {
 	opts := orasOptions{}
