@@ -37,13 +37,27 @@ func NewStaticSource(staticConfig *v1beta1.ClusterConfig) ConfigSource {
 	}
 }
 
-func (s *staticSource) Release(context.Context) {
+// Init implements [manager.Component].
+func (*staticSource) Init(context.Context) error { return nil }
+
+// Start implements [manager.Component].
+func (s *staticSource) Start(ctx context.Context) error {
 	logrus.WithField("component", "static-config-source").Debug("sending static config via channel")
-	s.resultChan <- s.staticConfig
+	select {
+	case s.resultChan <- s.staticConfig:
+		return nil
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	}
 }
 
+// ResultChan implements [ConfigSource].
 func (s *staticSource) ResultChan() <-chan *v1beta1.ClusterConfig {
 	return s.resultChan
 }
 
-func (*staticSource) Stop() {}
+// Stop implements [manager.Component].
+func (s *staticSource) Stop() error {
+	close(s.resultChan)
+	return nil
+}

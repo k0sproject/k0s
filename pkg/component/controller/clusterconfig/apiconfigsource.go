@@ -34,6 +34,7 @@ var _ ConfigSource = (*apiConfigSource)(nil)
 type apiConfigSource struct {
 	configClient k0sclient.ClusterConfigInterface
 	resultChan   chan *v1beta1.ClusterConfig
+	stop         func()
 }
 
 func NewAPIConfigSource(kubeClientFactory kubeutil.ClientFactoryInterface) (ConfigSource, error) {
@@ -43,12 +44,16 @@ func NewAPIConfigSource(kubeClientFactory kubeutil.ClientFactoryInterface) (Conf
 	}
 	a := &apiConfigSource{
 		configClient: configClient,
-		resultChan:   make(chan *v1beta1.ClusterConfig, 1),
+		resultChan:   make(chan *v1beta1.ClusterConfig),
 	}
 	return a, nil
 }
 
-func (a *apiConfigSource) Release(ctx context.Context) {
+// Init implements [manager.Component].
+func (*apiConfigSource) Init(context.Context) error { return nil }
+
+// Start implements [manager.Component].
+func (a *apiConfigSource) Start(context.Context) error {
 	var lastObservedVersion string
 
 	log := logrus.WithField("component", "clusterconfig.apiConfigSource")
@@ -75,25 +80,38 @@ func (a *apiConfigSource) Release(ctx context.Context) {
 			return retryAfter, nil
 		})
 
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	a.stop = func() { cancel(); <-done }
+
 	go func() {
+		defer close(done)
+		defer close(a.resultChan)
 		_ = watch.Until(ctx, func(cfg *v1beta1.ClusterConfig) (bool, error) {
 			// Push changes only when the config actually changes
 			if lastObservedVersion != cfg.ResourceVersion {
 				log.Debugf("Cluster configuration update to resource version %q", cfg.ResourceVersion)
 				lastObservedVersion = cfg.ResourceVersion
-				a.resultChan <- cfg
+				select {
+				case a.resultChan <- cfg:
+				case <-ctx.Done():
+					return true, nil
+				}
 			}
 			return false, nil
 		})
 	}()
+
+	return nil
 }
 
+// ResultChan implements [ConfigSource].
 func (a *apiConfigSource) ResultChan() <-chan *v1beta1.ClusterConfig {
 	return a.resultChan
 }
 
-func (a apiConfigSource) Stop() {
-	if a.resultChan != nil {
-		close(a.resultChan)
-	}
+// Stop implements [manager.Component].
+func (a *apiConfigSource) Stop() error {
+	a.stop()
+	return nil
 }

@@ -17,16 +17,13 @@ limitations under the License.
 package clusterconfig
 
 import (
-	"context"
-
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 )
 
 type ConfigSource interface {
-	// Release allows the config source to start sending config updates
-	Release(context.Context)
 	// ResultChan provides the result channel where config updates are pushed by the source on it is released
 	ResultChan() <-chan *v1beta1.ClusterConfig
-	// Stop stops sending config events
-	Stop()
+
+	manager.Component
 }
