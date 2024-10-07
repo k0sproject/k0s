@@ -2162,7 +2162,7 @@ the k0sctl configuration (<code>k0sctl.yaml</code>):</p>
 <span class="w">              </span><span class="nt">virtualServers</span><span class="p">:</span>
 <span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ipAddress</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;External</span><span class="nv"> </span><span class="s">ip</span><span class="nv"> </span><span class="s">address&gt;&quot;</span>
 </code></pre></div>
-<p>Because this is a feature intended to configure the apiserver, CPLB noes not
+<p>Because this is a feature intended to configure the apiserver, CPLB does not
 support dynamic configuration and in order to make changes you need to restart
 the k0s controllers to make changes.</p>
 <h2 id="full-example-using-k0sctl">Full example using <code>k0sctl</code><a class="headerlink" href="#full-example-using-k0sctl" title="Permanent link">#</a></h2>
@@ -2226,7 +2226,7 @@ controllers and three workers with control plane load balancing enabled.</p>
 <span class="w">        </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
 <span class="w">            </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">            </span><span class="nt">type: Keepalived</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
 <span class="w">            </span><span class="nt">keepalived</span><span class="p">:</span>
 <span class="w">              </span><span class="nt">vrrpInstances</span><span class="p">:</span>
 <span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;192.168.122.200/24&quot;</span><span class="p p-Indicator">]</span>
