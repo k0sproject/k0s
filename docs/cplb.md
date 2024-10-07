@@ -92,7 +92,7 @@ spec:
               - ipAddress: "<External ip address>"
 ```
 
-Because this is a feature intended to configure the apiserver, CPLB noes not
+Because this is a feature intended to configure the apiserver, CPLB does not
 support dynamic configuration and in order to make changes you need to restart
 the k0s controllers to make changes.
 
@@ -162,7 +162,7 @@ spec:
         network:
           controlPlaneLoadBalancing:
             enabled: true
-            type: Keepalived:
+            type: Keepalived
             keepalived:
               vrrpInstances:
               - virtualIPs: ["192.168.122.200/24"]
