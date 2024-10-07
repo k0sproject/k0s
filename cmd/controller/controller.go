@@ -416,8 +416,6 @@ func (c *command) start(ctx context.Context) error {
 		configSource = clusterconfig.NewStaticSource(nodeConfig)
 	}
 
-	defer configSource.Stop()
-
 	clusterComponents.Add(ctx, controller.NewClusterConfigReconciler(
 		clusterComponents,
 		adminClientFactory,
@@ -585,6 +583,10 @@ func (c *command) start(ctx context.Context) error {
 	}
 	clusterComponents.Add(ctx, controller.NewUpdateProber(apClientFactory, leaderElector))
 
+	// Add the config source as the last component, so that the reconciliation
+	// starts after all other components have been started.
+	clusterComponents.Add(ctx, configSource)
+
 	perfTimer.Checkpoint("starting-cluster-components-init")
 	// init Cluster components
 	if err := clusterComponents.Init(ctx); err != nil {
@@ -605,9 +607,6 @@ func (c *command) start(ctx context.Context) error {
 			logrus.Info("All cluster components stopped")
 		}
 	}()
-
-	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
-	go configSource.Release(ctx)
 
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
