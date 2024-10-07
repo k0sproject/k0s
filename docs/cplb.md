@@ -162,7 +162,7 @@ spec:
         network:
           controlPlaneLoadBalancing:
             enabled: true
-            type: Keepalived:
+            type: Keepalived
             keepalived:
               vrrpInstances:
               - virtualIPs: ["192.168.122.200/24"]
