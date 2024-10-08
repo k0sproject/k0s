@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package oras
+package oci
 
 import (
 	"context"
@@ -37,8 +37,8 @@ import (
 // Usage example:
 //
 // artifact := "docker.io/company/k0s:latest"
-// fp, _ := os.CreateTemp("", "k0s-oras-artifact-*")
-// err := oras.Download(ctx, artifact, fp)
+// fp, _ := os.CreateTemp("", "k0s-oci-artifact-*")
+// err := oci.Download(ctx, artifact, fp)
 //
 // This function expects only one artifact to be present, if none is found this
 // returns an error. The artifact is downloaded in a temporary location before
@@ -59,7 +59,7 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Oras
 		return fmt.Errorf("failed to parse artifact reference: %w", err)
 	}
 
-	tmpdir, err := os.MkdirTemp("", "k0s-oras-artifact-*")
+	tmpdir, err := os.MkdirTemp("", "k0s-oci-artifact-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %w", err)
 	}
