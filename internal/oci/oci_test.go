@@ -71,7 +71,7 @@ func TestDownload(t *testing.T) {
 		t.Run(tname, func(t *testing.T) {
 			addr := startOCIMockServer(t, tt)
 
-			opts := []OrasOption{WithInsecureSkipTLSVerify()}
+			opts := []DownloadOption{WithInsecureSkipTLSVerify()}
 			if tt.Authenticated {
 				entry := DockerConfigEntry{tt.AuthUser, tt.AuthPass}
 				opts = append(opts, WithDockerAuth(

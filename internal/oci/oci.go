@@ -43,8 +43,8 @@ import (
 // This function expects only one artifact to be present, if none is found this
 // returns an error. The artifact is downloaded in a temporary location before
 // being copied to the target.
-func Download(ctx context.Context, url string, target io.Writer, options ...OrasOption) (err error) {
-	opts := orasOptions{}
+func Download(ctx context.Context, url string, target io.Writer, options ...DownloadOption) (err error) {
+	opts := downloadOptions{}
 	for _, opt := range options {
 		opt(&opts)
 	}
@@ -117,26 +117,26 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Oras
 	return nil
 }
 
-// orasOptions holds the options used when downloading oras artifacts.
-type orasOptions struct {
+// downloadOptions holds the options used when downloading oras artifacts.
+type downloadOptions struct {
 	insecureSkipTLSVerify bool
 	auth                  DockerConfig
 }
 
-// OrasOptions is a function that sets an option for the oras download.
-type OrasOption func(*orasOptions)
+// DownloadOption is a function that sets an option for the oras download.
+type DownloadOption func(*downloadOptions)
 
 // WithInsecureSkipTLSVerify sets the insecureSkipTLSVerify option to true.
-func WithInsecureSkipTLSVerify() OrasOption {
-	return func(opts *orasOptions) {
+func WithInsecureSkipTLSVerify() DownloadOption {
+	return func(opts *downloadOptions) {
 		opts.insecureSkipTLSVerify = true
 	}
 }
 
 // WithDockerAuth sets the Docker config to be used when authenticating to
 // the registry.
-func WithDockerAuth(auth DockerConfig) OrasOption {
-	return func(opts *orasOptions) {
+func WithDockerAuth(auth DockerConfig) DownloadOption {
+	return func(opts *downloadOptions) {
 		opts.auth = auth
 	}
 }
