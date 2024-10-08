@@ -14,19 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package oci
+package oci_test
 
 import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path"
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/oci"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 )
@@ -41,7 +46,7 @@ func parseTestsYAML[T any](t *testing.T) map[string]T {
 	require.NoError(t, err)
 	tests := make(map[string]T, 0)
 	for _, entry := range entries {
-		fpath := fmt.Sprintf("testdata/%s", entry.Name())
+		fpath := path.Join("testdata", entry.Name())
 		data, err := testData.ReadFile(fpath)
 		require.NoError(t, err)
 
@@ -56,27 +61,26 @@ func parseTestsYAML[T any](t *testing.T) map[string]T {
 
 // testFile represents a single test file inside the testdata directory.
 type testFile struct {
-	Name          string
-	Manifest      string            `yaml:"manifest"`
-	Expected      string            `yaml:"expected"`
-	Error         string            `yaml:"error"`
-	Authenticated bool              `yaml:"authenticated"`
-	AuthUser      string            `yaml:"authUser"`
-	AuthPass      string            `yaml:"authPass"`
-	Artifacts     map[string]string `yaml:"artifacts"`
+	Manifest      string            `json:"manifest"`
+	Expected      string            `json:"expected"`
+	Error         string            `json:"error"`
+	Authenticated bool              `json:"authenticated"`
+	AuthUser      string            `json:"authUser"`
+	AuthPass      string            `json:"authPass"`
+	Artifacts     map[string]string `json:"artifacts"`
 }
 
 func TestDownload(t *testing.T) {
 	for tname, tt := range parseTestsYAML[testFile](t) {
 		t.Run(tname, func(t *testing.T) {
-			addr := startOCIMockServer(t, tt)
+			addr := startOCIMockServer(t, tname, tt)
 
-			opts := []DownloadOption{WithInsecureSkipTLSVerify()}
+			opts := []oci.DownloadOption{oci.WithInsecureSkipTLSVerify()}
 			if tt.Authenticated {
-				entry := DockerConfigEntry{tt.AuthUser, tt.AuthPass}
-				opts = append(opts, WithDockerAuth(
-					DockerConfig{
-						Auths: map[string]DockerConfigEntry{
+				entry := oci.DockerConfigEntry{tt.AuthUser, tt.AuthPass}
+				opts = append(opts, oci.WithDockerAuth(
+					oci.DockerConfig{
+						Auths: map[string]oci.DockerConfigEntry{
 							addr: entry,
 						},
 					},
@@ -85,7 +89,7 @@ func TestDownload(t *testing.T) {
 
 			buf := bytes.NewBuffer(nil)
 			url := fmt.Sprintf("%s/repository/artifact:latest", addr)
-			err := Download(context.TODO(), url, buf, opts...)
+			err := oci.Download(context.TODO(), url, buf, opts...)
 			if tt.Expected != "" {
 				require.NoError(t, err)
 				require.Empty(t, tt.Error)
@@ -101,7 +105,7 @@ func TestDownload(t *testing.T) {
 // startOCIMockServer starts a mock server that will respond to the given test.
 // this mimics the behavior of the real OCI registry. This function returns the
 // address of the server.
-func startOCIMockServer(t *testing.T, test testFile) string {
+func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 	var serverAddr string
 	server := httptest.NewTLSServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -113,19 +117,29 @@ func startOCIMockServer(t *testing.T, test testFile) string {
 					w.WriteHeader(http.StatusUnauthorized)
 					return
 				}
-				_, _ = w.Write([]byte(`{"token":"token"}`))
+				res := map[string]string{"token": tname}
+				marshalled, err := json.Marshal(res)
+				require.NoError(t, err)
+				_, _ = w.Write(marshalled)
 				return
 			}
 
 			// verify if the request should be authenticated or
 			// not. if it has already been authenticated then just
-			// moves on.
-			_, authenticated := r.Header["Authorization"]
+			// moves on. the token returned is the test name.
+			tokenhdr, authenticated := r.Header["Authorization"]
 			if !authenticated && test.Authenticated {
 				header := fmt.Sprintf(`Bearer realm="https://%s/token"`, serverAddr)
 				w.Header().Add("WWW-Authenticate", header)
 				w.WriteHeader(http.StatusUnauthorized)
 				return
+			}
+
+			// verify if the token provided by the client matches
+			// the expected token.
+			if test.Authenticated {
+				require.Len(t, tokenhdr, 1)
+				require.Contains(t, tokenhdr[0], tname)
 			}
 
 			// serve the manifest.
@@ -141,14 +155,14 @@ func startOCIMockServer(t *testing.T, test testFile) string {
 					if !strings.Contains(r.URL.Path, sha) {
 						continue
 					}
-					length := fmt.Sprintf("%d", len(content))
-					w.Header().Add("Content-Length", length)
+					w.Header().Add("Content-Length", strconv.Itoa(len(content)))
 					_, _ = w.Write([]byte(content))
 					return
 				}
 			}
 
-			t.Fatalf("unexpected request: %s", r.URL.Path)
+			assert.Failf(t, "unexpected request", "%s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
 		}),
 	)
 
