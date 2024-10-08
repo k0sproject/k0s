@@ -18,16 +18,16 @@ Note the two trailing spaces at the end of the first lines. Those denote a line 
 Try to maintain an alphabetical order. 
 -->
 
-* [AudioCodes](https://audiocodes.com)
-  Project: Underlying support for AudioCodes VoI/VoiceAI
+* [AudioCodes](https://audiocodes.com)<br>
+  Project: Underlying support for AudioCodes VoI/VoiceAI<br>
   AudioCodes uses it for [VoIP/VoiceAI (see page 17)](https://www.audiocodes.com/media/mpghsv0o/agent-assist-bot-installation-guide.pdf).
 
-* [DeepSquare](https://deepsquare.io)
-  Project: HPCaaS
+* [DeepSquare](https://deepsquare.io)<br>
+  Project: HPCaaS<br>
   DeepSquare embeds it into their HPCaaS [service](https://deepsquare.io/wp-content/uploads/2023/05/DeepSquare_White-Paper-1.pdf).
 
-* [k0smotron](https://k0smotron.io/)  
-  Project: Managing hosted k0s clusters and full Cluster API provider for k0s  
+* [k0smotron](https://k0smotron.io/)<br>
+  Project: Managing hosted k0s clusters and full Cluster API provider for k0s<br>
   K0smotron focuses on managing hosted k0s clusters within an existing
   Kubernetes cluster. It acts as a Cluster API provider, enabling seamless
   provisioning, scaling, and lifecycle management of k0s control planes. By
@@ -35,41 +35,45 @@ Try to maintain an alphabetical order.
   multi-cluster operations and provides flexibility in connecting worker nodes
   from different infrastructures.
 
-* [@k0sproject](https://github.com/k0sproject)  
-  Project: k0s build and CI infrastructure  
+* [@k0sproject](https://github.com/k0sproject)<br>
+  Project: k0s build and CI infrastructure<br>
   k0s maintainers use k0s to host build and CI infrastructure, mainly dynamic
   Github Runners.
 
-* [KubeArmor](https://docs.kubearmor.io/kubearmor/quick-links/support_matrix)
+* [KubeArmor](https://docs.kubearmor.io/kubearmor/quick-links/support_matrix)<br>
   Project: Supported in their security product
 
-* [Mirantis](https://www.mirantis.com/software/k0s/)  
-  Project: k0s support  
+* [Mirantis](https://www.mirantis.com/software/k0s/)<br>
+  Project: k0s support<br>
   Mirantis provides support for various customers utilizing k0s in their
   production environments and k0s is included in a number of Mirantis products
   such as MKE.
 
-* [Progress Chef 360](https://docs.chef.io/360/1.0/)
-  Project: Embedded Clusters for Chef 360
+* [National Astronomical Observatory for Japan](https://subarutelescope.org)<br>
+  Project: Providing compute nodes in telemetry HPC cluster<br>
+  Used for deploying and managing
+  [NVIDIA GPUs for data analysis](https://subarutelescope.org/Science/SubaruUM/SubaruUM2022/_src/679/P08_Morishima.pdf).
+  
+* [Progress Chef 360](https://docs.chef.io/360/1.0/)<br>
+  Project: Embedded Clusters for Chef 360<br>
   [Using it for embedded Kubernetes clusters](https://docs.chef.io/360/1.0/install/server/requirements/#kubernetes-requirements).
 
-* [Replicated, Inc.](https://www.replicated.com/)  
-  Project: Embedded Cluster  
-  Contact: [Chris Sanders](https://github.com/chris-sanders)  
+* [Replicated, Inc.](https://www.replicated.com/)<br>
+  Project: Embedded Cluster<br>
+  Contact: [Chris Sanders](https://github.com/chris-sanders)<br>
   Replicated builds their [Embedded Cluster](https://docs.replicated.com/vendor/embedded-overview) project on top
   of k0s. Replicated Embedded Cluster allows you to distribute a Kubernetes
   cluster and your application together as a single appliance, making it easy
   for enterprise users to install, update, and manage the application and the
   cluster in tandem.
   
-* [Splunk](https://splunk.com)
-  Project: Data Stream Processor
+* [Splunk](https://splunk.com)<br>
+  Project: Data Stream Processor<br>
   Used in their [Data Stream Processor](https://docs.splunk.com/Documentation/DSP/1.4.5/Admin/Install).
 
-* [National Astronomical Observatory for Japan](https://subarutelescope.org)
-  Project: Providing compute nodes in telemetry HPC cluster
-  Used for deploying and managing
-  [NVIDIA GPUs for data analysis](https://subarutelescope.org/Science/SubaruUM/SubaruUM2022/_src/679/P08_Morishima.pdf).
+* [vCluster](https://www.vcluster.com/)<br>
+  Project: Virtual Clusters<br>
+  vCluster supports both k0s and k3s for their virtual kubernetes nested clusters.
 
 In addition, it is being used for novel use cases in the wild:
 
