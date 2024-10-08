@@ -25,20 +25,21 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/config/kine"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/etcd"
-	clientv3 "go.etcd.io/etcd/client/v3"
+	"github.com/k0sproject/k0s/pkg/supervisor"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/users"
-	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/supervisor"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // Kine implement the component interface to run kine
@@ -131,7 +132,26 @@ func (k *Kine) Start(ctx context.Context) error {
 		GID: k.gid,
 	}
 
-	return k.supervisor.Supervise()
+	if err := k.supervisor.Supervise(); err != nil {
+		return err
+	}
+
+	var err error
+	waitErr := wait.PollUntilContextTimeout(ctx, 350*time.Millisecond, 2*time.Minute, true, func(ctx context.Context) (bool, error) {
+		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		defer cancel()
+		err = k.ready(ctx)
+		return err == nil, nil
+	})
+
+	if waitErr != nil {
+		if err != nil {
+			return fmt.Errorf("%w (%w)", waitErr, err)
+		}
+		return waitErr
+	}
+
+	return nil
 }
 
 // Stop stops kine
@@ -144,15 +164,18 @@ const hcKey = "/k0s-health-check"
 const hcValue = "value"
 
 func (k *Kine) Ready() error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
-	defer cancel()
+	return k.ready(context.TODO())
+}
 
+func (k *Kine) ready(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
 	ok, err := k.bypassClient.Write(ctx, hcKey, hcValue, 64*time.Second)
 	if err != nil {
 		return fmt.Errorf("kine-etcd-health: %w", err)
 	}
 	if !ok {
-		logrus.Warningf("kine-etcd-health: health-check value was not written")
+		return errors.New("kine-etcd-health: health-check value was not written")
 	}
 
 	v, err := k.bypassClient.Read(ctx, hcKey)
