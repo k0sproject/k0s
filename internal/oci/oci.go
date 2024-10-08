@@ -33,7 +33,7 @@ import (
 	"oras.land/oras-go/v2/registry/remote/credentials"
 )
 
-// Download downloads the oras artifact present at the given registry URL.
+// Download downloads the OCI artifact present at the given registry URL.
 // Usage example:
 //
 // artifact := "docker.io/company/k0s:latest"
@@ -117,13 +117,13 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 	return nil
 }
 
-// downloadOptions holds the options used when downloading oras artifacts.
+// downloadOptions holds the options used when downloading OCI artifacts.
 type downloadOptions struct {
 	insecureSkipTLSVerify bool
 	auth                  DockerConfig
 }
 
-// DownloadOption is a function that sets an option for the oras download.
+// DownloadOption is a function that sets an option for the OCI download.
 type DownloadOption func(*downloadOptions)
 
 // WithInsecureSkipTLSVerify sets the insecureSkipTLSVerify option to true.
