@@ -11,10 +11,18 @@ manifest: |
     "layers": [
       {
         "mediaType": "application/vnd.oci.image.layer.v1.tar",
-        "digest": "sha256:2d6c9a90dd38f6852515274cde41a8cd8e7e1a7a053835334ec7e29f61b918dd",
-        "size": 2,
+        "digest": "sha256:c147efcfc2d7ea666a9e4f5187b115c90903f0fc896a56df9a6ef5d8f3fc9f31",
+        "size": 5,
         "annotations": {
           "org.opencontainers.image.title": "file1"
+        }
+      },
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar",
+        "digest": "sha256:3377870dfeaaa7adf79a374d2702a3fdb13e5e5ea0dd8aa95a802ad39044a92f",
+        "size": 5,
+        "annotations": {
+          "org.opencontainers.image.title": "file2"
         }
       }
     ],
@@ -24,5 +32,6 @@ manifest: |
   }
 artifacts:
   44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a: "{}"
-  2d6c9a90dd38f6852515274cde41a8cd8e7e1a7a053835334ec7e29f61b918dd: "xy"
-error: mismatched digest
+  c147efcfc2d7ea666a9e4f5187b115c90903f0fc896a56df9a6ef5d8f3fc9f31: "file1"
+artifactName: unknown
+error: 'artifact "unknown" not found'

@@ -68,6 +68,7 @@ type testFile struct {
 	AuthUser      string            `json:"authUser"`
 	AuthPass      string            `json:"authPass"`
 	Artifacts     map[string]string `json:"artifacts"`
+	ArtifactName  string            `json:"artifactName"`
 }
 
 func TestDownload(t *testing.T) {
@@ -85,6 +86,10 @@ func TestDownload(t *testing.T) {
 						},
 					},
 				))
+			}
+
+			if tt.ArtifactName != "" {
+				opts = append(opts, oci.WithArtifactName(tt.ArtifactName))
 			}
 
 			buf := bytes.NewBuffer(nil)

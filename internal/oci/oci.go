@@ -23,9 +23,9 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 
-	"oras.land/oras-go/v2"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"oras.land/oras-go/v2/content"
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
@@ -40,9 +40,9 @@ import (
 // fp, _ := os.CreateTemp("", "k0s-oci-artifact-*")
 // err := oci.Download(ctx, artifact, fp)
 //
-// This function expects only one artifact to be present, if none is found this
-// returns an error. The artifact is downloaded in a temporary location before
-// being copied to the target.
+// This function expects at least one artifact to be present, if none is found
+// this returns an error. The artifact name can be specified using the
+// WithArtifactName option.
 func Download(ctx context.Context, url string, target io.Writer, options ...DownloadOption) (err error) {
 	opts := downloadOptions{}
 	for _, opt := range options {
@@ -87,40 +87,61 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 	}
 
 	tag := imgref.Reference
-	if _, err := oras.Copy(ctx, repo, tag, fs, tag, oras.DefaultCopyOptions); err != nil {
-		return fmt.Errorf("failed to fetch artifact: %w", err)
-	}
-
-	files, err := os.ReadDir(tmpdir)
+	desc, data, err := repo.Manifests().FetchReference(ctx, tag)
 	if err != nil {
-		return fmt.Errorf("failed to read temp dir: %w", err)
+		return fmt.Errorf("failed to fetch manifest: %w", err)
 	}
+	defer data.Close()
 
-	// we always expect only one single file to be downloaded.
-	if len(files) == 0 {
-		return fmt.Errorf("no artifacts found")
-	} else if len(files) > 1 {
-		return fmt.Errorf("multiple artifacts found")
-	}
-
-	fpath := filepath.Join(tmpdir, files[0].Name())
-	fp, err := os.Open(fpath)
+	successors, err := content.Successors(ctx, repo, desc)
 	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
+		return fmt.Errorf("failed to fetch successors: %w", err)
 	}
-	defer fp.Close()
 
-	if _, err := io.Copy(target, fp); err != nil {
-		return fmt.Errorf("failed to copy file: %w", err)
+	source, err := findArtifactDescriptor(successors, opts)
+	if err != nil {
+		return fmt.Errorf("failed to find artifact: %w", err)
+	}
+
+	// get a reader to the blob and copies it to the target.
+	reader, err := repo.Blobs().Fetch(ctx, source)
+	if err != nil {
+		return fmt.Errorf("failed to fetch blob: %w", err)
+	}
+	defer reader.Close()
+
+	if _, err := io.Copy(target, reader); err != nil {
+		return fmt.Errorf("failed to copy blob: %w", err)
 	}
 
 	return nil
+}
+
+// findArtifactDescriptor filters, out of the provided list of descriptors, the
+// one that matches the given options. If no artifact name is provided, it
+// returns the first descriptor.
+func findArtifactDescriptor(all []ocispec.Descriptor, opts downloadOptions) (ocispec.Descriptor, error) {
+	for _, desc := range all {
+		if desc.MediaType == ocispec.MediaTypeEmptyJSON {
+			continue
+		}
+		// if no artifact name is specified, we use the first one.
+		fname := opts.artifactName
+		if fname == "" || fname == desc.Annotations[ocispec.AnnotationTitle] {
+			return desc, nil
+		}
+	}
+	if opts.artifactName == "" {
+		return ocispec.Descriptor{}, fmt.Errorf("no artifacts found")
+	}
+	return ocispec.Descriptor{}, fmt.Errorf("artifact %q not found", opts.artifactName)
 }
 
 // downloadOptions holds the options used when downloading OCI artifacts.
 type downloadOptions struct {
 	insecureSkipTLSVerify bool
 	auth                  DockerConfig
+	artifactName          string
 }
 
 // DownloadOption is a function that sets an option for the OCI download.
@@ -138,6 +159,14 @@ func WithInsecureSkipTLSVerify() DownloadOption {
 func WithDockerAuth(auth DockerConfig) DownloadOption {
 	return func(opts *downloadOptions) {
 		opts.auth = auth
+	}
+}
+
+// WithArtifactName sets the name of the artifact to be downloaded. This is
+// used to filter out the artifacts present in the manifest.
+func WithArtifactName(name string) DownloadOption {
+	return func(opts *downloadOptions) {
+		opts.artifactName = name
 	}
 }
 
