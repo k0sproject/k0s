@@ -24,7 +24,7 @@ ARG TARGET_OS \
 
 RUN go version
 RUN set -ex \
-  && go get github.com/opencontainers/runc@v1.1.14 \
+  && go get github.com/opencontainers/runc@v1.1.15 \
   && make \
     CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
     SHIM_CGO_ENABLED=${BUILD_SHIM_GO_CGO_ENABLED} \
