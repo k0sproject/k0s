@@ -42,7 +42,6 @@ spec:
               chartName:
                 type: string
               forceUpgrade:
-                default: true
                 description: 'ForceUpgrade when set to false, disables the use of
                   the "--force" flag when upgrading the the chart (default: true).'
                 type: boolean
