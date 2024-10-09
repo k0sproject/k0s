@@ -1,5 +1,5 @@
 /*
-Copyright 2022 k0s authors
+Copyright 2024 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,16 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package iptablesutils
+package iptables
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
+	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,6 +36,82 @@ const (
 	ModeNFT    = "nft"
 	ModeLegacy = "legacy"
 )
+
+type Component struct {
+	IPTablesMode string
+	BinDir       string
+}
+
+func (c *Component) Init(_ context.Context) error {
+	log := logrus.WithField("component", constant.IptablesBinariesComponentName)
+	log.Info("Staging iptables binaries")
+	err, iptablesMode := extractIPTablesBinaries(c.BinDir, c.IPTablesMode)
+	if err != nil {
+		return err
+	}
+
+	c.IPTablesMode = iptablesMode
+	log.Infof("iptables mode: %s", c.IPTablesMode)
+	return nil
+}
+
+func (c *Component) Start(_ context.Context) error {
+	return nil
+}
+
+func (c *Component) Stop() error {
+	return nil
+}
+
+// extractIPTablesBinaries extracts the iptables binaries from the k0s binary and makes the symlinks
+// to the backend detected by DetectHostIPTablesMode.
+// extractIPTablesBinaries only works on linux, if called in another OS it will return an error.
+func extractIPTablesBinaries(k0sBinDir string, iptablesMode string) (error, string) {
+	cmds := []string{"xtables-legacy-multi", "xtables-nft-multi"}
+	for _, cmd := range cmds {
+		err := assets.Stage(k0sBinDir, cmd, constant.BinDirMode)
+		if err != nil {
+			return err, ""
+		}
+	}
+	if iptablesMode == "" || iptablesMode == "auto" {
+		var err error
+		iptablesMode, err = DetectHostIPTablesMode(k0sBinDir)
+		if err != nil {
+			if kernelMajorVersion() < 5 {
+				iptablesMode = ModeLegacy
+			} else {
+				iptablesMode = ModeNFT
+			}
+			logrus.WithError(err).Infof("Failed to detect iptables mode, using iptables-%s by default", iptablesMode)
+		}
+	}
+	logrus.Infof("using iptables-%s", iptablesMode)
+	oldpath := fmt.Sprintf("xtables-%s-multi", iptablesMode)
+	for _, symlink := range []string{"iptables", "iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
+		symlinkPath := filepath.Join(k0sBinDir, symlink)
+
+		// remove if it exist and ignore error if it doesn't
+		_ = os.Remove(symlinkPath)
+
+		err := os.Symlink(oldpath, symlinkPath)
+		if err != nil {
+			return fmt.Errorf("failed to create symlink %s: %w", symlink, err), ""
+		}
+	}
+
+	return nil, iptablesMode
+}
+func kernelMajorVersion() byte {
+	if runtime.GOOS != "linux" {
+		return 0
+	}
+	data, err := os.ReadFile("/proc/sys/kernel/osrelease")
+	if err != nil {
+		return 0
+	}
+	return data[0] - '0'
+}
 
 // DetectHostIPTablesMode figure out whether iptables-legacy or iptables-nft is in use on the host.
 // Follows the same logic as kube-proxy/kube-route.

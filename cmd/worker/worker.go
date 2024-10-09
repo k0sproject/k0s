@@ -28,6 +28,7 @@ import (
 	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
+	"github.com/k0sproject/k0s/pkg/component/iptables"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -147,20 +148,25 @@ func (c *Command) Start(ctx context.Context) error {
 		c.WorkerProfile = "default-windows"
 	}
 
-	componentManager.Add(ctx, &worker.Kubelet{
-		CRISocket:           c.CriSocket,
-		EnableCloudProvider: c.CloudProvider,
-		K0sVars:             c.K0sVars,
-		StaticPods:          staticPods,
-		Kubeconfig:          kubeletKubeconfigPath,
-		Configuration:       *workerConfig.KubeletConfiguration.DeepCopy(),
-		LogLevel:            c.LogLevels.Kubelet,
-		Labels:              c.Labels,
-		Taints:              c.Taints,
-		ExtraArgs:           c.KubeletExtraArgs,
-		IPTablesMode:        c.WorkerOptions.IPTablesMode,
-		DualStackEnabled:    workerConfig.DualStackEnabled,
+	componentManager.Add(ctx, &iptables.Component{
+		IPTablesMode: c.WorkerOptions.IPTablesMode,
+		BinDir:       c.K0sVars.BinDir,
 	})
+
+	componentManager.Add(ctx,
+		&worker.Kubelet{
+			CRISocket:           c.CriSocket,
+			EnableCloudProvider: c.CloudProvider,
+			K0sVars:             c.K0sVars,
+			StaticPods:          staticPods,
+			Kubeconfig:          kubeletKubeconfigPath,
+			Configuration:       *workerConfig.KubeletConfiguration.DeepCopy(),
+			LogLevel:            c.LogLevels.Kubelet,
+			Labels:              c.Labels,
+			Taints:              c.Taints,
+			ExtraArgs:           c.KubeletExtraArgs,
+			DualStackEnabled:    workerConfig.DualStackEnabled,
+		})
 
 	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
 
@@ -196,6 +202,7 @@ func (c *Command) Start(ctx context.Context) error {
 	}
 
 	worker.KernelSetup()
+
 	err = componentManager.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to start worker components: %w", err)

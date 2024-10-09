@@ -1,5 +1,5 @@
 /*
-Copyright 2022 k0s authors
+Copyright 2024 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package iptablesutils_test
+package iptables_test
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/internal/pkg/iptablesutils"
+	"github.com/k0sproject/k0s/pkg/component/iptables"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -64,7 +64,7 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 	t.Run("iptables_not_found", func(t *testing.T) {
 		binDir := t.TempDir()
 
-		_, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		_, err := iptables.DetectHostIPTablesMode(binDir)
 
 		var execErr *exec.Error
 		require.ErrorAs(t, err, &execErr)
@@ -79,9 +79,9 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 			strings.Repeat("echo KUBE-IPTABLES-HINT\n", 1),
 		)
 
-		mode, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		mode, err := iptables.DetectHostIPTablesMode(binDir)
 		require.NoError(t, err)
-		assert.Equal(t, iptablesutils.ModeNFT, mode)
+		assert.Equal(t, iptables.ModeNFT, mode)
 	})
 
 	t.Run("xtables_legacy", func(t *testing.T) {
@@ -91,9 +91,9 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 			strings.Repeat("echo KUBE-IPTABLES-HINT\n", 1),
 		)
 
-		mode, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		mode, err := iptables.DetectHostIPTablesMode(binDir)
 		require.NoError(t, err)
-		assert.Equal(t, iptablesutils.ModeLegacy, mode)
+		assert.Equal(t, iptables.ModeLegacy, mode)
 	})
 
 	t.Run("xtables_nft_over_legacy", func(t *testing.T) {
@@ -108,9 +108,9 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 			strings.Repeat("echo KUBE-IPTABLES-HINT\n", 3),
 		)
 
-		mode, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		mode, err := iptables.DetectHostIPTablesMode(binDir)
 		require.NoError(t, err)
-		assert.Equal(t, iptablesutils.ModeNFT, mode)
+		assert.Equal(t, iptables.ModeNFT, mode)
 	})
 
 	t.Run("xtables_legacy_over_nft_more_entries", func(t *testing.T) {
@@ -124,9 +124,9 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 			strings.Repeat("echo FOOBAR\n", 2),
 		)
 
-		mode, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		mode, err := iptables.DetectHostIPTablesMode(binDir)
 		require.NoError(t, err)
-		assert.Equal(t, iptablesutils.ModeLegacy, mode)
+		assert.Equal(t, iptables.ModeLegacy, mode)
 	})
 
 	t.Run("fallback_to_iptables_if_xtables_nft_over_legacy_more_entries", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 			strings.Repeat("echo FOOBAR\n", 1),
 		)
 
-		_, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		_, err := iptables.DetectHostIPTablesMode(binDir)
 		var execErr *exec.Error
 		require.ErrorAs(t, err, &execErr)
 		assert.Equal(t, "iptables", execErr.Name)
@@ -152,9 +152,9 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 		writeXtables(t, binDir, "nft", "exit 1", "exit 1")
 		writeXtables(t, binDir, "legacy", "exit 1", "echo KUBE-IPTABLES-HINT")
 
-		mode, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		mode, err := iptables.DetectHostIPTablesMode(binDir)
 		require.NoError(t, err)
-		assert.Equal(t, iptablesutils.ModeLegacy, mode)
+		assert.Equal(t, iptables.ModeLegacy, mode)
 	})
 
 	t.Run("xtables_legacy_fails", func(t *testing.T) {
@@ -162,9 +162,9 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 		writeXtables(t, binDir, "nft", "exit 1", "echo KUBE-IPTABLES-HINT")
 		writeXtables(t, binDir, "legacy", "exit 1", "exit 1")
 
-		mode, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		mode, err := iptables.DetectHostIPTablesMode(binDir)
 		require.NoError(t, err)
-		assert.Equal(t, iptablesutils.ModeNFT, mode)
+		assert.Equal(t, iptables.ModeNFT, mode)
 	})
 
 	t.Run("xtables_fails", func(t *testing.T) {
@@ -172,7 +172,7 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 		writeXtables(t, binDir, "nft", "exit 99", "exit 88")
 		writeXtables(t, binDir, "legacy", "exit 77", "exit 66")
 
-		_, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		_, err := iptables.DetectHostIPTablesMode(binDir)
 		var composite interface{ Unwrap() []error }
 		require.ErrorAs(t, err, &composite, "No wrapped errors")
 		errs := composite.Unwrap()
@@ -190,23 +190,23 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 	writeXtables(t, binDir, "legacy", "", "")
 
 	t.Run("iptables_legacy", func(t *testing.T) {
-		mode, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		mode, err := iptables.DetectHostIPTablesMode(binDir)
 		require.NoError(t, err)
-		assert.Equal(t, iptablesutils.ModeLegacy, mode)
+		assert.Equal(t, iptables.ModeLegacy, mode)
 	})
 
 	writeScript(t, pathDir, "iptables", "echo foo-nf_tables-bar")
 
 	t.Run("iptables_nft", func(t *testing.T) {
-		mode, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		mode, err := iptables.DetectHostIPTablesMode(binDir)
 		require.NoError(t, err)
-		assert.Equal(t, iptablesutils.ModeNFT, mode)
+		assert.Equal(t, iptables.ModeNFT, mode)
 	})
 
 	writeScript(t, pathDir, "iptables", "exit 1")
 
 	t.Run("iptables_broken", func(t *testing.T) {
-		_, err := iptablesutils.DetectHostIPTablesMode(binDir)
+		_, err := iptables.DetectHostIPTablesMode(binDir)
 		var exitErr *exec.ExitError
 		require.ErrorAs(t, err, &exitErr)
 		assert.Equal(t, 1, exitErr.ExitCode())
