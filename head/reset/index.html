@@ -2075,7 +2075,7 @@ following:</p>
   network interfaces or iptables rules set up specifically for cluster
   communication. This is done on a best effort basis. It's recommended that you
   reboot the host after a reset to ensure that there are no k0s remnants in the
-  host's network configuration.</li>
+  host's network configuration. Custom CNI plugins are not cleaned up.</li>
 <li>Registration with the host's init system: Reverts the registration done by
   <code>k0s install</code>. After a reset, k0s won't be automatically started when the host
   boots.</li>
