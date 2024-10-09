@@ -1,0 +1,4 @@
+authenticated: true
+authUser: wrong-user
+authPass: wrong-pass
+error: Unauthorized

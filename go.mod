@@ -32,6 +32,7 @@ require (
 	github.com/mesosphere/toml-merge v0.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/opencontainers/image-spec v1.1.0
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/otiai10/copy v1.14.0
 	github.com/pelletier/go-toml v1.9.5
@@ -59,6 +60,7 @@ require (
 	golang.org/x/tools v0.26.0
 	google.golang.org/grpc v1.67.1
 	helm.sh/helm/v3 v3.16.1
+	oras.land/oras-go/v2 v2.5.0
 )
 
 // Kubernetes
@@ -208,7 +210,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runc v1.1.14 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect

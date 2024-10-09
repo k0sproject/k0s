@@ -1,0 +1,29 @@
+manifest: |
+  {
+    "schemaVersion": 2,
+    "mediaType": "application/vnd.oci.image.manifest.v1+json",
+    "artifactType": "application/vnd.unknown.artifact.v1",
+    "config": {
+      "mediaType": "application/vnd.oci.empty.v1+json",
+      "digest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "size": 2
+    },
+    "layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar",
+        "digest": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+        "size": 4,
+        "annotations": {
+          "org.opencontainers.image.title": "file1"
+        }
+      }
+    ],
+    "annotations": {
+      "org.opencontainers.image.created": "2024-10-03T14:32:57Z"
+    }
+  }
+artifacts:
+  44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a: "{}"
+  9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08: "test"
+expected: test
+plainHTTP: true
