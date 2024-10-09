@@ -70,6 +70,10 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 		return fmt.Errorf("failed to create repository: %w", err)
 	}
 
+	if opts.plainHTTP {
+		repo.PlainHTTP = true
+	}
+
 	fs, err := file.New(tmpdir)
 	if err != nil {
 		return fmt.Errorf("failed to create file store: %w", err)
@@ -142,6 +146,7 @@ type downloadOptions struct {
 	insecureSkipTLSVerify bool
 	auth                  DockerConfig
 	artifactName          string
+	plainHTTP             bool
 }
 
 // DownloadOption is a function that sets an option for the OCI download.
@@ -151,6 +156,14 @@ type DownloadOption func(*downloadOptions)
 func WithInsecureSkipTLSVerify() DownloadOption {
 	return func(opts *downloadOptions) {
 		opts.insecureSkipTLSVerify = true
+	}
+}
+
+// WithPlainHTTP sets the client to reach the remote registry using plain HTTP
+// instead of HTTPS.
+func WithPlainHTTP() DownloadOption {
+	return func(opts *downloadOptions) {
+		opts.plainHTTP = true
 	}
 }
 

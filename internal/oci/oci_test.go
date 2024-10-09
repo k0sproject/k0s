@@ -69,6 +69,7 @@ type testFile struct {
 	AuthPass      string            `json:"authPass"`
 	Artifacts     map[string]string `json:"artifacts"`
 	ArtifactName  string            `json:"artifactName"`
+	PlainHTTP     bool              `json:"plainHTTP"`
 }
 
 func TestDownload(t *testing.T) {
@@ -92,6 +93,10 @@ func TestDownload(t *testing.T) {
 				opts = append(opts, oci.WithArtifactName(tt.ArtifactName))
 			}
 
+			if tt.PlainHTTP {
+				opts = append(opts, oci.WithPlainHTTP())
+			}
+
 			buf := bytes.NewBuffer(nil)
 			url := fmt.Sprintf("%s/repository/artifact:latest", addr)
 			err := oci.Download(context.TODO(), url, buf, opts...)
@@ -112,7 +117,13 @@ func TestDownload(t *testing.T) {
 // address of the server.
 func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 	var serverAddr string
-	server := httptest.NewTLSServer(
+
+	starter := httptest.NewTLSServer
+	if test.PlainHTTP {
+		starter = httptest.NewServer
+	}
+
+	server := starter(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			// this is a request to authenticate.
@@ -124,7 +135,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 				}
 				res := map[string]string{"token": tname}
 				marshalled, err := json.Marshal(res)
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				_, _ = w.Write(marshalled)
 				return
 			}
@@ -134,7 +145,12 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 			// moves on. the token returned is the test name.
 			tokenhdr, authenticated := r.Header["Authorization"]
 			if !authenticated && test.Authenticated {
-				header := fmt.Sprintf(`Bearer realm="https://%s/token"`, serverAddr)
+				proto := "https"
+				if test.PlainHTTP {
+					proto = "http"
+				}
+
+				header := fmt.Sprintf(`Bearer realm="%s://%s/token"`, proto, serverAddr)
 				w.Header().Add("WWW-Authenticate", header)
 				w.WriteHeader(http.StatusUnauthorized)
 				return
@@ -143,8 +159,8 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 			// verify if the token provided by the client matches
 			// the expected token.
 			if test.Authenticated {
-				require.Len(t, tokenhdr, 1)
-				require.Contains(t, tokenhdr[0], tname)
+				assert.Len(t, tokenhdr, 1)
+				assert.Contains(t, tokenhdr[0], tname)
 			}
 
 			// serve the manifest.
