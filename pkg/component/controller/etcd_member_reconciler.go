@@ -34,11 +34,9 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/sirupsen/logrus"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 )
 
 var _ manager.Component = (*EtcdMemberReconciler)(nil)
@@ -126,18 +124,14 @@ func (e *EtcdMemberReconciler) Stop() error {
 }
 
 func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
-	rc, err := e.clientFactory.GetRESTConfig()
-	if err != nil {
-		return err
-	}
-	ec, err := extclient.NewForConfig(rc)
+	client, err := e.clientFactory.GetAPIExtensionsClient()
 	if err != nil {
 		return err
 	}
 	var lastObservedVersion string
 	log := logrus.WithField("component", "etcdMemberReconciler")
 	log.Info("waiting to see EtcdMember CRD ready")
-	return watch.CRDs(ec.CustomResourceDefinitions()).
+	return watch.CRDs(client.ApiextensionsV1().CustomResourceDefinitions()).
 		WithObjectName(fmt.Sprintf("%s.%s", "etcdmembers", "etcd.k0sproject.io")).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryAfter, e := watch.IsRetryable(err); e == nil {
@@ -159,12 +153,12 @@ func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
 			)
 			return retryAfter, nil
 		}).
-		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
+		Until(ctx, func(item *apiextensionsv1.CustomResourceDefinition) (bool, error) {
 			lastObservedVersion = item.ResourceVersion
 			for _, cond := range item.Status.Conditions {
-				if cond.Type == extensionsv1.Established {
+				if cond.Type == apiextensionsv1.Established {
 					log.Infof("EtcdMember CRD status: %s", cond.Status)
-					return cond.Status == extensionsv1.ConditionTrue, nil
+					return cond.Status == apiextensionsv1.ConditionTrue, nil
 				}
 			}
 
