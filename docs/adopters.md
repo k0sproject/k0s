@@ -73,6 +73,8 @@ When adding new adopters, please adhere roughly to the following format:
   Project: Virtual Clusters<br>
   vCluster supports both k0s and k3s for their virtual kubernetes nested clusters.
 
+## Additional use cases
+
 In addition, it is being used for novel use cases in the wild:
 
 * [Kubernetes vs Philippine Power Outages - On setting up k0s over Tailscale](https://justrox.me/kubernetes-vs-philippine-power-outages-a-simple-guide-to-k0s-over-tailscale/)
