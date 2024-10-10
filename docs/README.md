@@ -1,8 +1,11 @@
 # k0s - The Zero Friction Kubernetes
 
-![k0s logo](img/k0s-logo-full-color-light.svg)
+<!-- When changing this file, consider to change ../README.md, too! -->
 
-k0s is an open source, all-inclusive Kubernetes distribution, which is configured with all of the features needed to build a Kubernetes cluster. Due to its simple design, flexible deployment options and modest system requirements, k0s is well suited for
+![k0s-logo-dark](img/k0s-logo-full-color-dark.svg#only-dark)
+![k0s-logo-light](img/k0s-logo-full-color-light.svg#only-light)
+
+k0s is an open source, all-inclusive Kubernetes distribution, which is configured with all of the features needed to build a Kubernetes cluster and packaged as a single binary for ease of use. Due to its simple design, flexible deployment options and modest system requirements, k0s is well suited for
 
 - Any cloud
 - Bare metal
@@ -12,13 +15,13 @@ k0s drastically reduces the complexity of installing and running a CNCF certifie
 
 k0s is distributed as a single binary with zero host OS dependencies besides the host OS kernel. It works with any Linux without additional software packages or configuration. Any security vulnerabilities or performance issues can be fixed directly in the k0s distribution that makes it extremely straightforward to keep the clusters up-to-date and secure.
 
-## What happened to Github stargazers?
+## What happened to GitHub stargazers?
 
-In September 2022 we made a human error while creating some build automation scripts&tools for the Github repository. Our automation accidentally changed the repo to a private one for few minutes. That itself is not a big deal and everything was restored quickly. But the nasty side effect is that it also removed all the stargazers at that point. :(
+In September 2022 we made a human error while creating some build automation scripts&tools for the GitHub repository. Our automation accidentally changed the repo to a private one for few minutes. That itself is not a big deal and everything was restored quickly. But the nasty side effect is that it also removed all the stargazers at that point. :(
 
 Before that mishap we had 4776 stargazers, making k0s one of the most popular Kubernetes distro out there.
 
-**So if you are reading this, and have not yet starred [k0s repo](https://github.com/k0sproject/k0s/) we would highly appreciate the :star: to get our numbers closer to what they used to be.**
+**So if you are reading this, and have not yet starred the [k0s repository](https://github.com/k0sproject/k0s/) we would highly appreciate the :star: to get our numbers closer to what they used to be.**
 
 ## Key Features
 
@@ -31,20 +34,22 @@ Before that mishap we had 4776 stargazers, making k0s one of the most popular Ku
 - Scalable from a single node to large, [high-available](high-availability.md) clusters
 - Supports custom [Container Network Interface (CNI)](networking.md) plugins (Kube-Router is the default, Calico is offered as a preconfigured alternative)
 - Supports custom [Container Runtime Interface (CRI)](runtime.md) plugins (containerd is the default)
-- Supports all Kubernetes storage options with [Container Storage Interface (CSI)](storage.md), includes [OpenEBS host-local storage provider](examples/openebs.md)
+- Supports all Kubernetes storage options with [Container Storage Interface (CSI)](storage.md)
 - Supports a variety of [datastore backends](configuration.md#specstorage): etcd (default for multi-node clusters), SQLite (default for single node clusters), MySQL, and PostgreSQL
 - Supports x86-64, ARM64 and ARMv7
 - Includes [Konnectivity service](networking.md#controller-worker-communication), CoreDNS and Metrics Server
 
 ## Getting Started
 
-[Quick Start Guide](install.md) for creating a full Kubernetes cluster with a single node.
+- [Quick Start Guide](install.md) for creating a full Kubernetes cluster with a single node.
+- [Install using k0sctl](k0sctl-install.md) - Deploy and upgrade multi-node clusters with one command.
+- [Run k0s in Docker](k0s-in-docker.md) - Run k0s controllers and workers in containers.
 
 ## Demo
 
 ![k0s demo](img/k0s_demo.gif)
 
-## Community Support
+## Join the Community
 
 - [Lens Forums] - Request for support and help from the Lens and k0s community.
 - [GitHub Issues] - Submit your issues and feature requests via GitHub.
@@ -57,7 +62,7 @@ check out the [Contributing Guide] and the [Code of Conduct].
 [Contributing Guide]: https://docs.k0sproject.io/stable/contributors/overview/
 [Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
 
-## Community hours
+### Community hours
 
 We will be holding regular community hours. Everyone in the community is welcome to drop by and ask questions, talk about projects, and chat.
 
