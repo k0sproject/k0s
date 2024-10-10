@@ -71,7 +71,9 @@ is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in
 use is `oci://` or of type `Opaque` if protocols `http://` or `https://` are
 used (see below for details on the Secret layout).
 
-Example configuration for OCI:
+### Example Configurations
+
+#### Configuration for OCI
 
 ```yaml
 url: oci://my.registry/binaries/k0s:v1.30.1+k0s.0
@@ -81,7 +83,7 @@ secretRef:
   name: artifacts-registry
 ```
 
-Example configuration for OCI using plain HTTP transport:
+#### Configuration for OCI using plain HTTP transport
 
 ```yaml
 url: oci+http://my.registry/binaries/k0s:v1.30.1+k0s.0
@@ -91,7 +93,7 @@ secretRef:
   name: artifacts-registry
 ```
 
-Example configuration for HTTPS:
+#### Configuration for HTTPS
 
 ```yaml
 url: https://my.file.server/binaries/k0s-v1.30.1+k0s.0
@@ -101,7 +103,7 @@ secretRef:
   name: artifacts-basic-auth
 ```
 
-Example configuration for HTTP:
+#### Configuration for HTTP
 
 ```yaml
 url: http://my.file.server/binaries/k0s-v1.30.1+k0s.0
