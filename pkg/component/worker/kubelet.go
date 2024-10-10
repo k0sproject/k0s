@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+    "strconv"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -72,8 +73,10 @@ var _ manager.Component = (*Kubelet)(nil)
 type kubeletConfig struct {
 	ClientCAFile       string
 	VolumePluginDir    string
-	KubeReservedCgroup string
-	KubeletCgroups     string
+    ReservedSystemCPUs string
+    SystemReservedCPU  string
+    SystemReservedMemory string
+
 	CgroupsPerQOS      bool
 	ResolvConf         string
 	StaticPodURL       string
@@ -152,6 +155,212 @@ func lookupHostname(ctx context.Context, hostname string) (ipv4 net.IP, ipv6 net
 	return ipv4, ipv6, nil
 }
 
+// Get cgroup path
+func getCgroup() string {
+	file, err := os.Open("/proc/1/cgroup")
+	if err != nil {
+		fmt.Println("Error opening /proc/1/cgroup:", err)
+		return ""
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fields := strings.Split(scanner.Text(), ":")
+		if len(fields) == 3 {
+			return filepath.Join("/sys/fs/cgroup", fields[2])
+		}
+	}
+	return ""
+}
+
+// Get memory limit from cgroup
+func getMemory() int64 {
+	cgroupPath := getCgroup()
+	memoryFile := filepath.Join(cgroupPath, "memory.max")
+	content, err := os.ReadFile(memoryFile)
+	if err != nil {
+		fmt.Println("Error reading memory.max file:", err)
+		return 0
+	}
+
+	memoryStr := strings.TrimSpace(string(content))
+	if memoryStr == "max" {
+		return 0
+	}
+
+	memory, err := strconv.ParseInt(memoryStr, 10, 64)
+	if err != nil {
+		fmt.Println("Error parsing memory:", err)
+		return 0
+	}
+
+	return memory
+}
+
+// Get CPU list from cgroup
+func getCpus() string {
+	cgroupPath := getCgroup()
+	cpusFile := filepath.Join(cgroupPath, "cpuset.cpus")
+	content, err := os.ReadFile(cpusFile)
+	if err != nil {
+		fmt.Println("Error reading cpuset.cpus file:", err)
+		return ""
+	}
+
+	return strings.TrimSpace(string(content))
+}
+
+// Get CPU quota from cgroup
+func getCpuQuota() int {
+    cgroupPath := getCgroup()
+    cpumaxFile := filepath.Join(cgroupPath, "cpu.max")
+    content, err := os.ReadFile(cpumaxFile)
+    if err != nil {
+        fmt.Println("Error reading cpu.max file:", err)
+        return 100000
+    }
+
+    // parse a string of the form max 100000
+    parts := strings.Fields(string(content))
+    if len(parts) != 2 {
+        fmt.Println("Error parsing cpu.max:", err)
+        return 100000
+    }
+
+    if parts[0] == "max" {
+        return 100000
+    }
+
+    quota, err := strconv.Atoi(parts[0])
+    if err != nil {
+        fmt.Println("Error parsing cpu.max:", err)
+        return 100000
+    }
+
+    return quota
+}
+
+
+// Get total system memory
+func getMemTotal() int64 {
+	file, err := os.Open("/proc/meminfo")
+	if err != nil {
+		fmt.Println("Error opening /proc/meminfo:", err)
+		return 0
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "MemTotal") {
+			parts := strings.Fields(line)
+			memTotalKb, err := strconv.ParseInt(parts[1], 10, 64)
+			if err != nil {
+				fmt.Println("Error parsing memory total:", err)
+				return 0
+			}
+			return memTotalKb * 1024 // Convert KB to bytes
+		}
+	}
+	return 0
+}
+
+// Invert memory usage
+func invertMemoryUsage(memory int64) int64 {
+	if memory == 0 {
+		return 0
+	}
+	return getMemTotal() - memory
+}
+
+// Count number of processors
+func numProcessors() int {
+	file, err := os.Open("/proc/cpuinfo")
+	if err != nil {
+		fmt.Println("Error opening /proc/cpuinfo:", err)
+		return 0
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	processorCount := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "processor") {
+			processorCount++
+		}
+	}
+	return processorCount
+}
+
+// Build CPU list as a boolean array
+func buildCpuList(cpu string, ncpu int) []bool {
+	cpuPresenceArray := make([]bool, ncpu)
+	cpuRanges := strings.Split(cpu, ",")
+
+	for _, item := range cpuRanges {
+		if strings.Contains(item, "-") {
+			rangeParts := strings.Split(item, "-")
+			start, _ := strconv.Atoi(rangeParts[0])
+			end, _ := strconv.Atoi(rangeParts[1])
+
+			for i := start; i <= end && i < ncpu; i++ {
+				cpuPresenceArray[i] = true
+			}
+		} else {
+			cpuIndex, _ := strconv.Atoi(strings.TrimSpace(item))
+			if cpuIndex < ncpu {
+				cpuPresenceArray[cpuIndex] = true
+			}
+		}
+	}
+
+	return cpuPresenceArray
+}
+
+// Build CPU string from boolean array
+func buildCpuString(cpus []bool) string {
+	var cpuList []string
+	i := 0
+	for i < len(cpus) {
+		if cpus[i] {
+			start := i
+			for i < len(cpus) && cpus[i] {
+				i++
+			}
+			end := i - 1
+			if start == end {
+				cpuList = append(cpuList, fmt.Sprintf("%d", start))
+			} else {
+				cpuList = append(cpuList, fmt.Sprintf("%d-%d", start, end))
+			}
+		}
+		i++
+	}
+	return strings.Join(cpuList, ",")
+}
+
+// Invert CPU list
+func invertCpuList(cpu string) string {
+	if cpu == "" {
+		return ""
+	}
+
+	ncpu := numProcessors()
+	cpuList := buildCpuList(cpu, ncpu)
+	for i := 0; i < ncpu; i++ {
+		cpuList[i] = !cpuList[i]
+	}
+
+	return buildCpuString(cpuList)
+}
+
+func buildCpuQuotaString(quota int) string {
+    return fmt.Sprintf("%dm", (100000-quota)/100)
+}
+
 // Run runs kubelet
 func (k *Kubelet) Start(ctx context.Context) error {
 	cmd := "kubelet"
@@ -165,11 +374,12 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	}
 
 	kubeletConfigData := kubeletConfig{
-		ClientCAFile:       filepath.Join(k.K0sVars.CertRootDir, "ca.crt"),
-		VolumePluginDir:    k.K0sVars.KubeletVolumePluginDir,
-		KubeReservedCgroup: "system.slice",
-		KubeletCgroups:     "/system.slice/containerd.service",
-		StaticPodURL:       staticPodURL,
+		ClientCAFile:           filepath.Join(k.K0sVars.CertRootDir, "ca.crt"),
+		VolumePluginDir:        k.K0sVars.KubeletVolumePluginDir,
+        ReservedSystemCPUs:     invertCpuList(getCpus()),
+        SystemReservedMemory:   strconv.FormatInt(invertMemoryUsage(getMemory()), 10),
+        SystemReservedCPU:      buildCpuQuotaString(getCpuQuota()),
+		StaticPodURL:           staticPodURL,
 	}
 	if runtime.GOOS == "windows" {
 		cmd = "kubelet.exe"
@@ -270,8 +480,10 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 	preparedConfig := k.Configuration.DeepCopy()
 	preparedConfig.Authentication.X509.ClientCAFile = kubeletConfigData.ClientCAFile // filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
 	preparedConfig.VolumePluginDir = kubeletConfigData.VolumePluginDir               // k.K0sVars.KubeletVolumePluginDir
-	preparedConfig.KubeReservedCgroup = kubeletConfigData.KubeReservedCgroup
-	preparedConfig.KubeletCgroups = kubeletConfigData.KubeletCgroups
+    preparedConfig.ReservedSystemCPUs = kubeletConfigData.ReservedSystemCPUs
+    preparedConfig.SystemReserved = make(map[string]string)
+    preparedConfig.SystemReserved["memory"] = kubeletConfigData.SystemReservedMemory
+    preparedConfig.SystemReserved["cpu"] = kubeletConfigData.SystemReservedCPU
 	preparedConfig.ResolverConfig = ptr.To(kubeletConfigData.ResolvConf)
 	preparedConfig.CgroupsPerQOS = ptr.To(kubeletConfigData.CgroupsPerQOS)
 	preparedConfig.StaticPodURL = kubeletConfigData.StaticPodURL
