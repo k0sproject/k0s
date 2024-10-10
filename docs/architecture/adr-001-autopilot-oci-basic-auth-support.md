@@ -81,6 +81,16 @@ secretRef:
   name: artifacts-registry
 ```
 
+Example configuration for OCI using plain HTTP transport:
+
+```yaml
+url: oci+http://my.registry/binaries/k0s:v1.30.1+k0s.0
+sha256: e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99
+secretRef:
+  namespace: kube-system
+  name: artifacts-registry
+```
+
 Example configuration for HTTPS:
 
 ```yaml
