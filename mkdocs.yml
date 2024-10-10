@@ -75,6 +75,7 @@ nav:
       - Kube-bench Security Benchmark: cis_benchmark.md
   - Releases & Support: releases.md
   - Commercial support: commercial-support.md
+  - Adopters: adopters.md
   - Contributing:
       - Overview: contributors/overview.md
       - GitHub Workflow: contributors/github_workflow.md

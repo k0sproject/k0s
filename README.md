@@ -81,7 +81,7 @@ To see the call details in your local timezone, check out [https://dateful.com/e
 
 k0s is used in numerous cases and environments. The range we've seen it being adopted ranges from very small far edge deployments to big data center deployments. Please add your use case to [adopters] list.
 
-[adopters]: ADOPTERS.md
+[adopters]: docs/adopters.md
 
 ## Motivation
 
