@@ -22,11 +22,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2/content"
-	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -59,12 +57,6 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 		return fmt.Errorf("failed to parse artifact reference: %w", err)
 	}
 
-	tmpdir, err := os.MkdirTemp("", "k0s-oci-artifact-*")
-	if err != nil {
-		return fmt.Errorf("failed to create temp dir: %w", err)
-	}
-	defer func() { _ = os.RemoveAll(tmpdir) }()
-
 	repo, err := remote.NewRepository(url)
 	if err != nil {
 		return fmt.Errorf("failed to create repository: %w", err)
@@ -73,12 +65,6 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 	if opts.plainHTTP {
 		repo.PlainHTTP = true
 	}
-
-	fs, err := file.New(tmpdir)
-	if err != nil {
-		return fmt.Errorf("failed to create file store: %w", err)
-	}
-	defer fs.Close()
 
 	transp := http.DefaultTransport.(*http.Transport).Clone()
 	if opts.insecureSkipTLSVerify {
