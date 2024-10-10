@@ -31,12 +31,12 @@ Starting with the current `PlanResourceURL` struct:
 
 ```go
 type PlanResourceURL struct {
-        // URL is the URL of a downloadable resource.
-        URL string `json:"url"`
+	// URL is the URL of a downloadable resource.
+	URL string `json:"url"`
 
-        // Sha256 provides an optional SHA256 hash of the URL's content for
-        // verification.
-        Sha256 string `json:"sha256,omitempty"`
+	// Sha256 provides an optional SHA256 hash of the URL's content for
+	// verification.
+	Sha256 string `json:"sha256,omitempty"`
 }
 ```
 
@@ -45,22 +45,22 @@ pulls. This will be achieved by adjusting the struct as follows:
 
 ```go
 type PlanResourceURL struct {
-        // URL is the URL of a downloadable resource.
-        URL string `json:"url"`
+	// URL is the URL of a downloadable resource.
+	URL string `json:"url"`
 
-        // Sha256 provides an optional SHA256 hash of the URL's content for
-        // verification.
-        Sha256 string `json:"sha256,omitempty"`
+	// Sha256 provides an optional SHA256 hash of the URL's content for
+	// verification.
+	Sha256 string `json:"sha256,omitempty"`
 
-        // SecretRef holds a reference to a secret where the credentials are
-        // stored. We use these credentials when pulling the artifacts from the
-        // provided URL using
-        // any of the supported protocols (http, https, and oci).
-        SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
+	// SecretRef holds a reference to a secret where the credentials are
+	// stored. We use these credentials when pulling the artifacts from the
+	// provided URL using
+	// any of the supported protocols (http, https, and oci).
+	SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
 
-        // InsecureSkipTLSVerify indicates whether certificates in the remote
-        // URL (if using TLS) can be ignored.
-        InsecureSkipTLSVerify bool `json:"insecureSkipTLSVerify,omitempty"`
+	// InsecureSkipTLSVerify indicates whether certificates in the remote
+	// URL (if using TLS) can be ignored.
+	InsecureSkipTLSVerify bool `json:"insecureSkipTLSVerify,omitempty"`
 }
 ```
 
