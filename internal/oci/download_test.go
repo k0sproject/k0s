@@ -18,6 +18,7 @@ package oci_test
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"embed"
 	"encoding/json"
@@ -61,15 +62,16 @@ func parseTestsYAML[T any](t *testing.T) map[string]T {
 
 // testFile represents a single test file inside the testdata directory.
 type testFile struct {
-	Manifest      string            `json:"manifest"`
-	Expected      string            `json:"expected"`
-	Error         string            `json:"error"`
-	Authenticated bool              `json:"authenticated"`
-	AuthUser      string            `json:"authUser"`
-	AuthPass      string            `json:"authPass"`
-	Artifacts     map[string]string `json:"artifacts"`
-	ArtifactName  string            `json:"artifactName"`
-	PlainHTTP     bool              `json:"plainHTTP"`
+	Manifest          string            `json:"manifest"`
+	ManifestMediaType string            `json:"manifestMediaType"`
+	Expected          string            `json:"expected"`
+	Error             string            `json:"error"`
+	Authenticated     bool              `json:"authenticated"`
+	AuthUser          string            `json:"authUser"`
+	AuthPass          string            `json:"authPass"`
+	Artifacts         map[string]string `json:"artifacts"`
+	ArtifactName      string            `json:"artifactName"`
+	PlainHTTP         bool              `json:"plainHTTP"`
 }
 
 func TestDownload(t *testing.T) {
@@ -170,7 +172,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 
 			// serve the manifest.
 			if strings.Contains(r.URL.Path, "/manifests/") {
-				w.Header().Add("Content-Type", "application/vnd.oci.image.manifest.v1+json")
+				w.Header().Add("Content-Type", cmp.Or(test.ManifestMediaType, "application/vnd.oci.image.manifest.v1+json"))
 				_, _ = w.Write([]byte(test.Manifest))
 				return
 			}
