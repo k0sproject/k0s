@@ -186,6 +186,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 			w.WriteHeader(http.StatusNotFound)
 		}),
 	)
+	t.Cleanup(server.Close)
 
 	u, err := url.Parse(server.URL)
 	require.NoError(t, err)
