@@ -9,13 +9,11 @@ list, we'd be more than happy to see a pull request.
 <!--
 When adding new adopters, please adhere roughly to the following format:
 
-* <Organization name including link>  
-  Project: <The project name or a short description of the use case>  
-  Contact: <Contact info, if applicable, e.g. email addresses, social media handles ...>  
+* <Organization name including link><br>
+  Project: <The project name or a short description of the use case><br>
+  Contact: <Contact info, if applicable, e.g. email addresses, social media handles ...><br>
   <A longer descriptive text, preferably hard wrapped at around 80-120 characters per line, or at the end of a sentence.>
 
-Note the two trailing spaces at the end of the first lines. Those denote a line break.
-Try to maintain an alphabetical order. 
 -->
 
 * [AudioCodes](https://audiocodes.com)<br>
@@ -53,7 +51,7 @@ Try to maintain an alphabetical order.
   Project: Providing compute nodes in telemetry HPC cluster<br>
   Used for deploying and managing
   [NVIDIA GPUs for data analysis](https://subarutelescope.org/Science/SubaruUM/SubaruUM2022/_src/679/P08_Morishima.pdf).
-  
+
 * [Progress Chef 360](https://docs.chef.io/360/1.0/)<br>
   Project: Embedded Clusters for Chef 360<br>
   [Using it for embedded Kubernetes clusters](https://docs.chef.io/360/1.0/install/server/requirements/#kubernetes-requirements).
@@ -66,7 +64,7 @@ Try to maintain an alphabetical order.
   cluster and your application together as a single appliance, making it easy
   for enterprise users to install, update, and manage the application and the
   cluster in tandem.
-  
+
 * [Splunk](https://splunk.com)<br>
   Project: Data Stream Processor<br>
   Used in their [Data Stream Processor](https://docs.splunk.com/Documentation/DSP/1.4.5/Admin/Install).
