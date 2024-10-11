@@ -2003,6 +2003,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#example-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#secrets-layout" class="md-nav__link">
     <span class="md-ellipsis">
       Secrets Layout
@@ -2067,8 +2076,8 @@ from registries. Currently, Autopilot's capabilities are limited to downloading
 artifacts via the HTTP[S] protocols.</p>
 <p>Enhancing Autopilot to pull artifacts directly from registries will streamline
 workflows and improve efficiency by allowing integration and deployment of
-diverse artifacts without relying solely on HTTP[S] endpoints. This update will
-enable Autopilot to handle registry-specific protocols and authentication
+diverse artifacts without relying solely on HTTP[S] endpoints. This update
+will enable Autopilot to handle registry-specific protocols and authentication
 mechanisms, aligning it with modern deployment practices.</p>
 <p>Currently, Autopilot does not support the retrieval of artifacts via the HTTP
 protocol when authentication is required. Implementing this feature to
@@ -2081,63 +2090,64 @@ authentication to ensure secure access to artifacts.</p>
 <h2 id="solution">Solution<a class="headerlink" href="#solution" title="Permanent link">#</a></h2>
 <p>Starting with the current <code>PlanResourceURL</code> struct:</p>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">PlanResourceURL</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// URL is the URL of a downloadable resource.</span>
-<span class="w">        </span><span class="nx">URL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;url&quot;`</span>
+<span class="w">    </span><span class="c1">// URL is the URL of a downloadable resource.</span>
+<span class="w">    </span><span class="nx">URL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;url&quot;`</span>
 
-<span class="w">        </span><span class="c1">// Sha256 provides an optional SHA256 hash of the URL&#39;s content for</span>
-<span class="w">        </span><span class="c1">// verification.</span>
-<span class="w">        </span><span class="nx">Sha256</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;sha256,omitempty&quot;`</span>
+<span class="w">    </span><span class="c1">// Sha256 provides an optional SHA256 hash of the URL&#39;s content for</span>
+<span class="w">    </span><span class="c1">// verification.</span>
+<span class="w">    </span><span class="nx">Sha256</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;sha256,omitempty&quot;`</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>We must specify to Autopilot where to access credentials for remote artifact
 pulls. This will be achieved by adjusting the struct as follows:</p>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">PlanResourceURL</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// URL is the URL of a downloadable resource.</span>
-<span class="w">        </span><span class="nx">URL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;url&quot;`</span>
+<span class="w">    </span><span class="c1">// URL is the URL of a downloadable resource.</span>
+<span class="w">    </span><span class="nx">URL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;url&quot;`</span>
 
-<span class="w">        </span><span class="c1">// Sha256 provides an optional SHA256 hash of the URL&#39;s content for</span>
-<span class="w">        </span><span class="c1">// verification.</span>
-<span class="w">        </span><span class="nx">Sha256</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;sha256,omitempty&quot;`</span>
+<span class="w">    </span><span class="c1">// Sha256 provides an optional SHA256 hash of the URL&#39;s content for</span>
+<span class="w">    </span><span class="c1">// verification.</span>
+<span class="w">    </span><span class="nx">Sha256</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;sha256,omitempty&quot;`</span>
 
-<span class="w">        </span><span class="c1">// SecretRef holds a reference to a secret where the credentials are</span>
-<span class="w">        </span><span class="c1">// stored. We use these credentials when pulling the artifacts from the</span>
-<span class="w">        </span><span class="c1">// provided URL using</span>
-<span class="w">        </span><span class="c1">// any of the supported protocols (http, https, and oci).</span>
-<span class="w">        </span><span class="nx">SecretRef</span><span class="w"> </span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">SecretReference</span><span class="w"> </span><span class="s">`json:&quot;secretRef,omitempty&quot;`</span>
+<span class="w">    </span><span class="c1">// SecretRef holds a reference to a secret where the credentials are</span>
+<span class="w">    </span><span class="c1">// stored. We use these credentials when pulling the artifacts from the</span>
+<span class="w">    </span><span class="c1">// provided URL using</span>
+<span class="w">    </span><span class="c1">// any of the supported protocols (http, https, and oci).</span>
+<span class="w">    </span><span class="nx">SecretRef</span><span class="w"> </span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">SecretReference</span><span class="w"> </span><span class="s">`json:&quot;secretRef,omitempty&quot;`</span>
 
-<span class="w">        </span><span class="c1">// InsecureSkipTLSVerify indicates whether certificates in the remote</span>
-<span class="w">        </span><span class="c1">// URL (if using TLS) can be ignored.</span>
-<span class="w">        </span><span class="nx">InsecureSkipTLSVerify</span><span class="w"> </span><span class="kt">bool</span><span class="w">  </span><span class="s">`json:&quot;insecureSkipTLSVerify,omitempty&quot;`</span>
+<span class="w">    </span><span class="c1">// InsecureSkipTLSVerify indicates whether certificates in the remote</span>
+<span class="w">    </span><span class="c1">// URL (if using TLS) can be ignored.</span>
+<span class="w">    </span><span class="nx">InsecureSkipTLSVerify</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="s">`json:&quot;insecureSkipTLSVerify,omitempty&quot;`</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><code>SecretRef</code> property is of type <code>SecretReference</code> as defined by
 <code>k8s.io/api/core/v1</code> package. The secret pointed by the provided <code>SecretRef</code>
-will be used for pulling artifacts using either HTTP[S] or OCI protocols and is
-expected to by of type <code>kubernetes.io/dockerconfigjson</code> if the protocol in use
-is <code>oci://</code> or of type <code>Opaque</code> if protocols <code>http://</code> or <code>https://</code> are used
-(see below for details on the Secret layout).</p>
-<p>Example configuration for OCI:</p>
+will be used for pulling artifacts using either HTTP[S] or OCI protocols and
+is expected to by of type <code>kubernetes.io/dockerconfigjson</code> if the protocol in
+use is <code>oci://</code> or of type <code>Opaque</code> if protocols <code>http://</code> or <code>https://</code> are
+used (see below for details on the Secret layout).</p>
+<h3 id="example-configurations">Example Configurations<a class="headerlink" href="#example-configurations" title="Permanent link">#</a></h3>
+<h4 id="configuration-for-oci">Configuration for OCI<a class="headerlink" href="#configuration-for-oci" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci://my.registry/binaries/k0s:v1.30.1+k0s.0</span>
 <span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99</span>
 <span class="nt">secretRef</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">artifacts-registry</span>
 </code></pre></div>
-<p>Example configuration for OCI using plain HTTP transport:</p>
+<h4 id="configuration-for-oci-using-plain-http-transport">Configuration for OCI using plain HTTP transport<a class="headerlink" href="#configuration-for-oci-using-plain-http-transport" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci+http://my.registry/binaries/k0s:v1.30.1+k0s.0</span>
 <span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99</span>
 <span class="nt">secretRef</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">artifacts-registry</span>
 </code></pre></div>
-<p>Example configuration for HTTPS:</p>
+<h4 id="configuration-for-https">Configuration for HTTPS<a class="headerlink" href="#configuration-for-https" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://my.file.server/binaries/k0s-v1.30.1+k0s.0</span>
 <span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99</span>
 <span class="nt">secretRef</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">artifacts-basic-auth</span>
 </code></pre></div>
-<p>Example configuration for HTTP:</p>
+<h4 id="configuration-for-http">Configuration for HTTP<a class="headerlink" href="#configuration-for-http" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://my.file.server/binaries/k0s-v1.30.1+k0s.0</span>
 <span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99</span>
 <span class="nt">secretRef</span><span class="p">:</span>
@@ -2164,7 +2174,7 @@ behaviour in case of conflicting configurations:</p>
 <blockquote>
 <p>In the case where the three properties are set (<code>username</code>, <code>password</code>, and
 <code>authorization</code>) Autopilot will ignore <code>username</code> and <code>password</code>, i.e.
-<code>authorization</code>  takes precedence over username and password.</p>
+<code>authorization</code> takes precedence over username and password.</p>
 </blockquote>
 <p>The <code>authorization</code> entry is used as is, its content is placed directly into
 the <code>Authorization</code> header. For example a secret like the following will make
