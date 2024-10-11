@@ -2123,6 +2123,13 @@ is <code>oci://</code> or of type <code>Opaque</code> if protocols <code>http://
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">artifacts-registry</span>
 </code></pre></div>
+<p>Example configuration for OCI using plain HTTP transport:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci+http://my.registry/binaries/k0s:v1.30.1+k0s.0</span>
+<span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99</span>
+<span class="nt">secretRef</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">artifacts-registry</span>
+</code></pre></div>
 <p>Example configuration for HTTPS:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://my.file.server/binaries/k0s-v1.30.1+k0s.0</span>
 <span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">e95603f167cce6e3cffef5594ef06785b3c1c00d3e27d8e4fc33824fe6c38a99</span>
