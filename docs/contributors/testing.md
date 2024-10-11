@@ -28,7 +28,7 @@ Please run the following style and formatting commands and fix/check-in any chan
 3. Checking the documentation
 
    Verify any changes to the documentation by following the instructions
-   [here](../internal/publishing_docs_using_mkdocs.md#testing-docs-locally).
+   [here](docs.md#testing-docs-locally).
 
 4. Pre-submit Flight Checks
 
