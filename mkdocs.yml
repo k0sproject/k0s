@@ -77,7 +77,7 @@ nav:
   - Commercial support: commercial-support.md
   - Adopters: adopters.md
   - Contributing:
-      - Overview: contributors/overview.md
+      - Getting Started: contributors/index.md
       - GitHub Workflow: contributors/github_workflow.md
       - Testing: contributors/testing.md
       - Documentation: internal/publishing_docs_using_mkdocs.md
