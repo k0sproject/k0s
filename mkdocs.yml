@@ -80,7 +80,7 @@ nav:
       - Getting Started: contributors/index.md
       - GitHub Workflow: contributors/github_workflow.md
       - Testing: contributors/testing.md
-      - Documentation: internal/publishing_docs_using_mkdocs.md
+      - Documentation: contributors/docs.md
 
 theme:
   name: "material"

@@ -1,4 +1,4 @@
-# Publishing Docs
+# Contributing to the k0s documentation
 
 We use [mkdocs](https://www.mkdocs.org) and [mike](https://github.com/jimporter/mike) for publishing docs to [docs.k0sproject.io](https://docs.k0sproject.io).
 This guide will provide a simple how-to on how to configure and deploy newly added docs to our website.
