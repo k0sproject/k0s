@@ -251,7 +251,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
-	disableEndpointReconciler := !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
+	disableEndpointReconciler := slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
 		nodeConfig.Spec.API.ExternalAddress != ""
 
 	if enableKonnectivity {
