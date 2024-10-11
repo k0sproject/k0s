@@ -13,27 +13,13 @@ Install mike: https://github.com/jimporter/mike#installation
 - Add a new link under `nav` in the main [mkdocs.yml](https://github.com/k0sproject/k0s/blob/main/mkdocs.yml) file:
 
 ```yaml
-nav:
-  - Overview: README.md
-  - Creating A Cluster:
-      - Quick Start Guide: create-cluster.md
-      - Run in Docker: k0s-in-docker.md
-      - Single node set-up: k0s-single-node.md
-  - Configuration Reference:
-      - Architecture: architecture/index.md
-      - Networking: networking.md
-      - Configuration Options: configuration.md
-      - Using Cloud Providers: cloud-providers.md
-      - Running k0s with Traefik: examples/traefik-ingress.md
-      - Running k0s as a service: install.md
-      - k0s CLI Help Pages: cli/k0s.md
-  - Deploying Manifests: manifests.md
-  - FAQ: FAQ.md
-  - Troubleshooting: troubleshooting.md
-  - Contributing:
-      - Overview: contributors/overview.md
-      - Workflow: contributors/github_workflow.md
-      - Testing: contributors/testing.md
+# ... other directives
+{%
+    include "../../mkdocs.yml"
+    start="# ~~~ START NAV SNIPPET ~~~\n"
+    end="\n# ~~~ END NAV SNIPPET ~~~\n"
+%}
+  # more navigation links ...
 ```
 
 - Once your changes are pushed to `main`, the "Publish Docs" jos will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22
