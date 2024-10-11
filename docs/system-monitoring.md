@@ -1,6 +1,6 @@
 # System components monitoring
 
-Controller nodes [are isolated](architecture.md#control-plane) by default, which thus means that a cluster user cannot schedule workloads onto controller nodes.
+Controller nodes [are isolated](architecture/index.md#control-plane) by default, which thus means that a cluster user cannot schedule workloads onto controller nodes.
 
 k0s provides a mechanism to expose system components for monitoring. System component metrics can give a better look into what is happening inside them. Metrics are particularly useful for building dashboards and alerts.
 You can read more about metrics for Kubernetes system components [here](https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/).

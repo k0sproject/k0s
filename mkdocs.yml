@@ -70,7 +70,7 @@ nav:
       - Common Pitfalls: troubleshooting.md
       - Support Insights: support-dump.md
   - Reference:
-      - Architecture: architecture.md
+      - Architecture: architecture/index.md
       - Command Line: cli/README.md
       - Kube-bench Security Benchmark: cis_benchmark.md
   - Releases & Support: releases.md
