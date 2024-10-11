@@ -114,6 +114,7 @@ plugins:
       j2_variable_end_string: "}}}"
   - exclude:
       glob:
+        - internal/*
         - "*.etag"
         - custom_theme/*
         - Dockerfile.serve-dev
