@@ -9,6 +9,8 @@ copyright:
   Copyright &copy; 2021 <a href="https://mirantis.com/">Mirantis Inc.</a>
   - All rights reserved.
 edit_uri: ""
+
+# ~~~ START NAV SNIPPET ~~~
 nav:
   - Overview: README.md
   - Installation:
@@ -25,6 +27,7 @@ nav:
       - System Requirements: system-requirements.md
       - External runtime dependencies: external-runtime-deps.md
       - Verifying Signed Binaries: verifying-signs.md
+# ~~~ END NAV SNIPPET ~~~
   - Maintenance:
       - Upgrade: upgrade.md
       - Backup/Restore: backup.md
