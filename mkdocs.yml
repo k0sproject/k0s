@@ -121,6 +121,7 @@ plugins:
         - Makefile*
         - requirements_pip.txt
         - requirements.txt
+  - include-markdown
 
 markdown_extensions:
   - pymdownx.highlight: {}
