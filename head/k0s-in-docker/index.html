@@ -2257,6 +2257,15 @@
 <p>You can run your own k0s in Docker:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w"> </span>docker.io/k0sproject/k0s:v1.31.1-k0s.0<span class="w"> </span>--<span class="w"> </span>k0s<span class="w"> </span>controller<span class="w"> </span>--enable-worker
 </code></pre></div>
+<p>Flags:
+-d: Runs the container in detached mode.
+--name k0s: Names the container k0s.
+--hostname k0s: Sets the hostname of the container to k0s.
+--privileged: Grants the container elevated privileges, required by k0s to function properly inside Docker.
+-v /var/lib/k0s: Uses Docker volume. Mounts the docker container’s /var/lib/k0s directory to the host, ensuring that cluster data persists across container restarts.
+-p 6443:6443: Exposes port 6443 on the host for the Kubernetes API server, allowing you to interact with the cluster externally.
+--cgroupns=host: Configures the container to share the host's cgroup namespace, allowing k0s to monitor system resources accurately.
+-- k0s controller --enable-worker: Starts the k0s controller and enables a worker node within the same container, creating a single-node cluster.</p>
 <p><strong>Note:</strong> This command starts k0s with a worker. You may disable the worker by running it without the flag <code>--enable-worker</code></p>
 <h3 id="2-optional-create-additional-workers">2. (Optional) Create additional workers<a class="headerlink" href="#2-optional-create-additional-workers" title="Permanent link">#</a></h3>
 <p>You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.</p>
@@ -2273,11 +2282,40 @@
 </code></pre></div>
 </li>
 </ol>
+<p>Repeat these steps for each additional worker node needed. Ensure that workers can reach the controller on port 6443.</p>
 <h3 id="3-access-your-cluster">3. Access your cluster<a class="headerlink" href="#3-access-your-cluster" title="Permanent link">#</a></h3>
-<p>Access your cluster using kubectl:</p>
+<p>a) Using kubectl within the Container</p>
+<p>To check cluster status and list nodes, use:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 </code></pre></div>
-<p>Alternatively, grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/admin.conf</code> and paste it into <a href="https://github.com/lensapp/lens/">Lens</a>.</p>
+<p>b) Using kubectl Locally</p>
+<p>To configure local access to your k0s cluster, follow these steps:</p>
+<ol>
+<li>
+<p>Generate the kubeconfig:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s<span class="w"> </span>k0s<span class="w"> </span>kubeconfig<span class="w"> </span>admin<span class="w"> </span>&gt;<span class="w"> </span>~/.kube/k0s.config
+</code></pre></div>
+</li>
+<li>
+<p>Update kubeconfig with Localhost Access:</p>
+<p>To automatically replace the server IP with localhost dynamically in <code>~/.kube/k0s.config</code>, use the following command:</p>
+<div class="highlight"><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>awk<span class="w"> </span><span class="s1">&#39;/server:/ {print NR; exit}&#39;</span><span class="w"> </span>~/.kube/k0s.config<span class="k">)</span><span class="s2">s|https://.*:6443|https://localhost:6443|&quot;</span><span class="w"> </span>~/.kube/k0s.config
+</code></pre></div>
+<p>This command updates the kubeconfig to point to localhost, allowing access to the API server from your host machine</p>
+</li>
+<li>
+<p>Set the KUBECONFIG Environment Variable:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">KUBECONFIG</span><span class="o">=</span>~/.kube/k0s.config
+</code></pre></div>
+</li>
+<li>
+<p>Verify Cluster Access:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+</code></pre></div>
+</li>
+</ol>
+<p>c) Use <a href="https://github.com/lensapp/lens/">Lens</a>:</p>
+<p>Access the k0s cluster using Lens by following the instructions <a href="https://docs.k8slens.dev/getting-started/add-cluster/">here</a>.</p>
 <h2 id="use-docker-compose-alternative">Use Docker Compose (alternative)<a class="headerlink" href="#use-docker-compose-alternative" title="Permanent link">#</a></h2>
 <p>As an alternative you can run k0s using Docker Compose:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.9&quot;</span>
