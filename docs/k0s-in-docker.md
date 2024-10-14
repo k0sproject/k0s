@@ -25,6 +25,16 @@ You can run your own k0s in Docker:
 docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 --cgroupns=host docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 -- k0s controller --enable-worker
 ```
 
+Flags:
+-d: Runs the container in detached mode.
+--name k0s: Names the container k0s.
+--hostname k0s: Sets the hostname of the container to k0s.
+--privileged: Grants the container elevated privileges, required by k0s to function properly inside Docker.
+-v /var/lib/k0s: Uses Docker volume. Mounts the docker container’s /var/lib/k0s directory to the host, ensuring that cluster data persists across container restarts.
+-p 6443:6443: Exposes port 6443 on the host for the Kubernetes API server, allowing you to interact with the cluster externally.
+--cgroupns=host: Configures the container to share the host's cgroup namespace, allowing k0s to monitor system resources accurately.
+-- k0s controller --enable-worker: Starts the k0s controller and enables a worker node within the same container, creating a single-node cluster.
+
 **Note:** This command starts k0s with a worker. You may disable the worker by running it without the flag `--enable-worker`
 
 ### 2. (Optional) Create additional workers
@@ -45,15 +55,53 @@ For each required worker:
     docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s --cgroupns=host  docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 k0s worker $token
     ```
 
+Repeat these steps for each additional worker node needed. Ensure that workers can reach the controller on port 6443.
+
 ### 3. Access your cluster
 
-Access your cluster using kubectl:
+a) Using kubectl within the Container
+
+To check cluster status and list nodes, use:
 
 ```sh
 docker exec k0s k0s kubectl get nodes
 ```
 
-Alternatively, grab the kubeconfig file with `docker exec k0s cat /var/lib/k0s/pki/admin.conf` and paste it into [Lens](https://github.com/lensapp/lens/).
+b) Using kubectl Locally
+
+To configure local access to your k0s cluster, follow these steps:
+
+1. Generate the kubeconfig:
+
+    ```sh
+    docker exec k0s k0s kubeconfig admin > ~/.kube/k0s.config
+    ```
+
+2. Update kubeconfig with Localhost Access:
+
+    To automatically replace the server IP with localhost dynamically in `~/.kube/k0s.config`, use the following command:
+
+    ```sh
+    sed -i '' -e "$(awk '/server:/ {print NR; exit}' ~/.kube/k0s.config)s|https://.*:6443|https://localhost:6443|" ~/.kube/k0s.config
+    ```
+
+    This command updates the kubeconfig to point to localhost, allowing access to the API server from your host machine
+
+3. Set the KUBECONFIG Environment Variable:
+
+    ```sh
+    export KUBECONFIG=~/.kube/k0s.config
+    ```
+
+4. Verify Cluster Access:
+
+    ```sh
+    kubectl get nodes
+    ```
+
+c) Use [Lens](https://github.com/lensapp/lens/):
+
+Access the k0s cluster using Lens by following the instructions [here](https://docs.k8slens.dev/getting-started/add-cluster/).
 
 ## Use Docker Compose (alternative)
 
