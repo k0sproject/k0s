@@ -145,6 +145,10 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 				m.removeStack(ctx, event.Name)
 			}
 		case <-ctx.Done():
+			// When the parent context is canceled, the stacks goroutine will stop.
+			// We need to clear the stacks map so that they can be added back if the lease is
+			// re-acquired.
+			m.stacks = make(map[string]stack)
 			log.Info("manifest watcher done")
 			return nil
 		}
