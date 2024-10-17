@@ -1,0 +1,6 @@
+manifest: I am most definitely not an OCI manifest!
+manifestMediaType: text/plain
+# TODO: This seems like a misleading error message.
+# Maybe add an extra check in the code for "this is not a manifest"?
+error: >-
+  failed to find artifact: no artifact descriptors found

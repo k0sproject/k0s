@@ -1,0 +1,3 @@
+manifest: I am most definitely not an OCI manifest!
+error: >-
+  failed to fetch successors: invalid character 'I' looking for beginning of value
