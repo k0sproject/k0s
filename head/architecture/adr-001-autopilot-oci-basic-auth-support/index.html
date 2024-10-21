@@ -2121,10 +2121,7 @@ pulls. This will be achieved by adjusting the struct as follows:</p>
 </code></pre></div>
 <p><code>SecretRef</code> property is of type <code>SecretReference</code> as defined by
 <code>k8s.io/api/core/v1</code> package. The secret pointed by the provided <code>SecretRef</code>
-will be used for pulling artifacts using either HTTP[S] or OCI protocols and
-is expected to by of type <code>kubernetes.io/dockerconfigjson</code> if the protocol in
-use is <code>oci://</code> or of type <code>Opaque</code> if protocols <code>http://</code> or <code>https://</code> are
-used (see below for details on the Secret layout).</p>
+will be used for pulling artifacts using either HTTP[S] or OCI protocols.</p>
 <h3 id="example-configurations">Example Configurations<a class="headerlink" href="#example-configurations" title="Permanent link">#</a></h3>
 <h4 id="configuration-for-oci">Configuration for OCI<a class="headerlink" href="#configuration-for-oci" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci://my.registry/binaries/k0s:v1.30.1+k0s.0</span>
@@ -2155,30 +2152,28 @@ used (see below for details on the Secret layout).</p>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">artifacts-token-based-auth</span>
 </code></pre></div>
 <h3 id="secrets-layout">Secrets Layout<a class="headerlink" href="#secrets-layout" title="Permanent link">#</a></h3>
-<p>For secrets of type <code>kubernetes.io/dockerconfigjson</code> the format is the default
-for Docker authentications, equal to what is used in a Pod's pull secret. For
-further details you can refer to the <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/">official
-documentation</a>.</p>
-<p>When it comes to the <code>Opaque</code> secret layout (used for HTTP requests) Autopilot
-will accept the following entries:</p>
+<p>The following standard Kubernetes secret types are supported:</p>
 <ul>
-<li><code>username</code> and <code>password</code>: if both are set then Autopilot will attempt to
-  pull the artifacts using <a href="https://www.ibm.com/docs/en/cics-ts/6.1?topic=concepts-http-basic-authentication">Basic
-  Authentication</a>.</li>
-<li><code>authorization</code>: if this property is set then the <code>Authorization</code>
-  <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization">header</a>
-  will be set to its value when pulling the artifacts.</li>
+<li><a href="https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret"><code>kubernetes.io/basic-auth</code></a><br>
+  The username and password are used according to the protocol's standard
+  procedure for password-based authentication.</li>
 </ul>
-<p>No other property will be parsed and used. For sake of defining the expected
-behaviour in case of conflicting configurations:</p>
-<blockquote>
-<p>In the case where the three properties are set (<code>username</code>, <code>password</code>, and
-<code>authorization</code>) Autopilot will ignore <code>username</code> and <code>password</code>, i.e.
-<code>authorization</code> takes precedence over username and password.</p>
-</blockquote>
-<p>The <code>authorization</code> entry is used as is, its content is placed directly into
-the <code>Authorization</code> header. For example a secret like the following will make
-Autopilot to set the <code>Authorization</code> header to <code>Bearer abc123def456ghi789jkl0</code>:</p>
+<ul>
+<li><a href="https://kubernetes.io/docs/concepts/configuration/secret/#docker-config-secrets"><code>kubernetes.io/dockerconfigjson</code></a><br>
+   It works in the same way as a Pod's <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/">image pull secret</a>. Only supported for
+  the <code>oci://</code> protocol. (Might be supported for other protocols in the future,
+  as well).</li>
+</ul>
+<p>Potentially supported in the future:</p>
+<ul>
+<li><a href="https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets"><code>kubernetes.io/tls</code></a><br>
+  For TLS client authentication.</li>
+</ul>
+<p>Moreover, k0s supports the following custom secret type:</p>
+<ul>
+<li>
+<p><code>k0sproject.io/http-authorization-header</code><br>
+  Sets a custom value for the HTTP Authorization header:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Secret</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -2187,12 +2182,18 @@ Autopilot to set the <code>Authorization</code> header to <code>Bearer abc123def
 <span class="nt">data</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">authorization</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Bearer</span><span class="nv"> </span><span class="s">abc123def456ghi789jkl0&quot;</span>
 </code></pre></div>
+<p>The <code>authorization</code> entry is used as is, with its content placed directly into
+the <code>Authorization</code> header. A secret like the above will make Autopilot set
+the <code>Authorization</code> header to <code>Bearer abc123def456ghi789jkl0</code>.</p>
+</li>
+</ul>
 <h3 id="additional-details">Additional Details<a class="headerlink" href="#additional-details" title="Permanent link">#</a></h3>
 <ul>
-<li>The <code>InsecureSkipTLSVerify</code> property is equivalent of defining
+<li>The <code>InsecureSkipTLSVerify</code> property is equivalent to defining
   <code>InsecureSkipTLSVerify</code> on a Go HTTP client.</li>
 <li>The <code>InsecureSkipTLSVerify</code> property will be valid for both <code>oci://</code> and
-  <code>https://</code> protocols.</li>
+  <code>https://</code> protocols. It has no effect for the <code>oci+http://</code> and <code>http://</code>
+  protocols.</li>
 <li>If a protocol is not specified or an incorrect one is provided, an error
   state should be activated.</li>
 <li>If no <code>SecretRef</code> is defined, access will be anonymous (no authentication).</li>
