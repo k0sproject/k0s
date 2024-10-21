@@ -66,10 +66,7 @@ type PlanResourceURL struct {
 
 `SecretRef` property is of type `SecretReference` as defined by
 `k8s.io/api/core/v1` package. The secret pointed by the provided `SecretRef`
-will be used for pulling artifacts using either HTTP\[S\] or OCI protocols and
-is expected to by of type `kubernetes.io/dockerconfigjson` if the protocol in
-use is `oci://` or of type `Opaque` if protocols `http://` or `https://` are
-used (see below for details on the Secret layout).
+will be used for pulling artifacts using either HTTP\[S\] or OCI protocols.
 
 ### Example Configurations
 
@@ -115,48 +112,50 @@ secretRef:
 
 ### Secrets Layout
 
-For secrets of type `kubernetes.io/dockerconfigjson` the format is the default
-for Docker authentications, equal to what is used in a Pod's pull secret. For
-further details you can refer to the [official
-documentation](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
+The following standard Kubernetes secret types are supported:
 
-When it comes to the `Opaque` secret layout (used for HTTP requests) Autopilot
-will accept the following entries:
+- [`kubernetes.io/basic-auth`](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret)<br>
+  The username and password are used according to the protocol's standard
+  procedure for password-based authentication.
 
-- `username` and `password`: if both are set then Autopilot will attempt to
-  pull the artifacts using [Basic
-  Authentication](https://www.ibm.com/docs/en/cics-ts/6.1?topic=concepts-http-basic-authentication).
-- `authorization`: if this property is set then the `Authorization`
-  [header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization)
-  will be set to its value when pulling the artifacts.
+- [`kubernetes.io/dockerconfigjson`](https://kubernetes.io/docs/concepts/configuration/secret/#docker-config-secrets)<br>
+   It works in the same way as a Pod's [image pull secret]. Only supported for
+  the `oci://` protocol. (Might be supported for other protocols in the future,
+  as well).
 
-No other property will be parsed and used. For sake of defining the expected
-behaviour in case of conflicting configurations:
+[image pull secret]: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 
-> In the case where the three properties are set (`username`, `password`, and
-> `authorization`) Autopilot will ignore `username` and `password`, i.e.
-> `authorization` takes precedence over username and password.
+Potentially supported in the future:
 
-The `authorization` entry is used as is, its content is placed directly into
-the `Authorization` header. For example a secret like the following will make
-Autopilot to set the `Authorization` header to `Bearer abc123def456ghi789jkl0`:
+- [`kubernetes.io/tls`](https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets)<br>
+  For TLS client authentication.
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: creds
-  namespace: kube-system
-data:
-  authorization: "Bearer abc123def456ghi789jkl0"
-```
+Moreover, k0s supports the following custom secret type:
+
+- `k0sproject.io/http-authorization-header`<br>
+  Sets a custom value for the HTTP Authorization header:
+
+  ```yaml
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: creds
+    namespace: kube-system
+  data:
+    authorization: "Bearer abc123def456ghi789jkl0"
+  ```
+
+  The `authorization` entry is used as is, with its content placed directly into
+  the `Authorization` header. A secret like the above will make Autopilot set
+  the `Authorization` header to `Bearer abc123def456ghi789jkl0`.
 
 ### Additional Details
 
-- The `InsecureSkipTLSVerify` property is equivalent of defining
+- The `InsecureSkipTLSVerify` property is equivalent to defining
   `InsecureSkipTLSVerify` on a Go HTTP client.
 - The `InsecureSkipTLSVerify` property will be valid for both `oci://` and
-  `https://` protocols.
+  `https://` protocols. It has no effect for the `oci+http://` and `http://`
+  protocols.
 - If a protocol is not specified or an incorrect one is provided, an error
   state should be activated.
 - If no `SecretRef` is defined, access will be anonymous (no authentication).
