@@ -36,9 +36,9 @@ const (
 
 type unixPID int
 
-// killPid signals SIGTERM to a PID and if it's still running after
-// s.TimeoutStop sends SIGKILL.
-func (s *Supervisor) killPid(pid unixPID) error {
+// Tries to terminate a process gracefully. If it's still running after
+// s.TimeoutStop, the process is forcibly terminated.
+func (s *Supervisor) killProcess(ph procHandle) error {
 	// Kill the process pid
 	deadlineTicker := time.NewTicker(s.TimeoutStop)
 	defer deadlineTicker.Stop()
@@ -49,7 +49,7 @@ Loop:
 	for {
 		select {
 		case <-checkTicker.C:
-			shouldKill, err := s.shouldKillProcess(pid)
+			shouldKill, err := s.shouldKillProcess(ph)
 			if err != nil {
 				return err
 			}
@@ -57,7 +57,7 @@ Loop:
 				return nil
 			}
 
-			err = pid.terminateGracefully()
+			err = ph.terminateGracefully()
 			if errors.Is(err, syscall.ESRCH) {
 				return nil
 			} else if err != nil {
@@ -68,7 +68,7 @@ Loop:
 		}
 	}
 
-	shouldKill, err := s.shouldKillProcess(pid)
+	shouldKill, err := s.shouldKillProcess(ph)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ Loop:
 		return nil
 	}
 
-	err = pid.terminateForcibly()
+	err = ph.terminateForcibly()
 	if errors.Is(err, syscall.ESRCH) {
 		return nil
 	} else if err != nil {
@@ -102,16 +102,16 @@ func (s *Supervisor) maybeKillPidFile() error {
 		return fmt.Errorf("failed to parse pid file %s: %w", s.PidFile, err)
 	}
 
-	if err := s.killPid(unixPID(p)); err != nil {
+	if err := s.killProcess(unixPID(p)); err != nil {
 		return fmt.Errorf("failed to kill process with PID %d: %w", p, err)
 	}
 
 	return nil
 }
 
-func (s *Supervisor) shouldKillProcess(pid unixPID) (bool, error) {
+func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 	// only kill process if it has the expected cmd
-	if cmd, err := pid.cmdline(); err != nil {
+	if cmd, err := ph.cmdline(); err != nil {
 		if errors.Is(err, syscall.ESRCH) {
 			return false, nil
 		}
@@ -121,7 +121,7 @@ func (s *Supervisor) shouldKillProcess(pid unixPID) (bool, error) {
 	}
 
 	//only kill process if it has the _KOS_MANAGED env set
-	if env, err := pid.environ(); err != nil {
+	if env, err := ph.environ(); err != nil {
 		if errors.Is(err, syscall.ESRCH) {
 			return false, nil
 		}
