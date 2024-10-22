@@ -23,123 +23,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
-)
-
-const (
-	exitCheckInterval = 200 * time.Millisecond
 )
 
 type unixPID int
 
 func newProcHandle(pid int) (procHandle, error) {
 	return unixPID(pid), nil
-}
-
-// Tries to terminate a process gracefully. If it's still running after
-// s.TimeoutStop, the process is forcibly terminated.
-func (s *Supervisor) killProcess(ph procHandle) error {
-	// Kill the process pid
-	deadlineTicker := time.NewTicker(s.TimeoutStop)
-	defer deadlineTicker.Stop()
-	checkTicker := time.NewTicker(exitCheckInterval)
-	defer checkTicker.Stop()
-
-Loop:
-	for {
-		select {
-		case <-checkTicker.C:
-			shouldKill, err := s.shouldKillProcess(ph)
-			if err != nil {
-				return err
-			}
-			if !shouldKill {
-				return nil
-			}
-
-			err = ph.terminateGracefully()
-			if errors.Is(err, syscall.ESRCH) {
-				return nil
-			} else if err != nil {
-				return fmt.Errorf("failed to terminate gracefully: %w", err)
-			}
-		case <-deadlineTicker.C:
-			break Loop
-		}
-	}
-
-	shouldKill, err := s.shouldKillProcess(ph)
-	if err != nil {
-		return err
-	}
-	if !shouldKill {
-		return nil
-	}
-
-	err = ph.terminateForcibly()
-	if errors.Is(err, syscall.ESRCH) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to terminate forcibly: %w", err)
-	}
-	return nil
-}
-
-// maybeKillPidFile checks kills the process in the pidFile if it's has
-// the same binary as the supervisor's and also checks that the env
-// `_KOS_MANAGED=yes`. This function does not delete the old pidFile as
-// this is done by the caller.
-func (s *Supervisor) maybeKillPidFile() error {
-	pid, err := os.ReadFile(s.PidFile)
-	if os.IsNotExist(err) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to read pid file %s: %w", s.PidFile, err)
-	}
-
-	p, err := strconv.Atoi(strings.TrimSuffix(string(pid), "\n"))
-	if err != nil {
-		return fmt.Errorf("failed to parse pid file %s: %w", s.PidFile, err)
-	}
-
-	ph, err := newProcHandle(p)
-	if err != nil {
-		return err
-	}
-
-	if err := s.killProcess(ph); err != nil {
-		return fmt.Errorf("failed to kill process with PID %d: %w", p, err)
-	}
-
-	return nil
-}
-
-func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
-	// only kill process if it has the expected cmd
-	if cmd, err := ph.cmdline(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
-			return false, nil
-		}
-		return false, err
-	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
-		return false, nil
-	}
-
-	//only kill process if it has the _KOS_MANAGED env set
-	if env, err := ph.environ(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
-			return false, nil
-		}
-		return false, err
-	} else if !slices.Contains(env, k0sManaged) {
-		return false, nil
-	}
-
-	return true, nil
 }
 
 func (pid unixPID) cmdline() ([]string, error) {

@@ -16,10 +16,11 @@ limitations under the License.
 
 package supervisor
 
-// maybeKillPidFile checks kills the process in the pidFile if it's has
-// the same binary as the supervisor's. This function does not delete
-// the old pidFile as this is done by the caller.
-func (s *Supervisor) maybeKillPidFile() error {
-	s.log.Warnf("maybeKillPidFile is not implemented on Windows")
-	return nil
+import (
+	"syscall"
+)
+
+// newProcHandle is not implemented on Windows.
+func newProcHandle(int) (procHandle, error) {
+	return nil, syscall.EWINDOWS
 }
