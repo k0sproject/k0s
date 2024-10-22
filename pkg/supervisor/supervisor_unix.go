@@ -57,11 +57,11 @@ Loop:
 				return nil
 			}
 
-			err = syscall.Kill(int(pid), syscall.SIGTERM)
+			err = pid.terminateGracefully()
 			if errors.Is(err, syscall.ESRCH) {
 				return nil
 			} else if err != nil {
-				return fmt.Errorf("failed to send SIGTERM: %w", err)
+				return fmt.Errorf("failed to terminate gracefully: %w", err)
 			}
 		case <-deadlineTicker.C:
 			break Loop
@@ -76,11 +76,11 @@ Loop:
 		return nil
 	}
 
-	err = syscall.Kill(int(pid), syscall.SIGKILL)
+	err = pid.terminateForcibly()
 	if errors.Is(err, syscall.ESRCH) {
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("failed to send SIGKILL: %w", err)
+		return fmt.Errorf("failed to terminate forcibly: %w", err)
 	}
 	return nil
 }
@@ -155,4 +155,12 @@ func (pid unixPID) environ() ([]string, error) {
 	}
 
 	return strings.Split(string(env), "\x00"), nil
+}
+
+func (pid unixPID) terminateGracefully() error {
+	return syscall.Kill(int(pid), syscall.SIGTERM)
+}
+
+func (pid unixPID) terminateForcibly() error {
+	return syscall.Kill(int(pid), syscall.SIGKILL)
 }
