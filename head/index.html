@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="img/k0s_social.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.8c3ca2c6.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.0253249f.min.css">
       
         
         <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
@@ -2246,8 +2246,6 @@
 
 <p><img alt="k0s-logo-dark" src="img/k0s-logo-full-color-dark.svg#only-dark" />
 <img alt="k0s-logo-light" src="img/k0s-logo-full-color-light.svg#only-light" /></p>
-<!-- BEGIN INCLUDE ../README.md '&lt;!-- Start Overview --&gt;' '&lt;!-- End Overview --&gt;' -->
-
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
 <p>k0s is an open source, all-inclusive Kubernetes distribution, which is configured with all of the features needed to build a Kubernetes cluster and packaged as a single binary for ease of use. Due to its simple design, flexible deployment options and modest system requirements, k0s is well suited for</p>
 <ul>
@@ -2257,14 +2255,10 @@
 </ul>
 <p>k0s drastically reduces the complexity of installing and running a CNCF certified Kubernetes distribution. With k0s new clusters can be bootstrapped in minutes and developer friction is reduced to zero. This allows anyone with no special skills or expertise in Kubernetes to easily get started.</p>
 <p>k0s is distributed as a single binary with zero host OS dependencies besides the host OS kernel. It works with any Linux without additional software packages or configuration. Any security vulnerabilities or performance issues can be fixed directly in the k0s distribution that makes it extremely straightforward to keep the clusters up-to-date and secure.</p>
-<!-- END INCLUDE -->
-
 <h2 id="what-happened-to-github-stargazers">What happened to GitHub stargazers?<a class="headerlink" href="#what-happened-to-github-stargazers" title="Permanent link">#</a></h2>
 <p>In September 2022 we made a human error while creating some build automation scripts&amp;tools for the GitHub repository. Our automation accidentally changed the repo to a private one for few minutes. That itself is not a big deal and everything was restored quickly. But the nasty side effect is that it also removed all the stargazers at that point. :(</p>
 <p>Before that mishap we had 4776 stargazers, making k0s one of the most popular Kubernetes distro out there.</p>
 <p><strong>So if you are reading this, and have not yet starred the <a href="https://github.com/k0sproject/k0s/">k0s repository</a> we would highly appreciate the :star: to get our numbers closer to what they used to be.</strong></p>
-<!-- BEGIN INCLUDE ../README.md '&lt;!-- Start Key Features --&gt;' '&lt;!-- End Key Features --&gt;' -->
-
 <h2 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">#</a></h2>
 <ul>
 <li>Certified and 100% upstream Kubernetes</li>
@@ -2281,8 +2275,6 @@
 <li>Supports x86-64, ARM64 and ARMv7</li>
 <li>Includes <a href="networking/#controller-worker-communication">Konnectivity service</a>, CoreDNS and Metrics Server</li>
 </ul>
-<!-- END INCLUDE -->
-
 <h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="install/">Quick Start Guide</a> for creating a full Kubernetes cluster with a single node.</li>
@@ -2291,8 +2283,6 @@
 </ul>
 <h2 id="demo">Demo<a class="headerlink" href="#demo" title="Permanent link">#</a></h2>
 <p><img alt="k0s demo" src="img/k0s_demo.gif" /></p>
-<!-- BEGIN INCLUDE ../README.md '&lt;!-- Start Join the Community --&gt;' '&lt;!-- End Join the Community --&gt;' -->
-
 <h2 id="join-the-community">Join the Community<a class="headerlink" href="#join-the-community" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="https://forums.k8slens.dev/">Lens Forums</a> - Request for support and help from the Lens and k0s community.</li>
@@ -2306,13 +2296,9 @@ check out the <a href="https://docs.k0sproject.io/stable/contributors/overview/"
 <p>To see the call details in your local timezone, check out <a href="https://dateful.com/eventlink/2735919704">https://dateful.com/eventlink/2735919704</a>.</p>
 <h3 id="adopters">Adopters<a class="headerlink" href="#adopters" title="Permanent link">#</a></h3>
 <p>k0s is used in numerous cases and environments. The range we've seen it being adopted ranges from very small far edge deployments to big data center deployments. Please add your use case to <a href="adopters/">adopters</a> list.</p>
-<!-- END INCLUDE -->
-
 <h2 id="commercial-support">Commercial Support<a class="headerlink" href="#commercial-support" title="Permanent link">#</a></h2>
 <p><a href="https://www.mirantis.com/software/k0s/">Mirantis</a> offers technical support, professional services and training for k0s. The support subscriptions include, for example, prioritized support (Phone, Web, Email) and access to verified extensions on top of your k0s cluster.</p>
 <p>For any k0s inquiries, please contact us via email <a href="mailto:info@k0sproject.io">info@k0sproject.io</a>.</p>
-<!-- BEGIN INCLUDE ../README.md '&lt;!-- Start Motivation --&gt;' '&lt;!-- End Motivation --&gt;' -->
-
 <h2 id="motivation">Motivation<a class="headerlink" href="#motivation" title="Permanent link">#</a></h2>
 <p><em>We have seen a gap between the host OS and Kubernetes that runs on top of it: How to ensure they work together as they are upgraded independent from each other? Who is responsible for vulnerabilities or performance issues originating from the host OS that affect the K8S on top?</em></p>
 <p><strong>&rarr;</strong> k0s is fully self contained. It’s distributed as a single binary with no host OS deps besides the kernel. Any vulnerability or perf issues may be fixed in k0s Kubernetes.</p>
@@ -2320,10 +2306,6 @@ check out the <a href="https://docs.k0sproject.io/stable/contributors/overview/"
 <p><strong>&rarr;</strong> k0s core + all included host OS dependencies + components on top may be compiled and packaged as a 100% FIPS compliant distribution using a proper toolchain.</p>
 <p><em>We have seen Kubernetes with cumbersome lifecycle management, high minimum system requirements, weird host OS and infra restrictions, and/or need to use different distros to meet different use cases.</em></p>
 <p><strong>&rarr;</strong> k0s is designed to be lightweight at its core. It comes with a tool to automate cluster lifecycle management. It works on any host OS and infrastructure, and may be extended to work with any use cases such as edge, IoT, telco, public clouds, private data centers, and hybrid &amp; hyper converged cloud applications without sacrificing the pure Kubernetes compliance or amazing developer experience.</p>
-<!-- END INCLUDE -->
-
-<!-- BEGIN INCLUDE ../README.md '&lt;!-- Start Scope --&gt;' '&lt;!-- End Scope --&gt;' -->
-
 <h2 id="scope">Scope<a class="headerlink" href="#scope" title="Permanent link">#</a></h2>
 <p>While some Kubernetes distros package everything and the kitchen sink, k0s tries to minimize the amount of "add-ons" to bundle in. Instead, we aim to provide a robust and versatile "base" for running Kubernetes in various setups. Of course we will provide some ways to easily control and setup various "add-ons", but we will not bundle many of those into k0s itself. There are a couple of reasons why we think this is the correct way:</p>
 <ul>
@@ -2331,7 +2313,6 @@ check out the <a href="https://docs.k0sproject.io/stable/contributors/overview/"
 <li>Keeping up with the upstream releases with many external addons is very maintenance heavy. Shipping with old versions does not make much sense either.</li>
 </ul>
 <p>With strong enough arguments we might take in new addons, but in general those should be something that are essential for the "core" of k0s.</p>
-<!-- END INCLUDE -->
 
 
 
@@ -2424,7 +2405,7 @@ check out the <a href="https://docs.k0sproject.io/stable/contributors/overview/"
     <script id="__config" type="application/json">{"base": ".", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="assets/javascripts/bundle.525ec568.min.js"></script>
+      <script src="assets/javascripts/bundle.83f73b43.min.js"></script>
       
     
   </body>
