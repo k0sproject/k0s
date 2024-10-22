@@ -34,9 +34,11 @@ const (
 	exitCheckInterval = 200 * time.Millisecond
 )
 
+type unixPID int
+
 // killPid signals SIGTERM to a PID and if it's still running after
 // s.TimeoutStop sends SIGKILL.
-func (s *Supervisor) killPid(pid int) error {
+func (s *Supervisor) killPid(pid unixPID) error {
 	// Kill the process pid
 	deadlineTicker := time.NewTicker(s.TimeoutStop)
 	defer deadlineTicker.Stop()
@@ -55,7 +57,7 @@ Loop:
 				return nil
 			}
 
-			err = syscall.Kill(pid, syscall.SIGTERM)
+			err = syscall.Kill(int(pid), syscall.SIGTERM)
 			if errors.Is(err, syscall.ESRCH) {
 				return nil
 			} else if err != nil {
@@ -74,7 +76,7 @@ Loop:
 		return nil
 	}
 
-	err = syscall.Kill(pid, syscall.SIGKILL)
+	err = syscall.Kill(int(pid), syscall.SIGKILL)
 	if errors.Is(err, syscall.ESRCH) {
 		return nil
 	} else if err != nil {
@@ -100,16 +102,16 @@ func (s *Supervisor) maybeKillPidFile() error {
 		return fmt.Errorf("failed to parse pid file %s: %w", s.PidFile, err)
 	}
 
-	if err := s.killPid(p); err != nil {
+	if err := s.killPid(unixPID(p)); err != nil {
 		return fmt.Errorf("failed to kill process with PID %d: %w", p, err)
 	}
 
 	return nil
 }
 
-func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
+func (s *Supervisor) shouldKillProcess(pid unixPID) (bool, error) {
 	// only kill process if it has the expected cmd
-	if cmd, err := cmdline(pid); err != nil {
+	if cmd, err := pid.cmdline(); err != nil {
 		if errors.Is(err, syscall.ESRCH) {
 			return false, nil
 		}
@@ -119,7 +121,7 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 	}
 
 	//only kill process if it has the _KOS_MANAGED env set
-	if env, err := environ(pid); err != nil {
+	if env, err := pid.environ(); err != nil {
 		if errors.Is(err, syscall.ESRCH) {
 			return false, nil
 		}
@@ -131,8 +133,8 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 	return true, nil
 }
 
-func cmdline(pid int) ([]string, error) {
-	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "cmdline"))
+func (pid unixPID) cmdline() ([]string, error) {
+	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "cmdline"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
@@ -143,8 +145,8 @@ func cmdline(pid int) ([]string, error) {
 	return strings.Split(string(cmdline), "\x00"), nil
 }
 
-func environ(pid int) ([]string, error) {
-	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "environ"))
+func (pid unixPID) environ() ([]string, error) {
+	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "environ"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
