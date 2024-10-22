@@ -107,16 +107,13 @@ func (s *Supervisor) maybeKillPidFile() error {
 }
 
 func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
-	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "cmdline"))
-	if os.IsNotExist(err) {
-		return false, nil
-	} else if err != nil {
-		return false, fmt.Errorf("failed to read process cmdline: %w", err)
-	}
-
 	// only kill process if it has the expected cmd
-	cmd := strings.Split(string(cmdline), "\x00")
-	if cmd[0] != s.BinPath {
+	if cmd, err := cmdline(pid); err != nil {
+		if errors.Is(err, syscall.ESRCH) {
+			return false, nil
+		}
+		return false, err
+	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
 		return false, nil
 	}
 
@@ -134,4 +131,16 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func cmdline(pid int) ([]string, error) {
+	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "cmdline"))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
+		}
+		return nil, fmt.Errorf("failed to read process cmdline: %w", err)
+	}
+
+	return strings.Split(string(cmdline), "\x00"), nil
 }
