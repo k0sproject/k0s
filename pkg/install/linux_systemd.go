@@ -29,7 +29,8 @@ ConditionFileIsExecutable={{.Path|cmdEscape}}
 StartLimitInterval=5
 StartLimitBurst=10
 ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmdEscape}}{{end}}
-Environment="{{- range $key, $value := .EnvVars}}{{$key}}={{$value}} {{- end}}"
+{{- if .Option.Environment}}{{range .Option.Environment}}
+Environment="{{.}}"{{end}}{{- end}}
 
 RestartSec=10
 Delegate=yes
