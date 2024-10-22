@@ -45,16 +45,26 @@ func (d *directories) Run() error {
 	}
 
 	var dataDirMounted bool
+	allKubeletsUnmounted := true
 
 	// search and unmount kubelet volume mounts
 	for _, v := range procMounts {
 		if v.Path == filepath.Join(d.Config.dataDir, "kubelet") {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
+				allKubeletsUnmounted = false
 				logrus.Warningf("failed to unmount %v", v.Path)
 			}
 		} else if v.Path == d.Config.dataDir {
 			dataDirMounted = true
+		}
+	}
+
+	if !allKubeletsUnmounted {
+		if dataDirMounted {
+			return fmt.Errorf("unable to remove the contents of mounted data-dir (%s) as not all mounts could be unmounted", d.Config.dataDir)
+		} else {
+			return fmt.Errorf("unable to remove k0s generated data-dir (%s) as not all mounts could be unmounted", d.Config.dataDir)
 		}
 	}
 
