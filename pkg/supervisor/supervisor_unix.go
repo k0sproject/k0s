@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -118,19 +119,16 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 	}
 
 	//only kill process if it has the _KOS_MANAGED env set
-	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "environ"))
-	if os.IsNotExist(err) {
+	if env, err := environ(pid); err != nil {
+		if errors.Is(err, syscall.ESRCH) {
+			return false, nil
+		}
+		return false, err
+	} else if !slices.Contains(env, k0sManaged) {
 		return false, nil
-	} else if err != nil {
-		return false, fmt.Errorf("failed to read process environ: %w", err)
 	}
 
-	for _, e := range strings.Split(string(env), "\x00") {
-		if e == k0sManaged {
-			return true, nil
-		}
-	}
-	return false, nil
+	return true, nil
 }
 
 func cmdline(pid int) ([]string, error) {
@@ -143,4 +141,16 @@ func cmdline(pid int) ([]string, error) {
 	}
 
 	return strings.Split(string(cmdline), "\x00"), nil
+}
+
+func environ(pid int) ([]string, error) {
+	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "environ"))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
+		}
+		return nil, fmt.Errorf("failed to read process environ: %w", err)
+	}
+
+	return strings.Split(string(env), "\x00"), nil
 }
