@@ -20,10 +20,14 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
+	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,6 +35,56 @@ const (
 	ModeNFT    = "nft"
 	ModeLegacy = "legacy"
 )
+
+// ExtractIPTablesBinaries extracts the iptables binaries from the k0s binary and makes the symlinks
+// to the backend detected by DetectHostIPTablesMode.
+// ExtractIPTablesBinaries only works on linux, if called in another OS it will return an error.
+func ExtractIPTablesBinaries(k0sBinDir string, iptablesMode string) (error, string) {
+	cmds := []string{"xtables-legacy-multi", "xtables-nft-multi"}
+	for _, cmd := range cmds {
+		err := assets.Stage(k0sBinDir, cmd, constant.BinDirMode)
+		if err != nil {
+			return err, ""
+		}
+	}
+	if iptablesMode == "" || iptablesMode == "auto" {
+		var err error
+		iptablesMode, err = DetectHostIPTablesMode(k0sBinDir)
+		if err != nil {
+			if kernelMajorVersion() < 5 {
+				iptablesMode = ModeLegacy
+			} else {
+				iptablesMode = ModeNFT
+			}
+			logrus.WithError(err).Infof("Failed to detect iptables mode, using iptables-%s by default", iptablesMode)
+		}
+	}
+	logrus.Infof("using iptables-%s", iptablesMode)
+	oldpath := fmt.Sprintf("xtables-%s-multi", iptablesMode)
+	for _, symlink := range []string{"iptables", "iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
+		symlinkPath := filepath.Join(k0sBinDir, symlink)
+
+		// remove if it exist and ignore error if it doesn't
+		_ = os.Remove(symlinkPath)
+
+		err := os.Symlink(oldpath, symlinkPath)
+		if err != nil {
+			return fmt.Errorf("failed to create symlink %s: %w", symlink, err), ""
+		}
+	}
+
+	return nil, iptablesMode
+}
+func kernelMajorVersion() byte {
+	if runtime.GOOS != "linux" {
+		return 0
+	}
+	data, err := os.ReadFile("/proc/sys/kernel/osrelease")
+	if err != nil {
+		return 0
+	}
+	return data[0] - '0'
+}
 
 // DetectHostIPTablesMode figure out whether iptables-legacy or iptables-nft is in use on the host.
 // Follows the same logic as kube-proxy/kube-route.
