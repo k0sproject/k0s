@@ -1,0 +1,11 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: applier-test
+  namespace: kube-system
+  labels:
+    component: applier
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.15
