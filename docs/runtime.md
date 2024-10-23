@@ -269,7 +269,7 @@ The successful configuration can be verified by executing the following command:
 
 ```console
 $ kubectl get nodes -o wide
-NAME              STATUS   ROLES    AGE   VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+NAME              STATUS   ROLES    AGE   VERSION        INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
 docker-worker-0   Ready    <none>   15m   v{{{ extra.k8s_version }}}+k0s   172.27.77.155   <none>        Ubuntu 22.04.3 LTS   5.15.0-82-generic   docker://24.0.7
 ```
 
