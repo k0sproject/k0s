@@ -1,5 +1,5 @@
 /*
-Copyright 2022 k0s authors
+Copyright 2024 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,10 +16,18 @@ limitations under the License.
 
 package supervisor
 
-// maybeKillPidFile checks kills the process in the pidFile if it's has
-// the same binary as the supervisor's. This function does not delete
-// the old pidFile as this is done by the caller.
-func (s *Supervisor) maybeKillPidFile() error {
-	s.log.Warnf("maybeKillPidFile is not implemented on Windows")
-	return nil
+// A handle to a running process. May be used to inspect the process properties
+// and terminate it.
+type procHandle interface {
+	// Reads and returns the process's command line.
+	cmdline() ([]string, error)
+
+	// Reads and returns the process's environment.
+	environ() ([]string, error)
+
+	// Terminates the process gracefully.
+	terminateGracefully() error
+
+	// Terminates the process forcibly.
+	terminateForcibly() error
 }
