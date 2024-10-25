@@ -81,9 +81,6 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 	// Execute the request.
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
-		if cause := context.Cause(ctx); cause != nil && !errors.Is(err, cause) {
-			err = fmt.Errorf("%w (%w)", cause, err)
-		}
 		return fmt.Errorf("request failed: %w", err)
 	}
 	defer func() {
@@ -111,10 +108,6 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 
 	// Run the actual data transfer.
 	if _, err := io.Copy(io.MultiWriter(writeMonitor, target), resp.Body); err != nil {
-		if cause := context.Cause(ctx); cause != nil && !errors.Is(err, cause) {
-			err = fmt.Errorf("%w (%w)", cause, err)
-		}
-
 		return fmt.Errorf("while downloading: %w", err)
 	}
 
