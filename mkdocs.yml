@@ -115,6 +115,7 @@ plugins:
   - exclude:
       glob:
         - "*.etag"
+        - custom_theme/*
         - Dockerfile.serve-dev
         - k0s
         - k0s.exe
