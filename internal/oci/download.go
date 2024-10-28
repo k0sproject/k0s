@@ -19,9 +19,11 @@ package oci
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"sync/atomic"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2/content"
@@ -77,13 +79,7 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 	}
 
 	tag := imgref.Reference
-	desc, data, err := repo.Manifests().FetchReference(ctx, tag)
-	if err != nil {
-		return fmt.Errorf("failed to fetch manifest: %w", err)
-	}
-	defer data.Close()
-
-	successors, err := content.Successors(ctx, repo, desc)
+	successors, err := fetchSuccessors(ctx, repo.Manifests(), tag)
 	if err != nil {
 		return fmt.Errorf("failed to fetch successors: %w", err)
 	}
@@ -107,6 +103,32 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 	return nil
 }
 
+// Fetches the manifest for the given reference and returns all of its successors.
+func fetchSuccessors(ctx context.Context, repo registry.ReferenceFetcher, reference string) ([]ocispec.Descriptor, error) {
+	var dataConsumed atomic.Bool
+	desc, data, err := repo.FetchReference(ctx, reference)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch manifest: %w", err)
+	}
+	defer func() {
+		if dataConsumed.Swap(true) {
+			return
+		}
+		if closeErr := data.Close(); closeErr != nil {
+			err = errors.Join(err, closeErr)
+		}
+	}()
+
+	fetcher := content.FetcherFunc(func(ctx context.Context, target ocispec.Descriptor) (io.ReadCloser, error) {
+		if target.Digest == desc.Digest && !dataConsumed.Swap(true) {
+			return data, nil
+		}
+		return nil, errors.ErrUnsupported
+	})
+
+	return content.Successors(ctx, fetcher, desc)
+}
+
 // findArtifactDescriptor filters, out of the provided list of descriptors, the
 // one that matches the given options. If no artifact name is provided, it
 // returns the first descriptor.
@@ -122,7 +144,7 @@ func findArtifactDescriptor(all []ocispec.Descriptor, opts downloadOptions) (oci
 		}
 	}
 	if opts.artifactName == "" {
-		return ocispec.Descriptor{}, fmt.Errorf("no artifacts found")
+		return ocispec.Descriptor{}, fmt.Errorf("no artifact descriptors found")
 	}
 	return ocispec.Descriptor{}, fmt.Errorf("artifact %q not found", opts.artifactName)
 }
