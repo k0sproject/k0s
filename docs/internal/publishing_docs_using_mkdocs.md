@@ -20,7 +20,7 @@ nav:
       - Run in Docker: k0s-in-docker.md
       - Single node set-up: k0s-single-node.md
   - Configuration Reference:
-      - Architecture: architecture.md
+      - Architecture: architecture/index.md
       - Networking: networking.md
       - Configuration Options: configuration.md
       - Using Cloud Providers: cloud-providers.md
