@@ -17,10 +17,6 @@
          <lastmod>2024-10-28</lastmod>
     </url>
     <url>
-         <loc>https://docs.k0sproject.io/head/architecture/</loc>
-         <lastmod>2024-10-28</lastmod>
-    </url>
-    <url>
          <loc>https://docs.k0sproject.io/head/autopilot-multicommand/</loc>
          <lastmod>2024-10-28</lastmod>
     </url>
@@ -210,6 +206,10 @@
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/worker-node-config/</loc>
+         <lastmod>2024-10-28</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/architecture/</loc>
          <lastmod>2024-10-28</lastmod>
     </url>
     <url>
