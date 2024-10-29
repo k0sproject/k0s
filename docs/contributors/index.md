@@ -1,4 +1,4 @@
-# Contributing to k0s
+# Getting Started
 
 Thank you for taking the time to make a contribution to k0s. The following document is a set of guidelines and instructions for contributing to k0s.
 
@@ -8,14 +8,14 @@ When contributing to this repository, please consider first discussing the chang
 
 Our code of conduct can be found in the link below. Please follow it in all your interactions with the project.
 
-- [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## GitHub Workflow
 
 We use [GitHub flow], so all code changes are tracked via Pull Requests. A
 detailed guide on the recommended workflow can be found below:
 
-- [GitHub Workflow](./github_workflow.md)
+- [GitHub Workflow](github_workflow.md)
 
 [GitHub flow]: https://docs.github.com/get-started/quickstart/github-flow
 
@@ -25,7 +25,7 @@ All submitted PRs go through a set of tests and reviews. You can run most of the
 In fact, we recommend it, because it will save on many possible review iterations and automated tests.
 The testing guidelines can be found here:
 
-- [Contributor's Guide to Testing](./testing.md)
+- [Contributor's Guide to Testing](testing.md)
 
 ## License
 
