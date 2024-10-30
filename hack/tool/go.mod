@@ -1,6 +1,6 @@
 module tool
 
-go 1.22.0
+go 1.23
 
 require (
 	github.com/hashicorp/terraform-exec v0.21.0
