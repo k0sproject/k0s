@@ -29,8 +29,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
-	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -155,11 +154,7 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 
 // waitForCRD waits 5 seconds for a CRD to become established on a best-effort basis.
 func (s *Stack) waitForCRD(ctx context.Context, crdName string) {
-	config, err := s.Clients.GetRESTConfig()
-	if err != nil {
-		return
-	}
-	client, err := extensionsclient.NewForConfig(config)
+	client, err := s.Clients.GetAPIExtensionsClient()
 	if err != nil {
 		return
 	}
@@ -167,13 +162,13 @@ func (s *Stack) waitForCRD(ctx context.Context, crdName string) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_ = watch.CRDs(client.CustomResourceDefinitions()).
+	_ = watch.CRDs(client.ApiextensionsV1().CustomResourceDefinitions()).
 		WithObjectName(crdName).
 		WithErrorCallback(watch.IsRetryable).
-		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
+		Until(ctx, func(item *apiextensionsv1.CustomResourceDefinition) (bool, error) {
 			for _, cond := range item.Status.Conditions {
-				if cond.Type == extensionsv1.Established {
-					return cond.Status == extensionsv1.ConditionTrue, nil
+				if cond.Type == apiextensionsv1.Established {
+					return cond.Status == apiextensionsv1.ConditionTrue, nil
 				}
 			}
 			return false, nil
@@ -450,7 +445,7 @@ func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
 
 func isCRD(resource *unstructured.Unstructured) bool {
 	gvk := resource.GroupVersionKind()
-	return gvk.Group == extensionsv1.GroupName && gvk.Kind == "CustomResourceDefinition"
+	return gvk.Group == apiextensionsv1.GroupName && gvk.Kind == "CustomResourceDefinition"
 }
 
 func generateResourceID(resource unstructured.Unstructured) string {

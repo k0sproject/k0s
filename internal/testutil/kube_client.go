@@ -29,6 +29,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextensionsfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	apiextensionsscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -51,6 +54,7 @@ func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
 	// Create a scheme containing all the kinds and types that k0s knows about.
 	scheme := runtime.NewScheme()
 	utilruntime.Must(kubernetesscheme.AddToScheme(scheme))
+	utilruntime.Must(apiextensionsscheme.AddToScheme(scheme))
 	utilruntime.Must(k0sscheme.AddToScheme(scheme))
 
 	// Create a dynamic fake client that can deal with all that.
@@ -66,21 +70,24 @@ func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
 	// transform between typed and unstructured objects.
 	tracker := fakeclient.TypedObjectTrackerFrom(scheme, fakeDynamic)
 	kubeClients := fakeclient.NewClientset[kubernetesfake.Clientset](fakeDiscovery, tracker)
+	apiExtensionsClients := fakeclient.NewClientset[apiextensionsfake.Clientset](fakeDiscovery, tracker)
 	k0sClients := fakeclient.NewClientset[k0sfake.Clientset](fakeDiscovery, tracker)
 
 	return &FakeClientFactory{
-		DynamicClient:   fakeDynamic,
-		Client:          kubeClients,
-		DiscoveryClient: memory.NewMemCacheClient(fakeDiscovery),
-		K0sClient:       k0sClients,
+		DynamicClient:       fakeDynamic,
+		Client:              kubeClients,
+		DiscoveryClient:     memory.NewMemCacheClient(fakeDiscovery),
+		APIExtensionsClient: apiExtensionsClients,
+		K0sClient:           k0sClients,
 	}
 }
 
 type FakeClientFactory struct {
-	DynamicClient   *dynamicfake.FakeDynamicClient
-	Client          kubernetes.Interface
-	DiscoveryClient discovery.CachedDiscoveryInterface
-	K0sClient       k0sclientset.Interface
+	DynamicClient       *dynamicfake.FakeDynamicClient
+	Client              kubernetes.Interface
+	DiscoveryClient     discovery.CachedDiscoveryInterface
+	APIExtensionsClient *apiextensionsfake.Clientset
+	K0sClient           *k0sfake.Clientset
 }
 
 func (f *FakeClientFactory) GetClient() (kubernetes.Interface, error) {
@@ -93,6 +100,10 @@ func (f *FakeClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 
 func (f *FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	return f.DiscoveryClient, nil
+}
+
+func (f *FakeClientFactory) GetAPIExtensionsClient() (apiextensionsclientset.Interface, error) {
+	return f.APIExtensionsClient, nil
 }
 
 func (f *FakeClientFactory) GetK0sClient() (k0sclientset.Interface, error) {

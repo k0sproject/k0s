@@ -17,31 +17,39 @@ limitations under the License.
 package controller
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	k0sclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/applier"
+	k0sv1beta1client "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/static"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
+
+const ClusterConfigStackName = "api-config"
 
 // ClusterConfigReconciler reconciles a ClusterConfig object
 type ClusterConfigReconciler struct {
-	KubeClientFactory kubeutil.ClientFactoryInterface
+	KubeClientFactory kubernetes.ClientFactoryInterface
 
 	log          *logrus.Entry
 	reconciler   manager.Reconciler
@@ -49,7 +57,7 @@ type ClusterConfigReconciler struct {
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(reconciler manager.Reconciler, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) *ClusterConfigReconciler {
+func NewClusterConfigReconciler(reconciler manager.Reconciler, kubeClientFactory kubernetes.ClientFactoryInterface, configSource clusterconfig.ConfigSource) *ClusterConfigReconciler {
 	return &ClusterConfigReconciler{
 		KubeClientFactory: kubeClientFactory,
 		log:               logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
@@ -100,7 +108,7 @@ func (r *ClusterConfigReconciler) Stop() error {
 	return nil
 }
 
-func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1beta1.ClusterConfig, reconcileError error) {
+func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *k0sv1beta1.ClusterConfig, reconcileError error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		r.log.Error("failed to get hostname:", err)
@@ -119,11 +127,11 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1be
 		FirstTimestamp: metav1.Now(),
 		LastTimestamp:  metav1.Now(),
 		InvolvedObject: corev1.ObjectReference{
-			Kind:            v1beta1.ClusterConfigKind,
+			Kind:            k0sv1beta1.ClusterConfigKind,
 			Namespace:       config.Namespace,
 			Name:            config.Name,
 			UID:             config.UID,
-			APIVersion:      v1beta1.ClusterConfigAPIVersion,
+			APIVersion:      k0sv1beta1.ClusterConfigAPIVersion,
 			ResourceVersion: config.ResourceVersion,
 		},
 		Action:              "ConfigReconciling",
@@ -147,15 +155,15 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1be
 
 type ClusterConfigInitializer struct {
 	log           logrus.FieldLogger
-	configClient  k0sclient.ClusterConfigInterface
+	clients       kubernetes.ClientFactoryInterface
 	leaderElector leaderelector.Interface
-	initialConfig *v1beta1.ClusterConfig
+	initialConfig *k0sv1beta1.ClusterConfig
 }
 
-// Init implements manager.Component.
+// Init implements [manager.Component].
 func (*ClusterConfigInitializer) Init(context.Context) error { return nil }
 
-// Start implements manager.Component.
+// Start implements [manager.Component].
 func (i *ClusterConfigInitializer) Start(ctx context.Context) error {
 	if err := i.ensureClusterConfigExistence(ctx); err != nil {
 		return fmt.Errorf("failed to ensure the existence of the cluster configuration: %w", err)
@@ -163,39 +171,49 @@ func (i *ClusterConfigInitializer) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop implements manager.Component.
+// Stop implements [manager.Component].
 func (*ClusterConfigInitializer) Stop() error { return nil }
 
-func NewClusterConfigInitializer(kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, initialConfig *v1beta1.ClusterConfig) (*ClusterConfigInitializer, error) {
-	configClient, err := kubeClientFactory.GetConfigClient()
-	if err != nil {
-		return nil, err
-	}
-
+func NewClusterConfigInitializer(clients kubernetes.ClientFactoryInterface, leaderElector leaderelector.Interface, initialConfig *k0sv1beta1.ClusterConfig) *ClusterConfigInitializer {
 	return &ClusterConfigInitializer{
 		log:           logrus.WithField("component", "clusterConfigInitializer"),
-		configClient:  configClient,
+		clients:       clients,
 		leaderElector: leaderElector,
 		initialConfig: initialConfig,
-	}, nil
+	}
 }
 
-func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Context) error {
+func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Context) (err error) {
+	clientset, err := i.clients.GetK0sClient()
+	if err != nil {
+		return err
+	}
+	client := clientset.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace)
+
 	// We need to wait until the cluster configuration exists or we succeed in creating it.
-	return wait.PollUntilContextTimeout(ctx, 1*time.Second, 20*time.Second, true, func(ctx context.Context) (_ bool, err error) {
+	var stackApplied bool
+	pollErr := wait.PollUntilContextTimeout(ctx, 1*time.Second, 20*time.Second, true, func(ctx context.Context) (bool, error) {
 		if i.leaderElector.IsLeader() {
-			err = i.createClusterConfig(ctx)
-			if err == nil {
-				i.log.Debug("Cluster configuration created")
-				return true, nil
+			if stackApplied {
+				err = nil
+			} else {
+				err = i.applyAPIConfigStack(ctx)
 			}
-			if apierrors.IsAlreadyExists(err) {
-				// An already existing configuration is just fine.
-				i.log.Debug("Cluster configuration already exists")
-				return true, nil
+			if err == nil {
+				stackApplied = true
+				err = i.createClusterConfig(ctx, client)
+				if err == nil {
+					i.log.Debug("Cluster configuration created")
+					return true, nil
+				}
+				if apierrors.IsAlreadyExists(err) {
+					// An already existing configuration is just fine.
+					i.log.Debug("Cluster configuration already exists")
+					return true, nil
+				}
 			}
 		} else {
-			err = i.clusterConfigExists(ctx)
+			err = i.clusterConfigExists(ctx, client)
 			if err == nil {
 				i.log.Debug("Cluster configuration exists")
 				return true, nil
@@ -205,19 +223,48 @@ func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Cont
 		i.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
 		return false, nil
 	})
+
+	if pollErr != nil {
+		pollErr = cmp.Or(context.Cause(ctx), pollErr)
+		if err != nil {
+			return fmt.Errorf("%w (%w)", pollErr, err)
+		}
+
+		return pollErr
+	}
+
+	return nil
 }
 
-func (i *ClusterConfigInitializer) clusterConfigExists(ctx context.Context) error {
+func (i *ClusterConfigInitializer) applyAPIConfigStack(ctx context.Context) error {
+	rawCRD, err := fs.ReadFile(static.CRDs, "k0s/k0s.k0sproject.io_clusterconfigs.yaml")
+	if err != nil {
+		return err
+	}
+
+	var crd unstructured.Unstructured
+	if err := yaml.Unmarshal(rawCRD, &crd); err != nil {
+		return err
+	}
+
+	return (&applier.Stack{
+		Name:      ClusterConfigStackName,
+		Resources: []*unstructured.Unstructured{&crd},
+		Clients:   i.clients,
+	}).Apply(ctx, true)
+}
+
+func (i *ClusterConfigInitializer) clusterConfigExists(ctx context.Context, client k0sv1beta1client.ClusterConfigInterface) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	_, err := i.configClient.Get(ctx, constant.ClusterConfigObjectName, metav1.GetOptions{})
+	_, err := client.Get(ctx, constant.ClusterConfigObjectName, metav1.GetOptions{})
 	return err
 }
 
-func (i *ClusterConfigInitializer) createClusterConfig(ctx context.Context) error {
+func (i *ClusterConfigInitializer) createClusterConfig(ctx context.Context, client k0sv1beta1client.ClusterConfigInterface) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	clusterWideConfig := i.initialConfig.GetClusterWideConfig().StripDefaults().CRValidator()
-	_, err := i.configClient.Create(ctx, clusterWideConfig, metav1.CreateOptions{})
+	_, err := client.Create(ctx, clusterWideConfig, metav1.CreateOptions{})
 	return err
 }

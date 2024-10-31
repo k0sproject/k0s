@@ -21,9 +21,12 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -39,6 +42,7 @@ import (
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
 	K0sVars           *config.CfgVars
+	IgnoredStacks     []string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	bundleDir string
@@ -167,6 +171,19 @@ func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name
 		return
 	}
 
+	log := m.log.WithField("stack", name)
+
+	stackName := filepath.Base(name)
+	if slices.Contains(m.IgnoredStacks, stackName) {
+		if err := file.AtomicWithTarget(filepath.Join(name, "ignored.txt")).WriteString(
+			"The " + stackName + " stack is handled internally.\n" +
+				"This directory is ignored and can be safely removed.\n",
+		); err != nil {
+			log.WithError(err).Warn("Failed to write ignore notice")
+		}
+		return
+	}
+
 	ctx, cancel := context.WithCancelCause(ctx)
 	stopped := make(chan struct{})
 
@@ -175,7 +192,6 @@ func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name
 
 	go func() {
 		defer close(stopped)
-		log := m.log.WithField("stack", name)
 
 		wait.UntilWithContext(ctx, func(ctx context.Context) {
 			log.Info("Running stack")
