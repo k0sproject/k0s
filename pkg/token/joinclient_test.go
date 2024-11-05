@@ -106,10 +106,6 @@ func TestJoinClient_Cancellation(t *testing.T) {
 		name          string
 		funcUnderTest func(context.Context, *token.JoinClient) error
 	}{
-		{"GetCA", func(ctx context.Context, c *token.JoinClient) error {
-			_, err := c.GetCA(ctx)
-			return err
-		}},
 		{"JoinEtcd", func(ctx context.Context, c *token.JoinClient) error {
 			_, err := c.JoinEtcd(ctx, k0sv1beta1.EtcdRequest{})
 			return err
@@ -138,6 +134,30 @@ func TestJoinClient_Cancellation(t *testing.T) {
 			assert.Same(t, context.Cause(clientContext), assert.AnError, "Didn't receive an HTTP request")
 		})
 	}
+}
+
+func TestJoinClient_EtcdUnhealthy(t *testing.T) {
+	t.Parallel()
+
+	joinURL, certData := startFakeJoinServer(t, func(res http.ResponseWriter, req *http.Request) {
+		res.WriteHeader(http.StatusServiceUnavailable)
+	})
+
+	joinURL.Path = "/some/sub/path"
+	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, t.Name(), "the-token")
+	require.NoError(t, err)
+	tok, err := token.JoinEncode(bytes.NewReader(kubeconfig))
+	require.NoError(t, err)
+
+	underTest, err := token.JoinClientFromToken(tok)
+	require.NoError(t, err)
+
+	response, err := underTest.JoinEtcd(context.TODO(), k0sv1beta1.EtcdRequest{
+		Node:        "the-node",
+		PeerAddress: "the-peer-address",
+	})
+	assert.ErrorIs(t, err, token.ErrEtcdUnhealthy)
+	assert.Zero(t, response)
 }
 
 func startFakeJoinServer(t *testing.T, handler func(http.ResponseWriter, *http.Request)) (*url.URL, []byte) {
