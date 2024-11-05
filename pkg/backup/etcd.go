@@ -21,6 +21,8 @@ package backup
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -84,7 +86,11 @@ func (e etcdStep) Restore(restoreFrom, _ string) error {
 	if err != nil {
 		return err
 	}
-	peerURL := fmt.Sprintf("https://%s:2380", e.peerAddress)
+	u := &url.URL{
+		Scheme: "https",
+		Host:   net.JoinHostPort(e.peerAddress, "2380"),
+	}
+	peerURL := u.String()
 	restoreConfig := utilsnapshot.RestoreConfig{
 		SnapshotPath:   snapshotPath,
 		OutputDataDir:  e.etcdDataDir,
