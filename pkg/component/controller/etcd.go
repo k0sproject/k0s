@@ -154,7 +154,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 		return err
 	}
 
-	peerURL := fmt.Sprintf("https://%s:2380", e.Config.PeerAddress)
+	peerURL := e.Config.GetPeerURL()
 
 	args := stringmap.StringMap{
 		"--data-dir":                    e.K0sVars.EtcdDataDir,
