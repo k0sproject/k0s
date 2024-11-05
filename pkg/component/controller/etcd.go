@@ -107,6 +107,8 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 			etcdResponse, err = e.JoinClient.JoinEtcd(ctx, etcdRequest)
 			return err
 		},
+		retry.Delay(1*time.Second),
+		retry.MaxJitter(1*time.Second),
 		retry.Context(ctx),
 		retry.LastErrorOnly(true),
 		retry.OnRetry(func(attempt uint, err error) {
