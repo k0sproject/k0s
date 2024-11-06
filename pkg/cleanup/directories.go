@@ -48,27 +48,27 @@ func (d *directories) Run() error {
 
 	// search and unmount kubelet volume mounts
 	for _, v := range procMounts {
-		if v.Path == filepath.Join(d.Config.dataDir, "kubelet") {
+		if v.Path == filepath.Join(d.Config.k0sVars.DataDir, "kubelet") {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
 				logrus.Warningf("failed to unmount %v", v.Path)
 			}
-		} else if v.Path == d.Config.dataDir {
+		} else if v.Path == d.Config.k0sVars.DataDir {
 			dataDirMounted = true
 		}
 	}
 
 	if dataDirMounted {
-		logrus.Debugf("removing the contents of mounted data-dir (%s)", d.Config.dataDir)
+		logrus.Debugf("removing the contents of mounted data-dir (%s)", d.Config.k0sVars.DataDir)
 	} else {
-		logrus.Debugf("removing k0s generated data-dir (%s)", d.Config.dataDir)
+		logrus.Debugf("removing k0s generated data-dir (%s)", d.Config.k0sVars.DataDir)
 	}
 
-	if err := os.RemoveAll(d.Config.dataDir); err != nil {
+	if err := os.RemoveAll(d.Config.k0sVars.DataDir); err != nil {
 		if !dataDirMounted {
 			return fmt.Errorf("failed to delete k0s generated data-dir: %w", err)
 		}
-		if !errorIsUnlinkat(err, d.Config.dataDir) {
+		if !errorIsUnlinkat(err, d.Config.k0sVars.DataDir) {
 			return fmt.Errorf("failed to delete contents of mounted data-dir: %w", err)
 		}
 	}
