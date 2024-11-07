@@ -1,3 +1,5 @@
+//go:build !linux
+
 /*
 Copyright 2021 k0s authors
 
@@ -81,7 +83,7 @@ func (d *directories) Run() error {
 	return nil
 }
 
-// this is for checking if the error retrned by os.RemoveAll is due to
+// this is for checking if the error returned by os.RemoveAll is due to
 // it being a mount point. if it is, we can ignore the error. this way
 // we can't rely on os.RemoveAll instead of recursively deleting the
 // contents of the directory
