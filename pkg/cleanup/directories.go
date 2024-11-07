@@ -69,7 +69,7 @@ func (d *directories) Run() error {
 			dataDirMounted = true
 			continue
 		}
-		if isUnderPath(v.Path, filepath.Join(d.Config.dataDir, "kubelet")) || isUnderPath(v.Path, d.Config.k0sVars.DataDir) {
+		if isUnderPath(v.Path, d.Config.k0sVars.KubeletRootDir) || isUnderPath(v.Path, d.Config.k0sVars.DataDir) {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
 				// if we fail to unmount, try lazy unmount so
@@ -81,6 +81,11 @@ func (d *directories) Run() error {
 				}
 			}
 		}
+	}
+
+	logrus.Debugf("removing kubelet root dir (%s)", d.Config.k0sVars.KubeletRootDir)
+	if err := os.RemoveAll(d.Config.k0sVars.KubeletRootDir); err != nil {
+		return fmt.Errorf("failed to delete k0s kubelet root direcotory: %w", err)
 	}
 
 	if dataDirMounted {

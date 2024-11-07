@@ -199,6 +199,7 @@ func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.BoolVarP(&Verbose, "verbose", "v", false, "Verbose logging (default: false)")
 	flagset.String("data-dir", constant.DataDirDefault, "Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break!")
+	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
 	flagset.StringVar(&StatusSocket, "status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
 	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
 	return flagset
