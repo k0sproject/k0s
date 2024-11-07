@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
@@ -48,7 +47,7 @@ func (d *directories) Run() error {
 
 	// search and unmount kubelet volume mounts
 	for _, v := range procMounts {
-		if v.Path == filepath.Join(d.Config.k0sVars.DataDir, "kubelet") {
+		if v.Path == d.Config.k0sVars.KubeletRootDir {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
 				logrus.Warningf("failed to unmount %v", v.Path)
@@ -56,6 +55,11 @@ func (d *directories) Run() error {
 		} else if v.Path == d.Config.k0sVars.DataDir {
 			dataDirMounted = true
 		}
+	}
+
+	logrus.Debugf("removing kubelet root dir (%s)", d.Config.k0sVars.KubeletRootDir)
+	if err := os.RemoveAll(d.Config.k0sVars.KubeletRootDir); err != nil {
+		return fmt.Errorf("failed to delete k0s kubelet root direcotory: %w", err)
 	}
 
 	if dataDirMounted {
