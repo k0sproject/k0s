@@ -42,7 +42,7 @@ func (s *suite) TestReset() {
 
 	if !s.Run("k0s gets up", func() {
 		s.Require().NoError(s.InitController(0, "--disable-components=konnectivity-server,metrics-server"))
-		s.Require().NoError(s.RunWorkers())
+		s.Require().NoError(s.RunWorkers("--kubelet-root-dir=/var/lib/kubelet"))
 
 		kc, err := s.KubeClient(s.ControllerNode(0))
 		s.Require().NoError(err)
@@ -59,6 +59,7 @@ func (s *suite) TestReset() {
 
 		s.NoError(ssh.Exec(ctx, "test -d /var/lib/k0s", common.SSHStreams{}), "/var/lib/k0s is not a directory")
 		s.NoError(ssh.Exec(ctx, "test -d /run/k0s", common.SSHStreams{}), "/run/k0s is not a directory")
+		s.NoError(ssh.Exec(ctx, "test -d /var/lib/kubelet", common.SSHStreams{}), "/var/lib/kubelet is not a directory")
 
 		s.NoError(ssh.Exec(ctx, "pidof containerd-shim-runc-v2 >&2", common.SSHStreams{}), "Expected some running containerd shims")
 	}) {
@@ -90,7 +91,7 @@ func (s *suite) TestReset() {
 		defer ssh.Disconnect()
 
 		streams, flushStreams := common.TestLogStreams(s.T(), "reset")
-		err = ssh.Exec(ctx, "k0s reset --debug", streams)
+		err = ssh.Exec(ctx, "k0s reset --debug --kubelet-root-dir=/var/lib/kubelet", streams)
 		flushStreams()
 		s.NoError(err, "k0s reset didn't exit cleanly")
 
@@ -104,6 +105,7 @@ func (s *suite) TestReset() {
 
 		// /var/lib/k0s is a mount point in the Docker container and can't be deleted, so it must be empty
 		s.NoError(ssh.Exec(ctx, `x="$(ls -A /var/lib/k0s)" && echo "$x" >&2 && [ -z "$x" ]`, common.SSHStreams{}), "/var/lib/k0s is not empty")
+		s.NoError(ssh.Exec(ctx, "! test -e /var/lib/kubelet", common.SSHStreams{}), "/var/lib/kubelet still exists")
 		s.NoError(ssh.Exec(ctx, "! test -e /run/k0s", common.SSHStreams{}), "/run/k0s still exists")
 		s.NoError(ssh.Exec(ctx, "! pidof containerd-shim-runc-v2 >&2", common.SSHStreams{}), "Expected no running containerd shims")
 	})
