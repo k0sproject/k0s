@@ -20,6 +20,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
@@ -45,15 +47,20 @@ func (d *directories) Run() error {
 
 	var dataDirMounted bool
 
-	// search and unmount kubelet volume mounts
-	for _, v := range procMounts {
-		if v.Path == d.Config.k0sVars.KubeletRootDir {
+	// search and unmount anything under kubelet root or data dir
+	// in reverse order to handle netsted mounts and over mounts
+	for i := len(procMounts) - 1; i >= 0; i-- {
+		v := procMounts[i]
+		// avoid unmount datadir if its mounted on separate partition
+		if v.Path == d.Config.k0sVars.DataDir {
+			dataDirMounted = true
+			continue
+		}
+		if isUnderPath(v.Path, d.Config.k0sVars.KubeletRootDir) || isUnderPath(v.Path, d.Config.k0sVars.DataDir) {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
 				logrus.Warningf("failed to unmount %v", v.Path)
 			}
-		} else if v.Path == d.Config.k0sVars.DataDir {
-			dataDirMounted = true
 		}
 	}
 
@@ -83,6 +90,12 @@ func (d *directories) Run() error {
 	}
 
 	return nil
+}
+
+// test if the path is a directory equal to or under base
+func isUnderPath(path, base string) bool {
+	rel, err := filepath.Rel(base, path)
+	return err == nil && !strings.HasPrefix(rel, "..") && !filepath.IsAbs(rel)
 }
 
 // this is for checking if the error retrned by os.RemoveAll is due to
