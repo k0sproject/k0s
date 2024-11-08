@@ -22,10 +22,6 @@ Before that mishap we had 4776 stargazers, making k0s one of the most popular Ku
 
 **So if you are reading this, and have not yet starred this repo we would highly appreciate the :star: to get our numbers closer to what they used to be.**
 
-## The Repository
-
-This repository ("k0s") is where Team Lens develops the [k0s](https://k8slens.dev/kubernetes) product together with the community. It is backed by a number of Kubernetes and cloud native ecosystem pioneers. This source code is available to everyone under the [Apache License 2.0](./LICENSE).
-
 <!-- Start Overview -->
 ## Overview
 
@@ -71,13 +67,13 @@ If you'd like to try k0s, please jump in to our:
 <!-- Start Join the Community -->
 ## Join the Community
 
-- [Lens Forums] - Request for support and help from the Lens and k0s community.
+- [k8s Slack] - Reach out for support and help from the k0s community.
 - [GitHub Issues] - Submit your issues and feature requests via GitHub.
 
 We welcome your help in building k0s! If you are interested, we invite you to
 check out the [Contributing Guide] and the [Code of Conduct].
 
-[Lens Forums]: https://forums.k8slens.dev/
+[k8s Slack]: https://kubernetes.slack.com/archives/C07VAPJUECS
 [GitHub Issues]: https://github.com/k0sproject/k0s/issues
 [Contributing Guide]: https://docs.k0sproject.io/stable/contributors/overview/
 [Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
