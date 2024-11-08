@@ -66,10 +66,17 @@ func NewConfig(k0sVars *config.CfgVars, criSocketFlag string) (*Config, error) {
 }
 
 func (c *Config) Cleanup() error {
+	cfg, err := c.k0sVars.NodeConfig()
+	if err != nil {
+		logrus.Errorf("failed to get cluster setup: %v", err)
+	}
+
 	var errs []error
 	cleanupSteps := []Step{
 		&containers{Config: c},
-		&users{Config: c},
+		&users{
+			systemUsers: cfg.Spec.Install.SystemUsers,
+		},
 		&services{},
 		&directories{
 			dataDir: c.k0sVars.DataDir,
