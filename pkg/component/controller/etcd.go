@@ -107,8 +107,11 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 			etcdResponse, err = e.JoinClient.JoinEtcd(ctx, etcdRequest)
 			return err
 		},
+		// When joining multiple nodes in parallel, etcd can lose consensus and will return 500 responses
+		// Allow for more time to recover (~ 15 minutes)
+		retry.Attempts(20),
 		retry.Delay(1*time.Second),
-		retry.MaxJitter(1*time.Second),
+		retry.MaxDelay(60*time.Second),
 		retry.Context(ctx),
 		retry.LastErrorOnly(true),
 		retry.OnRetry(func(attempt uint, err error) {
