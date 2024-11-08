@@ -20,21 +20,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-)
-
-var (
-	ErrEtcdUnhealthy = errors.New("etcd is unhealthy")
 )
 
 // JoinClient is the client we can use to call k0s join APIs
@@ -106,9 +100,6 @@ func (j *JoinClient) JoinEtcd(ctx context.Context, etcdRequest v1beta1.EtcdReque
 	b, err := j.restClient.Post().AbsPath("v1beta1", "etcd", "members").Body(buf).Do(ctx).Raw()
 	if err == nil {
 		err = json.Unmarshal(b, &etcdResponse)
-	}
-	if apierrors.IsServiceUnavailable(err) {
-		return etcdResponse, ErrEtcdUnhealthy
 	}
 
 	return etcdResponse, err
