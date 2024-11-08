@@ -135,12 +135,6 @@ func (c *command) etcdHandler() http.Handler {
 			return
 		}
 
-		err = etcdClient.Health(ctx)
-		if err != nil {
-			sendError(err, resp, http.StatusServiceUnavailable)
-			return
-		}
-
 		memberList, err := etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
 		if err != nil {
 			sendError(err, resp)
