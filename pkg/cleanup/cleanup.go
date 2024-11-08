@@ -70,7 +70,7 @@ func (c *Config) Cleanup() error {
 	cleanupSteps := []Step{
 		&containers{Config: c},
 		&users{Config: c},
-		&services{Config: c},
+		&services{},
 		&directories{Config: c},
 		&cni{},
 	}
