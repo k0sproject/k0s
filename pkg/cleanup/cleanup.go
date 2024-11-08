@@ -32,42 +32,28 @@ import (
 )
 
 type Config struct {
-	debug         bool
-	criSocketFlag string
-	dataDir       string
-	k0sVars       *config.CfgVars
-	runDir        string
+	cleanupSteps []Step
 }
 
 func NewConfig(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*Config, error) {
-	return &Config{
-		debug:         debug,
-		criSocketFlag: criSocketFlag,
-		dataDir:       k0sVars.DataDir,
-		k0sVars:       k0sVars,
-		runDir:        k0sVars.RunDir,
-	}, nil
-}
-
-func (c *Config) Cleanup() error {
-	cfg, err := c.k0sVars.NodeConfig()
+	cfg, err := k0sVars.NodeConfig()
 	if err != nil {
 		logrus.Errorf("failed to get cluster setup: %v", err)
 	}
 
-	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(c.criSocketFlag, c.k0sVars.RunDir)
+	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, k0sVars.RunDir)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	containerRuntime := runtime.NewContainerRuntime(runtimeEndpoint)
 	var managedContainerd *containerd.Component
-	if c.criSocketFlag == "" {
+	if criSocketFlag == "" {
 		logLevel := "error"
-		if c.debug {
+		if debug {
 			logLevel = "debug"
 		}
-		managedContainerd = containerd.NewComponent(logLevel, c.k0sVars, &workerconfig.Profile{
+		managedContainerd = containerd.NewComponent(logLevel, k0sVars, &workerconfig.Profile{
 			PauseImage: &k0sv1beta1.ImageSpec{
 				Image:   constant.KubePauseContainerImage,
 				Version: constant.KubePauseContainerImageVersion,
@@ -75,7 +61,6 @@ func (c *Config) Cleanup() error {
 		})
 	}
 
-	var errs []error
 	cleanupSteps := []Step{
 		&containers{
 			managedContainerd: managedContainerd,
@@ -86,8 +71,8 @@ func (c *Config) Cleanup() error {
 		},
 		&services{},
 		&directories{
-			dataDir: c.k0sVars.DataDir,
-			runDir:  c.k0sVars.RunDir,
+			dataDir: k0sVars.DataDir,
+			runDir:  k0sVars.RunDir,
 		},
 		&cni{},
 	}
@@ -96,7 +81,13 @@ func (c *Config) Cleanup() error {
 		cleanupSteps = append(cleanupSteps, bridge)
 	}
 
-	for _, step := range cleanupSteps {
+	return &Config{cleanupSteps}, nil
+}
+
+func (c *Config) Cleanup() error {
+	var errs []error
+
+	for _, step := range c.cleanupSteps {
 		logrus.Info("* ", step.Name())
 		err := step.Run()
 		if err != nil {
