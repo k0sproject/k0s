@@ -41,31 +41,13 @@ func NewConfig(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*Conf
 		logrus.Errorf("failed to get cluster setup: %v", err)
 	}
 
-	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, k0sVars.RunDir)
+	containers, err := newContainersStep(debug, k0sVars, criSocketFlag)
 	if err != nil {
 		return nil, err
 	}
 
-	containerRuntime := runtime.NewContainerRuntime(runtimeEndpoint)
-	var managedContainerd *containerd.Component
-	if criSocketFlag == "" {
-		logLevel := "error"
-		if debug {
-			logLevel = "debug"
-		}
-		managedContainerd = containerd.NewComponent(logLevel, k0sVars, &workerconfig.Profile{
-			PauseImage: &k0sv1beta1.ImageSpec{
-				Image:   constant.KubePauseContainerImage,
-				Version: constant.KubePauseContainerImageVersion,
-			},
-		})
-	}
-
 	cleanupSteps := []Step{
-		&containers{
-			managedContainerd: managedContainerd,
-			containerRuntime:  containerRuntime,
-		},
+		containers,
 		&users{
 			systemUsers: cfg.Spec.Install.SystemUsers,
 		},
@@ -99,6 +81,32 @@ func (c *Config) Cleanup() error {
 		return fmt.Errorf("errors occurred during clean-up: %w", errors.Join(errs...))
 	}
 	return nil
+}
+
+func newContainersStep(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*containers, error) {
+	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, k0sVars.RunDir)
+	if err != nil {
+		return nil, err
+	}
+
+	containers := containers{
+		containerRuntime: runtime.NewContainerRuntime(runtimeEndpoint),
+	}
+
+	if criSocketFlag == "" {
+		logLevel := "error"
+		if debug {
+			logLevel = "debug"
+		}
+		containers.managedContainerd = containerd.NewComponent(logLevel, k0sVars, &workerconfig.Profile{
+			PauseImage: &k0sv1beta1.ImageSpec{
+				Image:   constant.KubePauseContainerImage,
+				Version: constant.KubePauseContainerImageVersion,
+			},
+		})
+	}
+
+	return &containers, nil
 }
 
 // Step interface is used to implement cleanup steps
