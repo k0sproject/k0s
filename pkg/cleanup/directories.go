@@ -28,7 +28,8 @@ import (
 )
 
 type directories struct {
-	Config *Config
+	dataDir string
+	runDir  string
 }
 
 // Name returns the name of the step
@@ -65,11 +66,11 @@ func (d *directories) Run() error {
 		v := procMounts[i]
 		// avoid unmount datadir if its mounted on separate partition
 		// k0s didn't mount it so leave it alone
-		if v.Path == d.Config.k0sVars.DataDir {
+		if v.Path == d.dataDir {
 			dataDirMounted = true
 			continue
 		}
-		if isUnderPath(v.Path, filepath.Join(d.Config.dataDir, "kubelet")) || isUnderPath(v.Path, d.Config.k0sVars.DataDir) {
+		if isUnderPath(v.Path, filepath.Join(d.dataDir, "kubelet")) || isUnderPath(v.Path, d.dataDir) {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
 				// if we fail to unmount, try lazy unmount so
@@ -84,23 +85,23 @@ func (d *directories) Run() error {
 	}
 
 	if dataDirMounted {
-		logrus.Debugf("removing the contents of mounted data-dir (%s)", d.Config.dataDir)
+		logrus.Debugf("removing the contents of mounted data-dir (%s)", d.dataDir)
 	} else {
-		logrus.Debugf("removing k0s generated data-dir (%s)", d.Config.dataDir)
+		logrus.Debugf("removing k0s generated data-dir (%s)", d.dataDir)
 	}
 
-	if err := os.RemoveAll(d.Config.dataDir); err != nil {
+	if err := os.RemoveAll(d.dataDir); err != nil {
 		if !dataDirMounted {
 			return fmt.Errorf("failed to delete k0s generated data-dir: %w", err)
 		}
-		if !errorIsUnlinkat(err, d.Config.dataDir) {
+		if !errorIsUnlinkat(err, d.dataDir) {
 			return fmt.Errorf("failed to delete contents of mounted data-dir: %w", err)
 		}
 	}
 
-	logrus.Debugf("deleting k0s generated run-dir (%s)", d.Config.runDir)
-	if err := os.RemoveAll(d.Config.runDir); err != nil {
-		return fmt.Errorf("failed to delete %s: %w", d.Config.runDir, err)
+	logrus.Debugf("deleting k0s generated run-dir (%s)", d.runDir)
+	if err := os.RemoveAll(d.runDir); err != nil {
+		return fmt.Errorf("failed to delete %s: %w", d.runDir, err)
 	}
 
 	return nil

@@ -71,7 +71,10 @@ func (c *Config) Cleanup() error {
 		&containers{Config: c},
 		&users{Config: c},
 		&services{},
-		&directories{Config: c},
+		&directories{
+			dataDir: c.k0sVars.DataDir,
+			runDir:  c.k0sVars.RunDir,
+		},
 		&cni{},
 	}
 
