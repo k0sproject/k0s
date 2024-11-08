@@ -193,6 +193,8 @@ func (e *Etcd) Start(ctx context.Context) error {
 		"--enable-pprof":                "false",
 	}
 
+	// Use the main etcd data directory as the source of truth to determine if this node has already joined
+	// See https://etcd.io/docs/v3.5/learning/persistent-storage-files/#bbolt-btree-membersnapdb
 	if file.Exists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 	} else if e.JoinClient != nil {
