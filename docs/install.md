@@ -17,6 +17,7 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
     ```shell
     curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
     ```
+    Alternatively you can download it from the [releases page.](https://github.com/k0sproject/k0s/releases/latest) This is required for airgapped environments.
 
 2. Install k0s as a service
 
