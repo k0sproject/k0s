@@ -132,6 +132,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 	}
 
 	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil) // satisfy linter, not required for correctness
 	stacks := make(map[string]stack, len(dirs))
 
 	for _, dir := range dirs {
