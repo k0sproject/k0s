@@ -57,7 +57,7 @@ func (s *controllerworkerSuite) SetupTest() {
 	// ipAddress := s.GetControllerIPAddress(0)
 	var joinToken string
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		nodeName, require := s.ControllerNode(idx), s.Require()
 		address := s.GetIPAddress(nodeName)
 
@@ -106,7 +106,7 @@ func (s *controllerworkerSuite) SetupTest() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
 	}
 }
@@ -171,7 +171,7 @@ spec:
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		nodeName, require := s.ControllerNode(idx), s.Require()
 		require.NoError(s.WaitForNodeReady(nodeName, kc))
 		// Wait till we see kubelet reporting the expected version.

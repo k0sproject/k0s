@@ -51,7 +51,7 @@ func (s *ha3x3Suite) SetupTest() {
 	ipAddress := s.GetLBAddress()
 	var joinToken string
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, ipAddress))
 
@@ -74,7 +74,7 @@ func (s *ha3x3Suite) SetupTest() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
 	}
 
@@ -88,7 +88,7 @@ func (s *ha3x3Suite) SetupTest() {
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	for idx := 0; idx < s.BootlooseSuite.WorkerCount; idx++ {
+	for idx := range s.BootlooseSuite.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 	}
 }
@@ -194,7 +194,7 @@ spec:
 		s.Equal(iptablesModeBeforeUpdate, iptablesModeAfterUpdate)
 	}
 
-	for idx := 0; idx < s.ControllerCount; idx++ {
+	for idx := range s.ControllerCount {
 		node := s.ControllerNode(idx)
 		s.Run("kubelet-config_component_nonexistence/"+node, func() {
 			ssh, err := s.SSH(ctx, node)

@@ -232,13 +232,13 @@ func signalAwareCtx(parent context.Context) (context.Context, context.CancelCaus
 // Each node is tried in parallel for ~30secs max
 func (s *BootlooseSuite) waitForSSH(ctx context.Context) {
 	nodes := []string{}
-	for i := 0; i < s.ControllerCount; i++ {
+	for i := range s.ControllerCount {
 		nodes = append(nodes, s.ControllerNode(i))
 	}
-	for i := 0; i < s.WorkerCount; i++ {
+	for i := range s.WorkerCount {
 		nodes = append(nodes, s.WorkerNode(i))
 	}
-	for i := 0; i < s.K0smotronWorkerCount; i++ {
+	for i := range s.K0smotronWorkerCount {
 		nodes = append(nodes, s.K0smotronNode(i))
 	}
 	if s.WithLB {
@@ -606,7 +606,7 @@ listen stats
 func (s *BootlooseSuite) getControllersIPAddresses() []string {
 	upstreams := make([]string, s.ControllerCount)
 	addresses := make([]string, s.ControllerCount)
-	for i := 0; i < s.ControllerCount; i++ {
+	for i := range s.ControllerCount {
 		upstreams[i] = fmt.Sprintf("controller%d", i)
 	}
 
@@ -614,7 +614,7 @@ func (s *BootlooseSuite) getControllersIPAddresses() []string {
 
 	s.Require().NoError(err)
 
-	for i := 0; i < s.ControllerCount; i++ {
+	for i := range s.ControllerCount {
 		addresses[i] = machines[i].Status().IP
 	}
 	return addresses
@@ -664,7 +664,7 @@ func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 
 // ImportK0smotrtonImages imports
 func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
-	for i := 0; i < s.WorkerCount; i++ {
+	for i := range s.WorkerCount {
 		workerNode := s.WorkerNode(i)
 		s.T().Logf("Importing images in %s", workerNode)
 		sshWorker, err := s.SSH(s.Context(), workerNode)
@@ -692,7 +692,7 @@ func (s *BootlooseSuite) RunWorkers(args ...string) error {
 
 // RunWorkersWithToken joins all the workers to the cluster with the given token
 func (s *BootlooseSuite) RunWorkersWithToken(token string, args ...string) error {
-	for i := 0; i < s.WorkerCount; i++ {
+	for i := range s.WorkerCount {
 		err := s.RunWithToken(s.WorkerNode(i), token, args...)
 		if err != nil {
 			return err

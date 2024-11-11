@@ -47,7 +47,7 @@ func (s *suite) TestCustomizedBindAddress() {
 	ctx := s.Context()
 
 	{
-		for i := 0; i < s.ControllerCount; i++ {
+		for i := range s.ControllerCount {
 			config, err := yaml.Marshal(&v1beta1.ClusterConfig{
 				Spec: &v1beta1.ClusterSpec{
 					API: func() *v1beta1.APISpec {
@@ -89,7 +89,7 @@ func (s *suite) TestCustomizedBindAddress() {
 		s.Require().NoError(err)
 
 		eg, _ := errgroup.WithContext(ctx)
-		for i := 0; i < s.WorkerCount; i++ {
+		for i := range s.WorkerCount {
 			nodeName := s.WorkerNode(i)
 			eg.Go(func() error {
 				if err := s.WaitForNodeReady(nodeName, clients); err != nil {

@@ -83,7 +83,7 @@ func TestEvents(t *testing.T) {
 		emitter := &EventEmitter{
 			events: make(chan Event, 10),
 		}
-		for i := 0; i < 20; i++ {
+		for range 20 {
 			emitter.Emit("Test event")
 		}
 	})

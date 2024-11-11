@@ -64,7 +64,7 @@ func (aup *airgapupdate) SchedulableWait(ctx context.Context, planID string, cmd
 // against the current state maintained in the plan status. This ensures that any signal nodes that
 // have been transitioned to 'Completed' will also appear in the plan status as 'Completed'.
 func (aup *airgapupdate) reconcileSignalNodeStatusTarget(ctx context.Context, planID string, cmdStatus apv1beta2.PlanCommandStatus, delegate apdel.ControllerDelegate, signalNodes []apv1beta2.PlanCommandTargetStatus) {
-	for i := 0; i < len(signalNodes); i++ {
+	for i := range signalNodes {
 		if signalNodes[i].State == appc.SignalCompleted {
 			continue
 		}

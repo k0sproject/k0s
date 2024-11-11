@@ -55,7 +55,7 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 	ctx := s.Context()
 	var joinToken string
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb, lb))
 
@@ -72,7 +72,7 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
 	}
 
@@ -89,13 +89,13 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), client))
 
 	// Verify that all servers have the dummy interface
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.checkDummy(ctx, s.ControllerNode(idx), lb)
 	}
 
 	// Verify that only one controller has the VIP in eth0
 	count := 0
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		if s.hasVIP(ctx, s.ControllerNode(idx), lb) {
 			count++
 		}
@@ -103,7 +103,7 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 	s.Require().Equal(1, count, "Expected exactly one controller to have the VIP")
 
 	// Verify that the real servers are present in the ipvsadm output
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.validateRealServers(ctx, s.ControllerNode(idx), lb)
 	}
 }
@@ -136,7 +136,7 @@ func (s *keepalivedSuite) validateRealServers(ctx context.Context, node string, 
 	defer ssh.Disconnect()
 
 	servers := []string{}
-	for i := 0; i < s.BootlooseSuite.ControllerCount; i++ {
+	for i := range s.BootlooseSuite.ControllerCount {
 		servers = append(servers, s.GetIPAddress(s.ControllerNode(i)))
 	}
 

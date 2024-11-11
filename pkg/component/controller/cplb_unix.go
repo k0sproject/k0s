@@ -243,7 +243,7 @@ func (k *Keepalived) ensureLinkAddresses(linkName string, expectedAddresses []st
 	}
 
 	// Remove unexpected addresses
-	for i := 0; i < len(linkAddrs); i++ {
+	for i := range linkAddrs {
 		strAddr := strAddrs[i]
 		linkAddr := linkAddrs[i]
 		if !slices.Contains(expectedAddresses, strAddrs[i]) {

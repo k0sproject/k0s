@@ -64,7 +64,7 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	for idx := 0; idx < s.BootlooseSuite.WorkerCount; idx++ {
+	for idx := range s.BootlooseSuite.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 	}
 
@@ -160,7 +160,7 @@ func (s *kubeletCertRotateSuite) TestApply() {
 	//
 	// Leaving this as 1 for now until the issue is fixed.
 
-	for i := 0; i < 1; i++ {
+	for i := range 1 {
 		s.T().Logf("Applying autopilot plan #%d", i)
 		s.applyPlan(fmt.Sprintf("id%d", i))
 	}
