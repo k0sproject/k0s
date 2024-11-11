@@ -18,6 +18,8 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
     curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
     ```
 
+    Alternatively you can download it from the [releases page.](https://github.com/k0sproject/k0s/releases/latest) This is required for airgapped environments.
+
 2. Install k0s as a service
 
     The `k0s install` sub-command installs k0s as a system service on the local host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.
