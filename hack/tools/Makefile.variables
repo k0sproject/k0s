@@ -1,2 +1,2 @@
 controller-gen_version = 0.16.1
-golangci-lint_version = 1.60.3
+golangci-lint_version = 1.62.0
