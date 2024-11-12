@@ -16,6 +16,7 @@ limitations under the License.
 
 package install
 
+//nolint:dupword // this is a script
 const upstartScript = `# {{.Description}}
 
 {{- if .Option.Environment}}{{range .Option.Environment}}

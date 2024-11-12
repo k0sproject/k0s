@@ -16,6 +16,7 @@ limitations under the License.
 
 package install
 
+//nolint:dupword // this is a script
 const sysvScript = `#!/bin/sh
 # For RedHat and cousins:
 # chkconfig: - 99 01

@@ -38,8 +38,8 @@ type Debouncer[T any] struct {
 	Timeout time.Duration
 
 	// Filter controls which elements reset the time window and which elements
-	// are are simply silently dropped. It may be nil, in which case no items
-	// will be dropped.
+	// are simply silently dropped. It may be nil, in which case no items will
+	// be dropped.
 	Filter func(item T) bool
 
 	// Callback is the func that receives debounced items.
