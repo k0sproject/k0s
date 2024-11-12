@@ -35,7 +35,7 @@ To get a support bundle, after setting up the [tooling](#setting-up), you simply
 support-bundle --kubeconfig /var/lib/k0s/pki/admin.conf https://docs.k0sproject.io/stable/support-bundle-<role>.yaml
 ```
 
-Above `<role>` refers to either `controller`or `worker`. For different roles we collect different things. If you are running a controller with `--enable-worker` or `--single`, where it becomes also a worker, you can also get a comobined dump:
+Above `<role>` refers to either `controller`or `worker`. For different roles we collect different things. If you are running a controller with `--enable-worker` or `--single`, where it becomes also a worker, you can also get a combined dump:
 
 ```shell
 support-bundle --kubeconfig /var/lib/k0s/pki/admin.conf https://docs.k0sproject.io/stable/support-bundle-controller.yaml https://docs.k0sproject.io/stable/support-bundle-worker.yaml
