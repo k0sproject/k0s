@@ -30,6 +30,12 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
     sudo k0s install controller --single
     ```
 
+    NOTE:
+    The `--single` option will disable features needed for multi-node clusters so you will not be able to extend this cluster. If you want be able to extend the cluster in the future you should instead use:
+    ``` shell
+    sudo k0s install controller --enable-worker --no-taints
+    ```
+
     The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. Refer to [manual install](k0s-multi-node.md#install-k0s) for a custom config file example.
 
     It is possible to set environment variables with the install command:
