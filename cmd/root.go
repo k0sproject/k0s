@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
@@ -91,10 +92,16 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(install.NewInstallCmd())
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
 	cmd.AddCommand(kubectl.NewK0sKubectlCmd())
-	cmd.AddCommand(reset.NewResetCmd())
+	if runtime.GOOS == "linux" {
+		// Currently only supported on Linux
+		cmd.AddCommand(reset.NewResetCmd())
+	}
 	cmd.AddCommand(restore.NewRestoreCmd())
 	cmd.AddCommand(start.NewStartCmd())
-	cmd.AddCommand(status.NewStatusCmd())
+	if runtime.GOOS == "linux" {
+		// Currently only supported on Linux
+		cmd.AddCommand(status.NewStatusCmd())
+	}
 	cmd.AddCommand(stop.NewStopCmd())
 	cmd.AddCommand(sysinfo.NewSysinfoCmd())
 	cmd.AddCommand(token.NewTokenCmd())

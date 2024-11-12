@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"runtime"
 
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -40,9 +39,6 @@ func NewStatusCmd() *cobra.Command {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
-			}
-			if runtime.GOOS == "windows" {
-				return fmt.Errorf("currently not supported on windows")
 			}
 
 			statusInfo, err := status.GetStatusInfo(opts.K0sVars.StatusSocketPath)
@@ -74,9 +70,6 @@ func NewStatusSubCmdComponents() *cobra.Command {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
-			}
-			if runtime.GOOS == "windows" {
-				return fmt.Errorf("currently not supported on windows")
 			}
 			fmt.Fprintln(cmd.ErrOrStderr(), "!!! per component status is not yet finally ready, information here might be not full yet")
 			state, err := status.GetComponentStatus(opts.K0sVars.StatusSocketPath, maxCount)
