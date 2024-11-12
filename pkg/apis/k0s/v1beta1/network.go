@@ -216,11 +216,10 @@ func (n *Network) BuildServiceCIDR(addr string) string {
 	if !n.DualStack.Enabled {
 		return n.ServiceCIDR
 	}
-	// because in the dual-stack mode k8s
-	// relies on the ordering of the given CIDRs
-	// we need to first give family on which
-	// api server listens
-	if IsIPv6String(addr) {
+	// Because Kubernetes relies on the order of the given CIDRs in dual-stack
+	// mode, the CIDR whose version matches the version of the IP address the
+	// API server is listening on must be specified first.
+	if ip := net.ParseIP(addr); ip != nil && ip.To4() == nil {
 		return n.DualStack.IPv6ServiceCIDR + "," + n.ServiceCIDR
 	}
 	return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR

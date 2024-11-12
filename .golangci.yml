@@ -10,20 +10,21 @@ run:
 
 linters:
   enable:
-    - copyloopvar   # Detects unnecessary copies of loop variables for Go >= 1.22
-    - depguard      # Checks if package imports are in a list of acceptable packages
-    - dupword       # Finds word repetitions
-    - errorlint     # Find code that will cause problems with Go's error wrapping scheme
-    - gofmt         # Checks whether code was gofmt-ed
-    - goheader      # Checks is file headers matche a given pattern
-    - intrange      # Checking for loops that could use an integer range
-    - perfsprint    # Checks for faster fmt.Sprintf alternatives
-    - nolintlint    # Find ill-formed or insufficiently explained nolint directives
-    - revive        # Stricter drop-in replacement for golint
-    - testifylint   # Checks usage of github.com/stretchr/testify
-    - unconvert     # Checks for unnecessary type conversions
-    - unparam       # Checks for unused function parameters
-    - usestdlibvars # Checks for things that are provided by the standard library
+    - copyloopvar       # Detects unnecessary copies of loop variables for Go >= 1.22
+    - depguard          # Checks if package imports are in a list of acceptable packages
+    - dupword           # Finds word repetitions
+    - errorlint         # Find code that will cause problems with Go's error wrapping scheme
+    - gofmt             # Checks whether code was gofmt-ed
+    - goheader          # Checks is file headers matche a given pattern
+    - intrange          # Checking for loops that could use an integer range
+    - perfsprint        # Checks for faster fmt.Sprintf alternatives
+    - nolintlint        # Find ill-formed or insufficiently explained nolint directives
+    - nosprintfhostport # Detects misuses of Sprintf to construct hosts with ports in a URL
+    - revive            # Stricter drop-in replacement for golint
+    - testifylint       # Checks usage of github.com/stretchr/testify
+    - unconvert         # Checks for unnecessary type conversions
+    - unparam           # Checks for unused function parameters
+    - usestdlibvars     # Checks for things that are provided by the standard library
 
 linters-settings:
   depguard:
