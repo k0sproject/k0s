@@ -85,10 +85,10 @@ func TestValue_StructPtrs(t *testing.T) {
 	assert.Zero(t, k0scontext.Value[*Bar](ctx))
 
 	ctxWithFoo := k0scontext.WithValue(ctx, &Foo{})
-	assert.Equal(t, k0scontext.Value[*Foo](ctxWithFoo), &Foo{})
+	assert.Equal(t, &Foo{}, k0scontext.Value[*Foo](ctxWithFoo))
 	assert.Zero(t, k0scontext.Value[*Bar](ctx))
 
 	ctxWithFooAndBar := k0scontext.WithValue(ctxWithFoo, &Bar{})
-	assert.Equal(t, k0scontext.Value[*Foo](ctxWithFooAndBar), &Foo{})
-	assert.Equal(t, k0scontext.Value[*Bar](ctxWithFooAndBar), &Bar{})
+	assert.Equal(t, &Foo{}, k0scontext.Value[*Foo](ctxWithFooAndBar))
+	assert.Equal(t, &Bar{}, k0scontext.Value[*Bar](ctxWithFooAndBar))
 }

@@ -136,7 +136,7 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 
 	// Make sure the EtcdMember CR status is successfully updated
 	em := s.getMember(ctx, "controller2")
-	s.Require().Equal(em.Status.ReconcileStatus, "Success")
+	s.Require().Equal("Success", em.Status.ReconcileStatus)
 	s.Require().Equal(etcdv1beta1.ConditionFalse, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
 
 	// Stop k0s and reset the node
@@ -155,7 +155,7 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	// Check the CR is present again
 	em = s.getMember(ctx, "controller2")
 	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
-	s.Require().Equal(false, em.Spec.Leave)
+	s.Require().False(em.Spec.Leave)
 	s.Require().Equal(etcdv1beta1.ConditionTrue, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
 
 	// Check that after restarting the controller, the member is still present

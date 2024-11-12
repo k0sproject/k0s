@@ -54,7 +54,6 @@ func TestSchedulableWait(t *testing.T) {
 		status                        apv1beta2.PlanCommandStatus
 		expectedNextState             apv1beta2.PlanStateType
 		expectedRetry                 bool
-		expectedError                 bool
 		expectedPlanStatusControllers []apv1beta2.PlanCommandTargetStatus
 		expectedPlanStatusWorkers     []apv1beta2.PlanCommandTargetStatus
 	}{
@@ -78,7 +77,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanCompleted,
-			false,
 			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalCompleted),
@@ -105,7 +103,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanSchedulableWait,
 			true,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalSent),
 				apv1beta2.NewPlanCommandTargetStatus("controller1", appc.SignalCompleted),
@@ -131,7 +128,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanSchedulable,
-			false,
 			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
@@ -161,7 +157,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanCompleted,
 			false,
-			false,
 			nil,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
@@ -188,7 +183,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanSchedulableWait,
 			true,
-			false,
 			nil,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
@@ -222,7 +216,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanSchedulable,
-			false,
 			false,
 			nil,
 			[]apv1beta2.PlanCommandTargetStatus{
@@ -258,7 +251,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanSchedulable,
-			false,
 			false,
 			nil,
 			[]apv1beta2.PlanCommandTargetStatus{
@@ -313,7 +305,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanCompleted,
 			false,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalCompleted),
 			},
@@ -365,7 +356,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanApplyFailed,
 			false,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalApplyFailed),
 			},
@@ -407,7 +397,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanSchedulableWait,
 			true,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("controller1", appc.SignalSent),
@@ -452,7 +441,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanSchedulable,
-			false,
 			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalCompleted),
@@ -507,7 +495,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanSchedulable,
 			false,
-			false,
 			nil,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
@@ -555,7 +542,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanCompleted,
 			false,
-			false,
 			nil,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
@@ -587,7 +573,7 @@ func TestSchedulableWait(t *testing.T) {
 
 			assert.Equal(t, test.expectedNextState, nextState)
 			assert.Equal(t, test.expectedRetry, retry)
-			assert.Equal(t, test.expectedError, err != nil, "Unexpected error: %v", err)
+			assert.NoError(t, err)
 
 			assert.True(t, cmp.Equal(test.expectedPlanStatusControllers, test.status.K0sUpdate.Controllers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
 			assert.True(t, cmp.Equal(test.expectedPlanStatusWorkers, test.status.K0sUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))

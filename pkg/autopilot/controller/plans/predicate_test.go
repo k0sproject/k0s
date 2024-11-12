@@ -36,10 +36,10 @@ func TestPlanNamePredicate(t *testing.T) {
 	}
 
 	pred := PlanNamePredicate("foo")
-	assert.Equal(t, true, pred.Create(crev.CreateEvent{Object: createPlan("foo")}))
-	assert.Equal(t, true, pred.Update(crev.UpdateEvent{ObjectNew: createPlan("foo")}))
-	assert.Equal(t, false, pred.Create(crev.CreateEvent{Object: createPlan("bar")}))
-	assert.Equal(t, false, pred.Update(crev.UpdateEvent{ObjectNew: createPlan("bar")}))
+	assert.True(t, pred.Create(crev.CreateEvent{Object: createPlan("foo")}))
+	assert.True(t, pred.Update(crev.UpdateEvent{ObjectNew: createPlan("foo")}))
+	assert.False(t, pred.Create(crev.CreateEvent{Object: createPlan("bar")}))
+	assert.False(t, pred.Update(crev.UpdateEvent{ObjectNew: createPlan("bar")}))
 }
 
 // TestPlanStatusPredicate ensures that plans can be identified by their status
@@ -57,8 +57,8 @@ func TestPlanStatusPredicate(t *testing.T) {
 	}
 
 	pred := PlanStatusPredicate(appc.PlanSchedulable)
-	assert.Equal(t, true, pred.Update(crev.UpdateEvent{ObjectNew: createPlan(appc.PlanSchedulable)}))
-	assert.Equal(t, true, pred.Create(crev.CreateEvent{Object: createPlan(appc.PlanSchedulable)}))
-	assert.Equal(t, false, pred.Update(crev.UpdateEvent{ObjectNew: createPlan("unknown")}))
-	assert.Equal(t, false, pred.Create(crev.CreateEvent{Object: createPlan("unknown")}))
+	assert.True(t, pred.Update(crev.UpdateEvent{ObjectNew: createPlan(appc.PlanSchedulable)}))
+	assert.True(t, pred.Create(crev.CreateEvent{Object: createPlan(appc.PlanSchedulable)}))
+	assert.False(t, pred.Update(crev.UpdateEvent{ObjectNew: createPlan("unknown")}))
+	assert.False(t, pred.Create(crev.CreateEvent{Object: createPlan("unknown")}))
 }

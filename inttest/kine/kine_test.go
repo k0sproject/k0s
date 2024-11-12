@@ -23,8 +23,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -54,25 +52,25 @@ func (s *KineSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see CNI pods ready")
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
 
-	s.T().Run("verify", func(t *testing.T) {
+	s.Run("verify", func() {
 		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
-		require.NoError(t, err, "failed to SSH into controller")
+		s.Require().NoError(err, "failed to SSH into controller")
 		defer ssh.Disconnect()
 
-		t.Run(("kineIsUsedAsStorage"), func(t *testing.T) {
+		s.Run(("kineIsUsedAsStorage"), func() {
 			_, err = ssh.ExecWithOutput(s.Context(), "test -e /var/lib/k0s/bin/kine && ps xa | grep kine")
-			assert.NoError(t, err)
+			s.NoError(err)
 		})
 
-		t.Run(("noControllerJoinTokens"), func(t *testing.T) {
+		s.Run(("noControllerJoinTokens"), func() {
 			noToken, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("'%s' token create --role=controller", s.K0sFullPath))
-			assert.Error(t, err)
-			assert.Equal(t, "Error: refusing to create token: cannot join controller into current storage", noToken)
+			s.Error(err)
+			s.Equal("Error: refusing to create token: cannot join controller into current storage", noToken)
 		})
 
-		t.Run(("workerJoinTokens"), func(t *testing.T) {
+		s.Run(("workerJoinTokens"), func() {
 			_, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("'%s' token create --role=worker", s.K0sFullPath))
-			assert.NoError(t, err)
+			s.NoError(err)
 		})
 	})
 

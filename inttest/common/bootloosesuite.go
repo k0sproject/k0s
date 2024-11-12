@@ -585,7 +585,7 @@ listen stats
 
 `
 	content := bytes.NewBuffer([]byte{})
-	s.Assert().NoError(template.Must(template.New("haproxy").Parse(tpl)).Execute(content, struct {
+	s.NoError(template.Must(template.New("haproxy").Parse(tpl)).Execute(content, struct {
 		KubeAPIExternalPort   int
 		K0sAPIExternalPort    int
 		KonnectivityAgentPort int

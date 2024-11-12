@@ -209,7 +209,7 @@ func startFakeDownloadServer(t *testing.T, usetls bool, handler http.Handler) st
 		assert.NoError(t, err)
 
 		cert, err := tls.X509KeyPair(certData, keyData)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		server.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
 		serverError <- server.ServeTLS(listener, "", "")

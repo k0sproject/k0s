@@ -120,12 +120,12 @@ func TestFileSystemStepRestore(t *testing.T) {
 
 		for _, dir := range expectedDirs {
 			p := filepath.Join(src, dir)
-			require.NoErrorf(t, os.Mkdir(p, 0700), "Unable to create directory %s", p)
+			require.NoError(t, os.Mkdir(p, 0700))
 		}
 
 		for _, file := range expectedFiles {
 			p := filepath.Join(src, file)
-			require.NoError(t, os.WriteFile(p, []byte{}, 0600), "Unable to create file %s:", p)
+			require.NoError(t, os.WriteFile(p, []byte{}, 0600))
 		}
 
 		step1 := NewFileSystemStep(filepath.Join(src, "dir1"))

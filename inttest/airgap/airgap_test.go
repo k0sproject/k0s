@@ -94,7 +94,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 	for _, i := range airgap.GetImageURIs(v1beta1.DefaultClusterSpec(), true) {
 		output, err := ssh.ExecWithOutput(ctx, fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
 		s.Require().NoError(err)
-		s.Require().Contains(output, "io.cri-containerd.pinned=pinned", "expected %s image to have io.cri-containerd.pinned=pinned label", i)
+		s.Require().Containsf(output, "io.cri-containerd.pinned=pinned", "expected %s image to have io.cri-containerd.pinned=pinned label", i)
 	}
 }
 

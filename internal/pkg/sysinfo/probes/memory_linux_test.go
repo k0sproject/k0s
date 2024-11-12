@@ -51,8 +51,8 @@ func TestTotalMemoryProber(t *testing.T) {
 		line := lines.Text()
 		if matches := re.FindStringSubmatch(line); matches != nil {
 			kibiBytes, err := strconv.ParseUint(matches[1], 10, 64)
-			require.NoError(t, err, "expected an unsigned integer: %s", line)
-			require.Equal(t, kibiBytes*1024, ram, "/proc/meminfo differs: %s", line)
+			require.NoErrorf(t, err, "expected an unsigned integer: %s", line)
+			require.Equalf(t, kibiBytes*1024, ram, "/proc/meminfo differs: %s", line)
 			return
 		}
 	}

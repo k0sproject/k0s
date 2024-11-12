@@ -52,7 +52,7 @@ func TestDataStatusPredicate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.success, test.pred(test.data), "Failed on '%s'", test.name)
+			assert.Equal(t, test.success, test.pred(test.data))
 		})
 	}
 }
@@ -72,7 +72,7 @@ func TestDataNoStatusPredicate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.success, pred(test.data), "Failed on '%s'", test.name)
+			assert.Equal(t, test.success, pred(test.data))
 		})
 	}
 }

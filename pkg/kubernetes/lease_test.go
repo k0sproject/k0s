@@ -36,7 +36,7 @@ func TestValidLease(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, true, IsValidLease(lease))
+	assert.True(t, IsValidLease(lease))
 }
 
 func TestExpiredLease(t *testing.T) {
@@ -50,5 +50,5 @@ func TestExpiredLease(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, false, IsValidLease(lease))
+	assert.False(t, IsValidLease(lease))
 }

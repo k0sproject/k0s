@@ -82,7 +82,7 @@ func (s *airgapSuite) SetupTest() {
 			continue // The pause image is pinned by containerd itself
 		}
 		output, err := ssh.ExecWithOutput(ctx, fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
-		if s.NoError(err, "Failed to check %s", i) {
+		if s.NoErrorf(err, "Failed to check %s", i) {
 			s.NotContains(output, "io.cri-containerd.pinned=pinned", "%s is already pinned", i)
 		}
 	}
@@ -197,7 +197,7 @@ spec:
 	defer ssh.Disconnect()
 	for _, i := range airgap.GetImageURIs(v1beta1.DefaultClusterSpec(), true) {
 		output, err := ssh.ExecWithOutput(ctx, fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
-		if s.NoError(err, "Failed to check %s", i) {
+		if s.NoErrorf(err, "Failed to check %s", i) {
 			s.Contains(output, "io.cri-containerd.pinned=pinned", "%s is not pinned", i)
 		}
 	}

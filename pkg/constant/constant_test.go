@@ -46,8 +46,9 @@ func TestConstants(t *testing.T) {
 
 	t.Run("KubernetesMajorMinorVersion", func(t *testing.T) {
 		ver := strings.Split(getVersion(t, "kubernetes"), ".")
-		require.GreaterOrEqual(t, len(ver), 2, "failed to spilt Kubernetes version %q", ver)
+		require.GreaterOrEqualf(t, len(ver), 2, "failed to spilt Kubernetes version %q", ver)
 		kubeMajorMinor := ver[0] + "." + ver[1]
+		//nolint:testifylint // kubeMajorMinor _is_ the expected value
 		assert.Equal(t, kubeMajorMinor, KubernetesMajorMinorVersion)
 	})
 }
@@ -60,7 +61,7 @@ func TestTLSCipherSuites(t *testing.T) {
 			return x.ID == cipherSuite
 		})
 		if idx < 0 {
-			assert.Fail(t, "Not in tls.CipherSuites(), potentially insecure", "(0x%04x) %s", cipherSuite, tls.CipherSuiteName(cipherSuite))
+			assert.Failf(t, "Not in tls.CipherSuites(), potentially insecure", "(0x%04x) %s", cipherSuite, tls.CipherSuiteName(cipherSuite))
 		}
 	}
 }
@@ -98,7 +99,7 @@ func TestKubernetesModuleVersions(t *testing.T) {
 func TestEtcdModuleVersions(t *testing.T) {
 	etcdVersion := getVersion(t, "etcd")
 	etcdVersionParts := strings.Split(etcdVersion, ".")
-	require.GreaterOrEqual(t, len(etcdVersionParts), 1, "failed to spilt etcd version %q", etcdVersion)
+	require.GreaterOrEqualf(t, len(etcdVersionParts), 1, "failed to spilt etcd version %q", etcdVersion)
 
 	assertPackageModules(t,
 		func(modulePath string) bool {
@@ -158,7 +159,7 @@ func getVersion(t *testing.T, component string) string {
 
 	out, err := cmd.Output()
 	require.NoError(t, err)
-	require.NotEmpty(t, out, "failed to get %s version", component)
+	require.NotEmptyf(t, out, "failed to get %s version", component)
 
 	trailingNewlines := regexp.MustCompilePOSIX("(\r?\n)+$")
 	return string(trailingNewlines.ReplaceAll(out, []byte{}))

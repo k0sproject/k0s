@@ -99,14 +99,15 @@ spec:
 	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err, "While waiting for plan to complete")
 
-	s.Equal(1, len(plan.Status.Commands))
-	cmd := plan.Status.Commands[0]
+	if s.Len(plan.Status.Commands, 1) {
+		cmd := plan.Status.Commands[0]
 
-	s.Equal(appc.PlanCompleted, cmd.State)
-	s.NotNil(cmd.K0sUpdate)
-	s.NotNil(cmd.K0sUpdate.Controllers)
-	s.Empty(cmd.K0sUpdate.Workers)
-	s.Equal(appc.SignalCompleted, cmd.K0sUpdate.Controllers[0].State)
+		s.Equal(appc.PlanCompleted, cmd.State)
+		s.NotNil(cmd.K0sUpdate)
+		s.NotNil(cmd.K0sUpdate.Controllers)
+		s.Empty(cmd.K0sUpdate.Workers)
+		s.Equal(appc.SignalCompleted, cmd.K0sUpdate.Controllers[0].State)
+	}
 }
 
 // TestPlansSingleControllerSuite sets up a suite using a single controller, running various

@@ -24,7 +24,6 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/api/core/v1"
 )
@@ -77,12 +76,12 @@ func (suite *K0sCloudProviderSuite) SetupTest() {
 	}
 
 	suite.ccp = newK0sCloudProvider(config, DummyCommandBuilder(&suite.wg, &suite.cancelled))
-	assert.NotNil(suite.T(), suite.ccp)
+	suite.NotNil(suite.ccp)
 }
 
 // TestInit covers the `Init()` function.
 func (suite *K0sCloudProviderSuite) TestInit() {
-	assert.Nil(suite.T(), suite.ccp.Init(context.TODO()))
+	suite.NoError(suite.ccp.Init(context.TODO()))
 }
 
 // TestRunStop covers the scenario of issuing a `Start()`, and ensuring
@@ -91,14 +90,14 @@ func (suite *K0sCloudProviderSuite) TestInit() {
 // `Stop()`, without worrying about what was actually running.
 func (suite *K0sCloudProviderSuite) TestRunStop() {
 	ctx := context.TODO()
-	assert.Nil(suite.T(), suite.ccp.Init(ctx))
-	assert.Nil(suite.T(), suite.ccp.Start(ctx))
+	suite.NoError(suite.ccp.Init(ctx))
+	suite.NoError(suite.ccp.Start(ctx))
 
 	// Ensures that the stopping mechanism actually closes the stop channel.
-	assert.Nil(suite.T(), suite.ccp.Stop())
+	suite.NoError(suite.ccp.Stop())
 	suite.wg.Wait()
 
-	assert.Equal(suite.T(), true, suite.cancelled)
+	suite.True(suite.cancelled)
 }
 
 // TestK0sCloudProviderTestSuite sets up the suite for testing.

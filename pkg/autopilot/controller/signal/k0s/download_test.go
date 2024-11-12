@@ -15,7 +15,6 @@
 package k0s
 
 import (
-	"fmt"
 	"testing"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -164,9 +163,9 @@ func TestDownloadingEventFilter(t *testing.T) {
 		return false
 	})
 
-	for idx, test := range tests {
+	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.success, pred.Update(test.event), fmt.Sprintf("Failed in #%d '%s'", idx, test.name))
+			assert.Equal(t, test.success, pred.Update(test.event))
 		})
 	}
 }

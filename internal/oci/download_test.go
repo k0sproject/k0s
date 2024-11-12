@@ -128,7 +128,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 	server := starter(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			t.Log(r.Proto, r.Method, r.RequestURI)
-			if !assert.Equal(t, r.Method, http.MethodGet) {
+			if !assert.Equal(t, http.MethodGet, r.Method) {
 				w.WriteHeader(http.StatusMethodNotAllowed)
 				return
 			}

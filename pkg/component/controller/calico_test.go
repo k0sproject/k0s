@@ -51,7 +51,7 @@ func TestCalicoManifests(t *testing.T) {
 		for k := range saver {
 			require.NotContains(t, k, "calico-crd")
 		}
-		require.Len(t, crdSaver, 0)
+		require.Empty(t, crdSaver)
 	})
 
 	t.Run("must_have_wireguard_enabled_if_config_has", func(t *testing.T) {
@@ -89,14 +89,16 @@ func TestCalicoManifests(t *testing.T) {
 
 	t.Run("ip_autodetection", func(t *testing.T) {
 		t.Run("use_IPAutodetectionMethod_for_both_families_by_default", func(t *testing.T) {
-			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
+			calicoNetSpec := clusterConfig.Spec.Network.Calico
+			calicoNetSpec.IPAutodetectionMethod = "somemethod"
 			saver := inMemorySaver{}
 			crdSaver := inMemorySaver{}
 			calico := NewCalico(k0sVars, crdSaver, saver)
 			templateContext, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
-			require.Equal(t, clusterConfig.Spec.Network.Calico.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
-			require.Equal(t, templateContext.IPV6AutodetectionMethod, templateContext.IPV6AutodetectionMethod)
+			require.Equal(t, calicoNetSpec.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
+			require.Equal(t, calicoNetSpec.IPAutodetectionMethod, templateContext.IPV6AutodetectionMethod,
+				"IPv6 autodetection was not specified, hence it should be the same as the IPv4 autodetection method.")
 			cfg, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
 			_ = calico.processConfigChanges(cfg)
@@ -169,7 +171,7 @@ func (ds daemonSetContainersEnv) RequireContainerHasEnvVariable(t *testing.T, co
 				require.Equal(t, envSpec.Value, varValue)
 			}
 		}
-		require.True(t, found, "Variable %s not found", varName)
+		require.Truef(t, found, "Variable %s not found", varName)
 	}
 }
 
@@ -184,6 +186,6 @@ func (ds daemonSetContainersEnv) RequireContainerHasNoEnvVariable(t *testing.T, 
 				found = true
 			}
 		}
-		require.False(t, found, "Variable %s must not be found", varName)
+		require.Falsef(t, found, "Variable %s must not be found", varName)
 	}
 }

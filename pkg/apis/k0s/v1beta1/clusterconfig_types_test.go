@@ -21,9 +21,12 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/stretchr/testify/assert"
+
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestClusterDefaults(t *testing.T) {
@@ -153,7 +156,7 @@ spec:
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	errors := c.Validate()
-	assert.Equal(t, 0, len(errors))
+	assert.Zero(t, errors)
 }
 
 func TestNetworkValidation_Calico(t *testing.T) {
@@ -172,7 +175,7 @@ spec:
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	errors := c.Validate()
-	assert.Equal(t, 0, len(errors))
+	assert.Zero(t, errors)
 }
 
 func TestNetworkValidation_Invalid(t *testing.T) {
@@ -303,7 +306,7 @@ spec:
 `
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(c.Spec.WorkerProfiles))
+	require.Len(t, c.Spec.WorkerProfiles, 2)
 	assert.Equal(t, "profile_XXX", c.Spec.WorkerProfiles[0].Name)
 	assert.Equal(t, "profile_YYY", c.Spec.WorkerProfiles[1].Name)
 
@@ -355,7 +358,7 @@ func TestFeatureGates(t *testing.T) {
 `
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(c.Spec.FeatureGates))
+	require.Len(t, c.Spec.FeatureGates, 3)
 	assert.Equal(t, "feature_XXX", c.Spec.FeatureGates[0].Name)
 	assert.True(t, c.Spec.FeatureGates[0].Enabled)
 	for _, component := range []string{"x", "y", "z"} {

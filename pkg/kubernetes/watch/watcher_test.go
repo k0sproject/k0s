@@ -651,7 +651,7 @@ func forbiddenWatch(t *testing.T) func(metav1.ListOptions) error {
 
 func forbiddenErrorCallback(t *testing.T) watch.ErrorCallback {
 	return func(err error) (time.Duration, error) {
-		require.Fail(t, "ErrorCallback shouldn't be called.", "Error was: %v", err)
+		require.Failf(t, "ErrorCallback shouldn't be called.", "Error was: %v", err)
 		return 0, nil
 	}
 }

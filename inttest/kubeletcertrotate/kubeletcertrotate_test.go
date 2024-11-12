@@ -137,17 +137,18 @@ spec:
 	s.Require().NoError(err)
 
 	// Ensure all state/status are completed
-	s.Equal(1, len(plan.Status.Commands))
-	cmd := plan.Status.Commands[0]
+	if s.Len(plan.Status.Commands, 1) {
+		cmd := plan.Status.Commands[0]
 
-	s.Equal(appc.PlanCompleted, cmd.State)
-	s.NotNil(cmd.K0sUpdate)
-	//s.Nil(cmd.K0sUpdate.Controllers)
-	s.NotNil(cmd.K0sUpdate.Workers)
+		s.Equal(appc.PlanCompleted, cmd.State)
+		s.NotNil(cmd.K0sUpdate)
+		//s.Nil(cmd.K0sUpdate.Controllers)
+		s.NotNil(cmd.K0sUpdate.Workers)
 
-	for _, group := range [][]apv1beta2.PlanCommandTargetStatus{cmd.K0sUpdate.Controllers, cmd.K0sUpdate.Workers} {
-		for _, node := range group {
-			s.Equal(appc.SignalCompleted, node.State)
+		for _, group := range [][]apv1beta2.PlanCommandTargetStatus{cmd.K0sUpdate.Controllers, cmd.K0sUpdate.Workers} {
+			for _, node := range group {
+				s.Equal(appc.SignalCompleted, node.State)
+			}
 		}
 	}
 }

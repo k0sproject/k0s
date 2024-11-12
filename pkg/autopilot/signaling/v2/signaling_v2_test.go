@@ -15,6 +15,8 @@
 package v2
 
 import (
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +37,11 @@ func TestSignalValid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.signal.Validate()
-			assert.Equal(t, test.valid, err == nil, "Test '%s': validate failed - %v", test.name, err)
+			if test.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }
@@ -68,7 +74,11 @@ func TestSignalDataValid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.data.Validate()
-			assert.Equal(t, test.successful, err == nil, "Test '%s': validate failed - %v", test.name, err)
+			if test.successful {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }
@@ -137,7 +147,11 @@ func TestSignalDataUpdateK0sValid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.data.Validate()
-			assert.Equal(t, test.successful, err == nil, "Test '%s': validate failed - %v", test.name, err)
+			if test.successful {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }
@@ -166,9 +180,11 @@ func TestMarshaling(t *testing.T) {
 	// Forward ..
 	assert.NoError(t, signalData1.Marshal(m))
 	assert.NotEmpty(t, m)
-	assert.Equal(t, 2, len(m))
-	assert.Contains(t, m, "k0sproject.io/autopilot-signal-version")
-	assert.Contains(t, m, "k0sproject.io/autopilot-signal-data")
+	mapKeys := slices.Collect(maps.Keys(m))
+	assert.ElementsMatch(t, []string{
+		"k0sproject.io/autopilot-signal-version",
+		"k0sproject.io/autopilot-signal-data",
+	}, mapKeys)
 
 	// .. and backward
 	signalData2 := SignalData{}
