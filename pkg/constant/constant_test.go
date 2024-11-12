@@ -146,7 +146,7 @@ func TestRuncModuleVersions(t *testing.T) {
 
 	if runtime.GOOS == "windows" {
 		// The runc dependency is only a thing on Linux.
-		assert.Zero(t, numMatched, "Expected no packages to to pass the filter on Windows.")
+		assert.Zero(t, numMatched, "Expected no packages to pass the filter on Windows.")
 	} else {
 		assert.NotZero(t, numMatched, "Not a single package passed the filter.")
 	}

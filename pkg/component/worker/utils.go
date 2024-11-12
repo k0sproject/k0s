@@ -209,7 +209,7 @@ func writeKubeletBootstrapKubeconfig(kubeconfig []byte) (string, error) {
 		rmErr := os.Remove(bootstrapFile.Name())
 		// Don't propagate any fs.ErrNotExist errors. There is no point in doing
 		// this, since the desired state is already reached: The bootstrap file
-		// file is no longer present on the file system.
+		// is no longer present on the file system.
 		if errors.Is(rmErr, fs.ErrNotExist) {
 			rmErr = nil
 		}

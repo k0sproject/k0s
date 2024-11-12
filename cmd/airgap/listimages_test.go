@@ -61,7 +61,8 @@ func TestAirgapListImages(t *testing.T) {
 	t.Run("NodeLocalLoadBalancing", func(t *testing.T) {
 		const (
 			customImage = "example.com/envoy:v1337"
-			yamlData    = `
+			//nolint:dupword
+			yamlData = `
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 spec:

@@ -370,15 +370,15 @@ const dummyLinkName = "dummyvip0"
 var keepalivedConfigTemplate = template.Must(template.New("keepalived").Parse(`
 {{ range $i, $instance := .VRRPInstances }}
 vrrp_instance k0s-vip-{{$i}} {
-	# All servers must have state BACKUP so that when a new server comes up
-	# it doesn't perform a failover. This must be combined with the priority.
+    # All servers must have state BACKUP so that when a new server comes up
+    # it doesn't perform a failover. This must be combined with the priority.
     state BACKUP
-    # Make sure the interface is aligned with your server's network interface
+    # Make sure the interface is aligned with your server's network interface.
     interface {{ .Interface }}
-    # The virtual router ID must be unique to each VRRP instance that you define
+    # The virtual router ID must be unique to each VRRP instance that you define.
     virtual_router_id {{ $instance.VirtualRouterID }}
     # All servers have the same priority so that when a new one comes up we don't
-    # do a failover
+    # do a failover.
     priority 200
 #   advertisement interval, 1 second by default
     advert_int {{ $instance.AdvertIntervalSeconds }}

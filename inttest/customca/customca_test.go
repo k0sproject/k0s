@@ -37,6 +37,7 @@ func (s *CustomCASuite) TestK0sGetsUp() {
 	defer ssh.Disconnect()
 
 	err = ssh.Exec(s.Context(), "sh -e", common.SSHStreams{
+		//nolint:dupword // this is a script
 		In: strings.NewReader(fmt.Sprintf(`
 			K0S_PATH=%q
 			IP_ADDRESS=%q
