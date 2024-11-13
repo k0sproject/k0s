@@ -40,7 +40,7 @@ func TestFindNextPendingRandom(t *testing.T) {
 	// randomness is working. Its possible that one node can be chosen
 	// 100% of the time, but its unlikely.
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		node, err := FindNextPendingRandom(nodes)
 		assert.NoError(t, err)
 		assert.NotNil(t, node)

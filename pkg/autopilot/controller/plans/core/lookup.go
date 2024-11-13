@@ -29,7 +29,7 @@ import (
 func planCommandProviderLookup(pcpm PlanCommandProviderMap, cmd apv1beta2.PlanCommand) (string, PlanCommandProvider, bool) {
 	rpcmd := reflect.Indirect(reflect.ValueOf(cmd))
 
-	for i := 0; i < rpcmd.NumField(); i++ {
+	for i := range rpcmd.NumField() {
 		v := rpcmd.Field(i)
 
 		if v.Kind() == reflect.Pointer && !v.IsNil() {

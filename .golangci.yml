@@ -16,6 +16,7 @@ linters:
     - errorlint   # Find code that will cause problems with Go's error wrapping scheme
     - gofmt       # Checks whether code was gofmt-ed
     - goheader    # Checks is file headers matche a given pattern
+    - intrange    # checking for loops that could use an integer range
     - revive      # Stricter drop-in replacement for golint
 
 linters-settings:

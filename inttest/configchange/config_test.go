@@ -179,7 +179,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		s.Require().NoError(err)
 		defer configMapWatch.Stop()
 		timeout := time.After(20 * time.Second)
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			select {
 			case event := <-configMapWatch.ResultChan():
 				cm := event.Object.(*corev1.ConfigMap)

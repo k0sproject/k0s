@@ -46,7 +46,7 @@ func (s *quorumSafetySuite) SetupTest() {
 	ipAddress := s.GetControllerIPAddress(0)
 	var joinToken string
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
@@ -70,7 +70,7 @@ func (s *quorumSafetySuite) SetupTest() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
 	}
 }

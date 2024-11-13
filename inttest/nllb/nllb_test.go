@@ -80,7 +80,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 		})
 		s.Require().NoError(err)
 
-		for i := 0; i < s.ControllerCount; i++ {
+		for i := range s.ControllerCount {
 			s.WriteFileContent(s.ControllerNode(i), "/tmp/k0s.yaml", config)
 		}
 	}
@@ -98,7 +98,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 		s.Require().NoError(err)
 
 		eg, _ := errgroup.WithContext(ctx)
-		for i := 0; i < s.WorkerCount; i++ {
+		for i := range s.WorkerCount {
 			nodeName := s.WorkerNode(i)
 			eg.Go(func() error {
 				if err := s.WaitForNodeReady(nodeName, clients); err != nil {
@@ -130,7 +130,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 	})
 
 	workerNameToRestart := s.WorkerNode(0)
-	for i := 0; i < s.ControllerCount; i++ {
+	for i := range s.ControllerCount {
 		controllerName := s.ControllerNode(i)
 		s.Run(fmt.Sprintf("stop_%s_before_%s", workerNameToRestart, controllerName), func() {
 			err := s.StopWorker(workerNameToRestart)
@@ -216,7 +216,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.Clientset, numControllers int, degradedControllers ...string) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
-	for i := 0; i < numControllers; i++ {
+	for i := range numControllers {
 		nodeName := s.ControllerNode(i)
 		degraded := slices.Contains(degradedControllers, nodeName)
 
@@ -240,7 +240,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 		})
 	}
 
-	for i := 0; i < s.WorkerCount; i++ {
+	for i := range s.WorkerCount {
 		nodeName := s.WorkerNode(i)
 
 		eg.Go(func() error {

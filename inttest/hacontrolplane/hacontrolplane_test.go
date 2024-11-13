@@ -54,7 +54,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 	sshCon, err := s.SSH(s.Context(), s.ControllerNode(executeOnControllerIdx))
 	s.Require().NoError(err)
 	defer sshCon.Disconnect()
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		_, err := sshCon.ExecWithOutput(s.Context(), fmt.Sprintf("/usr/local/bin/k0s etcd leave --peer-address %s", peerAddress))
 		if err == nil {
 			break

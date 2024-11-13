@@ -229,7 +229,7 @@ func TestMultiThread(t *testing.T) {
 	assert.NoError(t, s.Supervise(), "Failed to start")
 	t.Cleanup(s.Stop)
 
-	for i := 0; i < 255; i++ {
+	for range 255 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

@@ -29,7 +29,7 @@ func Marshal(m map[string]string, value interface{}) {
 	fields := reflect.TypeOf(value)
 	values := reflect.ValueOf(value)
 
-	for i := 0; i < fields.NumField(); i++ {
+	for i := range fields.NumField() {
 		field := fields.Field(i)
 		value := values.Field(i)
 
@@ -62,7 +62,7 @@ func Unmarshal(m map[string]string, uftc UnmarshalFieldTypeCollector, ufvc Unmar
 	fields := uftc()
 	values := ufvc()
 
-	for i := 0; i < fields.NumField(); i++ {
+	for i := range fields.NumField() {
 		field := fields.Field(i)
 		value := values.Field(i)
 

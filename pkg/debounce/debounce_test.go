@@ -49,7 +49,7 @@ func TestDebounce(t *testing.T) {
 	runReturned := make(chan error)
 	go func() { runReturned <- debouncer.Run(ctx) }()
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		time.Sleep(10 * time.Millisecond)
 		if atomic.LoadInt32(&lastItem) == numEvents {
 			break

@@ -47,7 +47,7 @@ func (s *selectorSuite) SetupTest() {
 	ipAddress := s.GetLBAddress()
 	var joinToken string
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(selectorControllerConfig, ipAddress))
@@ -71,7 +71,7 @@ func (s *selectorSuite) SetupTest() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
 	}
 
@@ -85,7 +85,7 @@ func (s *selectorSuite) SetupTest() {
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	for idx := 0; idx < s.BootlooseSuite.WorkerCount; idx++ {
+	for idx := range s.BootlooseSuite.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 	}
 }

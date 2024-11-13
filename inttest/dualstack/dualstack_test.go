@@ -113,7 +113,7 @@ func (s *DualstackSuite) SetupSuite() {
 	err = s.WaitForNodeReady(s.WorkerNode(1), client)
 	s.Require().NoError(err)
 
-	for i := 0; i < s.WorkerCount; i++ {
+	for i := range s.WorkerCount {
 		ssh, err := s.SSH(s.Context(), s.WorkerNode(i))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
