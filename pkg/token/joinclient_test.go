@@ -115,7 +115,6 @@ func TestJoinClient_Cancellation(t *testing.T) {
 			return err
 		}},
 	} {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

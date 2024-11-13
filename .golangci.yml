@@ -10,12 +10,13 @@ run:
 
 linters:
   enable:
-    - depguard  # Checks if package imports are in a list of acceptable packages
-    - dupword   # Finds word repetitions
-    - errorlint # Find code that will cause problems with Go's error wrapping scheme
-    - gofmt     # Checks whether code was gofmt-ed
-    - goheader  # Checks is file headers matche a given pattern
-    - revive    # Stricter drop-in replacement for golint
+    - copyloopvar # Detects unnecessary copies of loop variables for Go >= 1.22
+    - depguard    # Checks if package imports are in a list of acceptable packages
+    - dupword     # Finds word repetitions
+    - errorlint   # Find code that will cause problems with Go's error wrapping scheme
+    - gofmt       # Checks whether code was gofmt-ed
+    - goheader    # Checks is file headers matche a given pattern
+    - revive      # Stricter drop-in replacement for golint
 
 linters-settings:
   depguard:

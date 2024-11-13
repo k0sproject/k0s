@@ -87,8 +87,6 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	eg := errgroup.Group{}
 
 	for i, obj := range expectedObjects {
-		i, obj := i, obj
-
 		eg.Go(func() error {
 			s.T().Logf("verifying initial status of %s", obj)
 			em := &etcdv1beta1.EtcdMember{}
