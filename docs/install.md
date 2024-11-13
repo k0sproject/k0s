@@ -31,7 +31,8 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
     ```
 
     NOTE:
-    The `--single` option will disable features needed for multi-node clusters so you will not be able to extend this cluster. If you want be able to extend the cluster in the future you should instead use:
+    The `--single` option will disable features needed for multi-node clusters, so you will not be able to extend this cluster. If you want to be able to extend the cluster in the future, you should use:
+
     ``` shell
     sudo k0s install controller --enable-worker --no-taints
     ```
