@@ -256,7 +256,6 @@ func loadConcurrently(ctx context.Context, addresses []string, loadWorkerConfig 
 	numActiveLoaders.Store(int64(numAddresses))
 
 	for pos, address := range addresses {
-		pos, address := pos, address
 		go func() {
 			defer func() {
 				if numActiveLoaders.Add(-1) == 0 {

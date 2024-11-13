@@ -190,7 +190,6 @@ func TestWatcher(t *testing.T) {
 			{apiwatch.Error, "watch error"},
 			{apiwatch.EventType("Bogus"), "unexpected watch event (Bogus)"},
 		} {
-			test := test
 			t.Run(string(test.eventType), func(t *testing.T) {
 				t.Parallel()
 				provider, underTest := newTestWatcher()

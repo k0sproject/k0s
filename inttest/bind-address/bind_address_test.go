@@ -133,7 +133,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	})
 
 	for _, lease := range []string{"kube-scheduler", "kube-controller-manager"} {
-		lease := lease
 		eg.Go(func() error {
 			id, err := common.WaitForLease(ctx, clients, lease, kubeSystem)
 			if err != nil {
@@ -145,7 +144,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	}
 
 	for _, daemonSet := range []string{"kube-proxy", "konnectivity-agent"} {
-		daemonSet := daemonSet
 		eg.Go(func() error {
 			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, "kube-system"); err != nil {
 				return fmt.Errorf("%s is not ready: %w", daemonSet, err)
@@ -156,7 +154,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	}
 
 	for _, deployment := range []string{"coredns", "metrics-server"} {
-		deployment := deployment
 		eg.Go(func() error {
 			if err := common.WaitForDeployment(ctx, clients, deployment, "kube-system"); err != nil {
 				return fmt.Errorf("%s did not become ready: %w", deployment, err)
