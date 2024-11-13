@@ -156,16 +156,17 @@ spec:
 	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
 
-	s.Equal(1, len(plan.Status.Commands))
-	cmd := plan.Status.Commands[0]
+	if s.Len(plan.Status.Commands, 1) {
+		cmd := plan.Status.Commands[0]
 
-	s.Equal(appc.PlanCompleted, cmd.State)
-	s.NotNil(cmd.K0sUpdate)
-	s.NotNil(cmd.K0sUpdate.Controllers)
-	s.Empty(cmd.K0sUpdate.Workers)
+		s.Equal(appc.PlanCompleted, cmd.State)
+		s.NotNil(cmd.K0sUpdate)
+		s.NotNil(cmd.K0sUpdate.Controllers)
+		s.Empty(cmd.K0sUpdate.Workers)
 
-	for _, node := range cmd.K0sUpdate.Controllers {
-		s.Equal(appc.SignalCompleted, node.State)
+		for _, node := range cmd.K0sUpdate.Controllers {
+			s.Equal(appc.SignalCompleted, node.State)
+		}
 	}
 
 	kc, err := s.KubeClient(s.ControllerNode(0))

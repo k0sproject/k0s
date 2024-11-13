@@ -79,7 +79,7 @@ func TestBasicCRSApprover(t *testing.T) {
 	csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, newCsr.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, csr)
-	assert.True(t, csr.Name == newCsr.Name)
+	assert.Equal(t, newCsr.Name, csr.Name)
 	for _, c := range csr.Status.Conditions {
 		assert.True(t, c.Type == certv1.CertificateApproved && c.Reason == "Autoapproved by K0S CSRApprover" && c.Status == core.ConditionTrue)
 	}

@@ -72,7 +72,7 @@ func TestKubeRouterConfig(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.Equal(t, float64(1450), p.Dig("mtu"))
+	require.InEpsilon(t, 1450, p.Dig("mtu"), 0)
 	require.Equal(t, true, p.Dig("hairpinMode"))
 	require.Equal(t, true, p.Dig("ipMasq"))
 }
@@ -190,7 +190,7 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.Equal(t, float64(1234), p.Dig("mtu"))
+	require.InEpsilon(t, 1234, p.Dig("mtu"), 0)
 }
 
 func TestExtraArgs(t *testing.T) {

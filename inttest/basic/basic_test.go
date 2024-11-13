@@ -123,7 +123,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 			out, err := common.PodExecCmdOutput(kc, restConfig, pod.Name, "kube-system", "gobgp global")
 			s.Require().NoError(err)
 			// Check that the output contains the default AS number, that's a sign that gobgp is working
-			s.Assert().Regexp(`AS:\s+64512`, out)
+			s.Regexp(`AS:\s+64512`, out)
 			break
 		}
 	}

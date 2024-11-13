@@ -18,6 +18,7 @@ linters:
     - goheader    # Checks is file headers matche a given pattern
     - intrange    # checking for loops that could use an integer range
     - revive      # Stricter drop-in replacement for golint
+    - testifylint # Checks usage of github.com/stretchr/testify
 
 linters-settings:
   depguard:
@@ -71,6 +72,12 @@ linters-settings:
       # This forbids to name variables "close", which seems natural for "close" functions.
       - name: redefines-builtin-id
         disabled: true
+
+  testifylint:
+    enable-all: true
+    disable:
+      - require-error # flags too many legitimate use cases
+      - suite-thelper # flags too many legitimate use cases
 
 issues:
   max-issues-per-linter: 0

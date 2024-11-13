@@ -15,7 +15,6 @@
 package common
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -94,7 +93,7 @@ func TestExtractSignalData(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			signalData := extractSignalData(logger, test.data)
-			assert.Equal(t, test.found, (signalData != nil), fmt.Sprintf("Failure in '%s'", test.name))
+			assert.Equalf(t, test.found, (signalData != nil), "Failure in '%s'", test.name)
 		})
 	}
 }

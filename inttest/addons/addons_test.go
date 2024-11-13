@@ -114,7 +114,7 @@ func (as *AddonsSuite) renameChart(ctx context.Context) {
 	i := slices.IndexFunc(cfg.Spec.Extensions.Helm.Charts, func(c k0sv1beta1.Chart) bool {
 		return c.Name == "tgz-addon"
 	})
-	as.Require().GreaterOrEqual(i, 0, "Didn't find tgz-addon in %v", cfg.Spec.Extensions.Helm.Charts)
+	as.Require().GreaterOrEqualf(i, 0, "Didn't find tgz-addon in %v", cfg.Spec.Extensions.Helm.Charts)
 	cfg.Spec.Extensions.Helm.Charts[i].Name = "tgz-renamed-addon"
 
 	cfg, err = configs.Update(ctx, cfg, metav1.UpdateOptions{FieldManager: as.T().Name()})

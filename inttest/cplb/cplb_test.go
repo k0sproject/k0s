@@ -118,7 +118,7 @@ func (s *keepalivedSuite) getLBAddress() string {
 		s.T().Fatalf("Invalid IP address: %q", ip)
 	}
 	lastOctet, err := strconv.Atoi(parts[3])
-	s.Require().NoErrorf(err, "Failed to convert last octet '%s' to int", parts[3])
+	s.Require().NoErrorf(err, "Failed to convert last octet %q to int", parts[3])
 	if lastOctet >= 154 {
 		lastOctet -= 100
 	} else {
@@ -144,7 +144,7 @@ func (s *keepalivedSuite) validateRealServers(ctx context.Context, node string, 
 	s.Require().NoError(err)
 
 	for _, server := range servers {
-		s.Require().Contains(output, fmt.Sprintf("-a -t %s:6443 -r %s", vip, server), "Controller %s is missing a server in ipvsadm", node)
+		s.Require().Containsf(output, fmt.Sprintf("-a -t %s:6443 -r %s", vip, server), "Controller %s is missing a server in ipvsadm", node)
 	}
 
 }

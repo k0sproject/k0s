@@ -50,7 +50,6 @@ func TestReconcile(t *testing.T) {
 		name            string
 		handler         PlanStateHandler
 		plan            *apv1beta2.Plan
-		expectedError   bool
 		expectedRequeue bool
 		expectedStatus  *apv1beta2.PlanStatus
 	}{
@@ -59,7 +58,6 @@ func TestReconcile(t *testing.T) {
 			"PlanNotFound",
 			nil,
 			&apv1beta2.Plan{},
-			false,
 			false,
 			nil,
 		},
@@ -80,7 +78,6 @@ func TestReconcile(t *testing.T) {
 				},
 			},
 			false,
-			false,
 			nil,
 		},
 
@@ -97,7 +94,6 @@ func TestReconcile(t *testing.T) {
 					Name: "HandleRetry",
 				},
 			},
-			false,
 			true,
 			nil,
 		},
@@ -117,7 +113,6 @@ func TestReconcile(t *testing.T) {
 					Name: "StatusUpdated",
 				},
 			},
-			false,
 			false,
 			&apv1beta2.PlanStatus{
 				State: PlanCompleted,
@@ -143,7 +138,7 @@ func TestReconcile(t *testing.T) {
 
 			ctx := context.TODO()
 			res, err := controller.Reconcile(ctx, req)
-			assert.Equal(t, test.expectedError, err != nil, "Unexpected error: %v", err)
+			assert.NoError(t, err)
 			assert.Equal(t, test.expectedRequeue, !res.IsZero())
 
 			if test.expectedStatus != nil {

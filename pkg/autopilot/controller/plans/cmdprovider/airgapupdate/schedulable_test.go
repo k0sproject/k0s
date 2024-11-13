@@ -46,7 +46,6 @@ func TestSchedulable(t *testing.T) {
 		status                    apv1beta2.PlanCommandStatus
 		expectedNextState         apv1beta2.PlanStateType
 		expectedRetry             bool
-		expectedError             bool
 		expectedPlanStatusWorkers []apv1beta2.PlanCommandTargetStatus
 	}{
 		// Ensures that if a controller is completed, no additional execution will occur.
@@ -91,7 +90,6 @@ func TestSchedulable(t *testing.T) {
 				},
 			},
 			appc.PlanCompleted,
-			false,
 			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
@@ -142,7 +140,6 @@ func TestSchedulable(t *testing.T) {
 			},
 			appc.PlanSchedulableWait,
 			false,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 			},
@@ -172,7 +169,7 @@ func TestSchedulable(t *testing.T) {
 
 			assert.Equal(t, test.expectedNextState, nextState)
 			assert.Equal(t, test.expectedRetry, retry)
-			assert.Equal(t, test.expectedError, err != nil, "Unexpected error: %v", err)
+			assert.NoError(t, err)
 			assert.True(t, cmp.Equal(test.expectedPlanStatusWorkers, test.status.AirgapUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
 		})
 	}

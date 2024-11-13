@@ -86,22 +86,22 @@ func TestLogWriter(t *testing.T) {
 			remaining := logs.AllEntries()
 
 			for i, line := range test.out {
-				if !assert.NotEmpty(t, remaining, "Expected additional log entry: %s", line) {
+				if !assert.NotEmptyf(t, remaining, "Expected additional log entry: %s", line) {
 					continue
 				}
 
 				chunk, isChunk := remaining[0].Data["chunk"]
-				assert.Equal(t, line.chunk != 0, isChunk, "Log entry %d chunk mismatch", i)
+				assert.Equalf(t, line.chunk != 0, isChunk, "Log entry %d chunk mismatch", i)
 				if isChunk {
-					assert.Equal(t, line.chunk, chunk, "Log entry %d differs in chunk", i)
+					assert.Equalf(t, line.chunk, chunk, "Log entry %d differs in chunk", i)
 				}
 
-				assert.Equal(t, line.msg, remaining[0].Message, "Log entry %d differs in message", i)
+				assert.Equalf(t, line.msg, remaining[0].Message, "Log entry %d differs in message", i)
 				remaining = remaining[1:]
 			}
 
 			for _, entry := range remaining {
-				assert.Fail(t, "Unexpected log entry", "%s", entry.Message)
+				assert.Failf(t, "Unexpected log entry", "%s", entry.Message)
 			}
 		})
 	}

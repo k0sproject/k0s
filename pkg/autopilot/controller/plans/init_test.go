@@ -15,7 +15,6 @@
 package plans
 
 import (
-	"fmt"
 	"testing"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -133,10 +132,10 @@ func TestSchedulableWaitEventFilter(t *testing.T) {
 
 	pred := schedulableWaitEventFilter()
 
-	for idx, test := range tests {
+	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			event := crev.UpdateEvent{ObjectNew: test.plan}
-			assert.Equal(t, test.expected, pred.Update(event), fmt.Sprintf("Failed at #%d '%s'", idx, test.name))
+			assert.Equal(t, test.expected, pred.Update(event))
 		})
 	}
 }
@@ -201,10 +200,10 @@ func TestSchedulableEventFilter(t *testing.T) {
 
 	pred := schedulableEventFilter()
 
-	for idx, test := range tests {
+	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			event := crev.UpdateEvent{ObjectNew: test.plan}
-			assert.Equal(t, test.expected, pred.Update(event), fmt.Sprintf("Failed at #%d '%s'", idx, test.name))
+			assert.Equal(t, test.expected, pred.Update(event))
 		})
 	}
 }

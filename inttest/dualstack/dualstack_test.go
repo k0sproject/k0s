@@ -81,7 +81,7 @@ func (s *DualstackSuite) cmdlineForExecutable(node, binary string) []string {
 	require.Len(pids, 1, "Expected a single pid")
 
 	output, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("cat /proc/%q/cmdline", pids[0]))
-	require.NoError(err, "Failed to get cmdline for PID %s", pids[0])
+	require.NoErrorf(err, "Failed to get cmdline for PID %s", pids[0])
 	return strings.Split(output, "\x00")
 }
 
@@ -158,7 +158,7 @@ func (s *DualstackSuite) SetupSuite() {
 
 	// test ipv6 address
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
-		s.Require().Equal(len(targetPod.Status.PodIPs), 2)
+		s.Require().Len(targetPod.Status.PodIPs, 2)
 		podIP := targetPod.Status.PodIPs[1].IP
 		targetIP := net.ParseIP(podIP)
 		s.Require().NotNil(targetIP)
@@ -175,7 +175,7 @@ func (s *DualstackSuite) SetupSuite() {
 
 	// test ipv4 address
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
-		s.Require().Equal(len(targetPod.Status.PodIPs), 2)
+		s.Require().Len(targetPod.Status.PodIPs, 2)
 		podIP := targetPod.Status.PodIPs[0].IP
 		targetIP := net.ParseIP(podIP)
 		s.Require().NotNil(targetIP)

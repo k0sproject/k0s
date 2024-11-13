@@ -453,7 +453,11 @@ func TestHandle(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := context.TODO()
 			res, err := test.handler.Handle(ctx, test.plan)
-			assert.Equal(t, test.expectedError, err != nil, "Unexpected error: %v", err)
+			if test.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 			assert.Equal(t, test.expectedResult, res)
 
 			if test.expectedPlanStatus != nil {

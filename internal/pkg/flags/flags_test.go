@@ -19,6 +19,8 @@ package flags
 import (
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,10 +29,11 @@ func TestFlagSplitting(t *testing.T) {
 
 	m := Split(args)
 
-	assert.Equal(t, 3, len(m))
-	assert.Equal(t, "bar", m["--foo"])
-	assert.Equal(t, "xyz,asd", m["--foobar"])
-	assert.Equal(t, "", m["--bool-flag"])
+	assert.Equal(t, stringmap.StringMap{
+		"--foo":       "bar",
+		"--foobar":    "xyz,asd",
+		"--bool-flag": "",
+	}, m)
 }
 
 func TestFlagSplittingBoolFlags(t *testing.T) {
@@ -38,6 +41,5 @@ func TestFlagSplittingBoolFlags(t *testing.T) {
 
 	m := Split(args)
 
-	assert.Equal(t, 1, len(m))
-	assert.Equal(t, "", m["--bool-flag"])
+	assert.Equal(t, stringmap.StringMap{"--bool-flag": ""}, m)
 }

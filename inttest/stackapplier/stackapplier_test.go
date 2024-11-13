@@ -67,6 +67,7 @@ func (s *suite) TestStackApplier() {
 
 	sgv := schema.GroupVersion{Group: "k0s.example.com", Version: "v1"}
 
+	//nolint:testifylint // runs in parallel
 	s.T().Run("hobbit", func(t *testing.T) {
 		t.Cleanup(func() {
 			if t.Failed() {
@@ -80,13 +81,14 @@ func (s *suite) TestStackApplier() {
 			WithErrorCallback(retryWatchErrors(t.Logf)).
 			Until(ctx, func(item *unstructured.Unstructured) (bool, error) {
 				speciesName, found, err := unstructured.NestedString(item.Object, "spec", "characteristics")
-				if assert.NoError(t, err) && assert.True(t, found, "no characteristics found: %v", item.Object) {
+				if assert.NoError(t, err) && assert.Truef(t, found, "no characteristics found: %v", item.Object) {
 					assert.Equal(t, "hairy feet", speciesName)
 				}
 				return true, nil
 			}))
 	})
 
+	//nolint:testifylint // runs in parallel
 	s.T().Run("frodo", func(t *testing.T) {
 		t.Cleanup(func() {
 			if t.Failed() {
@@ -100,7 +102,7 @@ func (s *suite) TestStackApplier() {
 			WithErrorCallback(retryWatchErrors(t.Logf)).
 			Until(ctx, func(item *unstructured.Unstructured) (bool, error) {
 				speciesName, found, err := unstructured.NestedString(item.Object, "spec", "speciesRef", "name")
-				if assert.NoError(t, err) && assert.True(t, found, "no species found: %v", item.Object) {
+				if assert.NoError(t, err) && assert.Truef(t, found, "no species found: %v", item.Object) {
 					assert.Equal(t, "hobbit", speciesName)
 				}
 				return true, nil

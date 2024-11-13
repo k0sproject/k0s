@@ -61,7 +61,7 @@ func TestWriteEnvoyConfigFiles(t *testing.T) {
 			parse := func(t *testing.T, file string) (parsed map[string]any) {
 				content, err := os.ReadFile(filepath.Join(dir, file))
 				require.NoError(t, err)
-				require.NoError(t, yaml.Unmarshal(content, &parsed), "invalid YAML in %s", file)
+				require.NoErrorf(t, yaml.Unmarshal(content, &parsed), "invalid YAML in %s", file)
 				return
 			}
 
@@ -83,9 +83,9 @@ func TestWriteEnvoyConfigFiles(t *testing.T) {
 				for i, ep := range eps {
 					host, herr := evalJSONPath[string](ep, ".endpoint.address.socket_address.address")
 					port, perr := evalJSONPath[float64](ep, ".endpoint.address.socket_address.port_value")
-					if assert.NoError(t, errors.Join(herr, perr), "For endpoint %d", i) {
+					if assert.NoErrorf(t, errors.Join(herr, perr), "For endpoint %d", i) {
 						iport := int64(port)
-						if assert.Equal(t, float64(iport), port, "Port is not an integer for endpoint %d", i) {
+						if assert.InEpsilonf(t, iport, port, 0, "Port is not an integer for endpoint %d", i) {
 							addrs = append(addrs, fmt.Sprintf("%s:%d", host, iport))
 						}
 					}

@@ -16,7 +16,6 @@ package k0s
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -228,9 +227,9 @@ func TestSignalControllerEventFilter(t *testing.T) {
 		return false
 	})
 
-	for idx, test := range tests {
+	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.success, pred.Update(test.event), fmt.Sprintf("Failed in #%d '%s'", idx, test.name))
+			assert.Equal(t, test.success, pred.Update(test.event))
 		})
 	}
 }
@@ -635,7 +634,7 @@ func TestCheckExpiredInvalid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			expired := checkExpiredInvalid(logger, test.data, test.timeout)
-			assert.Equal(t, test.expired, expired, fmt.Sprintf("Failure in '%s'", test.name))
+			assert.Equal(t, test.expired, expired)
 		})
 	}
 }

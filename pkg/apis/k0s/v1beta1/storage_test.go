@@ -377,7 +377,7 @@ func (s *storageSuite) TestIsTLSEnabled() {
 	for _, tt := range storageSpecs {
 		s.Run(tt.desc, func() {
 			result := tt.spec.Etcd.IsTLSEnabled()
-			s.Equal(result, tt.expectedResult)
+			s.Equal(tt.expectedResult, result)
 		})
 	}
 }

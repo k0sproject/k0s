@@ -163,9 +163,9 @@ func TestChartManifestFileName(t *testing.T) {
 		Order:     2,
 	}
 
-	assert.Equal(t, chartManifestFileName(&chart), "0_helm_extension_release.yaml")
-	assert.Equal(t, chartManifestFileName(&chart1), "1_helm_extension_release.yaml")
-	assert.Equal(t, chartManifestFileName(&chart2), "2_helm_extension_release.yaml")
+	assert.Equal(t, "0_helm_extension_release.yaml", chartManifestFileName(&chart))
+	assert.Equal(t, "1_helm_extension_release.yaml", chartManifestFileName(&chart1))
+	assert.Equal(t, "2_helm_extension_release.yaml", chartManifestFileName(&chart2))
 	assert.True(t, isChartManifestFileName("0_helm_extension_release.yaml"))
 }
 

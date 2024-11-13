@@ -191,9 +191,9 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 
 func requiredValue[V any](t *testing.T, obj map[string]any, key string) V {
 	value, ok := obj[key]
-	require.True(t, ok, "Key %q not found", key)
+	require.Truef(t, ok, "Key %q not found", key)
 	typedValue, ok := value.(V)
-	require.True(t, ok, "Incompatible type for key %q: %+v", key, value)
+	require.Truef(t, ok, "Incompatible type for key %q: %+v", key, value)
 	return typedValue
 }
 

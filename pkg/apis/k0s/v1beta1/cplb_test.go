@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -123,11 +124,11 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			k := &KeepalivedSpec{
 				VRRPInstances: tt.vrrps,
 			}
-			err := k.validateVRRPInstances(returnNIC)
+			errs := k.validateVRRPInstances(returnNIC)
 			if tt.wantErr {
-				s.Require().NotEmpty(err, "Test case %s expected error. Got none", tt.name)
+				s.Require().Error(errors.Join(errs...))
 			} else {
-				s.Require().Empty(err, "Test case %s expected no errors. Got: %v", tt.name, err)
+				s.Require().Empty(errs)
 				s.T().Log(k.VRRPInstances)
 				s.Require().Equal(len(tt.expectedVRRPs), len(k.VRRPInstances), "Expected and actual VRRPInstances length mismatch")
 				for i := range tt.expectedVRRPs {
@@ -264,11 +265,11 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			k := &KeepalivedSpec{VirtualServers: tt.vss}
-			err := k.validateVirtualServers()
+			errs := k.validateVirtualServers()
 			if tt.wantErr {
-				s.Require().NotEmpty(err, "Test case %s expected error. Got none", tt.name)
+				s.Require().Error(errors.Join(errs...))
 			} else {
-				s.Require().Empty(err, "Tedst case %s expected no error. Got: %v", tt.name, err)
+				s.Require().Empty(errs)
 				for i := range tt.expectedVSS {
 					s.Require().Equal(tt.expectedVSS[i].DelayLoop, k.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
 					s.Require().Equal(tt.expectedVSS[i].LBAlgo, k.VirtualServers[i].LBAlgo, "LBalgo mismatch")

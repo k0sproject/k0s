@@ -96,13 +96,14 @@ spec:
 	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
 
-	s.Equal(1, len(plan.Status.Commands))
-	cmd := plan.Status.Commands[0]
+	if s.Len(plan.Status.Commands, 1) {
+		cmd := plan.Status.Commands[0]
 
-	s.NotNil(cmd.K0sUpdate)
-	s.NotNil(cmd.K0sUpdate.Controllers)
-	s.NotEmpty(cmd.K0sUpdate.Controllers)
-	s.Equal(appc.SignalCompleted, cmd.K0sUpdate.Controllers[0].State)
+		s.NotNil(cmd.K0sUpdate)
+		s.NotNil(cmd.K0sUpdate.Controllers)
+		s.NotEmpty(cmd.K0sUpdate.Controllers)
+		s.Equal(appc.SignalCompleted, cmd.K0sUpdate.Controllers[0].State)
+	}
 }
 
 // TestPlatformSelectSuite sets up a suite using a single controller, running various

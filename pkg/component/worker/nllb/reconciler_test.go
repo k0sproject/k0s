@@ -426,7 +426,7 @@ func TestReconciler_ConfigMgmt(t *testing.T) {
 		configBytes, err := os.ReadFile(envoyConfig)
 		if assert.NoError(t, err) {
 			var yamlConfig any
-			assert.NoError(t, yaml.Unmarshal(configBytes, &yamlConfig), "invalid YAML in config file: %s", string(configBytes))
+			assert.NoErrorf(t, yaml.Unmarshal(configBytes, &yamlConfig), "invalid YAML in config file: %s", string(configBytes))
 		}
 	})
 }

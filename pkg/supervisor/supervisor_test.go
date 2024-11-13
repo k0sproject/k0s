@@ -412,6 +412,6 @@ func selectCmd(t *testing.T, cmds ...cmd) (_ cmd) {
 		tested = append(tested, candidate.binPath)
 	}
 
-	require.Fail(t, "none of those executables in PATH, dunno how to create test process: %s", strings.Join(tested, ", "))
+	require.Failf(t, "none of those executables in PATH, dunno how to create test process: %s", strings.Join(tested, ", "))
 	return // diverges above
 }
