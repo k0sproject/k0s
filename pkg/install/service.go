@@ -17,70 +17,27 @@ limitations under the License.
 package install
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/kardianos/service"
+	"github.com/k0sproject/k0s/pkg/service"
 	"github.com/sirupsen/logrus"
 )
-
-var (
-	k0sServiceName = "k0s"
-	k0sDescription = "k0s - Zero Friction Kubernetes"
-)
-
-type Program struct{}
-
-func (p *Program) Start(service.Service) error {
-	// Start should not block. Do the actual work async.
-	return nil
-}
-
-func (p *Program) Stop(service.Service) error {
-	// Stop should not block. Return with a few seconds.
-	return nil
-}
-
-// InstalledService returns a k0s service if one has been installed on the host or an error otherwise.
-func InstalledService() (service.Service, error) {
-	prg := &Program{}
-	for _, role := range []string{"controller", "worker"} {
-		c := GetServiceConfig(role)
-		s, err := service.New(prg, c)
-		if err != nil {
-			return nil, err
-		}
-		_, err = s.Status()
-
-		if err != nil && errors.Is(err, service.ErrNotInstalled) {
-			continue
-		}
-		if err != nil {
-			return nil, err
-		}
-		return s, nil
-	}
-
-	var s service.Service
-	return s, fmt.Errorf("k0s has not been installed as a service")
-}
 
 // EnsureService installs the k0s service, per the given arguments, and the detected platform
 func EnsureService(args []string, envVars []string, force bool) error {
 	var deps []string
 	var svcConfig *service.Config
 
-	prg := &Program{}
 	for _, v := range args {
 		if v == "controller" || v == "worker" {
-			svcConfig = GetServiceConfig(v)
+			svcConfig = service.K0sConfig(v)
 			break
 		}
 	}
 
-	s, err := service.New(prg, svcConfig)
+	s, err := service.NewService(svcConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create service: %w", err)
 	}
 
 	// fetch service type
@@ -116,9 +73,14 @@ func EnsureService(args []string, envVars []string, force bool) error {
 	svcConfig.Arguments = args
 	if force {
 		logrus.Infof("Uninstalling %s service", svcConfig.Name)
-		err = s.Uninstall()
-		if err != nil && !errors.Is(err, service.ErrNotInstalled) {
-			logrus.Warnf("failed to uninstall service: %v", err)
+		status, err := s.Status()
+		if err != nil {
+			logrus.Warnf("failed to get service status: %v", err)
+		}
+		if status != service.StatusNotInstalled {
+			if err := s.Uninstall(); err != nil {
+				logrus.Warnf("failed to uninstall service: %v", err)
+			}
 		}
 	}
 	logrus.Infof("Installing %s service", svcConfig.Name)
@@ -130,31 +92,14 @@ func EnsureService(args []string, envVars []string, force bool) error {
 }
 
 func UninstallService(role string) error {
-	prg := &Program{}
-
-	if role == "controller+worker" {
-		role = "controller"
-	}
-
-	svcConfig := GetServiceConfig(role)
-	s, err := service.New(prg, svcConfig)
+	s, err := service.InstalledK0sService()
 	if err != nil {
-		return err
+		return fmt.Errorf("uninstall service: %w", err)
 	}
 
-	return s.Uninstall()
-}
-
-func GetServiceConfig(role string) *service.Config {
-	var k0sDisplayName string
-
-	if role == "controller" || role == "worker" {
-		k0sDisplayName = "k0s " + role
-		k0sServiceName = "k0s" + role
+	if err := s.Uninstall(); err != nil {
+		return fmt.Errorf("uninstall service: %w", err)
 	}
-	return &service.Config{
-		Name:        k0sServiceName,
-		DisplayName: k0sDisplayName,
-		Description: k0sDescription,
-	}
+
+	return nil
 }

@@ -20,9 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/k0sproject/k0s/pkg/install"
-
-	"github.com/kardianos/service"
+	"github.com/k0sproject/k0s/pkg/service"
 	"github.com/spf13/cobra"
 )
 
@@ -34,10 +32,11 @@ func NewStopCmd() *cobra.Command {
 			if os.Geteuid() != 0 {
 				return fmt.Errorf("this command must be run as root")
 			}
-			svc, err := install.InstalledService()
+			svc, err := service.InstalledK0sService()
 			if err != nil {
 				return err
 			}
+
 			status, err := svc.Status()
 			if err != nil {
 				return err
@@ -45,8 +44,12 @@ func NewStopCmd() *cobra.Command {
 			if status == service.StatusStopped {
 				return fmt.Errorf("already stopped")
 			}
-			return svc.Stop()
+
+			if err := svc.Stop(); err != nil {
+				return fmt.Errorf("failed to stop the service: %w", err)
+			}
+
+			return nil
 		},
 	}
-
 }
