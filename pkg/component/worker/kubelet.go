@@ -247,14 +247,8 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		Args:    args.ToArgs(),
 	}
 
-	kubeletconfig, err := k.prepareLocalKubeletConfig(kubeletConfigData)
-	if err != nil {
-		logrus.Warnf("failed to prepare local kubelet config: %s", err.Error())
+	if err := k.writeKubeletConfig(kubeletConfigData, kubeletConfigPath); err != nil {
 		return err
-	}
-	err = file.WriteContentAtomically(kubeletConfigPath, []byte(kubeletconfig), 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}
 
 	return k.supervisor.Supervise()
@@ -266,39 +260,45 @@ func (k *Kubelet) Stop() error {
 	return nil
 }
 
-func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (string, error) {
-	preparedConfig := k.Configuration.DeepCopy()
-	preparedConfig.Authentication.X509.ClientCAFile = kubeletConfigData.ClientCAFile // filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
-	preparedConfig.VolumePluginDir = kubeletConfigData.VolumePluginDir               // k.K0sVars.KubeletVolumePluginDir
-	preparedConfig.KubeReservedCgroup = kubeletConfigData.KubeReservedCgroup
-	preparedConfig.KubeletCgroups = kubeletConfigData.KubeletCgroups
-	preparedConfig.ResolverConfig = ptr.To(kubeletConfigData.ResolvConf)
-	preparedConfig.CgroupsPerQOS = ptr.To(kubeletConfigData.CgroupsPerQOS)
-	preparedConfig.StaticPodURL = kubeletConfigData.StaticPodURL
+func (k *Kubelet) writeKubeletConfig(kubeletConfigData kubeletConfig, path string) error {
+	config := k.Configuration.DeepCopy()
+	config.Authentication.X509.ClientCAFile = kubeletConfigData.ClientCAFile // filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
+	config.VolumePluginDir = kubeletConfigData.VolumePluginDir               // k.K0sVars.KubeletVolumePluginDir
+	config.KubeReservedCgroup = kubeletConfigData.KubeReservedCgroup
+	config.KubeletCgroups = kubeletConfigData.KubeletCgroups
+	config.ResolverConfig = ptr.To(kubeletConfigData.ResolvConf)
+	config.CgroupsPerQOS = ptr.To(kubeletConfigData.CgroupsPerQOS)
+	config.StaticPodURL = kubeletConfigData.StaticPodURL
 
 	containerRuntimeEndpoint, err := GetContainerRuntimeEndpoint(k.CRISocket, k.K0sVars.RunDir)
 	if err != nil {
-		return "", err
+		return err
 	}
-	preparedConfig.ContainerRuntimeEndpoint = containerRuntimeEndpoint.String()
+	config.ContainerRuntimeEndpoint = containerRuntimeEndpoint.String()
 
 	if len(k.Taints) > 0 {
 		var taints []corev1.Taint
 		for _, taint := range k.Taints {
 			parsedTaint, err := parseTaint(taint)
 			if err != nil {
-				return "", fmt.Errorf("can't parse taints for profile config map: %w", err)
+				return fmt.Errorf("can't parse taints for profile config map: %w", err)
 			}
 			taints = append(taints, parsedTaint)
 		}
-		preparedConfig.RegisterWithTaints = taints
+		config.RegisterWithTaints = taints
 	}
 
-	preparedConfigBytes, err := yaml.Marshal(preparedConfig)
+	configBytes, err := yaml.Marshal(config)
 	if err != nil {
-		return "", fmt.Errorf("can't marshal kubelet config: %w", err)
+		return fmt.Errorf("can't marshal kubelet config: %w", err)
 	}
-	return string(preparedConfigBytes), nil
+
+	err = file.WriteContentAtomically(path, configBytes, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write kubelet config: %w", err)
+	}
+
+	return nil
 }
 
 func parseTaint(st string) (corev1.Taint, error) {
