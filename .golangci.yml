@@ -10,16 +10,17 @@ run:
 
 linters:
   enable:
-    - copyloopvar # Detects unnecessary copies of loop variables for Go >= 1.22
-    - depguard    # Checks if package imports are in a list of acceptable packages
-    - dupword     # Finds word repetitions
-    - errorlint   # Find code that will cause problems with Go's error wrapping scheme
-    - gofmt       # Checks whether code was gofmt-ed
-    - goheader    # Checks is file headers matche a given pattern
-    - intrange    # Checking for loops that could use an integer range
-    - revive      # Stricter drop-in replacement for golint
-    - testifylint # Checks usage of github.com/stretchr/testify
-    - unconvert   # Checks for unnecessary type conversions
+    - copyloopvar   # Detects unnecessary copies of loop variables for Go >= 1.22
+    - depguard      # Checks if package imports are in a list of acceptable packages
+    - dupword       # Finds word repetitions
+    - errorlint     # Find code that will cause problems with Go's error wrapping scheme
+    - gofmt         # Checks whether code was gofmt-ed
+    - goheader      # Checks is file headers matche a given pattern
+    - intrange      # Checking for loops that could use an integer range
+    - revive        # Stricter drop-in replacement for golint
+    - testifylint   # Checks usage of github.com/stretchr/testify
+    - unconvert     # Checks for unnecessary type conversions
+    - usestdlibvars # Checks for things that are provided by the standard library
 
 linters-settings:
   depguard:
