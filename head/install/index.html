@@ -2127,6 +2127,10 @@
 <p>Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single
 </code></pre></div>
+<p>NOTE:
+  The <code>--single</code> option will disable features needed for multi-node clusters, so you will not be able to extend this cluster. If you want to be able to extend the cluster in the future, you should use:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--enable-worker<span class="w"> </span>--no-taints
+</code></pre></div>
 <p>The <code>k0s install controller</code> sub-command accepts the same flags and parameters as the <code>k0s controller</code>. Refer to <a href="../k0s-multi-node/#install-k0s">manual install</a> for a custom config file example.</p>
 <p>It is possible to set environment variables with the install command:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>-e<span class="w"> </span><span class="nv">ETCD_UNSUPPORTED_ARCH</span><span class="o">=</span>arm

@@ -2094,7 +2094,7 @@ While one could always give access to the live cluster that is not always desire
 <p>To get a support bundle, after setting up the <a href="#setting-up">tooling</a>, you simply run:</p>
 <div class="highlight"><pre><span></span><code>support-bundle<span class="w"> </span>--kubeconfig<span class="w"> </span>/var/lib/k0s/pki/admin.conf<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-&lt;role&gt;.yaml
 </code></pre></div>
-<p>Above <code>&lt;role&gt;</code> refers to either <code>controller</code>or <code>worker</code>. For different roles we collect different things. If you are running a controller with <code>--enable-worker</code> or <code>--single</code>, where it becomes also a worker, you can also get a comobined dump:</p>
+<p>Above <code>&lt;role&gt;</code> refers to either <code>controller</code>or <code>worker</code>. For different roles we collect different things. If you are running a controller with <code>--enable-worker</code> or <code>--single</code>, where it becomes also a worker, you can also get a combined dump:</p>
 <div class="highlight"><pre><span></span><code>support-bundle<span class="w"> </span>--kubeconfig<span class="w"> </span>/var/lib/k0s/pki/admin.conf<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-controller.yaml<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-worker.yaml
 </code></pre></div>
 <p>Once the data collection and analysis finishes you will get a file called like <code>support-bundle-&lt;timestamp&gt;.tar.gz</code>. The file contains all the collected info which you can share with other people.</p>
