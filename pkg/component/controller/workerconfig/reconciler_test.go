@@ -373,35 +373,35 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		},
 	}))
 
-	configMaps := map[string]func(t *testing.T, expected *kubeletConfig){
-		"worker-config-default-1.31": func(t *testing.T, expected *kubeletConfig) {
+	expectedConfigMaps := map[string]func(expected *kubeletConfig){
+		"worker-config-default-1.31": func(expected *kubeletConfig) {
 			expected.CgroupsPerQOS = ptr.To(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-default-windows-1.31": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-default-windows-1.31": func(expected *kubeletConfig) {
 			expected.CgroupsPerQOS = ptr.To(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_XXX-1.31": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-profile_XXX-1.31": func(expected *kubeletConfig) {
 			expected.Authentication.Anonymous.Enabled = ptr.To(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_YYY-1.31": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-profile_YYY-1.31": func(expected *kubeletConfig) {
 			expected.Authentication.Webhook.CacheTTL = metav1.Duration{Duration: 15 * time.Second}
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 	}
 
 	appliedResources := applied()
-	assert.Len(t, appliedResources, len(configMaps)+2)
+	assert.Len(t, appliedResources, len(expectedConfigMaps)+2)
 
-	for name, mod := range configMaps {
+	for name, configModFn := range expectedConfigMaps {
 		t.Run(name, func(t *testing.T) {
 			kubelet := requireKubelet(t, appliedResources, name)
-			expected := makeKubeletConfig(t, func(expected *kubeletConfig) { mod(t, expected) })
+			expected := makeKubeletConfig(t, configModFn)
 			assert.JSONEq(t, expected, kubelet)
 		})
 	}
@@ -427,9 +427,9 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, ok, "No resourceNames field")
 
-		assert.Len(t, resourceNames, len(configMaps))
-		for expected := range configMaps {
-			assert.Contains(t, resourceNames, expected)
+		assert.Len(t, resourceNames, len(expectedConfigMaps))
+		for name := range expectedConfigMaps {
+			assert.Contains(t, resourceNames, name)
 		}
 	})
 
@@ -577,10 +577,10 @@ func TestReconciler_runReconcileLoop(t *testing.T) {
 	updates, firstDone, secondDone := make(chan updateFunc, 2), make(chan error, 1), make(chan error, 1)
 
 	// Put in the first update.
-	updates <- func(s *snapshot) chan<- error { return firstDone }
+	updates <- func(*snapshot) chan<- error { return firstDone }
 
 	// Put in the second update that'll cancel the context.
-	updates <- func(s *snapshot) chan<- error { cancel(); return secondDone }
+	updates <- func(*snapshot) chan<- error { cancel(); return secondDone }
 
 	underTest.runReconcileLoop(ctx, updates, nil)
 

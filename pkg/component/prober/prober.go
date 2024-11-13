@@ -145,7 +145,7 @@ func (p *Prober) healthCheckLoop(ctx context.Context) {
 			return
 		case at := <-ticker.C:
 			p.l.Debug("Probing components")
-			p.checkComponentsHealth(ctx, at)
+			p.checkComponentsHealth(at)
 			// limit amount of iterations for the test purposes
 			if p.stopAfterIterationNum > 0 {
 				epoch++
@@ -156,7 +156,7 @@ func (p *Prober) healthCheckLoop(ctx context.Context) {
 		}
 	}
 }
-func (p *Prober) checkComponentsHealth(ctx context.Context, at time.Time) {
+func (p *Prober) checkComponentsHealth(at time.Time) {
 	for name, component := range p.withHealthComponents {
 		p.Lock()
 		if _, ok := p.healthCheckState[name]; !ok {

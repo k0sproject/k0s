@@ -84,10 +84,12 @@ func TestWriteAtomically(t *testing.T) {
 		return
 	}
 
-	assertDirEmpty := func(t *testing.T, dir string) bool {
+	assertDirEmpty := func(t *testing.T, dir string) {
 		t.Helper()
 		entries, err := os.ReadDir(dir)
-		return assert.NoError(t, err) && assert.Empty(t, entries)
+		if assert.NoError(t, err) {
+			assert.Empty(t, entries)
+		}
 	}
 
 	t.Run("writeFails", func(t *testing.T) {

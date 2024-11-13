@@ -39,7 +39,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	yaml "sigs.k8s.io/yaml/goyaml.v2"
 
@@ -216,13 +215,12 @@ func TestManager(t *testing.T) {
 	writeLabel(t, filepath.Join(dir, "stack1/pod.yaml"), "custom1", "test")
 
 	t.Log("waiting for pod to be updated")
-	waitFor(t, 100*time.Millisecond, 5*time.Second, func(ctx context.Context) (bool, error) {
+	require.EventuallyWithT(t, func(t *assert.CollectT) {
 		r, err := getResource(fakes, *podgv, "kube-system", "applier-test")
-		if err != nil {
-			return false, nil
+		if assert.NoError(t, err) {
+			assert.Equal(t, "test", r.GetLabels()["custom1"])
 		}
-		return r.GetLabels()["custom1"] == "test", nil
-	})
+	}, 5*time.Second, 100*time.Millisecond)
 
 	// lose and re-acquire leadership
 	le.deactivate()
@@ -247,13 +245,12 @@ func TestManager(t *testing.T) {
 	writeLabel(t, filepath.Join(dir, "stack1/pod.yaml"), "custom2", "test")
 
 	t.Log("waiting for pod to be updated")
-	waitFor(t, 100*time.Millisecond, 5*time.Second, func(ctx context.Context) (bool, error) {
+	require.EventuallyWithT(t, func(t *assert.CollectT) {
 		r, err := getResource(fakes, *podgv, "kube-system", "applier-test")
-		if err != nil {
-			return false, nil
+		if assert.NoError(t, err) {
+			assert.Equal(t, "test", r.GetLabels()["custom2"])
 		}
-		return r.GetLabels()["custom2"] == "test", nil
-	})
+	}, 5*time.Second, 100*time.Millisecond)
 
 	// delete the stack and verify the resources are deleted
 
@@ -261,13 +258,10 @@ func TestManager(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("waiting for pod to be deleted")
-	waitFor(t, 100*time.Millisecond, 5*time.Second, func(ctx context.Context) (bool, error) {
+	require.EventuallyWithT(t, func(t *assert.CollectT) {
 		_, err := getResource(fakes, *podgv, "kube-system", "applier-test")
-		if errors.IsNotFound(err) {
-			return true, nil
-		}
-		return false, nil
-	})
+		assert.Truef(t, errors.IsNotFound(err), "Expected a 'not found' error: %v", err)
+	}, 5*time.Second, 100*time.Millisecond)
 }
 
 func writeLabel(t *testing.T, file string, key string, value string) {
@@ -286,25 +280,17 @@ func writeLabel(t *testing.T, file string, key string, value string) {
 
 func waitForResource(t *testing.T, fakes *kubeutil.FakeClientFactory, gv schema.GroupVersionResource, namespace string, name string) {
 	t.Logf("waiting for resource %s/%s", gv.Resource, name)
-	waitFor(t, 100*time.Millisecond, 5*time.Second, func(ctx context.Context) (bool, error) {
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := getResource(fakes, gv, namespace, name)
-		if errors.IsNotFound(err) {
-			return false, nil
-		} else if err != nil {
-			return false, err
+		if err != nil {
+			require.Truef(t, errors.IsNotFound(err), "Expected a 'not found' error: %v", err)
+			assert.NoError(c, err)
 		}
-		return true, nil
-	})
+	}, 5*time.Second, 100*time.Millisecond)
 }
 
 func getResource(fakes *kubeutil.FakeClientFactory, gv schema.GroupVersionResource, namespace string, name string) (*unstructured.Unstructured, error) {
 	return fakes.DynamicClient.Resource(gv).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
-}
-
-func waitFor(t *testing.T, interval, timeout time.Duration, fn wait.ConditionWithContextFunc) {
-	t.Helper()
-	err := wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, fn)
-	require.NoError(t, err)
 }
 
 func writeStack(t *testing.T, dst string, src string) {

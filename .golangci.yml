@@ -20,6 +20,7 @@ linters:
     - revive        # Stricter drop-in replacement for golint
     - testifylint   # Checks usage of github.com/stretchr/testify
     - unconvert     # Checks for unnecessary type conversions
+    - unparam       # Checks for unused function parameters
     - usestdlibvars # Checks for things that are provided by the standard library
 
 linters-settings:
