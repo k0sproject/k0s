@@ -233,10 +233,11 @@ func (k *Kubelet) Stop() error {
 func (k *Kubelet) writeKubeletConfig(path string) error {
 	var staticPodURL string
 	if k.StaticPods != nil {
-		var err error
-		if staticPodURL, err = k.StaticPods.ManifestURL(); err != nil {
+		url, err := k.StaticPods.ManifestURL()
+		if err != nil {
 			return err
 		}
+		staticPodURL = url.String()
 	}
 
 	containerRuntimeEndpoint, err := GetContainerRuntimeEndpoint(k.CRISocket, k.K0sVars.RunDir)

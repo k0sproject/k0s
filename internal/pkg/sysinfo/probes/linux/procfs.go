@@ -32,7 +32,7 @@ func (l *LinuxProbes) RequireProcFS() {
 	l.Set("procfs", func(path probes.ProbePath, _ probes.Probe) probes.Probe {
 		return probes.ProbeFn(func(r probes.Reporter) error {
 			mountPoint := "/proc"
-			desc := probes.NewProbeDesc(fmt.Sprintf("%s file system", mountPoint), path)
+			desc := probes.NewProbeDesc(mountPoint+" file system", path)
 
 			var st syscall.Statfs_t
 			if err := syscall.Statfs(mountPoint, &st); err != nil {

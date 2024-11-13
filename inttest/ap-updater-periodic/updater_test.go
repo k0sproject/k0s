@@ -16,6 +16,7 @@ package updater
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 	"time"
 
@@ -56,7 +57,7 @@ func (s *plansSingleControllerSuite) SetupTest() {
 	vars := struct {
 		Address string
 	}{
-		Address: fmt.Sprintf("http://%s", s.GetUpdateServerIPAddress()),
+		Address: (&url.URL{Scheme: "http", Host: s.GetUpdateServerIPAddress()}).String(),
 	}
 	s.PutFileTemplate(s.ControllerNode(0), "/etc/conf.d/k0scontroller", envTemplate, vars)
 

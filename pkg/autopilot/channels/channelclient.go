@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
+	"net/url"
 	"time"
 
 	"sigs.k8s.io/yaml"
@@ -36,19 +36,21 @@ func NewChannelClient(server string, channel string, token string) (*ChannelClie
 		Timeout: 10 * time.Second,
 	}
 
-	// If server is a full URL, use that. If not assume it's a hostname and use the default path
-	if strings.HasPrefix(server, "http") {
-		server = strings.TrimSuffix(server, "/")
-	} else {
-		server = fmt.Sprintf("https://%s", server)
+	// If server is a full URL, use that. If not, assume HTTPS.
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	if serverURL.Scheme == "" {
+		serverURL.Scheme = "https"
 	}
 
-	channelURL := fmt.Sprintf("%s/%s/index.yaml", server, channel)
+	channelURL := serverURL.JoinPath(channel, "index.yaml")
 
 	return &ChannelClient{
 		httpClient: httpClient,
 		token:      token,
-		channelURL: channelURL,
+		channelURL: channelURL.String(),
 	}, nil
 }
 
@@ -66,7 +68,7 @@ func (c *ChannelClient) GetLatest(ctx context.Context, headers map[string]string
 	}
 
 	if c.token != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.token))
+		req.Header.Add("Authorization", "Bearer "+c.token)
 	}
 
 	resp, err := c.httpClient.Do(req)

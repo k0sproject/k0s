@@ -126,7 +126,7 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, wo
 
 	// 4: None of the above, bail out.
 	default:
-		return fmt.Errorf("neither regular nor bootstrap kubelet kubeconfig files exist and no join token given; dunno how to make kubelet authenticate to API server")
+		return errors.New("neither regular nor bootstrap kubelet kubeconfig files exist and no join token given; dunno how to make kubelet authenticate to API server")
 	}
 
 	kubeletCAPath := path.Join(k0sVars.CertRootDir, "ca.crt")

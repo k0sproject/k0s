@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -63,19 +62,19 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			cfg.Spec.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/apiserver-network-proxy-agent:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/kube-proxy:%s", constant.KubeProxyImageVersion), testingConfig.Spec.Images.KubeProxy.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/coredns:%s", constant.CoreDNSImageVersion), testingConfig.Spec.Images.CoreDNS.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-cni:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.CNI.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-node:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.Node.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-kube-controllers:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.KubeControllers.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-cni:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.CNI.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-node:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.Node.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-kube-controllers:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.KubeControllers.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/kube-router:%s", constant.KubeRouterCNIImageVersion), testingConfig.Spec.Images.KubeRouter.CNI.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/cni-node:%s", constant.KubeRouterCNIInstallerImageVersion), testingConfig.Spec.Images.KubeRouter.CNIInstaller.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/pause:%s", constant.KubePauseContainerImageVersion), testingConfig.Spec.Images.Pause.URI())
+			require.Equal(t, "my.repo/k0sproject/apiserver-network-proxy-agent:"+constant.KonnectivityImageVersion, testingConfig.Spec.Images.Konnectivity.URI())
+			require.Equal(t, "my.repo/metrics-server/metrics-server:"+constant.MetricsImageVersion, testingConfig.Spec.Images.MetricsServer.URI())
+			require.Equal(t, "my.repo/k0sproject/kube-proxy:"+constant.KubeProxyImageVersion, testingConfig.Spec.Images.KubeProxy.URI())
+			require.Equal(t, "my.repo/k0sproject/coredns:"+constant.CoreDNSImageVersion, testingConfig.Spec.Images.CoreDNS.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-cni:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.CNI.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-node:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.Node.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-kube-controllers:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.KubeControllers.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-cni:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.CNI.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-node:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.Node.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-kube-controllers:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.KubeControllers.URI())
+			require.Equal(t, "my.repo/k0sproject/kube-router:"+constant.KubeRouterCNIImageVersion, testingConfig.Spec.Images.KubeRouter.CNI.URI())
+			require.Equal(t, "my.repo/k0sproject/cni-node:"+constant.KubeRouterCNIInstallerImageVersion, testingConfig.Spec.Images.KubeRouter.CNIInstaller.URI())
+			require.Equal(t, "my.repo/pause:"+constant.KubePauseContainerImageVersion, testingConfig.Spec.Images.Pause.URI())
 		})
 		t.Run("config_with_custom_images", func(t *testing.T) {
 			cfg := DefaultClusterConfig()
@@ -83,13 +82,13 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			cfg.Spec.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
-			require.Equal(t, fmt.Sprintf("my.repo/my-custom-image:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/kube-proxy:%s", constant.KubeProxyImageVersion), testingConfig.Spec.Images.KubeProxy.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/coredns:%s", constant.CoreDNSImageVersion), testingConfig.Spec.Images.CoreDNS.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-cni:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.CNI.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-node:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.Node.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-kube-controllers:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.KubeControllers.URI())
+			require.Equal(t, "my.repo/my-custom-image:"+constant.KonnectivityImageVersion, testingConfig.Spec.Images.Konnectivity.URI())
+			require.Equal(t, "my.repo/metrics-server/metrics-server:"+constant.MetricsImageVersion, testingConfig.Spec.Images.MetricsServer.URI())
+			require.Equal(t, "my.repo/k0sproject/kube-proxy:"+constant.KubeProxyImageVersion, testingConfig.Spec.Images.KubeProxy.URI())
+			require.Equal(t, "my.repo/k0sproject/coredns:"+constant.CoreDNSImageVersion, testingConfig.Spec.Images.CoreDNS.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-cni:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.CNI.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-node:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.Node.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-kube-controllers:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.KubeControllers.URI())
 		})
 	})
 }

@@ -16,7 +16,7 @@ package core
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -70,7 +70,7 @@ func TestHandle(t *testing.T) {
 				fakePlanCommandProvider{
 					commandID: "K0sUpdate",
 					handlerNewPlan: func(ctx context.Context, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return PlanSchedulableWait, false, fmt.Errorf("should not have reached newplan")
+						return PlanSchedulableWait, false, errors.New("should not have reached newplan")
 					},
 					handlerSchedulable: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 						assert.Equal(t, "v1.2.3", pc.K0sUpdate.Version)
@@ -79,7 +79,7 @@ func TestHandle(t *testing.T) {
 						return PlanCompleted, false, nil
 					},
 					handlerSchedulableWait: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return PlanSchedulableWait, false, fmt.Errorf("should not have reached schedulablewait")
+						return PlanSchedulableWait, false, errors.New("should not have reached schedulablewait")
 					},
 				},
 			),
@@ -206,7 +206,7 @@ func TestHandle(t *testing.T) {
 			NewPlanStateHandler(
 				logger,
 				func(ctx context.Context, provider PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-					return PlanSchedulableWait, false, fmt.Errorf("intentional error")
+					return PlanSchedulableWait, false, assert.AnError
 				},
 				fakePlanCommandProvider{
 					commandID: "K0sUpdate",
@@ -259,7 +259,7 @@ func TestHandle(t *testing.T) {
 				fakePlanCommandProvider{
 					commandID: "K0sUpdate",
 					handlerNewPlan: func(ctx context.Context, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return pcs.State, false, fmt.Errorf("should not have reached newplan")
+						return pcs.State, false, errors.New("should not have reached newplan")
 					},
 					handlerSchedulable: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 						// Ensures that only the second command makes it here
@@ -270,7 +270,7 @@ func TestHandle(t *testing.T) {
 						return PlanCompleted, false, nil
 					},
 					handlerSchedulableWait: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return pcs.State, false, fmt.Errorf("should not have reached schedulablewait")
+						return pcs.State, false, errors.New("should not have reached schedulablewait")
 					},
 				},
 			),
@@ -313,14 +313,14 @@ func TestHandle(t *testing.T) {
 				fakePlanCommandProvider{
 					commandID: "K0sUpdate",
 					handlerNewPlan: func(ctx context.Context, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return pcs.State, false, fmt.Errorf("should not have reached newplan")
+						return pcs.State, false, errors.New("should not have reached newplan")
 					},
 					handlerSchedulable: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 						pcs.K0sUpdate = &apv1beta2.PlanCommandK0sUpdateStatus{}
 						return PlanCompleted, false, nil
 					},
 					handlerSchedulableWait: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return pcs.State, false, fmt.Errorf("should not have reached schedulablewait")
+						return pcs.State, false, errors.New("should not have reached schedulablewait")
 					},
 				},
 			),
@@ -364,14 +364,14 @@ func TestHandle(t *testing.T) {
 				fakePlanCommandProvider{
 					commandID: "K0sUpdate",
 					handlerNewPlan: func(ctx context.Context, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return pcs.State, false, fmt.Errorf("should not have reached newplan")
+						return pcs.State, false, errors.New("should not have reached newplan")
 					},
 					handlerSchedulable: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 						pcs.K0sUpdate = &apv1beta2.PlanCommandK0sUpdateStatus{}
 						return PlanCompleted, false, nil
 					},
 					handlerSchedulableWait: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return pcs.State, false, fmt.Errorf("should not have reached schedulablewait")
+						return pcs.State, false, errors.New("should not have reached schedulablewait")
 					},
 				},
 			),
@@ -420,14 +420,14 @@ func TestHandle(t *testing.T) {
 				fakePlanCommandProvider{
 					commandID: "K0sUpdate",
 					handlerNewPlan: func(ctx context.Context, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return pcs.State, false, fmt.Errorf("should not have reached newplan")
+						return pcs.State, false, errors.New("should not have reached newplan")
 					},
 					handlerSchedulable: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 						pcs.K0sUpdate = &apv1beta2.PlanCommandK0sUpdateStatus{}
 						return pcs.State, true, nil
 					},
 					handlerSchedulableWait: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return pcs.State, false, fmt.Errorf("should not have reached schedulablewait")
+						return pcs.State, false, errors.New("should not have reached schedulablewait")
 					},
 				},
 			),

@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -119,10 +120,10 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"bgp-graceful-restart": "true",
 		"enable-ipv4":          "true",
 		// Args from config values
-		"enable-ipv6":  fmt.Sprintf("%t", clusterConfig.Spec.Network.DualStack.Enabled),
-		"auto-mtu":     fmt.Sprintf("%t", clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
-		"metrics-port": fmt.Sprintf("%d", clusterConfig.Spec.Network.KubeRouter.MetricsPort),
-		"hairpin-mode": fmt.Sprintf("%t", globalHairpin),
+		"enable-ipv6":  strconv.FormatBool(clusterConfig.Spec.Network.DualStack.Enabled),
+		"auto-mtu":     strconv.FormatBool(clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
+		"metrics-port": strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
+		"hairpin-mode": strconv.FormatBool(globalHairpin),
 	}
 
 	// We should not add peering flags if the values are empty

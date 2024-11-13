@@ -17,7 +17,7 @@ limitations under the License.
 package binaries
 
 import (
-	"fmt"
+	"path"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -71,7 +71,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 
 		for _, tc := range testCases {
 			s.Run(tc.cmd, func() {
-				out, err := sshC0.ExecWithOutput(s.Context(), fmt.Sprintf("/var/lib/k0s/bin/%s", tc.cmd))
+				out, err := sshC0.ExecWithOutput(s.Context(), path.Join("/var/lib/k0s/bin", tc.cmd))
 				if tc.checkError {
 					s.Require().NoError(err, tc.cmd, out)
 				}
@@ -93,7 +93,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 
 		for _, tc := range testCases {
 			s.Run("", func() {
-				out, err := sshC1.ExecWithOutput(s.Context(), fmt.Sprintf("/var/lib/k0s/bin/%s", tc.cmd))
+				out, err := sshC1.ExecWithOutput(s.Context(), path.Join("/var/lib/k0s/bin", tc.cmd))
 				if tc.checkError {
 					s.Require().NoError(err, tc.cmd, out)
 				}

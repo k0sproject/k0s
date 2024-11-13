@@ -68,7 +68,7 @@ func (c *client) GetUpdate(channel, clusterID, lastUpdateStatus, currentVersion 
 	}
 
 	if c.authToken != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
+		req.Header.Set("Authorization", "Bearer "+c.authToken)
 	}
 
 	resp, err := c.httpClient.Do(req)

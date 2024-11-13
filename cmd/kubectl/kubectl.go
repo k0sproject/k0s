@@ -17,6 +17,7 @@ limitations under the License.
 package kubectl
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -171,7 +172,7 @@ func handleKubectlPlugins(kubectlCmd *cobra.Command) {
 func fallbackToK0sKubeconfig(cmd *cobra.Command) error {
 	kubeconfigFlag := cmd.Flags().Lookup("kubeconfig")
 	if kubeconfigFlag == nil {
-		return fmt.Errorf("kubeconfig flag not found")
+		return errors.New("kubeconfig flag not found")
 	}
 
 	if kubeconfigFlag.Changed {

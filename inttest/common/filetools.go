@@ -30,7 +30,7 @@ func (s *BootlooseSuite) GetFileFromController(controllerIdx int, path string) s
 	sshCon, err := s.SSH(s.Context(), s.ControllerNode(controllerIdx))
 	s.Require().NoError(err)
 	defer sshCon.Disconnect()
-	content, err := sshCon.ExecWithOutput(s.Context(), fmt.Sprintf("cat %s", path))
+	content, err := sshCon.ExecWithOutput(s.Context(), "cat "+path)
 	s.Require().NoError(err)
 
 	return content
@@ -42,7 +42,7 @@ func (s *BootlooseSuite) WriteFile(node, path string, reader io.Reader) {
 	ssh, err := s.SSH(s.Context(), node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	s.Require().NoError(ssh.Exec(s.Context(), fmt.Sprintf("cat >%s", path), SSHStreams{In: reader}))
+	s.Require().NoError(ssh.Exec(s.Context(), "cat >"+path, SSHStreams{In: reader}))
 }
 
 // WriteFileContent writes content to a file at the given path on the given

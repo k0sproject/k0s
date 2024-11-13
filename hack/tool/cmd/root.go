@@ -16,7 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
+	"errors"
 	"os"
 
 	"tool/cmd/aws"
@@ -29,7 +29,7 @@ func newCommandRoot() *cobra.Command {
 		Use:   "tool",
 		Short: "tool is the tool",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("insufficient arguments")
+			return errors.New("insufficient arguments")
 		},
 	}
 

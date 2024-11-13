@@ -31,7 +31,7 @@ func cleanUpInterfaceArray(in []interface{}) []interface{} {
 func cleanUpInterfaceMap(in map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	for k, v := range in {
-		result[fmt.Sprintf("%v", k)] = cleanUpMapValue(v)
+		result[k] = cleanUpMapValue(v)
 	}
 	return result
 }
@@ -65,7 +65,7 @@ func cleanUpMapValue(v interface{}) interface{} {
 func CleanUpGenericMap(in map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	for k, v := range in {
-		result[fmt.Sprintf("%v", k)] = cleanUpMapValue(v)
+		result[k] = cleanUpMapValue(v)
 	}
 	return result
 }

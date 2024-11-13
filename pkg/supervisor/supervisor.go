@@ -357,7 +357,7 @@ func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 // - inject k0s embedded bins into path
 func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 	env := os.Environ()
-	componentPrefix := fmt.Sprintf("%s_", strings.ToUpper(component))
+	componentPrefix := strings.ToUpper(component) + "_"
 
 	// put the component specific env vars in the front.
 	sort.Slice(env, func(i, j int) bool { return strings.HasPrefix(env[i], componentPrefix) })
@@ -390,7 +390,7 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 		}
 		switch k {
 		case "PATH":
-			env[i] = fmt.Sprintf("PATH=%s", dir.PathListJoin(path.Join(dataDir, "bin"), v))
+			env[i] = "PATH=" + dir.PathListJoin(path.Join(dataDir, "bin"), v)
 		default:
 			env[i] = fmt.Sprintf("%s=%s", k, v)
 		}

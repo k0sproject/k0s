@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -157,7 +158,7 @@ func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig)
 		CNIBin:           "c:\\\\opt\\\\cni\\\\bin",
 		CNIConf:          "c:\\\\opt\\\\cni\\\\conf",
 		KubeAPIHost:      cfg.Spec.API.Address,
-		KubeAPIPort:      fmt.Sprintf("%d", cfg.Spec.API.Port),
+		KubeAPIPort:      strconv.Itoa(cfg.Spec.API.Port),
 		IPv4ServiceCIDR:  cfg.Spec.Network.ServiceCIDR,
 		Nameserver:       dns,
 		NodeImage:        "calico/windows:v3.23.5",

@@ -17,14 +17,13 @@ limitations under the License.
 package probes
 
 import (
-	"fmt"
 	"os/exec"
 )
 
 func AssertExecutableInPath(p Probes, executable string) {
-	p.Set(fmt.Sprintf("executableInPath:%s", executable), func(path ProbePath, _ Probe) Probe {
+	p.Set("executableInPath:"+executable, func(path ProbePath, _ Probe) Probe {
 		return ProbeFn(func(r Reporter) error {
-			desc := NewProbeDesc(fmt.Sprintf("Executable in PATH: %s", executable), path)
+			desc := NewProbeDesc("Executable in PATH: "+executable, path)
 			path, err := exec.LookPath(executable)
 			if err != nil {
 				return r.Warn(desc, ErrorProp(err), "")

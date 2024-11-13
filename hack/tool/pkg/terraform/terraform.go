@@ -56,7 +56,7 @@ func Output(ctx context.Context, modulePath string) (map[string]tfexec.OutputMet
 		return nil, fmt.Errorf("unable to create 'terraform' instance: %w", err)
 	}
 
-	if err := tf.Init(ctx, tfexec.BackendConfig(fmt.Sprintf("path=%s", constant.TerraformStateFile))); err != nil {
+	if err := tf.Init(ctx, tfexec.BackendConfig("path="+constant.TerraformStateFile)); err != nil {
 		return nil, fmt.Errorf("unable to init terraform in '%s': %w", scriptDir, err)
 	}
 
@@ -75,7 +75,7 @@ func execute[OT any](ctx context.Context, workDir string, handler Handler[OT], o
 	tf.SetStdout(os.Stdout)
 	tf.SetLogger(log.Default())
 
-	if err := tf.Init(ctx, tfexec.BackendConfig(fmt.Sprintf("path=%s", constant.TerraformStateFile))); err != nil {
+	if err := tf.Init(ctx, tfexec.BackendConfig("path="+constant.TerraformStateFile)); err != nil {
 		return fmt.Errorf("unable to init terraform in '%s': %w", workDir, err)
 	}
 

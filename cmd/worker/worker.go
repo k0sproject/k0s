@@ -74,7 +74,7 @@ func NewWorkerCmd() *cobra.Command {
 			}
 
 			if c.TokenArg != "" && c.TokenFile != "" {
-				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
+				return errors.New("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
 			}
 
 			if err := (&sysinfo.K0sSysinfoSpec{

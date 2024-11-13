@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"strconv"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
@@ -58,7 +59,7 @@ func (ci *ClusterInfo) AsMap() map[string]string {
 	return map[string]string{
 		"K0S_StorageType":            string(ci.StorageType),
 		"K0S_ClusterID":              ci.ClusterID,
-		"K0S_ControlPlaneNodesCount": fmt.Sprintf("%d", ci.ControlPlaneNodesCount),
+		"K0S_ControlPlaneNodesCount": strconv.FormatUint(uint64(ci.ControlPlaneNodesCount), 10),
 		"K0S_WorkerData":             workerData,
 		"K0S_Version":                ci.K0sVersion,
 		"K0S_CNIProvider":            ci.CNIProvider,

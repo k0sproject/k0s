@@ -19,7 +19,7 @@ package leaderelection
 import (
 	"cmp"
 	"context"
-	"fmt"
+	"errors"
 	"sync/atomic"
 	"time"
 
@@ -64,13 +64,13 @@ type LeaseConfig struct {
 // Implements [Config].
 func (c *LeaseConfig) buildLock() (resourcelock.Interface, error) {
 	if c.Namespace == "" {
-		return nil, fmt.Errorf("namespace may not be empty")
+		return nil, errors.New("namespace may not be empty")
 	}
 	if c.Name == "" {
-		return nil, fmt.Errorf("name may not be empty")
+		return nil, errors.New("name may not be empty")
 	}
 	if c.Client == nil {
-		return nil, fmt.Errorf("client may not be nil")
+		return nil, errors.New("client may not be nil")
 	}
 
 	return &resourcelock.LeaseLock{

@@ -77,7 +77,7 @@ func (g *cgroupV2) detectDevicesController() (cgroupControllerAvailable, error) 
 	case errors.Is(err, os.ErrPermission) && os.Geteuid() != 0:
 		return cgroupControllerAvailable{true, "unknown", "insufficient permissions, try with elevated permissions"}, nil
 	case errors.Is(err, unix.EROFS):
-		return cgroupControllerAvailable{true, "unknown", fmt.Sprintf("read-only file system: %s", g.mountPoint)}, nil
+		return cgroupControllerAvailable{true, "unknown", "read-only file system: " + g.mountPoint}, nil
 
 	case eBPFProgramUnsupported(err):
 		return cgroupControllerAvailable{false, err.Error(), ""}, nil
@@ -190,7 +190,7 @@ func (g *cgroupV2) detectFreezerController() (cgroupControllerAvailable, error) 
 				return cgroupControllerAvailable{true, "unknown", "insufficient permissions, try with elevated permissions"}, nil
 			}
 			if errors.Is(err, unix.EROFS) && os.Geteuid() != 0 {
-				return cgroupControllerAvailable{true, "unknown", fmt.Sprintf("read-only file system: %s", g.mountPoint)}, nil
+				return cgroupControllerAvailable{true, "unknown", "read-only file system: " + g.mountPoint}, nil
 			}
 
 			return cgroupControllerAvailable{}, fmt.Errorf("failed to create temporary cgroup: %w", err)

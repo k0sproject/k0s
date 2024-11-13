@@ -144,7 +144,7 @@ func findArtifactDescriptor(all []ocispec.Descriptor, opts downloadOptions) (oci
 		}
 	}
 	if opts.artifactName == "" {
-		return ocispec.Descriptor{}, fmt.Errorf("no artifact descriptors found")
+		return ocispec.Descriptor{}, errors.New("no artifact descriptors found")
 	}
 	return ocispec.Descriptor{}, fmt.Errorf("artifact %q not found", opts.artifactName)
 }

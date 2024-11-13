@@ -62,7 +62,7 @@ func InstalledService() (service.Service, error) {
 	}
 
 	var s service.Service
-	return s, fmt.Errorf("k0s has not been installed as a service")
+	return s, errors.New("k0s has not been installed as a service")
 }
 
 // EnsureService installs the k0s service, per the given arguments, and the detected platform

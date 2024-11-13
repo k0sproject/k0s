@@ -105,17 +105,17 @@ func fileNameFromContentDisposition(contentDisposition string) (string, error) {
 		return sanitizeFileName(fileName)
 	}
 
-	return "", fmt.Errorf("no filename parameter")
+	return "", errors.New("no filename parameter")
 }
 
 func fileNameFromRequestPath(requestPath string) (string, error) {
 	if requestPath == "" {
-		return "", fmt.Errorf("request path is empty")
+		return "", errors.New("request path is empty")
 	}
 
 	fileName := path.Base(requestPath)
 	if fileName == "/" {
-		return "", fmt.Errorf("request path has no base")
+		return "", errors.New("request path has no base")
 	}
 
 	return sanitizeFileName(fileName)

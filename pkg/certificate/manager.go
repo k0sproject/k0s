@@ -65,8 +65,8 @@ type Manager struct {
 
 // EnsureCA makes sure the given CA certs and key is created.
 func (m *Manager) EnsureCA(name, cn string) error {
-	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
-	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", name))
+	keyFile := filepath.Join(m.K0sVars.CertRootDir, name+".key")
+	certFile := filepath.Join(m.K0sVars.CertRootDir, name+".crt")
 
 	if file.Exists(keyFile) && file.Exists(certFile) {
 		return nil
@@ -101,8 +101,8 @@ func (m *Manager) EnsureCA(name, cn string) error {
 // EnsureCertificate creates the specified certificate if it does not already exist
 func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, error) {
 
-	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
-	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
+	keyFile := filepath.Join(m.K0sVars.CertRootDir, certReq.Name+".key")
+	certFile := filepath.Join(m.K0sVars.CertRootDir, certReq.Name+".crt")
 
 	// if regenerateCert returns true, it means we need to create the certs
 	if m.regenerateCert(certReq, keyFile, certFile) {
@@ -126,8 +126,8 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, 
 			return Certificate{}, err
 		}
 		config := cli.Config{
-			CAFile:    fmt.Sprintf("file:%s", certReq.CACert),
-			CAKeyFile: fmt.Sprintf("file:%s", certReq.CAKey),
+			CAFile:    "file:" + certReq.CACert,
+			CAKeyFile: "file:" + certReq.CAKey,
 		}
 		s, err := sign.SignerFromConfig(config)
 		if err != nil {
@@ -228,8 +228,8 @@ func isManagedByK0s(cert *certinfo.Certificate) bool {
 }
 
 func (m *Manager) CreateKeyPair(name string, k0sVars *config.CfgVars, ownerID int) error {
-	keyFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
-	pubFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.pub", name))
+	keyFile := filepath.Join(k0sVars.CertRootDir, name+".key")
+	pubFile := filepath.Join(k0sVars.CertRootDir, name+".pub")
 
 	if file.Exists(keyFile) && file.Exists(pubFile) {
 		return file.Chown(keyFile, ownerID, constant.CertSecureMode)

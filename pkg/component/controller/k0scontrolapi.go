@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -56,7 +55,7 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 		DataDir: m.K0sVars.DataDir,
 		Args: []string{
 			"api",
-			fmt.Sprintf("--data-dir=%s", m.K0sVars.DataDir),
+			"--data-dir=" + m.K0sVars.DataDir,
 		},
 	}
 

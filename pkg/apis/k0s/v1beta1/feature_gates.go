@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -121,7 +122,7 @@ func (fg *FeatureGate) EnabledFor(component string) (value bool, found bool) {
 // Validate given feature gate
 func (fg *FeatureGate) Validate() error {
 	if fg.Name == "" {
-		return fmt.Errorf("feature gate must have name")
+		return errors.New("feature gate must have name")
 	}
 	return nil
 }

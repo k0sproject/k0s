@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"runtime"
@@ -135,7 +134,7 @@ func newDocsCmd() *cobra.Command {
 			case "man":
 				return doc.GenManTree(NewRootCmd(), &doc.GenManHeader{Title: "k0s", Section: "1"}, "./man")
 			}
-			return fmt.Errorf("invalid format")
+			return errors.New("invalid format")
 		},
 	}
 }

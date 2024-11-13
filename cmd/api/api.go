@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -221,7 +222,7 @@ func (c *command) isValidToken(ctx context.Context, token string, usage string) 
 		return false
 	}
 
-	secretName := fmt.Sprintf("bootstrap-token-%s", parts[0])
+	secretName := "bootstrap-token-" + parts[0]
 	secret, err := c.client.CoreV1().Secrets("kube-system").Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("failed to get bootstrap token: %s", err.Error())
@@ -241,10 +242,12 @@ func (c *command) isValidToken(ctx context.Context, token string, usage string) 
 }
 
 func (c *command) authMiddleware(next http.Handler, usage string) http.Handler {
+	unauthorizedErr := errors.New("go away")
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
-			sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
+			sendError(unauthorizedErr, w, http.StatusUnauthorized)
 			return
 		}
 
@@ -252,11 +255,11 @@ func (c *command) authMiddleware(next http.Handler, usage string) http.Handler {
 		if len(parts) == 2 {
 			token := parts[1]
 			if !c.isValidToken(r.Context(), token, usage) {
-				sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
+				sendError(unauthorizedErr, w, http.StatusUnauthorized)
 				return
 			}
 		} else {
-			sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
+			sendError(unauthorizedErr, w, http.StatusUnauthorized)
 			return
 		}
 

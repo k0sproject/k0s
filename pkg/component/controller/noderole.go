@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -113,7 +114,7 @@ func (n *NodeRole) ensureNodeLabel(ctx context.Context, client kubernetes.Interf
 }
 
 func (n *NodeRole) addNodeLabel(ctx context.Context, client kubernetes.Interface, node, key, value string) (*corev1.Node, error) {
-	keyPath := fmt.Sprintf("/metadata/labels/%s", jsonpointer.Escape(key))
+	keyPath := path.Join("/metadata/labels", jsonpointer.Escape(key))
 	patch := fmt.Sprintf(`[{"op":"add", "path":"%s", "value":"%s" }]`, keyPath, value)
 	return client.CoreV1().Nodes().Patch(ctx, node, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
 }

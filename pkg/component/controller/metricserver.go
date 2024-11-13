@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"path"
@@ -346,7 +347,7 @@ func (m *MetricServer) Reconcile(_ context.Context, clusterConfig *v1beta1.Clust
 // So that's 10m CPU and 30MiB mem per 10 nodes
 func (m *MetricServer) getConfig(ctx context.Context) (metricsConfig, error) {
 	if m.clusterConfig == nil {
-		return metricsConfig{}, fmt.Errorf("cluster config not available yet")
+		return metricsConfig{}, errors.New("cluster config not available yet")
 	}
 	cfg := metricsConfig{
 		Image:      m.clusterConfig.Spec.Images.MetricsServer.URI(),

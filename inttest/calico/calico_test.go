@@ -18,7 +18,6 @@ package calico
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -104,7 +103,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", "default"), "alpine pod did not start")
 
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
-		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetPod.Status.PodIP))
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, "/usr/bin/wget -qO- "+targetPod.Status.PodIP)
 		if err != nil {
 			return false, err
 		}

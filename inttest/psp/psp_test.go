@@ -17,7 +17,6 @@ limitations under the License.
 package psp
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -52,7 +51,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s kubectl apply -f /tmp/role.yaml", s.K0sFullPath))
+	_, err = ssh.ExecWithOutput(s.Context(), s.K0sFullPath+" kubectl apply -f /tmp/role.yaml")
 	s.NoError(err)
 
 	nonPrivelegedPodReq := &corev1.Pod{

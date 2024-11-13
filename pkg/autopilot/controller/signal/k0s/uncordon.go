@@ -16,6 +16,7 @@ package k0s
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -156,7 +157,7 @@ func (r *uncordoning) unCordonNode(ctx context.Context, signalNode crcli.Object)
 		var ok bool
 		node, ok = signalNode.(*corev1.Node)
 		if !ok {
-			return fmt.Errorf("failed to convert signalNode to Node")
+			return errors.New("failed to convert signalNode to Node")
 		}
 	} else {
 		nodeName := signalNode.GetName()

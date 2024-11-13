@@ -17,7 +17,7 @@ limitations under the License.
 package start
 
 import (
-	"fmt"
+	"errors"
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/install"
@@ -32,7 +32,7 @@ func NewStartCmd() *cobra.Command {
 		Short: "Start the k0s service configured on this host. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if os.Geteuid() != 0 {
-				return fmt.Errorf("this command must be run as root")
+				return errors.New("this command must be run as root")
 			}
 			svc, err := install.InstalledService()
 			if err != nil {
@@ -40,7 +40,7 @@ func NewStartCmd() *cobra.Command {
 			}
 			status, _ := svc.Status()
 			if status == service.StatusRunning {
-				return fmt.Errorf("already running")
+				return errors.New("already running")
 			}
 			return svc.Start()
 		},

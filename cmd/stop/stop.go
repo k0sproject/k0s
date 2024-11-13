@@ -17,7 +17,7 @@ limitations under the License.
 package stop
 
 import (
-	"fmt"
+	"errors"
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/install"
@@ -32,7 +32,7 @@ func NewStopCmd() *cobra.Command {
 		Short: "Stop the k0s service configured on this host. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if os.Geteuid() != 0 {
-				return fmt.Errorf("this command must be run as root")
+				return errors.New("this command must be run as root")
 			}
 			svc, err := install.InstalledService()
 			if err != nil {
@@ -43,7 +43,7 @@ func NewStopCmd() *cobra.Command {
 				return err
 			}
 			if status == service.StatusStopped {
-				return fmt.Errorf("already stopped")
+				return errors.New("already stopped")
 			}
 			return svc.Stop()
 		},

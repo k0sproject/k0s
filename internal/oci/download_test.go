@@ -85,7 +85,7 @@ func TestDownload(t *testing.T) {
 				opts = append(opts, oci.WithDockerAuth(
 					oci.DockerConfig{
 						Auths: map[string]oci.DockerConfigEntry{
-							addr: entry,
+							addr.Host: entry,
 						},
 					},
 				))
@@ -100,7 +100,7 @@ func TestDownload(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			url := fmt.Sprintf("%s/repository/artifact:latest", addr)
+			url := path.Join(addr.Host, "repository", "artifact:latest")
 			err := oci.Download(context.TODO(), url, buf, opts...)
 			if tt.Expected != "" {
 				require.NoError(t, err)
@@ -117,8 +117,8 @@ func TestDownload(t *testing.T) {
 // startOCIMockServer starts a mock server that will respond to the given test.
 // this mimics the behavior of the real OCI registry. This function returns the
 // address of the server.
-func startOCIMockServer(t *testing.T, tname string, test testFile) string {
-	var serverAddr string
+func startOCIMockServer(t *testing.T, tname string, test testFile) url.URL {
+	var serverURL *url.URL
 
 	starter := httptest.NewTLSServer
 	if test.PlainHTTP {
@@ -157,7 +157,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 					proto = "http"
 				}
 
-				header := fmt.Sprintf(`Bearer realm="%s://%s/token"`, proto, serverAddr)
+				header := fmt.Sprintf(`Bearer realm="%s://%s/token"`, proto, serverURL.Host)
 				w.Header().Add("WWW-Authenticate", header)
 				w.WriteHeader(http.StatusUnauthorized)
 				return
@@ -195,8 +195,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 	)
 	t.Cleanup(server.Close)
 
-	u, err := url.Parse(server.URL)
+	serverURL, err := url.Parse(server.URL)
 	require.NoError(t, err)
-	serverAddr = u.Host
-	return serverAddr
+	return *serverURL
 }

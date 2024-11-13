@@ -46,7 +46,7 @@ func newSqliteStep(tmpDir string, dbPath string) *sqliteStep {
 }
 
 func (s *sqliteStep) Name() string {
-	return fmt.Sprintf("sqlite db path %s", s.dbPath)
+	return "sqlite db path " + s.dbPath
 }
 
 func (s *sqliteStep) Backup() (StepResult, error) {

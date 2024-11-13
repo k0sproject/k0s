@@ -18,7 +18,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -58,7 +57,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	defer ssh.Disconnect()
 
 	s.Run("sysinfoSmoketest", func() {
-		out, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s sysinfo", s.K0sFullPath))
+		out, err := ssh.ExecWithOutput(s.Context(), s.K0sFullPath+" sysinfo")
 		s.NoError(err, "k0s sysinfo has non-zero exit code")
 		s.T().Logf("%s", out)
 		s.Regexp("\nOperating system: Linux \\(pass\\)\n", out)

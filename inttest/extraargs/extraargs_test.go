@@ -62,7 +62,7 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 }
 func (s *ExtraArgsSuite) checkFlag(ssh *common.SSHConnection, processName string, flag string) {
 	s.T().Logf("Checking flag %s in process %s", flag, processName)
-	pid, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("/usr/bin/pgrep %s", processName))
+	pid, err := ssh.ExecWithOutput(s.Context(), "/usr/bin/pgrep "+processName)
 	s.NoError(err)
 
 	flagCount, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("/bin/grep -c -- %s /proc/%s/cmdline", flag, pid))

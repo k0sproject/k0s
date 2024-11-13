@@ -19,6 +19,7 @@ package basic
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -58,12 +59,12 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	defer ssh.Disconnect()
 	_, err = ssh.ExecWithOutput(ctx, fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
 	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput(ctx, fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
+	_, err = ssh.ExecWithOutput(ctx, "touch -t 202201010000 "+s.K0sFullPath)
 	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput(ctx, "mkdir -p /run/k0s/konnectivity-server/ && touch -t 202201010000 /run/k0s/konnectivity-server/konnectivity-server.sock")
 	s.Require().NoError(err)
 
-	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
+	dataDirOpt := "--data-dir=" + customDataDir
 	s.Require().NoError(s.InitController(0, dataDirOpt))
 
 	token, err := s.GetJoinToken("worker", dataDirOpt)
@@ -165,7 +166,7 @@ func (s *BasicSuite) verifyKubeletAddressFlag(ctx context.Context, node string) 
 		return err
 	}
 	if output != "--address=0.0.0.0" {
-		return fmt.Errorf("kubelet does not have the address flag set")
+		return errors.New("kubelet does not have the address flag set")
 	}
 
 	return nil

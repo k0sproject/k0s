@@ -72,7 +72,7 @@ func RandomBootstrapSecret(role string, valid time.Duration) (*corev1.Secret, st
 
 	s := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("bootstrap-token-%s", tokenID),
+			Name:      "bootstrap-token-" + tokenID,
 			Namespace: "kube-system",
 		},
 		Type: corev1.SecretTypeBootstrapToken,
@@ -144,7 +144,7 @@ func (m *Manager) List(ctx context.Context, role string) ([]Token, error) {
 }
 
 func (m *Manager) Remove(ctx context.Context, tokenID string) error {
-	err := m.client.CoreV1().Secrets("kube-system").Delete(ctx, fmt.Sprintf("bootstrap-token-%s", tokenID), metav1.DeleteOptions{})
+	err := m.client.CoreV1().Secrets("kube-system").Delete(ctx, "bootstrap-token-"+tokenID, metav1.DeleteOptions{})
 	if errors.IsNotFound(err) {
 		return nil
 	}

@@ -214,7 +214,7 @@ func (a *OCIBundleReconciler) unpinOne(ctx context.Context, image images.Image, 
 		if err := SetImageSources(&image, sources); err != nil {
 			return fmt.Errorf("failed to reset image sources: %w", err)
 		}
-		_, err := isvc.Update(ctx, image, fmt.Sprintf("labels.%s", ImageSourcePathsLabel))
+		_, err := isvc.Update(ctx, image, "labels."+ImageSourcePathsLabel)
 		return err
 	}
 
@@ -302,8 +302,8 @@ func (a *OCIBundleReconciler) unpackBundle(ctx context.Context, client *containe
 	}
 
 	fieldpaths := []string{
-		fmt.Sprintf("labels.%s", ImagePinnedLabel),
-		fmt.Sprintf("labels.%s", ImageSourcePathsLabel),
+		"labels." + ImagePinnedLabel,
+		"labels." + ImageSourcePathsLabel,
 	}
 
 	isvc := client.ImageService()

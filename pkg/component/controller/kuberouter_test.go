@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -238,7 +239,7 @@ func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error
 		}
 	}
 
-	return cm, fmt.Errorf("kube-router cm not found in manifests")
+	return cm, errors.New("kube-router cm not found in manifests")
 }
 
 func getKubeRouterPlugin(cm corev1.ConfigMap, pluginType string) (dig.Mapping, error) {
@@ -249,7 +250,7 @@ func getKubeRouterPlugin(cm corev1.ConfigMap, pluginType string) (dig.Mapping, e
 	}
 	plugins, ok := data.Dig("plugins").([]interface{})
 	if !ok {
-		return data, fmt.Errorf("failed to dig plugins")
+		return data, errors.New("failed to dig plugins")
 	}
 	for _, p := range plugins {
 		plugin := dig.Mapping(p.(map[string]interface{}))
@@ -274,5 +275,5 @@ func findDaemonset(resources []*unstructured.Unstructured) (v1.DaemonSet, error)
 		}
 	}
 
-	return ds, fmt.Errorf("kube-router ds not found in manifests")
+	return ds, errors.New("kube-router ds not found in manifests")
 }

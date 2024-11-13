@@ -18,11 +18,11 @@ package manager
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	proberPackage "github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,7 +89,7 @@ func TestManagerInitFail(t *testing.T) {
 
 	ctx := context.Background()
 	f1 := &Fake{
-		InitErr: fmt.Errorf("failed"),
+		InitErr: assert.AnError,
 	}
 	m.Add(ctx, f1)
 
@@ -113,7 +113,7 @@ func TestManagerRunFail(t *testing.T) {
 	m.Add(ctx, f1)
 
 	f2 := &Fake{
-		RunErr: fmt.Errorf("failed"),
+		RunErr: assert.AnError,
 	}
 	m.Add(ctx, f2)
 
@@ -145,7 +145,7 @@ func TestManagerHealthyFail(t *testing.T) {
 	m.Add(ctx, f1)
 
 	f2 := &Fake{
-		HealthyErr: fmt.Errorf("failed"),
+		HealthyErr: assert.AnError,
 	}
 	m.Add(ctx, f2)
 

@@ -120,7 +120,7 @@ func (c *Calico) dumpCRDs() error {
 
 	for _, entry := range crds {
 		filename := entry.Name()
-		manifestName := fmt.Sprintf("calico-crd-%s", filename)
+		manifestName := "calico-crd-" + filename
 
 		output := bytes.NewBuffer([]byte{})
 
@@ -130,7 +130,7 @@ func (c *Calico) dumpCRDs() error {
 		}
 
 		tw := templatewriter.TemplateWriter{
-			Name:     fmt.Sprintf("calico-crd-%s", strings.TrimSuffix(filename, filepath.Ext(filename))),
+			Name:     "calico-crd-" + strings.TrimSuffix(filename, filepath.Ext(filename)),
 			Template: string(contents),
 			Data:     emptyStruct,
 		}

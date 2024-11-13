@@ -19,6 +19,7 @@ limitations under the License.
 package restore
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -74,7 +75,7 @@ func NewRestoreCmd() *cobra.Command {
 
 func (c *command) restore(path string, out io.Writer) error {
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("this command must be run as root")
+		return errors.New("this command must be run as root")
 	}
 
 	k0sStatus, _ := status.GetStatusInfo(c.K0sVars.StatusSocketPath)
