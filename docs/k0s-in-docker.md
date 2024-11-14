@@ -25,15 +25,26 @@ You can run your own k0s in Docker:
 docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 --cgroupns=host docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 -- k0s controller --enable-worker
 ```
 
-Flags:
--d: Runs the container in detached mode.
---name k0s: Names the container k0s.
---hostname k0s: Sets the hostname of the container to k0s.
---privileged: Grants the container elevated privileges, required by k0s to function properly inside Docker.
--v /var/lib/k0s: Uses Docker volume. Mounts the docker container’s /var/lib/k0s directory to the host, ensuring that cluster data persists across container restarts.
--p 6443:6443: Exposes port 6443 on the host for the Kubernetes API server, allowing you to interact with the cluster externally.
---cgroupns=host: Configures the container to share the host's cgroup namespace, allowing k0s to monitor system resources accurately.
--- k0s controller --enable-worker: Starts the k0s controller and enables a worker node within the same container, creating a single-node cluster.
+Explanation of command line arguments:
+
+- `-d` runs the container in detached mode, i.e. in the background.
+- `--name k0s` names the container "k0s".
+- `--hostname k0s` sets the hostname of the container to "k0s".
+- `--privileged` gives the container the elevated privileges that k0s needs to
+  function properly within Docker.
+- `-v /var/lib/k0s` creates a a Docker volume and mounts it to `/var/lib/k0s`
+  inside the container, ensuring that cluster data persists across container
+  restarts.
+- `-p 6443:6443` exposes the container's Kubernetes API server port 6443 to the
+  host, allowing you to interact with the cluster externally.
+- `--cgroupns=host` configures the container to share the host's cgroup
+  namespace, allowing k0s to run embedded container workloads.
+- `docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0` is the name of the
+  k0s Docker image to run.
+- `--` marks the end of the argument processing for the docker binary.
+- `k0s controller --enable-worker` is the actual command to run inside the
+  Docker container. It starts the k0s controller and enables a worker node
+  within the same container, creating a single node cluster.
 
 **Note:** This command starts k0s with a worker. You may disable the worker by running it without the flag `--enable-worker`
 
