@@ -1,0 +1,25 @@
+#  Adding renovate workflow to dependencies version in 
+name: Renovate
+on:
+  schedule:
+    - cron: '* */6 * * *'  # Runs every 6 hours
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@v41.0.2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          configurationFile: .github/workflows/renovate.json
+        env:
+          LOG_LEVEL: 'debug'
+          RENOVATE_AUTODISCOVER: 'false'
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
