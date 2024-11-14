@@ -2257,15 +2257,27 @@
 <p>You can run your own k0s in Docker:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w"> </span>docker.io/k0sproject/k0s:v1.31.2-k0s.0<span class="w"> </span>--<span class="w"> </span>k0s<span class="w"> </span>controller<span class="w"> </span>--enable-worker
 </code></pre></div>
-<p>Flags:
--d: Runs the container in detached mode.
---name k0s: Names the container k0s.
---hostname k0s: Sets the hostname of the container to k0s.
---privileged: Grants the container elevated privileges, required by k0s to function properly inside Docker.
--v /var/lib/k0s: Uses Docker volume. Mounts the docker container’s /var/lib/k0s directory to the host, ensuring that cluster data persists across container restarts.
--p 6443:6443: Exposes port 6443 on the host for the Kubernetes API server, allowing you to interact with the cluster externally.
---cgroupns=host: Configures the container to share the host's cgroup namespace, allowing k0s to monitor system resources accurately.
--- k0s controller --enable-worker: Starts the k0s controller and enables a worker node within the same container, creating a single-node cluster.</p>
+<p>Explanation of command line arguments:</p>
+<ul>
+<li><code>-d</code> runs the container in detached mode, i.e. in the background.</li>
+<li><code>--name k0s</code> names the container "k0s".</li>
+<li><code>--hostname k0s</code> sets the hostname of the container to "k0s".</li>
+<li><code>--privileged</code> gives the container the elevated privileges that k0s needs to
+  function properly within Docker.</li>
+<li><code>-v /var/lib/k0s</code> creates a a Docker volume and mounts it to <code>/var/lib/k0s</code>
+  inside the container, ensuring that cluster data persists across container
+  restarts.</li>
+<li><code>-p 6443:6443</code> exposes the container's Kubernetes API server port 6443 to the
+  host, allowing you to interact with the cluster externally.</li>
+<li><code>--cgroupns=host</code> configures the container to share the host's cgroup
+  namespace, allowing k0s to run embedded container workloads.</li>
+<li><code>docker.io/k0sproject/k0s:v1.31.2-k0s.0</code> is the name of the
+  k0s Docker image to run.</li>
+<li><code>--</code> marks the end of the argument processing for the docker binary.</li>
+<li><code>k0s controller --enable-worker</code> is the actual command to run inside the
+  Docker container. It starts the k0s controller and enables a worker node
+  within the same container, creating a single node cluster.</li>
+</ul>
 <p><strong>Note:</strong> This command starts k0s with a worker. You may disable the worker by running it without the flag <code>--enable-worker</code></p>
 <h3 id="2-optional-create-additional-workers">2. (Optional) Create additional workers<a class="headerlink" href="#2-optional-create-additional-workers" title="Permanent link">#</a></h3>
 <p>You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.</p>
