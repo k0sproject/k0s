@@ -32,7 +32,6 @@ type Config struct {
 	cfgFile          string
 	containerd       *containerdConfig
 	containerRuntime runtime.ContainerRuntime
-	dataDir          string
 	k0sVars          *config.CfgVars
 	runDir           string
 }
@@ -63,7 +62,6 @@ func NewConfig(k0sVars *config.CfgVars, cfgFile string, criSocketFlag string) (*
 		cfgFile:          cfgFile,
 		containerd:       containerdCfg,
 		containerRuntime: runtime.NewContainerRuntime(runtimeEndpoint),
-		dataDir:          k0sVars.DataDir,
 		runDir:           runDir,
 		k0sVars:          k0sVars,
 	}, nil
