@@ -59,7 +59,7 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 
 	// Prepare the client and the request.
 	client := http.Client{Transport: transport}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("invalid download request: %w", err)
 	}
