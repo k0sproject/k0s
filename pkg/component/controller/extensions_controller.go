@@ -258,7 +258,7 @@ func removeFinalizer(ctx context.Context, c client.Client, chart *helmv1beta1.Ch
 	return c.Patch(ctx, chart, client.RawPatch(types.JSONPatchType, patch))
 }
 
-const defaultTimeout = time.Duration(10 * time.Minute)
+const defaultTimeout = 10 * time.Minute
 
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) error {
 	var err error

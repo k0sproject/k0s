@@ -206,7 +206,7 @@ func (uc *UpdateConfig) ToPlan(nextVersion uc.VersionInfo) Plan {
 	if !updateCommandFound {
 		p.Spec.Commands = append(p.Spec.Commands, PlanCommand{
 			K0sUpdate: &PlanCommandK0sUpdate{
-				Version:   string(nextVersion.Version),
+				Version:   nextVersion.Version,
 				Platforms: platforms,
 				Targets: PlanCommandTargets{
 					Controllers: PlanCommandTarget{
@@ -227,7 +227,7 @@ func (uc *UpdateConfig) ToPlan(nextVersion uc.VersionInfo) Plan {
 			planCmd := PlanCommand{}
 			if cmd.K0sUpdate != nil {
 				planCmd.K0sUpdate = &PlanCommandK0sUpdate{
-					Version:     string(nextVersion.Version),
+					Version:     nextVersion.Version,
 					ForceUpdate: cmd.K0sUpdate.ForceUpdate,
 					Platforms:   platforms,
 					Targets:     cmd.K0sUpdate.Targets,
@@ -235,7 +235,7 @@ func (uc *UpdateConfig) ToPlan(nextVersion uc.VersionInfo) Plan {
 			}
 			if cmd.AirgapUpdate != nil {
 				planCmd.AirgapUpdate = &PlanCommandAirgapUpdate{
-					Version:   string(nextVersion.Version),
+					Version:   nextVersion.Version,
 					Platforms: airgapPlatforms,
 					Workers:   cmd.AirgapUpdate.Workers,
 				}

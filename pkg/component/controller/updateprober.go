@@ -60,7 +60,7 @@ func (u *UpdateProber) Start(ctx context.Context) error {
 	u.log.Debug("starting up")
 	// Check for updates in 30min intervals from default update server
 	// ENV var only to be used for testing purposes
-	updateCheckInterval := time.Duration(30 * time.Minute)
+	updateCheckInterval := 30 * time.Minute
 	if os.Getenv("K0S_UPDATE_CHECK_INTERVAL") != "" {
 		d, err := time.ParseDuration(os.Getenv("K0S_UPDATE_CHECK_INTERVAL"))
 		if err != nil {

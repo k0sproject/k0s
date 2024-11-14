@@ -64,7 +64,7 @@ func (u *periodicUpdater) Config() *apv1beta2.UpdateConfig {
 
 func (u *periodicUpdater) Run() error {
 	u.log.Debug("starting periodic updater")
-	checkDuration := time.Duration(10 * time.Minute)
+	checkDuration := 10 * time.Minute
 	// ENV var used only for testing purposes
 	if e := os.Getenv("K0S_UPDATE_PERIOD"); e != "" {
 		cd, err := time.ParseDuration(e)

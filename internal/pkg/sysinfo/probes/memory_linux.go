@@ -33,7 +33,8 @@ func newTotalMemoryProber() totalMemoryProber {
 			if err = syscall.Sysinfo(&info); err != nil {
 				err = fmt.Errorf("sysinfo syscall failed: %w", err)
 			} else {
-				totalMemory = uint64(info.Totalram) * uint64(info.Unit) // explicit cast to support 32-bit systems
+				//nolint:unconvert // explicit cast to support 32-bit systems
+				totalMemory = uint64(info.Totalram) * uint64(info.Unit)
 			}
 		})
 
