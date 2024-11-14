@@ -69,16 +69,6 @@ type Kubelet struct {
 
 var _ manager.Component = (*Kubelet)(nil)
 
-type kubeletConfig struct {
-	ClientCAFile       string
-	VolumePluginDir    string
-	KubeReservedCgroup string
-	KubeletCgroups     string
-	CgroupsPerQOS      bool
-	ResolvConf         string
-	StaticPodURL       string
-}
-
 // Init extracts the needed binaries
 func (k *Kubelet) Init(_ context.Context) error {
 	cmds := []string{"kubelet", "xtables-legacy-multi", "xtables-nft-multi"}
@@ -156,21 +146,6 @@ func lookupHostname(ctx context.Context, hostname string) (ipv4 net.IP, ipv6 net
 func (k *Kubelet) Start(ctx context.Context) error {
 	cmd := "kubelet"
 
-	var staticPodURL string
-	if k.StaticPods != nil {
-		var err error
-		if staticPodURL, err = k.StaticPods.ManifestURL(); err != nil {
-			return err
-		}
-	}
-
-	kubeletConfigData := kubeletConfig{
-		ClientCAFile:       filepath.Join(k.K0sVars.CertRootDir, "ca.crt"),
-		VolumePluginDir:    k.K0sVars.KubeletVolumePluginDir,
-		KubeReservedCgroup: "system.slice",
-		KubeletCgroups:     "/system.slice/containerd.service",
-		StaticPodURL:       staticPodURL,
-	}
 	if runtime.GOOS == "windows" {
 		cmd = "kubelet.exe"
 	}
@@ -211,15 +186,10 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	}
 
 	if runtime.GOOS == "windows" {
-		kubeletConfigData.CgroupsPerQOS = false
-		kubeletConfigData.ResolvConf = ""
 		args["--enforce-node-allocatable"] = ""
 		args["--hostname-override"] = nodename
 		args["--hairpin-mode"] = "promiscuous-bridge"
 		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
-	} else {
-		kubeletConfigData.CgroupsPerQOS = true
-		kubeletConfigData.ResolvConf = determineKubeletResolvConfPath()
 	}
 
 	if k.CRISocket == "" && runtime.GOOS != "windows" {
@@ -247,14 +217,8 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		Args:    args.ToArgs(),
 	}
 
-	kubeletconfig, err := k.prepareLocalKubeletConfig(kubeletConfigData)
-	if err != nil {
-		logrus.Warnf("failed to prepare local kubelet config: %s", err.Error())
+	if err := k.writeKubeletConfig(kubeletConfigPath); err != nil {
 		return err
-	}
-	err = file.WriteContentAtomically(kubeletConfigPath, []byte(kubeletconfig), 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}
 
 	return k.supervisor.Supervise()
@@ -266,39 +230,57 @@ func (k *Kubelet) Stop() error {
 	return nil
 }
 
-func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (string, error) {
-	preparedConfig := k.Configuration.DeepCopy()
-	preparedConfig.Authentication.X509.ClientCAFile = kubeletConfigData.ClientCAFile // filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
-	preparedConfig.VolumePluginDir = kubeletConfigData.VolumePluginDir               // k.K0sVars.KubeletVolumePluginDir
-	preparedConfig.KubeReservedCgroup = kubeletConfigData.KubeReservedCgroup
-	preparedConfig.KubeletCgroups = kubeletConfigData.KubeletCgroups
-	preparedConfig.ResolverConfig = ptr.To(kubeletConfigData.ResolvConf)
-	preparedConfig.CgroupsPerQOS = ptr.To(kubeletConfigData.CgroupsPerQOS)
-	preparedConfig.StaticPodURL = kubeletConfigData.StaticPodURL
+func (k *Kubelet) writeKubeletConfig(path string) error {
+	var staticPodURL string
+	if k.StaticPods != nil {
+		var err error
+		if staticPodURL, err = k.StaticPods.ManifestURL(); err != nil {
+			return err
+		}
+	}
 
 	containerRuntimeEndpoint, err := GetContainerRuntimeEndpoint(k.CRISocket, k.K0sVars.RunDir)
 	if err != nil {
-		return "", err
+		return err
 	}
-	preparedConfig.ContainerRuntimeEndpoint = containerRuntimeEndpoint.String()
+
+	config := k.Configuration.DeepCopy()
+	config.Authentication.X509.ClientCAFile = filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
+	config.VolumePluginDir = k.K0sVars.KubeletVolumePluginDir
+	config.ResolverConfig = determineKubeletResolvConfPath()
+	config.StaticPodURL = staticPodURL
+	config.ContainerRuntimeEndpoint = containerRuntimeEndpoint.String()
 
 	if len(k.Taints) > 0 {
 		var taints []corev1.Taint
 		for _, taint := range k.Taints {
 			parsedTaint, err := parseTaint(taint)
 			if err != nil {
-				return "", fmt.Errorf("can't parse taints for profile config map: %w", err)
+				return fmt.Errorf("can't parse taints for profile config map: %w", err)
 			}
 			taints = append(taints, parsedTaint)
 		}
-		preparedConfig.RegisterWithTaints = taints
+		config.RegisterWithTaints = taints
 	}
 
-	preparedConfigBytes, err := yaml.Marshal(preparedConfig)
-	if err != nil {
-		return "", fmt.Errorf("can't marshal kubelet config: %w", err)
+	// cgroup related things (Linux only)
+	if runtime.GOOS == "linux" {
+		config.KubeReservedCgroup = "system.slice"
+		config.KubeletCgroups = "/system.slice/containerd.service"
+		config.CgroupsPerQOS = ptr.To(true)
 	}
-	return string(preparedConfigBytes), nil
+
+	configBytes, err := yaml.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("can't marshal kubelet config: %w", err)
+	}
+
+	err = file.WriteContentAtomically(path, configBytes, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write kubelet config: %w", err)
+	}
+
+	return nil
 }
 
 func parseTaint(st string) (corev1.Taint, error) {
@@ -354,27 +336,31 @@ func validateTaintEffect(effect corev1.TaintEffect) error {
 
 // determineKubeletResolvConfPath returns the path to the resolv.conf file that
 // the kubelet should use.
-func determineKubeletResolvConfPath() string {
+func determineKubeletResolvConfPath() *string {
 	path := "/etc/resolv.conf"
 
-	// https://www.freedesktop.org/software/systemd/man/systemd-resolved.service.html#/etc/resolv.conf
-	// If it's likely that resolv.conf is pointing to a systemd-resolved
-	// nameserver, that nameserver won't be reachable from within containers.
-	// Try to use the alternative resolv.conf path used by systemd-resolved instead.
-	detected, err := hasSystemdResolvedNameserver(path)
-	if err != nil {
-		logrus.WithError(err).Infof("Error while trying to detect the presence of systemd-resolved, using resolv.conf: %s", path)
-		return path
-	}
+	switch runtime.GOOS {
+	case "windows":
+		return nil
 
-	if detected {
-		alternatePath := "/run/systemd/resolve/resolv.conf"
-		logrus.Infof("The file %s looks like it's managed by systemd-resolved, using resolv.conf: %s", path, alternatePath)
-		return alternatePath
+	case "linux":
+		// https://www.freedesktop.org/software/systemd/man/systemd-resolved.service.html#/etc/resolv.conf
+		// If it's likely that resolv.conf is pointing to a systemd-resolved
+		// nameserver, that nameserver won't be reachable from within
+		// containers. Try to use the alternative resolv.conf path used by
+		// systemd-resolved instead.
+		detected, err := hasSystemdResolvedNameserver(path)
+		if err != nil {
+			logrus.WithError(err).Info("Failed to detect the presence of systemd-resolved")
+		} else if detected {
+			systemdPath := "/run/systemd/resolve/resolv.conf"
+			logrus.Infof("The file %s looks like it's managed by systemd-resolved, using resolv.conf: %s", path, systemdPath)
+			return &systemdPath
+		}
 	}
 
 	logrus.Infof("Using resolv.conf: %s", path)
-	return path
+	return &path
 }
 
 // hasSystemdResolvedNameserver parses the given resolv.conf file and checks if
