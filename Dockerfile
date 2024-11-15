@@ -15,4 +15,6 @@ ADD ./k0s-${TARGETARCH}/k0s /usr/local/bin/k0s
 
 ENTRYPOINT ["/sbin/tini", "--", "/entrypoint.sh" ]
 
+# Start CMD
 CMD ["k0s", "controller", "--enable-worker"]
+# End CMD

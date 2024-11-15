@@ -1,0 +1,36 @@
+services:
+  k0s-controller:
+    image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+    container_name: k0s-controller
+    hostname: k0s-controller
+    network_mode: bridge # other modes are unsupported
+    ports:
+      - 6443:6443 # publish the Kubernetes API server port
+    volumes:
+      - /var/lib/k0s # this is where k0s stores its data
+      - /var/log/pods # this is where k0s stores pod logs
+      - /dev/kmsg:/dev/kmsg:ro # required by kubelets OOM watcher
+    tmpfs:
+      - /run # this is where k0s stores runtime data
+    cap_add:
+     - sys_admin
+     - net_admin
+     - sys_ptrace
+     - sys_resource
+    device_cgroup_rules:
+      - c 1:11 r # required by kubelets OOM watcher
+    configs:
+      - source: k0s.yaml
+        target: /etc/k0s/k0s.yaml
+
+configs:
+  k0s.yaml:
+    content: |
+      apiVersion: k0s.k0sproject.io/v1beta1
+      kind: ClusterConfig
+      metadata:
+        name: k0s
+      spec:
+        storage:
+          type: kine
+      # Any additional configuration goes here ...
