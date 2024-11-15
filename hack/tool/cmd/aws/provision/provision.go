@@ -17,6 +17,7 @@ package provision
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -100,7 +101,7 @@ func bugfixK0sctlNullImages(k0sctlConfigFile string) error {
 	cmd.Stdout = os.Stdout
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to post-process k0sctl.yaml")
+		return errors.New("failed to post-process k0sctl.yaml")
 	}
 
 	return nil

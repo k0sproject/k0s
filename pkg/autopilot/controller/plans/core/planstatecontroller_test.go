@@ -16,7 +16,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -69,7 +68,7 @@ func TestReconcile(t *testing.T) {
 			"HandlerError",
 			&fakePlanStateHandler{
 				func(ctx context.Context, plan *apv1beta2.Plan) (ProviderResult, error) {
-					return ProviderResultFailure, fmt.Errorf("intentional error")
+					return ProviderResultFailure, assert.AnError
 				},
 			},
 			&apv1beta2.Plan{

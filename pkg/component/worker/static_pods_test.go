@@ -280,7 +280,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		url, err := underTest.ManifestURL()
 		require.NoError(t, err)
 
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
@@ -328,7 +328,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		url, err := underTest.ManifestURL()
 		require.NoError(t, err)
 
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)

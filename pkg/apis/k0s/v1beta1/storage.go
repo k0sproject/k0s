@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -281,19 +282,19 @@ func (e *EtcdConfig) GetKeyFilePath(certDir string) string {
 }
 
 func validateRequiredProperties(e *ExternalCluster) []error {
-	var errors []error
+	var errs []error
 
 	if len(e.Endpoints) == 0 {
-		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot be null or empty"))
+		errs = append(errs, errors.New("spec.storage.etcd.externalCluster.endpoints cannot be null or empty"))
 	} else if slices.Contains(e.Endpoints, "") {
-		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot contain empty strings"))
+		errs = append(errs, errors.New("spec.storage.etcd.externalCluster.endpoints cannot contain empty strings"))
 	}
 
 	if e.EtcdPrefix == "" {
-		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.etcdPrefix cannot be empty"))
+		errs = append(errs, errors.New("spec.storage.etcd.externalCluster.etcdPrefix cannot be empty"))
 	}
 
-	return errors
+	return errs
 }
 
 func validateOptionalTLSProperties(e *ExternalCluster) []error {
@@ -302,7 +303,7 @@ func validateOptionalTLSProperties(e *ExternalCluster) []error {
 	if noTLSPropertyDefined || e.hasAllTLSPropertiesDefined() {
 		return nil
 	}
-	return []error{fmt.Errorf("spec.storage.etcd.externalCluster is invalid: " +
+	return []error{errors.New("spec.storage.etcd.externalCluster is invalid: " +
 		"all TLS properties [caFile,clientCertFile,clientKeyFile] must be defined or none of those")}
 }
 

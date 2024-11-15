@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
@@ -52,7 +53,7 @@ func etcdLeaveCmd() *cobra.Command {
 			peerAddress := nodeConfig.Spec.Storage.Etcd.PeerAddress
 			if peerAddressArg == "" {
 				if peerAddress == "" {
-					return fmt.Errorf("can't leave etcd cluster: this node doesn't have an etcd peer address, check the k0s configuration or use --peer-address")
+					return errors.New("can't leave etcd cluster: this node doesn't have an etcd peer address, check the k0s configuration or use --peer-address")
 				}
 			} else {
 				peerAddress = peerAddressArg
@@ -73,13 +74,13 @@ func etcdLeaveCmd() *cobra.Command {
 			if err := etcdClient.DeleteMember(ctx, peerID); err != nil {
 				logrus.
 					WithField("peerURL", peerURL).
-					WithField("peerID", fmt.Sprintf("%x", peerID)).
+					WithField("peerID", strconv.FormatUint(peerID, 16)).
 					Errorf("Failed to delete node from cluster")
 				return err
 			}
 
 			logrus.
-				WithField("peerID", fmt.Sprintf("%x", peerID)).
+				WithField("peerID", strconv.FormatUint(peerID, 16)).
 				Info("Successfully deleted")
 			return nil
 		},

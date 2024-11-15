@@ -182,7 +182,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context) error {
 	}
 
 	// Convert the memberID to hex string
-	memberIDStr := fmt.Sprintf("%x", memberID)
+	memberIDStr := strconv.FormatUint(memberID, 16)
 	name, err := e.etcdConfig.GetNodeName()
 
 	if err != nil {

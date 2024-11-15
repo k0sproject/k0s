@@ -24,6 +24,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"slices"
 	"syscall"
@@ -58,6 +59,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/rest"
 )
 
@@ -94,7 +96,7 @@ func NewControllerCmd() *cobra.Command {
 				c.TokenArg = args[0]
 			}
 			if c.TokenArg != "" && c.TokenFile != "" {
-				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
+				return errors.New("you can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
 			}
 			if err := c.ControllerOptions.Normalize(); err != nil {
 				return err
@@ -659,9 +661,11 @@ func (c *command) startWorker(ctx context.Context, profile string, nodeConfig *v
 	wc := workercmd.Command(*(*config.CLIOptions)(c))
 	wc.TokenArg = bootstrapConfig
 	wc.WorkerProfile = profile
-	wc.Labels = append(wc.Labels, fmt.Sprintf("%s=control-plane", constant.K0SNodeRoleLabel))
+	wc.Labels = append(wc.Labels, fields.OneTermEqualSelector(constant.K0SNodeRoleLabel, "control-plane").String())
 	if !c.SingleNode && !c.NoTaints {
-		wc.Taints = append(wc.Taints, fmt.Sprintf("%s/master=:NoSchedule", constant.NodeRoleLabelNamespace))
+		key := path.Join(constant.NodeRoleLabelNamespace, "master")
+		taint := fields.OneTermEqualSelector(key, ":NoSchedule")
+		wc.Taints = append(wc.Taints, taint.String())
 	}
 	return wc.Start(ctx)
 }

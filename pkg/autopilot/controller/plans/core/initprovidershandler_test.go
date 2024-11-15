@@ -16,7 +16,7 @@ package core
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -80,10 +80,10 @@ func TestInitProvidersHandle(t *testing.T) {
 						return PlanSchedulableWait, false, nil
 					},
 					handlerSchedulable: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return PlanSchedulableWait, false, fmt.Errorf("should not have reached schedulable")
+						return PlanSchedulableWait, false, errors.New("should not have reached schedulable")
 					},
 					handlerSchedulableWait: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-						return PlanSchedulableWait, false, fmt.Errorf("should not have reached schedulablewait")
+						return PlanSchedulableWait, false, errors.New("should not have reached schedulablewait")
 					},
 				},
 			),
@@ -177,7 +177,7 @@ func TestInitProvidersHandle(t *testing.T) {
 			NewInitProvidersHandler(
 				logger,
 				func(ctx context.Context, provider PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-					return PlanSchedulableWait, false, fmt.Errorf("intentional error")
+					return PlanSchedulableWait, false, assert.AnError
 				},
 				PlanSchedulableWait,
 				fakePlanCommandProvider{

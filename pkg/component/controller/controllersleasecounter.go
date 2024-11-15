@@ -65,7 +65,7 @@ func (l *K0sControllersLeaseCounter) Start(context.Context) error {
 	if err != nil {
 		return nil
 	}
-	leaseName := fmt.Sprintf("k0s-ctrl-%s", nodeName)
+	leaseName := "k0s-ctrl-" + nodeName
 
 	leasePool, err := leaderelection.NewLeasePool(client, leaseName, l.InvocationID,
 		leaderelection.WithLogger(log))

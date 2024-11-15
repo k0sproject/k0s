@@ -160,6 +160,6 @@ func addCustomData(ctx context.Context, analyticCtx *analytics.Context, clients 
 		return
 	}
 	for k, v := range cm.Data {
-		analyticCtx.Extra[fmt.Sprintf("custom.%s", k)] = v
+		analyticCtx.Extra["custom."+k] = v
 	}
 }

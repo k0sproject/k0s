@@ -235,11 +235,11 @@ func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 	}
 
 	if c.origin == CfgVarsOriginRuntime {
-		return nil, fmt.Errorf("runtime config is not available")
+		return nil, errors.New("runtime config is not available")
 	}
 
 	if c.StartupConfigPath == "" {
-		return nil, fmt.Errorf("config path is not set")
+		return nil, errors.New("config path is not set")
 	}
 
 	var nodeConfig *v1beta1.ClusterConfig

@@ -156,7 +156,7 @@ func (as *AddonsSuite) deleteRelease(chart *helmv1beta1.Chart) {
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		as.T().Logf("Expecting have no secrets left for release %s/%s", chart.Status.Namespace, chart.Status.ReleaseName)
 		items, err := k8sclient.CoreV1().Secrets(chart.Status.Namespace).List(pollCtx, metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("name=%s", chart.Status.ReleaseName),
+			LabelSelector: "name=" + chart.Status.ReleaseName,
 		})
 		if err != nil {
 			if ctxErr := context.Cause(ctx); ctxErr != nil {
@@ -294,7 +294,7 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		err = chartClient.Get(pollCtx, client.ObjectKey{
 			Namespace: "kube-system",
-			Name:      fmt.Sprintf("k0s-addon-chart-%s", addonName),
+			Name:      "k0s-addon-chart-" + addonName,
 		}, &chart)
 		if err != nil {
 			if ctxErr := context.Cause(ctx); ctxErr != nil {
@@ -347,7 +347,7 @@ func (as *AddonsSuite) checkCustomValues(releaseName string) error {
 		return err
 	}
 	return wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
-		serverDeployment := fmt.Sprintf("%s-echo-server", releaseName)
+		serverDeployment := releaseName + "-echo-server"
 		d, err := kc.AppsV1().Deployments("default").Get(pollCtx, serverDeployment, metav1.GetOptions{})
 		if err != nil {
 			if ctxErr := context.Cause(ctx); ctxErr != nil {

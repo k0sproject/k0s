@@ -18,8 +18,8 @@ package applier_test
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -91,9 +91,9 @@ spec:
         ports:
           - containerPort: 80
 `
-	require.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-ns.yaml", dir), []byte(templateNS), 0400))
-	require.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-list.yaml", dir), []byte(template), 0400))
-	require.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-deploy.yaml", dir), []byte(templateDeployment), 0400))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "test-ns.yaml"), []byte(templateNS), 0400))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "test-list.yaml"), []byte(template), 0400))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "test-deploy.yaml"), []byte(templateDeployment), 0400))
 
 	fakes := kubeutil.NewFakeClientFactory()
 	a := applier.NewApplier(dir, fakes)

@@ -16,7 +16,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -40,7 +39,7 @@ func TestLeasesInitialPending(t *testing.T) {
 	leaseWatcher, err := NewLeaseWatcher(logger, clientFactory)
 	assert.NoError(t, err)
 
-	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(ctx, constant.AutopilotNamespace, fmt.Sprintf("%s-lease", constant.AutopilotNamespace), t.Name())
+	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(ctx, constant.AutopilotNamespace, constant.AutopilotNamespace+"-lease", t.Name())
 	assert.NotNil(t, errorCh)
 	assert.NotNil(t, leaseEventStatusCh)
 

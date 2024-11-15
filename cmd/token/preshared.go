@@ -19,6 +19,7 @@ package token
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -55,10 +56,10 @@ func preSharedCmd() *cobra.Command {
 				return err
 			}
 			if certPath == "" {
-				return fmt.Errorf("please, provide --cert argument")
+				return errors.New("please, provide --cert argument")
 			}
 			if joinURL == "" {
-				return fmt.Errorf("please, provide --url argument")
+				return errors.New("please, provide --url argument")
 			}
 
 			return nil

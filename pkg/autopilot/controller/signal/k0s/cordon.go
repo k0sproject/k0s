@@ -16,6 +16,7 @@ package k0s
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -156,7 +157,7 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 		var ok bool
 		node, ok = signalNode.(*corev1.Node)
 		if !ok {
-			return fmt.Errorf("failed to cast signalNode to *corev1.Node")
+			return errors.New("failed to cast signalNode to *corev1.Node")
 		}
 	} else {
 		nodeName := signalNode.GetName()

@@ -20,16 +20,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strconv"
+
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"net"
-	"os"
-	"path/filepath"
-	"strconv"
 
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -66,7 +68,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 	c.CACert = string(cert)
 	// Changing the URL here also requires changes in the "k0s kubeconfig admin" subcommand.
 	apiAddress := net.JoinHostPort(c.ClusterSpec.API.Address, strconv.Itoa(c.ClusterSpec.API.Port))
-	kubeConfigAPIUrl := fmt.Sprintf("https://%s", apiAddress)
+	kubeConfigAPIUrl := (&url.URL{Scheme: "https", Host: apiAddress}).String()
 
 	apiServerUID, err := users.LookupUID(constant.ApiserverUser)
 	if err != nil {
@@ -197,7 +199,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 		"kubernetes.default",
 		"kubernetes.default.svc",
 		"kubernetes.default.svc.cluster",
-		fmt.Sprintf("kubernetes.svc.%s", c.ClusterSpec.Network.ClusterDomain),
+		"kubernetes.svc." + c.ClusterSpec.Network.ClusterDomain,
 		"localhost",
 		"127.0.0.1",
 	}

@@ -18,6 +18,7 @@ package configchange
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -203,7 +204,7 @@ func (s *ConfigSuite) waitForReconcileEvent(eventWatch watch.Interface) (*corev1
 		event := e.Object.(*corev1.Event)
 		return event, nil
 	case <-timeout:
-		return nil, fmt.Errorf("timeout waiting for reconcile event")
+		return nil, errors.New("timeout waiting for reconcile event")
 	}
 }
 

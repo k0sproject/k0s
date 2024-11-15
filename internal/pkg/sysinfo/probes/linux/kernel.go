@@ -180,7 +180,7 @@ func ensureKConfig(config string) kConfig {
 }
 
 func (c kConfig) String() string {
-	return fmt.Sprintf("CONFIG_%s", string(c))
+	return "CONFIG_" + string(c)
 }
 
 type kConfigProbe struct {
@@ -242,7 +242,7 @@ func (k *kConfigProbe) probe(reporter probes.Reporter, option kConfigOption) err
 
 	msg := ""
 	if len(k.alternativeKConfigs) > 0 {
-		msg = fmt.Sprintf("also tried %s", strings.Join(alsoTried, ", "))
+		msg = "also tried " + strings.Join(alsoTried, ", ")
 	}
 
 	if k.require {

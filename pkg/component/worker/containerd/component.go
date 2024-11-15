@@ -151,11 +151,11 @@ func (c *Component) Start(ctx context.Context) error {
 			RunDir:  c.K0sVars.RunDir,
 			DataDir: c.K0sVars.DataDir,
 			Args: []string{
-				fmt.Sprintf("--root=%s", filepath.Join(c.K0sVars.DataDir, "containerd")),
-				fmt.Sprintf("--state=%s", filepath.Join(c.K0sVars.RunDir, "containerd")),
-				fmt.Sprintf("--address=%s", socketPath),
-				fmt.Sprintf("--log-level=%s", c.LogLevel),
-				fmt.Sprintf("--config=%s", c.confPath),
+				"--root=" + filepath.Join(c.K0sVars.DataDir, "containerd"),
+				"--state=" + filepath.Join(c.K0sVars.RunDir, "containerd"),
+				"--address=" + socketPath,
+				"--log-level=" + c.LogLevel,
+				"--config=" + c.confPath,
 			},
 		}
 

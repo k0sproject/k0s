@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -533,9 +534,9 @@ func (m *backendMock) updateAPIServers(apiServers []net.HostPort) error {
 
 type staticPodsMock struct{ mock.Mock }
 
-func (m *staticPodsMock) ManifestURL() (string, error) {
+func (m *staticPodsMock) ManifestURL() (*url.URL, error) {
 	args := m.Called()
-	return args.String(0), args.Error(1)
+	return args.Get(0).(*url.URL), args.Error(1)
 }
 
 func (m *staticPodsMock) ClaimStaticPod(namespace, name string) (worker.StaticPod, error) {

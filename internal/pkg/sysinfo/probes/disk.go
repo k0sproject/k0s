@@ -16,10 +16,6 @@ limitations under the License.
 
 package probes
 
-import (
-	"fmt"
-)
-
 // AssertDiskSpace asserts a minimum amount of free disk space.
 func AssertFreeDiskSpace(parent ParentProbe, fsPath string, minFree uint64) {
 	parent.Set("disk:"+fsPath, func(path ProbePath, current Probe) Probe {
@@ -44,9 +40,9 @@ type assertDiskSpace struct {
 func (a *assertDiskSpace) desc() ProbeDesc {
 	var description string
 	if a.isRelative {
-		description = fmt.Sprintf("Relative disk space available for %s", a.fsPath)
+		description = "Relative disk space available for " + a.fsPath
 	} else {
-		description = fmt.Sprintf("Disk space available for %s", a.fsPath)
+		description = "Disk space available for " + a.fsPath
 	}
 	return NewProbeDesc(description, a.path)
 }

@@ -16,10 +16,6 @@ limitations under the License.
 
 package probes
 
-import (
-	"fmt"
-)
-
 // AssertFileSystem asserts a minimum amount of free disk space.
 func AssertFileSystem(parent ParentProbe, fsPath string) {
 	parent.Set("filesystem:"+fsPath, func(path ProbePath, current Probe) Probe {
@@ -33,5 +29,5 @@ type assertFileSystem struct {
 }
 
 func (a *assertFileSystem) desc() ProbeDesc {
-	return NewProbeDesc(fmt.Sprintf("File system of %s", a.fsPath), a.path)
+	return NewProbeDesc("File system of "+a.fsPath, a.path)
 }

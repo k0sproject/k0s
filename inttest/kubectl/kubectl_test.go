@@ -156,7 +156,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 	}
 
 	execTest := func(t *testing.T, cmdline string, check checkFunc) {
-		cmdline = fmt.Sprintf("PATH=/inttest/bin:/inttest/symlink %s", cmdline)
+		cmdline = "PATH=/inttest/bin:/inttest/symlink " + cmdline
 		t.Log("Executing", cmdline)
 
 		var stdoutBuf bytes.Buffer
@@ -204,7 +204,7 @@ func checkClientVersion(t *testing.T, v map[string]any) {
 	)
 	assert.Contains(t,
 		requiredValue[string](t, v, "gitVersion"),
-		fmt.Sprintf("v%s", constant.KubernetesMajorMinorVersion),
+		"v"+constant.KubernetesMajorMinorVersion,
 	)
 	assert.Equal(t, "not_available", requiredValue[string](t, v, "gitCommit"))
 	assert.Empty(t, requiredValue[string](t, v, "gitTreeState"))
@@ -221,7 +221,7 @@ func checkServerVersion(t *testing.T, v map[string]any) {
 	)
 	assert.Contains(t,
 		requiredValue[string](t, v, "gitVersion"),
-		fmt.Sprintf("v%s", constant.KubernetesMajorMinorVersion),
+		"v"+constant.KubernetesMajorMinorVersion,
 	)
 	assert.Contains(t, requiredValue[string](t, v, "gitVersion"), "+k0s")
 	assert.NotEmpty(t, requiredValue[string](t, v, "gitCommit"))

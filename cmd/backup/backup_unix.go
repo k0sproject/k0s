@@ -19,6 +19,7 @@ limitations under the License.
 package backup
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -56,7 +57,7 @@ func NewBackupCmd() *cobra.Command {
 				return err
 			}
 			if nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
-				return fmt.Errorf("command 'k0s backup' does not support external etcd cluster")
+				return errors.New("command 'k0s backup' does not support external etcd cluster")
 			}
 			return c.backup(savePath, cmd.OutOrStdout())
 		},

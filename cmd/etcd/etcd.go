@@ -17,6 +17,7 @@ limitations under the License.
 package etcd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -46,7 +47,7 @@ func NewEtcdCmd() *cobra.Command {
 				return fmt.Errorf("wrong storage type: %s", nodeConfig.Spec.Storage.Type)
 			}
 			if nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
-				return fmt.Errorf("command 'k0s etcd' does not support external etcd cluster")
+				return errors.New("command 'k0s etcd' does not support external etcd cluster")
 			}
 			return nil
 		},

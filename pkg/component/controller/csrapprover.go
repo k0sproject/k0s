@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"time"
 
@@ -210,7 +211,7 @@ func parseCSR(obj *v1.CertificateSigningRequest) (*x509.CertificateRequest, erro
 	pemBytes := obj.Spec.Request
 	block, _ := pem.Decode(pemBytes)
 	if block == nil || block.Type != "CERTIFICATE REQUEST" {
-		return nil, fmt.Errorf("PEM block type must be CERTIFICATE REQUEST")
+		return nil, errors.New("PEM block type must be CERTIFICATE REQUEST")
 	}
 	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {

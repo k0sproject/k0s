@@ -19,6 +19,7 @@ package manager
 import (
 	"container/list"
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -88,7 +89,7 @@ func (m *Manager) Start(ctx context.Context) error {
 	perfTimer := performance.NewTimer("component-start").Buffer().Start()
 	for _, comp := range m.Components {
 		compName := reflect.TypeOf(comp).Elem().Name()
-		perfTimer.Checkpoint(fmt.Sprintf("running-%s", compName))
+		perfTimer.Checkpoint("running-" + compName)
 		logrus.Infof("starting %v", compName)
 		if err := comp.Start(ctx); err != nil {
 			_ = m.Stop()
@@ -118,7 +119,7 @@ func (m *Manager) Stop() error {
 		if err := component.Stop(); err != nil {
 			logrus.Errorf("failed to stop component %s: %s", name, err.Error())
 			if ret == nil {
-				ret = fmt.Errorf("failed to stop components")
+				ret = errors.New("failed to stop components")
 			}
 		} else {
 			logrus.Infof("stopped component %s", name)

@@ -17,6 +17,7 @@ limitations under the License.
 package install
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -54,7 +55,7 @@ func NewInstallCmd() *cobra.Command {
 //   - Sets up startup and logging for k0s.
 func (c *command) setup(role string, args []string, installFlags *installFlags) error {
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("this command must be run as root")
+		return errors.New("this command must be run as root")
 	}
 
 	nodeConfig, err := c.K0sVars.NodeConfig()

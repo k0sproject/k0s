@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -46,15 +45,15 @@ func TestHealthChecks(t *testing.T) {
 		prober := testProber(5)
 
 		prober.Register("test", &mockComponent{
-			errors: []error{nil, nil, fmt.Errorf("test1 error"), nil, nil},
+			errors: []error{nil, nil, errors.New("test1 error"), nil, nil},
 		})
 
 		prober.Register("test2", &mockComponent{
-			errors: []error{nil, fmt.Errorf("test2 error"), nil, nil, nil},
+			errors: []error{nil, errors.New("test2 error"), nil, nil, nil},
 		})
 
 		prober.Register("test3", &mockComponent{
-			errors: []error{nil, nil, nil, nil, fmt.Errorf("test3 error")},
+			errors: []error{nil, nil, nil, nil, errors.New("test3 error")},
 		})
 		prober.Run(context.Background())
 		st := prober.State(maxEvents)
@@ -74,15 +73,15 @@ func TestHealthChecks(t *testing.T) {
 		prober := testProber(5)
 
 		prober.Register("test", &mockComponent{
-			errors: []error{nil, nil, fmt.Errorf("test1 error"), nil, nil},
+			errors: []error{nil, nil, errors.New("test1 error"), nil, nil},
 		})
 
 		prober.Register("test2", &mockComponent{
-			errors: []error{nil, fmt.Errorf("test2 error"), nil, nil, nil},
+			errors: []error{nil, errors.New("test2 error"), nil, nil, nil},
 		})
 
 		prober.Register("test3", &mockComponent{
-			errors: []error{nil, nil, nil, nil, fmt.Errorf("test3 error")},
+			errors: []error{nil, nil, nil, nil, errors.New("test3 error")},
 		})
 		prober.Run(context.Background())
 		st := prober.State(1)

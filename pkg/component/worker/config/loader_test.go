@@ -59,7 +59,7 @@ data:
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("worker-config-fake-%s", constant.KubernetesMajorMinorVersion),
+			Name:      "worker-config-fake-" + constant.KubernetesMajorMinorVersion,
 			Namespace: "kube-system",
 		},
 		Data: map[string]string{

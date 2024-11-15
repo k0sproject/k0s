@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +54,7 @@ func (cs ChartSpec) YamlValues() map[string]interface{} {
 func (cs ChartSpec) HashValues() string {
 	h := sha256.New()
 	h.Write([]byte(cs.ReleaseName + cs.Values))
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // ShouldForceUpgrade returns true if the chart should be force upgraded

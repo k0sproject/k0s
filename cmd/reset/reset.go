@@ -19,7 +19,6 @@ package reset
 import (
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/k0sproject/k0s/pkg/cleanup"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -36,9 +35,6 @@ func NewResetCmd() *cobra.Command {
 		Use:   "reset",
 		Short: "Uninstall k0s. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if runtime.GOOS == "windows" {
-				return fmt.Errorf("currently not supported on windows")
-			}
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err

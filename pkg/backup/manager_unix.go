@@ -168,7 +168,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 	if err != nil {
 		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %w", err)
 	}
-	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
+	bm.discoverSteps(bm.tmpDir+"/k0s.yaml", cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
 	logrus.Info("Starting restore")
 
 	for _, step := range bm.steps {

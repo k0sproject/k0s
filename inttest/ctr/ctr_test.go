@@ -17,7 +17,6 @@ limitations under the License.
 package ctr
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"testing"
@@ -54,7 +53,7 @@ func (s *CtrSuite) TestK0sCtrCommand() {
 	s.Require().NoError(err)
 
 	flatOutput := removeRedundantSpaces(output)
-	errMsg := fmt.Sprintf("returned output of command 'k0s ctr namespaces list' is different than expected: %s", output)
+	errMsg := "returned output of command 'k0s ctr namespaces list' is different than expected: " + output
 	s.Equal("NAME LABELS k8s.io", flatOutput, errMsg)
 
 	output, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s ctr version")

@@ -227,7 +227,7 @@ func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 	return watch.CRDs(extClient.CustomResourceDefinitions()).
-		WithObjectName(fmt.Sprintf("controlnodes.%s", apv1beta2.GroupName)).
+		WithObjectName("controlnodes."+apv1beta2.GroupName).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryDelay, e := watch.IsRetryable(err); e == nil {
 				sc.log.WithError(err).Debugf(

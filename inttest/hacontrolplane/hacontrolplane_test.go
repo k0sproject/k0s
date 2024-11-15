@@ -18,7 +18,6 @@ package hacontrolplane
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/url"
 	"testing"
@@ -55,7 +54,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 	s.Require().NoError(err)
 	defer sshCon.Disconnect()
 	for range 20 {
-		_, err := sshCon.ExecWithOutput(s.Context(), fmt.Sprintf("/usr/local/bin/k0s etcd leave --peer-address %s", peerAddress))
+		_, err := sshCon.ExecWithOutput(s.Context(), "/usr/local/bin/k0s etcd leave --peer-address "+peerAddress)
 		if err == nil {
 			break
 		}

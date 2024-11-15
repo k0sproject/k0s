@@ -17,6 +17,7 @@ limitations under the License.
 package byocri
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -85,7 +86,7 @@ func (s *BYOCRISuite) runDockerWorker() error {
 		return err
 	}
 	if token == "" {
-		return fmt.Errorf("got empty token for worker join")
+		return errors.New("got empty token for worker join")
 	}
 	sshWorker, err := s.SSH(s.Context(), s.WorkerNode(0))
 	if err != nil {

@@ -18,6 +18,7 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -73,7 +74,7 @@ func (cri *CRIRuntime) RemoveContainer(ctx context.Context, id string) error {
 		return fmt.Errorf("failed to create CRI runtime client: %w", err)
 	}
 	if client == nil {
-		return fmt.Errorf("failed to create CRI runtime client")
+		return errors.New("failed to create CRI runtime client")
 	}
 	request := &pb.RemovePodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("RemovePodSandboxRequest: %v", request)
@@ -93,7 +94,7 @@ func (cri *CRIRuntime) StopContainer(ctx context.Context, id string) error {
 		return fmt.Errorf("failed to create CRI runtime client: %w", err)
 	}
 	if client == nil {
-		return fmt.Errorf("failed to create CRI runtime client")
+		return errors.New("failed to create CRI runtime client")
 	}
 	request := &pb.StopPodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("StopPodSandboxRequest: %v", request)

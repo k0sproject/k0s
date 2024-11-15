@@ -98,9 +98,9 @@ func (c *containers) isCustomCriUsed() bool {
 func (c *containers) startContainerd() error {
 	logrus.Debugf("starting containerd")
 	args := []string{
-		fmt.Sprintf("--root=%s", filepath.Join(c.Config.dataDir, "containerd")),
-		fmt.Sprintf("--state=%s", filepath.Join(c.Config.runDir, "containerd")),
-		fmt.Sprintf("--address=%s", c.Config.containerd.socketPath),
+		"--root=" + filepath.Join(c.Config.dataDir, "containerd"),
+		"--state=" + filepath.Join(c.Config.runDir, "containerd"),
+		"--address=" + c.Config.containerd.socketPath,
 	}
 	if file.Exists("/etc/k0s/containerd.toml") {
 		args = append(args, "--config=/etc/k0s/containerd.toml")

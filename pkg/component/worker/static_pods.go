@@ -25,6 +25,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -45,7 +46,7 @@ import (
 type StaticPods interface {
 	// ManifestURL returns the HTTP URL that can be used by the kubelet to
 	// obtain static pod manifests managed by this StaticPods instance.
-	ManifestURL() (string, error)
+	ManifestURL() (*url.URL, error)
 
 	// ClaimStaticPod returns a new, empty StaticPod associated with the given
 	// namespace and name. Note that only one StaticPod for a given combination
@@ -96,9 +97,9 @@ type staticPods struct {
 	contentPtr  atomic.Value // Store only when mu is locked, concurrent Load is okay
 	claimedPods map[staticPodID]*staticPod
 
-	manifestURL string // guaranteed to be initialized when started, immutable afterwards
-	stopSignal  context.CancelFunc
-	stopped     sync.WaitGroup
+	hostAddr   string // guaranteed to be initialized when started, immutable afterwards
+	stopSignal context.CancelFunc
+	stopped    sync.WaitGroup
 }
 
 var _ manager.Ready = (*staticPods)(nil)
@@ -116,14 +117,14 @@ func NewStaticPods() interface {
 	return staticPods
 }
 
-func (s *staticPods) ManifestURL() (string, error) {
+func (s *staticPods) ManifestURL() (*url.URL, error) {
 	if lifecycle := s.peekLifecycle(); lifecycle < staticPodsStarted {
-		return "", staticPodsNotYet(staticPodsStarted)
+		return nil, staticPodsNotYet(staticPodsStarted)
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.manifestURL, nil
+	return &url.URL{Scheme: "http", Host: s.hostAddr, Path: "/manifests"}, nil
 }
 
 func (s *staticPods) ClaimStaticPod(namespace, name string) (StaticPod, error) {
@@ -382,7 +383,7 @@ func (s *staticPods) Start(ctx context.Context) error {
 	}()
 
 	// Store the handles.
-	s.manifestURL = fmt.Sprintf("http://%s/manifests", addr)
+	s.hostAddr = addr
 	s.stopSignal = cancelFunc
 
 	// This instance started successfully, everything is setup and running.
@@ -482,7 +483,7 @@ func (s *staticPods) Ready() error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/_healthz", url), nil)
+	req, err := http.NewRequest(http.MethodGet, url.JoinPath("_healthz").String(), nil)
 	if err != nil {
 		return err
 	}

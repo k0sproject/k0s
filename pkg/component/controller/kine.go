@@ -119,11 +119,11 @@ func (k *Kine) Start(ctx context.Context) error {
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
 		Args: []string{
-			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),
+			"--endpoint=" + k.Config.DataSource,
 			// NB: kine doesn't parse URLs properly, so construct potentially
 			// invalid URLs that are understood by kine.
 			// https://github.com/k3s-io/kine/blob/v0.13.5/pkg/util/network.go#L5-L13
-			fmt.Sprintf("--listen-address=unix://%s", k.K0sVars.KineSocketPath),
+			"--listen-address=unix://" + k.K0sVars.KineSocketPath,
 			// Enable metrics on port 2380. The default is 8080, which clashes with kube-router.
 			"--metrics-bind-address=:2380",
 		},

@@ -250,7 +250,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 			s.T().Logf("Node %s is ready", nodeName)
 
-			nllbPodName := fmt.Sprintf("nllb-%s", nodeName)
+			nllbPodName := "nllb-" + nodeName
 			if err := common.WaitForPod(ctx, clients, nllbPodName, kubeSystem); err != nil {
 				return fmt.Errorf("Pod %s/%s is not ready: %w", nllbPodName, kubeSystem, err)
 			}

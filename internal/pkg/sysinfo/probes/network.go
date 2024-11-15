@@ -23,9 +23,9 @@ import (
 )
 
 func RequireNameResolution(p Probes, lookupIP func(host string) ([]net.IP, error), host string) {
-	p.Set(fmt.Sprintf("nameResolution:%s", host), func(path ProbePath, _ Probe) Probe {
+	p.Set("nameResolution:"+host, func(path ProbePath, _ Probe) Probe {
 		return ProbeFn(func(r Reporter) error {
-			desc := NewProbeDesc(fmt.Sprintf("Name resolution: %s", host), path)
+			desc := NewProbeDesc("Name resolution: "+host, path)
 			ips, err := lookupIP(host)
 			if err != nil {
 				return r.Error(desc, err)

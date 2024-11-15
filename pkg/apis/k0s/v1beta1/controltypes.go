@@ -16,7 +16,9 @@ limitations under the License.
 
 package v1beta1
 
-import "fmt"
+import (
+	"errors"
+)
 
 // CaResponse defines the response type for /ca control API
 type CaResponse struct {
@@ -37,11 +39,11 @@ type EtcdRequest struct {
 // Validate validates the request
 func (e *EtcdRequest) Validate() error {
 	if e.Node == "" {
-		return fmt.Errorf("node cannot be empty")
+		return errors.New("node cannot be empty")
 	}
 
 	if e.PeerAddress == "" {
-		return fmt.Errorf("peerAddress cannot be empty")
+		return errors.New("peerAddress cannot be empty")
 	}
 
 	return nil

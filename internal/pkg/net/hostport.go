@@ -37,7 +37,7 @@ func (h *HostPort) Port() uint16 { return h.port }
 
 func NewHostPort(host string, port uint16) (*HostPort, error) {
 	if !govalidator.IsIP(host) && !govalidator.IsDNSName(host) {
-		return nil, fmt.Errorf("host is neither an IP address nor a DNS name")
+		return nil, errors.New("host is neither an IP address nor a DNS name")
 	}
 
 	if port == 0 {

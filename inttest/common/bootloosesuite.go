@@ -432,8 +432,8 @@ func (s *BootlooseSuite) dumpNodeLogs(ctx context.Context, t *testing.T, node, d
 	}
 	defer ssh.Disconnect()
 
-	outPath := filepath.Join(dir, fmt.Sprintf("%s.out.log", node))
-	errPath := filepath.Join(dir, fmt.Sprintf("%s.err.log", node))
+	outPath := filepath.Join(dir, node+".out.log")
+	errPath := filepath.Join(dir, node+".err.log")
 
 	err = func() (err error) {
 		type log struct {
@@ -673,7 +673,7 @@ func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
 		}
 		defer sshWorker.Disconnect()
 
-		_, err = sshWorker.ExecWithOutput(ctx, fmt.Sprintf("k0s ctr images import %s", s.K0smotronImageBundleMountPoints[0]))
+		_, err = sshWorker.ExecWithOutput(ctx, "k0s ctr images import "+s.K0smotronImageBundleMountPoints[0])
 		if err != nil {
 			return fmt.Errorf("failed to import k0smotron images: %w", err)
 		}

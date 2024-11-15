@@ -376,7 +376,7 @@ func ResetNode(name string, suite *BootlooseSuite) error {
 		return err
 	}
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(suite.Context(), fmt.Sprintf("%s reset --debug", suite.K0sFullPath))
+	_, err = ssh.ExecWithOutput(suite.Context(), suite.K0sFullPath+" reset --debug")
 	return err
 }
 
