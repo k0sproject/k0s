@@ -81,11 +81,11 @@ func TestClusterSpecCustomImages(t *testing.T) {
 		},
 	}
 	validTestCase.Spec.Images.DefaultPullPolicy = string(corev1.PullIfNotPresent)
-	validTestCase.Spec.Images.Konnectivity = ImageSpec{
+	validTestCase.Spec.Images.Konnectivity = &ImageSpec{
 		Image:   "foo",
 		Version: "v1",
 	}
-	validTestCase.Spec.Images.PushGateway = ImageSpec{
+	validTestCase.Spec.Images.PushGateway = &ImageSpec{
 		Image:   "bar",
 		Version: "v2@sha256:0000000000000000000000000000000000000000000000000000000000000000",
 	}
@@ -98,17 +98,17 @@ func TestClusterSpecCustomImages(t *testing.T) {
 			Images: DefaultClusterImages(),
 		},
 	}
-	invalidTestCase.Spec.Images.MetricsServer = ImageSpec{
+	invalidTestCase.Spec.Images.MetricsServer = &ImageSpec{
 		Image: "baz",
 		// digest only is currently not supported
 		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
 	}
-	invalidTestCase.Spec.Images.Calico.CNI = ImageSpec{
+	invalidTestCase.Spec.Images.Calico.CNI = &ImageSpec{
 		Image: "qux",
 		// digest only is currently not supported
 		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
 	}
-	invalidTestCase.Spec.Images.KubeRouter.CNI = ImageSpec{
+	invalidTestCase.Spec.Images.KubeRouter.CNI = &ImageSpec{
 		Image: "quux",
 		// digest only is currently not supported
 		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",

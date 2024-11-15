@@ -91,17 +91,52 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	}
 	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
 		copy.Spec.Network = nil
+	} else {
+		if copy.Spec.Network.NodeLocalLoadBalancing != nil &&
+			copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
+			reflect.DeepEqual(copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
+			copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
+		}
 	}
 	if reflect.DeepEqual(copy.Spec.Telemetry, DefaultClusterTelemetry()) {
 		copy.Spec.Telemetry = nil
 	}
 	if reflect.DeepEqual(copy.Spec.Images, DefaultClusterImages()) {
 		copy.Spec.Images = nil
+	} else {
+		stripDefaultImages(copy.Spec.Images, DefaultClusterImages())
 	}
 	if reflect.DeepEqual(copy.Spec.Konnectivity, DefaultKonnectivitySpec()) {
 		copy.Spec.Konnectivity = nil
 	}
 	return copy
+}
+
+func stripDefaultImages(cfgImages, defaultImages *ClusterImages) {
+	cfgVal := reflect.ValueOf(cfgImages).Elem()
+	defaultVal := reflect.ValueOf(defaultImages).Elem()
+	stripDefaults(cfgVal, defaultVal)
+}
+
+func stripDefaults(cfgVal, defaultVal reflect.Value) {
+	for i := range cfgVal.NumField() {
+		f1 := cfgVal.Field(i)
+		f2 := defaultVal.Field(i)
+		switch f1.Kind() {
+		case reflect.Pointer:
+			if f1.Elem().Equal(f2.Elem()) {
+				f1.Set(reflect.Zero(f1.Type()))
+			} else {
+				stripDefaults(f1.Elem(), f2.Elem())
+			}
+		case reflect.Struct:
+			stripDefaults(f1, f2)
+		default:
+			if f1.Equal(f2) {
+				f1.Set(reflect.Zero(f1.Type()))
+			}
+		}
+	}
 }
 
 // InstallSpec defines the required fields for the `k0s install` command

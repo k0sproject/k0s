@@ -56,6 +56,30 @@ spec:
 	assert.Equal(t, "registry.k8s.io/metrics-server/metrics-server", a.MetricsServer.Image)
 }
 
+func TestStripDefaultsForDefaultImageList(t *testing.T) {
+	yamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1s
+kind: ClusterConfig
+spec:
+  images:
+    default_pull_policy: Never
+  network:
+    nodeLocalLoadBalancing:
+      enabled: true
+      type: EnvoyProxy
+`
+
+	cfg, err := ConfigFromString(yamlData)
+	require.NoError(t, err)
+
+	strippedCfg := cfg.StripDefaults()
+
+	require.Equal(t, "Never", strippedCfg.Spec.Images.DefaultPullPolicy)
+	require.Nil(t, strippedCfg.Spec.Images.Konnectivity)
+	require.True(t, strippedCfg.Spec.Network.NodeLocalLoadBalancing.Enabled)
+	require.Nil(t, strippedCfg.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image)
+}
+
 func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 	t.Run("if_has_repository_not_empty_add_prefix_to_all_images", func(t *testing.T) {
 		t.Run("default_config", func(t *testing.T) {
