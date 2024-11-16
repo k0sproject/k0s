@@ -46,17 +46,29 @@ func NewSysinfoCmd() *cobra.Command {
 			sysinfoSpec.AddDebugProbes = true
 			probes := sysinfoSpec.NewSysinfoProbes()
 			out := cmd.OutOrStdout()
-			cli := &cliReporter{
-				colors: aurora.NewAurora(term.IsTerminal(out)),
+
+			var cli cliReporter
+			switch outputFormat {
+			case "human":
+				cli = &humanReporter{
+					colors: aurora.NewAurora(term.IsTerminal(out)),
+				}
+			case "json":
+				cli = &jsonReporter{}
+			case "yaml":
+				cli = &yamlReporter{}
+			default:
+				return fmt.Errorf("unknown output format: %q", outputFormat)
 			}
+
 			if err := probes.Probe(cli); err != nil {
 				return err
 			}
-			if err := cli.printResults(out, outputFormat); err != nil {
+			if err := cli.printResults(out); err != nil {
 				return err
 			}
 
-			if cli.failed {
+			if cli.isFailed() {
 				return errors.New("sysinfo failed")
 			}
 			return nil
@@ -73,95 +85,18 @@ func NewSysinfoCmd() *cobra.Command {
 	return cmd
 }
 
-type cliReporter struct {
-	results []Probe
-	colors  aurora.Aurora
-	failed  bool
+type cliReporter interface {
+	probes.Reporter
+	isFailed() bool
+	printResults(io.Writer) error
 }
 
-type Probe struct {
-	Path        []string
-	DisplayName string
-	Prop        string
-	Message     string
-	Category    ProbeCategory
-	Error       error
+type humanReporter struct {
+	resultsCollector
+	colors aurora.Aurora
 }
 
-type ProbeCategory string
-
-const (
-	ProbeCategoryPass     ProbeCategory = "pass"
-	ProbeCategoryWarning  ProbeCategory = "warning"
-	ProbeCategoryRejected ProbeCategory = "rejected"
-	ProbeCategoryError    ProbeCategory = "error"
-)
-
-func (r *cliReporter) Pass(p probes.ProbeDesc, v probes.ProbedProp) error {
-	r.results = append(r.results, Probe{
-		Path:        probePath(p),
-		DisplayName: p.DisplayName(),
-		Prop:        propString(v),
-		Category:    ProbeCategoryPass,
-	})
-	return nil
-}
-
-func (r *cliReporter) Warn(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
-	r.results = append(r.results, Probe{
-		Path:        probePath(p),
-		DisplayName: p.DisplayName(),
-		Prop:        propString(v),
-		Message:     msg,
-		Category:    ProbeCategoryWarning,
-	})
-	return nil
-}
-
-func (r *cliReporter) Reject(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
-	r.failed = true
-	r.results = append(r.results, Probe{
-		Path:        probePath(p),
-		DisplayName: p.DisplayName(),
-		Prop:        propString(v),
-		Message:     msg,
-		Category:    ProbeCategoryRejected,
-	})
-	return nil
-}
-
-func (r *cliReporter) Error(p probes.ProbeDesc, err error) error {
-	r.failed = true
-	r.results = append(r.results, Probe{
-		Path:        probePath(p),
-		DisplayName: p.DisplayName(),
-		Category:    ProbeCategoryError,
-		Error:       err,
-	})
-	return nil
-}
-
-func (r *cliReporter) printResults(w io.Writer, outputFormat string) error {
-	switch outputFormat {
-	case "human":
-		return r.printHuman(w)
-	case "json":
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(r.results)
-	case "yaml":
-		b, err := yaml.Marshal(r.results)
-		if err != nil {
-			return err
-		}
-		_, err = io.WriteString(w, string(b))
-		return err
-	default:
-		return fmt.Errorf("unknown output format: %q", outputFormat)
-	}
-}
-
-func (r *cliReporter) printHuman(w io.Writer) error {
+func (r *humanReporter) printResults(w io.Writer) error {
 	for _, p := range r.results {
 		if err := r.printOneHuman(w, p); err != nil {
 			return err
@@ -170,7 +105,7 @@ func (r *cliReporter) printHuman(w io.Writer) error {
 	return nil
 }
 
-func (r *cliReporter) printOneHuman(w io.Writer, p Probe) error {
+func (r *humanReporter) printOneHuman(w io.Writer, p Probe) error {
 	var out string
 	switch p.Category {
 	case ProbeCategoryPass:
@@ -210,6 +145,103 @@ func (r *cliReporter) printOneHuman(w io.Writer, p Probe) error {
 	}
 	_, err := io.WriteString(w, out)
 	return err
+}
+
+type jsonReporter struct {
+	resultsCollector
+}
+
+func (r *jsonReporter) printResults(w io.Writer) error {
+	jsn, err := json.MarshalIndent(r.results, "", "   ")
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintln(w, string(jsn))
+	return err
+}
+
+type yamlReporter struct {
+	resultsCollector
+}
+
+func (r *yamlReporter) printResults(w io.Writer) error {
+	ym, err := yaml.Marshal(r.results)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintln(w, string(ym))
+	return err
+}
+
+type Probe struct {
+	Path        []string
+	DisplayName string
+	Prop        string
+	Message     string
+	Category    ProbeCategory
+	Error       error
+}
+
+type ProbeCategory string
+
+const (
+	ProbeCategoryPass     ProbeCategory = "pass"
+	ProbeCategoryWarning  ProbeCategory = "warning"
+	ProbeCategoryRejected ProbeCategory = "rejected"
+	ProbeCategoryError    ProbeCategory = "error"
+)
+
+type resultsCollector struct {
+	results []Probe
+	failed  bool
+}
+
+func (r *resultsCollector) Pass(p probes.ProbeDesc, v probes.ProbedProp) error {
+	r.results = append(r.results, Probe{
+		Path:        probePath(p),
+		DisplayName: p.DisplayName(),
+		Prop:        propString(v),
+		Category:    ProbeCategoryPass,
+	})
+	return nil
+}
+
+func (r *resultsCollector) Warn(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
+	r.results = append(r.results, Probe{
+		Path:        probePath(p),
+		DisplayName: p.DisplayName(),
+		Prop:        propString(v),
+		Message:     msg,
+		Category:    ProbeCategoryWarning,
+	})
+	return nil
+}
+
+func (r *resultsCollector) Reject(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
+	r.failed = true
+	r.results = append(r.results, Probe{
+		Path:        probePath(p),
+		DisplayName: p.DisplayName(),
+		Prop:        propString(v),
+		Message:     msg,
+		Category:    ProbeCategoryRejected,
+	})
+	return nil
+}
+
+func (r *resultsCollector) Error(p probes.ProbeDesc, err error) error {
+	r.failed = true
+	r.results = append(r.results, Probe{
+		Path:        probePath(p),
+		DisplayName: p.DisplayName(),
+		Category:    ProbeCategoryError,
+		Error:       err,
+	})
+	return nil
+}
+
+func (r *resultsCollector) isFailed() bool {
+	return r.failed
 }
 
 func probePath(p probes.ProbeDesc) []string {

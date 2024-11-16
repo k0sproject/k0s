@@ -60,14 +60,14 @@ func TestCliReporter_Pass(t *testing.T) {
 		},
 	} {
 		t.Run(data.name, func(t *testing.T) {
-			underTest := &cliReporter{
+			underTest := &humanReporter{
 				colors: aurora.NewAurora(true),
 			}
 			err := underTest.Pass(data.desc, data.prop)
 			assert.NoError(t, err)
 			assert.False(t, underTest.failed)
 			var buf strings.Builder
-			err = underTest.printHuman(&buf)
+			err = underTest.printResults(&buf)
 			assert.NoError(t, err)
 			result := buf.String()
 			t.Log(result)
@@ -111,14 +111,14 @@ func TestCliReporter_Warn(t *testing.T) {
 		},
 	} {
 		t.Run(data.name, func(t *testing.T) {
-			underTest := &cliReporter{
+			underTest := &humanReporter{
 				colors: aurora.NewAurora(true),
 			}
 			err := underTest.Warn(data.desc, data.prop, data.msg)
 			assert.NoError(t, err)
 			assert.False(t, underTest.failed)
 			var buf strings.Builder
-			err = underTest.printHuman(&buf)
+			err = underTest.printResults(&buf)
 			assert.NoError(t, err)
 			result := buf.String()
 			t.Log(result)
@@ -162,14 +162,14 @@ func TestCliReporter_Reject(t *testing.T) {
 		},
 	} {
 		t.Run(data.name, func(t *testing.T) {
-			underTest := &cliReporter{
+			underTest := &humanReporter{
 				colors: aurora.NewAurora(true),
 			}
 			err := underTest.Reject(data.desc, data.prop, data.msg)
 			assert.NoError(t, err)
 			assert.True(t, underTest.failed)
 			var buf strings.Builder
-			err = underTest.printHuman(&buf)
+			err = underTest.printResults(&buf)
 			assert.NoError(t, err)
 			result := buf.String()
 			t.Log(result)
@@ -202,14 +202,14 @@ func TestCliReporter_Error(t *testing.T) {
 		},
 	} {
 		t.Run(data.name, func(t *testing.T) {
-			underTest := &cliReporter{
+			underTest := &humanReporter{
 				colors: aurora.NewAurora(true),
 			}
 			err := underTest.Error(data.desc, data.err)
 			assert.NoError(t, err)
 			assert.True(t, underTest.failed)
 			var buf strings.Builder
-			err = underTest.printHuman(&buf)
+			err = underTest.printResults(&buf)
 			assert.NoError(t, err)
 			result := buf.String()
 			t.Log(result)
@@ -221,14 +221,14 @@ func TestCliReporter_Error(t *testing.T) {
 func TestCliReporter(t *testing.T) {
 	for _, data := range []struct {
 		name         string
-		probe        func(t *testing.T, cli *cliReporter)
+		probe        func(t *testing.T, cli cliReporter)
 		xpectResults []Probe
 		xpect        string
 		xpectFailed  bool
 	}{
 		{
 			"success",
-			func(t *testing.T, cli *cliReporter) {
+			func(t *testing.T, cli cliReporter) {
 				err := cli.Pass(&testDesc{"foo", probes.ProbePath{"bar"}}, testProp("baz"))
 				assert.NoError(t, err)
 				err = cli.Pass(&testDesc{"foo", probes.ProbePath{"bar", "baz"}}, testProp("qux"))
@@ -248,7 +248,7 @@ func TestCliReporter(t *testing.T) {
 		},
 		{
 			"has_reject",
-			func(t *testing.T, cli *cliReporter) {
+			func(t *testing.T, cli cliReporter) {
 				err := cli.Pass(&testDesc{"foo", probes.ProbePath{"bar"}}, testProp("baz"))
 				assert.NoError(t, err)
 				err = cli.Pass(&testDesc{"foo", probes.ProbePath{"bar", "baz"}}, testProp("qux"))
@@ -272,7 +272,7 @@ func TestCliReporter(t *testing.T) {
 		},
 		{
 			"has_error",
-			func(t *testing.T, cli *cliReporter) {
+			func(t *testing.T, cli cliReporter) {
 				err := cli.Pass(&testDesc{"foo", probes.ProbePath{"bar"}}, testProp("baz"))
 				assert.NoError(t, err)
 				err = cli.Pass(&testDesc{"foo", probes.ProbePath{"bar", "baz"}}, testProp("qux"))
@@ -296,13 +296,13 @@ func TestCliReporter(t *testing.T) {
 		},
 	} {
 		t.Run(data.name, func(t *testing.T) {
-			underTest := &cliReporter{
+			underTest := &humanReporter{
 				colors: aurora.NewAurora(true),
 			}
 			data.probe(t, underTest)
 			assert.Equal(t, data.xpectResults, underTest.results)
 			var buf strings.Builder
-			err := underTest.printResults(&buf, "human")
+			err := underTest.printResults(&buf)
 			assert.NoError(t, err)
 			result := buf.String()
 			assert.Equal(t, data.xpect, result)
