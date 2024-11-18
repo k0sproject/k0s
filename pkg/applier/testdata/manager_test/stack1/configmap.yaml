@@ -1,0 +1,9 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: applier-test
+  namespace: kube-system
+  labels:
+    component: applier
+data:
+  foo: bar
