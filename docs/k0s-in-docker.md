@@ -1,6 +1,6 @@
 # Run k0s in Docker
 
-You can create a k0s cluster on top of docker. In such a scenario, by default, both controller and worker nodes are run in the same container to provide an easy local testing "cluster".
+You can create a k0s cluster on top of Docker.
 
 ## Prerequisites
 
@@ -8,84 +8,197 @@ You will require a [Docker environment](https://docs.docker.com/get-docker/) run
 
 ## Container images
 
-The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include:
+The k0s OCI images are published to both Docker Hub and GitHub Container
+registry. For simplicity, the examples given here use Docker Hub (GitHub
+requires separate authentication, which is not covered here). The image names
+are as follows:
 
-- docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0
-- ghcr.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0
+- `docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`
+- `ghcr.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`
 
-**Note:** Due to Docker Hub tag validation scheme, we have to use `-` as the k0s version separator instead of the usual `+`. So for example k0s version `v{{{ extra.k8s_version }}}+k0s.0` is tagged as `docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0`.
+**Note:** Due to Docker's tag validation scheme, `-` is used as the k0s version
+separator instead of the usual `+`. For example, k0s version
+`v{{{extra.k8s_version}}}+k0s.0` is tagged as
+`docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`.
 
 ## Start k0s
 
-### 1. Initiate k0s
+### 1. Run a controller
 
-You can run your own k0s in Docker:
+By default, running the k0s OCI image will launch a controller with workloads
+enabled (i.e. a controller with the `--enable-worker` flag) to provide an easy
+local testing "cluster":
 
 ```sh
-docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 --cgroupns=host docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 -- k0s controller --enable-worker
+docker run -d --name k0s-controller --hostname k0s-controller \
+  -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
+  --tmpfs /run `# this is where k0s stores runtime data` \
+  --privileged `# this is the easiest way to enable container-in-container workloads` \
+  -p 6443:6443 `# publish the Kubernetes API server port` \
+  docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
 ```
 
 Explanation of command line arguments:
 
 - `-d` runs the container in detached mode, i.e. in the background.
-- `--name k0s` names the container "k0s".
-- `--hostname k0s` sets the hostname of the container to "k0s".
+- `--name k0s-controller` names the container "k0s-controller".
+- `--hostname k0s-controller` sets the hostname of the container to
+  "k0s-controller".
+- `-v /var/lib/k0s -v /var/log/pods` creates two Docker volumes and mounts them
+  to `/var/lib/k0s` and `/var/log/pods` respectively inside the container,
+  ensuring that cluster data persists across container restarts.
+- `--tmpfs /run` **TODO**
 - `--privileged` gives the container the elevated privileges that k0s needs to
-  function properly within Docker.
-- `-v /var/lib/k0s` creates a a Docker volume and mounts it to `/var/lib/k0s`
-  inside the container, ensuring that cluster data persists across container
-  restarts.
+  function properly within Docker. See the section on [adding additional
+  workers](#2-optional-add-additional-workers) for a more detailed discussion of
+  privileges.
 - `-p 6443:6443` exposes the container's Kubernetes API server port 6443 to the
   host, allowing you to interact with the cluster externally.
-- `--cgroupns=host` configures the container to share the host's cgroup
-  namespace, allowing k0s to run embedded container workloads.
 - `docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0` is the name of the
-  k0s Docker image to run.
-- `--` marks the end of the argument processing for the docker binary.
-- `k0s controller --enable-worker` is the actual command to run inside the
-  Docker container. It starts the k0s controller and enables a worker node
-  within the same container, creating a single node cluster.
+  k0s image to run.
 
-**Note:** This command starts k0s with a worker. You may disable the worker by running it without the flag `--enable-worker`
+By default, the k0s image starts a k0s controller with worker components enabled
+within the same container, creating a cluster with a single
+controller-and-worker node using the following command:
 
-### 2. (Optional) Create additional workers
+```Dockerfile
+{% include "../Dockerfile" start="# Start CMD" end="# End CMD" %}
+```
 
-You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.
+Alternatively, a controller-only node can be run like this:
 
-For each required worker:
+```sh
+docker run -d --name k0s-controller --hostname k0s-controller \
+  --read-only `# k0s won't write any data outside the below paths` \
+  -v /var/lib/k0s `# this is where k0s stores its data` \
+  --tmpfs /run `# this is where k0s stores runtime data` \
+  --tmpfs /tmp `# allow writing temporary files` \
+  -p 6443:6443 `# publish the Kubernetes API server port` \
+  docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+  k0s controller
+```
 
-1. Acquire a join token for the worker:
+Note the addition of `k0s controller` to override the image's default command.
+Also note that a controller-only node requires fewer privileges.
 
-    ```sh
-    token=$(docker exec -t -i k0s k0s token create --role=worker)
-    ```
+### 2. (Optional) Add additional workers
+
+You can add multiple worker nodes to the cluster and then distribute your
+application containers to separate workers.
+
+1. Acquire a [join token](k0s-multi-node.md#3-create-a-join-token) for the
+   worker:
+
+   ```sh
+   token=$(docker exec k0s-controller k0s token create --role=worker)
+   ```
 
 2. Run the container to create and join the new worker:
 
-    ```sh
-    docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s --cgroupns=host  docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 k0s worker $token
-    ```
+   ```sh
+   docker run -d --name k0s-worker1 --hostname k0s-worker1 \
+     -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
+     --tmpfs /run `# this is where k0s stores runtime data` \
+     --privileged `# this is the easiest way to enable container-in-container workloads` \
+     docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+     k0s worker $token
+   ```
 
-Repeat these steps for each additional worker node needed. Ensure that workers can reach the controller on port 6443.
+   Alternatively, with fine-grained privileges:
+   <!--
+     This setup is partly repeated in compose.yaml. So if things change here,
+     they should probably be reflected in compose.yaml as well.
+
+     Ideally, this example would show a setup with a read-only root file system.
+     Unfortunately, the entrypoint's DNS fixup needs to modify /etc/resolv.conf,
+     so this is not an option at this time. The entrypoint could perhaps try to
+     overmount /etc/resolv.conf, but that stunt is left for the future.
+     Additional paths that should then be added as tmpfs:
+     - /tmp
+     - /etc/cni/net.d
+     - /opt/cni/bin
+   -->
+
+   ```sh
+   docker run -d --name k0s-worker1 --hostname k0s-worker1 \
+     -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
+     --tmpfs /run `# this is where k0s stores runtime data` \
+     --security-opt seccomp=unconfined \
+     -v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r' \
+     --cap-add sys_admin \
+     --cap-add net_admin \
+     --cap-add sys_ptrace \
+     --cap-add sys_resource \
+     docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+     k0s worker "$token"
+   ```
+
+   Notes on the security-related flags:
+
+   - `--security-opt seccomp=unconfined` is required for `runc` to access the
+     [session keyring].
+   - `-v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r'` allows reading
+     of `/dev/kmsg` from inside the container. The kubelet's OOM watcher uses
+     this.
+     <!-- check device type via `stat -c %Hr:%Lr /dev/kmsg`. -->
+     <!--
+       Upstream reference: https://github.com/euank/go-kmsg-parser/blob/v2.0.0/kmsgparser/kmsgparser.go#L60
+       Also relevant: KubeletInUserNamespace feature gate (alpha since v1.22)
+       https://kubernetes.io/docs/tasks/administer-cluster/kubelet-in-userns/
+     -->
+
+   Notes on [Linux capabilities]:
+
+   - `CAP_SYS_ADMIN` allows for a variety of administrative tasks, including
+     mounting file systems and managing namespaces, which are necessary for
+     creating and configuring nested containers.
+   - `CAP_NET_ADMIN` allows manipulation of network settings such as interfaces
+     and routes, allowing containers to create isolated or bridged networks, and
+     so on.
+   - `CAP_SYS_PTRACE` allows to inspect and modify processes, used to monitor
+     other containers in a nested environment.
+     <!--
+       Omitting this results in not being able to start containers
+       ("RunContainerError")
+     -->
+   - `CAP_SYS_RESOURCE` allows containers to override resource limits for things
+     like memory or file descriptors, used to manage and adjust resource
+     allocation in nested container environments.
+     <!--
+       Omitting this results in "runc create failed: unable to start container
+       process: can't get final child's PID from pipe: EOF: unknown"
+     -->
+
+   Note that more privileges may be required depending on your cluster
+   configuration and workloads.
+
+   Repeat this step for each additional worker node and adjust the container and
+   host names accordingly. Make sure that the workers can reach the controller
+   on the [required ports]. If you are using Docker's default bridged network,
+   this should be the case.
+
+[session keyring]: https://www.man7.org/linux/man-pages/man7/session-keyring.7.html
+[Linux capabilities]: https://www.man7.org/linux/man-pages/man7/capabilities.7.html
+[required ports]: networking.md#controller-worker-communication
 
 ### 3. Access your cluster
 
-a) Using kubectl within the Container
+#### a) Using kubectl within the container
 
 To check cluster status and list nodes, use:
 
 ```sh
-docker exec k0s k0s kubectl get nodes
+docker exec k0s-controller k0s kubectl get nodes
 ```
 
-b) Using kubectl Locally
+#### b) Using kubectl locally
 
 To configure local access to your k0s cluster, follow these steps:
 
 1. Generate the kubeconfig:
 
     ```sh
-    docker exec k0s k0s kubeconfig admin > ~/.kube/k0s.config
+    docker exec k0s-controller k0s kubeconfig admin > ~/.kube/k0s.config
     ```
 
 2. Update kubeconfig with Localhost Access:
@@ -110,36 +223,21 @@ To configure local access to your k0s cluster, follow these steps:
     kubectl get nodes
     ```
 
-c) Use [Lens](https://github.com/lensapp/lens/):
+#### c) Use [Lens]
 
-Access the k0s cluster using Lens by following the instructions [here](https://docs.k8slens.dev/getting-started/add-cluster/).
+Access the k0s cluster using Lens by following the instructions on [how to add a
+cluster].
+
+[Lens]: https://k8slens.dev/
+[how to add a cluster]: https://docs.k8slens.dev/getting-started/add-cluster/
 
 ## Use Docker Compose (alternative)
 
 As an alternative you can run k0s using Docker Compose:
 
+<!-- Kept in its own file to ease local testing. -->
 ```yaml
-version: "3.9"
-services:
-  k0s:
-    container_name: k0s
-    image: docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0
-    command: k0s controller --config=/etc/k0s/config.yaml --enable-worker
-    hostname: k0s
-    privileged: true
-    cgroup: host
-    volumes:
-      - "/var/lib/k0s"
-    ports:
-      - "6443:6443"
-    network_mode: "bridge"
-    environment:
-      K0S_CONFIG: |-
-        apiVersion: k0s.k0sproject.io/v1beta1
-        kind: ClusterConfig
-        metadata:
-          name: k0s
-        # Any additional configuration goes here ...
+{% include "compose.yaml" %}
 ```
 
 ## Known limitations
