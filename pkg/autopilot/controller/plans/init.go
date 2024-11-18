@@ -73,7 +73,7 @@ func registerNewPlanStateController(logger *logrus.Entry, mgr crman.Manager, pro
 		providers...,
 	)
 
-	return registerPlanStateController("newplan", logger, mgr, newPlanEventFilter(), handler, providers)
+	return registerPlanStateController("newplan", logger, mgr, newPlanEventFilter(), handler)
 }
 
 // registerSchedulableWaitStateController registers the 'schedulablewait' plan state controller to
@@ -87,7 +87,7 @@ func registerSchedulableWaitStateController(logger *logrus.Entry, mgr crman.Mana
 		providers...,
 	)
 
-	return registerPlanStateController("schedulablewait", logger, mgr, schedulableWaitEventFilter(), handler, providers)
+	return registerPlanStateController("schedulablewait", logger, mgr, schedulableWaitEventFilter(), handler)
 }
 
 // registerSchedulableStateController registers the 'schedulable' plan state controller to
@@ -101,12 +101,12 @@ func registerSchedulableStateController(logger *logrus.Entry, mgr crman.Manager,
 		providers...,
 	)
 
-	return registerPlanStateController("schedulable", logger, mgr, schedulableEventFilter(), handler, providers)
+	return registerPlanStateController("schedulable", logger, mgr, schedulableEventFilter(), handler)
 }
 
 // registerPlanStateController is a helper for registering a plan state controller into
 // controller-runtime.
-func registerPlanStateController(name string, logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, handler appc.PlanStateHandler, providers []appc.PlanCommandProvider) error {
+func registerPlanStateController(name string, logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, handler appc.PlanStateHandler) error {
 	return cr.NewControllerManagedBy(mgr).
 		Named("planstate-" + name).
 		For(&apv1beta2.Plan{}).

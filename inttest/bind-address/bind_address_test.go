@@ -100,7 +100,7 @@ func (s *suite) TestCustomizedBindAddress() {
 		}
 		s.Require().NoError(eg.Wait())
 
-		s.Require().NoError(s.checkClusterReadiness(ctx, clients, 1))
+		s.Require().NoError(s.checkClusterReadiness(ctx, clients))
 	})
 
 	s.Run("join_new_controllers", func() {
@@ -117,11 +117,11 @@ func (s *suite) TestCustomizedBindAddress() {
 		s.Require().NoError(err)
 
 		s.T().Logf("Checking if HA cluster is ready")
-		s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount))
+		s.Require().NoError(s.checkClusterReadiness(ctx, clients))
 	})
 }
 
-func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.Clientset, numControllers int, degradedControllers ...string) error {
+func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.Clientset) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {

@@ -75,7 +75,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 	case apv1beta2.UpdateStrategyTypeCron:
 		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient)
 	case apv1beta2.UpdateStrategyTypePeriodic:
-		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, clusterID, build.Version)
+		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, clusterID, build.Version), nil
 	default:
 		return nil, fmt.Errorf("unknown update strategy type: %s", updateConfig.Spec.UpgradeStrategy.Type)
 	}

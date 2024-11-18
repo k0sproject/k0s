@@ -105,7 +105,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, 
 	certFile := filepath.Join(m.K0sVars.CertRootDir, certReq.Name+".crt")
 
 	// if regenerateCert returns true, it means we need to create the certs
-	if m.regenerateCert(certReq, keyFile, certFile) {
+	if m.regenerateCert(keyFile, certFile) {
 		logrus.Debugf("creating certificate %s", certFile)
 		req := csr.CertificateRequest{
 			KeyRequest: csr.NewKeyRequest(),
@@ -191,7 +191,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, 
 
 // if regenerateCert does not need to do any changes, it will return false
 // if a change in SAN hosts is detected, if will return true, to re-generate certs
-func (m *Manager) regenerateCert(certReq Request, keyFile string, certFile string) bool {
+func (m *Manager) regenerateCert(keyFile string, certFile string) bool {
 	var cert *certinfo.Certificate
 	var err error
 
