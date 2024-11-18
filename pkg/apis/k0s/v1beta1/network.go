@@ -18,8 +18,10 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilnet "k8s.io/utils/net"
@@ -135,9 +137,14 @@ func (n *Network) DNSAddress() (string, error) {
 		return "", fmt.Errorf("failed to parse service CIDR %q: %w", n.ServiceCIDR, err)
 	}
 
-	address := ipnet.IP.To4()
-	if IsIPv6String(ipnet.IP.String()) {
-		address = ipnet.IP.To16()
+	address := slices.Clone(ipnet.IP.To4())
+	if address == nil {
+		// The network address is not an IPv4 address. This can only happen if
+		// k0s is running in IPv6-only mode, which is currently not a supported
+		// configuration. In dual-stack mode, the IPv6 CIDR is stored in
+		// n.DualStack.IPv6ServiceCIDR. Error out until it is clear how to
+		// properly calculate the DNS address for a v6 network.
+		return "", fmt.Errorf("%w: DNS address calculation for non-v4 CIDR: %s", errors.ErrUnsupported, n.ServiceCIDR)
 	}
 
 	prefixlen, _ := ipnet.Mask.Size()
@@ -148,7 +155,7 @@ func (n *Network) DNSAddress() (string, error) {
 	}
 
 	if !ipnet.Contains(address) {
-		return "", fmt.Errorf("failed to calculate a valid DNS address: %q", address.String())
+		return "", fmt.Errorf("failed to calculate DNS address: CIDR too narrow: %s", n.ServiceCIDR)
 	}
 
 	return address.String(), nil
