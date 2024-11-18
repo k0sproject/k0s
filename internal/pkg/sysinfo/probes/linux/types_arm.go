@@ -18,6 +18,4 @@ limitations under the License.
 
 package linux
 
-func utsChar(ch rune) uint8 { return uint8(ch) } //nolint:deadcode,unused // just for tests 🙄
-
-type utsStringPtr *[65]uint8
+type utsChar = uint8

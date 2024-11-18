@@ -584,7 +584,7 @@ func TestReconciler_runReconcileLoop(t *testing.T) {
 
 	underTest.runReconcileLoop(ctx, updates, nil)
 
-	switch ctx.Err() { //nolint:errorlint // as per context contract
+	switch ctx.Err() {
 	case context.Canceled:
 		break // this is the good case
 	case context.DeadlineExceeded:

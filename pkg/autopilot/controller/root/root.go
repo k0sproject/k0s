@@ -19,7 +19,6 @@ import (
 )
 
 // TODO: decide on renaming root.RootConfig -> root.Config
-// nolint:revive
 type RootConfig struct {
 	InvocationID        string
 	KubeConfig          string

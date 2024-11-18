@@ -133,7 +133,7 @@ func newUnameProber() unameProber {
 }
 
 func parseUname(utsname *syscall.Utsname) *uname {
-	convert := func(chars utsStringPtr) unameField {
+	convert := func(chars *[65]utsChar) unameField {
 		var buf [65]byte
 		var i int
 		for pos, ch := range *chars {
