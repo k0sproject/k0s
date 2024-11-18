@@ -496,7 +496,7 @@ func TestWatcher(t *testing.T) {
 
 			return nil
 		}
-		second = func(opts metav1.ListOptions) error { // nolint:unparam // error required to satisfy interface
+		second = func(opts metav1.ListOptions) error { //nolint:unparam // error required to satisfy interface
 			assert.Equal(t, "the bookmark", opts.ResourceVersion)
 			assert.True(t, opts.AllowWatchBookmarks)
 
@@ -508,7 +508,7 @@ func TestWatcher(t *testing.T) {
 
 			return nil
 		}
-		third = func(opts metav1.ListOptions) error { // nolint:unparam // error required to satisfy interface
+		third = func(opts metav1.ListOptions) error { //nolint:unparam // error required to satisfy interface
 			assert.Equal(t, "someConfigMap", opts.ResourceVersion)
 			assert.True(t, opts.AllowWatchBookmarks)
 
