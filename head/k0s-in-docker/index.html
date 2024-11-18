@@ -513,18 +513,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-initiate-k0s" class="md-nav__link">
+  <a href="#1-run-a-controller" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Initiate k0s
+      1. Run a controller
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-optional-create-additional-workers" class="md-nav__link">
+  <a href="#2-optional-add-additional-workers" class="md-nav__link">
     <span class="md-ellipsis">
-      2. (Optional) Create additional workers
+      2. (Optional) Add additional workers
     </span>
   </a>
   
@@ -2153,18 +2153,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-initiate-k0s" class="md-nav__link">
+  <a href="#1-run-a-controller" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Initiate k0s
+      1. Run a controller
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-optional-create-additional-workers" class="md-nav__link">
+  <a href="#2-optional-add-additional-workers" class="md-nav__link">
     <span class="md-ellipsis">
-      2. (Optional) Create additional workers
+      2. (Optional) Add additional workers
     </span>
   </a>
   
@@ -2242,70 +2242,171 @@
 
 
 <h1 id="run-k0s-in-docker">Run k0s in Docker<a class="headerlink" href="#run-k0s-in-docker" title="Permanent link">#</a></h1>
-<p>You can create a k0s cluster on top of docker. In such a scenario, by default, both controller and worker nodes are run in the same container to provide an easy local testing "cluster".</p>
+<p>You can create a k0s cluster on top of Docker.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <p>You will require a <a href="https://docs.docker.com/get-docker/">Docker environment</a> running on a Mac, Windows, or Linux system.</p>
 <h2 id="container-images">Container images<a class="headerlink" href="#container-images" title="Permanent link">#</a></h2>
-<p>The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include:</p>
+<p>The k0s OCI images are published to both Docker Hub and GitHub Container
+registry. For simplicity, the examples given here use Docker Hub (GitHub
+requires separate authentication, which is not covered here). The image names
+are as follows:</p>
 <ul>
-<li>docker.io/k0sproject/k0s:v1.31.2-k0s.0</li>
-<li>ghcr.io/k0sproject/k0s:v1.31.2-k0s.0</li>
+<li><code>docker.io/k0sproject/k0s:v1.31.2-k0s.0</code></li>
+<li><code>ghcr.io/k0sproject/k0s:v1.31.2-k0s.0</code></li>
 </ul>
-<p><strong>Note:</strong> Due to Docker Hub tag validation scheme, we have to use <code>-</code> as the k0s version separator instead of the usual <code>+</code>. So for example k0s version <code>v1.31.2+k0s.0</code> is tagged as <code>docker.io/k0sproject/k0s:v1.31.2-k0s.0</code>.</p>
+<p><strong>Note:</strong> Due to Docker's tag validation scheme, <code>-</code> is used as the k0s version
+separator instead of the usual <code>+</code>. For example, k0s version
+<code>v1.31.2+k0s.0</code> is tagged as
+<code>docker.io/k0sproject/k0s:v1.31.2-k0s.0</code>.</p>
 <h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
-<h3 id="1-initiate-k0s">1. Initiate k0s<a class="headerlink" href="#1-initiate-k0s" title="Permanent link">#</a></h3>
-<p>You can run your own k0s in Docker:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w"> </span>docker.io/k0sproject/k0s:v1.31.2-k0s.0<span class="w"> </span>--<span class="w"> </span>k0s<span class="w"> </span>controller<span class="w"> </span>--enable-worker
+<h3 id="1-run-a-controller">1. Run a controller<a class="headerlink" href="#1-run-a-controller" title="Permanent link">#</a></h3>
+<p>By default, running the k0s OCI image will launch a controller with workloads
+enabled (i.e. a controller with the <code>--enable-worker</code> flag) to provide an easy
+local testing "cluster":</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-controller<span class="w"> </span>--hostname<span class="w"> </span>k0s-controller<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-v<span class="w"> </span>/var/log/pods<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores its data` \</span>
+<span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
+<span class="w">  </span>--privileged<span class="w"> </span><span class="sb">`</span><span class="c1"># this is the easiest way to enable container-in-container workloads` \</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span><span class="sb">`</span><span class="c1"># publish the Kubernetes API server port` \</span>
+<span class="w">  </span>docker.io/k0sproject/k0s:v1.31.2-k0s.0
 </code></pre></div>
 <p>Explanation of command line arguments:</p>
 <ul>
 <li><code>-d</code> runs the container in detached mode, i.e. in the background.</li>
-<li><code>--name k0s</code> names the container "k0s".</li>
-<li><code>--hostname k0s</code> sets the hostname of the container to "k0s".</li>
+<li><code>--name k0s-controller</code> names the container "k0s-controller".</li>
+<li><code>--hostname k0s-controller</code> sets the hostname of the container to
+  "k0s-controller".</li>
+<li><code>-v /var/lib/k0s -v /var/log/pods</code> creates two Docker volumes and mounts them
+  to <code>/var/lib/k0s</code> and <code>/var/log/pods</code> respectively inside the container,
+  ensuring that cluster data persists across container restarts.</li>
+<li><code>--tmpfs /run</code> <strong>TODO</strong></li>
 <li><code>--privileged</code> gives the container the elevated privileges that k0s needs to
-  function properly within Docker.</li>
-<li><code>-v /var/lib/k0s</code> creates a a Docker volume and mounts it to <code>/var/lib/k0s</code>
-  inside the container, ensuring that cluster data persists across container
-  restarts.</li>
+  function properly within Docker. See the section on <a href="#2-optional-add-additional-workers">adding additional
+  workers</a> for a more detailed discussion of
+  privileges.</li>
 <li><code>-p 6443:6443</code> exposes the container's Kubernetes API server port 6443 to the
   host, allowing you to interact with the cluster externally.</li>
-<li><code>--cgroupns=host</code> configures the container to share the host's cgroup
-  namespace, allowing k0s to run embedded container workloads.</li>
 <li><code>docker.io/k0sproject/k0s:v1.31.2-k0s.0</code> is the name of the
-  k0s Docker image to run.</li>
-<li><code>--</code> marks the end of the argument processing for the docker binary.</li>
-<li><code>k0s controller --enable-worker</code> is the actual command to run inside the
-  Docker container. It starts the k0s controller and enables a worker node
-  within the same container, creating a single node cluster.</li>
+  k0s image to run.</li>
 </ul>
-<p><strong>Note:</strong> This command starts k0s with a worker. You may disable the worker by running it without the flag <code>--enable-worker</code></p>
-<h3 id="2-optional-create-additional-workers">2. (Optional) Create additional workers<a class="headerlink" href="#2-optional-create-additional-workers" title="Permanent link">#</a></h3>
-<p>You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.</p>
-<p>For each required worker:</p>
+<p>By default, the k0s image starts a k0s controller with worker components enabled
+within the same container, creating a cluster with a single
+controller-and-worker node using the following command:</p>
+<div class="highlight"><pre><span></span><code><span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;k0s&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;controller&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--enable-worker&quot;</span><span class="p">]</span>
+</code></pre></div>
+<p>Alternatively, a controller-only node can be run like this:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-controller<span class="w"> </span>--hostname<span class="w"> </span>k0s-controller<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--read-only<span class="w"> </span><span class="sb">`</span><span class="c1"># k0s won&#39;t write any data outside the below paths` \</span>
+<span class="w">  </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores its data` \</span>
+<span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
+<span class="w">  </span>--tmpfs<span class="w"> </span>/tmp<span class="w"> </span><span class="sb">`</span><span class="c1"># allow writing temporary files` \</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span><span class="sb">`</span><span class="c1"># publish the Kubernetes API server port` \</span>
+<span class="w">  </span>docker.io/k0sproject/k0s:v1.31.2-k0s.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>k0s<span class="w"> </span>controller
+</code></pre></div>
+<p>Note the addition of <code>k0s controller</code> to override the image's default command.
+Also note that a controller-only node requires fewer privileges.</p>
+<h3 id="2-optional-add-additional-workers">2. (Optional) Add additional workers<a class="headerlink" href="#2-optional-add-additional-workers" title="Permanent link">#</a></h3>
+<p>You can add multiple worker nodes to the cluster and then distribute your
+application containers to separate workers.</p>
 <ol>
 <li>
-<p>Acquire a join token for the worker:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">token</span><span class="o">=</span><span class="k">$(</span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span>-i<span class="w"> </span>k0s<span class="w"> </span>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--role<span class="o">=</span>worker<span class="k">)</span>
+<p>Acquire a <a href="../k0s-multi-node/#3-create-a-join-token">join token</a> for the
+   worker:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">token</span><span class="o">=</span><span class="k">$(</span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s-controller<span class="w"> </span>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--role<span class="o">=</span>worker<span class="k">)</span>
 </code></pre></div>
 </li>
 <li>
 <p>Run the container to create and join the new worker:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-worker1<span class="w"> </span>--hostname<span class="w"> </span>k0s-worker1<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>--cgroupns<span class="o">=</span>host<span class="w">  </span>docker.io/k0sproject/k0s:v1.31.2-k0s.0<span class="w"> </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="nv">$token</span>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-worker1<span class="w"> </span>--hostname<span class="w"> </span>k0s-worker1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-v<span class="w"> </span>/var/log/pods<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores its data` \</span>
+<span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
+<span class="w">  </span>--privileged<span class="w"> </span><span class="sb">`</span><span class="c1"># this is the easiest way to enable container-in-container workloads` \</span>
+<span class="w">  </span>docker.io/k0sproject/k0s:v1.31.2-k0s.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="nv">$token</span>
 </code></pre></div>
+<p>Alternatively, with fine-grained privileges:
+ <!--
+     This setup is partly repeated in compose.yaml. So if things change here,
+     they should probably be reflected in compose.yaml as well.
+
+     Ideally, this example would show a setup with a read-only root file system.
+     Unfortunately, the entrypoint's DNS fixup needs to modify /etc/resolv.conf,
+     so this is not an option at this time. The entrypoint could perhaps try to
+     overmount /etc/resolv.conf, but that stunt is left for the future.
+     Additional paths that should then be added as tmpfs:
+     - /tmp
+     - /etc/cni/net.d
+     - /opt/cni/bin
+   -->
+</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-worker1<span class="w"> </span>--hostname<span class="w"> </span>k0s-worker1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-v<span class="w"> </span>/var/log/pods<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores its data` \</span>
+<span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
+<span class="w">  </span>--security-opt<span class="w"> </span><span class="nv">seccomp</span><span class="o">=</span>unconfined<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>/dev/kmsg:/dev/kmsg:ro<span class="w"> </span>--device-cgroup-rule<span class="o">=</span><span class="s1">&#39;c 1:11 r&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cap-add<span class="w"> </span>sys_admin<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cap-add<span class="w"> </span>net_admin<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cap-add<span class="w"> </span>sys_ptrace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cap-add<span class="w"> </span>sys_resource<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>docker.io/k0sproject/k0s:v1.31.2-k0s.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$token</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p>Notes on the security-related flags:</p>
+<ul>
+<li><code>--security-opt seccomp=unconfined</code> is required for <code>runc</code> to access the
+   <a href="https://www.man7.org/linux/man-pages/man7/session-keyring.7.html">session keyring</a>.</li>
+<li><code>-v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r'</code> allows reading
+   of <code>/dev/kmsg</code> from inside the container. The kubelet's OOM watcher uses
+   this.
+   <!-- check device type via <code>stat -c %Hr:%Lr /dev/kmsg</code>. -->
+   <!--
+     Upstream reference: https://github.com/euank/go-kmsg-parser/blob/v2.0.0/kmsgparser/kmsgparser.go#L60
+     Also relevant: KubeletInUserNamespace feature gate (alpha since v1.22)
+     https://kubernetes.io/docs/tasks/administer-cluster/kubelet-in-userns/
+   --></li>
+</ul>
+<p>Notes on <a href="https://www.man7.org/linux/man-pages/man7/capabilities.7.html">Linux capabilities</a>:</p>
+<ul>
+<li><code>CAP_SYS_ADMIN</code> allows for a variety of administrative tasks, including
+   mounting file systems and managing namespaces, which are necessary for
+   creating and configuring nested containers.</li>
+<li><code>CAP_NET_ADMIN</code> allows manipulation of network settings such as interfaces
+   and routes, allowing containers to create isolated or bridged networks, and
+   so on.</li>
+<li><code>CAP_SYS_PTRACE</code> allows to inspect and modify processes, used to monitor
+   other containers in a nested environment.
+   <!--
+     Omitting this results in not being able to start containers
+     ("RunContainerError")
+   --></li>
+<li><code>CAP_SYS_RESOURCE</code> allows containers to override resource limits for things
+   like memory or file descriptors, used to manage and adjust resource
+   allocation in nested container environments.
+   <!--
+     Omitting this results in "runc create failed: unable to start container
+     process: can't get final child's PID from pipe: EOF: unknown"
+   --></li>
+</ul>
+<p>Note that more privileges may be required depending on your cluster
+ configuration and workloads.</p>
+<p>Repeat this step for each additional worker node and adjust the container and
+ host names accordingly. Make sure that the workers can reach the controller
+ on the <a href="../networking/#controller-worker-communication">required ports</a>. If you are using Docker's default bridged network,
+ this should be the case.</p>
 </li>
 </ol>
-<p>Repeat these steps for each additional worker node needed. Ensure that workers can reach the controller on port 6443.</p>
 <h3 id="3-access-your-cluster">3. Access your cluster<a class="headerlink" href="#3-access-your-cluster" title="Permanent link">#</a></h3>
-<p>a) Using kubectl within the Container</p>
+<h4 id="a-using-kubectl-within-the-container">a) Using kubectl within the container<a class="headerlink" href="#a-using-kubectl-within-the-container" title="Permanent link">#</a></h4>
 <p>To check cluster status and list nodes, use:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s-controller<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 </code></pre></div>
-<p>b) Using kubectl Locally</p>
+<h4 id="b-using-kubectl-locally">b) Using kubectl locally<a class="headerlink" href="#b-using-kubectl-locally" title="Permanent link">#</a></h4>
 <p>To configure local access to your k0s cluster, follow these steps:</p>
 <ol>
 <li>
 <p>Generate the kubeconfig:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s<span class="w"> </span>k0s<span class="w"> </span>kubeconfig<span class="w"> </span>admin<span class="w"> </span>&gt;<span class="w"> </span>~/.kube/k0s.config
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s-controller<span class="w"> </span>k0s<span class="w"> </span>kubeconfig<span class="w"> </span>admin<span class="w"> </span>&gt;<span class="w"> </span>~/.kube/k0s.config
 </code></pre></div>
 </li>
 <li>
@@ -2326,31 +2427,48 @@
 </code></pre></div>
 </li>
 </ol>
-<p>c) Use <a href="https://github.com/lensapp/lens/">Lens</a>:</p>
-<p>Access the k0s cluster using Lens by following the instructions <a href="https://docs.k8slens.dev/getting-started/add-cluster/">here</a>.</p>
+<h4 id="c-use-lens">c) Use <a href="https://k8slens.dev/">Lens</a><a class="headerlink" href="#c-use-lens" title="Permanent link">#</a></h4>
+<p>Access the k0s cluster using Lens by following the instructions on <a href="https://docs.k8slens.dev/getting-started/add-cluster/">how to add a
+cluster</a>.</p>
 <h2 id="use-docker-compose-alternative">Use Docker Compose (alternative)<a class="headerlink" href="#use-docker-compose-alternative" title="Permanent link">#</a></h2>
 <p>As an alternative you can run k0s using Docker Compose:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.9&quot;</span>
-<span class="nt">services</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
+<!-- Kept in its own file to ease local testing. -->
+<div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">k0s-controller</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:v1.31.2-k0s.0</span>
-<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s controller --config=/etc/k0s/config.yaml --enable-worker</span>
-<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
-<span class="w">    </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">    </span><span class="nt">cgroup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">host</span>
-<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s&quot;</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller</span>
+<span class="w">    </span><span class="nt">network_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bridge</span><span class="w"> </span><span class="c1"># other modes are unsupported</span>
 <span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;6443:6443&quot;</span>
-<span class="w">    </span><span class="nt">network_mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bridge&quot;</span>
-<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">K0S_CONFIG</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|-</span>
-<span class="w">        </span><span class="no">apiVersion: k0s.k0sproject.io/v1beta1</span>
-<span class="w">        </span><span class="no">kind: ClusterConfig</span>
-<span class="w">        </span><span class="no">metadata:</span>
-<span class="w">          </span><span class="no">name: k0s</span>
-<span class="w">        </span><span class="no"># Any additional configuration goes here ...</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6443:6443</span><span class="w"> </span><span class="c1"># publish the Kubernetes API server port</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s</span><span class="w"> </span><span class="c1"># this is where k0s stores its data</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/log/pods</span><span class="w"> </span><span class="c1"># this is where k0s stores pod logs</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg:/dev/kmsg:ro</span><span class="w"> </span><span class="c1"># required by kubelets OOM watcher</span>
+<span class="w">    </span><span class="nt">tmpfs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/run</span><span class="w"> </span><span class="c1"># this is where k0s stores runtime data</span>
+<span class="w">    </span><span class="nt">cap_add</span><span class="p">:</span>
+<span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_admin</span>
+<span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">net_admin</span>
+<span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_ptrace</span>
+<span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_resource</span>
+<span class="w">    </span><span class="nt">device_cgroup_rules</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">c 1:11 r</span><span class="w"> </span><span class="c1"># required by kubelets OOM watcher</span>
+<span class="w">    </span><span class="nt">configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.yaml</span>
+<span class="w">        </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/k0s.yaml</span>
+
+<span class="nt">configs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">k0s.yaml</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="no">apiVersion: k0s.k0sproject.io/v1beta1</span>
+<span class="w">      </span><span class="no">kind: ClusterConfig</span>
+<span class="w">      </span><span class="no">metadata:</span>
+<span class="w">        </span><span class="no">name: k0s</span>
+<span class="w">      </span><span class="no">spec:</span>
+<span class="w">        </span><span class="no">storage:</span>
+<span class="w">          </span><span class="no">type: kine</span>
+<span class="w">      </span><span class="no"># Any additional configuration goes here ...</span>
 </code></pre></div>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
