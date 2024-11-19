@@ -30,7 +30,6 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
-	"github.com/k0sproject/k0s/internal/pkg/iptablesutils"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -63,7 +62,6 @@ type Kubelet struct {
 	Labels              []string
 	Taints              []string
 	ExtraArgs           string
-	IPTablesMode        string
 	DualStackEnabled    bool
 }
 
@@ -71,45 +69,15 @@ var _ manager.Component = (*Kubelet)(nil)
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init(_ context.Context) error {
-	cmds := []string{"kubelet", "xtables-legacy-multi", "xtables-nft-multi"}
 
 	if runtime.GOOS == "windows" {
-		cmds = []string{"kubelet.exe"}
-	}
-
-	for _, cmd := range cmds {
-		err := assets.Stage(k.K0sVars.BinDir, cmd, constant.BinDirMode)
-		if err != nil {
-			return err
-		}
+		err := assets.Stage(k.K0sVars.BinDir, "kubelet.exe", constant.BinDirMode)
+		return err
 	}
 
 	if runtime.GOOS == "linux" {
-		iptablesMode := k.IPTablesMode
-		if iptablesMode == "" || iptablesMode == "auto" {
-			var err error
-			iptablesMode, err = iptablesutils.DetectHostIPTablesMode(k.K0sVars.BinDir)
-			if err != nil {
-				if KernelMajorVersion() < 5 {
-					iptablesMode = iptablesutils.ModeLegacy
-				} else {
-					iptablesMode = iptablesutils.ModeNFT
-				}
-				logrus.WithError(err).Infof("Failed to detect iptables mode, using iptables-%s by default", iptablesMode)
-			}
-		}
-		logrus.Infof("using iptables-%s", iptablesMode)
-		oldpath := fmt.Sprintf("xtables-%s-multi", iptablesMode)
-		for _, symlink := range []string{"iptables", "iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
-			symlinkPath := filepath.Join(k.K0sVars.BinDir, symlink)
-
-			// remove if it exist and ignore error if it doesn't
-			_ = os.Remove(symlinkPath)
-
-			err := os.Symlink(oldpath, symlinkPath)
-			if err != nil {
-				return fmt.Errorf("failed to create symlink %s: %w", symlink, err)
-			}
+		if err := assets.Stage(k.K0sVars.BinDir, "kubelet", constant.BinDirMode); err != nil {
+			return err
 		}
 	}
 
