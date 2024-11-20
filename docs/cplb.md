@@ -3,60 +3,70 @@
 For clusters that don't have an [externally managed load balancer](high-availability.md#load-balancer) for the k0s
 control plane, there is another option to get a highly available control plane called control plane load balancing (CPLB).
 
-CPLB has two features that are independent, but normally will be used together: VRRP Instances, which allows
-automatic assignation of predefined IP addresses using VRRP across control plane nodes. VirtualServers allows to
-do Load Balancing to the other control plane nodes.
+CPLB provides clusters a highly available VIP (virtual IP) and load balancing for **accessing the cluster externally**.
+For internal traffic (nodes to control plane) k0s provides [NLLB](nllb.md). Both features are fully compatible and it's
+recommended to use both together if you don't have an external load balancer.
 
-This feature is intended to be used for external traffic. This feature is fully compatible with
-[node-local load balancing (NLLB)](nllb.md) which means CPLB can be used for external traffic and NLLB for
-internal traffic at the same time.
+Load balancing means that an IP address will forward the traffic to every control plane node, Virtual IPs mean that
+this IP address will be present on at least one node at a time.
 
-## Technical functionality
+CPLB relies on [keepalived](https://www.keepalived.org) for highly available VIPs. Internally, Keepalived uses the
+[VRRP protocol](https://datatracker.ietf.org/doc/html/rfc3768). Load Balancing can be done through either userspace
+reverse proxy implemented in k0s (recommended for simplicity), or it can use Keepalived's virtual servers feature,
+which ultimately relies on IPVS.
 
-The k0s control plane load balancer provides k0s with virtual IPs and TCP
-load Balancing on each controller node. This allows the control plane to
-be highly available using VRRP (Virtual Router Redundancy Protocol) and
-IPVS long as the network infrastructure allows multicast and GARP.
+## Compatibility
 
-[Keepalived](https://www.keepalived.org/) is the only load balancer that is
-supported so far. Currently there are no plans to support other alternatives.
+CPLB depends on multiple technologies to work together as a whole, making it difficult to work on every single scenario.
 
-## VRRP Instances
+### Single node
 
-VRRP, or Virtual Router Redundancy Protocol, is a protocol that allows several
-routers to utilize the same virtual IP address. A VRRP instance refers to a
-specific configuration of this protocol.
+CPLB is incompatible with running as a [single node](k0s-single-node.md). This means k0s must not be started using the `--single` flag.
 
-Each VRRP instance must have a unique virtualRouterID, at least one IP address,
-one unique password (which is sent in plain text across your network, this is
-to prevent accidental conflicts between VRRP instances) and one network
-interface.
+### Controller + worker
 
-Except for the network interface, all the fields of a VRRP instance must have
-the same value on all the control plane nodes.
+K0s only supports the userspace reverse proxy load balancer. Keepalived's VirtualServers are not supported with controller + worker.
 
-Usually, users will define multiple VRRP instances when they need k0s to be
-highly available on multiple network interfaces.
+Both Kube-Router and Calico managed by k0s are supported with the userspace reverse proxy load balancer, however, k0s creates iptables
+rules in the control plane nodes which may be incompatible with custom CNI plugins.
 
-## Enabling in a cluster
+### External address
 
-In order to use control plane load balancing, the cluster needs to comply with the
-following:
+If [`spec.api.externalAddress`](configuration.md#specapi) is defined it's mandatory to disable
+the [`endpoint-reconciler` component](configuration.md#disabling-controller-components) using the flag `--disable-components=endpoint-reconciler`.
 
-* K0s isn't running as a [single node](k0s-single-node.md), i.e. it isn't
-  started using the `--single` flag.
-* The cluster should have multiple controller nodes. Technically CPLB also works
-  with a single controller node, but is only useful in conjunction with a highly
-  available control plane.
-* Unique virtualRouterID and authPass for each VRRP Instance in the same broadcast domain.
-  These do not provide any sort of security against ill-intentioned attacks, they are
-  safety features to prevent accidental conflicts between VRRP instances in the same
-  network segment.
-* If `VirtualServers` are used, the cluster configuration mustn't specify a non-empty
-  [`spec.api.externalAddress`][specapi]. If only `VRRPInstances` are specified, a
-  non-empty [`spec.api.externalAddress`][specapi] may be specified.
+### Node Local Load Balancing
 
-Add the following to the cluster configuration (`k0s.yaml`):
+CPLB is fully compatible with [NLLB](nllb.md), however NLLB is incompatible with [`spec.api.externalAddress`](configuration.md#specapi).
+
+## Virtual IPs - High availability
+
+### What is a VIP (virtual IP)
+
+A virtual IP is an IP address that isn't tied to a single network interface,
+instead it floats between multiple servers. This is a failover mechanism that
+grants that there is always at least a functioning server and removes a single
+point of failure.
+
+### Configuring VIPs
+
+CPLB relies internally on Keepalived's VRRP Instances. A VRRP Instance is a
+server that will manage one or more VIPs. Most users will need exactly one
+VRRP instance with exactly one VIP, however k0s allows multiple VRRP servers
+with multiple VIPs for more advanced use cases such as network segmentation.
+
+A virtualIP requires:
+
+1. A user-defined CIDR address which must be routable in the network. For most installations, this will be in the same CIDR as the physical interface.
+**WARNING:** K0s is not aware of external IP address management and the administrator is responsible for ensuring that IP addresses aren't colliding.
+2. A user-defined password which should be unique for each cluster. This password is a mechanism to prevent accidental conflicts. It's not encrypted
+and doesn't prevent malicious attacks in any way.
+3. A virtual router ID, which defaults to 51. This virtual router ID **must be unique** in the broadcast domain.
+4. A network interface, if not defined, k0s will chose the network interface that owns the default route.
+
+Except the network interface, all the other fields must be equal on every control plane node.
+
+This is a minimal example:
 
 ```yaml
 spec:
@@ -66,37 +76,59 @@ spec:
       type: Keepalived
       keepalived:
         vrrpInstances:
-        - virtualIPs: ["<External address IP>/<external address IP netmask"]
-          authPass: <password>
-        virtualServers:
-        - ipAddress: "ipAddress"
+        - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["172.16.0.100/16"]
+          authPass: "<my password>"
 ```
 
-Or alternatively, if using [`k0sctl`](k0sctl-install.md), add the following to
-the k0sctl configuration (`k0sctl.yaml`):
+## Load Balancing
+
+Currently k0s allows to chose one of two load balancing mechanism:
+
+1. A userspace reverse proxy running in the k0s process. This is the default and recommended setting.
+2. For users who may need extra performance or more flexible algorithms, k0s can use the keepalived virtual servers load balancer feature.
+
+All control plane nodes must use the same load balancing mechanism. Different Load balancing mechanism
+is not supported and has undefined behavior.
+
+### Load Balancing - Userspace Reverse Proxy
+
+This is the default behavior, in order to enable it simple configure a VIP
+using a VRRP instance.
 
 ```yaml
 spec:
-  k0s:
-    config:
-      spec:
-        network:
-          controlPlaneLoadBalancing:
-            enabled: true
-            type: Keepalived
-            keepalived:
-              vrrpInstances:
-              - virtualIPs: ["<External address IP>/<external address IP netmask>"]
-                authPass: <password>
-              virtualServers:
-              - ipAddress: "<External ip address>"
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["172.16.0.100/16"]
+          authPass: "<my password>"
 ```
 
-Because this is a feature intended to configure the apiserver, CPLB does not
-support dynamic configuration and in order to make changes you need to restart
-the k0s controllers to make changes.
+### Keepalived Virtual Servers Load Balancing
 
-[specapi]: configuration.md#specapi
+The Keepalived virtual servers Load Balancing is more performant than the userspace reverse proxy load balancer. However, it's
+ not recommended because it has some drawbacks:
+
+1. It's incompatible with controller+worker.
+2. May not work on every infrastructure.
+3. Troubleshooting is significantly more complex.
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["172.16.0.100/16"]
+          authPass: "<my password>"
+        virtualServers:
+        - ipAddress: "<VIP address without netmask>" # for instance 172.16.0.100
+```
 
 ## Full example using `k0sctl`
 
@@ -156,9 +188,6 @@ spec:
     version: v{{{ extra.k8s_version }}}+k0s.0
     config:
       spec:
-        api:
-          sans:
-          - 192.168.122.200
         network:
           controlPlaneLoadBalancing:
             enabled: true
@@ -167,8 +196,9 @@ spec:
               vrrpInstances:
               - virtualIPs: ["192.168.122.200/24"]
                 authPass: Example
-              virtualServers:
-              - ipAddress: "<External ip address>"
+          nodeLocalLoadBalancing: # optional, but CPLB will often be used with NLLB.
+            enabled: true
+            type: EnvoyProxy
 ```
 
 Save the above configuration into a file called `k0sctl.yaml` and apply it in
@@ -287,7 +317,7 @@ level=info msg="     k0sctl kubeconfig"
 The cluster with the two nodes should be available by now. Setup the kubeconfig
 file in order to interact with it:
 
-```shell
+```console
 k0sctl kubeconfig > k0s-kubeconfig
 export KUBECONFIG=$(pwd)/k0s-kubeconfig
 ```
@@ -302,21 +332,17 @@ worker-1.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }
 worker-2.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
 ```
 
-Each controller node has a dummy interface with the VIP and /32 netmask,
-but only one has it in the real nic:
+Only one controller has the VIP:
 
 ```console
-$ for i in controller-{0..2} ; do echo $i ; ssh $i -- ip -4 --oneline addr show | grep -e eth0 -e dummyvip0; done
+$ for i in controller-{0..2} ; do echo $i ; ssh $i -- ip -4 --oneline addr show | grep eth0; done
 controller-0
 2: eth0    inet 192.168.122.37/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2381sec preferred_lft 2381sec
 2: eth0    inet 192.168.122.200/24 scope global secondary eth0\       valid_lft forever preferred_lft forever
-3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever
 controller-1
 2: eth0    inet 192.168.122.185/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2390sec preferred_lft 2390sec
-3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever
 controller-2
 2: eth0    inet 192.168.122.87/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2399sec preferred_lft 2399sec
-3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever
 ```
 
 The cluster is using control plane load balancing and is able to tolerate the
@@ -331,23 +357,12 @@ Connection to 192.168.122.37 closed by remote host.
 Control plane load balancing provides high availability, the VIP will have moved to a different node:
 
 ```console
-$ for i in controller-{0..2} ; do echo $i ; ssh $i -- ip -4 --oneline addr show | grep -e eth0 -e dummyvip0; done
+$ for i in controller-{1..2} ; do echo $i ; ssh $i -- ip -4 --oneline addr show | grep eth0; done
 controller-1
 2: eth0    inet 192.168.122.185/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2173sec preferred_lft 2173sec
 2: eth0    inet 192.168.122.200/24 scope global secondary eth0\       valid_lft forever preferred_lft forever
-3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever
 controller-2
 2: eth0    inet 192.168.122.87/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2182sec preferred_lft 2182sec
-3: dummyvip0    inet 192.168.122.200/32 scope global dummyvip0\       valid_lft forever preferred_lft forever
-
-$ for i in controller-{0..2} ; do echo $i ; ipvsadm --save -n; done
-IP Virtual Server version 1.2.1 (size=4096)
-Prot LocalAddress:Port Scheduler Flags
-  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
-TCP  192.168.122.200:6443 rr persistent 360
-  -> 192.168.122.185:6443              Route   1      0          0
-  -> 192.168.122.87:6443               Route   1      0          0
-  -> 192.168.122.122:6443              Route   1      0          0
 ````
 
 And the cluster will be working normally:
@@ -359,3 +374,150 @@ worker-0.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }
 worker-1.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
 worker-2.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
 ```
+
+## Troubleshooting
+
+Although Virtual IPs and Load Balancing work together and are closely related, these are two independent
+processes and must be troubleshooting as two independent features.
+
+### Troubleshooting Virtual IPs
+
+The first thing to check is that the VIP is present in exactly one node at a time,
+for instance if a cluster has an `172.17.0.102/16` address and the interface is `eth0`,
+the expected output is similar to:
+
+```console
+controller0:/# ip a s eth0
+53: eth0@if54: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet 172.17.0.102/16 scope global secondary eth0
+       valid_lft forever preferred_lft forever
+```
+
+```console
+controller1:/# ip a s eth0
+55: eth0@if56: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
+    link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.3/16 brd 172.17.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+```
+
+If the virtualServers feature is used, there must be a dummy interface on the node
+called `dummyvip0` which has the VIP but with `32` netmask. This isn't the VIP and
+has to be there even if the VIP is held by another node.
+
+```console
+controller0:/# ip a s dummyvip0 | grep 172.17.0.102
+    inet 172.17.0.102/32 scope global dummyvip0
+```
+
+```console
+controller1:/# ip a s dummyvip0 | grep 172.17.0.102
+    inet 172.17.0.102/32 scope global dummyvip0
+```
+
+If this isn't present in the nodes, keepalived logs can be seen in the k0s-logs, and
+can be filtered with `component=keepalived`.
+
+```console
+controller0:/# journalctl -u k0scontroller | grep component=keepalived
+time="2024-11-19 12:56:11" level=info msg="Starting to supervise" component=keepalived
+time="2024-11-19 12:56:11" level=info msg="Started successfully, go nuts pid 409" component=keepalived
+time="2024-11-19 12:56:11" level=info msg="Tue Nov 19 12:56:11 2024: Starting Keepalived v2.2.8 (04/04,2023), git commit v2.2.7-154-g292b299e+" component=keepalived stream=stderr
+[...]
+```
+
+The keepalived configuration is stored in a file called keepalived.conf in the k0s run
+directory, by default `/run/k0s/keepalived.conf`, in this file there should be a
+`vrrp_instance`section for each `vrrpInstance`.
+
+Finally, k0s should have two keepalived processes running.
+
+### Troubleshooting the Load Balancer's Endpoint List
+
+Both the userspace reverse proxy load balancer and Keepalived's virtual servers need an endpoint list to
+do the load balancing. They share a component called `cplb-reconciler` which responsible for setting the
+load balancer's endpoint list. This component monitors constantly the endpoint `kubernetes` in the
+`default`namespace:
+
+```console
+controller0:/# kubectl get ep kubernetes -n default
+NAME         ENDPOINTS                                         AGE
+kubernetes   172.17.0.6:6443,172.17.0.7:6443,172.17.0.8:6443   9m14s
+```
+
+You can see the `cplb-reconciler` updates by running:
+
+```console
+controller0:/# journalctl -u k0scontroller | grep component=cplb-reconciler
+time="2024-11-20 20:29:28" level=error msg="Failed to watch API server endpoints, last observed version is \"\", starting over in 10s ..." component=cplb-reconciler error="Get \"https://172.17.0.6:6443/api/v1/namespaces/default/endpoints?fieldSelector=metadata.name%3Dkubernetes&timeout=30s&timeoutSeconds=30\": dial tcp 172.17.0.6:6443: connect: connection refused"
+time="2024-11-20 20:29:38" level=info msg="Updated the list of IPs: [172.17.0.6]" component=cplb-reconciler
+time="2024-11-20 20:29:55" level=info msg="Updated the list of IPs: [172.17.0.6 172.17.0.7]" component=cplb-reconciler
+time="2024-11-20 20:29:59" level=info msg="Updated the list of IPs: [172.17.0.6 172.17.0.7 172.17.0.8]" component=cplb-reconciler
+```
+
+### Troubleshooting the Userspace Reverse Proxy Load Balancer
+
+The userspace reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:
+
+```console
+controller0:/# netstat -tlpn | grep 6444
+tcp        0      0 :::6444                 :::*                    LISTEN      345/k0s
+```
+
+Then the requests to the VIP on the apiserver port are forwarded to this socket using one iptables rule:
+
+```console
+-A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <apiserver port> -j REDIRECT --to-ports <userspace proxy port>
+```
+
+A real life example of a cluster using using the VIP `17.177.0.102` looks like:
+
+```console
+controller0:/# /var/lib/k0s/bin/iptables-save | grep 6444
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444
+```
+
+It the load balancer is not load balancing for whatever reason, you can establish connections to it directly. A good way to see if it's actually load balancing is checking the serving certificate:
+
+```console
+controller0:/# ip -o addr s eth0
+43: eth0    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0\       valid_lft forever preferred_lft forever
+43: eth0    inet 172.17.0.102/16 scope global secondary eth0\       valid_lft forever preferred_lft forever
+
+controller0:/# openssl s_client -connect 172.17.0.102:6444  </dev/null 2>/dev/null | openssl x509 -noout -fingerprint
+SHA1 Fingerprint=B7:90:E6:E4:E1:EE:5B:19:72:99:02:28:54:36:D9:84:D5:39:67:8B
+controller0:/# openssl s_client -connect 172.17.0.102:6444  </dev/null 2>/dev/null | openssl x509 -noout -fingerprint
+SHA1 Fingerprint=89:94:5C:E5:50:7E:40:B2:E5:20:E7:70:E8:58:91:ED:63:B0:EC:65
+controller0:/# openssl s_client -connect 172.17.0.102:6444  </dev/null 2>/dev/null | openssl x509 -noout -fingerprint
+SHA1 Fingerprint=49:0D:79:FD:79:6F:A0:E4:9D:BA:A1:65:9C:C5:54:CF:E5:20:BF:A8
+controller0:/# openssl s_client -connect 172.17.0.102:6444  </dev/null 2>/dev/null | openssl x509 -noout -fingerprint
+SHA1 Fingerprint=B7:90:E6:E4:E1:EE:5B:19:72:99:02:28:54:36:D9:84:D5:39:67:8B
+```
+
+Note: You can't query the port 6444 on the localhost address, there is an iptables conflict. You are expected to
+be able to reach the port 6443 on any address and the port 6444 on any address except localhost.
+
+### Troubleshooting Keepalived Virtual Servers
+
+You can verify the keepalived's logs and configuration file using the steps described in the section
+[troubleshooting virtual IPs](#troubleshooting-virtual-ips) IPs above. Additionally, you can check
+the actual IPVS configuration using `ipvsadm`:
+
+```console
+controller0:/# ipvsadm --save -n
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.122.200:6443 rr persistent 360
+  -> 192.168.122.185:6443              Route   1      0          0
+  -> 192.168.122.87:6443               Route   1      0          0
+  -> 192.168.122.122:6443              Route   1      0          0
+  ```
+
+  In this example `192.168.122.200` is the virtual IP, and `192.168.122.185`, `192.168.122.87`
+  and `192.168.122.122` are the control plane nodes.
+
+  All control plane nodes are expected to have the same output.
