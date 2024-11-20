@@ -47,6 +47,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/controller/workerconfig"
+	"github.com/k0sproject/k0s/pkg/component/iptables"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -237,6 +238,11 @@ func (c *command) start(ctx context.Context) error {
 
 	// Assume a single active controller during startup
 	numActiveControllers := value.NewLatest[uint](1)
+
+	nodeComponents.Add(ctx, &iptables.Component{
+		IPTablesMode: c.WorkerOptions.IPTablesMode,
+		BinDir:       c.K0sVars.BinDir,
+	})
 
 	if cplbCfg := nodeConfig.Spec.Network.ControlPlaneLoadBalancing; cplbCfg != nil && cplbCfg.Enabled {
 		if c.SingleNode {
@@ -665,6 +671,7 @@ func (c *command) startWorker(ctx context.Context, profile string, nodeConfig *v
 	wc.TokenArg = bootstrapConfig
 	wc.WorkerProfile = profile
 	wc.Labels = append(wc.Labels, fields.OneTermEqualSelector(constant.K0SNodeRoleLabel, "control-plane").String())
+	wc.DisableIPTables = true
 	if !c.SingleNode && !c.NoTaints {
 		key := path.Join(constant.NodeRoleLabelNamespace, "master")
 		taint := fields.OneTermEqualSelector(key, ":NoSchedule")

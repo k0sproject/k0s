@@ -67,6 +67,14 @@ type KeepalivedSpec struct {
 	// Configuration options related to the virtual servers. This is an array
 	// which allows to configure multiple load balancers.
 	VirtualServers VirtualServers `json:"virtualServers,omitempty"`
+	// UserspaceProxyPort is the port where the userspace proxy will bind
+	// to. This port is only exposed on the localhost interface and is only
+	// used internally. Defaults to 6444.
+	// +kubebuilder:default=6444
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	UserSpaceProxyPort int `json:"userSpaceProxyBindPort,omitempty"`
 }
 
 // VRRPInstances is a list of VRRPInstance
@@ -293,6 +301,12 @@ func (k *KeepalivedSpec) Validate(externalAddress string) (errs []error) {
 
 	errs = append(errs, k.validateVRRPInstances(nil)...)
 	errs = append(errs, k.validateVirtualServers()...)
+	if k.UserSpaceProxyPort == 0 {
+		k.UserSpaceProxyPort = 6444
+	} else if k.UserSpaceProxyPort < 1 || k.UserSpaceProxyPort > 65535 {
+		errs = append(errs, errors.New("UserSpaceProxyPort must be in the range of 1-65535"))
+	}
+
 	// CPLB reconciler relies in watching kubernetes.default.svc endpoints
 	if externalAddress != "" && len(k.VirtualServers) > 0 {
 		errs = append(errs, errors.New(".spec.api.externalAddress and virtual servers cannot be used together"))
