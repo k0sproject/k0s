@@ -18,8 +18,9 @@ package v1beta1
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
+	"net/url"
+	"strconv"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
@@ -84,12 +85,6 @@ func (a *APISpec) APIAddressURL() string {
 	return a.getExternalURIForPort(a.Port)
 }
 
-// IsIPv6String returns if ip is IPv6.
-func IsIPv6String(ip string) bool {
-	netIP := net.ParseIP(ip)
-	return netIP != nil && netIP.To4() == nil
-}
-
 // K0sControlPlaneAPIAddress returns the controller join APIs address
 func (a *APISpec) K0sControlPlaneAPIAddress() string {
 	return a.getExternalURIForPort(a.K0sAPIPort)
@@ -100,10 +95,7 @@ func (a *APISpec) getExternalURIForPort(port int) string {
 	if a.ExternalAddress != "" {
 		addr = a.ExternalAddress
 	}
-	if IsIPv6String(addr) {
-		return fmt.Sprintf("https://[%s]:%d", addr, port)
-	}
-	return fmt.Sprintf("https://%s:%d", addr, port)
+	return (&url.URL{Scheme: "https", Host: net.JoinHostPort(addr, strconv.Itoa(port))}).String()
 }
 
 // Sans return the given SANS plus all local addresses and externalAddress if given

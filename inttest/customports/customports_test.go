@@ -18,9 +18,11 @@ package customports
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
+	"net"
+	"net/url"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -138,12 +140,13 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 
 	// https://github.com/k0sproject/k0s/issues/1202
 	s.Run("kubeconfigIncludesExternalAddress", func() {
+		expectedURL := url.URL{Scheme: "https", Host: net.JoinHostPort(ipAddress, strconv.Itoa(kubeAPIPort))}
 		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
 
 		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kubeconfig create user | awk '$1 == \"server:\" {print $2}'")
 		s.Require().NoError(err)
-		s.Require().Equal(fmt.Sprintf("https://%s:%d", ipAddress, kubeAPIPort), out)
+		s.Require().Equal(expectedURL.String(), out)
 	})
 }
