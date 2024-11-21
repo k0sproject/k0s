@@ -253,8 +253,8 @@ func getKubeRouterPlugin(cm corev1.ConfigMap, pluginType string) (dig.Mapping, e
 		return data, errors.New("failed to dig plugins")
 	}
 	for _, p := range plugins {
-		plugin := dig.Mapping(p.(map[string]interface{}))
-		if plugin.DigString("type") == pluginType {
+		plugin, ok := p.(dig.Mapping)
+		if ok && plugin.DigString("type") == pluginType {
 			return plugin, nil
 		}
 	}
