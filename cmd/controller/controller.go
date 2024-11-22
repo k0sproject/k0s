@@ -244,9 +244,16 @@ func (c *command) start(ctx context.Context) error {
 		BinDir:       c.K0sVars.BinDir,
 	})
 
+	enableK0sEndpointReconciler := nodeConfig.Spec.API.ExternalAddress != "" &&
+		!slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName)
+
 	if cplbCfg := nodeConfig.Spec.Network.ControlPlaneLoadBalancing; cplbCfg != nil && cplbCfg.Enabled {
 		if c.SingleNode {
 			return errors.New("control plane load balancing cannot be used in a single-node cluster")
+		}
+
+		if enableK0sEndpointReconciler {
+			return errors.New("control plane load balancing requires the component 'endpoint-reconciler' to be disabled")
 		}
 
 		nodeComponents.Add(ctx, &cplb.Keepalived{
@@ -260,8 +267,6 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
-	enableK0sEndpointReconciler := nodeConfig.Spec.API.ExternalAddress != "" &&
-		!slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName)
 
 	if enableKonnectivity {
 		nodeComponents.Add(ctx, &controller.Konnectivity{

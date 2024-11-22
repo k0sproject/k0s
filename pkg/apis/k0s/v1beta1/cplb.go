@@ -277,7 +277,7 @@ func (k *KeepalivedSpec) validateVirtualServers() []error {
 }
 
 // Validate validates the ControlPlaneLoadBalancingSpec
-func (c *ControlPlaneLoadBalancingSpec) Validate(externalAddress string) (errs []error) {
+func (c *ControlPlaneLoadBalancingSpec) Validate() (errs []error) {
 	if c == nil {
 		return nil
 	}
@@ -290,11 +290,11 @@ func (c *ControlPlaneLoadBalancingSpec) Validate(externalAddress string) (errs [
 		errs = append(errs, fmt.Errorf("unsupported CPLB type: %s. Only allowed value: %s", c.Type, CPLBTypeKeepalived))
 	}
 
-	return append(errs, c.Keepalived.Validate(externalAddress)...)
+	return append(errs, c.Keepalived.Validate()...)
 }
 
 // Validate validates the KeepalivedSpec
-func (k *KeepalivedSpec) Validate(externalAddress string) (errs []error) {
+func (k *KeepalivedSpec) Validate() (errs []error) {
 	if k == nil {
 		return nil
 	}
@@ -305,11 +305,6 @@ func (k *KeepalivedSpec) Validate(externalAddress string) (errs []error) {
 		k.UserSpaceProxyPort = 6444
 	} else if k.UserSpaceProxyPort < 1 || k.UserSpaceProxyPort > 65535 {
 		errs = append(errs, errors.New("UserSpaceProxyPort must be in the range of 1-65535"))
-	}
-
-	// CPLB reconciler relies in watching kubernetes.default.svc endpoints
-	if externalAddress != "" && len(k.VirtualServers) > 0 {
-		errs = append(errs, errors.New(".spec.api.externalAddress and virtual servers cannot be used together"))
 	}
 
 	return errs
