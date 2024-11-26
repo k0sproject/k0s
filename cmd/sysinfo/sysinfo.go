@@ -47,31 +47,31 @@ func NewSysinfoCmd() *cobra.Command {
 			probes := sysinfoSpec.NewSysinfoProbes()
 			out := cmd.OutOrStdout()
 
-			var cli cliReporter
 			switch outputFormat {
 			case "text":
-				cli = &humanReporter{
+				cli := &cliReporter{
+					w:      out,
 					colors: aurora.NewAurora(term.IsTerminal(out)),
 				}
+				if err := probes.Probe(cli); err != nil {
+					return err
+				}
+				if cli.failed {
+					return errors.New("sysinfo failed")
+				}
+				return nil
+
 			case "json":
-				cli = &jsonReporter{}
+				return collectAndPrint(probes, out, func(v interface{}) ([]byte, error) {
+					return json.MarshalIndent(v, "", "  ")
+				})
+
 			case "yaml":
-				cli = &yamlReporter{}
+				return collectAndPrint(probes, out, yaml.Marshal)
+
 			default:
 				return fmt.Errorf("unknown output format: %q", outputFormat)
 			}
-
-			if err := probes.Probe(cli); err != nil {
-				return err
-			}
-			if err := cli.printResults(out); err != nil {
-				return err
-			}
-
-			if cli.isFailed() {
-				return errors.New("sysinfo failed")
-			}
-			return nil
 		},
 	}
 
@@ -85,91 +85,78 @@ func NewSysinfoCmd() *cobra.Command {
 	return cmd
 }
 
-type cliReporter interface {
-	probes.Reporter
-	isFailed() bool
-	printResults(io.Writer) error
-}
-
-type humanReporter struct {
-	resultsCollector
+type cliReporter struct {
+	w      io.Writer
 	colors aurora.Aurora
+	failed bool
 }
 
-func (r *humanReporter) printResults(w io.Writer) error {
-	for _, p := range r.results {
-		if err := r.printOneHuman(w, p); err != nil {
-			return err
+func (r *cliReporter) Pass(p probes.ProbeDesc, v probes.ProbedProp) error {
+	prop := propString(v)
+	return r.printf("%s%s%s%s\n",
+		indent(p),
+		r.colors.BrightWhite(p.DisplayName()+": "),
+		r.colors.Green(prop),
+		buildMsg(prop, "pass", ""),
+	)
+}
+
+func (r *cliReporter) Warn(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
+	prop := propString(v)
+	return r.printf("%s%s%s%s\n",
+		indent(p),
+		r.colors.BrightWhite(p.DisplayName()+": "),
+		r.colors.Yellow(prop),
+		buildMsg(prop, "warning", msg))
+}
+
+func (r *cliReporter) Reject(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
+	r.failed = true
+	prop := propString(v)
+	return r.printf("%s%s%s%s\n",
+		indent(p),
+		r.colors.BrightWhite(p.DisplayName()+": "),
+		r.colors.Bold(r.colors.Red(prop)),
+		buildMsg(prop, "rejected", msg))
+}
+
+func (r *cliReporter) Error(p probes.ProbeDesc, err error) error {
+	r.failed = true
+
+	errStr := "error"
+	if err != nil {
+		e := err.Error()
+		if e != "" {
+			errStr = errStr + ": " + e
 		}
 	}
-	return nil
+
+	return r.printf("%s%s%s\n",
+		indent(p),
+		r.colors.BrightWhite(p.DisplayName()+": "),
+		r.colors.Bold(errStr).Red(),
+	)
 }
 
-func (r *humanReporter) printOneHuman(w io.Writer, p Probe) error {
-	var out string
-	switch p.Category {
-	case ProbeCategoryPass:
-		out = aurora.Sprintf("%s%s%s%s\n",
-			indent(p.Path),
-			r.colors.BrightWhite(p.DisplayName+": "),
-			r.colors.Green(p.Prop),
-			buildMsg(p.Prop, string(p.Category), p.Message))
-	case ProbeCategoryWarning:
-		out = aurora.Sprintf("%s%s%s%s\n",
-			indent(p.Path),
-			r.colors.BrightWhite(p.DisplayName+": "),
-			r.colors.Yellow(p.Prop),
-			buildMsg(p.Prop, string(p.Category), p.Message))
-	case ProbeCategoryRejected:
-		out = aurora.Sprintf("%s%s%s%s\n",
-			indent(p.Path),
-			r.colors.BrightWhite(p.DisplayName+": "),
-			r.colors.Bold(r.colors.Red(p.Prop)),
-			buildMsg(p.Prop, string(p.Category), p.Message))
-	case ProbeCategoryError:
-		errStr := "error"
-		if p.Error != nil {
-			e := p.Error.Error()
-			if e != "" {
-				errStr = errStr + ": " + e
-			}
-		}
-
-		out = aurora.Sprintf("%s%s%s\n",
-			indent(p.Path),
-			r.colors.BrightWhite(p.DisplayName+": "),
-			r.colors.Bold(errStr).Red(),
-		)
-	default:
-		return fmt.Errorf("unknown probe category %q", p.Category)
+func collectAndPrint(probe probes.Probe, out io.Writer, marshal func(any) ([]byte, error)) error {
+	var c resultsCollector
+	if err := probe.Probe(&c); err != nil {
+		return err
 	}
-	_, err := io.WriteString(w, out)
-	return err
-}
-
-type jsonReporter struct {
-	resultsCollector
-}
-
-func (r *jsonReporter) printResults(w io.Writer) error {
-	jsn, err := json.MarshalIndent(r.results, "", "   ")
+	if c.failed {
+		return errors.New("sysinfo failed")
+	}
+	bytes, err := marshal(c.results)
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintln(w, string(jsn))
+
+	_, err = out.Write(bytes)
 	return err
 }
 
-type yamlReporter struct {
-	resultsCollector
-}
-
-func (r *yamlReporter) printResults(w io.Writer) error {
-	ym, err := yaml.Marshal(r.results)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintln(w, string(ym))
+func (r *cliReporter) printf(format interface{}, args ...interface{}) error {
+	_, err := io.WriteString(r.w, aurora.Sprintf(format, args...))
 	return err
 }
 
@@ -240,10 +227,6 @@ func (r *resultsCollector) Error(p probes.ProbeDesc, err error) error {
 	return nil
 }
 
-func (r *resultsCollector) isFailed() bool {
-	return r.failed
-}
-
 func probePath(p probes.ProbeDesc) []string {
 	if len(p.Path()) == 0 {
 		return nil
@@ -259,10 +242,13 @@ func propString(p probes.ProbedProp) string {
 	return p.String()
 }
 
-func indent(path []string) string {
-	count := len(path) - 1
-	if count < 1 {
-		return ""
+func indent(p probes.ProbeDesc) string {
+	count := 0
+	if p != nil {
+		count = len(p.Path()) - 1
+		if count < 1 {
+			return ""
+		}
 	}
 
 	return strings.Repeat("  ", count)
