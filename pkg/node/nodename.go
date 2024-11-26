@@ -19,11 +19,7 @@ package node
 import (
 	"context"
 	"fmt"
-	"runtime"
-	"time"
 
-	"github.com/carlmjohnson/requests"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
 
@@ -32,36 +28,13 @@ func GetNodename(override string) (string, error) {
 	return getNodename(context.TODO(), override)
 }
 
-// A URL that may be retrieved to determine the nodename.
-type nodenameURL string
-
 func getNodename(ctx context.Context, override string) (string, error) {
-	if override == "" && runtime.GOOS == "windows" {
-		// we need to check if we have EC2 dns name available
-		override = getHostnameFromAwsMeta(ctx)
+	if override == "" {
+		override = defaultNodenameOverride(ctx)
 	}
 	nodeName, err := nodeutil.GetHostname(override)
 	if err != nil {
 		return "", fmt.Errorf("failed to determine node name: %w", err)
 	}
 	return nodeName, nil
-}
-
-func getHostnameFromAwsMeta(ctx context.Context) string {
-	const awsMetaInformationHostnameURL nodenameURL = "http://169.254.169.254/latest/meta-data/local-hostname"
-	url := k0scontext.ValueOr(ctx, awsMetaInformationHostnameURL)
-
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
-
-	var s string
-	err := requests.
-		URL(string(url)).
-		ToString(&s).
-		Fetch(ctx)
-	// if status code is 2XX and no transport error, we assume we are running on ec2
-	if err != nil {
-		return ""
-	}
-	return s
 }
