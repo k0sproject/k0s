@@ -30,7 +30,11 @@ func GetNodename(override string) (string, error) {
 
 func getNodename(ctx context.Context, override string) (string, error) {
 	if override == "" {
-		override = defaultNodenameOverride(ctx)
+		var err error
+		override, err = defaultNodenameOverride(ctx)
+		if err != nil {
+			return "", err
+		}
 	}
 	nodeName, err := nodeutil.GetHostname(override)
 	if err != nil {
