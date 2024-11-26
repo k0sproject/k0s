@@ -44,6 +44,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
+	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/controller/workerconfig"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -237,14 +238,14 @@ func (c *command) start(ctx context.Context) error {
 	// Assume a single active controller during startup
 	numActiveControllers := value.NewLatest[uint](1)
 
-	if cplb := nodeConfig.Spec.Network.ControlPlaneLoadBalancing; cplb != nil && cplb.Enabled {
+	if cplbCfg := nodeConfig.Spec.Network.ControlPlaneLoadBalancing; cplbCfg != nil && cplbCfg.Enabled {
 		if c.SingleNode {
 			return errors.New("control plane load balancing cannot be used in a single-node cluster")
 		}
 
-		nodeComponents.Add(ctx, &controller.Keepalived{
+		nodeComponents.Add(ctx, &cplb.Keepalived{
 			K0sVars:         c.K0sVars,
-			Config:          cplb.Keepalived,
+			Config:          cplbCfg.Keepalived,
 			DetailedLogging: c.Debug,
 			LogConfig:       c.Debug,
 			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
