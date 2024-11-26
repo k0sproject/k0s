@@ -143,16 +143,18 @@ func collectAndPrint(probe probes.Probe, out io.Writer, marshal func(any) ([]byt
 	if err := probe.Probe(&c); err != nil {
 		return err
 	}
-	if c.failed {
-		return errors.New("sysinfo failed")
-	}
 	bytes, err := marshal(c.results)
 	if err != nil {
 		return err
 	}
-
 	_, err = out.Write(bytes)
-	return err
+	if err != nil {
+		return err
+	}
+	if c.failed {
+		return errors.New("sysinfo failed")
+	}
+	return nil
 }
 
 func (r *cliReporter) printf(format interface{}, args ...interface{}) error {
