@@ -49,7 +49,7 @@ func NewSysinfoCmd() *cobra.Command {
 
 			var cli cliReporter
 			switch outputFormat {
-			case "human":
+			case "text":
 				cli = &humanReporter{
 					colors: aurora.NewAurora(term.IsTerminal(out)),
 				}
@@ -80,7 +80,7 @@ func NewSysinfoCmd() *cobra.Command {
 	flags.BoolVar(&sysinfoSpec.ControllerRoleEnabled, "controller", true, "Include controller-specific sysinfo")
 	flags.BoolVar(&sysinfoSpec.WorkerRoleEnabled, "worker", true, "Include worker-specific sysinfo")
 	flags.StringVar(&sysinfoSpec.DataDir, "data-dir", constant.DataDirDefault, "Data Directory for k0s")
-	flags.StringVarP(&outputFormat, "output", "o", "human", "Output format. Must be one of human|yaml|json")
+	flags.StringVarP(&outputFormat, "output", "o", "text", "Output format (valid values: text, json, yaml)")
 
 	return cmd
 }
