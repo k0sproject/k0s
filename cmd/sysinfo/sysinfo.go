@@ -163,12 +163,12 @@ func (r *cliReporter) printf(format interface{}, args ...interface{}) error {
 }
 
 type Probe struct {
-	Path        []string
-	DisplayName string
-	Prop        string
-	Message     string
-	Category    ProbeCategory
-	Error       error
+	Path        []string      `json:"path"`
+	DisplayName string        `json:"displayName"`
+	Prop        string        `json:"prop"`
+	Message     string        `json:"message"`
+	Category    ProbeCategory `json:"category"`
+	Error       error         `json:"error"`
 }
 
 type ProbeCategory string
