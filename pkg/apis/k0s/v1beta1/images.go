@@ -67,15 +67,15 @@ func (s *ImageSpec) URI() string {
 
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
-	Konnectivity  ImageSpec `json:"konnectivity,omitempty"`
-	PushGateway   ImageSpec `json:"pushgateway,omitempty"`
-	MetricsServer ImageSpec `json:"metricsserver,omitempty"`
-	KubeProxy     ImageSpec `json:"kubeproxy,omitempty"`
-	CoreDNS       ImageSpec `json:"coredns,omitempty"`
-	Pause         ImageSpec `json:"pause,omitempty"`
+	Konnectivity  *ImageSpec `json:"konnectivity,omitempty"`
+	PushGateway   *ImageSpec `json:"pushgateway,omitempty"`
+	MetricsServer *ImageSpec `json:"metricsserver,omitempty"`
+	KubeProxy     *ImageSpec `json:"kubeproxy,omitempty"`
+	CoreDNS       *ImageSpec `json:"coredns,omitempty"`
+	Pause         *ImageSpec `json:"pause,omitempty"`
 
-	Calico     CalicoImageSpec     `json:"calico,omitempty"`
-	KubeRouter KubeRouterImageSpec `json:"kuberouter,omitempty"`
+	Calico     *CalicoImageSpec     `json:"calico,omitempty"`
+	KubeRouter *KubeRouterImageSpec `json:"kuberouter,omitempty"`
 
 	Repository string `json:"repository,omitempty"`
 
@@ -134,23 +134,23 @@ func (ci *ClusterImages) overrideImageRepositories() {
 	override := func(dst *ImageSpec) {
 		dst.Image = overrideRepository(ci.Repository, dst.Image)
 	}
-	override(&ci.Konnectivity)
-	override(&ci.MetricsServer)
-	override(&ci.KubeProxy)
-	override(&ci.CoreDNS)
-	override(&ci.Calico.CNI)
-	override(&ci.Calico.Node)
-	override(&ci.Calico.KubeControllers)
-	override(&ci.KubeRouter.CNI)
-	override(&ci.KubeRouter.CNIInstaller)
-	override(&ci.Pause)
+	override(ci.Konnectivity)
+	override(ci.MetricsServer)
+	override(ci.KubeProxy)
+	override(ci.CoreDNS)
+	override(ci.Calico.CNI)
+	override(ci.Calico.Node)
+	override(ci.Calico.KubeControllers)
+	override(ci.KubeRouter.CNI)
+	override(ci.KubeRouter.CNIInstaller)
+	override(ci.Pause)
 }
 
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
-	CNI             ImageSpec `json:"cni,omitempty"`
-	Node            ImageSpec `json:"node,omitempty"`
-	KubeControllers ImageSpec `json:"kubecontrollers,omitempty"`
+	CNI             *ImageSpec `json:"cni,omitempty"`
+	Node            *ImageSpec `json:"node,omitempty"`
+	KubeControllers *ImageSpec `json:"kubecontrollers,omitempty"`
 }
 
 func (s *CalicoImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
@@ -165,8 +165,8 @@ func (s *CalicoImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
 
 // KubeRouterImageSpec config group for kube-router related images
 type KubeRouterImageSpec struct {
-	CNI          ImageSpec `json:"cni,omitempty"`
-	CNIInstaller ImageSpec `json:"cniInstaller,omitempty"`
+	CNI          *ImageSpec `json:"cni,omitempty"`
+	CNIInstaller *ImageSpec `json:"cniInstaller,omitempty"`
 }
 
 func (s *KubeRouterImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
@@ -182,51 +182,51 @@ func (s *KubeRouterImageSpec) Validate(path *field.Path) (errs field.ErrorList) 
 func DefaultClusterImages() *ClusterImages {
 	return &ClusterImages{
 		DefaultPullPolicy: "IfNotPresent",
-		Konnectivity: ImageSpec{
+		Konnectivity: &ImageSpec{
 			Image:   constant.KonnectivityImage,
 			Version: constant.KonnectivityImageVersion,
 		},
-		PushGateway: ImageSpec{
+		PushGateway: &ImageSpec{
 			Image:   constant.PushGatewayImage,
 			Version: constant.PushGatewayImageVersion,
 		},
-		MetricsServer: ImageSpec{
+		MetricsServer: &ImageSpec{
 			Image:   constant.MetricsImage,
 			Version: constant.MetricsImageVersion,
 		},
-		KubeProxy: ImageSpec{
+		KubeProxy: &ImageSpec{
 			Image:   constant.KubeProxyImage,
 			Version: constant.KubeProxyImageVersion,
 		},
-		CoreDNS: ImageSpec{
+		CoreDNS: &ImageSpec{
 			Image:   constant.CoreDNSImage,
 			Version: constant.CoreDNSImageVersion,
 		},
-		Calico: CalicoImageSpec{
-			CNI: ImageSpec{
+		Calico: &CalicoImageSpec{
+			CNI: &ImageSpec{
 				Image:   constant.CalicoImage,
 				Version: constant.CalicoComponentImagesVersion,
 			},
-			Node: ImageSpec{
+			Node: &ImageSpec{
 				Image:   constant.CalicoNodeImage,
 				Version: constant.CalicoComponentImagesVersion,
 			},
-			KubeControllers: ImageSpec{
+			KubeControllers: &ImageSpec{
 				Image:   constant.KubeControllerImage,
 				Version: constant.CalicoComponentImagesVersion,
 			},
 		},
-		KubeRouter: KubeRouterImageSpec{
-			CNI: ImageSpec{
+		KubeRouter: &KubeRouterImageSpec{
+			CNI: &ImageSpec{
 				Image:   constant.KubeRouterCNIImage,
 				Version: constant.KubeRouterCNIImageVersion,
 			},
-			CNIInstaller: ImageSpec{
+			CNIInstaller: &ImageSpec{
 				Image:   constant.KubeRouterCNIInstallerImage,
 				Version: constant.KubeRouterCNIInstallerImageVersion,
 			},
 		},
-		Pause: ImageSpec{
+		Pause: &ImageSpec{
 			Image:   constant.KubePauseContainerImage,
 			Version: constant.KubePauseContainerImageVersion,
 		},
