@@ -1,6 +1,6 @@
 # Support Insight
 
-In many cases, especially when looking for [commercial support](commercial-support.md) there's a need for share the cluster state with other people.
+In many cases, especially when looking for [commercial support](../commercial-support.md) there's a need for share the cluster state with other people.
 While one could always give access to the live cluster that is not always desired nor even possible.
 
 For those kind of cases we can lean on the work our friends at [troubleshoot.sh](https://troubleshoot.sh) have done.
