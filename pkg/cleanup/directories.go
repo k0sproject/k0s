@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
@@ -46,15 +47,39 @@ func (d *directories) Run() error {
 
 	var dataDirMounted bool
 
-	// search and unmount kubelet volume mounts
-	for _, v := range procMounts {
-		if v.Path == filepath.Join(d.Config.dataDir, "kubelet") {
+	// ensure that we don't delete any persistent data volumes that may be
+	// mounted by kubernetes by unmount every mount point under DataDir.
+	//
+	// Unmount in the reverse order it was mounted so we handle recursive
+	// bind mounts and over mounts properly. If we for any reason are not
+	// able to unmount, fall back to lazy unmount and if that also fails
+	// bail out and don't delete anything.
+	//
+	// Note that if there are any shared bind mounts under k0s data
+	// directory, we may end up unmounting stuff outside the k0s DataDir.
+	// If someone has set a bind mount to be shared, we assume that is the
+	// desired behavior. See MS_SHARED and NOTES:
+	//  - https://man7.org/linux/man-pages/man2/mount.2.html
+	//  - https://man7.org/linux/man-pages/man2/umount.2.html#NOTES
+	for i := len(procMounts) - 1; i >= 0; i-- {
+		v := procMounts[i]
+		// avoid unmount datadir if its mounted on separate partition
+		// k0s didn't mount it so leave it alone
+		if v.Path == d.Config.k0sVars.DataDir {
+			dataDirMounted = true
+			continue
+		}
+		if isUnderPath(v.Path, filepath.Join(d.Config.dataDir, "kubelet")) || isUnderPath(v.Path, d.Config.k0sVars.DataDir) {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
-				logrus.Warningf("failed to unmount %v", v.Path)
+				// if we fail to unmount, try lazy unmount so
+				// we don't end up deleting stuff that we
+				// shouldn't
+				logrus.Warningf("lazy unmounting %v", v.Path)
+				if err = UnmountLazy(v.Path); err != nil {
+					return fmt.Errorf("failed unmount %v", v.Path)
+				}
 			}
-		} else if v.Path == d.Config.dataDir {
-			dataDirMounted = true
 		}
 	}
 
@@ -81,7 +106,13 @@ func (d *directories) Run() error {
 	return nil
 }
 
-// this is for checking if the error retrned by os.RemoveAll is due to
+// test if the path is a directory equal to or under base
+func isUnderPath(path, base string) bool {
+	rel, err := filepath.Rel(base, path)
+	return err == nil && !strings.HasPrefix(rel, "..") && !filepath.IsAbs(rel)
+}
+
+// this is for checking if the error returned by os.RemoveAll is due to
 // it being a mount point. if it is, we can ignore the error. this way
 // we can't rely on os.RemoveAll instead of recursively deleting the
 // contents of the directory
