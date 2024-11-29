@@ -2082,6 +2082,9 @@ following:</p>
 <li>Processes and containers: Terminates all running k0s processes to ensure that
   there are no active components left. This includes all container processes
   managed by the Container Runtime.</li>
+<li>Mounts under k0s data directory: In order to prevent persistent data to be
+  deleted, all mount points under k0s' data directory will be unmounted. If an
+  unmount fails, it will be unmounted lazy.</li>
 <li>Data stored on the node: Deletes the whole k0s data directory, which includes<ul>
 <li>all k0s-related configuration files, including those used for cluster setup
   and node-specific settings,</li>
@@ -2097,8 +2100,8 @@ following:</p>
   reboot the host after a reset to ensure that there are no k0s remnants in the
   host's network configuration. Custom CNI plugins are not cleaned up.</li>
 <li>Registration with the host's init system: Reverts the registration done by
-  <code>k0s install</code>. After a reset, k0s won't be automatically started when the host
-  boots.</li>
+  <code>k0s install</code>. After a reset, k0s won't be automatically started when the
+  host boots.</li>
 </ul>
 <p>After a successful reset, the k0s binary itself remains. It can then be used to
 join another cluster or create a new one.</p>
