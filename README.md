@@ -86,12 +86,14 @@ We currently have a monthly office hours call on the last Tuesday of the month.
 
 To see the call details in your local timezone, check out [https://dateful.com/eventlink/2735919704](https://dateful.com/eventlink/2735919704).
 
+<!-- End Join the Community -->
 ### Adopters
 
-k0s is used in numerous cases and environments. The range we've seen it being adopted ranges from very small far edge deployments to big data center deployments. Please add your use case to [adopters] list.
+k0s is used across diverse environments, from small-scale far-edge deployments
+to large data centers. Share your use case and add yourself to the list of
+[adopters].
 
-[adopters]: docs/adopters.md
-<!-- End Join the Community -->
+[adopters]: ADOPTERS.md
 
 <!-- Start Motivation -->
 ## Motivation
