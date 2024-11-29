@@ -19,6 +19,7 @@ package worker
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -63,6 +64,7 @@ type Kubelet struct {
 	DualStackEnabled    bool
 
 	rootDir    string
+	configPath string
 	supervisor supervisor.Supervisor
 }
 
@@ -86,6 +88,16 @@ func (k *Kubelet) Init(_ context.Context) error {
 	err := dir.Init(k.rootDir, constant.DataDirMode)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", k.rootDir, err)
+	}
+
+	runDir := filepath.Join(k.K0sVars.RunDir, "kubelet")
+	if err := dir.Init(runDir, constant.RunDirMode); err != nil {
+		return fmt.Errorf("failed to create %s: %w", runDir, err)
+	}
+	k.configPath = filepath.Join(runDir, "config.yaml")
+	// Delete legacy config file (removed in 1.32)
+	if err := os.Remove(filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")); err != nil && !errors.Is(err, os.ErrNotExist) {
+		logrus.WithError(err).Warn("Failed to remove legacy kubelet config file")
 	}
 
 	return nil
@@ -120,11 +132,9 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	}
 
 	logrus.Info("Starting kubelet")
-	kubeletConfigPath := filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")
-
 	args := stringmap.StringMap{
 		"--root-dir":        k.rootDir,
-		"--config":          kubeletConfigPath,
+		"--config":          k.configPath,
 		"--kubeconfig":      k.Kubeconfig,
 		"--v":               k.LogLevel,
 		"--runtime-cgroups": "/system.slice/containerd.service",
@@ -186,7 +196,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		Args:    args.ToArgs(),
 	}
 
-	if err := k.writeKubeletConfig(kubeletConfigPath); err != nil {
+	if err := k.writeKubeletConfig(); err != nil {
 		return err
 	}
 
@@ -199,7 +209,7 @@ func (k *Kubelet) Stop() error {
 	return nil
 }
 
-func (k *Kubelet) writeKubeletConfig(path string) error {
+func (k *Kubelet) writeKubeletConfig() error {
 	var staticPodURL string
 	if k.StaticPods != nil {
 		url, err := k.StaticPods.ManifestURL()
@@ -245,7 +255,7 @@ func (k *Kubelet) writeKubeletConfig(path string) error {
 		return fmt.Errorf("can't marshal kubelet config: %w", err)
 	}
 
-	err = file.WriteContentAtomically(path, configBytes, 0644)
+	err = file.WriteContentAtomically(k.configPath, configBytes, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}
