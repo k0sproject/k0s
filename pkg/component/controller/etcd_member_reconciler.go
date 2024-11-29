@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"strconv"
 	"time"
 
@@ -186,9 +185,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context) error {
 		return err
 	}
 
-	peerURL := fmt.Sprintf("https://%s", net.JoinHostPort(e.etcdConfig.PeerAddress, "2380"))
-
-	memberID, err := etcdClient.GetPeerIDByAddress(ctx, peerURL)
+	memberID, err := etcdClient.GetPeerIDByAddress(ctx, e.etcdConfig.GetPeerURL())
 	if err != nil {
 		return err
 	}

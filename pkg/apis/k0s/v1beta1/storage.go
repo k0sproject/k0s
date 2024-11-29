@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -171,6 +172,15 @@ func (e *EtcdConfig) GetNodeName() (string, error) {
 	}
 
 	return os.Hostname()
+}
+
+// GetPeerURL returns the URL of PeerAddress
+func (e *EtcdConfig) GetPeerURL() string {
+	u := &url.URL{
+		Scheme: "https",
+		Host:   net.JoinHostPort(e.PeerAddress, "2380"),
+	}
+	return u.String()
 }
 
 // DefaultKineConfig creates KineConfig with sane defaults
