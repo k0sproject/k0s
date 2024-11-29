@@ -72,6 +72,7 @@ nav:
       - Logs: troubleshooting/logs.md
       - Common Pitfalls: troubleshooting/troubleshooting.md
       - Support Insights: troubleshooting/support-dump.md
+      - Certificate Authorities (CAs): troubleshooting/certificate-authorities.md
   - Reference:
       - Architecture: architecture/index.md
       - Command Line: cli/README.md

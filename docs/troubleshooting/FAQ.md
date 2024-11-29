@@ -31,3 +31,12 @@ As a default, the control plane does not run kubelet at all, and will not accept
 ## Is k0sproject really open source?
 
 Yes, k0sproject is 100% open source. The source code is under Apache 2 and the documentation is under the Creative Commons License. Mirantis, Inc. is the main contributor and sponsor for this OSS project: building all the binaries from upstream, performing necessary security scans and calculating checksums so that it's easy and safe to use. The use of these ready-made binaries are subject to Mirantis EULA and the binaries include only open source software.
+
+## A kubeconfig created via [`k0s kubeconfig`](../cli/k0s_kubeconfig.md) has been leaked, what can I do?
+
+Kubernetes does not support certificate revocation (see [k/k/18982]). This means
+that you cannot disable the leaked credentials. The only way to effectively
+revoke them is to [replace the Kubernetes CA] for your cluster.
+
+[k/k/18982]: https://github.com/kubernetes/kubernetes/issues/18982
+[replace the Kubernetes CA]: certificate-authorities.md#replacing-the-kubernetes-ca-and-sa-key-pair
