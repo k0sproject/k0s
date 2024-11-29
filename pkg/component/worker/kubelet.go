@@ -56,13 +56,14 @@ type Kubelet struct {
 	Configuration       kubeletv1beta1.KubeletConfiguration
 	StaticPods          StaticPods
 	LogLevel            string
-	dataDir             string
-	supervisor          supervisor.Supervisor
 	ClusterDNS          string
 	Labels              []string
 	Taints              []string
 	ExtraArgs           string
 	DualStackEnabled    bool
+
+	rootDir    string
+	supervisor supervisor.Supervisor
 }
 
 var _ manager.Component = (*Kubelet)(nil)
@@ -81,10 +82,10 @@ func (k *Kubelet) Init(_ context.Context) error {
 		}
 	}
 
-	k.dataDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
-	err := dir.Init(k.dataDir, constant.DataDirMode)
+	k.rootDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
+	err := dir.Init(k.rootDir, constant.DataDirMode)
 	if err != nil {
-		return fmt.Errorf("failed to create %s: %w", k.dataDir, err)
+		return fmt.Errorf("failed to create %s: %w", k.rootDir, err)
 	}
 
 	return nil
@@ -122,12 +123,12 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	kubeletConfigPath := filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")
 
 	args := stringmap.StringMap{
-		"--root-dir":        k.dataDir,
+		"--root-dir":        k.rootDir,
 		"--config":          kubeletConfigPath,
 		"--kubeconfig":      k.Kubeconfig,
 		"--v":               k.LogLevel,
 		"--runtime-cgroups": "/system.slice/containerd.service",
-		"--cert-dir":        filepath.Join(k.dataDir, "pki"),
+		"--cert-dir":        filepath.Join(k.rootDir, "pki"),
 	}
 
 	if len(k.Labels) > 0 {
