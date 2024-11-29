@@ -77,8 +77,8 @@ terraform apply
 * `debian_10`: Debian GNU/Linux 10 (buster)
 * `debian_11`: Debian GNU/Linux 11 (bullseye)
 * `debian_12`: Debian GNU/Linux 12 (bookworm)
-* `fcos_38`: Fedora CoreOS 38
-* `fedora_38`: Fedora Linux 38 (Cloud Edition)
+* `fcos_41`: Fedora CoreOS 41
+* `fedora_41`: Fedora Linux 41 (Cloud Edition)
 * `flatcar`: Flatcar Container Linux by Kinvolk
 * `oracle_7_9`: Oracle Linux Server 7.9
 * `oracle_8_7`: Oracle Linux Server 8.7
@@ -90,7 +90,7 @@ terraform apply
 * `rocky_9`: Rocky Linux 9.2 (Blue Onyx)
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
-* `ubuntu_2304`: Ubuntu 23.04
+* `ubuntu_2310`: Ubuntu 23.10
 
 ### `arch`: Node architecture
 
