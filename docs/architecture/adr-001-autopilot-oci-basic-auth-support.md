@@ -116,14 +116,14 @@ This feature supports pulling both the k0s binary and the k0s air-gap bundle.
 Each repository tag should host only one artifact. To remotely host an artifact
 and later retrieve it using this feature, the following command is sufficient:
 
-```
+```sh
 oras push <registry-address>/<namespace>/<repository>:<tag> <artifact path>
 ```
 
 For example, to push the k0s binary and its corresponding airgap bundle, use
 the following commands:
 
-```
+```sh
 # pushing the k0s binary.
 oras push registry.company.com/k0s/binary:v1.31.1 k0s
 
