@@ -254,8 +254,8 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
-	disableEndpointReconciler := !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
-		nodeConfig.Spec.API.ExternalAddress != ""
+	enableK0sEndpointReconciler := nodeConfig.Spec.API.ExternalAddress != "" &&
+		!slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName)
 
 	if enableKonnectivity {
 		nodeComponents.Add(ctx, &controller.Konnectivity{
@@ -267,12 +267,14 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	nodeComponents.Add(ctx, &controller.APIServer{
-		ClusterConfig:             nodeConfig,
-		K0sVars:                   c.K0sVars,
-		LogLevel:                  c.LogLevels.KubeAPIServer,
-		Storage:                   storageBackend,
-		EnableKonnectivity:        enableKonnectivity,
-		DisableEndpointReconciler: disableEndpointReconciler,
+		ClusterConfig:      nodeConfig,
+		K0sVars:            c.K0sVars,
+		LogLevel:           c.LogLevels.KubeAPIServer,
+		Storage:            storageBackend,
+		EnableKonnectivity: enableKonnectivity,
+
+		// If k0s reconciles the kubernetes endpoint, the API server shouldn't do it.
+		DisableEndpointReconciler: enableK0sEndpointReconciler,
 	})
 
 	if !c.SingleNode {
@@ -442,7 +444,7 @@ func (c *command) start(ctx context.Context) error {
 		clusterComponents.Add(ctx, controller.NewCRD(manifestsSaver, "autopilot"))
 	}
 
-	if !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) && nodeConfig.Spec.API.ExternalAddress != "" {
+	if enableK0sEndpointReconciler {
 		clusterComponents.Add(ctx, controller.NewEndpointReconciler(
 			nodeConfig,
 			leaderElector,
