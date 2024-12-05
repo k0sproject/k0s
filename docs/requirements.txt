@@ -33,7 +33,7 @@ PyYAML==6.0.2
 pyyaml_env_tag==0.1
 regex==2024.11.6
 requests==2.32.3
-six==1.16.0
+six==1.17.0
 termcolor==2.5.0
 urllib3==1.26.20
 verspec==0.1.0
