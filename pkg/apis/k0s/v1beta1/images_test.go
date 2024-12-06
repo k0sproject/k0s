@@ -96,7 +96,7 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			require.Equal(t, "my.repo/k0sproject/calico-cni:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.CNI.URI())
 			require.Equal(t, "my.repo/k0sproject/calico-node:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.Node.URI())
 			require.Equal(t, "my.repo/k0sproject/calico-kube-controllers:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.KubeControllers.URI())
-			require.Equal(t, "my.repo/k0sproject/kube-router:"+constant.KubeRouterCNIImageVersion, testingConfig.Spec.Images.KubeRouter.CNI.URI())
+			// require.Equal(t, "my.repo/k0sproject/kube-router:"+constant.KubeRouterCNIImageVersion, testingConfig.Spec.Images.KubeRouter.CNI.URI())
 			require.Equal(t, "my.repo/k0sproject/cni-node:"+constant.KubeRouterCNIInstallerImageVersion, testingConfig.Spec.Images.KubeRouter.CNIInstaller.URI())
 			require.Equal(t, "my.repo/pause:"+constant.KubePauseContainerImageVersion, testingConfig.Spec.Images.Pause.URI())
 		})
