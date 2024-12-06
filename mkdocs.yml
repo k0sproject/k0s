@@ -68,10 +68,11 @@ nav:
       - GitOps with Flux: examples/gitops-flux.md
       - OpenEBS storage: examples/openebs.md
   - Troubleshooting:
-      - FAQ: FAQ.md
-      - Logs: logs.md
-      - Common Pitfalls: troubleshooting.md
-      - Support Insights: support-dump.md
+      - FAQ: troubleshooting/FAQ.md
+      - Logs: troubleshooting/logs.md
+      - Common Pitfalls: troubleshooting/troubleshooting.md
+      - Support Insights: troubleshooting/support-dump.md
+      - Certificate Authorities (CAs): troubleshooting/certificate-authorities.md
   - Reference:
       - Architecture: architecture/index.md
       - Command Line: cli/README.md
