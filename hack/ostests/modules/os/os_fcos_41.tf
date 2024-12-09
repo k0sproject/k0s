@@ -1,15 +1,15 @@
-# https://alt.fedoraproject.org/cloud/
+# https://docs.fedoraproject.org/en-US/fedora-coreos/provisioning-aws/
 
-data "aws_ami" "fedora_38" {
-  count = var.os == "fedora_38" ? 1 : 0
+data "aws_ami" "fcos_41" {
+  count = var.os == "fcos_41" ? 1 : 0
 
   owners      = ["125523088429"]
-  name_regex  = "^Fedora-Cloud-Base-38-.+\\.x86_64-hvm-"
+  name_regex  = "^fedora-coreos-41\\.\\d+\\..+-x86_64"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["Fedora-Cloud-Base-38-*.x86_64-hvm-*"]
+    values = ["fedora-coreos-41.*.*-x86_64"]
   }
 
   filter {
@@ -30,20 +30,20 @@ data "aws_ami" "fedora_38" {
   lifecycle {
     precondition {
       condition     = var.arch == "x86_64"
-      error_message = "Unsupported architecture for Fedora Linux 38 (Cloud Edition)."
+      error_message = "Unsupported architecture for Fedora CoreOS 41."
     }
   }
 }
 
 locals {
-  os_fedora_38 = var.os != "fedora_38" ? {} : {
+  os_fcos_41 = var.os != "fcos_41" ? {} : {
     node_configs = {
       default = {
-        ami_id = one(data.aws_ami.fedora_38.*.id)
+        ami_id = one(data.aws_ami.fcos_41.*.id)
 
         connection = {
           type     = "ssh"
-          username = "fedora"
+          username = "core"
         }
       }
     }
