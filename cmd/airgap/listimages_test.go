@@ -26,7 +26,9 @@ import (
 	"testing"
 	"testing/iotest"
 
+	internalio "github.com/k0sproject/k0s/internal/io"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+
 	"github.com/spf13/cobra"
 
 	"github.com/stretchr/testify/assert"
@@ -41,6 +43,23 @@ func TestAirgapListImages(t *testing.T) {
 	require.NoFileExists(t, "/run/k0s/k0s.yaml", "Runtime config exists and will interfere with this test.")
 
 	defaultImage := v1beta1.DefaultEnvoyProxyImage().URI()
+
+	t.Run("HonorsIOErrors", func(t *testing.T) {
+		var writes uint
+		underTest := NewAirgapListImagesCmd()
+		underTest.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
+		underTest.SilenceUsage = true // Cobra writes usage to stdout on errors 🤔
+		underTest.SetOut(internalio.WriterFunc(func(p []byte) (int, error) {
+			writes++
+			return 0, assert.AnError
+		}))
+		var stderr strings.Builder
+		underTest.SetErr(&stderr)
+
+		assert.Same(t, assert.AnError, underTest.Execute())
+		assert.Equal(t, uint(1), writes, "Expected a single write to stdout")
+		assert.Equal(t, fmt.Sprintf("Error: %v\n", assert.AnError), stderr.String())
+	})
 
 	t.Run("All", func(t *testing.T) {
 		underTest, out, err := newAirgapListImagesCmdWithConfig(t, "{}", "--all")
