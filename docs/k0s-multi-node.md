@@ -64,7 +64,7 @@ To get a token, run the following command on one of the existing controller node
 sudo k0s token create --role=worker
 ```
 
-The resulting output is a long [token](#about-tokens) string, which you can use to add a worker to the cluster.
+The resulting output is a long [token](#about-join-tokens) string, which you can use to add a worker to the cluster.
 
 For enhanced security, run the following command to set an expiration time for the token:
 
@@ -84,7 +84,7 @@ sudo k0s install worker --token-file /path/to/token/file
 sudo k0s start
 ```
 
-#### About tokens
+#### About join tokens
 
 The join tokens are base64-encoded [kubeconfigs](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) for several reasons:
 

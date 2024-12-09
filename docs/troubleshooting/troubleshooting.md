@@ -67,7 +67,7 @@ io.containerd.snapshotter.v1    zfs                      linux/amd64    ok
 ...
 ```
 
-- create a containerd config according to the [documentation](runtime.md): `$ containerd config default > /etc/k0s/containerd.toml`
+- create a containerd config according to the [documentation](../runtime.md): `$ containerd config default > /etc/k0s/containerd.toml`
 - modify the line in `/etc/k0s/containerd.toml`:
 
 ```toml
@@ -92,7 +92,7 @@ to
 
 ## Pods pending when using cloud providers
 
-Once we enable [cloud provider support](cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This tain will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.
+Once we enable [cloud provider support](../cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This tain will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.
 
 For troubleshooting your specific cloud provider see its documentation.
 
