@@ -17,7 +17,6 @@ limitations under the License.
 package airgap
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/airgap"
@@ -37,10 +36,6 @@ func NewAirgapListImagesCmd() *cobra.Command {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
-			}
-
-			if opts.EnableDynamicConfig {
-				return errors.New("dynamic config is not supported for airgap list-images")
 			}
 
 			clusterConfig, err := opts.K0sVars.NodeConfig()
