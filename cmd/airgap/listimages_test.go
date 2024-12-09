@@ -17,14 +17,12 @@ limitations under the License.
 package airgap
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"testing/iotest"
 
@@ -48,7 +46,7 @@ func TestAirgapListImages(t *testing.T) {
 		underTest, out, err := newAirgapListImagesCmdWithConfig(t, "{}", "--all")
 
 		require.NoError(t, underTest.Execute())
-		lines := intoLines(out)
+		lines := strings.Split(out.String(), "\n")
 		if runtime.GOARCH == "arm" {
 			assert.NotContains(t, lines, defaultImage)
 		} else {
@@ -88,7 +86,7 @@ spec:
 
 				require.NoError(t, underTest.Execute())
 
-				lines := intoLines(out)
+				lines := strings.Split(out.String(), "\n")
 				for _, contained := range test.contained {
 					if runtime.GOARCH == "arm" {
 						assert.NotContains(t, lines, contained)
@@ -105,24 +103,15 @@ spec:
 	})
 }
 
-func newAirgapListImagesCmdWithConfig(t *testing.T, config string, args ...string) (_ *cobra.Command, out, err *bytes.Buffer) {
+func newAirgapListImagesCmdWithConfig(t *testing.T, config string, args ...string) (_ *cobra.Command, out, err *strings.Builder) {
 	configFile := filepath.Join(t.TempDir(), "k0s.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(config), 0644))
 
-	out, err = new(bytes.Buffer), new(bytes.Buffer)
+	out, err = new(strings.Builder), new(strings.Builder)
 	cmd := NewAirgapListImagesCmd()
 	cmd.SetArgs(append([]string{"--config=" + configFile}, args...))
 	cmd.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
 	cmd.SetOut(out)
 	cmd.SetErr(err)
 	return cmd, out, err
-}
-
-func intoLines(in io.Reader) (lines []string) {
-	scanner := bufio.NewScanner(in)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return
 }
