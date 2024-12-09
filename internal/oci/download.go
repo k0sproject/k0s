@@ -89,18 +89,23 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 		return fmt.Errorf("failed to find artifact: %w", err)
 	}
 
-	// get a reader to the blob and copies it to the target.
-	reader, err := repo.Blobs().Fetch(ctx, source)
+	// Get a reader to the blob.
+	raw, err := repo.Blobs().Fetch(ctx, source)
 	if err != nil {
 		return fmt.Errorf("failed to fetch blob: %w", err)
 	}
-	defer reader.Close()
+	defer func() { err = errors.Join(err, raw.Close()) }()
 
-	if _, err := io.Copy(target, reader); err != nil {
+	// Wrap the reader so that its length and digest will be verified.
+	verified := content.NewVerifyReader(raw, source)
+
+	// Copy over the blob to its target.
+	if _, err := io.Copy(target, verified); err != nil {
 		return fmt.Errorf("failed to copy blob: %w", err)
 	}
 
-	return nil
+	// Verify the digest.
+	return verified.Verify()
 }
 
 // Fetches the manifest for the given reference and returns all of its successors.
