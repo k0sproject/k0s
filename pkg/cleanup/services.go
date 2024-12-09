@@ -24,9 +24,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/install"
 )
 
-type services struct {
-	Config *Config
-}
+type services struct{}
 
 // Name returns the name of the step
 func (s *services) Name() string {
