@@ -48,8 +48,11 @@ func NewAirgapListImagesCmd() *cobra.Command {
 				return fmt.Errorf("failed to get config: %w", err)
 			}
 
+			out := cmd.OutOrStdout()
 			for _, uri := range airgap.GetImageURIs(clusterConfig.Spec, all) {
-				fmt.Fprintln(cmd.OutOrStdout(), uri)
+				if _, err := fmt.Fprintln(out, uri); err != nil {
+					return err
+				}
 			}
 			return nil
 		},
