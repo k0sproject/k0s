@@ -41,6 +41,15 @@ Before that mishap we had 4776 stargazers, making k0s one of the most popular Ku
     end="<!-- End Join the Community -->"
 %}
 
+<!-- Copied over from "Join the Community" because rewriting the link won't work here. -->
+### Adopters
+
+k0s is used across diverse environments, from small-scale far-edge deployments
+to large data centers. Share your use case and add yourself to the list of
+[adopters].
+
+[adopters]: adopters.md
+
 ## Commercial Support
 
 [Mirantis](https://www.mirantis.com/software/k0s/) offers technical support, professional services and training for k0s. The support subscriptions include, for example, prioritized support (Phone, Web, Email) and access to verified extensions on top of your k0s cluster.
