@@ -1,5 +1,5 @@
 /*
-Copyright 2023 k0s authors
+Copyright 2024 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,49 +23,38 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
 
-func TestGetNodename(t *testing.T) {
-
+func TestGetNodenameWindows(t *testing.T) {
+	kubeHostname, err := nodeutil.GetHostname("")
+	require.NoError(t, err)
 	baseURL := startFakeMetadataServer(t)
-	t.Run("should_always_return_override_if_given", func(t *testing.T) {
-		name, err := GetNodename("override")
-		require.Equal(t, "override", name)
-		require.NoError(t, err)
+
+	t.Run("no_metadata_service_available", func(t *testing.T) {
+		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL))
+		name, err := getNodename(ctx, "")
+		if assert.NoError(t, err) {
+			assert.Equal(t, kubeHostname, name)
+		}
 	})
 
-	t.Run("should_call_kubernetes_hostname_helper_on_linux", func(t *testing.T) {
-		name, err := GetNodename("")
-		name2, err2 := nodeutil.GetHostname("")
-		require.Equal(t, name, name2)
-		require.NoError(t, err)
-		require.NoError(t, err2)
-	})
-
-	t.Run("windows_no_metadata_service_available", func(t *testing.T) {
-		name, err := getNodeNameWindows("", baseURL)
-		nodename, err2 := nodeutil.GetHostname("")
-		require.NoError(t, err)
-		require.NoError(t, err2)
-		require.Equal(t, nodename, name)
-	})
-
-	t.Run("windows_metadata_service_is_available", func(t *testing.T) {
-		name, err := getNodeNameWindows("", baseURL+"/latest/meta-data/local-hostname")
-		nodename, err2 := nodeutil.GetHostname("")
-		require.NoError(t, err)
-		require.NoError(t, err2)
-		require.NotEqual(t, nodename, name)
+	t.Run("metadata_service_is_available", func(t *testing.T) {
+		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL+"/latest/meta-data/local-hostname"))
+		name, err := getNodename(ctx, "")
+		if assert.NoError(t, err) {
+			assert.Equal(t, "some-hostname from aws_metadata", name)
+		}
 	})
 }
 
 func startFakeMetadataServer(t *testing.T) string {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/latest/meta-data/local-hostname", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("some-hostname-from-metadata"))
+		_, err := w.Write([]byte("Some-hostname from AWS_metadata\n"))
 		assert.NoError(t, err)
 	})
 	server := &http.Server{Addr: "localhost:0", Handler: mux}
