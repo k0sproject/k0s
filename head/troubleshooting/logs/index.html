@@ -12,24 +12,28 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/containerd_config/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/troubleshooting/logs/">
       
       
+        <link rel="prev" href="../FAQ/">
       
       
-      <link rel="icon" href="../img/k0s_social.png">
+        <link rel="next" href="../troubleshooting/">
+      
+      
+      <link rel="icon" href="../../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
     
     
       
-        <title>Containerd config - Documentation</title>
+        <title>Logs - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.6f8fc17f.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,9 +52,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
@@ -82,6 +86,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#logs" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -93,7 +102,7 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You are not currently viewing the documentation for the current stable release of k0s.
-  <a href="../..">
+  <a href="../../..">
     <strong>Click here to go to the documentation of the current stable release.</strong>
   </a>
 
@@ -110,9 +119,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -129,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Containerd config
+              Logs
             
           </span>
         </div>
@@ -244,9 +253,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -273,7 +282,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -328,7 +337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
+      <a href="../../install/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -349,7 +358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0sctl-install/" class="md-nav__link">
+      <a href="../../k0sctl-install/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -405,7 +414,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-multi-node/" class="md-nav__link">
+      <a href="../../k0s-multi-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -426,7 +435,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-in-docker/" class="md-nav__link">
+      <a href="../../k0s-in-docker/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -447,7 +456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../experimental-windows/" class="md-nav__link">
+      <a href="../../experimental-windows/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -468,7 +477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi4/" class="md-nav__link">
+      <a href="../../raspberry-pi4/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -489,7 +498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../../examples/ansible-playbook/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -510,7 +519,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airgap-install/" class="md-nav__link">
+      <a href="../../airgap-install/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -531,7 +540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../custom-ca/" class="md-nav__link">
+      <a href="../../custom-ca/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -560,7 +569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-requirements/" class="md-nav__link">
+      <a href="../../system-requirements/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -581,7 +590,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../external-runtime-deps/" class="md-nav__link">
+      <a href="../../external-runtime-deps/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -602,7 +611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../verifying-signs/" class="md-nav__link">
+      <a href="../../verifying-signs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -665,7 +674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+      <a href="../../upgrade/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -686,7 +695,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup/" class="md-nav__link">
+      <a href="../../backup/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -707,7 +716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../remove_controller/" class="md-nav__link">
+      <a href="../../remove_controller/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -728,7 +737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reset/" class="md-nav__link">
+      <a href="../../reset/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -791,7 +800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../configuration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -812,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dynamic-configuration/" class="md-nav__link">
+      <a href="../../dynamic-configuration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -833,7 +842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration-validation/" class="md-nav__link">
+      <a href="../../configuration-validation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -854,7 +863,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../worker-node-config/" class="md-nav__link">
+      <a href="../../worker-node-config/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -875,7 +884,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
+      <a href="../../networking/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -896,7 +905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../runtime/" class="md-nav__link">
+      <a href="../../runtime/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -917,7 +926,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
+      <a href="../../storage/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -938,7 +947,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-monitoring/" class="md-nav__link">
+      <a href="../../system-monitoring/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -959,7 +968,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../manifests/" class="md-nav__link">
+      <a href="../../manifests/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -980,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../helm-charts/" class="md-nav__link">
+      <a href="../../helm-charts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1001,7 +1010,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
+      <a href="../../cloud-providers/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1022,7 +1031,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
+      <a href="../../dual-stack/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1043,7 +1052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
+      <a href="../../high-availability/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1064,7 +1073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../nllb/" class="md-nav__link">
+      <a href="../../nllb/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1085,7 +1094,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cplb/" class="md-nav__link">
+      <a href="../../cplb/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1106,7 +1115,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
+      <a href="../../shell-completion/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1127,7 +1136,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
+      <a href="../../user-management/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1148,7 +1157,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../environment-variables/" class="md-nav__link">
+      <a href="../../environment-variables/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1169,7 +1178,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1190,7 +1199,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../selinux/" class="md-nav__link">
+      <a href="../../selinux/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1211,7 +1220,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../podsecurity/" class="md-nav__link">
+      <a href="../../podsecurity/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1232,7 +1241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reinstall-k0sctl/" class="md-nav__link">
+      <a href="../../reinstall-k0sctl/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1295,7 +1304,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../autopilot/" class="md-nav__link">
+      <a href="../../autopilot/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1316,7 +1325,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../autopilot-multicommand/" class="md-nav__link">
+      <a href="../../autopilot-multicommand/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1379,7 +1388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../../examples/metallb-loadbalancer/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1400,7 +1409,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../../examples/nginx-ingress/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1421,7 +1430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../../examples/traefik-ingress/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1442,7 +1451,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../../examples/ambassador-ingress/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1463,7 +1472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/rook-ceph/" class="md-nav__link">
+      <a href="../../examples/rook-ceph/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1484,7 +1493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/gitops-flux/" class="md-nav__link">
+      <a href="../../examples/gitops-flux/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1505,7 +1514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/openebs/" class="md-nav__link">
+      <a href="../../examples/openebs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1530,17 +1539,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
           <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
@@ -1554,7 +1565,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             Troubleshooting
@@ -1568,7 +1579,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/FAQ/" class="md-nav__link">
+      <a href="../FAQ/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1586,10 +1597,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../troubleshooting/logs/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Logs
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -1598,6 +1629,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-are-the-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Where are the logs?
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Where are the logs?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#systemd-based-setups" class="md-nav__link">
+    <span class="md-ellipsis">
+      systemd based setups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openrc-based-setups" class="md-nav__link">
+    <span class="md-ellipsis">
+      openRC based setups
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1610,7 +1694,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1631,7 +1715,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/support-dump/" class="md-nav__link">
+      <a href="../support-dump/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1652,7 +1736,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/certificate-authorities/" class="md-nav__link">
+      <a href="../certificate-authorities/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1715,7 +1799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1736,7 +1820,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/" class="md-nav__link">
+      <a href="../../cli/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1757,7 +1841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cis_benchmark/" class="md-nav__link">
+      <a href="../../cis_benchmark/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1785,7 +1869,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../releases/" class="md-nav__link">
+      <a href="../../releases/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1805,7 +1889,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../commercial-support/" class="md-nav__link">
+      <a href="../../commercial-support/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1825,7 +1909,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adopters/" class="md-nav__link">
+      <a href="../../adopters/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1880,7 +1964,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/" class="md-nav__link">
+      <a href="../../contributors/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1901,7 +1985,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../contributors/github_workflow/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1922,7 +2006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/testing/" class="md-nav__link">
+      <a href="../../contributors/testing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1943,7 +2027,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/docs/" class="md-nav__link">
+      <a href="../../contributors/docs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1981,6 +2065,49 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-are-the-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Where are the logs?
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Where are the logs?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#systemd-based-setups" class="md-nav__link">
+    <span class="md-ellipsis">
+      systemd based setups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openrc-based-setups" class="md-nav__link">
+    <span class="md-ellipsis">
+      openRC based setups
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1995,9 +2122,17 @@
                   
 
 
-  <h1>Containerd config</h1>
-
-<p>See <a href="../runtime/">runtime</a>.</p>
+<h1 id="logs">Logs<a class="headerlink" href="#logs" title="Permanent link">#</a></h1>
+<p>k0s runs most of the Kubernetes and other system components as plain Linux child processes. As it acts as a watchdog for the child processes it also combines the logs for all such processes into its own log stream.</p>
+<p>k0s adds a "selector" to each components log stream so it is easier to distinguish logs from various components. For example the log stream from kubelet is enhanced with a selector <code>component=kubelet</code>:</p>
+<div class="highlight"><pre><span></span><code>Jul 08 08:46:25 worker-kppzr-lls2q k0s[1766]: time=&quot;2024-07-08 08:46:25&quot; level=info msg=&quot;I0708 08:46:25.876821    1814 operation_generator.go:721] \&quot;MountVolume.SetUp succeeded for volume \\\&quot;kube-api-access-7tfxw\\\&quot; (UniqueName: \\\&quot;kubernetes.io/projected/ca514728-a1de-4408-9be5-8b36ee896752-kube-api-access-7tfxw\\\&quot;) pod \\\&quot;node-shell-a16894ee-eb67-4865-8964-44ca5c87e18d\\\&quot; (UID: \\\&quot;ca514728-a1de-4408-9be5-8b36ee896752\\\&quot;) \&quot; pod=\&quot;kube-system/node-shell-a16894ee-eb67-4865-8964-44ca5c87e18d\&quot;&quot; component=kubelet stream=stderr
+Jul 08 08:46:26 worker-kppzr-lls2q k0s[1766]: time=&quot;2024-07-08 08:46:26&quot; level=info msg=&quot;I0708 08:46:26.112550    1814 kuberuntime_container_linux.go:167] \&quot;No swap cgroup controller present\&quot; swapBehavior=\&quot;\&quot; pod=\&quot;kube-system/node-shell-a16894ee-eb67-4865-8964-44ca5c87e18d\&quot; containerName=\&quot;shell\&quot;&quot; component=kubelet stream=stderr
+</code></pre></div>
+<h2 id="where-are-the-logs">Where are the logs?<a class="headerlink" href="#where-are-the-logs" title="Permanent link">#</a></h2>
+<h3 id="systemd-based-setups">systemd based setups<a class="headerlink" href="#systemd-based-setups" title="Permanent link">#</a></h3>
+<p>SystemD uses journal log system for all logs. This means that you can access k0s and all the sub-component logs using <code>journalctl</code>. For example if you are interested in kubelet logs, you can run something like <code>journalctl -u k0sworker | grep component=kubelet</code>.</p>
+<h3 id="openrc-based-setups">openRC based setups<a class="headerlink" href="#openrc-based-setups" title="Permanent link">#</a></h3>
+<p>openRC stores logs of services in <code>/var/log/k0sworker.log</code>. Again, if you're interested in specific component logs you cat run something like <code>grep component=kubelet /var/log/k0s.log</code>.</p>
 
 
 
@@ -2087,10 +2222,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
       
     
   </body>

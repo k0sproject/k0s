@@ -12,28 +12,28 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/support-dump/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/troubleshooting/certificate-authorities/">
       
       
-        <link rel="prev" href="../troubleshooting/">
+        <link rel="prev" href="../support-dump/">
       
       
-        <link rel="next" href="../architecture/">
+        <link rel="next" href="../../architecture/">
       
       
-      <link rel="icon" href="../img/k0s_social.png">
+      <link rel="icon" href="../../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
     
     
       
-        <title>Support Insights - Documentation</title>
+        <title>Certificate Authorities (CAs) - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.6f8fc17f.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -52,9 +52,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#support-insight" class="md-skip">
+        <a href="#certificate-authorities-cas" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You are not currently viewing the documentation for the current stable release of k0s.
-  <a href="../..">
+  <a href="../../..">
     <strong>Click here to go to the documentation of the current stable release.</strong>
   </a>
 
@@ -119,9 +119,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -138,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Support Insights
+              Certificate Authorities (CAs)
             
           </span>
         </div>
@@ -253,9 +253,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -282,7 +282,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -337,7 +337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
+      <a href="../../install/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -358,7 +358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0sctl-install/" class="md-nav__link">
+      <a href="../../k0sctl-install/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -414,7 +414,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-multi-node/" class="md-nav__link">
+      <a href="../../k0s-multi-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -435,7 +435,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-in-docker/" class="md-nav__link">
+      <a href="../../k0s-in-docker/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -456,7 +456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../experimental-windows/" class="md-nav__link">
+      <a href="../../experimental-windows/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -477,7 +477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi4/" class="md-nav__link">
+      <a href="../../raspberry-pi4/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -498,7 +498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../../examples/ansible-playbook/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -519,7 +519,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airgap-install/" class="md-nav__link">
+      <a href="../../airgap-install/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -540,7 +540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../custom-ca/" class="md-nav__link">
+      <a href="../../custom-ca/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -569,7 +569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-requirements/" class="md-nav__link">
+      <a href="../../system-requirements/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -590,7 +590,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../external-runtime-deps/" class="md-nav__link">
+      <a href="../../external-runtime-deps/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -611,7 +611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../verifying-signs/" class="md-nav__link">
+      <a href="../../verifying-signs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -674,7 +674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+      <a href="../../upgrade/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -695,7 +695,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup/" class="md-nav__link">
+      <a href="../../backup/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -716,7 +716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../remove_controller/" class="md-nav__link">
+      <a href="../../remove_controller/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -737,7 +737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reset/" class="md-nav__link">
+      <a href="../../reset/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -800,7 +800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../configuration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -821,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dynamic-configuration/" class="md-nav__link">
+      <a href="../../dynamic-configuration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -842,7 +842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration-validation/" class="md-nav__link">
+      <a href="../../configuration-validation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -863,7 +863,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../worker-node-config/" class="md-nav__link">
+      <a href="../../worker-node-config/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -884,7 +884,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
+      <a href="../../networking/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -905,7 +905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../runtime/" class="md-nav__link">
+      <a href="../../runtime/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -926,7 +926,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
+      <a href="../../storage/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -947,7 +947,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-monitoring/" class="md-nav__link">
+      <a href="../../system-monitoring/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -968,7 +968,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../manifests/" class="md-nav__link">
+      <a href="../../manifests/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -989,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../helm-charts/" class="md-nav__link">
+      <a href="../../helm-charts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1010,7 +1010,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
+      <a href="../../cloud-providers/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1031,7 +1031,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
+      <a href="../../dual-stack/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1052,7 +1052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
+      <a href="../../high-availability/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1073,7 +1073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../nllb/" class="md-nav__link">
+      <a href="../../nllb/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1094,7 +1094,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cplb/" class="md-nav__link">
+      <a href="../../cplb/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1115,7 +1115,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
+      <a href="../../shell-completion/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1136,7 +1136,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
+      <a href="../../user-management/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1157,7 +1157,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../environment-variables/" class="md-nav__link">
+      <a href="../../environment-variables/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1178,7 +1178,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1199,7 +1199,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../selinux/" class="md-nav__link">
+      <a href="../../selinux/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1220,7 +1220,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../podsecurity/" class="md-nav__link">
+      <a href="../../podsecurity/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1241,7 +1241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reinstall-k0sctl/" class="md-nav__link">
+      <a href="../../reinstall-k0sctl/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1304,7 +1304,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../autopilot/" class="md-nav__link">
+      <a href="../../autopilot/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1325,7 +1325,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../autopilot-multicommand/" class="md-nav__link">
+      <a href="../../autopilot-multicommand/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1388,7 +1388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../../examples/metallb-loadbalancer/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1409,7 +1409,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../../examples/nginx-ingress/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1430,7 +1430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../../examples/traefik-ingress/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1451,7 +1451,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../../examples/ambassador-ingress/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1472,7 +1472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/rook-ceph/" class="md-nav__link">
+      <a href="../../examples/rook-ceph/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1493,7 +1493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/gitops-flux/" class="md-nav__link">
+      <a href="../../examples/gitops-flux/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1514,7 +1514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/openebs/" class="md-nav__link">
+      <a href="../../examples/openebs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1639,6 +1639,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../support-dump/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Support Insights
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1655,7 +1676,7 @@
           
   
   <span class="md-ellipsis">
-    Support Insights
+    Certificate Authorities (CAs)
   </span>
   
 
@@ -1666,7 +1687,7 @@
         
   
   <span class="md-ellipsis">
-    Support Insights
+    Certificate Authorities (CAs)
   </span>
   
 
@@ -1688,18 +1709,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setting-up" class="md-nav__link">
+  <a href="#overview-of-cas-managed-by-k0s" class="md-nav__link">
     <span class="md-ellipsis">
-      Setting up
+      Overview of CAs managed by k0s
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#creating-support-bundle" class="md-nav__link">
+  <a href="#replacing-the-kubernetes-ca-and-sa-key-pair" class="md-nav__link">
     <span class="md-ellipsis">
-      Creating support bundle
+      Replacing the Kubernetes CA and SA key pair
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
     </span>
   </a>
   
@@ -1763,7 +1793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1784,7 +1814,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/" class="md-nav__link">
+      <a href="../../cli/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1805,7 +1835,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cis_benchmark/" class="md-nav__link">
+      <a href="../../cis_benchmark/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1833,7 +1863,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../releases/" class="md-nav__link">
+      <a href="../../releases/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1853,7 +1883,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../commercial-support/" class="md-nav__link">
+      <a href="../../commercial-support/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1873,7 +1903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adopters/" class="md-nav__link">
+      <a href="../../adopters/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1928,7 +1958,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/" class="md-nav__link">
+      <a href="../../contributors/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1949,7 +1979,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../contributors/github_workflow/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1970,7 +2000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/testing/" class="md-nav__link">
+      <a href="../../contributors/testing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1991,7 +2021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/docs/" class="md-nav__link">
+      <a href="../../contributors/docs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2039,18 +2069,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setting-up" class="md-nav__link">
+  <a href="#overview-of-cas-managed-by-k0s" class="md-nav__link">
     <span class="md-ellipsis">
-      Setting up
+      Overview of CAs managed by k0s
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#creating-support-bundle" class="md-nav__link">
+  <a href="#replacing-the-kubernetes-ca-and-sa-key-pair" class="md-nav__link">
     <span class="md-ellipsis">
-      Creating support bundle
+      Replacing the Kubernetes CA and SA key pair
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
     </span>
   </a>
   
@@ -2071,33 +2110,99 @@
                   
 
 
-<h1 id="support-insight">Support Insight<a class="headerlink" href="#support-insight" title="Permanent link">#</a></h1>
-<p>In many cases, especially when looking for <a href="../commercial-support/">commercial support</a> there's a need for share the cluster state with other people.
-While one could always give access to the live cluster that is not always desired nor even possible.</p>
-<p>For those kind of cases we can lean on the work our friends at <a href="https://troubleshoot.sh">troubleshoot.sh</a> have done.</p>
-<p>With troubleshoot tool you can essentially take a dump of the cluster state and share it with other people. You can even use <a href="https://github.com/replicatedhq/sbctl">sbctl</a> tool to make the dump tarball to act as Kubernetes API.</p>
-<p>Let's look at how this works with k0s.</p>
-<h2 id="setting-up">Setting up<a class="headerlink" href="#setting-up" title="Permanent link">#</a></h2>
-<p>To gather all the needed data we need another tool called <a href="https://troubleshoot.sh/docs/support-bundle/introduction/"><code>support-bundle</code></a>.</p>
-<p>You can download it from the <a href="https://github.com/replicatedhq/troubleshoot/releases">releases page</a>, pay attention that you download the right architecture.</p>
-<h2 id="creating-support-bundle">Creating support bundle<a class="headerlink" href="#creating-support-bundle" title="Permanent link">#</a></h2>
-<p>A Support Bundle needs to know what to collect and optionally, what to analyze. This is defined in a YAML file.</p>
-<p>While you can customize the data collection and analysis for your specific needs, we've made a good reference for k0s. These cover the core k0s things like:</p>
+<h1 id="certificate-authorities-cas">Certificate Authorities (CAs)<a class="headerlink" href="#certificate-authorities-cas" title="Permanent link">#</a></h1>
+<h2 id="overview-of-cas-managed-by-k0s">Overview of CAs managed by k0s<a class="headerlink" href="#overview-of-cas-managed-by-k0s" title="Permanent link">#</a></h2>
+<p>k0s maintains two Certificate Authorities and one public/private key pair:</p>
 <ul>
-<li>collecting info on the host</li>
-<li>collecting system component statuses from <code>kube-system</code> namespace</li>
-<li>checking health of Kubernetes API, Etcd etc. components</li>
-<li>collecting k0s logs</li>
-<li>checking status of firewalls, anti-virus etc. services which are known to interfere with Kubernetes</li>
+<li>The <strong>Kubernetes CA</strong> is used to secure the Kubernetes cluster and manage
+  client and server certificates for API communication.</li>
+<li>The <strong>etcd CA</strong> is used only when managed etcd is enabled, for securing etcd
+  communications.</li>
+<li>The <strong>Kubernetes Service Account (SA) key pair</strong> is used for signing
+  Kubernetes <a href="https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/">service account tokens</a>.</li>
 </ul>
-<p>As we need to collect host level info you should run the commands on the hosts directly, on controllers and/or workers.</p>
-<p>To get a support bundle, after setting up the <a href="#setting-up">tooling</a>, you simply run:</p>
-<div class="highlight"><pre><span></span><code>support-bundle<span class="w"> </span>--kubeconfig<span class="w"> </span>/var/lib/k0s/pki/admin.conf<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-&lt;role&gt;.yaml
+<p>These CAs are automatically created during cluster initialization and have a
+default expiration period of 10 years. They are distributed once to all k0s
+controllers as part of k0s's <a href="../../k0s-multi-node/#5-add-controllers-to-the-cluster">join process</a>. Replacing them is a manual process,
+as k0s currently lacks automation for CA renewal.</p>
+<h2 id="replacing-the-kubernetes-ca-and-sa-key-pair">Replacing the Kubernetes CA and SA key pair<a class="headerlink" href="#replacing-the-kubernetes-ca-and-sa-key-pair" title="Permanent link">#</a></h2>
+<p>The following steps describe a way how to manually replace the Kubernetes CA and
+SA key pair by taking a cluster down, regenerating those and redistributing them
+to all nodes, and then bringing the cluster back online:</p>
+<ol>
+<li>
+<p>Take a <a href="../../backup/">backup</a>! Things might go wrong at any level.</p>
+</li>
+<li>
+<p>Stop k0s on all worker and controller nodes. All the instructions below
+   assume that all k0s nodes are using the default data directory
+   <code>/var/lib/k0s</code>. Please adjust accordingly if you're using a different data
+   directory path.</p>
+</li>
+<li>
+<p>Delete the Kubernetes CA and SA key pair files from the all the controller
+   data directories:</p>
+<ul>
+<li><code>/var/lib/k0s/pki/ca.crt</code></li>
+<li><code>/var/lib/k0s/pki/ca.key</code></li>
+<li><code>/var/lib/k0s/pki/sa.pub</code></li>
+<li><code>/var/lib/k0s/pki/sa.key</code></li>
+</ul>
+<p>Delete the kubelet's kubeconfig file and the kubelet's PKI directory from all
+ worker data directories. Note that this includes controllers that have been
+ started with the <code>--enable-worker</code> flag:</p>
+<ul>
+<li><code>/var/lib/k0s/kubelet.conf</code></li>
+<li><code>/var/lib/k0s/kubelet/pki</code></li>
+</ul>
+</li>
+<li>
+<p>Choose one controller as the "first" one. Restart k0s on the first
+   controller. If this controller is running with the <code>--enable-worker</code> flag,
+   you should <strong>reboot the machine</strong> instead. This will ensure that all
+   processes and pods will be cleanly restarted. After the restart, k0s will
+   have regenerated a new Kubernetes CA and SA key pair.</p>
+</li>
+<li>
+<p>Distribute the new CA and SA key pair to the other controllers: Copy over the
+   following files from the first controller to each of the remaining
+   controllers:</p>
+<ul>
+<li><code>/var/lib/k0s/pki/ca.crt</code></li>
+<li><code>/var/lib/k0s/pki/ca.key</code></li>
+<li><code>/var/lib/k0s/pki/sa.pub</code></li>
+<li><code>/var/lib/k0s/pki/sa.key</code></li>
+</ul>
+<p>After copying the files, the new CA and SA key pair are in place. Restart k0s
+ on the other controllers. For controllers running with the <code>--enable-worker</code>
+ flag, <strong>reboot the machines</strong> instead.</p>
+</li>
+<li>
+<p>Rejoin all workers. The easiest way to do this is to use a
+   <code>kubelet-bootstrap.conf</code> file. You can <a href="../../cli/k0s_token_create/">generate</a>
+   such a file on a controller like this (see the section on <a href="../../k0s-multi-node/#about-join-tokens">join tokens</a> for
+   details):</p>
+<div class="highlight"><pre><span></span><code>touch<span class="w"> </span>/tmp/rejoin-token<span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">  </span>chmod<span class="w"> </span><span class="m">0600</span><span class="w"> </span>/tmp/rejoin-token<span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">  </span>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--expiry<span class="w"> </span>1h<span class="w"> </span><span class="p">|</span>
+<span class="w">  </span>base64<span class="w"> </span>-d<span class="w"> </span><span class="p">|</span>
+<span class="w">  </span>gunzip<span class="w"> </span>&gt;/tmp/rejoin-token
 </code></pre></div>
-<p>Above <code>&lt;role&gt;</code> refers to either <code>controller</code>or <code>worker</code>. For different roles we collect different things. If you are running a controller with <code>--enable-worker</code> or <code>--single</code>, where it becomes also a worker, you can also get a combined dump:</p>
-<div class="highlight"><pre><span></span><code>support-bundle<span class="w"> </span>--kubeconfig<span class="w"> </span>/var/lib/k0s/pki/admin.conf<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-controller.yaml<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-worker.yaml
-</code></pre></div>
-<p>Once the data collection and analysis finishes you will get a file called like <code>support-bundle-&lt;timestamp&gt;.tar.gz</code>. The file contains all the collected info which you can share with other people.</p>
+<p>Copy that token to each worker node and place it at
+ <code>/var/lib/k0s/kubelet-bootstrap.conf</code>. Then reboot the machine.</p>
+</li>
+<li>
+<p>When all workers are back online, the <code>kubelet-bootstrap.conf</code> files can be
+   safely removed from the workers. You can also invalidate the token so you
+   don't have to wait for it to expire: Use <a href="../../cli/k0s_token_list/"><code>k0s token list --role
+   worker</code></a> to list all tokens and <a href="../../cli/k0s_token_invalidate/"><code>k0s token
+   invalidate &lt;token-id&gt;</code></a> to invalidate them immediately.</p>
+</li>
+</ol>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">#</a></h2>
+<ul>
+<li><a href="../../custom-ca/">Install using custom CAs</a></li>
+</ul>
 
 
 
@@ -2187,10 +2292,10 @@ While one could always give access to the live cluster that is not always desire
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
       
     
   </body>

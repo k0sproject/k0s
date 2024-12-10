@@ -1717,7 +1717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../FAQ/" class="md-nav__link">
+      <a href="../troubleshooting/FAQ/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1738,7 +1738,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../logs/" class="md-nav__link">
+      <a href="../troubleshooting/logs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1759,7 +1759,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/troubleshooting/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1780,11 +1780,32 @@
   
   
     <li class="md-nav__item">
-      <a href="../support-dump/" class="md-nav__link">
+      <a href="../troubleshooting/support-dump/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Support Insights
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/certificate-authorities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Certificate Authorities (CAs)
   </span>
   
 
@@ -2278,7 +2299,7 @@ k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> 
 <p>To get a token, run the following command on one of the existing controller nodes:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--role<span class="o">=</span>worker
 </code></pre></div>
-<p>The resulting output is a long <a href="#about-tokens">token</a> string, which you can use to add a worker to the cluster.</p>
+<p>The resulting output is a long <a href="#about-join-tokens">token</a> string, which you can use to add a worker to the cluster.</p>
 <p>For enhanced security, run the following command to set an expiration time for the token:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--role<span class="o">=</span>worker<span class="w"> </span>--expiry<span class="o">=</span>100h<span class="w"> </span>&gt;<span class="w"> </span>token-file
 </code></pre></div>
@@ -2288,7 +2309,7 @@ k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> 
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
-<h4 id="about-tokens">About tokens<a class="headerlink" href="#about-tokens" title="Permanent link">#</a></h4>
+<h4 id="about-join-tokens">About join tokens<a class="headerlink" href="#about-join-tokens" title="Permanent link">#</a></h4>
 <p>The join tokens are base64-encoded <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">kubeconfigs</a> for several reasons:</p>
 <ul>
 <li>Well-defined structure</li>

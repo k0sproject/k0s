@@ -5,10 +5,6 @@
          <lastmod>2024-12-10</lastmod>
     </url>
     <url>
-         <loc>https://docs.k0sproject.io/head/FAQ/</loc>
-         <lastmod>2024-12-10</lastmod>
-    </url>
-    <url>
          <loc>https://docs.k0sproject.io/head/adopters/</loc>
          <lastmod>2024-12-10</lastmod>
     </url>
@@ -121,10 +117,6 @@
          <lastmod>2024-12-10</lastmod>
     </url>
     <url>
-         <loc>https://docs.k0sproject.io/head/logs/</loc>
-         <lastmod>2024-12-10</lastmod>
-    </url>
-    <url>
          <loc>https://docs.k0sproject.io/head/manifests/</loc>
          <lastmod>2024-12-10</lastmod>
     </url>
@@ -177,19 +169,11 @@
          <lastmod>2024-12-10</lastmod>
     </url>
     <url>
-         <loc>https://docs.k0sproject.io/head/support-dump/</loc>
-         <lastmod>2024-12-10</lastmod>
-    </url>
-    <url>
          <loc>https://docs.k0sproject.io/head/system-monitoring/</loc>
          <lastmod>2024-12-10</lastmod>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/system-requirements/</loc>
-         <lastmod>2024-12-10</lastmod>
-    </url>
-    <url>
-         <loc>https://docs.k0sproject.io/head/troubleshooting/</loc>
          <lastmod>2024-12-10</lastmod>
     </url>
     <url>
@@ -430,6 +414,26 @@
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/oidc/oidc-provider-configuration/</loc>
+         <lastmod>2024-12-10</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/troubleshooting/FAQ/</loc>
+         <lastmod>2024-12-10</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/troubleshooting/certificate-authorities/</loc>
+         <lastmod>2024-12-10</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/troubleshooting/logs/</loc>
+         <lastmod>2024-12-10</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/troubleshooting/support-dump/</loc>
+         <lastmod>2024-12-10</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/troubleshooting/troubleshooting/</loc>
          <lastmod>2024-12-10</lastmod>
     </url>
 </urlset>
