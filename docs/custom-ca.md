@@ -38,3 +38,7 @@ Here's an example of a command for pre-generating a token for a controller.
 ```shell
 k0s token pre-shared --role controller --cert /var/lib/k0s/pki/ca.crt --url https://<controller-ip>:9443/
 ```
+
+## See also
+
+- [Certificate Authorities](troubleshooting/certificate-authorities.md)

@@ -266,7 +266,7 @@ metrics][cadvisor-metrics] when using cri-dockerd.
 [install cri-dockerd]: https://github.com/Mirantis/cri-dockerd#using-cri-dockerd
 [worker profiles]: worker-node-config.md#worker-profiles
 [dynamic configuration]: dynamic-configuration.md
-[cadvisor-metrics]: ./troubleshooting.md#using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics
+[cadvisor-metrics]: ./troubleshooting/troubleshooting.md#using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics
 
 #### Verification
 
