@@ -153,9 +153,6 @@ func (c *containers) stopAllContainers() error {
 		return fmt.Errorf("failed at listing pods %w", err)
 	}
 	if len(pods) > 0 {
-		if err := removeMount("kubelet/pods"); err != nil {
-			msg = append(msg, err)
-		}
 		if err := removeMount("run/netns"); err != nil {
 			msg = append(msg, err)
 		}
