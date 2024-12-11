@@ -795,15 +795,6 @@ func (s *BootlooseSuite) StopWorker(name string) error {
 	return s.launchDelegate.StopWorker(s.Context(), ssh)
 }
 
-func (s *BootlooseSuite) Reset(name string) error {
-	ssh, err := s.SSH(s.Context(), name)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-	resetCommand := fmt.Sprintf("%s reset --debug", s.K0sFullPath)
-	_, err = ssh.ExecWithOutput(s.Context(), resetCommand)
-	return err
-}
-
 // KubeClient return kube client by loading the admin access config from given node
 func (s *BootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
 	machine, err := s.MachineForName(node)
