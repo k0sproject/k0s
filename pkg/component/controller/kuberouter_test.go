@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/dig"
@@ -50,13 +52,14 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
 	cfg.Spec.Network.KubeRouter.IPMasq = true
 
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
-	require.NoError(t, kr.Stop())
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(context.TODO()))
+	require.NoError(t, kr.Start(context.TODO()))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(context.TODO(), cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -133,13 +136,14 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
-	require.NoError(t, kr.Stop())
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(context.TODO()))
+	require.NoError(t, kr.Start(context.TODO()))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(context.TODO(), cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -169,13 +173,14 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
 	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
 	cfg.Spec.Network.KubeRouter.MTU = 1234
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
-	require.NoError(t, kr.Stop())
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(context.TODO()))
+	require.NoError(t, kr.Start(context.TODO()))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(context.TODO(), cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -208,13 +213,14 @@ func TestExtraArgs(t *testing.T) {
 		"run-firewall": "false",
 	}
 
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
-	require.NoError(t, kr.Stop())
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(context.TODO()))
+	require.NoError(t, kr.Start(context.TODO()))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(context.TODO(), cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
