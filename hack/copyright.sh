@@ -45,6 +45,10 @@ has_date_copyright(){
 # Copyright notice aren't related to the date of the document.
 for i in $(find cmd hack internal inttest pkg static -type f -name '*.go' -not -name 'zz_generated*'); do
     case "$i" in
+    pkg/component/controller/cplb/tcpproxy/*)
+    # These files have a special copyright due to being copied
+    # from github.com/inetaf/tcpproxy
+    ;;
     pkg/client/clientset/*)
         if ! has_basic_copyright "$i"; then
           echo "ERROR: $i doesn't have a proper copyright notice" 1>&2
