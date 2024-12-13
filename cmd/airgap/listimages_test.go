@@ -46,7 +46,7 @@ func TestAirgapListImages(t *testing.T) {
 
 	t.Run("HonorsIOErrors", func(t *testing.T) {
 		var writes uint
-		underTest := NewAirgapListImagesCmd()
+		underTest := newAirgapListImagesCmd()
 		underTest.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
 		underTest.SilenceUsage = true // Cobra writes usage to stdout on errors 🤔
 		underTest.SetOut(internalio.WriterFunc(func(p []byte) (int, error) {
@@ -127,7 +127,7 @@ func newAirgapListImagesCmdWithConfig(t *testing.T, config string, args ...strin
 	require.NoError(t, os.WriteFile(configFile, []byte(config), 0644))
 
 	out, err = new(strings.Builder), new(strings.Builder)
-	cmd := NewAirgapListImagesCmd()
+	cmd := newAirgapListImagesCmd()
 	cmd.SetArgs(append([]string{"--config=" + configFile}, args...))
 	cmd.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
 	cmd.SetOut(out)

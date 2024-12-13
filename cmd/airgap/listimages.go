@@ -25,12 +25,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAirgapListImagesCmd() *cobra.Command {
+func newAirgapListImagesCmd() *cobra.Command {
 	var all bool
 
 	cmd := &cobra.Command{
 		Use:     "list-images",
-		Short:   "List image names and version needed for air-gap install",
+		Short:   "List image names and versions needed for airgapped installations",
 		Example: `k0s airgap list-images`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)
