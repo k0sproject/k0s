@@ -309,7 +309,7 @@ jobs:
         id: cache-airgap-image-bundle
         uses: actions/cache@v4
         with:
-          key: airgap-image-bundle-linux-${{ matrix.arch }}-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          key: airgap-image-bundle-linux-${{ matrix.arch }}-${{ hashFiles('Makefile', 'airgap-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
           path: |
             airgap-images.txt
             airgap-image-bundle-linux-${{ matrix.arch }}.tar

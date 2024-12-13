@@ -26,12 +26,7 @@ done using platform compatibility.
 [OCI Image Layout]: https://github.com/opencontainers/image-spec/blob/v1.0/image-layout.md
 [GitHub releases page]: https://github.com/k0sproject/k0s/releases/v{{{ extra.k8s_version }}}+k0s.0
 
-<<<<<<< HEAD
-[Quick Start Guide]: install.md
-[containerd Getting Started Guide]: https://github.com/containerd/containerd/blob/v1.7.27/docs/getting-started.md
-=======
 ## Creating image bundles
->>>>>>> 7010e4ed1 (Introduce k0s airgap bundle-artifacts)
 
 ### Using k0s builtin tooling
 

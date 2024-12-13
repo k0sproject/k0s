@@ -246,15 +246,8 @@ airgap-image-bundle-linux-riscv64.tar: TARGET_PLATFORM := linux/riscv64
 airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar \
-airgap-image-bundle-linux-riscv64.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
-	$(DOCKER) run --rm -i --privileged \
-	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
-	  '$(shell cat .k0sbuild.image-bundler.stamp)' < airgap-images.txt > '$@'
-
-.k0sbuild.image-bundler.stamp: hack/image-bundler/* embedded-bins/Makefile.variables
-	$(DOCKER) build --progress=plain --iidfile '$@' \
-	  --build-arg ALPINE_VERSION=$(alpine_patch_version) \
-	  -t k0sbuild.image-bundler -- hack/image-bundler
+airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
+	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <airgap-images.txt
 
 .PHONY: $(smoketests)
 check-airgap check-ap-airgap: airgap-image-bundle-linux-$(HOST_ARCH).tar
@@ -285,9 +278,7 @@ clean-docker-image:
 	$(clean-iid-files)
 
 .PHONY: clean-airgap-image-bundles
-clean-airgap-image-bundles: IID_FILES = .k0sbuild.image-bundler.stamp
 clean-airgap-image-bundles:
-	$(clean-iid-files)
 	-rm airgap-images.txt
 	-rm airgap-image-bundle-linux-amd64.tar airgap-image-bundle-linux-arm64.tar airgap-image-bundle-linux-arm.tar  airgap-image-bundle-linux-riscv64.tar
 
