@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package airgap
+package airgap_test
 
 import (
 	"errors"
@@ -26,6 +26,7 @@ import (
 	"testing"
 	"testing/iotest"
 
+	"github.com/k0sproject/k0s/cmd"
 	internalio "github.com/k0sproject/k0s/internal/io"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
@@ -44,17 +45,23 @@ func TestAirgapListImages(t *testing.T) {
 
 	defaultImage := v1beta1.DefaultEnvoyProxyImage().URI()
 
+	t.Run("RejectsUnknownCommands", func(t *testing.T) {
+		underTest, stdout, stderr := newAirgapListImagesCmdWithConfig(t, "", "bogus")
+
+		msg := `unknown command "bogus" for "k0s airgap list-images"`
+		assert.ErrorContains(t, underTest.Execute(), msg)
+		assert.Equal(t, "Error: "+msg+"\n", stderr.String())
+		assert.Empty(t, stdout.String())
+	})
+
 	t.Run("HonorsIOErrors", func(t *testing.T) {
 		var writes uint
-		underTest := NewAirgapListImagesCmd()
-		underTest.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
+		underTest, _, stderr := newAirgapListImagesCmdWithConfig(t, "")
 		underTest.SilenceUsage = true // Cobra writes usage to stdout on errors 🤔
 		underTest.SetOut(internalio.WriterFunc(func(p []byte) (int, error) {
 			writes++
 			return 0, assert.AnError
 		}))
-		var stderr strings.Builder
-		underTest.SetErr(&stderr)
 
 		assert.Same(t, assert.AnError, underTest.Execute())
 		assert.Equal(t, uint(1), writes, "Expected a single write to stdout")
@@ -127,8 +134,8 @@ func newAirgapListImagesCmdWithConfig(t *testing.T, config string, args ...strin
 	require.NoError(t, os.WriteFile(configFile, []byte(config), 0644))
 
 	out, err = new(strings.Builder), new(strings.Builder)
-	cmd := NewAirgapListImagesCmd()
-	cmd.SetArgs(append([]string{"--config=" + configFile}, args...))
+	cmd := cmd.NewRootCmd()
+	cmd.SetArgs(append([]string{"airgap", "--config=" + configFile, "list-images"}, args...))
 	cmd.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
 	cmd.SetOut(out)
 	cmd.SetErr(err)

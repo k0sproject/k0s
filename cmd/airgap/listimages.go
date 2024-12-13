@@ -32,6 +32,7 @@ func NewAirgapListImagesCmd() *cobra.Command {
 		Use:     "list-images",
 		Short:   "List image names and version needed for air-gap install",
 		Example: `k0s airgap list-images`,
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
