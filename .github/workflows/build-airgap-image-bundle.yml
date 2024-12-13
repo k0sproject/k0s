@@ -33,6 +33,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: "Download :: k0s"
+        uses: actions/download-artifact@v4
+        with:
+          name: k0s-linux-amd64
+
       - name: "Download :: Airgap image list"
         uses: actions/download-artifact@v4
         with:
@@ -44,7 +49,7 @@ jobs:
       - name: "Cache :: Airgap image bundle :: Calculate cache key"
         id: cache-airgap-image-bundle-calc-key
         env:
-          HASH_VALUE: ${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          HASH_VALUE: ${{ hashFiles('Makefile', 'airgap-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
         run: |
           printf 'cache-key=build-airgap-image-bundle-%s-%s-%s\n' "$TARGET_OS" "$TARGET_ARCH" "$HASH_VALUE" >> "$GITHUB_OUTPUT"
 
@@ -58,6 +63,7 @@ jobs:
       - name: "Build :: Airgap image bundle"
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
         run: |
+          chmod +x k0s
           mkdir -p "embedded-bins/staging/$TARGET_OS/bin"
           make --touch airgap-images.txt
           make "airgap-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
