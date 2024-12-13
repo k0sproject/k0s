@@ -23,7 +23,7 @@ nav:
           - Raspberry Pi 4: raspberry-pi4.md
           - Raspberry Pi 5: raspberry-pi5.md
           - Ansible Playbook: examples/ansible-playbook.md
-          - Airgap Install: airgap-install.md
+          - Airgapped Installation: airgap-install.md
           - Using custom CA certificate (advanced): custom-ca.md
       - System Requirements: system-requirements.md
       - External runtime dependencies: external-runtime-deps.md
