@@ -105,7 +105,7 @@ func TestFileSystemStepRestore(t *testing.T) {
 		step := NewFileSystemStep(src)
 		require.NoError(t, step.Restore(src, dst), "Unable to copy empty dir")
 
-		//rmdir will fail if the directory has anything at all
+		// rmdir will fail if the directory has anything at all
 		require.NoError(t, os.Remove(dst), "Unable to remove supposedly empty dir")
 	})
 

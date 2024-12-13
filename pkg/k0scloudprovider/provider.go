@@ -66,7 +66,7 @@ func (p *provider) InstancesV2() (cloudprovider.InstancesV2, bool) {
 }
 
 // Zones returns a zones interface. Also returns true if the interface is supported, false otherwise.
-// DEPRECATED: Zones is deprecated in favor of retrieving zone/region information from InstancesV2.
+// Deprecated: Zones is deprecated in favor of retrieving zone/region information from InstancesV2.
 // This interface will not be called if InstancesV2 is enabled.
 func (p *provider) Zones() (cloudprovider.Zones, bool) {
 	// Not supported

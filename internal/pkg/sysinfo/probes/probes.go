@@ -161,7 +161,7 @@ func (p *probes) Get(id string) Probe {
 }
 
 func (p *probes) Set(id string, setter func(ProbePath, Probe) Probe) {
-	path := append(p.path, id)
+	path := append(p.path, id) //nolint:gocritic // not assigning to p.path is intended
 	for _, probe := range p.probes {
 		if probe.id == id {
 			probe.probe = ensureSet(setter(path, probe.probe))

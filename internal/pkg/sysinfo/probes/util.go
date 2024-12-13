@@ -44,7 +44,7 @@ func (b iecBytes) String() string {
 	const prefixes = "KMGTPE"
 	const unit = 1 << 10
 
-	for i := 0; ; i = i + 1 {
+	for i := 0; ; i++ {
 		x := float32(b) / float32((uint64(1) << (i * 10)))
 		if x < unit {
 			if i == 0 {

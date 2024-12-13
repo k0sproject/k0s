@@ -18,7 +18,6 @@ package token
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -42,7 +41,7 @@ func tokenListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			manager, err := token.NewManager(filepath.Join(opts.K0sVars.AdminKubeConfigPath))
+			manager, err := token.NewManager(opts.K0sVars.AdminKubeConfigPath)
 			if err != nil {
 				return err
 			}
@@ -56,7 +55,6 @@ func tokenListCmd() *cobra.Command {
 				return nil
 			}
 
-			//fmt.Fprintf(cmd.OutOrStdout(), "Tokens: %v \n", tokens)
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
 			table.SetHeader([]string{"ID", "Role", "Expires at"})
 			table.SetAutoWrapText(false)

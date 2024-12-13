@@ -91,12 +91,10 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	}
 	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
 		copy.Spec.Network = nil
-	} else {
-		if copy.Spec.Network.NodeLocalLoadBalancing != nil &&
-			copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
-			reflect.DeepEqual(copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
-			copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
-		}
+	} else if copy.Spec.Network.NodeLocalLoadBalancing != nil &&
+		copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
+		reflect.DeepEqual(copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
+		copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
 	}
 	if reflect.DeepEqual(copy.Spec.Telemetry, DefaultClusterTelemetry()) {
 		copy.Spec.Telemetry = nil

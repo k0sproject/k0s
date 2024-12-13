@@ -250,9 +250,7 @@ func (c *rootController) startSubControllers(ctx context.Context, event LeaseEve
 
 	ctx, cancel := context.WithCancel(ctx)
 
-	//wg := sync.WaitGroup{}
 	g, ctx := errgroup.WithContext(ctx)
-	//wg.Add(1)
 
 	g.Go(func() error {
 		logger.Info("Starting controller-runtime subhandlers")

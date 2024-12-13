@@ -339,7 +339,7 @@ func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 		return false, nil
 	}
 
-	//only kill process if it has the _KOS_MANAGED env set
+	// only kill process if it has the _KOS_MANAGED env set
 	if env, err := ph.environ(); err != nil {
 		if errors.Is(err, syscall.ESRCH) {
 			return false, nil

@@ -50,7 +50,7 @@ func (g *cgroupV1) loadControllers(seen func(name, msg string)) error {
 	var lineNo uint
 	lines := bufio.NewScanner(f)
 	for lines.Scan() {
-		lineNo = lineNo + 1
+		lineNo++
 		if err := lines.Err(); err != nil {
 			return fmt.Errorf("failed to parse /proc/cgroups at line %d: %w ", lineNo, err)
 		}
