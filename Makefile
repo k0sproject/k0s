@@ -21,11 +21,20 @@ K0S_GO_BUILD_CACHE ?= build/cache
 GO_SRCS := $(shell find . -type f -name '*.go' -not -path './$(K0S_GO_BUILD_CACHE)/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
 GO_CHECK_UNIT_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
+DOCKER = docker
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
 #   none	does not embed any binaries
 
-EMBEDDED_BINS_BUILDMODE ?= docker
+ifeq ($(DOCKER),false)
+  EMBEDDED_BINS_BUILDMODE ?= none
+  K0S_BUILD_IMAGE_FILE =
+  GO ?= go
+else
+  EMBEDDED_BINS_BUILDMODE ?= docker
+  K0S_BUILD_IMAGE_FILE = .k0sbuild.docker-image.k0s
+  GO ?= $(GO_ENV) go
+endif
 # k0s runs on linux even if it's built on mac or windows
 TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
@@ -71,7 +80,7 @@ LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
 GOLANG_IMAGE ?= $(golang_buildimage)
 K0S_GO_BUILD_CACHE_VOLUME_PATH=$(realpath $(K0S_GO_BUILD_CACHE))
-GO_ENV ?= docker run --rm \
+GO_ENV ?= $(DOCKER) run --rm \
 	-v '$(K0S_GO_BUILD_CACHE_VOLUME_PATH)':/run/k0s-build \
 	-v '$(CURDIR)':/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
@@ -80,8 +89,7 @@ GO_ENV ?= docker run --rm \
 	-e CGO_CFLAGS \
 	-e GOARCH \
 	--user $(BUILD_UID):$(BUILD_GID) \
-	-- '$(shell cat .k0sbuild.docker-image.k0s)'
-GO ?= $(GO_ENV) go
+	-- '$(shell cat $(K0S_BUILD_IMAGE_FILE))'
 
 # https://www.gnu.org/software/make/manual/make.html#index-spaces_002c-in-variable-values
 nullstring :=
@@ -104,12 +112,12 @@ all: k0s k0s.exe
 $(K0S_GO_BUILD_CACHE):
 	mkdir -p -- '$@'
 
-.k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | $(K0S_GO_BUILD_CACHE)
-	docker build --progress=plain --iidfile '$@' \
+$(K0S_BUILD_IMAGE_FILE): build/Dockerfile embedded-bins/Makefile.variables | $(K0S_GO_BUILD_CACHE)
+	$(DOCKER) build --progress=plain --iidfile '$@' \
 	  --build-arg BUILDIMAGE=$(GOLANG_IMAGE) \
-	  -t k0sbuild.docker-image.k0s - <build/Dockerfile
+	  -t $(patsubst .%,%,$(K0S_BUILD_IMAGE_FILE)) - <build/Dockerfile
 
-go.sum: go.mod .k0sbuild.docker-image.k0s
+go.sum: go.mod $(K0S_BUILD_IMAGE_FILE)
 	$(GO) mod tidy && touch -c -- '$@'
 
 # List of all the custom APIs that k0s defines.
@@ -122,7 +130,7 @@ $(foreach gv,$(api_group_versions),$(eval $(foreach t,$(api_group_version_target
 # Run controller-gen for each API group version.
 controller_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp)
 codegen_targets := $(controller_gen_targets)
-$(controller_gen_targets): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
+$(controller_gen_targets): $(K0S_BUILD_IMAGE_FILE) hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
 	gendir="$$(mktemp -d .controller-gen.XXXXXX.tmp)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
@@ -136,7 +144,7 @@ $(controller_gen_targets): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.
 # Run register-gen for each API group version.
 register_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/zz_generated.register.go)
 codegen_targets += $(register_gen_targets)
-$(register_gen_targets): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
+$(register_gen_targets): $(K0S_BUILD_IMAGE_FILE) hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/register-gen@v$(kubernetes_version:1.%=0.%) \
 	  --go-header-file=hack/tools/boilerplate.go.txt \
 	  --output-file='_$(notdir $@).tmp' \
@@ -151,7 +159,7 @@ $(register_gen_targets): .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.tx
 clientset_input_dirs := $(foreach gv,$(api_group_versions),pkg/apis/$(gv))
 codegen_targets += pkg/client/clientset/.client-gen.stamp
 pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
-pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
+pkg/client/clientset/.client-gen.stamp: $(K0S_BUILD_IMAGE_FILE) hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	gendir="$$(mktemp -d .client-gen.XXXXXX.tmp)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
 	  && CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/client-gen@v$(kubernetes_version:1.%=0.%) \
@@ -172,7 +180,7 @@ codegen_targets += pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s go.sum
+pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: $(K0S_BUILD_IMAGE_FILE) go.sum
 	GOOS=${GOHOSTOS} $(GO) run -tags=hack hack/gen-bindata/cmd/main.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
@@ -180,7 +188,7 @@ endif
 
 k0s: TARGET_OS = linux
 k0s: BUILD_GO_CGO_ENABLED = 1
-k0s: .k0sbuild.docker-image.k0s
+k0s: $(K0S_BUILD_IMAGE_FILE)
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
@@ -215,14 +223,14 @@ lint-copyright:
 
 .PHONY: lint-go
 lint-go: GOLANGCI_LINT_FLAGS ?=
-lint-go: .k0sbuild.docker-image.k0s go.sum bindata
+lint-go: $(K0S_BUILD_IMAGE_FILE) go.sum bindata
 	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v$(golangci-lint_version)
 	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO_ENV) golangci-lint run --verbose --build-tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
 
 .PHONY: lint
 lint: lint-copyright lint-go
 
-airgap-images.txt: k0s .k0sbuild.docker-image.k0s
+airgap-images.txt: k0s $(K0S_BUILD_IMAGE_FILE)
 	$(GO_ENV) ./k0s airgap list-images --all > '$@'
 
 airgap-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
@@ -231,12 +239,12 @@ airgap-image-bundle-linux-arm.tar:   TARGET_PLATFORM := linux/arm/v7
 airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
-	docker run --rm -i --privileged \
+	$(DOCKER) run --rm -i --privileged \
 	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
 	  '$(shell cat .k0sbuild.image-bundler.stamp)' < airgap-images.txt > '$@'
 
 .k0sbuild.image-bundler.stamp: hack/image-bundler/* embedded-bins/Makefile.variables
-	docker build --progress=plain --iidfile '$@' \
+	$(DOCKER) build --progress=plain --iidfile '$@' \
 	  --build-arg ALPINE_VERSION=$(alpine_patch_version) \
 	  -t k0sbuild.image-bundler -- hack/image-bundler
 
@@ -255,7 +263,7 @@ else
 check-unit: GO_TEST_RACE ?= -race
 endif
 check-unit: BUILD_GO_TAGS += hack
-check-unit: .k0sbuild.docker-image.k0s go.sum bindata
+check-unit: $(K0S_BUILD_IMAGE_FILE) go.sum bindata
 	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO) test -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GO_CHECK_UNIT_DIRS)`
 
 .PHONY: clean-gocache
@@ -264,7 +272,7 @@ clean-gocache:
 	rm -rf -- '$(K0S_GO_BUILD_CACHE)/go'
 
 .PHONY: clean-docker-image
-clean-docker-image: IID_FILES = .k0sbuild.docker-image.k0s
+clean-docker-image: IID_FILES = $(K0S_BUILD_IMAGE_FILE)
 clean-docker-image:
 	$(clean-iid-files)
 
@@ -294,7 +302,7 @@ docs:
 docs-serve-dev: DOCS_DEV_PORT ?= 8000
 docs-serve-dev:
 	$(MAKE) -C docs .docker-image.serve-dev.stamp
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  -e KUBERNETES_VERSION='$(kubernetes_version)' \
 	  -v "$(CURDIR):/k0s:ro" \
 	  -p '$(DOCS_DEV_PORT):8000' \
@@ -302,7 +310,7 @@ docs-serve-dev:
 
 sbom/spdx.json: go.mod
 	mkdir -p -- '$(dir $@)'
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
 	  -v "$(CURDIR)/embedded-bins/staging/linux/bin:/k0s/bin" \
 	  -v "$(CURDIR)/syft.yaml:/tmp/syft.yaml" \
@@ -313,7 +321,7 @@ sbom/spdx.json: go.mod
 
 .PHONY: sign-sbom
 sign-sbom: sbom/spdx.json
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
@@ -325,7 +333,7 @@ sign-sbom: sbom/spdx.json
 
 .PHONY: sign-pub-key
 sign-pub-key:
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
