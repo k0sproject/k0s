@@ -21,12 +21,13 @@ K0S_GO_BUILD_CACHE ?= build/cache
 GO_SRCS := $(shell find . -type f -name '*.go' -not -path './$(K0S_GO_BUILD_CACHE)/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
 GO_CHECK_UNIT_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
-DOCKER = docker
+DOCKER ?= docker
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
 #   none	does not embed any binaries
 
-ifeq ($(DOCKER),false)
+# Disable Docker build integration if DOCKER is set to the empty string.
+ifeq ($(DOCKER),)
   EMBEDDED_BINS_BUILDMODE ?= none
   K0S_BUILD_IMAGE_FILE =
   GO ?= go
@@ -35,6 +36,7 @@ else
   K0S_BUILD_IMAGE_FILE = .k0sbuild.docker-image.k0s
   GO ?= $(GO_ENV) go
 endif
+
 # k0s runs on linux even if it's built on mac or windows
 TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
