@@ -45,14 +45,14 @@ BUILD_CGO_CFLAGS :=
 BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
 
-VERSION ?= $(shell git describe --tags)
+VERSION ?= $(shell git describe --tags 2>/dev/null || printf v%s-dev+k0s '$(kubernetes_version)')
 ifeq ($(DEBUG), false)
 LD_FLAGS ?= -w -s
 endif
 
 # https://reproducible-builds.org/docs/source-date-epoch/#makefile
 # https://reproducible-builds.org/docs/source-date-epoch/#git
-SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct || date -u +%s)
+SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct 2>/dev/null || date -u +%s)
 BUILD_DATE_FMT = %Y-%m-%dT%H:%M:%SZ
 BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u "+$(BUILD_DATE_FMT)")
 
