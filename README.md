@@ -138,7 +138,7 @@ The requirements for building k0s from source are as follows:
 All of the compilation steps are performed inside Docker containers, no
 installation of Go is required.
 
-The k0s binary can be built in two different ways:
+The k0s binary can be built in different ways:
 
 The "k0s" way, self-contained, all binaries compiled from source, statically
 linked and embedded:
@@ -147,14 +147,23 @@ linked and embedded:
 make
 ```
 
-The "package maintainer" way, without any embedded binaries (requires that the
-required binaries are provided separately at runtime):
+The "package maintainer" way, without building and embedding the required
+binaries. This assumes necessary binaries are provided separately at runtime:
 
 ```shell
 make EMBEDDED_BINS_BUILDMODE=none
 ```
 
-The embedded binaries can be built on their own:
+As mentioned previously, Docker build integration is enabled by default.
+Building k0s without Docker using the system toolchain can be done as follows:
+
+```shell
+make DOCKER='' EMBEDDED_BINS_BUILDMODE=none
+```
+
+Note that the k0s build system does not currently support building the embedded
+binaries using the system toolchain. However, the embedded binaries can be built
+independently using Docker:
 
 ```shell
 make -C embedded-bins
