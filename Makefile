@@ -132,7 +132,7 @@ controller_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.con
 codegen_targets := $(controller_gen_targets)
 $(controller_gen_targets): $(K0S_BUILD_IMAGE_FILE) hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
-	gendir="$$(mktemp -d .controller-gen.XXXXXX.tmp)" \
+	gendir="$$(mktemp -d .controller-gen.tmp.XXXXXX)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
 	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
 	    paths="./$(dir $@)..." \
@@ -160,7 +160,7 @@ clientset_input_dirs := $(foreach gv,$(api_group_versions),pkg/apis/$(gv))
 codegen_targets += pkg/client/clientset/.client-gen.stamp
 pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
 pkg/client/clientset/.client-gen.stamp: $(K0S_BUILD_IMAGE_FILE) hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
-	gendir="$$(mktemp -d .client-gen.XXXXXX.tmp)" \
+	gendir="$$(mktemp -d .client-gen.tmp.XXXXXX)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
 	  && CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/client-gen@v$(kubernetes_version:1.%=0.%) \
 	    --go-header-file=hack/tools/boilerplate.go.txt \
