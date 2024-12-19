@@ -369,19 +369,23 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 			}, {
 				Name:   "profile_YYY",
 				Config: &runtime.RawExtension{Raw: []byte(`{"authentication": {"webhook": {"cacheTTL": "15s"}}}`)},
+			}, {
+				Name:   "profile_ZZZ",
+				Config: &runtime.RawExtension{Raw: []byte(`{"cgroupsPerQOS": false, "kubeletCgroups": "", "kubeReservedCgroup": ""}`)},
 			}},
 		},
 	}))
 
 	expectedConfigMaps := map[string]func(expected *kubeletConfig){
 		"worker-config-default-1.31": func(expected *kubeletConfig) {
-			expected.CgroupsPerQOS = ptr.To(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
 		"worker-config-default-windows-1.31": func(expected *kubeletConfig) {
 			expected.CgroupsPerQOS = ptr.To(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
+			expected.KubeletCgroups = ""
+			expected.KubeReservedCgroup = ""
 		},
 
 		"worker-config-profile_XXX-1.31": func(expected *kubeletConfig) {
@@ -392,6 +396,13 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		"worker-config-profile_YYY-1.31": func(expected *kubeletConfig) {
 			expected.Authentication.Webhook.CacheTTL = metav1.Duration{Duration: 15 * time.Second}
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
+		},
+
+		"worker-config-profile_ZZZ-1.31": func(expected *kubeletConfig) {
+			expected.CgroupsPerQOS = ptr.To(false)
+			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
+			expected.KubeletCgroups = ""
+			expected.KubeReservedCgroup = ""
 		},
 	}
 
@@ -751,6 +762,8 @@ func makeKubeletConfig(t *testing.T, mods ...func(*kubeletConfig)) string {
 		ClusterDomain:      "test.local",
 		EventRecordQPS:     ptr.To(int32(0)),
 		FailSwapOn:         ptr.To(false),
+		KubeletCgroups:     "/system.slice/containerd.service",
+		KubeReservedCgroup: "system.slice",
 		RotateCertificates: true,
 		ServerTLSBootstrap: true,
 		TLSMinVersion:      "VersionTLS12",

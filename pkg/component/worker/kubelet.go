@@ -42,7 +42,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
@@ -241,13 +240,6 @@ func (k *Kubelet) writeKubeletConfig() error {
 			taints = append(taints, parsedTaint)
 		}
 		config.RegisterWithTaints = taints
-	}
-
-	// cgroup related things (Linux only)
-	if runtime.GOOS == "linux" {
-		config.KubeReservedCgroup = "system.slice"
-		config.KubeletCgroups = "/system.slice/containerd.service"
-		config.CgroupsPerQOS = ptr.To(true)
 	}
 
 	configBytes, err := yaml.Marshal(config)
