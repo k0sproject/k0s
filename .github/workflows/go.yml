@@ -195,11 +195,8 @@ jobs:
         env:
           EMBEDDED_BINS_BUILDMODE: none
           TARGET_OS: windows
-          GO: go
-          GO_ENV: ''
         run: |
-          make --touch .k0sbuild.docker-image.k0s
-          make check-unit
+          make check-unit DOCKER=''
 
   smoketests:
     strategy:
