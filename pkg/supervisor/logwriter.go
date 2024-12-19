@@ -82,7 +82,7 @@ func (w *logWriter) writeBytes(in []byte) {
 			len := w.len
 			for i := 0; i < utf8.MaxRune && i < w.len; i++ {
 				if r, _ := utf8.DecodeLastRune(w.buf[:w.len-i]); r != utf8.RuneError {
-					len = len - i
+					len -= i
 					break
 				}
 			}

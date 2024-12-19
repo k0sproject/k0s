@@ -65,10 +65,10 @@ func (s *K0sSysinfoSpec) NewSysinfoProbes() probes.Probes {
 	// https://docs.k0sproject.io/main/system-requirements/#storage
 	var minFreeDiskSpace uint64
 	if s.ControllerRoleEnabled {
-		minFreeDiskSpace = minFreeDiskSpace + 500*probes.Mi
+		minFreeDiskSpace += 500 * probes.Mi
 	}
 	if s.WorkerRoleEnabled {
-		minFreeDiskSpace = minFreeDiskSpace + 1300*probes.Mi
+		minFreeDiskSpace += 1300 * probes.Mi
 	}
 	probes.AssertFileSystem(p, s.DataDir)
 	probes.AssertFreeDiskSpace(p, s.DataDir, minFreeDiskSpace)

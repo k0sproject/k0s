@@ -171,7 +171,7 @@ func (r *uncordoning) unCordonNode(ctx context.Context, signalNode crcli.Object)
 			}
 		}
 
-		//otherwise get node from client
+		// otherwise get node from client
 		if err := r.client.Get(ctx, crcli.ObjectKey{Name: nodeName}, node); err != nil {
 			return fmt.Errorf("failed to get node: %w", err)
 		}

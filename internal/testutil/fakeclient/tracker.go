@@ -258,7 +258,7 @@ func fromUnstructured(scheme *runtime.Scheme, obj runtime.Object, gvk schema.Gro
 	}
 
 	listGVK := gvk
-	listGVK.Kind = listGVK.Kind + "List"
+	listGVK.Kind += "List"
 
 	list, err := scheme.New(listGVK)
 	if err != nil {

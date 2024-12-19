@@ -19,7 +19,6 @@ package token
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -40,7 +39,7 @@ func tokenInvalidateCmd() *cobra.Command {
 			if len(args) < 1 {
 				return errors.New("invalidate requires at least one token ID to invalidate")
 			}
-			manager, err := token.NewManager(filepath.Join(opts.K0sVars.AdminKubeConfigPath))
+			manager, err := token.NewManager(opts.K0sVars.AdminKubeConfigPath)
 			if err != nil {
 				return err
 			}

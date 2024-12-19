@@ -142,7 +142,6 @@ spec:
 
 		s.Equal(appc.PlanCompleted, cmd.State)
 		s.NotNil(cmd.K0sUpdate)
-		//s.Nil(cmd.K0sUpdate.Controllers)
 		s.NotNil(cmd.K0sUpdate.Workers)
 
 		for _, group := range [][]apv1beta2.PlanCommandTargetStatus{cmd.K0sUpdate.Controllers, cmd.K0sUpdate.Workers} {

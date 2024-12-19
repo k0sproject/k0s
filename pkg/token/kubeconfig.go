@@ -102,7 +102,7 @@ func loadCACert(k0sVars *config.CfgVars) ([]byte, error) {
 }
 
 func loadToken(ctx context.Context, k0sVars *config.CfgVars, role string, expiry time.Duration) (string, error) {
-	manager, err := NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
+	manager, err := NewManager(k0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return "", err
 	}

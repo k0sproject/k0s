@@ -78,11 +78,7 @@ func (p readyProber) Probe() error {
 	g := errgroup.Group{}
 
 	for _, target := range p.targets {
-		g.Go(func() error {
-			return func(target apv1beta2.PlanCommandTargetStatus) error {
-				return p.probeOne(target)
-			}(target)
-		})
+		g.Go(func() error { return p.probeOne(target) })
 	}
 
 	return g.Wait()

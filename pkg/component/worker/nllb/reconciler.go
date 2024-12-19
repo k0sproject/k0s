@@ -104,7 +104,7 @@ func NewReconciler(
 	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
 	if runtimeDir == "" {
 		if runtime.GOOS == "windows" {
-			runtimeDir = filepath.Join(k0sVars.DataDir)
+			runtimeDir = k0sVars.DataDir
 		} else {
 			runtimeDir = "/run/k0s"
 		}

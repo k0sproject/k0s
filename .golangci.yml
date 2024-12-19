@@ -14,6 +14,7 @@ linters:
     - depguard          # Checks if package imports are in a list of acceptable packages
     - dupword           # Finds word repetitions
     - errorlint         # Find code that will cause problems with Go's error wrapping scheme
+    - gocritic          # another style/metalinter (dynamic rules supported)
     - gofmt             # Checks whether code was gofmt-ed
     - goheader          # Checks is file headers matche a given pattern
     - intrange          # Checking for loops that could use an integer range
@@ -67,6 +68,14 @@ linters-settings:
         deny:
           - pkg: github.com/k0sproject/k0s/inttest
             desc: Usage of integration test code outside of integration tests.
+
+  gocritic:
+    disabled-checks:
+      - singleCaseSwitch
+    settings:
+      ifElseChain:
+        minThreshold: 5
+
   goheader:
     template-path: .go-header.txt
     values:

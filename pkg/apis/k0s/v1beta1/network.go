@@ -149,9 +149,9 @@ func (n *Network) DNSAddress() (string, error) {
 
 	prefixlen, _ := ipnet.Mask.Size()
 	if prefixlen < 29 {
-		address[3] = address[3] + 10
+		address[3] += 10
 	} else {
-		address[3] = address[3] + 2
+		address[3] += 2
 	}
 
 	if !ipnet.Contains(address) {

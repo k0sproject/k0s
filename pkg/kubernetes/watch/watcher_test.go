@@ -530,7 +530,7 @@ func TestWatcher(t *testing.T) {
 				switch callsToCondition {
 				case 0:
 					return false, nil
-				default:
+				default: //nolint:gocritic // needed for fallthrough
 					require.Fail(t, "Unexpected call to condition")
 					fallthrough
 				case 1:
