@@ -75,7 +75,7 @@ func TestBufferedClose(t *testing.T) {
 	defer back.Close()
 
 	p := testProxy(t, front)
-	p.AddRoute(testFrontAddr, To(back.Addr().String()))
+	p.SetRoutes(testFrontAddr, []Route{To(back.Addr().String())})
 	if err := p.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +114,7 @@ func TestProxyAlwaysMatch(t *testing.T) {
 	defer back.Close()
 
 	p := testProxy(t, front)
-	p.AddRoute(testFrontAddr, To(back.Addr().String()))
+	p.setRoutes(testFrontAddr, []Route{To(back.Addr().String())})
 	if err := p.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -149,10 +149,10 @@ func TestProxyPROXYOut(t *testing.T) {
 	defer back.Close()
 
 	p := testProxy(t, front)
-	p.AddRoute(testFrontAddr, &DialProxy{
+	p.SetRoutes(testFrontAddr, []Route{{
 		Addr:                 back.Addr().String(),
 		ProxyProtocolVersion: 1,
-	})
+	}})
 	if err := p.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -185,7 +185,7 @@ func TestSetRoutes(t *testing.T) {
 
 	var p Proxy
 	ipPort := ":8080"
-	p.AddRoute(ipPort, To("127.0.0.2:8080"))
+	p.setRoutes(ipPort, []Route{To("127.0.0.2:8080")})
 	cfg := p.configFor(ipPort)
 
 	expectedAddrsList := [][]string{
@@ -203,21 +203,21 @@ func TestSetRoutes(t *testing.T) {
 	}
 }
 
-func stringsToTargets(s []string) []Target {
-	targets := make([]Target, len(s))
+func stringsToTargets(s []string) []Route {
+	targets := make([]Route, len(s))
 	for i, v := range s {
 		targets[i] = To(v)
 	}
 
 	return targets
 }
-func equalRoutes(routes []route, expectedAddrs []string) bool {
+func equalRoutes(routes []Route, expectedAddrs []string) bool {
 	if len(routes) != len(expectedAddrs) {
 		return false
 	}
 
 	for i := range routes {
-		addr := routes[i].(fixedTarget).t.(*DialProxy).Addr
+		addr := routes[i].Addr
 		if addr != expectedAddrs[i] {
 			return false
 		}

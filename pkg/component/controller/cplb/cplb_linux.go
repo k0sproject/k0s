@@ -87,7 +87,7 @@ func (k *Keepalived) Init(_ context.Context) error {
 }
 
 // Start generates the keepalived configuration and starts the keepalived process
-func (k *Keepalived) Start(_ context.Context) error {
+func (k *Keepalived) Start(ctx context.Context) error {
 	if k.Config == nil || (len(k.Config.VRRPInstances) == 0 && len(k.Config.VirtualServers) == 0) {
 		k.log.Warn("No VRRP instances or virtual servers defined, skipping keepalived start")
 		return nil
@@ -154,8 +154,7 @@ func (k *Keepalived) Start(_ context.Context) error {
 			if len(k.Config.VirtualServers) > 0 {
 				k.watchReconcilerUpdatesKeepalived()
 			} else {
-
-				if err := k.watchReconcilerUpdatesReverseProxy(); err != nil {
+				if err := k.watchReconcilerUpdatesReverseProxy(ctx); err != nil {
 					k.log.WithError(err).Error("failed to watch reconciler updates")
 				}
 			}
@@ -347,18 +346,23 @@ func (k *Keepalived) generateKeepalivedTemplate() error {
 	return nil
 }
 
-func (k *Keepalived) watchReconcilerUpdatesReverseProxy() error {
+func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) error {
 	k.proxy = tcpproxy.Proxy{}
 	// We don't know how long until we get the first update, so initially we
 	// forward everything to localhost
-	k.proxy.AddRoute(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort)))
+	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), []tcpproxy.Route{tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort))})
 
 	if err := k.proxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
 	}
 
-	fmt.Println("Waiting for updateCh")
-	<-k.updateCh
+	k.log.Info("Waiting for the first cplb-reconciler update")
+
+	select {
+	case <-ctx.Done():
+		return errors.New("context cancelled while starting the reverse proxy")
+	case <-k.updateCh:
+	}
 	k.setProxyRoutes()
 
 	// Do not create the iptables rules until we have the first update and the
@@ -374,11 +378,15 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy() error {
 }
 
 func (k *Keepalived) setProxyRoutes() {
-	routes := []tcpproxy.Target{}
+	routes := []tcpproxy.Route{}
 	for _, addr := range k.reconciler.GetIPs() {
 		routes = append(routes, tcpproxy.To(fmt.Sprintf("%s:%d", addr, k.APIPort)))
 	}
 
+	if len(routes) == 0 {
+		k.log.Error("No API servers available, leave previous configuration")
+		return
+	}
 	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), routes)
 }
 

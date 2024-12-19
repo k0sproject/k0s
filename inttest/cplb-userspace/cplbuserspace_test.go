@@ -154,15 +154,16 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	s.T().Log("Testing that the load balancer is actually balancing the load")
 	// Other stuff may be querying the controller, running the HTTPS request 15 times
 	// should be more than we need.
+	attempt := 0
 	signatures := make(map[string]int)
 	url := url.URL{Scheme: "https", Host: net.JoinHostPort(lb, strconv.Itoa(6443))}
-	for range 15 {
+	for len(signatures) < 3 {
 		signature, err := getServerCertSignature(ctx, url.String())
 		s.Require().NoError(err)
 		signatures[signature] = 1
+		attempt++
+		s.Require().LessOrEqual(attempt, 15, "Failed to get a signature from all controllers")
 	}
-
-	s.Require().Len(signatures, 3, "Expected 3 different signatures, got %d", len(signatures))
 }
 
 // getLBAddress returns the IP address of the controller 0 and it adds 100 to
