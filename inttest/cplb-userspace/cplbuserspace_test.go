@@ -16,7 +16,13 @@ package keepalived
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/hex"
+	"errors"
 	"fmt"
+	"net"
+	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -27,7 +33,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type keepalivedSuite struct {
+type CPLBUserSpaceSuite struct {
 	common.BootlooseSuite
 }
 
@@ -41,8 +47,6 @@ spec:
         vrrpInstances:
         - virtualIPs: ["%s/16"]
           authPass: "123456"
-        virtualServers:
-        - ipAddress: %s
     nodeLocalLoadBalancing:
       enabled: true
       type: EnvoyProxy
@@ -50,17 +54,17 @@ spec:
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
-func (s *keepalivedSuite) TestK0sGetsUp() {
+func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	lb := s.getLBAddress()
 	ctx := s.Context()
 	var joinToken string
 
 	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb, lb))
+		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb))
 
 		// Note that the token is intentionally empty for the first controller
-		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
+		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", "--enable-worker", joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
 
 		// With the primary controller running, create the join token for subsequent controllers.
@@ -86,11 +90,14 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
+	for idx := range s.BootlooseSuite.ControllerCount {
+		s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(idx), client))
+	}
 	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), client))
 
-	// Verify that all servers have the dummy interface
+	// Verify that none of the servers has the dummy interface
 	for idx := range s.BootlooseSuite.ControllerCount {
-		s.checkDummy(ctx, s.ControllerNode(idx), lb)
+		s.checkDummy(ctx, s.ControllerNode(idx))
 	}
 
 	// Verify that only one controller has the VIP in eth0
@@ -102,16 +109,32 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 	}
 	s.Require().Equal(1, count, "Expected exactly one controller to have the VIP")
 
-	// Verify that the real servers are present in the ipvsadm output
-	for idx := range s.BootlooseSuite.ControllerCount {
-		s.validateRealServers(ctx, s.ControllerNode(idx), lb)
+	// Verify that controller+worker nodes are working normally.
+	s.T().Log("waiting to see CNI pods ready")
+	s.Require().NoError(common.WaitForKubeRouterReady(s.Context(), client), "kube router did not start")
+	s.T().Log("waiting to see konnectivity-agent pods ready")
+	s.Require().NoError(common.WaitForDaemonSet(s.Context(), client, "konnectivity-agent", "kube-system"), "konnectivity-agent did not start")
+	s.T().Log("waiting to get logs from pods")
+	s.Require().NoError(common.WaitForPodLogs(s.Context(), client, "kube-system"))
+
+	s.T().Log("Testing that the load balancer is actually balancing the load")
+	// Other stuff may be querying the controller, running the HTTPS request 15 times
+	// should be more than we need.
+	signatures := make(map[string]int)
+	url := url.URL{Scheme: "https", Host: net.JoinHostPort(lb, strconv.Itoa(6443))}
+	for range 15 {
+		signature, err := getServerCertSignature(url.String())
+		s.Require().NoError(err)
+		signatures[signature] = 1
 	}
+
+	s.Require().Len(signatures, 3, "Expected 3 different signatures, got %d", len(signatures))
 }
 
 // getLBAddress returns the IP address of the controller 0 and it adds 100 to
 // the last octet unless it's bigger or equal to 154, in which case it
 // subtracts 100. Theoretically this could result in an invalid IP address.
-func (s *keepalivedSuite) getLBAddress() string {
+func (s *CPLBUserSpaceSuite) getLBAddress() string {
 	ip := s.GetIPAddress(s.ControllerNode(0))
 	parts := strings.Split(ip, ".")
 	if len(parts) != 4 {
@@ -128,46 +151,19 @@ func (s *keepalivedSuite) getLBAddress() string {
 	return fmt.Sprintf("%s.%d", strings.Join(parts[:3], "."), lastOctet)
 }
 
-// validateRealServers checks that the real servers are present in the
-// ipvsadm output.
-func (s *keepalivedSuite) validateRealServers(ctx context.Context, node string, vip string) {
+// checkDummy checks that the dummy interface isn't present in the node.
+func (s *CPLBUserSpaceSuite) checkDummy(ctx context.Context, node string) {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	servers := []string{}
-	for i := range s.BootlooseSuite.ControllerCount {
-		servers = append(servers, s.GetIPAddress(s.ControllerNode(i)))
-	}
-
-	output, err := ssh.ExecWithOutput(ctx, "ipvsadm --save -n")
-	s.Require().NoError(err)
-
-	for _, server := range servers {
-		s.Require().Containsf(output, fmt.Sprintf("-a -t %s:6443 -r %s", vip, server), "Controller %s is missing a server in ipvsadm", node)
-	}
-
-}
-
-// checkDummy checks that the dummy interface is present on the given node and
-// that it has only the virtual IP address.
-func (s *keepalivedSuite) checkDummy(ctx context.Context, node string, vip string) {
-	ssh, err := s.SSH(ctx, node)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	output, err := ssh.ExecWithOutput(ctx, "ip --oneline addr show dummyvip0")
-	s.Require().NoError(err)
-
-	s.Require().Equal(0, strings.Count(output, "\n"), "Expected only one line of output")
-
-	expected := fmt.Sprintf("inet %s/32", vip)
-	s.Require().Contains(output, expected)
+	_, err = ssh.ExecWithOutput(ctx, "ip --oneline addr show dummyvip0")
+	s.Require().Error(err)
 }
 
 // hasVIP checks that the dummy interface is present on the given node and
 // that it has only the virtual IP address.
-func (s *keepalivedSuite) hasVIP(ctx context.Context, node string, vip string) bool {
+func (s *CPLBUserSpaceSuite) hasVIP(ctx context.Context, node string, vip string) bool {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -178,10 +174,47 @@ func (s *keepalivedSuite) hasVIP(ctx context.Context, node string, vip string) b
 	return strings.Contains(output, fmt.Sprintf("inet %s/16", vip))
 }
 
+// getServerCertSignature connects to the given HTTPS URL and returns the server certificate signature.
+func getServerCertSignature(url string) (string, error) {
+	// Create a custom HTTP client with a custom TLS configuration
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // Skip verification for demonstration purposes
+			},
+		},
+	}
+
+	// Make a request to the URL
+	resp, err := client.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Get the TLS connection state
+	connState := resp.TLS
+	if connState == nil {
+		return "", errors.New("no TLS connection state")
+	}
+
+	// Get the server certificate
+	if len(connState.PeerCertificates) == 0 {
+		return "", errors.New("no server certificate found")
+	}
+	cert := connState.PeerCertificates[0]
+
+	// Get the certificate signature
+	signature := cert.Signature
+
+	// Return the signature as a hex string
+	return hex.EncodeToString(signature), nil
+}
+
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
 // virtual IP is working by joining a node to the cluster using the VIP.
-func TestKeepAlivedSuite(t *testing.T) {
-	suite.Run(t, &keepalivedSuite{
+func TestCPLBUserSpaceSuite(t *testing.T) {
+	suite.Run(t, &CPLBUserSpaceSuite{
 		common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     1,
