@@ -81,9 +81,12 @@ func TestWithCommand(t *testing.T) {
 	c := &CfgVars{}
 	WithCommand(fakeCmd)(c)
 
+	dir, err := filepath.Abs("/path/to/kubelet")
+	assert.NoError(t, err)
+
 	assert.Same(t, in, c.stdin)
 	assert.Equal(t, "/path/to/data", c.DataDir)
-	assert.Equal(t, "/path/to/kubelet", c.KubeletRootDir)
+	assert.Equal(t, dir, c.KubeletRootDir)
 	assert.Equal(t, "/path/to/config", c.StartupConfigPath)
 	assert.Equal(t, "/path/to/socket", c.StatusSocketPath)
 	assert.True(t, c.EnableDynamicConfig)

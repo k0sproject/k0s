@@ -107,7 +107,9 @@ func WithCommand(cmd command) CfgVarOption {
 		}
 
 		if f, err := flags.GetString("kubelet-root-dir"); err == nil && f != "" {
-			c.KubeletRootDir = f
+			if f, err := filepath.Abs(f); err == nil {
+				c.KubeletRootDir = f
+			}
 		}
 
 		if f, err := flags.GetString("config"); err == nil && f != "" {
