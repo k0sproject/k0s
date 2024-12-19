@@ -10,12 +10,12 @@
 /k0s.exe.code
 /pkg/assets/zz_generated_offsets*.go
 .*.stamp
-.tmp
+*.tmp
+*.tmp.*
 .terraform
 .idea
 *.tfstate*
 aws_private.pem
-out.json
 .vscode
 .k0sbuild.docker-image.*
 docs/cli
