@@ -351,7 +351,7 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy() error {
 	k.proxy = tcpproxy.Proxy{}
 	// We don't know how long until we get the first update, so initially we
 	// forward everything to localhost
-	k.proxy.AddRoute(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort)))
+	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), []tcpproxy.Route{tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort))})
 
 	if err := k.proxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
@@ -374,11 +374,15 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy() error {
 }
 
 func (k *Keepalived) setProxyRoutes() {
-	routes := []tcpproxy.Target{}
+	routes := []tcpproxy.Route{}
 	for _, addr := range k.reconciler.GetIPs() {
 		routes = append(routes, tcpproxy.To(fmt.Sprintf("%s:%d", addr, k.APIPort)))
 	}
 
+	if len(routes) == 0 {
+		k.log.Error("No API servers available, leave previous configuration")
+		return
+	}
 	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), routes)
 }
 
