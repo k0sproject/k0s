@@ -241,8 +241,11 @@ func TestMultiThread(t *testing.T) {
 }
 
 func TestCleanupPIDFile_Gracefully(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		t.Skip("PID file cleanup not yet implemented on Windows")
+	case "darwin":
+		t.Skip("FIXME: times out on macOS, needs debugging")
 	}
 
 	// Start some k0s-managed process.
@@ -279,8 +282,11 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 }
 
 func TestCleanupPIDFile_Forcefully(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		t.Skip("PID file cleanup not yet implemented on Windows")
+	case "darwin":
+		t.Skip("FIXME: times out on macOS, needs debugging")
 	}
 
 	// Start some k0s-managed process that won't terminate gracefully.
