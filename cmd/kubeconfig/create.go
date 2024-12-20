@@ -28,7 +28,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -46,10 +45,6 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 
 	optionally add groups:
 	$ k0s kubeconfig create username --groups [groups]`,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			// ensure logs don't mess up the output
-			logrus.SetOutput(cmd.ErrOrStderr())
-		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			username := args[0]

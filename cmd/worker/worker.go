@@ -25,7 +25,7 @@ import (
 	"runtime"
 	"syscall"
 
-	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/iptables"
@@ -60,7 +60,7 @@ func NewWorkerCmd() *cobra.Command {
 	Note: Token can be passed either as a CLI argument or as a flag`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			logrus.SetOutput(cmd.OutOrStdout())
-			k0slog.SetInfoLevel()
+			internallog.SetInfoLevel()
 			return config.CallParentPersistentPreRun(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

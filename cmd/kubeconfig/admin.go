@@ -26,7 +26,6 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -38,10 +37,6 @@ func kubeConfigAdminCmd() *cobra.Command {
 		Example: `	$ k0s kubeconfig admin > ~/.kube/config
 	$ export KUBECONFIG=~/.kube/config
 	$ kubectl get nodes`,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			// ensure logs don't mess up the output
-			logrus.SetOutput(cmd.ErrOrStderr())
-		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
