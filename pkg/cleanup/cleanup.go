@@ -53,8 +53,9 @@ func NewConfig(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*Conf
 		},
 		&services{},
 		&directories{
-			dataDir: k0sVars.DataDir,
-			runDir:  k0sVars.RunDir,
+			dataDir:        k0sVars.DataDir,
+			kubeletRootDir: k0sVars.KubeletRootDir,
+			runDir:         k0sVars.RunDir,
 		},
 		&cni{},
 	}
