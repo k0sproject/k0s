@@ -23,13 +23,13 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/cmd"
-	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 )
 
 //go:generate make codegen
 
 func init() {
-	k0slog.InitLogging()
+	internallog.InitLogging()
 }
 
 func main() {

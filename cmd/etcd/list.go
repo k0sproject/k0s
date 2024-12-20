@@ -22,7 +22,6 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
-	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -32,10 +31,6 @@ func etcdListCmd() *cobra.Command {
 		Use:   "member-list",
 		Short: "List etcd cluster members (JSON encoded)",
 		Args:  cobra.NoArgs,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			// ensure logs don't mess up the output
-			logrus.SetOutput(cmd.ErrOrStderr())
-		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
