@@ -1,7 +1,7 @@
-//go:build unix
+//go:build !windows
 
 /*
-Copyright 2024 k0s authors
+Copyright 2023 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,12 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cleanup
+package containerd
 
-import (
-	"golang.org/x/sys/unix"
-)
-
-func UnmountLazy(path string) error {
-	return unix.Unmount(path, unix.MNT_DETACH)
+func winExecute(args ...string) error {
+	panic("Invariant broken: this function should never be called on non-winodws platforms")
 }

@@ -116,10 +116,29 @@ jobs:
           name: spdx.json
           path: sbom/spdx.json
 
+  unittests-k0s:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            runs-on: ubuntu-22.04
+          - name: windows-amd64
+            runs-on: windows-2022
+            target-os: windows
+          - name: macos-arm64
+            runs-on: macos-15
+            target-os: darwin
 
-  unittests-k0s-linux-amd64:
-    name: "Unit tests :: linux-amd64"
-    runs-on: ubuntu-22.04
+    name: "Unit tests :: k0s :: ${{ matrix.name }}"
+    runs-on: "${{ matrix.runs-on }}"
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      EMBEDDED_BINS_BUILDMODE: none
 
     steps:
       - name: Check out code into the Go module directory
@@ -127,79 +146,53 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Prepare unit tests
+        if: matrix.target-os != ''
+        run: |
+          cat <<EOF >>"$GITHUB_ENV"
+          TARGET_OS=${{ matrix.target-os }}
+          GO=go
+          GO_ENV=
+          GOCACHE=$GITHUB_WORKSPACE/build/cache/go/build
+          GOMODCACHE=$GITHUB_WORKSPACE/build/cache/go/mod
+          UNITTEST_EXTRA_ARGS=BUILD_GO_LDFLAGS_EXTRA=
+          EOF
+
+          echo ::group::Build Environment
+          cat -- "$GITHUB_ENV"
+          echo ::endgroup::
+
+          mkdir -p build/cache
+          make --touch .k0sbuild.docker-image.k0s
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        if: matrix.target-os != ''
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
       - name: Cache GOCACHE
         uses: actions/cache@v4
         with:
-          key: unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
+          key: unittests-k0s-${{ matrix.name }}-gocache-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-
-            build-k0s-linux-amd64-gocache-${{ github.ref_name }}-
+            unittests-k0s-${{ matrix.name }}-gocache-${{ github.ref_name }}-
           path: |
             build/cache/go/build
 
       - name: Cache GOMODCACHE
         uses: actions/cache@v4
         with:
-          key: unittests-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            build-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
+          key: unittests-k0s-gomodcache-${{ hashFiles('go.sum') }}
           path: |
             build/cache/go/mod
 
       - name: Run unit tests
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-        run: make check-unit
-
-  unittests-k0s-windows-amd64:
-    name: "Unit tests :: windows-amd64"
-    runs-on: windows-2022
-
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - name: Check out
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Cache GOCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-
-          path: |
-            ~\AppData\Local\go-build
-
-      - name: Cache GOMODCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            build-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            ~\go\pkg\mod
-
-      - name: Run unit tests
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-          TARGET_OS: windows
-          GO: go
-          GO_ENV: ''
-        run: |
-          make --touch .k0sbuild.docker-image.k0s
-          make check-unit
+        run: make check-unit $UNITTEST_EXTRA_ARGS
 
   smoketests:
     strategy:
