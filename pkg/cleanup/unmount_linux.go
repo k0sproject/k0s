@@ -16,8 +16,10 @@ limitations under the License.
 
 package cleanup
 
-import "fmt"
+import (
+	"golang.org/x/sys/unix"
+)
 
 func UnmountLazy(path string) error {
-	return fmt.Errorf("lazy unmount is not supported on Windows for path: %s", path)
+	return unix.Unmount(path, unix.MNT_DETACH)
 }

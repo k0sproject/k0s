@@ -1,4 +1,4 @@
-//go:build unix
+//go:build !linux
 
 /*
 Copyright 2024 k0s authors
@@ -19,9 +19,11 @@ limitations under the License.
 package cleanup
 
 import (
-	"golang.org/x/sys/unix"
+	"errors"
+	"fmt"
+	"runtime"
 )
 
-func UnmountLazy(path string) error {
-	return unix.Unmount(path, unix.MNT_DETACH)
+func UnmountLazy(string) error {
+	return fmt.Errorf("%w on %s", errors.ErrUnsupported, runtime.GOOS)
 }
