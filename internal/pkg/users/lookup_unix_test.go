@@ -18,17 +18,12 @@ package users
 
 import (
 	"os/exec"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetUID(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("No numeric user IDs on Windows")
-	}
-
+func TestLookupUID(t *testing.T) {
 	uid, err := LookupUID("root")
 	if assert.NoError(t, err, "Failed to get UID for root user") {
 		assert.Equal(t, 0, uid, "root's UID is not 0?")
