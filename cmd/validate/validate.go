@@ -25,9 +25,10 @@ import (
 // TODO deprecated, remove when appropriate
 func NewValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "validate",
-		Short:  "Validation related sub-commands",
-		Hidden: true,
+		Use:        "validate",
+		Short:      "Validation related sub-commands",
+		Hidden:     true,
+		Deprecated: "use 'k0s config validate' instead",
 	}
 	cmd.AddCommand(newConfigCmd())
 	return cmd

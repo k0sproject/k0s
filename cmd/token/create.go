@@ -44,10 +44,11 @@ func tokenCreateCmd() *cobra.Command {
 		Example: `k0s token create --role worker --expiry 100h //sets expiration time to 100 hours
 k0s token create --role worker --expiry 10m  //sets expiration time to 10 minutes
 `,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		Args: cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
 			return checkTokenRole(createTokenRole)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err

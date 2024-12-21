@@ -26,6 +26,8 @@ func NewAirgapCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "airgap",
 		Short: "Manage airgap setup",
+		Args:  cobra.NoArgs,
+		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
 
 	cmd.AddCommand(NewAirgapListImagesCmd())

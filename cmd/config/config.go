@@ -24,10 +24,29 @@ func NewConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Configuration related sub-commands",
+		Args:  cobra.NoArgs,
+		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewEditCmd())
 	cmd.AddCommand(NewStatusCmd())
 	cmd.AddCommand(NewValidateCmd())
 	return cmd
+}
+
+func reExecKubectl(cmd *cobra.Command, kubectlArgs ...string) error {
+	args := []string{"kubectl"}
+	if dataDir, err := cmd.Flags().GetString("data-dir"); err != nil {
+		return err
+	} else if dataDir != "" {
+		args = append(args, "--data-dir", dataDir)
+	}
+
+	root := cmd.Root()
+	root.SetArgs(append(args, kubectlArgs...))
+
+	silenceErrors := root.SilenceErrors
+	defer func() { root.SilenceErrors = silenceErrors }()
+	root.SilenceErrors = true // So that errors aren't printed twice.
+	return root.Execute()
 }

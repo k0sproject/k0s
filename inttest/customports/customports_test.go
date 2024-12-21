@@ -110,17 +110,17 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 
 	s.Require().NoError(s.InitController(0, controllerArgs...))
 
-	workerToken, err := s.GetJoinToken("worker", "")
+	workerToken, err := s.GetJoinToken("worker")
 	s.Require().NoError(err)
-	s.Require().NoError(s.RunWorkersWithToken("/var/lib/k0s", workerToken))
+	s.Require().NoError(s.RunWorkersWithToken(workerToken))
 
-	kc, err := s.KubeClient("controller0", "")
+	kc, err := s.KubeClient("controller0")
 	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady("worker0", kc)
 	s.Require().NoError(err)
 
-	controllerToken, err := s.GetJoinToken("controller", "")
+	controllerToken, err := s.GetJoinToken("controller")
 	s.Require().NoError(err)
 	controllerArgs = append([]string{controllerToken, ""}, controllerArgs...)
 	s.Require().NoError(s.InitController(1, controllerArgs...))

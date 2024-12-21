@@ -39,7 +39,7 @@ func etcdLeaveCmd() *cobra.Command {
 		Use:   "leave",
 		Short: "Leave the etcd cluster, or remove a specific peer",
 		Args:  cobra.NoArgs, // accept peer address via flag, not via arg
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err

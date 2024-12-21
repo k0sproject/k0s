@@ -35,7 +35,8 @@ func NewStatusCmd() *cobra.Command {
 		Use:     "status",
 		Short:   "Get k0s instance status information",
 		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
@@ -66,7 +67,8 @@ func NewStatusSubCmdComponents() *cobra.Command {
 		Use:     "components",
 		Short:   "Get k0s instance component status information",
 		Example: `The command will return information about k0s components.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err

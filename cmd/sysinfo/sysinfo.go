@@ -38,7 +38,8 @@ func NewSysinfoCmd() *cobra.Command {
 		Use:   "sysinfo",
 		Short: "Display system information",
 		Long:  `Runs k0s's pre-flight checks and issues the results to stdout.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			sysinfoSpec.AddDebugProbes = true
 			probes := sysinfoSpec.NewSysinfoProbes()
 			out := cmd.OutOrStdout()

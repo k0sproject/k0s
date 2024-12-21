@@ -50,7 +50,8 @@ func preSharedCmd() *cobra.Command {
 		Use:     "pre-shared",
 		Short:   "Generates token and secret and stores them as a files",
 		Example: `k0s token pre-shared --role worker --cert <path>/<to>/ca.crt --url https://<controller-ip>:<port>/`,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		Args:    cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
 			err := checkTokenRole(preSharedRole)
 			if err != nil {
 				return err
@@ -64,7 +65,7 @@ func preSharedCmd() *cobra.Command {
 
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			t, err := createSecret(preSharedRole, validity, outDir)
 			if err != nil {
 				return err

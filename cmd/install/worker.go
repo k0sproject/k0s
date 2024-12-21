@@ -30,7 +30,8 @@ func installWorkerCmd(installFlags *installFlags) *cobra.Command {
 All default values of worker command will be passed to the service stub unless overridden.
 
 Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err

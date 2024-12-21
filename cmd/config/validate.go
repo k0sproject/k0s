@@ -34,7 +34,8 @@ func NewValidateCmd() *cobra.Command {
 		Short: "Validate k0s configuration",
 		Long: `Example:
    k0s config validate --config path_to_config.yaml`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			var reader io.Reader
 
 			// config.CfgFile is the global value holder for --config flag, set by cobra/pflag
