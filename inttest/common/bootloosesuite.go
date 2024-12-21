@@ -817,15 +817,15 @@ func (s *BootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 	defer ssh.Disconnect()
 
 	kubeConfigCmd := fmt.Sprintf("%s kubeconfig admin %s", s.K0sFullPath, strings.Join(k0sKubeconfigArgs, " "))
-	kubeConf, err := ssh.ExecWithOutput(s.Context(), kubeConfigCmd)
-	if err != nil {
+	var kubeConf bytes.Buffer
+	if err := ssh.Exec(s.Context(), kubeConfigCmd, SSHStreams{Out: &kubeConf}); err != nil {
 		return nil, err
 	}
-	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
+	cfg, err := clientcmd.RESTConfigFromKubeConfig(kubeConf.Bytes())
+	s.Require().NoError(err)
 	// The tests are querying the API server quite a lot, so we need to increase the QPS and Burst
 	cfg.QPS = 40.0
 	cfg.Burst = 400.0
-	s.Require().NoError(err)
 
 	hostURL, err := url.Parse(cfg.Host)
 	if err != nil {

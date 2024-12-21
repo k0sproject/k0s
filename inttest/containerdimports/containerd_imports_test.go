@@ -38,17 +38,16 @@ func (s *ContainerdImportsSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	s.NoError(s.InitController(0))
+	s.Require().NoError(s.InitController(0))
 
-	s.NoError(s.RunWorkers())
+	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	if err != nil {
 		s.FailNow("failed to obtain Kubernetes client", err)
 	}
 
-	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
-	s.NoError(err)
+	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), kc))
 
 	s.AssertSomeKubeSystemPods(kc)
 
