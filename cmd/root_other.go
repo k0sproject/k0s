@@ -1,7 +1,7 @@
 //go:build !linux
 
 /*
-Copyright 2021 k0s authors
+Copyright 2024 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cleanup
+package cmd
 
-func newBridgeStep() Step {
-	return nil
-}
+import "github.com/spf13/cobra"
+
+func addPlatformSpecificCommands(root *cobra.Command) { /* no-op */ }
