@@ -38,6 +38,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 		Example: `	$ k0s kubeconfig admin > ~/.kube/config
 	$ export KUBECONFIG=~/.kube/config
 	$ kubectl get nodes`,
+		Args: cobra.NoArgs,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			// ensure logs don't mess up the output
 			logrus.SetOutput(cmd.ErrOrStderr())

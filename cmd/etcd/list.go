@@ -36,7 +36,7 @@ func etcdListCmd() *cobra.Command {
 			// ensure logs don't mess up the output
 			logrus.SetOutput(cmd.ErrOrStderr())
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err

@@ -82,7 +82,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			logger.WithError(err).Debugf("Failed to start controller manager in attempt #%d, retrying after backoff", attempt+1)
 		}),
 	); err != nil {
-		logger.WithError(err).Fatal("unable to start controller manager")
+		return fmt.Errorf("unable to start controller manager: %w", err)
 	}
 
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs

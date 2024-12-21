@@ -26,6 +26,8 @@ func NewKubeConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kubeconfig [command]",
 		Short: "Create a kubeconfig file for a specified user",
+		Args:  cobra.NoArgs,
+		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
 	cmd.AddCommand(kubeconfigCreateCmd())
 	cmd.AddCommand(kubeConfigAdminCmd())

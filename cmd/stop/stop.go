@@ -30,7 +30,8 @@ func NewStopCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
 		Short: "Stop the k0s service configured on this host. Must be run as root (or with sudo)",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			if os.Geteuid() != 0 {
 				return errors.New("this command must be run as root")
 			}

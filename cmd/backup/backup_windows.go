@@ -28,6 +28,7 @@ func NewBackupCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "backup",
 		Short: "Back-Up k0s configuration. Not supported on Windows OS",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return errors.New("unsupported Operating System for this command")
 		},

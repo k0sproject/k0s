@@ -123,10 +123,10 @@ func NewRootCmd() *cobra.Command {
 
 func newDocsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:       "docs <markdown|man>",
+		Use:       "docs {markdown|man}",
 		Short:     "Generate k0s command documentation",
 		ValidArgs: []string{"markdown", "man"},
-		Args:      cobra.ExactValidArgs(1),
+		Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch args[0] {
 			case "markdown":
@@ -149,7 +149,7 @@ func newDefaultConfigCmd() *cobra.Command {
 
 func newCompletionCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "completion <bash|zsh|fish|powershell>",
+		Use:   "completion {bash|zsh|fish|powershell}",
 		Short: "Generate completion script",
 		Long: `To load completions:
 
@@ -181,7 +181,7 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 `,
 		DisableFlagsInUseLine: true,
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
-		Args:                  cobra.ExactValidArgs(1),
+		Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 			switch args[0] {

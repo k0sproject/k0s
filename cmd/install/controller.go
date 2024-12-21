@@ -36,7 +36,8 @@ With the controller subcommand you can setup a single node cluster by running:
 
 	k0s install controller --single
 	`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
