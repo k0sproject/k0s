@@ -655,14 +655,18 @@ func (c *command) startWorker(ctx context.Context, profile string, nodeConfig *v
 	return wc.Start(ctx)
 }
 
-// If we've got CA in place we assume the node has already joined previously
+// If we've got an etcd data directory in place for embedded etcd, or a ca for
+// external or other storage types, we assume the node has already joined
+// previously.
 func (c *command) needToJoin(nodeConfig *v1beta1.ClusterConfig) bool {
+	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+		// Use the main etcd data directory as the source of truth to determine if this node has already joined
+		// See https://etcd.io/docs/v3.5/learning/persistent-storage-files/#bbolt-btree-membersnapdb
+		return !file.Exists(filepath.Join(c.K0sVars.EtcdDataDir, "member", "snap", "db"))
+	}
 	if file.Exists(filepath.Join(c.K0sVars.CertRootDir, "ca.key")) &&
 		file.Exists(filepath.Join(c.K0sVars.CertRootDir, "ca.crt")) {
 		return false
-	}
-	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
-		return !file.Exists(filepath.Join(c.K0sVars.EtcdDataDir, "member", "snap", "db"))
 	}
 	return true
 }
