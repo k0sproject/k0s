@@ -1,5 +1,7 @@
+//go:build !linux
+
 /*
-Copyright 2023 k0s authors
+Copyright 2024 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,8 +16,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package containerd
+package cleanup
 
-func winExecute(args ...string) error {
-	panic("Invariant broken: this function should never be called on non-winodws platforms")
+import (
+	"errors"
+	"fmt"
+	"runtime"
+)
+
+func UnmountLazy(string) error {
+	return fmt.Errorf("%w on %s", errors.ErrUnsupported, runtime.GOOS)
 }
