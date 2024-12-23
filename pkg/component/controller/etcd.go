@@ -107,6 +107,11 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 			etcdResponse, err = e.JoinClient.JoinEtcd(ctx, etcdRequest)
 			return err
 		},
+		// When joining multiple nodes in parallel, etcd can lose consensus and will return 500 responses
+		// Allow for more time to recover (~ 4 minutes = 0+1+2+4+8+16+32+60+60+60)
+		retry.Attempts(10),
+		retry.Delay(1*time.Second),
+		retry.MaxDelay(60*time.Second),
 		retry.Context(ctx),
 		retry.LastErrorOnly(true),
 		retry.OnRetry(func(attempt uint, err error) {
@@ -191,6 +196,8 @@ func (e *Etcd) Start(ctx context.Context) error {
 		"--enable-pprof":                "false",
 	}
 
+	// Use the main etcd data directory as the source of truth to determine if this node has already joined
+	// See https://etcd.io/docs/v3.5/learning/persistent-storage-files/#bbolt-btree-membersnapdb
 	if file.Exists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 	} else if e.JoinClient != nil {
