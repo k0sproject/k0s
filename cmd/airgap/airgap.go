@@ -17,18 +17,28 @@ limitations under the License.
 package airgap
 
 import (
-	"github.com/spf13/cobra"
-
 	"github.com/k0sproject/k0s/pkg/config"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 func NewAirgapCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "airgap",
-		Short: "Manage airgap setup",
+		Short: "Tooling for airgapped installations",
+		Long: `Tooling for airgapped installations.
+
+For example, to create an image bundle that contains the images required for
+the current configuration, use the following command:
+
+    k0s airgap list-images | k0s airgap bundle-artifacts -v -o image-bundle.tar
+`,
 	}
 
-	cmd.AddCommand(NewAirgapListImagesCmd())
+	log := logrus.StandardLogger()
+	cmd.AddCommand(newAirgapListImagesCmd())
+	cmd.AddCommand(newAirgapBundleArtifactsCmd(log, nil))
 	cmd.PersistentFlags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
