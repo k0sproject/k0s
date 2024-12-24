@@ -35,6 +35,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func preSharedCmd() *cobra.Command {
@@ -78,12 +79,21 @@ func preSharedCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&certPath, "cert", "", "path to the CA certificate file")
-	cmd.Flags().StringVar(&joinURL, "url", "", "url of the api server to join")
-	cmd.Flags().StringVar(&preSharedRole, "role", "worker", "token role. valid values: worker, controller. Default: worker")
-	cmd.Flags().StringVar(&outDir, "out", ".", "path to the output directory. Default: current dir")
-	cmd.Flags().DurationVar(&validity, "valid", 0, "how long token is valid, in Go duration format")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	pflags := cmd.PersistentFlags()
+	// Add unused persistent flags for backwards compatibility.
+	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		pflags.AddFlag(f)
+	})
+
+	flags := cmd.Flags()
+	flags.StringVar(&certPath, "cert", "", "path to the CA certificate file")
+	flags.StringVar(&joinURL, "url", "", "url of the api server to join")
+	flags.StringVar(&preSharedRole, "role", "worker", "token role. valid values: worker, controller. Default: worker")
+	flags.StringVar(&outDir, "out", ".", "path to the output directory. Default: current dir")
+	flags.DurationVar(&validity, "valid", 0, "how long token is valid, in Go duration format")
+
 	return cmd
 }
 

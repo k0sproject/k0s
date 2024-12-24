@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"errors"
-	"net/http"
 	"os"
 	"runtime"
 
@@ -42,11 +41,8 @@ import (
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
-	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/config"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -58,27 +54,6 @@ func NewRootCmd() *cobra.Command {
 		Use:          "k0s",
 		Short:        "k0s - Zero Friction Kubernetes",
 		SilenceUsage: true,
-
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if config.Verbose {
-				k0slog.SetInfoLevel()
-			}
-
-			if config.Debug {
-				// TODO: check if it actually works and is not overwritten by something else
-				k0slog.SetDebugLevel()
-
-				go func() {
-					log := logrus.WithField("debug_server", config.DebugListenOn)
-					log.Debug("Starting debug server")
-					if err := http.ListenAndServe(config.DebugListenOn, nil); !errors.Is(err, http.ErrServerClosed) {
-						log.WithError(err).Debug("Failed to start debug server")
-					} else {
-						log.Debug("Debug server closed")
-					}
-				}()
-			}
-		},
 	}
 
 	cmd.AddCommand(airgap.NewAirgapCmd())

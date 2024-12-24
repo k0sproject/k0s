@@ -59,7 +59,7 @@ Flags:
   -c, --config string                                  config file, use '-' to read the config from stdin (default `+defaultConfigPath+`)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --data-dir string                                Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default `+defaultDataDir+`)
-  -d, --debug                                          Debug logging (default: false)
+  -d, --debug                                          Debug logging (implies verbose logging)
       --debugListenOn string                           Http listenOn for Debug pprof handler (default ":6060")
       --disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
       --enable-cloud-provider                          Whether or not to enable cloud provider support in kubelet
@@ -82,6 +82,6 @@ Flags:
       --status-socket string                           Full file path to the socket file. (default: <rundir>/status.sock)
       --taints strings                                 Node taints, list of key=value:effect strings
       --token-file string                              Path to the file containing join-token.
-  -v, --verbose                                        Verbose logging (default: false)
+  -v, --verbose                                        Verbose logging (default true)
 `, out.String())
 }

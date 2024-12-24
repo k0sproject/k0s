@@ -51,9 +51,10 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 			return nil
 		},
 	}
-	// append flags
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
+
+	pflags := cmd.PersistentFlags()
+	pflags.AddFlagSet(config.GetPersistentFlagSet())
+	pflags.AddFlagSet(config.GetWorkerFlags())
 
 	return cmd
 }

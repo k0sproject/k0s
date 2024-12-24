@@ -31,6 +31,8 @@ func NewEditCmd() *cobra.Command {
 			return reExecKubectl(cmd, "-n", "kube-system", "edit", "clusterconfig", "k0s")
 		},
 	}
+
 	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
+
 	return cmd
 }

@@ -51,6 +51,8 @@ func tokenInvalidateCmd() *cobra.Command {
 			return nil
 		},
 	}
+
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
 	return cmd
 }
