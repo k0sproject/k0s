@@ -35,8 +35,8 @@ func NewVersionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the k0s version",
-
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, _ []string) {
 			info := versionInfo{
 				Version:      build.Version,
 				Runc:         build.RuncVersion,

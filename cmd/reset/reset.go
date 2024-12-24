@@ -17,6 +17,7 @@ limitations under the License.
 package reset
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -34,7 +35,8 @@ func NewResetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reset",
 		Short: "Uninstall k0s. Must be run as root (or with sudo)",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
@@ -51,12 +53,12 @@ func NewResetCmd() *cobra.Command {
 
 func (c *command) reset() error {
 	if os.Geteuid() != 0 {
-		logrus.Fatal("this command must be run as root!")
+		return errors.New("this command must be run as root!")
 	}
 
 	k0sStatus, _ := status.GetStatusInfo(c.K0sVars.StatusSocketPath)
 	if k0sStatus != nil && k0sStatus.Pid != 0 {
-		logrus.Fatal("k0s seems to be running! please stop k0s before reset.")
+		return errors.New("k0s seems to be running! please stop k0s before reset.")
 	}
 
 	nodeCfg, err := c.K0sVars.NodeConfig()

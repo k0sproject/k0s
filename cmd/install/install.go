@@ -40,6 +40,8 @@ func NewInstallCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install k0s on a brand-new system. Must be run as root (or with sudo)",
+		Args:  cobra.NoArgs,
+		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
 
 	cmd.AddCommand(installControllerCmd(&installFlags))

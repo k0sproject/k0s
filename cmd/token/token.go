@@ -28,6 +28,8 @@ func NewTokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "Manage join tokens",
+		Args:  cobra.NoArgs,
+		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
 
 	cmd.AddCommand(tokenCreateCmd())

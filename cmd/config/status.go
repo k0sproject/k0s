@@ -17,8 +17,6 @@ limitations under the License.
 package config
 
 import (
-	"os"
-
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/spf13/cobra"
@@ -30,16 +28,14 @@ func NewStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Display dynamic configuration reconciliation status",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, err := config.GetCmdOpts(cmd)
-			if err != nil {
-				return err
-			}
-			os.Args = []string{os.Args[0], "kubectl", "--data-dir", opts.K0sVars.DataDir, "-n", "kube-system", "get", "event", "--field-selector", "involvedObject.name=k0s"}
+			args := []string{"-n", "kube-system", "get", "event", "--field-selector", "involvedObject.name=k0s"}
 			if outputFormat != "" {
-				os.Args = append(os.Args, "-o", outputFormat)
+				args = append(args, "-o", outputFormat)
 			}
-			return cmd.Execute()
+
+			return reExecKubectl(cmd, args...)
 		},
 	}
 	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())

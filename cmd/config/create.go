@@ -32,7 +32,8 @@ func NewCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Output the default k0s configuration yaml to stdout",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			config := v1beta1.DefaultClusterConfig()
 			if !includeImages {
 				config.Spec.Images = nil

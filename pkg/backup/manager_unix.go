@@ -136,7 +136,7 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 	// Create the archive and write the output to the "out" Writer
 	err = createArchive(out, assets, bm.dataDir)
 	if err != nil {
-		logrus.Fatalf("error creating archive: %v", err)
+		return fmt.Errorf("error creating archive: %w", err)
 	}
 
 	destinationFile := filepath.Join(bm.tmpDir, backupFileName)
