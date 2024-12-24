@@ -24,7 +24,9 @@ smoketests := \
 	check-cnichange \
 	check-configchange \
 	check-containerdimports \
-	check-cplb \
+	check-cplb-ipvs \
+	check-cplb-userspace \
+	check-cplb-userspace-extaddr \
 	check-ctr \
 	check-custom-cidrs \
 	check-customca \

@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type keepalivedSuite struct {
+type cplbIPVSSuite struct {
 	common.BootlooseSuite
 }
 
@@ -50,7 +50,7 @@ spec:
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
-func (s *keepalivedSuite) TestK0sGetsUp() {
+func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	lb := s.getLBAddress()
 	ctx := s.Context()
 	var joinToken string
@@ -111,7 +111,7 @@ func (s *keepalivedSuite) TestK0sGetsUp() {
 // getLBAddress returns the IP address of the controller 0 and it adds 100 to
 // the last octet unless it's bigger or equal to 154, in which case it
 // subtracts 100. Theoretically this could result in an invalid IP address.
-func (s *keepalivedSuite) getLBAddress() string {
+func (s *cplbIPVSSuite) getLBAddress() string {
 	ip := s.GetIPAddress(s.ControllerNode(0))
 	parts := strings.Split(ip, ".")
 	if len(parts) != 4 {
@@ -130,7 +130,7 @@ func (s *keepalivedSuite) getLBAddress() string {
 
 // validateRealServers checks that the real servers are present in the
 // ipvsadm output.
-func (s *keepalivedSuite) validateRealServers(ctx context.Context, node string, vip string) {
+func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vip string) {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -151,7 +151,7 @@ func (s *keepalivedSuite) validateRealServers(ctx context.Context, node string, 
 
 // checkDummy checks that the dummy interface is present on the given node and
 // that it has only the virtual IP address.
-func (s *keepalivedSuite) checkDummy(ctx context.Context, node string, vip string) {
+func (s *cplbIPVSSuite) checkDummy(ctx context.Context, node string, vip string) {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -167,7 +167,7 @@ func (s *keepalivedSuite) checkDummy(ctx context.Context, node string, vip strin
 
 // hasVIP checks that the dummy interface is present on the given node and
 // that it has only the virtual IP address.
-func (s *keepalivedSuite) hasVIP(ctx context.Context, node string, vip string) bool {
+func (s *cplbIPVSSuite) hasVIP(ctx context.Context, node string, vip string) bool {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -180,8 +180,8 @@ func (s *keepalivedSuite) hasVIP(ctx context.Context, node string, vip string) b
 
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
 // virtual IP is working by joining a node to the cluster using the VIP.
-func TestKeepAlivedSuite(t *testing.T) {
-	suite.Run(t, &keepalivedSuite{
+func TestCPLBIPVSSuite(t *testing.T) {
+	suite.Run(t, &cplbIPVSSuite{
 		common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     1,

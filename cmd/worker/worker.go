@@ -149,11 +149,12 @@ func (c *Command) Start(ctx context.Context) error {
 		c.WorkerProfile = "default-windows"
 	}
 
-	componentManager.Add(ctx, &iptables.Component{
-		IPTablesMode: c.WorkerOptions.IPTablesMode,
-		BinDir:       c.K0sVars.BinDir,
-	})
-
+	if !c.DisableIPTables {
+		componentManager.Add(ctx, &iptables.Component{
+			IPTablesMode: c.WorkerOptions.IPTablesMode,
+			BinDir:       c.K0sVars.BinDir,
+		})
+	}
 	componentManager.Add(ctx,
 		&worker.Kubelet{
 			CRISocket:           c.CriSocket,
