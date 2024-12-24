@@ -25,7 +25,7 @@ import (
 	"runtime"
 	"syscall"
 
-	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/iptables"
@@ -46,7 +46,10 @@ import (
 type Command config.CLIOptions
 
 func NewWorkerCmd() *cobra.Command {
-	var ignorePreFlightChecks bool
+	var (
+		debugFlags            internal.DebugFlags
+		ignorePreFlightChecks bool
+	)
 
 	cmd := &cobra.Command{
 		Use:   "worker [join-token]",
@@ -58,12 +61,8 @@ func NewWorkerCmd() *cobra.Command {
 	or CLI flag:
 	$ k0s worker --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
-		Args: cobra.MaximumNArgs(1),
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			logrus.SetOutput(cmd.OutOrStdout())
-			k0slog.SetInfoLevel()
-			return config.CallParentPersistentPreRun(cmd, args)
-		},
+		Args:             cobra.MaximumNArgs(1),
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
@@ -95,10 +94,13 @@ func NewWorkerCmd() *cobra.Command {
 		},
 	}
 
-	// append flags
+	pflags := cmd.PersistentFlags()
+	debugFlags.LongRunning().AddToFlagSet(pflags)
+	pflags.AddFlagSet(config.GetPersistentFlagSet())
+	pflags.AddFlagSet(config.GetWorkerFlags())
+
 	cmd.Flags().BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
+
 	return cmd
 }
 

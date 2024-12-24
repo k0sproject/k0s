@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
 
@@ -35,20 +36,27 @@ type installFlags struct {
 }
 
 func NewInstallCmd() *cobra.Command {
-	var installFlags installFlags
+	var (
+		debugFlags   internal.DebugFlags
+		installFlags installFlags
+	)
 
 	cmd := &cobra.Command{
-		Use:   "install",
-		Short: "Install k0s on a brand-new system. Must be run as root (or with sudo)",
-		Args:  cobra.NoArgs,
-		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
+		Use:              "install",
+		Short:            "Install k0s on a brand-new system. Must be run as root (or with sudo)",
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
+		Run:              func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
+
+	pflags := cmd.PersistentFlags()
+	debugFlags.AddToFlagSet(pflags)
+	pflags.BoolVar(&installFlags.force, "force", false, "force init script creation")
+	pflags.StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
 
 	cmd.AddCommand(installControllerCmd(&installFlags))
 	cmd.AddCommand(installWorkerCmd(&installFlags))
-	cmd.PersistentFlags().BoolVar(&installFlags.force, "force", false, "force init script creation")
-	cmd.PersistentFlags().StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
 	return cmd
 }
 

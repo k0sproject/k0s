@@ -78,7 +78,10 @@ func tokenListCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&listTokenRole, "role", "", "Either worker, controller or empty for all roles")
+
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	cmd.Flags().StringVar(&listTokenRole, "role", "", "Either worker, controller or empty for all roles")
+
 	return cmd
 }
