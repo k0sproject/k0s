@@ -42,7 +42,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
-	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/config"
 
@@ -61,12 +61,12 @@ func NewRootCmd() *cobra.Command {
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if config.Verbose {
-				k0slog.SetInfoLevel()
+				internallog.SetInfoLevel()
 			}
 
 			if config.Debug {
 				// TODO: check if it actually works and is not overwritten by something else
-				k0slog.SetDebugLevel()
+				internallog.SetDebugLevel()
 
 				go func() {
 					log := logrus.WithField("debug_server", config.DebugListenOn)
