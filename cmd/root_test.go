@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -77,9 +78,11 @@ func TestUnknownSubCommandsAreRejected(t *testing.T) {
 	commandsWithArguments := []string{
 		"controller",
 		"kubeconfig create",
-		"restore",
 		"token invalidate",
 		"worker",
+	}
+	if runtime.GOOS == "linux" {
+		commandsWithArguments = append(commandsWithArguments, "restore")
 	}
 	t.Cleanup(func() {
 		if !t.Failed() {
