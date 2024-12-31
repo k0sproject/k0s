@@ -309,3 +309,12 @@ func (k *KeepalivedSpec) Validate() (errs []error) {
 
 	return errs
 }
+
+// VirtualIPs returns a list of virtual IPs used by the VRRP instances.
+func (c *ControlPlaneLoadBalancingSpec) VirtualIPs() []string {
+	var vips []string
+	for _, vrrp := range c.Keepalived.VRRPInstances {
+		vips = append(vips, vrrp.VirtualIPs...)
+	}
+	return vips
+}

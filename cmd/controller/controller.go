@@ -34,6 +34,7 @@ import (
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/iface"
 	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/internal/sync/value"
@@ -231,6 +232,9 @@ func (c *command) start(ctx context.Context) error {
 			K0sVars:     c.K0sVars,
 			LogLevel:    c.LogLevels.Etcd,
 		}
+		// if cplb is disabled use the default primary address
+		storageBackend.(*controller.Etcd).Config.PeerAddress = etcdPeerAddress(nodeConfig.Spec.Network.ControlPlaneLoadBalancing)
+
 	default:
 		return fmt.Errorf("invalid storage type: %s", nodeConfig.Spec.Storage.Type)
 	}
@@ -639,6 +643,27 @@ func (c *command) start(ctx context.Context) error {
 	perfTimer.Output()
 
 	return nil
+}
+
+func etcdPeerAddress(cplb *v1beta1.ControlPlaneLoadBalancingSpec) string {
+	if cplb != nil && cplb.Enabled {
+		cplbAddresses := cplb.VirtualIPs()
+		addresses, err := iface.GetPublicAddresses()
+		if err != nil {
+			logrus.WithError(err).Errorf("Failed to get the primary address, using %s", addresses[0])
+			return addresses[0]
+		}
+		for _, addr := range addresses {
+			if !slices.Contains(cplbAddresses, addr) {
+				return addr
+			}
+		}
+	}
+	addr, err := iface.FirstPublicAddress()
+	if err != nil {
+		logrus.WithError(err).Errorf("Failed to get the primary address, using %s", addr)
+	}
+	return addr
 }
 
 func (c *command) startWorker(ctx context.Context, profile string, nodeConfig *v1beta1.ClusterConfig) error {

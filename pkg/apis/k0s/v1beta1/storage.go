@@ -27,13 +27,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/pkg/config/kine"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/sirupsen/logrus"
 )
 
 var _ Validateable = (*StorageSpec)(nil)
@@ -158,14 +155,8 @@ type ExternalCluster struct {
 
 // DefaultEtcdConfig creates EtcdConfig with sane defaults
 func DefaultEtcdConfig() *EtcdConfig {
-	addr, err := iface.FirstPublicAddress()
-	if err != nil {
-		logrus.Warnf("failed to resolve etcd peering address automatically, using loopback")
-		addr = "127.0.0.1"
-	}
 	return &EtcdConfig{
 		ExternalCluster: nil,
-		PeerAddress:     addr,
 		ExtraArgs:       make(map[string]string),
 	}
 }

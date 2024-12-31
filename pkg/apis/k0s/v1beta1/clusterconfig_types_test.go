@@ -20,8 +20,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/k0sproject/k0s/internal/pkg/iface"
-
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
@@ -55,9 +53,6 @@ metadata:
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, EtcdStorageType, c.Spec.Storage.Type)
-	addr, err := iface.FirstPublicAddress()
-	assert.NoError(t, err)
-	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
 }
 
 func TestEmptyClusterSpec(t *testing.T) {
@@ -135,9 +130,6 @@ spec:
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, EtcdStorageType, c.Spec.Storage.Type)
-	addr, err := iface.FirstPublicAddress()
-	assert.NoError(t, err)
-	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
 }
 
 func TestNetworkValidation_Custom(t *testing.T) {
