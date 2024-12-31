@@ -118,3 +118,9 @@ issues:
     - linters:
         - staticcheck
       text: "^SA1019:"
+
+    # tcpproxy is copied from https://github.com/inetaf/tcpproxy/, as per
+    # Apache 2.0 license section 4 (Redistribution) we must keep the original header.
+    - path: "pkg/component/controller/cplb/tcpproxy/.*"
+      linters:
+        - goheader

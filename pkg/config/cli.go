@@ -85,6 +85,7 @@ type WorkerOptions struct {
 	TokenArg         string
 	WorkerProfile    string
 	IPTablesMode     string
+	DisableIPTables  bool
 }
 
 func (o *ControllerOptions) Normalize() error {

@@ -22,8 +22,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
+	"strings"
 	"syscall"
 	"text/template"
 	"time"
@@ -32,11 +35,17 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component/controller/cplb/tcpproxy"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
+)
+
+const (
+	iptablesCommandAppend = "-A"
+	iptablesCommandDelete = "-D"
 )
 
 // Keepalived is the controller for the keepalived process in the control plane load balancing
@@ -55,6 +64,7 @@ type Keepalived struct {
 	reconciler       *CPLBReconciler
 	updateCh         chan struct{}
 	reconcilerDone   chan struct{}
+	proxy            tcpproxy.Proxy
 }
 
 // Init extracts the needed binaries and creates the directories
@@ -77,19 +87,20 @@ func (k *Keepalived) Init(_ context.Context) error {
 }
 
 // Start generates the keepalived configuration and starts the keepalived process
-func (k *Keepalived) Start(_ context.Context) error {
+func (k *Keepalived) Start(ctx context.Context) error {
 	if k.Config == nil || (len(k.Config.VRRPInstances) == 0 && len(k.Config.VirtualServers) == 0) {
 		k.log.Warn("No VRRP instances or virtual servers defined, skipping keepalived start")
 		return nil
 	}
 
-	if len(k.Config.VRRPInstances) > 0 {
+	// We only need the dummy interface when using IPVS.
+	if len(k.Config.VirtualServers) > 0 {
 		if err := k.configureDummy(); err != nil {
 			return fmt.Errorf("failed to configure dummy interface: %w", err)
 		}
 	}
 
-	if len(k.Config.VirtualServers) > 0 {
+	if len(k.Config.VRRPInstances) > 0 || len(k.Config.VirtualServers) > 0 {
 		k.log.Info("Starting CPLB reconciler")
 		updateCh := make(chan struct{}, 1)
 		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, updateCh)
@@ -140,7 +151,13 @@ func (k *Keepalived) Start(_ context.Context) error {
 		k.reconcilerDone = reconcilerDone
 		go func() {
 			defer close(reconcilerDone)
-			k.watchReconcilerUpdates()
+			if len(k.Config.VirtualServers) > 0 {
+				k.watchReconcilerUpdatesKeepalived()
+			} else {
+				if err := k.watchReconcilerUpdatesReverseProxy(ctx); err != nil {
+					k.log.WithError(err).Error("failed to watch reconciler updates")
+				}
+			}
 		}()
 	}
 	return k.supervisor.Supervise()
@@ -150,29 +167,37 @@ func (k *Keepalived) Start(_ context.Context) error {
 // k0s controller is stopped, it can still reach the other APIservers on the VIP
 func (k *Keepalived) Stop() error {
 	if k.reconciler != nil {
-		k.log.Infof("Stopping cplb-reconciler")
+		k.log.Info("Stopping cplb-reconciler")
 		k.reconciler.Stop()
 		close(k.updateCh)
 		<-k.reconcilerDone
 	}
 
-	k.log.Infof("Stopping keepalived")
+	k.log.Info("Stopping keepalived")
 	k.supervisor.Stop()
 
-	k.log.Infof("Deleting dummy interface")
-	link, err := netlink.LinkByName(dummyLinkName)
-	if err != nil {
-		if errors.As(err, &netlink.LinkNotFoundError{}) {
-			return nil
+	if len(k.Config.VirtualServers) > 0 {
+		k.log.Info("Deleting dummy interface")
+		link, err := netlink.LinkByName(dummyLinkName)
+		if err != nil {
+			if errors.As(err, &netlink.LinkNotFoundError{}) {
+				return nil
+			}
+			k.log.Errorf("failed to get link by name %s. Attempting to delete it anyway: %v", dummyLinkName, err)
+			link = &netlink.Dummy{
+				LinkAttrs: netlink.LinkAttrs{
+					Name: dummyLinkName,
+				},
+			}
 		}
-		k.log.Errorf("failed to get link by name %s. Attempting to delete it anyway: %v", dummyLinkName, err)
-		link = &netlink.Dummy{
-			LinkAttrs: netlink.LinkAttrs{
-				Name: dummyLinkName,
-			},
-		}
+		return netlink.LinkDel(link)
 	}
-	return netlink.LinkDel(link)
+	if err := k.proxy.Close(); err != nil {
+		return fmt.Errorf("failed to close proxy: %w", err)
+	}
+
+	// Only clean iptables rules if we are using the userspace reverse proxy
+	return k.redirectToProxyIPTables(iptablesCommandDelete)
 }
 
 // configureDummy creates the dummy interface and sets the virtual IPs on it.
@@ -321,7 +346,78 @@ func (k *Keepalived) generateKeepalivedTemplate() error {
 	return nil
 }
 
-func (k *Keepalived) watchReconcilerUpdates() {
+func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) error {
+	k.proxy = tcpproxy.Proxy{}
+	// We don't know how long until we get the first update, so initially we
+	// forward everything to localhost
+	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), []tcpproxy.Route{tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort))})
+
+	if err := k.proxy.Start(); err != nil {
+		return fmt.Errorf("failed to start proxy: %w", err)
+	}
+
+	k.log.Info("Waiting for the first cplb-reconciler update")
+
+	select {
+	case <-ctx.Done():
+		return errors.New("context cancelled while starting the reverse proxy")
+	case <-k.updateCh:
+	}
+	k.setProxyRoutes()
+
+	// Do not create the iptables rules until we have the first update and the
+	// proxy is running
+	if err := k.redirectToProxyIPTables(iptablesCommandAppend); err != nil {
+		k.log.Fatal(err)
+	}
+
+	for range k.updateCh {
+		k.setProxyRoutes()
+	}
+	return nil
+}
+
+func (k *Keepalived) setProxyRoutes() {
+	routes := []tcpproxy.Route{}
+	for _, addr := range k.reconciler.GetIPs() {
+		routes = append(routes, tcpproxy.To(fmt.Sprintf("%s:%d", addr, k.APIPort)))
+	}
+
+	if len(routes) == 0 {
+		k.log.Error("No API servers available, leave previous configuration")
+		return
+	}
+	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), routes)
+}
+
+func (k *Keepalived) redirectToProxyIPTables(op string) error {
+	for _, vrrp := range k.Config.VRRPInstances {
+		for _, vipCIDR := range vrrp.VirtualIPs {
+			vip := strings.Split(vipCIDR, "/")[0]
+
+			cmdArgs := []string{
+				"-t", "nat", op, "PREROUTING", "-p", "tcp",
+				"-d", vip, "--dport", strconv.Itoa(k.APIPort),
+				"-j", "REDIRECT", "--to-port", strconv.Itoa(k.Config.UserSpaceProxyPort),
+			}
+
+			if op == iptablesCommandAppend {
+				k.log.Infof("Adding iptables rule to redirect %s", vip)
+			} else if op == iptablesCommandDelete {
+				k.log.Infof("Deleting iptables rule to redirect %s", vip)
+			}
+
+			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, "iptables"), cmdArgs...)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)
+			}
+		}
+	}
+	return nil
+}
+
+func (k *Keepalived) watchReconcilerUpdatesKeepalived() {
 	// Wait for the supervisor to start keepalived before
 	// watching for endpoint changes
 	process := k.supervisor.GetProcess()
@@ -385,9 +481,9 @@ vrrp_instance k0s-vip-{{$i}} {
         auth_pass {{ $instance.AuthPass }}
     }
     virtual_ipaddress {
-	    {{ range $instance.VirtualIPs }}
-		{{ . }}
-		{{ end }}
+        {{ range $instance.VirtualIPs }}
+        {{ . }}
+        {{ end }}
     }
 }
 {{ end }}
