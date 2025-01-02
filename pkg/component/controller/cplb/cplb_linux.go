@@ -485,6 +485,16 @@ vrrp_instance k0s-vip-{{$i}} {
         {{ . }}
         {{ end }}
     }
+    {{ if .UnicastPeers }}
+    unicast_src_ip {{ .UnicastSourceIP }}
+    unicast_peer {
+        {{ range .UnicastPeers }}
+        {{ . }}
+        {{ end }}
+    }
+    {{ else}}
+	 #F
+    {{ end }}
 }
 {{ end }}
 

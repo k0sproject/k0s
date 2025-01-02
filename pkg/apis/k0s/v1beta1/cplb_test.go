@@ -72,9 +72,11 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
-					VirtualIPs:            []string{"192.168.1.1/24"},
+					VirtualIPs:            []string{"192.168.1.100/24"},
 					AdvertIntervalSeconds: 1,
 					AuthPass:              "123456",
+					UnicastSourceIP:       "192.168.1.1",
+					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
 			expectedVRRPs: []VRRPInstance{
@@ -84,6 +86,8 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					VirtualIPs:            []string{"192.168.1.1/24"},
 					AdvertIntervalSeconds: 1,
 					AuthPass:              "123456",
+					UnicastSourceIP:       "192.168.1.1",
+					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
 			wantErr: false,
@@ -113,6 +117,60 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 				{
 					VirtualIPs: []string{"192.168.1.1"},
 					AuthPass:   "123456",
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "Unicast Peers without unicast source",
+			vrrps: []VRRPInstance{
+				{
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.100/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
+					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "Invalid unicast peers",
+			vrrps: []VRRPInstance{
+				{
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.100/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
+					UnicastPeers:          []string{"example.com", "192.168.1.3"},
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "Invalid unicast source",
+			vrrps: []VRRPInstance{
+				{
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.100/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
+					UnicastSourceIP:       "example.com",
+					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "Unicast peers includes unicast source",
+			vrrps: []VRRPInstance{
+				{
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.100/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
+					UnicastSourceIP:       "192.168.1.1",
+					UnicastPeers:          []string{"192.168.1.1", "192.168.1.2", "192.168.1.3"},
 				},
 			},
 			wantErr: true,
