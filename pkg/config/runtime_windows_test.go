@@ -1,5 +1,7 @@
+//go:build windows
+
 /*
-Copyright 2023 k0s authors
+Copyright 2025 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,17 +19,15 @@ limitations under the License.
 package config
 
 import (
-	"fmt"
-
-	"golang.org/x/sys/windows"
+	"os/exec"
+	"syscall"
 )
 
-func checkPid(pid int) error {
-	procHandle, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
-	if err != nil {
-		return fmt.Errorf("failed to find process: %w", err)
+// a simple long running background command for windows systems
+func getBackgroundCommand() *exec.Cmd {
+	cmd := exec.Command("cmd.exe")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		CmdLine: "cmd.exe /C timeout /T 9999", // provide the full command line here, see docs for exec.Command()
 	}
-	defer func() { _ = windows.CloseHandle(procHandle) }()
-
-	return nil
+	return cmd
 }

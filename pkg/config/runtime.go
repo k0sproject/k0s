@@ -28,6 +28,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/shirou/gopsutil/v4/process"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -97,9 +98,14 @@ func LoadRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 	// an error is returned, which allows the controller startup to proceed to
 	// initialize a new runtime config.
 	if spec.Pid != 0 {
-		if err := checkPid(spec.Pid); err != nil {
+		isRunning, err := checkInstanceRunning(spec.Pid)
+		if !isRunning || err != nil {
 			defer func() { _ = spec.Cleanup() }()
-			return nil, errors.Join(ErrK0sNotRunning, err)
+			if !isRunning {
+				return nil, errors.Join(ErrK0sNotRunning, err)
+			} else if err != nil {
+				return nil, fmt.Errorf("%w: failed to check if instance is running", err)
+			}
 		}
 	}
 
@@ -191,4 +197,57 @@ func (r *RuntimeConfigSpec) Cleanup() error {
 		return fmt.Errorf("failed to clean up runtime config file: %w", err)
 	}
 	return nil
+}
+
+// returns:
+// - true, nil if the pid is the same k0s executable and running
+// - false, nil if the pid is not running or another executable
+// - false, error on any kind of internal error checking the status
+//
+// process does not exist -> error
+// process exists and is same executable -> error
+// process exists and is not same executable -> nil
+func checkInstanceRunning(pid int) (bool, error) {
+	// create the process object
+	proc, err := process.NewProcess(int32(pid))
+	if err != nil {
+		return false, fmt.Errorf("failed to create process object: %w", err)
+	}
+
+	// first check if the pid is running
+	isRunning, err := proc.IsRunning()
+	if err != nil {
+		return false, fmt.Errorf("failed to check if process is running: %w", err)
+	}
+	if !isRunning {
+		return false, nil
+	}
+
+	// Get the executable path of the target pid
+	// - no need to resolve symlinks here, it is already a resolved path
+	exeTarget, err := proc.Exe()
+	if err != nil {
+		return false, fmt.Errorf("failed to get process executable path: %w", err)
+	}
+
+	// Get the executable path of the current process
+	currentExe, err := os.Executable()
+	if err != nil {
+		return false, fmt.Errorf("failed to get current executable: %w", err)
+	}
+
+	// Resolve symlinks
+	currentExe, err = filepath.EvalSymlinks(currentExe)
+	if err != nil {
+		return false, fmt.Errorf("failed to resolve current executable symlinks: %w", err)
+	}
+
+	// check that the executable is the same in order to issue an error, if it would be a different
+	// than it can't be a running instance of k0s, which the check is all about
+	if exeTarget != currentExe {
+		return false, nil
+	}
+
+	// return that k0s is running witht he same executable image
+	return true, nil
 }
