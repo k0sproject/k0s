@@ -80,6 +80,28 @@ spec:
           authPass: "<my password>"
 ```
 
+By default, VRRP Intances use multicast as per [RFC 3768]. It's possible to configure VRRP
+instances to use unicast:
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["172.16.0.100/16"]
+          authPass: "<my password>"
+          unicastSourceIP: <ip address of this controller>
+          unicastPeers: [<ip address of other controllers>, ...]
+```
+
+When using unicast, k0st does not attempt to detect `unicastSourceIP` and it must be defined explicitly and
+`unicastPeers` must include the IP address of the other controllers' `unicastSourceIP`.
+
+[RFC 3768]: https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2
+
 ## Load Balancing
 
 Currently k0s allows to chose one of two load balancing mechanism:

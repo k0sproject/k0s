@@ -114,6 +114,15 @@ type VRRPInstance struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=8
 	AuthPass string `json:"authPass"`
+
+	// UnicastPeers is a list of unicast peers. If not specified, k0s will use multicast.
+	// If specified, UnicastSourceIP must be specified as well.
+	// +listType=set
+	UnicastPeers []string `json:"unicastPeers,omitempty"`
+
+	// UnicastSourceIP is the source address for unicast peers.
+	// If not specified, k0s will use the first address of the interface.
+	UnicastSourceIP string `json:"unicastSourceIP,omitempty"`
 }
 
 // validateVRRPInstances validates existing configuration and sets the default
@@ -159,6 +168,20 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 		for _, vip := range k.VRRPInstances[i].VirtualIPs {
 			if _, _, err := net.ParseCIDR(vip); err != nil {
 				errs = append(errs, fmt.Errorf("VirtualIPs must be a CIDR. Got: %s", vip))
+			}
+		}
+
+		if len(k.VRRPInstances[i].UnicastPeers) > 0 {
+			if net.ParseIP(k.VRRPInstances[i].UnicastSourceIP) == nil {
+				errs = append(errs, fmt.Errorf("UnicastPeers require a valid UnicastSourceIP. Got: %s", k.VRRPInstances[i].UnicastSourceIP))
+			}
+			for _, peer := range k.VRRPInstances[i].UnicastPeers {
+				if net.ParseIP(peer) == nil {
+					errs = append(errs, fmt.Errorf("UnicastPeers require valid IP addresses. Got: %s", peer))
+				}
+				if peer == k.VRRPInstances[i].UnicastSourceIP {
+					errs = append(errs, fmt.Errorf("UnicastPeers must not contain the UnicastSourceIP. Got: %s", peer))
+				}
 			}
 		}
 	}
