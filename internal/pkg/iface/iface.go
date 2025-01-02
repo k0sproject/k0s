@@ -59,11 +59,18 @@ func CollectAllIPs() (addresses []net.IP, err error) {
 // FirstPublicAddress return the first found non-local IPv4 address that's not part of pod network
 // if any interface does not have any IPv4 address then return the first found non-local IPv6 address
 func FirstPublicAddress() (string, error) {
+	addr, err := GetPublicAddresses()
+	return addr[0], err
+}
+
+// GetPublicAddresses returns a list of all public network addresses on a node.
+// The slice contains the ipv4 addresses followed by the ipv6 addresses
+func GetPublicAddresses() ([]string, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
-		return "127.0.0.1", fmt.Errorf("failed to list network interfaces: %w", err)
+		return []string{"127.0.0.1"}, fmt.Errorf("failed to list network interfaces: %w", err)
 	}
-	ipv6addr := ""
+	publicAddresses := []string{}
 	for _, i := range ifs {
 		switch {
 		// Skip calico CNI interface
@@ -91,18 +98,23 @@ func FirstPublicAddress() (string, error) {
 			// check the address type and skip if loopback
 			if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 				if ipnet.IP.To4() != nil {
-					return ipnet.IP.String(), nil
+					publicAddresses = append(publicAddresses, ipnet.IP.String())
 				}
-				if ipnet.IP.To16() != nil && ipv6addr == "" {
-					ipv6addr = ipnet.IP.String()
+			}
+		}
+		for _, a := range addresses {
+			// check the address type and skip if loopback
+			if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To16() != nil {
+					publicAddresses = append(publicAddresses, ipnet.IP.String())
 				}
 			}
 		}
 	}
-	if ipv6addr != "" {
-		return ipv6addr, nil
+	if len(publicAddresses) > 0 {
+		return publicAddresses, nil
 	}
 
 	logrus.Warn("failed to find any non-local, non podnetwork addresses on host, defaulting public address to 127.0.0.1")
-	return "127.0.0.1", nil
+	return []string{"127.0.0.1"}, nil
 }
