@@ -43,10 +43,6 @@ func NewBackupCmd() *cobra.Command {
 		Use:   "backup",
 		Short: "Back-Up k0s configuration. Must be run as root (or with sudo)",
 		Args:  cobra.NoArgs,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			// ensure logs don't mess up output
-			logrus.SetOutput(cmd.ErrOrStderr())
-		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
