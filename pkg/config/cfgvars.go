@@ -47,6 +47,7 @@ type CfgVars struct {
 	BinDir                     string              // location for all pki related binaries
 	CertRootDir                string              // CertRootDir defines the root location for all pki related artifacts
 	DataDir                    string              // Data directory containing k0s state
+	KubeletRootDir             string              // Root directory for kubelet
 	EtcdCertDir                string              // EtcdCertDir contains etcd certificates
 	EtcdDataDir                string              // EtcdDataDir contains etcd state
 	KineSocketPath             string              // The unix socket path for kine
@@ -105,6 +106,12 @@ func WithCommand(cmd command) CfgVarOption {
 			c.DataDir = f
 		}
 
+		if f, err := flags.GetString("kubelet-root-dir"); err == nil && f != "" {
+			if f, err := filepath.Abs(f); err == nil {
+				c.KubeletRootDir = f
+			}
+		}
+
 		if f, err := flags.GetString("config"); err == nil && f != "" {
 			c.StartupConfigPath = f
 		}
@@ -137,6 +144,7 @@ func DefaultCfgVars() *CfgVars {
 // NewCfgVars returns a new CfgVars struct.
 func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 	var dataDir string
+	var kubeletRootDir string
 
 	if len(dirs) > 0 {
 		dataDir = dirs[0]
@@ -145,6 +153,9 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 	if cobraCmd != nil {
 		if val, err := cobraCmd.Flags().GetString("data-dir"); err == nil && val != "" {
 			dataDir = val
+		}
+		if val, err := cobraCmd.Flags().GetString("kubelet-root-dir"); err == nil && val != "" {
+			kubeletRootDir = val
 		}
 	}
 
@@ -156,6 +167,14 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 	dataDir, err := filepath.Abs(dataDir)
 	if err != nil {
 		return nil, fmt.Errorf("invalid datadir: %w", err)
+	}
+
+	if kubeletRootDir == "" {
+		kubeletRootDir = filepath.Join(dataDir, "kubelet")
+	}
+	kubeletRootDir, err = filepath.Abs(kubeletRootDir)
+	if err != nil {
+		return nil, fmt.Errorf("invalid kubeletRootDir: %w", err)
 	}
 
 	var runDir string
@@ -180,6 +199,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		OCIBundleDir:               filepath.Join(dataDir, "images"),
 		CertRootDir:                certDir,
 		DataDir:                    dataDir,
+		KubeletRootDir:             kubeletRootDir,
 		EtcdCertDir:                filepath.Join(certDir, "etcd"),
 		EtcdDataDir:                filepath.Join(dataDir, "etcd"),
 		KineSocketPath:             filepath.Join(runDir, constant.KineSocket),

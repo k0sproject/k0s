@@ -63,7 +63,6 @@ type Kubelet struct {
 	ExtraArgs           string
 	DualStackEnabled    bool
 
-	rootDir    string
 	configPath string
 	supervisor supervisor.Supervisor
 }
@@ -84,10 +83,9 @@ func (k *Kubelet) Init(_ context.Context) error {
 		}
 	}
 
-	k.rootDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
-	err := dir.Init(k.rootDir, constant.DataDirMode)
+	err := dir.Init(k.K0sVars.KubeletRootDir, constant.DataDirMode)
 	if err != nil {
-		return fmt.Errorf("failed to create %s: %w", k.rootDir, err)
+		return fmt.Errorf("failed to create %s: %w", k.K0sVars.KubeletRootDir, err)
 	}
 
 	runDir := filepath.Join(k.K0sVars.RunDir, "kubelet")
@@ -133,12 +131,12 @@ func (k *Kubelet) Start(ctx context.Context) error {
 
 	logrus.Info("Starting kubelet")
 	args := stringmap.StringMap{
-		"--root-dir":        k.rootDir,
+		"--root-dir":        k.K0sVars.KubeletRootDir,
 		"--config":          k.configPath,
 		"--kubeconfig":      k.Kubeconfig,
 		"--v":               k.LogLevel,
 		"--runtime-cgroups": "/system.slice/containerd.service",
-		"--cert-dir":        filepath.Join(k.rootDir, "pki"),
+		"--cert-dir":        filepath.Join(k.K0sVars.KubeletRootDir, "pki"),
 	}
 
 	if len(k.Labels) > 0 {
