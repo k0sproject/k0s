@@ -61,7 +61,7 @@ $(bindir)/xtables-legacy-multi: .container.iptables
 $(bindir)/xtables-nft-multi: .container.iptables
 $(bindir)/keepalived: .container.keepalived
 
-$(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows 
+$(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
 $(bindir)/containerd.exe $(bindir)/containerd-shim-runhcs-v1.exe: .container.containerd.windows
 
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
@@ -84,6 +84,7 @@ build_docker_container = \
 
 build_docker_image = \
 	docker build --progress=plain --iidfile '$@' -t k0sbuild$(basename $@):latest \
+	  --build-arg BUILDKIT_DOCKERFILE_CHECK=skip=InvalidDefaultArgInFrom \
 	  --build-arg TARGET_OS=$(if $(findstring .windows.stamp,$@),windows,linux) \
 	  --build-arg CONTAINERD_BINS="$(containerd_bins)" \
 	  --build-arg KUBERNETES_BINS="$(kubernetes_bins)" \
