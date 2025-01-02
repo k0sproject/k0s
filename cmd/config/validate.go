@@ -25,7 +25,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func NewValidateCmd() *cobra.Command {
@@ -62,8 +65,15 @@ func NewValidateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	pflags := cmd.PersistentFlags()
+	// Add unused persistent flags for backwards compatibility.
+	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		pflags.AddFlag(f)
+	})
+
 	cmd.Flags().AddFlagSet(config.FileInputFlag())
-	_ = cmd.MarkFlagRequired("config")
+	utilruntime.Must(cmd.MarkFlagRequired("config"))
+
 	return cmd
 }

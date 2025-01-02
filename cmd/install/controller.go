@@ -66,9 +66,11 @@ With the controller subcommand you can setup a single node cluster by running:
 			return nil
 		},
 	}
-	// append flags
+
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
 	cmd.Flags().AddFlagSet(config.GetControllerFlags())
 	cmd.Flags().AddFlagSet(config.GetWorkerFlags())
+
 	return cmd
 }

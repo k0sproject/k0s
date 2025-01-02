@@ -96,11 +96,14 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			return nil
 		},
 	}
+
 	// append flags
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.Flags().StringVar(&tokenExpiry, "expiry", "0s", "Expiration time of the token. Format 1.5h, 2h45m or 300ms.")
-	cmd.Flags().StringVar(&createTokenRole, "role", "worker", "Either worker or controller")
-	cmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
+
+	flags := cmd.Flags()
+	flags.StringVar(&tokenExpiry, "expiry", "0s", "Expiration time of the token. Format 1.5h, 2h45m or 300ms.")
+	flags.StringVar(&createTokenRole, "role", "worker", "Either worker or controller")
+	flags.BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
 
 	return cmd
 }
