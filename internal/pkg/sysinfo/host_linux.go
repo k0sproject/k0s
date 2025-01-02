@@ -163,7 +163,7 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 
 	// IPv6: Netfilter Configuration
 	netfilter.AssertKernelConfig("NF_CONNTRACK_IPV6", "IPv6 connection tracking support (required for NAT)") // enables NF_NAT_IPV6, merged into NF_CONNTRACK in Linux 4.19 (a0ae2562c6c4)
-	netfilter.AssertKernelConfig("NF_NAT_IPV6", "IPv6 NAT")                                                 // depends on NF_CONNTRACK_IPV6, selects NF_NAT, merged into NF_NAT in Linux 5.1 (3bf195ae6037)
+	netfilter.AssertKernelConfig("NF_NAT_IPV6", "IPv6 NAT")                                                  // depends on NF_CONNTRACK_IPV6, selects NF_NAT, merged into NF_NAT in Linux 5.1 (3bf195ae6037)
 	ip6NFIPTables := netfilter.AssertKernelConfig("IP6_NF_IPTABLES", "IP6 tables support")
 	ip6NFIPTables.AssertKernelConfig("IP6_NF_FILTER", "Packet filtering")
 	ip6NFIPTables.AssertKernelConfig("IP6_NF_MANGLE", "Packet mangling")
