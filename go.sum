@@ -351,8 +351,8 @@ github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHm
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
 github.com/k0sproject/bootloose v0.9.0 h1:Ae45gF0jfS7ND6z1EotWs4qWAwqTRahvET91Y2+GMwo=
 github.com/k0sproject/bootloose v0.9.0/go.mod h1:4NkBMQoJ5ZZCGNWjiiEBOxn4ciEo1mBQVOmCYYglGmM=
-github.com/k0sproject/dig v0.3.1 h1:/QK40lXQ/HEE3LMT3r/kST1ANhMVZiajNDXI+spbL9o=
-github.com/k0sproject/dig v0.3.1/go.mod h1:rlZ7N7ZEcB4Fi96TPXkZ4dqyAiDWOGLapyL9YpZ7Qz4=
+github.com/k0sproject/dig v0.4.0 h1:yBxFUUxNXAMGBg6b7c6ypxdx/o3RmhoI5v5ABOw5tn0=
+github.com/k0sproject/dig v0.4.0/go.mod h1:rlZ7N7ZEcB4Fi96TPXkZ4dqyAiDWOGLapyL9YpZ7Qz4=
 github.com/k0sproject/version v0.6.0 h1:Wi8wu9j+H36+okIQA47o/YHbzNpKeIYj8IjGdJOdqsI=
 github.com/k0sproject/version v0.6.0/go.mod h1:5/7Js62gDCLBP6mEs0mUcYEEkYneM5qXDKN/hyFlQTM=
 github.com/kardianos/service v1.2.2 h1:ZvePhAHfvo0A7Mftk/tEzqEZ7Q4lgnR8sGz4xu1YX60=
