@@ -55,7 +55,6 @@ linters-settings:
           - "!$test"
           - "!**/internal/testutil/**"
           - "!**/inttest/**"
-          - "!**/pkg/supervisor/pingpong*.go" # only used for testing
         deny:
           - pkg: github.com/k0sproject/k0s/internal/testutil
             desc: Usage of test code outside of tests.
