@@ -18,7 +18,6 @@ import (
 	"crypto/sha256"
 	"path"
 
-	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apdl "github.com/k0sproject/k0s/pkg/autopilot/download"
@@ -63,7 +62,7 @@ func (b downloadManfiestBuilderAirgap) Build(signalNode crcli.Object, signalData
 			URL:          signalData.Command.AirgapUpdate.URL,
 			ExpectedHash: signalData.Command.AirgapUpdate.Sha256,
 			Hasher:       sha256.New(),
-			DownloadDir:  path.Join(b.k0sDataDir, apconst.K0sImagesDir),
+			DownloadDir:  path.Join(b.k0sDataDir, "images"),
 		},
 		SuccessState: apsigcomm.Completed,
 	}
