@@ -1,7 +1,7 @@
 //go:build unix
 
 /*
-Copyright 2023 k0s authors
+Copyright 2025 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,20 +19,15 @@ limitations under the License.
 package config
 
 import (
-	"fmt"
-	"os"
+	"os/exec"
 	"syscall"
 )
 
-func checkPid(pid int) error {
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return fmt.Errorf("failed to find process: %w", err)
+// a simple long running background command for unix systems
+func getBackgroundCommand() *exec.Cmd {
+	cmd := exec.Command("/bin/sh", "-c", "sleep 9999")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true, // Ensure the process runs in a separate process group
 	}
-
-	if err := proc.Signal(syscall.Signal(0)); err != nil {
-		return fmt.Errorf("failed to signal process: %w", err)
-	}
-
-	return nil
+	return cmd
 }
