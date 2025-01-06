@@ -19,6 +19,7 @@ package config
 import (
 	"bytes"
 	"io"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -62,6 +63,7 @@ func TestWithCommand(t *testing.T) {
 	fakeFlags := &FakeFlagSet{
 		values: map[string]any{
 			"data-dir":              "/path/to/data",
+			"kubelet-root-dir":      "/path/to/kubelet",
 			"config":                "/path/to/config",
 			"status-socket":         "/path/to/socket",
 			"enable-dynamic-config": true,
@@ -79,8 +81,12 @@ func TestWithCommand(t *testing.T) {
 	c := &CfgVars{}
 	WithCommand(fakeCmd)(c)
 
+	dir, err := filepath.Abs("/path/to/kubelet")
+	assert.NoError(t, err)
+
 	assert.Same(t, in, c.stdin)
 	assert.Equal(t, "/path/to/data", c.DataDir)
+	assert.Equal(t, dir, c.KubeletRootDir)
 	assert.Equal(t, "/path/to/config", c.StartupConfigPath)
 	assert.Equal(t, "/path/to/socket", c.StatusSocketPath)
 	assert.True(t, c.EnableDynamicConfig)
@@ -145,6 +151,45 @@ func TestNewCfgVars_DataDir(t *testing.T) {
 			c, err := NewCfgVars(tt.fakeCmd, tt.dirs...)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected.DataDir, c.DataDir)
+		})
+	}
+}
+
+func TestNewCfgVars_KubeletRootDir(t *testing.T) {
+	tests := []struct {
+		name     string
+		fakeCmd  command
+		dirs     []string
+		expected *CfgVars
+	}{
+		{
+			name:     "default kubelet root dir",
+			fakeCmd:  &FakeCommand{flagSet: &FakeFlagSet{}},
+			expected: &CfgVars{KubeletRootDir: filepath.Join(constant.DataDirDefault, "kubelet")},
+		},
+		{
+			name: "default kubelet root dir when datadir set",
+			fakeCmd: &FakeCommand{
+				flagSet: &FakeFlagSet{values: map[string]any{"data-dir": "/path/to/data"}},
+			},
+			expected: &CfgVars{KubeletRootDir: "/path/to/data/kubelet"},
+		},
+		{
+			name: "custom kubelet root dir",
+			fakeCmd: &FakeCommand{
+				flagSet: &FakeFlagSet{values: map[string]any{"kubelet-root-dir": "/path/to/kubelet"}},
+			},
+			expected: &CfgVars{KubeletRootDir: "/path/to/kubelet"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := NewCfgVars(tt.fakeCmd, tt.dirs...)
+			assert.NoError(t, err)
+			expected, err := filepath.Abs(tt.expected.KubeletRootDir)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, c.KubeletRootDir)
 		})
 	}
 }
