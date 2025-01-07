@@ -18,7 +18,6 @@ package install
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -65,8 +64,8 @@ func InstalledService() (service.Service, error) {
 	return s, errors.New("k0s has not been installed as a service")
 }
 
-// EnsureService installs the k0s service, per the given arguments, and the detected platform
-func EnsureService(args []string, envVars []string, force bool) error {
+// InstallService installs the k0s service, per the given arguments, and the detected platform
+func InstallService(args []string, envVars []string, force bool) error {
 	var deps []string
 	var svcConfig *service.Config
 
@@ -114,6 +113,7 @@ func EnsureService(args []string, envVars []string, force bool) error {
 
 	svcConfig.Dependencies = deps
 	svcConfig.Arguments = args
+
 	if force {
 		logrus.Infof("Uninstalling %s service", svcConfig.Name)
 		err = s.Uninstall()
@@ -121,12 +121,9 @@ func EnsureService(args []string, envVars []string, force bool) error {
 			logrus.Warnf("failed to uninstall service: %v", err)
 		}
 	}
+
 	logrus.Infof("Installing %s service", svcConfig.Name)
-	err = s.Install()
-	if err != nil {
-		return fmt.Errorf("failed to install service: %w", err)
-	}
-	return nil
+	return s.Install()
 }
 
 func UninstallService(role string) error {
