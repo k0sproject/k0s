@@ -174,7 +174,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 	}
 	kubeletRootDir, err = filepath.Abs(kubeletRootDir)
 	if err != nil {
-		return nil, fmt.Errorf("invalid kubeletRootDir: %w", err)
+		return nil, err
 	}
 
 	var runDir string

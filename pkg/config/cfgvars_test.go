@@ -82,7 +82,7 @@ func TestWithCommand(t *testing.T) {
 	WithCommand(fakeCmd)(c)
 
 	dir, err := filepath.Abs("/path/to/kubelet")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Same(t, in, c.stdin)
 	assert.Equal(t, "/path/to/data", c.DataDir)
@@ -149,7 +149,7 @@ func TestNewCfgVars_DataDir(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c, err := NewCfgVars(tt.fakeCmd, tt.dirs...)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.expected.DataDir, c.DataDir)
 		})
 	}
@@ -186,9 +186,9 @@ func TestNewCfgVars_KubeletRootDir(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c, err := NewCfgVars(tt.fakeCmd, tt.dirs...)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			expected, err := filepath.Abs(tt.expected.KubeletRootDir)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, expected, c.KubeletRootDir)
 		})
 	}
