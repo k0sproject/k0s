@@ -1,5 +1,7 @@
+//go:build !linux
+
 /*
-Copyright 2021 k0s authors
+Copyright 2025 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,22 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package restore
+package cmd
 
-import (
-	"errors"
+import "github.com/spf13/cobra"
 
-	"github.com/spf13/cobra"
-)
-
-var restoredConfigPath string
-
-func NewRestoreCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "restore",
-		Short: "restore k0s state from given backup archive. Not supported in Windows OS",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("unsupported Operating System for this command")
-		},
-	}
-}
+func addPlatformSpecificCommands(root *cobra.Command) { /* no-op */ }

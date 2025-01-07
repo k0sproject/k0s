@@ -37,8 +37,9 @@ func NewInstallCmd() *cobra.Command {
 		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
 
-	cmd.AddCommand(installControllerCmd(&installFlags))
 	cmd.AddCommand(installWorkerCmd(&installFlags))
+	addPlatformSpecificCommands(cmd, &installFlags)
+
 	cmd.PersistentFlags().BoolVar(&installFlags.force, "force", false, "force init script creation")
 	cmd.PersistentFlags().StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())

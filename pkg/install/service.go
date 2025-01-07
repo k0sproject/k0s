@@ -66,7 +66,6 @@ func InstalledService() (service.Service, error) {
 
 // InstallService installs the k0s service, per the given arguments, and the detected platform
 func InstallService(args []string, envVars []string, force bool) error {
-	var deps []string
 	var svcConfig *service.Config
 
 	prg := &Program{}
@@ -82,36 +81,12 @@ func InstallService(args []string, envVars []string, force bool) error {
 		return err
 	}
 
-	// fetch service type
-	svcType := s.Platform()
-	switch svcType {
-	case "linux-openrc":
-		deps = []string{"need cgroups", "need net", "use dns", "after firewall"}
-		svcConfig.Option = map[string]interface{}{
-			"OpenRCScript": openRCScript,
-		}
-	case "linux-upstart":
-		svcConfig.Option = map[string]interface{}{
-			"UpstartScript": upstartScript,
-		}
-	case "unix-systemv":
-		svcConfig.Option = map[string]interface{}{
-			"SysVScript": sysvScript,
-		}
-	case "linux-systemd":
-		deps = []string{"After=network-online.target", "Wants=network-online.target"}
-		svcConfig.Option = map[string]interface{}{
-			"SystemdScript": systemdScript,
-			"LimitNOFILE":   999999,
-		}
-	default:
-	}
+	configureServicePlatform(s, svcConfig)
 
 	if len(envVars) > 0 {
 		svcConfig.Option["Environment"] = envVars
 	}
 
-	svcConfig.Dependencies = deps
 	svcConfig.Arguments = args
 
 	if force {

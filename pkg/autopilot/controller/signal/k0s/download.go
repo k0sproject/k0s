@@ -33,6 +33,8 @@ import (
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
+const Downloading = "Downloading"
+
 // downloadEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
 func downloadEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {

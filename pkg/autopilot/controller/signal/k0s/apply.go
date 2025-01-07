@@ -36,6 +36,8 @@ import (
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
+const ApplyingUpdate = "ApplyingUpdate"
+
 // applyingUpdateEventFilter creates a controller-runtime predicate that governs which
 // objects will make it into reconciliation, and which will be ignored.
 func applyingUpdateEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
