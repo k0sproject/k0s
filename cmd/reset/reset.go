@@ -46,8 +46,12 @@ func NewResetCmd() *cobra.Command {
 		},
 	}
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.Flags().AddFlagSet(config.GetCriSocketFlag())
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetCriSocketFlag())
+	flags.AddFlagSet(config.FileInputFlag())
+	flags.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
+
 	return cmd
 }
 
