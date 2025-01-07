@@ -23,13 +23,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/k0sproject/dig"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -73,9 +72,9 @@ func TestKubeRouterConfig(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.InEpsilon(t, 1450, p.Dig("mtu"), 0)
-	require.Equal(t, true, p.Dig("hairpinMode"))
-	require.Equal(t, true, p.Dig("ipMasq"))
+	assert.InEpsilon(t, 1450, p["mtu"], 0)
+	assert.Equal(t, true, p["hairpinMode"])
+	assert.Equal(t, true, p["ipMasq"])
 }
 
 type hairpinTest struct {
@@ -155,9 +154,9 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.Nil(t, p.Dig("mtu"))
-	require.Equal(t, true, p.Dig("hairpinMode"))
-	require.Equal(t, false, p.Dig("ipMasq"))
+	assert.NotContains(t, p, "mtu")
+	assert.Equal(t, true, p["hairpinMode"])
+	assert.Equal(t, false, p["ipMasq"])
 }
 
 func TestKubeRouterManualMTUManifests(t *testing.T) {
@@ -191,7 +190,7 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.InEpsilon(t, 1234, p.Dig("mtu"), 0)
+	assert.InEpsilon(t, 1234, p["mtu"], 0)
 }
 
 func TestExtraArgs(t *testing.T) {
@@ -242,28 +241,25 @@ func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error
 	return cm, errors.New("kube-router cm not found in manifests")
 }
 
-func getKubeRouterPlugin(cm corev1.ConfigMap, pluginType string) (dig.Mapping, error) {
-	data := dig.Mapping{}
+func getKubeRouterPlugin(cm corev1.ConfigMap, pluginType string) (map[string]any, error) {
+	var data map[string]any
 	err := json.Unmarshal([]byte(cm.Data["cni-conf.json"]), &data)
 	if err != nil {
 		return data, err
 	}
-	plugins, ok := data.Dig("plugins").([]interface{})
-	if !ok {
-		return data, errors.New("failed to dig plugins")
-	}
-	for _, p := range plugins {
-		plugin, ok := p.(dig.Mapping)
-		if ok && plugin.DigString("type") == pluginType {
-			return plugin, nil
+	if plugins, ok := data["plugins"].([]any); ok {
+		for _, plugin := range plugins {
+			if p, ok := plugin.(map[string]any); ok && p["type"] == pluginType {
+				return p, nil
+			}
 		}
 	}
 
 	return data, fmt.Errorf("failed to find plugin of type %s", pluginType)
 }
 
-func findDaemonset(resources []*unstructured.Unstructured) (v1.DaemonSet, error) {
-	var ds v1.DaemonSet
+func findDaemonset(resources []*unstructured.Unstructured) (appsv1.DaemonSet, error) {
+	var ds appsv1.DaemonSet
 	for _, r := range resources {
 		if r.GetKind() == "DaemonSet" {
 			err := runtime.DefaultUnstructuredConverter.FromUnstructured(r.Object, &ds)
