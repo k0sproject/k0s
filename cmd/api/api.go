@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -56,7 +56,7 @@ func NewAPICmd() *cobra.Command {
 		Args:  cobra.NoArgs,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			logrus.SetOutput(cmd.OutOrStdout())
-			k0slog.SetInfoLevel()
+			internallog.SetInfoLevel()
 			return config.CallParentPersistentPreRun(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
