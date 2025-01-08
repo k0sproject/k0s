@@ -17,13 +17,10 @@ limitations under the License.
 package config
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -68,12 +65,6 @@ func LoadRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 		return nil, err
 	}
 
-	// "migrate" old runtime config to allow running commands on a new binary while an old version is still running.
-	// the legacy runtime config gets deleted when the server running on the old binary is stopped.
-	if isLegacy(content) {
-		return migrateLegacyRuntimeConfig(k0sVars, content)
-	}
-
 	config := &RuntimeConfig{}
 	if err := yaml.Unmarshal(content, config); err != nil {
 		return nil, err
@@ -104,36 +95,6 @@ func LoadRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 	}
 
 	return spec, nil
-}
-
-func migrateLegacyRuntimeConfig(k0sVars *CfgVars, content []byte) (*RuntimeConfigSpec, error) {
-	cfg := &v1beta1.ClusterConfig{}
-
-	if err := yaml.Unmarshal(content, cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal legacy runtime config: %w", err)
-	}
-
-	// generate a new runtime config
-	return &RuntimeConfigSpec{K0sVars: k0sVars, NodeConfig: cfg, Pid: os.Getpid()}, nil
-}
-
-func isLegacy(data []byte) bool {
-	scanner := bufio.NewScanner(bytes.NewReader(data))
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.HasPrefix(line, "kind:") {
-			value := strings.TrimSpace(strings.TrimPrefix(line, "kind:"))
-			return value != RuntimeConfigKind
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "error scanning runtime config:", err)
-	}
-
-	return false
 }
 
 func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
