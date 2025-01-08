@@ -25,6 +25,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 type command config.CLIOptions
@@ -41,7 +42,7 @@ func NewInstallCmd() *cobra.Command {
 		Use:   "install",
 		Short: "Install k0s on a brand-new system. Must be run as root (or with sudo)",
 		Args:  cobra.NoArgs,
-		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
+		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 
 	cmd.AddCommand(installControllerCmd(&installFlags))

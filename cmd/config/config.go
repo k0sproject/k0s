@@ -18,6 +18,7 @@ package config
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func NewConfigCmd() *cobra.Command {
@@ -25,7 +26,7 @@ func NewConfigCmd() *cobra.Command {
 		Use:   "config",
 		Short: "Configuration related sub-commands",
 		Args:  cobra.NoArgs,
-		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
+		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewEditCmd())
