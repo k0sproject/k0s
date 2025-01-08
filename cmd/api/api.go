@@ -41,18 +41,13 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	clientcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	tokenutil "k8s.io/cluster-bootstrap/token/util"
 	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
-
-type command struct {
-	*config.CLIOptions
-	client kubernetes.Interface
-}
 
 func NewAPICmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -69,7 +64,13 @@ func NewAPICmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return (&command{CLIOptions: opts}).start()
+
+			run, err := buildServer(opts.K0sVars)
+			if err != nil {
+				return err
+			}
+
+			return run()
 		},
 	}
 
@@ -78,18 +79,19 @@ func NewAPICmd() *cobra.Command {
 	return cmd
 }
 
-func (c *command) start() (err error) {
+func buildServer(k0sVars *config.CfgVars) (func() error, error) {
 	// Single kube client for whole lifetime of the API
-	c.client, err = kubeutil.NewClientFromFile(c.K0sVars.AdminKubeConfigPath)
+	client, err := kubeutil.NewClientFromFile(k0sVars.AdminKubeConfigPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	secrets := client.CoreV1().Secrets("kube-system")
 
 	prefix := "/v1beta1"
 	mux := http.NewServeMux()
-	nodeConfig, err := c.K0sVars.NodeConfig()
+	nodeConfig, err := k0sVars.NodeConfig()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	storage := nodeConfig.Spec.Storage
 
@@ -97,12 +99,12 @@ func (c *command) start() (err error) {
 		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		mux.Handle(prefix+"/etcd/members", mw.AllowMethods(http.MethodPost)(
-			c.authMiddleware(c.etcdHandler(), "controller-join")))
+			authMiddleware(etcdHandler(k0sVars.CertRootDir, k0sVars.EtcdCertDir), secrets, "controller-join")))
 	}
 
 	if storage.IsJoinable() {
 		mux.Handle(prefix+"/ca", mw.AllowMethods(http.MethodGet)(
-			c.authMiddleware(c.caHandler(), "controller-join")))
+			authMiddleware(caHandler(k0sVars.CertRootDir), secrets, "controller-join")))
 	}
 
 	srv := &http.Server{
@@ -116,13 +118,13 @@ func (c *command) start() (err error) {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	return srv.ListenAndServeTLS(
-		filepath.Join(c.K0sVars.CertRootDir, "k0s-api.crt"),
-		filepath.Join(c.K0sVars.CertRootDir, "k0s-api.key"),
-	)
+	cert := filepath.Join(k0sVars.CertRootDir, "k0s-api.crt")
+	key := filepath.Join(k0sVars.CertRootDir, "k0s-api.key")
+
+	return func() error { return srv.ListenAndServeTLS(cert, key) }, nil
 }
 
-func (c *command) etcdHandler() http.Handler {
+func etcdHandler(certRootDir, etcdCertDir string) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		var etcdReq v1beta1.EtcdRequest
@@ -138,7 +140,7 @@ func (c *command) etcdHandler() http.Handler {
 			return
 		}
 
-		etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir, nil)
+		etcdClient, err := etcd.NewClient(certRootDir, etcdCertDir, nil)
 		if err != nil {
 			sendError(err, resp)
 			return
@@ -154,7 +156,7 @@ func (c *command) etcdHandler() http.Handler {
 			InitialCluster: memberList,
 		}
 
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(c.K0sVars.EtcdCertDir, "ca.crt"), filepath.Join(c.K0sVars.EtcdCertDir, "ca.key")
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(etcdCertDir, "ca.crt"), filepath.Join(etcdCertDir, "ca.key")
 		etcdCACert, err := os.ReadFile(etcdCaCertPath)
 		if err != nil {
 			sendError(err, resp)
@@ -178,30 +180,30 @@ func (c *command) etcdHandler() http.Handler {
 	})
 }
 
-func (c *command) caHandler() http.Handler {
+func caHandler(certRootDir string) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		caResp := v1beta1.CaResponse{}
-		key, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.key"))
+		key, err := os.ReadFile(path.Join(certRootDir, "ca.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Key = key
-		crt, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
+		crt, err := os.ReadFile(path.Join(certRootDir, "ca.crt"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Cert = crt
 
-		saKey, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.key"))
+		saKey, err := os.ReadFile(path.Join(certRootDir, "sa.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.SAKey = saKey
 
-		saPub, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.pub"))
+		saPub, err := os.ReadFile(path.Join(certRootDir, "sa.pub"))
 		if err != nil {
 			sendError(err, resp)
 			return
@@ -223,14 +225,14 @@ func (c *command) caHandler() http.Handler {
 // We need to validate:
 //   - that we find a secret with the ID
 //   - that the token matches whats inside the secret
-func (c *command) isValidToken(ctx context.Context, rawTokenString string, usage string) bool {
+func isValidToken(ctx context.Context, secrets clientcorev1.SecretInterface, rawTokenString, usage string) bool {
 	tokenString, err := bootstraptokenv1.NewBootstrapTokenString(rawTokenString)
 	if err != nil {
 		return false
 	}
 
 	secretName := tokenutil.BootstrapTokenSecretName(tokenString.ID)
-	secret, err := c.client.CoreV1().Secrets("kube-system").Get(ctx, secretName, metav1.GetOptions{})
+	secret, err := secrets.Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			logrus.WithError(err).Error("Failed to get bootstrap token with ID ", tokenString.ID)
@@ -262,12 +264,12 @@ func (c *command) isValidToken(ctx context.Context, rawTokenString string, usage
 	}
 }
 
-func (c *command) authMiddleware(next http.Handler, usage string) http.Handler {
+func authMiddleware(next http.Handler, secrets clientcorev1.SecretInterface, usage string) http.Handler {
 	unauthorizedErr := errors.New("go away")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
-		if ok && c.isValidToken(r.Context(), token, usage) {
+		if ok && isValidToken(r.Context(), secrets, token, usage) {
 			next.ServeHTTP(w, r)
 		} else {
 			sendError(unauthorizedErr, w, http.StatusUnauthorized)
