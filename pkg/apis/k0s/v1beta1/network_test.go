@@ -100,14 +100,14 @@ func (s *NetworkSuite) TestAddresses() {
 }
 
 func (s *NetworkSuite) TestDomainMarshaling() {
-	yamlData := `
+	yamlData := []byte(`
 spec:
   storage:
     type: kine
   network:
     clusterDomain: something.local
-`
-	c, err := ConfigFromString(yamlData)
+`)
+	c, err := ConfigFromBytes(yamlData)
 	s.Require().NoError(err)
 	n := c.Spec.Network
 	s.Equal("kuberouter", n.Provider)
@@ -125,7 +125,7 @@ func (s *NetworkSuite) TestNetworkDefaults() {
 }
 
 func (s *NetworkSuite) TestCalicoDefaultsAfterMashaling() {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -134,9 +134,9 @@ spec:
   network:
     provider: calico
     calico:
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	s.Require().NoError(err)
 	n := c.Spec.Network
 
@@ -148,7 +148,7 @@ spec:
 }
 
 func (s *NetworkSuite) TestKubeRouterDefaultsAfterMashaling() {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -157,9 +157,9 @@ spec:
   network:
     provider: kuberouter
     kuberouter:
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	s.Require().NoError(err)
 	n := c.Spec.Network
 
@@ -174,15 +174,15 @@ spec:
 }
 
 func (s *NetworkSuite) TestKubeProxyDefaultsAfterMashaling() {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
   name: foobar
 spec:
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	s.Require().NoError(err)
 	p := c.Spec.Network.KubeProxy
 
@@ -191,7 +191,7 @@ spec:
 }
 
 func (s *NetworkSuite) TestKubeProxyDisabling() {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -200,9 +200,9 @@ spec:
   network:
     kubeProxy:
       disabled: true
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	s.Require().NoError(err)
 	p := c.Spec.Network.KubeProxy
 

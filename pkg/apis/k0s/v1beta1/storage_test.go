@@ -143,12 +143,12 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 }
 
 func TestKinePartialConfigLoading(t *testing.T) {
-	yaml := `
+	yaml := []byte(`
 spec:
   storage:
     type: kine
-`
-	c, err := ConfigFromString(yaml)
+`)
+	c, err := ConfigFromBytes(yaml)
 	assert.NoError(t, err)
 	assert.Equal(t, KineStorageType, c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)

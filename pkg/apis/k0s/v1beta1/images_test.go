@@ -33,7 +33,7 @@ func getConfigYAML(t *testing.T, c *ClusterConfig) []byte {
 }
 
 func TestClusterImages_Customized(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1s
 kind: ClusterConfig
 spec:
@@ -44,8 +44,8 @@ spec:
     coredns:
       image: custom.io/coredns/coredns
       version: 1.0.0
-`
-	cfg, err := ConfigFromString(yamlData)
+`)
+	cfg, err := ConfigFromBytes(yamlData)
 	require.NoError(t, err)
 	a := cfg.Spec.Images
 
@@ -56,7 +56,7 @@ spec:
 }
 
 func TestStripDefaultsForDefaultImageList(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1s
 kind: ClusterConfig
 spec:
@@ -66,9 +66,9 @@ spec:
     nodeLocalLoadBalancing:
       enabled: true
       type: EnvoyProxy
-`
+`)
 
-	cfg, err := ConfigFromString(yamlData)
+	cfg, err := ConfigFromBytes(yamlData)
 	require.NoError(t, err)
 
 	strippedCfg := cfg.StripDefaults()

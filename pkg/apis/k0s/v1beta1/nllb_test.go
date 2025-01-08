@@ -42,7 +42,7 @@ func TestNodeLocalLoadBalancing_IsEnabled(t *testing.T) {
 }
 
 func TestNodeLocalLoadBalancing_Unmarshal_ImageOverride(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -50,9 +50,9 @@ metadata:
 spec:
   images:
     repository: example.com
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	require.NoError(t, err)
 	errors := c.Validate()
 	require.Nil(t, errors)
@@ -79,7 +79,7 @@ spec:
 
 	for _, field := range []string{"image", "version"} {
 		t.Run(field+"_empty", func(t *testing.T) {
-			c, err := ConfigFromString(fmt.Sprintf(yamlData, field, `""`))
+			c, err := ConfigFromBytes([]byte(fmt.Sprintf(yamlData, field, `""`)))
 			require.NoError(t, err)
 			require.NotNil(t, c)
 			require.Empty(t, c.Validate())
@@ -104,7 +104,7 @@ spec:
 		},
 	} {
 		t.Run(test.field+"_invalid", func(t *testing.T) {
-			c, err := ConfigFromString(fmt.Sprintf(yamlData, test.field, test.value))
+			c, err := ConfigFromBytes([]byte(fmt.Sprintf(yamlData, test.field, test.value)))
 			require.NoError(t, err)
 			require.NotNil(t, c)
 			errs := c.Validate()
