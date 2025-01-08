@@ -25,17 +25,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/spf13/pflag"
-)
-
-type CfgVarsOriginType int
-
-const (
-	CfgVarsOriginDefault CfgVarsOriginType = iota
-	CfgVarsOriginRuntime
 )
 
 // CfgVars is a struct that holds all the config variables required for K0s
@@ -71,7 +63,6 @@ type CfgVars struct {
 
 	stdin      io.Reader
 	nodeConfig *v1beta1.ClusterConfig
-	origin     CfgVarsOriginType
 }
 
 func (c *CfgVars) DeepCopy() *CfgVars {
@@ -218,8 +209,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		HelmRepositoryCache:  filepath.Join(helmHome, "cache"),
 		HelmRepositoryConfig: filepath.Join(helmHome, "repositories.yaml"),
 
-		stdin:  os.Stdin,
-		origin: CfgVarsOriginDefault,
+		stdin: os.Stdin,
 	}
 
 	if cobraCmd != nil {
@@ -227,13 +217,6 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 	}
 
 	return vars, nil
-}
-
-func (c *CfgVars) Cleanup() error {
-	if c.origin == CfgVarsOriginDefault && file.Exists(c.RuntimeConfigPath) {
-		return os.Remove(c.RuntimeConfigPath)
-	}
-	return nil
 }
 
 func (c *CfgVars) defaultStorageSpec() *v1beta1.StorageSpec {
@@ -252,10 +235,6 @@ var defaultConfigPath = constant.K0sConfigPathDefault
 func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 	if c.nodeConfig != nil {
 		return c.nodeConfig, nil
-	}
-
-	if c.origin == CfgVarsOriginRuntime {
-		return nil, errors.New("runtime config is not available")
 	}
 
 	if c.StartupConfigPath == "" {
