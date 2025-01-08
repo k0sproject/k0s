@@ -189,7 +189,7 @@ func (bm Manager) getConfigForRestore() (*v1beta1.ClusterConfig, error) {
 		return nil, err
 	}
 
-	cfg, err := v1beta1.ConfigFromString(string(bytes))
+	cfg, err := v1beta1.ConfigFromBytes(bytes)
 	if err != nil {
 		return nil, err
 	}

@@ -227,8 +227,12 @@ func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 			return nil, errors.New("stdin already grabbed")
 		}
 
-		var err error
-		nodeConfig, err = v1beta1.ConfigFromReader(configReader, c.defaultStorageSpec())
+		bytes, err := io.ReadAll(configReader)
+		if err != nil {
+			return nil, err
+		}
+
+		nodeConfig, err = v1beta1.ConfigFromBytes(bytes, c.defaultStorageSpec())
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +241,7 @@ func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 		if errors.Is(err, os.ErrNotExist) && c.StartupConfigPath == defaultConfigPath {
 			nodeConfig = v1beta1.DefaultClusterConfig(c.defaultStorageSpec())
 		} else if err == nil {
-			cfg, err := v1beta1.ConfigFromString(string(cfgContent), c.defaultStorageSpec())
+			cfg, err := v1beta1.ConfigFromBytes(cfgContent, c.defaultStorageSpec())
 			if err != nil {
 				return nil, err
 			}

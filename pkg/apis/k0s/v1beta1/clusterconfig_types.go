@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -198,9 +197,9 @@ func (s *SchedulerSpec) IsZero() bool {
 	return len(s.ExtraArgs) == 0
 }
 
-func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
+func ConfigFromBytes(bytes []byte, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
 	config := DefaultClusterConfig(defaultStorage...)
-	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, "interval", "podSecurityPolicy")
+	err := strictyaml.YamlUnmarshalStrictIgnoringFields(bytes, config, "interval", "podSecurityPolicy")
 	if err != nil {
 		return config, err
 	}
@@ -208,15 +207,6 @@ func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfi
 		config.Spec = DefaultClusterSpec(defaultStorage...)
 	}
 	return config, nil
-}
-
-// ConfigFromReader reads the configuration from any reader (can be stdin, file reader, etc)
-func ConfigFromReader(r io.Reader, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
-	input, err := io.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-	return ConfigFromString(string(input), defaultStorage...)
 }
 
 // DefaultClusterConfig sets the default ClusterConfig values, when none are given

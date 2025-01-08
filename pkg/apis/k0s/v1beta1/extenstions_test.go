@@ -87,7 +87,7 @@ func TestValidation(t *testing.T) {
 }
 
 func TestIntegerTimeoutParsing(t *testing.T) {
-	yaml := `
+	yaml := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -100,9 +100,9 @@ spec:
         chartname: prometheus-community/prometheus
         version: "14.6.1"
         timeout: 60000000000
-`
+`)
 
-	c, err := ConfigFromString(yaml)
+	c, err := ConfigFromBytes(yaml)
 	require := require.New(t)
 
 	require.NoError(err)
@@ -115,7 +115,7 @@ spec:
 }
 
 func TestDurationParsing(t *testing.T) {
-	yaml := `
+	yaml := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -128,9 +128,9 @@ spec:
         chartname: prometheus-community/prometheus
         version: "14.6.1"
         timeout: 20m
-`
+`)
 
-	c, err := ConfigFromString(yaml)
+	c, err := ConfigFromBytes(yaml)
 	require := require.New(t)
 
 	require.NoError(err)
