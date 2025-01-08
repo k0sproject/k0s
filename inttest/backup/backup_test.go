@@ -76,11 +76,8 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.InitController(1, token, "--config=/tmp/k0s.yaml"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(1)))
 
-	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
-	s.Require().NoError(err)
-
-	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
-	s.Require().NoError(err)
+	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), kc))
+	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(1), kc))
 
 	s.AssertSomeKubeSystemPods(kc)
 
@@ -90,8 +87,6 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.backupFunc())
 
 	snapshot := s.makeSnapshot(kc)
-
-	s.Require().NoError(err)
 
 	s.Require().NoError(s.StopController(s.ControllerNode(0)))
 	_ = s.StopController(s.ControllerNode(1)) // No error check as k0s might have actually exited since etcd is not really happy
@@ -106,16 +101,10 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	// Join the second controller as normally
 	s.Require().NoError(s.InitController(1, "--enable-worker", token))
 
-	s.Require().NoError(err)
-
-	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
-	s.Require().NoError(err)
-
-	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
-	s.Require().NoError(err)
+	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), kc))
+	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(1), kc))
 
 	snapshotAfterBackup := s.makeSnapshot(kc)
-	s.Require().NoError(err)
 	// Matching object UIDs after restore guarantees we got the full state restored
 	s.Require().Equal(snapshot, snapshotAfterBackup)
 
@@ -191,7 +180,7 @@ func (s *BackupSuite) takeBackup() error {
 	}
 	defer ssh.Disconnect()
 
-	out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s backup --save-path /root/")
+	out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s backup --debug --save-path /root/")
 	if !s.NoErrorf(err, "backup failed with output: %s", out) {
 		return err
 	}
@@ -206,7 +195,7 @@ func (s *BackupSuite) takeBackupStdout() error {
 	}
 	defer ssh.Disconnect()
 
-	out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s backup --save-path - > backup.tar.gz")
+	out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s backup --debug --save-path - > backup.tar.gz")
 	if !s.NoErrorf(err, "backup failed with output: %s", out) {
 		return err
 	}
@@ -216,7 +205,7 @@ func (s *BackupSuite) takeBackupStdout() error {
 		return err
 	}
 
-	s.T().Logf("backup taken succesfully with output:\n%s", out)
+	s.T().Logf("backup taken successfully with output:\n%s", out)
 	return nil
 }
 
@@ -229,11 +218,11 @@ func (s *BackupSuite) restoreBackup() error {
 
 	s.T().Log("restoring controller from file")
 
-	out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s restore $(ls /root/k0s_backup_*.tar.gz)")
+	out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s restore --debug $(ls /root/k0s_backup_*.tar.gz)")
 	if !s.NoErrorf(err, "restore failed with output: %s", out) {
 		return err
 	}
-	s.T().Logf("restored succesfully with output:\n%s", out)
+	s.T().Logf("restored successfully with output:\n%s", out)
 
 	return nil
 }
@@ -247,11 +236,11 @@ func (s *BackupSuite) restoreBackupStdin() error {
 
 	s.T().Log("restoring controller from stdin")
 
-	out, err := ssh.ExecWithOutput(s.Context(), "cat backup.tar.gz | /usr/local/bin/k0s restore -")
+	out, err := ssh.ExecWithOutput(s.Context(), "cat backup.tar.gz | /usr/local/bin/k0s restore --debug -")
 	if !s.NoErrorf(err, "restore failed with output: %s", out) {
 		return err
 	}
-	s.T().Logf("restored succesfully with output:\n%s", out)
+	s.T().Logf("restored successfully with output:\n%s", out)
 
 	return nil
 }

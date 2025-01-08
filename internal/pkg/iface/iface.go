@@ -82,19 +82,20 @@ func FirstPublicAddress() (string, error) {
 		case strings.HasPrefix(i.Name, "cali"):
 			continue
 		}
-		addresses, err := i.Addrs()
+
+		addresses, err := interfaceAddrs(i)
 		if err != nil {
-			logrus.Warnf("failed to get addresses for interface %s: %s", i.Name, err.Error())
+			logrus.WithError(err).Warn("Skipping network interface ", i.Name)
 			continue
 		}
-		for _, a := range addresses {
+		for a := range addresses {
 			// check the address type and skip if loopback
-			if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-				if ipnet.IP.To4() != nil {
-					return ipnet.IP.String(), nil
+			if a != nil && !a.IP.IsLoopback() {
+				if a.IP.To4() != nil {
+					return a.IP.String(), nil
 				}
-				if ipnet.IP.To16() != nil && ipv6addr == "" {
-					ipv6addr = ipnet.IP.String()
+				if a.IP.To16() != nil && ipv6addr == "" {
+					ipv6addr = a.IP.String()
 				}
 			}
 		}
