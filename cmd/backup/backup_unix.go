@@ -25,6 +25,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/backup"
@@ -38,12 +39,16 @@ import (
 type command config.CLIOptions
 
 func NewBackupCmd() *cobra.Command {
-	var savePath string
+	var (
+		debugFlags internal.DebugFlags
+		savePath   string
+	)
 
 	cmd := &cobra.Command{
-		Use:   "backup",
-		Short: "Back-Up k0s configuration. Must be run as root (or with sudo)",
-		Args:  cobra.NoArgs,
+		Use:              "backup",
+		Short:            "Back-Up k0s configuration. Must be run as root (or with sudo)",
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
@@ -60,6 +65,8 @@ func NewBackupCmd() *cobra.Command {
 			return c.backup(nodeConfig, savePath, cmd.OutOrStdout())
 		},
 	}
+
+	debugFlags.AddToFlagSet(cmd.PersistentFlags())
 
 	flags := cmd.Flags()
 	flags.AddFlagSet(config.GetPersistentFlagSet())
