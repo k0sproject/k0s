@@ -55,8 +55,11 @@ func NewEtcdCmd() *cobra.Command {
 		},
 		RunE: func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
+
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
 	cmd.AddCommand(etcdLeaveCmd())
 	cmd.AddCommand(etcdListCmd())
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
 	return cmd
 }

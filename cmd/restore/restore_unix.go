@@ -61,8 +61,10 @@ func NewRestoreCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", "Specify desired name and full path for the restored k0s.yaml file (default: k0s_<archive timestamp>.yaml")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.StringVar(&restoredConfigPath, "config-out", "", "Specify desired name and full path for the restored k0s.yaml file (default: k0s_<archive timestamp>.yaml")
+
 	return cmd
 }
 

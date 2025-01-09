@@ -53,8 +53,11 @@ func NewAirgapListImagesCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
-	cmd.Flags().BoolVar(&all, "all", false, "include all images, even if they are not used in the current configuration")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlagSet(config.FileInputFlag())
+	flags.BoolVar(&all, "all", false, "include all images, even if they are not used in the current configuration")
+
 	return cmd
 }
