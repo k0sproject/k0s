@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 
@@ -28,14 +29,14 @@ import (
 )
 
 func NewEtcdCmd() *cobra.Command {
+	var debugFlags internal.DebugFlags
+
 	cmd := &cobra.Command{
 		Use:   "etcd",
 		Short: "Manage etcd cluster",
 		Args:  cobra.NoArgs,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := config.CallParentPersistentPreRun(cmd, args); err != nil {
-				return err
-			}
+			debugFlags.Run(cmd, args)
 
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
@@ -56,7 +57,9 @@ func NewEtcdCmd() *cobra.Command {
 		RunE: func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	pflags := cmd.PersistentFlags()
+	debugFlags.AddToFlagSet(pflags)
+	pflags.AddFlagSet(config.GetPersistentFlagSet())
 
 	cmd.AddCommand(etcdLeaveCmd())
 	cmd.AddCommand(etcdListCmd())

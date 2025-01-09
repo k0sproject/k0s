@@ -26,9 +26,11 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/component-base/logs"
 	kubectl "k8s.io/kubectl/pkg/cmd"
 	"k8s.io/kubectl/pkg/cmd/plugin"
@@ -70,7 +72,7 @@ func (h *kubectlPluginHandler) Execute(executablePath string, cmdArgs, environme
 func NewK0sKubectlCmd() *cobra.Command {
 	// Create a new kubectl command without a plugin handler.
 	kubectlCmd := kubectl.NewKubectlCommand(kubectl.KubectlOptions{
-		IOStreams: genericclioptions.IOStreams{
+		IOStreams: genericiooptions.IOStreams{
 			In:     os.Stdin,
 			Out:    os.Stdout,
 			ErrOut: os.Stderr,
@@ -104,6 +106,7 @@ func hookKubectlPluginHandler(kubectlCmd *cobra.Command) {
 	// Intercept kubectl's PreRunE, so that generic k0s flags are honored and
 	// kubectl plugins may be handled properly, e.g. so that `k0s kc foo bar`
 	// works as expected when there's a `kubectl-foo` plugin installed.
+	var debugFlags internal.DebugFlags
 	originalPreRunE := kubectlCmd.PersistentPreRunE
 	kubectlCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		handleKubectlPlugins(kubectlCmd)
@@ -126,9 +129,7 @@ func hookKubectlPluginHandler(kubectlCmd *cobra.Command) {
 		logs.InitLogs()
 		cobra.OnFinalize(logs.FlushLogs)
 
-		if err := config.CallParentPersistentPreRun(kubectlCmd, args); err != nil {
-			return err
-		}
+		debugFlags.Run(kubectlCmd, args)
 
 		if err := fallbackToK0sKubeconfig(cmd); err != nil {
 			return err
@@ -136,6 +137,8 @@ func hookKubectlPluginHandler(kubectlCmd *cobra.Command) {
 
 		return originalPreRunE(cmd, args)
 	}
+
+	debugFlags.AddToKubectlFlagSet(kubectlCmd.PersistentFlags())
 }
 
 // handleKubectlPlugins calls kubectl's plugin handler and execs the plugin

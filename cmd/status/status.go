@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
 
@@ -31,13 +32,17 @@ import (
 )
 
 func NewStatusCmd() *cobra.Command {
-	var output string
+	var (
+		debugFlags internal.DebugFlags
+		output     string
+	)
 
 	cmd := &cobra.Command{
-		Use:     "status",
-		Short:   "Get k0s instance status information",
-		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
-		Args:    cobra.NoArgs,
+		Use:              "status",
+		Short:            "Get k0s instance status information",
+		Example:          `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
+		PersistentPreRun: debugFlags.Run,
+		Args:             cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
@@ -57,7 +62,9 @@ func NewStatusCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
+	pflags := cmd.PersistentFlags()
+	debugFlags.AddToFlagSet(pflags)
+	pflags.String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
 
 	cmd.AddCommand(NewStatusSubCmdComponents())
 

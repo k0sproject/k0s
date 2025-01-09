@@ -32,7 +32,7 @@ import (
 	"strings"
 	"time"
 
-	internallog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/cmd/internal"
 	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -52,17 +52,15 @@ import (
 )
 
 func NewAPICmd() *cobra.Command {
+	var debugFlags internal.DebugFlags
+
 	cmd := &cobra.Command{
 		Use:   "api",
 		Short: "Run the controller API",
 		Long: `Run the controller API.
 Reads the runtime configuration from standard input.`,
-		Args: cobra.NoArgs,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			logrus.SetOutput(cmd.OutOrStdout())
-			internallog.SetInfoLevel()
-			return config.CallParentPersistentPreRun(cmd, args)
-		},
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			var run func() error
 
@@ -75,6 +73,8 @@ Reads the runtime configuration from standard input.`,
 			return run()
 		},
 	}
+
+	debugFlags.LongRunning().AddToFlagSet(cmd.PersistentFlags())
 
 	flags := cmd.Flags()
 	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {

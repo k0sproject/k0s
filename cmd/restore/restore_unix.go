@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/backup"
@@ -43,12 +44,16 @@ type command struct {
 }
 
 func NewRestoreCmd() *cobra.Command {
-	var restoredConfigPath string
+	var (
+		debugFlags         internal.DebugFlags
+		restoredConfigPath string
+	)
 
 	cmd := &cobra.Command{
-		Use:   "restore filename",
-		Short: "restore k0s state from given backup archive. Use '-' as filename to read from stdin. Must be run as root (or with sudo)",
-		Args:  cobra.ExactArgs(1),
+		Use:              "restore filename",
+		Short:            "restore k0s state from given backup archive. Use '-' as filename to read from stdin. Must be run as root (or with sudo)",
+		Args:             cobra.ExactArgs(1),
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
@@ -60,6 +65,8 @@ func NewRestoreCmd() *cobra.Command {
 			return c.restore(args[0], cmd.OutOrStdout())
 		},
 	}
+
+	debugFlags.AddToFlagSet(cmd.PersistentFlags())
 
 	flags := cmd.Flags()
 	flags.AddFlagSet(config.GetPersistentFlagSet())
