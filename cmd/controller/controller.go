@@ -33,10 +33,10 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/cmd/internal"
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -70,7 +70,10 @@ import (
 type command config.CLIOptions
 
 func NewControllerCmd() *cobra.Command {
-	var ignorePreFlightChecks bool
+	var (
+		debugFlags            internal.DebugFlags
+		ignorePreFlightChecks bool
+	)
 
 	cmd := &cobra.Command{
 		Use:     "controller [join-token]",
@@ -83,12 +86,8 @@ func NewControllerCmd() *cobra.Command {
 	or CLI flag:
 	$ k0s controller --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
-		Args: cobra.MaximumNArgs(1),
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			logrus.SetOutput(cmd.OutOrStdout())
-			internallog.SetInfoLevel()
-			return config.CallParentPersistentPreRun(cmd, args)
-		},
+		Args:             cobra.MaximumNArgs(1),
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
@@ -117,9 +116,11 @@ func NewControllerCmd() *cobra.Command {
 
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
-			return c.start(ctx)
+			return c.start(ctx, debugFlags.IsDebug())
 		},
 	}
+
+	debugFlags.LongRunning().AddToFlagSet(cmd.PersistentFlags())
 
 	flags := cmd.Flags()
 	flags.AddFlagSet(config.GetPersistentFlagSet())
@@ -130,7 +131,7 @@ func NewControllerCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *command) start(ctx context.Context) error {
+func (c *command) start(ctx context.Context, debug bool) error {
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
 	nodeConfig, err := c.K0sVars.NodeConfig()
@@ -264,8 +265,8 @@ func (c *command) start(ctx context.Context) error {
 		nodeComponents.Add(ctx, &cplb.Keepalived{
 			K0sVars:         c.K0sVars,
 			Config:          cplbCfg.Keepalived,
-			DetailedLogging: c.Debug,
-			LogConfig:       c.Debug,
+			DetailedLogging: debug,
+			LogConfig:       debug,
 			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
 			APIPort:         nodeConfig.Spec.API.Port,
 		})

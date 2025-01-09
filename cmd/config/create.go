@@ -17,13 +17,15 @@ limitations under the License.
 package config
 
 import (
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"sigs.k8s.io/yaml"
-
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/config"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"sigs.k8s.io/yaml"
 )
 
 func NewCreateCmd() *cobra.Command {
@@ -57,7 +59,11 @@ func NewCreateCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.AddFlagSet(config.GetPersistentFlagSet())
+	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		f.Deprecated = "it has no effect and will be removed in a future release"
+		cmd.PersistentFlags().AddFlag(f)
+	})
 	flags.BoolVar(&includeImages, "include-images", false, "include the default images in the output")
 
 	return cmd
