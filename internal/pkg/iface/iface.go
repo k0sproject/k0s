@@ -90,7 +90,7 @@ func FirstPublicAddress() (string, error) {
 		}
 		for a := range addresses {
 			// check the address type and skip if loopback
-			if a != nil && !a.IP.IsLoopback() {
+			if !a.IP.IsLoopback() {
 				if a.IP.To4() != nil {
 					return a.IP.String(), nil
 				}

@@ -318,10 +318,12 @@ Configuration options related to k0s's [control plane load balancing] feature
 
 Configuration options related to keepalived in [control plane load balancing]
 
-| Element          | Description                                                                                                 |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| `vrrpInstances`  | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs. |
-| `virtualServers` | Configuration options related LoadBalancing. This is an array which allows to configure multiple LBs.       |
+| Element                  | Description                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `vrrpInstances`          | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs.                     |
+| `virtualServers`         | Configuration options related LoadBalancing. This is an array which allows to configure multiple LBs.                           |
+| `userSpaceProxyBindPort` | The port the userspace proxy will bind to. This port is for internal use only, but listens on every interface. Default: `6444`  |
+| `disableLoadBalancer`    | Disables the load balancer. Default: `false`                                                                                    |
 
 ##### `spec.network.controlPlaneLoadBalancing.keepalived.vrrpInstances`
 
