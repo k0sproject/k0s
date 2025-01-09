@@ -24,7 +24,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/users"
@@ -67,8 +66,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 	}
 	c.CACert = string(cert)
 	// Changing the URL here also requires changes in the "k0s kubeconfig admin" subcommand.
-	apiAddress := net.JoinHostPort(c.ClusterSpec.API.Address, strconv.Itoa(c.ClusterSpec.API.Port))
-	kubeConfigAPIUrl := (&url.URL{Scheme: "https", Host: apiAddress}).String()
+	kubeConfigAPIUrl := c.ClusterSpec.API.LocalURL()
 
 	apiServerUID, err := users.LookupUID(constant.ApiserverUser)
 	if err != nil {
@@ -289,7 +287,7 @@ func detectLocalIPs(ctx context.Context) ([]string, error) {
 	return localIPs, nil
 }
 
-func kubeConfig(dest, url, caCert, clientCert, clientKey string, ownerID int) error {
+func kubeConfig(dest string, url *url.URL, caCert, clientCert, clientKey string, ownerID int) error {
 	// We always overwrite the kubeconfigs as the certs might be regenerated at startup
 	const (
 		clusterName = "local"
@@ -300,7 +298,7 @@ func kubeConfig(dest, url, caCert, clientCert, clientKey string, ownerID int) er
 	kubeconfig, err := clientcmd.Write(clientcmdapi.Config{
 		Clusters: map[string]*clientcmdapi.Cluster{clusterName: {
 			// The server URL is replaced in the "k0s kubeconfig admin" subcommand.
-			Server:                   url,
+			Server:                   url.String(),
 			CertificateAuthorityData: []byte(caCert),
 		}},
 		Contexts: map[string]*clientcmdapi.Context{contextName: {

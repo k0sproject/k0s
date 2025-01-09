@@ -65,7 +65,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			internalURL := fmt.Sprintf("https://localhost:%d", nodeConfig.Spec.API.Port)
+			internalURL := nodeConfig.Spec.API.LocalURL().String()
 			externalURL := nodeConfig.Spec.API.APIAddressURL()
 			for _, c := range adminConfig.Clusters {
 				if c.Server == internalURL {

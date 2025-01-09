@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/url"
 	"strconv"
@@ -70,6 +71,17 @@ func DefaultAPISpec() *APISpec {
 	a.setDefaults()
 	a.SANs, _ = iface.AllAddresses()
 	return a
+}
+
+func (a *APISpec) LocalURL() *url.URL {
+	var host string
+	if a.OnlyBindToAddress {
+		host = net.JoinHostPort(a.Address, strconv.Itoa(a.Port))
+	} else {
+		host = fmt.Sprintf("localhost:%d", a.Port)
+	}
+
+	return &url.URL{Scheme: "https", Host: host}
 }
 
 // APIAddress ...
