@@ -51,9 +51,10 @@ func NewVersionCmd() *cobra.Command {
 		},
 	}
 
-	// append flags
-	cmd.PersistentFlags().BoolVarP(&all, "all", "a", false, "use to print all k0s version info")
-	cmd.PersistentFlags().BoolVarP(&isJsn, "json", "j", false, "use to print all k0s version info in json")
+	flags := cmd.Flags()
+	flags.BoolVarP(&all, "all", "a", false, "use to print all k0s version info")
+	flags.BoolVarP(&isJsn, "json", "j", false, "use to print all k0s version info in json")
+
 	return cmd
 }
 

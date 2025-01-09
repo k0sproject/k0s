@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
 
@@ -31,12 +32,17 @@ import (
 )
 
 func NewStatusCmd() *cobra.Command {
-	var output string
+	var (
+		debugFlags internal.DebugFlags
+		output     string
+	)
+
 	cmd := &cobra.Command{
-		Use:     "status",
-		Short:   "Get k0s instance status information",
-		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
-		Args:    cobra.NoArgs,
+		Use:              "status",
+		Short:            "Get k0s instance status information",
+		Example:          `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
+		PersistentPreRun: debugFlags.Run,
+		Args:             cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
@@ -56,14 +62,20 @@ func NewStatusCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&output, "out", "o", "", "sets type of output to json or yaml")
-	cmd.PersistentFlags().String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
+	pflags := cmd.PersistentFlags()
+	debugFlags.AddToFlagSet(pflags)
+	pflags.String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
+
 	cmd.AddCommand(NewStatusSubCmdComponents())
+
+	cmd.Flags().StringVarP(&output, "out", "o", "", "sets type of output to json or yaml")
+
 	return cmd
 }
 
 func NewStatusSubCmdComponents() *cobra.Command {
 	var maxCount int
+
 	cmd := &cobra.Command{
 		Use:     "components",
 		Short:   "Get k0s instance component status information",
@@ -87,9 +99,15 @@ func NewStatusSubCmdComponents() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().IntVar(&maxCount, "max-count", 1, "how many latest probes to show")
-	return cmd
 
+	flags := cmd.Flags()
+	flags.IntVar(&maxCount, "max-count", 1, "how many latest probes to show")
+	flags.StringP("out", "o", "", "")
+	outFlag := flags.Lookup("out")
+	outFlag.Hidden = true
+	outFlag.Deprecated = "it has no effect and will be removed in a future release"
+
+	return cmd
 }
 
 func printStatus(w io.Writer, status *status.K0sStatus, output string) {

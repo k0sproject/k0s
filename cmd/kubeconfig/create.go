@@ -72,9 +72,11 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 		},
 	}
 
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
-	cmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlagSet(config.FileInputFlag())
+	flags.StringVar(&groups, "groups", "", "Specify groups")
+
 	return cmd
 }
 
