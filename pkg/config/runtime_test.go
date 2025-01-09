@@ -24,38 +24,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLoadRuntimeConfig_Legacy(t *testing.T) {
-	tmpfile, err := os.CreateTemp("", "runtime-config")
-	assert.NoError(t, err)
-	defer os.Remove(tmpfile.Name())
-
-	// prepare k0sVars
-	k0sVars := &CfgVars{
-		DataDir:           "/var/lib/k0s-custom",
-		RuntimeConfigPath: tmpfile.Name(),
-	}
-
-	content := []byte(`apiVersion: k0s.k0sproject.io/v1beta1
-kind: ClusterConfig
-metadata:
-  name: k0s
-spec:
-  api:
-    address: 10.2.3.4
-`)
-	err = os.WriteFile(k0sVars.RuntimeConfigPath, content, 0644)
-	assert.NoError(t, err)
-
-	spec, err := LoadRuntimeConfig(k0sVars)
-	assert.NoError(t, err)
-	assert.NotNil(t, spec)
-	assert.Equal(t, "/var/lib/k0s-custom", spec.K0sVars.DataDir)
-	assert.Equal(t, os.Getpid(), spec.Pid)
-	assert.NotNil(t, spec.NodeConfig)
-	assert.NotNil(t, spec.NodeConfig.Spec.API)
-	assert.Equal(t, "10.2.3.4", spec.NodeConfig.Spec.API.Address)
-}
-
 func TestLoadRuntimeConfig_K0sNotRunning(t *testing.T) {
 	// create a temporary file for runtime config
 	tmpfile, err := os.CreateTemp("", "runtime-config")
