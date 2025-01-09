@@ -38,7 +38,10 @@ func NewStatusCmd() *cobra.Command {
 			return reExecKubectl(cmd, args...)
 		},
 	}
-	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
-	cmd.Flags().StringVarP(&outputFormat, "output", "o", "", "Output format. Must be one of yaml|json")
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetKubeCtlFlagSet())
+	flags.StringVarP(&outputFormat, "output", "o", "", "Output format. Must be one of yaml|json")
+
 	return cmd
 }

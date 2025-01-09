@@ -30,8 +30,15 @@ func NewKubeConfigCmd() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
+
+	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		f.Deprecated = "it has no effect and will be removed in a future release"
+		cmd.PersistentFlags().AddFlag(f)
+	})
+
 	cmd.AddCommand(kubeconfigCreateCmd())
 	cmd.AddCommand(kubeConfigAdminCmd())
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
 	return cmd
 }

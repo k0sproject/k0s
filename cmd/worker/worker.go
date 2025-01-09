@@ -93,10 +93,11 @@ func NewWorkerCmd() *cobra.Command {
 		},
 	}
 
-	// append flags
-	cmd.Flags().BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlagSet(config.GetWorkerFlags())
+	flags.BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
+
 	return cmd
 }
 

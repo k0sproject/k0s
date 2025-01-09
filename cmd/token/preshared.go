@@ -78,12 +78,15 @@ func preSharedCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&certPath, "cert", "", "path to the CA certificate file")
-	cmd.Flags().StringVar(&joinURL, "url", "", "url of the api server to join")
-	cmd.Flags().StringVar(&preSharedRole, "role", "worker", "token role. valid values: worker, controller. Default: worker")
-	cmd.Flags().StringVar(&outDir, "out", ".", "path to the output directory. Default: current dir")
-	cmd.Flags().DurationVar(&validity, "valid", 0, "how long token is valid, in Go duration format")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.StringVar(&certPath, "cert", "", "path to the CA certificate file")
+	flags.StringVar(&joinURL, "url", "", "url of the api server to join")
+	flags.StringVar(&preSharedRole, "role", "worker", "token role. valid values: worker, controller. Default: worker")
+	flags.StringVar(&outDir, "out", ".", "path to the output directory. Default: current dir")
+	flags.DurationVar(&validity, "valid", 0, "how long token is valid, in Go duration format")
+
 	return cmd
 }
 
