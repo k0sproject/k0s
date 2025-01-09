@@ -1,5 +1,7 @@
+//go:build !unix
+
 /*
-Copyright 2021 k0s authors
+Copyright 2025 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,23 +16,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package backup
+package worker
 
 import (
-	"errors"
+	"context"
 
-	"github.com/spf13/cobra"
+	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/worker"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
-var savePath string
-
-func NewBackupCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "backup",
-		Short: "Back-Up k0s configuration. Not supported on Windows OS",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("unsupported Operating System for this command")
-		},
-	}
+func addPlatformSpecificComponents(context.Context, *manager.Manager, *config.CfgVars, *config.ControllerOptions, *worker.CertificateManager) {
+	// no-op
 }

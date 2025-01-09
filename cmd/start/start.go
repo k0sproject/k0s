@@ -19,6 +19,7 @@ package start
 import (
 	"errors"
 	"os"
+	"runtime"
 
 	"github.com/k0sproject/k0s/pkg/install"
 
@@ -32,7 +33,7 @@ func NewStartCmd() *cobra.Command {
 		Short: "Start the k0s service configured on this host. Must be run as root (or with sudo)",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if os.Geteuid() != 0 {
+			if runtime.GOOS != "windows" && os.Geteuid() != 0 {
 				return errors.New("this command must be run as root")
 			}
 			svc, err := install.InstalledService()

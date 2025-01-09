@@ -1,7 +1,7 @@
 //go:build !linux
 
 /*
-Copyright 2021 k0s authors
+Copyright 2025 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cleanup
+package install
 
-func newBridgeStep() Step {
-	return nil
+import "github.com/kardianos/service"
+
+func configureServicePlatform(s service.Service, svcConfig *service.Config) {
+	// no-op
 }

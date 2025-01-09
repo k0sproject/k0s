@@ -32,10 +32,11 @@ func NewTokenCmd() *cobra.Command {
 		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
 
-	cmd.AddCommand(tokenCreateCmd())
 	cmd.AddCommand(tokenListCmd())
 	cmd.AddCommand(tokenInvalidateCmd())
 	cmd.AddCommand(preSharedCmd())
+	addPlatformSpecificCommands(cmd)
+
 	return cmd
 }
 

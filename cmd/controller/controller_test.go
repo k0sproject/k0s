@@ -17,6 +17,7 @@ limitations under the License.
 package controller_test
 
 import (
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -28,6 +29,10 @@ import (
 )
 
 func TestControllerCmd_Help(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Running controllers is only supported on Linux")
+	}
+
 	defaultConfigPath := strconv.Quote(constant.K0sConfigPathDefault)
 	defaultDataDir := strconv.Quote(constant.DataDirDefault)
 

@@ -65,6 +65,8 @@ func DeleteControllerUsers(systemUsers *v1beta1.SystemUser) error {
 			if err := deleteUser(userName); err != nil {
 				errs = append(errs, err)
 			}
+		} else if !errors.Is(err, users.ErrNotExist) {
+			errs = append(errs, err)
 		}
 	}
 

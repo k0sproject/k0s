@@ -1,3 +1,5 @@
+//go:build unix
+
 /*
 Copyright 2021 k0s authors
 
@@ -20,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -56,7 +57,7 @@ func NewStatusCmd() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVarP(&output, "out", "o", "", "sets type of output to json or yaml")
-	cmd.PersistentFlags().StringVar(&config.StatusSocket, "status-socket", filepath.Join(config.K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")
+	cmd.PersistentFlags().String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
 	cmd.AddCommand(NewStatusSubCmdComponents())
 	return cmd
 }

@@ -1,3 +1,5 @@
+//go:build linux
+
 /*
 Copyright 2021 k0s authors
 
@@ -19,8 +21,11 @@ package install
 import (
 	"errors"
 	"fmt"
+	"os"
+	"testing/iotest"
 
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/spf13/cobra"
 )
@@ -38,14 +43,17 @@ With the controller subcommand you can setup a single node cluster by running:
 	`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, err := config.GetCmdOpts(cmd)
-			if err != nil {
-				return err
+			if os.Geteuid() != 0 {
+				return errors.New("this command must be run as root")
 			}
 
-			c := (*command)(opts)
+			cmd.SetIn(iotest.ErrReader(errors.New("cannot read configuration from standard input when installing k0s")))
+			k0sVars, err := config.NewCfgVars(cmd)
+			if err != nil {
+				return fmt.Errorf("failed to initialize configuration variables: %w", err)
+			}
 
-			nodeConfig, err := c.K0sVars.NodeConfig()
+			nodeConfig, err := k0sVars.NodeConfig()
 			if err != nil {
 				return fmt.Errorf("failed to load node config: %w", err)
 			}
@@ -59,10 +67,17 @@ With the controller subcommand you can setup a single node cluster by running:
 				return err
 			}
 
-			flagsAndVals = append([]string{"controller"}, flagsAndVals...)
-			if err := c.setup("controller", flagsAndVals, installFlags); err != nil {
-				return err
+			systemUsers := nodeConfig.Spec.Install.SystemUsers
+			homeDir := k0sVars.DataDir
+			if err := install.EnsureControllerUsers(systemUsers, homeDir); err != nil {
+				return fmt.Errorf("failed to create controller users: %w", err)
 			}
+
+			args := append([]string{"controller"}, flagsAndVals...)
+			if err := install.InstallService(args, installFlags.envVars, installFlags.force); err != nil {
+				return fmt.Errorf("failed to install controller service: %w", err)
+			}
+
 			return nil
 		},
 	}

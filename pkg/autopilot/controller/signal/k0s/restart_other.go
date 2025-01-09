@@ -1,3 +1,5 @@
+//go:build !unix
+
 // Copyright 2022 k0s authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +23,8 @@ import (
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
 )
+
+const Restart = "Restart"
 
 // restartEventFilter creates a controller-runtime predicate that governs which
 // objects will make it into reconciliation, and which will be ignored.

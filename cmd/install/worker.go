@@ -17,9 +17,15 @@ limitations under the License.
 package install
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"runtime"
+
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/install"
 )
 
 func installWorkerCmd(installFlags *installFlags) *cobra.Command {
@@ -32,20 +38,18 @@ All default values of worker command will be passed to the service stub unless o
 Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, err := config.GetCmdOpts(cmd)
-			if err != nil {
-				return err
+			if runtime.GOOS != "windows" && os.Geteuid() != 0 {
+				return errors.New("this command must be run as root")
 			}
-			c := (*command)(opts)
 
 			flagsAndVals, err := cmdFlagsToArgs(cmd)
 			if err != nil {
 				return err
 			}
 
-			flagsAndVals = append([]string{"worker"}, flagsAndVals...)
-			if err := c.setup("worker", flagsAndVals, installFlags); err != nil {
-				return err
+			args := append([]string{"worker"}, flagsAndVals...)
+			if err := install.InstallService(args, installFlags.envVars, installFlags.force); err != nil {
+				return fmt.Errorf("failed to install worker service: %w", err)
 			}
 
 			return nil

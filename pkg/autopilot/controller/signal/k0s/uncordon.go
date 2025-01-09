@@ -38,6 +38,8 @@ import (
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
+const UnCordoning = "UnCordoning"
+
 // unCordoningEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
 func unCordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {

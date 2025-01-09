@@ -1,3 +1,5 @@
+//go:build unix
+
 /*
 Copyright 2022 k0s authors
 
@@ -43,7 +45,6 @@ type K0sStatus struct {
 	ClusterConfig               *v1beta1.ClusterConfig
 	K0sVars                     *config.CfgVars
 }
-
 type ProbeStatus struct {
 	Message string
 	Success bool

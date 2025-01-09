@@ -1,3 +1,5 @@
+//go:build unix
+
 /*
 Copyright 2021 k0s authors
 
@@ -41,6 +43,7 @@ import (
 type Stater interface {
 	State(maxCount int) prober.State
 }
+
 type Status struct {
 	StatusInformation K0sStatus
 	Prober            Stater

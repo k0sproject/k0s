@@ -17,17 +17,10 @@ limitations under the License.
 package install
 
 import (
-	"errors"
-	"fmt"
-	"os"
-
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/spf13/cobra"
 )
-
-type command config.CLIOptions
 
 type installFlags struct {
 	force   bool
@@ -44,37 +37,11 @@ func NewInstallCmd() *cobra.Command {
 		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
 	}
 
-	cmd.AddCommand(installControllerCmd(&installFlags))
 	cmd.AddCommand(installWorkerCmd(&installFlags))
+	addPlatformSpecificCommands(cmd, &installFlags)
+
 	cmd.PersistentFlags().BoolVar(&installFlags.force, "force", false, "force init script creation")
 	cmd.PersistentFlags().StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
-}
-
-// The setup functions:
-//   - Ensures that the proper users are created.
-//   - Sets up startup and logging for k0s.
-func (c *command) setup(role string, args []string, installFlags *installFlags) error {
-	if os.Geteuid() != 0 {
-		return errors.New("this command must be run as root")
-	}
-
-	nodeConfig, err := c.K0sVars.NodeConfig()
-	if err != nil {
-		return err
-	}
-
-	if role == "controller" {
-		systemUsers := nodeConfig.Spec.Install.SystemUsers
-		homeDir := c.K0sVars.DataDir
-		if err := install.EnsureControllerUsers(systemUsers, homeDir); err != nil {
-			return fmt.Errorf("failed to create controller users: %w", err)
-		}
-	}
-	err = install.EnsureService(args, installFlags.envVars, installFlags.force)
-	if err != nil {
-		return fmt.Errorf("failed to install k0s service: %w", err)
-	}
-	return nil
 }

@@ -22,11 +22,13 @@ import (
 
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
+	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
 	cr "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crev "sigs.k8s.io/controller-runtime/pkg/event"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
@@ -37,6 +39,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 )
+
+const Cordoning = "Cordoning"
 
 // cordoningEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
@@ -203,4 +207,17 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 	}
 
 	return nil
+}
+
+func needsCordoning(signalNode client.Object) bool {
+	kind := signalNode.GetObjectKind().GroupVersionKind().Kind
+	if kind == "Node" {
+		return true
+	}
+	for k, v := range signalNode.GetAnnotations() {
+		if k == apconst.K0SControlNodeModeAnnotation && v == apconst.K0SControlNodeModeControllerWorker {
+			return true
+		}
+	}
+	return false
 }

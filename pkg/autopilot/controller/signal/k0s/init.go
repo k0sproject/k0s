@@ -1,3 +1,5 @@
+//go:build unix
+
 // Copyright 2021 k0s authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,24 +23,12 @@ import (
 	"path/filepath"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
-	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
-	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 	"github.com/k0sproject/k0s/pkg/component/status"
 
 	"github.com/sirupsen/logrus"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
-)
-
-const (
-	Downloading     = "Downloading"
-	Cordoning       = "Cordoning"
-	CordoningFailed = "CordoningFailed"
-	UnCordoning     = "UnCordoning"
-	ApplyingUpdate  = "ApplyingUpdate"
-	Restart         = "Restart"
 )
 
 // RegisterControllers registers all of the autopilot controllers used for updating `k0s`
@@ -59,7 +49,11 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 
 	logger.Infof("Using effective hostname = '%v'", hostname)
 
-	if err := registerSignalController(logger, mgr, signalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID); err != nil {
+	k0sVersionHandler := func() (string, error) {
+		return getK0sVersion(DefaultK0sStatusSocketPath)
+	}
+
+	if err := registerSignalController(logger, mgr, signalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID, k0sVersionHandler); err != nil {
 		return fmt.Errorf("unable to register k0s 'signal' controller: %w", err)
 	}
 
@@ -99,35 +93,4 @@ func getK0sVersion(statusSocketPath string) (string, error) {
 	}
 
 	return status.Version, nil
-}
-
-// getK0sPid returns the PID of a running k0s based on its status socket.
-func getK0sPid(statusSocketPath string) (int, error) {
-	status, err := status.GetStatusInfo(statusSocketPath)
-	if err != nil {
-		return -1, err
-	}
-
-	return status.Pid, nil
-}
-
-// signalDataUpdateCommandK0sPredicate creates a predicate that ensures that the
-// provided SignalData is an 'k0s' update.
-func signalDataUpdateCommandK0sPredicate() apsigpred.SignalDataPredicate {
-	return func(signalData apsigv2.SignalData) bool {
-		return signalData.Command.K0sUpdate != nil
-	}
-}
-
-func needsCordoning(signalNode client.Object) bool {
-	kind := signalNode.GetObjectKind().GroupVersionKind().Kind
-	if kind == "Node" {
-		return true
-	}
-	for k, v := range signalNode.GetAnnotations() {
-		if k == apconst.K0SControlNodeModeAnnotation && v == apconst.K0SControlNodeModeControllerWorker {
-			return true
-		}
-	}
-	return false
 }
