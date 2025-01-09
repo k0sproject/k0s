@@ -39,7 +39,7 @@ const (
 var (
 	ErrK0sNotRunning        = errors.New("k0s is not running")
 	ErrK0sAlreadyRunning    = errors.New("an instance of k0s is already running")
-	ErrInvalidRuntimeConfig = errors.New("invalid runtime config")
+	ErrInvalidRuntimeConfig = errors.New("invalid runtime configuration")
 )
 
 // Runtime config is a static copy of the start up config and CfgVars that is used by
@@ -65,23 +65,11 @@ func LoadRuntimeConfig(path string) (*RuntimeConfigSpec, error) {
 		return nil, err
 	}
 
-	config := &RuntimeConfig{}
-	if err := yaml.Unmarshal(content, config); err != nil {
-		return nil, err
+	config, err := ParseRuntimeConfig(content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse runtime configuration: %w", err)
 	}
-
-	if config.APIVersion != v1beta1.ClusterConfigAPIVersion {
-		return nil, fmt.Errorf("%w: invalid api version: %s", ErrInvalidRuntimeConfig, config.APIVersion)
-	}
-
-	if config.Kind != RuntimeConfigKind {
-		return nil, fmt.Errorf("%w: invalid kind: %s", ErrInvalidRuntimeConfig, config.Kind)
-	}
-
 	spec := config.Spec
-	if spec == nil {
-		return nil, fmt.Errorf("%w: spec is nil", ErrInvalidRuntimeConfig)
-	}
 
 	// If a pid is defined but there's no process found, the instance of k0s is
 	// expected to have died, in which case the existing config is removed and
@@ -97,7 +85,29 @@ func LoadRuntimeConfig(path string) (*RuntimeConfigSpec, error) {
 	return spec, nil
 }
 
-func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
+func ParseRuntimeConfig(content []byte) (*RuntimeConfig, error) {
+	var config RuntimeConfig
+
+	if err := yaml.Unmarshal(content, &config); err != nil {
+		return nil, err
+	}
+
+	if config.APIVersion != v1beta1.ClusterConfigAPIVersion {
+		return nil, fmt.Errorf("%w: invalid api version: %q", ErrInvalidRuntimeConfig, config.APIVersion)
+	}
+
+	if config.Kind != RuntimeConfigKind {
+		return nil, fmt.Errorf("%w: invalid kind: %q", ErrInvalidRuntimeConfig, config.Kind)
+	}
+
+	if config.Spec == nil {
+		return nil, fmt.Errorf("%w: spec is nil", ErrInvalidRuntimeConfig)
+	}
+
+	return &config, nil
+}
+
+func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfig, error) {
 	if _, err := LoadRuntimeConfig(k0sVars.RuntimeConfigPath); err == nil {
 		return nil, ErrK0sAlreadyRunning
 	}
@@ -135,7 +145,7 @@ func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 		return nil, fmt.Errorf("failed to write runtime config: %w", err)
 	}
 
-	return cfg.Spec, nil
+	return cfg, nil
 }
 
 func (r *RuntimeConfigSpec) Cleanup() error {

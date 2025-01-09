@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -47,26 +48,27 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func NewAPICmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "api",
 		Short: "Run the controller API",
-		Args:  cobra.NoArgs,
+		Long: `Run the controller API.
+Reads the runtime configuration from standard input.`,
+		Args: cobra.NoArgs,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			logrus.SetOutput(cmd.OutOrStdout())
 			internallog.SetInfoLevel()
 			return config.CallParentPersistentPreRun(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, err := config.GetCmdOpts(cmd)
-			if err != nil {
-				return err
-			}
+			var run func() error
 
-			run, err := buildServer(opts.K0sVars)
-			if err != nil {
+			if runtimeConfig, err := loadRuntimeConfig(cmd.InOrStdin()); err != nil {
+				return err
+			} else if run, err = buildServer(runtimeConfig.Spec.K0sVars, runtimeConfig.Spec.NodeConfig); err != nil {
 				return err
 			}
 
@@ -74,12 +76,33 @@ func NewAPICmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
+	flags := cmd.Flags()
+	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
+		switch f.Name {
+		case "debug", "debugListenOn", "verbose":
+			flags.AddFlag(f)
+		}
+	})
 
 	return cmd
 }
 
-func buildServer(k0sVars *config.CfgVars) (func() error, error) {
+func loadRuntimeConfig(stdin io.Reader) (*config.RuntimeConfig, error) {
+	logrus.Info("Reading runtime configuration from standard input ...")
+	bytes, err := io.ReadAll(stdin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from standard input: %w", err)
+	}
+
+	runtimeConfig, err := config.ParseRuntimeConfig(bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load runtime configuration: %w", err)
+	}
+
+	return runtimeConfig, nil
+}
+
+func buildServer(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) (func() error, error) {
 	// Single kube client for whole lifetime of the API
 	client, err := kubeutil.NewClientFromFile(k0sVars.AdminKubeConfigPath)
 	if err != nil {
@@ -89,10 +112,6 @@ func buildServer(k0sVars *config.CfgVars) (func() error, error) {
 
 	prefix := "/v1beta1"
 	mux := http.NewServeMux()
-	nodeConfig, err := k0sVars.NodeConfig()
-	if err != nil {
-		return nil, err
-	}
 	storage := nodeConfig.Spec.Storage
 
 	if storage.Type == v1beta1.EtcdStorageType && !storage.Etcd.IsExternalClusterUsed() {

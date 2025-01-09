@@ -165,7 +165,7 @@ func (c *command) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initialize runtime config: %w", err)
 	}
 	defer func() {
-		if err := rtc.Cleanup(); err != nil {
+		if err := rtc.Spec.Cleanup(); err != nil {
 			logrus.WithError(err).Warn("Failed to cleanup runtime config")
 		}
 	}()
@@ -329,10 +329,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	if !c.SingleNode && !slices.Contains(c.DisableComponents, constant.ControlAPIComponentName) {
-		nodeComponents.Add(ctx, &controller.K0SControlAPI{
-			ConfigPath: c.CfgFile,
-			K0sVars:    c.K0sVars,
-		})
+		nodeComponents.Add(ctx, &controller.K0SControlAPI{RuntimeConfig: rtc})
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.CsrApproverComponentName) {

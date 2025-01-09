@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -44,6 +45,7 @@ type Supervisor struct {
 	BinPath        string
 	RunDir         string
 	DataDir        string
+	Stdin          func() io.Reader
 	Args           []string
 	PidFile        string
 	UID            int
@@ -174,6 +176,9 @@ func (s *Supervisor) Supervise() error {
 				s.cmd = exec.Command(s.BinPath, s.Args...)
 				s.cmd.Dir = s.DataDir
 				s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix)
+				if s.Stdin != nil {
+					s.cmd.Stdin = s.Stdin()
+				}
 
 				// detach from the process group so children don't
 				// get signals sent directly to parent.

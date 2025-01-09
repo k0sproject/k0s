@@ -17,18 +17,21 @@ limitations under the License.
 package controller
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/supervisor"
+	"sigs.k8s.io/yaml"
 )
 
 // K0SControlAPI implements the k0s control API component
 type K0SControlAPI struct {
-	ConfigPath string
-	K0sVars    *config.CfgVars
+	RuntimeConfig *config.RuntimeConfig
+
 	supervisor supervisor.Supervisor
 }
 
@@ -48,15 +51,19 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	runtimeConfig, err := yaml.Marshal(m.RuntimeConfig)
+	if err != nil {
+		return err
+	}
+
 	m.supervisor = supervisor.Supervisor{
 		Name:    "k0s-control-api",
 		BinPath: selfExe,
-		RunDir:  m.K0sVars.RunDir,
-		DataDir: m.K0sVars.DataDir,
-		Args: []string{
-			"api",
-			"--data-dir=" + m.K0sVars.DataDir,
-		},
+		RunDir:  m.RuntimeConfig.Spec.K0sVars.RunDir,
+		DataDir: m.RuntimeConfig.Spec.K0sVars.DataDir,
+		Args:    []string{"api"},
+		Stdin:   func() io.Reader { return bytes.NewReader(runtimeConfig) },
 	}
 
 	return m.supervisor.Supervise()
