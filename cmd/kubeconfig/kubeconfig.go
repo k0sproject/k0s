@@ -20,6 +20,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func NewKubeConfigCmd() *cobra.Command {
@@ -27,7 +28,7 @@ func NewKubeConfigCmd() *cobra.Command {
 		Use:   "kubeconfig [command]",
 		Short: "Create a kubeconfig file for a specified user",
 		Args:  cobra.NoArgs,
-		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
+		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 	cmd.AddCommand(kubeconfigCreateCmd())
 	cmd.AddCommand(kubeConfigAdminCmd())

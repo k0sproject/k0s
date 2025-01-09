@@ -22,6 +22,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func NewTokenCmd() *cobra.Command {
@@ -29,7 +30,7 @@ func NewTokenCmd() *cobra.Command {
 		Use:   "token",
 		Short: "Manage join tokens",
 		Args:  cobra.NoArgs,
-		Run:   func(*cobra.Command, []string) { /* Enforce arg validation. */ },
+		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 
 	cmd.AddCommand(tokenListCmd())
