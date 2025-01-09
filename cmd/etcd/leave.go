@@ -86,13 +86,14 @@ func etcdLeaveCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().AddFlag(&pflag.Flag{
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlag(&pflag.Flag{
 		Name:  "peer-address",
 		Usage: "etcd peer address to remove (default <this node's peer address>)",
 		Value: (*ipOrDNSName)(&peerAddressArg),
 	})
 
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 

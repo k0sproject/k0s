@@ -62,8 +62,10 @@ func NewValidateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlagSet(config.FileInputFlag())
 	_ = cmd.MarkFlagRequired("config")
+
 	return cmd
 }

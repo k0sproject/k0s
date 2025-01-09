@@ -59,8 +59,11 @@ func NewBackupCmd() *cobra.Command {
 			return c.backup(savePath, cmd.OutOrStdout())
 		},
 	}
-	cmd.Flags().StringVar(&savePath, "save-path", "", "destination directory path for backup assets, use '-' for stdout")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.StringVar(&savePath, "save-path", "", "destination directory path for backup assets, use '-' for stdout")
+
 	return cmd
 }
 

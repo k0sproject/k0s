@@ -31,8 +31,16 @@ func NewAirgapCmd() *cobra.Command {
 		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 
+	var deprecatedFlags pflag.FlagSet
+	deprecatedFlags.AddFlagSet(config.GetPersistentFlagSet())
+	deprecatedFlags.AddFlagSet(config.FileInputFlag())
+	deprecatedFlags.VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		f.Deprecated = "it has no effect and will be removed in a future release"
+		cmd.PersistentFlags().AddFlag(f)
+	})
+
 	cmd.AddCommand(NewAirgapListImagesCmd())
-	cmd.PersistentFlags().AddFlagSet(config.FileInputFlag())
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
 	return cmd
 }
