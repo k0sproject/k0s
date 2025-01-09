@@ -2487,6 +2487,22 @@ and doesn't prevent malicious attacks in any way.</li>
 <span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
 <span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
 </code></pre></div>
+<p>By default, VRRP Intances use multicast as per <a href="https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2">RFC 3768</a>. It's possible to configure VRRP
+instances to use unicast:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">          </span><span class="nt">unicastSourceIP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ip address of this controller&gt;</span>
+<span class="w">          </span><span class="nt">unicastPeers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">&lt;ip address of other controllers&gt;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>When using unicast, k0st does not attempt to detect <code>unicastSourceIP</code> and it must be defined explicitly and
+<code>unicastPeers</code> must include the IP address of the other controllers' <code>unicastSourceIP</code>.</p>
 <h2 id="load-balancing">Load Balancing<a class="headerlink" href="#load-balancing" title="Permanent link">#</a></h2>
 <p>Currently k0s allows to chose one of two load balancing mechanism:</p>
 <ol>

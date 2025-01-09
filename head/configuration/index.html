@@ -2924,6 +2924,14 @@ node-local load balancing.</p>
 <td><code>authPass</code></td>
 <td>The password for accessing VRRPD. This is not a security feature but a way to prevent accidental misconfigurations. It must be in the range of 1-8 characters</td>
 </tr>
+<tr>
+<td><code>unicastPeers</code></td>
+<td>A list of IP addresses to connect using unicast. If this field is specified, <code>unicastSourceIP</code> is mandatory, and this list must not contain the IP address specified in <code>unicastSourceIP</code>.</td>
+</tr>
+<tr>
+<td><code>unicastSourceIP</code></td>
+<td>The source IP address when using unicast. If <code>unicastPeers</code> isn't defined this field is ignored.</td>
+</tr>
 </tbody>
 </table>
 <h5 id="specnetworkcontrolplaneloadbalancingkeepalivedvirtualservers"><code>spec.network.controlPlaneLoadBalancing.keepalived.virtualServers</code><a class="headerlink" href="#specnetworkcontrolplaneloadbalancingkeepalivedvirtualservers" title="Permanent link">#</a></h5>
