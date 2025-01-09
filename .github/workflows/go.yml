@@ -151,19 +151,13 @@ jobs:
         run: |
           cat <<EOF >>"$GITHUB_ENV"
           TARGET_OS=${{ matrix.target-os }}
-          GO=go
-          GO_ENV=
-          GOCACHE=$GITHUB_WORKSPACE/build/cache/go/build
-          GOMODCACHE=$GITHUB_WORKSPACE/build/cache/go/mod
+          DOCKER=
           UNITTEST_EXTRA_ARGS=BUILD_GO_LDFLAGS_EXTRA=
           EOF
 
           echo ::group::Build Environment
           cat -- "$GITHUB_ENV"
           echo ::endgroup::
-
-          mkdir -p build/cache
-          make --touch .k0sbuild.docker-image.k0s
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
