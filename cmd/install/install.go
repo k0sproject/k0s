@@ -17,6 +17,7 @@ limitations under the License.
 package install
 
 import (
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -28,16 +29,21 @@ type installFlags struct {
 }
 
 func NewInstallCmd() *cobra.Command {
-	var installFlags installFlags
+	var (
+		debugFlags   internal.DebugFlags
+		installFlags installFlags
+	)
 
 	cmd := &cobra.Command{
-		Use:   "install",
-		Short: "Install k0s on a brand-new system. Must be run as root (or with sudo)",
-		Args:  cobra.NoArgs,
-		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
+		Use:              "install",
+		Short:            "Install k0s on a brand-new system. Must be run as root (or with sudo)",
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
+		RunE:             func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 
 	pflags := cmd.PersistentFlags()
+	debugFlags.AddToFlagSet(pflags)
 	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
 		f.Hidden = true
 		f.Deprecated = "it has no effect and will be removed in a future release"
