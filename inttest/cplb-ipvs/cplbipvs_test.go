@@ -41,6 +41,8 @@ spec:
         vrrpInstances:
         - virtualIPs: ["%s/16"]
           authPass: "123456"
+          unicastSourceIP: %s
+          unicastPeers: [%s, %s]
         virtualServers:
         - ipAddress: %s
     nodeLocalLoadBalancing:
@@ -57,7 +59,9 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 
 	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(haControllerConfig, lb, lb))
+		addr := s.getUnicastAddresses(idx)
+		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml",
+			fmt.Sprintf(haControllerConfig, lb, addr[0], addr[1], addr[2], lb))
 
 		// Note that the token is intentionally empty for the first controller
 		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
@@ -126,6 +130,16 @@ func (s *cplbIPVSSuite) getLBAddress() string {
 	}
 
 	return fmt.Sprintf("%s.%d", strings.Join(parts[:3], "."), lastOctet)
+}
+
+// getUnicastAddreses returns the IP addresses of the controllers. The first IP
+// is the address of the controller with the ID provided.
+func (s *cplbIPVSSuite) getUnicastAddresses(i int) []string {
+	return []string{
+		s.GetIPAddress(s.ControllerNode(i % s.BootlooseSuite.ControllerCount)),
+		s.GetIPAddress(s.ControllerNode((i + 1) % s.BootlooseSuite.ControllerCount)),
+		s.GetIPAddress(s.ControllerNode((i + 2) % s.BootlooseSuite.ControllerCount)),
+	}
 }
 
 // validateRealServers checks that the real servers are present in the

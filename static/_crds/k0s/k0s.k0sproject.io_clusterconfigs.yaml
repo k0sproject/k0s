@@ -609,6 +609,19 @@ spec:
                                     Interface specifies the NIC used by the virtual router. If not specified,
                                     k0s will use the interface that owns the default route.
                                   type: string
+                                unicastPeers:
+                                  description: |-
+                                    UnicastPeers is a list of unicast peers. If not specified, k0s will use multicast.
+                                    If specified, UnicastSourceIP must be specified as well.
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: set
+                                unicastSourceIP:
+                                  description: |-
+                                    UnicastSourceIP is the source address for unicast peers.
+                                    If not specified, k0s will use the first address of the interface.
+                                  type: string
                                 virtualIPs:
                                   description: |-
                                     VirtualIPs is the list of virtual IP address used by the VRRP instance.
