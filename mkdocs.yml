@@ -80,6 +80,7 @@ nav:
   - Releases & Support: releases.md
   - Commercial support: commercial-support.md
   - Adopters: adopters.md
+  - Security Policy: security.md
   - Contributing:
       - Getting Started: contributors/index.md
       - GitHub Workflow: contributors/github_workflow.md
