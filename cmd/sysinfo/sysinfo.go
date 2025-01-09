@@ -23,6 +23,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -34,15 +35,18 @@ import (
 )
 
 func NewSysinfoCmd() *cobra.Command {
-
-	var sysinfoSpec sysinfo.K0sSysinfoSpec
-	var outputFormat string
+	var (
+		debugFlags   internal.DebugFlags
+		sysinfoSpec  sysinfo.K0sSysinfoSpec
+		outputFormat string
+	)
 
 	cmd := &cobra.Command{
-		Use:   "sysinfo",
-		Short: "Display system information",
-		Long:  `Runs k0s's pre-flight checks and issues the results to stdout.`,
-		Args:  cobra.NoArgs,
+		Use:              "sysinfo",
+		Short:            "Display system information",
+		Long:             `Runs k0s's pre-flight checks and issues the results to stdout.`,
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			sysinfoSpec.AddDebugProbes = true
 			probes := sysinfoSpec.NewSysinfoProbes()
@@ -75,6 +79,8 @@ func NewSysinfoCmd() *cobra.Command {
 			}
 		},
 	}
+
+	debugFlags.AddToFlagSet(cmd.PersistentFlags())
 
 	// append flags
 	flags := cmd.Flags()
