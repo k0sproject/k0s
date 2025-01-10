@@ -31,6 +31,8 @@ import (
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/token"
 
+	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
+
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/stretchr/testify/assert"
@@ -42,13 +44,13 @@ func TestJoinClient_GetCA(t *testing.T) {
 
 	joinURL, certData := startFakeJoinServer(t, func(res http.ResponseWriter, req *http.Request) {
 		assert.Equal(t, "/some/sub/path/v1beta1/ca", req.RequestURI)
-		assert.Equal(t, []string{"Bearer the-token"}, req.Header["Authorization"])
+		assert.Equal(t, []string{"Bearer the-id.the-secret"}, req.Header["Authorization"])
 		_, err := res.Write([]byte("{}"))
 		assert.NoError(t, err)
 	})
 
 	joinURL.Path = "/some/sub/path"
-	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, t.Name(), "the-token")
+	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, t.Name(), &bootstraptokenv1.BootstrapTokenString{ID: "the-id", Secret: "the-secret"})
 	require.NoError(t, err)
 	tok, err := token.JoinEncode(bytes.NewReader(kubeconfig))
 	require.NoError(t, err)
@@ -66,7 +68,7 @@ func TestJoinClient_JoinEtcd(t *testing.T) {
 
 	joinURL, certData := startFakeJoinServer(t, func(res http.ResponseWriter, req *http.Request) {
 		assert.Equal(t, "/some/sub/path/v1beta1/etcd/members", req.RequestURI)
-		assert.Equal(t, []string{"Bearer the-token"}, req.Header["Authorization"])
+		assert.Equal(t, []string{"Bearer the-id.the-secret"}, req.Header["Authorization"])
 
 		if body, err := io.ReadAll(req.Body); assert.NoError(t, err) {
 			var data map[string]string
@@ -83,7 +85,7 @@ func TestJoinClient_JoinEtcd(t *testing.T) {
 	})
 
 	joinURL.Path = "/some/sub/path"
-	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, t.Name(), "the-token")
+	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, t.Name(), &bootstraptokenv1.BootstrapTokenString{ID: "the-id", Secret: "the-secret"})
 	require.NoError(t, err)
 	tok, err := token.JoinEncode(bytes.NewReader(kubeconfig))
 	require.NoError(t, err)
@@ -124,7 +126,7 @@ func TestJoinClient_Cancellation(t *testing.T) {
 				<-req.Context().Done()              // block forever
 			})
 
-			kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, "", "")
+			kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, "", &bootstraptokenv1.BootstrapTokenString{})
 			require.NoError(t, err)
 			tok, err := token.JoinEncode(bytes.NewReader(kubeconfig))
 			require.NoError(t, err)

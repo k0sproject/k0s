@@ -17,6 +17,7 @@ limitations under the License.
 package api
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -26,6 +27,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -37,8 +39,11 @@ import (
 	"github.com/k0sproject/k0s/pkg/etcd"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	tokenutil "k8s.io/cluster-bootstrap/token/util"
+	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -90,12 +95,12 @@ func (c *command) start() (err error) {
 		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		mux.Handle(prefix+"/etcd/members", mw.AllowMethods(http.MethodPost)(
-			c.authMiddleware(c.etcdHandler(), "usage-controller-join")))
+			c.authMiddleware(c.etcdHandler(), "controller-join")))
 	}
 
 	if storage.IsJoinable() {
 		mux.Handle(prefix+"/ca", mw.AllowMethods(http.MethodGet)(
-			c.authMiddleware(c.caHandler(), "usage-controller-join")))
+			c.authMiddleware(c.caHandler(), "controller-join")))
 	}
 
 	srv := &http.Server{
@@ -216,54 +221,54 @@ func (c *command) caHandler() http.Handler {
 // We need to validate:
 //   - that we find a secret with the ID
 //   - that the token matches whats inside the secret
-func (c *command) isValidToken(ctx context.Context, token string, usage string) bool {
-	parts := strings.Split(token, ".")
-	logrus.Debugf("token parts: %v", parts)
-	if len(parts) != 2 {
+func (c *command) isValidToken(ctx context.Context, rawTokenString string, usage string) bool {
+	tokenString, err := bootstraptokenv1.NewBootstrapTokenString(rawTokenString)
+	if err != nil {
 		return false
 	}
 
-	secretName := "bootstrap-token-" + parts[0]
+	secretName := tokenutil.BootstrapTokenSecretName(tokenString.ID)
 	secret, err := c.client.CoreV1().Secrets("kube-system").Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
-		logrus.Errorf("failed to get bootstrap token: %s", err.Error())
+		if !apierrors.IsNotFound(err) {
+			logrus.WithError(err).Error("Failed to get bootstrap token with ID ", tokenString.ID)
+		}
 		return false
 	}
 
-	if string(secret.Data["token-secret"]) != parts[1] {
+	token, err := bootstraptokenv1.BootstrapTokenFromSecret(secret)
+	if err != nil {
+		logrus.WithError(err).Errorf("Bootstrap token with ID %s is malformed", tokenString.ID)
 		return false
 	}
 
-	usageValue, ok := secret.Data[usage]
-	if !ok || string(usageValue) != "true" {
+	if token.Expires != nil && !time.Now().Before(token.Expires.Time) {
 		return false
 	}
 
-	return true
+	if *token.Token != *tokenString {
+		return false
+	}
+
+	switch {
+	case slices.Contains(token.Usages, usage):
+		return true // usage found
+	case bytes.Equal(secret.Data["usage-"+usage], []byte("true")):
+		return true // usage found in its legacy form
+	default:
+		return false // usage not found
+	}
 }
 
 func (c *command) authMiddleware(next http.Handler, usage string) http.Handler {
 	unauthorizedErr := errors.New("go away")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		auth := r.Header.Get("Authorization")
-		if auth == "" {
-			sendError(unauthorizedErr, w, http.StatusUnauthorized)
-			return
-		}
-
-		parts := strings.Split(auth, "Bearer ")
-		if len(parts) == 2 {
-			token := parts[1]
-			if !c.isValidToken(r.Context(), token, usage) {
-				sendError(unauthorizedErr, w, http.StatusUnauthorized)
-				return
-			}
+		token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+		if ok && c.isValidToken(r.Context(), token, usage) {
+			next.ServeHTTP(w, r)
 		} else {
 			sendError(unauthorizedErr, w, http.StatusUnauthorized)
-			return
 		}
-
-		next.ServeHTTP(w, r)
 	})
 }
