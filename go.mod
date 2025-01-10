@@ -69,6 +69,7 @@ require (
 	k8s.io/cli-runtime v0.31.3
 	k8s.io/client-go v0.31.3
 	k8s.io/cloud-provider v0.31.3
+	k8s.io/cluster-bootstrap v0.31.3
 	k8s.io/component-base v0.31.3
 	k8s.io/component-helpers v0.31.3
 	k8s.io/cri-api v0.31.3
