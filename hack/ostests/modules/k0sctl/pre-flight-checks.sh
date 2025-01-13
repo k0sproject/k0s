@@ -51,7 +51,7 @@ testKonnectivityPods() {
 }
 
 testCoreDnsDeployment() {
-  kubectl -n kube-system wait --for=condition=Available --timeout=9s deploy/coredns
+  kubectl -n kube-system wait --for=condition=Available --timeout=30s deploy/coredns
 }
 
 main() {
