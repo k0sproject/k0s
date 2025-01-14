@@ -61,8 +61,7 @@ type CfgVars struct {
 	HelmRepositoryCache  string
 	HelmRepositoryConfig string
 
-	stdin      io.Reader
-	nodeConfig *v1beta1.ClusterConfig
+	stdin io.Reader
 }
 
 type CfgVarOption func(*CfgVars)
@@ -107,10 +106,6 @@ func WithCommand(cmd command) CfgVarOption {
 			c.DefaultStorageType = v1beta1.EtcdStorageType
 		}
 	}
-}
-
-func (c *CfgVars) SetNodeConfig(cfg *v1beta1.ClusterConfig) {
-	c.nodeConfig = cfg
 }
 
 func DefaultCfgVars() *CfgVars {
@@ -219,10 +214,6 @@ func (c *CfgVars) defaultStorageSpec() *v1beta1.StorageSpec {
 var defaultConfigPath = constant.K0sConfigPathDefault
 
 func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
-	if c.nodeConfig != nil {
-		return c.nodeConfig, nil
-	}
-
 	if c.StartupConfigPath == "" {
 		return nil, errors.New("config path is not set")
 	}
@@ -259,8 +250,6 @@ func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 	if nodeConfig.Spec.Storage.Type == v1beta1.KineStorageType && nodeConfig.Spec.Storage.Kine == nil {
 		nodeConfig.Spec.Storage.Kine = v1beta1.DefaultKineConfig(c.DataDir)
 	}
-
-	c.nodeConfig = nodeConfig
 
 	return nodeConfig, nil
 }

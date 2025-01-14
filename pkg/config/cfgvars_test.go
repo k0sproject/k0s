@@ -222,10 +222,10 @@ func TestNodeConfig_Stdin(t *testing.T) {
 	require.NoError(t, err)
 
 	nodeConfig, err := underTest.NodeConfig()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "calico", nodeConfig.Spec.Network.Provider)
 
-	nodeConfig2, err := underTest.NodeConfig()
-	require.NoError(t, err)
-	assert.Same(t, nodeConfig, nodeConfig2)
+	nodeConfig, err = underTest.NodeConfig()
+	assert.ErrorContains(t, err, "stdin already grabbed")
+	assert.Nil(t, nodeConfig)
 }
