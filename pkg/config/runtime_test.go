@@ -24,6 +24,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/yaml"
 )
 
 func TestLoadRuntimeConfig_K0sNotRunning(t *testing.T) {
@@ -47,38 +48,38 @@ spec:
 }
 
 func TestNewRuntimeConfig(t *testing.T) {
-	// create a temporary directory for k0s files
-	tempDir, err := os.MkdirTemp("", "k0s")
-	assert.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	// Create regular configuration file
+	tempDir := t.TempDir()
+	startupConfigPath := filepath.Join(tempDir, "startup-config")
+	startupConfig, err := yaml.Marshal(&v1beta1.ClusterConfig{
+		Spec: &v1beta1.ClusterSpec{
+			API: &v1beta1.APISpec{Address: "10.0.0.1"},
+		},
+	})
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(startupConfigPath, startupConfig, 0644))
 
-	// create a temporary file for the runtime config
-	tmpfile, err := os.CreateTemp("", "runtime-config")
-	assert.NoError(t, err)
-	tmpfile.Close()
-	defer os.Remove(tmpfile.Name())
+	// Define runtime configuration file in a not yet existing directory
+	rtConfigPath := filepath.Join(tempDir, "runtime", "config")
 
 	// prepare k0sVars
 	k0sVars := &CfgVars{
-		RuntimeConfigPath: tmpfile.Name(),
+		StartupConfigPath: startupConfigPath,
+		RuntimeConfigPath: rtConfigPath,
 		DataDir:           tempDir,
-		nodeConfig: &v1beta1.ClusterConfig{
-			Spec: &v1beta1.ClusterSpec{
-				API: &v1beta1.APISpec{Address: "10.0.0.1"},
-			},
-		},
 	}
 
 	// create a new runtime config and check if it's valid
 	spec, err := NewRuntimeConfig(k0sVars)
 	assert.NoError(t, err)
 	assert.NotNil(t, spec)
-	assert.Equal(t, tempDir, spec.K0sVars.DataDir)
+	assert.Same(t, k0sVars, spec.K0sVars)
 	assert.Equal(t, os.Getpid(), spec.Pid)
 	assert.NotNil(t, spec.NodeConfig)
 	cfg, err := spec.K0sVars.NodeConfig()
 	assert.NoError(t, err)
 	assert.Equal(t, "10.0.0.1", cfg.Spec.API.Address)
+	assert.FileExists(t, rtConfigPath)
 
 	// try to create a new runtime config when one is already active and check if it returns an error
 	_, err = NewRuntimeConfig(k0sVars)
