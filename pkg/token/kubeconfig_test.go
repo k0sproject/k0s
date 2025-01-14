@@ -19,6 +19,8 @@ package token
 import (
 	"testing"
 
+	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,10 +43,11 @@ preferences: {}
 users:
 - name: the user
   user:
-    token: the token
+    token: abcdef.0123456789abcdef
 `
 
-	kubeconfig, err := GenerateKubeconfig("the join URL", []byte("the cert"), "the user", "the token")
+	tok := bootstraptokenv1.BootstrapTokenString{ID: "abcdef", Secret: "0123456789abcdef"}
+	kubeconfig, err := GenerateKubeconfig("the join URL", []byte("the cert"), "the user", &tok)
 	require.NoError(t, err)
 	assert.Equal(t, expected, string(kubeconfig))
 }
