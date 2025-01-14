@@ -107,11 +107,6 @@ func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 		return nil, fmt.Errorf("load node config: %w", err)
 	}
 
-	vars := k0sVars.DeepCopy()
-
-	// don't persist the startup config path in the runtime config
-	vars.StartupConfigPath = ""
-
 	cfg := &RuntimeConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			CreationTimestamp: metav1.Now(),

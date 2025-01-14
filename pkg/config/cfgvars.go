@@ -65,20 +65,6 @@ type CfgVars struct {
 	nodeConfig *v1beta1.ClusterConfig
 }
 
-func (c *CfgVars) DeepCopy() *CfgVars {
-	if c == nil {
-		return nil
-	}
-	// Make a copy of the original struct, this works because all the fields are
-	// primitive types
-	copy := *c
-
-	copy.nodeConfig = c.nodeConfig.DeepCopy()
-
-	// Return the copied struct
-	return &copy
-}
-
 type CfgVarOption func(*CfgVars)
 
 // Command represents cobra.Command
