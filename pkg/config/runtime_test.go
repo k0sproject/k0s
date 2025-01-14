@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func TestLoadRuntimeConfig_K0sNotRunning(t *testing.T) {
+func TestLoadRuntimeConfig(t *testing.T) {
 	// write some content to the runtime config file
 	rtConfigPath := filepath.Join(t.TempDir(), "runtime-config")
 	content := []byte(`---
@@ -37,7 +37,6 @@ spec:
   nodeConfig:
     metadata:
       name: k0s
-  pid: -1
 `)
 	require.NoError(t, os.WriteFile(rtConfigPath, content, 0644))
 
@@ -78,9 +77,9 @@ func TestNewRuntimeConfig(t *testing.T) {
 	// create a new runtime config and check if it's valid
 	cfg, err := NewRuntimeConfig(k0sVars, nodeConfig)
 	if assert.NoError(t, err) && assert.NotNil(t, cfg) && assert.NotNil(t, cfg.Spec) {
+		t.Cleanup(func() { assert.NoError(t, cfg.Spec.Cleanup()) })
 		assert.Same(t, k0sVars, cfg.Spec.K0sVars)
 		assert.Same(t, nodeConfig, cfg.Spec.NodeConfig)
-		assert.Equal(t, os.Getpid(), cfg.Spec.Pid)
 	}
 	assert.FileExists(t, rtConfigPath)
 
