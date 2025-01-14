@@ -19,10 +19,10 @@ limitations under the License.
 package v1beta2
 
 import (
-	"net/http"
+	http "net/http"
 
-	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
-	"github.com/k0sproject/k0s/pkg/client/clientset/scheme"
+	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -95,10 +95,10 @@ func New(c rest.Interface) *AutopilotV1beta2Client {
 }
 
 func setConfigDefaults(config *rest.Config) error {
-	gv := v1beta2.SchemeGroupVersion
+	gv := autopilotv1beta2.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	config.NegotiatedSerializer = rest.CodecFactoryForGeneratedClient(scheme.Scheme, scheme.Codecs).WithoutConversion()
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()

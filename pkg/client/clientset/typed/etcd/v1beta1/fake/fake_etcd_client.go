@@ -29,7 +29,7 @@ type FakeEtcdV1beta1 struct {
 }
 
 func (c *FakeEtcdV1beta1) EtcdMembers() v1beta1.EtcdMemberInterface {
-	return &FakeEtcdMembers{c}
+	return newFakeEtcdMembers(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

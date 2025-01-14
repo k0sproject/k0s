@@ -29,7 +29,7 @@ type FakeK0sV1beta1 struct {
 }
 
 func (c *FakeK0sV1beta1) ClusterConfigs(namespace string) v1beta1.ClusterConfigInterface {
-	return &FakeClusterConfigs{c, namespace}
+	return newFakeClusterConfigs(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

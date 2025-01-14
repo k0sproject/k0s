@@ -71,7 +71,7 @@ const (
 	KeepalivedUser = "keepalived"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
-	KubernetesMajorMinorVersion = "1.31"
+	KubernetesMajorMinorVersion = "1.32"
 	// Indicates if k0s is using a Kubernetes pre-release or a GA version.
 	KubernetesPreRelease = false
 
@@ -86,7 +86,7 @@ const (
 	KubePauseContainerImage            = "registry.k8s.io/pause"
 	KubePauseContainerImageVersion     = "3.9"
 	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion              = "v1.31.5"
+	KubeProxyImageVersion              = "v1.32.1"
 	CoreDNSImage                       = "quay.io/k0sproject/coredns"
 	CoreDNSImageVersion                = "1.12.0"
 	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"

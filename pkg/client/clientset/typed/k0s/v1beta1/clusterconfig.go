@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,29 +36,30 @@ type ClusterConfigsGetter interface {
 
 // ClusterConfigInterface has methods to work with ClusterConfig resources.
 type ClusterConfigInterface interface {
-	Create(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.CreateOptions) (*v1beta1.ClusterConfig, error)
-	Update(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.UpdateOptions) (*v1beta1.ClusterConfig, error)
+	Create(ctx context.Context, clusterConfig *k0sv1beta1.ClusterConfig, opts v1.CreateOptions) (*k0sv1beta1.ClusterConfig, error)
+	Update(ctx context.Context, clusterConfig *k0sv1beta1.ClusterConfig, opts v1.UpdateOptions) (*k0sv1beta1.ClusterConfig, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.ClusterConfig, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.ClusterConfigList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*k0sv1beta1.ClusterConfig, error)
+	List(ctx context.Context, opts v1.ListOptions) (*k0sv1beta1.ClusterConfigList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	ClusterConfigExpansion
 }
 
 // clusterConfigs implements ClusterConfigInterface
 type clusterConfigs struct {
-	*gentype.ClientWithList[*v1beta1.ClusterConfig, *v1beta1.ClusterConfigList]
+	*gentype.ClientWithList[*k0sv1beta1.ClusterConfig, *k0sv1beta1.ClusterConfigList]
 }
 
 // newClusterConfigs returns a ClusterConfigs
 func newClusterConfigs(c *K0sV1beta1Client, namespace string) *clusterConfigs {
 	return &clusterConfigs{
-		gentype.NewClientWithList[*v1beta1.ClusterConfig, *v1beta1.ClusterConfigList](
+		gentype.NewClientWithList[*k0sv1beta1.ClusterConfig, *k0sv1beta1.ClusterConfigList](
 			"clusterconfigs",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta1.ClusterConfig { return &v1beta1.ClusterConfig{} },
-			func() *v1beta1.ClusterConfigList { return &v1beta1.ClusterConfigList{} }),
+			func() *k0sv1beta1.ClusterConfig { return &k0sv1beta1.ClusterConfig{} },
+			func() *k0sv1beta1.ClusterConfigList { return &k0sv1beta1.ClusterConfigList{} },
+		),
 	}
 }

@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,29 +36,30 @@ type ChartsGetter interface {
 
 // ChartInterface has methods to work with Chart resources.
 type ChartInterface interface {
-	Create(ctx context.Context, chart *v1beta1.Chart, opts v1.CreateOptions) (*v1beta1.Chart, error)
-	Update(ctx context.Context, chart *v1beta1.Chart, opts v1.UpdateOptions) (*v1beta1.Chart, error)
+	Create(ctx context.Context, chart *helmv1beta1.Chart, opts v1.CreateOptions) (*helmv1beta1.Chart, error)
+	Update(ctx context.Context, chart *helmv1beta1.Chart, opts v1.UpdateOptions) (*helmv1beta1.Chart, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.Chart, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.ChartList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*helmv1beta1.Chart, error)
+	List(ctx context.Context, opts v1.ListOptions) (*helmv1beta1.ChartList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	ChartExpansion
 }
 
 // charts implements ChartInterface
 type charts struct {
-	*gentype.ClientWithList[*v1beta1.Chart, *v1beta1.ChartList]
+	*gentype.ClientWithList[*helmv1beta1.Chart, *helmv1beta1.ChartList]
 }
 
 // newCharts returns a Charts
 func newCharts(c *HelmV1beta1Client, namespace string) *charts {
 	return &charts{
-		gentype.NewClientWithList[*v1beta1.Chart, *v1beta1.ChartList](
+		gentype.NewClientWithList[*helmv1beta1.Chart, *helmv1beta1.ChartList](
 			"charts",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1beta1.Chart { return &v1beta1.Chart{} },
-			func() *v1beta1.ChartList { return &v1beta1.ChartList{} }),
+			func() *helmv1beta1.Chart { return &helmv1beta1.Chart{} },
+			func() *helmv1beta1.ChartList { return &helmv1beta1.ChartList{} },
+		),
 	}
 }

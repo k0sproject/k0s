@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
+	context "context"
 
-	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,31 +36,32 @@ type ControlNodesGetter interface {
 
 // ControlNodeInterface has methods to work with ControlNode resources.
 type ControlNodeInterface interface {
-	Create(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.CreateOptions) (*v1beta2.ControlNode, error)
-	Update(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (*v1beta2.ControlNode, error)
+	Create(ctx context.Context, controlNode *autopilotv1beta2.ControlNode, opts v1.CreateOptions) (*autopilotv1beta2.ControlNode, error)
+	Update(ctx context.Context, controlNode *autopilotv1beta2.ControlNode, opts v1.UpdateOptions) (*autopilotv1beta2.ControlNode, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (*v1beta2.ControlNode, error)
+	UpdateStatus(ctx context.Context, controlNode *autopilotv1beta2.ControlNode, opts v1.UpdateOptions) (*autopilotv1beta2.ControlNode, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta2.ControlNode, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta2.ControlNodeList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*autopilotv1beta2.ControlNode, error)
+	List(ctx context.Context, opts v1.ListOptions) (*autopilotv1beta2.ControlNodeList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	ControlNodeExpansion
 }
 
 // controlNodes implements ControlNodeInterface
 type controlNodes struct {
-	*gentype.ClientWithList[*v1beta2.ControlNode, *v1beta2.ControlNodeList]
+	*gentype.ClientWithList[*autopilotv1beta2.ControlNode, *autopilotv1beta2.ControlNodeList]
 }
 
 // newControlNodes returns a ControlNodes
 func newControlNodes(c *AutopilotV1beta2Client) *controlNodes {
 	return &controlNodes{
-		gentype.NewClientWithList[*v1beta2.ControlNode, *v1beta2.ControlNodeList](
+		gentype.NewClientWithList[*autopilotv1beta2.ControlNode, *autopilotv1beta2.ControlNodeList](
 			"controlnodes",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1beta2.ControlNode { return &v1beta2.ControlNode{} },
-			func() *v1beta2.ControlNodeList { return &v1beta2.ControlNodeList{} }),
+			func() *autopilotv1beta2.ControlNode { return &autopilotv1beta2.ControlNode{} },
+			func() *autopilotv1beta2.ControlNodeList { return &autopilotv1beta2.ControlNodeList{} },
+		),
 	}
 }
