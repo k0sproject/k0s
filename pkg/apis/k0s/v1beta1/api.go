@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
+	"strconv"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
@@ -69,6 +71,17 @@ func DefaultAPISpec() *APISpec {
 	a.setDefaults()
 	a.SANs, _ = iface.AllAddresses()
 	return a
+}
+
+func (a *APISpec) LocalURL() *url.URL {
+	var host string
+	if a.OnlyBindToAddress {
+		host = net.JoinHostPort(a.Address, strconv.Itoa(a.Port))
+	} else {
+		host = fmt.Sprintf("localhost:%d", a.Port)
+	}
+
+	return &url.URL{Scheme: "https", Host: host}
 }
 
 // APIAddress ...
