@@ -18,24 +18,17 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadRuntimeConfig_K0sNotRunning(t *testing.T) {
-	// create a temporary file for runtime config
-	tmpfile, err := os.CreateTemp("", "runtime-config")
-	assert.NoError(t, err)
-	defer os.Remove(tmpfile.Name())
-
-	// prepare k0sVars
-	k0sVars := &CfgVars{
-		RuntimeConfigPath: tmpfile.Name(),
-	}
-
 	// write some content to the runtime config file
+	rtConfigPath := filepath.Join(t.TempDir(), "runtime-config")
 	content := []byte(`---
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: RuntimeConfig
@@ -43,13 +36,12 @@ spec:
   nodeConfig:
     metadata:
       name: k0s
-  pid: 9999999
+  pid: -1
 `)
-	err = os.WriteFile(k0sVars.RuntimeConfigPath, content, 0644)
-	assert.NoError(t, err)
+	require.NoError(t, os.WriteFile(rtConfigPath, content, 0644))
 
 	// try to load runtime config and check if it returns an error
-	spec, err := LoadRuntimeConfig(k0sVars)
+	spec, err := LoadRuntimeConfig(rtConfigPath)
 	assert.Nil(t, spec)
 	assert.ErrorIs(t, err, ErrK0sNotRunning)
 }
