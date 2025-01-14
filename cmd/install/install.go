@@ -18,7 +18,6 @@ package install
 
 import (
 	"github.com/k0sproject/k0s/pkg/config"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -38,11 +37,17 @@ func NewInstallCmd() *cobra.Command {
 		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 
+	pflags := cmd.PersistentFlags()
+	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		f.Deprecated = "it has no effect and will be removed in a future release"
+		pflags.AddFlag(f)
+	})
+	pflags.BoolVar(&installFlags.force, "force", false, "force init script creation")
+	pflags.StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
+
 	cmd.AddCommand(installWorkerCmd(&installFlags))
 	addPlatformSpecificCommands(cmd, &installFlags)
 
-	cmd.PersistentFlags().BoolVar(&installFlags.force, "force", false, "force init script creation")
-	cmd.PersistentFlags().StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

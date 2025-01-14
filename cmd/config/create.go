@@ -55,7 +55,10 @@ func NewCreateCmd() *cobra.Command {
 			return err
 		},
 	}
-	cmd.Flags().BoolVar(&includeImages, "include-images", false, "include the default images in the output")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.BoolVar(&includeImages, "include-images", false, "include the default images in the output")
+
 	return cmd
 }

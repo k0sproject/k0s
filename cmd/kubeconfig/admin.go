@@ -82,6 +82,8 @@ func kubeConfigAdminCmd() *cobra.Command {
 			return err
 		},
 	}
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
+
 	return cmd
 }

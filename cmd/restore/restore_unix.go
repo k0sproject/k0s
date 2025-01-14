@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -62,14 +61,10 @@ func NewRestoreCmd() *cobra.Command {
 		},
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		logrus.Fatal("failed to get local path")
-	}
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.StringVar(&restoredConfigPath, "config-out", "", "Specify desired name and full path for the restored k0s.yaml file (default: k0s_<archive timestamp>.yaml")
 
-	restoredConfigPathDescription := fmt.Sprintf("Specify desired name and full path for the restored k0s.yaml file (default: %s/k0s_<archive timestamp>.yaml", cwd)
-	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", restoredConfigPathDescription)
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
@@ -113,11 +108,5 @@ func defaultConfigFileOutputPath(archivePath string) string {
 	f := filepath.Base(archivePath)
 	nameWithoutExt := strings.Split(f, ".")[0]
 	fName := strings.TrimPrefix(nameWithoutExt, "k0s_backup_")
-	restoredFileName := fmt.Sprintf("k0s_%s.yaml", fName)
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-	return path.Join(cwd, restoredFileName)
+	return fmt.Sprintf("k0s_%s.yaml", fName)
 }
