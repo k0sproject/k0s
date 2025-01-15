@@ -77,12 +77,17 @@ func DefaultStorageSpec() *StorageSpec {
 func (s *StorageSpec) IsJoinable() bool {
 	switch s.Type {
 	case EtcdStorageType:
-		return !s.Etcd.IsExternalClusterUsed()
+		// Controllers will always be able to connect to an etcd backend, either
+		// by joining as a managed etcd node, or by simply connecting to an
+		// external cluster over the network.
+		return true
+
 	case KineStorageType:
 		return s.Kine.IsJoinable()
-	}
 
-	return false
+	default:
+		return false
+	}
 }
 
 // UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
@@ -211,18 +216,24 @@ func (k *KineConfig) IsJoinable() bool {
 
 	switch backend {
 	case "sqlite":
+		// An sqlite backend is only available via the file system.
 		return false
 
 	case "nats":
 		if u, err := url.Parse(dsn); err == nil {
 			if q, err := url.ParseQuery(u.RawQuery); err == nil {
+				// If it's not an embedded NATS, other controllers may
+				// also be able to connect to it over the network.
 				return q.Has("noEmbed")
 			}
 		}
 		return false
-	}
 
-	return true
+	default:
+		// The assumption is that all other backends will
+		// somehow be reachable over the network.
+		return true
+	}
 }
 
 // GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist
