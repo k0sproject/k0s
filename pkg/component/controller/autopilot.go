@@ -38,7 +38,7 @@ type Autopilot struct {
 	K0sVars            *config.CfgVars
 	KubeletExtraArgs   string
 	AdminClientFactory kubernetes.ClientFactoryInterface
-	EnableWorker       bool
+	Workloads          bool
 }
 
 func (a *Autopilot) Init(ctx context.Context) error {
@@ -66,7 +66,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",
 		HealthProbeBindAddr: "0",
-	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), a.EnableWorker, a.AdminClientFactory, autopilotClientFactory)
+	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), a.Workloads, a.AdminClientFactory, autopilotClientFactory)
 	if err != nil {
 		return fmt.Errorf("failed to create autopilot controller: %w", err)
 	}
