@@ -59,8 +59,8 @@ type RuntimeConfigSpec struct {
 	Pid        int                    `json:"pid"`
 }
 
-func LoadRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
-	content, err := os.ReadFile(k0sVars.RuntimeConfigPath)
+func LoadRuntimeConfig(path string) (*RuntimeConfigSpec, error) {
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func LoadRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 }
 
 func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
-	if _, err := LoadRuntimeConfig(k0sVars); err == nil {
+	if _, err := LoadRuntimeConfig(k0sVars.RuntimeConfigPath); err == nil {
 		return nil, ErrK0sAlreadyRunning
 	}
 
@@ -106,11 +106,6 @@ func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 	if err != nil {
 		return nil, fmt.Errorf("load node config: %w", err)
 	}
-
-	vars := k0sVars.DeepCopy()
-
-	// don't persist the startup config path in the runtime config
-	vars.StartupConfigPath = ""
 
 	cfg := &RuntimeConfig{
 		ObjectMeta: metav1.ObjectMeta{
