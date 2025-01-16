@@ -100,7 +100,7 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		}
 	}
 
-	if len(k.Config.VRRPInstances) > 0 || len(k.Config.VirtualServers) > 0 {
+	if !k.Config.DisableLoadBalancer && (len(k.Config.VRRPInstances) > 0 || len(k.Config.VirtualServers) > 0) {
 		k.log.Info("Starting CPLB reconciler")
 		updateCh := make(chan struct{}, 1)
 		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, updateCh)
@@ -160,6 +160,7 @@ func (k *Keepalived) Start(ctx context.Context) error {
 			}
 		}()
 	}
+
 	return k.supervisor.Supervise()
 }
 
