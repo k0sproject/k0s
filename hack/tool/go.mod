@@ -1,7 +1,6 @@
 module tool
 
 go 1.23
-toolchain go1.23.4
 
 require (
 	github.com/hashicorp/terraform-exec v0.21.0
@@ -90,8 +89,8 @@ require (
 	golang.org/x/time v0.7.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/apimachinery v0.31.3 // indirect
-	k8s.io/client-go v0.31.3 // indirect
+	k8s.io/apimachinery v0.31.5 // indirect
+	k8s.io/client-go v0.31.5 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
