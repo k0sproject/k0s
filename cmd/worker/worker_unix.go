@@ -30,9 +30,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, opts *config.ControllerOptions, certManager *worker.CertificateManager) {
+func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, controller EmbeddingController, certManager *worker.CertificateManager) {
 	// if running inside a controller, status component is already running
-	if !opts.SingleNode && !opts.EnableWorker {
+	if controller == nil {
 		m.Add(ctx, &status.Status{
 			Prober: prober.DefaultProber,
 			StatusInformation: status.K0sStatus{
