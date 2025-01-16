@@ -48,6 +48,11 @@ import (
 
 type Command config.CLIOptions
 
+// Interface between an embedded worker and its embedding controller.
+type EmbeddingController interface {
+	IsSingleNode() bool
+}
+
 func NewWorkerCmd() *cobra.Command {
 	var ignorePreFlightChecks bool
 
@@ -99,7 +104,7 @@ func NewWorkerCmd() *cobra.Command {
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
 
-			return c.Start(ctx, nodeName, kubeletExtraArgs)
+			return c.Start(ctx, nodeName, kubeletExtraArgs, nil)
 		},
 	}
 
@@ -132,7 +137,7 @@ func GetNodeName(opts *config.WorkerOptions) (apitypes.NodeName, stringmap.Strin
 }
 
 // Start starts the worker components based on the given [config.CLIOptions].
-func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap) error {
+func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, controller EmbeddingController) error {
 	if err := worker.BootstrapKubeletKubeconfig(ctx, c.K0sVars, nodeName, &c.WorkerOptions); err != nil {
 		return err
 	}
@@ -153,7 +158,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	var staticPods worker.StaticPods
 
 	if workerConfig.NodeLocalLoadBalancing.IsEnabled() {
-		if c.SingleNode {
+		if controller != nil && controller.IsSingleNode() {
 			return errors.New("node-local load balancing cannot be used in a single-node cluster")
 		}
 
@@ -178,7 +183,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		c.WorkerProfile = "default-windows"
 	}
 
-	if !c.DisableIPTables {
+	if controller == nil {
 		componentManager.Add(ctx, &iptables.Component{
 			IPTablesMode: c.WorkerOptions.IPTablesMode,
 			BinDir:       c.K0sVars.BinDir,
@@ -202,7 +207,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 
 	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
 
-	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, &c.ControllerOptions, certManager)
+	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, controller, certManager)
 
 	// extract needed components
 	if err := componentManager.Init(ctx); err != nil {
