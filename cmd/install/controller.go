@@ -84,8 +84,9 @@ With the controller subcommand you can setup a single node cluster by running:
 
 	flags := cmd.Flags()
 	flags.AddFlagSet(config.GetPersistentFlagSet())
-	flags.AddFlagSet(config.GetControllerFlags())
+	flags.AddFlagSet(config.GetControllerFlags(&config.ControllerOptions{}))
 	flags.AddFlagSet(config.GetWorkerFlags())
+	flags.AddFlagSet(config.FileInputFlag())
 
 	return cmd
 }
