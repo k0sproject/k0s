@@ -2892,6 +2892,14 @@ node-local load balancing.</p>
 <td><code>virtualServers</code></td>
 <td>Configuration options related LoadBalancing. This is an array which allows to configure multiple LBs.</td>
 </tr>
+<tr>
+<td><code>userSpaceProxyBindPort</code></td>
+<td>The port the userspace proxy will bind to. This port is for internal use only, but listens on every interface. Default: <code>6444</code></td>
+</tr>
+<tr>
+<td><code>disableLoadBalancer</code></td>
+<td>Disables the load balancer. Default: <code>false</code></td>
+</tr>
 </tbody>
 </table>
 <h5 id="specnetworkcontrolplaneloadbalancingkeepalivedvrrpinstances"><code>spec.network.controlPlaneLoadBalancing.keepalived.vrrpInstances</code><a class="headerlink" href="#specnetworkcontrolplaneloadbalancingkeepalivedvrrpinstances" title="Permanent link">#</a></h5>
