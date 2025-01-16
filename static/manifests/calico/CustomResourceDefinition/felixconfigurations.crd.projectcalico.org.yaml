@@ -1,5 +1,5 @@
 ---
-# Source: calico/templates/kdd-crds.yaml
+# Source: libcalico-go/config/crd/crd.projectcalico.org_felixconfigurations.yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -266,6 +266,17 @@ spec:
                   information about the BPF policy programs, which can be examined
                   with the calico-bpf command-line tool.
                 type: boolean
+              bpfRedirectToPeer:
+                description: 'BPFRedirectToPeer controls which whether it is allowed
+                  to forward straight to the peer side of the workload devices. It
+                  is allowed for any host L2 devices by default (L2Only), but it breaks
+                  TCP dump on the host side of workload device as it bypasses it on
+                  ingress. Value of Enabled also allows redirection from L3 host devices
+                  like IPIP tunnel or Wireguard directly to the peer side of the workload''s
+                  device. This makes redirection faster, however, it breaks tools
+                  like tcpdump on the peer side. Use Enabled with caution. [Default:
+                  L2Only]'
+                type: string
               chainInsertMode:
                 description: 'ChainInsertMode controls whether Felix hooks the kernel''s
                   top-level iptables chains by inserting a rule at the top of the
@@ -360,15 +371,17 @@ spec:
                   type: string
                 type: array
               failsafeInboundHostPorts:
-                description: 'FailsafeInboundHostPorts is a list of UDP/TCP ports
-                  and CIDRs that Felix will allow incoming traffic to host endpoints
-                  on irrespective of the security policy. This is useful to avoid
-                  accidentally cutting off a host with incorrect configuration. For
-                  back-compatibility, if the protocol is not specified, it defaults
-                  to "tcp". If a CIDR is not specified, it will allow traffic from
-                  all addresses. To disable all inbound host ports, use the value
-                  none. The default value allows ssh access and DHCP. [Default: tcp:22,
-                  udp:68, tcp:179, tcp:2379, tcp:2380, tcp:6443, tcp:6666, tcp:6667]'
+                description: 'FailsafeInboundHostPorts is a list of PortProto struct
+                  objects including UDP/TCP/SCTP ports and CIDRs that Felix will allow
+                  incoming traffic to host endpoints on irrespective of the security
+                  policy. This is useful to avoid accidentally cutting off a host
+                  with incorrect configuration. For backwards compatibility, if the
+                  protocol is not specified, it defaults to "tcp". If a CIDR is not
+                  specified, it will allow traffic from all addresses. To disable
+                  all inbound host ports, use the value "[]". The default value allows
+                  ssh access, DHCP, BGP, etcd and the Kubernetes API. [Default: tcp:22,
+                  udp:68, tcp:179, tcp:2379, tcp:2380, tcp:5473, tcp:6443, tcp:6666,
+                  tcp:6667 ]'
                 items:
                   description: ProtoPort is combination of protocol, port, and CIDR.
                     Protocol and port must be specified.
@@ -385,17 +398,18 @@ spec:
                   type: object
                 type: array
               failsafeOutboundHostPorts:
-                description: 'FailsafeOutboundHostPorts is a list of UDP/TCP ports
-                  and CIDRs that Felix will allow outgoing traffic from host endpoints
-                  to irrespective of the security policy. This is useful to avoid
-                  accidentally cutting off a host with incorrect configuration. For
-                  back-compatibility, if the protocol is not specified, it defaults
-                  to "tcp". If a CIDR is not specified, it will allow traffic from
-                  all addresses. To disable all outbound host ports, use the value
-                  none. The default value opens etcd''s standard ports to ensure that
-                  Felix does not get cut off from etcd as well as allowing DHCP and
-                  DNS. [Default: tcp:179, tcp:2379, tcp:2380, tcp:6443, tcp:6666,
-                  tcp:6667, udp:53, udp:67]'
+                description: 'FailsafeOutboundHostPorts is a list of List of PortProto
+                  struct objects including UDP/TCP/SCTP ports and CIDRs that Felix
+                  will allow outgoing traffic from host endpoints to irrespective
+                  of the security policy. This is useful to avoid accidentally cutting
+                  off a host with incorrect configuration. For backwards compatibility,
+                  if the protocol is not specified, it defaults to "tcp". If a CIDR
+                  is not specified, it will allow traffic from all addresses. To disable
+                  all outbound host ports, use the value "[]". The default value opens
+                  etcd''s standard ports to ensure that Felix does not get cut off
+                  from etcd as well as allowing DHCP, DNS, BGP and the Kubernetes
+                  API. [Default: udp:53, udp:67, tcp:179, tcp:2379, tcp:2380, tcp:5473,
+                  tcp:6443, tcp:6666, tcp:6667 ]'
                 items:
                   description: ProtoPort is combination of protocol, port, and CIDR.
                     Protocol and port must be specified.
@@ -439,6 +453,35 @@ spec:
                   is not recommended since it doesn''t provide better performance
                   than iptables. [Default: false]'
                 type: boolean
+              goGCThreshold:
+                description: "GoGCThreshold Sets the Go runtime's garbage collection
+                  threshold.  I.e. the percentage that the heap is allowed to grow
+                  before garbage collection is triggered.  In general, doubling the
+                  value halves the CPU time spent doing GC, but it also doubles peak
+                  GC memory overhead.  A special value of -1 can be used to disable
+                  GC entirely; this should only be used in conjunction with the GoMemoryLimitMB
+                  setting. \n This setting is overridden by the GOGC environment variable.
+                  \n [Default: 40]"
+                type: integer
+              goMaxProcs:
+                description: "GoMaxProcs sets the maximum number of CPUs that the
+                  Go runtime will use concurrently.  A value of -1 means \"use the
+                  system default\"; typically the number of real CPUs on the system.
+                  \n this setting is overridden by the GOMAXPROCS environment variable.
+                  \n [Default: -1]"
+                type: integer
+              goMemoryLimitMB:
+                description: "GoMemoryLimitMB sets a (soft) memory limit for the Go
+                  runtime in MB.  The Go runtime will try to keep its memory usage
+                  under the limit by triggering GC as needed.  To avoid thrashing,
+                  it will exceed the limit if GC starts to take more than 50% of the
+                  process's CPU time.  A value of -1 disables the memory limit. \n
+                  Note that the memory limit, if used, must be considerably less than
+                  any hard resource limit set at the container or pod level.  This
+                  is because felix is not the only process that must run in the container
+                  or pod. \n This setting is overridden by the GOMEMLIMIT environment
+                  variable. \n [Default: -1]"
+                type: integer
               healthEnabled:
                 type: boolean
               healthHost:
@@ -486,6 +529,15 @@ spec:
                   rescans local interfaces to verify their state. The rescan can be
                   disabled by setting the interval to 0.
                 pattern: ^([0-9]+(\\.[0-9]+)?(ms|s|m|h))*$
+                type: string
+              ipForwarding:
+                description: 'IPForwarding controls whether Felix sets the host sysctls
+                  to enable IP forwarding.  IP forwarding is required when using Calico
+                  for workload networking.  This should only be disabled on hosts
+                  where Calico is used for host protection.  [Default: Enabled]'
+                enum:
+                - Enabled
+                - Disabled
                 type: string
               ipipEnabled:
                 description: 'IPIPEnabled overrides whether Felix should configure
@@ -618,6 +670,9 @@ spec:
                 pattern: ^(?i)(Debug|Info|Warning|Error|Fatal)?$
                 type: string
               maxIpsetSize:
+                description: MaxIpsetSize is the maximum number of IP addresses that
+                  can be stored in an IP set. Not applicable if using the nftables
+                  backend.
                 type: integer
               metadataAddr:
                 description: 'MetadataAddr is the IP address or domain name of the
@@ -655,6 +710,34 @@ spec:
                 x-kubernetes-int-or-string: true
               netlinkTimeout:
                 pattern: ^([0-9]+(\\.[0-9]+)?(ms|s|m|h))*$
+                type: string
+              nftablesFilterAllowAction:
+                pattern: ^(?i)(Accept|Return)?$
+                type: string
+              nftablesFilterDenyAction:
+                description: FilterDenyAction controls what happens to traffic that
+                  is denied by network policy. By default Calico blocks traffic with
+                  a "drop" action. If you want to use a "reject" action instead you
+                  can configure it here.
+                pattern: ^(?i)(Drop|Reject)?$
+                type: string
+              nftablesMangleAllowAction:
+                pattern: ^(?i)(Accept|Return)?$
+                type: string
+              nftablesMarkMask:
+                description: 'MarkMask is the mask that Felix selects its nftables
+                  Mark bits from. Should be a 32 bit hexadecimal number with at least
+                  8 bits set, none of which clash with any other mark bits in use
+                  on the system. [Default: 0xffff0000]'
+                format: int32
+                type: integer
+              nftablesMode:
+                description: 'NFTablesMode configures nftables support in Felix. [Default:
+                  Disabled]'
+                type: string
+              nftablesRefreshInterval:
+                description: 'NftablesRefreshInterval controls the interval at which
+                  Felix periodically refreshes the nftables rules. [Default: 90s]'
                 type: string
               openstackRegion:
                 description: 'OpenstackRegion is the name of the region that a particular
@@ -867,6 +950,10 @@ spec:
                 description: 'WireguardRoutingRulePriority controls the priority value
                   to use for the Wireguard routing rule. [Default: 99]'
                 type: integer
+              wireguardThreadingEnabled:
+                description: 'WireguardThreadingEnabled controls whether Wireguard
+                  has NAPI threading enabled. [Default: false]'
+                type: boolean
               workloadSourceSpoofing:
                 description: WorkloadSourceSpoofing controls whether pods can use
                   the allowedSourcePrefixes annotation to send traffic with a source
