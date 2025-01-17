@@ -61,6 +61,11 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 				return err
 			}
 
+			nodeConfig, err := opts.K0sVars.NodeConfig()
+			if err != nil {
+				return err
+			}
+
 			var bootstrapToken string
 			// we will retry every second for two minutes and then error
 			err = retry.OnError(wait.Backoff{
@@ -80,11 +85,6 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 				}
 				if err = ensureTokenCreationAcceptable(createTokenRole, statusInfo); err != nil {
 					waitCreate = false
-					return err
-				}
-
-				nodeConfig, err := opts.K0sVars.NodeConfig()
-				if err != nil {
 					return err
 				}
 
