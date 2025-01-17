@@ -329,10 +329,10 @@ k0s project follows closely the upstream Kubernetes release cycle. The only diff
 The k0s version string consists of the Kubernetes version and the k0s version. For example:
 
 ```text
-v1.31.3+k0s.0
+v1.31.5+k0s.0
 ```
 
-The Kubernetes version (1.31.3) is the first part, and the last part (k0s.0) reflects the k0s version, which is built on top of the certain Kubernetes version.
+The Kubernetes version (1.31.5) is the first part, and the last part (k0s.0) reflects the k0s version, which is built on top of the certain Kubernetes version.
 
 ## Installation
 
