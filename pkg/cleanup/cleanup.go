@@ -37,12 +37,7 @@ type Config struct {
 	cleanupSteps []Step
 }
 
-func NewConfig(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*Config, error) {
-	cfg, err := k0sVars.NodeConfig()
-	if err != nil {
-		logrus.Errorf("failed to get cluster setup: %v", err)
-	}
-
+func NewConfig(debug bool, k0sVars *config.CfgVars, systemUsers *k0sv1beta1.SystemUser, criSocketFlag string) (*Config, error) {
 	containers, err := newContainersStep(debug, k0sVars, criSocketFlag)
 	if err != nil {
 		return nil, err
@@ -50,9 +45,7 @@ func NewConfig(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*Conf
 
 	cleanupSteps := []Step{
 		containers,
-		&users{
-			systemUsers: cfg.Spec.Install.SystemUsers,
-		},
+		&users{systemUsers: systemUsers},
 		&services{},
 		&directories{
 			dataDir:        k0sVars.DataDir,
