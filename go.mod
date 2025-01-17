@@ -1,6 +1,6 @@
 module github.com/k0sproject/k0s
 
-go 1.23
+go 1.23.0
 
 // k0s
 require (
