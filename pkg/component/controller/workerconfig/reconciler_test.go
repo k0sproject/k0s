@@ -96,7 +96,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("reconcile_fails", func(t *testing.T) {
 			underTest := createdReconciler(t, nil)
 
-			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil))
+			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig())
 
 			require.Error(t, err)
 			assert.Equal(t, "cannot reconcile, not started: created", err.Error())
@@ -140,7 +140,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("reconcile_fails", func(t *testing.T) {
 			underTest := initializedReconciler(t, nil)
 
-			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil))
+			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig())
 
 			require.Error(t, err)
 			assert.Equal(t, "cannot reconcile, not started: initialized", err.Error())
@@ -196,7 +196,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 			underTest, mockApplier := startedReconciler(t)
 			applied := mockApplier.expectApply(t, nil)
 
-			assert.NoError(t, underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil)))
+			assert.NoError(t, underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig()))
 
 			assert.NotEmpty(t, applied(), "Expected some resources to be applied")
 		})
@@ -214,7 +214,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Helper()
 		underTest, mockApplier := startedReconciler(t)
 		applied := mockApplier.expectApply(t, nil)
-		require.NoError(t, underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil)))
+		require.NoError(t, underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig()))
 
 		_ = applied() // wait until reconciliation happened
 		return underTest, mockApplier
@@ -242,7 +242,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("another_reconcile_succeeds", func(t *testing.T) {
 			underTest, mockApplier := reconciledReconciler(t)
 			applied := mockApplier.expectApply(t, nil)
-			clusterConfig := v1beta1.DefaultClusterConfig(nil)
+			clusterConfig := v1beta1.DefaultClusterConfig()
 			clusterConfig.Spec.WorkerProfiles = v1beta1.WorkerProfiles{
 				{Name: "foo", Config: &runtime.RawExtension{Raw: []byte("{}")}},
 			}
@@ -291,7 +291,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("reconcile_fails", func(t *testing.T) {
 			underTest := stoppedReconciler(t)
 
-			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil))
+			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig())
 
 			require.Error(t, err)
 			assert.Equal(t, "cannot reconcile, not started: stopped", err.Error())
@@ -480,7 +480,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 }
 
 func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
-	cluster := v1beta1.DefaultClusterConfig(nil)
+	cluster := v1beta1.DefaultClusterConfig()
 	clients := testutil.NewFakeClientFactory()
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
@@ -630,7 +630,7 @@ func TestReconciler_runReconcileLoop(t *testing.T) {
 
 func TestReconciler_LeaderElection(t *testing.T) {
 	var le mockLeaderElector
-	cluster := v1beta1.DefaultClusterConfig(nil)
+	cluster := v1beta1.DefaultClusterConfig()
 	clients := testutil.NewFakeClientFactory()
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
