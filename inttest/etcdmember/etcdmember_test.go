@@ -20,16 +20,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 )
+
+const basePath = "apis/etcd.k0sproject.io/v1beta1/etcdmembers/%s"
 
 type EtcdMemberSuite struct {
 	common.BootlooseSuite
@@ -81,12 +85,10 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	etcdMemberClient, err := s.EtcdMemberClient(s.ControllerNode(0))
 
 	// Check each node is present in the etcd cluster and reports joined state
-	expectedObjects := []string{"controller0", "controller1", "controller2"}
-
 	// Use errorgroup to wait for all the statuses to be updated
 	eg := errgroup.Group{}
 
-	for i, obj := range expectedObjects {
+	for i, obj := range nodes {
 		i, obj := i, obj
 
 		eg.Go(func() error {
@@ -138,7 +140,7 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 
 	// Make sure the EtcdMember CR status is successfully updated
 	em := s.getMember(ctx, "controller2")
-	s.Require().Equal(em.Status.ReconcileStatus, "Success")
+	s.Require().Equal(em.Status.ReconcileStatus, etcdv1beta1.ReconcileStatusSuccess)
 	s.Require().Equal(etcdv1beta1.ConditionFalse, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
 
 	// Stop k0s and reset the node
@@ -167,12 +169,46 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	s.Require().NoError(err)
 	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
 
+	// Figure out what node is the leader and mark it as leaving
+	leader := s.getLeader(ctx)
+	s.leaveNode(ctx, leader)
+
 }
 
-const basePath = "apis/etcd.k0sproject.io/v1beta1/etcdmembers/%s"
+// getLeader returns the name of the current k0s leader node by comparing
+// the holder identity of the "k0s-endpoint-reconciler" lease to the per node leases
+func (s *EtcdMemberSuite) getLeader(ctx context.Context) string {
+	// First we need to get all leases in "kube-node-lease" NS
+	kc, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	leases, err := kc.CoordinationV1().Leases("kube-node-lease").List(ctx, metav1.ListOptions{})
+	s.Require().NoError(err)
+	leaseIDs := make(map[string]string)
+	for _, l := range leases.Items {
+		if strings.Contains(l.Name, "k0s-ctrl") {
+			node := strings.ReplaceAll(l.Name, "k0s-ctrl-", "")
+			leaseID := l.Spec.HolderIdentity
+			leaseIDs[*leaseID] = node
+		}
+	}
+	// Next we need to match the "k0s-endpoint-reconciler" lease holder identity to a node name
+	leaderLease, err := kc.CoordinationV1().Leases("kube-node-lease").Get(ctx, "k0s-endpoint-reconciler", metav1.GetOptions{})
+	s.Require().NoError(err)
+	return leaseIDs[*leaderLease.Spec.HolderIdentity]
+
+}
 
 func (s *EtcdMemberSuite) leaveNode(ctx context.Context, name string) {
-	kc, err := s.KubeClient(s.ControllerNode(0))
+	// Get kube client to some other node that we're marking to leave
+	n := ""
+	for _, node := range nodes {
+		if node != name {
+			n = node
+			break
+		}
+	}
+	s.T().Logf("using %s as API server to mark %s for leaving", n, name)
+	kc, err := s.KubeClient(n)
 	s.Require().NoError(err)
 
 	// Patch the EtcdMember CR to set the Leave flag
@@ -185,13 +221,16 @@ func (s *EtcdMemberSuite) leaveNode(ctx context.Context, name string) {
 	err = common.Poll(ctx, func(ctx context.Context) (done bool, err error) {
 		em := &etcdv1beta1.EtcdMember{}
 		err = kc.RESTClient().Get().AbsPath(fmt.Sprintf(basePath, name)).Do(ctx).Into(em)
-		s.Require().NoError(err)
+		if err != nil {
+			// We need to retry on errors since it's very common to hit "etcd leader changed" errors when we're messing with the cluster
+			s.T().Logf("error getting EtcdMember %s, gonna retry: %v", name, err)
+			return false, nil
+		}
 
 		c := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
 		if c == nil {
 			return false, nil
 		}
-		s.T().Logf("JoinStatus = %s, waiting for %s", c.Status, etcdv1beta1.ConditionFalse)
 		return c.Status == etcdv1beta1.ConditionFalse, nil
 
 	})
@@ -209,6 +248,8 @@ func (s *EtcdMemberSuite) getMember(ctx context.Context, name string) *etcdv1bet
 	s.Require().NoError(err)
 	return em
 }
+
+var nodes = []string{"controller0", "controller1", "controller2"}
 
 func TestEtcdMemberSuite(t *testing.T) {
 	s := EtcdMemberSuite{
