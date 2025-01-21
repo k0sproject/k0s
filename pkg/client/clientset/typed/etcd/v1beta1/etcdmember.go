@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
+	context "context"
 
-	v1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
+	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -37,32 +37,33 @@ type EtcdMembersGetter interface {
 
 // EtcdMemberInterface has methods to work with EtcdMember resources.
 type EtcdMemberInterface interface {
-	Create(ctx context.Context, etcdMember *v1beta1.EtcdMember, opts v1.CreateOptions) (*v1beta1.EtcdMember, error)
-	Update(ctx context.Context, etcdMember *v1beta1.EtcdMember, opts v1.UpdateOptions) (*v1beta1.EtcdMember, error)
+	Create(ctx context.Context, etcdMember *etcdv1beta1.EtcdMember, opts v1.CreateOptions) (*etcdv1beta1.EtcdMember, error)
+	Update(ctx context.Context, etcdMember *etcdv1beta1.EtcdMember, opts v1.UpdateOptions) (*etcdv1beta1.EtcdMember, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, etcdMember *v1beta1.EtcdMember, opts v1.UpdateOptions) (*v1beta1.EtcdMember, error)
+	UpdateStatus(ctx context.Context, etcdMember *etcdv1beta1.EtcdMember, opts v1.UpdateOptions) (*etcdv1beta1.EtcdMember, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.EtcdMember, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.EtcdMemberList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*etcdv1beta1.EtcdMember, error)
+	List(ctx context.Context, opts v1.ListOptions) (*etcdv1beta1.EtcdMemberList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.EtcdMember, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *etcdv1beta1.EtcdMember, err error)
 	EtcdMemberExpansion
 }
 
 // etcdMembers implements EtcdMemberInterface
 type etcdMembers struct {
-	*gentype.ClientWithList[*v1beta1.EtcdMember, *v1beta1.EtcdMemberList]
+	*gentype.ClientWithList[*etcdv1beta1.EtcdMember, *etcdv1beta1.EtcdMemberList]
 }
 
 // newEtcdMembers returns a EtcdMembers
 func newEtcdMembers(c *EtcdV1beta1Client) *etcdMembers {
 	return &etcdMembers{
-		gentype.NewClientWithList[*v1beta1.EtcdMember, *v1beta1.EtcdMemberList](
+		gentype.NewClientWithList[*etcdv1beta1.EtcdMember, *etcdv1beta1.EtcdMemberList](
 			"etcdmembers",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1beta1.EtcdMember { return &v1beta1.EtcdMember{} },
-			func() *v1beta1.EtcdMemberList { return &v1beta1.EtcdMemberList{} }),
+			func() *etcdv1beta1.EtcdMember { return &etcdv1beta1.EtcdMember{} },
+			func() *etcdv1beta1.EtcdMemberList { return &etcdv1beta1.EtcdMemberList{} },
+		),
 	}
 }

@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
+	context "context"
 
-	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,29 +36,30 @@ type UpdateConfigsGetter interface {
 
 // UpdateConfigInterface has methods to work with UpdateConfig resources.
 type UpdateConfigInterface interface {
-	Create(ctx context.Context, updateConfig *v1beta2.UpdateConfig, opts v1.CreateOptions) (*v1beta2.UpdateConfig, error)
-	Update(ctx context.Context, updateConfig *v1beta2.UpdateConfig, opts v1.UpdateOptions) (*v1beta2.UpdateConfig, error)
+	Create(ctx context.Context, updateConfig *autopilotv1beta2.UpdateConfig, opts v1.CreateOptions) (*autopilotv1beta2.UpdateConfig, error)
+	Update(ctx context.Context, updateConfig *autopilotv1beta2.UpdateConfig, opts v1.UpdateOptions) (*autopilotv1beta2.UpdateConfig, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta2.UpdateConfig, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta2.UpdateConfigList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*autopilotv1beta2.UpdateConfig, error)
+	List(ctx context.Context, opts v1.ListOptions) (*autopilotv1beta2.UpdateConfigList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	UpdateConfigExpansion
 }
 
 // updateConfigs implements UpdateConfigInterface
 type updateConfigs struct {
-	*gentype.ClientWithList[*v1beta2.UpdateConfig, *v1beta2.UpdateConfigList]
+	*gentype.ClientWithList[*autopilotv1beta2.UpdateConfig, *autopilotv1beta2.UpdateConfigList]
 }
 
 // newUpdateConfigs returns a UpdateConfigs
 func newUpdateConfigs(c *AutopilotV1beta2Client) *updateConfigs {
 	return &updateConfigs{
-		gentype.NewClientWithList[*v1beta2.UpdateConfig, *v1beta2.UpdateConfigList](
+		gentype.NewClientWithList[*autopilotv1beta2.UpdateConfig, *autopilotv1beta2.UpdateConfigList](
 			"updateconfigs",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1beta2.UpdateConfig { return &v1beta2.UpdateConfig{} },
-			func() *v1beta2.UpdateConfigList { return &v1beta2.UpdateConfigList{} }),
+			func() *autopilotv1beta2.UpdateConfig { return &autopilotv1beta2.UpdateConfig{} },
+			func() *autopilotv1beta2.UpdateConfigList { return &autopilotv1beta2.UpdateConfigList{} },
+		),
 	}
 }

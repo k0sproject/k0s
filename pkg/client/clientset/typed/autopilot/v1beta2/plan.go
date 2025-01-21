@@ -19,9 +19,9 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
+	context "context"
 
-	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,29 +36,30 @@ type PlansGetter interface {
 
 // PlanInterface has methods to work with Plan resources.
 type PlanInterface interface {
-	Create(ctx context.Context, plan *v1beta2.Plan, opts v1.CreateOptions) (*v1beta2.Plan, error)
-	Update(ctx context.Context, plan *v1beta2.Plan, opts v1.UpdateOptions) (*v1beta2.Plan, error)
+	Create(ctx context.Context, plan *autopilotv1beta2.Plan, opts v1.CreateOptions) (*autopilotv1beta2.Plan, error)
+	Update(ctx context.Context, plan *autopilotv1beta2.Plan, opts v1.UpdateOptions) (*autopilotv1beta2.Plan, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta2.Plan, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1beta2.PlanList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*autopilotv1beta2.Plan, error)
+	List(ctx context.Context, opts v1.ListOptions) (*autopilotv1beta2.PlanList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	PlanExpansion
 }
 
 // plans implements PlanInterface
 type plans struct {
-	*gentype.ClientWithList[*v1beta2.Plan, *v1beta2.PlanList]
+	*gentype.ClientWithList[*autopilotv1beta2.Plan, *autopilotv1beta2.PlanList]
 }
 
 // newPlans returns a Plans
 func newPlans(c *AutopilotV1beta2Client) *plans {
 	return &plans{
-		gentype.NewClientWithList[*v1beta2.Plan, *v1beta2.PlanList](
+		gentype.NewClientWithList[*autopilotv1beta2.Plan, *autopilotv1beta2.PlanList](
 			"plans",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v1beta2.Plan { return &v1beta2.Plan{} },
-			func() *v1beta2.PlanList { return &v1beta2.PlanList{} }),
+			func() *autopilotv1beta2.Plan { return &autopilotv1beta2.Plan{} },
+			func() *autopilotv1beta2.PlanList { return &autopilotv1beta2.PlanList{} },
+		),
 	}
 }

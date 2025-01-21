@@ -29,15 +29,15 @@ type FakeAutopilotV1beta2 struct {
 }
 
 func (c *FakeAutopilotV1beta2) ControlNodes() v1beta2.ControlNodeInterface {
-	return &FakeControlNodes{c}
+	return newFakeControlNodes(c)
 }
 
 func (c *FakeAutopilotV1beta2) Plans() v1beta2.PlanInterface {
-	return &FakePlans{c}
+	return newFakePlans(c)
 }
 
 func (c *FakeAutopilotV1beta2) UpdateConfigs() v1beta2.UpdateConfigInterface {
-	return &FakeUpdateConfigs{c}
+	return newFakeUpdateConfigs(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
