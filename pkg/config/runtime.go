@@ -107,14 +107,9 @@ func ParseRuntimeConfig(content []byte) (*RuntimeConfig, error) {
 	return &config, nil
 }
 
-func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfig, error) {
+func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*RuntimeConfig, error) {
 	if _, err := LoadRuntimeConfig(k0sVars.RuntimeConfigPath); err == nil {
 		return nil, ErrK0sAlreadyRunning
-	}
-
-	nodeConfig, err := k0sVars.NodeConfig()
-	if err != nil {
-		return nil, fmt.Errorf("load node config: %w", err)
 	}
 
 	cfg := &RuntimeConfig{

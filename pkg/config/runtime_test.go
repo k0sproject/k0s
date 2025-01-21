@@ -69,21 +69,23 @@ func TestNewRuntimeConfig(t *testing.T) {
 		DataDir:           tempDir,
 	}
 
+	// Check if the node config can be loaded properly
+	nodeConfig, err := k0sVars.NodeConfig()
+	if assert.NoError(t, err) {
+		assert.Equal(t, "10.0.0.1", nodeConfig.Spec.API.Address)
+	}
+
 	// create a new runtime config and check if it's valid
-	cfg, err := NewRuntimeConfig(k0sVars)
-	spec := cfg.Spec
-	assert.NoError(t, err)
-	assert.NotNil(t, spec)
-	assert.Same(t, k0sVars, spec.K0sVars)
-	assert.Equal(t, os.Getpid(), spec.Pid)
-	assert.NotNil(t, spec.NodeConfig)
-	nodeConfig, err := spec.K0sVars.NodeConfig()
-	assert.NoError(t, err)
-	assert.Equal(t, "10.0.0.1", nodeConfig.Spec.API.Address)
+	cfg, err := NewRuntimeConfig(k0sVars, nodeConfig)
+	if assert.NoError(t, err) && assert.NotNil(t, cfg) && assert.NotNil(t, cfg.Spec) {
+		assert.Same(t, k0sVars, cfg.Spec.K0sVars)
+		assert.Same(t, nodeConfig, cfg.Spec.NodeConfig)
+		assert.Equal(t, os.Getpid(), cfg.Spec.Pid)
+	}
 	assert.FileExists(t, rtConfigPath)
 
 	// try to create a new runtime config when one is already active and check if it returns an error
-	_, err = NewRuntimeConfig(k0sVars)
+	_, err = NewRuntimeConfig(k0sVars, nil)
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, ErrK0sAlreadyRunning)
 }
