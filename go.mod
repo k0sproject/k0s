@@ -57,7 +57,7 @@ require (
 	golang.org/x/text v0.21.0
 	golang.org/x/tools v0.29.0
 	google.golang.org/grpc v1.69.4
-	helm.sh/helm/v3 v3.16.4
+	helm.sh/helm/v3 v3.17.0
 	oras.land/oras-go/v2 v2.5.0
 )
 
@@ -120,7 +120,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
-	github.com/cyphar/filepath-securejoin v0.3.5 // indirect
+	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/cli v25.0.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
@@ -219,7 +219,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/rubenv/sql-migrate v1.7.0 // indirect
+	github.com/rubenv/sql-migrate v1.7.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
