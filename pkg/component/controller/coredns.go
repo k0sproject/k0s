@@ -274,9 +274,8 @@ var _ manager.Reconciler = (*CoreDNS)(nil)
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
-	K0sVars    *config.CfgVars
-	NodeConfig *v1beta1.ClusterConfig
-
+	dnsAddress             string
+	clusterDomain          string
 	client                 kubernetes.Interface
 	log                    *logrus.Entry
 	manifestDir            string
@@ -298,19 +297,22 @@ type coreDNSConfig struct {
 
 // NewCoreDNS creates new instance of CoreDNS component
 func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) (*CoreDNS, error) {
-	manifestDir := path.Join(k0sVars.ManifestsDir, "coredns")
+	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress()
+	if err != nil {
+		return nil, err
+	}
 
 	client, err := clientFactory.GetClient()
 	if err != nil {
 		return nil, err
 	}
-	log := logrus.WithFields(logrus.Fields{"component": "coredns"})
+
 	return &CoreDNS{
-		client:      client,
-		log:         log,
-		K0sVars:     k0sVars,
-		manifestDir: manifestDir,
-		NodeConfig:  nodeConfig,
+		dnsAddress:    dnsAddress,
+		clusterDomain: nodeConfig.Spec.Network.ClusterDomain,
+		client:        client,
+		log:           logrus.WithField("component", "coredns"),
+		manifestDir:   path.Join(k0sVars.ManifestsDir, "coredns"),
 	}, nil
 }
 
@@ -348,16 +350,6 @@ func (c *CoreDNS) Start(ctx context.Context) error {
 }
 
 func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) (coreDNSConfig, error) {
-	nodeConfig, err := c.K0sVars.NodeConfig()
-	if err != nil {
-		return coreDNSConfig{}, fmt.Errorf("failed to get node config: %w", err)
-	}
-
-	dns, err := nodeConfig.Spec.Network.DNSAddress()
-	if err != nil {
-		return coreDNSConfig{}, err
-	}
-
 	nodes, err := c.client.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		return coreDNSConfig{}, err
@@ -367,8 +359,8 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 
 	config := coreDNSConfig{
 		Replicas:      replicaCount(nodeCount),
-		ClusterDomain: nodeConfig.Spec.Network.ClusterDomain,
-		ClusterDNSIP:  dns,
+		ClusterDomain: c.clusterDomain,
+		ClusterDNSIP:  c.dnsAddress,
 		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
 		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
