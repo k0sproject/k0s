@@ -70,6 +70,11 @@ const (
 	JoinStatusLeft   JoinStatus = "Left"
 )
 
+const (
+	ReconcileStatusSuccess = "Success"
+	ReconcileStatusFailed  = "Failed"
+)
+
 // EtcdMemberSpec defines the desired state of EtcdMember
 type EtcdMemberSpec struct {
 	// Leave is a flag to indicate that the member should be removed from the cluster
