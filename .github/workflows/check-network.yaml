@@ -89,11 +89,11 @@ jobs:
           path: |
             build/cache/go/build
       - name: Cache GOMODCACHE
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
-          key: ${{ runner.os }}-build-gomodcache-linux-${{ hashFiles('go.sum') }}
-          path: |
-            build/cache/go/mod
+          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
+          path: build/cache/go/mod
+          enableCrossOsArchive: true
 
       - name: Build k0s Binary
         id: k0s_build
