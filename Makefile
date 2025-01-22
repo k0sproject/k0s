@@ -238,7 +238,7 @@ lint-go: $(GO_ENV_REQUISITES) go.sum bindata
 lint: lint-copyright lint-go
 
 airgap-images.txt: k0s $(GO_ENV_REQUISITES)
-	$(GO_ENV) ./k0s airgap list-images --all > '$@'
+	$(GO_ENV) ./k0s airgap list-images --all > '$@.tmp' && mv '$@.tmp' '$@'
 
 airgap-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
 airgap-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
@@ -248,7 +248,8 @@ airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
 	$(DOCKER) run --rm -i --privileged \
 	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
-	  '$(shell cat .k0sbuild.image-bundler.stamp)' < airgap-images.txt > '$@'
+	  '$(shell cat .k0sbuild.image-bundler.stamp)' < airgap-images.txt > '$@.tmp' \
+	  && mv '$@.tmp' '$@'
 
 .k0sbuild.image-bundler.stamp: hack/image-bundler/* embedded-bins/Makefile.variables
 	$(DOCKER) build --progress=plain --iidfile '$@' \
