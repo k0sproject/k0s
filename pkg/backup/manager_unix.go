@@ -164,7 +164,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 		return fmt.Errorf("failed to unpack backup archive `%s`: %w", archivePath, err)
 	}
 	defer os.RemoveAll(bm.tmpDir)
-	cfg, err := bm.getConfigForRestore(k0sVars)
+	cfg, err := bm.getConfigForRestore()
 	if err != nil {
 		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %w", err)
 	}
@@ -180,11 +180,16 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 	return nil
 }
 
-func (bm Manager) getConfigForRestore(k0sVars *config.CfgVars) (*v1beta1.ClusterConfig, error) {
+func (bm Manager) getConfigForRestore() (*v1beta1.ClusterConfig, error) {
 	configFromBackup := path.Join(bm.tmpDir, "k0s.yaml")
 	logrus.Debugf("Using k0s.yaml from: %s", configFromBackup)
 
-	cfg, err := k0sVars.NodeConfig()
+	bytes, err := os.ReadFile(configFromBackup)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := v1beta1.ConfigFromString(string(bytes))
 	if err != nil {
 		return nil, err
 	}

@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/backup"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -56,7 +57,7 @@ func NewBackupCmd() *cobra.Command {
 			if nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
 				return errors.New("command 'k0s backup' does not support external etcd cluster")
 			}
-			return c.backup(savePath, cmd.OutOrStdout())
+			return c.backup(nodeConfig, savePath, cmd.OutOrStdout())
 		},
 	}
 
@@ -67,7 +68,7 @@ func NewBackupCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *command) backup(savePath string, out io.Writer) error {
+func (c *command) backup(nodeConfig *k0sv1beta1.ClusterConfig, savePath string, out io.Writer) error {
 	if os.Geteuid() != 0 {
 		return errors.New("this command must be run as root!")
 	}
@@ -85,11 +86,6 @@ func (c *command) backup(savePath string, out io.Writer) error {
 		return fmt.Errorf("unable to detect cluster status %w", err)
 	}
 	logrus.Debugf("detected role for backup operations: %v", status.Role)
-
-	nodeConfig, err := c.K0sVars.NodeConfig()
-	if err != nil {
-		return err
-	}
 
 	if strings.Contains(status.Role, "controller") {
 		mgr, err := backup.NewBackupManager()

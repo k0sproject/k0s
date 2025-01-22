@@ -160,7 +160,7 @@ func (c *command) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initialize dir: %w", err)
 	}
 
-	rtc, err := config.NewRuntimeConfig(c.K0sVars)
+	rtc, err := config.NewRuntimeConfig(c.K0sVars, nodeConfig)
 	if err != nil {
 		return fmt.Errorf("failed to initialize runtime config: %w", err)
 	}

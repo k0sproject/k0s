@@ -76,7 +76,7 @@ func (c *command) reset() error {
 	}
 
 	// Get Cleanup Config
-	cfg, err := cleanup.NewConfig(c.Debug, c.K0sVars, c.WorkerOptions.CriSocket)
+	cfg, err := cleanup.NewConfig(c.Debug, c.K0sVars, nodeCfg.Spec.Install.SystemUsers, c.WorkerOptions.CriSocket)
 	if err != nil {
 		return fmt.Errorf("failed to configure cleanup: %w", err)
 	}
