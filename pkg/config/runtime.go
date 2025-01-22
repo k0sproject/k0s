@@ -56,10 +56,14 @@ type RuntimeConfig struct {
 type RuntimeConfigSpec struct {
 	NodeConfig *v1beta1.ClusterConfig `json:"nodeConfig"`
 	K0sVars    *CfgVars               `json:"k0sVars"`
-	Pid        int                    `json:"pid"`
+	lockFile   *os.File
 }
 
 func LoadRuntimeConfig(path string) (*RuntimeConfigSpec, error) {
+	if !isLocked(path + ".lock") {
+		return nil, ErrK0sNotRunning
+	}
+
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -69,20 +73,8 @@ func LoadRuntimeConfig(path string) (*RuntimeConfigSpec, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse runtime configuration: %w", err)
 	}
-	spec := config.Spec
 
-	// If a pid is defined but there's no process found, the instance of k0s is
-	// expected to have died, in which case the existing config is removed and
-	// an error is returned, which allows the controller startup to proceed to
-	// initialize a new runtime config.
-	if spec.Pid != 0 {
-		if err := checkPid(spec.Pid); err != nil {
-			defer func() { _ = spec.Cleanup() }()
-			return nil, errors.Join(ErrK0sNotRunning, err)
-		}
-	}
-
-	return spec, nil
+	return config.Spec, nil
 }
 
 func ParseRuntimeConfig(content []byte) (*RuntimeConfig, error) {
@@ -108,8 +100,27 @@ func ParseRuntimeConfig(content []byte) (*RuntimeConfig, error) {
 }
 
 func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*RuntimeConfig, error) {
-	if _, err := LoadRuntimeConfig(k0sVars.RuntimeConfigPath); err == nil {
-		return nil, ErrK0sAlreadyRunning
+	if err := dir.Init(filepath.Dir(k0sVars.RuntimeConfigPath), constant.RunDirMode); err != nil {
+		logrus.Warnf("failed to initialize runtime config dir: %v", err)
+	}
+
+	// A file lock is acquired using `flock(2)` to ensure that only one
+	// instance of the `k0s` process can modify the runtime configuration
+	// at a time. The lock is tied to the lifetime of the `k0s` process,
+	// meaning that if the process terminates unexpectedly, the lock is
+	// automatically released by the operating system. This ensures that
+	// subsequent processes can acquire the lock without manual cleanup.
+	// https://man7.org/linux/man-pages/man2/flock.2.html
+	//
+	// It works similar on Windows, but with LockFileEx
+
+	path, err := filepath.Abs(k0sVars.RuntimeConfigPath + ".lock")
+	if err != nil {
+		return nil, err
+	}
+	lockFile, err := tryLock(path)
+	if err != nil {
+		return nil, err
 	}
 
 	cfg := &RuntimeConfig{
@@ -123,17 +134,13 @@ func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*Run
 		Spec: &RuntimeConfigSpec{
 			NodeConfig: nodeConfig,
 			K0sVars:    k0sVars,
-			Pid:        os.Getpid(),
+			lockFile:   lockFile,
 		},
 	}
 
 	content, err := yaml.Marshal(cfg)
 	if err != nil {
 		return nil, err
-	}
-
-	if err := dir.Init(filepath.Dir(k0sVars.RuntimeConfigPath), constant.RunDirMode); err != nil {
-		logrus.Warnf("failed to initialize runtime config dir: %v", err)
 	}
 
 	if err := os.WriteFile(k0sVars.RuntimeConfigPath, content, 0600); err != nil {
@@ -149,7 +156,15 @@ func (r *RuntimeConfigSpec) Cleanup() error {
 	}
 
 	if err := os.Remove(r.K0sVars.RuntimeConfigPath); err != nil {
-		return fmt.Errorf("failed to clean up runtime config file: %w", err)
+		logrus.Warnf("failed to clean up runtime config file: %v", err)
+	}
+
+	if err := r.lockFile.Close(); err != nil {
+		return fmt.Errorf("failed to close the runtime config file: %w", err)
+	}
+
+	if err := os.Remove(r.lockFile.Name()); err != nil {
+		return fmt.Errorf("failed to delete %s: %w", r.lockFile.Name(), err)
 	}
 	return nil
 }

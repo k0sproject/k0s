@@ -55,16 +55,15 @@ func TestAdmin(t *testing.T) {
 		},
 	}, adminConfPath))
 
-	rtConfigPath := filepath.Join(dataDir, "run", "k0s.yaml")
-	writeYAML(t, rtConfigPath, &config.RuntimeConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String(), Kind: config.RuntimeConfigKind},
-		Spec: &config.RuntimeConfigSpec{K0sVars: &config.CfgVars{
-			AdminKubeConfigPath: adminConfPath,
-			DataDir:             dataDir,
-			RuntimeConfigPath:   rtConfigPath,
-			StartupConfigPath:   configPath,
-		}},
-	})
+	k0sVars := &config.CfgVars{
+		AdminKubeConfigPath: adminConfPath,
+		DataDir:             dataDir,
+		RuntimeConfigPath:   filepath.Join(dataDir, "run", "k0s.yaml"),
+		StartupConfigPath:   configPath,
+	}
+	cfg, err := config.NewRuntimeConfig(k0sVars, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, cfg.Spec.Cleanup()) })
 
 	var stdout bytes.Buffer
 	var stderr strings.Builder
@@ -89,17 +88,23 @@ func TestAdmin_NoAdminConfig(t *testing.T) {
 	dataDir := t.TempDir()
 
 	configPath := filepath.Join(dataDir, "k0s.yaml")
-	adminConfPath := filepath.Join(dataDir, "admin.conf")
-	rtConfigPath := filepath.Join(dataDir, "run", "k0s.yaml")
-	writeYAML(t, rtConfigPath, &config.RuntimeConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String(), Kind: config.RuntimeConfigKind},
-		Spec: &config.RuntimeConfigSpec{K0sVars: &config.CfgVars{
-			AdminKubeConfigPath: adminConfPath,
-			DataDir:             dataDir,
-			RuntimeConfigPath:   rtConfigPath,
-			StartupConfigPath:   configPath,
+	writeYAML(t, configPath, &v1beta1.ClusterConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String(), Kind: v1beta1.ClusterConfigKind},
+		Spec: &v1beta1.ClusterSpec{API: &v1beta1.APISpec{
+			Port: 65432, ExternalAddress: "not-here.example.com",
 		}},
 	})
+
+	k0sVars := &config.CfgVars{
+		AdminKubeConfigPath: filepath.Join(dataDir, "admin.conf"),
+		DataDir:             dataDir,
+		RuntimeConfigPath:   filepath.Join(dataDir, "run", "k0s.yaml"),
+		StartupConfigPath:   filepath.Join(dataDir, "k0s.yaml"),
+	}
+
+	cfg, err := config.NewRuntimeConfig(k0sVars, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, cfg.Spec.Cleanup()) })
 
 	var stdout, stderr strings.Builder
 	underTest := cmd.NewRootCmd()
@@ -110,7 +115,7 @@ func TestAdmin_NoAdminConfig(t *testing.T) {
 	assert.Error(t, underTest.Execute())
 
 	assert.Empty(t, stdout.String())
-	msg := fmt.Sprintf("admin config %q not found, check if the control plane is initialized on this node", adminConfPath)
+	msg := fmt.Sprintf("admin config %q not found, check if the control plane is initialized on this node", k0sVars.AdminKubeConfigPath)
 	assert.Equal(t, "Error: "+msg+"\n", stderr.String())
 }
 
