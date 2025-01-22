@@ -182,8 +182,8 @@ jobs:
         uses: actions/cache@v4
         with:
           key: unittests-k0s-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            build/cache/go/mod
+          path: build/cache/go/mod
+          enableCrossOsArchive: true
 
       - name: Run unit tests
         run: make check-unit $UNITTEST_EXTRA_ARGS
