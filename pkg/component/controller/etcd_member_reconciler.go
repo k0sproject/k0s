@@ -22,8 +22,12 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/avast/retry-go"
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	etcdmemberclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
@@ -59,20 +63,59 @@ type EtcdMemberReconciler struct {
 	etcdConfig       *v1beta1.EtcdConfig
 	etcdMemberClient etcdmemberclient.EtcdMemberInterface
 	leaderElector    leaderelector.Interface
+	mux              sync.Mutex
+	started          atomic.Bool
 }
 
 func (e *EtcdMemberReconciler) Init(_ context.Context) error {
 	return nil
 }
 
+// resync does a full resync of the etcd members when the leader changes
+// This is needed to ensure all the member objects are in sync with the actual etcd cluster
+// We might get stale state if we remove the current leader as the leader will essentially
+// remove itself from the etcd cluster and after that tries to update the member object.
+func (e *EtcdMemberReconciler) resync(ctx context.Context) error {
+	e.mux.Lock()
+	defer e.mux.Unlock()
+
+	if !e.started.Load() {
+		logrus.WithField("component", "EtcdMemberReconciler").Debug("Not started yet!!?!?")
+		return nil
+	}
+
+	// Loop through all the members and run reconcile on them
+	// Use high timeout as etcd/api could be a bit slow when the leader changes
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+	members, err := e.etcdMemberClient.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, member := range members.Items {
+		e.reconcileMember(ctx, &member)
+	}
+	return nil
+}
+
 func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
-	log := logrus.WithField("component", "etcdMemberReconciler")
+	log := logrus.WithField("component", "EtcdMemberReconciler")
 
 	etcdMemberClient, err := e.clientFactory.GetEtcdMemberClient()
 	if err != nil {
 		return err
 	}
 	e.etcdMemberClient = etcdMemberClient
+
+	e.leaderElector.AddAcquiredLeaseCallback(func() {
+		// Spin up resync in separate routine to not block the leader election
+		go func() {
+			log.Info("leader lease acquired, starting resync")
+			if err := e.resync(ctx); err != nil {
+				log.WithError(err).Error("failed to resync etcd members")
+			}
+		}()
+	})
 
 	// Run the watch in go routine so it keeps running till the context ends
 	go func() {
@@ -83,10 +126,25 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 		}
 
 		// Create the object for this node
-		err = e.createMemberObject(ctx)
+		// Need to be done in retry loop as during the initial startup the etcd might not be stable
+		err = retry.Do(
+			func() error {
+				return e.createMemberObject(ctx)
+			},
+			retry.Delay(3*time.Second),
+			retry.Attempts(5),
+			retry.Context(ctx),
+			retry.LastErrorOnly(true),
+			retry.RetryIf(func(retryErr error) bool {
+				log.Debugf("retrying createMemberObject: %v", retryErr)
+				// During etcd cluster bootstrap, it's common to see k8s giving 500 errors due to etcd timeouts
+				return apierrors.IsInternalError(retryErr)
+			}),
+		)
 		if err != nil {
-			log.WithError(err).Error("failed to create EtcdMember object")
+			log.WithError(err).Error("failed to create EtcdMember object for this controller")
 		}
+		e.started.Store(true)
 		var lastObservedVersion string
 		err = watch.EtcdMembers(etcdMemberClient).
 			WithErrorCallback(func(err error) (time.Duration, error) {
@@ -105,7 +163,14 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 			}).
 			Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
 				lastObservedVersion = member.ResourceVersion
-				e.reconcileMember(ctx, member)
+				log.Debugf("watch triggered on %s", member.Name)
+				if e.leaderElector.IsLeader() {
+					if err := e.resync(ctx); err != nil {
+						log.WithError(err).Error("failed to resync etcd members")
+					}
+				} else {
+					log.Debug("Not the leader, skipping")
+				}
 				// Never stop the watch
 				return false, nil
 			})
@@ -237,8 +302,6 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context) error {
 		}
 	}
 
-	em.Status.PeerAddress = e.etcdConfig.PeerAddress
-	em.Status.MemberID = memberIDStr
 	em.Spec.Leave = false
 
 	log.Debug("EtcdMember object already exists, updating it")
@@ -247,6 +310,8 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	em.Status.PeerAddress = e.etcdConfig.PeerAddress
+	em.Status.MemberID = memberIDStr
 	em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
 	_, err = e.etcdMemberClient.UpdateStatus(ctx, em, metav1.UpdateOptions{})
 	if err != nil {
@@ -265,12 +330,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 		"peerAddress": member.Status.PeerAddress,
 	})
 
-	if !e.leaderElector.IsLeader() {
-		log.Debug("not the leader, skipping reconcile")
-		return
-	}
-
-	log.Debugf("reconciling EtcdMember: %+v", member)
+	log.Debugf("reconciling EtcdMember: %s", member.Name)
 
 	if !member.Spec.Leave {
 		log.Debug("member not marked for leave, no action needed")
@@ -280,7 +340,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 	etcdClient, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
 	if err != nil {
 		log.WithError(err).Warn("failed to create etcd client")
-		member.Status.ReconcileStatus = "Failed"
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
 		member.Status.Message = err.Error()
 		if _, err = e.etcdMemberClient.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
 			log.WithError(err).Error("failed to update member state")
@@ -295,7 +355,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 	// Verify that the member is actually still present in etcd
 	members, err := etcdClient.ListMembers(ctx)
 	if err != nil {
-		member.Status.ReconcileStatus = "Failed"
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
 		member.Status.Message = err.Error()
 		if _, err = e.etcdMemberClient.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
 			log.WithError(err).Error("failed to update member state")
@@ -309,6 +369,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 	if !ok {
 		log.Debug("member marked for leave but not in actual member list, updating state to reflect that")
 		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
 		member, err = e.etcdMemberClient.UpdateStatus(ctx, member, metav1.UpdateOptions{})
 		if err != nil {
 			log.WithError(err).Error("failed to update EtcdMember status")
@@ -328,11 +389,31 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 		return
 	}
 
-	if err = etcdClient.DeleteMember(ctx, memberID); err != nil {
+	err = retry.Do(func() error {
+		return etcdClient.DeleteMember(ctx, memberID)
+	},
+		retry.Delay(5*time.Second),
+		retry.LastErrorOnly(true),
+		retry.Attempts(5),
+		retry.Context(ctx),
+		retry.RetryIf(func(err error) bool {
+			// In case etcd reports unhealthy cluster, retry
+			msg := err.Error()
+			switch {
+			case strings.Contains(msg, "unhealthy cluster"):
+				return true
+			case strings.Contains(msg, "leader changed"):
+				return true
+			}
+			return false
+		}),
+	)
+
+	if err != nil {
 		logrus.
 			WithError(err).
 			Errorf("Failed to delete etcd peer from cluster")
-		member.Status.ReconcileStatus = "Failed"
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
 		member.Status.Message = err.Error()
 		_, err = e.etcdMemberClient.UpdateStatus(ctx, member, metav1.UpdateOptions{})
 		if err != nil {
@@ -343,7 +424,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, member *etcd
 
 	// Peer removed successfully, update status
 	log.Info("reconcile succeeded")
-	member.Status.ReconcileStatus = "Success"
+	member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
 	member.Status.Message = "Member removed from cluster"
 	member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
 	_, err = e.etcdMemberClient.UpdateStatus(ctx, member, metav1.UpdateOptions{})
