@@ -237,3 +237,77 @@ func (d *testDesc) DisplayName() string    { return d.name }
 type testProp string
 
 func (p testProp) String() string { return string(p) }
+
+func Test_resultsCollector(t *testing.T) {
+	for _, data := range []struct {
+		name         string
+		probe        func(t *testing.T, cli *resultsCollector)
+		xpectResults []Probe
+		xpectFailed  bool
+	}{
+		{
+			"success",
+			func(t *testing.T, cli *resultsCollector) {
+				err := cli.Pass(&testDesc{"foo", probes.ProbePath{"bar"}}, testProp("baz"))
+				assert.NoError(t, err)
+				err = cli.Pass(&testDesc{"foo", probes.ProbePath{"bar", "baz"}}, testProp("qux"))
+				assert.NoError(t, err)
+				err = cli.Warn(&testDesc{"foo", nil}, testProp("bar"), "baz")
+				assert.NoError(t, err)
+			},
+			[]Probe{
+				{Path: []string{"bar"}, DisplayName: "foo", Prop: "baz", Message: "", Category: "pass", Error: nil},
+				{Path: []string{"bar", "baz"}, DisplayName: "foo", Prop: "qux", Message: "", Category: "pass", Error: nil},
+				{Path: []string(nil), DisplayName: "foo", Prop: "bar", Message: "baz", Category: "warning", Error: nil},
+			},
+			false,
+		},
+		{
+			"has_reject",
+			func(t *testing.T, cli *resultsCollector) {
+				err := cli.Pass(&testDesc{"foo", probes.ProbePath{"bar"}}, testProp("baz"))
+				assert.NoError(t, err)
+				err = cli.Pass(&testDesc{"foo", probes.ProbePath{"bar", "baz"}}, testProp("qux"))
+				assert.NoError(t, err)
+				err = cli.Warn(&testDesc{"foo", nil}, testProp("bar"), "baz")
+				assert.NoError(t, err)
+				err = cli.Reject(&testDesc{"foo", nil}, testProp("bar"), "baz")
+				assert.NoError(t, err)
+			},
+			[]Probe{
+				{Path: []string{"bar"}, DisplayName: "foo", Prop: "baz", Message: "", Category: "pass", Error: nil},
+				{Path: []string{"bar", "baz"}, DisplayName: "foo", Prop: "qux", Message: "", Category: "pass", Error: nil},
+				{Path: []string(nil), DisplayName: "foo", Prop: "bar", Message: "baz", Category: "warning", Error: nil},
+				{Path: []string(nil), DisplayName: "foo", Prop: "bar", Message: "baz", Category: "rejected", Error: nil},
+			},
+			true,
+		},
+		{
+			"has_error",
+			func(t *testing.T, cli *resultsCollector) {
+				err := cli.Pass(&testDesc{"foo", probes.ProbePath{"bar"}}, testProp("baz"))
+				assert.NoError(t, err)
+				err = cli.Pass(&testDesc{"foo", probes.ProbePath{"bar", "baz"}}, testProp("qux"))
+				assert.NoError(t, err)
+				err = cli.Warn(&testDesc{"foo", nil}, testProp("bar"), "baz")
+				assert.NoError(t, err)
+				err = cli.Error(&testDesc{"foo", probes.ProbePath{}}, errors.New("bar"))
+				assert.NoError(t, err)
+			},
+			[]Probe{
+				{Path: []string{"bar"}, DisplayName: "foo", Prop: "baz", Message: "", Category: "pass", Error: nil},
+				{Path: []string{"bar", "baz"}, DisplayName: "foo", Prop: "qux", Message: "", Category: "pass", Error: nil},
+				{Path: []string(nil), DisplayName: "foo", Prop: "bar", Message: "baz", Category: "warning", Error: nil},
+				{Path: []string(nil), DisplayName: "foo", Prop: "", Message: "", Category: "error", Error: errors.New("bar")},
+			},
+			true,
+		},
+	} {
+		t.Run(data.name, func(t *testing.T) {
+			c := &resultsCollector{}
+			data.probe(t, c)
+			assert.Equal(t, data.xpectResults, c.results)
+			assert.Equal(t, data.xpectFailed, c.failed)
+		})
+	}
+}
