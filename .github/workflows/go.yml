@@ -35,7 +35,7 @@ env:
 jobs:
   prepare:
     name: Prepare
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     outputs:
       smoketest-matrix: ${{ steps.generate-smoketest-matrix.outputs.smoketests }}
@@ -99,7 +99,7 @@ jobs:
     name: "Build :: SBOM"
     needs: [build-k0s]
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check out code into the Go module directory
@@ -119,7 +119,7 @@ jobs:
 
   unittests-k0s-linux-amd64:
     name: "Unit tests :: linux-amd64"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check out code into the Go module directory

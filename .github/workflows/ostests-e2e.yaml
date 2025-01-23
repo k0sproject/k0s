@@ -59,7 +59,7 @@ env:
 jobs:
   e2e-tests:
     name: e2e tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     env:
       E2E_FOCUS: ${{ inputs.e2e-focus }}
