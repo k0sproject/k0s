@@ -16,4 +16,5 @@ ENV \
   PATH="/run/k0s-build/go/bin:$PATH" \
   GOBIN="/run/k0s-build/go/bin" \
   GOCACHE="/run/k0s-build/go/build" \
-  GOMODCACHE="/run/k0s-build/go/mod"
+  GOMODCACHE="/run/k0s-build/go/mod" \
+  GOTELEMETRY="off"
