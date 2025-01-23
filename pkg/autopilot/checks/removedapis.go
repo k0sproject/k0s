@@ -43,7 +43,7 @@ func removedInVersion(candidate schema.GroupVersionKind) string {
 }
 
 // Sorted array of removed APIs.
-var removedGVKs = [59]removedAPI{
+var removedGVKs = [65]removedAPI{
 	{"admissionregistration.k8s.io", "v1beta1", "MutatingWebhookConfiguration", "v1.22.0"},
 	{"admissionregistration.k8s.io", "v1beta1", "ValidatingWebhookConfiguration", "v1.22.0"},
 	{"apiextensions.k8s.io", "v1beta1", "CustomResourceDefinition", "v1.22.0"},
@@ -73,6 +73,12 @@ var removedGVKs = [59]removedAPI{
 	{"extensions", "v1beta1", "PodSecurityPolicy", "v1.16.0"},
 	{"extensions", "v1beta1", "ReplicaSet", "v1.16.0"},
 	{"flowcontrol.apiserver.k8s.io", "v1beta1", "FlowControl", "v1.26.0"},
+	{"flowcontrol.apiserver.k8s.io", "v1beta1", "FlowSchema", "v1.26.0"},
+	{"flowcontrol.apiserver.k8s.io", "v1beta1", "PriorityLevelConfiguration", "v1.26.0"},
+	{"flowcontrol.apiserver.k8s.io", "v1beta2", "FlowSchema", "v1.29.0"},
+	{"flowcontrol.apiserver.k8s.io", "v1beta2", "PriorityLevelConfiguration", "v1.29.0"},
+	{"flowcontrol.apiserver.k8s.io", "v1beta3", "FlowSchema", "v1.32.0"},
+	{"flowcontrol.apiserver.k8s.io", "v1beta3", "PriorityLevelConfiguration", "v1.32.0"},
 	{"k0s.k0sproject.example.com", "v1beta1", "RemovedCRD", "v99.99.99"}, // This is a test entry
 	{"networking.k8s.io", "v1beta1", "Ingress", "v1.22.0"},
 	{"networking.k8s.io", "v1beta1", "IngressClass", "v1.22.0"},
