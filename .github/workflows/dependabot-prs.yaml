@@ -9,7 +9,7 @@ jobs:
   auto-merge:
     name: Auto-merge version updates
     if: github.actor == 'dependabot[bot]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Fetch Dependabot metadata
