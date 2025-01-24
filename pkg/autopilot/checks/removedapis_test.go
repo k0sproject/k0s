@@ -19,9 +19,8 @@ import (
 	"slices"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestRemovedGVKs(t *testing.T) {
@@ -36,10 +35,21 @@ func TestRemovedGVKs(t *testing.T) {
 	}), "removedGVKs needs to be sorted, so that it can be used for binary searches")
 
 	// Test two random entries at the top and the bottom of the list
-	assert.Equal(t, "v1.22.0", removedInVersion(schema.GroupVersionKind{
-		Group: "apiregistration.k8s.io", Version: "v1beta1", Kind: "APIService",
-	}))
-	assert.Equal(t, "v1.27.0", removedInVersion(schema.GroupVersionKind{
-		Group: "storage.k8s.io", Version: "v1beta1", Kind: "CSIStorageCapacity",
-	}))
+	version, currentVersion := removedInVersion(schema.GroupVersionKind{
+		Group: "flowcontrol.apiserver.k8s.io", Version: "v1beta2", Kind: "FlowSchema",
+	})
+	assert.Equal(t, "v1.29.0", version)
+	assert.Equal(t, "v1beta3", currentVersion)
+
+	version, currentVersion = removedInVersion(schema.GroupVersionKind{
+		Group: "k0s.k0sproject.example.com", Version: "v1beta1", Kind: "RemovedCRD",
+	})
+	assert.Equal(t, "v99.99.99", version)
+	assert.Equal(t, "", currentVersion)
+
+	version, currentVersion = removedInVersion(schema.GroupVersionKind{
+		Group: "k0s.k0sproject.example.com", Version: "v1beta1", Kind: "MustFail",
+	})
+	assert.Equal(t, "", version)
+	assert.Equal(t, "", currentVersion)
 }
