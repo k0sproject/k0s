@@ -17,9 +17,11 @@ package checks
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/metadata"
@@ -55,6 +57,12 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 		}
 
 		for _, ar := range r.APIResources {
+			// Skip resources which don't have the same name and kind. This is to skip
+			// subresources such as FlowSchema/Status
+			if strings.Contains(ar.Name, "/") {
+				continue
+			}
+
 			gv := gv // Copy over the default GroupVersion from the list
 			// Apply resource-specific overrides
 			if ar.Group != "" {
@@ -64,7 +72,7 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 				gv.Version = ar.Version
 			}
 
-			removedInVersion := removedInVersion(gv.WithKind(ar.Kind))
+			removedInVersion, currentVersion := removedInVersion(gv.WithKind(ar.Kind))
 			if removedInVersion == "" || semver.Compare(newVersion, removedInVersion) < 0 {
 				continue
 			}
@@ -77,7 +85,28 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 			}
 
 			if found := len(metas.Items); found > 0 {
-				return fmt.Errorf("%s.%s %s has been removed in Kubernetes %s, but there are %d such resources in the cluster", ar.Name, gv.Group, gv.Version, removedInVersion, found)
+				if currentVersion == "" {
+					return fmt.Errorf("%s.%s %s has been removed in Kubernetes %s, but there are %d such resources in the cluster", ar.Name, gv.Group, gv.Version, removedInVersion, found)
+				}
+				// If we find removed APIs, it could be because the APIserver is serving the same object with an older GVK
+				// for compatibility reasons while the current good API still works.
+				newGV := gv
+				newGV.Version = currentVersion
+				outdatedItems := []metav1.PartialObjectMetadata{}
+				for _, item := range metas.Items {
+					// Currently none of the deleted resources are namespaced, so we can skip the namespace check.
+					// However we keep it in the list so that it breaks if we add a namespaced resource.
+					_, err := metaClient.Resource(newGV.WithResource(ar.Name)).
+						Get(ctx, item.GetName(), metav1.GetOptions{})
+					if apierrors.IsNotFound(err) {
+						outdatedItems = append(outdatedItems, item)
+					} else if err != nil {
+						return err
+					}
+				}
+				if foundOutdated := len(outdatedItems); foundOutdated > 0 {
+					return fmt.Errorf("%s.%s %s has been removed in Kubernetes %s, but there are %d such resources in the cluster", ar.Name, gv.Group, gv.Version, removedInVersion, found)
+				}
 			}
 		}
 	}
