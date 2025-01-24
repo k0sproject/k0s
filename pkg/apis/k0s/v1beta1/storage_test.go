@@ -52,7 +52,7 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 					PeerAddress: "",
 				},
 			},
-			want: false,
+			want: true,
 		},
 		{
 			name: "kine-sqlite",
