@@ -1,10 +1,6 @@
 name: k0s Check Network
 on:
   workflow_dispatch:
-    inputs:
-      prNumber:
-        description: PR against which to this workflow
-        required: false
   schedule:
     - cron: "0 23 * * *"
 
@@ -12,6 +8,14 @@ env:
   MAKEFLAGS: -j
 
 jobs:
+  build-k0s:
+    name: "Build :: k0s"
+    if: github.repository == 'k0sproject/k0s'
+    uses: ./.github/workflows/build-k0s.yml
+    with:
+      target-os: linux
+      target-arch: amd64
+
   check-network:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_TERRAFORM_ID }}
@@ -22,6 +26,7 @@ jobs:
 
     name: "K8s Network Conformance Testing"
     if: github.repository == 'k0sproject/k0s'
+    needs: [build-k0s]
     runs-on: ubuntu-24.04
     outputs:
       k0s_version: ${{ steps.bin_info.outputs.K0S_VERSION }}
@@ -31,36 +36,14 @@ jobs:
       run:
         working-directory: ./inttest/sonobuoy/terraform
     steps:
-      - name: Get PR Reference
-        env:
-          INPUT_PRNUMBER: ${{ github.event.inputs.prNumber }}
-        run: |
-          # check if a an input to override the reference is set
-          if [[ ${INPUT_PRNUMBER} != "" ]]; then
-            GIT_REF="refs/pull/${INPUT_PRNUMBER}/merge"
-            echo "github_ref=$GIT_REF" >> $GITHUB_ENV
-            exit 0
-          else
-            # PR number was not set manually
-            echo "no manual override: leaving GitHub reference unchanged."
-            echo "github_ref=$GITHUB_REF" >> $GITHUB_ENV
-          fi
-        working-directory: ./
       - name: Run git checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.github_ref }}
-          # Dev builds rely on "git describe --tags" to set the binary version
-          fetch-depth: 0
+          persist-credentials: false
 
       - name: Prepare build environment
         working-directory: ./
         run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -70,44 +53,17 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Cache embedded binaries
-        uses: actions/cache@v4
+      - name: Download k0s executable
+        uses: actions/download-artifact@v4
         with:
-          key: ${{ runner.os }}-embedded-bins-linux-${{ hashFiles('embedded-bins/**/*') }}
-          path: |
-            .bins.linux.stamp
-            bindata_linux
-            embedded-bins/staging/linux/bin/
-            embedded-bins/Makefile.variables
-            pkg/assets/zz_generated_offsets_linux.go
-      - name: Cache GOCACHE
-        uses: actions/cache@v4
-        with:
-          key: ${{ runner.os }}-build-gocache-linux-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-gocache-linux-${{ github.ref_name }}-
-          path: |
-            build/cache/go/build
-      - name: Cache GOMODCACHE
-        uses: actions/cache@v4
-        with:
-          key: ${{ runner.os }}-build-gomodcache-linux-${{ hashFiles('go.sum') }}
-          path: |
-            build/cache/go/mod
-
-      - name: Build k0s Binary
-        id: k0s_build
-        run: |
-          make build
-          KUBERNETES_VERSION="$(./vars.sh kubernetes_version)"
-          echo KUBERNETES_VERSION="$KUBERNETES_VERSION" >> $GITHUB_OUTPUT
-        working-directory: ./
+          name: k0s-linux-amd64
 
       - name: Set k0s' Version
         id: bin_info
+        working-directory: ./
         run: |
-          # run k0s version
-          K0S_VER=$("$GITHUB_WORKSPACE/k0s" version)
+          chmod +x k0s
+          K0S_VER=$(./k0s version)
 
           if [ -z "$K0S_VER" ]; then
             echo "empty k0s version. failing..."
