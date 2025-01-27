@@ -33,6 +33,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/stop"
 	"github.com/k0sproject/k0s/cmd/sysinfo"
 	"github.com/k0sproject/k0s/cmd/token"
+	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
@@ -86,10 +87,12 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(stop.NewStopCmd())
 	cmd.AddCommand(sysinfo.NewSysinfoCmd())
 	cmd.AddCommand(token.NewTokenCmd())
+	cmd.AddCommand(validate.NewValidateCmd()) // hidden+deprecated
 	cmd.AddCommand(version.NewVersionCmd())
 	cmd.AddCommand(worker.NewWorkerCmd())
 
 	cmd.AddCommand(newCompletionCmd())
+	cmd.AddCommand(newDefaultConfigCmd()) // hidden+deprecated
 	cmd.AddCommand(newDocsCmd())
 
 	addPlatformSpecificCommands(cmd)
@@ -119,6 +122,14 @@ func newDocsCmd() *cobra.Command {
 			return errors.New("invalid format")
 		},
 	}
+}
+
+func newDefaultConfigCmd() *cobra.Command {
+	cmd := configcmd.NewCreateCmd()
+	cmd.Hidden = true
+	cmd.Deprecated = "use 'k0s config create' instead"
+	cmd.Use = "default-config"
+	return cmd
 }
 
 func newCompletionCmd() *cobra.Command {
