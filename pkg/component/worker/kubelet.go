@@ -30,16 +30,15 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/node"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 
 	corev1 "k8s.io/api/core/v1"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 
@@ -49,6 +48,7 @@ import (
 
 // Kubelet is the component implementation to manage kubelet
 type Kubelet struct {
+	NodeName            apitypes.NodeName
 	CRISocket           string
 	EnableCloudProvider bool
 	K0sVars             *config.CfgVars
@@ -59,7 +59,7 @@ type Kubelet struct {
 	ClusterDNS          string
 	Labels              []string
 	Taints              []string
-	ExtraArgs           string
+	ExtraArgs           stringmap.StringMap
 	DualStackEnabled    bool
 
 	configPath string
@@ -100,8 +100,8 @@ func (k *Kubelet) Init(_ context.Context) error {
 	return nil
 }
 
-func lookupHostname(ctx context.Context, hostname string) (ipv4 net.IP, ipv6 net.IP, _ error) {
-	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, hostname)
+func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.IP, ipv6 net.IP, _ error) {
+	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(nodeName))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -142,28 +142,24 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		args["--node-labels"] = strings.Join(k.Labels, ",")
 	}
 
-	extras := flags.Split(k.ExtraArgs)
-	nodename, err := node.GetNodename(extras["--hostname-override"])
-	if err != nil {
-		return fmt.Errorf("failed to get nodename: %w", err)
-	}
-
-	if k.DualStackEnabled && extras["--node-ip"] == "" {
-		// Kubelet uses hostname lookup to autodetect the ip address, but
-		// will only pick one for a single family. Do something similar as
-		// kubelet but for both ipv6 and ipv6.
-		// https://github.com/kubernetes/kubernetes/blob/0cc57258c3f8545c8250f0e7a1307fd01b0d283d/pkg/kubelet/nodestatus/setters.go#L196
-		ipv4, ipv6, err := lookupHostname(ctx, nodename)
+	if k.DualStackEnabled && k.ExtraArgs["--node-ip"] == "" {
+		// Kubelet uses a DNS lookup of the node name to figure out the node IP,
+		// but will only pick one for a single family. Do something similar as
+		// kubelet, but for both IPv4 and IPv6.
+		// https://github.com/kubernetes/kubernetes/blob/v1.32.1/pkg/kubelet/nodestatus/setters.go#L202-L230
+		ipv4, ipv6, err := lookupNodeName(ctx, k.NodeName)
 		if err != nil {
-			logrus.WithError(err).Errorf("failed to lookup %q", nodename)
+			logrus.WithError(err).Errorf("failed to lookup %q", k.NodeName)
 		} else if ipv4 != nil && ipv6 != nil {
+			// The kubelet will perform some extra validations on the discovered IP
+			// addresses in the private function k8s.io/kubernetes/pkg/kubelet.validateNodeIP
+			// which won't be replicated here.
 			args["--node-ip"] = ipv4.String() + "," + ipv6.String()
 		}
 	}
 
 	if runtime.GOOS == "windows" {
 		args["--enforce-node-allocatable"] = ""
-		args["--hostname-override"] = nodename
 		args["--hairpin-mode"] = "promiscuous-bridge"
 		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
 	}
@@ -181,9 +177,11 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	}
 
 	// Handle the extra args as last so they can be used to override some k0s "hardcodings"
-	if k.ExtraArgs != "" {
-		args.Merge(extras)
-	}
+	args.Merge(k.ExtraArgs)
+
+	// Pin the node name that has been figured out by k0s
+	args["--hostname-override"] = string(k.NodeName)
+
 	logrus.Debugf("starting kubelet with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
 		Name:    cmd,

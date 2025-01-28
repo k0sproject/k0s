@@ -28,7 +28,7 @@ import (
 // A URL that may be retrieved to determine the nodename.
 type nodenameURL string
 
-func defaultNodenameOverride(ctx context.Context) (string, error) {
+func defaultNodeNameOverride(ctx context.Context) (string, error) {
 	// we need to check if we have EC2 dns name available
 	url := k0scontext.ValueOr[nodenameURL](ctx, "http://169.254.169.254/latest/meta-data/local-hostname")
 

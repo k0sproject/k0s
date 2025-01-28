@@ -22,6 +22,6 @@ import (
 	"context"
 )
 
-func defaultNodenameOverride(context.Context) (string, error) {
+func defaultNodeNameOverride(context.Context) (string, error) {
 	return "", nil // no default override
 }

@@ -25,7 +25,9 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/k0sproject/k0s/internal/pkg/flags"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/component/iptables"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -36,6 +38,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker/nllb"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/node"
+
+	apitypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -77,6 +82,11 @@ func NewWorkerCmd() *cobra.Command {
 				return errors.New("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
 			}
 
+			nodeName, kubeletExtraArgs, err := GetNodeName(&c.WorkerOptions)
+			if err != nil {
+				return fmt.Errorf("failed to determine node name: %w", err)
+			}
+
 			if err := (&sysinfo.K0sSysinfoSpec{
 				ControllerRoleEnabled: false,
 				WorkerRoleEnabled:     true,
@@ -89,7 +99,7 @@ func NewWorkerCmd() *cobra.Command {
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
 
-			return c.Start(ctx)
+			return c.Start(ctx, nodeName, kubeletExtraArgs)
 		},
 	}
 
@@ -101,9 +111,29 @@ func NewWorkerCmd() *cobra.Command {
 	return cmd
 }
 
+func GetNodeName(opts *config.WorkerOptions) (apitypes.NodeName, stringmap.StringMap, error) {
+	// The node name used during bootstrapping needs to match the node name
+	// selected by kubelet. Otherwise, kubelet will have problems interacting
+	// with a Node object that doesn't match the name in the certificates.
+	// https://kubernetes.io/docs/reference/access-authn-authz/node/
+
+	// Kubelet still has some deprecated support for cloud providers, which may
+	// completely bypass the "standard" node name detection as it's done here.
+	// K0s only supports external cloud providers, which seems to be a dead code
+	// path anyways in kubelet. So it's safe to assume that the following code
+	// exactly matches the behavior of kubelet.
+
+	kubeletExtraArgs := flags.Split(opts.KubeletExtraArgs)
+	nodeName, err := node.GetNodeName(kubeletExtraArgs["--hostname-override"])
+	if err != nil {
+		return "", nil, err
+	}
+	return nodeName, kubeletExtraArgs, nil
+}
+
 // Start starts the worker components based on the given [config.CLIOptions].
-func (c *Command) Start(ctx context.Context) error {
-	if err := worker.BootstrapKubeletKubeconfig(ctx, c.K0sVars, &c.WorkerOptions); err != nil {
+func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap) error {
+	if err := worker.BootstrapKubeletKubeconfig(ctx, c.K0sVars, nodeName, &c.WorkerOptions); err != nil {
 		return err
 	}
 
@@ -156,6 +186,7 @@ func (c *Command) Start(ctx context.Context) error {
 	}
 	componentManager.Add(ctx,
 		&worker.Kubelet{
+			NodeName:            nodeName,
 			CRISocket:           c.CriSocket,
 			EnableCloudProvider: c.CloudProvider,
 			K0sVars:             c.K0sVars,
@@ -165,7 +196,7 @@ func (c *Command) Start(ctx context.Context) error {
 			LogLevel:            c.LogLevels.Kubelet,
 			Labels:              c.Labels,
 			Taints:              c.Taints,
-			ExtraArgs:           c.KubeletExtraArgs,
+			ExtraArgs:           kubeletExtraArgs,
 			DualStackEnabled:    workerConfig.DualStackEnabled,
 		})
 
