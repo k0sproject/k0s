@@ -20,8 +20,6 @@ The use of Manifest Deployer is quite similar to the use the `kubectl apply` com
 
 ## Example
 
-**Note:** The file type must be `.yaml` not `.yml`.
-
 To try Manifest Deployer, create a new folder under `/var/lib/k0s/manifests` and then create a manifest file (such as `nginx.yaml`) with the following content:
 
 ```yaml
