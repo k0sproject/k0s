@@ -38,7 +38,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, nodeName apitypes.NodeName, workerOpts *config.WorkerOptions) error {
+func BootstrapKubeletClientConfig(ctx context.Context, k0sVars *config.CfgVars, nodeName apitypes.NodeName, workerOpts *config.WorkerOptions) error {
+	log := logrus.WithFields(logrus.Fields{"component": "bootstrap-kubelet", "node_name": nodeName})
 	bootstrapKubeconfigPath := filepath.Join(k0sVars.DataDir, "kubelet-bootstrap.conf")
 
 	// When using `k0s install` along with a join token, that join token
@@ -92,7 +93,7 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 
 		// Load the bootstrap kubeconfig to validate it.
 		if bootstrapKubeconfig, err := clientcmd.Load(kubeconfig); err != nil {
-			return fmt.Errorf("failed to parse kubelet bootstrap kubeconfig from join token: %w", err)
+			return fmt.Errorf("failed to parse bootstrap kubeconfig from join token: %w", err)
 		} else if actual := token.GetTokenType(bootstrapKubeconfig); actual != token.WorkerTokenAuthName {
 			return fmt.Errorf("wrong token type %s, expected type: %s", actual, token.WorkerTokenAuthName)
 		}
@@ -101,25 +102,25 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 		// kubelet bootstrap API only accepts files.
 		bootstrapKubeconfigPath, err = writeKubeletBootstrapKubeconfig(kubeconfig)
 		if err != nil {
-			return fmt.Errorf("failed to write kubelet bootstrap kubeconfig: %w", err)
+			return fmt.Errorf("failed to write bootstrap kubeconfig file: %w", err)
 		}
 
 		// Ensure that the temporary kubelet bootstrap kubeconfig file will be
 		// removed when done.
 		defer func() {
 			if err := os.Remove(bootstrapKubeconfigPath); err != nil && !os.IsNotExist(err) {
-				logrus.WithError(err).Error("Failed to remove kubelet bootstrap kubeconfig file")
+				log.WithError(err).Error("Failed to remove bootstrap kubeconfig file")
 			}
 		}()
 
-		logrus.Debug("Wrote kubelet bootstrap kubeconfig file: ", bootstrapKubeconfigPath)
+		log.Debug("Wrote bootstrap kubeconfig file: ", bootstrapKubeconfigPath)
 
 	// 4: None of the above, bail out.
 	default:
-		return errors.New("neither regular nor bootstrap kubelet kubeconfig files exist and no join token given; dunno how to make kubelet authenticate to API server")
+		return errors.New("neither regular nor bootstrap kubeconfig files exist and no join token given; dunno how to make kubelet authenticate to API server")
 	}
 
-	logrus.Infof("Bootstrapping kubelet client configuration using %s as node name", nodeName)
+	log.Info("Bootstrapping client configuration")
 
 	if err := retry.Do(
 		func() error {
@@ -135,13 +136,13 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 		retry.LastErrorOnly(true),
 		retry.Delay(1*time.Second),
 		retry.OnRetry(func(attempt uint, err error) {
-			logrus.WithError(err).Debugf("Failed to bootstrap kubelet client configuration in attempt #%d, retrying after backoff", attempt+1)
+			log.WithError(err).WithField("attempt", attempt+1).Debug("Failed to bootstrap client configuration, retrying after backoff")
 		}),
 	); err != nil {
-		return fmt.Errorf("failed to bootstrap kubelet client configuration: %w", err)
+		return fmt.Errorf("failed to bootstrap client configuration: %w", err)
 	}
 
-	logrus.Debug("Successfully bootstrapped kubelet client configuration")
+	log.Info("Successfully bootstrapped client configuration")
 	return nil
 }
 

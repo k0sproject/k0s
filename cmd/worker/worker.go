@@ -147,8 +147,8 @@ func GetNodeName(opts *config.WorkerOptions) (apitypes.NodeName, stringmap.Strin
 
 // Start starts the worker components based on the given [config.CLIOptions].
 func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, controller EmbeddingController) error {
-	if err := worker.BootstrapKubeletKubeconfig(ctx, c.K0sVars, nodeName, &c.WorkerOptions); err != nil {
-		return err
+	if err := worker.BootstrapKubeletClientConfig(ctx, c.K0sVars, nodeName, &c.WorkerOptions); err != nil {
+		return fmt.Errorf("failed to bootstrap kubelet client configuration: %w", err)
 	}
 
 	kubeletKubeconfigPath := c.K0sVars.KubeletAuthConfigPath
