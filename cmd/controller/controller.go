@@ -748,8 +748,8 @@ func joinController(ctx context.Context, tokenArg string, certRootDir string) (*
 		return nil, fmt.Errorf("failed to create join client: %w", err)
 	}
 
-	if joinClient.JoinTokenType() != "controller-bootstrap" {
-		return nil, fmt.Errorf("wrong token type %s, expected type: controller-bootstrap", joinClient.JoinTokenType())
+	if actual := joinClient.JoinTokenType(); actual != token.ControllerTokenAuthName {
+		return nil, fmt.Errorf("wrong token type %s, expected type: %s", actual, token.ControllerTokenAuthName)
 	}
 
 	logrus.Info("Joining existing cluster via ", joinClient.Address())

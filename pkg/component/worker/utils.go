@@ -138,8 +138,8 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 		}
 	}
 
-	if tokenType := token.GetTokenType(bootstrapKubeconfig); tokenType != "kubelet-bootstrap" {
-		return fmt.Errorf("wrong token type %s, expected type: kubelet-bootstrap", tokenType)
+	if actual := token.GetTokenType(bootstrapKubeconfig); actual != token.WorkerTokenAuthName {
+		return fmt.Errorf("wrong token type %s, expected type: %s", actual, token.WorkerTokenAuthName)
 	}
 
 	certDir := filepath.Join(k0sVars.KubeletRootDir, "pki")
