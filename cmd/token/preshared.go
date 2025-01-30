@@ -120,10 +120,10 @@ func createKubeConfig(tok *bootstraptokenv1.BootstrapTokenString, role, joinURL,
 
 	var userName string
 	switch role {
-	case "worker":
-		userName = "kubelet-bootstrap"
-	case "controller":
-		userName = "controller-bootstrap"
+	case token.RoleWorker:
+		userName = token.WorkerTokenAuthName
+	case token.RoleController:
+		userName = token.ControllerTokenAuthName
 	default:
 		return fmt.Errorf("unknown role: %s", role)
 	}
