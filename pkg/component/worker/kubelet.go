@@ -35,6 +35,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 
 	corev1 "k8s.io/api/core/v1"
@@ -219,8 +220,13 @@ func (k *Kubelet) writeKubeletConfig() error {
 		return err
 	}
 
+	caPath, err := k.getKubeletCAPath()
+	if err != nil {
+		return err
+	}
+
 	config := k.Configuration.DeepCopy()
-	config.Authentication.X509.ClientCAFile = filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
+	config.Authentication.X509.ClientCAFile = caPath
 	config.VolumePluginDir = k.K0sVars.KubeletVolumePluginDir
 	config.ResolverConfig = determineKubeletResolvConfPath()
 	config.StaticPodURL = staticPodURL
@@ -249,6 +255,27 @@ func (k *Kubelet) writeKubeletConfig() error {
 	}
 
 	return nil
+}
+
+func (k *Kubelet) getKubeletCAPath() (string, error) {
+	restConfig, err := kubernetes.ClientConfig(kubernetes.KubeconfigFromFile(k.Kubeconfig))
+	if err != nil {
+		return "", fmt.Errorf("failed to load kubelet kubeconfig: %w", err)
+	}
+
+	if len(restConfig.CAData) > 0 {
+		caPath := filepath.Join(k.K0sVars.RunDir, "kubelet", "ca.crt")
+		if err := file.WriteContentAtomically(caPath, restConfig.CAData, constant.CertMode); err != nil {
+			return "", fmt.Errorf("failed to write kubelet CA file: %w", err)
+		}
+		return caPath, nil
+	}
+
+	if !file.Exists(restConfig.CAFile) {
+		return "", fmt.Errorf("kubelet CA file doesn't exist: %s", restConfig.CAFile)
+	}
+
+	return restConfig.CAFile, nil
 }
 
 func parseTaint(st string) (corev1.Taint, error) {

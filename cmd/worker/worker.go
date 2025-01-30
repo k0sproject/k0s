@@ -22,9 +22,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"syscall"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -103,6 +105,13 @@ func NewWorkerCmd() *cobra.Command {
 			// Set up signal handling
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
+
+			// Check for legacy CA file (unused on worker-only nodes since 1.33)
+			if legacyCAFile := filepath.Join(c.K0sVars.CertRootDir, "ca.crt"); file.Exists(legacyCAFile) {
+				// Keep the file to allow interop between 1.32 and 1.33.
+				// TODO automatically delete this file in future releases.
+				logrus.Infof("The file %s is no longer used and can safely be deleted", legacyCAFile)
+			}
 
 			return c.Start(ctx, nodeName, kubeletExtraArgs, nil)
 		},

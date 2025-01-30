@@ -22,20 +22,16 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/kubernetes/pkg/kubelet/certificate/bootstrap"
 
 	"github.com/avast/retry-go"
@@ -51,7 +47,6 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 	// needs to be ignored if it has already been used. This results in the
 	// following order of precedence:
 
-	var bootstrapKubeconfig *clientcmdapi.Config
 	switch {
 	// 1: Regular kubelet kubeconfig file exists.
 	// The kubelet kubeconfig has been bootstrapped already.
@@ -61,11 +56,7 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 	// 2: Kubelet bootstrap kubeconfig file exists.
 	// The kubelet kubeconfig will be bootstrapped without a join token.
 	case file.Exists(bootstrapKubeconfigPath):
-		var err error
-		bootstrapKubeconfig, err = clientcmd.LoadFromFile(bootstrapKubeconfigPath)
-		if err != nil {
-			return fmt.Errorf("failed to parse kubelet bootstrap kubeconfig from file: %w", err)
-		}
+		// Nothing to do here.
 
 	// 3: A join token has been given.
 	// Bootstrap the kubelet kubeconfig via the embedded bootstrap config.
@@ -100,9 +91,10 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 		}
 
 		// Load the bootstrap kubeconfig to validate it.
-		bootstrapKubeconfig, err = clientcmd.Load(kubeconfig)
-		if err != nil {
+		if bootstrapKubeconfig, err := clientcmd.Load(kubeconfig); err != nil {
 			return fmt.Errorf("failed to parse kubelet bootstrap kubeconfig from join token: %w", err)
+		} else if actual := token.GetTokenType(bootstrapKubeconfig); actual != token.WorkerTokenAuthName {
+			return fmt.Errorf("wrong token type %s, expected type: %s", actual, token.WorkerTokenAuthName)
 		}
 
 		// Write the kubelet bootstrap kubeconfig to a temporary file, as the
@@ -125,21 +117,6 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 	// 4: None of the above, bail out.
 	default:
 		return errors.New("neither regular nor bootstrap kubelet kubeconfig files exist and no join token given; dunno how to make kubelet authenticate to API server")
-	}
-
-	kubeletCAPath := path.Join(k0sVars.CertRootDir, "ca.crt")
-	if !file.Exists(kubeletCAPath) {
-		if err := dir.Init(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
-			return fmt.Errorf("failed to initialize directory '%s': %w", k0sVars.CertRootDir, err)
-		}
-		err := file.WriteContentAtomically(kubeletCAPath, bootstrapKubeconfig.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
-		if err != nil {
-			return fmt.Errorf("failed to write ca client cert: %w", err)
-		}
-	}
-
-	if actual := token.GetTokenType(bootstrapKubeconfig); actual != token.WorkerTokenAuthName {
-		return fmt.Errorf("wrong token type %s, expected type: %s", actual, token.WorkerTokenAuthName)
 	}
 
 	logrus.Infof("Bootstrapping kubelet client configuration using %s as node name", nodeName)
