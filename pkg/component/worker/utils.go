@@ -142,11 +142,6 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 		return fmt.Errorf("wrong token type %s, expected type: %s", actual, token.WorkerTokenAuthName)
 	}
 
-	certDir := filepath.Join(k0sVars.KubeletRootDir, "pki")
-	if err := dir.Init(certDir, constant.DataDirMode); err != nil {
-		return fmt.Errorf("failed to initialize kubelet certificate directory: %w", err)
-	}
-
 	logrus.Infof("Bootstrapping kubelet client configuration using %s as node name", nodeName)
 
 	if err := retry.Do(
@@ -155,7 +150,7 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, no
 				ctx,
 				k0sVars.KubeletAuthConfigPath,
 				bootstrapKubeconfigPath,
-				certDir,
+				filepath.Join(k0sVars.KubeletRootDir, "pki"),
 				nodeName,
 			)
 		},
