@@ -41,8 +41,11 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/node"
+	"github.com/k0sproject/k0s/pkg/token"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -85,8 +88,9 @@ func NewWorkerCmd() *cobra.Command {
 				c.TokenArg = args[0]
 			}
 
-			if c.TokenArg != "" && c.TokenFile != "" {
-				return errors.New("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
+			getBootstrapKubeconfig, err := kubeconfigGetterFromJoinToken(c.TokenFile, c.TokenArg)
+			if err != nil {
+				return err
 			}
 
 			nodeName, kubeletExtraArgs, err := GetNodeName(&c.WorkerOptions)
@@ -113,7 +117,7 @@ func NewWorkerCmd() *cobra.Command {
 				logrus.Infof("The file %s is no longer used and can safely be deleted", legacyCAFile)
 			}
 
-			return c.Start(ctx, nodeName, kubeletExtraArgs, nil)
+			return c.Start(ctx, nodeName, kubeletExtraArgs, getBootstrapKubeconfig, nil)
 		},
 	}
 
@@ -145,9 +149,72 @@ func GetNodeName(opts *config.WorkerOptions) (apitypes.NodeName, stringmap.Strin
 	return nodeName, kubeletExtraArgs, nil
 }
 
+func kubeconfigGetterFromJoinToken(tokenFile, tokenArg string) (clientcmd.KubeconfigGetter, error) {
+	if tokenArg != "" {
+		if tokenFile != "" {
+			return nil, errors.New("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
+		}
+
+		kubeconfig, err := loadKubeconfigFromJoinToken(tokenArg)
+		if err != nil {
+			return nil, err
+		}
+
+		return func() (*clientcmdapi.Config, error) {
+			return kubeconfig, nil
+		}, nil
+	}
+
+	if tokenFile == "" {
+		return nil, nil
+	}
+
+	return func() (*clientcmdapi.Config, error) {
+		return loadKubeconfigFromTokenFile(tokenFile)
+	}, nil
+}
+
+func loadKubeconfigFromJoinToken(tokenData string) (*clientcmdapi.Config, error) {
+	decoded, err := token.DecodeJoinToken(tokenData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode join token: %w", err)
+	}
+
+	kubeconfig, err := clientcmd.Load(decoded)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load kubeconfig from join token: %w", err)
+	}
+
+	if tokenType := token.GetTokenType(kubeconfig); tokenType != "kubelet-bootstrap" {
+		return nil, fmt.Errorf("wrong token type %s, expected type: kubelet-bootstrap", tokenType)
+	}
+
+	return kubeconfig, nil
+}
+
+func loadKubeconfigFromTokenFile(path string) (*clientcmdapi.Config, error) {
+	var problem string
+	tokenBytes, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		problem = "not found"
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to read token file: %w", err)
+	} else if len(tokenBytes) == 0 {
+		problem = "is empty"
+	}
+	if problem != "" {
+		return nil, fmt.Errorf("token file %q %s"+
+			`: obtain a new token via "k0s token create ..." and store it in the file`+
+			` or reinstall this node via "k0s install --force ..." or "k0sctl apply --force ..."`,
+			path, problem)
+	}
+
+	return loadKubeconfigFromJoinToken(string(tokenBytes))
+}
+
 // Start starts the worker components based on the given [config.CLIOptions].
-func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, controller EmbeddingController) error {
-	if err := worker.BootstrapKubeletClientConfig(ctx, c.K0sVars, nodeName, &c.WorkerOptions); err != nil {
+func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, getBootstrapKubeconfig clientcmd.KubeconfigGetter, controller EmbeddingController) error {
+	if err := worker.BootstrapKubeletClientConfig(ctx, c.K0sVars, nodeName, &c.WorkerOptions, getBootstrapKubeconfig); err != nil {
 		return fmt.Errorf("failed to bootstrap kubelet client configuration: %w", err)
 	}
 
