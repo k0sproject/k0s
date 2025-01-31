@@ -33,9 +33,8 @@ import (
 
 // JoinClient is the client we can use to call k0s join APIs
 type JoinClient struct {
-	joinTokenType string
-	joinAddress   string
-	restClient    *rest.RESTClient
+	joinAddress string
+	restClient  *rest.RESTClient
 }
 
 // JoinClientFromToken creates a new join api client from a token
@@ -50,6 +49,10 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 		return nil, err
 	}
 
+	if actual := GetTokenType(kubeconfig); actual != ControllerTokenAuthName {
+		return nil, fmt.Errorf("wrong token type %s, expected type: %s", actual, ControllerTokenAuthName)
+	}
+
 	restConfig, err := kubernetes.ClientConfig(func() (*api.Config, error) { return kubeconfig, nil })
 	if err != nil {
 		return nil, err
@@ -62,18 +65,13 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 	}
 
 	return &JoinClient{
-		joinAddress:   restConfig.Host,
-		joinTokenType: GetTokenType(kubeconfig),
-		restClient:    restClient,
+		joinAddress: restConfig.Host,
+		restClient:  restClient,
 	}, nil
 }
 
 func (j *JoinClient) Address() string {
 	return j.joinAddress
-}
-
-func (j *JoinClient) JoinTokenType() string {
-	return j.joinTokenType
 }
 
 // GetCA calls the CA sync API

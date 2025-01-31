@@ -50,7 +50,7 @@ func TestJoinClient_GetCA(t *testing.T) {
 	})
 
 	joinURL.Path = "/some/sub/path"
-	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, t.Name(), &bootstraptokenv1.BootstrapTokenString{ID: "the-id", Secret: "the-secret"})
+	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, token.ControllerTokenAuthName, &bootstraptokenv1.BootstrapTokenString{ID: "the-id", Secret: "the-secret"})
 	require.NoError(t, err)
 	tok, err := token.JoinEncode(bytes.NewReader(kubeconfig))
 	require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestJoinClient_JoinEtcd(t *testing.T) {
 	})
 
 	joinURL.Path = "/some/sub/path"
-	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, t.Name(), &bootstraptokenv1.BootstrapTokenString{ID: "the-id", Secret: "the-secret"})
+	kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, token.ControllerTokenAuthName, &bootstraptokenv1.BootstrapTokenString{ID: "the-id", Secret: "the-secret"})
 	require.NoError(t, err)
 	tok, err := token.JoinEncode(bytes.NewReader(kubeconfig))
 	require.NoError(t, err)
@@ -126,7 +126,7 @@ func TestJoinClient_Cancellation(t *testing.T) {
 				<-req.Context().Done()              // block forever
 			})
 
-			kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, "", &bootstraptokenv1.BootstrapTokenString{})
+			kubeconfig, err := token.GenerateKubeconfig(joinURL.String(), certData, token.ControllerTokenAuthName, &bootstraptokenv1.BootstrapTokenString{})
 			require.NoError(t, err)
 			tok, err := token.JoinEncode(bytes.NewReader(kubeconfig))
 			require.NoError(t, err)
