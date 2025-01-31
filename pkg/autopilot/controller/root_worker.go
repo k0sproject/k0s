@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"time"
 
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -27,14 +26,12 @@ import (
 	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-	k8sretry "k8s.io/client-go/util/retry"
+
 	cr "sigs.k8s.io/controller-runtime"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -71,49 +68,30 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
 	}
 
-	var mgr crman.Manager
-	if err := retry.Do(
-		func() (err error) {
-			mgr, err = cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
-			return err
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.Delay(1*time.Second),
-		retry.OnRetry(func(attempt uint, err error) {
-			logger.WithError(err).Debugf("Failed to start controller manager in attempt #%d, retrying after backoff", attempt+1)
-		}),
-	); err != nil {
+	clusterID, err := w.getClusterID(ctx)
+	if err != nil {
+		return err
+	}
+
+	mgr, err := cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
+	if err != nil {
 		return fmt.Errorf("unable to start controller manager: %w", err)
 	}
 
-	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
-	return k8sretry.OnError(wait.Backoff{
-		Steps:    120,
-		Duration: 1 * time.Second,
-		Factor:   1.0,
-		Jitter:   0.1,
-	}, func(err error) bool {
-		return true
-	}, func() error {
-		clusterID, err := w.getClusterID(ctx)
-		if err != nil {
-			return err
-		}
+	if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
+		return fmt.Errorf("unable to register indexers: %w", err)
+	}
 
-		if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
-			return fmt.Errorf("unable to register indexers: %w", err)
-		}
+	if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
+		return fmt.Errorf("unable to register 'controlnodes' controllers: %w", err)
+	}
 
-		if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
-			return fmt.Errorf("unable to register 'controlnodes' controllers: %w", err)
-		}
-		// The controller-runtime start blocks until the context is cancelled.
-		if err := mgr.Start(ctx); err != nil {
-			return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)
-		}
-		return nil
-	})
+	// The controller-runtime start blocks until the context is cancelled.
+	if err := mgr.Start(ctx); err != nil {
+		return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)
+	}
+
+	return nil
 }
 
 func (w *rootWorker) getClusterID(ctx context.Context) (string, error) {
