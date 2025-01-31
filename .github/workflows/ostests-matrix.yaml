@@ -8,6 +8,9 @@ on:
       k0s-version:
         type: string
         description: The k0s version to test. Will build k0s from source if empty.
+      k0sctl-version:
+        type: string
+        description: The k0sctl version to use when bootstrapping test clusters.
       e2e-concurrency-level:
         type: number
         description: The number of tests that may be run concurrently.
@@ -81,6 +84,7 @@ jobs:
     uses: ./.github/workflows/ostests-e2e.yaml
     with:
       k0s-version: ${{ inputs.k0s-version }}
+      k0sctl-version: ${{ inputs.k0sctl-version }}
       e2e-concurrency-level: ${{ fromJSON(inputs.e2e-concurrency-level) }} # infamous GH workflows bug that looses type information (actions/runner#2206)
       e2e-focus: ${{ inputs.e2e-focus }}
       os: ${{ matrix.os }}
