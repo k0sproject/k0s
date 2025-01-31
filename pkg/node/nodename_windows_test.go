@@ -24,29 +24,32 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/k0scontext"
+
+	apitypes "k8s.io/apimachinery/pkg/types"
+	nodeutil "k8s.io/component-helpers/node/util"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	nodeutil "k8s.io/component-helpers/node/util"
 )
 
-func TestGetNodenameWindows(t *testing.T) {
+func TestGetNodeNameWindows(t *testing.T) {
 	kubeHostname, err := nodeutil.GetHostname("")
 	require.NoError(t, err)
 	baseURL := startFakeMetadataServer(t)
 
 	t.Run("no_metadata_service_available", func(t *testing.T) {
 		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL))
-		name, err := getNodename(ctx, "")
+		name, err := getNodeName(ctx, "")
 		if assert.NoError(t, err) {
-			assert.Equal(t, kubeHostname, name)
+			assert.Equal(t, apitypes.NodeName(kubeHostname), name)
 		}
 	})
 
 	t.Run("metadata_service_is_available", func(t *testing.T) {
 		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL+"/latest/meta-data/local-hostname"))
-		name, err := getNodename(ctx, "")
+		name, err := getNodeName(ctx, "")
 		if assert.NoError(t, err) {
-			assert.Equal(t, "some-hostname from aws_metadata", name)
+			assert.Equal(t, apitypes.NodeName("some-hostname from aws_metadata"), name)
 		}
 	})
 }

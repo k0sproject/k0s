@@ -29,10 +29,8 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/node"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
@@ -44,7 +42,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, workerOpts *config.WorkerOptions) error {
+func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, nodeName apitypes.NodeName, workerOpts *config.WorkerOptions) error {
 	bootstrapKubeconfigPath := filepath.Join(k0sVars.DataDir, "kubelet-bootstrap.conf")
 
 	// When using `k0s install` along with a join token, that join token
@@ -149,22 +147,6 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, wo
 		return fmt.Errorf("failed to initialize kubelet certificate directory: %w", err)
 	}
 
-	// The node name used during bootstrapping needs to match the node name
-	// selected by kubelet. Otherwise, kubelet will have problems interacting
-	// with a Node object that doesn't match the name in the certificates.
-	// https://kubernetes.io/docs/reference/access-authn-authz/node/
-
-	// Kubelet still has some deprecated support for cloud providers, which may
-	// completely bypass the "standard" node name detection as it's done here.
-	// K0s only supports external cloud providers, which seems to be a dead code
-	// path anyways in kubelet. So it's safe to assume that the following code
-	// exactly matches the behavior of kubelet.
-
-	nodeName, err := node.GetNodename(flags.Split(workerOpts.KubeletExtraArgs)["--hostname-override"])
-	if err != nil {
-		return fmt.Errorf("failed to determine node name: %w", err)
-	}
-
 	logrus.Infof("Bootstrapping kubelet client configuration using %s as node name", nodeName)
 
 	if err := retry.Do(
@@ -174,7 +156,7 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, wo
 				k0sVars.KubeletAuthConfigPath,
 				bootstrapKubeconfigPath,
 				certDir,
-				apitypes.NodeName(nodeName),
+				nodeName,
 			)
 		},
 		retry.Context(ctx),

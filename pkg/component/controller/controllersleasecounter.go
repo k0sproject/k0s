@@ -25,8 +25,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
-	"github.com/k0sproject/k0s/pkg/node"
 
+	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
@@ -36,6 +36,7 @@ import (
 // K0sControllersLeaseCounter implements a component that manages a lease per controller.
 // The per-controller leases are used to determine the amount of currently running controllers
 type K0sControllersLeaseCounter struct {
+	NodeName              apitypes.NodeName
 	InvocationID          string
 	ClusterConfig         *v1beta1.ClusterConfig
 	KubeClientFactory     kubeutil.ClientFactoryInterface
@@ -59,13 +60,8 @@ func (l *K0sControllersLeaseCounter) Start(context.Context) error {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
 	}
 
-	// hostname used to make the lease names be clear to which controller they belong to
-	// follow kubelet convention for naming so we e.g. use lowercase hostname etc.
-	nodeName, err := node.GetNodename("")
-	if err != nil {
-		return nil
-	}
-	leaseName := "k0s-ctrl-" + nodeName
+	// Use the node name to make the lease names be clear to which controller they belong to
+	leaseName := "k0s-ctrl-" + string(l.NodeName)
 
 	leasePool, err := leaderelection.NewLeasePool(client, leaseName, l.InvocationID,
 		leaderelection.WithLogger(log))

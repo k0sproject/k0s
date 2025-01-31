@@ -37,6 +37,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -64,6 +65,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/fields"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 )
 
@@ -293,8 +295,14 @@ func (c *command) start(ctx context.Context) error {
 		DisableEndpointReconciler: enableK0sEndpointReconciler,
 	})
 
+	nodeName, kubeletExtraArgs, err := workercmd.GetNodeName(&c.WorkerOptions)
+	if err != nil {
+		return fmt.Errorf("failed to determine node name: %w", err)
+	}
+
 	if !c.SingleNode {
 		nodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
+			NodeName:              nodeName,
 			InvocationID:          c.K0sVars.InvocationID,
 			ClusterConfig:         nodeConfig,
 			KubeClientFactory:     adminClientFactory,
@@ -622,7 +630,7 @@ func (c *command) start(ctx context.Context) error {
 
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
-		if err := c.startWorker(ctx, c.WorkerProfile, nodeConfig); err != nil {
+		if err := c.startWorker(ctx, nodeName, kubeletExtraArgs, c.WorkerProfile, nodeConfig); err != nil {
 			logrus.WithError(err).Error("Failed to start controller worker")
 		} else {
 			perfTimer.Checkpoint("started-worker")
@@ -641,7 +649,7 @@ func (c *command) start(ctx context.Context) error {
 	return nil
 }
 
-func (c *command) startWorker(ctx context.Context, profile string, nodeConfig *v1beta1.ClusterConfig) error {
+func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, profile string, nodeConfig *v1beta1.ClusterConfig) error {
 	var bootstrapConfig string
 	if !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
@@ -684,7 +692,7 @@ func (c *command) startWorker(ctx context.Context, profile string, nodeConfig *v
 		taint := fields.OneTermEqualSelector(key, ":NoSchedule")
 		wc.Taints = append(wc.Taints, taint.String())
 	}
-	return wc.Start(ctx)
+	return wc.Start(ctx, nodeName, kubeletExtraArgs)
 }
 
 // If we've got an etcd data directory in place for embedded etcd, or a ca for

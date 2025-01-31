@@ -29,11 +29,12 @@ const (
 // for an AUTOPILOT_HOSTNAME environment variable, falling back to whatever the OS
 // returns.
 func FindEffectiveHostname() (string, error) {
-	return node.GetNodename(os.Getenv(envAutopilotHostname))
+	nodeName, err := node.GetNodeName(os.Getenv(envAutopilotHostname))
+	return string(nodeName), err
 }
 
 func FindKubeletHostname(kubeletExtraArgs string) string {
-	defaultNodename, _ := node.GetNodename("")
+	defaultNodename, _ := node.GetNodeName("")
 	if kubeletExtraArgs != "" {
 		extras := flags.Split(kubeletExtraArgs)
 		nodeName, ok := extras["--hostname-override"]
@@ -42,5 +43,5 @@ func FindKubeletHostname(kubeletExtraArgs string) string {
 		}
 	}
 
-	return defaultNodename
+	return string(defaultNodename)
 }
