@@ -41,7 +41,7 @@ import (
 type Manager struct {
 	K0sVars               *config.CfgVars
 	LogLevel              string
-	SingleNode            bool
+	DisableLeaderElection bool
 	ServiceClusterIPRange string
 	ExtraArgs             string
 
@@ -132,7 +132,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 			args[name] = value
 		}
 	}
-	if a.SingleNode {
+	if a.DisableLeaderElection {
 		args["leader-elect"] = "false"
 	}
 

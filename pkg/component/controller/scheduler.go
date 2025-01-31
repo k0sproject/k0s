@@ -35,13 +35,13 @@ import (
 
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
-	gid            int
-	K0sVars        *config.CfgVars
-	LogLevel       string
-	SingleNode     bool
-	supervisor     *supervisor.Supervisor
-	uid            int
-	previousConfig stringmap.StringMap
+	gid                   int
+	K0sVars               *config.CfgVars
+	LogLevel              string
+	DisableLeaderElection bool
+	supervisor            *supervisor.Supervisor
+	uid                   int
+	previousConfig        stringmap.StringMap
 }
 
 var _ manager.Component = (*Scheduler)(nil)
@@ -95,7 +95,7 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 		}
 		args[name] = value
 	}
-	if a.SingleNode {
+	if a.DisableLeaderElection {
 		args["leader-elect"] = "false"
 	}
 	args = clusterConfig.Spec.FeatureGates.BuildArgs(args, kubeSchedulerComponentName)
