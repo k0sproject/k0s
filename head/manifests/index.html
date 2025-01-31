@@ -2146,7 +2146,7 @@
 <p>Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by defining your extensions as <a href="../helm-charts/">Helm charts</a>).</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
 <p>Manifest Deployer runs on the controller nodes and provides an easy way to automatically deploy manifests at runtime.</p>
-<p>By default, k0s reads all manifests under <code>/var/lib/k0s/manifests</code> and ensures that their state matches the cluster state. Moreover, on removal of a manifest file, k0s will automatically prune all of it associated resources.</p>
+<p>By default, k0s reads all manifests under <code>/var/lib/k0s/manifests</code> that end with <code>.yaml</code> and ensures that their state matches the cluster state. It does not read files with other extensions, such as <code>.yml</code>. Moreover, on removal of a manifest file, k0s will automatically prune all of its associated resources.</p>
 <p>The use of Manifest Deployer is quite similar to the use the <code>kubectl apply</code> command. The main difference between the two is that Manifest Deployer constantly monitors the directory for changes, and thus you do not need to manually apply changes that are made to the manifest files.</p>
 <h3 id="note">Note<a class="headerlink" href="#note" title="Permanent link">#</a></h3>
 <ul>
