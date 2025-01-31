@@ -11,8 +11,8 @@ locals {
     debian_10   = local.os_debian_10
     debian_11   = local.os_debian_11
     debian_12   = local.os_debian_12
-    fcos_38     = local.os_fcos_38
-    fedora_38   = local.os_fedora_38
+    fcos_41     = local.os_fcos_41
+    fedora_41   = local.os_fedora_41
     flatcar     = local.os_flatcar
     oracle_7_9  = local.os_oracle_7_9
     oracle_8_7  = local.os_oracle_8_7
@@ -24,6 +24,6 @@ locals {
     rocky_9     = local.os_rocky_9
     ubuntu_2004 = local.os_ubuntu_2004
     ubuntu_2204 = local.os_ubuntu_2204
-    ubuntu_2304 = local.os_ubuntu_2304
+    ubuntu_2310 = local.os_ubuntu_2310
   }
 }
