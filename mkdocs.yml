@@ -92,8 +92,8 @@ theme:
   highlightjs: true
   language: "en"
   custom_dir: docs/custom_theme
-  favicon: img/k0s_social.png
-  logo: img/k0s_social.png
+  favicon: img/k0s-favicon-192.png
+  logo: img/k0s-favicon-192.png
   palette:
     - scheme: default
       primary: custom

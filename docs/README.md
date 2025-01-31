@@ -2,8 +2,8 @@
 
 <!-- When changing this file, consider to change ../README.md, too! -->
 
-![k0s-logo-dark](img/k0s-logo-full-color-dark.svg#only-dark)
-![k0s-logo-light](img/k0s-logo-full-color-light.svg#only-light)
+![k0s-logo-dark](img/k0s-logo-2025-horizontal-inverted.svg#only-dark)
+![k0s-logo-light](img/k0s-logo-2025-horizontal.svg#only-light)
 
 {%
     include-markdown "../README.md"
