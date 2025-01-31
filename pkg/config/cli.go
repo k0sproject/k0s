@@ -262,7 +262,7 @@ var availableComponents = []string{
 	constant.MetricsServerComponentName,
 	constant.NetworkProviderComponentName,
 	constant.NodeRoleComponentName,
-	constant.SystemRbacComponentName,
+	constant.SystemRBACComponentName,
 	constant.WindowsNodeComponentName,
 	constant.WorkerConfigComponentName,
 }
