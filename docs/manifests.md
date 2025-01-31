@@ -6,7 +6,7 @@ Included with k0s, Manifest Deployer is one of two methods you can use to run k0
 
 Manifest Deployer runs on the controller nodes and provides an easy way to automatically deploy manifests at runtime.
 
-By default, k0s reads all manifests under `/var/lib/k0s/manifests` and ensures that their state matches the cluster state. Moreover, on removal of a manifest file, k0s will automatically prune all of it associated resources.
+By default, k0s reads all manifests under `/var/lib/k0s/manifests` that end with `.yaml` and ensures that their state matches the cluster state. It does not read files with other extensions, such as `.yml`. Moreover, on removal of a manifest file, k0s will automatically prune all of its associated resources.
 
 The use of Manifest Deployer is quite similar to the use the `kubectl apply` command. The main difference between the two is that Manifest Deployer constantly monitors the directory for changes, and thus you do not need to manually apply changes that are made to the manifest files.
 
