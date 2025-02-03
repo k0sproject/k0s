@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/hashicorp/terraform-exec v0.21.0
-	github.com/k0sproject/k0sctl v0.20.0
+	github.com/k0sproject/k0sctl v0.22.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.6
 )
