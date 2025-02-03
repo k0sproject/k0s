@@ -1,4 +1,4 @@
-# k0s - The Zero Friction Kubernetes by Team Lens
+# k0s - The Zero Friction Kubernetes
 
 <!-- When changing this file, consider to change docs/README.md, too! -->
 
