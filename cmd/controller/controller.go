@@ -242,6 +242,9 @@ func (c *command) start(ctx context.Context) error {
 	logrus.Infof("using storage backend %s", nodeConfig.Spec.Storage.Type)
 	nodeComponents.Add(ctx, storageBackend)
 
+	// Will the cluster support multiple controllers, or just a single one?
+	singleController := c.SingleNode || !nodeConfig.Spec.Storage.IsJoinable()
+
 	// Assume a single active controller during startup
 	numActiveControllers := value.NewLatest[uint](1)
 
@@ -300,7 +303,7 @@ func (c *command) start(ctx context.Context) error {
 		return fmt.Errorf("failed to determine node name: %w", err)
 	}
 
-	if !c.SingleNode {
+	if !singleController {
 		nodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
 			NodeName:              nodeName,
 			InvocationID:          c.K0sVars.InvocationID,
@@ -316,12 +319,12 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	// One leader elector per controller
-	if !c.SingleNode {
+	if singleController {
+		leaderElector = &leaderelector.Dummy{Leader: true}
+	} else {
 		// The name used to be hardcoded in the component itself
 		// At some point we need to rename this.
 		leaderElector = leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory, "k0s-endpoint-reconciler")
-	} else {
-		leaderElector = &leaderelector.Dummy{Leader: true}
 	}
 	nodeComponents.Add(ctx, leaderElector)
 
@@ -561,9 +564,9 @@ func (c *command) start(ctx context.Context) error {
 
 	if !slices.Contains(c.DisableComponents, constant.KubeSchedulerComponentName) {
 		clusterComponents.Add(ctx, &controller.Scheduler{
-			LogLevel:   c.LogLevels.KubeScheduler,
-			K0sVars:    c.K0sVars,
-			SingleNode: c.SingleNode,
+			LogLevel:              c.LogLevels.KubeScheduler,
+			K0sVars:               c.K0sVars,
+			DisableLeaderElection: singleController,
 		})
 	}
 
@@ -571,7 +574,7 @@ func (c *command) start(ctx context.Context) error {
 		clusterComponents.Add(ctx, &controller.Manager{
 			LogLevel:              c.LogLevels.KubeControllerManager,
 			K0sVars:               c.K0sVars,
-			SingleNode:            c.SingleNode,
+			DisableLeaderElection: singleController,
 			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.API.Address),
 			ExtraArgs:             c.KubeControllerManagerExtraArgs,
 		})
@@ -591,7 +594,7 @@ func (c *command) start(ctx context.Context) error {
 		K0sVars:            c.K0sVars,
 		KubeletExtraArgs:   c.KubeletExtraArgs,
 		AdminClientFactory: adminClientFactory,
-		EnableWorker:       c.EnableWorker,
+		Workloads:          c.EnableWorker,
 	})
 
 	restConfig, err := adminClientFactory.GetRESTConfig()
