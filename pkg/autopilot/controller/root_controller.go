@@ -25,10 +25,10 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
-	applan "github.com/k0sproject/k0s/pkg/autopilot/controller/plans"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/plans"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
-	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
-	apupdate "github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
@@ -217,18 +217,18 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	}
 	clusterID := string(ns.UID)
 
-	if err := apsig.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
-		logger.WithError(err).Error("unable to register 'signal' controllers")
+	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
+		logger.WithError(err).Error("unable to register signal controllers")
 		return err
 	}
 
-	if err := applan.RegisterControllers(ctx, logger, mgr, c.kubeClientFactory, leaderMode, delegateMap, c.cfg.ExcludeFromPlans); err != nil {
-		logger.WithError(err).Error("unable to register 'plans' controllers")
+	if err := plans.RegisterControllers(ctx, logger, mgr, c.kubeClientFactory, leaderMode, delegateMap, c.cfg.ExcludeFromPlans); err != nil {
+		logger.WithError(err).Error("unable to register plans controllers")
 		return err
 	}
 
-	if err := apupdate.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID); err != nil {
-		logger.WithError(err).Error("unable to register 'update' controllers")
+	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID); err != nil {
+		logger.WithError(err).Error("unable to register updates controllers")
 		return err
 	}
 

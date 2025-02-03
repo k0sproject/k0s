@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -77,7 +78,8 @@ type cordoning struct {
 // moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
 // the node.
 func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
-	logger.Infof("Registering 'cordoning' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_cordoning"
+	logger.Info("Registering reconciler: ", name)
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
@@ -86,12 +88,12 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 	}
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-cordoning").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
 			&cordoning{
-				log:       logger.WithFields(logrus.Fields{"reconciler": "cordoning", "object": delegate.Name()}),
+				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,

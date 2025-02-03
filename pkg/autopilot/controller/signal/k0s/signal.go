@@ -17,6 +17,7 @@ package k0s
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
@@ -81,11 +82,12 @@ type signalControllerHandler struct {
 // mechanism in identifying incoming autopilot k0s signaling updates.
 func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, clusterID string, k0sVersionHandler k0sVersionHandlerFunc) error {
 	logr := logger.WithFields(logrus.Fields{"updatetype": "k0s"})
+	name := strings.ToLower(delegate.Name()) + "_k0s_signal"
 
-	logr.Infof("Registering 'signal' reconciler for '%s'", delegate.Name())
+	logr.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-signal").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

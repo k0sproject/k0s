@@ -17,6 +17,7 @@ package airgap
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -64,11 +65,12 @@ type signalControllerHandler struct {
 // updates.
 func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
 	logr := logger.WithFields(logrus.Fields{"updatetype": "airgap"})
+	name := strings.ToLower(delegate.Name()) + "_airgap_signal"
 
-	logr.Infof("Registering 'airgap-signal' reconciler for '%s'", delegate.Name())
+	logr.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named("airgap-signal").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

@@ -38,15 +38,15 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 
 	hostname, err := apcomm.FindEffectiveHostname()
 	if err != nil {
-		return fmt.Errorf("unable to determine hostname for controlnode airgap 'signal' reconciler: %w", err)
+		return fmt.Errorf("unable to determine hostname: %w", err)
 	}
 
 	if err := registerSignalController(logger, mgr, SignalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "signal")), delegate); err != nil {
-		return fmt.Errorf("unable to register 'airgap-signal' controller: %w", err)
+		return fmt.Errorf("unable to register signal controller: %w", err)
 	}
 
 	if err := registerDownloading(logger, mgr, SignalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "airgap download")), delegate, k0sDataDir); err != nil {
-		return fmt.Errorf("unable to register 'airgap-downloading' controller: %w", err)
+		return fmt.Errorf("unable to register downloading controller: %w", err)
 	}
 
 	return nil

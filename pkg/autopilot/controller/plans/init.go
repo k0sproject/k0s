@@ -46,15 +46,15 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 
 	if leaderMode {
 		if err := registerNewPlanStateController(logger, mgr, cmdProviders); err != nil {
-			return fmt.Errorf("unable to register 'newplan' controller: %w", err)
+			return fmt.Errorf("unable to register newplan controller: %w", err)
 		}
 
 		if err := registerSchedulableWaitStateController(logger, mgr, cmdProviders); err != nil {
-			return fmt.Errorf("unable to register 'schedulablewait' controller: %w", err)
+			return fmt.Errorf("unable to register schedulablewait controller: %w", err)
 		}
 
 		if err := registerSchedulableStateController(logger, mgr, cmdProviders); err != nil {
-			return fmt.Errorf("unable to register 'schedulable' controller: %w", err)
+			return fmt.Errorf("unable to register schedulable controller: %w", err)
 		}
 	}
 
@@ -108,7 +108,7 @@ func registerSchedulableStateController(logger *logrus.Entry, mgr crman.Manager,
 // controller-runtime.
 func registerPlanStateController(name string, logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, handler appc.PlanStateHandler) error {
 	return cr.NewControllerManagedBy(mgr).
-		Named("planstate-" + name).
+		Named("planstate_" + name).
 		For(&apv1beta2.Plan{}).
 		WithEventFilter(eventFilter).
 		Complete(

@@ -38,12 +38,12 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 
 	hostname, err := apcomm.FindEffectiveHostname()
 	if err != nil {
-		return fmt.Errorf("unable to determine hostname for controlnode 'signal' reconciler: %w", err)
+		return fmt.Errorf("unable to determine hostname: %w", err)
 	}
 
 	k0sBinaryPath, err := os.Executable()
 	if err != nil {
-		return fmt.Errorf("unable to determine k0s binary path for controlnode 'signal' reconciler: %w", err)
+		return fmt.Errorf("unable to determine k0s binary path: %w", err)
 	}
 	k0sBinaryDir := filepath.Dir(k0sBinaryPath)
 
@@ -54,31 +54,31 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	}
 
 	if err := registerSignalController(logger, mgr, signalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID, k0sVersionHandler); err != nil {
-		return fmt.Errorf("unable to register k0s 'signal' controller: %w", err)
+		return fmt.Errorf("unable to register signal controller: %w", err)
 	}
 
 	if err := registerDownloading(logger, mgr, downloadEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s downloading")), delegate, k0sBinaryDir); err != nil {
-		return fmt.Errorf("unable to register k0s 'downloading' controller: %w", err)
+		return fmt.Errorf("unable to register downloading controller: %w", err)
 	}
 
 	if err := registerCordoning(logger, mgr, cordoningEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s cordoning")), delegate); err != nil {
-		return fmt.Errorf("unable to register k0s 'cordoning' controller: %w", err)
+		return fmt.Errorf("unable to register cordoning controller: %w", err)
 	}
 
 	if err := registerApplyingUpdate(logger, mgr, applyingUpdateEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s applying-update")), delegate, k0sBinaryDir); err != nil {
-		return fmt.Errorf("unable to register k0s 'applying-update' controller: %w", err)
+		return fmt.Errorf("unable to register applying-update controller: %w", err)
 	}
 
 	if err := registerRestart(logger, mgr, restartEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restart")), delegate); err != nil {
-		return fmt.Errorf("unable to register k0s 'restart' controller: %w", err)
+		return fmt.Errorf("unable to register restart controller: %w", err)
 	}
 
 	if err := registerRestarted(logger, mgr, restartedEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restarted")), delegate); err != nil {
-		return fmt.Errorf("unable to register k0s 'restarted' controller: %w", err)
+		return fmt.Errorf("unable to register restarted controller: %w", err)
 	}
 
 	if err := registerUncordoning(logger, mgr, unCordoningEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s uncordoning")), delegate); err != nil {
-		return fmt.Errorf("unable to register k0s 'uncordoning' controller: %w", err)
+		return fmt.Errorf("unable to register uncordoning controller: %w", err)
 	}
 
 	return nil

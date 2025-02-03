@@ -24,7 +24,7 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
-	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -115,8 +115,8 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
-			return fmt.Errorf("unable to register 'controlnodes' controllers: %w", err)
+		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
+			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
 		// The controller-runtime start blocks until the context is cancelled.
 		if err := mgr.Start(ctx); err != nil {

@@ -19,6 +19,7 @@ package k0s
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -61,15 +62,16 @@ func restartedEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
 func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
-	logger.Infof("Registering 'restarted' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_restarted"
+	logger.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-restarted").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
 			&restarted{
-				log:      logger.WithFields(logrus.Fields{"reconciler": "restarted", "object": delegate.Name()}),
+				log:      logger.WithFields(logrus.Fields{"reconciler": "k0s-restarted", "object": delegate.Name()}),
 				client:   mgr.GetClient(),
 				delegate: delegate,
 			},
