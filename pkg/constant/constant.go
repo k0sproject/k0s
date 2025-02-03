@@ -118,7 +118,7 @@ const (
 	WorkerConfigComponentName          = "worker-config"
 	MetricsServerComponentName         = "metrics-server"
 	NetworkProviderComponentName       = "network-provider"
-	SystemRbacComponentName            = "system-rbac"
+	SystemRBACComponentName            = "system-rbac"
 	NodeRoleComponentName              = "node-role"
 	WindowsNodeComponentName           = "windows-node"
 	AutopilotComponentName             = "autopilot"
