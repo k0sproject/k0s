@@ -32,7 +32,6 @@ import (
 	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -69,22 +68,6 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
 	}
 
-	var mgr crman.Manager
-	if err := retry.Do(
-		func() (err error) {
-			mgr, err = cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
-			return err
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.Delay(1*time.Second),
-		retry.OnRetry(func(attempt uint, err error) {
-			logger.WithError(err).Debugf("Failed to start controller manager in attempt #%d, retrying after backoff", attempt+1)
-		}),
-	); err != nil {
-		logger.WithError(err).Fatal("unable to start controller manager")
-	}
-
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
 	var attempt uint
 	return k8sretry.OnError(wait.Backoff{
@@ -107,6 +90,11 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return err
 		}
 		clusterID := string(ns.UID)
+
+		mgr, err := cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
+		if err != nil {
+			return fmt.Errorf("failed to create controller manager: %w", err)
+		}
 
 		if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
 			return fmt.Errorf("unable to register indexers: %w", err)
