@@ -29,7 +29,9 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sretry "k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
+	crconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -61,6 +63,17 @@ func (w *rootWorker) Run(ctx context.Context) error {
 
 	managerOpts := crman.Options{
 		Scheme: scheme,
+		Controller: crconfig.Controller{
+			// Controller-runtime maintains a global checklist of controller
+			// names and does not currently provide a way to unregister the
+			// controller names used by discarded managers. The autopilot
+			// controller and worker components accidentally share some
+			// controller names. So it's necessary to suppress the global name
+			// check because the order in which components are started is not
+			// fully guaranteed for k0s controller nodes running an embedded
+			// worker.
+			SkipNameValidation: ptr.To(true),
+		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: w.cfg.ManagerPort,
 		}),
