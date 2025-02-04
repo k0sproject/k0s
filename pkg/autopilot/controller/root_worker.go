@@ -43,6 +43,8 @@ type rootWorker struct {
 	cfg           aproot.RootConfig
 	log           *logrus.Entry
 	clientFactory apcli.FactoryInterface
+
+	initialized bool
 }
 
 var _ aproot.Root = (*rootWorker)(nil)
@@ -64,15 +66,14 @@ func (w *rootWorker) Run(ctx context.Context) error {
 	managerOpts := crman.Options{
 		Scheme: scheme,
 		Controller: crconfig.Controller{
-			// Controller-runtime maintains a global checklist of controller
-			// names and does not currently provide a way to unregister the
-			// controller names used by discarded managers. The autopilot
-			// controller and worker components accidentally share some
-			// controller names. So it's necessary to suppress the global name
-			// check because the order in which components are started is not
-			// fully guaranteed for k0s controller nodes running an embedded
-			// worker.
-			SkipNameValidation: ptr.To(true),
+			// If this controller is already initialized, this means that all
+			// controller-runtime controllers have already been successfully
+			// registered to another manager. However, controller-runtime
+			// maintains a global checklist of controller names and doesn't
+			// currently provide a way to unregister names from discarded
+			// managers. So it's necessary to suppress the global name check
+			// whenever things retried.
+			SkipNameValidation: ptr.To(w.initialized),
 		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: w.cfg.ManagerPort,
@@ -118,6 +119,10 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
 			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
+
+		// All the controller-runtime controllers have been registered.
+		w.initialized = true
+
 		// The controller-runtime start blocks until the context is cancelled.
 		if err := mgr.Start(ctx); err != nil {
 			return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)

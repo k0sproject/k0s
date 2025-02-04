@@ -60,6 +60,8 @@ type rootController struct {
 	stopSubHandler         subControllerStopFunc
 	leaseWatcherCreator    leaseWatcherCreatorFunc
 	setupHandler           setupFunc
+
+	initialized bool
 }
 
 var _ aproot.Root = (*rootController)(nil)
@@ -153,15 +155,14 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	managerOpts := crman.Options{
 		Scheme: scheme,
 		Controller: crconfig.Controller{
-			// Controller-runtime maintains a global checklist of controller
-			// names and does not currently provide a way to unregister the
-			// controller names used by discarded managers. The autopilot
-			// controller and worker components accidentally share some
-			// controller names. So it's necessary to suppress the global name
-			// check because the order in which components are started is not
-			// fully guaranteed for k0s controller nodes running an embedded
-			// worker.
-			SkipNameValidation: ptr.To(true),
+			// If this controller is already initialized, this means that all
+			// controller-runtime controllers have already been successfully
+			// registered to another manager. However, controller-runtime
+			// maintains a global checklist of controller names and doesn't
+			// currently provide a way to unregister names from discarded
+			// managers. So it's necessary to suppress the global name check
+			// whenever things are restarted for reconfiguration.
+			SkipNameValidation: ptr.To(c.initialized),
 		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: c.cfg.ManagerPort,
@@ -231,6 +232,9 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		logger.WithError(err).Error("unable to register updates controllers")
 		return err
 	}
+
+	// All the controller-runtime controllers have been registered.
+	c.initialized = true
 
 	// The controller-runtime start blocks until the context is cancelled.
 	if err := mgr.Start(ctx); err != nil {
