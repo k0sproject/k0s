@@ -86,12 +86,16 @@ func (w *rootWorker) Run(ctx context.Context) error {
 	}
 
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
+	var attempt uint
 	return k8sretry.OnError(wait.Backoff{
 		Steps:    120,
 		Duration: 1 * time.Second,
 		Factor:   1.0,
 		Jitter:   0.1,
 	}, func(err error) bool {
+		attempt++
+		logger := logger.WithError(err).WithField("attempt", attempt)
+		logger.Debug("Failed to run controller manager, retrying after backoff")
 		return true
 	}, func() error {
 		cl, err := w.clientFactory.GetClient()
