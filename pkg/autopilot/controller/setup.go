@@ -25,6 +25,7 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
+	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
@@ -173,7 +174,8 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	}
 
 	node.Status = apv1beta2.ControlNodeStatus{
-		Addresses: addresses,
+		Addresses:  addresses,
+		K0sVersion: build.Version,
 	}
 
 	logger.Infof("Updating controlnode status '%s'", name)
