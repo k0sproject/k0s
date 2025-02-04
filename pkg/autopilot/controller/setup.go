@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/k0sproject/k0s/pkg/build"
 	"runtime"
 	"time"
 
@@ -175,6 +176,7 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 
 	node.Status = apv1beta2.ControlNodeStatus{
 		Addresses: addresses,
+		Version:   build.Version,
 	}
 
 	logger.Infof("Updating controlnode status '%s'", name)
