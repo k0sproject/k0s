@@ -597,15 +597,12 @@ func (c *command) start(ctx context.Context) error {
 		Workloads:          c.EnableWorker,
 	})
 
-	restConfig, err := adminClientFactory.GetRESTConfig()
-	if err != nil {
-		return err
-	}
-	apClientFactory, err := apclient.NewClientFactory(restConfig)
-	if err != nil {
-		return err
-	}
-	clusterComponents.Add(ctx, controller.NewUpdateProber(apClientFactory, leaderElector))
+	clusterComponents.Add(ctx, controller.NewUpdateProber(
+		&apclient.ClientFactory{
+			ClientFactoryInterface: adminClientFactory,
+		},
+		leaderElector,
+	))
 
 	// Add the config source as the last component, so that the reconciliation
 	// starts after all other components have been started.

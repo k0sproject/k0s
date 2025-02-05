@@ -124,7 +124,7 @@ func createNamespace(ctx context.Context, cf apcli.FactoryInterface, name string
 // for this physical host.
 func (sc *setupController) createControlNode(ctx context.Context, cf apcli.FactoryInterface, name, nodeName string) error {
 	logger := sc.log.WithField("component", "setup")
-	client, err := sc.clientFactory.GetAutopilotClient()
+	client, err := sc.clientFactory.GetK0sClient()
 	if err != nil {
 		return err
 	}

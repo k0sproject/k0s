@@ -89,7 +89,7 @@ func (p readyProber) Probe() error {
 func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 	p.log.Infof("Probing %v", target.Name)
 
-	client, err := p.clientFactory.GetAutopilotClient()
+	client, err := p.clientFactory.GetK0sClient()
 	if err != nil {
 		return err
 	}
