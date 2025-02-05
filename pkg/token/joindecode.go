@@ -39,12 +39,12 @@ func DecodeJoinToken(token string) ([]byte, error) {
 
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, gz)
-	gzErr := gz.Close()
+	closeErr := gz.Close()
 	if err != nil {
 		return nil, err
 	}
-	if gzErr != nil {
-		return nil, err
+	if closeErr != nil {
+		return nil, closeErr
 	}
 
 	return buf.Bytes(), nil
