@@ -144,6 +144,7 @@ func (ci *ClusterImages) overrideImageRepositories() {
 	override(ci.KubeRouter.CNI)
 	override(ci.KubeRouter.CNIInstaller)
 	override(ci.Pause)
+	override(ci.PushGateway)
 }
 
 // CalicoImageSpec config group for calico related image settings
