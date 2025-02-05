@@ -18,9 +18,9 @@ linters:
     - gofmt             # Checks whether code was gofmt-ed
     - goheader          # Checks is file headers matche a given pattern
     - intrange          # Checking for loops that could use an integer range
-    - perfsprint        # Checks for faster fmt.Sprintf alternatives
     - nolintlint        # Find ill-formed or insufficiently explained nolint directives
     - nosprintfhostport # Detects misuses of Sprintf to construct hosts with ports in a URL
+    - perfsprint        # Checks for faster fmt.Sprintf alternatives
     - revive            # Stricter drop-in replacement for golint
     - testifylint       # Checks usage of github.com/stretchr/testify
     - unconvert         # Checks for unnecessary type conversions
