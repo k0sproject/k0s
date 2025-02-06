@@ -11,8 +11,8 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/k0sproject/k0s?label=latest%20stable)
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/k0sproject/k0s?include_prereleases&label=latest-release%20%28including+pre-release%29) ![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/k0sproject/k0s/latest)
 
-![k0s-logo-dark](docs/img/k0s-logo-full-color-dark.svg#gh-dark-mode-only)
-![k0s-logo-light](docs/img/k0s-logo-full-color-light.svg#gh-light-mode-only)
+![k0s-logo-dark](docs/img/k0s-logo-2025-horizontal-inverted.svg#gh-dark-mode-only)
+![k0s-logo-light](docs/img/k0s-logo-2025-horizontal.svg#gh-light-mode-only)
 
 ## What happened to GitHub stargazers?
 
