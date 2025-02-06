@@ -205,7 +205,7 @@ func TestNodeConfig_Default(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, nodeConfig)
-	assert.True(t, reflect.DeepEqual(v1beta1.DefaultClusterConfig(c.defaultStorageSpec()), nodeConfig))
+	assert.True(t, reflect.DeepEqual(v1beta1.DefaultClusterConfig(), nodeConfig))
 }
 
 func TestNodeConfig_Stdin(t *testing.T) {

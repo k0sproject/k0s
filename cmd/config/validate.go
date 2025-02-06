@@ -35,27 +35,26 @@ func NewValidateCmd() *cobra.Command {
 		Long: `Example:
    k0s config validate --config path_to_config.yaml`,
 		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			var reader io.Reader
+		RunE: func(cmd *cobra.Command, _ []string) (err error) {
+			var bytes []byte
 
 			// config.CfgFile is the global value holder for --config flag, set by cobra/pflag
 			switch config.CfgFile {
 			case "-":
-				reader = cmd.InOrStdin()
+				if bytes, err = io.ReadAll(cmd.InOrStdin()); err != nil {
+					return fmt.Errorf("failed to read configuration from standard input: %w", err)
+				}
 			case "":
 				return errors.New("--config can't be empty")
 			default:
-				f, err := os.Open(config.CfgFile)
-				if err != nil {
-					return err
+				if bytes, err = os.ReadFile(config.CfgFile); err != nil {
+					return fmt.Errorf("failed to read configuration file: %w", err)
 				}
-				defer f.Close()
-				reader = f
 			}
 
-			cfg, err := v1beta1.ConfigFromReader(reader)
+			cfg, err := v1beta1.ConfigFromBytes(bytes)
 			if err != nil {
-				return fmt.Errorf("failed to read config: %w", err)
+				return fmt.Errorf("failed to parse configuration: %w", err)
 			}
 
 			return errors.Join(cfg.Validate()...)

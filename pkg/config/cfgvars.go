@@ -200,17 +200,6 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 	return vars, nil
 }
 
-func (c *CfgVars) defaultStorageSpec() *v1beta1.StorageSpec {
-	if c.DefaultStorageType == v1beta1.KineStorageType {
-		return &v1beta1.StorageSpec{
-			Type: v1beta1.KineStorageType,
-			Kine: v1beta1.DefaultKineConfig(c.DataDir),
-		}
-	}
-
-	return v1beta1.DefaultStorageSpec()
-}
-
 var defaultConfigPath = constant.K0sConfigPathDefault
 
 func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
@@ -218,7 +207,15 @@ func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 		return nil, errors.New("config path is not set")
 	}
 
-	var nodeConfig *v1beta1.ClusterConfig
+	nodeConfig := v1beta1.DefaultClusterConfig()
+
+	// Optionally override the default storage (used for single node clusters)
+	if c.DefaultStorageType == v1beta1.KineStorageType {
+		nodeConfig.Spec.Storage = &v1beta1.StorageSpec{
+			Type: v1beta1.KineStorageType,
+			Kine: v1beta1.DefaultKineConfig(c.DataDir),
+		}
+	}
 
 	if c.StartupConfigPath == "-" {
 		configReader := c.stdin
@@ -227,24 +224,27 @@ func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 			return nil, errors.New("stdin already grabbed")
 		}
 
-		var err error
-		nodeConfig, err = v1beta1.ConfigFromReader(configReader, c.defaultStorageSpec())
+		bytes, err := io.ReadAll(configReader)
+		if err != nil {
+			return nil, err
+		}
+
+		nodeConfig, err = nodeConfig.MergedWithYAML(bytes)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		cfgContent, err := os.ReadFile(c.StartupConfigPath)
-		if errors.Is(err, os.ErrNotExist) && c.StartupConfigPath == defaultConfigPath {
-			nodeConfig = v1beta1.DefaultClusterConfig(c.defaultStorageSpec())
-		} else if err == nil {
-			cfg, err := v1beta1.ConfigFromString(string(cfgContent), c.defaultStorageSpec())
-			if err != nil {
-				return nil, err
+		if err != nil {
+			if c.StartupConfigPath == defaultConfigPath && errors.Is(err, os.ErrNotExist) {
+				// The default configuration file doesn't exist; continue with the defaults.
+				return nodeConfig, nil
 			}
-			nodeConfig = cfg
-		} else {
+
 			return nil, err
 		}
+
+		return nodeConfig.MergedWithYAML(cfgContent)
 	}
 
 	if nodeConfig.Spec.Storage.Type == v1beta1.KineStorageType && nodeConfig.Spec.Storage.Kine == nil {

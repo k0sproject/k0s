@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -198,30 +197,24 @@ func (s *SchedulerSpec) IsZero() bool {
 	return len(s.ExtraArgs) == 0
 }
 
-func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
-	config := DefaultClusterConfig(defaultStorage...)
-	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, "interval", "podSecurityPolicy")
-	if err != nil {
-		return config, err
-	}
-	if config.Spec == nil {
-		config.Spec = DefaultClusterSpec(defaultStorage...)
-	}
-	return config, nil
+func ConfigFromBytes(bytes []byte) (*ClusterConfig, error) {
+	return DefaultClusterConfig().MergedWithYAML(bytes)
 }
 
-// ConfigFromReader reads the configuration from any reader (can be stdin, file reader, etc)
-func ConfigFromReader(r io.Reader, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
-	input, err := io.ReadAll(r)
+func (c *ClusterConfig) MergedWithYAML(bytes []byte) (*ClusterConfig, error) {
+	merged := c.DeepCopy()
+	err := strictyaml.YamlUnmarshalStrictIgnoringFields(bytes, merged, "interval", "podSecurityPolicy")
 	if err != nil {
 		return nil, err
 	}
-	return ConfigFromString(string(input), defaultStorage...)
+	if merged.Spec == nil {
+		merged.Spec = c.Spec
+	}
+	return merged, nil
 }
 
 // DefaultClusterConfig sets the default ClusterConfig values, when none are given
-func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
-	clusterSpec := DefaultClusterSpec(defaultStorage...)
+func DefaultClusterConfig() *ClusterConfig {
 	return &ClusterConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: GroupVersion.String(),
@@ -231,7 +224,7 @@ func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
 			Name:      constant.ClusterConfigObjectName,
 			Namespace: constant.ClusterConfigNamespace,
 		},
-		Spec: clusterSpec,
+		Spec: DefaultClusterSpec(),
 	}
 }
 
@@ -247,7 +240,10 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if c.Spec != nil && c.Spec.Storage != nil {
 		storage = c.Spec.Storage
 	}
-	c.Spec = DefaultClusterSpec(storage)
+	c.Spec = DefaultClusterSpec()
+	if storage != nil {
+		c.Spec.Storage = storage
+	}
 
 	type config ClusterConfig
 	jc := (*config)(c)
@@ -261,7 +257,10 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	if jc.Spec == nil {
-		jc.Spec = DefaultClusterSpec(storage)
+		jc.Spec = DefaultClusterSpec()
+		if storage != nil {
+			jc.Spec.Storage = storage
+		}
 		return nil
 	}
 	if jc.Spec.Storage == nil {
@@ -301,17 +300,10 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 }
 
 // DefaultClusterSpec default settings
-func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
-	var storage *StorageSpec
-	if defaultStorage == nil || defaultStorage[0] == nil {
-		storage = DefaultStorageSpec()
-	} else {
-		storage = defaultStorage[0]
-	}
-
+func DefaultClusterSpec() *ClusterSpec {
 	spec := &ClusterSpec{
 		Extensions:        DefaultExtensions(),
-		Storage:           storage,
+		Storage:           DefaultStorageSpec(),
 		Network:           DefaultNetwork(),
 		API:               DefaultAPISpec(),
 		ControllerManager: DefaultControllerManagerSpec(),
