@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
@@ -78,15 +79,16 @@ func registerApplyingUpdate(
 	delegate apdel.ControllerDelegate,
 	k0sBinaryDir string,
 ) error {
-	logger.Infof("Registering 'applying-update' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_applying_update"
+	logger.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-applying-update").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
 			&applyingUpdate{
-				log:          logger.WithFields(logrus.Fields{"reconciler": "applying-update", "object": delegate.Name()}),
+				log:          logger.WithFields(logrus.Fields{"reconciler": "k0s-applying-update", "object": delegate.Name()}),
 				client:       mgr.GetClient(),
 				delegate:     delegate,
 				k0sBinaryDir: k0sBinaryDir,

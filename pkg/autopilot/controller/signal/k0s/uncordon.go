@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -75,7 +76,8 @@ type uncordoning struct {
 // moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
 // the node.
 func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
-	logger.Infof("Registering 'uncordoning' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_uncordoning"
+	logger.Info("Registering reconciler: ", name)
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
@@ -84,12 +86,12 @@ func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 	}
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-uncordoning").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
 			&uncordoning{
-				log:       logger.WithFields(logrus.Fields{"reconciler": "uncordoning", "object": delegate.Name()}),
+				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-uncordoning", "object": delegate.Name()}),
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,

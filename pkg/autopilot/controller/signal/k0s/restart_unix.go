@@ -19,6 +19,7 @@ package k0s
 import (
 	"context"
 	"fmt"
+	"strings"
 	"syscall"
 	"time"
 
@@ -70,15 +71,16 @@ type restart struct {
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
 func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
-	logger.Infof("Registering 'restart' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_restart"
+	logger.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-restart").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
 			&restart{
-				log:      logger.WithFields(logrus.Fields{"reconciler": "restart", "object": delegate.Name()}),
+				log:      logger.WithFields(logrus.Fields{"reconciler": "k0s-restart", "object": delegate.Name()}),
 				client:   mgr.GetClient(),
 				delegate: delegate,
 			},

@@ -25,10 +25,10 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
-	applan "github.com/k0sproject/k0s/pkg/autopilot/controller/plans"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/plans"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
-	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
-	apupdate "github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
@@ -60,6 +60,8 @@ type rootController struct {
 	stopSubHandler         subControllerStopFunc
 	leaseWatcherCreator    leaseWatcherCreatorFunc
 	setupHandler           setupFunc
+
+	initialized bool
 }
 
 var _ aproot.Root = (*rootController)(nil)
@@ -153,15 +155,14 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	managerOpts := crman.Options{
 		Scheme: scheme,
 		Controller: crconfig.Controller{
-			// Controller-runtime maintains a global checklist of controller
-			// names and does not currently provide a way to unregister the
-			// controller names used by discarded managers. The autopilot
-			// controller and worker components accidentally share some
-			// controller names. So it's necessary to suppress the global name
-			// check because the order in which components are started is not
-			// fully guaranteed for k0s controller nodes running an embedded
-			// worker.
-			SkipNameValidation: ptr.To(true),
+			// If this controller is already initialized, this means that all
+			// controller-runtime controllers have already been successfully
+			// registered to another manager. However, controller-runtime
+			// maintains a global checklist of controller names and doesn't
+			// currently provide a way to unregister names from discarded
+			// managers. So it's necessary to suppress the global name check
+			// whenever things are restarted for reconfiguration.
+			SkipNameValidation: ptr.To(c.initialized),
 		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: c.cfg.ManagerPort,
@@ -222,20 +223,23 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	}
 	clusterID := string(ns.UID)
 
-	if err := apsig.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
-		logger.WithError(err).Error("unable to register 'signal' controllers")
+	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
+		logger.WithError(err).Error("unable to register signal controllers")
 		return err
 	}
 
-	if err := applan.RegisterControllers(ctx, logger, mgr, c.kubeClientFactory, leaderMode, delegateMap, c.cfg.ExcludeFromPlans); err != nil {
-		logger.WithError(err).Error("unable to register 'plans' controllers")
+	if err := plans.RegisterControllers(ctx, logger, mgr, c.kubeClientFactory, leaderMode, delegateMap, c.cfg.ExcludeFromPlans); err != nil {
+		logger.WithError(err).Error("unable to register plans controllers")
 		return err
 	}
 
-	if err := apupdate.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID); err != nil {
-		logger.WithError(err).Error("unable to register 'update' controllers")
+	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID); err != nil {
+		logger.WithError(err).Error("unable to register updates controllers")
 		return err
 	}
+
+	// All the controller-runtime controllers have been registered.
+	c.initialized = true
 
 	// The controller-runtime start blocks until the context is cancelled.
 	if err := mgr.Start(ctx); err != nil {

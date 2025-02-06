@@ -16,6 +16,7 @@ package k0s
 
 import (
 	"crypto/sha256"
+	"strings"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
@@ -69,10 +70,11 @@ var _ apsigcomm.DownloadManifestBuilder = (*downloadManifestBuilderK0s)(nil)
 // moved to a `Downloading` status. At this point, it will attempt to download
 // the file provided in the update request.
 func registerDownloading(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, k0sBinaryDir string) error {
-	logger.Infof("Registering k0s 'downloading' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_downloading"
+	logger.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-downloading").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(

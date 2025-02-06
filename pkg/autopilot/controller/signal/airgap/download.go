@@ -17,6 +17,7 @@ package airgap
 import (
 	"crypto/sha256"
 	"path"
+	"strings"
 
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
@@ -43,10 +44,11 @@ var _ apsigcomm.DownloadManifestBuilder = (*downloadManfiestBuilderAirgap)(nil)
 // moved to a `Downloading` status. At this point, it will attempt to download
 // the file provided in the update request.
 func registerDownloading(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, k0sDataDir string) error {
-	logger.Infof("Registering 'airgap-downloading' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_airgap_downloading"
+	logger.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named("airgap-downloading").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
