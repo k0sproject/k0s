@@ -80,9 +80,9 @@ jobs:
       - name: "Cache :: GOMODCACHE"
         uses: actions/cache@v4
         with:
-          key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            build/cache/go/mod
+          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
+          path: build/cache/go/mod
+          enableCrossOsArchive: true
 
       - name: "Build :: k0s"
         run: |

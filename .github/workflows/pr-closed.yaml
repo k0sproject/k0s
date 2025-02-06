@@ -1,0 +1,33 @@
+name: Pull request closed
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  # Based on https://github.com/actions/cache/blob/v4.2.0/tips-and-workarounds.md#force-deletion-of-caches-overriding-default-cache-eviction-policy
+  cleanup-actions-caches:
+    name: Cleanup GitHub Actions caches
+    runs-on: ubuntu-latest
+    permissions:
+      # `actions:write` permission is required to delete caches
+      #   See also: https://docs.github.com/en/rest/actions/cache?apiVersion=2022-11-28#delete-a-github-actions-cache-for-a-repository-using-a-cache-id
+      actions: write
+      contents: read
+
+    steps:
+      - name: Cleanup
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_REPO: "${{ github.repository }}"
+          BRANCH: "refs/pull/${{ github.event.pull_request.number }}/merge"
+        run: |
+          set -euo pipefail
+          gh api -X GET /repos/{owner}/{repo}/actions/caches -f ref="$BRANCH" --paginate -q '.actions_caches[] | "\(.id) \(.key)"' | {
+            fail=0
+            while read -r id key; do
+              echo Deleting cache with ID $id: $key
+              gh api -X DELETE /repos/{owner}/{repo}/actions/caches/"$id" || fail=1
+            done
+            [ $fail -eq 0 ]
+          }
