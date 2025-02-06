@@ -5,6 +5,14 @@
   "first-line-h1": false,
   "single-trailing-newline": false,
   "ol-prefix": "one_or_ordered",
+  "MD010": {
+    "code_blocks": false // Go uses tabs ¯\_(ツ)_/¯
+  },
+  "MD033": {
+    "allowed_elements": [
+      "br" // The br tag is more readable than two trailing spaces.
+    ]
+  },
   "MD055": false, // broken
   "MD056": false // broken
 }

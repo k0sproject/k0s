@@ -8,7 +8,7 @@ on:
     paths:
       - '**.md'
       - .github/workflows/docs.yml
-      - .github/workflows/markdownlint-config.jsonc
+      - .markdownlint.jsonc
   pull_request:
     branches:
       - main
@@ -16,15 +16,14 @@ on:
     paths:
       - '**.md'
       - .github/workflows/docs.yml
-      - .github/workflows/markdownlint-config.jsonc
+      - .markdownlint.jsonc
 jobs:
   lint:
     name: Lint markdown
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: articulate/actions-markdownlint@v1
+      - uses: DavidAnson/markdownlint-cli2-action@v19.1.0
         with:
-          config: .github/workflows/markdownlint-config.jsonc
-          ignore: autopilot
-          version: 0.39.0
+          config: .markdownlint.jsonc
+          globs: '**/*.md'
