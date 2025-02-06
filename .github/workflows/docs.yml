@@ -23,8 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: articulate/actions-markdownlint@v1
+      - uses: DavidAnson/markdownlint-cli2-action@v19.1.0
         with:
           config: .markdownlint.jsonc
-          ignore: autopilot
-          version: 0.42.0
+          globs: '**/*.md'
