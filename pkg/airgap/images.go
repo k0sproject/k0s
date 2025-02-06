@@ -20,15 +20,10 @@ import (
 	"runtime"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // GetImageURIs returns all image tags
 func GetImageURIs(spec *v1beta1.ClusterSpec, all bool) []string {
-	pauseImage := v1beta1.ImageSpec{
-		Image:   constant.KubePauseContainerImage,
-		Version: constant.KubePauseContainerImageVersion,
-	}
 
 	imageURIs := []string{
 		spec.Images.Calico.CNI.URI(),
@@ -40,7 +35,15 @@ func GetImageURIs(spec *v1beta1.ClusterSpec, all bool) []string {
 		spec.Images.KubeRouter.CNI.URI(),
 		spec.Images.KubeRouter.CNIInstaller.URI(),
 		spec.Images.MetricsServer.URI(),
-		pauseImage.URI(),
+		spec.Images.Pause.URI(),
+	}
+
+	if all {
+		// Currently we can't determine if the user has enabled the PushGateway via
+		// config so include it only if all is requested
+		imageURIs = append(imageURIs,
+			spec.Images.PushGateway.URI(),
+		)
 	}
 
 	if spec.Network != nil {

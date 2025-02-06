@@ -76,6 +76,7 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/kube-router:%s", constant.KubeRouterCNIImageVersion), testingConfig.Spec.Images.KubeRouter.CNI.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/cni-node:%s", constant.KubeRouterCNIInstallerImageVersion), testingConfig.Spec.Images.KubeRouter.CNIInstaller.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/pause:%s", constant.KubePauseContainerImageVersion), testingConfig.Spec.Images.Pause.URI())
+			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/pushgateway-ttl:%s", constant.PushGatewayImageVersion), testingConfig.Spec.Images.PushGateway.URI())
 		})
 		t.Run("config_with_custom_images", func(t *testing.T) {
 			cfg := DefaultClusterConfig()
