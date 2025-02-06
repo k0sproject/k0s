@@ -244,8 +244,8 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
 
   1. Apply the cluster.yaml using k0sctl on your local machine.
 
-      ```bash
-      ➜ k0sctl apply --config cluster.yaml
+      ```console
+      $ k0sctl apply --config cluster.yaml
 
       ⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
       ⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███
@@ -257,7 +257,7 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       https://k0sproject.io/licenses/eula
       INFO ==> Running phase: Set k0s version
       INFO Looking up latest stable k0s version
-      INFO Using k0s version v1.32.1+k0s.0
+      INFO Using k0s version v{{{ extra.k8s_version }}}+k0s.0
       INFO ==> Running phase: Connect to hosts
       INFO [ssh] 192.168.31.93:22: connected
       INFO ==> Running phase: Detect host operating systems
@@ -270,7 +270,7 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       INFO ==> Running phase: Validate hosts
       INFO ==> Running phase: Validate facts
       INFO ==> Running phase: Download k0s on hosts
-      INFO [ssh] 192.168.31.93:22: downloading k0s v1.32.1+k0s.0
+      INFO [ssh] 192.168.31.93:22: downloading k0s v{{{ extra.k8s_version }}}+k0s.0
       INFO ==> Running phase: Install k0s binaries on hosts
       INFO [ssh] 192.168.31.93:22: validating configuration
       INFO ==> Running phase: Configure k0s
@@ -282,7 +282,7 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       INFO ==> Running phase: Release exclusive host lock
       INFO ==> Running phase: Disconnect from hosts
       INFO ==> Finished in 4m14s
-      INFO k0s cluster version v1.32.1+k0s.0 is now installed
+      INFO k0s cluster version v{{{ extra.k8s_version }}}+k0s.0 is now installed
       INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
       INFO      k0sctl kubeconfig --config cluster.yaml
       ```
@@ -295,11 +295,11 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
 
   3. Export KUBECONFIG and verify
 
-      ```bash
-      ➜ export KUBECONFIG=pi_cluster.kubeconfig`
-      ➜ kubectl get nodes
+      ```console
+      $ export KUBECONFIG=pi_cluster.kubeconfig
+      $ kubectl get nodes
       NAME   STATUS   ROLES           AGE     VERSION
-      pi     Ready    control-plane   2m54s   v1.32.1+k0s
+      pi     Ready    control-plane   2m54s   v{{{ extra.k8s_version }}}+k0s
       ```
 
 ## Tear down k0s on Pi 5
@@ -309,23 +309,23 @@ If you need to remove k0s entirely (for example, if you run into conflicts or ju
   1. Stop existing processes
 
       ```bash
-      ramesses-pi5@pi:~ $ sudo k0s stop
+      sudo k0s stop
       ```
 
   2. Reset k0s
 
       ```bash
-      ramesses-pi5@pi:~ $ sudo k0s reset
+      sudo k0s reset
       ```
 
   3. Remove k0s binaries
 
       ```bash
-      ramesses-pi5@pi:~ $ sudo rm -rf /usr/local/bin/k0s
+      sudo rm -rf /usr/local/bin/k0s
       ```
 
   4. Reboot Pi 5.
 
       ```bash
-      ramesses-pi5@pi:~ $ sudo reboot
+      sudo reboot
       ```
