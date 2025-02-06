@@ -2,9 +2,9 @@
 
 <!-- When changing this file, consider to change docs/README.md, too! -->
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9994/badge)](https://www.bestpractices.dev/projects/9994)
 [![Go build](https://github.com/k0sproject/k0s/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/k0sproject/k0s/actions/workflows/go.yml?query=branch%3Amain)
 [![k0s network conformance](https://github.com/k0sproject/k0s/workflows/k0s%20Check%20Network/badge.svg)](https://github.com/k0sproject/k0s/actions/workflows/check-network.yaml)
-[![Go Reference](https://img.shields.io/badge/code%20reference-go.dev-bc42f5.svg)](https://pkg.go.dev/github.com/k0sproject/k0s)
 ![GitHub Repo stars](https://img.shields.io/github/stars/k0sproject/k0s?color=blueviolet&label=Stargazers)
 [![Releases](https://img.shields.io/github/downloads/k0sproject/k0s/total.svg)](https://github.com/k0sproject/k0s/tags?label=Downloads)
 
