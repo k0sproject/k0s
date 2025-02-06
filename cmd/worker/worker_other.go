@@ -26,6 +26,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-func addPlatformSpecificComponents(context.Context, *manager.Manager, *config.CfgVars, *config.ControllerOptions, *worker.CertificateManager) {
+func addPlatformSpecificComponents(context.Context, *manager.Manager, *config.CfgVars, EmbeddingController, *worker.CertificateManager) {
 	// no-op
 }
