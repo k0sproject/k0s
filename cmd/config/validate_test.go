@@ -20,10 +20,12 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 )
 
@@ -75,10 +77,9 @@ func TestValidateCmd(t *testing.T) {
 
 	t.Run("malformed config from file", func(t *testing.T) {
 		cmd := NewValidateCmd()
-		tmpfile, _ := os.CreateTemp("", "testconfig")
-		defer os.Remove(tmpfile.Name())
-		_, _ = tmpfile.WriteString("malformed yaml")
-		cmd.SetArgs([]string{"--config", tmpfile.Name()})
+		tmpfile := filepath.Join(t.TempDir(), "testconfig")
+		require.NoError(t, os.WriteFile(tmpfile, []byte("malformed yaml"), 0644))
+		cmd.SetArgs([]string{"--config", tmpfile})
 		errOut := bytes.NewBuffer(nil)
 		cmd.SetErr(errOut)
 		assert.ErrorContains(t, cmd.Execute(), "cannot unmarshal")
@@ -87,10 +88,9 @@ func TestValidateCmd(t *testing.T) {
 
 	t.Run("valid config from file", func(t *testing.T) {
 		cmd := NewValidateCmd()
-		tmpfile, _ := os.CreateTemp("", "testconfig")
-		defer os.Remove(tmpfile.Name())
-		_, _ = tmpfile.Write(validConfig())
-		cmd.SetArgs([]string{"--config", tmpfile.Name()})
+		tmpfile := filepath.Join(t.TempDir(), "testconfig")
+		require.NoError(t, os.WriteFile(tmpfile, validConfig(), 0644))
+		cmd.SetArgs([]string{"--config", tmpfile})
 		errOut := bytes.NewBuffer(nil)
 		cmd.SetErr(errOut)
 		assert.NoError(t, cmd.Execute())

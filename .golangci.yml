@@ -27,6 +27,7 @@ linters:
     - unconvert         # Checks for unnecessary type conversions
     - unparam           # Checks for unused function parameters
     - usestdlibvars     # Checks for things that are provided by the standard library
+    - usetesting        # Reports usages of functions that have a replacement within the testing package
 
 linters-settings:
   depguard:

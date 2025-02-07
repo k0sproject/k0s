@@ -19,6 +19,7 @@ package worker
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -67,106 +68,84 @@ func TestSetImageSources(t *testing.T) {
 	require.Empty(t, image.Labels)
 
 	// test setting one source
-	fp, err := os.CreateTemp("", "test")
-	require.NoError(t, err)
-	defer func() {
-		_ = fp.Close()
-		_ = os.Remove(fp.Name())
-	}()
-	info, err := fp.Stat()
+	test := filepath.Join(t.TempDir(), "test")
+	require.NoError(t, os.WriteFile(test, nil, 0644))
+	info, err := os.Stat(test)
 	require.NoError(t, err)
 	image = images.Image{}
-	expected := ImageSources{fp.Name(): info.ModTime()}
+	expected := ImageSources{test: info.ModTime()}
 	err = SetImageSources(&image, expected)
 	require.NoError(t, err)
 	got, err := GetImageSources(image)
 	require.NoError(t, err)
-	require.True(t, expected[fp.Name()].Equal(got[fp.Name()]), "dates mismatch")
+	require.True(t, expected[test].Equal(got[test]), "dates mismatch")
 
 	// test sources replacement
-	img0, err := os.CreateTemp("", "test")
-	require.NoError(t, err)
-	defer func() {
-		_ = img0.Close()
-		_ = os.Remove(img0.Name())
-	}()
-	info0, err := img0.Stat()
+	img0 := filepath.Join(t.TempDir(), "test")
+	require.NoError(t, os.WriteFile(img0, nil, 0644))
+	info0, err := os.Stat(img0)
 	require.NoError(t, err)
 
-	data, err := json.Marshal(map[string]time.Time{img0.Name(): info0.ModTime()})
+	data, err := json.Marshal(map[string]time.Time{img0: info0.ModTime()})
 	require.NoError(t, err)
 	image = images.Image{
 		Labels: map[string]string{ImageSourcePathsLabel: string(data)},
 	}
 
-	img1, err := os.CreateTemp("", "test")
-	require.NoError(t, err)
-	defer func() {
-		_ = img1.Close()
-		_ = os.Remove(img1.Name())
-	}()
-	info1, err := img1.Stat()
+	img1 := filepath.Join(t.TempDir(), "test")
+	require.NoError(t, os.WriteFile(img1, nil, 0644))
+	info1, err := os.Stat(img1)
 	require.NoError(t, err)
 
-	newsrc := ImageSources{img1.Name(): info1.ModTime()}
+	newsrc := ImageSources{img1: info1.ModTime()}
 	err = SetImageSources(&image, newsrc)
 	require.NoError(t, err)
 
-	expected = ImageSources{img1.Name(): info1.ModTime()}
+	expected = ImageSources{img1: info1.ModTime()}
 	got, err = GetImageSources(image)
 	require.NoError(t, err)
-	require.True(t, expected[img1.Name()].Equal(got[img1.Name()]), "dates mismatch")
+	require.True(t, expected[img1].Equal(got[img1]), "dates mismatch")
 }
 
 func TestAddToImageSources(t *testing.T) {
 	// test replacing sources
-	img0, err := os.CreateTemp("", "test")
-	require.NoError(t, err)
-	defer func() {
-		_ = img0.Close()
-		_ = os.Remove(img0.Name())
-	}()
-	info0, err := img0.Stat()
+	img0 := filepath.Join(t.TempDir(), "test")
+	require.NoError(t, os.WriteFile(img0, nil, 0644))
+	info0, err := os.Stat(img0)
 	require.NoError(t, err)
 
-	data, err := json.Marshal(map[string]time.Time{img0.Name(): info0.ModTime()})
+	data, err := json.Marshal(map[string]time.Time{img0: info0.ModTime()})
 	require.NoError(t, err)
 	image := images.Image{
 		Labels: map[string]string{ImageSourcePathsLabel: string(data)},
 	}
 
-	img1, err := os.CreateTemp("", "test")
-	require.NoError(t, err)
-	defer func() {
-		_ = img1.Close()
-		_ = os.Remove(img1.Name())
-	}()
-	info1, err := img1.Stat()
+	img1 := filepath.Join(t.TempDir(), "test")
+	require.NoError(t, os.WriteFile(img1, nil, 0644))
+	info1, err := os.Stat(img0)
 	require.NoError(t, err)
 
-	err = AddToImageSources(&image, img1.Name(), info1.ModTime())
+	err = AddToImageSources(&image, img1, info1.ModTime())
 	require.NoError(t, err)
 
 	expected := ImageSources{
-		img0.Name(): info0.ModTime(),
-		img1.Name(): info1.ModTime(),
+		img0: info0.ModTime(),
+		img1: info1.ModTime(),
 	}
 	got, err := GetImageSources(image)
 	require.NoError(t, err)
-	require.True(t, expected[img0.Name()].Equal(got[img0.Name()]), "dates mismatch")
-	require.True(t, expected[img1.Name()].Equal(got[img1.Name()]), "dates mismatch")
+	require.True(t, expected[img0].Equal(got[img0]), "dates mismatch")
+	require.True(t, expected[img1].Equal(got[img1]), "dates mismatch")
 
 	// test if it trims the sources
-	err = img0.Close()
-	require.NoError(t, err)
-	err = os.Remove(img0.Name())
+	err = os.Remove(img0)
 	require.NoError(t, err)
 
-	err = AddToImageSources(&image, img1.Name(), info1.ModTime())
+	err = AddToImageSources(&image, img1, info1.ModTime())
 	require.NoError(t, err)
 
-	expected = ImageSources{img1.Name(): info1.ModTime()}
+	expected = ImageSources{img1: info1.ModTime()}
 	got, err = GetImageSources(image)
 	require.NoError(t, err)
-	require.True(t, expected[img1.Name()].Equal(got[img1.Name()]), "dates mismatch")
+	require.True(t, expected[img1].Equal(got[img1]), "dates mismatch")
 }
