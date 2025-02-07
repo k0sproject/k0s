@@ -18,7 +18,7 @@ jobs:
       - name: Start k0s controller
         run: |
           wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
-          wsl sh -c 'echo spec: \{storage: \{type: kine\}\} >/etc/k0s/k0s.yaml'
+          wsl sh -c 'mkdir /etc/k0s && echo spec: \{storage: \{type: kine\}\} >/etc/k0s/k0s.yaml'
           wsl k0s install controller --debug --disable-components metrics-server
           wsl k0s start
 
@@ -42,7 +42,7 @@ jobs:
                   foreach ($cluster in $kubeconfig.clusters) {
                     $cluster.cluster.server = "https://localhost:6443"
                   }
-                  $kubeconfig | ConvertFrom-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
+                  $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
               }
               catch {
                   $attempt++
