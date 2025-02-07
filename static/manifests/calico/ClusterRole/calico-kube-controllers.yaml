@@ -1,5 +1,7 @@
 ---
 # Source: calico/templates/calico-kube-controllers-rbac.yaml
+# These permissions assume .Values.datastore != "etcd"
+#
 # Include a clusterrole for the kube-controllers component,
 # and bind it to the calico-kube-controllers serviceaccount.
 kind: ClusterRole
@@ -23,6 +25,16 @@ rules:
       - get
       - list
       - watch
+  # Services are monitored for service LoadBalancer IP allocation
+  - apiGroups: [""]
+    resources:
+      - services
+      - services/status
+    verbs:
+      - get
+      - list
+      - update
+      - watch
   # IPAM resources are manipulated in response to node and block updates, as well as periodic triggers.
   - apiGroups: ["crd.projectcalico.org"]
     resources:
@@ -34,6 +46,8 @@ rules:
       - blockaffinities
       - ipamblocks
       - ipamhandles
+      - ipamconfigs
+      - tiers
     verbs:
       - get
       - list
@@ -75,6 +89,7 @@ rules:
     verbs:
       # read its own config
       - get
+      - list
       # create a default if none exists
       - create
       # update status
