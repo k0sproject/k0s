@@ -43,19 +43,20 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          Install-Module -Name powershell-yaml -Scope CurrentUser
+          # Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          # Install-Module -Name powershell-yaml -Scope CurrentUser
 
           for ($attempt = 1; $true; $attempt++) {
             try {
               Write-Host "Getting kubeconfig (attempt $attempt) ..."
-              $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
-              foreach ($cluster in $kubeconfig.clusters) {
-                $cluster.cluster.server = "https://127.0.0.1:6443"
-              }
+              $kubeconfig = & wsl k0s kubeconfig admin
+              # $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
+              # foreach ($cluster in $kubeconfig.clusters) {
+              #   $cluster.cluster.server = "https://127.0.0.1:6443"
+              # }
 
-              $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
-              # & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
+              # $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
+              & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
             }
             catch {
               Write-Warning "Failed to get kubeconfig: $_"
