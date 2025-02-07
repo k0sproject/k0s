@@ -1,5 +1,7 @@
 ---
 # Source: calico/templates/calico-kube-controllers-rbac.yaml
+# These permissions assume .Values.datastore != "etcd"
+# 
 # Include a clusterrole for the kube-controllers component,
 # and bind it to the calico-kube-controllers serviceaccount.
 kind: ClusterRole
@@ -81,3 +83,16 @@ rules:
       - update
       # watch for changes
       - watch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: calico-kube-controllers
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: calico-kube-controllers
+subjects:
+- kind: ServiceAccount
+  name: calico-kube-controllers
+  namespace: kube-system
