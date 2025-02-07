@@ -24,6 +24,7 @@ jobs:
           Write-Host "Using $addr"
           & wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
           & wsl sh -c "mkdir /etc/k0s && echo spec: \{api: \{address: $addr\}, storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml"
+          & wsl cat /etc/k0s/k0s.yaml
           & wsl k0s install controller --debug --disable-components metrics-server
           & wsl k0s start
 
