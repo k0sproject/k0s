@@ -19,8 +19,10 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
+          & wsl hostname -i
           & wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
-          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{api: \{address: 127.0.0.1, externalAddress: localhost\}, storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml'
+          # & wsl sh -c 'mkdir /etc/k0s && echo spec: \{api: \{address: 127.0.0.1, externalAddress: localhost\}, storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml'
+          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml'
           & wsl k0s install controller --debug --disable-components metrics-server
           & wsl k0s start
 
