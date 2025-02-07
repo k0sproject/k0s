@@ -8,63 +8,101 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - name: Install Ubuntu
+      - name: Install Ubuntu WSL
         run: |
           wsl --update
           wsl --set-default-version 2
           wsl --install Ubuntu
 
-      - name: Start k0s controller
+      - name: Start k0s controller in WSL
         run: |
-          wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
-          wsl sh -c 'mkdir /etc/k0s && echo spec: \{storage: \{type: kine\}\} >/etc/k0s/k0s.yaml'
-          wsl k0s install controller --debug --disable-components metrics-server
-          wsl k0s start
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          & wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
+          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{storage: \{type: kine\}\} >/etc/k0s/k0s.yaml'
+          & wsl k0s install controller --debug --disable-components metrics-server
+          & wsl k0s start
+
+      - name: Download k0s for Windows
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          $k0sVersion = (Invoke-WebRequest -URI https://docs.k0sproject.io/latest.txt).Content.Trim()
+          Write-Host "Downloading k0s $k0sVersion"
+          & curl --proto =https --tlsv1.2 --retry 5 --retry-all-errors -sSLfo k0s.exe "https://github.com/k0sproject/k0s/releases/download/$k0sVersion/k0s-${k0sVersion}-amd64.exe"
+          & .\k0s version
 
       - name: Prepare kubeconfig
         run: |
           $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
 
           Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
           Install-Module -Name powershell-yaml -Scope CurrentUser
 
           $attempt = 0
           while ($true) {
-              try {
-                  Write-Host "Attempt $($attempt + 1) ..."
-                  $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
-                  foreach ($cluster in $kubeconfig.clusters) {
-                    $cluster.cluster.server = "https://localhost:6443"
-                  }
-                  $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
-              }
-              catch {
-                  $attempt++
-                  Write-Warning "Failed to get kubeconfig in attempt ${attempt}: $_.Exception.Message"
-                  if ($attempt -ge 5) {
-                    Write-Error "Aborting!"
-                    exit 1
-                  }
-
-                  Write-Warning "Retrying in 5 seconds..."
-                  Start-Sleep -Seconds 5
+            try {
+              Write-Host "Getting kubeconfig (attempt $($attempt + 1)) ..."
+              $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
+              foreach ($cluster in $kubeconfig.clusters) {
+                $cluster.cluster.server = "https://localhost:6443"
               }
 
-              Write-Host "Kubeconfig written to file"
-              break
+              $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
+            }
+            catch {
+              $attempt++
+              Write-Warning "Failed to get kubeconfig: $_"
+              if ($attempt -lt 5) {
+                Start-Sleep -Seconds 5
+                continue
+              }
+              throw
+            }
+
+            Write-Host "Kubeconfig written to file"
+            break
           }
 
           "KUBECONFIG=" + (Resolve-Path "kubeconfig").Path | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-      - name: Try to connect
-        run: |
-          Write-Host $env:KUBECONFIG
-          & kubectl auth whoami
-
-      - name: k0s worker
+      - name: Get join token
         run: |
           $ErrorActionPreference = "Stop"
-          $k0sVersion = (Invoke-WebRequest -URI https://docs.k0sproject.io/latest.txt).Content.Trim()
-          $k0sURL = "https://github.com/k0sproject/k0s/releases/download/$k0sVersion/k0s-${k0sVersion}-amd64.exe"
-          Invoke-WebRequest -URI $k0sURL -OutFile k0s.exe
-          & .\k0s --help
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          for ($attempt = 1; $true; $attempt++) {
+            try {
+              Write-Host "Getting join token (attempt $($attempt + 1)) ..."
+              & wsl k0s token create --role=worker | Out-File -FilePath k0s-worker-token -Encoding utf8
+            }
+            catch {
+              Write-Warning "Failed to get join token: $_"
+              if ($attempt -le 15) {
+                Start-Sleep -Seconds 5
+                continue
+              }
+              throw
+            }
+
+            Write-Host "Join token written to file"
+            break
+          }
+
+      - name: Start k0s worker
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          & .\k0s install worker --token-file=k0s-worker-token
+          & .\k0s start
+
+      - name: Monitor cluster a bit
+        run: |
+          for ($i = 1; $i -le 5; $i++) {
+            & k0sctl get node,po -A -owide
+            Start-Sleep -Seconds 5
+          }
