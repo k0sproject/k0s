@@ -77,8 +77,8 @@ jobs:
           Write-Host $env:KUBECONFIG
           Get-Content -Path $env:KUBECONFIG
           for ($i = 1; $i -le 5; $i++) {
-            & kubectl auth whoami
-            & kubectl get node,po -A -owide
+            & kubectl -v9 auth whoami
+            & kubectl -v9 get node,po -A -owide
             Start-Sleep -Seconds 5
           }
 
