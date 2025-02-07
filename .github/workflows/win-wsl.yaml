@@ -20,7 +20,7 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
 
           & wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
-          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml'
+          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{api: \{address: 127.0.0.1\}, storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml'
           & wsl k0s install controller --debug --disable-components metrics-server
           & wsl k0s start
 
@@ -39,19 +39,20 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          Install-Module -Name powershell-yaml -Scope CurrentUser
+          # Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          # Install-Module -Name powershell-yaml -Scope CurrentUser
 
           $attempt = 0
           while ($true) {
             try {
               Write-Host "Getting kubeconfig (attempt $($attempt + 1)) ..."
-              $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
-              foreach ($cluster in $kubeconfig.clusters) {
-                $cluster.cluster.server = "https://localhost:6443"
-              }
+              # $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
+              # foreach ($cluster in $kubeconfig.clusters) {
+              #   $cluster.cluster.server = "https://localhost:6443"
+              # }
 
-              $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
+              # $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
+              & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
             }
             catch {
               $attempt++
