@@ -12,7 +12,6 @@ jobs:
         run: |
           wsl --update
           wsl --set-default-version 2
-          wsl --status
           wsl --install Ubuntu
 
       - name: Start k0s controller
@@ -29,12 +28,7 @@ jobs:
           Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
           Install-Module -Name powershell-yaml -Scope CurrentUser
 
-          # Set the maximum number of retries and the delay between attempts (in seconds)
-          $maxRetries = 5
-          $delaySeconds = 5
           $attempt = 0
-          $success = $false
-
           while ($true) {
               try {
                   Write-Host "Attempt $($attempt + 1) ..."
@@ -47,13 +41,13 @@ jobs:
               catch {
                   $attempt++
                   Write-Warning "Failed to get kubeconfig in attempt ${attempt}: $_.Exception.Message"
-                  if ($attempt -ge $maxRetries) {
+                  if ($attempt -ge 5) {
                     Write-Error "Aborting!"
                     exit 1
                   }
 
-                  Write-Warning "Retrying in $delaySeconds seconds..."
-                  Start-Sleep -Seconds $delaySeconds
+                  Write-Warning "Retrying in 5 seconds..."
+                  Start-Sleep -Seconds 5
               }
 
               Write-Host "Kubeconfig written to file"
@@ -66,3 +60,11 @@ jobs:
         run: |
           Write-Host $env:KUBECONFIG
           & kubectl auth whoami
+
+      - name: k0s worker
+        run: |
+          $ErrorActionPreference = "Stop"
+          $k0sVersion = (Invoke-WebRequest -URI https://docs.k0sproject.io/latest.txt).Content.Trim()
+          $k0sURL = "https://github.com/k0sproject/k0s/releases/download/$k0sVersion/k0s-${k0sVersion}-amd64.exe"
+          Invoke-WebRequest -URI $k0sURL -OutFile k0s.exe
+          & .\k0s --help
