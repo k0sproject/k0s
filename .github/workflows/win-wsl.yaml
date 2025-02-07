@@ -24,6 +24,9 @@ jobs:
 
       - name: Prepare kubeconfig
         run: |
+          $ErrorActionPreference = "Stop"
+
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
           Install-Module -Name powershell-yaml -Scope CurrentUser
 
           # Set the maximum number of retries and the delay between attempts (in seconds)
@@ -40,18 +43,21 @@ jobs:
                     $cluster.cluster.server = "https://localhost:6443"
                   }
                   $kubeconfig | ConvertFrom-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
-                  Write-Host "Kubeconfig written to file"
-                  break
               }
               catch {
                   $attempt++
-                  if ($attempt -lt $maxRetries) {
-                    Write-Error "Failed to get kubeconfig after $maxRetries attempts."
+                  Write-Warning "Failed to get kubeconfig in attempt ${attempt}: $_.Exception.Message"
+                  if ($attempt -ge $maxRetries) {
+                    Write-Error "Aborting!"
                     exit 1
                   }
-                  Write-Warning "Failed to get kubeonfig on attempt $attempt. Retrying in $delaySeconds seconds..."
+
+                  Write-Warning "Retrying in $delaySeconds seconds..."
                   Start-Sleep -Seconds $delaySeconds
               }
+
+              Write-Host "Kubeconfig written to file"
+              break
           }
 
           "KUBECONFIG=" + (Resolve-Path "kubeconfig").Path | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
