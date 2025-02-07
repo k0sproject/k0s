@@ -20,7 +20,7 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
 
           & wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
-          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{storage: \{type: kine\}\} >/etc/k0s/k0s.yaml'
+          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml'
           & wsl k0s install controller --debug --disable-components metrics-server
           & wsl k0s start
 
@@ -76,7 +76,7 @@ jobs:
 
           for ($attempt = 1; $true; $attempt++) {
             try {
-              Write-Host "Getting join token (attempt $($attempt + 1)) ..."
+              Write-Host "Getting join token (attempt $attempt) ..."
               & wsl k0s token create --role=worker | Out-File -FilePath k0s-worker-token -Encoding utf8
             }
             catch {
@@ -93,12 +93,12 @@ jobs:
           }
 
       - name: Start k0s worker
+        timeout-minutes: 7
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          & .\k0s install worker --token-file=k0s-worker-token
-          & .\k0s start
+          & .\k0s worker --token-file=k0s-worker-token
 
       - name: Monitor cluster a bit
         run: |
