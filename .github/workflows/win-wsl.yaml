@@ -51,7 +51,7 @@ jobs:
               Write-Host "Getting kubeconfig (attempt $attempt) ..."
               $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
               foreach ($cluster in $kubeconfig.clusters) {
-                $cluster.cluster.server = "https://localhost:6443"
+                $cluster.cluster.server = "https://127.0.0.1:6443"
               }
 
               $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
