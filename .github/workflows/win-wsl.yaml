@@ -8,20 +8,23 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - name: Start k0s controller in WSL Ubuntu
+      - name: Install Ubuntu
         run: |
           wsl --update
           wsl --set-default-version 2
           wsl --status
           wsl --install Ubuntu
+
+      - name: Start k0s controller
+        run: |
           wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
           wsl sh -c 'echo spec: \{storage: \{type: kine\}\} >/etc/k0s/k0s.yaml'
           wsl k0s install controller --debug --disable-components metrics-server
           wsl k0s start
 
-      - name: Try to connect
+      - name: Prepare kubeconfig
         run: |
-          #winget install Kubernetes.kubectl
+          Install-Module -Name powershell-yaml -Scope CurrentUser
 
           # Set the maximum number of retries and the delay between attempts (in seconds)
           $maxRetries = 5
@@ -29,28 +32,31 @@ jobs:
           $attempt = 0
           $success = $false
 
-          while ($attempt -lt $maxRetries -and -not $success) {
+          while ($true) {
               try {
                   Write-Host "Attempt $($attempt + 1) ..."
-                  
-                  $kubeconfig = & wsl k0s kubeconfig admin
-                  if ($LASTEXITCODE -ne 0) {
-                      Write-Error "Failed to get kubeconfig"
-                  } else {
-                      $kubeconfig | Tee-Object -FilePath kubeconfig
-                      $success = $true
-                      Write-Host "Kubeconfig written to file"
+                  $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
+                  foreach ($cluster in $kubeconfig.clusters) {
+                    $cluster.cluster.server = "https://localhost:6443"
                   }
+                  $kubeconfig | ConvertFrom-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
+                  Write-Host "Kubeconfig written to file"
+                  break
               }
               catch {
-                  Write-Warning "Command failed on attempt $($attempt + 1). Retrying in $delaySeconds seconds..."
-                  Start-Sleep -Seconds $delaySeconds
                   $attempt++
+                  if ($attempt -lt $maxRetries) {
+                    Write-Error "Failed to get kubeconfig after $maxRetries attempts."
+                    exit 1
+                  }
+                  Write-Warning "Failed to get kubeonfig on attempt $attempt. Retrying in $delaySeconds seconds..."
+                  Start-Sleep -Seconds $delaySeconds
               }
           }
 
-          if (-not $success) {
-              Write-Error "Command failed after $maxRetries attempts."
-          }
+          "KUBECONFIG=" + (Resolve-Path "kubeconfig").Path | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          kubectl --kubeconfig kubeconfig auth whoami
+      - name: Try to connect
+        run: |
+          Write-Host $env:KUBECONFIG
+          & kubectl auth whoami
