@@ -15,6 +15,7 @@ jobs:
           wsl --install Ubuntu
 
       - name: Start k0s controller in WSL
+        id: start-controller
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
@@ -98,6 +99,7 @@ jobs:
       - name: Try to connect
         run: |
           Write-Host $env:KUBECONFIG
+          Get-Content -Path $env:KUBECONFIG
           for ($i = 1; $i -le 5; $i++) {
             & kubectl auth whoami
             & kubectl get node,po -A -owide
@@ -118,3 +120,9 @@ jobs:
             & kubectl get node,po -A -owide
             Start-Sleep -Seconds 5
           }
+
+      - name: k0 controller logs
+        if: always() && steps.start-controller.conclusion == 'success'
+        run: |
+          wsl systemctl status k0scontroller.service
+          wsl journalctl -u k0scontroller.service
