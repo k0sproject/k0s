@@ -1,0 +1,56 @@
+on:
+  push:
+    branches:
+      - win-wsl
+
+jobs:
+  wsl:
+    runs-on: windows-2022
+
+    steps:
+      - name: Start k0s controller in WSL Ubuntu
+        run: |
+          wsl --update
+          wsl --set-default-version 2
+          wsl --status
+          wsl --install Ubuntu
+          wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
+          wsl sh -c 'echo spec: \{storage: \{type: kine\}\} >/etc/k0s/k0s.yaml'
+          wsl k0s install controller --debug --disable-components metrics-server
+          wsl k0s start
+
+      - name: Try to connect
+        run: |
+          #winget install Kubernetes.kubectl
+
+          # Set the maximum number of retries and the delay between attempts (in seconds)
+          $maxRetries = 5
+          $delaySeconds = 5
+          $attempt = 0
+          $success = $false
+
+          while ($attempt -lt $maxRetries -and -not $success) {
+              try {
+                  Write-Host "Attempt $($attempt + 1) ..."
+                  
+                  $kubeconfig = & wsl k0s kubeconfig admin
+                  if ($LASTEXITCODE -ne 0) {
+                      Write-Error "Failed to get kubeconfig"
+                  } else {
+                      $kubeconfig | Tee-Object -FilePath kubeconfig
+                      $success = $true
+                      Write-Host "Kubeconfig written to file"
+                  }
+              }
+              catch {
+                  Write-Warning "Command failed on attempt $($attempt + 1). Retrying in $delaySeconds seconds..."
+                  Start-Sleep -Seconds $delaySeconds
+                  $attempt++
+              }
+          }
+
+          if (-not $success) {
+              Write-Error "Command failed after $maxRetries attempts."
+          }
+
+          kubectl --kubeconfig kubeconfig auth whoami
