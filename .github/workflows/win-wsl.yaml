@@ -43,25 +43,23 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          # Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          # Install-Module -Name powershell-yaml -Scope CurrentUser
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name powershell-yaml -Scope CurrentUser
 
-          $attempt = 0
-          while ($true) {
+          for ($attempt = 1; $true; $attempt++) {
             try {
-              Write-Host "Getting kubeconfig (attempt $($attempt + 1)) ..."
-              # $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
-              # foreach ($cluster in $kubeconfig.clusters) {
-              #   $cluster.cluster.server = "https://localhost:6443"
-              # }
+              Write-Host "Getting kubeconfig (attempt $attempt) ..."
+              $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
+              foreach ($cluster in $kubeconfig.clusters) {
+                $cluster.cluster.server = "https://localhost:6443"
+              }
 
-              # $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
-              & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
+              $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
+              # & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
             }
             catch {
-              $attempt++
               Write-Warning "Failed to get kubeconfig: $_"
-              if ($attempt -lt 5) {
+              if ($attempt -le 5) {
                 Start-Sleep -Seconds 5
                 continue
               }
@@ -73,6 +71,16 @@ jobs:
           }
 
           "KUBECONFIG=" + (Resolve-Path "kubeconfig").Path | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Try to connect
+        run: |
+          Write-Host $env:KUBECONFIG
+          Get-Content -Path $env:KUBECONFIG
+          for ($i = 1; $i -le 5; $i++) {
+            & kubectl auth whoami
+            & kubectl get node,po -A -owide
+            Start-Sleep -Seconds 5
+          }
 
       - name: Get join token
         run: |
@@ -95,16 +103,6 @@ jobs:
 
             Write-Host "Join token written to file"
             break
-          }
-
-      - name: Try to connect
-        run: |
-          Write-Host $env:KUBECONFIG
-          Get-Content -Path $env:KUBECONFIG
-          for ($i = 1; $i -le 5; $i++) {
-            & kubectl auth whoami
-            & kubectl get node,po -A -owide
-            Start-Sleep -Seconds 5
           }
 
       - name: Start k0s worker
