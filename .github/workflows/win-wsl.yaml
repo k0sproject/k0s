@@ -20,7 +20,7 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
 
           & wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
-          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{api: \{address: 127.0.0.1\}, storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml'
+          & wsl sh -c 'mkdir /etc/k0s && echo spec: \{api: \{address: 127.0.0.1, externalAddress: localhost\}, storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml'
           & wsl k0s install controller --debug --disable-components metrics-server
           & wsl k0s start
 
@@ -93,6 +93,15 @@ jobs:
             break
           }
 
+      - name: Try to connect
+        run: |
+          Write-Host $env:KUBECONFIG
+          for ($i = 1; $i -le 5; $i++) {
+            & kubectl auth whoami
+            & kubectl get node,po -A -owide
+            Start-Sleep -Seconds 5
+          }
+
       - name: Start k0s worker
         timeout-minutes: 7
         run: |
@@ -104,6 +113,6 @@ jobs:
       - name: Monitor cluster a bit
         run: |
           for ($i = 1; $i -le 5; $i++) {
-            & k0sctl get node,po -A -owide
+            & kubectl get node,po -A -owide
             Start-Sleep -Seconds 5
           }
