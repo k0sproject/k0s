@@ -8,11 +8,17 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - name: Install Ubuntu WSL
+      - name: Start Ubuntu WSL
         run: |
-          wsl --update
-          wsl --set-default-version 2
-          wsl --install Ubuntu
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          & wsl --update
+          & wsl --set-default-version 2
+          & wsl --install Ubuntu
+          & wsl --set-default Ubuntu
+          # https://github.com/microsoft/WSL/issues/10138#issuecomment-1593856698
+          & wsl --exec dbus-launch true
 
       - name: Start k0s controller in WSL
         id: start-controller
