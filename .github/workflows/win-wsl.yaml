@@ -13,11 +13,6 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          # @'
-          # [wsl2]
-          # vmIdleTimeout=-1
-          # '@ | Out-File -FilePath "$env:USERPROFILE\.wslconfig"
-
           & wsl --update
           & wsl --set-default-version 2
           & wsl --install Ubuntu
@@ -48,17 +43,16 @@ jobs:
 
           & wsl -- bash -euo pipefail -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
           & wsl mkdir /etc/k0s
-          @"
+          @'
           spec:
-          #  api:
-          #    address: $((& wsl hostname -i).Split(" ")[-1])
             storage:
               type: kine
             network:
               provider: calico
-          "@ | & wsl tee /etc/k0s/k0s.yaml
+          '@ | & wsl tee /etc/k0s/k0s.yaml | Out-Null
 
           & wsl -- k0s install controller --debug --disable-components metrics-server
+          # Do not use "k0s start" here, as its error reporting is poor.
           & wsl -- systemctl start k0scontroller.service
 
       - name: Download k0s for Windows
@@ -80,23 +74,6 @@ jobs:
           & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
           "KUBECONFIG=" + (Resolve-Path "kubeconfig").Path | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-      - name: Try to connect
-        run: |
-          Write-Host $env:KUBECONFIG
-          Get-Content -Path $env:KUBECONFIG
-          for ($i = 1; $i -le 8; $i++) {
-            try {
-              & kubectl auth whoami
-              & wsl -- k0s kc auth whoami
-            }
-            catch {
-              Write-Warning "Failed to connect to cluster: $_"
-              & wsl -- systemctl status k0scontroller.service
-              & wsl -- k0s status
-            }
-            Start-Sleep -Seconds 15
-          }
-
       - name: Get join token
         run: |
           $ErrorActionPreference = "Stop"
@@ -108,14 +85,14 @@ jobs:
               & wsl k0s token create --role=worker | Out-File -FilePath k0s-worker-token -Encoding utf8
             }
             catch {
-              Write-Warning "Failed to get join token: $_"
-              if ($attempt -le 15) {
-                & wsl -- systemctl status k0scontroller.service
-                & wsl -- k0s status
-                Start-Sleep -Seconds 5
-                continue
+              if ($attempt -gt 15) {
+                throw
               }
-              throw
+
+              Write-Warning "Failed to get join token: $_"
+              & wsl -- systemctl status k0scontroller.service
+              Start-Sleep -Seconds 5
+              continue
             }
 
             Write-Host "Join token written to file"
@@ -125,23 +102,28 @@ jobs:
       - name: Start k0s worker
         timeout-minutes: 7
         run: |
-          $ErrorActionPreference = "Stop"
-          $PSNativeCommandUseErrorActionPreference = $true
-
           & .\k0s worker --token-file=k0s-worker-token
 
       - name: Monitor cluster a bit
         run: |
-          for ($i = 1; $i -le 5; $i++) {
-            & wsl --list --running
-            & wsl -- systemctl status keepwsl.service
-            & wsl -- systemctl status k0scontroller.service
-            & kubectl get node,po -A -owide
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          for ($attempt = 1; $attempt -le 5; $attempt++) {
+            try {
+              & kubectl get node,po -A -owide
+            }
+            catch {
+              if ($attempt -eq 5 ) {
+                throw
+              }
+              & wsl -- systemctl status k0scontroller.service
+            }
             Start-Sleep -Seconds 5
           }
 
       - name: k0 controller logs
-        if: always() && steps.start-controller.conclusion == 'success'
+        if: failure() && steps.start-controller.conclusion == 'success'
         run: |
           & wsl systemctl status k0scontroller.service
           & wsl journalctl --boot -u k0scontroller.service
