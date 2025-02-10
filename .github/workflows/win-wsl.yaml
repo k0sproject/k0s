@@ -86,7 +86,7 @@ jobs:
           Get-Content -Path $env:KUBECONFIG
           for ($i = 1; $i -le 8; $i++) {
             try {
-              # & kubectl auth whoami
+              & kubectl auth whoami
               & wsl -- k0s kc auth whoami
             }
             catch {
