@@ -23,17 +23,7 @@ jobs:
           & wsl --install Ubuntu
           & wsl --set-default Ubuntu
 
-          try { wsl cat /etc/wsl.conf } catch { Write-Warning "$_" }
-          try { wsl ls -la /mnt/c/Windows/System32/wsl.exe } catch { Write-Warning "$_" }
-
           # https://github.com/microsoft/WSL/issues/10138#issuecomment-2380431569
-
-          # @'
-          # [automount]
-          # enabled=true
-          # '@ | & wsl tee -a /etc/wsl.conf
-
-          # & wsl -- mkdir -p /etc/systemd/system/
           @'
           [Unit]
           Description=A simple service to keep WSL alive
@@ -45,28 +35,16 @@ jobs:
 
           [Install]
           WantedBy=default.target
-          '@ | & wsl tee /etc/systemd/system/keepwsl.service
+          '@ | & wsl tee /etc/systemd/system/keepwsl.service | Out-Null
 
-          & wsl -- systemctl status
           & wsl -- systemctl daemon-reload
-          & wsl -- systemctl show keepwsl.service
           & wsl -- systemctl start keepwsl.service
-          Start-Sleep -Seconds 5
-          & wsl -- systemctl status keepwsl.service
-          Start-Sleep -Seconds 10
-          & wsl --list --running
-          Start-Sleep -Seconds 15
-          & wsl --list --running
 
       - name: Start k0s controller in WSL
         id: start-controller
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
-
-          & wsl --list --running
-          & wsl -- systemctl status keepwsl.service
-
 
           & wsl -- bash -euo pipefail -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
           & wsl mkdir /etc/k0s
@@ -81,7 +59,6 @@ jobs:
           "@ | & wsl tee /etc/k0s/k0s.yaml
 
           & wsl -- k0s install controller --debug --disable-components metrics-server
-          & wsl -- systemctl status
           & wsl -- systemctl start k0scontroller.service
 
       - name: Download k0s for Windows
@@ -100,52 +77,24 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          # Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          # Install-Module -Name powershell-yaml -Scope CurrentUser
-
-          for ($attempt = 1; $true; $attempt++) {
-            try {
-              & wsl --list --running
-              & wsl -- systemctl status keepwsl.service
-              & wsl -- systemctl status k0scontroller.service
-
-              Write-Host "Getting kubeconfig (attempt $attempt) ..."
-              $kubeconfig = & wsl k0s kubeconfig admin
-              # $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
-              # foreach ($cluster in $kubeconfig.clusters) {
-              #   $cluster.cluster.server = "https://127.0.0.1:6443"
-              # }
-
-              # $kubeconfig | ConvertTo-Yaml | Out-File -FilePath kubeconfig -Encoding utf8
-              & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
-            }
-            catch {
-              Write-Warning "Failed to get kubeconfig: $_"
-              if ($attempt -le 5) {
-                Start-Sleep -Seconds 5
-                continue
-              }
-              throw
-            }
-
-            Write-Host "Kubeconfig written to file"
-            break
-          }
-
+          & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
           "KUBECONFIG=" + (Resolve-Path "kubeconfig").Path | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Try to connect
         run: |
           Write-Host $env:KUBECONFIG
           Get-Content -Path $env:KUBECONFIG
-          for ($i = 1; $i -le 72; $i++) {
-            & wsl --list --running
-            & wsl -- systemctl status keepwsl.service
-            & wsl -- systemctl status k0scontroller.service
-            & kubectl auth whoami
-            & wsl -- k0s status
-            & wsl -- k0s kc auth whoami
-            Start-Sleep -Seconds 30
+          for ($i = 1; $i -le 8; $i++) {
+            try {
+              # & kubectl auth whoami
+              & wsl -- k0s kc auth whoami
+            }
+            catch {
+              Write-Warning "Failed to connect to cluster: $_"
+              & wsl -- systemctl status k0scontroller.service
+              & wsl -- k0s status
+            }
+            Start-Sleep -Seconds 15
           }
 
       - name: Get join token
@@ -155,15 +104,14 @@ jobs:
 
           for ($attempt = 1; $true; $attempt++) {
             try {
-              & wsl --list --running
-              & wsl -- systemctl status keepwsl.service
-              & wsl -- systemctl status k0scontroller.service
               Write-Host "Getting join token (attempt $attempt) ..."
               & wsl k0s token create --role=worker | Out-File -FilePath k0s-worker-token -Encoding utf8
             }
             catch {
               Write-Warning "Failed to get join token: $_"
               if ($attempt -le 15) {
+                & wsl -- systemctl status k0scontroller.service
+                & wsl -- k0s status
                 Start-Sleep -Seconds 5
                 continue
               }
@@ -180,9 +128,6 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          & wsl --list --running
-          & wsl -- systemctl status keepwsl.service
-          & wsl -- systemctl status k0scontroller.service
           & .\k0s worker --token-file=k0s-worker-token
 
       - name: Monitor cluster a bit
