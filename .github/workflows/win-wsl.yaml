@@ -41,6 +41,7 @@ jobs:
 
           [Service]
           ExecStart=/mnt/c/Windows/System32/wsl.exe sleep infinity
+          Restart=always
 
           [Install]
           WantedBy=default.target
@@ -53,15 +54,19 @@ jobs:
           Start-Sleep -Seconds 5
           & wsl -- systemctl status keepwsl.service
           Start-Sleep -Seconds 10
-          & wsl -- systemctl status keepwsl.service
+          & wsl --list --running
           Start-Sleep -Seconds 15
-          & wsl -- systemctl status keepwsl.service
+          & wsl --list --running
 
       - name: Start k0s controller in WSL
         id: start-controller
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
+
+          & wsl --list --running
+          & wsl -- systemctl status keepwsl.service
+
 
           & wsl -- bash -euo pipefail -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
           & wsl mkdir /etc/k0s
@@ -100,6 +105,10 @@ jobs:
 
           for ($attempt = 1; $true; $attempt++) {
             try {
+              & wsl --list --running
+              & wsl -- systemctl status keepwsl.service
+              & wsl -- systemctl status k0scontroller.service
+
               Write-Host "Getting kubeconfig (attempt $attempt) ..."
               $kubeconfig = & wsl k0s kubeconfig admin
               # $kubeconfig = & wsl k0s kubeconfig admin | ConvertFrom-Yaml
@@ -130,8 +139,13 @@ jobs:
           Write-Host $env:KUBECONFIG
           Get-Content -Path $env:KUBECONFIG
           for ($i = 1; $i -le 72; $i++) {
+            & wsl --list --running
+            & wsl -- systemctl status keepwsl.service
+            & wsl -- systemctl status k0scontroller.service
             & kubectl auth whoami
-            Start-Sleep -Seconds 5
+            & wsl -- k0s status
+            & wsl -- k0s kc auth whoami
+            Start-Sleep -Seconds 30
           }
 
       - name: Get join token
@@ -141,6 +155,9 @@ jobs:
 
           for ($attempt = 1; $true; $attempt++) {
             try {
+              & wsl --list --running
+              & wsl -- systemctl status keepwsl.service
+              & wsl -- systemctl status k0scontroller.service
               Write-Host "Getting join token (attempt $attempt) ..."
               & wsl k0s token create --role=worker | Out-File -FilePath k0s-worker-token -Encoding utf8
             }
@@ -163,11 +180,17 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
+          & wsl --list --running
+          & wsl -- systemctl status keepwsl.service
+          & wsl -- systemctl status k0scontroller.service
           & .\k0s worker --token-file=k0s-worker-token
 
       - name: Monitor cluster a bit
         run: |
           for ($i = 1; $i -le 5; $i++) {
+            & wsl --list --running
+            & wsl -- systemctl status keepwsl.service
+            & wsl -- systemctl status k0scontroller.service
             & kubectl get node,po -A -owide
             Start-Sleep -Seconds 5
           }
@@ -176,4 +199,4 @@ jobs:
         if: always() && steps.start-controller.conclusion == 'success'
         run: |
           & wsl systemctl status k0scontroller.service
-          & wsl journalctl -u k0scontroller.service
+          & wsl journalctl --boot -u k0scontroller.service
