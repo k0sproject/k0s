@@ -13,10 +13,10 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          @'
-          [wsl2]
-          vmIdleTimeout=-1
-          '@ | Out-File -FilePath "$env:USERPROFILE\.wslconfig"
+          # @'
+          # [wsl2]
+          # vmIdleTimeout=-1
+          # '@ | Out-File -FilePath "$env:USERPROFILE\.wslconfig"
 
           & wsl --update
           & wsl --set-default-version 2
@@ -50,8 +50,8 @@ jobs:
           & wsl mkdir /etc/k0s
           @"
           spec:
-            api:
-              address: $((& wsl hostname -i).Split(" ")[-1])
+          #  api:
+          #    address: $((& wsl hostname -i).Split(" ")[-1])
             storage:
               type: kine
             network:
