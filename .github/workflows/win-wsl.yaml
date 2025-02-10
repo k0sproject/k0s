@@ -8,17 +8,54 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - name: Start Ubuntu WSL
+      - name: Prepare WSL
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
+
+          @'
+          [wsl2]
+          vmIdleTimeout=-1
+          '@ | Out-File -FilePath "$env:USERPROFILE\.wslconfig"
 
           & wsl --update
           & wsl --set-default-version 2
           & wsl --install Ubuntu
           & wsl --set-default Ubuntu
-          # https://github.com/microsoft/WSL/issues/10138#issuecomment-1593856698
-          & wsl --exec dbus-launch true
+
+          try { wsl cat /etc/wsl.conf } catch { Write-Warning "$_" }
+          try { wsl ls -la /mnt/c/Windows/System32/wsl.exe } catch { Write-Warning "$_" }
+
+          # https://github.com/microsoft/WSL/issues/10138#issuecomment-2380431569
+
+          # @'
+          # [automount]
+          # enabled=true
+          # '@ | & wsl tee -a /etc/wsl.conf
+
+          # & wsl -- mkdir -p /etc/systemd/system/
+          @'
+          [Unit]
+          Description=A simple service to keep WSL alive
+          Documentation=https://github.com/gardengim/keepwsl
+
+          [Service]
+          ExecStart=/mnt/c/Windows/System32/wsl.exe sleep infinity
+
+          [Install]
+          WantedBy=default.target
+          '@ | & wsl tee /etc/systemd/system/keepwsl.service
+
+          & wsl -- systemctl status
+          & wsl -- systemctl daemon-reload
+          & wsl -- systemctl show keepwsl.service
+          & wsl -- systemctl start keepwsl.service
+          Start-Sleep -Seconds 5
+          & wsl -- systemctl status keepwsl.service
+          Start-Sleep -Seconds 10
+          & wsl -- systemctl status keepwsl.service
+          Start-Sleep -Seconds 15
+          & wsl -- systemctl status keepwsl.service
 
       - name: Start k0s controller in WSL
         id: start-controller
@@ -26,22 +63,31 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          $addr = (& wsl hostname -i).Split(" ")[-1]
-          Write-Host "Using $addr"
-          & wsl sh -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
-          & wsl sh -c "mkdir /etc/k0s && echo spec: \{api: \{address: $addr\}, storage: \{type: kine\}, network: \{provider: calico\}\} >/etc/k0s/k0s.yaml"
-          & wsl cat /etc/k0s/k0s.yaml
-          & wsl k0s install controller --debug --disable-components metrics-server
-          & wsl k0s start
+          & wsl -- bash -euo pipefail -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
+          & wsl mkdir /etc/k0s
+          @"
+          spec:
+            api:
+              address: $((& wsl hostname -i).Split(" ")[-1])
+            storage:
+              type: kine
+            network:
+              provider: calico
+          "@ | & wsl tee /etc/k0s/k0s.yaml
+
+          & wsl -- k0s install controller --debug --disable-components metrics-server
+          & wsl -- systemctl status
+          & wsl -- systemctl start k0scontroller.service
 
       - name: Download k0s for Windows
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          $k0sVersion = (Invoke-WebRequest -URI https://docs.k0sproject.io/latest.txt).Content.Trim()
+          $k0sVersion = (Invoke-WebRequest -Uri https://docs.k0sproject.io/latest.txt).Content.Trim()
+          $url = "https://github.com/k0sproject/k0s/releases/download/$k0sVersion/k0s-${k0sVersion}-amd64.exe"
           Write-Host "Downloading k0s $k0sVersion"
-          & curl --proto =https --tlsv1.2 --retry 5 --retry-all-errors -sSLfo k0s.exe "https://github.com/k0sproject/k0s/releases/download/$k0sVersion/k0s-${k0sVersion}-amd64.exe"
+          Invoke-WebRequest -Uri $url -OutFile k0s.exe
           & .\k0s version
 
       - name: Prepare kubeconfig
@@ -129,5 +175,5 @@ jobs:
       - name: k0 controller logs
         if: always() && steps.start-controller.conclusion == 'success'
         run: |
-          wsl systemctl status k0scontroller.service
-          wsl journalctl -u k0scontroller.service
+          & wsl systemctl status k0scontroller.service
+          & wsl journalctl -u k0scontroller.service
