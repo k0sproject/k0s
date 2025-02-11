@@ -169,18 +169,28 @@ func (c *Component) Start(ctx context.Context) error {
 	go c.watchDropinConfigs(ctx)
 
 	log.Debug("Waiting for containerd")
-	return wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+	var lastErr error
+	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Duration: 100 * time.Millisecond, Factor: 1.2, Jitter: 0.05, Steps: 30,
 	}, func(ctx context.Context) (bool, error) {
 		rt := containerruntime.NewContainerRuntime(runtimeEndpoint)
-		if err := rt.Ping(ctx); err != nil {
-			log.WithError(err).Debug("Failed to ping containerd")
+		if lastErr = rt.Ping(ctx); lastErr != nil {
+			log.WithError(lastErr).Debug("Failed to ping containerd")
 			return false, nil
 		}
 
 		log.Debug("Successfully pinged containerd")
 		return true, nil
 	})
+
+	if err != nil {
+		if lastErr == nil {
+			return fmt.Errorf("failed to ping containerd: %w", err)
+		}
+		return fmt.Errorf("failed to ping containerd: %w (%w)", err, lastErr)
+	}
+
+	return nil
 }
 
 func (c *Component) windowsStart(_ context.Context) error {
