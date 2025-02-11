@@ -106,7 +106,26 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
+          for ($attempt = 1; $true; $attempt++) {
+            try {
+              Write-Host "Getting kubeconfig (attempt $attempt) ..."
+              & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
+            }
+            catch {
+              if ($attempt -gt 5) {
+                throw
+              }
+
+              Write-Warning "Failed to get kubeconfig: $_"
+              & wsl -- systemctl status k0scontroller.service
+              Start-Sleep -Seconds 5
+              continue
+            }
+
+            Write-Host "Kubeconfig written to file"
+            break
+          }
+
           "KUBECONFIG=" + (Resolve-Path "kubeconfig").Path | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Get join token
