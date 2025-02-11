@@ -4,12 +4,40 @@ on:
       - win-wsl
 
 jobs:
-  wsl:
+  build-k0s:
+    strategy:
+      matrix:
+        target-os: [linux, windows]
+
+    name: "Build :: k0s :: ${{ matrix.target-os }}-amd64"
+    uses: ./.github/workflows/build-k0s.yml
+    with:
+      target-os: ${{ matrix.target-os }}
+      target-arch: amd64
+
+  smoketest:
+    name: Smoketest
+    needs: [build-k0s]
+
     runs-on: windows-2022
 
     steps:
       - name: Prepare WSL
         run: |
+          Write-Host '$OutputEncoding'
+          $OutputEncoding
+          Write-Host '[Console]::InputEncoding'
+          [Console]::InputEncoding
+          Write-Host '[Console]::OutputEncoding'
+          [Console]::OutputEncoding
+
+          Write-Host '[Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)'
+          [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+          [Console]::InputEncoding
+          Write-Host '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)'
+          [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+          [Console]::OutputEncoding
+
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
@@ -30,41 +58,48 @@ jobs:
 
           [Install]
           WantedBy=default.target
-          '@ | & wsl tee /etc/systemd/system/keepwsl.service | Out-Null
+          # some trailing carriage return
+          '@ -replace "`r", "" | & wsl tee /etc/systemd/system/keepwsl.service | Out-Null
+
+          & wsl -- base64 /etc/systemd/system/keepwsl.service
 
           & wsl -- systemctl daemon-reload
           & wsl -- systemctl start keepwsl.service
 
-      - name: Start k0s controller in WSL
+      - name: Download compiled binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: k0s-{linux,windows}-amd64
+          merge-multiple: true
+
+      - name: Install and start k0s controller
         id: start-controller
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          & wsl -- bash -euo pipefail -c 'curl --proto =https --tlsv1.2 -sSf https://get.k0s.sh | sh'
-          & wsl mkdir /etc/k0s
-          @'
+          & ./k0s.exe version
+
+          $dir = Resolve-Path .
+          $dir = "/mnt/$((Split-Path -Qualifier $dir).ToLower()[0])$((Split-Path -NoQualifier $dir) -replace '\\','/')"
+
+          @"
+          mkdir /etc/k0s
+          cat <<EOF >/etc/k0s/k0s.yaml
           spec:
             storage:
               type: kine
             network:
               provider: calico
-          '@ | & wsl tee /etc/k0s/k0s.yaml | Out-Null
+          EOF
 
-          & wsl -- k0s install controller --debug --disable-components metrics-server
+          install -m755 -D -- '$dir/k0s' /usr/local/bin/k0s
+
+          k0s install controller --debug --disable-components metrics-server
           # Do not use "k0s start" here, as its error reporting is poor.
-          & wsl -- systemctl start k0scontroller.service
-
-      - name: Download k0s for Windows
-        run: |
-          $ErrorActionPreference = "Stop"
-          $PSNativeCommandUseErrorActionPreference = $true
-
-          $k0sVersion = (Invoke-WebRequest -Uri https://docs.k0sproject.io/latest.txt).Content.Trim()
-          $url = "https://github.com/k0sproject/k0s/releases/download/$k0sVersion/k0s-${k0sVersion}-amd64.exe"
-          Write-Host "Downloading k0s $k0sVersion"
-          Invoke-WebRequest -Uri $url -OutFile k0s.exe
-          & .\k0s version
+          systemctl start k0scontroller.service
+          # some trailing carriage return
+          "@ -replace "`r`n", "`n" | & wsl bash -euo pipefail
 
       - name: Prepare kubeconfig
         run: |
@@ -102,7 +137,7 @@ jobs:
       - name: Start k0s worker
         timeout-minutes: 7
         run: |
-          & .\k0s worker --token-file=k0s-worker-token
+          & .\k0s.exe worker --token-file=k0s-worker-token
 
       - name: Monitor cluster a bit
         run: |
