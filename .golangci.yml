@@ -19,6 +19,7 @@ linters:
     - gofmt             # Checks whether code was gofmt-ed
     - goheader          # Checks is file headers matche a given pattern
     - intrange          # Checking for loops that could use an integer range
+    - nilnesserr        # Reports constructs that check for err != nil but return a different nil value error
     - nolintlint        # Find ill-formed or insufficiently explained nolint directives
     - nosprintfhostport # Detects misuses of Sprintf to construct hosts with ports in a URL
     - perfsprint        # Checks for faster fmt.Sprintf alternatives
