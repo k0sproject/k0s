@@ -15,7 +15,7 @@ During the first run, the calico install script is created as `C:\bootstrap.ps1`
 Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).
 
 ```shell
-k0s worker --cri-socket=remote:npipe:////./pipe/containerd-containerd --cidr-range=<cidr_range> --cluster-dns=<clusterdns> --api-server=<k0s api> <token>
+k0s worker --cri-socket=remote:npipe:////./pipe/containerd-containerd <token>
 ```
 
 You must initiate the Cluster control with the correct config.
@@ -47,14 +47,6 @@ calicoctl ipam configure --strictaffinity=true
 ### Network connectivity in AWS
 
 Disable the `Change Source/Dest. Check` option for the network interface attached to your EC2 instance. In AWS, the console option for the network interface is in the **Actions** menu.
-
-### Hacks
-
-k0s offers the following CLI arguments in lieu of a formal means for passing cluster settings from controller plane to worker:
-
-- cidr-range
-- cluster-dns
-- api-server
 
 ## Useful commands
 

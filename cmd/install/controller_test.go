@@ -56,7 +56,6 @@ With the controller subcommand you can setup a single node cluster by running:
 	
 
 Flags:
-      --cidr-range string                              HACK: cidr range for the windows worker node (default "10.96.0.0/12")
   -c, --config string                                  config file, use '-' to read the config from stdin (default `+defaultConfigPath+`)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --data-dir string                                Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default `+defaultDataDir+`)

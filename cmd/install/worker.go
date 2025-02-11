@@ -33,9 +33,7 @@ func installWorkerCmd(installFlags *installFlags) *cobra.Command {
 		Use:   "worker",
 		Short: "Install k0s worker on a brand-new system. Must be run as root (or with sudo)",
 		Example: `Worker subcommand allows you to pass in all available worker parameters.
-All default values of worker command will be passed to the service stub unless overridden.
-
-Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
+All default values of worker command will be passed to the service stub unless overridden.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if runtime.GOOS != "windows" && os.Geteuid() != 0 {

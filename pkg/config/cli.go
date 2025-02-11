@@ -79,7 +79,6 @@ type ControllerOptions struct {
 
 // Shared worker cli flags
 type WorkerOptions struct {
-	CIDRRange        string
 	CloudProvider    bool
 	LogLevels        LogLevels
 	CriSocket        string
@@ -257,9 +256,14 @@ func GetWorkerFlags() *pflag.FlagSet {
 		workerOpts.LogLevels = DefaultLogLevels()
 	}
 
+	flagset.String("cidr-range", "", "")
+	flagset.VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		f.Deprecated = "it has no effect and will be removed in a future release"
+	})
+
 	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
-	flagset.StringVar(&workerOpts.CIDRRange, "cidr-range", "10.96.0.0/12", "HACK: cidr range for the windows worker node")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.VarP((*logLevelsFlag)(&workerOpts.LogLevels), "logging", "l", "Logging Levels for the different components")
