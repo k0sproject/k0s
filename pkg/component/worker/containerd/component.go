@@ -43,7 +43,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 	containerruntime "github.com/k0sproject/k0s/pkg/container/runtime"
 	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -100,7 +99,7 @@ func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
 	for _, bin := range c.binaries {
 		g.Go(func() error {
-			err := assets.Stage(c.K0sVars.BinDir, bin, constant.BinDirMode)
+			err := assets.Stage(c.K0sVars.BinDir, bin)
 			// Simply ignore the "running executable" problem on Windows for
 			// now. Whenever there's a permission error on Windows and the
 			// target file exists, log the error and continue.

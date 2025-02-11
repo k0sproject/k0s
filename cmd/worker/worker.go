@@ -26,6 +26,7 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
@@ -39,6 +40,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/component/worker/nllb"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/node"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -115,6 +117,17 @@ func NewWorkerCmd() *cobra.Command {
 				// Keep the file to allow interop between 1.32 and 1.33.
 				// TODO automatically delete this file in future releases.
 				logrus.Infof("The file %s is no longer used and can safely be deleted", legacyCAFile)
+			}
+
+			// create directories early with the proper permissions
+			if err := dir.Init(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
+				return err
+			}
+			if err := dir.Init(c.K0sVars.RunDir, constant.RunDirMode); err != nil {
+				return err
+			}
+			if err := dir.Init(c.K0sVars.BinDir, constant.BinDirMode); err != nil {
+				return err
 			}
 
 			return c.Start(ctx, nodeName, kubeletExtraArgs, getBootstrapKubeconfig, nil)

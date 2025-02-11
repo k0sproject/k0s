@@ -80,7 +80,7 @@ func (a *Manager) Init(_ context.Context) error {
 	if err := os.Chown(path.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
 		logrus.Warn("failed to change permissions for the ca.key: ", err)
 	}
-	return assets.Stage(a.K0sVars.BinDir, kubeControllerManagerComponent, constant.BinDirMode)
+	return assets.Stage(a.K0sVars.BinDir, kubeControllerManagerComponent)
 }
 
 // Run runs kube Manager

@@ -22,14 +22,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -80,10 +78,6 @@ func (s *Status) Init(_ context.Context) error {
 	var err error
 	s.httpserver = http.Server{
 		Handler: mux,
-	}
-	err = dir.Init(s.StatusInformation.K0sVars.RunDir, 0755)
-	if err != nil {
-		return fmt.Errorf("failed to create %s: %w", s.Socket, err)
 	}
 
 	removeLeftovers(s.Socket)
