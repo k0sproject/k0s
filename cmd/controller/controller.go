@@ -32,7 +32,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/avast/retry-go"
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -62,11 +61,14 @@ import (
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/k0sproject/k0s/pkg/token"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
+
 	"k8s.io/apimachinery/pkg/fields"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
+
+	"github.com/avast/retry-go"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 type command config.CLIOptions
@@ -636,7 +638,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions) er
 
 	if controllerMode.WorkloadsEnabled() {
 		perfTimer.Checkpoint("starting-worker")
-		if err := c.startWorker(ctx, nodeName, kubeletExtraArgs, flags, nodeConfig); err != nil {
+		if err := c.startWorker(ctx, nodeName, kubeletExtraArgs, flags); err != nil {
 			logrus.WithError(err).Error("Failed to start controller worker")
 		} else {
 			perfTimer.Checkpoint("started-worker")
@@ -655,48 +657,18 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions) er
 	return nil
 }
 
-func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, opts *config.ControllerOptions, nodeConfig *v1beta1.ClusterConfig) error {
-	var bootstrapConfig string
-	if !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
-		// wait for controller to start up
-		err := retry.Do(func() error {
-			if !file.Exists(c.K0sVars.AdminKubeConfigPath) {
-				return fmt.Errorf("file does not exist: %s", c.K0sVars.AdminKubeConfigPath)
-			}
-			return nil
-		}, retry.Context(ctx))
-		if err != nil {
-			return err
-		}
-
-		err = retry.Do(func() error {
-			// five minutes here are coming from maximum theoretical duration of kubelet bootstrap process
-			// we use retry.Do with 10 attempts, back-off delay and delay duration 500 ms which gives us
-			// 225 seconds here
-			tokenAge := time.Second * 225
-			cfg, err := token.CreateKubeletBootstrapToken(ctx, nodeConfig.Spec.API, c.K0sVars, token.RoleWorker, tokenAge)
-			if err != nil {
-				return err
-			}
-			bootstrapConfig = cfg
-			return nil
-		}, retry.Context(ctx))
-		if err != nil {
-			return err
-		}
-	}
+func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, opts *config.ControllerOptions) error {
 	// Cast and make a copy of the controller command so it can use the same
 	// opts to start the worker. Needs to be a copy so the original token and
 	// possibly other args won't get messed up.
 	wc := workercmd.Command(*(*config.CLIOptions)(c))
-	wc.TokenArg = bootstrapConfig
 	wc.Labels = append(wc.Labels, fields.OneTermEqualSelector(constant.K0SNodeRoleLabel, "control-plane").String())
 	if opts.Mode() == config.ControllerPlusWorkerMode && !opts.NoTaints {
 		key := path.Join(constant.NodeRoleLabelNamespace, "master")
 		taint := fields.OneTermEqualSelector(key, ":NoSchedule")
 		wc.Taints = append(wc.Taints, taint.String())
 	}
-	return wc.Start(ctx, nodeName, kubeletExtraArgs, (*embeddingController)(opts))
+	return wc.Start(ctx, nodeName, kubeletExtraArgs, kubernetes.KubeconfigFromFile(c.K0sVars.AdminKubeConfigPath), (*embeddingController)(opts))
 }
 
 type embeddingController config.ControllerOptions
@@ -746,10 +718,6 @@ func joinController(ctx context.Context, tokenArg string, certRootDir string) (*
 	joinClient, err := token.JoinClientFromToken(tokenArg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create join client: %w", err)
-	}
-
-	if joinClient.JoinTokenType() != "controller-bootstrap" {
-		return nil, fmt.Errorf("wrong token type %s, expected type: controller-bootstrap", joinClient.JoinTokenType())
 	}
 
 	logrus.Info("Joining existing cluster via ", joinClient.Address())

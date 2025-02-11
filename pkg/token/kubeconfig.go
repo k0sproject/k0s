@@ -37,6 +37,11 @@ const (
 	RoleWorker     = "worker"
 )
 
+const (
+	ControllerTokenAuthName = "controller-bootstrap"
+	WorkerTokenAuthName     = "kubelet-bootstrap"
+)
+
 // CreateKubeletBootstrapToken creates a new k0s bootstrap token.
 func CreateKubeletBootstrapToken(ctx context.Context, api *v1beta1.APISpec, k0sVars *config.CfgVars, role string, expiry time.Duration) (string, error) {
 	userName, joinURL, err := loadUserAndJoinURL(api, role)
@@ -84,9 +89,9 @@ func GenerateKubeconfig(joinURL string, caCert []byte, userName string, token *b
 func loadUserAndJoinURL(api *v1beta1.APISpec, role string) (string, string, error) {
 	switch role {
 	case RoleController:
-		return "controller-bootstrap", api.K0sControlPlaneAPIAddress(), nil
+		return ControllerTokenAuthName, api.K0sControlPlaneAPIAddress(), nil
 	case RoleWorker:
-		return "kubelet-bootstrap", api.APIAddressURL(), nil
+		return WorkerTokenAuthName, api.APIAddressURL(), nil
 	default:
 		return "", "", fmt.Errorf("unsupported role %q; supported roles are %q and %q", role, RoleController, RoleWorker)
 	}
