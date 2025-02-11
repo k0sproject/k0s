@@ -183,7 +183,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		c.WorkerProfile = "default-windows"
 	}
 
-	if controller == nil {
+	if controller == nil && runtime.GOOS == "linux" {
 		componentManager.Add(ctx, &iptables.Component{
 			IPTablesMode: c.WorkerOptions.IPTablesMode,
 			BinDir:       c.K0sVars.BinDir,
