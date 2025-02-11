@@ -135,6 +135,17 @@ func TestCalicoSuite(t *testing.T) {
 
 const k0sConfig = `
 spec:
+  images:
+    calico:
+      cni: 
+        image: ttl.sh/k0sproject-calico-cni-13262427030-1
+        version: 1h
+      node: 
+        image: ttl.sh/k0sproject-calico-node-13262427030-1
+        version: 1h
+      kubecontrollers:
+        image: ttl.sh/k0sproject-calico-kube-controllers-13262427030-1
+        version: 1h
   network:
     provider: calico
     calico:
