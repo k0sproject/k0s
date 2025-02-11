@@ -560,15 +560,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#hacks" class="md-nav__link">
-    <span class="md-ellipsis">
-      Hacks
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -2298,15 +2289,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#hacks" class="md-nav__link">
-    <span class="md-ellipsis">
-      Hacks
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -2369,7 +2351,7 @@
 <p><strong>Note</strong>: The k0s.exe supervises kubelet.exe and kube-proxy.exe.</p>
 <p>During the first run, the calico install script is created as <code>C:\bootstrap.ps1</code>. This bootstrap script downloads the calico binaries, builds pause container and sets up vSwitch settings.</p>
 <p>Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--cri-socket<span class="o">=</span>remote:npipe:////./pipe/containerd-containerd<span class="w"> </span>--cidr-range<span class="o">=</span>&lt;cidr_range&gt;<span class="w"> </span>--cluster-dns<span class="o">=</span>&lt;clusterdns&gt;<span class="w"> </span>--api-server<span class="o">=</span>&lt;k0s<span class="w"> </span>api&gt;<span class="w"> </span>&lt;token&gt;
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--cri-socket<span class="o">=</span>remote:npipe:////./pipe/containerd-containerd<span class="w"> </span>&lt;token&gt;
 </code></pre></div>
 <p>You must initiate the Cluster control with the correct config.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
@@ -2389,13 +2371,6 @@
 </code></pre></div>
 <h3 id="network-connectivity-in-aws">Network connectivity in AWS<a class="headerlink" href="#network-connectivity-in-aws" title="Permanent link">#</a></h3>
 <p>Disable the <code>Change Source/Dest. Check</code> option for the network interface attached to your EC2 instance. In AWS, the console option for the network interface is in the <strong>Actions</strong> menu.</p>
-<h3 id="hacks">Hacks<a class="headerlink" href="#hacks" title="Permanent link">#</a></h3>
-<p>k0s offers the following CLI arguments in lieu of a formal means for passing cluster settings from controller plane to worker:</p>
-<ul>
-<li>cidr-range</li>
-<li>cluster-dns</li>
-<li>api-server</li>
-</ul>
 <h2 id="useful-commands">Useful commands<a class="headerlink" href="#useful-commands" title="Permanent link">#</a></h2>
 <h3 id="run-pod-with-cmdexe-shell">Run pod with cmd.exe shell<a class="headerlink" href="#run-pod-with-cmdexe-shell" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>run<span class="w"> </span>win<span class="w"> </span>--image<span class="o">=</span>hello-world:nanoserver<span class="w"> </span>--command<span class="o">=</span><span class="nb">true</span><span class="w"> </span>-i<span class="w"> </span>--attach<span class="o">=</span><span class="nb">true</span><span class="w"> </span>--<span class="w"> </span>cmd.exe
