@@ -27,12 +27,13 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sretry "k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
+	crconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,6 +61,17 @@ func (w *rootWorker) Run(ctx context.Context) error {
 
 	managerOpts := crman.Options{
 		Scheme: scheme,
+		Controller: crconfig.Controller{
+			// Controller-runtime maintains a global checklist of controller
+			// names and does not currently provide a way to unregister the
+			// controller names used by discarded managers. The autopilot
+			// controller and worker components accidentally share some
+			// controller names. So it's necessary to suppress the global name
+			// check because the order in which components are started is not
+			// fully guaranteed for k0s controller nodes running an embedded
+			// worker.
+			SkipNameValidation: ptr.To(true),
+		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: w.cfg.ManagerPort,
 		}),
@@ -69,29 +81,17 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
 	}
 
-	var mgr crman.Manager
-	if err := retry.Do(
-		func() (err error) {
-			mgr, err = cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
-			return err
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.Delay(1*time.Second),
-		retry.OnRetry(func(attempt uint, err error) {
-			logger.WithError(err).Debugf("Failed to start controller manager in attempt #%d, retrying after backoff", attempt+1)
-		}),
-	); err != nil {
-		logger.WithError(err).Fatal("unable to start controller manager")
-	}
-
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
+	var attempt uint
 	return k8sretry.OnError(wait.Backoff{
 		Steps:    120,
 		Duration: 1 * time.Second,
 		Factor:   1.0,
 		Jitter:   0.1,
 	}, func(err error) bool {
+		attempt++
+		logger := logger.WithError(err).WithField("attempt", attempt)
+		logger.Debug("Failed to run controller manager, retrying after backoff")
 		return true
 	}, func() error {
 		cl, err := w.clientFactory.GetClient()
@@ -103,6 +103,11 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return err
 		}
 		clusterID := string(ns.UID)
+
+		mgr, err := cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
+		if err != nil {
+			return fmt.Errorf("failed to create controller manager: %w", err)
+		}
 
 		if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
 			return fmt.Errorf("unable to register indexers: %w", err)
