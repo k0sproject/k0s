@@ -59,7 +59,7 @@ jobs:
           [Install]
           WantedBy=default.target
           # some trailing carriage return
-          '@ -replace "`r", "" | & wsl tee /etc/systemd/system/keepwsl.service | Out-Null
+          '@ | & wsl tee /etc/systemd/system/keepwsl.service | Out-Null
 
           & wsl -- base64 /etc/systemd/system/keepwsl.service
 
