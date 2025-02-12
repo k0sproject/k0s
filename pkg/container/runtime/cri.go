@@ -5,8 +5,8 @@ package runtime
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"io"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -17,29 +17,27 @@ import (
 var _ ContainerRuntime = (*CRIRuntime)(nil)
 
 type CRIRuntime struct {
-	criSocketPath string
+	grpcTarget string
 }
 
 func (cri *CRIRuntime) Ping(ctx context.Context) error {
-	client, conn, err := getRuntimeClient(cri.criSocketPath)
-	defer closeConnection(conn)
+	client, conn, err := newRuntimeClient(cri.grpcTarget)
 	if err != nil {
-		return fmt.Errorf("failed to create CRI runtime client: %w", err)
+		return err
 	}
+	defer conn.Close()
 
 	_, err = client.Version(ctx, &pb.VersionRequest{})
 	return err
 }
 
 func (cri *CRIRuntime) ListContainers(ctx context.Context) ([]string, error) {
-	client, conn, err := getRuntimeClient(cri.criSocketPath)
-	defer closeConnection(conn)
+	client, conn, err := newRuntimeClient(cri.grpcTarget)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create CRI runtime client: %w", err)
+		return nil, err
 	}
-	if client == nil {
-		return nil, fmt.Errorf("failed to create CRI runtime client: %w", err)
-	}
+	defer conn.Close()
+
 	request := &pb.ListPodSandboxRequest{}
 	logrus.Debugf("ListPodSandboxRequest: %v", request)
 	r, err := client.ListPodSandbox(ctx, request)
@@ -55,14 +53,12 @@ func (cri *CRIRuntime) ListContainers(ctx context.Context) ([]string, error) {
 }
 
 func (cri *CRIRuntime) RemoveContainer(ctx context.Context, id string) error {
-	client, conn, err := getRuntimeClient(cri.criSocketPath)
-	defer closeConnection(conn)
+	client, conn, err := newRuntimeClient(cri.grpcTarget)
 	if err != nil {
-		return fmt.Errorf("failed to create CRI runtime client: %w", err)
+		return err
 	}
-	if client == nil {
-		return errors.New("failed to create CRI runtime client")
-	}
+	defer conn.Close()
+
 	request := &pb.RemovePodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("RemovePodSandboxRequest: %v", request)
 	r, err := client.RemovePodSandbox(ctx, request)
@@ -75,14 +71,12 @@ func (cri *CRIRuntime) RemoveContainer(ctx context.Context, id string) error {
 }
 
 func (cri *CRIRuntime) StopContainer(ctx context.Context, id string) error {
-	client, conn, err := getRuntimeClient(cri.criSocketPath)
-	defer closeConnection(conn)
+	client, conn, err := newRuntimeClient(cri.grpcTarget)
 	if err != nil {
-		return fmt.Errorf("failed to create CRI runtime client: %w", err)
+		return err
 	}
-	if client == nil {
-		return errors.New("failed to create CRI runtime client")
-	}
+	defer conn.Close()
+
 	request := &pb.StopPodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("StopPodSandboxRequest: %v", request)
 	r, err := client.StopPodSandbox(ctx, request)
@@ -94,28 +88,11 @@ func (cri *CRIRuntime) StopContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-func getRuntimeClient(addr string) (pb.RuntimeServiceClient, *grpc.ClientConn, error) {
-	conn, err := getRuntimeClientConnection(addr)
+func newRuntimeClient(target string) (pb.RuntimeServiceClient, io.Closer, error) {
+	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, nil, fmt.Errorf("connect: %w", err)
+		return nil, nil, fmt.Errorf("failed to create new gRPC client to target %s: %w", target, err)
 	}
-	runtimeClient := pb.NewRuntimeServiceClient(conn)
-	return runtimeClient, conn, nil
-}
 
-func getRuntimeClientConnection(addr string) (*grpc.ClientConn, error) {
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("connect endpoint %s, make sure you are running as root and the endpoint has been started: %w", addr, err)
-	} else {
-		logrus.Debugf("connected successfully using endpoint: %s", addr)
-	}
-	return conn, nil
-}
-
-func closeConnection(conn *grpc.ClientConn) {
-	if conn == nil {
-		return
-	}
-	conn.Close()
+	return pb.NewRuntimeServiceClient(conn), conn, nil
 }
