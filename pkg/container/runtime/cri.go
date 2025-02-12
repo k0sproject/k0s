@@ -17,11 +17,16 @@ import (
 var _ ContainerRuntime = (*CRIRuntime)(nil)
 
 type CRIRuntime struct {
-	grpcTarget string
+	target      string
+	dialOptions []grpc.DialOption
+}
+
+var defaultGRPCDialOptions = []grpc.DialOption{
+	grpc.WithTransportCredentials(insecure.NewCredentials()),
 }
 
 func (cri *CRIRuntime) Ping(ctx context.Context) error {
-	client, conn, err := newRuntimeClient(cri.grpcTarget)
+	client, conn, err := cri.newRuntimeClient()
 	if err != nil {
 		return err
 	}
@@ -32,7 +37,7 @@ func (cri *CRIRuntime) Ping(ctx context.Context) error {
 }
 
 func (cri *CRIRuntime) ListContainers(ctx context.Context) ([]string, error) {
-	client, conn, err := newRuntimeClient(cri.grpcTarget)
+	client, conn, err := cri.newRuntimeClient()
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +58,7 @@ func (cri *CRIRuntime) ListContainers(ctx context.Context) ([]string, error) {
 }
 
 func (cri *CRIRuntime) RemoveContainer(ctx context.Context, id string) error {
-	client, conn, err := newRuntimeClient(cri.grpcTarget)
+	client, conn, err := cri.newRuntimeClient()
 	if err != nil {
 		return err
 	}
@@ -71,7 +76,7 @@ func (cri *CRIRuntime) RemoveContainer(ctx context.Context, id string) error {
 }
 
 func (cri *CRIRuntime) StopContainer(ctx context.Context, id string) error {
-	client, conn, err := newRuntimeClient(cri.grpcTarget)
+	client, conn, err := cri.newRuntimeClient()
 	if err != nil {
 		return err
 	}
@@ -88,10 +93,10 @@ func (cri *CRIRuntime) StopContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-func newRuntimeClient(target string) (pb.RuntimeServiceClient, io.Closer, error) {
-	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func (cri *CRIRuntime) newRuntimeClient() (pb.RuntimeServiceClient, io.Closer, error) {
+	conn, err := grpc.NewClient(cri.target, cri.dialOptions...)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create new gRPC client to target %s: %w", target, err)
+		return nil, nil, fmt.Errorf("failed to create new gRPC client to target %s: %w", cri.target, err)
 	}
 
 	return pb.NewRuntimeServiceClient(conn), conn, nil
