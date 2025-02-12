@@ -156,7 +156,7 @@ jobs:
       - name: Start k0s worker
         timeout-minutes: 7
         run: |
-          & .\k0s.exe worker --token-file=k0s-worker-token
+          & .\k0s.exe worker --token-file=k0s-worker-token --debug
 
       - name: Monitor cluster a bit
         run: |
