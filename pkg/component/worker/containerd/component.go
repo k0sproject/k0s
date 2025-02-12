@@ -14,6 +14,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -47,10 +48,12 @@ type Component struct {
 	Profile       *workerconfig.Profile
 	OCIBundlePath string
 
-	supervisor     *supervisor.Supervisor
 	executablePath string
 	confPath       string
 	importsPath    string
+
+	reloadConfig func()
+	stop         func() error
 }
 
 func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
@@ -102,7 +105,7 @@ func (c *Component) Init(ctx context.Context) error {
 // }
 
 // Run runs containerd.
-func (c *Component) Start(ctx context.Context) error {
+func (c *Component) Start(ctx context.Context) (err error) {
 	log := logrus.WithField("component", "containerd")
 	log.Info("Starting containerd")
 
@@ -115,7 +118,7 @@ func (c *Component) Start(ctx context.Context) error {
 	// 		return fmt.Errorf("failed to start windows server: %w", err)
 	// 	}
 	// } else {
-	c.supervisor = &supervisor.Supervisor{
+	supervisor := &supervisor.Supervisor{
 		Name:    "containerd",
 		BinPath: c.executablePath,
 		RunDir:  c.K0sVars.RunDir,
@@ -129,16 +132,44 @@ func (c *Component) Start(ctx context.Context) error {
 		},
 	}
 
-	if err := c.supervisor.Supervise(); err != nil {
+	if err := supervisor.Supervise(); err != nil {
 		return err
 	}
 	// }
 
-	go c.watchDropinConfigs(ctx)
+	cctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	stop := func() {
+		cancel()
+		supervisor.Stop()
+		wg.Wait()
+	}
+	c.reloadConfig = func() {
+		p := supervisor.GetProcess()
+		if err := p.Signal(syscall.SIGHUP); err != nil {
+			// FIXME will never work on Windows!
+			log.WithError(err).Warn("failed to send SIGHUP")
+		}
+	}
+
+	defer func() {
+		if err == nil {
+			c.stop = stop
+		} else {
+			 stop()
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wait.UntilWithContext(cctx, c.watchDropinConfigs, 30*time.Second)
+		log.Info("Stopped to watch for drop-ins")
+	}()
 
 	log.Debug("Waiting for containerd")
 	var lastErr error
-	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+	err = wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Duration: 100 * time.Millisecond, Factor: 1.2, Jitter: 0.05, Steps: 30,
 	}, func(ctx context.Context) (bool, error) {
 		rt := containerruntime.NewContainerRuntime(Endpoint(c.K0sVars.RunDir))
@@ -242,13 +273,30 @@ func (c *Component) watchDropinConfigs(ctx context.Context) {
 		log.WithError(err).Error("failed to create watcher for drop-ins")
 		return
 	}
-	defer watcher.Close()
 
-	err = watcher.Add(c.importsPath)
-	if err != nil {
+	if err = watcher.Add(c.importsPath); err != nil {
+		err := errors.Join(err, watcher.Close())
 		log.WithError(err).Error("failed to watch for drop-ins")
 		return
 	}
+
+	// Consume and log any errors from watcher.
+	// Close the watcher when the context closes.
+	go func() {
+		defer func() {
+			if err := watcher.Close(); err != nil {
+				log.WithError(err).Error("Failed to close watcher for drop-ins")
+			}
+		}()
+
+		select {
+		case <-ctx.Done():
+		case err, ok := <-watcher.Errors:
+			if ok {
+				log.WithError(err).Error("error while watching drop-ins")
+			}
+		}
+	}()
 
 	debouncer := debounce.Debouncer[fsnotify.Event]{
 		Input:   watcher.Events,
@@ -264,23 +312,8 @@ func (c *Component) watchDropinConfigs(ctx context.Context) {
 		Callback: func(fsnotify.Event) { c.restart() },
 	}
 
-	// Consume and log any errors from watcher
-	go func() {
-		for {
-			err, ok := <-watcher.Errors
-			if !ok {
-				return
-			}
-			log.WithError(err).Error("error while watching drop-ins")
-		}
-	}()
-
 	log.Infof("started to watch events on %s", c.importsPath)
-
-	err = debouncer.Run(ctx)
-	if err != nil {
-		log.WithError(err).Warn("dropin watch bouncer exited with error")
-	}
+	_ = debouncer.Run(context.Background()) // Will return as soon as the watcher is closed.
 }
 
 func (c *Component) restart() {
@@ -291,23 +324,8 @@ func (c *Component) restart() {
 		log.WithError(err).Warn("failed to resolve config")
 		return
 	}
-	// if runtime.GOOS == "windows" {
 
-	// 	if err := c.windowsStop(); err != nil {
-	// 		log.WithError(err).Warn("failed to stop windows service")
-	// 		return
-	// 	}
-	// 	if err := c.windowsStart(context.Background()); err != nil {
-	// 		log.WithError(err).Warn("failed to start windows service")
-	// 		return
-	// 	}
-	// } else {
-	p := c.supervisor.GetProcess()
-	if err := p.Signal(syscall.SIGHUP); err != nil {
-		// FIXME will never work on Windows!
-		log.WithError(err).Warn("failed to send SIGHUP")
-	}
-	// }
+	c.reloadConfig()
 }
 
 // Stop stops containerd.
@@ -315,8 +333,8 @@ func (c *Component) Stop() error {
 	// if runtime.GOOS == "windows" {
 	// 	return c.windowsStop()
 	// }
-	if c.supervisor != nil {
-		c.supervisor.Stop()
+	if stop := c.stop; stop != nil {
+		return stop()
 	}
 	return nil
 }
