@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
@@ -48,10 +49,12 @@ type Component struct {
 	Profile       *workerconfig.Profile
 	OCIBundlePath string
 
-	supervisor     *supervisor.Supervisor
 	executablePath string
 	confPath       string
 	importsPath    string
+
+	reloadConfig func() error
+	stop         func() error
 }
 
 func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
@@ -103,7 +106,7 @@ func (c *Component) windowsInit() error {
 }
 
 // Run runs containerd.
-func (c *Component) Start(ctx context.Context) error {
+func (c *Component) Start(ctx context.Context) (err error) {
 	log := logrus.WithField("component", "containerd")
 	log.Info("Starting containerd")
 
@@ -111,12 +114,29 @@ func (c *Component) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to setup containerd config: %w", err)
 	}
 
+	var stopContainerd func() error
 	if runtime.GOOS == "windows" {
-		if err := c.windowsStart(ctx); err != nil {
-			return fmt.Errorf("failed to start windows server: %w", err)
+		if err := winExecute("Start-Service containerd"); err != nil {
+			return fmt.Errorf("failed to start service %q: %w", "containerd", err)
+		}
+
+		// There's no way of telling containerd to reload the configuration on
+		// Windows. The SIGHUP stuff is (obviously) UNIX only. We need to go
+		// full circle and restart it.
+		c.reloadConfig = func() error {
+			if err := winExecute("Restart-Service containerd"); err != nil {
+				return fmt.Errorf("failed to restart service %q: %w", "containerd", err)
+			}
+			return nil
+		}
+		stopContainerd = func() error {
+			if err := winExecute("Stop-Service containerd"); err != nil {
+				return fmt.Errorf("failed to stop service %q: %w", "containerd", err)
+			}
+			return nil
 		}
 	} else {
-		c.supervisor = &supervisor.Supervisor{
+		supervisor := &supervisor.Supervisor{
 			Name:    "containerd",
 			BinPath: c.executablePath,
 			RunDir:  c.K0sVars.RunDir,
@@ -130,16 +150,50 @@ func (c *Component) Start(ctx context.Context) error {
 			},
 		}
 
-		if err := c.supervisor.Supervise(); err != nil {
+		if err := supervisor.Supervise(); err != nil {
 			return err
+		}
+
+		c.reloadConfig = func() error {
+			p := supervisor.GetProcess()
+			if err := p.Signal(syscall.SIGHUP); err != nil {
+				return fmt.Errorf("failed to send SIGHUP: %w", err)
+			}
+			return nil
+		}
+		stopContainerd = func() error { //nolint:unparam // error is non-nil on Windows
+			supervisor.Stop()
+			return nil
 		}
 	}
 
-	go c.watchDropinConfigs(ctx)
+	cctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	stop := func() error {
+		cancel()
+		err := stopContainerd()
+		wg.Wait()
+		return err
+	}
+
+	defer func() {
+		if err == nil {
+			c.stop = stop
+		} else {
+			err = errors.Join(err, stop())
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wait.UntilWithContext(cctx, c.watchDropinConfigs, 30*time.Second)
+		log.Info("Stopped to watch for drop-ins")
+	}()
 
 	log.Debug("Waiting for containerd")
 	var lastErr error
-	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+	err = wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Duration: 100 * time.Millisecond, Factor: 1.2, Jitter: 0.05, Steps: 30,
 	}, func(ctx context.Context) (bool, error) {
 		rt := containerruntime.NewContainerRuntime(Endpoint(c.K0sVars.RunDir))
@@ -159,20 +213,6 @@ func (c *Component) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to ping containerd: %w (%w)", err, lastErr)
 	}
 
-	return nil
-}
-
-func (c *Component) windowsStart(_ context.Context) error {
-	if err := winExecute("Start-Service containerd"); err != nil {
-		return fmt.Errorf("failed to start Windows Service %q: %w", "containerd", err)
-	}
-	return nil
-}
-
-func (c *Component) windowsStop() error {
-	if err := winExecute("Stop-Service containerd"); err != nil {
-		return fmt.Errorf("failed to stop Windows Service %q: %w", "containerd", err)
-	}
 	return nil
 }
 
@@ -243,13 +283,30 @@ func (c *Component) watchDropinConfigs(ctx context.Context) {
 		log.WithError(err).Error("failed to create watcher for drop-ins")
 		return
 	}
-	defer watcher.Close()
 
-	err = watcher.Add(c.importsPath)
-	if err != nil {
+	if err = watcher.Add(c.importsPath); err != nil {
+		err := errors.Join(err, watcher.Close())
 		log.WithError(err).Error("failed to watch for drop-ins")
 		return
 	}
+
+	// Consume and log any errors from watcher.
+	// Close the watcher when the context closes.
+	go func() {
+		defer func() {
+			if err := watcher.Close(); err != nil {
+				log.WithError(err).Error("Failed to close watcher for drop-ins")
+			}
+		}()
+
+		select {
+		case <-ctx.Done():
+		case err, ok := <-watcher.Errors:
+			if ok {
+				log.WithError(err).Error("error while watching drop-ins")
+			}
+		}
+	}()
 
 	debouncer := debounce.Debouncer[fsnotify.Event]{
 		Input:   watcher.Events,
@@ -262,62 +319,30 @@ func (c *Component) watchDropinConfigs(ctx context.Context) {
 				return false
 			}
 		},
-		Callback: func(fsnotify.Event) { c.restart() },
-	}
+		Callback: func(fsnotify.Event) {
+			log := logrus.WithFields(logrus.Fields{"component": "containerd", "phase": "reloadConfig"})
 
-	// Consume and log any errors from watcher
-	go func() {
-		for {
-			err, ok := <-watcher.Errors
-			if !ok {
+			if err := c.setupConfig(); err != nil {
+				log.WithError(err).Warn("Failed to resolve config")
 				return
 			}
-			log.WithError(err).Error("error while watching drop-ins")
-		}
-	}()
+
+			if err := c.reloadConfig(); err != nil {
+				log.WithError(err).Error("Failed to reload")
+			} else {
+				log.Info("Configuration reloaded")
+			}
+		},
+	}
 
 	log.Infof("started to watch events on %s", c.importsPath)
-
-	err = debouncer.Run(ctx)
-	if err != nil {
-		log.WithError(err).Warn("dropin watch bouncer exited with error")
-	}
-}
-
-func (c *Component) restart() {
-	log := logrus.WithFields(logrus.Fields{"component": "containerd", "phase": "restart"})
-
-	log.Info("restart requested")
-	if err := c.setupConfig(); err != nil {
-		log.WithError(err).Warn("failed to resolve config")
-		return
-	}
-	if runtime.GOOS == "windows" {
-
-		if err := c.windowsStop(); err != nil {
-			log.WithError(err).Warn("failed to stop windows service")
-			return
-		}
-		if err := c.windowsStart(context.Background()); err != nil {
-			log.WithError(err).Warn("failed to start windows service")
-			return
-		}
-	} else {
-		p := c.supervisor.GetProcess()
-		if err := p.Signal(syscall.SIGHUP); err != nil {
-			log.WithError(err).Warn("failed to send SIGHUP")
-		}
-
-	}
+	_ = debouncer.Run(context.Background()) // Will return as soon as the watcher is closed.
 }
 
 // Stop stops containerd.
 func (c *Component) Stop() error {
-	if runtime.GOOS == "windows" {
-		return c.windowsStop()
-	}
-	if c.supervisor != nil {
-		c.supervisor.Stop()
+	if stop := c.stop; stop != nil {
+		return stop()
 	}
 	return nil
 }
