@@ -24,20 +24,6 @@ jobs:
     steps:
       - name: Prepare WSL
         run: |
-          Write-Host '$OutputEncoding'
-          $OutputEncoding
-          Write-Host '[Console]::InputEncoding'
-          [Console]::InputEncoding
-          Write-Host '[Console]::OutputEncoding'
-          [Console]::OutputEncoding
-
-          Write-Host '[Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)'
-          [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
-          [Console]::InputEncoding
-          Write-Host '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)'
-          [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-          [Console]::OutputEncoding
-
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
