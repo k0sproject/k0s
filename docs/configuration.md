@@ -580,3 +580,22 @@ spec:
 
 As seen from the component list, the only always-on component is the Kubernetes
 api-server, without that k0s serves no purpose.
+
+## Kubelet root directory
+
+Unlike vanilla kubernetes, k0s by default deploys kubelet's root directory inside
+`--data-dir`, which defaults to `/var/lib/k0s/` and kubelet ultimately runs in
+`/var/lib/k0s/kubelet`. This can result in incompatibilities on external software
+that mounts the kubelet working dir, such as CSI plugins.
+
+This can be changed using the flag `--kubelet-root-dir`, for instance, to use
+kubernetes' default value it can be set up as:
+
+```shell
+sudo k0s install worker --token-file /var/lib/k0s/join-token --kubelet-root-dir=/var/lib/kubelet
+```
+
+Keep in mind that changing the flag in an existing node will not remove existing directories.
+Equally importantly, some pods such as CSI plugins are likely to mount this directory,
+having inconsistent values across nodes is very likely to cause problems on Deployments and
+DaemonSets.
