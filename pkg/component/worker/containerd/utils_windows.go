@@ -71,9 +71,9 @@ func getSourceVip() (string, error) {
 	return vip, nil
 }
 
-func winExecute(args ...string) error {
-	ps := NewPowershell()
+// func winExecute(args ...string) error {
+// 	ps := NewPowershell()
 
-	r := ps.execute(args...)
-	return r
-}
+// 	r := ps.execute(args...)
+// 	return r
+// }

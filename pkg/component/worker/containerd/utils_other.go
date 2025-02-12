@@ -21,6 +21,6 @@ func Endpoint(runDir string) *url.URL {
 	}
 }
 
-func winExecute(args ...string) error {
-	panic("Invariant broken: this function should never be called on non-winodws platforms")
-}
+// func winExecute(args ...string) error {
+// 	panic("Invariant broken: this function should never be called on non-winodws platforms")
+// }
