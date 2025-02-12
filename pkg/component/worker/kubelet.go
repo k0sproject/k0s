@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	cliflag "k8s.io/component-base/cli/flag"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
+	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
@@ -311,7 +312,8 @@ func determineKubeletResolvConfPath() *string {
 
 	switch runtime.GOOS {
 	case "windows":
-		return nil
+		// https://github.com/kubernetes/kubernetes/issues/116782#issuecomment-1477536396
+		return ptr.To("")
 
 	case "linux":
 		// https://www.freedesktop.org/software/systemd/man/systemd-resolved.service.html#/etc/resolv.conf
