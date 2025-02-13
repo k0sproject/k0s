@@ -24,7 +24,7 @@ require (
 	github.com/go-playground/validator/v10 v10.24.0
 	github.com/google/go-cmp v0.6.0
 	github.com/k0sproject/bootloose v0.9.0
-	github.com/k0sproject/version v0.6.0
+	github.com/k0sproject/version v0.7.0
 	github.com/kardianos/service v1.2.2
 	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mesosphere/toml-merge v0.2.0
