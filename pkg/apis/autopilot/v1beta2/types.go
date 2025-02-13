@@ -37,6 +37,7 @@ type ControlNode struct {
 // ControlNodeStatus has the runtime status info of the controller such as address etc.
 type ControlNodeStatus struct {
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
+	Version   string               `json:"version,omitempty"`
 }
 
 // GetInternalIP returns the internal IP address for the object. Returns empty string if the object does not have InternalIP set.
