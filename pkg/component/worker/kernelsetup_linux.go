@@ -45,7 +45,7 @@ func hasFilesystem(filesystem string) bool {
 func modprobe(module string) {
 	out, err := exec.Command("modprobe", module).CombinedOutput()
 	if err != nil {
-		logrus.Warnf("failed to load %s kernel module: %s, out=%q", module, err.Error(), string(out))
+		logrus.WithError(err).Warnf("failed to load kernel module %s: %s", module, out)
 	}
 }
 
