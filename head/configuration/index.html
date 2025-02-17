@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../img/k0s-favicon-192.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -1037,6 +1037,15 @@
   <a href="#disabling-controller-components" class="md-nav__link">
     <span class="md-ellipsis">
       Disabling controller components
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kubelet-root-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kubelet root directory
     </span>
   </a>
   
@@ -2457,6 +2466,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#kubelet-root-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kubelet root directory
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3280,6 +3298,19 @@ controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:
 </code></pre></div>
 <p>As seen from the component list, the only always-on component is the Kubernetes
 api-server, without that k0s serves no purpose.</p>
+<h2 id="kubelet-root-directory">Kubelet root directory<a class="headerlink" href="#kubelet-root-directory" title="Permanent link">#</a></h2>
+<p>Unlike vanilla kubernetes, k0s by default deploys kubelet's root directory inside
+<code>--data-dir</code>, which defaults to <code>/var/lib/k0s/</code> and kubelet ultimately runs in
+<code>/var/lib/k0s/kubelet</code>. This can result in incompatibilities on external software
+that mounts the kubelet working dir, such as CSI plugins.</p>
+<p>This can be changed using the flag <code>--kubelet-root-dir</code>, for instance, to use
+kubernetes' default value it can be set up as:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>worker<span class="w"> </span>--token-file<span class="w"> </span>/var/lib/k0s/join-token<span class="w"> </span>--kubelet-root-dir<span class="o">=</span>/var/lib/kubelet
+</code></pre></div>
+<p>Keep in mind that changing the flag in an existing node will not remove existing directories.
+Equally importantly, some pods such as CSI plugins are likely to mount this directory,
+having inconsistent values across nodes is very likely to cause problems on Deployments and
+DaemonSets.</p>
 
 
 
