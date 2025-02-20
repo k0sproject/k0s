@@ -81,12 +81,12 @@ func (h *serviceHandler) Execute(args []string, requests <-chan svc.ChangeReques
 	})
 	if err != nil {
 		logrus.WithError(err).Error("Service failed")
-		h.log.Error(2, "Service failed: ", err)
+		h.log.Error(1, "Service failed: ", err)
 		return true, 2
 	}
 
 	logrus.Info("Service stopped")
-	h.log.Info(1, "Service stopped: ", err)
+	h.log.Info(2, "Service stopped: ", err)
 	return false, 0
 }
 
@@ -206,5 +206,5 @@ func (c *serviceConn) handleOther(request svc.ChangeRequest) {
 		return
 	}
 
-	c.log.Error(2, fmt.Sprintf("unexpected service control request %d", request.Cmd))
+	c.log.Error(3, fmt.Sprintf("unexpected service control request %d", request.Cmd))
 }

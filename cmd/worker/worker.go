@@ -10,11 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/internal/supervised"
@@ -68,6 +70,15 @@ func NewWorkerCmd() *cobra.Command {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
+			}
+
+			if err := internallog.SwapBufferedOutput(func() (*os.File, error) {
+				if err := dir.Init(opts.K0sVars.DataDir, constant.DataDirMode); err != nil {
+					return nil, err
+				}
+				return os.CreateTemp(opts.K0sVars.DataDir, fmt.Sprintf("k0s_%d_*.log", time.Now().Unix()))
+			}); err != nil && !errors.Is(err, errors.ErrUnsupported) {
+				return fmt.Errorf("failed to initialize log file: %w", err)
 			}
 
 			c := (*Command)(opts)
