@@ -34,7 +34,7 @@ func main() {
 		os.Args = append([]string{"k0s", progN}, os.Args[1:]...)
 	}
 
-	if err := supervised.Run(ctx, cmd.Execute); err != nil {
+	if err := supervised.Run(ctx, cmd.NewRootCmd()); err != nil {
 		os.Exit(1)
 	}
 }

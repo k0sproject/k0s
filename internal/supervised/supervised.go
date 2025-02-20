@@ -8,6 +8,8 @@ import (
 	"context"
 
 	"github.com/k0sproject/k0s/pkg/k0scontext"
+
+	"github.com/spf13/cobra"
 )
 
 // Interaction points with the process supervisor.
@@ -22,17 +24,12 @@ func Get(ctx context.Context) Interface {
 	return k0scontext.Value[Interface](ctx)
 }
 
-// The main function to run in a supervised fashion.
-type MainFunc func(context.Context) error
-
-// Runs the main function in a supervisor-aware manner. The main function can
+// Runs the main function in a supervisor-aware manner. The main command can
 // interact with the supervisor by obtaining a supervision interface via [Get].
 // Whenever the supervisor deems that k0s should exit, the context passed to
 // main is canceled.
-func Run(ctx context.Context, main MainFunc) error {
-	// This is not doing anything special yet. Explicitly store a nil interface.
-	ctx = set(ctx, nil)
-	return main(ctx)
+func Run(ctx context.Context, main *cobra.Command) error {
+	return run(ctx, main)
 }
 
 func set(ctx context.Context, supervised Interface) context.Context {
