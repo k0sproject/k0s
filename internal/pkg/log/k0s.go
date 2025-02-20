@@ -4,11 +4,19 @@
 package log
 
 import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/k0sproject/k0s/internal/supervised"
+
 	"github.com/bombsimon/logrusr/v4"
 	cfssllog "github.com/cloudflare/cfssl/log"
 	"github.com/sirupsen/logrus"
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+var logFile *os.File
 
 func InitLogging() {
 	customFormatter := new(logrus.TextFormatter)
@@ -16,10 +24,24 @@ func InitLogging() {
 	customFormatter.FullTimestamp = true
 	logrus.SetFormatter(customFormatter)
 
+	if isService, err := supervised.IsService(); err != nil {
+		panic(err)
+	} else if isService {
+		logFile, err = os.CreateTemp("", fmt.Sprintf("k0s_%d_*.log", time.Now().Unix()))
+		if err != nil {
+			panic(err)
+		}
+		logrus.SetOutput(logFile)
+	}
+
 	cfssllog.SetLogger((*cfsslAdapter)(logrus.WithField("component", "cfssl")))
 	crlog.SetLogger(logrusr.New(logrus.WithField("component", "controller-runtime")))
 
 	SetWarnLevel()
+}
+
+func ShutdownLogging() {
+	_ = logFile.Close()
 }
 
 func SetDebugLevel() {
