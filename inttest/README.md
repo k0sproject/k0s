@@ -26,10 +26,6 @@ TestNetworkSuite: bootloosesuite.go:138: bootloose cluster left intact for debug
 
 This allows you to run manual cleanup after you've done the needed debugging.
 
-## Long term plans
-
-We're planning to build some abstractions on the suite level to be able to create the test environment also using some cloud provider infrastructure. We'll probably build that using Terraform as that provides nice abstraction over different providers. This means we need to create some abstraction that defines the set of machines and adjacent details (addresses, keys etc.) we're using for testing. This should make it possible to run the tests across many different cloud providers with little effort.
-
 ## Which tests to run when?
 
 The plan is to run only the basic (and quick) smoke tests on each PR commit. We should build some bot like functionality to run longer and more expensive tests using some trigger before the final merge of a PR. Naturally we should be able to run any of the tests locally, or at least triggered locally, to ensure we can actually debug what is happening.

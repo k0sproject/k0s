@@ -1,5 +1,5 @@
 locals {
-  # Boilerplate to make terraform a little bit dynamic
+  # Boilerplate to make OpenTofu a little bit dynamic
 
   os = {
     al2023      = local.os_al2023
