@@ -91,6 +91,7 @@ tofu apply
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2304`: Ubuntu 23.04
+* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.20)
 
 ### `arch`: Node architecture
 
@@ -124,6 +125,11 @@ tofu output -json | jq -r '
 ### `k0s_version`: The k0s version to deploy
 
 This may be a fixed version number, "stable" or "latest".
+
+### `k0s_executable_path`: The k0s version to deploy
+
+Path to the k0s executable to use, or null if it should be downloaded. Note that
+for Windows, the `.exe` suffix is appended automatically.
 
 ### `k0s_network_provider`: Network provider
 

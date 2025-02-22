@@ -13,7 +13,13 @@ variable "os" {
     arch = string
     node_configs = object({
       default = object({
-        ami_id = string
+        ami_id        = string
+        instance_type = optional(string)
+        os_type       = optional(string)
+
+        volume = optional(object({
+          size = number
+        }))
 
         user_data    = optional(string)
         ready_script = optional(string)
@@ -23,9 +29,60 @@ variable "os" {
           username = string
         })
       })
-      controller        = optional(map(any))
-      controller_worker = optional(map(any))
-      worker            = optional(map(any))
+
+      controller = optional(object({
+        ami_id        = optional(string)
+        instance_type = optional(string)
+        os_type       = optional(string)
+
+        volume = optional(object({
+          size = number
+        }))
+
+        user_data    = optional(string)
+        ready_script = optional(string)
+
+        connection = optional(object({
+          type     = string
+          username = string
+        }))
+      }))
+
+      controller_worker = optional(object({
+        ami_id        = optional(string)
+        instance_type = optional(string)
+        os_type       = optional(string)
+
+        volume = optional(object({
+          size = number
+        }))
+
+        user_data    = optional(string)
+        ready_script = optional(string)
+
+        connection = optional(object({
+          type     = string
+          username = string
+        }))
+      }))
+
+      worker = optional(object({
+        ami_id        = optional(string)
+        instance_type = optional(string)
+        os_type       = optional(string)
+
+        volume = optional(object({
+          size = number
+        }))
+
+        user_data    = optional(string)
+        ready_script = optional(string)
+
+        connection = optional(object({
+          type     = string
+          username = string
+        }))
+      }))
     })
   })
 

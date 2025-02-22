@@ -2,10 +2,11 @@ variable "hosts" {
   type = list(
     object({
       name          = string,
+      os_type       = string,
       role          = string,
       is_controller = bool,
       is_worker     = bool,
-      ipv4          = optional(string),
+      ipv4          = string,
       connection = object({
         type     = string
         username = string

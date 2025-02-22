@@ -39,7 +39,7 @@ locals {
         }),
 
         var.k0s_executable_path == null ? {} : {
-          k0sBinaryPath = var.k0s_executable_path
+          k0sBinaryPath = format("%s%s", var.k0s_executable_path, host.os_type == "windows" ? ".exe" : "")
         },
       )]
     }
