@@ -1,7 +1,7 @@
 # https://www.alpinelinux.org/cloud/
 
 data "aws_ami" "alpine_3_20" {
-  count = var.os == "alpine_3_20" ? 1 : 0
+  count = (var.os == "alpine_3_20" || startswith(var.os, "windows_")) ? 1 : 0
 
   owners      = ["538276064493"]
   name_regex  = "^alpine-3\\.20\\.\\d+-(aarch64|x86_64)-uefi-tiny($|-.*)"
@@ -29,7 +29,7 @@ data "aws_ami" "alpine_3_20" {
 }
 
 locals {
-  os_alpine_3_20 = var.os != "alpine_3_20" ? {} : {
+  os_alpine_3_20 = (var.os != "alpine_3_20" && !startswith(var.os, "windows_")) ? {} : {
     node_configs = {
       default = {
         ami_id = one(data.aws_ami.alpine_3_20.*.id)

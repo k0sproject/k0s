@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     env:
-      TERRAFORM_VERSION: 1.4.6
+      TOFU_VERSION: 1.9.0
 
     defaults:
       run:
@@ -81,11 +81,11 @@ jobs:
           sparse-checkout: hack/ostests
           persist-credentials: false
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: opentofu/setup-opentofu@v1
         with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
-          terraform_wrapper: false
+          tofu_version: ${{ env.TOFU_VERSION }}
+          tofu_wrapper: false
 
-      - run: terraform fmt -check
-      - run: terraform init
-      - run: terraform validate -no-color
+      - run: tofu fmt -check
+      - run: tofu init
+      - run: tofu validate -no-color
