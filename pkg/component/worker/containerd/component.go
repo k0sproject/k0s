@@ -99,9 +99,19 @@ var _ manager.Component = (*Component)(nil)
 func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
 	for _, bin := range c.binaries {
-		b := bin
 		g.Go(func() error {
-			return assets.Stage(c.K0sVars.BinDir, b, constant.BinDirMode)
+			err := assets.Stage(c.K0sVars.BinDir, bin, constant.BinDirMode)
+			// Simply ignore the "running executable" problem on Windows for
+			// now. Whenever there's a permission error on Windows and the
+			// target file exists, log the error and continue.
+			if err != nil &&
+				runtime.GOOS == "windows" &&
+				errors.Is(err, os.ErrPermission) &&
+				file.Exists(filepath.Join(c.K0sVars.BinDir, bin)) {
+				logrus.WithField("component", "containerd").WithError(err).Error("Failed to replace ", bin)
+				return nil
+			}
+			return err
 		})
 	}
 	if err := g.Wait(); err != nil {
