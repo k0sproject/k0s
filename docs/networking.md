@@ -2,7 +2,7 @@
 
 ## In-cluster networking
 
-k0s supports any standard [CNI] network providers. For convenience, k0s does come bundled with tho built-in providers, [Kube-router] and [Calico].
+k0s supports any standard [CNI] network providers. For convenience, k0s does come bundled with two built-in providers, [Kube-router] and [Calico].
 
 [CNI]: https://github.com/containernetworking/cni
 [Kube-router]: https://github.com/cloudnativelabs/kube-router
