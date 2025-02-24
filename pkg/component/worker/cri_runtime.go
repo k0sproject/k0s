@@ -30,15 +30,27 @@ type RuntimeEndpoint = url.URL
 // Parses the CRI runtime flag and returns the parsed values.
 // If the flag is empty, provide k0s's defaults.
 func GetContainerRuntimeEndpoint(criSocketFlag, k0sRunDir string) (*RuntimeEndpoint, error) {
-	switch {
-	case criSocketFlag != "":
+	if criSocketFlag != "" {
 		return parseCRISocketFlag(criSocketFlag)
-	case runtime.GOOS == "windows":
-		return &url.URL{Scheme: "npipe", Path: "//./pipe/containerd-containerd"}, nil
-	default:
-		socketPath := filepath.Join(k0sRunDir, "containerd.sock")
-		return &url.URL{Scheme: "unix", Path: filepath.ToSlash(socketPath)}, nil
 	}
+
+	return getContainerRuntimeEndpoint(k0sRunDir), nil
+}
+
+func getContainerRuntimeEndpoint(k0sRunDir string) *RuntimeEndpoint {
+	if runtime.GOOS == "windows" {
+		return &url.URL{Scheme: "npipe", Path: "//./pipe/containerd-containerd"}
+	}
+
+	return &url.URL{Scheme: "unix", Path: filepath.ToSlash(GetContainerdAddress(k0sRunDir))}
+}
+
+func GetContainerdAddress(k0sRunDir string) string {
+	if runtime.GOOS == "windows" {
+		return getContainerRuntimeEndpoint(k0sRunDir).String()
+	}
+
+	return filepath.Join(k0sRunDir, "containerd.sock")
 }
 
 func parseCRISocketFlag(criSocketFlag string) (*RuntimeEndpoint, error) {

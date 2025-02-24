@@ -18,9 +18,9 @@ package ctr
 
 import (
 	"os"
-	"path"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/containerd/containerd/cmd/ctr/app"
@@ -58,7 +58,7 @@ func setDefaultValues(runDir string, flags []cli.Flag) {
 	for i, flag := range flags {
 		if f, ok := flag.(cli.StringFlag); ok {
 			if f.Name == "address, a" {
-				f.Value = path.Join(runDir, "containerd.sock")
+				f.Value = worker.GetContainerdAddress(runDir)
 				flags[i] = f
 			} else if f.Name == "namespace, n" {
 				f.Value = "k8s.io"
