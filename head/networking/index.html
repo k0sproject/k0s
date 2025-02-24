@@ -2349,7 +2349,7 @@
 
 <h1 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h1>
 <h2 id="in-cluster-networking">In-cluster networking<a class="headerlink" href="#in-cluster-networking" title="Permanent link">#</a></h2>
-<p>k0s supports any standard <a href="https://github.com/containernetworking/cni">CNI</a> network providers. For convenience, k0s does come bundled with tho built-in providers, <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> and <a href="https://www.projectcalico.org/">Calico</a>.</p>
+<p>k0s supports any standard <a href="https://github.com/containernetworking/cni">CNI</a> network providers. For convenience, k0s does come bundled with two built-in providers, <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> and <a href="https://www.projectcalico.org/">Calico</a>.</p>
 <h3 id="custom-cni-configuration">Custom CNI configuration<a class="headerlink" href="#custom-cni-configuration" title="Permanent link">#</a></h3>
 <p>You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure <code>custom</code> as the <a href="../configuration/#specnetwork">network provider</a> in the k0s configuration file (<code>k0s.yaml</code>). To deploy the CNI provider you want to use, you can deploy it using Helm, plain Kubernetes manifests or any other way.</p>
 <h3 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">#</a></h3>
