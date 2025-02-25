@@ -152,7 +152,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// Kubelet uses hostname lookup to autodetect the ip address, but
 		// will only pick one for a single family. Do something similar as
 		// kubelet but for both ipv6 and ipv6.
-		// https://github.com/kubernetes/kubernetes/blob/0cc57258c3f8545c8250f0e7a1307fd01b0d283d/pkg/kubelet/nodestatus/setters.go#L196
+		// https://github.com/kubernetes/kubernetes/blob/v1.32.2/pkg/kubelet/nodestatus/setters.go#L202-L230
 		ipv4, ipv6, err := lookupHostname(ctx, nodename)
 		if err != nil {
 			logrus.WithError(err).Errorf("failed to lookup %q", nodename)
