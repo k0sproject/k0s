@@ -32,6 +32,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -46,7 +47,7 @@ type Manager struct {
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	bundleDir string
-	stop      func(reason string)
+	stop      func()
 	log       *logrus.Entry
 
 	LeaderElector leaderelector.Interface
@@ -69,34 +70,33 @@ func (m *Manager) Init(ctx context.Context) error {
 	m.log = logrus.WithField("component", constant.ApplierManagerComponentName)
 	m.bundleDir = m.K0sVars.ManifestsDir
 
-	m.LeaderElector.AddAcquiredLeaseCallback(func() {
-		ctx, cancel := context.WithCancelCause(ctx)
-		stopped := make(chan struct{})
-
-		m.stop = func(reason string) { cancel(errors.New(reason)); <-stopped }
-		go func() {
-			defer close(stopped)
-			wait.UntilWithContext(ctx, m.runWatchers, 1*time.Minute)
-		}()
-	})
-	m.LeaderElector.AddLostLeaseCallback(func() {
-		if m.stop != nil {
-			m.stop("lost leadership")
-		}
-	})
-
-	return err
+	return nil
 }
 
 // Run runs the Manager
-func (m *Manager) Start(_ context.Context) error {
+func (m *Manager) Start(context.Context) error {
+	ctx, cancel := context.WithCancelCause(context.Background())
+	stopped := make(chan struct{})
+
+	m.stop = func() {
+		cancel(errors.New("applier manager is stopping"))
+		<-stopped
+	}
+
+	go func() {
+		defer close(stopped)
+		leaderelection.RunLeaderTasks(ctx, m.LeaderElector.CurrentStatus, func(ctx context.Context) {
+			wait.UntilWithContext(ctx, m.runWatchers, time.Minute)
+		})
+	}()
+
 	return nil
 }
 
 // Stop stops the Manager
 func (m *Manager) Stop() error {
 	if m.stop != nil {
-		m.stop("applier manager is stopping")
+		m.stop()
 	}
 	return nil
 }
