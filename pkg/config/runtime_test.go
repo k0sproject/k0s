@@ -58,8 +58,7 @@ func TestNewRuntimeConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(startupConfigPath, startupConfig, 0644))
 
-	// Define runtime configuration file in a not yet existing directory
-	rtConfigPath := filepath.Join(tempDir, "runtime", "config")
+	rtConfigPath := filepath.Join(tempDir, "runtime-config")
 
 	// prepare k0sVars
 	k0sVars := &CfgVars{

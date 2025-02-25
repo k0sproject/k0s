@@ -78,15 +78,6 @@ func TestSupervisorStart(t *testing.T) {
 				RunDir:  t.TempDir(),
 			},
 		},
-		{
-			expectedErrMsg: "mkdir " + sleep.binPath,
-			proc: Supervisor{
-				Name:    "supervisor-test-rundir-init-fail",
-				BinPath: sleep.binPath,
-				Args:    sleep.binArgs,
-				RunDir:  filepath.Join(sleep.binPath, "obstructed"),
-			},
-		},
 	}
 
 	for _, s := range testSupervisors {

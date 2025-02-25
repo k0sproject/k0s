@@ -61,6 +61,7 @@ func TestAdmin(t *testing.T) {
 		RuntimeConfigPath:   filepath.Join(dataDir, "run", "k0s.yaml"),
 		StartupConfigPath:   configPath,
 	}
+	require.NoError(t, os.Mkdir(filepath.Dir(k0sVars.RuntimeConfigPath), 0700))
 	cfg, err := config.NewRuntimeConfig(k0sVars, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { assert.NoError(t, cfg.Spec.Cleanup()) })
@@ -101,6 +102,7 @@ func TestAdmin_NoAdminConfig(t *testing.T) {
 		RuntimeConfigPath:   filepath.Join(dataDir, "run", "k0s.yaml"),
 		StartupConfigPath:   filepath.Join(dataDir, "k0s.yaml"),
 	}
+	require.NoError(t, os.Mkdir(filepath.Dir(k0sVars.RuntimeConfigPath), 0700))
 
 	cfg, err := config.NewRuntimeConfig(k0sVars, nil)
 	require.NoError(t, err)

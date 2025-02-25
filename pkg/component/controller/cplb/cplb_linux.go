@@ -83,7 +83,7 @@ func (k *Keepalived) Init(_ context.Context) error {
 	}
 
 	k.configFilePath = filepath.Join(k.K0sVars.RunDir, "keepalived.conf")
-	return assets.Stage(k.K0sVars.BinDir, "keepalived", constant.BinDirMode)
+	return assets.Stage(k.K0sVars.BinDir, "keepalived")
 }
 
 // Start generates the keepalived configuration and starts the keepalived process

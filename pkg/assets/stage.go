@@ -24,7 +24,6 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/sirupsen/logrus"
 )
 
@@ -63,14 +62,9 @@ func BinPath(name string, binDir string) string {
 }
 
 // Stage ...
-func Stage(dataDir string, name string, filemode os.FileMode) error {
+func Stage(dataDir string, name string) error {
 	p := filepath.Join(dataDir, name)
 	logrus.Infof("Staging '%s'", p)
-
-	err := dir.Init(filepath.Dir(p), filemode)
-	if err != nil {
-		return fmt.Errorf("failed to create dir '%s': %w", filepath.Dir(p), err)
-	}
 
 	selfexe, err := os.Executable()
 	if err != nil {

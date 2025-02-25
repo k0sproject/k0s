@@ -160,12 +160,14 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions) er
 	if err := dir.Init(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 		return err
 	}
-	if err := dir.Init(c.K0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
+	if err := dir.Init(c.K0sVars.RunDir, constant.RunDirMode); err != nil {
 		return err
 	}
-	// let's make sure run-dir exists
-	if err := dir.Init(c.K0sVars.RunDir, constant.RunDirMode); err != nil {
-		return fmt.Errorf("failed to initialize dir: %w", err)
+	if err := dir.Init(c.K0sVars.BinDir, constant.BinDirMode); err != nil {
+		return err
+	}
+	if err := dir.Init(c.K0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
+		return err
 	}
 
 	rtc, err := config.NewRuntimeConfig(c.K0sVars, nodeConfig)

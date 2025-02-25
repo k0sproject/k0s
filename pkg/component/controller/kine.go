@@ -106,7 +106,7 @@ func (k *Kine) Init(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can't create bypass etcd client: %w", err)
 	}
-	return assets.Stage(k.K0sVars.BinDir, "kine", constant.BinDirMode)
+	return assets.Stage(k.K0sVars.BinDir, "kine")
 }
 
 // Run runs kine
