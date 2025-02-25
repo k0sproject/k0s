@@ -1,0 +1,24 @@
+{
+  "architecture": "arm64",
+  "config": {
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "WorkingDir": "/"
+  },
+  "created": "1980-01-01T00:00:00Z",
+  "history": [
+    {
+      "created": "1980-01-01T00:00:00Z",
+      "created_by": "COPY /hello /hello # buildkit",
+      "comment": "buildkit.dockerfile.v0"
+    }
+  ],
+  "os": "linux",
+  "rootfs": {
+    "type": "layers",
+    "diff_ids": [
+      "sha256:fc5206b05a82c863b06199219265bba69c4c4952b01a843254873a29a85a717a"
+    ]
+  }
+}
