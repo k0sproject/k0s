@@ -23,7 +23,7 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/go-openapi/jsonpointer v0.21.0
 	github.com/go-playground/validator/v10 v10.22.1
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/k0sproject/bootloose v0.8.0
 	github.com/k0sproject/dig v0.2.0
 	github.com/k0sproject/version v0.6.0
