@@ -131,10 +131,6 @@ func (s *Supervisor) Supervise() error {
 	}
 	s.log = logrus.WithField("component", s.Name)
 	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
-	if err := dir.Init(s.RunDir, constant.RunDirMode); err != nil {
-		s.log.Warnf("failed to initialize dir: %v", err)
-		return err
-	}
 
 	if s.TimeoutStop == 0 {
 		s.TimeoutStop = 5 * time.Second

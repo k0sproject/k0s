@@ -22,9 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -100,10 +98,6 @@ func ParseRuntimeConfig(content []byte) (*RuntimeConfig, error) {
 }
 
 func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*RuntimeConfig, error) {
-	if err := dir.Init(filepath.Dir(k0sVars.RuntimeConfigPath), constant.RunDirMode); err != nil {
-		logrus.Warnf("failed to initialize runtime config dir: %v", err)
-	}
-
 	// A file lock is acquired using `flock(2)` to ensure that only one
 	// instance of the `k0s` process can modify the runtime configuration
 	// at a time. The lock is tied to the lifetime of the `k0s` process,
