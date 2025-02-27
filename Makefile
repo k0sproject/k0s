@@ -149,7 +149,7 @@ $(controller_gen_targets): $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt ha
 # Usually register-gen should should be:
 # k8s.io/code-generator/cmd/register-gen@v$(kubernetes_version:1.%=0.%)
 # However, due to https://github.com/kubernetes/kubernetes/issues/129290 in 1.32.1 we
-# need to hardcode it to 0.31.5 instead of the appropriate 0.32.1.
+# need to hardcode it to 0.31.5 instead of the appropriate 0.32.2.
 register_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/zz_generated.register.go)
 codegen_targets += $(register_gen_targets)
 $(register_gen_targets): $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
