@@ -339,7 +339,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions) er
 
 	if !slices.Contains(flags.DisableComponents, constant.ApplierManagerComponentName) {
 		nodeComponents.Add(ctx, &applier.Manager{
-			K0sVars:           c.K0sVars,
+			ManifestsDir:      c.K0sVars.ManifestsDir,
 			KubeClientFactory: adminClientFactory,
 			IgnoredStacks: []string{
 				controller.ClusterConfigStackName,
