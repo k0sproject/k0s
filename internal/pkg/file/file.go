@@ -76,6 +76,8 @@ func WriteTmpFile(data string, prefix string) (path string, err error) {
 		return "", fmt.Errorf("cannot create temporary file: %w", err)
 	}
 
+	defer tmpFile.Close()
+
 	text := []byte(data)
 	if _, err = tmpFile.Write(text); err != nil {
 		return "", fmt.Errorf("failed to write to temporary file: %w", err)
