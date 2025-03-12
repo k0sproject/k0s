@@ -361,7 +361,7 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) err
 
 	select {
 	case <-ctx.Done():
-		return errors.New("context cancelled while starting the reverse proxy")
+		return errors.New("context canceled while starting the reverse proxy")
 	case <-k.updateCh:
 	}
 	k.setProxyRoutes()
