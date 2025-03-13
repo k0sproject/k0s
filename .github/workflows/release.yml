@@ -428,7 +428,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Download assets for generating checksums
-        uses: robinraju/release-downloader@v1.11
+        uses: robinraju/release-downloader@v1.12
         with:
           releaseId: ${{ needs.release.outputs.release_id }}
           filename: "*"
