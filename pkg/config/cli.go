@@ -64,6 +64,7 @@ const (
 type ControllerOptions struct {
 	NoTaints          bool
 	DisableComponents []string
+	InitOnly          bool
 
 	ClusterComponents               *manager.Manager
 	EnableK0sCloudProvider          bool
@@ -309,6 +310,7 @@ func GetControllerFlags(controllerOpts *ControllerOptions) *pflag.FlagSet {
 	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
 	flagset.BoolVar(&controllerOpts.EnableMetricsScraper, "enable-metrics-scraper", false, "enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)")
 	flagset.StringVar(&controllerOpts.KubeControllerManagerExtraArgs, "kube-controller-manager-extra-args", "", "extra args for kube-controller-manager")
+	flagset.BoolVar(&controllerOpts.InitOnly, "init-only", false, "only initialize controller and exit")
 	return flagset
 }
 

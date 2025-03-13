@@ -417,6 +417,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions) er
 
 	perfTimer.Checkpoint("starting-node-components")
 
+	if flags.InitOnly {
+		return nil
+	}
+
 	// Start components
 	err = nodeComponents.Start(ctx)
 	perfTimer.Checkpoint("finished-starting-node-components")
