@@ -77,7 +77,7 @@ func (u *periodicUpdater) Run() error {
 	}
 	u.log.Debugf("using %s for update check period", checkDuration.String())
 	go func() {
-		// Check for update every checkDuration, return when context is cancelled
+		// Check for update every checkDuration, return when context is canceled
 		ticker := time.NewTicker(checkDuration)
 		u.ticker = ticker
 		defer ticker.Stop()

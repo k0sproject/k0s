@@ -53,7 +53,7 @@ func TestSupervisorStart(t *testing.T) {
 		cmd{"powershell", []string{"-noprofile", "-noninteractive", "-command", "exit 1"}},
 	)
 
-	var testSupervisors = []*SupervisorTest{
+	testSupervisors := []*SupervisorTest{
 		{
 			proc: Supervisor{
 				Name:    "supervisor-test-sleep",
@@ -99,7 +99,7 @@ func TestGetEnv(t *testing.T) {
 	t.Cleanup(func() {
 		for _, e := range oldEnv {
 			key, val, _ := strings.Cut(e, "=")
-			assert.NoError(t, os.Setenv(key, val))
+			assert.NoError(t, os.Setenv(key, val)) //nolint:usetesting
 		}
 	})
 
@@ -258,7 +258,7 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0o644))
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
@@ -300,7 +300,7 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0o644))
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
@@ -333,7 +333,7 @@ func TestCleanupPIDFile_WrongProcess(t *testing.T) {
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0o644))
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
@@ -363,7 +363,7 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 	// Create a PID file that's pointing to some non-existing process. Note that
 	// this is probably not 100% safe, but we'll assume MaxInt32 will be unused.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", math.MaxInt32)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", math.MaxInt32)), 0o644))
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
@@ -389,7 +389,7 @@ func TestCleanupPIDFile_BogusPIDFile(t *testing.T) {
 
 	// Create a PID file with non-parsable content.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte("rubbish"), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, []byte("rubbish"), 0o644))
 
 	// Expect the supervisor to bail out.
 	assert.ErrorContains(t, s.Supervise(), `"rubbish": invalid`)
