@@ -135,7 +135,7 @@ func TestJoinClient_Cancellation(t *testing.T) {
 			require.NoError(t, err)
 
 			err = test.funcUnderTest(clientContext, underTest)
-			assert.ErrorIs(t, err, context.Canceled, "Expected the call to be cancelled")
+			assert.ErrorIs(t, err, context.Canceled, "Expected the call to be canceled")
 			assert.Same(t, context.Cause(clientContext), assert.AnError, "Didn't receive an HTTP request")
 		})
 	}

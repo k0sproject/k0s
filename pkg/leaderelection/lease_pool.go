@@ -39,7 +39,7 @@ type LeaseEvents struct {
 	LostLease     chan struct{}
 }
 
-// The LeaseConfiguration allows passing through various options to customise the lease.
+// The LeaseConfiguration allows passing through various options to customize the lease.
 type LeaseConfiguration struct {
 	name        string
 	identity    string
