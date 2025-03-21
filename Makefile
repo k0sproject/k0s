@@ -45,6 +45,9 @@ else
   GO ?= $(GO_ENV) go
 endif
 
+UPX ?= upx
+UPX_OPTS ?= -1
+
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
 #   none	does not embed any binaries
@@ -204,6 +207,9 @@ k0s.exe: BUILD_GO_CGO_ENABLED = 0
 k0s.exe k0s: $(GO_ENV_REQUISITES) go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/manifests/calico static/manifests/windows -type f)
 	rm -f -- '$@'
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
+ifneq ($(UPX),)
+	$(GO_ENV) $(UPX) $(UPX_OPTS) -- '$@'
+endif
 ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
 	cat -- bindata_$(TARGET_OS) >>$@
 endif
