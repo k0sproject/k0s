@@ -241,7 +241,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	// All the controller-runtime controllers have been registered.
 	c.initialized = true
 
-	// The controller-runtime start blocks until the context is cancelled.
+	// The controller-runtime start blocks until the context is canceled.
 	if err := mgr.Start(ctx); err != nil {
 		logger.WithError(err).Error("unable to run controller-runtime manager")
 		return err
