@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 )
 
 type Dummy struct {
@@ -36,6 +37,17 @@ func (l *Dummy) IsLeader() bool               { return l.Leader }
 
 func (l *Dummy) AddAcquiredLeaseCallback(fn func()) {
 	l.callbacks = append(l.callbacks, fn)
+}
+
+var never = make(<-chan struct{})
+
+func (l *Dummy) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
+	var status leaderelection.Status
+	if l.Leader {
+		status = leaderelection.StatusLeading
+	}
+
+	return status, never
 }
 
 func (l *Dummy) AddLostLeaseCallback(func()) {}
