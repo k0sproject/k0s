@@ -2,7 +2,15 @@ ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
-RUN apk add build-base git linux-headers rsync grep coreutils bash
+
+RUN if [ ! -z "$(which apt)" ]; then \
+       apt update && apt install -y build-essential git rsync grep coreutils bash; \
+    elif [ ! -z "$(which apk)" ]; then \
+       apk add build-base git linux-headers rsync grep coreutils bash; \
+    else \
+       echo "unsupported package manager"; \
+       exit 1; \
+    fi
 
 RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
@@ -46,3 +54,4 @@ RUN \
 
 FROM scratch
 COPY --from=build out/* /bin/
+
