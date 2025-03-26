@@ -9,7 +9,7 @@ RUN set -ex; \
   arm*) binutils=binutils-gold ;; \
     *)    binutils=binutils ;; \
   esac; \
-  apk add --no-cache make gcc musl-dev "$binutils"
+  apk add --no-cache make gcc musl-dev "$binutils" upx
 
 ENV \
   HOME="/run/k0s-build" \
