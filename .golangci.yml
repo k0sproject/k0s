@@ -19,6 +19,7 @@ linters:
     - gofmt             # Checks whether code was gofmt-ed
     - goheader          # Checks is file headers matche a given pattern
     - intrange          # Checking for loops that could use an integer range
+    - misspell          # Finds commonly misspelled English words
     - nilnesserr        # Reports constructs that check for err != nil but return a different nil value error
     - nolintlint        # Find ill-formed or insufficiently explained nolint directives
     - nosprintfhostport # Detects misuses of Sprintf to construct hosts with ports in a URL
@@ -86,6 +87,9 @@ linters-settings:
     values:
       regexp:
         year: 202[0-9]
+
+  misspell:
+    locale: US
 
   revive:
     rules:
