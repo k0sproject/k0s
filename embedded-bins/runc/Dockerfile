@@ -1,8 +1,16 @@
 ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
-RUN apk add build-base git \
-	curl linux-headers gperf bash pkgconf cmd:tail
+RUN if [ ! -z "$(which apt)" ]; then \
+       apt update && apt install -y build-essential git \
+        curl gperf bash pkg-config; \
+    elif [ ! -z "$(which apk)" ]; then \
+       apk add build-base git \
+       	curl linux-headers gperf bash pkgconf cmd:tail; \
+    else \
+       echo "unsupported package manager"; \
+       exit 1; \
+    fi
 
 ENV GOPATH=/go
 

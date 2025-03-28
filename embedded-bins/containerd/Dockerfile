@@ -3,10 +3,20 @@ FROM $BUILDIMAGE AS build
 
 ENV GOPATH=/go
 
-RUN apk upgrade -U -a && apk add \
-	build-base git \
-	btrfs-progs-dev btrfs-progs-static \
-	protoc bash
+RUN if [ ! -z "$(which apt)" ]; then \
+       apt update && apt install -y \
+        build-essential git \
+        btrfs-progs protobuf-compiler \
+        bash; \
+    elif [ ! -z "$(which apk)" ]; then \
+       apk upgrade -U -a && apk add \
+        build-base git \
+        btrfs-progs-dev btrfs-progs-static \
+        protoc bash; \
+    else \
+       echo "unsupported package manager"; \
+       exit 1; \
+    fi
 
 ARG VERSION
 RUN mkdir -p $GOPATH/src/github.com/containerd/containerd
