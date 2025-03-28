@@ -1,7 +1,14 @@
 ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
-RUN apk add build-base git make protoc
+RUN if [ ! -z "$(which apt)" ]; then \
+       apt update && apt install -y build-essential make protobuf-compiler git; \
+    elif [ ! -z "$(which apk)" ]; then \
+       apk add build-base git make protoc; \
+    else \
+       echo "unsupported package manager"; \
+       exit 1; \
+    fi
 
 ARG VERSION
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git /apiserver-network-proxy
