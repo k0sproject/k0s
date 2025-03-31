@@ -2,6 +2,8 @@ module github.com/k0sproject/k0s
 
 go 1.23.0
 
+toolchain go1.24.1
+
 // k0s
 require (
 	github.com/BurntSushi/toml v1.5.0
@@ -21,7 +23,7 @@ require (
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-logr/logr v1.4.2
 	github.com/go-openapi/jsonpointer v0.21.1
-	github.com/go-playground/validator/v10 v10.25.0
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/go-cmp v0.7.0
 	github.com/k0sproject/bootloose v0.9.0
 	github.com/k0sproject/version v0.7.0
