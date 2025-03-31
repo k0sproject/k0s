@@ -1,7 +1,7 @@
 alpine_version = 3.21
 alpine_patch_version = $(alpine_version).3
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
-go_version = 1.23.6
+go_version = 1.23.7
 
 runc_version = 1.2.6
 runc_buildimage = $(golang_buildimage)
@@ -22,7 +22,7 @@ containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_ldflags =
 containerd_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-kubernetes_version = 1.32.2
+kubernetes_version = 1.32.3
 helm_version = 3.11.1
 kubernetes_buildimage = $(golang_buildimage)
 kubernetes_build_go_tags = "providerless"
