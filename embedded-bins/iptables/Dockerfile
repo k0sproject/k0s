@@ -1,10 +1,19 @@
 ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
-RUN apk add build-base curl pkgconf \
-	linux-headers \
-	libmnl-dev libmnl-static \
-	libnftnl-dev
+RUN if [ ! -z "$(which apt)" ]; then \
+       apt update && apt install -y build-essential curl \
+        pkg-config \
+        libmnl-dev libnftnl-dev; \
+    elif [ ! -z "$(which apk)" ]; then \
+       apk add build-base curl pkgconf \
+         linux-headers \
+         libmnl-dev libmnl-static \
+         libnftnl-dev; \
+    else \
+       echo "unsupported package manager"; \
+       exit 1; \
+    fi
 
 ARG VERSION
 RUN curl -L https://www.netfilter.org/projects/iptables/files/iptables-$VERSION.tar.xz \
