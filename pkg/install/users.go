@@ -18,7 +18,6 @@ package install
 
 import (
 	"errors"
-	"fmt"
 	"os/exec"
 	"os/user"
 	"reflect"
@@ -46,7 +45,7 @@ func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config
 		}
 	}
 	if len(messages) > 0 {
-		return fmt.Errorf(strings.Join(messages, "\n"))
+		return errors.New(strings.Join(messages, "\n"))
 	}
 	return nil
 }
@@ -66,7 +65,7 @@ func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 	}
 	if len(messages) > 0 {
 		// don't fail the command, just notify on errors
-		return fmt.Errorf(strings.Join(messages, "\n"))
+		return errors.New(strings.Join(messages, "\n"))
 	}
 	return nil
 }
