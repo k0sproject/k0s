@@ -18,9 +18,7 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -28,28 +26,21 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 var (
-	CfgFile       string
-	Debug         bool
-	DebugListenOn string
-	K0sVars       CfgVars
-	workerOpts    WorkerOptions
-	Verbose       bool
+	CfgFile    string
+	K0sVars    CfgVars
+	workerOpts WorkerOptions
 )
 
 // This struct holds all the CLI options & settings required by the
 // different k0s sub-commands
 type CLIOptions struct {
 	WorkerOptions
-	CfgFile       string
-	Debug         bool
-	DebugListenOn string
-	K0sVars       *CfgVars
-	Verbose       bool
+	CfgFile string
+	K0sVars *CfgVars
 }
 
 type ControllerMode uint8
@@ -221,25 +212,14 @@ func (f *logLevelsFlag) String() string {
 
 func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
-	flagset.BoolVarP(&Verbose, "verbose", "v", false, "Verbose logging (default: false)")
 	flagset.String("data-dir", constant.DataDirDefault, "Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break!")
 	flagset.String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
-	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
 	return flagset
 }
 
-// XX: not a pretty hack, but we need the data-dir flag for the kubectl subcommand
-// XX: when other global flags cannot be used (specifically -d and -c)
 func GetKubeCtlFlagSet() *pflag.FlagSet {
-	debugDefault := false
-	if v, ok := os.LookupEnv("DEBUG"); ok {
-		debugDefault, _ = strconv.ParseBool(v)
-	}
-
 	flagset := &pflag.FlagSet{}
 	flagset.String("data-dir", constant.DataDirDefault, "Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break!")
-	flagset.BoolVar(&Debug, "debug", debugDefault, "Debug logging [$DEBUG]")
 	return flagset
 }
 
@@ -339,41 +319,7 @@ func GetCmdOpts(cobraCmd command) (*CLIOptions, error) {
 	return &CLIOptions{
 		WorkerOptions: workerOpts,
 
-		CfgFile:       CfgFile,
-		Debug:         Debug,
-		Verbose:       Verbose,
-		K0sVars:       k0sVars,
-		DebugListenOn: DebugListenOn,
+		CfgFile: CfgFile,
+		K0sVars: k0sVars,
 	}, nil
-}
-
-// CallParentPersistentPreRun runs the parent command's persistent pre-run.
-// Cobra does not do this automatically.
-//
-// See: https://github.com/spf13/cobra/issues/216
-// See: https://github.com/spf13/cobra/blob/v1.4.0/command.go#L833-L843
-func CallParentPersistentPreRun(cmd *cobra.Command, args []string) error {
-	for p := cmd.Parent(); p != nil; p = p.Parent() {
-		preRunE := p.PersistentPreRunE
-		preRun := p.PersistentPreRun
-
-		p.PersistentPreRunE = nil
-		p.PersistentPreRun = nil
-
-		defer func() {
-			p.PersistentPreRunE = preRunE
-			p.PersistentPreRun = preRun
-		}()
-
-		if preRunE != nil {
-			return preRunE(cmd, args)
-		}
-
-		if preRun != nil {
-			preRun(cmd, args)
-			return nil
-		}
-	}
-
-	return nil
 }

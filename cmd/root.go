@@ -18,12 +18,11 @@ package cmd
 
 import (
 	"errors"
-	"net/http"
 	"os"
 
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
-	configcmd "github.com/k0sproject/k0s/cmd/config"
+	"github.com/k0sproject/k0s/cmd/config"
 	"github.com/k0sproject/k0s/cmd/ctr"
 	"github.com/k0sproject/k0s/cmd/etcd"
 	"github.com/k0sproject/k0s/cmd/install"
@@ -36,11 +35,8 @@ import (
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
-	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/config"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -52,33 +48,12 @@ func NewRootCmd() *cobra.Command {
 		Use:          "k0s",
 		Short:        "k0s - Zero Friction Kubernetes",
 		SilenceUsage: true,
-
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if config.Verbose {
-				internallog.SetInfoLevel()
-			}
-
-			if config.Debug {
-				// TODO: check if it actually works and is not overwritten by something else
-				internallog.SetDebugLevel()
-
-				go func() {
-					log := logrus.WithField("debug_server", config.DebugListenOn)
-					log.Debug("Starting debug server")
-					if err := http.ListenAndServe(config.DebugListenOn, nil); !errors.Is(err, http.ErrServerClosed) {
-						log.WithError(err).Debug("Failed to start debug server")
-					} else {
-						log.Debug("Debug server closed")
-					}
-				}()
-			}
-		},
 	}
 
 	cmd.AddCommand(airgap.NewAirgapCmd())
 	cmd.AddCommand(api.NewAPICmd())
 	cmd.AddCommand(ctr.NewCtrCommand())
-	cmd.AddCommand(configcmd.NewConfigCmd())
+	cmd.AddCommand(config.NewConfigCmd())
 	cmd.AddCommand(etcd.NewEtcdCmd())
 	cmd.AddCommand(install.NewInstallCmd())
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
@@ -125,7 +100,7 @@ func newDocsCmd() *cobra.Command {
 }
 
 func newDefaultConfigCmd() *cobra.Command {
-	cmd := configcmd.NewCreateCmd()
+	cmd := config.NewCreateCmd()
 	cmd.Hidden = true
 	cmd.Deprecated = "use 'k0s config create' instead"
 	cmd.Use = "default-config"
