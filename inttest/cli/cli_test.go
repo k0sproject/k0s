@@ -62,7 +62,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	s.T().Run("sysinfoSmoketest", func(t *testing.T) {
 		out, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s sysinfo", s.K0sFullPath))
 		assert.NoError(t, err, "k0s sysinfo has non-zero exit code")
-		t.Logf(out)
+		t.Log(out)
 		assert.Regexp(t, "\nOperating system: Linux \\(pass\\)\n", out)
 		assert.Regexp(t, "\n  Linux kernel release: ", out)
 		assert.Regexp(t, "\n  CONFIG_CGROUPS: ", out)
