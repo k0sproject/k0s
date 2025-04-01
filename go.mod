@@ -2,6 +2,8 @@ module github.com/k0sproject/k0s
 
 go 1.23.0
 
+toolchain go1.24.1
+
 // k0s
 require (
 	github.com/BurntSushi/toml v1.5.0
@@ -56,7 +58,7 @@ require (
 	golang.org/x/sys v0.31.0
 	golang.org/x/text v0.23.0
 	golang.org/x/tools v0.31.0
-	google.golang.org/grpc v1.71.0
+	google.golang.org/grpc v1.71.1
 	helm.sh/helm/v3 v3.17.2
 	oras.land/oras-go/v2 v2.5.0
 )
