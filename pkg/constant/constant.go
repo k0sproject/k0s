@@ -86,7 +86,7 @@ const (
 	KubePauseContainerImage            = "registry.k8s.io/pause"
 	KubePauseContainerImageVersion     = "3.9"
 	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion              = "v1.32.2"
+	KubeProxyImageVersion              = "v1.32.3"
 	CoreDNSImage                       = "quay.io/k0sproject/coredns"
 	CoreDNSImageVersion                = "1.12.0"
 	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"
