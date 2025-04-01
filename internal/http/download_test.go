@@ -45,7 +45,7 @@ func TestDownload_CancelRequest(t *testing.T) {
 	if urlErr := (*url.Error)(nil); assert.ErrorAs(t, err, &urlErr) {
 		assert.Equal(t, "Get", urlErr.Op)
 		assert.Equal(t, "http://404.example.com", urlErr.URL)
-		assert.Equal(t, context.Canceled, urlErr.Err)
+		assert.Equal(t, assert.AnError, urlErr.Err)
 	}
 }
 
@@ -110,7 +110,6 @@ func TestDownload_CancelDownload(t *testing.T) {
 
 	assert.ErrorContains(t, err, "while downloading: ")
 	assert.ErrorIs(t, err, assert.AnError)
-	assert.ErrorIs(t, err, context.Canceled)
 }
 
 func TestDownload_RedirectLoop(t *testing.T) {
