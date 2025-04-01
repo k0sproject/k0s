@@ -2389,13 +2389,13 @@ registry. For simplicity, the examples given here use Docker Hub (GitHub
 requires separate authentication, which is not covered here). The image names
 are as follows:</p>
 <ul>
-<li><code>docker.io/k0sproject/k0s:v1.32.2-k0s.0</code></li>
-<li><code>ghcr.io/k0sproject/k0s:v1.32.2-k0s.0</code></li>
+<li><code>docker.io/k0sproject/k0s:v1.32.3-k0s.0</code></li>
+<li><code>ghcr.io/k0sproject/k0s:v1.32.3-k0s.0</code></li>
 </ul>
 <p><strong>Note:</strong> Due to Docker's tag validation scheme, <code>-</code> is used as the k0s version
 separator instead of the usual <code>+</code>. For example, k0s version
-<code>v1.32.2+k0s.0</code> is tagged as
-<code>docker.io/k0sproject/k0s:v1.32.2-k0s.0</code>.</p>
+<code>v1.32.3+k0s.0</code> is tagged as
+<code>docker.io/k0sproject/k0s:v1.32.3-k0s.0</code>.</p>
 <h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
 <h3 id="1-run-a-controller">1. Run a controller<a class="headerlink" href="#1-run-a-controller" title="Permanent link">#</a></h3>
 <p>By default, running the k0s OCI image will launch a controller with workloads
@@ -2406,7 +2406,7 @@ local testing "cluster":</p>
 <span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
 <span class="w">  </span>--privileged<span class="w"> </span><span class="sb">`</span><span class="c1"># this is the easiest way to enable container-in-container workloads` \</span>
 <span class="w">  </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span><span class="sb">`</span><span class="c1"># publish the Kubernetes API server port` \</span>
-<span class="w">  </span>docker.io/k0sproject/k0s:v1.32.2-k0s.0
+<span class="w">  </span>docker.io/k0sproject/k0s:v1.32.3-k0s.0
 </code></pre></div>
 <p>Explanation of command line arguments:</p>
 <ul>
@@ -2424,7 +2424,7 @@ local testing "cluster":</p>
   privileges.</li>
 <li><code>-p 6443:6443</code> exposes the container's Kubernetes API server port 6443 to the
   host, allowing you to interact with the cluster externally.</li>
-<li><code>docker.io/k0sproject/k0s:v1.32.2-k0s.0</code> is the name of the
+<li><code>docker.io/k0sproject/k0s:v1.32.3-k0s.0</code> is the name of the
   k0s image to run.</li>
 </ul>
 <p>By default, the k0s image starts a k0s controller with worker components enabled
@@ -2439,7 +2439,7 @@ controller-and-worker node using the following command:</p>
 <span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
 <span class="w">  </span>--tmpfs<span class="w"> </span>/tmp<span class="w"> </span><span class="sb">`</span><span class="c1"># allow writing temporary files` \</span>
 <span class="w">  </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span><span class="sb">`</span><span class="c1"># publish the Kubernetes API server port` \</span>
-<span class="w">  </span>docker.io/k0sproject/k0s:v1.32.2-k0s.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>docker.io/k0sproject/k0s:v1.32.3-k0s.0<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>k0s<span class="w"> </span>controller
 </code></pre></div>
 <p>Note the addition of <code>k0s controller</code> to override the image's default command.
@@ -2460,7 +2460,7 @@ application containers to separate workers.</p>
 <span class="w">  </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-v<span class="w"> </span>/var/log/pods<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores its data` \</span>
 <span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
 <span class="w">  </span>--privileged<span class="w"> </span><span class="sb">`</span><span class="c1"># this is the easiest way to enable container-in-container workloads` \</span>
-<span class="w">  </span>docker.io/k0sproject/k0s:v1.32.2-k0s.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>docker.io/k0sproject/k0s:v1.32.3-k0s.0<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="nv">$token</span>
 </code></pre></div>
 <p>Alternatively, with fine-grained privileges:
@@ -2487,7 +2487,7 @@ application containers to separate workers.</p>
 <span class="w">  </span>--cap-add<span class="w"> </span>net_admin<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cap-add<span class="w"> </span>sys_ptrace<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cap-add<span class="w"> </span>sys_resource<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>docker.io/k0sproject/k0s:v1.32.2-k0s.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>docker.io/k0sproject/k0s:v1.32.3-k0s.0<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$token</span><span class="s2">&quot;</span>
 </code></pre></div>
 <p>Notes on the security-related flags:</p>
@@ -2573,7 +2573,7 @@ cluster</a>.</p>
 <!-- Kept in its own file to ease local testing. -->
 <div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">k0s-controller</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:v1.32.2-k0s.0</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:v1.32.3-k0s.0</span>
 <span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller</span>
 <span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller</span>
 <span class="w">    </span><span class="nt">network_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bridge</span><span class="w"> </span><span class="c1"># other modes are unsupported</span>

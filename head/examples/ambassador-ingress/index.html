@@ -2236,7 +2236,7 @@
 <ol>
 <li>
 <p>Run k0s under Docker:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>docker.io/k0sproject/k0s:v1.32.2-k0s.0
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>docker.io/k0sproject/k0s:v1.32.3-k0s.0
 </code></pre></div>
 </li>
 <li>
@@ -2294,7 +2294,7 @@ docker<span class="w"> </span>rm<span class="w"> </span>k0s
 </li>
 <li>
 <p>Retart your k0s container, this time with additional ports and the above config file mapped into it:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-v<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">&quot;</span>/k0s.yaml:/k0s.yaml<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>-p<span class="w"> </span><span class="m">80</span>:80<span class="w"> </span>-p<span class="w"> </span><span class="m">443</span>:443<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span>docker.io/k0sproject/k0s:v1.32.2-k0s.0
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--name<span class="w"> </span>k0s<span class="w"> </span>--hostname<span class="w"> </span>k0s<span class="w"> </span>--privileged<span class="w"> </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-v<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">&quot;</span>/k0s.yaml:/k0s.yaml<span class="w"> </span>-p<span class="w"> </span><span class="m">6443</span>:6443<span class="w"> </span>-p<span class="w"> </span><span class="m">80</span>:80<span class="w"> </span>-p<span class="w"> </span><span class="m">443</span>:443<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span>docker.io/k0sproject/k0s:v1.32.3-k0s.0
 </code></pre></div>
 <p>After some time, you will be able to list the Ambassador Services:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>services<span class="w"> </span>-n<span class="w"> </span>ambassador

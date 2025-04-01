@@ -2499,7 +2499,7 @@ swapon<span class="w"> </span>-a
 <h2 id="download-k0s">Download k0s<a class="headerlink" href="#download-k0s" title="Permanent link">#</a></h2>
 <p>Download a <a href="https://github.com/k0sproject/k0s/releases/latest">k0s release</a>. For
 example:</p>
-<div class="highlight"><pre><span></span><code>wget<span class="w"> </span>-O<span class="w"> </span>/tmp/k0s<span class="w"> </span>https://github.com/k0sproject/k0s/releases/download/v1.32.2+k0s.0/k0s-v1.32.2+k0s.0-arm64<span class="w"> </span><span class="c1"># replace version number!</span>
+<div class="highlight"><pre><span></span><code>wget<span class="w"> </span>-O<span class="w"> </span>/tmp/k0s<span class="w"> </span>https://github.com/k0sproject/k0s/releases/download/v1.32.3+k0s.0/k0s-v1.32.3+k0s.0-arm64<span class="w"> </span><span class="c1"># replace version number!</span>
 sudo<span class="w"> </span>install<span class="w"> </span>/tmp/k0s<span class="w"> </span>/usr/local/bin/k0s
 </code></pre></div>
 <p>― or ―</p>
@@ -2509,7 +2509,7 @@ and make it executable in <code>/usr/bin/k0s</code>.</p>
 </code></pre></div>
 <p>At this point you can run <code>k0s</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>k0s<span class="w"> </span>version
-<span class="go">v1.32.2+k0s.0</span>
+<span class="go">v1.32.3+k0s.0</span>
 </code></pre></div>
 <p>To check if k0s's <a href="../system-requirements/">system requirements</a> and <a href="../external-runtime-deps/">external
 runtime dependencies</a> are fulfilled by your current
@@ -2646,7 +2646,7 @@ cluster, this is for you.</p>
 <p>When the cluster is up, try to have a look:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-owide
 <span class="go">NAME     STATUS   ROLES           AGE     VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
-<span class="go">ubuntu   Ready    control-plane   4m41s   v1.32.2+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.27</span>
+<span class="go">ubuntu   Ready    control-plane   4m41s   v1.32.3+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.27</span>
 <span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-owide<span class="w"> </span>-A
 <span class="go">NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE     IP             NODE     NOMINATED NODE   READINESS GATES</span>
 <span class="go">kube-system   kube-proxy-kkv2l                  1/1     Running   0          4m44s   10.152.56.54   ubuntu   &lt;none&gt;           &lt;none&gt;</span>
@@ -2765,7 +2765,7 @@ setup):</p>
 <p>As this is a worker node, we cannot access the Kubernetes API via the builtin
 <code>k0s kc</code> subcommand, but we can check the k0s API instead:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>status
-<span class="go">Version: v1.32.2+k0s.0</span>
+<span class="go">Version: v1.32.3+k0s.0</span>
 <span class="go">Process ID: 1631</span>
 <span class="go">Role: worker</span>
 <span class="go">Workloads: true</span>
@@ -2807,7 +2807,7 @@ rights and get a <a href="https://kubernetes.io/docs/concepts/configuration/orga
 <p>Using the above kubeconfig, you can now access and use the cluster:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span><span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/kubeconfig<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes,deployments,pods<span class="w"> </span>-owide<span class="w"> </span>-A
 <span class="go">NAME          STATUS   ROLES    AGE    VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
-<span class="go">node/ubuntu   Ready    &lt;none&gt;   5m1s   v1.32.2+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.27</span>
+<span class="go">node/ubuntu   Ready    &lt;none&gt;   5m1s   v1.32.3+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.27</span>
 
 <span class="go">NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR</span>
 <span class="go">kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          registry.k8s.io/coredns/coredns:v1.7.0                 k8s-app=kube-dns</span>

@@ -2693,7 +2693,7 @@ controllers and three workers with control plane load balancing enabled.</p>
 <span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
 <span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.32.2+k0s.0</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.32.3+k0s.0</span>
 <span class="w">    </span><span class="nt">config</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">spec</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">network</span><span class="p">:</span>
@@ -2814,7 +2814,7 @@ order to bootstrap the cluster:</p>
 <span class="go">level=info msg=&quot;==&gt; Running phase: Release exclusive host lock&quot;</span>
 <span class="go">level=info msg=&quot;==&gt; Running phase: Disconnect from hosts&quot;</span>
 <span class="go">level=info msg=&quot;==&gt; Finished in 2m20s&quot;</span>
-<span class="go">level=info msg=&quot;k0s cluster version v1.32.2+k0s.0  is now installed&quot;</span>
+<span class="go">level=info msg=&quot;k0s cluster version v1.32.3+k0s.0  is now installed&quot;</span>
 <span class="go">level=info msg=&quot;Tip: To access the cluster you can now fetch the admin kubeconfig using:&quot;</span>
 <span class="go">level=info msg=&quot;     k0sctl kubeconfig&quot;</span>
 </code></pre></div>
@@ -2826,9 +2826,9 @@ file in order to interact with it:</p>
 <p>All three worker nodes are ready:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 <span class="go">NAME                   STATUS   ROLES           AGE     VERSION</span>
-<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.2+k0s</span>
-<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.2+k0s</span>
-<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.2+k0s</span>
+<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.3+k0s</span>
+<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.3+k0s</span>
+<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.3+k0s</span>
 </code></pre></div>
 <p>Only one controller has the VIP:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span>controller-<span class="o">{</span><span class="m">0</span>..2<span class="o">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$i</span><span class="w"> </span><span class="p">;</span><span class="w"> </span>ssh<span class="w"> </span><span class="nv">$i</span><span class="w"> </span>--<span class="w"> </span>ip<span class="w"> </span>-4<span class="w"> </span>--oneline<span class="w"> </span>addr<span class="w"> </span>show<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>eth0<span class="p">;</span><span class="w"> </span><span class="k">done</span>
@@ -2860,9 +2860,9 @@ failure condition:</p>
 <span class="go">```console</span>
 <span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 <span class="go">NAME                   STATUS   ROLES           AGE     VERSION</span>
-<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.2+k0s</span>
-<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.2+k0s</span>
-<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.2+k0s</span>
+<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.3+k0s</span>
+<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.3+k0s</span>
+<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.3+k0s</span>
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h2>
 <p>Although Virtual IPs and Load Balancing work together and are closely related, these are two independent

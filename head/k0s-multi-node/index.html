@@ -2388,7 +2388,7 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>K0S_VERSION=v1.32.2+k0s.0</code></td>
+<td style="text-align: left;"><code>K0S_VERSION=v1.32.3+k0s.0</code></td>
 <td style="text-align: left;">Select the version of k0s to be installed</td>
 </tr>
 <tr>
@@ -2398,7 +2398,7 @@
 </tbody>
 </table>
 <p><strong>Note</strong>: If you require environment variables and use sudo, you can do:</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span><span class="nv">K0S_VERSION</span><span class="o">=</span>v1.32.2+k0s.0<span class="w"> </span>sh
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span><span class="nv">K0S_VERSION</span><span class="o">=</span>v1.32.3+k0s.0<span class="w"> </span>sh
 </code></pre></div>
 <h3 id="2-bootstrap-a-controller-node">2. Bootstrap a controller node<a class="headerlink" href="#2-bootstrap-a-controller-node" title="Permanent link">#</a></h3>
 <p>Create a configuration file:</p>
@@ -2450,7 +2450,7 @@ If your configuration file includes IP addresses (node address, sans, etcd peerA
 <p>To get general information about your k0s instance's status:</p>
 <div class="highlight"><pre><span></span><code><span class="w"> </span>sudo<span class="w"> </span>k0s<span class="w"> </span>status
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>Version:<span class="w"> </span>v1.32.2+k0s.0
+<div class="highlight"><pre><span></span><code>Version:<span class="w"> </span>v1.32.3+k0s.0
 Process<span class="w"> </span>ID:<span class="w"> </span><span class="m">2769</span>
 Parent<span class="w"> </span>Process<span class="w"> </span>ID:<span class="w"> </span><span class="m">1</span>
 Role:<span class="w"> </span>controller
@@ -2462,7 +2462,7 @@ Service<span class="w"> </span>file:<span class="w"> </span>/etc/systemd/system/
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>NAME<span class="w">   </span>STATUS<span class="w">   </span>ROLES<span class="w">    </span>AGE<span class="w">    </span>VERSION
-k0s<span class="w">    </span>Ready<span class="w">    </span>&lt;none&gt;<span class="w">   </span>4m6s<span class="w">   </span>v1.32.2+k0s
+k0s<span class="w">    </span>Ready<span class="w">    </span>&lt;none&gt;<span class="w">   </span>4m6s<span class="w">   </span>v1.32.3+k0s
 </code></pre></div>
 <p>You can also access your cluster easily with <a href="https://k8slens.dev/">Lens</a>, simply by copying the kubeconfig and pasting it to Lens:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>cat<span class="w"> </span>/var/lib/k0s/pki/admin.conf

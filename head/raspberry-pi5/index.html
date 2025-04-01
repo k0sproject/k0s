@@ -2495,7 +2495,7 @@ any issues.</p>
 <h3 id="download-k0s">Download k0s<a class="headerlink" href="#download-k0s" title="Permanent link">#</a></h3>
 <p>Download a <a href="https://github.com/k0sproject/k0s/releases/latest">k0s release</a>. For
 example:</p>
-<div class="highlight"><pre><span></span><code>wget<span class="w"> </span>-O<span class="w"> </span>/tmp/k0s<span class="w"> </span>https://github.com/k0sproject/k0s/releases/download/v1.32.2+k0s.0/k0s-v1.32.2+k0s.0-arm64<span class="w"> </span><span class="c1"># replace version number!</span>
+<div class="highlight"><pre><span></span><code>wget<span class="w"> </span>-O<span class="w"> </span>/tmp/k0s<span class="w"> </span>https://github.com/k0sproject/k0s/releases/download/v1.32.3+k0s.0/k0s-v1.32.3+k0s.0-arm64<span class="w"> </span><span class="c1"># replace version number!</span>
 sudo<span class="w"> </span>install<span class="w"> </span>/tmp/k0s<span class="w"> </span>/usr/local/bin/k0s
 </code></pre></div>
 <p>― or ―</p>
@@ -2505,7 +2505,7 @@ and make it executable in <code>/usr/bin/k0s</code>.</p>
 </code></pre></div>
 <p>At this point you can run <code>k0s</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>version
-<span class="go">v1.32.2+k0s.0</span>
+<span class="go">v1.32.3+k0s.0</span>
 </code></pre></div>
 <p>To check if k0s's <a href="../system-requirements/">system requirements</a> and <a href="../external-runtime-deps/">external
 runtime dependencies</a> are fulfilled by your current
@@ -2654,7 +2654,7 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
   https://k0sproject.io/licenses/eula
   INFO ==&gt; Running phase: Set k0s version
   INFO Looking up latest stable k0s version
-  INFO Using k0s version v1.32.2+k0s.0
+  INFO Using k0s version v1.32.3+k0s.0
   INFO ==&gt; Running phase: Connect to hosts
   INFO [ssh] 192.168.31.93:22: connected
   INFO ==&gt; Running phase: Detect host operating systems
@@ -2667,7 +2667,7 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
   INFO ==&gt; Running phase: Validate hosts
   INFO ==&gt; Running phase: Validate facts
   INFO ==&gt; Running phase: Download k0s on hosts
-  INFO [ssh] 192.168.31.93:22: downloading k0s v1.32.2+k0s.0
+  INFO [ssh] 192.168.31.93:22: downloading k0s v1.32.3+k0s.0
   INFO ==&gt; Running phase: Install k0s binaries on hosts
   INFO [ssh] 192.168.31.93:22: validating configuration
   INFO ==&gt; Running phase: Configure k0s
@@ -2679,7 +2679,7 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
   INFO ==&gt; Running phase: Release exclusive host lock
   INFO ==&gt; Running phase: Disconnect from hosts
   INFO ==&gt; Finished in 4m14s
-  INFO k0s cluster version v1.32.2+k0s.0 is now installed
+  INFO k0s cluster version v1.32.3+k0s.0 is now installed
   INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
   INFO      k0sctl kubeconfig --config cluster.yaml
   ```
@@ -2694,7 +2694,7 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
   $ export KUBECONFIG=pi_cluster.kubeconfig
   $ kubectl get nodes
   NAME   STATUS   ROLES           AGE     VERSION
-  pi     Ready    control-plane   2m54s   v1.32.2+k0s
+  pi     Ready    control-plane   2m54s   v1.32.3+k0s
   ```
 </code></pre></div>
 <h2 id="tear-down-k0s-on-pi-5">Tear down k0s on Pi 5<a class="headerlink" href="#tear-down-k0s-on-pi-5" title="Permanent link">#</a></h2>
