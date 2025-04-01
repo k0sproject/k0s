@@ -27,12 +27,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -311,7 +313,7 @@ func writeStack(t *testing.T, dst string, src string) {
 
 type mockLeaderElector struct {
 	mu       sync.Mutex
-	leader   bool
+	leader   value.Latest[bool]
 	acquired []func()
 	lost     []func()
 }
@@ -319,8 +321,9 @@ type mockLeaderElector struct {
 func (e *mockLeaderElector) activate() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if !e.leader {
-		e.leader = true
+
+	if leader, _ := e.leader.Peek(); !leader {
+		e.leader.Set(true)
 		for _, fn := range e.acquired {
 			fn()
 		}
@@ -330,8 +333,8 @@ func (e *mockLeaderElector) activate() {
 func (e *mockLeaderElector) deactivate() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if e.leader {
-		e.leader = false
+	if leader, _ := e.leader.Peek(); leader {
+		e.leader.Set(false)
 		for _, fn := range e.lost {
 			fn()
 		}
@@ -341,14 +344,23 @@ func (e *mockLeaderElector) deactivate() {
 func (e *mockLeaderElector) IsLeader() bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	return e.leader
+	leader, _ := e.leader.Peek()
+	return leader
+}
+
+func (e *mockLeaderElector) CurrentStatus() (status leaderelection.Status, expired <-chan struct{}) {
+	leader, expired := e.leader.Peek()
+	if leader {
+		return leaderelection.StatusLeading, expired
+	}
+	return leaderelection.StatusPending, expired
 }
 
 func (e *mockLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.acquired = append(e.acquired, fn)
-	if e.leader {
+	if leader, _ := e.leader.Peek(); leader {
 		fn()
 	}
 }
@@ -357,7 +369,7 @@ func (e *mockLeaderElector) AddLostLeaseCallback(fn func()) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.lost = append(e.lost, fn)
-	if e.leader {
+	if leader, _ := e.leader.Peek(); !leader {
 		fn()
 	}
 }
