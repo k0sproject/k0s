@@ -2,6 +2,8 @@ module github.com/k0sproject/k0s
 
 go 1.23.0
 
+toolchain go1.24.1
+
 // k0s
 require (
 	github.com/BurntSushi/toml v1.5.0
@@ -12,7 +14,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bombsimon/logrusr/v4 v4.1.0
-	github.com/cilium/ebpf v0.17.3
+	github.com/cilium/ebpf v0.18.0
 	github.com/cloudflare/cfssl v1.6.4
 	github.com/containerd/cgroups/v3 v3.0.5
 	github.com/containerd/containerd v1.7.27
