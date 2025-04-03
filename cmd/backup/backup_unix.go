@@ -70,7 +70,7 @@ func NewBackupCmd() *cobra.Command {
 
 func (c *command) backup(nodeConfig *k0sv1beta1.ClusterConfig, savePath string, out io.Writer) error {
 	if os.Geteuid() != 0 {
-		return errors.New("this command must be run as root!")
+		return errors.New("this command must be run as root")
 	}
 
 	if savePath != "-" && !dir.IsDirectory(savePath) {

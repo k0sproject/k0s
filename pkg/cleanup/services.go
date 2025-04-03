@@ -36,7 +36,7 @@ func (s *services) Run() error {
 	var errs []error
 
 	for _, role := range []string{"controller", "worker"} {
-		if err := install.UninstallService(role); err != nil && !(errors.Is(err, fs.ErrNotExist) || isExitCode(err, 1)) {
+		if err := install.UninstallService(role); err != nil && (!errors.Is(err, fs.ErrNotExist) && !isExitCode(err, 1)) {
 			errs = append(errs, err)
 		}
 	}
@@ -46,5 +46,5 @@ func (s *services) Run() error {
 
 func isExitCode(err error, exitcode int) bool {
 	var e *exec.ExitError
-	return errors.As(err, &e) && e.ProcessState.ExitCode() == exitcode
+	return errors.As(err, &e) && e.ExitCode() == exitcode
 }

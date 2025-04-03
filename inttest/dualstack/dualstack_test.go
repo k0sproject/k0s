@@ -30,7 +30,6 @@ import (
 	"strings"
 
 	"github.com/stretchr/testify/suite"
-	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"testing"
 
@@ -53,7 +52,7 @@ type DualstackSuite struct {
 }
 
 func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
-	nl, err := s.client.CoreV1().Nodes().List(s.Context(), v1meta.ListOptions{})
+	nl, err := s.client.CoreV1().Nodes().List(s.Context(), metav1.ListOptions{})
 	s.Require().NoError(err)
 	for _, n := range nl.Items {
 		s.Require().Len(n.Spec.PodCIDRs, 2, "Each node must have ipv4 and ipv6 pod cidr")

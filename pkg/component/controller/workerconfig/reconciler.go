@@ -538,7 +538,7 @@ func (r *Reconciler) buildConfigMaps(snapshot *snapshot) ([]*corev1.ConfigMap, e
 func buildRBACResources(configMaps []*corev1.ConfigMap) []resource {
 	configMapNames := make([]string, len(configMaps))
 	for i, configMap := range configMaps {
-		configMapNames[i] = configMap.ObjectMeta.Name
+		configMapNames[i] = configMap.Name
 	}
 
 	// Not strictly necessary, but it guarantees a stable ordering.

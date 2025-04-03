@@ -130,21 +130,21 @@ func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 	nsList, err := kc.CoreV1().Namespaces().List(s.Context(), v1.ListOptions{})
 	s.Require().NoError(err)
 	for _, n := range nsList.Items {
-		namespaces[n.ObjectMeta.UID] = n.Name
+		namespaces[n.UID] = n.Name
 	}
 
 	services := make(map[types.UID]string)
 	{
 		svc, err := kc.CoreV1().Services("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
 		s.Require().NoError(err)
-		services[svc.ObjectMeta.UID] = svc.Name
+		services[svc.UID] = svc.Name
 	}
 
 	nodes := make(map[types.UID]string)
 	nodeList, err := kc.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
 	s.Require().NoError(err)
 	for _, n := range nodeList.Items {
-		nodes[n.ObjectMeta.UID] = n.Name
+		nodes[n.UID] = n.Name
 	}
 
 	return snapshot{

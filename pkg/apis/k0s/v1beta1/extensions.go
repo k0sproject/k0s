@@ -131,7 +131,7 @@ type BackwardCompatibleDuration metav1.Duration
 
 // MarshalJSON marshals the BackwardCompatibleDuration to JSON.
 func (b BackwardCompatibleDuration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(b.Duration.String())
+	return json.Marshal(b.String())
 }
 
 // UnmarshalJSON attempts unmarshals the provided value into a

@@ -57,10 +57,11 @@ func NewCtrCommand() *cobra.Command {
 func setDefaultValues(runDir string, flags []cli.Flag) {
 	for i, flag := range flags {
 		if f, ok := flag.(cli.StringFlag); ok {
-			if f.Name == "address, a" {
+			switch f.Name {
+			case "address, a":
 				f.Value = worker.GetContainerdAddress(runDir)
 				flags[i] = f
-			} else if f.Name == "namespace, n" {
+			case "namespace, n":
 				f.Value = "k8s.io"
 				flags[i] = f
 			}

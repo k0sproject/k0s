@@ -45,7 +45,7 @@ type Component struct {
 func (c *Component) Init(_ context.Context) error {
 	log := logrus.WithField("component", constant.IptablesBinariesComponentName)
 	log.Info("Staging iptables binaries")
-	err, iptablesMode := extractIPTablesBinaries(c.BinDir, c.IPTablesMode)
+	iptablesMode, err := extractIPTablesBinaries(c.BinDir, c.IPTablesMode)
 	if err != nil {
 		return err
 	}
@@ -66,12 +66,12 @@ func (c *Component) Stop() error {
 // extractIPTablesBinaries extracts the iptables binaries from the k0s binary and makes the symlinks
 // to the backend detected by DetectHostIPTablesMode.
 // extractIPTablesBinaries only works on linux, if called in another OS it will return an error.
-func extractIPTablesBinaries(k0sBinDir string, iptablesMode string) (error, string) {
+func extractIPTablesBinaries(k0sBinDir string, iptablesMode string) (string, error) {
 	cmds := []string{"xtables-legacy-multi", "xtables-nft-multi"}
 	for _, cmd := range cmds {
 		err := assets.Stage(k0sBinDir, cmd)
 		if err != nil {
-			return err, ""
+			return "", err
 		}
 	}
 	if iptablesMode == "" || iptablesMode == "auto" {
@@ -96,11 +96,11 @@ func extractIPTablesBinaries(k0sBinDir string, iptablesMode string) (error, stri
 
 		err := os.Symlink(oldpath, symlinkPath)
 		if err != nil {
-			return fmt.Errorf("failed to create symlink %s: %w", symlink, err), ""
+			return "", fmt.Errorf("failed to create symlink %s: %w", symlink, err)
 		}
 	}
 
-	return nil, iptablesMode
+	return iptablesMode, nil
 }
 func kernelMajorVersion() byte {
 	if runtime.GOOS != "linux" {
