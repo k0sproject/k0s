@@ -196,14 +196,14 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 
 	var chartInstance helmv1beta1.Chart
 
-	if err := cr.Client.Get(ctx, req.NamespacedName, &chartInstance); err != nil {
+	if err := cr.Get(ctx, req.NamespacedName, &chartInstance); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
 
-	if !chartInstance.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !chartInstance.DeletionTimestamp.IsZero() {
 		cr.L.Debugf("Uninstall reconciliation request: %s", req)
 		// uninstall chart
 		if err := cr.uninstall(ctx, chartInstance); err != nil {
@@ -323,10 +323,10 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 }
 
 func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
-	return !(chart.Status.Namespace == chart.Spec.Namespace &&
-		chart.Status.ReleaseName == chart.Spec.ReleaseName &&
-		chart.Status.Version == chart.Spec.Version &&
-		chart.Status.ValuesHash == chart.Spec.HashValues())
+	return chart.Status.Namespace != chart.Spec.Namespace ||
+		chart.Status.ReleaseName != chart.Spec.ReleaseName ||
+		chart.Status.Version != chart.Spec.Version ||
+		chart.Status.ValuesHash != chart.Spec.HashValues()
 }
 
 // updateStatus updates the status of the chart with the given release information. This function

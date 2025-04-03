@@ -188,7 +188,7 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			} else {
 				s.Require().Empty(errs)
 				s.T().Log(k.VRRPInstances)
-				s.Require().Equal(len(tt.expectedVRRPs), len(k.VRRPInstances), "Expected and actual VRRPInstances length mismatch")
+				s.Require().Len(k.VRRPInstances, len(tt.expectedVRRPs), "Expected and actual VRRPInstances length mismatch")
 				for i := range tt.expectedVRRPs {
 					s.Require().Equal(tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
 					s.Require().Equal(tt.expectedVRRPs[i].VirtualRouterID, k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")

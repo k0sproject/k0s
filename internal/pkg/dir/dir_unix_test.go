@@ -54,7 +54,7 @@ func checkPermissions(t *testing.T, path string, want os.FileMode) {
 
 func TestPathListJoin(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		require.Equal(t, "", dir.PathListJoin())
+		require.Empty(t, dir.PathListJoin())
 	})
 	t.Run("single", func(t *testing.T) {
 		require.Equal(t, "foo", dir.PathListJoin("foo"))

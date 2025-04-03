@@ -127,7 +127,7 @@ func WaitForCoreDNSReady(ctx context.Context, kc *kubernetes.Clientset) error {
 		// Check that all addresses show ready conditions
 		for _, epSlice := range epSlices.Items {
 			for _, endpoint := range epSlice.Endpoints {
-				if !(*endpoint.Conditions.Ready && *endpoint.Conditions.Serving) {
+				if !*endpoint.Conditions.Ready || !*endpoint.Conditions.Serving {
 					// endpoint not ready&serving yet
 					return false, nil
 				}

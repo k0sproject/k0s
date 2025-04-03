@@ -402,9 +402,10 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 				"-j", "REDIRECT", "--to-port", strconv.Itoa(k.Config.UserSpaceProxyPort),
 			}
 
-			if op == iptablesCommandAppend {
+			switch op {
+			case iptablesCommandAppend:
 				k.log.Infof("Adding iptables rule to redirect %s", vip)
-			} else if op == iptablesCommandDelete {
+			case iptablesCommandDelete:
 				k.log.Infof("Deleting iptables rule to redirect %s", vip)
 			}
 

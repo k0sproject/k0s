@@ -194,7 +194,7 @@ func (k *kConfigProbe) Path() probes.ProbePath {
 
 func (k *kConfigProbe) DisplayName() string {
 	var buf strings.Builder
-	buf.WriteString(k.kConfig.String())
+	buf.WriteString(k.String())
 	if k.desc != "" {
 		buf.WriteString(": ")
 		buf.WriteString(k.desc)

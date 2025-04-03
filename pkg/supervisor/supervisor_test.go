@@ -94,16 +94,16 @@ func TestSupervisorStart(t *testing.T) {
 }
 
 func TestGetEnv(t *testing.T) {
-	// backup environment vars, and restore them when test finishes
+	// Cleanup the environment variables before the test to ensure a clean slate.
+	// t.Setenv is used to reset each variable, and it automatically restores the
+	// original environment after the test finishes.
 	oldEnv := os.Environ()
-	t.Cleanup(func() {
-		for _, e := range oldEnv {
-			key, val, _ := strings.Cut(e, "=")
-			assert.NoError(t, os.Setenv(key, val))
-		}
-	})
+	for _, e := range oldEnv {
+		key, _, _ := strings.Cut(e, "=")
+		t.Setenv(key, "")
+		os.Unsetenv(key)
+	}
 
-	os.Clearenv()
 	t.Setenv("k3", "v3")
 	t.Setenv("PATH", "/bin")
 	t.Setenv("k2", "v2")

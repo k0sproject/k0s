@@ -46,13 +46,13 @@ func (s *NetworkSuite) TestAddresses() {
 	s.Run("DNS_service_cidr_too_narrow", func() {
 		n := Network{ServiceCIDR: "192.168.178.0/31"}
 		dns, err := n.DNSAddress()
-		s.Zero(dns)
+		s.Empty(dns)
 		s.ErrorContains(err, "failed to calculate DNS address: CIDR too narrow: 192.168.178.0/31")
 	})
 	s.Run("DNS_rejects_v6_service_cidr", func() {
 		n := Network{ServiceCIDR: "fd00:abcd:1234::/64"}
 		dns, err := n.DNSAddress()
-		s.Zero(dns)
+		s.Empty(dns)
 		s.ErrorIs(err, errors.ErrUnsupported)
 		s.ErrorContains(err, "unsupported operation: DNS address calculation for non-v4 CIDR: fd00:abcd:1234::/64")
 	})

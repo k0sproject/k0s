@@ -186,7 +186,7 @@ func (e *envoyProxy) updateAPIServers(apiServers []k0snet.HostPort) error {
 	if e.config == nil {
 		return errors.New("not yet started")
 	}
-	e.config.envoyFilesParams.apiServers = apiServers
+	e.config.apiServers = apiServers
 	return writeEnvoyConfigFiles(&e.config.envoyParams, &e.config.envoyFilesParams)
 }
 

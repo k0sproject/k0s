@@ -60,7 +60,7 @@ func (s *EtcdMemberSuite) getMembers(ctx context.Context, fromControllerIdx int)
 func (s *EtcdMemberSuite) TestDeregistration() {
 	ctx := s.Context()
 	var joinToken string
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 
 		// Note that the token is intentionally empty for the first controller
@@ -76,8 +76,8 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := range s.BootlooseSuite.ControllerCount {
-		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
+	for idx := range s.ControllerCount {
+		s.Require().Len(s.GetMembers(idx), s.ControllerCount)
 	}
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -133,7 +133,7 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 
 	// Check that the node is gone from the etcd cluster according to etcd itself
 	members := s.getMembers(ctx, 0)
-	s.Require().Len(members, s.BootlooseSuite.ControllerCount-1)
+	s.Require().Len(members, s.ControllerCount-1)
 	s.Require().NotContains(members, "controller2")
 
 	// Make sure the EtcdMember CR status is successfully updated
@@ -151,7 +151,7 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 
 	// Final sanity -- ensure all nodes see each other according to etcd
 	members = s.getMembers(ctx, 0)
-	s.Require().Len(members, s.BootlooseSuite.ControllerCount)
+	s.Require().Len(members, s.ControllerCount)
 	s.Require().Contains(members, "controller2")
 
 	// Check the CR is present again

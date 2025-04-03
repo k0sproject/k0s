@@ -109,7 +109,7 @@ func TestArgsFeatureGates(t *testing.T) {
 		}
 
 		require.Equal(t, "some_feature_gate=true", enabledFeature.String("component_a"))
-		require.Equal(t, "", enabledFeature.String("component_b"))
+		require.Empty(t, enabledFeature.String("component_b"))
 		require.Equal(t, "another_feature_gate=false", explicitlyDisabledFeature.String("component_a"))
 
 	})

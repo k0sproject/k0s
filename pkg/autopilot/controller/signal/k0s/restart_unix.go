@@ -97,7 +97,7 @@ func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred
 func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
 	}
 
 	logger := r.log.WithField("signalnode", signalNode.GetName())
@@ -114,7 +114,7 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
 
 	if k0sVersion == signalData.Command.K0sUpdate.Version {
@@ -122,7 +122,7 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 		signalData.Status = apsigv2.NewStatus(UnCordoning)
 
 		if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-			return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+			return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.Name, err)
 		}
 
 		logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)

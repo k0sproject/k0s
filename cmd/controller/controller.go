@@ -258,7 +258,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions) er
 	numActiveControllers := value.NewLatest[uint](1)
 
 	nodeComponents.Add(ctx, &iptables.Component{
-		IPTablesMode: c.WorkerOptions.IPTablesMode,
+		IPTablesMode: c.IPTablesMode,
 		BinDir:       c.K0sVars.BinDir,
 	})
 

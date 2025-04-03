@@ -82,7 +82,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	ctx := s.Context()
 	var joinToken string
 
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 		if useExtAddr {
 			s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(extAddrControllerConfig, lb, lb))
@@ -105,8 +105,8 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := range s.BootlooseSuite.ControllerCount {
-		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
+	for idx := range s.ControllerCount {
+		s.Require().Len(s.GetMembers(idx), s.ControllerCount)
 	}
 
 	// Create a worker join token
@@ -119,19 +119,19 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(idx), client))
 	}
 	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), client))
 
 	// Verify that none of the servers has the dummy interface
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		s.checkDummy(ctx, s.ControllerNode(idx))
 	}
 
 	// Verify that only one controller has the VIP in eth0
 	count := 0
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		if s.hasVIP(ctx, s.ControllerNode(idx), lb) {
 			count++
 		}

@@ -26,7 +26,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -145,7 +144,7 @@ func (u *cronUpdater) checkUpdates() {
 
 	plan := u.toPlan(update)
 
-	err = u.k8sClient.Patch(u.ctx, &plan, client.Apply, patchOpts...)
+	err = u.k8sClient.Patch(u.ctx, &plan, crcli.Apply, patchOpts...)
 	if err != nil {
 		u.log.Errorf("failed to patch plan: %s", err)
 		return
