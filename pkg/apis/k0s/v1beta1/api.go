@@ -62,6 +62,7 @@ type APISpec struct {
 	Port int `json:"port,omitempty"`
 
 	// List of additional addresses to push to API servers serving the certificate
+	// +listType=set
 	SANs []string `json:"sans,omitempty"`
 }
 
