@@ -79,6 +79,7 @@ spec:
                     items:
                       type: string
                     type: array
+                    x-kubernetes-list-type: set
                 type: object
               controllerManager:
                 description: ControllerManagerSpec defines the fields for the ControllerManager
