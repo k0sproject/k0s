@@ -8,5 +8,5 @@ Binaries can be verified using the `cosign` tool, for example:
 cosign verify-blob \
   --key https://github.com/k0sproject/k0s/releases/download/v{{{ extra.k8s_version }}}%2Bk0s.0/cosign.pub \
   --signature https://github.com/k0sproject/k0s/releases/download/v{{{ extra.k8s_version }}}%2Bk0s.0/k0s-v{{{ extra.k8s_version }}}+k0s.0-amd64.sig \
-  --payload k0s-v{{{ extra.k8s_version }}}+k0s.0-amd64
+  k0s-v{{{ extra.k8s_version }}}+k0s.0-amd64
 ```
