@@ -57,7 +57,7 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	ctx := s.Context()
 	var joinToken string
 
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 		addr := s.getUnicastAddresses(idx)
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml",
@@ -76,8 +76,8 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := range s.BootlooseSuite.ControllerCount {
-		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
+	for idx := range s.ControllerCount {
+		s.Require().Len(s.GetMembers(idx), s.ControllerCount)
 	}
 
 	// Create a worker join token
@@ -93,13 +93,13 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), client))
 
 	// Verify that all servers have the dummy interface
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		s.checkDummy(ctx, s.ControllerNode(idx), lb)
 	}
 
 	// Verify that only one controller has the VIP in eth0
 	count := 0
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		if s.hasVIP(ctx, s.ControllerNode(idx), lb) {
 			count++
 		}
@@ -107,7 +107,7 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	s.Require().Equal(1, count, "Expected exactly one controller to have the VIP")
 
 	// Verify that the real servers are present in the ipvsadm output
-	for idx := range s.BootlooseSuite.ControllerCount {
+	for idx := range s.ControllerCount {
 		s.validateRealServers(ctx, s.ControllerNode(idx), lb)
 	}
 }
@@ -136,9 +136,9 @@ func (s *cplbIPVSSuite) getLBAddress() string {
 // is the address of the controller with the ID provided.
 func (s *cplbIPVSSuite) getUnicastAddresses(i int) []string {
 	return []string{
-		s.GetIPAddress(s.ControllerNode(i % s.BootlooseSuite.ControllerCount)),
-		s.GetIPAddress(s.ControllerNode((i + 1) % s.BootlooseSuite.ControllerCount)),
-		s.GetIPAddress(s.ControllerNode((i + 2) % s.BootlooseSuite.ControllerCount)),
+		s.GetIPAddress(s.ControllerNode(i % s.ControllerCount)),
+		s.GetIPAddress(s.ControllerNode((i + 1) % s.ControllerCount)),
+		s.GetIPAddress(s.ControllerNode((i + 2) % s.ControllerCount)),
 	}
 }
 
@@ -150,7 +150,7 @@ func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vi
 	defer ssh.Disconnect()
 
 	servers := []string{}
-	for i := range s.BootlooseSuite.ControllerCount {
+	for i := range s.ControllerCount {
 		servers = append(servers, s.GetIPAddress(s.ControllerNode(i)))
 	}
 

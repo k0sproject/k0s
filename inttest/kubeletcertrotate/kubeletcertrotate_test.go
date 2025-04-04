@@ -64,7 +64,7 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	for idx := range s.BootlooseSuite.WorkerCount {
+	for idx := range s.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 	}
 

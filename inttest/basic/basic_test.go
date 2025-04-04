@@ -262,7 +262,7 @@ func (s *BasicSuite) probeCoreDNSAntiAffinity(ctx context.Context, kc *kubernete
 			}
 			nodeName := pod.Spec.NodeName
 			if nodeName == "" {
-				s.T().Logf("Pod %s not scheduled yet: %+v", pod.ObjectMeta.Name, pod.Status)
+				s.T().Logf("Pod %s not scheduled yet: %+v", pod.Name, pod.Status)
 				return false, nil
 			}
 

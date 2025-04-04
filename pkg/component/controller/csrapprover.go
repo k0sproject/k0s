@@ -147,7 +147,7 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 			return fmt.Errorf("failed to perform SubjectAccessReview for CSR %q", csr.Name)
 		}
 
-		a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
+		a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.Name, x509cr.DNSNames, x509cr.IPAddresses)
 		appendApprovalCondition(&csr, "Auto approving kubelet serving certificate after SubjectAccessReview.")
 		_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, &csr, metav1.UpdateOptions{})
 		if err != nil {

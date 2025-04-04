@@ -437,8 +437,8 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 // CRValidator is used to make sure a config CR is created with correct values
 func (c *ClusterConfig) CRValidator() *ClusterConfig {
 	copy := c.DeepCopy()
-	copy.ObjectMeta.Name = "k0s"
-	copy.ObjectMeta.Namespace = "kube-system"
+	copy.Name = "k0s"
+	copy.Namespace = "kube-system"
 
 	return copy
 }

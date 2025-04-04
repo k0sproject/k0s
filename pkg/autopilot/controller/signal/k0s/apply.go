@@ -102,7 +102,7 @@ func registerApplyingUpdate(
 func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
 	}
 
 	logger := r.log.WithField("signalnode", signalNode.GetName())
@@ -110,7 +110,7 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
 
 	updateFilenamePath := path.Join(r.k0sBinaryDir, apconst.K0sTempFilename)
@@ -135,7 +135,7 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 
 	signalData.Status = apsigv2.NewStatus(Restart)
 	if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.Name, err)
 	}
 
 	logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)

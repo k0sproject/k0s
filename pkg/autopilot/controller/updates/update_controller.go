@@ -76,10 +76,10 @@ func (u *updateController) Reconcile(ctx context.Context, req cr.Request) (cr.Re
 	// If the config is being deleted, stop the updater
 	if !updaterConfig.DeletionTimestamp.IsZero() {
 		u.log.Debugf("updater config '%s' is being deleted", req.NamespacedName)
-		if updater, ok := u.updaters[req.NamespacedName.String()]; ok {
+		if updater, ok := u.updaters[req.String()]; ok {
 			u.log.Debugf("stopping existing updater for '%s'", req.NamespacedName)
 			updater.Stop()
-			delete(u.updaters, req.NamespacedName.String())
+			delete(u.updaters, req.String())
 		}
 		// Remove finalizer
 		controllerutil.RemoveFinalizer(updaterConfig, apv1beta2.UpdateConfigFinalizer)
@@ -90,12 +90,12 @@ func (u *updateController) Reconcile(ctx context.Context, req cr.Request) (cr.Re
 	}
 	u.log.Debugf("checking if there's an existing updater for '%s'", req.NamespacedName)
 	// Find the updater for this config if exists
-	if updater, ok := u.updaters[req.NamespacedName.String()]; ok {
+	if updater, ok := u.updaters[req.String()]; ok {
 		// Check if there's been updates to the config, if so re-create the updater
-		if updater.Config() == nil || updater.Config().ObjectMeta.ResourceVersion != updaterConfig.ResourceVersion {
+		if updater.Config() == nil || updater.Config().ResourceVersion != updaterConfig.ResourceVersion {
 			u.log.Debugf("updater config '%s' has been updated, re-creating updater", req.NamespacedName)
 			updater.Stop()
-			delete(u.updaters, req.NamespacedName.String())
+			delete(u.updaters, req.String())
 		}
 	}
 	u.log.Debugf("creating new updater for '%s'", req.NamespacedName)
@@ -105,7 +105,7 @@ func (u *updateController) Reconcile(ctx context.Context, req cr.Request) (cr.Re
 		u.log.Errorf("failed to create updater for '%s': %s", req.NamespacedName, err)
 		return cr.Result{}, err
 	}
-	u.updaters[req.NamespacedName.String()] = updater
+	u.updaters[req.String()] = updater
 	if err := updater.Run(); err != nil {
 		return cr.Result{}, err
 	}
