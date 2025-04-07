@@ -134,7 +134,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
 	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
-	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
+	assert.Equal(t, "bar", e.Annotations["foo"])
 }
 
 func TestReconcilerWithNeedForUpdate(t *testing.T) {
@@ -170,7 +170,7 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
 	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
-	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
+	assert.Equal(t, "bar", e.Annotations["foo"])
 }
 
 func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, clients kubernetes.Interface) *corev1.Endpoints {

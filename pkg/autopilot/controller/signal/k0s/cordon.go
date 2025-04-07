@@ -29,7 +29,6 @@ import (
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
 	cr "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crev "sigs.k8s.io/controller-runtime/pkg/event"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
@@ -105,14 +104,14 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
 	}
 
 	logger := r.log.WithField("signalnode", signalNode.GetName())
 
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
 	if !needsCordoning(signalNode) {
 		logger.Infof("ignoring non worker node")
@@ -211,7 +210,7 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 	return nil
 }
 
-func needsCordoning(signalNode client.Object) bool {
+func needsCordoning(signalNode crcli.Object) bool {
 	kind := signalNode.GetObjectKind().GroupVersionKind().Kind
 	if kind == "Node" {
 		return true

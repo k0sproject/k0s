@@ -76,7 +76,7 @@ func NewSignalController(logger *logrus.Entry, client crcli.Client, delegate apd
 func (r *signalController) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.ctx.Delegate.CreateObject()
 	if err := r.ctx.Client.Get(ctx, req.NamespacedName, signalNode); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
 	}
 
 	// Extract an update request from the signal node annotations, and determine at what

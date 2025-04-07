@@ -274,7 +274,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 
 	if controller == nil && runtime.GOOS == "linux" {
 		componentManager.Add(ctx, &iptables.Component{
-			IPTablesMode: c.WorkerOptions.IPTablesMode,
+			IPTablesMode: c.IPTablesMode,
 			BinDir:       c.K0sVars.BinDir,
 		})
 	}

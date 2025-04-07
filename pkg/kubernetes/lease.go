@@ -42,7 +42,7 @@ func CountActiveControllerLeases(ctx context.Context, kubeClient kubernetes.Inte
 	}
 	for _, l := range leases.Items {
 		switch {
-		case !strings.HasPrefix(l.ObjectMeta.Name, "k0s-ctrl-"):
+		case !strings.HasPrefix(l.Name, "k0s-ctrl-"):
 		case l.Spec.HolderIdentity == nil || *l.Spec.HolderIdentity == "":
 		case IsValidLease(l):
 			count++

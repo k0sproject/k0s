@@ -45,11 +45,11 @@ func TestRemovedGVKs(t *testing.T) {
 		Group: "k0s.k0sproject.example.com", Version: "v1beta1", Kind: "RemovedCRD",
 	})
 	assert.Equal(t, "v99.99.99", version)
-	assert.Equal(t, "", currentVersion)
+	assert.Empty(t, currentVersion)
 
 	version, currentVersion = removedInVersion(schema.GroupVersionKind{
 		Group: "k0s.k0sproject.example.com", Version: "v1beta1", Kind: "MustFail",
 	})
-	assert.Equal(t, "", version)
-	assert.Equal(t, "", currentVersion)
+	assert.Empty(t, version)
+	assert.Empty(t, currentVersion)
 }

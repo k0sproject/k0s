@@ -42,7 +42,6 @@ import (
 
 	yaml "sigs.k8s.io/yaml/goyaml.v2"
 
-	kubeutil "github.com/k0sproject/k0s/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -172,7 +171,7 @@ func TestManager(t *testing.T) {
 		ManifestsDir: dir,
 	}
 
-	fakes := kubeutil.NewFakeClientFactory()
+	fakes := testutil.NewFakeClientFactory()
 
 	le := new(mockLeaderElector)
 
@@ -278,7 +277,7 @@ func writeLabel(t *testing.T, file string, key string, value string) {
 	require.NoError(t, err)
 }
 
-func waitForResource(t *testing.T, fakes *kubeutil.FakeClientFactory, gv schema.GroupVersionResource, namespace string, name string) {
+func waitForResource(t *testing.T, fakes *testutil.FakeClientFactory, gv schema.GroupVersionResource, namespace string, name string) {
 	t.Logf("waiting for resource %s/%s", gv.Resource, name)
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := getResource(fakes, gv, namespace, name)
@@ -289,7 +288,7 @@ func waitForResource(t *testing.T, fakes *kubeutil.FakeClientFactory, gv schema.
 	}, 5*time.Second, 100*time.Millisecond)
 }
 
-func getResource(fakes *kubeutil.FakeClientFactory, gv schema.GroupVersionResource, namespace string, name string) (*unstructured.Unstructured, error) {
+func getResource(fakes *testutil.FakeClientFactory, gv schema.GroupVersionResource, namespace string, name string) (*unstructured.Unstructured, error) {
 	return fakes.DynamicClient.Resource(gv).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 }
 

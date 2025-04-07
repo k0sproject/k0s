@@ -59,12 +59,12 @@ func NewResetCmd() *cobra.Command {
 
 func (c *command) reset() error {
 	if os.Geteuid() != 0 {
-		return errors.New("this command must be run as root!")
+		return errors.New("this command must be run as root")
 	}
 
 	k0sStatus, _ := status.GetStatusInfo(c.K0sVars.StatusSocketPath)
 	if k0sStatus != nil && k0sStatus.Pid != 0 {
-		return errors.New("k0s seems to be running! please stop k0s before reset.")
+		return errors.New("k0s seems to be running, please stop k0s before reset")
 	}
 
 	nodeCfg, err := c.K0sVars.NodeConfig()
@@ -76,7 +76,7 @@ func (c *command) reset() error {
 	}
 
 	// Get Cleanup Config
-	cfg, err := cleanup.NewConfig(c.Debug, c.K0sVars, nodeCfg.Spec.Install.SystemUsers, c.WorkerOptions.CriSocket)
+	cfg, err := cleanup.NewConfig(c.Debug, c.K0sVars, nodeCfg.Spec.Install.SystemUsers, c.CriSocket)
 	if err != nil {
 		return fmt.Errorf("failed to configure cleanup: %w", err)
 	}

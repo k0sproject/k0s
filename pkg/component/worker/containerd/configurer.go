@@ -111,8 +111,8 @@ func generateDefaultCRIConfig(sandboxContainerImage string) ([]byte, error) {
 	if runtime.GOOS == "windows" {
 		// The default config for Windows uses %ProgramFiles%/containerd/cni/{bin,conf}.
 		// Maybe k0s can use the default in the future, so there's no need for this override.
-		criPluginConfig.CniConfig.NetworkPluginBinDir = `c:\opt\cni\bin`
-		criPluginConfig.CniConfig.NetworkPluginConfDir = `c:\opt\cni\conf`
+		criPluginConfig.NetworkPluginBinDir = `c:\opt\cni\bin`
+		criPluginConfig.NetworkPluginConfDir = `c:\opt\cni\conf`
 	}
 
 	return toml.Marshal(map[string]any{

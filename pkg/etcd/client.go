@@ -157,7 +157,7 @@ func (c *Client) Health(ctx context.Context) error {
 // Write tries to write a new value with a given key and returns indicator if write operation succeed.
 func (c *Client) Write(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
 
-	leaseResp, err := c.client.Lease.Grant(ctx, int64(ttl.Seconds()))
+	leaseResp, err := c.client.Grant(ctx, int64(ttl.Seconds()))
 
 	if err != nil {
 		return false, fmt.Errorf("can't get TTL lease: %w", err)
@@ -180,7 +180,7 @@ func (c *Client) Write(ctx context.Context, key string, value string, ttl time.D
 }
 
 func (c *Client) Read(ctx context.Context, key string) (*clientv3.GetResponse, error) {
-	resp, err := c.client.KV.Get(ctx, key)
+	resp, err := c.client.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("can't read from etcd: %w", err)
 	}
