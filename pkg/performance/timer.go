@@ -63,7 +63,7 @@ func (t *Timer) Start() *Timer {
 
 // Checkpoint records the time since the timer was started
 func (t *Timer) Checkpoint(name string) {
-	// if the timer was never started, we'll record an errored checkpoint that Output can recognise
+	// if the timer was never started, we'll record an errored checkpoint that Output can recognize
 	if t.startedAt.IsZero() {
 		t.buffer = append(t.buffer, checkpoint{
 			name: name,

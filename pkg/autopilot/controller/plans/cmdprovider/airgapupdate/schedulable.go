@@ -58,7 +58,7 @@ func (aup *airgapupdate) Schedulable(ctx context.Context, planID string, cmd apv
 		return appc.PlanMissingSignalNode, false, nil
 	}
 
-	logger.Infof("Sending signalling to node='%s'", nextForSignal.Name)
+	logger.Infof("Sending signaling to node='%s'", nextForSignal.Name)
 
 	signalNodeCopy := signalNodeDelegate.DeepCopy(signalNode)
 	signalNodeCommandBuilder, err := signalNodeAirgapUpdateCommandBuilder(signalNodeCopy, cmd, status)
