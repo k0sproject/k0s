@@ -102,7 +102,7 @@ jobs:
         run: |
           curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64
           chmod +x ./cosign
-          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
+          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
 
       - name: Upload Release Assets - Binary
@@ -194,7 +194,7 @@ jobs:
         run: |
           curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64
           chmod +x ./cosign
-          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.exe.sig k0s.exe
+          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.exe.sig k0s.exe
           cat k0s.exe.sig
 
       - name: Clean Docker
@@ -262,7 +262,7 @@ jobs:
         run: |
           curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-arm64
           chmod +x ./cosign
-          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
+          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
 
       - name: Set up Go for smoke tests
@@ -349,7 +349,7 @@ jobs:
         run: |
           curl -sSLo cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-arm
           chmod +x ./cosign
-          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
+          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
 
       - name: Set up Go for smoke tests
