@@ -90,7 +90,7 @@ tofu apply
 * `rocky_9`: Rocky Linux 9.2 (Blue Onyx)
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
-* `ubuntu_2304`: Ubuntu 23.04
+* `ubuntu_2404`: Ubuntu 24.04
 * `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.20)
 
 ### `arch`: Node architecture

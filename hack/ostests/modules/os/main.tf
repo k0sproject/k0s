@@ -24,7 +24,7 @@ locals {
     rocky_9             = local.os_rocky_9
     ubuntu_2004         = local.os_ubuntu_2004
     ubuntu_2204         = local.os_ubuntu_2204
-    ubuntu_2304         = local.os_ubuntu_2304
+    ubuntu_2404         = local.os_ubuntu_2404
     windows_server_2022 = local.os_windows_server_2022
   }
 }
