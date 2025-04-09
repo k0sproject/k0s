@@ -48,7 +48,7 @@ Select the desired cluster configuration for OpenTofu. Again, just an example,
 other ways described [here][tf-config].
 
 ```shell
-export TF_VAR_os=alpine_3_20
+export TF_VAR_os=alpine_3_21
 export TF_VAR_arch=x86_64
 export TF_VAR_k0s_version=stable
 export TF_VAR_k0s_network_provider=calico
@@ -69,8 +69,8 @@ tofu apply
 ### `os`: Operating system stack
 
 * `al2023`: Amazon Linux 2023
-* `alpine_3_20`: Alpine Linux 3.17
-* `alpine_3_20`: Alpine Linux 3.20
+* `alpine_3_18`: Alpine Linux 3.18
+* `alpine_3_21`: Alpine Linux 3.21
 * `centos_7`: CentOS Linux 7 (Core)
 * `centos_8`: CentOS Stream 8
 * `centos_9`: CentOS Stream 9
@@ -91,7 +91,7 @@ tofu apply
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2404`: Ubuntu 24.04
-* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.20)
+* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.21)
 
 ### `arch`: Node architecture
 
@@ -110,7 +110,7 @@ Assuming the AWS credentials are available, it can be used like this:
 
 ```sh
 tofu init
-export TF_VAR_os=alpine_3_20
+export TF_VAR_os=alpine_3_21
 export TF_VAR_k0sctl_skip=true
 tofu apply
 tofu output -json | jq -r '
@@ -172,7 +172,7 @@ workflow] that exposes more knobs and can be triggered manually, e.g. via [gh]:
 
 ```console
 $ gh workflow run ostests-matrix.yaml --ref some/experimental/branch \
-  -f oses='["alpine_3_20"]' \
+  -f oses='["alpine_3_21"]' \
   -f network-providers='["calico"]'
 ✓ Created workflow_dispatch event for ostests-matrix.yaml at some/experimental/branch
 
