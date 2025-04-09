@@ -1,7 +1,7 @@
 # https://ubuntu.com/server/docs/cloud-images/amazon-ec2
 
-data "aws_ami" "ubuntu_2304" {
-  count = var.os == "ubuntu_2304" ? 1 : 0
+data "aws_ami" "ubuntu_2404" {
+  count = var.os == "ubuntu_2404" ? 1 : 0
 
   owners      = ["099720109477"]
   name_regex  = "ubuntu/images/hvm-ssd/ubuntu-lunar-23.04-amd64-server-\\d+"
@@ -36,10 +36,10 @@ data "aws_ami" "ubuntu_2304" {
 }
 
 locals {
-  os_ubuntu_2304 = var.os != "ubuntu_2304" ? {} : {
+  os_ubuntu_2404 = var.os != "ubuntu_2404" ? {} : {
     node_configs = {
       default = {
-        ami_id = one(data.aws_ami.ubuntu_2304.*.id)
+        ami_id = one(data.aws_ami.ubuntu_2404.*.id)
 
         user_data = format("#cloud-config\n%s", jsonencode({
           runcmd = [
