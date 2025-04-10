@@ -80,8 +80,8 @@ tofu apply
 * `fcos_41`: Fedora CoreOS 41
 * `fedora_41`: Fedora Linux 41 (Cloud Edition)
 * `flatcar`: Flatcar Container Linux by Kinvolk
-* `oracle_8_7`: Oracle Linux Server 8.7
-* `oracle_9_1`: Oracle Linux Server 9.1
+* `oracle_8_9`: Oracle Linux Server 8.9
+* `oracle_9_3`: Oracle Linux Server 9.3
 * `rhel_7`: Red Hat Enterprise Linux Server 7.9 (Maipo)
 * `rhel_8`: Red Hat Enterprise Linux 8.6 (Ootpa)
 * `rhel_9`: Red Hat Enterprise Linux 9.3 (Plow)
