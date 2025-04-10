@@ -59,15 +59,6 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 	//  which is the first kernel release that supports all of those configs.
 
 	if s.WorkerRoleEnabled {
-		cgroups := linux.RequireKernelConfig("CGROUPS", "Control Group support")
-		cgroups.RequireKernelConfig("CGROUP_FREEZER", "Freezer cgroup subsystem")
-		cgroups.RequireKernelConfig("CGROUP_PIDS", "PIDs cgroup subsystem")
-		cgroups.RequireKernelConfig("CGROUP_DEVICE", "Device controller for cgroups")
-		cgroups.RequireKernelConfig("CPUSETS", "Cpuset support")
-		cgroups.RequireKernelConfig("CGROUP_CPUACCT", "Simple CPU accounting cgroup subsystem")
-		cgroups.RequireKernelConfig("MEMCG", "Memory Resource Controller for Control Groups")
-		cgroups.AssertKernelConfig("CGROUP_HUGETLB", "HugeTLB Resource Controller for Control Groups")
-		cgSched := cgroups.RequireKernelConfig("CGROUP_SCHED", "Group CPU scheduler")
 		// https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-717996215
 		// > For reference https://github.com/torvalds/linux/blob/v4.3/kernel/sched/core.c#L8511-L8533
 		// >
@@ -75,6 +66,8 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 		// >   currently no way to disable using it in Kubernetes
 		// > - CONFIG_CFS_BANDWIDTH should be set as optional, as long as
 		// >   --cpu-cfs-quota=false actually works when CONFIG_CFS_BANDWIDTH=n
+		cgroups := linux.RequireKernelConfig("CGROUPS", "Control Group support")
+		cgSched := cgroups.RequireKernelConfig("CGROUP_SCHED", "Group CPU scheduler")
 		fairGroupSched := cgSched.RequireKernelConfig("FAIR_GROUP_SCHED", "Group scheduling for SCHED_OTHER")
 		fairGroupSched.AssertKernelConfig("CFS_BANDWIDTH", "CPU bandwidth provisioning for FAIR_GROUP_SCHED")
 		cgroups.AssertKernelConfig("BLK_CGROUP", "Block IO controller")
