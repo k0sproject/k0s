@@ -85,8 +85,8 @@ tofu apply
 * `rhel_7`: Red Hat Enterprise Linux Server 7.9 (Maipo)
 * `rhel_8`: Red Hat Enterprise Linux 8.10 (Ootpa)
 * `rhel_9`: Red Hat Enterprise Linux 9.5 (Plow)
-* `rocky_8`: Rocky Linux 8.7 (Green Obsidian)
-* `rocky_9`: Rocky Linux 9.2 (Blue Onyx)
+* `rocky_8`: Rocky Linux 8.10 (Green Obsidian)
+* `rocky_9`: Rocky Linux 9.5 (Blue Onyx)
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2404`: Ubuntu 24.04
