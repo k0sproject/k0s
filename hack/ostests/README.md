@@ -83,8 +83,8 @@ tofu apply
 * `oracle_8_9`: Oracle Linux Server 8.9
 * `oracle_9_3`: Oracle Linux Server 9.3
 * `rhel_7`: Red Hat Enterprise Linux Server 7.9 (Maipo)
-* `rhel_8`: Red Hat Enterprise Linux 8.6 (Ootpa)
-* `rhel_9`: Red Hat Enterprise Linux 9.3 (Plow)
+* `rhel_8`: Red Hat Enterprise Linux 8.10 (Ootpa)
+* `rhel_9`: Red Hat Enterprise Linux 9.5 (Plow)
 * `rocky_8`: Rocky Linux 8.7 (Green Obsidian)
 * `rocky_9`: Rocky Linux 9.2 (Blue Onyx)
 * `ubuntu_2004`: Ubuntu 20.04 LTS
