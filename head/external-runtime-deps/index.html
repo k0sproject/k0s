@@ -2435,22 +2435,6 @@ own workloads may require more.</p>
 <ul>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L927"><code>CONFIG_CGROUPS</code></a>:
   Control Group support<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L953"><code>CONFIG_CGROUP_FREEZER</code></a>:
-  Freezer cgroup subsystem</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L959"><code>CONFIG_CGROUP_PIDS</code></a>:
-  PIDs cgroup subsystem<br />
-<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L975"><code>CONFIG_CGROUP_DEVICE</code></a>:
-  Device controller for cgroups</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L981"><code>CONFIG_CPUSETS</code></a>:
-  Cpuset support</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L996"><code>CONFIG_CGROUP_CPUACCT</code></a>:
-  Simple CPU accounting cgroup subsystem</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1005"><code>CONFIG_MEMCG</code></a>:
-  Memory Resource Controller for Control Groups</li>
-<li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1055"><code>CONFIG_CGROUP_HUGETLB</code></a>:
-  HugeTLB Resource Controller for Control Groups<br />
-<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081"><code>CONFIG_CGROUP_SCHED</code></a>:
   Group CPU scheduler<ul>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090"><code>CONFIG_FAIR_GROUP_SCHED</code></a>:
@@ -2527,7 +2511,7 @@ and, if enabled as a module, to load the <code>configs</code> module: <code>modp
 <p>Optional cgroup controllers:</p>
 <ul>
 <li>hugetlb (<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a>)</li>
-<li>blkio (<a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a>)<br />
+<li>blkio (<a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a>)
    containerd and cri-o will use blkio to track disk I/O and throttling in both
    cgroup v1 and v2.</li>
 </ul>
