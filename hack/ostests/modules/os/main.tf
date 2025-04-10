@@ -14,7 +14,6 @@ locals {
     fcos_41             = local.os_fcos_41
     fedora_41           = local.os_fedora_41
     flatcar             = local.os_flatcar
-    oracle_7_9          = local.os_oracle_7_9
     oracle_8_7          = local.os_oracle_8_7
     oracle_9_1          = local.os_oracle_9_1
     rhel_7              = local.os_rhel_7
