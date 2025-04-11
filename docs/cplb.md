@@ -32,10 +32,13 @@ rules in the control plane nodes which may be incompatible with custom CNI plugi
 
 ### External address
 
-If [`spec.api.externalAddress`](configuration.md#specapi) is defined it's mandatory to disable
-the [`endpoint-reconciler` component](configuration.md#disabling-controller-components) using the flag `--disable-components=endpoint-reconciler`.
+If [`spec.api.externalAddress`](configuration.md#specapi) is defined, control
+plane load balancing implicitly
+[disables](configuration.md#disabling-controller-components) k0s's endpoint
+reconciler component, just as if the `--disable-components=endpoint-reconciler`
+flag had been specified.
 
-### Node Local Load Balancing
+### Node Local load balancing
 
 CPLB is fully compatible with [NLLB](nllb.md), however NLLB is incompatible with [`spec.api.externalAddress`](configuration.md#specapi).
 

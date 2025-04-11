@@ -272,7 +272,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions) er
 
 		if enableK0sEndpointReconciler {
 			enableK0sEndpointReconciler = false
-			logrus.Warn("Disabling k0s endpoint reconciler as it is incompatible with control plane load balancing")
+			logrus.Info("Disabling k0s endpoint reconciler in favor of control plane load balancing")
 		}
 
 		nodeComponents.Add(ctx, &cplb.Keepalived{
