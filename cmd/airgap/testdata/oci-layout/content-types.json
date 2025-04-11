@@ -1,0 +1,10 @@
+{
+    "sha256:19d3d41ccd3a337cbd19142c3a8304fad1a69ec8bb0129d49eb1bbc6bd0d12f1": "application/vnd.oci.image.config.v1+json",
+    "sha256:2c640c3bebc4bba061a05c7aeadee50344fa2bed3d912dcceb8c1b27f1330b49": "application/vnd.oci.image.layer.v1.tar+gzip",
+    "sha256:4cbfb7be9baac76cc5dd2b44e9c8c671eb2247c295699cc1c0f69a4d93242206": "application/vnd.oci.image.manifest.v1+json",
+    "sha256:6a7f603fb7cf5e494705bc22c3130cb819b9f3bbeb63106163dbcac294517404": "application/vnd.oci.image.config.v1+json",
+    "sha256:9a280cc46a419001ca991d52ba03c12683d5997fbcda0fd6aa6dda4a21a87884": "application/vnd.oci.image.index.v1+json",
+    "sha256:c259653916b1fea8bd000584e1f47499512acffd0c0db6e208bdaf4b644b33d6": "application/vnd.oci.image.manifest.v1+json",
+    "sha256:e3f5758bd1bd52a64a10152876d1338016b9c2fda2052ff2550e067200382502": "application/vnd.oci.image.manifest.v1+json",
+    "sha256:eab318ba111ebe88a3a3d7d8792a17f970a231107dbc130571ca6bd84d523f20": "application/vnd.oci.image.config.v1+json"
+}

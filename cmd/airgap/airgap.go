@@ -19,6 +19,7 @@ package airgap
 import (
 	"github.com/k0sproject/k0s/pkg/config"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -26,9 +27,16 @@ import (
 func NewAirgapCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "airgap",
-		Short: "Manage airgap setup",
-		Args:  cobra.NoArgs,
-		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
+		Short: "Tooling for airgapped installations",
+		Long: `Tooling for airgapped installations.
+
+For example, to create an image bundle that contains the images required for
+the current configuration, use the following command:
+
+    k0s airgap list-images | k0s airgap bundle-artifacts -v -o image-bundle.tar
+`,
+		Args: cobra.NoArgs,
+		RunE: func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 
 	var deprecatedFlags pflag.FlagSet
@@ -40,7 +48,9 @@ func NewAirgapCmd() *cobra.Command {
 		cmd.PersistentFlags().AddFlag(f)
 	})
 
-	cmd.AddCommand(NewAirgapListImagesCmd())
+	log := logrus.StandardLogger()
+	cmd.AddCommand(newAirgapListImagesCmd())
+	cmd.AddCommand(newAirgapBundleArtifactsCmd(log, nil))
 
 	return cmd
 }
