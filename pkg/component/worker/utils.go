@@ -144,7 +144,7 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, wo
 		return fmt.Errorf("wrong token type %s, expected type: kubelet-bootstrap", tokenType)
 	}
 
-	certDir := filepath.Join(k0sVars.DataDir, "kubelet", "pki")
+	certDir := filepath.Join(k0sVars.KubeletRootDir, "pki")
 	if err := dir.Init(certDir, constant.DataDirMode); err != nil {
 		return fmt.Errorf("failed to initialize kubelet certificate directory: %w", err)
 	}

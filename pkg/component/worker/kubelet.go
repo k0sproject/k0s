@@ -123,7 +123,7 @@ func (k *Kubelet) Init(_ context.Context) error {
 		}
 	}
 
-	k.dataDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
+	k.dataDir = k.K0sVars.KubeletRootDir
 	err := dir.Init(k.dataDir, constant.DataDirMode)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", k.dataDir, err)

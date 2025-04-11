@@ -232,6 +232,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 		workerOpts.LogLevels = DefaultLogLevels()
 	}
 
+	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
 	flagset.StringVar(&workerOpts.CIDRRange, "cidr-range", "10.96.0.0/12", "HACK: cidr range for the windows worker node")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
