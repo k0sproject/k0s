@@ -90,6 +90,7 @@ tofu apply
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2404`: Ubuntu 24.04
+* `sles_15`: SUSE Linux Enterprise Server 15 SP6
 * `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.21)
 
 ### `arch`: Node architecture
