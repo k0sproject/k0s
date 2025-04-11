@@ -37,7 +37,7 @@ func configureServicePlatform(s service.Service, svcConfig *service.Config) {
 		svcConfig.Dependencies = []string{"After=network-online.target", "Wants=network-online.target"}
 		svcConfig.Option = map[string]interface{}{
 			"SystemdScript": systemdScript,
-			"LimitNOFILE":   999999,
+			"LimitNOFILE":   1048576,
 		}
 	}
 }
