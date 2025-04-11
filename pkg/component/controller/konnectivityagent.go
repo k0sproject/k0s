@@ -188,16 +188,13 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 }
 
 type konnectivityAgentConfig struct {
-	ProxyServerHost      string
-	ProxyServerPort      uint16
-	AgentPort            uint16
-	Image                string
-	ServerCount          uint
-	PullPolicy           string
-	HostNetwork          bool
-	BindToNodeIP         bool
-	APIServerPortMapping string
-	FeatureGates         string
+	ProxyServerHost string
+	ProxyServerPort uint16
+	AgentPort       uint16
+	Image           string
+	ServerCount     uint
+	PullPolicy      string
+	HostNetwork     bool
 }
 
 const konnectivityAgentTemplate = `
@@ -276,15 +273,6 @@ spec:
             - --service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token
             - --agent-identifiers=host=$(NODE_IP)
             - --agent-id=$(NODE_IP)
-              {{- if .BindToNodeIP }}
-            - --bind-address=$(NODE_IP)
-              {{- end }}
-              {{- if .APIServerPortMapping }}
-            - --apiserver-port-mapping={{ .APIServerPortMapping }}
-              {{- end }}
-              {{- if .FeatureGates }}
-            - "--feature-gates={{ .FeatureGates }}"
-              {{- end }}
           volumeMounts:
             - mountPath: /var/run/secrets/tokens
               name: konnectivity-agent-token
