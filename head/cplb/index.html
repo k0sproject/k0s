@@ -1285,7 +1285,7 @@
           <li class="md-nav__item">
   <a href="#node-local-load-balancing" class="md-nav__link">
     <span class="md-ellipsis">
-      Node Local Load Balancing
+      Node Local load balancing
     </span>
   </a>
   
@@ -2461,7 +2461,7 @@
           <li class="md-nav__item">
   <a href="#node-local-load-balancing" class="md-nav__link">
     <span class="md-ellipsis">
-      Node Local Load Balancing
+      Node Local load balancing
     </span>
   </a>
   
@@ -2635,9 +2635,12 @@ which ultimately relies on IPVS.</p>
 <p>Both Kube-Router and Calico managed by k0s are supported with the userspace reverse proxy load balancer, however, k0s creates iptables
 rules in the control plane nodes which may be incompatible with custom CNI plugins.</p>
 <h3 id="external-address">External address<a class="headerlink" href="#external-address" title="Permanent link">#</a></h3>
-<p>If <a href="../configuration/#specapi"><code>spec.api.externalAddress</code></a> is defined it's mandatory to disable
-the <a href="../configuration/#disabling-controller-components"><code>endpoint-reconciler</code> component</a> using the flag <code>--disable-components=endpoint-reconciler</code>.</p>
-<h3 id="node-local-load-balancing">Node Local Load Balancing<a class="headerlink" href="#node-local-load-balancing" title="Permanent link">#</a></h3>
+<p>If <a href="../configuration/#specapi"><code>spec.api.externalAddress</code></a> is defined, control
+plane load balancing implicitly
+<a href="../configuration/#disabling-controller-components">disables</a> k0s's endpoint
+reconciler component, just as if the <code>--disable-components=endpoint-reconciler</code>
+flag had been specified.</p>
+<h3 id="node-local-load-balancing">Node Local load balancing<a class="headerlink" href="#node-local-load-balancing" title="Permanent link">#</a></h3>
 <p>CPLB is fully compatible with <a href="../nllb/">NLLB</a>, however NLLB is incompatible with <a href="../configuration/#specapi"><code>spec.api.externalAddress</code></a>.</p>
 <h2 id="virtual-ips-high-availability">Virtual IPs - High availability<a class="headerlink" href="#virtual-ips-high-availability" title="Permanent link">#</a></h2>
 <h3 id="what-is-a-vip-virtual-ip">What is a VIP (virtual IP)<a class="headerlink" href="#what-is-a-vip-virtual-ip" title="Permanent link">#</a></h3>
