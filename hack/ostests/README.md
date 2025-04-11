@@ -87,6 +87,7 @@ tofu apply
 * `rhel_9`: Red Hat Enterprise Linux 9.5 (Plow)
 * `rocky_8`: Rocky Linux 8.10 (Green Obsidian)
 * `rocky_9`: Rocky Linux 9.5 (Blue Onyx)
+* `sles_15`: SUSE Linux Enterprise Server 15 SP6
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2404`: Ubuntu 24.04

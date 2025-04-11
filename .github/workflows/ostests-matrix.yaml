@@ -35,6 +35,7 @@ on:
             "oracle_8_7", "oracle_9_3",
             "rhel_7", "rhel_8", "rhel_9",
             "rocky_8", "rocky_9",
+            "sles_15",
             "ubuntu_2004", "ubuntu_2204", "ubuntu_2404"
           ]
       arch:
