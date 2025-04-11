@@ -163,7 +163,7 @@ func (k *Konnectivity) serverArgs(count uint) []string {
 		"--delete-existing-uds-file": "true",
 		"--server-count":             strconv.FormatUint(uint64(count), 10),
 		"--server-id":                k.K0sVars.InvocationID,
-		"--proxy-strategies":         "destHost,default",
+		"--proxy-strategies":         "destHost,defaultRoute,default",
 		"--cipher-suites":            constant.AllowedTLS12CipherSuiteNames(),
 	}.ToArgs()
 }
