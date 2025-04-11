@@ -19,7 +19,6 @@ package token
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,6 +27,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
 
@@ -36,6 +36,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func preSharedCmd() *cobra.Command {
@@ -52,38 +53,29 @@ func preSharedCmd() *cobra.Command {
 		Short:   "Generates token and secret and stores them as a files",
 		Example: `k0s token pre-shared --role worker --cert <path>/<to>/ca.crt --url https://<controller-ip>:<port>/`,
 		Args:    cobra.NoArgs,
-		PreRunE: func(cmd *cobra.Command, _ []string) error {
-			err := checkTokenRole(preSharedRole)
-			if err != nil {
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if err := checkTokenRole(preSharedRole); err != nil {
 				return err
 			}
-			if certPath == "" {
-				return errors.New("please, provide --cert argument")
-			}
-			if joinURL == "" {
-				return errors.New("please, provide --url argument")
-			}
 
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
 			t, err := createSecret(preSharedRole, validity, outDir)
 			if err != nil {
 				return err
 			}
 
-			err = createKubeConfig(t, preSharedRole, joinURL, certPath, outDir)
-			if err != nil {
-				return err
-			}
-			return nil
+			return createKubeConfig(t, preSharedRole, joinURL, certPath, outDir)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.AddFlagSet(config.GetPersistentFlagSet())
+	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		flags.AddFlag(f)
+	})
 	flags.StringVar(&certPath, "cert", "", "path to the CA certificate file")
+	runtime.Must(cobra.MarkFlagRequired(flags, "cert"))
 	flags.StringVar(&joinURL, "url", "", "url of the api server to join")
+	runtime.Must(cobra.MarkFlagRequired(flags, "url"))
 	flags.StringVar(&preSharedRole, "role", "worker", "token role. valid values: worker, controller. Default: worker")
 	flags.StringVar(&outDir, "out", ".", "path to the output directory. Default: current dir")
 	flags.DurationVar(&validity, "valid", 0, "how long token is valid, in Go duration format")
