@@ -17,7 +17,7 @@ resource "terraform_data" "k0sctl_apply" {
     }
 
     command = <<-EOF
-      printf %s "$K0SCTL_CONFIG" | env -u SSH_AUTH_SOCK SSH_KNOWN_HOSTS='' "$K0SCTL_EXECUTABLE_PATH" apply -c -
+      printf %s "$K0SCTL_CONFIG" | env -u SSH_AUTH_SOCK SSH_KNOWN_HOSTS='' "$K0SCTL_EXECUTABLE_PATH" apply -c - || printf %s "$K0SCTL_CONFIG" | env -u SSH_AUTH_SOCK SSH_KNOWN_HOSTS='' "$K0SCTL_EXECUTABLE_PATH" apply -c -      
       EOF
   }
 }

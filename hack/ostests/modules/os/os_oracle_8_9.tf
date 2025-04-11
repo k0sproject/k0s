@@ -1,16 +1,16 @@
 # https://blogs.oracle.com/linux/post/running-oracle-linux-in-public-clouds
 # https://forums.oracle.com/ords/apexds/post/launch-an-oracle-linux-instance-in-aws-9462
 
-data "aws_ami" "oracle_8_7" {
-  count = var.os == "oracle_8_7" ? 1 : 0
+data "aws_ami" "oracle_8_9" {
+  count = var.os == "oracle_8_9" ? 1 : 0
 
   owners      = ["131827586825"]
-  name_regex  = "^OL8\\.7-x86_64-HVM-"
+  name_regex  = "^OL8\\.9-x86_64-HVM-"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["OL8.7-x86_64-HVM-*"]
+    values = ["OL8.9-x86_64-HVM-*"]
   }
 
   filter {
@@ -31,16 +31,16 @@ data "aws_ami" "oracle_8_7" {
   lifecycle {
     precondition {
       condition     = var.arch == "x86_64"
-      error_message = "Unsupported architecture for Oracle Linux Server 8.7."
+      error_message = "Unsupported architecture for Oracle Linux Server 8.9."
     }
   }
 }
 
 locals {
-  os_oracle_8_7 = var.os != "oracle_8_7" ? {} : {
+  os_oracle_8_9 = var.os != "oracle_8_9" ? {} : {
     node_configs = {
       default = {
-        ami_id = one(data.aws_ami.oracle_8_7.*.id)
+        ami_id = one(data.aws_ami.oracle_8_9.*.id)
 
         connection = {
           type     = "ssh"
