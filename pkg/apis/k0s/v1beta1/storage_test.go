@@ -311,6 +311,22 @@ func (s *storageSuite) TestValidation() {
 		s.Contains(errs[0].Error(), "spec.storage.etcd.externalCluster.endpoints cannot be null or empty")
 		s.Contains(errs[1].Error(), "spec.storage.etcd.externalCluster.etcdPrefix cannot be empty")
 	})
+
+	s.Run("invalid_duration", func() {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				CAExpiry:   "123",
+				CertExpiry: "aaa",
+			},
+		}
+
+		errs := spec.Validate()
+		s.NotNil(errs)
+		if s.Len(errs, 2) {
+			s.ErrorContains(errs[0], `invalid duration`)
+		}
+	})
 }
 
 func (s *storageSuite) TestIsTLSEnabled() {

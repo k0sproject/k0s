@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
@@ -64,6 +65,14 @@ type APISpec struct {
 	// List of additional addresses to push to API servers serving the certificate
 	// +listType=set
 	SANs []string `json:"sans,omitempty"`
+
+	// The expiration duration of the CA certificate
+	// +kubebuilder:default="87600h"
+	CAExpiry string `json:"caExpiry,omitempty"`
+
+	// The expiration duration of the server certificate
+	// +kubebuilder:default="8760h"
+	CertExpiry string `json:"certExpiry,omitempty"`
 }
 
 // DefaultAPISpec default settings for api
@@ -169,6 +178,16 @@ func (a *APISpec) Validate() []error {
 		validateIPAddressOrDNSName(sansPath.Index(idx), san)
 	}
 
+	validateDuration := func(path *field.Path, d string) {
+		if d == "" {
+			return
+		}
+		if _, err := time.ParseDuration(d); err != nil {
+			errors = append(errors, field.Invalid(path, d, fmt.Sprintf("invalid duration: %v", err)))
+		}
+	}
+	validateDuration(field.NewPath("caExpiry"), a.CAExpiry)
+	validateDuration(field.NewPath("certExpiry"), a.CertExpiry)
 	return errors
 }
 
@@ -194,5 +213,11 @@ func (a *APISpec) setDefaults() {
 	}
 	if a.Port == 0 {
 		a.Port = 6443
+	}
+	if a.CAExpiry == "" {
+		a.CAExpiry = "87600h"
+	}
+	if a.CertExpiry == "" {
+		a.CertExpiry = "8760h"
 	}
 }

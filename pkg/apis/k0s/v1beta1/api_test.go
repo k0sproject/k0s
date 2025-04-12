@@ -70,6 +70,20 @@ func (s *APISuite) TestValidation() {
 			s.ErrorContains(errors[0], `sans[0]: Invalid value: "something.that.is.not.valid//(())": invalid IP address / DNS name`)
 		}
 	})
+
+	s.Run("invalid_duration", func() {
+		a := APISpec{
+			CAExpiry:   "123",
+			CertExpiry: "aaa",
+		}
+		a.setDefaults()
+
+		errors := a.Validate()
+		s.NotNil(errors)
+		if s.Len(errors, 2) {
+			s.ErrorContains(errors[0], `invalid duration`)
+		}
+	})
 }
 
 func TestApiSuite(t *testing.T) {
