@@ -22,12 +22,10 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -67,13 +65,8 @@ type APISpec struct {
 	// +listType=set
 	SANs []string `json:"sans,omitempty"`
 
-	// The expiration duration of the CA certificate
-	// +kubebuilder:default="87600h"
-	CAExpiry metav1.Duration `json:"caExpiry,omitempty"`
-
-	// The expiration duration of the server certificate
-	// +kubebuilder:default="8760h"
-	CertExpiry metav1.Duration `json:"certExpiry,omitempty"`
+	// Custom config for CA certificates.
+	CA *CA `json:"ca,omitempty"`
 }
 
 // DefaultAPISpec default settings for api
@@ -205,14 +198,7 @@ func (a *APISpec) setDefaults() {
 	if a.Port == 0 {
 		a.Port = 6443
 	}
-	if a.CAExpiry.Duration == 0 {
-		a.CAExpiry = metav1.Duration{
-			Duration: 87600 * time.Hour,
-		}
-	}
-	if a.CertExpiry.Duration == 0 {
-		a.CertExpiry = metav1.Duration{
-			Duration: 8760 * time.Hour,
-		}
+	if a.CA == nil {
+		a.CA = DefaultCA()
 	}
 }

@@ -26,13 +26,11 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/pkg/config/kine"
 	"github.com/k0sproject/k0s/pkg/constant"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/sirupsen/logrus"
@@ -143,13 +141,8 @@ type EtcdConfig struct {
 	// Map of key-values (strings) for any extra arguments you want to pass down to the etcd process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 
-	// The expiration duration of the CA certificate
-	// +kubebuilder:default="87600h"
-	CAExpiry metav1.Duration `json:"caExpiry,omitempty"`
-
-	// The expiration duration of the server certificate
-	// +kubebuilder:default="8760h"
-	CertExpiry metav1.Duration `json:"certExpiry,omitempty"`
+	// Custom config for CA certificates.
+	CA *CA `json:"ca,omitempty"`
 }
 
 // ExternalCluster defines external etcd cluster related config options
@@ -182,12 +175,7 @@ func DefaultEtcdConfig() *EtcdConfig {
 		ExternalCluster: nil,
 		PeerAddress:     addr,
 		ExtraArgs:       make(map[string]string),
-		CAExpiry: metav1.Duration{
-			Duration: 87600 * time.Hour,
-		},
-		CertExpiry: metav1.Duration{
-			Duration: 8760 * time.Hour,
-		},
+		CA:              DefaultCA(),
 	}
 }
 

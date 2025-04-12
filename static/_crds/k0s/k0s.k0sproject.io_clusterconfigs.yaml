@@ -45,14 +45,18 @@ spec:
                   address:
                     description: Address on which to connect to the API server.
                     type: string
-                  caExpiry:
-                    default: 87600h
-                    description: The expiration duration of the CA certificate
-                    type: string
-                  certExpiry:
-                    default: 8760h
-                    description: The expiration duration of the server certificate
-                    type: string
+                  ca:
+                    description: Custom config for CA certificates.
+                    properties:
+                      certificatesExpireAfter:
+                        default: 8760h
+                        description: The expiration duration of the server certificate
+                        type: string
+                      expiresAfter:
+                        default: 87600h
+                        description: The expiration duration of the CA certificate
+                        type: string
+                    type: object
                   externalAddress:
                     description: The loadbalancer address (for k0s controllers running
                       behind a loadbalancer)
@@ -922,14 +926,18 @@ spec:
                   etcd:
                     description: EtcdConfig defines etcd related config options
                     properties:
-                      caExpiry:
-                        default: 87600h
-                        description: The expiration duration of the CA certificate
-                        type: string
-                      certExpiry:
-                        default: 8760h
-                        description: The expiration duration of the server certificate
-                        type: string
+                      ca:
+                        description: Custom config for CA certificates.
+                        properties:
+                          certificatesExpireAfter:
+                            default: 8760h
+                            description: The expiration duration of the server certificate
+                            type: string
+                          expiresAfter:
+                            default: 87600h
+                            description: The expiration duration of the CA certificate
+                            type: string
+                        type: object
                       externalCluster:
                         description: ExternalCluster defines external etcd cluster
                           related config options
