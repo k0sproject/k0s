@@ -239,7 +239,6 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 | `ipvs`              | Kube proxy ipvs settings                                                                                                                                   |
 | `nftables`          | Kube proxy nftables settings                                                                                                                               |
 | `nodePortAddresses` | Kube proxy [nodePortAddresses](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/)                                              |
-| `nodePortAddresses` | Kube proxy [nodePortAddresses](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/)                                              |
 | `extraArgs` .       | Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. Any behavior triggered by these parameters is outside k0s support. |
 
 Default kube-proxy iptables settings:
