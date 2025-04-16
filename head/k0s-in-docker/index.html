@@ -2569,11 +2569,12 @@ application containers to separate workers.</p>
 <span class="w">  </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span>-v<span class="w"> </span>/var/log/pods<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores its data` \</span>
 <span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
 <span class="w">  </span>--security-opt<span class="w"> </span><span class="nv">seccomp</span><span class="o">=</span>unconfined<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-v<span class="w"> </span>/dev/kmsg:/dev/kmsg:ro<span class="w"> </span>--device-cgroup-rule<span class="o">=</span><span class="s1">&#39;c 1:11 r&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--device<span class="w"> </span>/dev/kmsg<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cap-add<span class="w"> </span>sys_admin<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cap-add<span class="w"> </span>net_admin<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cap-add<span class="w"> </span>sys_ptrace<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cap-add<span class="w"> </span>sys_resource<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cap-add<span class="w"> </span>syslog<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>docker.io/k0sproject/k0s:v1.32.3-k0s.0<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$token</span><span class="s2">&quot;</span>
 </code></pre></div>
@@ -2581,11 +2582,10 @@ application containers to separate workers.</p>
 <ul>
 <li><code>--security-opt seccomp=unconfined</code> is required for <code>runc</code> to access the
    <a href="https://www.man7.org/linux/man-pages/man7/session-keyring.7.html">session keyring</a>.</li>
-<li><code>-v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r'</code> allows reading
-   of <code>/dev/kmsg</code> from inside the container. The kubelet's OOM watcher uses
-   this.
-   <!-- check device type via <code>stat -c %Hr:%Lr /dev/kmsg</code>. -->
+<li><code>--device /dev/kmsg</code> makes <code>/dev/kmsg</code> visible from inside the container.
+   The kubelet's OOM watcher uses this.
    <!--
+     Note that this used to work via <code>-v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r'</code> as well.
      Upstream reference: https://github.com/euank/go-kmsg-parser/blob/v2.0.0/kmsgparser/kmsgparser.go#L60
      Also relevant: KubeletInUserNamespace feature gate (alpha since v1.22)
      https://kubernetes.io/docs/tasks/administer-cluster/kubelet-in-userns/
@@ -2612,6 +2612,8 @@ application containers to separate workers.</p>
      Omitting this results in "runc create failed: unable to start container
      process: can't get final child's PID from pipe: EOF: unknown"
    --></li>
+<li><code>CAP_SYSLOG</code> allows containers to perform privileged syslog operations.
+   This is required in order to read <code>/dev/kmsg</code>.</li>
 </ul>
 <p>Note that more privileges may be required depending on your cluster
  configuration and workloads.</p>
@@ -2672,13 +2674,16 @@ cluster</a>.</p>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg:/dev/kmsg:ro</span><span class="w"> </span><span class="c1"># required by kubelets OOM watcher</span>
 <span class="w">    </span><span class="nt">tmpfs</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/run</span><span class="w"> </span><span class="c1"># this is where k0s stores runtime data</span>
+<span class="w">    </span><span class="nt">devices</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg</span><span class="w"> </span><span class="c1"># required by kubelet&#39;s OOM watcher</span>
 <span class="w">    </span><span class="nt">cap_add</span><span class="p">:</span>
 <span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_admin</span>
 <span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">net_admin</span>
 <span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_ptrace</span>
 <span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_resource</span>
-<span class="w">    </span><span class="nt">device_cgroup_rules</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">c 1:11 r</span><span class="w"> </span><span class="c1"># required by kubelets OOM watcher</span>
+<span class="w">     </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">syslog</span>
+<span class="w">    </span><span class="nt">security_opt</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">seccomp:unconfined</span><span class="w"> </span><span class="c1"># allow access to the session keyring</span>
 <span class="w">    </span><span class="nt">configs</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.yaml</span>
 <span class="w">        </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/k0s.yaml</span>
@@ -2694,6 +2699,223 @@ cluster</a>.</p>
 <span class="w">        </span><span class="no">storage:</span>
 <span class="w">          </span><span class="no">type: kine</span>
 <span class="w">      </span><span class="no"># Any additional configuration goes here ...</span>
+</code></pre></div>
+<p>Below is a more complex example, using traefik as a load balancer, along with
+three controller and three worker nodes:</p>
+<!-- Kept in its own file to ease local testing. -->
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">compose-cluster</span>
+
+<span class="nt">x-k0s-controller</span><span class="p">:</span><span class="w"> </span><span class="nl">&amp;k0s-controller</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:v1.32.3-k0s.0</span>
+<span class="w">  </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-net</span>
+<span class="w">  </span><span class="nt">tmpfs</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/run</span><span class="w"> </span><span class="c1"># this is where k0s stores runtime data</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/tmp</span>
+<span class="w">  </span><span class="nt">configs</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.yaml</span>
+<span class="w">      </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/k0s.yaml</span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.enable=true</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.kube-api.service=kube-api</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.kube-api.rule=HostSNI(`*`)</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.kube-api.entrypoints=kube-api</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.services.kube-api.loadbalancer.server.port=6443</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.k0s-api.service=k0s-api</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.k0s-api.rule=HostSNI(`*`)</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.k0s-api.entrypoints=k0s-api</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.services.k0s-api.loadbalancer.server.port=9443</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.konnectivity.service=konnectivity</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.konnectivity.rule=HostSNI(`*`)</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.routers.konnectivity.entrypoints=konnectivity</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.tcp.services.konnectivity.loadbalancer.server.port=8132</span>
+<span class="w">  </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">on-failure</span>
+
+<span class="nt">x-k0s-worker</span><span class="p">:</span><span class="w"> </span><span class="nl">&amp;k0s-worker</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:v1.32.3-k0s.0</span>
+<span class="w">  </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-net</span>
+<span class="w">  </span><span class="nt">depends_on</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-1</span>
+<span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">k0s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">worker</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">--token-file</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">/run/secrets/k0sproject.io/tokens/worker</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s</span><span class="w"> </span><span class="c1"># this is where k0s stores its data</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/log/pods</span><span class="w"> </span><span class="c1"># this is where k0s stores pod logs</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg:/dev/kmsg:ro</span><span class="w"> </span><span class="c1"># required by kubelets OOM watcher</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-worker-token:/run/secrets/k0sproject.io/tokens:ro</span>
+<span class="w">  </span><span class="nt">tmpfs</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/run</span><span class="w"> </span><span class="c1"># this is where k0s stores runtime data</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/tmp</span>
+<span class="w">  </span><span class="nt">devices</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg</span><span class="w"> </span><span class="c1"># required by kubelet&#39;s OOM watcher</span>
+<span class="w">  </span><span class="nt">cap_add</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_admin</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">net_admin</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_ptrace</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_resource</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">syslog</span>
+<span class="w">  </span><span class="nt">security_opt</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">seccomp:unconfined</span><span class="w"> </span><span class="c1"># allow access to the session keyring</span>
+<span class="w">  </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">on-failure</span>
+
+<span class="nt">networks</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">k0s-net</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bridge</span>
+
+<span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">k0s-lb</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/traefik:v3.3.5</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-lb</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-lb</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-net</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--api.insecure=true</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--providers.docker=true</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--providers.docker.exposedbydefault=false</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--entryPoints.kube-api.address=:6443</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--entryPoints.k0s-api.address=:9443</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--entryPoints.konnectivity.address=:8132</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6443:6443</span><span class="w"> </span><span class="c1"># publish the Kubernetes API server port</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/docker.sock:/var/run/docker.sock:ro</span>
+
+<span class="w">  </span><span class="nt">k0s-controller-1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="nv">*k0s-controller</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-1</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-1</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-lb</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">k0s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">controller</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">post_start</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">command</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/bin/sh</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-euc</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">            </span><span class="no">bootstrap() {</span>
+<span class="w">              </span><span class="no"># this works even if etcd isn&#39;t up</span>
+
+<span class="w">              </span><span class="no">find /run/secrets/k0sproject.io/controller-token ! -path /run/secrets/k0sproject.io/controller-token -prune -exec rm -rf {} +</span>
+<span class="w">              </span><span class="no">k0s token pre-shared --role controller \</span>
+<span class="w">                </span><span class="no">--cert /var/lib/k0s/pki/ca.crt \</span>
+<span class="w">                </span><span class="no">--url https://k0s-lb:9443 \</span>
+<span class="w">                </span><span class="no">--out /run/secrets/k0sproject.io/controller-token/</span>
+
+<span class="w">              </span><span class="no">find /run/secrets/k0sproject.io/worker-token ! -path /run/secrets/k0sproject.io/worker-token -prune -exec rm -rf {} +</span>
+<span class="w">              </span><span class="no">k0s token pre-shared --role worker \</span>
+<span class="w">                </span><span class="no">--cert /var/lib/k0s/pki/ca.crt \</span>
+<span class="w">                </span><span class="no">--url https://k0s-lb:6443 \</span>
+<span class="w">                </span><span class="no">--out /run/secrets/k0sproject.io/worker-token/</span>
+
+<span class="w">              </span><span class="no">mv /run/secrets/k0sproject.io/controller-token/*.yaml /var/lib/k0s/manifests/k0s-token-secrets/controller.yaml</span>
+<span class="w">              </span><span class="no">mv /run/secrets/k0sproject.io/controller-token/token_* /run/secrets/k0sproject.io/controller-token/controller</span>
+<span class="w">              </span><span class="no">mv /run/secrets/k0sproject.io/worker-token/*.yaml /var/lib/k0s/manifests/k0s-token-secrets/worker.yaml</span>
+<span class="w">              </span><span class="no">mv /run/secrets/k0sproject.io/worker-token/token_* /run/secrets/k0sproject.io/worker-token/worker</span>
+<span class="w">            </span><span class="no">}</span>
+
+<span class="w">            </span><span class="no">while [ ! -f /var/lib/k0s/pki/ca.crt ] || ! bootstrap; do</span>
+<span class="w">              </span><span class="no">sleep 1</span>
+<span class="w">            </span><span class="no">done</span>
+<span class="w">            </span><span class="no">sleep 10 # give this controller a bit of a head start</span>
+
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s</span><span class="w"> </span><span class="c1"># this is where k0s stores its data</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-token-secrets:/var/lib/k0s/manifests/k0s-token-secrets</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-token:/run/secrets/k0sproject.io/controller-token</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-worker-token:/run/secrets/k0sproject.io/worker-token</span>
+
+<span class="w">  </span><span class="nt">k0s-controller-2</span><span class="p">:</span><span class="w"> </span><span class="nl">&amp;k0s-additional-controller</span>
+<span class="w">    </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="nv">*k0s-controller</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-2</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-2</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-1</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="nv">k0s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">controller</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">--token-file</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">/run/secrets/k0sproject.io/tokens/controller</span><span class="w"> </span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s</span><span class="w"> </span><span class="c1"># this is where k0s stores its data</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-token-secrets:/var/lib/k0s/manifests/k0s-token-secrets:ro</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-token:/run/secrets/k0sproject.io/tokens:ro</span>
+
+<span class="w">  </span><span class="nt">k0s-controller-3</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="nv">*k0s-additional-controller</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-3</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-controller-3</span>
+
+<span class="w">  </span><span class="nt">k0s-worker-1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="nv">*k0s-worker</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-worker-1</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-worker-1</span>
+
+<span class="w">  </span><span class="nt">k0s-worker-2</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="nv">*k0s-worker</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-worker-2</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-worker-2</span>
+
+<span class="w">  </span><span class="nt">k0s-worker-3</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">&lt;&lt;</span><span class="p">:</span><span class="w"> </span><span class="nv">*k0s-worker</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-worker-3</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-worker-3</span>
+
+<span class="nt">volumes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">k0s-token-secrets</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">    </span><span class="nt">driver_opts</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmpfs</span>
+<span class="w">      </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmpfs</span>
+<span class="w">  </span><span class="nt">k0s-controller-token</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">    </span><span class="nt">driver_opts</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmpfs</span>
+<span class="w">      </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmpfs</span>
+<span class="w">  </span><span class="nt">k0s-worker-token</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">    </span><span class="nt">driver_opts</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmpfs</span>
+<span class="w">      </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmpfs</span>
+
+<span class="nt">configs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">k0s.yaml</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="no">spec:</span>
+<span class="w">        </span><span class="no">api:</span>
+<span class="w">          </span><span class="no">externalAddress: k0s-lb</span>
+</code></pre></div>
+<p>Running the above:</p>
+<div class="highlight"><pre><span></span><code><span class="go"> ❯ docker compose up -d</span>
+<span class="go">[+] Running 11/11</span>
+<span class="go"> ✔ Network compose-cluster_k0s-net                Created                0.1s</span>
+<span class="go"> ✔ Volume &quot;compose-cluster_k0s-token-secrets&quot;     Created                0.0s</span>
+<span class="go"> ✔ Volume &quot;compose-cluster_k0s-controller-token&quot;  Created                0.0s</span>
+<span class="go"> ✔ Volume &quot;compose-cluster_k0s-worker-token&quot;      Created                0.0s</span>
+<span class="go"> ✔ Container k0s-lb                               Started                0.5s</span>
+<span class="go"> ✔ Container k0s-controller-1                     Started                11.8s</span>
+<span class="go"> ✔ Container k0s-controller-2                     Started                12.2s</span>
+<span class="go"> ✔ Container k0s-worker-1                         Started                12.4s</span>
+<span class="go"> ✔ Container k0s-worker-2                         Started                12.3s</span>
+<span class="go"> ✔ Container k0s-worker-3                         Started                12.1s</span>
+<span class="go"> ✔ Container k0s-controller-3                     Started                12.5s</span>
+</code></pre></div>
+<p>After a short while:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>k0s-controller-1<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>node,po<span class="w"> </span>-A
+<span class="go">NAME                STATUS   ROLES    AGE     VERSION</span>
+<span class="go">node/k0s-worker-1   Ready    &lt;none&gt;   1m36s   v1.32.3+k0s</span>
+<span class="go">node/k0s-worker-2   Ready    &lt;none&gt;   1m36s   v1.32.3+k0s</span>
+<span class="go">node/k0s-worker-3   Ready    &lt;none&gt;   1m36s   v1.32.3+k0s</span>
+
+<span class="go">NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE</span>
+<span class="go">kube-system   pod/coredns-7d4f7fbd5c-54lxp          1/1     Running   0          1m27s</span>
+<span class="go">kube-system   pod/coredns-7d4f7fbd5c-pwbck          1/1     Running   0          1m27s</span>
+<span class="go">kube-system   pod/konnectivity-agent-5g8pn          1/1     Running   0          1m22s</span>
+<span class="go">kube-system   pod/konnectivity-agent-6rp7r          1/1     Running   0          1m22s</span>
+<span class="go">kube-system   pod/konnectivity-agent-zx9fn          1/1     Running   0          1m22s</span>
+<span class="go">kube-system   pod/kube-proxy-9m77t                  1/1     Running   0          1m36s</span>
+<span class="go">kube-system   pod/kube-proxy-v5vs6                  1/1     Running   0          1m36s</span>
+<span class="go">kube-system   pod/kube-proxy-xfw2h                  1/1     Running   0          1m36s</span>
+<span class="go">kube-system   pod/kube-router-6c62v                 1/1     Running   0          1m36s</span>
+<span class="go">kube-system   pod/kube-router-98ss8                 1/1     Running   0          1m36s</span>
+<span class="go">kube-system   pod/kube-router-lr46f                 1/1     Running   0          1m36s</span>
+<span class="go">kube-system   pod/metrics-server-7778865875-fzhx6   1/1     Running   0          1m37s</span>
 </code></pre></div>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
