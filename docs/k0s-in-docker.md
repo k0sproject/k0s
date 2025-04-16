@@ -124,11 +124,12 @@ application containers to separate workers.
      -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
      --tmpfs /run `# this is where k0s stores runtime data` \
      --security-opt seccomp=unconfined \
-     -v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r' \
+     --device /dev/kmsg \
      --cap-add sys_admin \
      --cap-add net_admin \
      --cap-add sys_ptrace \
      --cap-add sys_resource \
+     --cap-add syslog \
      docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
      k0s worker "$token"
    ```
@@ -137,11 +138,10 @@ application containers to separate workers.
 
    - `--security-opt seccomp=unconfined` is required for `runc` to access the
      [session keyring].
-   - `-v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r'` allows reading
-     of `/dev/kmsg` from inside the container. The kubelet's OOM watcher uses
-     this.
-     <!-- check device type via `stat -c %Hr:%Lr /dev/kmsg`. -->
+   - `--device /dev/kmsg` makes `/dev/kmsg` visible from inside the container.
+     The kubelet's OOM watcher uses this.
      <!--
+       Note that this used to work via `-v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r'` as well.
        Upstream reference: https://github.com/euank/go-kmsg-parser/blob/v2.0.0/kmsgparser/kmsgparser.go#L60
        Also relevant: KubeletInUserNamespace feature gate (alpha since v1.22)
        https://kubernetes.io/docs/tasks/administer-cluster/kubelet-in-userns/
@@ -168,6 +168,8 @@ application containers to separate workers.
        Omitting this results in "runc create failed: unable to start container
        process: can't get final child's PID from pipe: EOF: unknown"
      -->
+   - `CAP_SYSLOG` allows containers to perform privileged syslog operations.
+     This is required in order to read `/dev/kmsg`.
 
    Note that more privileges may be required depending on your cluster
    configuration and workloads.
@@ -238,6 +240,56 @@ As an alternative you can run k0s using Docker Compose:
 <!-- Kept in its own file to ease local testing. -->
 ```yaml
 {% include "compose.yaml" %}
+```
+
+Below is a more complex example, using traefik as a load balancer, along with
+three controller and three worker nodes:
+
+<!-- Kept in its own file to ease local testing. -->
+```yaml
+{% include "compose-cluster.yaml" %}
+```
+
+Running the above:
+
+```console
+ ❯ docker compose up -d
+[+] Running 11/11
+ ✔ Network compose-cluster_k0s-net                Created                0.1s
+ ✔ Volume "compose-cluster_k0s-token-secrets"     Created                0.0s
+ ✔ Volume "compose-cluster_k0s-controller-token"  Created                0.0s
+ ✔ Volume "compose-cluster_k0s-worker-token"      Created                0.0s
+ ✔ Container k0s-lb                               Started                0.5s
+ ✔ Container k0s-controller-1                     Started                11.8s
+ ✔ Container k0s-controller-2                     Started                12.2s
+ ✔ Container k0s-worker-1                         Started                12.4s
+ ✔ Container k0s-worker-2                         Started                12.3s
+ ✔ Container k0s-worker-3                         Started                12.1s
+ ✔ Container k0s-controller-3                     Started                12.5s
+```
+
+After a short while:
+
+```console
+$ docker exec k0s-controller-1 k0s kc get node,po -A
+NAME                STATUS   ROLES    AGE     VERSION
+node/k0s-worker-1   Ready    <none>   1m36s   v{{{extra.k8s_version}}}+k0s
+node/k0s-worker-2   Ready    <none>   1m36s   v{{{extra.k8s_version}}}+k0s
+node/k0s-worker-3   Ready    <none>   1m36s   v{{{extra.k8s_version}}}+k0s
+
+NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE
+kube-system   pod/coredns-7d4f7fbd5c-54lxp          1/1     Running   0          1m27s
+kube-system   pod/coredns-7d4f7fbd5c-pwbck          1/1     Running   0          1m27s
+kube-system   pod/konnectivity-agent-5g8pn          1/1     Running   0          1m22s
+kube-system   pod/konnectivity-agent-6rp7r          1/1     Running   0          1m22s
+kube-system   pod/konnectivity-agent-zx9fn          1/1     Running   0          1m22s
+kube-system   pod/kube-proxy-9m77t                  1/1     Running   0          1m36s
+kube-system   pod/kube-proxy-v5vs6                  1/1     Running   0          1m36s
+kube-system   pod/kube-proxy-xfw2h                  1/1     Running   0          1m36s
+kube-system   pod/kube-router-6c62v                 1/1     Running   0          1m36s
+kube-system   pod/kube-router-98ss8                 1/1     Running   0          1m36s
+kube-system   pod/kube-router-lr46f                 1/1     Running   0          1m36s
+kube-system   pod/metrics-server-7778865875-fzhx6   1/1     Running   0          1m37s
 ```
 
 ## Known limitations
