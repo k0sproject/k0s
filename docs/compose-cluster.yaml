@@ -1,0 +1,177 @@
+name: compose-cluster
+
+x-k0s-controller: &k0s-controller
+  image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+  networks:
+    - k0s-net
+  tmpfs:
+    - /run # this is where k0s stores runtime data
+    - /tmp
+  configs:
+    - source: k0s.yaml
+      target: /etc/k0s/k0s.yaml
+  labels:
+    - traefik.enable=true
+    - traefik.tcp.routers.kube-api.service=kube-api
+    - traefik.tcp.routers.kube-api.rule=HostSNI(`*`)
+    - traefik.tcp.routers.kube-api.entrypoints=kube-api
+    - traefik.tcp.services.kube-api.loadbalancer.server.port=6443
+    - traefik.tcp.routers.k0s-api.service=k0s-api
+    - traefik.tcp.routers.k0s-api.rule=HostSNI(`*`)
+    - traefik.tcp.routers.k0s-api.entrypoints=k0s-api
+    - traefik.tcp.services.k0s-api.loadbalancer.server.port=9443
+    - traefik.tcp.routers.konnectivity.service=konnectivity
+    - traefik.tcp.routers.konnectivity.rule=HostSNI(`*`)
+    - traefik.tcp.routers.konnectivity.entrypoints=konnectivity
+    - traefik.tcp.services.konnectivity.loadbalancer.server.port=8132
+  restart: on-failure
+
+x-k0s-worker: &k0s-worker
+  image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+  networks:
+    - k0s-net
+  depends_on:
+    - k0s-controller-1
+  command: [k0s, worker, --token-file, /run/secrets/k0sproject.io/tokens/worker]
+  volumes:
+    - /var/lib/k0s # this is where k0s stores its data
+    - /var/log/pods # this is where k0s stores pod logs
+    - /dev/kmsg:/dev/kmsg:ro # required by kubelets OOM watcher
+    - k0s-worker-token:/run/secrets/k0sproject.io/tokens:ro
+  tmpfs:
+    - /run # this is where k0s stores runtime data
+    - /tmp
+  devices:
+    - /dev/kmsg # required by kubelet's OOM watcher
+  cap_add:
+    - sys_admin
+    - net_admin
+    - sys_ptrace
+    - sys_resource
+    - syslog
+  security_opt:
+    - seccomp:unconfined # allow access to the session keyring
+  restart: on-failure
+
+networks:
+  k0s-net:
+    driver: bridge
+
+services:
+  k0s-lb:
+    image: docker.io/traefik:v3.3.5
+    container_name: k0s-lb
+    hostname: k0s-lb
+    networks:
+      - k0s-net
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entryPoints.kube-api.address=:6443
+      - --entryPoints.k0s-api.address=:9443
+      - --entryPoints.konnectivity.address=:8132
+    ports:
+      - 6443:6443 # publish the Kubernetes API server port
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  k0s-controller-1:
+    <<: *k0s-controller
+    container_name: k0s-controller-1
+    hostname: k0s-controller-1
+    depends_on:
+      - k0s-lb
+    command: [k0s, controller]
+    post_start:
+      - command:
+          - /bin/sh
+          - -euc
+          - |
+            bootstrap() {
+              # this works even if etcd isn't up
+
+              find /run/secrets/k0sproject.io/controller-token ! -path /run/secrets/k0sproject.io/controller-token -prune -exec rm -rf {} +
+              k0s token pre-shared --role controller \
+                --cert /var/lib/k0s/pki/ca.crt \
+                --url https://k0s-lb:9443 \
+                --out /run/secrets/k0sproject.io/controller-token/
+
+              find /run/secrets/k0sproject.io/worker-token ! -path /run/secrets/k0sproject.io/worker-token -prune -exec rm -rf {} +
+              k0s token pre-shared --role worker \
+                --cert /var/lib/k0s/pki/ca.crt \
+                --url https://k0s-lb:6443 \
+                --out /run/secrets/k0sproject.io/worker-token/
+
+              mv /run/secrets/k0sproject.io/controller-token/*.yaml /var/lib/k0s/manifests/k0s-token-secrets/controller.yaml
+              mv /run/secrets/k0sproject.io/controller-token/token_* /run/secrets/k0sproject.io/controller-token/controller
+              mv /run/secrets/k0sproject.io/worker-token/*.yaml /var/lib/k0s/manifests/k0s-token-secrets/worker.yaml
+              mv /run/secrets/k0sproject.io/worker-token/token_* /run/secrets/k0sproject.io/worker-token/worker
+            }
+
+            while [ ! -f /var/lib/k0s/pki/ca.crt ] || ! bootstrap; do
+              sleep 1
+            done
+            sleep 10 # give this controller a bit of a head start
+
+    volumes:
+      - /var/lib/k0s # this is where k0s stores its data
+      - k0s-token-secrets:/var/lib/k0s/manifests/k0s-token-secrets
+      - k0s-controller-token:/run/secrets/k0sproject.io/controller-token
+      - k0s-worker-token:/run/secrets/k0sproject.io/worker-token
+
+  k0s-controller-2: &k0s-additional-controller
+    <<: *k0s-controller
+    container_name: k0s-controller-2
+    hostname: k0s-controller-2
+    depends_on:
+      - k0s-controller-1
+    command: [ k0s, controller, --token-file, /run/secrets/k0sproject.io/tokens/controller ]
+    volumes:
+      - /var/lib/k0s # this is where k0s stores its data
+      - k0s-token-secrets:/var/lib/k0s/manifests/k0s-token-secrets:ro
+      - k0s-controller-token:/run/secrets/k0sproject.io/tokens:ro
+
+  k0s-controller-3:
+    <<: *k0s-additional-controller
+    container_name: k0s-controller-3
+    hostname: k0s-controller-3
+
+  k0s-worker-1:
+    <<: *k0s-worker
+    container_name: k0s-worker-1
+    hostname: k0s-worker-1
+
+  k0s-worker-2:
+    <<: *k0s-worker
+    container_name: k0s-worker-2
+    hostname: k0s-worker-2
+
+  k0s-worker-3:
+    <<: *k0s-worker
+    container_name: k0s-worker-3
+    hostname: k0s-worker-3
+
+volumes:
+  k0s-token-secrets:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  k0s-controller-token:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  k0s-worker-token:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+
+configs:
+  k0s.yaml:
+    content: |
+      spec:
+        api:
+          externalAddress: k0s-lb

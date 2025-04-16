@@ -12,13 +12,16 @@ services:
       - /dev/kmsg:/dev/kmsg:ro # required by kubelets OOM watcher
     tmpfs:
       - /run # this is where k0s stores runtime data
+    devices:
+    - /dev/kmsg # required by kubelet's OOM watcher
     cap_add:
      - sys_admin
      - net_admin
      - sys_ptrace
      - sys_resource
-    device_cgroup_rules:
-      - c 1:11 r # required by kubelets OOM watcher
+     - syslog
+    security_opt:
+      - seccomp:unconfined # allow access to the session keyring
     configs:
       - source: k0s.yaml
         target: /etc/k0s/k0s.yaml
