@@ -28,6 +28,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/static"
 	"github.com/sirupsen/logrus"
@@ -47,7 +49,6 @@ type WindowsStackComponent struct {
 
 	kubeClientFactory    k8sutil.ClientFactoryInterface
 	k0sVars              *config.CfgVars
-	saver                manifestsSaver
 	prevRenderingContext windowsStackRenderingContext
 }
 
@@ -66,21 +67,21 @@ type windowsStackRenderingContext struct {
 }
 
 // NewWindowsStackComponent creates new WindowsStackComponent reconciler
-func NewWindowsStackComponent(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, saver manifestsSaver) *WindowsStackComponent {
+func NewWindowsStackComponent(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface) *WindowsStackComponent {
 	return &WindowsStackComponent{
 		log:               logrus.WithFields(logrus.Fields{"component": "WindowsNodeController"}),
-		saver:             saver,
 		kubeClientFactory: clientFactory,
 		k0sVars:           k0sVars,
 	}
 }
 
-// Init no-op
-func (n *WindowsStackComponent) Init(_ context.Context) error {
-	return nil
+// Init implements [manager.Component].
+func (n *WindowsStackComponent) Init(context.Context) error {
+	return dir.Init(filepath.Join(n.k0sVars.ManifestsDir, "windows"), constant.ManifestsDirMode)
 }
 
-// Run checks and adds labels
+// Start implements [manager.Component].
+// Runs checks and adds labels.
 func (n *WindowsStackComponent) Start(ctx context.Context) error {
 
 	go func() {
@@ -178,7 +179,7 @@ func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig)
 	return config, nil
 }
 
-// Stop no-op
+// Stop implements [manager.Component].
 func (n *WindowsStackComponent) Stop() error {
 	return nil
 }
@@ -190,6 +191,8 @@ func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderi
 	if err != nil {
 		return fmt.Errorf("error retrieving manifests: %w", err)
 	}
+
+	targetDir := filepath.Join(n.k0sVars.ManifestsDir, "windows")
 	for _, entry := range manifestDirectories {
 		dir := entry.Name()
 		manifestPaths, err := fs.ReadDir(static.WindowsManifests, dir)
@@ -219,7 +222,9 @@ func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderi
 				Data:     newConfig,
 			}
 			tryAndLog(manifestName, tw.WriteToBuffer(output))
-			tryAndLog(manifestName, n.saver.Save(manifestName, output.Bytes()))
+			tryAndLog(manifestName, file.AtomicWithTarget(filepath.Join(targetDir, manifestName)).
+				WithPermissions(constant.CertMode).
+				Write(output.Bytes()))
 		}
 	}
 	return nil
