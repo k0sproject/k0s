@@ -24,11 +24,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -126,9 +128,14 @@ func buildServer(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) (fu
 			authMiddleware(caHandler(k0sVars.CertRootDir), secrets, "controller-join")))
 	}
 
+	ipAddr, bindAddressSpecified := nodeConfig.Spec.API.ExtraArgs["bind-address"]
+	if !bindAddressSpecified && nodeConfig.Spec.API.OnlyBindToAddress {
+		ipAddr = nodeConfig.Spec.API.Address
+	}
+
 	srv := &http.Server{
 		Handler: mux,
-		Addr:    fmt.Sprintf(":%d", nodeConfig.Spec.API.K0sAPIPort),
+		Addr:    net.JoinHostPort(ipAddr, strconv.Itoa(nodeConfig.Spec.API.K0sAPIPort)),
 		TLSConfig: &tls.Config{
 			MinVersion:   tls.VersionTLS12,
 			CipherSuites: constant.AllowedTLS12CipherSuiteIDs,
