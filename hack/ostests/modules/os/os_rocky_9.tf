@@ -4,12 +4,12 @@ data "aws_ami" "rocky_9" {
   count = var.os == "rocky_9" ? 1 : 0
 
   owners      = ["792107900819"]
-  name_regex  = "^Rocky-9-EC2-Base-9\\.2-\\d+\\.\\d+\\.x86_64"
+  name_regex  = "^Rocky-9-EC2-Base-9\\.5-\\d+\\.\\d+\\.x86_64"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["Rocky-9-EC2-Base-9.2-*.x86_64"]
+    values = ["Rocky-9-EC2-Base-9.5-*.x86_64"]
   }
 
   filter {

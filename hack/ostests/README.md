@@ -48,7 +48,7 @@ Select the desired cluster configuration for OpenTofu. Again, just an example,
 other ways described [here][tf-config].
 
 ```shell
-export TF_VAR_os=alpine_3_20
+export TF_VAR_os=alpine_3_21
 export TF_VAR_arch=x86_64
 export TF_VAR_k0s_version=stable
 export TF_VAR_k0s_network_provider=calico
@@ -69,29 +69,29 @@ tofu apply
 ### `os`: Operating system stack
 
 * `al2023`: Amazon Linux 2023
-* `alpine_3_20`: Alpine Linux 3.17
-* `alpine_3_20`: Alpine Linux 3.20
+* `alpine_3_18`: Alpine Linux 3.18
+* `alpine_3_21`: Alpine Linux 3.21
 * `centos_7`: CentOS Linux 7 (Core)
 * `centos_8`: CentOS Stream 8
 * `centos_9`: CentOS Stream 9
 * `debian_10`: Debian GNU/Linux 10 (buster)
 * `debian_11`: Debian GNU/Linux 11 (bullseye)
 * `debian_12`: Debian GNU/Linux 12 (bookworm)
-* `fcos_38`: Fedora CoreOS 38
-* `fedora_38`: Fedora Linux 38 (Cloud Edition)
+* `fcos_41`: Fedora CoreOS 41
+* `fedora_41`: Fedora Linux 41 (Cloud Edition)
 * `flatcar`: Flatcar Container Linux by Kinvolk
-* `oracle_7_9`: Oracle Linux Server 7.9
-* `oracle_8_7`: Oracle Linux Server 8.7
-* `oracle_9_1`: Oracle Linux Server 9.1
+* `oracle_8_9`: Oracle Linux Server 8.9
+* `oracle_9_3`: Oracle Linux Server 9.3
 * `rhel_7`: Red Hat Enterprise Linux Server 7.9 (Maipo)
-* `rhel_8`: Red Hat Enterprise Linux 8.6 (Ootpa)
-* `rhel_9`: Red Hat Enterprise Linux 9.3 (Plow)
-* `rocky_8`: Rocky Linux 8.7 (Green Obsidian)
-* `rocky_9`: Rocky Linux 9.2 (Blue Onyx)
+* `rhel_8`: Red Hat Enterprise Linux 8.10 (Ootpa)
+* `rhel_9`: Red Hat Enterprise Linux 9.5 (Plow)
+* `rocky_8`: Rocky Linux 8.10 (Green Obsidian)
+* `rocky_9`: Rocky Linux 9.5 (Blue Onyx)
+* `sles_15`: SUSE Linux Enterprise Server 15 SP6
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
-* `ubuntu_2304`: Ubuntu 23.04
-* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.20)
+* `ubuntu_2404`: Ubuntu 24.04
+* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.21)
 
 ### `arch`: Node architecture
 
@@ -110,7 +110,7 @@ Assuming the AWS credentials are available, it can be used like this:
 
 ```sh
 tofu init
-export TF_VAR_os=alpine_3_20
+export TF_VAR_os=alpine_3_21
 export TF_VAR_k0sctl_skip=true
 tofu apply
 tofu output -json | jq -r '
@@ -172,7 +172,7 @@ workflow] that exposes more knobs and can be triggered manually, e.g. via [gh]:
 
 ```console
 $ gh workflow run ostests-matrix.yaml --ref some/experimental/branch \
-  -f oses='["alpine_3_20"]' \
+  -f oses='["alpine_3_21"]' \
   -f network-providers='["calico"]'
 ✓ Created workflow_dispatch event for ostests-matrix.yaml at some/experimental/branch
 

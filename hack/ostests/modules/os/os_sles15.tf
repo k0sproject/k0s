@@ -1,15 +1,13 @@
-# https://docs.fedoraproject.org/en-US/fedora-coreos/provisioning-aws/
+data "aws_ami" "sles_15" {
+  count = var.os == "sles_15" ? 1 : 0
 
-data "aws_ami" "fcos_38" {
-  count = var.os == "fcos_38" ? 1 : 0
-
-  owners      = ["125523088429"]
-  name_regex  = "^fedora-coreos-38\\.\\d+\\..+-x86_64"
+  owners      = ["013907871322"]
+  name_regex  = "^suse-sles-15-sp6-v\\d+-hvm-ssd-x86_64"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["fedora-coreos-38.*.*-x86_64"]
+    values = ["suse-sles-15-sp6-v*-hvm-ssd-x86_64"]
   }
 
   filter {
@@ -30,20 +28,20 @@ data "aws_ami" "fcos_38" {
   lifecycle {
     precondition {
       condition     = var.arch == "x86_64"
-      error_message = "Unsupported architecture for Fedora CoreOS 38."
+      error_message = "Unsupported architecture for SUSE Linux Enterprise Server 15 SP6."
     }
   }
 }
 
 locals {
-  os_fcos_38 = var.os != "fcos_38" ? {} : {
+  os_sles_15 = var.os != "sles_15" ? {} : {
     node_configs = {
       default = {
-        ami_id = one(data.aws_ami.fcos_38.*.id)
+        ami_id = one(data.aws_ami.sles_15.*.id)
 
         connection = {
           type     = "ssh"
-          username = "core"
+          username = "ec2-user"
         }
       }
     }

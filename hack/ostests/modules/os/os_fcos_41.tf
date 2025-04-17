@@ -1,15 +1,15 @@
-# https://access.redhat.com/solutions/15356
+# https://docs.fedoraproject.org/en-US/fedora-coreos/provisioning-aws/
 
-data "aws_ami" "rhel_8" {
-  count = var.os == "rhel_8" ? 1 : 0
+data "aws_ami" "fcos_41" {
+  count = var.os == "fcos_41" ? 1 : 0
 
-  owners      = ["309956199498"]
-  name_regex  = "^RHEL-8\\.10\\.0_HVM-\\d+-x86_64-"
+  owners      = ["125523088429"]
+  name_regex  = "^fedora-coreos-41\\.\\d+\\..+-x86_64"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["RHEL-8.10.0_HVM-*-x86_64-*"]
+    values = ["fedora-coreos-41.*.*-x86_64"]
   }
 
   filter {
@@ -30,20 +30,20 @@ data "aws_ami" "rhel_8" {
   lifecycle {
     precondition {
       condition     = var.arch == "x86_64"
-      error_message = "Unsupported architecture for Red Hat Enterprise Linux 8.6 (Ootpa)."
+      error_message = "Unsupported architecture for Fedora CoreOS 41."
     }
   }
 }
 
 locals {
-  os_rhel_8 = var.os != "rhel_8" ? {} : {
+  os_fcos_41 = var.os != "fcos_41" ? {} : {
     node_configs = {
       default = {
-        ami_id = one(data.aws_ami.rhel_8.*.id)
+        ami_id = one(data.aws_ami.fcos_41.*.id)
 
         connection = {
           type     = "ssh"
-          username = "ec2-user"
+          username = "core"
         }
       }
     }
