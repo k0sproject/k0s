@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/pkg/config/kine"
@@ -122,9 +123,23 @@ func (s *StorageSpec) Validate() []error {
 		errors = append(errors, field.NotSupported(field.NewPath("type"), s.Type, types))
 	}
 
-	if s.Etcd != nil && s.Etcd.ExternalCluster != nil {
-		errors = append(errors, validateRequiredProperties(s.Etcd.ExternalCluster)...)
-		errors = append(errors, validateOptionalTLSProperties(s.Etcd.ExternalCluster)...)
+	validateDuration := func(path *field.Path, d string) {
+		if d == "" {
+			return
+		}
+		if _, err := time.ParseDuration(d); err != nil {
+			errors = append(errors, field.Invalid(path, d, fmt.Sprintf("invalid duration: %v", err)))
+		}
+	}
+
+	if s.Etcd != nil {
+		validateDuration(field.NewPath("caExpiry"), s.Etcd.CAExpiry)
+		validateDuration(field.NewPath("certExpiry"), s.Etcd.CertExpiry)
+
+		if s.Etcd.ExternalCluster != nil {
+			errors = append(errors, validateRequiredProperties(s.Etcd.ExternalCluster)...)
+			errors = append(errors, validateOptionalTLSProperties(s.Etcd.ExternalCluster)...)
+		}
 	}
 
 	return errors
@@ -140,6 +155,14 @@ type EtcdConfig struct {
 
 	// Map of key-values (strings) for any extra arguments you want to pass down to the etcd process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+
+	// The expiration duration of the CA certificate
+	// +kubebuilder:default="87600h"
+	CAExpiry string `json:"caExpiry,omitempty"`
+
+	// The expiration duration of the server certificate
+	// +kubebuilder:default="8760h"
+	CertExpiry string `json:"certExpiry,omitempty"`
 }
 
 // ExternalCluster defines external etcd cluster related config options
@@ -172,6 +195,8 @@ func DefaultEtcdConfig() *EtcdConfig {
 		ExternalCluster: nil,
 		PeerAddress:     addr,
 		ExtraArgs:       make(map[string]string),
+		CAExpiry:        "87600h",
+		CertExpiry:      "8760h",
 	}
 }
 
