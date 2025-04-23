@@ -20,8 +20,17 @@ RUN curl --proto '=https' --tlsv1.2 -L https://www.netfilter.org/projects/iptabl
 	| tar -C / -Jx
 
 ARG TARGET_OS
-RUN cd /iptables-$VERSION && \
-  CFLAGS="-Os" ./configure --sysconfdir=/etc --enable-static --disable-shared --without-kernel --disable-devel
+# -D__UAPI_DEF_ETHHDR is required to build on musl.
+# If this CFLAG isn't defined, itpables will define it in include/xtables.h
+# and will have a conflict with musl, which defines it in
+# /usr/include/netinet/if_ether.h
+RUN if [ ! -z "$(which apk)" ]; then \
+      cd /iptables-$VERSION && \
+      CFLAGS="-Os -D__UAPI_DEF_ETHHDR=0" ./configure --sysconfdir=/etc --enable-static --disable-shared --without-kernel --disable-devel; \
+    else \
+      cd /iptables-$VERSION && \
+      CFLAGS="-Os" ./configure --sysconfdir=/etc --enable-static --disable-shared --without-kernel --disable-devel; \
+    fi
 
 RUN make -j$(nproc) -C /iptables-$VERSION LDFLAGS=-all-static
 RUN make -j$(nproc) -C /iptables-$VERSION install
