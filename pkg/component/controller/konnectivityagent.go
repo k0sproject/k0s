@@ -245,6 +245,8 @@ spec:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '8093'
     spec:
+      securityContext:
+        supplementalGroups: [0]` /* in order to read the projected service account token */ + `
       nodeSelector:
         kubernetes.io/os: linux
       priorityClassName: system-cluster-critical
@@ -292,6 +294,12 @@ spec:
             httpGet:
               port: 8093
               path: /healthz
+            initialDelaySeconds: 15
+            timeoutSeconds: 15
+          readinessProbe:` /* helps to quickly identify pods with connection issues */ + `
+            httpGet:
+              port: 8093
+              path: /readyz
             initialDelaySeconds: 15
             timeoutSeconds: 15
       serviceAccountName: konnectivity-agent
