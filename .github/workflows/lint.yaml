@@ -35,7 +35,7 @@ env:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,7 +66,7 @@ jobs:
 
   validate-os-tests:
     name: Validate OS tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     env:
       TERRAFORM_VERSION: 1.4.6

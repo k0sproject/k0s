@@ -20,7 +20,7 @@ on:
 jobs:
   lint:
     name: Lint markdown
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: articulate/actions-markdownlint@v1

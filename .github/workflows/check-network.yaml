@@ -22,7 +22,7 @@ jobs:
 
     name: "K8s Network Conformance Testing"
     if: github.repository == 'k0sproject/k0s'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       k0s_version: ${{ steps.bin_info.outputs.K0S_VERSION }}
       kubernetes_version: ${{ steps.k0s_build.outputs.KUBERNETES_VERSION }}

@@ -15,7 +15,7 @@ jobs:
       TF_VAR_k0s_binary_path: "${{ github.workspace }}/k0s"
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
     name: release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       tag_name: ${{ steps.branch_name.outputs.TAG_NAME }}
@@ -425,7 +425,7 @@ jobs:
       - x64
       - arm64
       - armv7
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Download assets for generating checksums
         uses: robinraju/release-downloader@v1.11
@@ -452,7 +452,7 @@ jobs:
       - x64
       - arm64
       - armv7
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -512,7 +512,7 @@ jobs:
   sbom:
     needs:
       - release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Run git checkout
         uses: actions/checkout@v4
@@ -558,7 +558,7 @@ jobs:
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     name: "K8s Conformance Testing"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: ./inttest/sonobuoy/terraform

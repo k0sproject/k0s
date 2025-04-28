@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check for merge conflicts
         uses: eps1lon/actions-label-merge-conflict@v3.0.2
