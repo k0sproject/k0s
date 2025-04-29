@@ -5,9 +5,8 @@ locals {
     al2023              = local.os_al2023
     alpine_3_18         = local.os_alpine_3_18
     alpine_3_21         = local.os_alpine_3_21
-    centos_7            = local.os_centos_7
-    centos_8            = local.os_centos_8
     centos_9            = local.os_centos_9
+    centos_10           = local.os_centos_10
     debian_10           = local.os_debian_10
     debian_11           = local.os_debian_11
     debian_12           = local.os_debian_12
