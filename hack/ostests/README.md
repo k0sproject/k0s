@@ -71,9 +71,8 @@ tofu apply
 * `al2023`: Amazon Linux 2023
 * `alpine_3_18`: Alpine Linux 3.18
 * `alpine_3_21`: Alpine Linux 3.21
-* `centos_7`: CentOS Linux 7 (Core)
-* `centos_8`: CentOS Stream 8
 * `centos_9`: CentOS Stream 9
+* `centos_10`: CentOS Stream 10 (Coughlan)
 * `debian_10`: Debian GNU/Linux 10 (buster)
 * `debian_11`: Debian GNU/Linux 11 (bullseye)
 * `debian_12`: Debian GNU/Linux 12 (bookworm)
