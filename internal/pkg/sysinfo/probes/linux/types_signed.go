@@ -1,4 +1,4 @@
-//go:build linux
+//go:build linux && !(arm || riscv64)
 
 /*
 Copyright 2022 k0s authors
@@ -18,4 +18,4 @@ limitations under the License.
 
 package linux
 
-type utsChar = uint8
+type utsChar = int8
