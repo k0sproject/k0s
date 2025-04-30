@@ -19,7 +19,6 @@ package oci_test
 import (
 	"bytes"
 	"cmp"
-	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -101,7 +100,7 @@ func TestDownload(t *testing.T) {
 
 			buf := bytes.NewBuffer(nil)
 			url := path.Join(addr.Host, "repository", "artifact:latest")
-			err := oci.Download(context.TODO(), url, buf, opts...)
+			err := oci.Download(t.Context(), url, buf, opts...)
 			if tt.Expected != "" {
 				require.NoError(t, err)
 				require.Empty(t, tt.Error)

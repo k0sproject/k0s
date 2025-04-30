@@ -17,7 +17,6 @@ limitations under the License.
 package prober
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -33,7 +32,7 @@ func TestHealthChecks(t *testing.T) {
 		prober := testProber(9)
 		prober.Register("test", &mockComponent{})
 		prober.Register("test2", &mockComponent{})
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		st := prober.State(maxEvents)
 		assert.Len(t, prober.withHealthComponents, 2)
 		assert.Len(t, st.HealthProbes, 2, "should have 2 components in the state")
@@ -55,7 +54,7 @@ func TestHealthChecks(t *testing.T) {
 		prober.Register("test3", &mockComponent{
 			errors: []error{nil, nil, nil, nil, errors.New("test3 error")},
 		})
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		st := prober.State(maxEvents)
 		assert.Len(t, prober.withHealthComponents, 3)
 		assert.Len(t, st.HealthProbes, 3, "should have 3 components in the state")
@@ -83,7 +82,7 @@ func TestHealthChecks(t *testing.T) {
 		prober.Register("test3", &mockComponent{
 			errors: []error{nil, nil, nil, nil, errors.New("test3 error")},
 		})
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		st := prober.State(1)
 		assert.Len(t, prober.withHealthComponents, 3)
 		assert.Len(t, st.HealthProbes, 3, "should have 3 components in the state")

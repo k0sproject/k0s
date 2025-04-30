@@ -190,7 +190,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("fails_to_run_without_init", func(t *testing.T) {
-		err := underTest.Start(context.TODO())
+		err := underTest.Start(t.Context())
 		require.Error(t, err)
 		require.Equal(t, "static_pods component is not yet initialized", err.Error())
 	})
@@ -208,11 +208,11 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("init", func(t *testing.T) {
-		require.NoError(t, underTest.Init(context.TODO()))
+		require.NoError(t, underTest.Init(t.Context()))
 	})
 
 	t.Run("another_init_fails", func(t *testing.T) {
-		err := underTest.Init(context.TODO())
+		err := underTest.Init(t.Context())
 		if assert.Error(t, err) {
 			assert.Equal(t, "static_pods component is already initialized", err.Error())
 		}
@@ -236,11 +236,8 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		assert.Equal(t, "static_pods component is not yet running", err.Error())
 	})
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
-
 	t.Run("runs", func(runT *testing.T) {
-		if assert.NoError(runT, underTest.Start(ctx)) {
+		if assert.NoError(runT, underTest.Start(t.Context())) {
 			t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
 			var lastLog *logrus.Entry
@@ -258,7 +255,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("another_run_fails", func(t *testing.T) {
-		err := underTest.Start(ctx)
+		err := underTest.Start(t.Context())
 		require.Error(t, err)
 		assert.Equal(t, "static_pods component is already running", err.Error())
 	})
@@ -283,7 +280,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 		t.Cleanup(cancel)
 
 		req = req.WithContext(ctx)
@@ -331,7 +328,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 		t.Cleanup(cancel)
 
 		resp, err := http.DefaultClient.Do(req.WithContext(ctx))
@@ -351,13 +348,13 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("reinit_fails", func(t *testing.T) {
-		err := underTest.Init(context.TODO())
+		err := underTest.Init(t.Context())
 		require.Error(t, err)
 		assert.Equal(t, "static_pods component is already stopped", err.Error())
 	})
 
 	t.Run("rerun_fails", func(t *testing.T) {
-		err := underTest.Start(context.TODO())
+		err := underTest.Start(t.Context())
 		require.Error(t, err)
 		assert.Equal(t, "static_pods component is already stopped", err.Error())
 	})

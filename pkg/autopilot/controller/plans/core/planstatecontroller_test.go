@@ -135,7 +135,7 @@ func TestReconcile(t *testing.T) {
 			controller := NewPlanStateController(test.name, logrus.NewEntry(logrus.StandardLogger()), client, test.handler)
 			req := cr.Request{NamespacedName: types.NamespacedName{Name: test.name}}
 
-			ctx := context.TODO()
+			ctx := t.Context()
 			res, err := controller.Reconcile(ctx, req)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expectedRequeue, !res.IsZero())
