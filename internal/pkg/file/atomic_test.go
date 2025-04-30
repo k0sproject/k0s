@@ -28,7 +28,6 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -118,10 +117,10 @@ func TestWriteAtomically(t *testing.T) {
 	t.Run("workingDirectoryChanges", func(t *testing.T) {
 		dir := t.TempDir()
 		otherDir := t.TempDir()
-		defer testutil.Chdir(t, dir)()
+		t.Chdir(dir)
 
 		assert.NoError(t, WriteAtomically("file", 0644, func(w io.Writer) error {
-			assert.NoError(t, os.Chdir(otherDir))
+			t.Chdir(otherDir)
 			return nil
 		}))
 		assertDirEmpty(t, otherDir)

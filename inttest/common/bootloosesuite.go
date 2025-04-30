@@ -208,7 +208,7 @@ func (s *BootlooseSuite) SetupSuite() {
 		t.Logf("Cleaning up")
 
 		// Get a fresh context for the cleanup tasks.
-		ctx, cancel := signalAwareCtx(context.Background())
+		ctx, cancel := signalAwareCtx(t.Context())
 		defer cancel(nil)
 		s.cleanupSuite(ctx, t)
 	}()
@@ -1342,7 +1342,7 @@ func cleanupClusterDir(t *testing.T, dir string) {
 }
 
 func newSuiteContext(t *testing.T) (context.Context, context.CancelCauseFunc) {
-	signalCtx, cancel := signalAwareCtx(context.Background())
+	signalCtx, cancel := signalAwareCtx(t.Context())
 
 	// We need to reserve some time to conduct a proper teardown of the suite before the test timeout kicks in.
 	deadline, hasDeadline := t.Deadline()

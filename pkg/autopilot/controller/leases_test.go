@@ -15,7 +15,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -32,15 +31,12 @@ import (
 func TestLeasesInitialPending(t *testing.T) {
 	clientFactory := testutil.NewFakeClientFactory()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	logger := logrus.StandardLogger().WithField("app", "leases_test")
 
 	leaseWatcher, err := NewLeaseWatcher(logger, clientFactory)
 	assert.NoError(t, err)
 
-	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(ctx, constant.AutopilotNamespace, fmt.Sprintf("%s-lease", constant.AutopilotNamespace), t.Name())
+	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(t.Context(), constant.AutopilotNamespace, fmt.Sprintf("%s-lease", constant.AutopilotNamespace), t.Name())
 	assert.NotNil(t, errorCh)
 	assert.NotNil(t, leaseEventStatusCh)
 
@@ -142,12 +138,10 @@ func TestLeadershipWatcher(t *testing.T) {
 
 			go test.eventSource(events)
 
-			ctx, cancel := context.WithDeadline(context.TODO(), time.Now().Add(1*time.Second))
-			wg := leadershipWatcher(ctx, leaseEventStatusCh, events)
+			wg := leadershipWatcher(t.Context(), leaseEventStatusCh, events)
 			wg.Wait()
 
 			close(leaseEventStatusCh)
-			cancel()
 
 			assert.Equal(t, test.expectedEvents, realizeLeaseEventStatus(leaseEventStatusCh))
 		})

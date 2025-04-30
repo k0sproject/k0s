@@ -68,8 +68,7 @@ func TestLeaseConfig_Client(t *testing.T) {
 
 func TestClient_Reacquisition(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
+	ctx, cancel := context.WithCancel(t.Context())
 
 	givenLeaderElectorError := func() func(err error) {
 		var updateErr atomic.Pointer[error]
@@ -142,8 +141,7 @@ func TestClient_Reacquisition(t *testing.T) {
 
 func TestClient_LeadTakeover(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
+	ctx, cancel := context.WithCancel(t.Context())
 
 	// Create two leader election clients, Red and Black.
 	ctxRed, cancelRed := context.WithCancel(ctx)
@@ -213,7 +211,7 @@ func TestClient_LeadTakeover(t *testing.T) {
 	// Pre-create the acquired lease for Red, so that there are no races when
 	// taking the lead by the two competing leader election client.
 	now := metav1.NewMicroTime(time.Now())
-	_, err = fakeClient.CoordinationV1().Leases("foo").Create(context.TODO(), &coordinationv1.Lease{
+	_, err = fakeClient.CoordinationV1().Leases("foo").Create(t.Context(), &coordinationv1.Lease{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Lease",
 			APIVersion: coordinationv1.SchemeGroupVersion.String(),

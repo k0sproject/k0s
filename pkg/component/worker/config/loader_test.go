@@ -18,6 +18,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -92,7 +93,7 @@ data:
 	}
 
 	workerProfile, err := func() (*Profile, error) {
-		ctx, cancel := context.WithCancel(context.TODO())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		timer := time.AfterFunc(10*time.Second, func() {
 			assert.Fail(t, "Call to Loader.Load() took too long, check the logs for details")
@@ -163,21 +164,22 @@ func TestWatchProfile(t *testing.T) {
 
 	cacheDir := t.TempDir()
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
-	timer := time.AfterFunc(10*time.Second, func() {
-		assert.Fail(t, "Call to Watcher.Watch() took too long, check the logs for details")
-		cancel()
-	})
-	defer timer.Stop()
+	ctx, cancel := context.WithCancelCause(t.Context())
+	timeout := errors.New("timeout: Watcher.Watch()")
+	timer := time.AfterFunc(10*time.Second, func() { cancel(timeout) })
+	defer func() {
+		timer.Stop()
+		if errors.Is(context.Cause(ctx), timeout) {
+			assert.Fail(t, "Call to Watcher.Watch() took too long, check the logs for details")
+		}
+	}()
 
 	var timesCallbackCalled atomic.Uint32
 	callback := func(p Profile) error {
 		timesCallbackCalled.Add(1)
 		assert.Equal(t, "foo", p.KubeletConfiguration.Kind)
 		timer.Stop()
-		cancel()
+		cancel(nil)
 		return nil
 	}
 

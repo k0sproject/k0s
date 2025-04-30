@@ -15,7 +15,6 @@
 package airgapupdate
 
 import (
-	"context"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
@@ -167,7 +166,7 @@ func TestSchedulable(t *testing.T) {
 				[]string{},
 			)
 
-			ctx := context.TODO()
+			ctx := t.Context()
 			nextState, retry, err := provider.Schedulable(ctx, "id123", test.command, &test.status)
 
 			assert.Equal(t, test.expectedNextState, nextState)

@@ -42,7 +42,7 @@ import (
 var managerTestData embed.FS
 
 func TestManager(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	dir := t.TempDir()
 
