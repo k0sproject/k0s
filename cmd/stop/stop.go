@@ -21,6 +21,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/kardianos/service"
@@ -28,10 +29,13 @@ import (
 )
 
 func NewStopCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "stop",
-		Short: "Stop the k0s service configured on this host. Must be run as root (or with sudo)",
-		Args:  cobra.NoArgs,
+	var debugFlags internal.DebugFlags
+
+	cmd := &cobra.Command{
+		Use:              "stop",
+		Short:            "Stop the k0s service configured on this host. Must be run as root (or with sudo)",
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if runtime.GOOS != "windows" && os.Geteuid() != 0 {
 				return errors.New("this command must be run as root")
@@ -51,4 +55,7 @@ func NewStopCmd() *cobra.Command {
 		},
 	}
 
+	debugFlags.AddToFlagSet(cmd.PersistentFlags())
+
+	return cmd
 }

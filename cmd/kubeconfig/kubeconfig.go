@@ -17,6 +17,7 @@ limitations under the License.
 package kubeconfig
 
 import (
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/spf13/cobra"
@@ -24,17 +25,22 @@ import (
 )
 
 func NewKubeConfigCmd() *cobra.Command {
+	var debugFlags internal.DebugFlags
+
 	cmd := &cobra.Command{
-		Use:   "kubeconfig [command]",
-		Short: "Create a kubeconfig file for a specified user",
-		Args:  cobra.NoArgs,
-		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
+		Use:              "kubeconfig [command]",
+		Short:            "Create a kubeconfig file for a specified user",
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
+		RunE:             func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
 	}
 
+	pflags := cmd.PersistentFlags()
+	debugFlags.AddToFlagSet(pflags)
 	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
 		f.Hidden = true
 		f.Deprecated = "it has no effect and will be removed in a future release"
-		cmd.PersistentFlags().AddFlag(f)
+		pflags.AddFlag(f)
 	})
 
 	cmd.AddCommand(kubeconfigCreateCmd())

@@ -26,6 +26,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func NewValidateCmd() *cobra.Command {
@@ -62,7 +63,11 @@ func NewValidateCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.AddFlagSet(config.GetPersistentFlagSet())
+	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		f.Deprecated = "it has no effect and will be removed in a future release"
+		cmd.PersistentFlags().AddFlag(f)
+	})
 	flags.AddFlagSet(config.FileInputFlag())
 	_ = cmd.MarkFlagRequired("config")
 
