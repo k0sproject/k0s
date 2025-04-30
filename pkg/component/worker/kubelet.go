@@ -19,7 +19,6 @@ package worker
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -93,10 +92,6 @@ func (k *Kubelet) Init(_ context.Context) error {
 		return fmt.Errorf("failed to create %s: %w", runDir, err)
 	}
 	k.configPath = filepath.Join(runDir, "config.yaml")
-	// Delete legacy config file (removed in 1.32)
-	if err := os.Remove(filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")); err != nil && !errors.Is(err, os.ErrNotExist) {
-		logrus.WithError(err).Warn("Failed to remove legacy kubelet config file")
-	}
 
 	return nil
 }
