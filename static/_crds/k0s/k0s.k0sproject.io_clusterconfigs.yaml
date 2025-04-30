@@ -662,6 +662,12 @@ spec:
                         - Keepalived
                         type: string
                     type: object
+                  coredns:
+                    description: CoreDNS defines the coredns related config options
+                    properties:
+                      corefile:
+                        type: string
+                    type: object
                   dualStack:
                     description: DualStack defines network configuration for ipv4\ipv6
                       mixed cluster setup

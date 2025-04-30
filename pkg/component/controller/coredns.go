@@ -96,22 +96,7 @@ metadata:
   namespace: kube-system
 data:
   Corefile: |
-    .:53 {
-        errors
-        health
-        ready
-        kubernetes {{ .ClusterDomain }} in-addr.arpa ip6.arpa {
-          pods insecure
-          ttl 30
-          fallthrough in-addr.arpa ip6.arpa
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
+{{ .Corefile | indent 4 }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -275,7 +260,6 @@ var _ manager.Reconciler = (*CoreDNS)(nil)
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
 	dnsAddress             string
-	clusterDomain          string
 	client                 kubernetes.Interface
 	log                    *logrus.Entry
 	manifestDir            string
@@ -286,8 +270,8 @@ type CoreDNS struct {
 
 type coreDNSConfig struct {
 	Replicas                   int
+	Corefile                   string
 	ClusterDNSIP               string
-	ClusterDomain              string
 	Image                      string
 	PullPolicy                 string
 	MaxUnavailableReplicas     *uint
@@ -308,11 +292,10 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 	}
 
 	return &CoreDNS{
-		dnsAddress:    dnsAddress,
-		clusterDomain: nodeConfig.Spec.Network.ClusterDomain,
-		client:        client,
-		log:           logrus.WithField("component", "coredns"),
-		manifestDir:   path.Join(k0sVars.ManifestsDir, "coredns"),
+		dnsAddress:  dnsAddress,
+		client:      client,
+		log:         logrus.WithField("component", "coredns"),
+		manifestDir: path.Join(k0sVars.ManifestsDir, "coredns"),
 	}, nil
 }
 
@@ -357,12 +340,32 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 
 	nodeCount := len(nodes.Items)
 
+	corefile := clusterConfig.Spec.Network.CoreDNS.Corefile
+	if corefile == "" {
+		corefile = fmt.Sprintf(`.:53 {
+	errors
+	health
+	ready
+	kubernetes %s in-addr.arpa ip6.arpa {
+	  pods insecure
+	  ttl 30
+	  fallthrough in-addr.arpa ip6.arpa
+	}
+	prometheus :9153
+	forward . /etc/resolv.conf
+	cache 30
+	loop
+	reload
+	loadbalance
+}`, clusterConfig.Spec.Network.ClusterDomain)
+	}
+
 	config := coreDNSConfig{
-		Replicas:      replicaCount(nodeCount),
-		ClusterDomain: c.clusterDomain,
-		ClusterDNSIP:  c.dnsAddress,
-		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
-		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,
+		Replicas:     replicaCount(nodeCount),
+		Corefile:     corefile,
+		ClusterDNSIP: c.dnsAddress,
+		Image:        clusterConfig.Spec.Images.CoreDNS.URI(),
+		PullPolicy:   clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
 	if config.Replicas <= 1 {
