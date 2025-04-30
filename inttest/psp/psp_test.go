@@ -58,7 +58,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: v1.ObjectMeta{Name: "test-pod-non-privileged"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "pause", Image: "registry.k8s.io/pause"}},
+			Containers: []corev1.Container{{Name: "pause", Image: "quay.io/k0sproject/pause"}},
 		},
 	}
 
@@ -75,7 +75,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 			Containers: []corev1.Container{
 				{
 					Name:  "pause",
-					Image: "registry.k8s.io/pause",
+					Image: "quay.io/k0sproject/pause",
 					SecurityContext: &corev1.SecurityContext{
 						RunAsUser: ptr.To(int64(0)),
 					},
