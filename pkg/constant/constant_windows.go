@@ -20,9 +20,6 @@ const (
 	// DataDirDefault is the default directory containing k0s state.
 	DataDirDefault = "C:\\var\\lib\\k0s"
 
-	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables
-	KubeletVolumePluginDir = "C:\\usr\\libexec\\k0s\\kubelet-plugins\\volume\\exec"
-
 	KineSocket           = "kine\\kine.sock:2379"
 	K0sConfigPathDefault = "C:\\etc\\k0s\\k0s.yaml"
 )
