@@ -500,7 +500,7 @@ NAME          STATUS   ROLES    AGE    VERSION       INTERNAL-IP    EXTERNAL-IP 
 node/ubuntu   Ready    <none>   5m1s   v{{{ extra.k8s_version }}}+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.27
 
 NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR
-kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          registry.k8s.io/coredns/coredns:v1.7.0                 k8s-app=kube-dns
+kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          quay.io/k0sproject/coredns:1.12.1                      k8s-app=kube-dns
 kube-system   deployment.apps/metrics-server   1/1     1            1           33m   metrics-server   quay.io/k0sproject/metrics-server:v0.7.2               k8s-app=metrics-server
 
 NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE    IP             NODE     NOMINATED NODE   READINESS GATES
