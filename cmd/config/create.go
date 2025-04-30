@@ -17,6 +17,7 @@ limitations under the License.
 package config
 
 import (
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -29,12 +30,16 @@ import (
 )
 
 func NewCreateCmd() *cobra.Command {
-	var includeImages bool
+	var (
+		debugFlags    internal.DebugFlags
+		includeImages bool
+	)
 
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Output the default k0s configuration yaml to stdout",
-		Args:  cobra.NoArgs,
+		Use:              "create",
+		Short:            "Output the default k0s configuration yaml to stdout",
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			config := v1beta1.DefaultClusterConfig()
 			if !includeImages {
@@ -58,13 +63,15 @@ func NewCreateCmd() *cobra.Command {
 		},
 	}
 
-	flags := cmd.Flags()
+	pflags := cmd.PersistentFlags()
+	debugFlags.AddToFlagSet(pflags)
 	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
 		f.Hidden = true
 		f.Deprecated = "it has no effect and will be removed in a future release"
-		cmd.PersistentFlags().AddFlag(f)
+		pflags.AddFlag(f)
 	})
-	flags.BoolVar(&includeImages, "include-images", false, "include the default images in the output")
+
+	cmd.Flags().BoolVar(&includeImages, "include-images", false, "include the default images in the output")
 
 	return cmd
 }

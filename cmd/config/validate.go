@@ -22,6 +22,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 
@@ -30,12 +31,15 @@ import (
 )
 
 func NewValidateCmd() *cobra.Command {
+	var debugFlags internal.DebugFlags
+
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate k0s configuration",
 		Long: `Example:
    k0s config validate --config path_to_config.yaml`,
-		Args: cobra.NoArgs,
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
 			var bytes []byte
 
@@ -62,13 +66,15 @@ func NewValidateCmd() *cobra.Command {
 		},
 	}
 
-	flags := cmd.Flags()
+	pflags := cmd.PersistentFlags()
+	debugFlags.AddToFlagSet(pflags)
 	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
 		f.Hidden = true
 		f.Deprecated = "it has no effect and will be removed in a future release"
-		cmd.PersistentFlags().AddFlag(f)
+		pflags.AddFlag(f)
 	})
-	flags.AddFlagSet(config.FileInputFlag())
+
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	_ = cmd.MarkFlagRequired("config")
 
 	return cmd

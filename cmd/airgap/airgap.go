@@ -17,6 +17,7 @@ limitations under the License.
 package airgap
 
 import (
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/spf13/cobra"
@@ -32,6 +33,7 @@ func NewAirgapCmd() *cobra.Command {
 	}
 
 	var deprecatedFlags pflag.FlagSet
+	(&internal.DebugFlags{}).AddToFlagSet(&deprecatedFlags)
 	deprecatedFlags.AddFlagSet(config.GetPersistentFlagSet())
 	deprecatedFlags.AddFlagSet(config.FileInputFlag())
 	deprecatedFlags.VisitAll(func(f *pflag.Flag) {

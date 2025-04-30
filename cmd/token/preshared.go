@@ -31,6 +31,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -67,11 +68,15 @@ func preSharedCmd() *cobra.Command {
 		},
 	}
 
-	flags := cmd.Flags()
+	var deprecatedFlags pflag.FlagSet
+	(&internal.DebugFlags{}).AddToFlagSet(&deprecatedFlags)
+	deprecatedFlags.AddFlagSet(config.GetPersistentFlagSet())
 	config.GetPersistentFlagSet().VisitAll(func(f *pflag.Flag) {
 		f.Hidden = true
-		flags.AddFlag(f)
+		cmd.PersistentFlags().AddFlag(f)
 	})
+
+	flags := cmd.Flags()
 	flags.StringVar(&certPath, "cert", "", "path to the CA certificate file")
 	runtime.Must(cobra.MarkFlagRequired(flags, "cert"))
 	flags.StringVar(&joinURL, "url", "", "url of the api server to join")
