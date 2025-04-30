@@ -17,7 +17,6 @@
 package k0s
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -320,12 +319,12 @@ func TestSignalControllerSameVersion(t *testing.T) {
 
 			// Reconciling a signaling request that requests a version that matches the current installed version
 			// should jump immediately to 'Completed'.
-			_, err := c.Reconcile(context.TODO(), req)
+			_, err := c.Reconcile(t.Context(), req)
 			assert.NoError(t, err)
 
 			// Re-fetch the signal node again to confirm the status update
 			signalNode := test.delegate.CreateObject()
-			assert.NoError(t, client.Get(context.TODO(), req.NamespacedName, signalNode))
+			assert.NoError(t, client.Get(t.Context(), req.NamespacedName, signalNode))
 
 			var signalData apsigv2.SignalData
 			err = signalData.Unmarshal(signalNode.GetAnnotations())
@@ -425,12 +424,12 @@ func TestSignalControllerSameVersionForceUpdate(t *testing.T) {
 
 			// Reconciling a signaling request that requests a version that matches the current installed version
 			// should jump immediately to 'Completed'.
-			_, err := c.Reconcile(context.TODO(), req)
+			_, err := c.Reconcile(t.Context(), req)
 			assert.NoError(t, err)
 
 			// Re-fetch the signal node again to confirm the status update
 			signalNode := test.delegate.CreateObject()
-			assert.NoError(t, client.Get(context.TODO(), req.NamespacedName, signalNode))
+			assert.NoError(t, client.Get(t.Context(), req.NamespacedName, signalNode))
 
 			var signalData apsigv2.SignalData
 			err = signalData.Unmarshal(signalNode.GetAnnotations())
@@ -529,12 +528,12 @@ func TestSignalControllerNewVersion(t *testing.T) {
 
 			// Reconciling a signaling request that requests a version that matches the current installed version
 			// should jump immediately to 'Downloading'.
-			_, err := c.Reconcile(context.TODO(), req)
+			_, err := c.Reconcile(t.Context(), req)
 			assert.NoError(t, err)
 
 			// Re-fetch the signal node again to confirm the status update
 			signalNode := test.delegate.CreateObject()
-			assert.NoError(t, client.Get(context.TODO(), req.NamespacedName, signalNode))
+			assert.NoError(t, client.Get(t.Context(), req.NamespacedName, signalNode))
 
 			var signalData apsigv2.SignalData
 			err = signalData.Unmarshal(signalNode.GetAnnotations())

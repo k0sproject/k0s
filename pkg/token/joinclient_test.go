@@ -28,6 +28,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/token"
 
@@ -58,7 +59,7 @@ func TestJoinClient_GetCA(t *testing.T) {
 	underTest, err := token.JoinClientFromToken(tok)
 	require.NoError(t, err)
 
-	response, err := underTest.GetCA(context.TODO())
+	response, err := underTest.GetCA(t.Context())
 	assert.NoError(t, err)
 	assert.Zero(t, response)
 }
@@ -93,7 +94,7 @@ func TestJoinClient_JoinEtcd(t *testing.T) {
 	underTest, err := token.JoinClientFromToken(tok)
 	require.NoError(t, err)
 
-	response, err := underTest.JoinEtcd(context.TODO(), k0sv1beta1.EtcdRequest{
+	response, err := underTest.JoinEtcd(t.Context(), k0sv1beta1.EtcdRequest{
 		Node:        "the-node",
 		PeerAddress: "the-peer-address",
 	})
@@ -120,7 +121,7 @@ func TestJoinClient_Cancellation(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			clientContext, cancelClientContext := context.WithCancelCause(context.Background())
+			clientContext, cancelClientContext := context.WithCancelCause(t.Context())
 			joinURL, certData := startFakeJoinServer(t, func(_ http.ResponseWriter, req *http.Request) {
 				cancelClientContext(assert.AnError) // cancel the client's context
 				<-req.Context().Done()              // block forever
@@ -142,7 +143,7 @@ func TestJoinClient_Cancellation(t *testing.T) {
 }
 
 func startFakeJoinServer(t *testing.T, handler func(http.ResponseWriter, *http.Request)) (*url.URL, []byte) {
-	requestCtx, cancelRequests := context.WithCancel(context.Background())
+	requestCtx, cancelRequests := context.WithCancel(t.Context())
 	var ok bool
 
 	listener, err := net.Listen("tcp", "localhost:0")
@@ -181,7 +182,8 @@ func startFakeJoinServer(t *testing.T, handler func(http.ResponseWriter, *http.R
 	go func() { defer close(serverError); serverError <- server.ServeTLS(listener, "", "") }()
 	t.Cleanup(func() {
 		cancelRequests()
-		if !assert.NoError(t, server.Shutdown(context.Background()), "Couldn't shutdown HTTP server") {
+		// We cannot use t.Context because this is during t.Cleanup because it's cancelled
+		if !assert.NoError(t, server.Shutdown(testutil.ContextBackground()), "Couldn't shutdown HTTP server") {
 			return
 		}
 		assert.ErrorIs(t, <-serverError, http.ErrServerClosed, "HTTP server terminated unexpectedly")

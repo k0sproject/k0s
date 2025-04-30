@@ -1,5 +1,5 @@
 /*
-Copyright 2023 k0s authors
+Copyright 2025 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,25 +17,11 @@ limitations under the License.
 package testutil
 
 import (
-	"os"
-	"testing"
-
-	"github.com/stretchr/testify/require"
+	"context"
 )
 
-// Chdir changes the current working directory to the named directory and
-// returns a function that, when called, restores the original working
-// directory.
-//
-// Use in tests like so:
-//
-//	tmpDir := t.TempDir()
-//	defer testutil.Chdir(t, tmpDir)()
-func Chdir(t *testing.T, dir string) func() {
-	wd, err := os.Getwd()
-	require.NoError(t, err)
-	require.NoError(t, os.Chdir(dir))
-	return func() {
-		require.NoError(t, os.Chdir(wd))
-	}
+// ContextBackground returns context.Background so that it can be used without triggering
+// the contextcheck linter in t.Cleanup.
+func ContextBackground() context.Context {
+	return context.Background()
 }

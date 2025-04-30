@@ -36,8 +36,8 @@ import (
 
 func TestWatcher(t *testing.T) {
 	ctx := func() context.Context {
-		ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
-		t.Cleanup(cancel)
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		t.Cleanup(cancel) // satisfy linter, redundant
 		return ctx
 	}()
 
@@ -54,7 +54,7 @@ func TestWatcher(t *testing.T) {
 				return nil
 			}
 
-			ctx, cancel := context.WithCancel(context.TODO())
+			ctx, cancel := context.WithCancel(t.Context())
 			cancel()
 
 			err := underTest.
@@ -75,7 +75,7 @@ func TestWatcher(t *testing.T) {
 			provider.watch = func(metav1.ListOptions) error { return assert.AnError }
 			var callsToErrorCallback int
 
-			ctx, cancel := context.WithCancel(context.TODO())
+			ctx, cancel := context.WithCancel(t.Context())
 
 			err := underTest.
 				WithErrorCallback(func(err error) (time.Duration, error) {
