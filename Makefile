@@ -8,6 +8,8 @@ ifneq (, $(filter $(HOST_HARDWARE), aarch64 arm64))
   HOST_ARCH := arm64
 else ifneq (, $(filter $(HOST_HARDWARE), armv8l armv7l arm))
   HOST_ARCH := arm
+else ifneq (, $(filter $(HOST_HARDWARE), riscv64))
+  HOST_ARCH := riscv64
 else
   ifeq (, $(filter $(HOST_HARDWARE), x86_64 amd64 x64))
     $(warning unknown machine hardware name $(HOST_HARDWARE), assuming amd64)
@@ -237,12 +239,14 @@ lint: lint-copyright lint-go
 airgap-images.txt: k0s $(GO_ENV_REQUISITES)
 	$(GO_ENV) ./k0s airgap list-images --all > '$@'
 
-airgap-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
-airgap-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
-airgap-image-bundle-linux-arm.tar:   TARGET_PLATFORM := linux/arm/v7
+airgap-image-bundle-linux-amd64.tar:   TARGET_PLATFORM := linux/amd64
+airgap-image-bundle-linux-arm64.tar:   TARGET_PLATFORM := linux/arm64
+airgap-image-bundle-linux-arm.tar:     TARGET_PLATFORM := linux/arm/v7
+airgap-image-bundle-linux-riscv64.tar: TARGET_PLATFORM := linux/riscv64
 airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
-airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
+airgap-image-bundle-linux-arm.tar \
+airgap-image-bundle-linux-riscv64.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
 	$(DOCKER) run --rm -i --privileged \
 	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
 	  '$(shell cat .k0sbuild.image-bundler.stamp)' < airgap-images.txt > '$@'
@@ -261,7 +265,7 @@ $(smoketests): k0s
 smoketests: $(smoketests)
 
 .PHONY: check-unit
-ifneq (, $(filter $(HOST_ARCH), arm))
+ifneq (, $(filter $(HOST_ARCH), arm riscv64))
 check-unit: GO_TEST_RACE ?=
 else
 check-unit: GO_TEST_RACE ?= -race
@@ -285,7 +289,7 @@ clean-airgap-image-bundles: IID_FILES = .k0sbuild.image-bundler.stamp
 clean-airgap-image-bundles:
 	$(clean-iid-files)
 	-rm airgap-images.txt
-	-rm airgap-image-bundle-linux-amd64.tar airgap-image-bundle-linux-arm64.tar airgap-image-bundle-linux-arm.tar
+	-rm airgap-image-bundle-linux-amd64.tar airgap-image-bundle-linux-arm64.tar airgap-image-bundle-linux-arm.tar  airgap-image-bundle-linux-riscv64.tar
 
 .PHONY: clean
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
