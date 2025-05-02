@@ -2,6 +2,7 @@
 /airgap-image-bundle-linux-amd64.tar
 /airgap-image-bundle-linux-arm64.tar
 /airgap-image-bundle-linux-arm.tar
+/airgap-image-bundle-linux-riscv64.tar
 /bindata_*
 /build/cache/*
 /k0s
