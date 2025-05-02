@@ -1,6 +1,6 @@
 module github.com/k0sproject/k0s/hack/tool
 
-go 1.23.2
+go 1.24.0
 
 require (
 	github.com/hashicorp/terraform-exec v0.22.0
