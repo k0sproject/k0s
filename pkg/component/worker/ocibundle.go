@@ -29,7 +29,7 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/platforms"
+	"github.com/containerd/platforms"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 
