@@ -26,7 +26,7 @@
     
     
       
-        <title>Airgap Install - Documentation</title>
+        <title>Airgapped Installation - Documentation</title>
       
     
     
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#airgap-install" class="md-skip">
+        <a href="#airgapped-installation" class="md-skip">
           Skip to content
         </a>
       
@@ -138,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Airgap Install
+              Airgapped Installation
             
           </span>
         </div>
@@ -585,7 +585,7 @@
   
   
   <span class="md-ellipsis">
-    Airgap Install
+    Airgapped Installation
     
   </span>
   
@@ -598,7 +598,7 @@
   
   
   <span class="md-ellipsis">
-    Airgap Install
+    Airgapped Installation
     
   </span>
   
@@ -621,37 +621,37 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#creating-image-bundles" class="md-nav__link">
     <span class="md-ellipsis">
-      Prerequisites
+      Creating image bundles
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-create-your-own-image-bundle-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Create your own image bundle (optional)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Create your own image bundle (optional)">
+    <nav class="md-nav" aria-label="Creating image bundles">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
+  <a href="#using-k0s-builtin-tooling" class="md-nav__link">
     <span class="md-ellipsis">
-      Docker
+      Using k0s builtin tooling
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#previously-set-up-k0s-worker" class="md-nav__link">
+  <a href="#from-a-running-worker-node" class="md-nav__link">
     <span class="md-ellipsis">
-      Previously set up k0s worker
+      From a running worker node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-third-party-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using third-party tools
     </span>
   </a>
   
@@ -663,36 +663,42 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2a-sync-the-bundle-file-with-the-airgapped-machine-locally" class="md-nav__link">
+  <a href="#placing-image-bundles-on-worker-nodes" class="md-nav__link">
     <span class="md-ellipsis">
-      2a. Sync the bundle file with the airgapped machine (locally)
+      Placing image bundles on worker nodes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Placing image bundles on worker nodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      By hand
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#2b-sync-the-bundle-file-with-the-airgapped-machines-remotely-with-k0sctl" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#via-k0sctl" class="md-nav__link">
     <span class="md-ellipsis">
-      2b. Sync the bundle file with the airgapped machines (remotely with k0sctl)
+      Via k0sctl
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#3-ensure-pull-policy-in-the-k0syaml-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Ensure pull policy in the k0s.yaml (optional)
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-set-up-the-controller-and-worker-nodes" class="md-nav__link">
+  <a href="#disable-image-pulling-optional" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Set up the controller and worker nodes
+      Disable image pulling (optional)
     </span>
   </a>
   
@@ -2325,37 +2331,37 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#creating-image-bundles" class="md-nav__link">
     <span class="md-ellipsis">
-      Prerequisites
+      Creating image bundles
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-create-your-own-image-bundle-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Create your own image bundle (optional)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Create your own image bundle (optional)">
+    <nav class="md-nav" aria-label="Creating image bundles">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
+  <a href="#using-k0s-builtin-tooling" class="md-nav__link">
     <span class="md-ellipsis">
-      Docker
+      Using k0s builtin tooling
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#previously-set-up-k0s-worker" class="md-nav__link">
+  <a href="#from-a-running-worker-node" class="md-nav__link">
     <span class="md-ellipsis">
-      Previously set up k0s worker
+      From a running worker node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-third-party-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using third-party tools
     </span>
   </a>
   
@@ -2367,36 +2373,42 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2a-sync-the-bundle-file-with-the-airgapped-machine-locally" class="md-nav__link">
+  <a href="#placing-image-bundles-on-worker-nodes" class="md-nav__link">
     <span class="md-ellipsis">
-      2a. Sync the bundle file with the airgapped machine (locally)
+      Placing image bundles on worker nodes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Placing image bundles on worker nodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      By hand
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#2b-sync-the-bundle-file-with-the-airgapped-machines-remotely-with-k0sctl" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#via-k0sctl" class="md-nav__link">
     <span class="md-ellipsis">
-      2b. Sync the bundle file with the airgapped machines (remotely with k0sctl)
+      Via k0sctl
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#3-ensure-pull-policy-in-the-k0syaml-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Ensure pull policy in the k0s.yaml (optional)
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-set-up-the-controller-and-worker-nodes" class="md-nav__link">
+  <a href="#disable-image-pulling-optional" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Set up the controller and worker nodes
+      Disable image pulling (optional)
     </span>
   </a>
   
@@ -2418,55 +2430,97 @@
 
 
 
-<h1 id="airgap-install">Airgap install<a class="headerlink" href="#airgap-install" title="Permanent link">#</a></h1>
-<p>You can install k0s in an environment with restricted Internet access. Airgap installation requires an image bundle, which contains all the needed container images. There are two options to get the image bundle:</p>
+<h1 id="airgapped-installation">Airgapped Installation<a class="headerlink" href="#airgapped-installation" title="Permanent link">#</a></h1>
+<p>You can install k0s in environments without Internet access. Airgapped
+installations require an image bundle that contains all the container images
+that would normally be pulled over the network. K0s uses so-called OCI archives
+for this: Tarball representations of an <a href="https://github.com/opencontainers/image-spec/blob/v1.0/image-layout.md">OCI Image Layout</a>. They allow for
+multiple images to be packed into a single file. K0s will watch for image
+bundles in the <code>&lt;data-dir&gt;/images</code> folder will automatically import them into
+the container runtime.</p>
+<p>There are several ways to obtain an image bundle:</p>
 <ul>
-<li>Use a ready-made image bundle, which is created for each k0s release. It can be downloaded from the <a href="https://github.com/k0sproject/k0s/releases/latest">releases page</a>.</li>
-<li>Create your own image bundle. In this case, you can easily customize the bundle to also include container images, which are not used by default in k0s.</li>
+<li>Use the pre-built image bundles for different target platforms that are
+  created for each k0s release. They contain all the images for the default k0s
+  <a href="../configuration/#specimages">image configuration</a> and can be downloaded from
+  the <a href="https://github.com/k0sproject/k0s/releases/v1.32.4+k0s.0">GitHub releases page</a>.</li>
+<li>Create your own image bundle. In this case, you can easily customize the
+  bundle to include container images that are not used by default in k0s.</li>
 </ul>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
-<p>In order to create your own image bundle, you need:</p>
-<ul>
-<li>A working cluster with at least one controller that will be used to build the
-  image bundle. See the <a href="../install/">Quick Start Guide</a> for more information.</li>
-<li>The containerd CLI management tool <code>ctr</code>, installed on the worker node. See
-  the <a href="https://github.com/containerd/containerd/blob/v1.7.27/docs/getting-started.md">containerd Getting Started Guide</a> for more information.</li>
-</ul>
-<h2 id="1-create-your-own-image-bundle-optional">1. Create your own image bundle (optional)<a class="headerlink" href="#1-create-your-own-image-bundle-optional" title="Permanent link">#</a></h2>
-<p>k0s/containerd uses OCI (Open Container Initiative) bundles for airgap installation. OCI bundles must be uncompressed. As OCI bundles are built specifically for each architecture, create an OCI bundle that uses the same processor architecture (x86-64, ARM64, ARMv7) as on the target system.</p>
-<p>k0s offers two methods for creating OCI bundles, one using Docker and the other using a previously set up k0s worker.</p>
-<p><strong>Note:</strong> When importing the image bundle k0s uses containerd "loose" <a href="https://pkg.go.dev/github.com/containerd/containerd/platforms#Only">platform matching</a>. For arm/v8, it will also match arm/v7, arm/v6 and arm/v5. This means that your bundle can contain multi arch images and the import will be done using platform compatibility.</p>
-<h3 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">#</a></h3>
+<p><strong>Note:</strong> When importing image bundles, k0s uses <a href="https://pkg.go.dev/github.com/containerd/platforms@v0.2.1#Only">"loose" platform
+matching</a>. For
+example, on arm/v8, k0s will also import arm/v7, arm/v6, and arm/v5 images. This
+means that your bundle can contain multi-arch images, and the import will be
+done using platform compatibility.</p>
+<h2 id="creating-image-bundles">Creating image bundles<a class="headerlink" href="#creating-image-bundles" title="Permanent link">#</a></h2>
+<h3 id="using-k0s-builtin-tooling">Using k0s builtin tooling<a class="headerlink" href="#using-k0s-builtin-tooling" title="Permanent link">#</a></h3>
+<p>k0s ships with the <a href="../cli/k0s_airgap/"><code>k0s airgap</code></a> sub-command, which is
+dedicated for tooling for airgapped environments. It allows for listing the
+required images for a given configuration, as well as bundling them into an OCI
+Image Layout archive.</p>
 <ol>
 <li>
-<p>Pull the images.</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>-I<span class="o">{}</span><span class="w"> </span>docker<span class="w"> </span>pull<span class="w"> </span><span class="o">{}</span>
+<p>Create the list of images required by k0s.</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span>--all<span class="w"> </span>&gt;airgap-images.txt
 </code></pre></div>
 </li>
 <li>
-<p>Create a bundle.</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>image<span class="w"> </span>save<span class="w"> </span><span class="k">$(</span>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="k">)</span><span class="w"> </span>-o<span class="w"> </span>bundle_file
+<p>Review this list and edit it according to your needs.</p>
+</li>
+<li>
+<p>Create the image bundle.</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>airgap<span class="w"> </span>bundle-artifacts<span class="w"> </span>-v<span class="w"> </span>-o<span class="w"> </span>image-bundle.tar<span class="w"> </span>&lt;airgap-images.txt
 </code></pre></div>
 </li>
 </ol>
-<h3 id="previously-set-up-k0s-worker">Previously set up k0s worker<a class="headerlink" href="#previously-set-up-k0s-worker" title="Permanent link">#</a></h3>
-<p>As containerd pulls all the images during the k0s worker normal bootstrap, you can use it to build the OCI bundle with images.</p>
+<h3 id="from-a-running-worker-node">From a running worker node<a class="headerlink" href="#from-a-running-worker-node" title="Permanent link">#</a></h3>
+<p>As containerd pulls all the images during the k0s worker normal bootstrap, you
+can use it to build the OCI bundle with images.</p>
 <p>Use the following commands on a machine with an installed k0s worker:</p>
-<div class="highlight"><pre><span></span><code>ctr<span class="w"> </span>--namespace<span class="w"> </span>k8s.io<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--address<span class="w"> </span>/run/k0s/containerd.sock<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>images<span class="w"> </span><span class="nb">export</span><span class="w"> </span>bundle_file<span class="w"> </span><span class="k">$(</span>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="k">)</span>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>ctr<span class="w"> </span>images<span class="w"> </span><span class="nb">export</span><span class="w"> </span>image-bundle.tar<span class="w"> </span><span class="k">$(</span>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="k">)</span>
 </code></pre></div>
-<h2 id="2a-sync-the-bundle-file-with-the-airgapped-machine-locally">2a. Sync the bundle file with the airgapped machine (locally)<a class="headerlink" href="#2a-sync-the-bundle-file-with-the-airgapped-machine-locally" title="Permanent link">#</a></h2>
-<p>Copy the <code>bundle_file</code> you created in the previous step or downloaded from the <a href="https://github.com/k0sproject/k0s/releases/latest">releases page</a> to the target machine into the <code>images</code> directory in the k0s data directory. Copy the bundle only to the worker nodes. Controller nodes don't use it.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># mkdir -p /var/lib/k0s/images</span>
-<span class="c1"># cp bundle_file /var/lib/k0s/images/bundle_file</span>
+<h3 id="using-third-party-tools">Using third-party tools<a class="headerlink" href="#using-third-party-tools" title="Permanent link">#</a></h3>
+<p>There are several CLI tools that can help you fetch OCI artifacts and manage OCI
+Image Layouts, such as <a href="https://github.com/containers/skopeo">skopeo</a>, <a href="https://oras.land/">oras</a>, or <a href="https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md">crane</a>. The following is an example
+uses Docker:</p>
+<h4 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">#</a></h4>
+<ol>
+<li>
+<p>Create the list of images required by k0s.</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span>--all<span class="w"> </span>&gt;airgap-images.txt
 </code></pre></div>
-<h2 id="2b-sync-the-bundle-file-with-the-airgapped-machines-remotely-with-k0sctl">2b. Sync the bundle file with the airgapped machines (remotely with k0sctl)<a class="headerlink" href="#2b-sync-the-bundle-file-with-the-airgapped-machines-remotely-with-k0sctl" title="Permanent link">#</a></h2>
-<p>As an alternative to the previous step, you can use k0sctl to upload the bundle file to the worker nodes. k0sctl can also be used to upload k0s binary file to all nodes. Take a look at this example (k0sctl.yaml) with one controller and one worker node to upload the bundle file and k0s binary:</p>
+</li>
+<li>
+<p>Review this list and edit it according to your needs.</p>
+</li>
+<li>
+<p>Pull the images.</p>
+<div class="highlight"><pre><span></span><code>xargs<span class="w"> </span>-I<span class="o">{}</span><span class="w"> </span>docker<span class="w"> </span>pull<span class="w"> </span><span class="o">{}</span><span class="w"> </span>&lt;airgap-images.txt
+</code></pre></div>
+</li>
+<li>
+<p>Create the bundle.</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>image<span class="w"> </span>save<span class="w"> </span>-o<span class="w"> </span>image-bundle.tar<span class="w"> </span><span class="k">$(</span>xargs<span class="w"> </span>&lt;airgap-images.txt<span class="k">)</span>
+</code></pre></div>
+</li>
+</ol>
+<h2 id="placing-image-bundles-on-worker-nodes">Placing image bundles on worker nodes<a class="headerlink" href="#placing-image-bundles-on-worker-nodes" title="Permanent link">#</a></h2>
+<h3 id="by-hand">By hand<a class="headerlink" href="#by-hand" title="Permanent link">#</a></h3>
+<p>Copy the <code>image-bundle.tar</code> to the target machine into the <code>images</code> directory in
+the k0s data directory. Copy the bundle only to the worker nodes. Controller
+nodes don't use it.</p>
+<div class="highlight"><pre><span></span><code><span class="gp"># </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/var/lib/k0s/images
+<span class="gp"># </span>cp<span class="w"> </span>image-bundle.tar<span class="w"> </span>/var/lib/k0s/images/image-bundle.tar
+</code></pre></div>
+<h3 id="via-k0sctl">Via k0sctl<a class="headerlink" href="#via-k0sctl" title="Permanent link">#</a></h3>
+<p>As an alternative to the previous step, you can use <code>k0sctl</code> to upload image
+bundles to worker nodes. <code>k0sctl</code> can also be used to upload the k0s binary file
+to all nodes. Take a look at this example configuration with one controller and
+one worker node to upload k0s binary and an image bundle:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterConfig</span>
 <span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.32.4+k0s.0</span>
@@ -2475,7 +2529,7 @@
 <span class="w">      </span><span class="nt">ssh</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;controller-ip-address&gt;</span>
 <span class="w">        </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu</span>
-<span class="w">        </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/.ssh/id_rsa</span>
+<span class="w">        </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/.ssh/id_rsa</span>
 
 <span class="w">      </span><span class="c1">#  uploadBinary: &lt;boolean&gt;</span>
 <span class="w">      </span><span class="c1">#    When true the k0s binaries are cached and uploaded</span>
@@ -2493,17 +2547,19 @@
 <span class="w">      </span><span class="nt">ssh</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;worker-ip-address&gt;</span>
 <span class="w">        </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu</span>
-<span class="w">        </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/.ssh/id_rsa</span>
+<span class="w">        </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/.ssh/id_rsa</span>
 <span class="w">      </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="nt">files</span><span class="p">:</span>
 <span class="w">        </span><span class="c1"># This airgap bundle file will be uploaded from the k0sctl</span>
 <span class="w">        </span><span class="c1"># host to the specified directory on the target host</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/local/path/to/bundle-file/airgap-bundle-amd64.tar</span>
-<span class="w">          </span><span class="nt">dstDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s/images/</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/airgap-bundle-amd64.tar</span>
+<span class="w">          </span><span class="nt">dstDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s/images</span>
 <span class="w">          </span><span class="nt">perm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0755</span>
 </code></pre></div>
-<h2 id="3-ensure-pull-policy-in-the-k0syaml-optional">3. Ensure pull policy in the k0s.yaml (optional)<a class="headerlink" href="#3-ensure-pull-policy-in-the-k0syaml-optional" title="Permanent link">#</a></h2>
-<p>Use the following <code>k0s.yaml</code> to ensure that containerd does not pull images for k0s components from the Internet at any time.</p>
+<h2 id="disable-image-pulling-optional">Disable image pulling (optional)<a class="headerlink" href="#disable-image-pulling-optional" title="Permanent link">#</a></h2>
+<p>Use the following k0s configuration to ensure that all pods and pod templates
+managed by k0s contain an <code>imagePullPolicy</code> of <code>Never</code>, ensuring that no images
+are pulled from the Internet at any time.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterConfig</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -2512,9 +2568,6 @@
 <span class="w">  </span><span class="nt">images</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">default_pull_policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Never</span>
 </code></pre></div>
-<h2 id="4-set-up-the-controller-and-worker-nodes">4. Set up the controller and worker nodes<a class="headerlink" href="#4-set-up-the-controller-and-worker-nodes" title="Permanent link">#</a></h2>
-<p>Refer to the <a href="../k0s-multi-node/">Manual Install</a> for information on setting up the controller and worker nodes locally. Alternatively, you can use <a href="../k0sctl-install/">k0sctl</a>.</p>
-<p><strong>Note</strong>: During the worker start up k0s imports all bundles from the <code>$K0S_DATA_DIR/images</code> before starting <code>kubelet</code>.</p>
 
 
 
