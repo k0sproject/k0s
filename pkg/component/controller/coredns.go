@@ -140,6 +140,7 @@ spec:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '9153'
     spec:
+      priorityClassName: system-cluster-critical
       serviceAccountName: coredns
       tolerations:
         - key: "CriticalAddonsOnly"
