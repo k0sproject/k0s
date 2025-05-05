@@ -54,7 +54,6 @@ type CfgVars struct {
 	RuntimeConfigPath          string              // A static copy of the config loaded at startup
 	StatusSocketPath           string              // The unix socket path for k0s status API
 	StartupConfigPath          string              // The path to the config file used at startup
-	EnableDynamicConfig        bool                // EnableDynamicConfig enables dynamic config
 
 	// Helm config
 	HelmHome             string
@@ -94,10 +93,6 @@ func WithCommand(cmd command) CfgVarOption {
 
 		if f, err := flags.GetString("status-socket"); err == nil && f != "" {
 			c.StatusSocketPath = f
-		}
-
-		if f, err := flags.GetBool("enable-dynamic-config"); err == nil {
-			c.EnableDynamicConfig = f
 		}
 
 		if f, err := flags.GetBool("single"); err == nil && f {

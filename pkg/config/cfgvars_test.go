@@ -62,11 +62,10 @@ func TestWithCommand(t *testing.T) {
 	// Create a fake flag set with some values
 	fakeFlags := &FakeFlagSet{
 		values: map[string]any{
-			"data-dir":              "/path/to/data",
-			"kubelet-root-dir":      "/path/to/kubelet",
-			"config":                "/path/to/config",
-			"status-socket":         "/path/to/socket",
-			"enable-dynamic-config": true,
+			"data-dir":         "/path/to/data",
+			"kubelet-root-dir": "/path/to/kubelet",
+			"config":           "/path/to/config",
+			"status-socket":    "/path/to/socket",
 		},
 	}
 
@@ -89,7 +88,6 @@ func TestWithCommand(t *testing.T) {
 	assert.Equal(t, dir, c.KubeletRootDir)
 	assert.Equal(t, "/path/to/config", c.StartupConfigPath)
 	assert.Equal(t, "/path/to/socket", c.StatusSocketPath)
-	assert.True(t, c.EnableDynamicConfig)
 }
 
 func TestWithCommand_DefaultsAndOverrides(t *testing.T) {
