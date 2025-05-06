@@ -54,7 +54,7 @@ processed by **autopilot**.
 (line numbers added for commentary below)
 
 ```yaml
- 1: apiVersion: autopilot.k0sproject.io/v1beta2
+ 1:  apiVersion: autopilot.k0sproject.io/v1beta2
  2:  kind: Plan
  3:  metadata:
  4:    annotations:
