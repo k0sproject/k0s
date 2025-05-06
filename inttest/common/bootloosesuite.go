@@ -46,7 +46,6 @@ import (
 	etcdmemberclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
-	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -936,26 +935,6 @@ func (s *BootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 	}
 
 	return n.Labels, nil
-}
-
-// WaitForNodeLabel waits for label be assigned to the node
-func (s *BootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelKey, labelValue string) error {
-	return watch.Nodes(kc.CoreV1().Nodes()).
-		WithObjectName(node).
-		WithErrorCallback(RetryWatchErrors(s.T().Logf)).
-		Until(s.Context(), func(node *corev1.Node) (bool, error) {
-			for k, v := range node.Labels {
-				if labelKey == k {
-					if labelValue == v {
-						return true, nil
-					}
-
-					break
-				}
-			}
-
-			return false, nil
-		})
 }
 
 // WaitForKubeAPI waits until we see kube API online on given node.

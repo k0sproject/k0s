@@ -67,28 +67,31 @@ get-conformance-results: bin/sonobuoy
 
 TIMEOUT ?= 6m
 
-check-ctr: TIMEOUT=10m
-
-# Config change smoke runs actually many cases hence a bit longer timeout
-check-configchange: TIMEOUT=8m
-
-# Backup check runs two scenarios
-check-backup: TIMEOUT=10m
+check-ap-controllerworker: K0S_UPDATE_FROM_BIN ?= ../k0s
+check-ap-controllerworker: K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
 
 # Autopilot 3x3 HA test can take a while to run
 check-ap-ha3x3: K0S_UPDATE_FROM_BIN ?= ../k0s
 check-ap-ha3x3: K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
 
-check-ap-controllerworker: K0S_UPDATE_FROM_BIN ?= ../k0s
-check-ap-controllerworker: K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
+check-ap-updater-periodic: .update-server.stamp
+check-ap-updater-periodic: TIMEOUT=10m
 
-check-customports-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
-check-customports-dynamicconfig: TEST_PACKAGE=customports
+check-ap-updater: .update-server.stamp
 
-check-kubeletcertrotate: TIMEOUT=15m
+# Backup check runs two scenarios
+check-backup: TIMEOUT=10m
+
+# Config change smoke runs actually many cases hence a bit longer timeout
+check-configchange: TIMEOUT=8m
 
 check-cplb-userspace-extaddr: export K0S_USE_EXTERNAL_ADDRESS=yes
 check-cplb-userspace-extaddr: TEST_PACKAGE=cplb-userspace
+
+check-ctr: TIMEOUT=10m
+
+check-customports-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
+check-customports-dynamicconfig: TEST_PACKAGE=customports
 
 check-dualstack-calico: export K0S_NETWORK=calico
 check-dualstack-calico: TEST_PACKAGE=dualstack
@@ -104,16 +107,23 @@ check-dualstack-kuberouter-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
 check-dualstack-kuberouter-dynamicconfig: export K0S_NETWORK=kuberouter
 check-dualstack-kuberouter-dynamicconfig: TEST_PACKAGE=dualstack
 
-check-ap-updater: .update-server.stamp
-check-ap-updater-periodic: .update-server.stamp
-check-ap-updater-periodic: TIMEOUT=10m
+check-kubeletcertrotate: TIMEOUT=15m
 
-check-network-conformance-kuberouter: TIMEOUT=15m
-check-network-conformance-kuberouter: export K0S_NETWORK_CONFORMANCE_CNI=kuberouter
-check-network-conformance-kuberouter: TEST_PACKAGE=network-conformance
-check-network-conformance-calico: TIMEOUT=15m
+check-metricsscraper-singlenode: export K0S_SINGLENODE=1
+check-metricsscraper-singlenode: TEST_PACKAGE=metricsscraper
+
 check-network-conformance-calico: export K0S_NETWORK_CONFORMANCE_CNI=calico
 check-network-conformance-calico: TEST_PACKAGE=network-conformance
+check-network-conformance-calico: TIMEOUT=15m
+
+check-network-conformance-calico-nft: export K0S_NETWORK_CONFORMANCE_CNI=calico
+check-network-conformance-calico-nft: export K0S_NETWORK_CONFORMANCE_PROXY_MODE=nftables
+check-network-conformance-calico-nft: TEST_PACKAGE=network-conformance
+check-network-conformance-calico-nft: TIMEOUT=15m
+
+check-network-conformance-kuberouter: export K0S_NETWORK_CONFORMANCE_CNI=kuberouter
+check-network-conformance-kuberouter: TEST_PACKAGE=network-conformance
+check-network-conformance-kuberouter: TIMEOUT=15m
 
 check-network-conformance-kuberouter-nft: TIMEOUT=15m
 check-network-conformance-kuberouter-nft: export K0S_NETWORK_CONFORMANCE_CNI=kuberouter
@@ -124,11 +134,9 @@ check-network-conformance-calico-nft: export K0S_NETWORK_CONFORMANCE_CNI=calico
 check-network-conformance-calico-nft: export K0S_NETWORK_CONFORMANCE_PROXY_MODE=nftables
 check-network-conformance-calico-nft: TEST_PACKAGE=network-conformance
 
-
-check-metricsscraper-singlenode: export K0S_SINGLENODE=1
-check-metricsscraper-singlenode: TEST_PACKAGE=metricsscraper
-
 check-nllb: TIMEOUT=15m
+
+check-noderole-single: TEST_PACKAGE=noderole
 
 .PHONY: $(smoketests)
 include Makefile.variables
@@ -142,6 +150,7 @@ $(smoketests):
 	K0S_UPDATE_FROM_PATH='$(K0S_UPDATE_FROM_PATH)' \
 	K0S_IMAGES_BUNDLE='$(K0S_IMAGES_BUNDLE)' \
 	K0S_UPDATE_TO_VERSION='$(K0S_UPDATE_TO_VERSION)' \
+	K0S_TEST_TARGET='$(subst check-,,$@)' \
 	go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(TEST_PACKAGE)
 .PHONY: clean
 
