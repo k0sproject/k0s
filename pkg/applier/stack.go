@@ -114,6 +114,11 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			errs = append(errs, err)
 			continue
 		} else { // The resource already exists, we need to update/patch it
+			if serverResource.GetLabels()[ManagedLabel] == "false" {
+				s.log.Debug("resource is not managed by k0s, skipping")
+				continue
+			}
+
 			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
 			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
 				s.log.Debug("resource checksums match, no need to update")
@@ -385,7 +390,8 @@ func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.Reso
 	for _, resource := range resourceList.Items {
 		// We need to filter out objects that do not actually have the stack label set
 		// There are some cases where we get "extra" results, e.g.: https://github.com/kubernetes-sigs/metrics-server/issues/604
-		if !s.isInStack(resource) && len(resource.GetOwnerReferences()) == 0 && resource.GetLabels()[NameLabel] == s.Name {
+		labels := resource.GetLabels()
+		if !s.isInStack(resource) && len(resource.GetOwnerReferences()) == 0 && labels[NameLabel] == s.Name && labels[ManagedLabel] != "false" {
 			s.log.Debugf("adding prunable resource: %s", generateResourceID(resource))
 			pruneableResources = append(pruneableResources, resource)
 		}
