@@ -26,7 +26,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"slices"
 	"syscall"
@@ -65,6 +64,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
+	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
@@ -669,9 +669,7 @@ func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, k
 	wc := workercmd.Command(*(*config.CLIOptions)(c))
 	wc.Labels = append(wc.Labels, fields.OneTermEqualSelector(constant.K0SNodeRoleLabel, "control-plane").String())
 	if opts.Mode() == config.ControllerPlusWorkerMode && !opts.NoTaints {
-		key := path.Join(constant.NodeRoleLabelNamespace, "master")
-		taint := fields.OneTermEqualSelector(key, ":NoSchedule")
-		wc.Taints = append(wc.Taints, taint.String())
+		wc.Taints = append(wc.Taints, constants.ControlPlaneTaint.ToString())
 	}
 	return wc.Start(ctx, nodeName, kubeletExtraArgs, kubernetes.KubeconfigFromFile(c.K0sVars.AdminKubeConfigPath), (*embeddingController)(opts))
 }
