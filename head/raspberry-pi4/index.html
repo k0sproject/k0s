@@ -2890,8 +2890,8 @@ rights and get a <a href="https://kubernetes.io/docs/concepts/configuration/orga
 <span class="go">node/ubuntu   Ready    &lt;none&gt;   5m1s   v1.32.4+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.27</span>
 
 <span class="go">NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR</span>
-<span class="go">kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          registry.k8s.io/coredns/coredns:v1.7.0                 k8s-app=kube-dns</span>
-<span class="go">kube-system   deployment.apps/metrics-server   1/1     1            1           33m   metrics-server   registry.k8s.io/metrics-server/metrics-server:v0.7.2   k8s-app=metrics-server</span>
+<span class="go">kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          quay.io/k0sproject/coredns:1.12.1                      k8s-app=kube-dns</span>
+<span class="go">kube-system   deployment.apps/metrics-server   1/1     1            1           33m   metrics-server   quay.io/k0sproject/metrics-server:v0.7.2               k8s-app=metrics-server</span>
 
 <span class="go">NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE    IP             NODE     NOMINATED NODE   READINESS GATES</span>
 <span class="go">kube-system   pod/coredns-88b745646-pkk5w           1/1     Running   0          33m    10.244.0.5     ubuntu   &lt;none&gt;           &lt;none&gt;</span>
