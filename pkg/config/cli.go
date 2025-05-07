@@ -26,6 +26,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
 
@@ -108,6 +109,11 @@ func (o *ControllerOptions) Normalize() error {
 	var disabledComponents []string
 	for _, disabledComponent := range o.DisableComponents {
 		if !slices.Contains(availableComponents, disabledComponent) {
+			if disabledComponent == "node-role" {
+				logrus.Warn("Deprecated component name node-role specified: it has no effect, and using it will be a hard error in future releases")
+				continue
+			}
+
 			return fmt.Errorf("unknown component %s", disabledComponent)
 		}
 
@@ -271,7 +277,6 @@ var availableComponents = []string{
 	constant.KubeSchedulerComponentName,
 	constant.MetricsServerComponentName,
 	constant.NetworkProviderComponentName,
-	constant.NodeRoleComponentName,
 	constant.SystemRBACComponentName,
 	constant.WindowsNodeComponentName,
 	constant.WorkerConfigComponentName,
