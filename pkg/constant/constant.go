@@ -119,7 +119,6 @@ const (
 	MetricsServerComponentName         = "metrics-server"
 	NetworkProviderComponentName       = "network-provider"
 	SystemRBACComponentName            = "system-rbac"
-	NodeRoleComponentName              = "node-role"
 	WindowsNodeComponentName           = "windows-node"
 	AutopilotComponentName             = "autopilot"
 

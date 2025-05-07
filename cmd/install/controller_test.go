@@ -59,7 +59,7 @@ Flags:
   -c, --config string                                  config file, use '-' to read the config from stdin (default `+defaultConfigPath+`)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --data-dir string                                Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default `+defaultDataDir+`)
-      --disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
+      --disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,system-rbac,windows-node,worker-config)
       --enable-cloud-provider                          Whether or not to enable cloud provider support in kubelet
       --enable-dynamic-config                          enable cluster-wide dynamic config based on custom resource
       --enable-k0s-cloud-provider                      enables the k0s-cloud-provider (default false)
