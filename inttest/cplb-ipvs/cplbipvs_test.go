@@ -98,17 +98,19 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	}
 
 	// Verify that only one controller has the VIP in eth0
+	activeNode := -1
 	count := 0
 	for idx := range s.ControllerCount {
 		if s.hasVIP(ctx, s.ControllerNode(idx), lb) {
+			activeNode = idx
 			count++
 		}
 	}
 	s.Require().Equal(1, count, "Expected exactly one controller to have the VIP")
 
-	// Verify that the real servers are present in the ipvsadm output
+	// Verify that the real servers are present in the ipvsadm output in the active node and missing in the others
 	for idx := range s.ControllerCount {
-		s.validateRealServers(ctx, s.ControllerNode(idx), lb)
+		s.validateRealServers(ctx, s.ControllerNode(idx), lb, idx == activeNode)
 	}
 }
 
@@ -144,7 +146,7 @@ func (s *cplbIPVSSuite) getUnicastAddresses(i int) []string {
 
 // validateRealServers checks that the real servers are present in the
 // ipvsadm output.
-func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vip string) {
+func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vip string, isActive bool) {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -157,8 +159,14 @@ func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vi
 	output, err := ssh.ExecWithOutput(ctx, "ipvsadm --save -n")
 	s.Require().NoError(err)
 
-	for _, server := range servers {
-		s.Require().Containsf(output, fmt.Sprintf("-a -t %s:6443 -r %s", vip, server), "Controller %s is missing a server in ipvsadm", node)
+	if isActive {
+		for _, server := range servers {
+			s.Require().Containsf(output, fmt.Sprintf("-a -t %s:6443 -r %s", vip, server), "Controller %s is missing a server in ipvsadm", node)
+		}
+	} else {
+		for _, server := range servers {
+			s.Require().NotContainsf(output, fmt.Sprintf("-a -t %s:6443 -r %s", vip, server), "Controller %s has a server in ipvsadm", node)
+		}
 	}
 
 }
