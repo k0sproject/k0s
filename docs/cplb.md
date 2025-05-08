@@ -140,6 +140,7 @@ The Keepalived virtual servers Load Balancing is more performant than the usersp
 1. It's incompatible with controller+worker.
 2. May not work on every infrastructure.
 3. Troubleshooting is significantly more complex.
+4. Requires `sh`, `sed` and `kill` to be present in the control plane nodes.
 
 ```yaml
 spec:
