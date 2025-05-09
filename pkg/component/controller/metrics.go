@@ -352,11 +352,12 @@ spec:
         app: k0s-observability
     spec:
       tolerations:
-        - key: "CriticalAddonsOnly"
-          operator: "Exists"
-        - key: "node-role.kubernetes.io/master"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: prometheus-pushgateway
           image: {{ .Image }}
