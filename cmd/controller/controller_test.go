@@ -65,7 +65,7 @@ Flags:
       --data-dir string                                Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default `+defaultDataDir+`)
   -d, --debug                                          Debug logging (implies verbose logging)
       --debugListenOn string                           Http listenOn for Debug pprof handler (default ":6060")
-      --disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
+      --disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,system-rbac,windows-node,worker-config)
       --enable-cloud-provider                          Whether or not to enable cloud provider support in kubelet
       --enable-dynamic-config                          enable cluster-wide dynamic config based on custom resource
       --enable-k0s-cloud-provider                      enables the k0s-cloud-provider (default false)

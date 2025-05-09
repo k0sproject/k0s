@@ -295,6 +295,13 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 			DualStackEnabled:    workerConfig.DualStackEnabled,
 		})
 
+	if controller != nil {
+		componentManager.Add(ctx, &worker.NodeRole{
+			KubeconfigGetter: getBootstrapKubeconfig,
+			NodeName:         nodeName,
+		})
+	}
+
 	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
 
 	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, controller, certManager)
