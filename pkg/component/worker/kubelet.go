@@ -19,7 +19,6 @@ package worker
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -93,10 +92,6 @@ func (k *Kubelet) Init(_ context.Context) error {
 		return fmt.Errorf("failed to create %s: %w", runDir, err)
 	}
 	k.configPath = filepath.Join(runDir, "config.yaml")
-	// Delete legacy config file (removed in 1.32)
-	if err := os.Remove(filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")); err != nil && !errors.Is(err, os.ErrNotExist) {
-		logrus.WithError(err).Warn("Failed to remove legacy kubelet config file")
-	}
 
 	return nil
 }
@@ -147,7 +142,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// Kubelet uses a DNS lookup of the node name to figure out the node IP,
 		// but will only pick one for a single family. Do something similar as
 		// kubelet, but for both IPv4 and IPv6.
-		// https://github.com/kubernetes/kubernetes/blob/v1.32.4/pkg/kubelet/nodestatus/setters.go#L202-L230
+		// https://github.com/kubernetes/kubernetes/blob/v1.33.0/pkg/kubelet/nodestatus/setters.go#L207-L235
 		ipv4, ipv6, err := lookupNodeName(ctx, k.NodeName)
 		if err != nil {
 			logrus.WithError(err).Errorf("failed to lookup %q", k.NodeName)
