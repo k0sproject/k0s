@@ -41,6 +41,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
+	cliflag "k8s.io/component-base/cli/flag"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 
 	"github.com/sirupsen/logrus"
@@ -58,7 +59,7 @@ type Kubelet struct {
 	StaticPods          StaticPods
 	LogLevel            string
 	ClusterDNS          string
-	Labels              []string
+	Labels              map[string]string
 	Taints              []string
 	ExtraArgs           stringmap.StringMap
 	DualStackEnabled    bool
@@ -140,7 +141,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	}
 
 	if len(k.Labels) > 0 {
-		args["--node-labels"] = strings.Join(k.Labels, ",")
+		args["--node-labels"] = ((*cliflag.ConfigurationMap)(&k.Labels)).String()
 	}
 
 	if k.DualStackEnabled && k.ExtraArgs["--node-ip"] == "" {
