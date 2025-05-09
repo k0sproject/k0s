@@ -227,8 +227,9 @@ func (k *Kubelet) writeKubeletConfig() error {
 
 	config := k.Configuration.DeepCopy()
 	config.Authentication.X509.ClientCAFile = caPath
-	config.VolumePluginDir = k.K0sVars.KubeletVolumePluginDir
-	config.ResolverConfig = determineKubeletResolvConfPath()
+	if config.ResolverConfig == nil {
+		config.ResolverConfig = determineKubeletResolvConfPath()
+	}
 	config.StaticPodURL = staticPodURL
 	config.ContainerRuntimeEndpoint = containerRuntimeEndpoint.String()
 

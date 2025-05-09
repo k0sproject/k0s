@@ -25,9 +25,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/pflag"
+
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/spf13/pflag"
 )
 
 // CfgVars is a struct that holds all the config variables required for K0s
@@ -45,7 +46,6 @@ type CfgVars struct {
 	KineSocketPath             string              // The unix socket path for kine
 	KonnectivitySocketDir      string              // location of konnectivity's socket path
 	KubeletAuthConfigPath      string              // KubeletAuthConfigPath defines the default kubelet auth config path
-	KubeletVolumePluginDir     string              // location for kubelet plugins volume executables
 	ManifestsDir               string              // location for all stack manifests
 	RunDir                     string              // location of supervised pid files and sockets
 	KonnectivityKubeConfigPath string              // location for konnectivity kubeconfig
@@ -172,7 +172,6 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		KineSocketPath:             filepath.Join(runDir, constant.KineSocket),
 		KonnectivitySocketDir:      filepath.Join(runDir, "konnectivity-server"),
 		KubeletAuthConfigPath:      filepath.Join(dataDir, "kubelet.conf"),
-		KubeletVolumePluginDir:     constant.KubeletVolumePluginDir,
 		ManifestsDir:               filepath.Join(dataDir, "manifests"),
 		RunDir:                     runDir,
 		KonnectivityKubeConfigPath: filepath.Join(certDir, "konnectivity.conf"),

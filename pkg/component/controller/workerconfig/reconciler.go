@@ -606,6 +606,7 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			RotateCertificates: true,
 			ServerTLSBootstrap: true,
 			EventRecordQPS:     ptr.To(int32(0)),
+			VolumePluginDir:    "/usr/libexec/k0s/kubelet-plugins/volume/exec",
 		},
 		PauseImage:             snapshot.pauseImage.DeepCopy(),
 		NodeLocalLoadBalancing: snapshot.nodeLocalLoadBalancing.DeepCopy(),
