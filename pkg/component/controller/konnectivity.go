@@ -131,7 +131,7 @@ func (k *Konnectivity) serverArgs(count int) []string {
 		"--delete-existing-uds-file": "true",
 		"--server-count":             strconv.Itoa(count),
 		"--server-id":                k.K0sVars.InvocationID,
-		"--proxy-strategies":         "destHost,default",
+		"--proxy-strategies":         "destHost,defaultRoute,default",
 		"--cipher-suites":            constant.AllowedTLS12CipherSuiteNames(),
 	}.ToArgs()
 }
