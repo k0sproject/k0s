@@ -34,6 +34,7 @@ var _ Validateable = (*Network)(nil)
 // Network defines the network related config options
 type Network struct {
 	Calico    *Calico   `json:"calico,omitempty"`
+	CoreDNS   *CoreDNS  `json:"coredns,omitempty"`
 	DualStack DualStack `json:"dualStack,omitempty"`
 
 	KubeProxy  *KubeProxy  `json:"kubeProxy,omitempty"`
@@ -66,6 +67,7 @@ type Network struct {
 // DefaultNetwork creates the Network config struct with sane default values
 func DefaultNetwork() *Network {
 	return &Network{
+		CoreDNS:                DefaultCoreDNS(),
 		PodCIDR:                "10.244.0.0/16",
 		ServiceCIDR:            "10.96.0.0/12",
 		Provider:               "kuberouter",

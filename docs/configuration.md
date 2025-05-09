@@ -213,6 +213,33 @@ IP6: "autodetect"
 CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 ```
 
+#### `spec.network.coredns`
+
+| Element    | Description                            |
+|------------|----------------------------------------|
+| `corefile` | Override CoreDNS’s configuration file. |
+
+The default CoreDNS configuration is:
+
+```
+.:53 {
+	errors
+	health
+	ready
+	kubernetes cluster.local in-addr.arpa ip6.arpa {
+	  pods insecure
+	  ttl 30
+	  fallthrough in-addr.arpa ip6.arpa
+	}
+	prometheus :9153
+	forward . /etc/resolv.conf
+	cache 30
+	loop
+	reload
+	loadbalance
+}
+```
+
 #### `spec.network.kuberouter`
 
 | Element          | Description                                                                                                                                                                                                                                                               |
