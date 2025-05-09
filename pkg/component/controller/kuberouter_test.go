@@ -17,7 +17,6 @@ limitations under the License.
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -51,7 +50,7 @@ func TestKubeRouterConfig(t *testing.T) {
 
 	saver := inMemorySaver{}
 	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
+	require.NoError(t, kr.Reconcile(t.Context(), cfg))
 	require.NoError(t, kr.Stop())
 
 	manifestData, foundRaw := saver["kube-router.yaml"]
@@ -134,7 +133,7 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
 	saver := inMemorySaver{}
 	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
+	require.NoError(t, kr.Reconcile(t.Context(), cfg))
 	require.NoError(t, kr.Stop())
 
 	manifestData, foundRaw := saver["kube-router.yaml"]
@@ -170,7 +169,7 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.MTU = 1234
 	saver := inMemorySaver{}
 	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
+	require.NoError(t, kr.Reconcile(t.Context(), cfg))
 	require.NoError(t, kr.Stop())
 
 	manifestData, foundRaw := saver["kube-router.yaml"]
@@ -209,7 +208,7 @@ func TestExtraArgs(t *testing.T) {
 
 	saver := inMemorySaver{}
 	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
+	require.NoError(t, kr.Reconcile(t.Context(), cfg))
 	require.NoError(t, kr.Stop())
 
 	manifestData, foundRaw := saver["kube-router.yaml"]

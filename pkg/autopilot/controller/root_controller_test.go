@@ -92,7 +92,7 @@ func TestModeSwitch(t *testing.T) {
 		return nil
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	// Send alternating lease events, as well as one that is considered redundant
 

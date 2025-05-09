@@ -17,7 +17,6 @@ limitations under the License.
 package k0scontext_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/k0scontext"
@@ -29,7 +28,7 @@ func TestHasValue_StructPtrs(t *testing.T) {
 	type Foo struct{}
 	type Bar struct{}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	assert.False(t, k0scontext.HasValue[*Foo](ctx))
 	assert.False(t, k0scontext.HasValue[*Bar](ctx))
 
@@ -46,7 +45,7 @@ func TestHasValue_Ifaces(t *testing.T) {
 	type Foo interface{}
 	type Bar interface{}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	assert.False(t, k0scontext.HasValue[Foo](ctx))
 	assert.False(t, k0scontext.HasValue[Bar](ctx))
 
@@ -63,7 +62,7 @@ func TestHasValue_Aliases(t *testing.T) {
 	type Foo string
 	type Bar string
 
-	ctx := context.Background()
+	ctx := t.Context()
 	assert.False(t, k0scontext.HasValue[Foo](ctx))
 	assert.False(t, k0scontext.HasValue[Bar](ctx))
 
@@ -80,7 +79,7 @@ func TestValue_StructPtrs(t *testing.T) {
 	type Foo struct{}
 	type Bar struct{}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	assert.Zero(t, k0scontext.Value[*Foo](ctx))
 	assert.Zero(t, k0scontext.Value[*Bar](ctx))
 

@@ -30,6 +30,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/testutil"
+
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/initca"
 	internalhttp "github.com/k0sproject/k0s/internal/http"
@@ -40,7 +42,7 @@ import (
 )
 
 func TestDownload_CancelRequest(t *testing.T) {
-	ctx, cancel := context.WithCancelCause(context.TODO())
+	ctx, cancel := context.WithCancelCause(t.Context())
 	cancel(assert.AnError)
 
 	err := internalhttp.Download(ctx, "http://404.example.com", io.Discard)
@@ -55,7 +57,7 @@ func TestDownload_NoContent(t *testing.T) {
 	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
-	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	err := internalhttp.Download(t.Context(), baseURL, io.Discard)
 	assert.ErrorContains(t, err, "bad status: 204 No Content")
 }
 
@@ -66,7 +68,7 @@ func TestDownload_ShortDownload(t *testing.T) {
 		assert.NoError(t, err)
 	}))
 
-	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	err := internalhttp.Download(t.Context(), baseURL, io.Discard)
 	assert.ErrorContains(t, err, "while downloading: unexpected EOF")
 }
 
@@ -81,15 +83,14 @@ func TestDownload_ExcessContentLength(t *testing.T) {
 	}))
 
 	var downloaded strings.Builder
-	err := internalhttp.Download(context.TODO(), baseURL, &downloaded)
+	err := internalhttp.Download(t.Context(), baseURL, &downloaded)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "yolo", downloaded.String())
 }
 
 func TestDownload_CancelDownload(t *testing.T) {
-	ctx, cancel := context.WithCancelCause(context.TODO())
-	t.Cleanup(func() { cancel(nil) })
+	ctx, cancel := context.WithCancelCause(t.Context())
 
 	baseURL := startFakeDownloadServer(t, false, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for {
@@ -138,7 +139,7 @@ func TestDownload_RedirectLoop(t *testing.T) {
 	}))
 
 	var downloaded strings.Builder
-	err := internalhttp.Download(context.TODO(), baseURL, &downloaded)
+	err := internalhttp.Download(t.Context(), baseURL, &downloaded)
 
 	assert.Equal(t, expectedRequests, requests.Load())
 	assert.ErrorContains(t, err, "stopped after 10 redirects")
@@ -151,18 +152,18 @@ func TestDownload_BasicAuth(t *testing.T) {
 			return
 		}
 	}))
-	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	err := internalhttp.Download(t.Context(), baseURL, io.Discard)
 	assert.ErrorContains(t, err, "bad status: 401 Unauthorized")
-	err = internalhttp.Download(context.TODO(), baseURL, io.Discard, internalhttp.WithBasicAuth("myuser", "mypassword"))
+	err = internalhttp.Download(t.Context(), baseURL, io.Discard, internalhttp.WithBasicAuth("myuser", "mypassword"))
 	assert.NoError(t, err)
 }
 
 func TestDownload_InsecureSkipTLSVerify(t *testing.T) {
 	baseURL := startFakeDownloadServer(t, true, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	}))
-	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	err := internalhttp.Download(t.Context(), baseURL, io.Discard)
 	assert.ErrorContains(t, err, "tls: failed to verify certificate")
-	err = internalhttp.Download(context.TODO(), baseURL, io.Discard, internalhttp.WithInsecureSkipTLSVerify())
+	err = internalhttp.Download(t.Context(), baseURL, io.Discard, internalhttp.WithInsecureSkipTLSVerify())
 	assert.NoError(t, err)
 }
 
@@ -173,10 +174,10 @@ func TestDownload_CustomHeaders(t *testing.T) {
 			return
 		}
 	}))
-	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	err := internalhttp.Download(t.Context(), baseURL, io.Discard)
 	assert.ErrorContains(t, err, "bad status: 400 Bad Request")
 	err = internalhttp.Download(
-		context.TODO(),
+		t.Context(),
 		baseURL,
 		io.Discard,
 		internalhttp.WithHeader("X-First-Header", "first-header"),
@@ -216,7 +217,7 @@ func startFakeDownloadServer(t *testing.T, usetls bool, handler http.Handler) st
 	}()
 
 	t.Cleanup(func() {
-		err := server.Shutdown(context.Background())
+		err := server.Shutdown(testutil.ContextBackground())
 		if !assert.NoError(t, err, "Couldn't shutdown HTTP server") {
 			return
 		}

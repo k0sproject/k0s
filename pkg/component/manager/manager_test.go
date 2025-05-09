@@ -61,7 +61,7 @@ func TestManagerSuccess(t *testing.T) {
 	m := New(proberPackage.NopProber{})
 	require.NotNil(t, m)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	f1 := &Fake{}
 	m.Add(ctx, f1)
 
@@ -87,7 +87,7 @@ func TestManagerInitFail(t *testing.T) {
 	m := New(proberPackage.NopProber{})
 	require.NotNil(t, m)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	f1 := &Fake{
 		InitErr: assert.AnError,
 	}
@@ -107,7 +107,7 @@ func TestManagerRunFail(t *testing.T) {
 	m := New(proberPackage.NopProber{})
 	require.NotNil(t, m)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	f1 := &Fake{}
 	m.Add(ctx, f1)
@@ -139,7 +139,7 @@ func TestManagerHealthyFail(t *testing.T) {
 	require.NotNil(t, m)
 	m.ReadyWaitDuration = 1 * time.Millisecond
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	f1 := &Fake{}
 	m.Add(ctx, f1)

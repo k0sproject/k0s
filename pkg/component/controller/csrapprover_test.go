@@ -17,7 +17,6 @@ limitations under the License.
 package controller
 
 import (
-	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -41,7 +40,7 @@ func TestBasicCRSApprover(t *testing.T) {
 	client, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
 
-	ctx := context.TODO()
+	ctx := t.Context()
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {

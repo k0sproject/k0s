@@ -46,7 +46,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 
 	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: false}, fakeFactory, fakeResolver{})
 
-	ctx := context.TODO()
+	ctx := t.Context()
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
@@ -65,7 +65,7 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 
 	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
 
-	ctx := context.TODO()
+	ctx := t.Context()
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
@@ -87,7 +87,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	}
 	fakeClient, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
-	ctx := context.TODO()
+	ctx := t.Context()
 	_, err = fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
 	config := getFakeConfig()
@@ -122,7 +122,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 
 	fakeClient, _ := fakeFactory.GetClient()
 
-	ctx := context.TODO()
+	ctx := t.Context()
 	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
 
@@ -159,7 +159,7 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 
 	fakeClient, _ := fakeFactory.GetClient()
 
-	ctx := context.TODO()
+	ctx := t.Context()
 	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
 
@@ -174,7 +174,7 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 }
 
 func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, clients kubernetes.Interface) *corev1.Endpoints {
-	ep, err := clients.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
+	ep, err := clients.CoreV1().Endpoints("default").Get(t.Context(), "kubernetes", v1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAddresses, endpointAddressesToStrings(ep.Subsets[0].Addresses))
 

@@ -196,7 +196,7 @@ func TestInitProvidersHandle(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := context.TODO()
+			ctx := t.Context()
 			res, err := test.handler.Handle(ctx, test.plan)
 			if test.expectedError {
 				assert.Error(t, err)
