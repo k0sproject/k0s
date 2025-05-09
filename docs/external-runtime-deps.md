@@ -191,6 +191,21 @@ are not detected.
 External `id` will be executed as a fallback if local user lookup fails, in case
 NSS is used.
 
+#### sh
+
+`sh` is executed by k0s when CPLB is used with `VirtualServers`. CPLB with userspace
+proxy does not require it.
+
+#### sed
+
+`sed` is executed by k0s when CPLB is used with `VirtualServers`. CPLB with userspace
+proxy does not require it.
+
+#### kill
+
+`kill` is executed by k0s when CPLB is used with `VirtualServers`. CPLB with userspace
+proxy does not require it.
+
 ## Windows specific
 <!--
 The kubernetes/system-validators require certain Windows versions starting with
