@@ -56,6 +56,8 @@ spec:
     port: 6443
     sans:
     - 192.168.68.104
+    caExpiry: 87600h
+    certExpiry: 8760h
   controllerManager: {}
   extensions:
     helm:
@@ -103,6 +105,8 @@ spec:
   storage:
     etcd:
       peerAddress: 192.168.68.104
+      caExpiry: 87600h
+      certExpiry: 8760h
     type: etcd
   telemetry:
     enabled: true
@@ -118,6 +122,8 @@ spec:
 | `onlyBindToAddress` | The API server binds too all interfaces by default. With this option set to `true`, the API server will only listen on the IP address configured by the `address` option (first non-local address by default). This can be necessary with multi-homed control plane nodes. |
 | `externalAddress`   | The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use when joining new nodes to the cluster.                                                 |
 | `sans`              | List of additional addresses to push to API servers serving the certificate.                                                                                                                                                                                               |
+| `caExpiry`          | The expiration duration of the CA certificate.                                                                                                                                                                                                                             |
+| `certExpiry`        | The expiration duration of the server certificate.                                                                                                                                                                                                                         |
 | `extraArgs`         | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process. Any behavior triggered by these parameters is outside k0s support.                                                                                                      |
 | `port`¹             | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                                                               |
 | `k0sApiPort`¹       | Custom port for k0s-api server to listen on (default: 9443)                                                                                                                                                                                                                |
@@ -131,6 +137,8 @@ spec:
 | `type`                 | Type of the data store (valid values:`etcd` or `kine`). **Note**: Type `etcd` will cause k0s to create and manage an elastic etcd cluster within the controller nodes. |
 | `etcd.peerAddress`     | Node address used for etcd cluster peering.                                                                                                                            |
 | `etcd.extraArgs`       | Map of key-values (strings) for any extra arguments to pass down to etcd process. Any behavior triggered by these parameters is outside k0s support.                   |
+| `etcd.caExpiry`        | The expiration duration of the CA certificate.                                                                                                                         |
+| `etcd.certExpiry`      | The expiration duration of the server certificate.                                                                                                                     |
 | `kine.dataSource`      | [kine](https://github.com/k3s-io/kine) datasource URL.                                                                                                                 |
 | `etcd.externalCluster` | Configuration when etcd is externally managed, i.e. running on dedicated nodes. See [`spec.storage.etcd.externalCluster`](#specstorageetcdexternalcluster)             |
 

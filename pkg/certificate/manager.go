@@ -26,11 +26,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cloudflare/cfssl/certinfo"
 	"github.com/cloudflare/cfssl/cli"
 	"github.com/cloudflare/cfssl/cli/genkey"
 	"github.com/cloudflare/cfssl/cli/sign"
+	cfsslconfig "github.com/cloudflare/cfssl/config"
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/cloudflare/cfssl/signer"
@@ -64,7 +66,7 @@ type Manager struct {
 }
 
 // EnsureCA makes sure the given CA certs and key is created.
-func (m *Manager) EnsureCA(name, cn string) error {
+func (m *Manager) EnsureCA(name, cn string, expiry time.Duration) error {
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, name+".key")
 	certFile := filepath.Join(m.K0sVars.CertRootDir, name+".crt")
 
@@ -78,7 +80,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 	req.KeyRequest.S = 2048
 	req.CN = cn
 	req.CA = &csr.CAConfig{
-		Expiry: "87600h",
+		Expiry: expiry.String(),
 	}
 	cert, _, key, err := initca.New(req)
 	if err != nil {
@@ -99,7 +101,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 }
 
 // EnsureCertificate creates the specified certificate if it does not already exist
-func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, error) {
+func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Duration) (Certificate, error) {
 
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, certReq.Name+".key")
 	certFile := filepath.Join(m.K0sVars.CertRootDir, certReq.Name+".crt")
@@ -128,6 +130,16 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, 
 		config := cli.Config{
 			CAFile:    "file:" + certReq.CACert,
 			CAKeyFile: "file:" + certReq.CAKey,
+			CFG: &cfsslconfig.Config{
+				Signing: &cfsslconfig.Signing{
+					Profiles: map[string]*cfsslconfig.SigningProfile{},
+					Default: &cfsslconfig.SigningProfile{
+						Usage:        []string{"signing", "key encipherment", "server auth", "client auth"},
+						Expiry:       expiry,
+						ExpiryString: expiry.String(),
+					},
+				},
+			},
 		}
 		s, err := sign.SignerFromConfig(config)
 		if err != nil {
