@@ -90,10 +90,10 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 	require.NoError(t, err)
 
 	<-events.AcquiredLease
-	t.Log("lease acquired, cancelling leaser")
+	t.Log("lease acquired, canceling leaser")
 	cancel()
 	<-events.LostLease
-	t.Log("context cancelled and lease successfully lost")
+	t.Log("context canceled and lease successfully lost")
 }
 
 func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
@@ -210,7 +210,7 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	for {
 		select {
 		case <-events1.AcquiredLease:
-			t.Log("First lease acquired, cancelling pool")
+			t.Log("First lease acquired, canceling pool")
 			cancel1()
 			receivedEvents = append(receivedEvents, "pool1-acquired")
 		case <-events1.LostLease:

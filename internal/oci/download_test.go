@@ -140,9 +140,9 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) url.URL {
 					return
 				}
 				res := map[string]string{"token": tname}
-				marshalled, err := json.Marshal(res)
+				marshaled, err := json.Marshal(res)
 				assert.NoError(t, err)
-				_, _ = w.Write(marshalled)
+				_, _ = w.Write(marshaled)
 				return
 			}
 

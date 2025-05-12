@@ -239,7 +239,7 @@ func TestManager(t *testing.T) {
 		assert.Equal(t, "applier", r.GetLabels()["component"])
 	}
 
-	// update the stack after the lease aquire and verify the changes are applied
+	// update the stack after the lease acquire and verify the changes are applied
 
 	writeLabel(t, filepath.Join(dir, "stack1/pod.yaml"), "custom2", "test")
 

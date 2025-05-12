@@ -22,9 +22,9 @@ const (
 	TagAutopilot = "autopilot"
 )
 
-// Marshal converts a signalling object to a map, including any nested structs
+// Marshal converts a signaling object to a map, including any nested structs
 // that belong to the value. Only fields that have the `autopilot` tag are
-// considered for marshalling.
+// considered for marshaling.
 func Marshal(m map[string]string, value interface{}) {
 	fields := reflect.TypeOf(value)
 	values := reflect.ValueOf(value)
@@ -48,7 +48,7 @@ func Marshal(m map[string]string, value interface{}) {
 type UnmarshalFieldTypeCollector func() reflect.Type
 type UnmarshalFieldValueCollector func() reflect.Value
 
-// Unmarshal uses reflection semantics to turn the marshalled map of values
+// Unmarshal uses reflection semantics to turn the marshaled map of values
 // back into a structure of unknown type. By relying on two reflection helper
 // functions, the reflect types + values can be specialized by the caller,
 // allowing this to be reused for all types.

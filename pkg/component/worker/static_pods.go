@@ -421,7 +421,7 @@ func newStaticPodsServer(log logrus.FieldLogger, contentFn func() []byte) (*http
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 	}
 
-	// Fire up a goroutine that'll close the HTTP server whenever the context is cancelled.
+	// Fire up a goroutine that'll close the HTTP server whenever the context is canceled.
 	go func() {
 		<-ctx.Done()
 		log.Debug("Closing HTTP server")

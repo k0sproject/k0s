@@ -115,7 +115,7 @@ processed by **autopilot**.
 * Lines **7-33** are the two **Commands** that make up this plan -- an `airgapupdate` and `k0supdate`.
 * Lines **38-55** are the associated status entries for the two **Commands**.
 
-The state of this **Plan** exerpt is that **autopilot** has successfully processed the **Plan**, and
+The state of this **Plan** excerpt is that **autopilot** has successfully processed the **Plan**, and
 has begun processing the `airgapupdate` **Command**. Its status indicates **SignalSent** which means
 that the **Signal Node** has been sent signaling information to perform an airgap update.
 

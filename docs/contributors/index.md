@@ -31,7 +31,7 @@ The testing guidelines can be found here:
 
 By contributing, you agree that your contributions will be licensed as followed:
 
-- All content residing under the "docs/" directory of this repository is licensed under "Creative Commons Attribution Share Alike 4.0 International" (CC-BY-SA-4.0). See docs/LICENCE for details.
+- All content residing under the "docs/" directory of this repository is licensed under "Creative Commons Attribution Share Alike 4.0 International" (CC-BY-SA-4.0). See docs/LICENSE for details.
 - Content outside of the above mentioned directories or restrictions above is available under the "Apache License 2.0".
 
 ## Community

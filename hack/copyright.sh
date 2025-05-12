@@ -25,7 +25,7 @@ get_year(){
     YEAR=$(TZ=UTC git log --follow --find-copies=90% -1 --diff-filter=A --pretty=format:%ad --date=format:%Y -- "$1")
     if [ -z "$YEAR" ]; then
         YEAR=$(TZ=UTC date +%Y)
-	    echo "WARN: $1 doesn't seem to be commited in the repo, assuming $YEAR" 1>&2
+	    echo "WARN: $1 doesn't seem to be committed in the repo, assuming $YEAR" 1>&2
     fi
     echo "$YEAR"
 }
