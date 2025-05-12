@@ -196,12 +196,13 @@ func (n *Network) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if n.Provider == "calico" {
+	switch n.Provider {
+	case "calico":
 		if n.Calico == nil {
 			n.Calico = DefaultCalico()
 		}
 		n.KubeRouter = nil
-	} else if n.Provider == "kuberouter" {
+	case "kuberouter":
 		if n.KubeRouter == nil {
 			n.KubeRouter = DefaultKubeRouter()
 		}
