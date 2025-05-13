@@ -18,11 +18,15 @@ package token
 
 import (
 	"fmt"
+	"io"
+	"text/tabwriter"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
 
-	"github.com/olekukonko/tablewriter"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/cli-runtime/pkg/printers"
+
 	"github.com/spf13/cobra"
 )
 
@@ -56,26 +60,7 @@ func tokenListCmd() *cobra.Command {
 				return nil
 			}
 
-			table := tablewriter.NewWriter(cmd.OutOrStdout())
-			table.SetHeader([]string{"ID", "Role", "Expires at"})
-			table.SetAutoWrapText(false)
-			table.SetAutoFormatHeaders(true)
-			table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-			table.SetAlignment(tablewriter.ALIGN_LEFT)
-			table.SetCenterSeparator("")
-			table.SetColumnSeparator("")
-			table.SetRowSeparator("")
-			table.SetHeaderLine(false)
-			table.SetBorder(false)
-			table.SetTablePadding("\t") // pad with tabs
-			table.SetNoWhiteSpace(true)
-			for _, t := range tokens {
-				if listTokenRole == "" || listTokenRole == t.Role {
-					table.Append(t.ToArray())
-				}
-			}
-
-			table.Render()
+			printTokens(cmd.OutOrStdout(), tokens, listTokenRole)
 
 			return nil
 		},
@@ -86,4 +71,38 @@ func tokenListCmd() *cobra.Command {
 	flags.StringVar(&listTokenRole, "role", "", "Either worker, controller or empty for all roles")
 
 	return cmd
+}
+
+func printTokens(writer io.Writer, tokens []token.Token, listTokenRole string) {
+	// Create a metav1.Table object to hold the data
+	table := &metav1.Table{
+		ColumnDefinitions: []metav1.TableColumnDefinition{
+			{Name: "ID", Type: "string", Description: "Token ID"},
+			{Name: "Role", Type: "string", Description: "Token Role"},
+			{Name: "Expires at", Type: "string", Description: "Expiration Time"},
+		},
+	}
+
+	// Populate the rows
+	for _, t := range tokens {
+		if listTokenRole == "" || listTokenRole == t.Role {
+			table.Rows = append(table.Rows, metav1.TableRow{
+				Cells: []any{t.ID, t.Role, t.Expiry},
+			})
+		}
+	}
+
+	// Use a TabWriter for output
+	tabWriter := tabwriter.NewWriter(writer, 0, 0, 2, ' ', 0)
+	defer tabWriter.Flush()
+
+	// Use the TablePrinter to render the table
+	printer := printers.NewTablePrinter(printers.PrintOptions{
+		WithNamespace: false,
+		Wide:          false,
+		ShowLabels:    false,
+	})
+	if err := printer.PrintObj(table, tabWriter); err != nil {
+		fmt.Fprintf(writer, "Error printing table: %v\n", err)
+	}
 }
