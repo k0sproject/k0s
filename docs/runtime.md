@@ -56,7 +56,8 @@ state = "/run/k0s/containerd"
 
 As of 1.27.1, k0s allows dynamic configuration of containerd CRI runtimes. This
 works by k0s creating a special directory in `/etc/k0s/containerd.d/` where
-users can place partial containerd configuration files.
+users can place partial containerd configuration TOML files (i.e. files with a
+`.toml` extension).
 
 K0s will automatically pick up these files and add them as containerd
 configuration `imports`. If a partial configuration file contains a CRI plugin
@@ -70,7 +71,9 @@ Please note, that in order for drop-ins in `/etc/k0s/containerd.d` to take effec
 
 If you change the first magic line (`# k0s_managed=true`) in the `/etc/k0s/containerd.toml` (by accident or on purpose), it automatically becomes "not k0s managed". To make it "k0s managed" again, remove `/etc/k0s/containerd.toml` and restart k0s service on the node, it'll be recreated by k0s.
 
-To confirm that drop-ins are applied to running configuration, check the content of `/run/k0s/containerd-cri.toml`, drop-in specific configuration should be present in this file.
+To confirm that drop-ins are being applied to the running configuration, you can
+check the contents of `/run/k0s/containerd-cri.toml`; drop-in specific
+configuration should be present in this file.
 
 [merge patch]: https://datatracker.ietf.org/doc/html/rfc7396
 [containerd's decision]: https://github.com/containerd/containerd/pull/3574/commits/24b9e2c1a0a72a7ad302cdce7da3abbc4e6295cb
@@ -79,7 +82,48 @@ To confirm that drop-ins are applied to running configuration, check the content
 
 ### Examples
 
-Following chapters provide some examples how to configure different runtimes for containerd using k0s managed drop-in configurations.
+The following sections provide some examples of how to use k0s managed drop-in
+configurations for common configuration tasks.
+
+#### Configuring OCI registry mirrors
+
+Say you host an internal registry mirror of Docker Hub as
+`docker-mirror.internal.acme.corp`. Then you could use the following drop-in
+configuration:
+
+`/etc/k0s/containerd.d/cri-registry.toml`:
+
+```toml
+version = 2
+
+[plugins."io.containerd.grpc.v1.cri".registry]
+config_path = "/etc/k0s/containerd.d/certs.d"
+```
+
+Create the file `/etc/k0s/containerd.d/certs.d/docker.io/hosts.toml` with the following content:
+
+```toml
+# Always resolve tags against Docker Hub as the "server"
+server = "https://registry-1.docker.io"
+
+[host."https://docker-mirror.internal.acme.corp:5000"]
+capabilities = ["pull", "resolve"]
+# Trust the internal mirror's certificate. Paths will be resolved relative to
+# the containing file's directory, e.g. the below path will be resolved to
+# /etc/k0s/containerd.d/certs.d/docker.io/internal-mirror.crt
+ca = "internal-mirror.crt"
+# Or, alternatively, disable TLS verification, if you know what you're doing:
+# skip_verify = true
+
+# Use Google's public pull-through cache
+[host."https://mirror.gcr.io"]
+capabilities = ["pull", "resolve"]
+```
+
+For more details on how to configure registry hosts, please refer to the
+[official containerd configuration][containerd-hosts].
+
+[containerd-hosts]: https://github.com/containerd/containerd/blob/release/1.7/docs/hosts.md
 
 #### Using gVisor
 
