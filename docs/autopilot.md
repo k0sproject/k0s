@@ -30,8 +30,8 @@ spec:
   upgradeStrategy:
     type: periodic
     periodic:
-      # The folowing fields configures updates to happen only on Tue or Wed at 13:00-15:00
-      days: [Tuesdsay,Wednesday]
+      # The following fields configures updates to happen only on Tue or Wed at 13:00-15:00
+      days: [Tuesdays,Wednesday]
       startTime: "13:00"
       length: 2h
   planSpec: # This defines the plan to be created IF there are updates available
@@ -312,7 +312,7 @@ To read this status, this indicates that:
   waiting for the next opportunity to process a command.
 * There are three controller nodes
   * Two controllers have `SignalCompleted` successfully
-  * One is waiting to be signalled (`SignalPending`)
+  * One is waiting to be signaled (`SignalPending`)
 * There are also three worker nodes
   * All are awaiting signaling updates (`SignalPending`)
 
@@ -396,8 +396,8 @@ spec:
   upgradeStrategy:
     type: periodic
     periodic:
-      # The folowing fields configures updates to happen only on Tue or Wed at 13:00-15:00
-      days: [Tuesdsay,Wednesday]
+      # The following fields configures updates to happen only on Tue or Wed at 13:00-15:00
+      days: [Tuesdays,Wednesday]
       startTime: "13:00"
       length: 2h
   # Optional. Specifies a created Plan object

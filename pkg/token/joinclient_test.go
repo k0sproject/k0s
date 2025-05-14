@@ -136,7 +136,7 @@ func TestJoinClient_Cancellation(t *testing.T) {
 			require.NoError(t, err)
 
 			err = test.funcUnderTest(clientContext, underTest)
-			assert.ErrorIs(t, err, context.Canceled, "Expected the call to be cancelled")
+			assert.ErrorIs(t, err, context.Canceled, "Expected the call to be canceled")
 			assert.Same(t, context.Cause(clientContext), assert.AnError, "Didn't receive an HTTP request")
 		})
 	}
@@ -182,7 +182,7 @@ func startFakeJoinServer(t *testing.T, handler func(http.ResponseWriter, *http.R
 	go func() { defer close(serverError); serverError <- server.ServeTLS(listener, "", "") }()
 	t.Cleanup(func() {
 		cancelRequests()
-		// We cannot use t.Context because this is during t.Cleanup because it's cancelled
+		// We cannot use t.Context because this is during t.Cleanup because it's canceled
 		if !assert.NoError(t, server.Shutdown(testutil.ContextBackground()), "Couldn't shutdown HTTP server") {
 			return
 		}

@@ -14,7 +14,7 @@ The use of Manifest Deployer is quite similar to the use the `kubectl apply` com
 
 - Each directory that is a direct descendant of `/var/lib/k0s/manifests` is considered to be its own "stack". Nested directories (further subfolders), however, are excluded from the stack mechanism and thus are not automatically deployed by the Manifest Deployer.
 
-- k0s uses the indepenent stack mechanism for some of its internal in-cluster components, as well as for other resources. Be sure to only touch the manifests that are not managed by k0s.
+- k0s uses the independent stack mechanism for some of its internal in-cluster components, as well as for other resources. Be sure to only touch the manifests that are not managed by k0s.
 
 - Explicitly define the namespace in the manifests (Manifest Deployer does not have a default namespace).
 

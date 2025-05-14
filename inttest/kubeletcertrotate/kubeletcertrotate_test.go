@@ -70,7 +70,7 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 
 	// Knowing that `kube-controller-manager` is issuing certificates that live for
 	// only 3m, if we can successfully apply autopilot plans AFTER kubelet key/certs have changed, we should
-	// be able to confidentally say that the transport cert rotation is fine.
+	// be able to confidentially say that the transport cert rotation is fine.
 	workerSSH, err := s.SSH(s.Context(), s.WorkerNode(0))
 	s.Require().NoError(err)
 	s.T().Log("waiting to see kubelet rotating the client cert before triggering Plan creation")

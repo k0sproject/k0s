@@ -79,7 +79,7 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 		return status.State, true, nil
 	}
 
-	logger.Infof("Sending signalling to node='%s'", nextForSignal.Name)
+	logger.Infof("Sending signaling to node='%s'", nextForSignal.Name)
 
 	// Add the signaling instructions to the nodes metadata.
 	//

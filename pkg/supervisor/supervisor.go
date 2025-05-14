@@ -221,7 +221,7 @@ func (s *Supervisor) Supervise() error {
 
 			select {
 			case <-ctx.Done():
-				s.log.Debug("respawn cancelled")
+				s.log.Debug("respawn canceled")
 				return
 			case <-time.After(s.TimeoutRespawn):
 				s.log.Debug("respawning")

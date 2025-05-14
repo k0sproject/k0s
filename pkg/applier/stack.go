@@ -211,7 +211,7 @@ func (s *Stack) prune(ctx context.Context, mapper meta.ResettableRESTMapper) err
 			}
 		}
 	}
-	s.log.Debug("resources pruned succesfully")
+	s.log.Debug("resources pruned successfully")
 	s.keepResources = []string{}
 
 	return nil

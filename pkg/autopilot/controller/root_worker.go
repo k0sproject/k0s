@@ -128,7 +128,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		// All the controller-runtime controllers have been registered.
 		w.initialized = true
 
-		// The controller-runtime start blocks until the context is cancelled.
+		// The controller-runtime start blocks until the context is canceled.
 		if err := mgr.Start(ctx); err != nil {
 			return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)
 		}

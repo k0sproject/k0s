@@ -178,7 +178,7 @@ func TestClient_LeadTakeover(t *testing.T) {
 			if t.Failed() {
 				return
 			}
-			t.Log("Red took the lead, cancelling Red's context")
+			t.Log("Red took the lead, canceling Red's context")
 			cancelRed()
 		},
 		func(runner string, status Status) {
@@ -195,7 +195,7 @@ func TestClient_LeadTakeover(t *testing.T) {
 			if t.Failed() {
 				return
 			}
-			t.Log("Black took the lead, cancelling Black's context")
+			t.Log("Black took the lead, canceling Black's context")
 			cancelBlack()
 		},
 		func(runner string, status Status) {

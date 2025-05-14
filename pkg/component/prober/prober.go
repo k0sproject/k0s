@@ -215,7 +215,7 @@ func (p *Prober) Register(name string, component any) {
 
 // ProbeError is a string that implements the error interface.
 // This is necessary because errors in golang are an interface and not structs,
-// which means they are marshalled as an empty json and cannot be unmarshalled.
+// which means they are marshaled as an empty json and cannot be unmarshalled.
 type ProbeError string
 
 // ProbeResult represents a result of a probe

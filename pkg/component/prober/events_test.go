@@ -88,7 +88,7 @@ func TestEvents(t *testing.T) {
 		}
 	})
 
-	t.Run("emitter_observes_events_emited_by_components_registred_after_run_is_called", func(t *testing.T) {
+	t.Run("emitter_observes_events_emitted_by_components_registred_after_run_is_called", func(t *testing.T) {
 		prober := testProber(0)
 		ctx, cancel := context.WithCancel(t.Context())
 		go prober.Run(ctx)

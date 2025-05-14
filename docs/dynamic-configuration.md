@@ -69,6 +69,6 @@ k0s config status
 ```shell
 LAST SEEN   TYPE      REASON                OBJECT              MESSAGE
 64s         Warning   FailedReconciling     clusterconfig/k0s   failed to validate config: [invalid pod CIDR invalid ip address]
-59s         Normal    SuccessfulReconcile   clusterconfig/k0s   Succesfully reconciler cluster config
+59s         Normal    SuccessfulReconcile   clusterconfig/k0s   Successfully reconciler cluster config
 69s         Warning   FailedReconciling     clusterconfig/k0s   cannot change CNI provider from kuberouter to calico
 ```

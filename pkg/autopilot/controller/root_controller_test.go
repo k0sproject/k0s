@@ -114,7 +114,7 @@ func TestModeSwitch(t *testing.T) {
 
 	// Despite the additional send of LeaseAcquired, only two events should
 	// have been processed. The additional 3rd stop event is a result of
-	// the cancelling of the context.
+	// the canceling of the context.
 
 	assert.Equal(t, 2, startCount)
 	assert.Equal(t, 3, stopCount)

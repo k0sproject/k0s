@@ -134,7 +134,7 @@ func TestMarshalling(t *testing.T) {
 
 	for _, source := range tests {
 		data, err := json.Marshal(source)
-		assert.NoError(t, err, "marshalling ProbeError shouldn't fail")
+		assert.NoError(t, err, "marshaling ProbeError shouldn't fail")
 
 		target := &ProbeResult{}
 		err = json.Unmarshal(data, target)

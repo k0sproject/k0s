@@ -35,7 +35,7 @@ func EmptyAddressCollector(node *v1.Node) []v1.NodeAddress {
 // DummyCommand is a simple `k0scloudprovider.Command` that returns if the
 // provided channel is closed, or after a 30s timeout.  The main motivation is
 // to have a command that waits until completed, with notification.
-func DummyCommand(wg *sync.WaitGroup, cancelled *bool) (k0scloudprovider.Command, error) {
+func DummyCommand(wg *sync.WaitGroup, canceled *bool) (k0scloudprovider.Command, error) {
 	wg.Add(1)
 
 	return func(stopCh <-chan struct{}) {
@@ -46,24 +46,24 @@ func DummyCommand(wg *sync.WaitGroup, cancelled *bool) (k0scloudprovider.Command
 
 		select {
 		case <-stopCh:
-			*cancelled = true
+			*canceled = true
 		case <-t.C:
 		}
 	}, nil
 }
 
 // DummyCommandBuilder adapts `DummyCommand` to `CommandBuilder`
-func DummyCommandBuilder(wg *sync.WaitGroup, cancelled *bool) CommandBuilder {
+func DummyCommandBuilder(wg *sync.WaitGroup, canceled *bool) CommandBuilder {
 	return func() (k0scloudprovider.Command, error) {
-		return DummyCommand(wg, cancelled)
+		return DummyCommand(wg, canceled)
 	}
 }
 
 type K0sCloudProviderSuite struct {
 	suite.Suite
-	ccp       manager.Component
-	cancelled bool
-	wg        sync.WaitGroup
+	ccp      manager.Component
+	canceled bool
+	wg       sync.WaitGroup
 }
 
 // SetupTest builds a makeshift k0s-cloud-provider configuration, and
@@ -75,7 +75,7 @@ func (suite *K0sCloudProviderSuite) SetupTest() {
 		UpdateFrequency:  1 * time.Second,
 	}
 
-	suite.ccp = newK0sCloudProvider(config, DummyCommandBuilder(&suite.wg, &suite.cancelled))
+	suite.ccp = newK0sCloudProvider(config, DummyCommandBuilder(&suite.wg, &suite.canceled))
 	suite.NotNil(suite.ccp)
 }
 
@@ -85,7 +85,7 @@ func (suite *K0sCloudProviderSuite) TestInit() {
 }
 
 // TestRunStop covers the scenario of issuing a `Start()`, and ensuring
-// that when `Stop()` is called, the underlying goroutine is cancelled.
+// that when `Stop()` is called, the underlying goroutine is canceled.
 // This is effectively testing the close-channel semantics baked into
 // `Stop()`, without worrying about what was actually running.
 func (suite *K0sCloudProviderSuite) TestRunStop() {
@@ -97,7 +97,7 @@ func (suite *K0sCloudProviderSuite) TestRunStop() {
 	suite.NoError(suite.ccp.Stop())
 	suite.wg.Wait()
 
-	suite.True(suite.cancelled)
+	suite.True(suite.canceled)
 }
 
 // TestK0sCloudProviderTestSuite sets up the suite for testing.
