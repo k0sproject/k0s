@@ -25,8 +25,11 @@ ARG TARGET_OS \
   BUILD_GO_LDFLAGS_EXTRA \
   KUBERNETES_BINS
 
+COPY riscv64.patch .
+
 RUN \
   set -ex; \
+  git apply < riscv64.patch; \
   export GOPATH=/go; \
   if [ "${TARGET_OS}" = windows ]; then \
     commands="${KUBERNETES_BINS}"; \
@@ -46,6 +49,7 @@ RUN \
   export SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH; \
   export FORCE_HOST_GO=y; \
   export KUBE_VERBOSE=9; \
+  export KUBE_GIT_TREE_STATE=clean; \
   export KUBE_GIT_VERSION="v$VERSION+k0s"; \
   for cmd in $commands; do \
     make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" WHAT=cmd/$cmd; \
