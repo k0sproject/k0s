@@ -17,6 +17,7 @@ limitations under the License.
 package keepalived
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,8 +29,10 @@ import (
 )
 
 func NewKeepalivedSetStateCmd() *cobra.Command {
-	var rundir string
-	var state string
+	var (
+		rundir string
+		state  string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "keepalived-setstate",
@@ -39,6 +42,7 @@ func NewKeepalivedSetStateCmd() *cobra.Command {
 		Hidden: true,
 		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
+			rundir = unescapeSingleQuotes(rundir)
 			// Verify that rundir is a valid directory
 			if err := validateRundir(rundir); err != nil {
 				return err
@@ -77,7 +81,7 @@ func NewKeepalivedSetStateCmd() *cobra.Command {
 		},
 	}
 	// Add flags
-	cmd.Flags().StringVarP(&rundir, "rundir", "r", "", "Path to the rundir (required)")
+	cmd.Flags().StringVarP(&rundir, "run-dir", "r", "", "Path to the run-dir (required)")
 	cmd.Flags().StringVarP(&state, "state", "s", "", "State to set (MASTER or BACKUP) (required)")
 
 	// Mark flags as required
@@ -90,17 +94,12 @@ func NewKeepalivedSetStateCmd() *cobra.Command {
 func createSymlink(rundir string, sourceFile string) error {
 	consumedVirtualServers := filepath.Join(rundir, "keepalived-virtualservers-consumed.conf")
 
-	_, err := os.Stat(consumedVirtualServers)
-	if err == nil {
-		if err := os.Remove(consumedVirtualServers); err != nil {
-			return fmt.Errorf("failed to remove existing file %s: %w", consumedVirtualServers, err)
-		}
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("failed to stat file %s: %w", consumedVirtualServers, err)
+	if err := os.Remove(consumedVirtualServers); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to remove consumed virtual servers path %q: %w", consumedVirtualServers, err)
 	}
 
 	if err := os.Symlink(sourceFile, consumedVirtualServers); err != nil {
-		return fmt.Errorf("failed to create soft link from %s to %s: %w", sourceFile, consumedVirtualServers, err)
+		return fmt.Errorf("failed to create soft link from %q to %q: %w", sourceFile, consumedVirtualServers, err)
 	}
 	return nil
 }
@@ -108,10 +107,10 @@ func createSymlink(rundir string, sourceFile string) error {
 func validateRundir(rundir string) error {
 	path, err := os.Stat(rundir)
 	if err != nil {
-		return fmt.Errorf("rundir %s is invalid: %w", rundir, err)
+		return fmt.Errorf("run-dir %q is invalid: %w", rundir, err)
 	}
 	if !path.IsDir() {
-		return fmt.Errorf("rundir %s is not a directory: %w", rundir, err)
+		return fmt.Errorf("run-dir %q is not a directory", rundir)
 	}
 	return nil
 }
@@ -120,12 +119,17 @@ func getPid(rundir string) (int, error) {
 	pidfile := filepath.Join(rundir, "keepalived.pid")
 	pidBytes, err := os.ReadFile(pidfile)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read pidfile %s: %w", pidfile, err)
+		return 0, fmt.Errorf("failed to read pidfile %q: %w", pidfile, err)
 	}
 	pid, err := strconv.Atoi(strings.TrimSpace(string(pidBytes)))
 	if err != nil {
-		return 0, fmt.Errorf("failed to convert pid %s to int: %w", string(pidBytes), err)
+		return 0, fmt.Errorf("failed to convert pid %q to int: %w", pidBytes, err)
 	}
 	return pid, nil
 
+}
+
+func unescapeSingleQuotes(s string) string {
+	// Replace escaped single quotes with a single quote
+	return strings.ReplaceAll(s, `\'`, `'`)
 }

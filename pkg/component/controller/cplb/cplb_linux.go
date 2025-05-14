@@ -117,9 +117,10 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		VRRPInstances:  k.Config.VRRPInstances,
 		VirtualServers: k.Config.VirtualServers,
 		APIServerPort:  k.APIPort,
-		K0sBin:         os.Args[0],
-		RunDir:         k.K0sVars.RunDir,
+		K0sBin:         escapeSingleQuotes(os.Args[0]),
+		RunDir:         escapeSingleQuotes(k.K0sVars.RunDir),
 	}
+
 	if len(k.Config.VirtualServers) > 0 {
 		k.keepalivedConfig.IPVSLoadBalancer = true
 
@@ -466,6 +467,13 @@ func (k *Keepalived) watchReconcilerUpdatesKeepalived() {
 	k.log.Info("stopped watching cplb-reconciler updates")
 }
 
+// escapeSingleQuotes escapes single quotes in a string for use in the keepalived
+// template.
+func escapeSingleQuotes(s string) string {
+	str := strings.ReplaceAll(s, `\'`, `'`)
+	return strings.ReplaceAll(str, `'`, `\'`)
+}
+
 // keepalivedConfig contains all the information required by the
 // KeepalivedConfigTemplate.
 // Right now this struct doesn't make sense right now but we need this for the
@@ -503,8 +511,8 @@ vrrp_instance k0s-vip-{{$i}} {
     {{ if and ($ipvsLoadBalancer) (eq $VRRPInstancesLen 1) }}
     # Required to prevent routing loops when we use keepalived
     # virtual_servers: https://github.com/k0sproject/k0s/issues/5178
-    notify_master "{{ $k0s }} keepalived-setstate -r {{ $runDir }} -s MASTER"
-    notify_backup "{{ $k0s }} keepalived-setstate -r {{ $runDir }} -s BACKUP"
+    notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER"
+    notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP"
     {{ end }}
  
 	#advertisement interval, 1 second by default
