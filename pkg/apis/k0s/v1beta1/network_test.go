@@ -124,7 +124,7 @@ func (s *NetworkSuite) TestNetworkDefaults() {
 	s.Equal("cluster.local", n.ClusterDomain)
 }
 
-func (s *NetworkSuite) TestCalicoDefaultsAfterMashaling() {
+func (s *NetworkSuite) TestCalicoDefaultsAfterMarshaling() {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
@@ -142,12 +142,42 @@ spec:
 
 	s.Equal("calico", n.Provider)
 	s.NotNil(n.Calico)
+	s.Nil(n.KubeRouter)
 	s.Equal(4789, n.Calico.VxlanPort)
 	s.Equal(1450, n.Calico.MTU)
 	s.Equal(CalicoModeVXLAN, n.Calico.Mode)
 }
 
-func (s *NetworkSuite) TestKubeRouterDefaultsAfterMashaling() {
+func (s *NetworkSuite) TestCalicoConfigMarshaling() {
+	yamlData := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  network:
+    provider: calico
+    calico:
+      mode: vxlan
+      mtu: 1550
+      overlay: Never
+      vxlanPort: 4700
+`)
+
+	c, err := ConfigFromBytes(yamlData)
+	s.Require().NoError(err)
+	n := c.Spec.Network
+
+	s.Equal("calico", n.Provider)
+	s.NotNil(n.Calico)
+	s.Nil(n.KubeRouter)
+	s.Equal(4700, n.Calico.VxlanPort)
+	s.Equal(1550, n.Calico.MTU)
+	s.Equal(CalicoModeVXLAN, n.Calico.Mode)
+	s.Equal("Never", n.Calico.Overlay)
+}
+
+func (s *NetworkSuite) TestKubeRouterDefaultsAfterMarshaling() {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
@@ -173,7 +203,33 @@ spec:
 	s.Empty(n.KubeRouter.PeerRouterIPs)
 }
 
-func (s *NetworkSuite) TestKubeProxyDefaultsAfterMashaling() {
+func (s *NetworkSuite) TestKubeRouterConfigMarshaling() {
+	yamlData := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  network:
+    provider: kuberouter
+    kuberouter:
+      autoMTU: false
+      mtu: 1500
+`)
+
+	c, err := ConfigFromBytes(yamlData)
+	s.Require().NoError(err)
+	n := c.Spec.Network
+
+	s.Equal("kuberouter", n.Provider)
+	s.NotNil(n.KubeRouter)
+	s.Nil(n.Calico)
+
+	s.Equal(ptr.To(false), n.KubeRouter.AutoMTU)
+	s.Equal(1500, n.KubeRouter.MTU)
+}
+
+func (s *NetworkSuite) TestKubeProxyDefaultsAfterMarshaling() {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
