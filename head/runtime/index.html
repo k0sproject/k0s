@@ -2437,7 +2437,8 @@
 <h2 id="k0s-managed-dynamic-runtime-configuration">k0s managed dynamic runtime configuration<a class="headerlink" href="#k0s-managed-dynamic-runtime-configuration" title="Permanent link">#</a></h2>
 <p>As of 1.27.1, k0s allows dynamic configuration of containerd CRI runtimes. This
 works by k0s creating a special directory in <code>/etc/k0s/containerd.d/</code> where
-users can place partial containerd configuration files.</p>
+users can place partial containerd configuration TOML files (i.e. files with a
+<code>.toml</code> extension).</p>
 <p>K0s will automatically pick up these files and add them as containerd
 configuration <code>imports</code>. If a partial configuration file contains a CRI plugin
 configuration section, k0s will instead treat such a file as a <a href="https://datatracker.ietf.org/doc/html/rfc7396">merge patch</a> to
@@ -2447,9 +2448,41 @@ from imported configuration files. However, this behavior <a href="https://githu
 <a href="https://github.com/containerd/containerd/pull/9982">change</a> in future releases of containerd.</p>
 <p>Please note, that in order for drop-ins in <code>/etc/k0s/containerd.d</code> to take effect on running configuration, <code>/etc/k0s/containerd.toml</code> needs to be k0s managed.</p>
 <p>If you change the first magic line (<code># k0s_managed=true</code>) in the <code>/etc/k0s/containerd.toml</code> (by accident or on purpose), it automatically becomes "not k0s managed". To make it "k0s managed" again, remove <code>/etc/k0s/containerd.toml</code> and restart k0s service on the node, it'll be recreated by k0s.</p>
-<p>To confirm that drop-ins are applied to running configuration, check the content of <code>/run/k0s/containerd-cri.toml</code>, drop-in specific configuration should be present in this file.</p>
+<p>To confirm that drop-ins are being applied to the running configuration, you can
+check the contents of <code>/run/k0s/containerd-cri.toml</code>; drop-in specific
+configuration should be present in this file.</p>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<p>Following chapters provide some examples how to configure different runtimes for containerd using k0s managed drop-in configurations.</p>
+<p>The following sections provide some examples of how to use k0s managed drop-in
+configurations for common configuration tasks.</p>
+<h4 id="configuring-oci-registry-mirrors">Configuring OCI registry mirrors<a class="headerlink" href="#configuring-oci-registry-mirrors" title="Permanent link">#</a></h4>
+<p>Say you host an internal registry mirror of Docker Hub as
+<code>docker-mirror.internal.acme.corp</code>. Then you could use the following drop-in
+configuration:</p>
+<p><code>/etc/k0s/containerd.d/cri-registry.toml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+
+<span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">.registry]</span>
+<span class="n">config_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/etc/k0s/containerd.d/certs.d&quot;</span>
+</code></pre></div>
+<p>Create the file <code>/etc/k0s/containerd.d/certs.d/docker.io/hosts.toml</code> with the following content:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Always resolve tags against Docker Hub as the &quot;server&quot;</span>
+<span class="n">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://registry-1.docker.io&quot;</span>
+
+<span class="k">[host.</span><span class="s2">&quot;https://docker-mirror.internal.acme.corp:5000&quot;</span><span class="k">]</span>
+<span class="n">capabilities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pull&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;resolve&quot;</span><span class="p">]</span>
+<span class="c1"># Trust the internal mirror&#39;s certificate. Paths will be resolved relative to</span>
+<span class="c1"># the containing file&#39;s directory, e.g. the below path will be resolved to</span>
+<span class="c1"># /etc/k0s/containerd.d/certs.d/docker.io/internal-mirror.crt</span>
+<span class="n">ca</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;internal-mirror.crt&quot;</span>
+<span class="c1"># Or, alternatively, disable TLS verification, if you know what you&#39;re doing:</span>
+<span class="c1"># skip_verify = true</span>
+
+<span class="c1"># Use Google&#39;s public pull-through cache</span>
+<span class="k">[host.</span><span class="s2">&quot;https://mirror.gcr.io&quot;</span><span class="k">]</span>
+<span class="n">capabilities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pull&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;resolve&quot;</span><span class="p">]</span>
+</code></pre></div>
+<p>For more details on how to configure registry hosts, please refer to the
+<a href="https://github.com/containerd/containerd/blob/release/1.7/docs/hosts.md">official containerd configuration</a>.</p>
 <h4 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h4>
 <p><a href="https://gvisor.dev/docs/">gVisor</a> is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.</p>
 <ol>
