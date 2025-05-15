@@ -101,7 +101,7 @@ func (k *Kubelet) Init(_ context.Context) error {
 	return nil
 }
 
-func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.IP, ipv6 net.IP, _ error) {
+func detectDualStackNodeIPs(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.IP, ipv6 net.IP, _ error) {
 	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(nodeName))
 	if err != nil {
 		return nil, nil, err
@@ -113,12 +113,12 @@ func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.I
 		} else if ipv6 == nil && addr.IP.To16() != nil && addr.IP.To4() == nil {
 			ipv6 = addr.IP
 		}
-
 		if ipv4 != nil && ipv6 != nil {
-			break
+			return ipv4, ipv6, nil
 		}
 	}
-	return ipv4, ipv6, nil
+
+	return nil, nil, fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %v, IPv6: %v", ipv4, ipv6)
 }
 
 // Run runs kubelet
@@ -148,15 +148,15 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// but will only pick one for a single family. Do something similar as
 		// kubelet, but for both IPv4 and IPv6.
 		// https://github.com/kubernetes/kubernetes/blob/v1.32.4/pkg/kubelet/nodestatus/setters.go#L202-L230
-		ipv4, ipv6, err := lookupNodeName(ctx, k.NodeName)
+		ipv4, ipv6, err := detectDualStackNodeIPs(ctx, k.NodeName)
 		if err != nil {
-			logrus.WithError(err).Errorf("failed to lookup %q", k.NodeName)
-		} else if ipv4 != nil && ipv6 != nil {
-			// The kubelet will perform some extra validations on the discovered IP
-			// addresses in the private function k8s.io/kubernetes/pkg/kubelet.validateNodeIP
-			// which won't be replicated here.
-			args["--node-ip"] = ipv4.String() + "," + ipv6.String()
+			return fmt.Errorf("failed to detect dual-stack node IPs for %q", k.NodeName)
 		}
+
+		// The kubelet will perform some extra validations on the discovered IP
+		// addresses in the private function k8s.io/kubernetes/pkg/kubelet.validateNodeIP
+		// which won't be replicated here.
+		args["--node-ip"] = ipv4.String() + "," + ipv6.String()
 	}
 
 	if runtime.GOOS == "windows" {
