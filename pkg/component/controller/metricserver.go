@@ -215,9 +215,12 @@ spec:
       nodeSelector:
         kubernetes.io/os: linux
       tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
       priorityClassName: system-cluster-critical
       serviceAccountName: metrics-server
       volumes:

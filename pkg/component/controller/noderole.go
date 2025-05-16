@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -93,13 +94,14 @@ func (n *NodeRole) Start(ctx context.Context) error {
 
 func (n *NodeRole) ensureNodeLabel(ctx context.Context, client kubernetes.Interface, node corev1.Node) error {
 	var labelToAdd string
+	nodeRoleNamespace, _, _ := strings.Cut(constants.LabelNodeRoleControlPlane, "/")
 	for label, value := range node.Labels {
-		if strings.HasPrefix(label, constant.NodeRoleLabelNamespace) {
+		if labelNamespace, _, _ := strings.Cut(label, "/"); labelNamespace == nodeRoleNamespace {
 			return nil
 		}
 
 		if label == constant.K0SNodeRoleLabel {
-			labelToAdd = fmt.Sprintf("%s/%s", constant.NodeRoleLabelNamespace, value)
+			labelToAdd = path.Join(nodeRoleNamespace, value)
 		}
 	}
 

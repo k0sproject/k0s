@@ -280,13 +280,8 @@ spec:
       tolerations:
       - effect: NoSchedule
         operator: Exists
-      - key: CriticalAddonsOnly
-        operator: Exists
       - effect: NoExecute
         operator: Exists
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
       volumes:
       - name: lib-modules
         hostPath:
