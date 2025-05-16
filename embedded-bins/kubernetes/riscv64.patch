@@ -1,0 +1,53 @@
+diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
+index 983ff368e25..b926572b469 100755
+--- a/hack/lib/golang.sh
++++ b/hack/lib/golang.sh
+@@ -27,6 +27,7 @@ readonly KUBE_SUPPORTED_SERVER_PLATFORMS=(
+   linux/arm64
+   linux/s390x
+   linux/ppc64le
++  linux/riscv64
+ )
+ 
+ # The node platforms we build for
+@@ -35,6 +36,7 @@ readonly KUBE_SUPPORTED_NODE_PLATFORMS=(
+   linux/arm64
+   linux/s390x
+   linux/ppc64le
++  linux/riscv64
+   windows/amd64
+ )
+ 
+@@ -47,6 +49,7 @@ readonly KUBE_SUPPORTED_CLIENT_PLATFORMS=(
+   linux/arm64
+   linux/s390x
+   linux/ppc64le
++  linux/riscv64
+   darwin/amd64
+   darwin/arm64
+   windows/amd64
+@@ -61,6 +64,7 @@ readonly KUBE_SUPPORTED_TEST_PLATFORMS=(
+   linux/arm64
+   linux/s390x
+   linux/ppc64le
++  linux/riscv64
+   darwin/amd64
+   darwin/arm64
+   windows/amd64
+diff --git a/hack/lib/util.sh b/hack/lib/util.sh
+index 70568f76fa6..2ddfa435ca2 100755
+--- a/hack/lib/util.sh
++++ b/hack/lib/util.sh
+@@ -185,8 +185,11 @@ kube::util::host_arch() {
+     ppc64le*)
+       host_arch=ppc64le
+       ;;
++    riscv64)
++      host_arch=riscv64
++      ;;
+     *)
+-      kube::log::error "Unsupported host arch. Must be x86_64, 386, arm, arm64, s390x or ppc64le."
++      kube::log::error "Unsupported host arch. Must be x86_64, 386, arm, arm64, s390x, ppc64le or riscv64."
+       exit 1
+       ;;
+   esac
