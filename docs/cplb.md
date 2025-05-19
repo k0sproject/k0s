@@ -140,6 +140,8 @@ The Keepalived virtual servers Load Balancing is more performant than the usersp
 1. It's incompatible with controller+worker.
 2. May not work on every infrastructure.
 3. Troubleshooting is significantly more complex.
+4. When there is more than one VRRPInstance, we must do the load balancing in all the servers
+which in some rare circumstances can provoke temporary routing loops.
 
 ```yaml
 spec:
@@ -528,8 +530,16 @@ be able to reach the port 6443 on any address and the port 6444 on any address e
 ### Troubleshooting Keepalived Virtual Servers
 
 You can verify the keepalived's logs and configuration file using the steps described in the section
-[troubleshooting virtual IPs](#troubleshooting-virtual-ips) IPs above. Additionally, you can check
-the actual IPVS configuration using `ipvsadm`:
+[troubleshooting virtual IPs](#troubleshooting-virtual-ips) above.
+
+When virtual servers are enabled K0s generates two additional files:
+
+* `keepalived-virtualservers-generated.conf`: This file contains the list of control plane nodes that should be balanced to.
+* `keepalived-virtualservers-consumed.conf`: This is a symlink which points to `keepalived-virtualservers-generated.conf`
+if the Keepalived VRRP instance's current state is `master` or to `/dev/null` if it's `backup`. This file is only generated if
+there is exactly one VRRP instance.
+
+Additionally, you can check the actual IPVS configuration using `ipvsadm`:
 
 ```console
 controller0:/# ipvsadm --save -n
@@ -545,4 +555,4 @@ TCP  192.168.122.200:6443 rr persistent 360
   In this example `192.168.122.200` is the virtual IP, and `192.168.122.185`, `192.168.122.87`
   and `192.168.122.122` are the control plane nodes.
 
-  All control plane nodes are expected to have the same output.
+If there is only one VRRP instance, only the current master should be load balancing.

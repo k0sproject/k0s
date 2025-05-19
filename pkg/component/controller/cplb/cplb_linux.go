@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
@@ -50,21 +51,22 @@ const (
 
 // Keepalived is the controller for the keepalived process in the control plane load balancing
 type Keepalived struct {
-	K0sVars          *config.CfgVars
-	Config           *k0sAPI.KeepalivedSpec
-	DetailedLogging  bool
-	LogConfig        bool
-	APIPort          int
-	KubeConfigPath   string
-	keepalivedConfig *keepalivedConfig
-	uid              int
-	supervisor       *supervisor.Supervisor
-	log              *logrus.Entry
-	configFilePath   string
-	reconciler       *CPLBReconciler
-	updateCh         chan struct{}
-	reconcilerDone   chan struct{}
-	proxy            tcpproxy.Proxy
+	K0sVars                *config.CfgVars
+	Config                 *k0sAPI.KeepalivedSpec
+	DetailedLogging        bool
+	LogConfig              bool
+	APIPort                int
+	KubeConfigPath         string
+	keepalivedConfig       *keepalivedConfig
+	uid                    int
+	supervisor             *supervisor.Supervisor
+	log                    *logrus.Entry
+	configFilePath         string
+	virtualServersFilePath string
+	reconciler             *CPLBReconciler
+	updateCh               chan struct{}
+	reconcilerDone         chan struct{}
+	proxy                  tcpproxy.Proxy
 }
 
 // Init extracts the needed binaries and creates the directories
@@ -83,6 +85,7 @@ func (k *Keepalived) Init(_ context.Context) error {
 	}
 
 	k.configFilePath = filepath.Join(k.K0sVars.RunDir, "keepalived.conf")
+	k.virtualServersFilePath = filepath.Join(k.K0sVars.RunDir, "keepalived-virtualservers-generated.conf")
 	return assets.Stage(k.K0sVars.BinDir, "keepalived")
 }
 
@@ -110,16 +113,27 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		}
 	}
 
-	// In order to make the code simpler, we always create the keepalived template
-	// without the virtual servers, before starting the reconcile loop
 	k.keepalivedConfig = &keepalivedConfig{
 		VRRPInstances:  k.Config.VRRPInstances,
 		VirtualServers: k.Config.VirtualServers,
 		APIServerPort:  k.APIPort,
+		K0sBin:         escapeSingleQuotes(os.Args[0]),
+		RunDir:         escapeSingleQuotes(k.K0sVars.RunDir),
 	}
-	if err := k.generateKeepalivedTemplate(); err != nil {
+
+	if len(k.Config.VirtualServers) > 0 {
+		k.keepalivedConfig.IPVSLoadBalancer = true
+
+	}
+
+	// In order to make the code simpler, we always create the keepalived template
+	// without the virtual servers, before starting the reconcile loop
+	if err := k.generateTemplate(keepalivedVRRPConfigTemplate, k.configFilePath); err != nil {
 		return fmt.Errorf("failed to generate keepalived template: %w", err)
 	}
+
+	// We don't need anymore so we can set it to nil so the garbage collector can clean it up
+	keepalivedVRRPConfigTemplate = nil
 
 	args := []string{
 		"--dont-fork",
@@ -157,6 +171,9 @@ func (k *Keepalived) Start(ctx context.Context) error {
 				if err := k.watchReconcilerUpdatesReverseProxy(ctx); err != nil {
 					k.log.WithError(err).Error("failed to watch reconciler updates")
 				}
+
+				// We don't need so we can set it to nil so the garbage collector can clean it up
+				keepalivedVirtualServersConfigTemplate = nil
 			}
 		}()
 	}
@@ -330,13 +347,13 @@ func (*Keepalived) getLinkAddresses(link netlink.Link) ([]netlink.Addr, []string
 	return linkAddrs, strAddrs, nil
 }
 
-func (k *Keepalived) generateKeepalivedTemplate() error {
-	if err := file.AtomicWithTarget(k.configFilePath).
+func (k *Keepalived) generateTemplate(templ *template.Template, path string) error {
+	if err := file.AtomicWithTarget(path).
 		WithPermissions(0400).
 		WithOwner(k.uid).
 		Do(func(unbuffered file.AtomicWriter) error {
 			w := bufio.NewWriter(unbuffered)
-			if err := keepalivedConfigTemplate.Execute(w, k.keepalivedConfig); err != nil {
+			if err := templ.Execute(w, k.keepalivedConfig); err != nil {
 				return err
 			}
 			return w.Flush()
@@ -437,7 +454,7 @@ func (k *Keepalived) watchReconcilerUpdatesKeepalived() {
 	for range k.updateCh {
 		k.keepalivedConfig.RealServers = k.reconciler.GetIPs()
 		k.log.Infof("cplb-reconciler update, got %s", k.keepalivedConfig.RealServers)
-		if err := k.generateKeepalivedTemplate(); err != nil {
+		if err := k.generateTemplate(keepalivedVirtualServersConfigTemplate, k.virtualServersFilePath); err != nil {
 			k.log.Errorf("failed to generate keepalived template: %v", err)
 			continue
 		}
@@ -450,20 +467,34 @@ func (k *Keepalived) watchReconcilerUpdatesKeepalived() {
 	k.log.Info("stopped watching cplb-reconciler updates")
 }
 
+// escapeSingleQuotes escapes single quotes in a string for use in the keepalived
+// template.
+func escapeSingleQuotes(s string) string {
+	str := strings.ReplaceAll(s, `\'`, `'`)
+	return strings.ReplaceAll(str, `'`, `\'`)
+}
+
 // keepalivedConfig contains all the information required by the
 // KeepalivedConfigTemplate.
 // Right now this struct doesn't make sense right now but we need this for the
 // future virtual_server support.
 type keepalivedConfig struct {
-	VRRPInstances  []k0sAPI.VRRPInstance
-	VirtualServers []k0sAPI.VirtualServer
-	RealServers    []string
-	APIServerPort  int
+	VRRPInstances    []k0sAPI.VRRPInstance
+	VirtualServers   []k0sAPI.VirtualServer
+	RealServers      []string
+	APIServerPort    int
+	IPVSLoadBalancer bool
+	K0sBin           string
+	RunDir           string
 }
 
 const dummyLinkName = "dummyvip0"
 
-var keepalivedConfigTemplate = template.Must(template.New("keepalived").Parse(`
+var keepalivedVRRPConfigTemplate = template.Must(template.New("keepalived").Parse(`
+{{ $ipvsLoadBalancer := .IPVSLoadBalancer }}
+{{ $k0s := .K0sBin }}
+{{ $runDir := .RunDir }}
+{{ $VRRPInstancesLen := len .VRRPInstances }}
 {{ range $i, $instance := .VRRPInstances }}
 vrrp_instance k0s-vip-{{$i}} {
     # All servers must have state BACKUP so that when a new server comes up
@@ -476,7 +507,15 @@ vrrp_instance k0s-vip-{{$i}} {
     # All servers have the same priority so that when a new one comes up we don't
     # do a failover.
     priority 200
-#   advertisement interval, 1 second by default
+
+    {{ if and ($ipvsLoadBalancer) (eq $VRRPInstancesLen 1) }}
+    # Required to prevent routing loops when we use keepalived
+    # virtual_servers: https://github.com/k0sproject/k0s/issues/5178
+    notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER"
+    notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP"
+    {{ end }}
+ 
+	#advertisement interval, 1 second by default
     advert_int {{ $instance.AdvertIntervalSeconds }}
     authentication {
         auth_type PASS
@@ -495,11 +534,23 @@ vrrp_instance k0s-vip-{{$i}} {
         {{ end }}
     }
     {{ else}}
-	 #F
     {{ end }}
 }
 {{ end }}
+{{ if $ipvsLoadBalancer }}
+{{ if eq $VRRPInstancesLen 1 }}
+# This include is commented by default and is only used after becoming master
+# so that we prevent routing looops: https://github.com/k0sproject/k0s/issues/5178
+include keepalived-virtualservers-consumed.conf
+{{ else}}
+# If there is more than one VRRP instance, we need to always have the servers list
+# because we cannot guarantee that the masters will always be in the same host.
+include keepalived-virtualservers-generated.conf
+{{ end }}
+{{ end }}
+`))
 
+var keepalivedVirtualServersConfigTemplate = template.Must(template.New("keepalived").Parse(`
 {{ $APIServerPort := .APIServerPort }}
 {{ $RealServers := .RealServers }}
 {{ if gt (len $RealServers) 0 }}
