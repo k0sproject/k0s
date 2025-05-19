@@ -543,7 +543,7 @@ func (c *command) start(ctx context.Context) error {
 			LogLevel:              c.Logging[constant.KubeControllerManagerComponentName],
 			K0sVars:               c.K0sVars,
 			SingleNode:            c.SingleNode,
-			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.API.Address),
+			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.API.APIAddress()),
 			ExtraArgs:             c.KubeControllerManagerExtraArgs,
 		})
 	}
