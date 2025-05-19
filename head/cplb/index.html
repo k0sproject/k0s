@@ -2718,6 +2718,8 @@ using a VRRP instance.</p>
 <li>It's incompatible with controller+worker.</li>
 <li>May not work on every infrastructure.</li>
 <li>Troubleshooting is significantly more complex.</li>
+<li>When there is more than one VRRPInstance, we must do the load balancing in all the servers
+which in some rare circumstances can provoke temporary routing loops.</li>
 </ol>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span>
@@ -3042,8 +3044,15 @@ load balancer's endpoint list. This component monitors constantly the endpoint <
 be able to reach the port 6443 on any address and the port 6444 on any address except localhost.</p>
 <h3 id="troubleshooting-keepalived-virtual-servers">Troubleshooting Keepalived Virtual Servers<a class="headerlink" href="#troubleshooting-keepalived-virtual-servers" title="Permanent link">#</a></h3>
 <p>You can verify the keepalived's logs and configuration file using the steps described in the section
-<a href="#troubleshooting-virtual-ips">troubleshooting virtual IPs</a> IPs above. Additionally, you can check
-the actual IPVS configuration using <code>ipvsadm</code>:</p>
+<a href="#troubleshooting-virtual-ips">troubleshooting virtual IPs</a> above.</p>
+<p>When virtual servers are enabled K0s generates two additional files:</p>
+<ul>
+<li><code>keepalived-virtualservers-generated.conf</code>: This file contains the list of control plane nodes that should be balanced to.</li>
+<li><code>keepalived-virtualservers-consumed.conf</code>: This is a symlink which points to <code>keepalived-virtualservers-generated.conf</code>
+if the Keepalived VRRP instance's current state is <code>master</code> or to <code>/dev/null</code> if it's <code>backup</code>. This file is only generated if
+there is exactly one VRRP instance.</li>
+</ul>
+<p>Additionally, you can check the actual IPVS configuration using <code>ipvsadm</code>:</p>
 <p><code>console
 controller0:/# ipvsadm --save -n
 IP Virtual Server version 1.2.1 (size=4096)
@@ -3055,7 +3064,7 @@ TCP  192.168.122.200:6443 rr persistent 360
   -&gt; 192.168.122.122:6443              Route   1      0          0</code></p>
 <p>In this example <code>192.168.122.200</code> is the virtual IP, and <code>192.168.122.185</code>, <code>192.168.122.87</code>
   and <code>192.168.122.122</code> are the control plane nodes.</p>
-<p>All control plane nodes are expected to have the same output.</p>
+<p>If there is only one VRRP instance, only the current master should be load balancing.</p>
 
 
 
