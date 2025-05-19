@@ -116,7 +116,7 @@ func (a *APIServer) Start(_ context.Context) error {
 		"requestheader-allowed-names":      "front-proxy-client",
 		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"service-account-key-file":         path.Join(a.K0sVars.CertRootDir, "sa.pub"),
-		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.API.Address),
+		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.API.APIAddress()),
 		"tls-min-version":                  "VersionTLS12",
 		"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
 		"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),

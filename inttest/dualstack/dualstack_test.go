@@ -48,7 +48,8 @@ import (
 type DualstackSuite struct {
 	common.BootlooseSuite
 
-	client *k8s.Clientset
+	client      *k8s.Clientset
+	defaultIPv6 bool
 }
 
 func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
@@ -60,9 +61,14 @@ func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
 }
 
 func (s *DualstackSuite) TestDualStackControlPlaneComponentsHaveServiceCIDRs() {
-	const expected = "--service-cluster-ip-range=10.96.0.0/12,fd01::/108"
+	const expectedIPv4 = "--service-cluster-ip-range=10.96.0.0/12,fd01::/108"
+	const expectedIPv6 = "--service-cluster-ip-range=fd01::/108,10.96.0.0/12"
 	node := s.ControllerNode(0)
 
+	expected := expectedIPv4
+	if s.defaultIPv6 {
+		expected = expectedIPv6
+	}
 	s.Contains(s.cmdlineForExecutable(node, "kube-apiserver"), expected)
 	s.Contains(s.cmdlineForExecutable(node, "kube-controller-manager"), expected)
 }
@@ -94,7 +100,9 @@ func (s *DualstackSuite) SetupSuite() {
 
 	if os.Getenv("K0S_NETWORK") == "kube-router" {
 		s.T().Log("Using kube-router network")
-		k0sConfig = k0sConfigWithKuberouterDualStack
+		ipv6Address := s.getIPv6Address(s.ControllerNode(0))
+		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouterDualStack, ipv6Address)
+		s.defaultIPv6 = true
 	}
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
@@ -191,6 +199,17 @@ func (s *DualstackSuite) SetupSuite() {
 	s.client = client
 }
 
+func (s *DualstackSuite) getIPv6Address(nodeName string) string {
+	ssh, err := s.SSH(s.Context(), nodeName)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	ipAddress, err := ssh.ExecWithOutput(s.Context(), "ip -6 -oneline addr show eth0 | awk '{print $4}' | grep -v '^fe80' | cut -d/ -f1")
+	s.Require().NoError(err)
+	return ipAddress
+
+}
+
 func TestDualStack(t *testing.T) {
 
 	s := DualstackSuite{
@@ -199,6 +218,7 @@ func TestDualStack(t *testing.T) {
 			WorkerCount:     2,
 		},
 		nil,
+		false,
 	}
 
 	suite.Run(t, &s)
@@ -218,10 +238,13 @@ spec:
       IPv6podCIDR: "fd00::/108"
       IPv6serviceCIDR: "fd01::/108"
     podCIDR: 10.244.0.0/16
-    serviceCIDR: 10.96.0.0/12`
+    serviceCIDR: 10.96.0.0/12
+`
 
 const k0sConfigWithKuberouterDualStack = `
 spec:
+  api:
+    externalAddress: %s
   network:
     provider: kuberouter
     dualStack:
@@ -229,4 +252,5 @@ spec:
       IPv6podCIDR: "fd00::/108"
       IPv6serviceCIDR: "fd01::/108"
     podCIDR: 10.244.0.0/16
-    serviceCIDR: 10.96.0.0/12`
+    serviceCIDR: 10.96.0.0/12
+`
