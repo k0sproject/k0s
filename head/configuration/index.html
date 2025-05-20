@@ -2623,6 +2623,8 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6443</span>
 <span class="w">    </span><span class="nt">sans</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span>
+<span class="w">    </span><span class="nt">caExpiry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">87600h</span>
+<span class="w">    </span><span class="nt">certExpiry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8760h</span>
 <span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
 <span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">helm</span><span class="p">:</span>
@@ -2670,6 +2672,8 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="w">  </span><span class="nt">storage</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">etcd</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">peerAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span>
+<span class="w">      </span><span class="nt">caExpiry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">87600h</span>
+<span class="w">      </span><span class="nt">certExpiry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8760h</span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">etcd</span>
 <span class="w">  </span><span class="nt">telemetry</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
@@ -2699,6 +2703,14 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <tr>
 <td><code>sans</code></td>
 <td>List of additional addresses to push to API servers serving the certificate.</td>
+</tr>
+<tr>
+<td><code>caExpiry</code></td>
+<td>The expiration duration of the CA certificate.</td>
+</tr>
+<tr>
+<td><code>certExpiry</code></td>
+<td>The expiration duration of the server certificate.</td>
 </tr>
 <tr>
 <td><code>extraArgs</code></td>
@@ -2735,6 +2747,14 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <tr>
 <td><code>etcd.extraArgs</code></td>
 <td>Map of key-values (strings) for any extra arguments to pass down to etcd process. Any behavior triggered by these parameters is outside k0s support.</td>
+</tr>
+<tr>
+<td><code>etcd.caExpiry</code></td>
+<td>The expiration duration of the CA certificate.</td>
+</tr>
+<tr>
+<td><code>etcd.certExpiry</code></td>
+<td>The expiration duration of the server certificate.</td>
 </tr>
 <tr>
 <td><code>kine.dataSource</code></td>
