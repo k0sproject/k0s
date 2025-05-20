@@ -19,6 +19,7 @@ bin:
 bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
+helm_version = $(strip $(subst v,,$(shell ../vars.sh FROM=../ helm_version)))
 bootloose_alpine_build_cmdline := \
 	--build-arg GOLANG_IMAGE=$(golang_buildimage) \
 	--build-arg ALPINE_VERSION=$(alpine_patch_version) \
