@@ -1,0 +1,22 @@
+name: Renovate
+
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    - cron: '0 0 * * *' # Runs at 00:00 UTC every day
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@v42.0.3
+        with:
+          configurationFile: "renovate.json"
+          token: '${{ github.token }}'
+        env:
+          LOG_LEVEL: debug
+          RENOVATE_AUTODISCOVER: true # Necessary for it to work on forks
