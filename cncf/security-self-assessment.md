@@ -9,7 +9,7 @@ This document serves as the k0s project [CNCF security self-assessment](https://
 | Software | https://github.com/k0sproject/k0s |
 | Security Provider | No |
 | Languages | Golang |
-| SBOM | [https://github.com/k0sproject/k0s/releases/download/v1.32.4%2Bk0s.0/spdx.json](https://github.com/k0sproject/k0s/releases/download/v1.32.4%2Bk0s.0/spdx.json)  |
+| SBOM | [https://github.com/k0sproject/k0s/releases/download/v1.32.5%2Bk0s.0/spdx.json](https://github.com/k0sproject/k0s/releases/download/v1.32.5%2Bk0s.0/spdx.json)  |
 
 ## Security links
 
