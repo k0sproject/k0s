@@ -264,6 +264,7 @@ spec:
 
 	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
+	assert.False(t, c.Spec.Telemetry.IsEnabled())
 	assert.Equal(t, DefaultClusterImages(), c.Spec.Images)
 	assert.Equal(t, DefaultStorageSpec(), c.Spec.Storage)
 	assert.Equal(t, DefaultNetwork(), c.Spec.Network)

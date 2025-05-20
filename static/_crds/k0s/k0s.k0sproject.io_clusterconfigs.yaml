@@ -973,7 +973,7 @@ spec:
                 description: ClusterTelemetry holds telemetry related settings
                 properties:
                   enabled:
-                    default: true
+                    default: false
                     type: boolean
                 type: object
               workerProfiles:
