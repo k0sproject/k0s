@@ -72,9 +72,9 @@ func TestEnsureCertificate(t *testing.T) {
 	// check the expiration date of the cert
 	assert.Equal(t, cert.NotBefore.Add(10000*time.Hour), cert.NotAfter)
 	// check if the cert has the `signing` usage
-	assert.NotEqual(t, cert.KeyUsage&x509.KeyUsageDigitalSignature, 0)
+	assert.NotEqual(t, 0, cert.KeyUsage&x509.KeyUsageDigitalSignature)
 	// check if the cert has the `key encipherment` usage
-	assert.NotEqual(t, cert.KeyUsage&x509.KeyUsageKeyEncipherment, 0)
+	assert.NotEqual(t, 0, cert.KeyUsage&x509.KeyUsageKeyEncipherment)
 	assert.Equal(t,
 		[]x509.ExtKeyUsage{cfsslconfig.ExtKeyUsage["server auth"], cfsslconfig.ExtKeyUsage["client auth"]},
 		cert.ExtKeyUsage,
