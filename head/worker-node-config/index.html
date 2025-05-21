@@ -2381,11 +2381,11 @@ controller0<span class="w">   </span>NotReady<span class="w">   </span>control-p
 <p><strong>Note:</strong> Setting the labels is only effective on the first registration of the node. Changing the labels thereafter has no effect.</p>
 <h2 id="taints">Taints<a class="headerlink" href="#taints" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts the <code>--taints</code> flag, with which you can make the newly joined worker node the register itself with the given set of taints.</p>
-<p><strong>Note:</strong> Controller nodes running with <code>--enable-worker</code> are assigned <code>node-role.kubernetes.io/master:NoExecute</code> taint automatically. You can disable default taints using <code>--no-taints</code>  parameter.</p>
+<p><strong>Note:</strong> Controller nodes running with <code>--enable-worker</code> are assigned <code>node-role.kubernetes.io/control-plane:NoExecute</code> taint automatically. You can disable default taints using <code>--no-taints</code> parameter.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-o<span class="w"> </span>custom-columns<span class="o">=</span>NAME:.metadata.name,TAINTS:.spec.taints
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>NAME<span class="w">          </span>TAINTS
-controller0<span class="w">   </span><span class="o">[</span>map<span class="o">[</span>effect:NoSchedule<span class="w"> </span>key:node-role.kubernetes.io/master<span class="o">]]</span>
+controller0<span class="w">   </span><span class="o">[</span>map<span class="o">[</span>effect:NoSchedule<span class="w"> </span>key:node-role.kubernetes.io/control-plane<span class="o">]]</span>
 worker0<span class="w">       </span>&lt;none&gt;
 </code></pre></div>
 <h2 id="kubelet-configuration">Kubelet configuration<a class="headerlink" href="#kubelet-configuration" title="Permanent link">#</a></h2>
