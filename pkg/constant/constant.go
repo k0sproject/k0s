@@ -127,8 +127,7 @@ const (
 	ClusterConfigNamespace  = "kube-system"
 	ClusterConfigObjectName = "k0s"
 
-	NodeRoleLabelNamespace = "node-role.kubernetes.io"
-	K0SNodeRoleLabel       = "node.k0sproject.io/role"
+	K0SNodeRoleLabel = "node.k0sproject.io/role"
 )
 
 // The list of allowed TLS v1.2 cipher suites. Those should be used for k0s
