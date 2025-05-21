@@ -67,7 +67,7 @@ func (s *NodeRoleNoTaintsSuite) TestK0sNoTaints() {
 	}
 
 	if n, err := kc.CoreV1().Nodes().Get(s.Context(), s.WorkerNode(0), metav1.GetOptions{}); s.NoError(err) {
-		s.NotContains(maps.Keys(n.Labels), "node-role.kubernetes.io/master")
+		s.NotContains(slices.Collect(maps.Keys(n.Labels)), "node-role.kubernetes.io/master")
 		s.False(slices.ContainsFunc(n.Spec.Taints, func(taint corev1.Taint) bool {
 			return taint.Key == constants.ControlPlaneTaint.Key
 		}), "Worker node has been tainted when it shouldn't")
