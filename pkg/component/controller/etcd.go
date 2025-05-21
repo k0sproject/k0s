@@ -268,7 +268,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 
-	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca", e.Config.CAExpiry.Duration); err != nil {
+	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca", e.Config.CA.ExpiresAfter.Duration); err != nil {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
@@ -295,7 +295,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")
 		}
 
-		_, err = e.CertManager.EnsureCertificate(etcdCertReq, uid, e.Config.CertExpiry.Duration)
+		_, err = e.CertManager.EnsureCertificate(etcdCertReq, uid, e.Config.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 
@@ -313,7 +313,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			},
 		}
 
-		_, err := e.CertManager.EnsureCertificate(etcdCertReq, e.uid, e.Config.CertExpiry.Duration)
+		_, err := e.CertManager.EnsureCertificate(etcdCertReq, e.uid, e.Config.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 
@@ -328,7 +328,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 				e.Config.PeerAddress,
 			},
 		}
-		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, e.uid, e.Config.CertExpiry.Duration)
+		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, e.uid, e.Config.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 

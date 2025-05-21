@@ -54,7 +54,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 	caCertPath := filepath.Join(c.K0sVars.CertRootDir, "ca.crt")
 	caCertKey := filepath.Join(c.K0sVars.CertRootDir, "ca.key")
 
-	if err := c.CertManager.EnsureCA("ca", "kubernetes-ca", c.ClusterSpec.API.CAExpiry.Duration); err != nil {
+	if err := c.CertManager.EnsureCA("ca", "kubernetes-ca", c.ClusterSpec.API.CA.ExpiresAfter.Duration); err != nil {
 		return err
 	}
 
@@ -76,7 +76,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 	}
 	eg.Go(func() error {
 		// Front proxy CA
-		if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca", c.ClusterSpec.API.CAExpiry.Duration); err != nil {
+		if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca", c.ClusterSpec.API.CA.ExpiresAfter.Duration); err != nil {
 			return err
 		}
 
@@ -89,7 +89,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CACert: proxyCertPath,
 			CAKey:  proxyCertKey,
 		}
-		_, err := c.CertManager.EnsureCertificate(proxyClientReq, apiServerUID, c.ClusterSpec.API.CertExpiry.Duration)
+		_, err := c.CertManager.EnsureCertificate(proxyClientReq, apiServerUID, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
 
 		return err
 	})
@@ -103,7 +103,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CACert: caCertPath,
 			CAKey:  caCertKey,
 		}
-		adminCert, err := c.CertManager.EnsureCertificate(adminReq, users.RootUID, c.ClusterSpec.API.CertExpiry.Duration)
+		adminCert, err := c.CertManager.EnsureCertificate(adminReq, users.RootUID, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			logrus.WithError(err).Warn("Files with key material for konnectivity-server user will be owned by root")
 		}
 
-		konnectivityCert, err := c.CertManager.EnsureCertificate(konnectivityReq, uid, c.ClusterSpec.API.CertExpiry.Duration)
+		konnectivityCert, err := c.CertManager.EnsureCertificate(konnectivityReq, uid, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
 		if err != nil {
 			return err
 		}
@@ -148,7 +148,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CACert: caCertPath,
 			CAKey:  caCertKey,
 		}
-		ccmCert, err := c.CertManager.EnsureCertificate(ccmReq, apiServerUID, c.ClusterSpec.API.CertExpiry.Duration)
+		ccmCert, err := c.CertManager.EnsureCertificate(ccmReq, apiServerUID, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
 		if err != nil {
 			return err
 		}
@@ -172,7 +172,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			logrus.WithError(err).Warn("Files with key material for kube-scheduler user will be owned by root")
 		}
 
-		schedulerCert, err := c.CertManager.EnsureCertificate(schedulerReq, uid, c.ClusterSpec.API.CertExpiry.Duration)
+		schedulerCert, err := c.CertManager.EnsureCertificate(schedulerReq, uid, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
 		if err != nil {
 			return err
 		}
@@ -188,7 +188,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CACert: caCertPath,
 			CAKey:  caCertKey,
 		}
-		_, err := c.CertManager.EnsureCertificate(kubeletClientReq, apiServerUID, c.ClusterSpec.API.CertExpiry.Duration)
+		_, err := c.CertManager.EnsureCertificate(kubeletClientReq, apiServerUID, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 
@@ -238,7 +238,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CAKey:     caCertKey,
 			Hostnames: hostnames,
 		}
-		_, err = c.CertManager.EnsureCertificate(serverReq, apiServerUID, c.ClusterSpec.API.CertExpiry.Duration)
+		_, err = c.CertManager.EnsureCertificate(serverReq, apiServerUID, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 
@@ -252,7 +252,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			Hostnames: hostnames,
 		}
 		// TODO Not sure about the user...
-		_, err := c.CertManager.EnsureCertificate(apiReq, apiServerUID, c.ClusterSpec.API.CertExpiry.Duration)
+		_, err := c.CertManager.EnsureCertificate(apiReq, apiServerUID, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 

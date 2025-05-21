@@ -33,7 +33,10 @@ import (
 )
 
 func kubeconfigCreateCmd() *cobra.Command {
-	var groups string
+	var (
+		groups                  string
+		certificateExpiresAfter time.Duration
+	)
 
 	cmd := &cobra.Command{
 		Use:   "create username",
@@ -45,7 +48,10 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	$ k0s kubeconfig create username
 
 	optionally add groups:
-	$ k0s kubeconfig create username --groups [groups]`,
+	$ k0s kubeconfig create username --groups [groups]
+
+	customize the expiration duration of the certificate:
+	$ k0s kubeconfig create username --certificate-expires-after 8760h`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			username := args[0]
@@ -63,7 +69,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			}
 			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
 
-			kubeconfig, err := createUserKubeconfig(opts.K0sVars, clusterAPIURL, username, groups)
+			kubeconfig, err := createUserKubeconfig(opts.K0sVars, clusterAPIURL, username, groups, certificateExpiresAfter)
 			if err != nil {
 				return err
 			}
@@ -77,11 +83,11 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	flags.AddFlagSet(config.GetPersistentFlagSet())
 	flags.AddFlagSet(config.FileInputFlag())
 	flags.StringVar(&groups, "groups", "", "Specify groups")
-
+	flags.DurationVar(&certificateExpiresAfter, "certificate-expires-after", 8760*time.Hour, "The expiration duration of the certificate")
 	return cmd
 }
 
-func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, groups string) ([]byte, error) {
+func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, groups string, certificateExpiresAfter time.Duration) ([]byte, error) {
 	userReq := certificate.Request{
 		Name:   username,
 		CN:     username,
@@ -92,7 +98,7 @@ func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, grou
 	certManager := certificate.Manager{
 		K0sVars: k0sVars,
 	}
-	userCert, err := certManager.EnsureCertificate(userReq, users.RootUID, 8760*time.Hour)
+	userCert, err := certManager.EnsureCertificate(userReq, users.RootUID, certificateExpiresAfter)
 	if err != nil {
 		return nil, fmt.Errorf("failed generate user certificate: %w, check if the control plane is initialized on this node", err)
 	}
