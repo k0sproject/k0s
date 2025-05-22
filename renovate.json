@@ -1,0 +1,71 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":configMigration",
+    ":gitSignOff"
+  ],
+  "includeForks": true,
+  "enabledManagers": [
+    "gomod",
+    "custom.regex"
+  ],
+  "packageRules": [
+    {
+      "description": "Ignore all Go dependencies by default",
+      "enabled": false,
+      "matchManagers": [
+        "gomod"
+      ]
+    },
+    {
+      "description": "Group all etcd updates (go.mod and Makefile) into a single PR",
+      "matchPackageNames": [
+        "go.etcd.io/etcd/**/v3",
+        "etcd-io/etcd"
+      ],
+      "groupName": "etcd dependencies",
+      "groupSlug": "etcd-all"
+    },
+    {
+      "description": "Ensure etcd in Makefile uses github-releases and is enabled",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "etcd-io/etcd"
+      ],
+      "enabled": true
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update etcd version in embedded-bins/Makefile.variables",
+      "managerFilePatterns": [
+        "embedded-bins/Makefile.variables"
+      ],
+      "matchStrings": [
+        "etcd_version = (?<currentValue>v?[\\d\\.]+)"
+      ],
+      "depNameTemplate": "etcd-io/etcd",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Update kine versions across the codebase",
+      "managerFilePatterns": [
+        "/(^|/)[Mm]akefile(\\.[^/]+)?$/",
+        "*.go"
+      ],
+      "matchStrings": [
+        "kine_version = (?<currentValue>[\\d\\.]+)",
+        "\\bkine/blob/(v?<currentValue>[\\d\\.]+)\\b"
+      ],
+      "depNameTemplate": "k3s-io/kine",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    }
+  ]
+}
