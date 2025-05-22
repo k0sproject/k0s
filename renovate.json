@@ -5,7 +5,10 @@
     ":configMigration",
     ":gitSignOff"
   ],
-  "forkProcessing": "enabled",
+  "gitAuthor": "Renovate Bot <renovate@whitesourcesoftware.com>",
+  "labels": [
+    "dependencies"
+  ],
   "enabledManagers": [
     "gomod",
     "custom.regex"
@@ -34,16 +37,6 @@
       ],
       "groupName": "etcd dependencies",
       "groupSlug": "etcd-all"
-    },
-    {
-      "description": "Ensure etcd in Makefile uses github-releases and is enabled",
-      "matchManagers": [
-        "custom.regex"
-      ],
-      "matchPackageNames": [
-        "etcd-io/etcd"
-      ],
-      "enabled": true
     }
   ],
   "customManagers": [
@@ -54,7 +47,7 @@
         "embedded-bins/Makefile.variables"
       ],
       "matchStrings": [
-        "etcd_version = (?<currentValue>v?[\\d\\.]+)"
+        "etcd_version = (?<currentValue>\\d+(\\.\\d+){2})"
       ],
       "depNameTemplate": "etcd-io/etcd",
       "datasourceTemplate": "github-releases",
@@ -65,11 +58,11 @@
       "description": "Update kine versions across the codebase",
       "managerFilePatterns": [
         "/(^|/)[Mm]akefile(\\.[^/]+)?$/",
-        "**.go"
+        "**/*.go"
       ],
       "matchStrings": [
-        "kine_version = (?<currentValue>[\\d\\.]+)",
-        "\\bkine/blob/v?(?<currentValue>[\\d\\.]+)\\b"
+        "kine_version = (?<currentValue>\\d+(\\.\\d+){2})",
+        "\\bkine/blob/v(?<currentValue>\\d+(\\.\\d+){2})"
       ],
       "depNameTemplate": "k3s-io/kine",
       "datasourceTemplate": "github-releases",
