@@ -20,6 +20,11 @@
     },
     {
       "description": "Group all etcd updates (go.mod and Makefile) into a single PR",
+      "matchManagers": [
+        "gomod",
+        "custom.regex"
+      ],
+      "enabled": true,
       "matchPackageNames": [
         "go.etcd.io/etcd/**/v3",
         "etcd-io/etcd"
