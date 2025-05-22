@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -26,6 +27,7 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
+	corev1 "k8s.io/api/core/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -42,20 +44,21 @@ type K0sControllersLeaseCounter struct {
 	KubeClientFactory     kubeutil.ClientFactoryInterface
 	UpdateControllerCount func(uint)
 
-	cancelFunc context.CancelFunc
+	log  logrus.FieldLogger
+	stop func()
 }
 
 var _ manager.Component = (*K0sControllersLeaseCounter)(nil)
 
 // Init initializes the component needs
 func (l *K0sControllersLeaseCounter) Init(_ context.Context) error {
+	l.log = logrus.WithField("component", "controllerlease")
 	return nil
 }
 
 // Run runs the leader elector to keep the lease object up-to-date.
 func (l *K0sControllersLeaseCounter) Start(context.Context) error {
-	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
-	client, err := l.KubeClientFactory.GetClient()
+	kubeClient, err := l.KubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
 	}
@@ -63,58 +66,57 @@ func (l *K0sControllersLeaseCounter) Start(context.Context) error {
 	// Use the node name to make the lease names be clear to which controller they belong to
 	leaseName := "k0s-ctrl-" + string(l.NodeName)
 
-	leasePool, err := leaderelection.NewLeasePool(client, leaseName, l.InvocationID,
-		leaderelection.WithLogger(log))
+	client, err := leaderelection.NewClient(&leaderelection.LeaseConfig{
+		Namespace: corev1.NamespaceNodeLease,
+		Name:      leaseName,
+		Identity:  l.InvocationID,
+		Client:    kubeClient.CoordinationV1(),
+	})
 	if err != nil {
 		return err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	events, err := leasePool.Watch(ctx)
-	if err != nil {
-		cancel()
-		return err
-	}
-	l.cancelFunc = cancel
+	var wg sync.WaitGroup
 
-	go func() {
-		for {
-			select {
-			case <-events.AcquiredLease:
-				log.Info("acquired leader lease")
-			case <-events.LostLease:
-				log.Error("lost leader lease, this should not really happen!?!?!?")
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	go l.runLeaseCounter(ctx, client)
+	wg.Add(2)
+	go func() { defer wg.Done(); l.runLeaderElection(ctx, client) }()
+	go func() { defer wg.Done(); l.runLeaseCounter(ctx, kubeClient) }()
+	l.stop = func() { cancel(); wg.Wait() }
 
 	return nil
 }
 
 // Stop stops the component
 func (l *K0sControllersLeaseCounter) Stop() error {
-	if l.cancelFunc != nil {
-		l.cancelFunc()
+	if l.stop != nil {
+		l.stop()
 	}
 	return nil
 }
 
+func (l *K0sControllersLeaseCounter) runLeaderElection(ctx context.Context, client *leaderelection.Client) {
+	l.log.Info("Trying to acquire the controller lease")
+	client.Run(ctx, func(status leaderelection.Status) {
+		if status == leaderelection.StatusLeading {
+			l.log.Info("Holding the controller lease")
+		} else {
+			l.log.Error("Lost the controller lease")
+		}
+	})
+}
+
 // Updates the number of active controller leases every 10 secs.
 func (l *K0sControllersLeaseCounter) runLeaseCounter(ctx context.Context, clients kubernetes.Interface) {
-	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
-	log.Debug("Starting controller lease counter every 10 secs")
+	l.log.Debug("Starting controller lease counter every 10 secs")
 
 	wait.UntilWithContext(ctx, func(ctx context.Context) {
-		log.Debug("Counting active controller leases")
+		l.log.Debug("Counting active controller leases")
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 		count, err := kubeutil.CountActiveControllerLeases(ctx, clients)
 		if err != nil {
-			log.WithError(err).Error("Failed to count controller lease holders")
+			l.log.WithError(err).Error("Failed to count controller lease holders")
 			return
 		}
 
