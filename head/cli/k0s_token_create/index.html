@@ -2264,13 +2264,10 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>      --data-dir string        Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default &quot;/var/lib/k0s&quot;)
-  -d, --debug                  Debug logging (default: false)
-      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
       --expiry string          Expiration time of the token. Format 1.5h, 2h45m or 300ms. (default &quot;0s&quot;)
   -h, --help                   help for create
       --role string            Either worker or controller (default &quot;worker&quot;)
       --status-socket string   Full file path to the socket file. (default: &lt;rundir&gt;/status.sock)
-  -v, --verbose                Verbose logging (default: false)
       --wait                   wait forever (default false)
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>

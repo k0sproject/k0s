@@ -2268,10 +2268,9 @@
     Note: Token can be passed either as a CLI argument or as a flag
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --cidr-range string           HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
-      --cri-socket string           container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
+<div class="highlight"><pre><span></span><code>      --cri-socket string           container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --data-dir string             Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default &quot;/var/lib/k0s&quot;)
-  -d, --debug                       Debug logging (default: false)
+  -d, --debug                       Debug logging (implies verbose logging)
       --debugListenOn string        Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
       --enable-cloud-provider       Whether or not to enable cloud provider support in kubelet
   -h, --help                        help for worker
@@ -2285,7 +2284,7 @@
       --status-socket string        Full file path to the socket file. (default: &lt;rundir&gt;/status.sock)
       --taints strings              Node taints, list of key=value:effect strings
       --token-file string           Path to the file containing join-token.
-  -v, --verbose                     Verbose logging (default: false)
+  -v, --verbose                     Verbose logging (default true)
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>

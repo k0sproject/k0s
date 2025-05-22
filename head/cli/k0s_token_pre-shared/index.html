@@ -2262,17 +2262,12 @@
 <div class="highlight"><pre><span></span><code>k0s token pre-shared --role worker --cert &lt;path&gt;/&lt;to&gt;/ca.crt --url https://&lt;controller-ip&gt;:&lt;port&gt;/
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --cert string            path to the CA certificate file
-      --data-dir string        Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default &quot;/var/lib/k0s&quot;)
-  -d, --debug                  Debug logging (default: false)
-      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
-  -h, --help                   help for pre-shared
-      --out string             path to the output directory. Default: current dir (default &quot;.&quot;)
-      --role string            token role. valid values: worker, controller. Default: worker (default &quot;worker&quot;)
-      --status-socket string   Full file path to the socket file. (default: &lt;rundir&gt;/status.sock)
-      --url string             url of the api server to join
-      --valid duration         how long token is valid, in Go duration format
-  -v, --verbose                Verbose logging (default: false)
+<div class="highlight"><pre><span></span><code>      --cert string      path to the CA certificate file
+  -h, --help             help for pre-shared
+      --out string       path to the output directory. Default: current dir (default &quot;.&quot;)
+      --role string      token role. valid values: worker, controller. Default: worker (default &quot;worker&quot;)
+      --url string       url of the api server to join
+      --valid duration   how long token is valid, in Go duration format
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>

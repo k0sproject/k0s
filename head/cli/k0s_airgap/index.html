@@ -2205,6 +2205,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Synopsis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#options" class="md-nav__link">
     <span class="md-ellipsis">
       Options
@@ -2246,7 +2255,13 @@
   <h1>K0s airgap</h1>
 
 <h2 id="k0s-airgap">k0s airgap<a class="headerlink" href="#k0s-airgap" title="Permanent link">#</a></h2>
-<p>Manage airgap setup</p>
+<p>Tooling for airgapped installations</p>
+<h3 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h3>
+<p>Tooling for airgapped installations.</p>
+<p>For example, to create an image bundle that contains the images required for
+the current configuration, use the following command:</p>
+<div class="highlight"><pre><span></span><code>k0s airgap list-images | k0s airgap bundle-artifacts -v -o image-bundle.tar
+</code></pre></div>
 <div class="highlight"><pre><span></span><code>k0s airgap [flags]
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
@@ -2255,7 +2270,8 @@
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
 <li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
-<li><a href="../k0s_airgap_list-images/">k0s airgap list-images</a>    - List image names and version needed for air-gap install</li>
+<li><a href="../k0s_airgap_bundle-artifacts/">k0s airgap bundle-artifacts</a>  - Bundles artifacts needed for airgapped installations into a tarball</li>
+<li><a href="../k0s_airgap_list-images/">k0s airgap list-images</a>    - List image names and versions needed for airgapped installations</li>
 </ul>
 
 

@@ -2255,7 +2255,7 @@
   <h1>K0s airgap list images</h1>
 
 <h2 id="k0s-airgap-list-images">k0s airgap list-images<a class="headerlink" href="#k0s-airgap-list-images" title="Permanent link">#</a></h2>
-<p>List image names and version needed for air-gap install</p>
+<p>List image names and versions needed for airgapped installations</p>
 <div class="highlight"><pre><span></span><code>k0s airgap list-images [flags]
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
@@ -2265,15 +2265,15 @@
 <div class="highlight"><pre><span></span><code>      --all                    include all images, even if they are not used in the current configuration
   -c, --config string          config file, use &#39;-&#39; to read the config from stdin (default &quot;/etc/k0s/k0s.yaml&quot;)
       --data-dir string        Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default &quot;/var/lib/k0s&quot;)
-  -d, --debug                  Debug logging (default: false)
+  -d, --debug                  Debug logging (implies verbose logging)
       --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
   -h, --help                   help for list-images
       --status-socket string   Full file path to the socket file. (default: &lt;rundir&gt;/status.sock)
-  -v, --verbose                Verbose logging (default: false)
+  -v, --verbose                Verbose logging
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s_airgap/">k0s airgap</a>    - Manage airgap setup</li>
+<li><a href="../k0s_airgap/">k0s airgap</a>    - Tooling for airgapped installations</li>
 </ul>
 
 

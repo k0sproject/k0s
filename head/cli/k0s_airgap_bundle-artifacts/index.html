@@ -12,7 +12,7 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/cli/k0s_reset/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/cli/k0s_airgap_bundle-artifacts/">
       
       
       
@@ -22,7 +22,7 @@
     
     
       
-        <title>K0s reset - Documentation</title>
+        <title>K0s airgap bundle artifacts - Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-reset" class="md-skip">
+        <a href="#k0s-airgap-bundle-artifacts" class="md-skip">
           Skip to content
         </a>
       
@@ -134,7 +134,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s reset
+              K0s airgap bundle artifacts
             
           </span>
         </div>
@@ -2195,14 +2195,23 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-reset" class="md-nav__link">
+  <a href="#k0s-airgap-bundle-artifacts" class="md-nav__link">
     <span class="md-ellipsis">
-      k0s reset
+      k0s airgap bundle-artifacts
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="k0s reset">
+    <nav class="md-nav" aria-label="k0s airgap bundle-artifacts">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Synopsis
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#options" class="md-nav__link">
@@ -2243,26 +2252,30 @@
 
 
 
-  <h1>K0s reset</h1>
+  <h1>K0s airgap bundle artifacts</h1>
 
-<h2 id="k0s-reset">k0s reset<a class="headerlink" href="#k0s-reset" title="Permanent link">#</a></h2>
-<p>Uninstall k0s. Must be run as root (or with sudo)</p>
-<div class="highlight"><pre><span></span><code>k0s reset [flags]
+<h2 id="k0s-airgap-bundle-artifacts">k0s airgap bundle-artifacts<a class="headerlink" href="#k0s-airgap-bundle-artifacts" title="Permanent link">#</a></h2>
+<p>Bundles artifacts needed for airgapped installations into a tarball</p>
+<h3 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h3>
+<p>Bundles artifacts needed for airgapped installations into a tarball. Fetches the
+artifacts from their OCI registries and bundles them into an OCI Image Layout
+archive (written to standard output by default). Reads names from standard input
+if no names are given on the command line.</p>
+<div class="highlight"><pre><span></span><code>k0s airgap bundle-artifacts [flags] [names...]
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -c, --config string             config file, use &#39;-&#39; to read the config from stdin (default &quot;/etc/k0s/k0s.yaml&quot;)
-      --cri-socket string         container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-      --data-dir string           Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default &quot;/var/lib/k0s&quot;)
-  -d, --debug                     Debug logging (implies verbose logging)
-      --debugListenOn string      Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
-  -h, --help                      help for reset
-      --kubelet-root-dir string   Kubelet root directory for k0s
-      --status-socket string      Full file path to the socket file. (default: &lt;rundir&gt;/status.sock)
-  -v, --verbose                   Verbose logging
+<div class="highlight"><pre><span></span><code>  -d, --debug                           Debug logging (implies verbose logging)
+      --debugListenOn string            Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
+  -h, --help                            help for bundle-artifacts
+      --insecure-registries string      one of no, skip-tls-verify or plain-http (default &quot;no&quot;)
+  -o, --output string                   output file path (writes to standard output if omitted)
+      --platform string                 the platform to export (default &quot;linux/amd64&quot;)
+      --registries-config stringArray   paths to the authentication files for OCI registries (uses the standard Docker config if omitted)
+  -v, --verbose                         Verbose logging
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
+<li><a href="../k0s_airgap/">k0s airgap</a>    - Tooling for airgapped installations</li>
 </ul>
 
 
