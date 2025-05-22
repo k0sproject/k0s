@@ -10,6 +10,9 @@
     "gomod",
     "custom.regex"
   ],
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
   "packageRules": [
     {
       "description": "Ignore all Go dependencies by default",
