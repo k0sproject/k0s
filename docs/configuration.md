@@ -146,8 +146,9 @@ spec:
 | `etcd.rawArgs`                    | Slice of strings for any raw arguments to pass down to the etcd process. These are appeneded after `extraArg`. If possible, it's recommended to use `extraArgs` over `rawArgs`. Any behavior triggered by these parameters is outside k0s support. |
 | `etcd.ca.expiresAfter`            | The expiration duration of the CA certificate (default: 87600h)                                                                                                                                                                                    |
 | `etcd.ca.certificatesExpireAfter` | The expiration duration of the server certificate (default: 8760h)                                                                                                                                                                                 |
-| `kine.dataSource`                 | [kine](https://github.com/k3s-io/kine) data source URL.                                                                                                                                                                                            |
 | `etcd.externalCluster`            | Configuration when etcd is externally managed, i.e. running on dedicated nodes. See [`spec.storage.etcd.externalCluster`](#specstorageetcdexternalcluster)                                                                                         |
+| `kine.dataSource`                 | [kine](https://github.com/k3s-io/kine) data source URL.                                                                                                                                                                                            |
+| `kine.extraArgs`                  | Map of key-values (strings) for any extra arguments to pass down to kine process. Any behavior triggered by these parameters is outside k0s support.                   |
 
 #### `spec.storage.etcd.externalCluster`
 

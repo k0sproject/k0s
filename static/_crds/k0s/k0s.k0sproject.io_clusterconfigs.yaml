@@ -1125,6 +1125,12 @@ spec:
                       dataSource:
                         description: kine datasource URL
                         type: string
+                      extraArgs:
+                        additionalProperties:
+                          type: string
+                        description: Map of key-values (strings) for any extra arguments
+                          you want to pass down to Kine
+                        type: object
                     type: object
                   type:
                     default: etcd

@@ -49,6 +49,8 @@ const (
 type KineConfig struct {
 	// kine datasource URL
 	DataSource string `json:"dataSource,omitempty"`
+	// Map of key-values (strings) for any extra arguments you want to pass down to Kine
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
@@ -199,6 +201,7 @@ func DefaultKineConfig(dataDir string) *KineConfig {
 			Path:     filepath.ToSlash(filepath.Join(dataDir, "db", "state.db")),
 			RawQuery: "mode=rwc&_journal=WAL",
 		}),
+		ExtraArgs: make(map[string]string),
 	}
 }
 
