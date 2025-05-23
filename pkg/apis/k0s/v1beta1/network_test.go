@@ -381,6 +381,30 @@ func (s *NetworkSuite) TestValidation() {
 			s.ErrorContains(errors[0], "Unsupported value")
 		}
 	})
+
+	s.Run("invalid_pod_cidr_service_cidr_protocol_mismatch", func() {
+		n := DefaultNetwork()
+		n.ServiceCIDR = "fd01::/108"
+		errors := n.Validate()
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], "podCIDR and serviceCIDR must be both IPv4 or IPv6")
+		}
+	})
+
+	s.Run("invalid_dual_stack_ipv6_dualstack_CIDRs", func() {
+		n := DefaultNetwork()
+		n.DualStack = DefaultDualStack()
+		n.DualStack.Enabled = true
+		n.DualStack.IPv6PodCIDR = "fd00::/108"
+		n.DualStack.IPv6ServiceCIDR = "fd01::/108"
+		n.PodCIDR = "fd00::/108"
+		n.ServiceCIDR = "fd01::/108"
+		errors := n.Validate()
+		if s.Len(errors, 2) {
+			s.ErrorContains(errors[0], "if DualStack is enabled, podCIDR must be IPv4")
+			s.ErrorContains(errors[1], "if DualStack is enabled, serviceCIDR must be IPv4")
+		}
+	})
 }
 
 func TestNetworkSuite(t *testing.T) {
