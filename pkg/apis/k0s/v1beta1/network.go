@@ -18,7 +18,6 @@ package v1beta1
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"slices"
@@ -176,28 +175,20 @@ func (n *Network) DNSAddress() (string, error) {
 		return "", fmt.Errorf("failed to parse service CIDR %q: %w", n.ServiceCIDR, err)
 	}
 
-	address := slices.Clone(ipnet.IP.To4())
-	if address == nil {
-		// The network address is not an IPv4 address. This can only happen if
-		// k0s is running in IPv6-only mode, which is currently not a supported
-		// configuration. In dual-stack mode, the IPv6 CIDR is stored in
-		// n.DualStack.IPv6ServiceCIDR. Error out until it is clear how to
-		// properly calculate the DNS address for a v6 network.
-		return "", fmt.Errorf("%w: DNS address calculation for non-v4 CIDR: %s", errors.ErrUnsupported, n.ServiceCIDR)
-	}
+	addr := slices.Clone(ipnet.IP)
 
-	prefixlen, _ := ipnet.Mask.Size()
-	if prefixlen < 29 {
-		address[3] += 10
+	maskLen, netLen := ipnet.Mask.Size()
+	if netLen-maskLen > 3 {
+		addr[len(addr)-1] += 10
 	} else {
-		address[3] += 2
+		addr[len(addr)-1] += 2
 	}
 
-	if !ipnet.Contains(address) {
+	if !ipnet.Contains(addr) {
 		return "", fmt.Errorf("failed to calculate DNS address: CIDR too narrow: %s", n.ServiceCIDR)
 	}
 
-	return address.String(), nil
+	return addr.String(), nil
 }
 
 // InternalAPIAddresses calculates the internal API address of configured service CIDR block.
