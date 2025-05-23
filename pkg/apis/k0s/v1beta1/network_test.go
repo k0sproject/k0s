@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"errors"
 	"testing"
 
 	"k8s.io/utils/ptr"
@@ -49,12 +48,23 @@ func (s *NetworkSuite) TestAddresses() {
 		s.Empty(dns)
 		s.ErrorContains(err, "failed to calculate DNS address: CIDR too narrow: 192.168.178.0/31")
 	})
-	s.Run("DNS_rejects_v6_service_cidr", func() {
+	s.Run("DNS_uses_v6_service_cidr", func() {
 		n := Network{ServiceCIDR: "fd00:abcd:1234::/64"}
 		dns, err := n.DNSAddress()
+		s.NoError(err)
+		s.Equal("fd00:abcd:1234::a", dns)
+	})
+	s.Run("DNS_uses_v6_small_service_cidr", func() {
+		n := Network{ServiceCIDR: "fd00::/126"}
+		dns, err := n.DNSAddress()
+		s.NoError(err)
+		s.Equal("fd00::2", dns)
+	})
+	s.Run("DNS_service_v6_cidr_too_narrow", func() {
+		n := Network{ServiceCIDR: "fd00::/127"}
+		dns, err := n.DNSAddress()
 		s.Empty(dns)
-		s.ErrorIs(err, errors.ErrUnsupported)
-		s.ErrorContains(err, "unsupported operation: DNS address calculation for non-v4 CIDR: fd00:abcd:1234::/64")
+		s.ErrorContains(err, "failed to calculate DNS address: CIDR too narrow: fd00::/127")
 	})
 	s.Run("Internal_api_address_default", func() {
 		n := DefaultNetwork()
