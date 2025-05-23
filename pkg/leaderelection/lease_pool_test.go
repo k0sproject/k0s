@@ -19,6 +19,7 @@ package leaderelection
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -47,7 +48,7 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 		LostLease:     make(chan struct{}, 1),
 	}
 
-	events, err := pool.Watch(t.Context(), withOutputChannels(output))
+	events, _, err := pool.Watch(t.Context(), withOutputChannels(output))
 	require.NoError(t, err)
 
 	done := make(chan struct{})
@@ -86,7 +87,7 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(t.Context())
-	events, err := pool.Watch(ctx, withOutputChannels(output))
+	events, _, err := pool.Watch(ctx, withOutputChannels(output))
 	require.NoError(t, err)
 
 	<-events.AcquiredLease
@@ -129,7 +130,7 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 	givenLeaderElectorError(nil)
 	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
-	events, err := pool.Watch(ctx, withOutputChannels(output))
+	events, _, err := pool.Watch(ctx, withOutputChannels(output))
 	require.NoError(t, err)
 
 	<-events.AcquiredLease
@@ -163,7 +164,10 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	expectedEventOrder := []string{"pool1-acquired", "pool1-lost", "pool2-acquired"}
+	expectedEventOrders := [][]string{
+		{"pool1-acquired", "pool1-lost", "pool1-done", "pool2-acquired"},
+		{"pool1-acquired", "pool1-lost", "pool2-acquired", "pool1-done"},
+	}
 
 	// Pre-create the acquired lease for the first identity, so that there are
 	// no races when acquiring the lease by the two competing pools.
@@ -188,19 +192,13 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 
 	ctx1, cancel1 := context.WithCancel(t.Context())
 	t.Cleanup(cancel1)
-	events1, err := pool1.Watch(ctx1, withOutputChannels(&LeaseEvents{
-		AcquiredLease: make(chan struct{}, 1),
-		LostLease:     make(chan struct{}, 1),
-	}))
+	events1, watch1Done, err := pool1.Watch(ctx1)
 	require.NoError(t, err)
 	t.Log("Started first lease pool")
 
 	ctx2, cancel2 := context.WithCancel(t.Context())
 	t.Cleanup(cancel2)
-	events2, err := pool2.Watch(ctx2, withOutputChannels(&LeaseEvents{
-		AcquiredLease: make(chan struct{}, 1),
-		LostLease:     make(chan struct{}, 1),
-	}))
+	events2, watch2Done, err := pool2.Watch(ctx2)
 	require.NoError(t, err)
 	defer cancel2()
 	t.Log("Started second lease pool, receiving events ...")
@@ -216,22 +214,36 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 		case <-events1.LostLease:
 			t.Log("First lease lost")
 			receivedEvents = append(receivedEvents, "pool1-lost")
+		case _, ok := <-watch1Done:
+			require.False(t, ok, "Something has been sent to the first pool's done channel")
+			t.Log("First pool done")
+			receivedEvents = append(receivedEvents, "pool1-done")
+			watch1Done = nil
 		case <-events2.AcquiredLease:
 			t.Log("Second lease acquired")
 			receivedEvents = append(receivedEvents, "pool2-acquired")
 		case <-events2.LostLease:
 			t.Log("Second lease lost")
 			receivedEvents = append(receivedEvents, "pool2-lost")
+		case _, ok := <-watch2Done:
+			require.False(t, ok, "Something has been sent to the second pool's done channel")
+			t.Log("Second pool done")
+			receivedEvents = append(receivedEvents, "pool2-done")
+			watch2Done = nil
 		case <-time.After(10 * time.Second):
 			require.Fail(t, "Didn't receive any events for 10 seconds.")
 		}
 
-		if len(receivedEvents) >= 3 {
+		if len(receivedEvents) >= 4 {
 			break
 		}
 	}
 
-	assert.Equal(t, expectedEventOrder, receivedEvents)
+	if !slices.ContainsFunc(expectedEventOrders, func(expectedEventOrder []string) bool {
+		return slices.Equal(expectedEventOrder, receivedEvents)
+	}) {
+		assert.Failf(t, "Observed an unexpected order of events", "%v", receivedEvents)
+	}
 }
 
 // withOutputChannels allows us to pass through channels with
