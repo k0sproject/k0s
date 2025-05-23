@@ -34,7 +34,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
@@ -81,32 +80,44 @@ func (r *ClusterConfigReconciler) Init(context.Context) error { return nil }
 func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 	if r.configSource.NeedToStoreInitialConfig() {
 		// We need to wait until the cluster configuration exists or we succeed in creating it.
-		err := wait.PollImmediateWithContext(ctx, 1*time.Second, 20*time.Second, func(ctx context.Context) (bool, error) {
+		start := time.Now()
+		for {
 			var err error
 			if r.leaderElector.IsLeader() {
 				err = r.createClusterConfig(ctx)
 				if err == nil {
 					r.log.Debug("Cluster configuration created")
-					return true, nil
+					break
 				}
 				if errors.IsAlreadyExists(err) {
 					// An already existing configuration is just fine.
 					r.log.Debug("Cluster configuration already exists")
-					return true, nil
+					break
 				}
 			} else {
 				err = r.clusterConfigExists(ctx)
 				if err == nil {
 					r.log.Debug("Cluster configuration exists")
-					return true, nil
+					break
 				}
 			}
 
-			r.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
-			return false, nil
-		})
-		if err != nil {
-			return fmt.Errorf("failed to ensure the existence of the cluster configuration: %w", err)
+			var log func(...any)
+			if now := time.Now(); now.Sub(start) >= (1 * time.Minute) {
+				start = now
+				log = r.log.WithError(err).Info
+			} else {
+				log = r.log.WithError(err).Debug
+			}
+
+			log("Still trying to ensure the existence of the cluster configuration")
+
+			select {
+			case <-time.After(1 * time.Second):
+				continue
+			case <-ctx.Done():
+				return fmt.Errorf("%w (last error: %w)", context.Cause(ctx), err)
+			}
 		}
 	}
 
