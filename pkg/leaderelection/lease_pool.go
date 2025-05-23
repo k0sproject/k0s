@@ -138,9 +138,9 @@ func WithOutputChannels(channels *LeaseEvents) WatchOpt {
 }
 
 // Watch is the primary function of LeasePool, and starts the leader election process
-func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, error) {
+func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, <-chan struct{}, error) {
 	if p.events != nil {
-		return p.events, nil
+		return p.events, nil, nil
 	}
 
 	watchOptions := watchOptions{
@@ -185,17 +185,21 @@ func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, 
 	}
 	le, err := leaderelection.NewLeaderElector(lec)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if lec.WatchDog != nil {
 		lec.WatchDog.SetLeaderElection(le)
 	}
 
+	done := make(chan struct{})
 	go func() {
-		for ctx.Err() == nil {
-			le.Run(ctx)
-		}
+		defer close(done)
+		func() {
+			for ctx.Err() == nil {
+				le.Run(ctx)
+			}
+		}()
 	}()
 
-	return p.events, nil
+	return p.events, done, nil
 }
