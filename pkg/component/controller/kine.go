@@ -126,7 +126,11 @@ func (k *Kine) Start(ctx context.Context) error {
 	for name, value := range k.Config.ExtraArgs {
 		argName := "--" + name
 		if _, ok := args[argName]; ok {
-			logrus.Warnf("overriding kine flag with user provided value: %s", argName)
+			switch argName {
+			case "endpoint", "listen-address", "metrics-bind-address":
+				logrus.Warnf("ignoring provided value for: %s", argName)
+				continue
+			}
 		}
 		args[argName] = value
 	}
