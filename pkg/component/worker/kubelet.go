@@ -101,8 +101,24 @@ func (k *Kubelet) Init(_ context.Context) error {
 	return nil
 }
 
-func detectDualStackNodeIPs(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.IP, ipv6 net.IP, _ error) {
-	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(nodeName))
+func detectDualStackNodeIPs(ctx context.Context, nodeName apitypes.NodeName) (ipv4, ipv6 net.IP, _ error) {
+	ipv4, ipv6, err := lookupNodeName(ctx, nodeName)
+	if err != nil {
+		return nil, nil, err
+	}
+	if ipv4 == nil || ipv6 == nil {
+		return nil, nil, fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %v, IPv6: %v", ipv4, ipv6)
+	}
+
+	return ipv4, ipv6, nil
+}
+
+func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4, ipv6 net.IP, _ error) {
+	resolver := &net.Resolver{
+		PreferGo: true,
+	}
+
+	ipaddrs, err := resolver.LookupIPAddr(ctx, string(nodeName))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -113,12 +129,12 @@ func detectDualStackNodeIPs(ctx context.Context, nodeName apitypes.NodeName) (ip
 		} else if ipv6 == nil && addr.IP.To16() != nil && addr.IP.To4() == nil {
 			ipv6 = addr.IP
 		}
+
 		if ipv4 != nil && ipv6 != nil {
-			return ipv4, ipv6, nil
+			break
 		}
 	}
-
-	return nil, nil, fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %v, IPv6: %v", ipv4, ipv6)
+	return ipv4, ipv6, nil
 }
 
 // Run runs kubelet
@@ -150,7 +166,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// https://github.com/kubernetes/kubernetes/blob/v1.32.4/pkg/kubelet/nodestatus/setters.go#L202-L230
 		ipv4, ipv6, err := detectDualStackNodeIPs(ctx, k.NodeName)
 		if err != nil {
-			return fmt.Errorf("failed to detect dual-stack node IPs for %q", k.NodeName)
+			return fmt.Errorf("failed to detect dual-stack node IPs for %q: %w", k.NodeName, err)
 		}
 
 		// The kubelet will perform some extra validations on the discovered IP

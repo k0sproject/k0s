@@ -27,6 +27,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestYolo(t *testing.T) {
+	v4, v6, err := lookupNodeName(t.Context(), "tix")
+	t.Errorf("%v, %v, %v", v4, v6, err)
+}
+
 func TestParseTaints(t *testing.T) {
 	cases := []struct {
 		name          string
