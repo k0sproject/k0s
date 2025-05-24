@@ -32,7 +32,7 @@ kubernetes_build_go_flags = "-v"
 #kubernetes_build_go_ldflags =
 kubernetes_build_go_ldflags_extra = "-extldflags=-static"
 
-kine_version = 0.13.12
+kine_version = 0.13.15
 kine_buildimage = $(golang_buildimage)
 kine_build_go_tags = nats
 #kine_build_go_cgo_enabled =
