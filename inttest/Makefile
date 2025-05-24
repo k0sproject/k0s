@@ -20,16 +20,25 @@ bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
 bootloose_alpine_build_cmdline := \
-	--build-arg GOLANG_IMAGE=$(golang_buildimage) \
-	--build-arg ALPINE_VERSION=$(alpine_patch_version) \
 	--build-arg ETCD_VERSION=$(etcd_version) \
 	--build-arg HELM_VERSION=$(helm_version) \
-	-t bootloose-alpine \
+	  --build-arg TARGETARCH=$(ARCH) \
 	-f bootloose-alpine/Dockerfile \
 	bootloose-alpine
 
 .bootloose-alpine.stamp: $(shell find bootloose-alpine -type f)
-	docker build --progress=plain --build-arg TARGETARCH=$(ARCH) $(bootloose_alpine_build_cmdline)
+	docker build --progress=plain \
+	  --build-arg BOOTLOOSE_BASE=docker.io/library/alpine:$(alpine_patch_version) \
+	  -t bootloose-alpine \
+	  $(bootloose_alpine_build_cmdline)
+	touch $@
+
+.bootloose-debug.stamp: $(shell find bootloose-alpine -type f)
+	docker build --progress=plain \
+	  -t bootloose-debug \
+	  --build-arg INCLUDE_DEBUG_TOOLS=true \
+	  --build-arg BOOTLOOSE_BASE=$(golang_buildimage) \
+	  $(bootloose_alpine_build_cmdline)
 	touch $@
 
 # This is a special target to test the bootloose alpine image locally for all supported platforms.
@@ -133,15 +142,25 @@ check-nllb: TIMEOUT=15m
 .PHONY: $(smoketests)
 include Makefile.variables
 
+# Determine the bootloose stamp dependency based on K0S_DEBUG
+# Default to .bootloose-alpine.stamp (the "otherwise" case from the request)
+BOOTLOOSE_STAMP_DEP := .bootloose-alpine.stamp
+ifeq ($(K0S_DEBUG_TESTS),true)
+  BOOTLOOSE_STAMP_DEP := .bootloose-debug.stamp
+  BOOTLOOSE_IMAGE ?= bootloose-debug
+else
+endif
+
 $(smoketests): K0S_PATH ?= $(realpath ../k0s)
 $(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
-$(smoketests): .bootloose-alpine.stamp
+$(smoketests): $(BOOTLOOSE_STAMP_DEP)
 $(smoketests): TEST_PACKAGE ?= $(subst check-,,$@)
 $(smoketests):
 	K0S_PATH='$(K0S_PATH)' \
 	K0S_UPDATE_FROM_PATH='$(K0S_UPDATE_FROM_PATH)' \
 	K0S_IMAGES_BUNDLE='$(K0S_IMAGES_BUNDLE)' \
 	K0S_UPDATE_TO_VERSION='$(K0S_UPDATE_TO_VERSION)' \
+	$(if $(BOOTLOOSE_IMAGE),BOOTLOOSE_IMAGE='$(BOOTLOOSE_IMAGE)') \
 	go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(TEST_PACKAGE)
 .PHONY: clean
 
