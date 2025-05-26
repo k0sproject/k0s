@@ -272,3 +272,14 @@ func (n *Network) BuildPodCIDR() string {
 	}
 	return n.PodCIDR
 }
+
+// IsSingleStackIPv6 returns true if the ServiceCIDR is IPv6.
+// This function relies on being called after Validate() and it
+// assumes that n.PodCIDR has a legal value.
+func (n *Network) IsSingleStackIPv6() bool {
+	if n.DualStack.Enabled {
+		return false
+	}
+	ip, _, _ := net.ParseCIDR(n.PodCIDR)
+	return ip.To4() == nil
+}
