@@ -8,6 +8,13 @@ on:
 jobs:
   renovate:
     runs-on: ubuntu-latest
+
+    # These permissions only affect the stock GitHub Actions token.
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -15,8 +22,13 @@ jobs:
       - name: Self-hosted Renovate
         uses: renovatebot/github-action@v42.0.3
         with:
-          configurationFile: "renovate.json"
-          token: '${{ github.token }}'
+          configurationFile: renovate.json
+          # Use the same token as the backport workflow. If this token is
+          # unavailable, i.e. if the workflow is triggered on a fork, use the
+          # stock GitHub Actions token instead ("Allow GitHub Actions to create
+          # and approve pull requests" must be selected in the fork's GitHub
+          # Actions settings).
+          token: "${{ secrets.GH_BACKPORT_TOKEN || github.token }}"
         env:
           LOG_LEVEL: debug
-          RENOVATE_AUTODISCOVER: true # Necessary for it to work on forks
+          RENOVATE_REPOSITORIES: "${{ github.repository }}"
