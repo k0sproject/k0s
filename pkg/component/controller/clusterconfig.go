@@ -17,7 +17,6 @@ limitations under the License.
 package controller
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -39,7 +38,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
@@ -191,8 +189,9 @@ func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Cont
 	client := clientset.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace)
 
 	// We need to wait until the cluster configuration exists or we succeed in creating it.
+	start := time.Now()
 	var stackApplied bool
-	pollErr := wait.PollUntilContextTimeout(ctx, 1*time.Second, 20*time.Second, true, func(ctx context.Context) (bool, error) {
+	for {
 		if i.leaderElector.IsLeader() {
 			if stackApplied {
 				err = nil
@@ -204,36 +203,39 @@ func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Cont
 				err = i.createClusterConfig(ctx, client)
 				if err == nil {
 					i.log.Debug("Cluster configuration created")
-					return true, nil
+					return nil
 				}
 				if apierrors.IsAlreadyExists(err) {
 					// An already existing configuration is just fine.
 					i.log.Debug("Cluster configuration already exists")
-					return true, nil
+					return nil
 				}
 			}
 		} else {
 			err = i.clusterConfigExists(ctx, client)
 			if err == nil {
 				i.log.Debug("Cluster configuration exists")
-				return true, nil
+				return nil
 			}
 		}
 
-		i.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
-		return false, nil
-	})
-
-	if pollErr != nil {
-		pollErr = cmp.Or(context.Cause(ctx), pollErr)
-		if err != nil {
-			return fmt.Errorf("%w (%w)", pollErr, err)
+		var log func(...any)
+		if now := time.Now(); now.Sub(start) >= (1 * time.Minute) {
+			start = now
+			log = i.log.WithError(err).Info
+		} else {
+			log = i.log.WithError(err).Debug
 		}
 
-		return pollErr
-	}
+		log("Still trying to ensure the existence of the cluster configuration")
 
-	return nil
+		select {
+		case <-time.After(1 * time.Second):
+			continue
+		case <-ctx.Done():
+			return fmt.Errorf("%w (last error: %w)", context.Cause(ctx), err)
+		}
+	}
 }
 
 func (i *ClusterConfigInitializer) applyAPIConfigStack(ctx context.Context) error {
