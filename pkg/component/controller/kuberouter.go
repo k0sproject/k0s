@@ -112,18 +112,25 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 
 	cniHairpin, globalHairpin := getHairpinConfig(clusterConfig.Spec.Network.KubeRouter)
 
+	isSingleStackIPv6 := clusterConfig.Spec.Network.IsSingleStackIPv6()
 	args := stringmap.StringMap{
 		// k0s set default args
 		"run-router":           "true",
 		"run-firewall":         "true",
 		"run-service-proxy":    "false",
 		"bgp-graceful-restart": "true",
-		"enable-ipv4":          "true",
 		// Args from config values
-		"enable-ipv6":  strconv.FormatBool(clusterConfig.Spec.Network.DualStack.Enabled),
-		"auto-mtu":     strconv.FormatBool(clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
-		"metrics-port": strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
-		"hairpin-mode": strconv.FormatBool(globalHairpin),
+		"enable-ipv4":              strconv.FormatBool(!isSingleStackIPv6),
+		"enable-ipv6":              strconv.FormatBool(clusterConfig.Spec.Network.DualStack.Enabled || isSingleStackIPv6),
+		"auto-mtu":                 strconv.FormatBool(clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
+		"metrics-port":             strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
+		"hairpin-mode":             strconv.FormatBool(globalHairpin),
+		"service-cluster-ip-range": clusterConfig.Spec.Network.ServiceCIDR,
+	}
+
+	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic
+	if isSingleStackIPv6 {
+		args["router-id"] = "generate"
 	}
 
 	// We should not add peering flags if the values are empty
