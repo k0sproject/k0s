@@ -75,38 +75,38 @@ type ClusterConfig struct {
 
 // StripDefaults returns a copy of the config where the default values a nilled out
 func (c *ClusterConfig) StripDefaults() *ClusterConfig {
-	copy := c.DeepCopy()
-	if reflect.DeepEqual(copy.Spec.API, DefaultAPISpec()) {
-		copy.Spec.API = nil
+	c = c.DeepCopy() // Clone and overwrite receiver to avoid side effects
+	if reflect.DeepEqual(c.Spec.API, DefaultAPISpec()) {
+		c.Spec.API = nil
 	}
-	if reflect.DeepEqual(copy.Spec.ControllerManager, DefaultControllerManagerSpec()) {
-		copy.Spec.ControllerManager = nil
+	if reflect.DeepEqual(c.Spec.ControllerManager, DefaultControllerManagerSpec()) {
+		c.Spec.ControllerManager = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Scheduler, DefaultSchedulerSpec()) {
-		copy.Spec.Scheduler = nil
+	if reflect.DeepEqual(c.Spec.Scheduler, DefaultSchedulerSpec()) {
+		c.Spec.Scheduler = nil
 	}
 	if reflect.DeepEqual(c.Spec.Storage, DefaultStorageSpec()) {
-		copy.Spec.Storage = nil
+		c.Spec.Storage = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
-		copy.Spec.Network = nil
-	} else if copy.Spec.Network.NodeLocalLoadBalancing != nil &&
-		copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
-		reflect.DeepEqual(copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
-		copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
+	if reflect.DeepEqual(c.Spec.Network, DefaultNetwork()) {
+		c.Spec.Network = nil
+	} else if c.Spec.Network.NodeLocalLoadBalancing != nil &&
+		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
+		reflect.DeepEqual(c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
+		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Telemetry, DefaultClusterTelemetry()) {
-		copy.Spec.Telemetry = nil
+	if reflect.DeepEqual(c.Spec.Telemetry, DefaultClusterTelemetry()) {
+		c.Spec.Telemetry = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Images, DefaultClusterImages()) {
-		copy.Spec.Images = nil
+	if reflect.DeepEqual(c.Spec.Images, DefaultClusterImages()) {
+		c.Spec.Images = nil
 	} else {
-		stripDefaultImages(copy.Spec.Images, DefaultClusterImages())
+		stripDefaultImages(c.Spec.Images, DefaultClusterImages())
 	}
-	if reflect.DeepEqual(copy.Spec.Konnectivity, DefaultKonnectivitySpec()) {
-		copy.Spec.Konnectivity = nil
+	if reflect.DeepEqual(c.Spec.Konnectivity, DefaultKonnectivitySpec()) {
+		c.Spec.Konnectivity = nil
 	}
-	return copy
+	return c
 }
 
 func stripDefaultImages(cfgImages, defaultImages *ClusterImages) {
