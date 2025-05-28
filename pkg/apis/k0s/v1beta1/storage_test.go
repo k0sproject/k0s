@@ -75,6 +75,19 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "kine-mysql-extra-args",
+			storage: StorageSpec{
+				Type: "kine",
+				Kine: &KineConfig{
+					DataSource: "mysql://foobar",
+					ExtraArgs: map[string]string{
+						"datastore-max-open-connections": "10",
+					},
+				},
+			},
+			want: true,
+		},
+		{
 			name: "kine-postgres",
 			storage: StorageSpec{
 				Type: "kine",
