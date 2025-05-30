@@ -49,7 +49,8 @@ import (
 type DualstackSuite struct {
 	common.BootlooseSuite
 
-	client *k8s.Clientset
+	client      *k8s.Clientset
+	defaultIPv6 bool
 }
 
 func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
@@ -61,9 +62,14 @@ func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
 }
 
 func (s *DualstackSuite) TestDualStackControlPlaneComponentsHaveServiceCIDRs() {
-	const expected = "--service-cluster-ip-range=10.96.0.0/12,fd01::/108"
+	const expectedIPv4 = "--service-cluster-ip-range=10.96.0.0/12,fd01::/108"
+	const expectedIPv6 = "--service-cluster-ip-range=fd01::/108,10.96.0.0/12"
 	node := s.ControllerNode(0)
 
+	expected := expectedIPv4
+	if s.defaultIPv6 {
+		expected = expectedIPv6
+	}
 	s.Contains(s.cmdlineForExecutable(node, "kube-apiserver"), expected)
 	s.Contains(s.cmdlineForExecutable(node, "kube-controller-manager"), expected)
 }
@@ -185,6 +191,7 @@ func TestDualStack(t *testing.T) {
 			WorkerCount:     2,
 		},
 		nil,
+		false,
 	}
 
 	suite.Run(t, &s)
@@ -204,4 +211,5 @@ spec:
       IPv6podCIDR: "fd00::/108"
       IPv6serviceCIDR: "fd01::/108"
     podCIDR: 10.244.0.0/16
-    serviceCIDR: 10.96.0.0/12`
+    serviceCIDR: 10.96.0.0/12
+`
