@@ -30,7 +30,7 @@ type StatusFunc func() (current Status, expired <-chan struct{})
 
 // Runs the provided tasks function when the lead is taken. It continuously
 // monitors the leader election status using statusFunc. When the lead is taken,
-// the tasks function is called with a context that is cancelled either when the
+// the tasks function is called with a context that is canceled either when the
 // lead has been lost or ctx is done. After the tasks function returns, the
 // process is repeated until ctx is done.
 func RunLeaderTasks(ctx context.Context, statusFunc StatusFunc, tasks func(context.Context)) {
