@@ -118,74 +118,78 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 
 	go func() {
 		defer close(done)
-
-		err = e.waitForCRD(ctx)
-		if err != nil {
-			log.WithError(err).Errorf("didn't see EtcdMember CRD ready in time")
-			return
-		}
-
-		// Create the object for this node
-		// Need to be done in retry loop as during the initial startup the etcd might not be stable
-		err = retry.Do(
-			func() error {
-				return e.createMemberObject(ctx, client)
-			},
-			retry.Delay(3*time.Second),
-			retry.Attempts(5),
-			retry.Context(ctx),
-			retry.LastErrorOnly(true),
-			retry.RetryIf(func(retryErr error) bool {
-				log.Debugf("retrying createMemberObject: %v", retryErr)
-				// During etcd cluster bootstrap, it's common to see k8s giving 500 errors due to etcd timeouts
-				return apierrors.IsInternalError(retryErr)
-			}),
-		)
-		if err != nil {
-			log.WithError(err).Error("failed to create EtcdMember object for this controller")
-		}
-		e.started.Store(true)
-		var lastObservedVersion string
-		err = watch.EtcdMembers(client).
-			WithErrorCallback(func(err error) (time.Duration, error) {
-				retryDelay, e := watch.IsRetryable(err)
-				if e == nil {
-					log.WithError(err).Debugf(
-						"Encountered transient error while watching etcd members"+
-							", last observed resource version was %q"+
-							", retrying in %s",
-						lastObservedVersion, retryDelay,
-					)
-					return retryDelay, nil
-				}
-				log.WithError(e).Error("bailing out watch")
-				return 0, err
-			}).
-			Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
-				lastObservedVersion = member.ResourceVersion
-				log.Debugf("watch triggered on %s", member.Name)
-				if e.leaderElector.IsLeader() {
-					if err := e.resync(ctx, client); err != nil {
-						log.WithError(err).Error("failed to resync etcd members")
-					}
-				} else {
-					log.Debug("Not the leader, skipping")
-				}
-				// Never stop the watch
-				return false, nil
-			})
-		if err != nil {
-			if errors.Is(err, context.Canceled) {
-				log.WithError(err).Info("watch terminated")
-			} else {
-				log.WithError(err).Error("watch terminated unexpectedly")
-			}
-		}
+		e.reconcile(ctx, log, client)
 	}()
 
 	e.stop = func() { cancel(); <-done }
 
 	return nil
+}
+
+func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
+	err := e.waitForCRD(ctx)
+	if err != nil {
+		log.WithError(err).Errorf("didn't see EtcdMember CRD ready in time")
+		return
+	}
+
+	// Create the object for this node
+	// Need to be done in retry loop as during the initial startup the etcd might not be stable
+	err = retry.Do(
+		func() error {
+			return e.createMemberObject(ctx, client)
+		},
+		retry.Delay(3*time.Second),
+		retry.Attempts(5),
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.RetryIf(func(retryErr error) bool {
+			log.Debugf("retrying createMemberObject: %v", retryErr)
+			// During etcd cluster bootstrap, it's common to see k8s giving 500 errors due to etcd timeouts
+			return apierrors.IsInternalError(retryErr)
+		}),
+	)
+	if err != nil {
+		log.WithError(err).Error("failed to create EtcdMember object for this controller")
+	}
+	e.started.Store(true)
+	var lastObservedVersion string
+	err = watch.EtcdMembers(client).
+		WithErrorCallback(func(err error) (time.Duration, error) {
+			retryDelay, e := watch.IsRetryable(err)
+			if e == nil {
+				log.WithError(err).Debugf(
+					"Encountered transient error while watching etcd members"+
+						", last observed resource version was %q"+
+						", retrying in %s",
+					lastObservedVersion, retryDelay,
+				)
+				return retryDelay, nil
+			}
+			log.WithError(e).Error("bailing out watch")
+			return 0, err
+		}).
+		Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
+			lastObservedVersion = member.ResourceVersion
+			log.Debugf("watch triggered on %s", member.Name)
+			if e.leaderElector.IsLeader() {
+				if err := e.resync(ctx, client); err != nil {
+					log.WithError(err).Error("failed to resync etcd members")
+				}
+			} else {
+				log.Debug("Not the leader, skipping")
+			}
+			// Never stop the watch
+			return false, nil
+		})
+	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			log.WithError(err).Info("watch terminated")
+		} else {
+			log.WithError(err).Error("watch terminated unexpectedly")
+		}
+	}
+
 }
 
 func (e *EtcdMemberReconciler) Stop() error {
