@@ -40,6 +40,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 var _ manager.Component = (*EtcdMemberReconciler)(nil)
@@ -118,7 +119,9 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 
 	go func() {
 		defer close(done)
-		e.reconcile(ctx, log, client)
+		wait.UntilWithContext(ctx, func(ctx context.Context) {
+			e.reconcile(ctx, log, client)
+		}, 1*time.Minute)
 	}()
 
 	e.stop = func() { cancel(); <-done }
