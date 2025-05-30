@@ -25,6 +25,7 @@ import (
 	"github.com/k0sproject/k0s/internal/testutil"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +33,7 @@ import (
 )
 
 type fakeLeaseWatcher struct {
-	leaseEventStatusCh chan LeaseEventStatus
+	leaseEventStatusCh chan leaderelection.Status
 	errorsCh           chan error
 }
 
@@ -40,8 +41,8 @@ var _ LeaseWatcher = (*fakeLeaseWatcher)(nil)
 
 // NewFakeLeaseWatcher creates a LeaseWatcher where the source channel
 // is made available, for simulating lease changes.
-func NewFakeLeaseWatcher() (LeaseWatcher, chan LeaseEventStatus) {
-	leaseEventStatusCh := make(chan LeaseEventStatus, 10)
+func NewFakeLeaseWatcher() (LeaseWatcher, chan leaderelection.Status) {
+	leaseEventStatusCh := make(chan leaderelection.Status, 10)
 	errorsCh := make(chan error, 10)
 
 	return &fakeLeaseWatcher{
@@ -51,7 +52,7 @@ func NewFakeLeaseWatcher() (LeaseWatcher, chan LeaseEventStatus) {
 }
 
 // StartWatcher for the fake LeaseWatcher just propagates the premade lease event channel
-func (lw *fakeLeaseWatcher) StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan LeaseEventStatus, <-chan error) {
+func (lw *fakeLeaseWatcher) StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan leaderelection.Status, <-chan error) {
 	return lw.leaseEventStatusCh, lw.errorsCh
 }
 
@@ -76,16 +77,16 @@ func TestModeSwitch(t *testing.T) {
 	rootController.leaseWatcherCreator = func(e *logrus.Entry, cf apcli.FactoryInterface) (LeaseWatcher, error) {
 		return leaseWatcher, nil
 	}
-	rootController.startSubHandler = func(ctx context.Context, event LeaseEventStatus) (context.CancelFunc, *errgroup.Group) {
-		seenEvents = append(seenEvents, "start: "+string(event))
+	rootController.startSubHandler = func(ctx context.Context, event leaderelection.Status) (context.CancelFunc, *errgroup.Group) {
+		seenEvents = append(seenEvents, "start: "+event.String())
 		return rootController.startSubControllers(ctx, event)
 	}
-	rootController.startSubHandlerRoutine = func(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error {
+	rootController.startSubHandlerRoutine = func(ctx context.Context, logger *logrus.Entry, event leaderelection.Status) error {
 		<-ctx.Done()
 		return nil
 	}
-	rootController.stopSubHandler = func(cancel context.CancelFunc, g *errgroup.Group, event LeaseEventStatus) {
-		seenEvents = append(seenEvents, "stop: "+string(event))
+	rootController.stopSubHandler = func(cancel context.CancelFunc, g *errgroup.Group, event leaderelection.Status) {
+		seenEvents = append(seenEvents, "stop: "+event.String())
 		rootController.stopSubControllers(cancel, g, event)
 	}
 	rootController.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
@@ -98,13 +99,13 @@ func TestModeSwitch(t *testing.T) {
 
 	go func() {
 		logger.Info("Sending pending")
-		leaseEventStatusCh <- LeasePending
+		leaseEventStatusCh <- leaderelection.StatusPending
 
 		logger.Info("Sending acquired")
-		leaseEventStatusCh <- LeaseAcquired
+		leaseEventStatusCh <- leaderelection.StatusLeading
 
 		logger.Info("Sending acquired (again)")
-		leaseEventStatusCh <- LeaseAcquired
+		leaseEventStatusCh <- leaderelection.StatusLeading
 
 		time.Sleep(1 * time.Second)
 		logger.Info("Canceling context")
@@ -118,13 +119,13 @@ func TestModeSwitch(t *testing.T) {
 		"start: pending",
 
 		// The first leading status is observed.
-		"stop: acquired",
-		"start: acquired",
+		"stop: leading",
+		"start: leading",
 
 		// The second leading status is ignored, as the controller is already in
 		// the right state.
 
 		// Finally, the context gets canceled and the controller shuts down.
-		"stop: acquired",
+		"stop: leading",
 	}, seenEvents)
 }

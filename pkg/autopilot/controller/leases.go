@@ -23,18 +23,12 @@ import (
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
 	clientset "k8s.io/client-go/kubernetes"
-)
-
-type LeaseEventStatus string
-
-const (
-	LeaseAcquired LeaseEventStatus = "acquired"
-	LeasePending  LeaseEventStatus = "pending"
+	"k8s.io/utils/ptr"
 )
 
 // LeaseWatcher outlines the lease operations for the autopilot configuration.
 type LeaseWatcher interface {
-	StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan LeaseEventStatus, <-chan error)
+	StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan leaderelection.Status, <-chan error)
 }
 
 // NewLeaseWatcher creates a new `LeaseWatcher` using the appropriate clientset
@@ -57,8 +51,8 @@ type leaseWatcher struct {
 
 var _ LeaseWatcher = (*leaseWatcher)(nil)
 
-func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan LeaseEventStatus, <-chan error) {
-	leaseEventStatusCh := make(chan LeaseEventStatus, 10)
+func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan leaderelection.Status, <-chan error) {
+	leaseEventStatusCh := make(chan leaderelection.Status, 10)
 	errorCh := make(chan error, 10)
 
 	go func() {
@@ -68,7 +62,7 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 		// Seed the leaseEventStatus channel to ensure that all controllers start in
 		// a `pending` state.  As leases are obtained, they will move to `acquired`
 
-		leaseEventStatusCh <- LeasePending
+		leaseEventStatusCh <- leaderelection.StatusPending
 
 		for {
 			select {
@@ -115,14 +109,14 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 //
 // To circumvent this problem, we take note when we have become a leader, and if we lose
 // leadership at any point afterwards, this watcher goroutine will exit.
-func leadershipWatcher(ctx context.Context, leaseEventStatusCh chan<- LeaseEventStatus, events *leaderelection.LeaseEvents) *sync.WaitGroup {
+func leadershipWatcher(ctx context.Context, leaseEventStatusCh chan<- leaderelection.Status, events *leaderelection.LeaseEvents) *sync.WaitGroup {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
 	go func(ctx context.Context) {
 		defer wg.Done()
 		previouslyHeldLeadership := false
-		var lastLeaseEventStatus LeaseEventStatus
+		var lastLeaseEventStatus *leaderelection.Status
 
 		for {
 			select {
@@ -131,9 +125,9 @@ func leadershipWatcher(ctx context.Context, leaseEventStatusCh chan<- LeaseEvent
 					return
 				}
 
-				if lastLeaseEventStatus != LeaseAcquired {
-					lastLeaseEventStatus = LeaseAcquired
-					leaseEventStatusCh <- lastLeaseEventStatus
+				if lastLeaseEventStatus == nil || *lastLeaseEventStatus != leaderelection.StatusLeading {
+					lastLeaseEventStatus = ptr.To(leaderelection.StatusLeading)
+					leaseEventStatusCh <- *lastLeaseEventStatus
 
 					previouslyHeldLeadership = true
 				}
@@ -143,9 +137,9 @@ func leadershipWatcher(ctx context.Context, leaseEventStatusCh chan<- LeaseEvent
 					return
 				}
 
-				if lastLeaseEventStatus != LeasePending {
-					lastLeaseEventStatus = LeasePending
-					leaseEventStatusCh <- lastLeaseEventStatus
+				if lastLeaseEventStatus == nil || *lastLeaseEventStatus != leaderelection.StatusPending {
+					lastLeaseEventStatus = ptr.To(leaderelection.StatusPending)
+					leaseEventStatusCh <- *lastLeaseEventStatus
 
 					if previouslyHeldLeadership {
 						return

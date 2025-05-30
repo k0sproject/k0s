@@ -48,8 +48,7 @@ func TestLeasesInitialPending(t *testing.T) {
 
 	case leaseEventStatus, ok := <-leaseEventStatusCh:
 		assert.True(t, ok)
-		assert.NotEmpty(t, leaseEventStatus)
-		assert.Equal(t, LeasePending, leaseEventStatus)
+		assert.Equal(t, leaderelection.StatusPending, leaseEventStatus)
 	}
 }
 
@@ -63,14 +62,14 @@ func closeLeaseEvents(events *leaderelection.LeaseEvents) {
 func TestLeadershipWatcher(t *testing.T) {
 	var tests = []struct {
 		name           string
-		expectedEvents []LeaseEventStatus
+		expectedEvents []leaderelection.Status
 		eventSource    func(events *leaderelection.LeaseEvents)
 	}{
 		{
 			"AcquiredThenLost",
-			[]LeaseEventStatus{
-				LeaseAcquired,
-				LeasePending,
+			[]leaderelection.Status{
+				leaderelection.StatusLeading,
+				leaderelection.StatusPending,
 			},
 			func(events *leaderelection.LeaseEvents) {
 				sendEventAfter100ms(events.AcquiredLease)
@@ -80,9 +79,9 @@ func TestLeadershipWatcher(t *testing.T) {
 		},
 		{
 			"LostThenAcquired",
-			[]LeaseEventStatus{
-				LeasePending,
-				LeaseAcquired,
+			[]leaderelection.Status{
+				leaderelection.StatusPending,
+				leaderelection.StatusLeading,
 			},
 			func(events *leaderelection.LeaseEvents) {
 				sendEventAfter100ms(events.LostLease)
@@ -92,9 +91,9 @@ func TestLeadershipWatcher(t *testing.T) {
 		},
 		{
 			"AcquiredThenLostThenAcquired",
-			[]LeaseEventStatus{
-				LeaseAcquired,
-				LeasePending,
+			[]leaderelection.Status{
+				leaderelection.StatusLeading,
+				leaderelection.StatusPending,
 			},
 			func(events *leaderelection.LeaseEvents) {
 				sendEventAfter100ms(events.AcquiredLease)
@@ -105,8 +104,8 @@ func TestLeadershipWatcher(t *testing.T) {
 		},
 		{
 			"DoubleLostMakesNoSense",
-			[]LeaseEventStatus{
-				LeasePending,
+			[]leaderelection.Status{
+				leaderelection.StatusPending,
 			},
 			func(events *leaderelection.LeaseEvents) {
 				sendEventAfter100ms(events.LostLease)
@@ -115,8 +114,8 @@ func TestLeadershipWatcher(t *testing.T) {
 		},
 		{
 			"DoubleAcquireMakesNoSense",
-			[]LeaseEventStatus{
-				LeaseAcquired,
+			[]leaderelection.Status{
+				leaderelection.StatusLeading,
 			},
 			func(events *leaderelection.LeaseEvents) {
 				sendEventAfter100ms(events.AcquiredLease)
@@ -128,7 +127,7 @@ func TestLeadershipWatcher(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			leaseEventStatusCh := make(chan LeaseEventStatus, 100)
+			leaseEventStatusCh := make(chan leaderelection.Status, 100)
 
 			events := &leaderelection.LeaseEvents{
 				AcquiredLease: make(chan struct{}),
@@ -147,8 +146,8 @@ func TestLeadershipWatcher(t *testing.T) {
 	}
 }
 
-func realizeLeaseEventStatus(ch chan LeaseEventStatus) []LeaseEventStatus {
-	s := make([]LeaseEventStatus, 0)
+func realizeLeaseEventStatus(ch chan leaderelection.Status) []leaderelection.Status {
+	s := make([]leaderelection.Status, 0)
 	for ev := range ch {
 		s = append(s, ev)
 	}
