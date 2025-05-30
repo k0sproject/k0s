@@ -65,11 +65,11 @@
       "description": "Update kine versions across the codebase",
       "managerFilePatterns": [
         "/(^|/)[Mm]akefile(\\.[^/]+)?$/",
-        "*.go"
+        "**.go"
       ],
       "matchStrings": [
         "kine_version = (?<currentValue>[\\d\\.]+)",
-        "\\bkine/blob/(v?<currentValue>[\\d\\.]+)\\b"
+        "\\bkine/blob/v?(?<currentValue>[\\d\\.]+)\\b"
       ],
       "depNameTemplate": "k3s-io/kine",
       "datasourceTemplate": "github-releases",
