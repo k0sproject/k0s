@@ -68,7 +68,7 @@ func TestModeSwitch(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotEmpty(t, rootController)
 
-	var startCount, stopCount int
+	var seenEvents []string
 
 	// Override the important portions of leasewatcher, and provide wrappers to the start/stop
 	// sub-controller handlers for invocation counting.
@@ -77,7 +77,7 @@ func TestModeSwitch(t *testing.T) {
 		return leaseWatcher, nil
 	}
 	rootController.startSubHandler = func(ctx context.Context, event LeaseEventStatus) (context.CancelFunc, *errgroup.Group) {
-		startCount++
+		seenEvents = append(seenEvents, "start: "+string(event))
 		return rootController.startSubControllers(ctx, event)
 	}
 	rootController.startSubHandlerRoutine = func(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error {
@@ -85,7 +85,7 @@ func TestModeSwitch(t *testing.T) {
 		return nil
 	}
 	rootController.stopSubHandler = func(cancel context.CancelFunc, g *errgroup.Group, event LeaseEventStatus) {
-		stopCount++
+		seenEvents = append(seenEvents, "stop: "+string(event))
 		rootController.stopSubControllers(cancel, g, event)
 	}
 	rootController.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
@@ -107,15 +107,24 @@ func TestModeSwitch(t *testing.T) {
 		leaseEventStatusCh <- LeaseAcquired
 
 		time.Sleep(1 * time.Second)
+		logger.Info("Canceling context")
 		cancel()
 	}()
 
 	assert.NoError(t, rootController.Run(ctx))
 
-	// Despite the additional send of LeaseAcquired, only two events should
-	// have been processed. The additional 3rd stop event is a result of
-	// the canceling of the context.
+	assert.Equal(t, []string{
+		// The controller will always start in pending state.
+		"start: pending",
 
-	assert.Equal(t, 2, startCount)
-	assert.Equal(t, 3, stopCount)
+		// The first leading status is observed.
+		"stop: acquired",
+		"start: acquired",
+
+		// The second leading status is ignored, as the controller is already in
+		// the right state.
+
+		// Finally, the context gets canceled and the controller shuts down.
+		"stop: acquired",
+	}, seenEvents)
 }

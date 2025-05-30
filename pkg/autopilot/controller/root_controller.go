@@ -110,6 +110,7 @@ func (c *rootController) Run(ctx context.Context) error {
 	var lastLeaseEventStatus LeaseEventStatus
 	var subControllerCancel context.CancelFunc
 	var subControllerErrGroup *errgroup.Group
+	var started bool
 
 	for {
 		select {
@@ -117,8 +118,10 @@ func (c *rootController) Run(ctx context.Context) error {
 			return err
 
 		case <-ctx.Done():
-			c.log.Info("Shutting down")
-			c.stopSubHandler(subControllerCancel, subControllerErrGroup, LeaseAcquired)
+			if started {
+				c.log.Info("Shutting down")
+				c.stopSubHandler(subControllerCancel, subControllerErrGroup, LeaseAcquired)
+			}
 
 			return nil
 
@@ -137,10 +140,13 @@ func (c *rootController) Run(ctx context.Context) error {
 			c.log.Infof("Got lease event = %v, reconfiguring controllers", leaseEventStatus)
 
 			// Stop controllers + wait for termination
-			c.stopSubHandler(subControllerCancel, subControllerErrGroup, leaseEventStatus)
+			if started {
+				c.stopSubHandler(subControllerCancel, subControllerErrGroup, leaseEventStatus)
+			}
 
 			// Start controllers
 			subControllerCancel, subControllerErrGroup = c.startSubHandler(ctx, leaseEventStatus)
+			started = true
 
 			// Remember which mode we're in
 			lastLeaseEventStatus = leaseEventStatus
