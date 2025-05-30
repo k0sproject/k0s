@@ -17,6 +17,9 @@ helm:
     url: https://charts.helm.sh/stable
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts
+  - name: oci-registry-with-private-ca
+    url: oci://registry-with-private-ca.com:8080
+    caFile: /path/to/ca.crt
   charts:
   - name: prometheus-stack
     chartname: prometheus-community/prometheus
@@ -27,8 +30,18 @@ helm:
           medium: Memory
     namespace: default
   # We don't need to specify the repo in the repositories section for OCI charts
+  # unless a custom TLS transport is needed
   - name: oci-chart
     chartname: oci://registry:8080/chart
+    version: "0.0.1"
+    values: ""
+    namespace: default
+  # OCI charts that require a custom TLS transport must add a repository entry 
+  # pointing to TLS certificates on the controller node.
+  # In this case, chartname of the chart must include the same registry URL 
+  # previously defined in the repository URL.
+  - name: oci-chart-with-tls
+    chartname: oci://registry-with-private-ca.com:8080/chart
     version: "0.0.1"
     values: ""
     namespace: default
