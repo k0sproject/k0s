@@ -60,6 +60,7 @@ done
 case "$var" in
 k0sctl_version) pkg=github.com/k0sproject/k0sctl ;;
 k0s_sort_version) pkg=github.com/k0sproject/version ;;
+helm_version) pkg=helm.sh/helm/v3 ;;
 *) pkg='' ;;
 esac
 
