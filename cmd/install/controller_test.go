@@ -73,7 +73,7 @@ Flags:
       --kube-controller-manager-extra-args string      extra args for kube-controller-manager
       --kubelet-extra-args string                      extra args for kubelet
       --kubelet-root-dir string                        Kubelet root directory for k0s
-      --labels strings                                 Node labels, list of key=value pairs
+      --labels mapStringString                         Node labels, list of key=value pairs
   -l, --logging stringToString                         Logging Levels for the different components (default [containerd=info,etcd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1])
       --no-taints                                      disable default taints for controller node
       --profile string                                 worker profile to use on the node (default "default")
