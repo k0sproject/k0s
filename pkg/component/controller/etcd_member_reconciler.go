@@ -61,6 +61,7 @@ type EtcdMemberReconciler struct {
 	leaderElector leaderelector.Interface
 	mux           sync.Mutex
 	started       atomic.Bool
+	stop          func()
 }
 
 func (e *EtcdMemberReconciler) Init(_ context.Context) error {
@@ -112,8 +113,12 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 		}()
 	})
 
-	// Run the watch in go routine so it keeps running till the context ends
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
 	go func() {
+		defer close(done)
+
 		err = e.waitForCRD(ctx)
 		if err != nil {
 			log.WithError(err).Errorf("didn't see EtcdMember CRD ready in time")
@@ -178,10 +183,15 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 		}
 	}()
 
+	e.stop = func() { cancel(); <-done }
+
 	return nil
 }
 
 func (e *EtcdMemberReconciler) Stop() error {
+	if e.stop != nil {
+		e.stop()
+	}
 	return nil
 }
 
