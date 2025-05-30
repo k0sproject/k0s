@@ -32,28 +32,21 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type fakeLeaseWatcher struct {
-	leaseEventStatusCh chan leaderelection.Status
-	errorsCh           chan error
-}
+type fakeLeaderElector chan leaderelection.Status
 
-var _ LeaseWatcher = (*fakeLeaseWatcher)(nil)
-
-// NewFakeLeaseWatcher creates a LeaseWatcher where the source channel
-// is made available, for simulating lease changes.
-func NewFakeLeaseWatcher() (LeaseWatcher, chan leaderelection.Status) {
-	leaseEventStatusCh := make(chan leaderelection.Status, 10)
-	errorsCh := make(chan error, 10)
-
-	return &fakeLeaseWatcher{
-		leaseEventStatusCh: leaseEventStatusCh,
-		errorsCh:           errorsCh,
-	}, leaseEventStatusCh
-}
-
-// StartWatcher for the fake LeaseWatcher just propagates the premade lease event channel
-func (lw *fakeLeaseWatcher) StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan leaderelection.Status, <-chan error) {
-	return lw.leaseEventStatusCh, lw.errorsCh
+// Run implements leaderElector.
+func (le fakeLeaderElector) Run(ctx context.Context, callback func(leaderelection.Status)) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case status, ok := <-le:
+			if !ok {
+				return
+			}
+			callback(status)
+		}
+	}
 }
 
 // TestModeSwitch tests the scenario of losing + re-acquiring the kubernetes lease.
@@ -69,15 +62,19 @@ func TestModeSwitch(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotEmpty(t, rootController)
 
+	awaitFirstStart := make(chan struct{})
 	var seenEvents []string
 
 	// Override the important portions of leasewatcher, and provide wrappers to the start/stop
 	// sub-controller handlers for invocation counting.
-	leaseWatcher, leaseEventStatusCh := NewFakeLeaseWatcher()
-	rootController.leaseWatcherCreator = func(e *logrus.Entry, cf apcli.FactoryInterface) (LeaseWatcher, error) {
-		return leaseWatcher, nil
+	leaseEventStatusCh := make(fakeLeaderElector)
+	rootController.newLeaderElector = func(c leaderelection.Config) (leaderElector, error) {
+		return &leaseEventStatusCh, nil
 	}
 	rootController.startSubHandler = func(ctx context.Context, event leaderelection.Status) (context.CancelFunc, *errgroup.Group) {
+		if len(seenEvents) < 1 {
+			close(awaitFirstStart)
+		}
 		seenEvents = append(seenEvents, "start: "+event.String())
 		return rootController.startSubControllers(ctx, event)
 	}
@@ -98,8 +95,8 @@ func TestModeSwitch(t *testing.T) {
 	// Send alternating lease events, as well as one that is considered redundant
 
 	go func() {
-		logger.Info("Sending pending")
-		leaseEventStatusCh <- leaderelection.StatusPending
+		logger.Info("Awaiting first start")
+		<-awaitFirstStart
 
 		logger.Info("Sending acquired")
 		leaseEventStatusCh <- leaderelection.StatusLeading
