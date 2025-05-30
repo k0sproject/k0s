@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -198,6 +199,11 @@ func (r *Repository) IsInsecure() bool {
 	// This defaults to true when not explicitly set to false.
 	// Better have this the other way round in the next API version.
 	return r == nil || r.Insecure == nil || *r.Insecure
+}
+
+// IsOCI returns true if the repository URL starts with "oci://"
+func (r *Repository) IsOCI() bool {
+	return strings.HasPrefix(r.URL, "oci://")
 }
 
 // Validate performs validation

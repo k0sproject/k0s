@@ -1175,6 +1175,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					ExtraArgs:    []string{"--add-host=host.docker.internal:host-gateway"},
 				},
 			},
 			{
