@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -36,6 +34,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/etcd"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -60,8 +59,6 @@ type EtcdMemberReconciler struct {
 	k0sVars       *config.CfgVars
 	etcdConfig    *v1beta1.EtcdConfig
 	leaderElector leaderelector.Interface
-	mux           sync.Mutex
-	started       atomic.Bool
 	stop          func()
 }
 
@@ -74,14 +71,6 @@ func (e *EtcdMemberReconciler) Init(_ context.Context) error {
 // We might get stale state if we remove the current leader as the leader will essentially
 // remove itself from the etcd cluster and after that tries to update the member object.
 func (e *EtcdMemberReconciler) resync(ctx context.Context, client etcdclient.EtcdMemberInterface) error {
-	e.mux.Lock()
-	defer e.mux.Unlock()
-
-	if !e.started.Load() {
-		logrus.WithField("component", "EtcdMemberReconciler").Debug("Not started yet!!?!?")
-		return nil
-	}
-
 	// Loop through all the members and run reconcile on them
 	// Use high timeout as etcd/api could be a bit slow when the leader changes
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -104,17 +93,7 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 		return err
 	}
 
-	e.leaderElector.AddAcquiredLeaseCallback(func() {
-		// Spin up resync in separate routine to not block the leader election
-		go func() {
-			log.Info("leader lease acquired, starting resync")
-			if err := e.resync(ctx, client); err != nil {
-				log.WithError(err).Error("failed to resync etcd members")
-			}
-		}()
-	})
-
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancelCause(context.Background())
 	done := make(chan struct{})
 
 	go func() {
@@ -124,7 +103,10 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 		}, 1*time.Minute)
 	}()
 
-	e.stop = func() { cancel(); <-done }
+	e.stop = func() {
+		cancel(errors.New("etcd member reconciler is stopping"))
+		<-done
+	}
 
 	return nil
 }
@@ -155,44 +137,40 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 	if err != nil {
 		log.WithError(err).Error("failed to create EtcdMember object for this controller")
 	}
-	e.started.Store(true)
-	var lastObservedVersion string
-	err = watch.EtcdMembers(client).
-		WithErrorCallback(func(err error) (time.Duration, error) {
-			retryDelay, e := watch.IsRetryable(err)
-			if e == nil {
-				log.WithError(err).Debugf(
-					"Encountered transient error while watching etcd members"+
-						", last observed resource version was %q"+
-						", retrying in %s",
-					lastObservedVersion, retryDelay,
-				)
-				return retryDelay, nil
-			}
-			log.WithError(e).Error("bailing out watch")
-			return 0, err
-		}).
-		Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
-			lastObservedVersion = member.ResourceVersion
-			log.Debugf("watch triggered on %s", member.Name)
-			if e.leaderElector.IsLeader() {
+
+	leaderelection.RunLeaderTasks(ctx, e.leaderElector.CurrentStatus, func(ctx context.Context) {
+		var lastObservedVersion string
+		err = watch.EtcdMembers(client).
+			WithErrorCallback(func(err error) (time.Duration, error) {
+				retryDelay, e := watch.IsRetryable(err)
+				if e == nil {
+					log.WithError(err).Debugf(
+						"Encountered transient error while watching etcd members"+
+							", last observed resource version was %q"+
+							", retrying in %s",
+						lastObservedVersion, retryDelay,
+					)
+					return retryDelay, nil
+				}
+				log.WithError(e).Error("bailing out watch")
+				return 0, err
+			}).
+			Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
+				lastObservedVersion = member.ResourceVersion
+				log.Debugf("watch triggered on %s", member.Name)
 				if err := e.resync(ctx, client); err != nil {
 					log.WithError(err).Error("failed to resync etcd members")
 				}
-			} else {
-				log.Debug("Not the leader, skipping")
-			}
-			// Never stop the watch
-			return false, nil
-		})
-	if err != nil {
-		if errors.Is(err, context.Canceled) {
-			log.WithError(err).Info("watch terminated")
-		} else {
-			log.WithError(err).Error("watch terminated unexpectedly")
-		}
-	}
+				// Never stop the watch
+				return false, nil
+			})
 
+		if canceled := context.Cause(ctx); errors.Is(err, canceled) {
+			log.WithError(err).Info("Watch terminated")
+		} else {
+			log.WithError(err).Error("Watch terminated unexpectedly")
+		}
+	})
 }
 
 func (e *EtcdMemberReconciler) Stop() error {
