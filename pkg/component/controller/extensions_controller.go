@@ -26,7 +26,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
-	"sync"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -40,6 +39,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -65,10 +65,7 @@ type ExtensionsController struct {
 	kubeConfig    string
 	leaderElector leaderelector.Interface
 	manifestsDir  string
-	startChan     chan struct{}
-	mux           sync.Mutex
-	mgr           crman.Manager
-	mgrCancelFn   context.CancelFunc
+	stop          context.CancelFunc
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
@@ -396,76 +393,33 @@ func (ec *ExtensionsController) Init(_ context.Context) error {
 // Start
 func (ec *ExtensionsController) Start(ctx context.Context) error {
 	ec.L.Debug("Starting")
-	ec.startChan = make(chan struct{}, 1)
 
-	// Do the first validation before setting callbacks
-	var err error
-	ec.mgr, err = ec.instantiateManager(ctx)
+	mgr, err := ec.instantiateManager(ctx)
 	if err != nil {
-		ec.L.WithError(err).Error("Can't instantiate controller-runtime manager")
-		return err
+		return fmt.Errorf("can't instantiate controller-runtime manager: %w", err)
 	}
 
-	ec.leaderElector.AddLostLeaseCallback(ec.leaseLost)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
 
-	ec.leaderElector.AddAcquiredLeaseCallback(ec.leaseAcquired)
-
-	// It's possible that by the time we added the callback, we are already the leader,
-	// If this is true the callback will not be called, so we need to check if we are
-	// the leader and notify the channel manually
-	if ec.leaderElector.IsLeader() {
-		ec.leaseAcquired()
-	}
-
-	go ec.watchStartChan()
-	return nil
-}
-
-func (ec *ExtensionsController) leaseLost() {
-	ec.mux.Lock()
-	defer ec.mux.Unlock()
-	ec.L.Warn("Lost leader lease, stopping controller-manager")
-
-	mgrCancelFn := ec.mgrCancelFn
-	if mgrCancelFn != nil {
-		mgrCancelFn()
-	}
-	ec.mgr = nil
-}
-
-func (ec *ExtensionsController) watchStartChan() {
-	ec.L.Debug("Watching start channel")
-	for range ec.startChan {
-		ec.L.Info("Acquired leader lease")
-		ec.mux.Lock()
-		ctx, cancel := context.WithCancel(context.Background())
-		// If there is a previous cancel func, call it
-		if ec.mgrCancelFn != nil {
-			ec.mgrCancelFn()
-		}
-		ec.mgrCancelFn = cancel
-		if ec.mgr == nil {
-			ec.L.Info("Instantiating controller-runtime manager")
-			var err error
-			ec.mgr, err = ec.instantiateManager(ctx)
-			if err != nil {
-				ec.L.WithError(err).Error("Can't instantiate controller-runtime manager")
-				ec.mux.Unlock()
-				return
+	go func() {
+		defer close(done)
+		leaderelection.RunLeaderTasks(ctx, ec.leaderElector.CurrentStatus, func(ctx context.Context) {
+			ec.L.Info("Running controller-runtime manager")
+			if err := mgr.Start(ctx); err != nil {
+				ec.L.WithError(err).Error("Failed to run controller-runtime manager")
 			}
-		}
-		ec.mux.Unlock()
-		ec.startControllerManager(ctx)
-	}
-	ec.L.Info("Start channel closed, stopping controller-manager")
-}
+			ec.L.Info("Controller-runtime manager exited")
+		})
 
-func (ec *ExtensionsController) leaseAcquired() {
-	ec.L.Info("Acquired leader lease")
-	select {
-	case ec.startChan <- struct{}{}:
-	default:
+	}()
+
+	ec.stop = func() {
+		cancel()
+		<-done
 	}
+
+	return nil
 }
 
 func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.Manager, error) {
@@ -524,26 +478,11 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 	return mgr, nil
 }
 
-func (ec *ExtensionsController) startControllerManager(ctx context.Context) {
-	go func() {
-		ec.L.Info("Starting controller-manager")
-		if err := ec.mgr.Start(ctx); err != nil {
-			ec.L.WithError(err).Error("Controller manager working loop exited")
-		}
-	}()
-}
-
 // Stop
 func (ec *ExtensionsController) Stop() error {
-	ec.L.Info("Stopping extensions controller")
-	// We have no guarantees on concurrency here, so use mutex
-	ec.mux.Lock()
-	mgrCancelFn := ec.mgrCancelFn
-	ec.mux.Unlock()
-	if mgrCancelFn != nil {
-		mgrCancelFn()
+	if ec.stop != nil {
+		ec.stop()
 	}
-	close(ec.startChan)
 	ec.L.Debug("Stopped extensions controller")
 	return nil
 }
