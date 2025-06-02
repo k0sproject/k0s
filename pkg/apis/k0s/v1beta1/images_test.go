@@ -152,6 +152,7 @@ func TestImageSpec_Validate(t *testing.T) {
 		{"my.registry/repo/image", "latest"},
 		{"my.registry/repo/image", "v1.0.0-rc1"},
 		{"my.registry/repo/image", "v1.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+		{"my.registry/repo/image", ""},
 	}
 	for _, tc := range validTestCases {
 		t.Run(tc.Image+":"+tc.Version+"_valid", func(t *testing.T) {
@@ -171,10 +172,6 @@ func TestImageSpec_Validate(t *testing.T) {
 		Version string
 		Errs    field.ErrorList
 	}{
-		{
-			"my.registry/repo/image", "",
-			field.ErrorList{field.Invalid(field.NewPath("image").Child("version"), "", errVersionRe)},
-		},
 		// digest only is currently not supported
 		{
 			"my.registry/repo/image", "sha256:0000000000000000000000000000000000000000000000000000000000000000",

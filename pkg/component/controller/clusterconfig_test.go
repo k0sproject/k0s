@@ -43,6 +43,7 @@ func TestClusterConfigInitializer_Create(t *testing.T) {
 	leaderElector := leaderelector.Dummy{Leader: true}
 	initialConfig := k0sv1beta1.DefaultClusterConfig()
 	initialConfig.ResourceVersion = "42"
+	initialConfig.Spec.Images.CoreDNS.Image = "myrepo.org/coredns/coredns"
 
 	underTest := controller.NewClusterConfigInitializer(
 		clients, &leaderElector, initialConfig.DeepCopy(),
@@ -64,6 +65,8 @@ func TestClusterConfigInitializer_Create(t *testing.T) {
 		ClusterConfigs(constant.ClusterConfigNamespace).
 		Get(t.Context(), "k0s", metav1.GetOptions{})
 	if assert.NoError(t, err) {
+		assert.NotEqual(t, initialConfig.Spec.Images.CoreDNS.Version, actualConfig.Spec.Images.CoreDNS.Version)
+		initialConfig.Spec.Images.CoreDNS.Version = actualConfig.Spec.Images.CoreDNS.Version
 		assert.Equal(t, initialConfig, actualConfig)
 	}
 }

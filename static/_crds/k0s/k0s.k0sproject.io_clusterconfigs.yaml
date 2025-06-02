@@ -255,7 +255,7 @@ spec:
                             minLength: 1
                             type: string
                           version:
-                            pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                            pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                             type: string
                         required:
                         - image
@@ -268,7 +268,7 @@ spec:
                             minLength: 1
                             type: string
                           version:
-                            pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                            pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                             type: string
                         required:
                         - image
@@ -281,7 +281,7 @@ spec:
                             minLength: 1
                             type: string
                           version:
-                            pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                            pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                             type: string
                         required:
                         - image
@@ -295,7 +295,7 @@ spec:
                         minLength: 1
                         type: string
                       version:
-                        pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                        pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                         type: string
                     required:
                     - image
@@ -315,7 +315,7 @@ spec:
                         minLength: 1
                         type: string
                       version:
-                        pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                        pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                         type: string
                     required:
                     - image
@@ -328,7 +328,7 @@ spec:
                         minLength: 1
                         type: string
                       version:
-                        pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                        pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                         type: string
                     required:
                     - image
@@ -345,7 +345,7 @@ spec:
                             minLength: 1
                             type: string
                           version:
-                            pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                            pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                             type: string
                         required:
                         - image
@@ -358,7 +358,7 @@ spec:
                             minLength: 1
                             type: string
                           version:
-                            pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                            pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                             type: string
                         required:
                         - image
@@ -372,7 +372,7 @@ spec:
                         minLength: 1
                         type: string
                       version:
-                        pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                        pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                         type: string
                     required:
                     - image
@@ -385,7 +385,7 @@ spec:
                         minLength: 1
                         type: string
                       version:
-                        pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                        pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                         type: string
                     required:
                     - image
@@ -398,7 +398,7 @@ spec:
                         minLength: 1
                         type: string
                       version:
-                        pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                        pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                         type: string
                     required:
                     - image
@@ -856,7 +856,7 @@ spec:
                                 minLength: 1
                                 type: string
                               version:
-                                pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                                pattern: (^$)|(^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$)
                                 type: string
                             required:
                             - image
