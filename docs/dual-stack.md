@@ -44,6 +44,28 @@ spec:
       IPv6serviceCIDR: fd01::/108
 ```
 
+## Specifying the default IP family
+
+In Kubernetes dual stack clusters, by default all the services are single stack,
+including `kubernetes.default.svc`, which is used to communicate with the kube-servers.
+
+This is specially importantwhen specifying explicitly `spec.api.externalAddress` or
+`spec.api.address`.
+
+To explicitly define the family which will be used by default use the following
+configuration:
+
+```yaml
+spec:
+  network:
+    # primaryAddressFamily is optional
+    priamryAddressFamily: <IPv4|IPv6>
+```
+
+If not defined explicitly, k0s will determine it based on `spec.api.externalAddress`,
+if this field is not defined, k0s will use `spec.api.address`. If the field used is
+a hostname or both are empty, k0s will use IPv4.
+
 ## Custom CNI providers
 
 While the dual-stack configuration section configures all components managed by
