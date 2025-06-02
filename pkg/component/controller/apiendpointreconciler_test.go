@@ -18,12 +18,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -32,11 +33,14 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 )
 
-var expectedAddresses = []string{
-	"2001:db8::1",
-	"2001:db8::2",
+var expectedIPv4Addresses = []string{
 	"240.0.0.2",
 	"240.0.0.3",
+}
+
+var expectedIPv6Addresses = []string{
+	"2001:db8::1",
+	"2001:db8::2",
 }
 
 func TestBasicReconcilerWithNoLeader(t *testing.T) {
@@ -44,7 +48,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: false}, fakeFactory, fakeResolver{})
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: false}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	ctx := t.Context()
 	assert.NoError(t, r.Init(ctx))
@@ -55,21 +59,37 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 	_, err = client.CoreV1().Endpoints("default").Get(ctx, "kubernetes", v1.GetOptions{})
 	// The reconciler should not make any modification as we're not the leader so the endpoint should not get created
 	assert.Error(t, err)
-	assert.True(t, errors.IsNotFound(err))
+	assert.True(t, k8serrors.IsNotFound(err))
 	// verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 }
 
 func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
-	fakeFactory := testutil.NewFakeClientFactory()
-	config := getFakeConfig()
+	tests := []struct {
+		afnet             v1beta1.PrimaryAddressFamilyType
+		expectedAddresses []string
+	}{
+		{
+			afnet:             v1beta1.PrimaryFamilyIPv4,
+			expectedAddresses: expectedIPv4Addresses,
+		},
+		{
+			afnet:             v1beta1.PrimaryFamilyIPv6,
+			expectedAddresses: expectedIPv6Addresses,
+		},
+	}
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
+	for _, test := range tests {
+		fakeFactory := testutil.NewFakeClientFactory()
+		config := getFakeConfig()
 
-	ctx := t.Context()
-	assert.NoError(t, r.Init(ctx))
+		r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, test.afnet)
 
-	assert.NoError(t, r.reconcileEndpoints(ctx))
-	verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
+		ctx := t.Context()
+		assert.NoError(t, r.Init(ctx))
+
+		assert.NoError(t, r.reconcileEndpoints(ctx))
+		verifyEndpointAddresses(t, test.expectedAddresses, fakeFactory.Client)
+	}
 }
 
 func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
@@ -92,12 +112,12 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	assert.NoError(t, err)
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
+	verifyEndpointAddresses(t, expectedIPv4Addresses, fakeFactory.Client)
 }
 
 func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
@@ -115,7 +135,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 		},
 		Subsets: []corev1.EndpointSubset{
 			{
-				Addresses: stringsToEndpointAddresses(expectedAddresses),
+				Addresses: stringsToEndpointAddresses(expectedIPv4Addresses),
 			},
 		},
 	}
@@ -128,12 +148,12 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
+	e := verifyEndpointAddresses(t, expectedIPv4Addresses, fakeFactory.Client)
 	assert.Equal(t, "bar", e.Annotations["foo"])
 }
 
@@ -165,11 +185,11 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
+	e := verifyEndpointAddresses(t, expectedIPv4Addresses, fakeFactory.Client)
 	assert.Equal(t, "bar", e.Annotations["foo"])
 }
 
@@ -183,13 +203,21 @@ func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, clients k
 
 type fakeResolver struct{}
 
-func (fr fakeResolver) LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error) {
-	return []net.IPAddr{
-		{IP: net.ParseIP("2001:db8::1")},
-		{IP: net.ParseIP("2001:db8::2")},
-		{IP: net.ParseIP("240.0.0.2")},
-		{IP: net.ParseIP("240.0.0.3")},
-	}, nil
+func (fr fakeResolver) LookupIP(ctx context.Context, afnet string, host string) ([]net.IP, error) {
+	switch afnet {
+	case "ip4":
+		return []net.IP{
+			net.ParseIP("240.0.0.2"),
+			net.ParseIP("240.0.0.3"),
+		}, nil
+	case "ip6":
+		return []net.IP{
+			net.ParseIP("2001:db8::1"),
+			net.ParseIP("2001:db8::2"),
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown address family %q", afnet)
+	}
 }
 
 func getFakeConfig() *v1beta1.ClusterConfig {

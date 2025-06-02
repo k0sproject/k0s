@@ -487,6 +487,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			leaderElector,
 			adminClientFactory,
 			net.DefaultResolver,
+			nodeConfig.PrimaryAddressFamily(),
 		))
 	}
 
