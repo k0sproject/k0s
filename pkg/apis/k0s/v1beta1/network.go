@@ -61,7 +61,22 @@ type Network struct {
 	// Cluster Domain
 	// +kubebuilder:default="cluster.local"
 	ClusterDomain string `json:"clusterDomain,omitempty"`
+
+	// PrimaryAddressFamily defines the primary family for the cluster.
+	// If empty, k0s determines it based on `.spec.API.ExternalAddress`,
+	// if this isn't present it will use `.spec.API.Address.`.
+	// If both addresses are empty or the chosen address is a hostname, defaults to `IPv4`.
+	// +Kubebuilder:validation:Enum=IPv4;IPv6
+	PrimaryAddressFamily PrimaryAddressFamilyType `json:"primaryAddressFamily,omitempty"`
 }
+
+type PrimaryAddressFamilyType string
+
+const (
+	PrimaryFamilyUnknown PrimaryAddressFamilyType = ""
+	PrimaryFamilyIPv4    PrimaryAddressFamilyType = "IPv4"
+	PrimaryFamilyIPv6    PrimaryAddressFamilyType = "IPv6"
+)
 
 // DefaultNetwork creates the Network config struct with sane default values
 func DefaultNetwork() *Network {
@@ -116,6 +131,13 @@ func (n *Network) Validate() []error {
 		_, _, err = net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "invalid CIDR address"))
+		}
+	}
+
+	if n.PrimaryAddressFamily != "" {
+		if allowed := []PrimaryAddressFamilyType{PrimaryFamilyIPv4, PrimaryFamilyIPv6}; !slices.Contains(allowed, n.PrimaryAddressFamily) {
+			err := field.NotSupported(field.NewPath("addressFamily"), n.PrimaryAddressFamily, allowed)
+			errors = append(errors, err)
 		}
 	}
 
@@ -217,17 +239,22 @@ func (n *Network) UnmarshalJSON(data []byte) error {
 }
 
 // BuildServiceCIDR returns actual argument value for service cidr
-func (n *Network) BuildServiceCIDR(addr string) string {
+func (n *Network) BuildServiceCIDR(primaryAddressFamily PrimaryAddressFamilyType) string {
 	if !n.DualStack.Enabled {
 		return n.ServiceCIDR
 	}
+
 	// Because Kubernetes relies on the order of the given CIDRs in dual-stack
 	// mode, the CIDR whose version matches the version of the IP address the
 	// API server is listening on must be specified first.
-	if ip := net.ParseIP(addr); ip != nil && ip.To4() == nil {
+	switch primaryAddressFamily {
+	case PrimaryFamilyIPv4:
+		return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR
+	case PrimaryFamilyIPv6:
 		return n.DualStack.IPv6ServiceCIDR + "," + n.ServiceCIDR
+	default:
+		panic(fmt.Sprintf("BuildServiceCIDR called invalid PrimaryAddressFamily %q family. This is theoretically impossible", primaryAddressFamily))
 	}
-	return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR
 }
 
 // BuildPodCIDR returns actual argument value for pod cidr

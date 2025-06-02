@@ -481,6 +481,7 @@ func (c *ClusterConfig) Validate() (errs []error) {
 // - Network.ServiceCIDR
 // - Network.ClusterDomain
 // - Network.ControlPlaneLoadBalancing
+// - Network.PrimaryAddressFamily
 // - Install
 func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 	c = c.DeepCopy()
@@ -491,6 +492,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 			c.Spec.Network.ServiceCIDR = ""
 			c.Spec.Network.ClusterDomain = ""
 			c.Spec.Network.ControlPlaneLoadBalancing = nil
+			c.Spec.Network.PrimaryAddressFamily = ""
 		}
 		c.Spec.Install = nil
 	}
@@ -505,4 +507,11 @@ func (c *ClusterConfig) CRValidator() *ClusterConfig {
 	copy.Namespace = "kube-system"
 
 	return copy
+}
+
+func (c *ClusterConfig) PrimaryAddressFamily() PrimaryAddressFamilyType {
+	if c != nil && c.Spec != nil && c.Spec.Network != nil && c.Spec.Network.PrimaryAddressFamily != PrimaryFamilyUnknown {
+		return c.Spec.Network.PrimaryAddressFamily
+	}
+	return c.Spec.API.DetectPrimaryAddressFamily()
 }

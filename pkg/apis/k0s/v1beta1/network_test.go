@@ -88,13 +88,13 @@ func (s *NetworkSuite) TestAddresses() {
 			n := DefaultNetwork()
 			n.DualStack.Enabled = true
 			n.DualStack.IPv6ServiceCIDR = "fd00::/108"
-			s.Equal(n.ServiceCIDR+","+n.DualStack.IPv6ServiceCIDR, n.BuildServiceCIDR("10.96.0.249"))
+			s.Equal(n.ServiceCIDR+","+n.DualStack.IPv6ServiceCIDR, n.BuildServiceCIDR(PrimaryFamilyIPv4))
 		})
 		s.Run("dual_stack_api_listens_on_ipv6", func() {
 			n := DefaultNetwork()
 			n.DualStack.Enabled = true
 			n.DualStack.IPv6ServiceCIDR = "fd00::/108"
-			s.Equal(n.DualStack.IPv6ServiceCIDR+","+n.ServiceCIDR, n.BuildServiceCIDR("fe80::cf8:3cff:fef2:c5ca"))
+			s.Equal(n.DualStack.IPv6ServiceCIDR+","+n.ServiceCIDR, n.BuildServiceCIDR(PrimaryFamilyIPv6))
 		})
 	})
 }
@@ -366,6 +366,20 @@ func (s *NetworkSuite) TestValidation() {
 
 		errors := n.Validate()
 		s.Nil(errors)
+	})
+
+	s.Run("invalid_address_family", func() {
+		n := DefaultNetwork()
+		for _, af := range []PrimaryAddressFamilyType{PrimaryFamilyUnknown, PrimaryFamilyIPv4, PrimaryFamilyIPv6} {
+			n.PrimaryAddressFamily = af
+			errors := n.Validate()
+			s.Nil(errors)
+		}
+		n.PrimaryAddressFamily = PrimaryAddressFamilyType("IPv5")
+		errors := n.Validate()
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], "Unsupported value")
+		}
 	})
 }
 
