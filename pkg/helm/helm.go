@@ -32,6 +32,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -47,6 +48,8 @@ import (
 // Commands run different helm command in the same way as CLI tool
 // This struct isn't thread-safe. Check on a per function basis.
 type Commands struct {
+	registryManager *ociRegistryManager
+
 	repoFile     string
 	helmCacheDir string
 	kubeConfig   string
@@ -71,9 +74,10 @@ var getters = getter.Providers{
 // NewCommands builds new Commands instance with default values
 func NewCommands(k0sVars *config.CfgVars) *Commands {
 	return &Commands{
-		repoFile:     k0sVars.HelmRepositoryConfig,
-		helmCacheDir: k0sVars.HelmRepositoryCache,
-		kubeConfig:   k0sVars.AdminKubeConfigPath,
+		repoFile:        k0sVars.HelmRepositoryConfig,
+		registryManager: newOCIRegistryManager(),
+		helmCacheDir:    k0sVars.HelmRepositoryCache,
+		kubeConfig:      k0sVars.AdminKubeConfigPath,
 	}
 }
 
@@ -105,6 +109,10 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 }
 
 func (hc *Commands) AddRepository(repoCfg v1beta1.Repository) error {
+	if err := hc.registryManager.AddRegistry(repoCfg); !errors.Is(err, errors.ErrUnsupported) {
+		return err
+	}
+
 	err := dir.Init(filepath.Dir(hc.repoFile), constant.DataDirMode)
 	if err != nil && !os.IsExist(err) {
 		return fmt.Errorf("can't add repository to %s: %w", hc.repoFile, err)
@@ -148,7 +156,7 @@ func (hc *Commands) AddRepository(repoCfg v1beta1.Repository) error {
 	return nil
 }
 
-func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string) error {
+func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string, registryClient *registry.Client) error {
 	if chart.Metadata.Dependencies == nil {
 		return nil
 	}
@@ -161,6 +169,7 @@ func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string) e
 			RepositoryConfig: hc.repoFile,
 			RepositoryCache:  hc.helmCacheDir,
 			Debug:            false,
+			RegistryClient:   registryClient,
 		}
 		if err := man.Update(); err != nil {
 			return err
@@ -169,7 +178,7 @@ func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string) e
 	return nil
 }
 
-func (hc *Commands) locateChart(name string, version string) (string, error) {
+func (hc *Commands) locateChart(name string, version string, registryClient *registry.Client) (string, error) {
 	name = strings.TrimSpace(name)
 
 	if _, err := os.Stat(name); err == nil {
@@ -186,9 +195,10 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 	dl := downloader.ChartDownloader{
 		Out:              os.Stdout,
 		Getters:          getters,
-		Options:          []getter.Option{},
+		Options:          []getter.Option{getter.WithRegistryClient(registryClient)},
 		RepositoryConfig: hc.repoFile,
 		RepositoryCache:  hc.helmCacheDir,
+		RegistryClient:   registryClient,
 	}
 
 	if err := dir.Init(hc.helmCacheDir, constant.DataDirMode); err != nil {
@@ -220,12 +230,18 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
+
+	cfg.RegistryClient, err = hc.registryManager.GetRegistryClient(chartName)
+	if err != nil {
+		return nil, fmt.Errorf("can't get registry client for chart `%s`: %w", chartName, err)
+	}
+
 	install := action.NewInstall(cfg)
 	install.CreateNamespace = true
 	install.WaitForJobs = true
 	install.Wait = true
 	install.Timeout = timeout
-	chartDir, err := hc.locateChart(chartName, version)
+	chartDir, err := hc.locateChart(chartName, version, cfg.RegistryClient)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +263,7 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 		return nil, fmt.Errorf("loadedChart with type `%s` is not installable", loadedChart.Metadata.Type)
 	}
 
-	if err := hc.downloadDependencies(loadedChart, chartDir); err != nil {
+	if err := hc.downloadDependencies(loadedChart, chartDir, cfg.RegistryClient); err != nil {
 		return nil, err
 	}
 
@@ -269,6 +285,12 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
+
+	cfg.RegistryClient, err = hc.registryManager.GetRegistryClient(chartName)
+	if err != nil {
+		return nil, fmt.Errorf("can't get registry client for chart `%s`: %w", chartName, err)
+	}
+
 	upgrade := action.NewUpgrade(cfg)
 	upgrade.Namespace = namespace
 	upgrade.Wait = true
@@ -277,7 +299,7 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	upgrade.Force = force
 	upgrade.Atomic = true
 	upgrade.Timeout = timeout
-	chartDir, err := hc.locateChart(chartName, version)
+	chartDir, err := hc.locateChart(chartName, version, cfg.RegistryClient)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +311,7 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 		return nil, fmt.Errorf("loadedChart with type `%s` is not installable", loadedChart.Metadata.Type)
 	}
 
-	if err := hc.downloadDependencies(loadedChart, chartDir); err != nil {
+	if err := hc.downloadDependencies(loadedChart, chartDir, cfg.RegistryClient); err != nil {
 		return nil, err
 	}
 

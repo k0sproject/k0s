@@ -22,16 +22,16 @@ It is possible to customize the timeout by using the `timeout' field.
 
 ### Repository configuration
 
-| Field    | Default value | Description                                                              |
-|----------|---------------|--------------------------------------------------------------------------|
-| name     | _(required)_  | The repository name                                                      |
-| url      | _(required)_  | The repository URL                                                       |
-| insecure | true          | Whether to skip TLS certificate checks when connecting to the repository |
-| caFile   | -             | CA bundle file to use when verifying HTTPS-enabled servers               |
-| certFile | -             | The TLS certificate file to use for HTTPS client authentication          |
-| keyfile  | -             | The TLS key file to use for HTTPS client authentication                  |
-| username | -             | Username for Basic HTTP authentication                                   |
-| password | -             | Password for Basic HTTP authentication                                   |
+| Field    | Default value | Description                                                                                       |
+|----------|---------------|---------------------------------------------------------------------------------------------------|
+| name     | _(required)_  | The repository name                                                                               |
+| url      | _(required)_  | The repository URL                                                                                |
+| insecure | true          | Whether to skip TLS certificate checks when connecting to the repository                          |
+| caFile   | -             | CA bundle file to use when verifying HTTPS-enabled servers                                        |
+| certFile | -             | The TLS certificate file to use for HTTPS client authentication (not supported by OCI registries) |
+| keyfile  | -             | The TLS key file to use for HTTPS client authentication (not supported by OCI registries)         |
+| username | -             | Username for Basic HTTP authentication                                                            |
+| password | -             | Password for Basic HTTP authentication                                                            |
 
 ### Chart configuration
 
@@ -64,6 +64,12 @@ spec:
         url: https://can-be-your-own-gitlab-ce-instance.org/api/v4/projects/PROJECTID/packages/helm/main
         username: access-token-name-as-username
         password: access-token-value-as-password
+      - name: oci-registry-with-private-ca
+        # OCI registry URL must not include any path elements
+        url: oci://registry-with-private-ca.com:8080
+        # Currently, only caFile is supported for TLS transport
+        # Setting certFile or keyFile will result in an error
+        caFile: /path/to/ca.crt
       charts:
       - name: prometheus-stack
         chartname: prometheus-community/prometheus
@@ -79,10 +85,20 @@ spec:
               enabled: false
         namespace: default
       # We don't need to specify the repo in the repositories section for OCI charts
+      # unless a custom TLS transport is needed
       - name: oci-chart
         chartname: oci://registry:8080/chart
         version: "0.0.1"
         order: 2
+        values: ""
+        namespace: default
+      # OCI charts that require a custom TLS transport must add a repository entry 
+      # pointing to TLS certificates on the controller node.
+      # In this case, chartname of the chart must include the same registry URL 
+      # previously defined in the repository URL.
+      - name: oci-chart-with-tls
+        chartname: oci://registry-with-private-ca.com:8080/chart
+        version: "0.0.1"
         values: ""
         namespace: default
       # Other way is to use local tgz file with chart
