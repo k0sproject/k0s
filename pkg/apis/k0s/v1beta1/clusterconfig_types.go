@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -75,65 +77,127 @@ type ClusterConfig struct {
 
 // StripDefaults returns a copy of the config where the default values a nilled out
 func (c *ClusterConfig) StripDefaults() *ClusterConfig {
-	copy := c.DeepCopy()
-	if reflect.DeepEqual(copy.Spec.API, DefaultAPISpec()) {
-		copy.Spec.API = nil
+	c = c.DeepCopy() // Clone and overwrite receiver to avoid side effects
+	if c == nil || c.Spec == nil {
+		return c
 	}
-	if reflect.DeepEqual(copy.Spec.ControllerManager, DefaultControllerManagerSpec()) {
-		copy.Spec.ControllerManager = nil
+	if reflect.DeepEqual(c.Spec.API, DefaultAPISpec()) {
+		c.Spec.API = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Scheduler, DefaultSchedulerSpec()) {
-		copy.Spec.Scheduler = nil
+	if reflect.DeepEqual(c.Spec.ControllerManager, DefaultControllerManagerSpec()) {
+		c.Spec.ControllerManager = nil
+	}
+	if reflect.DeepEqual(c.Spec.Scheduler, DefaultSchedulerSpec()) {
+		c.Spec.Scheduler = nil
 	}
 	if reflect.DeepEqual(c.Spec.Storage, DefaultStorageSpec()) {
-		copy.Spec.Storage = nil
+		c.Spec.Storage = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
-		copy.Spec.Network = nil
-	} else if copy.Spec.Network.NodeLocalLoadBalancing != nil &&
-		copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
-		reflect.DeepEqual(copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
-		copy.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
+	if reflect.DeepEqual(c.Spec.Network, DefaultNetwork()) {
+		c.Spec.Network = nil
+	} else if c.Spec.Network != nil &&
+		c.Spec.Network.NodeLocalLoadBalancing != nil &&
+		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
+		reflect.DeepEqual(c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
+		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Telemetry, DefaultClusterTelemetry()) {
-		copy.Spec.Telemetry = nil
+	if reflect.DeepEqual(c.Spec.Telemetry, DefaultClusterTelemetry()) {
+		c.Spec.Telemetry = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Images, DefaultClusterImages()) {
-		copy.Spec.Images = nil
+	if reflect.DeepEqual(c.Spec.Images, DefaultClusterImages()) {
+		c.Spec.Images = nil
 	} else {
-		stripDefaultImages(copy.Spec.Images, DefaultClusterImages())
+		stripDefaultImages(c.Spec.Images, DefaultClusterImages())
 	}
-	if reflect.DeepEqual(copy.Spec.Konnectivity, DefaultKonnectivitySpec()) {
-		copy.Spec.Konnectivity = nil
+	if reflect.DeepEqual(c.Spec.Konnectivity, DefaultKonnectivitySpec()) {
+		c.Spec.Konnectivity = nil
 	}
-	return copy
+	return c
 }
 
 func stripDefaultImages(cfgImages, defaultImages *ClusterImages) {
-	cfgVal := reflect.ValueOf(cfgImages).Elem()
-	defaultVal := reflect.ValueOf(defaultImages).Elem()
-	stripDefaults(cfgVal, defaultVal)
+	if cfgImages != nil && defaultImages != nil {
+		cfgVal := reflect.ValueOf(cfgImages).Elem()
+		defaultVal := reflect.ValueOf(defaultImages).Elem()
+		stripDefaults(cfgVal, defaultVal)
+	}
 }
 
-func stripDefaults(cfgVal, defaultVal reflect.Value) {
-	for i := range cfgVal.NumField() {
-		f1 := cfgVal.Field(i)
-		f2 := defaultVal.Field(i)
-		switch f1.Kind() {
+// Zeroes out any field in actualValue whose value equals the corresponding
+// field in defaultValue, but only if that field's JSON tag contains
+// "omitempty". Both actualValue and defaultValue must be wrapping the same
+// struct type, actualValue must be addressable so its fields can be set, and
+// defaultValue is never modified. Unexported fields and fields without
+// "omitempty" (including json:\"-\") are left untouched.
+//
+// This logic will be applied recursively, i.e. stripDefaults will be called on
+// nested structs (or pointers to them). All other types will be handled at the
+// top level only.
+func stripDefaults(actualValue, defaultValue reflect.Value) {
+	typ := actualValue.Type()
+	for i := range typ.NumField() {
+		field := typ.Field(i)
+
+		switch field.Type.Kind() {
 		case reflect.Pointer:
-			if f1.Elem().Equal(f2.Elem()) {
-				f1.Set(reflect.Zero(f1.Type()))
-			} else {
-				stripDefaults(f1.Elem(), f2.Elem())
+			// Skip fields to be ignored.
+			if !field.IsExported() || !canStrip(field) {
+				continue
 			}
+
+			actualValue, defaultValue := actualValue.Field(i), defaultValue.Field(i)
+
+			// Skip over nil pointers.
+			if actualValue.IsNil() || defaultValue.IsNil() {
+				continue
+			}
+
+			// Dereference pointers.
+			actualElem, defaultElem := actualValue.Elem(), defaultValue.Elem()
+
+			if reflect.DeepEqual(actualElem.Interface(), defaultElem.Interface()) {
+				// Underlying values are equal, nil out pointer.
+				actualValue.SetZero()
+			} else if actualElem.Kind() == reflect.Struct {
+				// Underlying values are different, recurse into the pointed struct.
+				stripDefaults(actualElem, defaultElem)
+				// Nil out pointer if only the zero value remains.
+				if actualElem.IsZero() {
+					actualValue.SetZero()
+				}
+			}
+
 		case reflect.Struct:
-			stripDefaults(f1, f2)
+			// Recurse into structs. The omitempty tag is meaningless for them.
+			if field.IsExported() {
+				stripDefaults(actualValue.Field(i), defaultValue.Field(i))
+			}
+
 		default:
-			if f1.Equal(f2) {
-				f1.Set(reflect.Zero(f1.Type()))
+			// Skip fields to be ignored.
+			if !field.IsExported() || !canStrip(field) {
+				continue
+			}
+
+			actualValue, defaultValue := actualValue.Field(i), defaultValue.Field(i)
+			if reflect.DeepEqual(actualValue.Interface(), defaultValue.Interface()) {
+				actualValue.SetZero()
 			}
 		}
 	}
+}
+
+// Indicates whether a struct field is eligible for stripping defaults: it
+// returns true if the JSON tag includes "omitempty" and the field is not
+// explicitly ignored. Fields tagged `json:"-"` (or `json:"-,omitempty"`) are
+// never stripped.
+func canStrip(f reflect.StructField) bool {
+	if name, tags, hasTags := strings.Cut(f.Tag.Get("json"), ","); hasTags && name != "-" {
+		tags := strings.Split(tags, ",")
+		return slices.Contains(tags, "omitempty")
+	}
+
+	return false
 }
 
 // InstallSpec defines the required fields for the `k0s install` command
