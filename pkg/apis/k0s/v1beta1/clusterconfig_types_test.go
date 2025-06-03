@@ -324,7 +324,17 @@ spec:
 	}
 }
 
-func TestStripDefaults(t *testing.T) {
+func TestClusterConfig_StripDefaults_Zero(t *testing.T) {
+	underTest := ClusterConfig{}
+	assert.Equal(t, &underTest, underTest.StripDefaults())
+}
+
+func TestClusterConfig_StripDefaults_ZeroSpec(t *testing.T) {
+	underTest := ClusterConfig{Spec: &ClusterSpec{}}
+	assert.Equal(t, &underTest, underTest.StripDefaults())
+}
+
+func TestClusterConfig_StripDefaults_DefaultConfig(t *testing.T) {
 	defaultConfig := DefaultClusterConfig()
 	stripped := defaultConfig.StripDefaults()
 	a := assert.New(t)
@@ -336,6 +346,70 @@ func TestStripDefaults(t *testing.T) {
 	a.Nil(stripped.Spec.Telemetry)
 	a.Nil(stripped.Spec.Images)
 	a.Nil(stripped.Spec.Konnectivity)
+}
+
+func TestClusterConfig_StripDefaults_Images(t *testing.T) {
+	//nolint:dupword // it's YAML data
+	yaml := `
+spec:
+   images:
+     calico:
+       cni:
+         image: registry.acme.corp/k0sproject/cni
+       kubecontrollers:
+         image: registry.acme.corp/k0sproject/kubecontrollers
+       node:
+         image: registry.acme.corp/k0sproject/node
+     coredns:
+       image: registry.acme.corp/k0sproject/coredns
+     konnectivity:
+       image: registry.acme.corp/k0sproject/konnectivity
+     kubeproxy:
+       image: registry.acme.corp/k0sproject/kubeproxy
+     kuberouter:
+       cni:
+         image: registry.acme.corp/k0sproject/cni
+       cniInstaller:
+         image: registry.acme.corp/k0sproject/cniinstaller
+     metricsserver:
+       image: registry.acme.corp/k0sproject/metricsserver
+     pause:
+       image: registry.acme.corp/k0sproject/pause
+     pushgateway:
+       image: registry.acme.corp/k0sproject/pushgateway
+   network:
+     nodeLocalLoadBalancing:
+       envoyProxy:
+         image:
+           image: registry.acme.corp/k0sproject/image
+`
+
+	input, err := ConfigFromBytes([]byte(yaml))
+	require.NoError(t, err)
+
+	stripped := input.StripDefaults()
+	assert.NotEmpty(t, stripped.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Konnectivity.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.PushGateway.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.MetricsServer.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.KubeProxy.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.CoreDNS.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Pause.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Calico.CNI.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Calico.Node.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Calico.KubeControllers.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.KubeRouter.CNI.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.KubeRouter.CNIInstaller.Version)
+}
+
+func TestStrippedClusterWideDefaultConfig(t *testing.T) {
+	underTest := DefaultClusterConfig().GetClusterWideConfig().StripDefaults()
+	if assert.NotNil(t, underTest.Spec) {
+		// The network and extensions fields aren't properly handled at the moment.
+		underTest.Spec.Network = nil
+		underTest.Spec.Extensions = nil
+		assert.Zero(t, *underTest.Spec, "%+v", underTest.Spec)
+	}
 }
 
 func TestDefaultClusterConfigYaml(t *testing.T) {
