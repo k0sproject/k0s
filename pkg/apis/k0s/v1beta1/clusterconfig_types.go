@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -121,25 +123,81 @@ func stripDefaultImages(cfgImages, defaultImages *ClusterImages) {
 	}
 }
 
-func stripDefaults(cfgVal, defaultVal reflect.Value) {
-	for i := range cfgVal.NumField() {
-		f1 := cfgVal.Field(i)
-		f2 := defaultVal.Field(i)
-		switch f1.Kind() {
+// Zeroes out any field in actualValue whose value equals the corresponding
+// field in defaultValue, but only if that field's JSON tag contains
+// "omitempty". Both actualValue and defaultValue must be wrapping the same
+// struct type, actualValue must be addressable so its fields can be set, and
+// defaultValue is never modified. Unexported fields and fields without
+// "omitempty" (including json:\"-\") are left untouched.
+//
+// This logic will be applied recursively, i.e. stripDefaults will be called on
+// nested structs (or pointers to them). All other types will be handled at the
+// top level only.
+func stripDefaults(actualValue, defaultValue reflect.Value) {
+	typ := actualValue.Type()
+	for i := range typ.NumField() {
+		field := typ.Field(i)
+
+		switch field.Type.Kind() {
 		case reflect.Pointer:
-			if f1.Elem().Equal(f2.Elem()) {
-				f1.Set(reflect.Zero(f1.Type()))
-			} else {
-				stripDefaults(f1.Elem(), f2.Elem())
+			// Skip fields to be ignored.
+			if !field.IsExported() || !canStrip(field) {
+				continue
 			}
+
+			actualValue, defaultValue := actualValue.Field(i), defaultValue.Field(i)
+
+			// Skip over nil pointers.
+			if actualValue.IsNil() || defaultValue.IsNil() {
+				continue
+			}
+
+			// Dereference pointers.
+			actualElem, defaultElem := actualValue.Elem(), defaultValue.Elem()
+
+			if reflect.DeepEqual(actualElem.Interface(), defaultElem.Interface()) {
+				// Underlying values are equal, nil out pointer.
+				actualValue.SetZero()
+			} else if actualElem.Kind() == reflect.Struct {
+				// Underlying values are different, recurse into the pointed struct.
+				stripDefaults(actualElem, defaultElem)
+				// Nil out pointer if only the zero value remains.
+				if actualElem.IsZero() {
+					actualValue.SetZero()
+				}
+			}
+
 		case reflect.Struct:
-			stripDefaults(f1, f2)
+			// Recurse into structs. The omitempty tag is meaningless for them.
+			if field.IsExported() {
+				stripDefaults(actualValue.Field(i), defaultValue.Field(i))
+			}
+
 		default:
-			if f1.Equal(f2) {
-				f1.Set(reflect.Zero(f1.Type()))
+			// Skip fields to be ignored.
+			if !field.IsExported() || !canStrip(field) {
+				continue
+			}
+
+			actualValue, defaultValue := actualValue.Field(i), defaultValue.Field(i)
+			if reflect.DeepEqual(actualValue.Interface(), defaultValue.Interface()) {
+				actualValue.SetZero()
 			}
 		}
 	}
+}
+
+// Indicates whether a struct field is eligible for stripping defaults: it
+// returns true if the JSON tag includes "omitempty" and the field is not
+// explicitly ignored. Fields tagged `json:"-"` (or `json:"-,omitempty"`) are
+// never stripped.
+func canStrip(f reflect.StructField) bool {
+	if name, tags, hasTags := strings.Cut(f.Tag.Get("json"), ","); hasTags && name != "-" {
+		tags := strings.Split(tags, ",")
+		return slices.Contains(tags, "omitempty")
+	}
+
+	return false
 }
 
 // InstallSpec defines the required fields for the `k0s install` command
