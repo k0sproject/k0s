@@ -1,7 +1,7 @@
 name: compose-cluster
 
 x-k0s-controller: &k0s-controller
-  image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+  image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1
   networks:
     - k0s-net
   tmpfs:
@@ -27,7 +27,7 @@ x-k0s-controller: &k0s-controller
   restart: on-failure
 
 x-k0s-worker: &k0s-worker
-  image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+  image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1
   networks:
     - k0s-net
   depends_on:
