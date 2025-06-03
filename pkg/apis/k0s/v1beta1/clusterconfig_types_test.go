@@ -330,7 +330,11 @@ func TestStripDefaults(t *testing.T) {
 	a.Nil(stripped.Spec.API)
 	a.Nil(stripped.Spec.ControllerManager)
 	a.Nil(stripped.Spec.Scheduler)
+	a.Nil(stripped.Spec.Storage)
 	a.Nil(stripped.Spec.Network)
+	a.Nil(stripped.Spec.Telemetry)
+	a.Nil(stripped.Spec.Images)
+	a.Nil(stripped.Spec.Konnectivity)
 }
 
 func TestDefaultClusterConfigYaml(t *testing.T) {
