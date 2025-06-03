@@ -238,107 +238,104 @@ $ k0sctl apply
 ⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
-k0sctl  Copyright 2023, k0sctl authors.
-Anonymized telemetry of usage will be sent to the authors.
-By continuing to use k0sctl you agree to these terms:
-https://k0sproject.io/licenses/eula
-level=info msg="==> Running phase: Connect to hosts"
-level=info msg="[ssh] worker-2.k0s.lab:22: connected"
-level=info msg="[ssh] controller-2.k0s.lab:22: connected"
-level=info msg="[ssh] worker-1.k0s.lab:22: connected"
-level=info msg="[ssh] worker-0.k0s.lab:22: connected"
-level=info msg="[ssh] controller-0.k0s.lab:22: connected"
-level=info msg="[ssh] controller-1.k0s.lab:22: connected"
-level=info msg="==> Running phase: Detect host operating systems"
-level=info msg="[ssh] worker-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] controller-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] controller-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] controller-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] worker-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] worker-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="==> Running phase: Acquire exclusive host lock"
-level=info msg="==> Running phase: Prepare hosts"
-level=info msg="==> Running phase: Gather host facts"
-level=info msg="[ssh] worker-2.k0s.lab:22: using worker-2.k0s.lab as hostname"
-level=info msg="[ssh] controller-0.k0s.lab:22: using controller-0.k0s.lab as hostname"
-level=info msg="[ssh] controller-2.k0s.lab:22: using controller-2.k0s.lab as hostname"
-level=info msg="[ssh] controller-1.k0s.lab:22: using controller-1.k0s.lab as hostname"
-level=info msg="[ssh] worker-1.k0s.lab:22: using worker-1.k0s.lab as hostname"
-level=info msg="[ssh] worker-0.k0s.lab:22: using worker-0.k0s.lab as hostname"
-level=info msg="[ssh] worker-2.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] controller-0.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] controller-2.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] controller-1.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] worker-1.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] worker-0.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] worker-2.k0s.lab:22: discovered 192.168.122.210 as private address"
-level=info msg="[ssh] controller-0.k0s.lab:22: discovered 192.168.122.37 as private address"
-level=info msg="[ssh] controller-2.k0s.lab:22: discovered 192.168.122.87 as private address"
-level=info msg="[ssh] controller-1.k0s.lab:22: discovered 192.168.122.185 as private address"
-level=info msg="[ssh] worker-1.k0s.lab:22: discovered 192.168.122.81 as private address"
-level=info msg="[ssh] worker-0.k0s.lab:22: discovered 192.168.122.219 as private address"
-level=info msg="==> Running phase: Validate hosts"
-level=info msg="==> Running phase: Validate facts"
-level=info msg="==> Running phase: Download k0s binaries to local host"
-level=info msg="==> Running phase: Upload k0s binaries to hosts"
-level=info msg="[ssh] controller-0.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] controller-2.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] worker-0.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] controller-1.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] worker-1.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] worker-2.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="==> Running phase: Install k0s binaries on hosts"
-level=info msg="[ssh] controller-0.k0s.lab:22: validating configuration"
-level=info msg="[ssh] controller-1.k0s.lab:22: validating configuration"
-level=info msg="[ssh] controller-2.k0s.lab:22: validating configuration"
-level=info msg="==> Running phase: Configure k0s"
-level=info msg="[ssh] controller-0.k0s.lab:22: installing new configuration"
-level=info msg="[ssh] controller-2.k0s.lab:22: installing new configuration"
-level=info msg="[ssh] controller-1.k0s.lab:22: installing new configuration"
-level=info msg="==> Running phase: Initialize the k0s cluster"
-level=info msg="[ssh] controller-0.k0s.lab:22: installing k0s controller"
-level=info msg="[ssh] controller-0.k0s.lab:22: waiting for the k0s service to start"
-level=info msg="[ssh] controller-0.k0s.lab:22: waiting for kubernetes api to respond"
-level=info msg="==> Running phase: Install controllers"
-level=info msg="[ssh] controller-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] controller-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating token"
-level=info msg="[ssh] controller-1.k0s.lab:22: writing join token"
-level=info msg="[ssh] controller-1.k0s.lab:22: installing k0s controller"
-level=info msg="[ssh] controller-1.k0s.lab:22: starting service"
-level=info msg="[ssh] controller-1.k0s.lab:22: waiting for the k0s service to start"
-level=info msg="[ssh] controller-1.k0s.lab:22: waiting for kubernetes api to respond"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating token"
-level=info msg="[ssh] controller-2.k0s.lab:22: writing join token"
-level=info msg="[ssh] controller-2.k0s.lab:22: installing k0s controller"
-level=info msg="[ssh] controller-2.k0s.lab:22: starting service"
-level=info msg="[ssh] controller-2.k0s.lab:22: waiting for the k0s service to start"
-level=info msg="[ssh] controller-2.k0s.lab:22: waiting for kubernetes api to respond"
-level=info msg="==> Running phase: Install workers"
-level=info msg="[ssh] worker-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] worker-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] worker-0.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating a join token for worker 1"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating a join token for worker 2"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating a join token for worker 3"
-level=info msg="[ssh] worker-2.k0s.lab:22: writing join token"
-level=info msg="[ssh] worker-0.k0s.lab:22: writing join token"
-level=info msg="[ssh] worker-1.k0s.lab:22: writing join token"
-level=info msg="[ssh] worker-2.k0s.lab:22: installing k0s worker"
-level=info msg="[ssh] worker-1.k0s.lab:22: installing k0s worker"
-level=info msg="[ssh] worker-0.k0s.lab:22: installing k0s worker"
-level=info msg="[ssh] worker-2.k0s.lab:22: starting service"
-level=info msg="[ssh] worker-1.k0s.lab:22: starting service"
-level=info msg="[ssh] worker-0.k0s.lab:22: starting service"
-level=info msg="[ssh] worker-2.k0s.lab:22: waiting for node to become ready"
-level=info msg="[ssh] worker-0.k0s.lab:22: waiting for node to become ready"
-level=info msg="[ssh] worker-1.k0s.lab:22: waiting for node to become ready"
-level=info msg="==> Running phase: Release exclusive host lock"
-level=info msg="==> Running phase: Disconnect from hosts"
-level=info msg="==> Finished in 2m20s"
-level=info msg="k0s cluster version v{{{ extra.k8s_version }}}+k0s.0  is now installed"
-level=info msg="Tip: To access the cluster you can now fetch the admin kubeconfig using:"
-level=info msg="     k0sctl kubeconfig"
+k0sctl v0.21.0 Copyright 2023, k0sctl authors.
+INFO ==> Running phase: Connect to hosts
+INFO [ssh] worker-2.k0s.lab:22: connected
+INFO [ssh] controller-2.k0s.lab:22: connected
+INFO [ssh] worker-1.k0s.lab:22: connected
+INFO [ssh] worker-0.k0s.lab:22: connected
+INFO [ssh] controller-0.k0s.lab:22: connected
+INFO [ssh] controller-1.k0s.lab:22: connected
+INFO ==> Running phase: Detect host operating systems
+INFO [ssh] worker-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] controller-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] controller-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] controller-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] worker-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] worker-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO ==> Running phase: Acquire exclusive host lock
+INFO ==> Running phase: Prepare hosts
+INFO ==> Running phase: Gather host facts
+INFO [ssh] worker-2.k0s.lab:22: using worker-2.k0s.lab as hostname
+INFO [ssh] controller-0.k0s.lab:22: using controller-0.k0s.lab as hostname
+INFO [ssh] controller-2.k0s.lab:22: using controller-2.k0s.lab as hostname
+INFO [ssh] controller-1.k0s.lab:22: using controller-1.k0s.lab as hostname
+INFO [ssh] worker-1.k0s.lab:22: using worker-1.k0s.lab as hostname
+INFO [ssh] worker-0.k0s.lab:22: using worker-0.k0s.lab as hostname
+INFO [ssh] worker-2.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] controller-0.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] controller-2.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] controller-1.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] worker-1.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] worker-0.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] worker-2.k0s.lab:22: discovered 192.168.122.210 as private address
+INFO [ssh] controller-0.k0s.lab:22: discovered 192.168.122.37 as private address
+INFO [ssh] controller-2.k0s.lab:22: discovered 192.168.122.87 as private address
+INFO [ssh] controller-1.k0s.lab:22: discovered 192.168.122.185 as private address
+INFO [ssh] worker-1.k0s.lab:22: discovered 192.168.122.81 as private address
+INFO [ssh] worker-0.k0s.lab:22: discovered 192.168.122.219 as private address
+INFO ==> Running phase: Validate hosts
+INFO ==> Running phase: Validate facts
+INFO ==> Running phase: Download k0s binaries to local host
+INFO ==> Running phase: Upload k0s binaries to hosts
+INFO [ssh] controller-0.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] controller-2.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] worker-0.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] controller-1.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] worker-1.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] worker-2.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO ==> Running phase: Install k0s binaries on hosts
+INFO [ssh] controller-0.k0s.lab:22: validating configuration
+INFO [ssh] controller-1.k0s.lab:22: validating configuration
+INFO [ssh] controller-2.k0s.lab:22: validating configuration
+INFO ==> Running phase: Configure k0s
+INFO [ssh] controller-0.k0s.lab:22: installing new configuration
+INFO [ssh] controller-2.k0s.lab:22: installing new configuration
+INFO [ssh] controller-1.k0s.lab:22: installing new configuration
+INFO ==> Running phase: Initialize the k0s cluster
+INFO [ssh] controller-0.k0s.lab:22: installing k0s controller
+INFO [ssh] controller-0.k0s.lab:22: waiting for the k0s service to start
+INFO [ssh] controller-0.k0s.lab:22: waiting for kubernetes api to respond
+INFO ==> Running phase: Install controllers
+INFO [ssh] controller-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] controller-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] controller-0.k0s.lab:22: generating token
+INFO [ssh] controller-1.k0s.lab:22: writing join token
+INFO [ssh] controller-1.k0s.lab:22: installing k0s controller
+INFO [ssh] controller-1.k0s.lab:22: starting service
+INFO [ssh] controller-1.k0s.lab:22: waiting for the k0s service to start
+INFO [ssh] controller-1.k0s.lab:22: waiting for kubernetes api to respond
+INFO [ssh] controller-0.k0s.lab:22: generating token
+INFO [ssh] controller-2.k0s.lab:22: writing join token
+INFO [ssh] controller-2.k0s.lab:22: installing k0s controller
+INFO [ssh] controller-2.k0s.lab:22: starting service
+INFO [ssh] controller-2.k0s.lab:22: waiting for the k0s service to start
+INFO [ssh] controller-2.k0s.lab:22: waiting for kubernetes api to respond
+INFO ==> Running phase: Install workers
+INFO [ssh] worker-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] worker-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] worker-0.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] controller-0.k0s.lab:22: generating a join token for worker 1
+INFO [ssh] controller-0.k0s.lab:22: generating a join token for worker 2
+INFO [ssh] controller-0.k0s.lab:22: generating a join token for worker 3
+INFO [ssh] worker-2.k0s.lab:22: writing join token
+INFO [ssh] worker-0.k0s.lab:22: writing join token
+INFO [ssh] worker-1.k0s.lab:22: writing join token
+INFO [ssh] worker-2.k0s.lab:22: installing k0s worker
+INFO [ssh] worker-1.k0s.lab:22: installing k0s worker
+INFO [ssh] worker-0.k0s.lab:22: installing k0s worker
+INFO [ssh] worker-2.k0s.lab:22: starting service
+INFO [ssh] worker-1.k0s.lab:22: starting service
+INFO [ssh] worker-0.k0s.lab:22: starting service
+INFO [ssh] worker-2.k0s.lab:22: waiting for node to become ready
+INFO [ssh] worker-0.k0s.lab:22: waiting for node to become ready
+INFO [ssh] worker-1.k0s.lab:22: waiting for node to become ready
+INFO ==> Running phase: Release exclusive host lock
+INFO ==> Running phase: Disconnect from hosts
+INFO ==> Finished in 2m20s
+INFO k0s cluster version v{{{ extra.k8s_version }}}+k0s.0  is now installed
+INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
+INFO      k0sctl kubeconfig
 ```
 
 The cluster with the two nodes should be available by now. Setup the kubeconfig

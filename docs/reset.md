@@ -67,10 +67,7 @@ K0sctl can be used to connect and reset all cluster nodes in a single command.
 
     ```console
     $ k0sctl reset --config k0sctl.yaml
-    k0sctl v0.17.4 Copyright 2023, k0sctl authors.
-    Anonymized telemetry of usage will be sent to the authors.
-    By continuing to use k0sctl you agree to these terms:
-    https://k0sproject.io/licenses/eula
+    k0sctl v0.21.0 Copyright 2023, k0sctl authors.
     ? Going to reset all of the hosts, which will destroy all configuration and data, Are you sure? Yes
     INFO ==> Running phase: Connect to hosts
     INFO [ssh] 13.53.43.63:22: connected

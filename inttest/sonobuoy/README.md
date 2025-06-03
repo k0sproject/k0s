@@ -72,18 +72,15 @@ k0sctl apply -c k0sctl.yaml
 
 Example output:
 
-```shell
-➜ k0sctl apply -c k0sctl.yaml
+```console
+$ k0sctl apply -c k0sctl.yaml
 
 ⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
 ⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███
 ⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
-k0sctl 0.13.2 Copyright 2021, k0sctl authors.
-Anonymized telemetry of usage will be sent to the authors.
-By continuing to use k0sctl you agree to these terms:
-https://k0sproject.io/licenses/eula
+k0sctl v0.21.0 Copyright 2023, k0sctl authors.
 INFO ==> Running phase: Connect to hosts
 INFO [ssh] 3.250.52.147:22: connected
 INFO [ssh] 54.216.71.108:22: connected

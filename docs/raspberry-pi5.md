@@ -246,8 +246,6 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
       ⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
       k0sctl v0.21.0 Copyright 2023, k0sctl authors.
-      By continuing to use k0sctl you agree to these terms:
-      https://k0sproject.io/licenses/eula
       INFO ==> Running phase: Set k0s version
       INFO Looking up latest stable k0s version
       INFO Using k0s version v{{{ extra.k8s_version }}}+k0s.0
