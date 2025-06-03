@@ -13,13 +13,13 @@ registry. For simplicity, the examples given here use Docker Hub (GitHub
 requires separate authentication, which is not covered here). The image names
 are as follows:
 
-- `docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`
-- `ghcr.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`
+- `docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1`
+- `ghcr.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1`
 
 **Note:** Due to Docker's tag validation scheme, `-` is used as the k0s version
 separator instead of the usual `+`. For example, k0s version
-`v{{{extra.k8s_version}}}+k0s.0` is tagged as
-`docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`.
+`v{{{extra.k8s_version}}}+k0s.1` is tagged as
+`docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1`.
 
 ## Start k0s
 
@@ -35,7 +35,7 @@ docker run -d --name k0s-controller --hostname k0s-controller \
   --tmpfs /run `# this is where k0s stores runtime data` \
   --privileged `# this is the easiest way to enable container-in-container workloads` \
   -p 6443:6443 `# publish the Kubernetes API server port` \
-  docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+  docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1
 ```
 
 Explanation of command line arguments:
@@ -54,7 +54,7 @@ Explanation of command line arguments:
   privileges.
 - `-p 6443:6443` exposes the container's Kubernetes API server port 6443 to the
   host, allowing you to interact with the cluster externally.
-- `docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0` is the name of the
+- `docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.1` is the name of the
   k0s image to run.
 
 By default, the k0s image starts a k0s controller with worker components enabled
@@ -74,7 +74,7 @@ docker run -d --name k0s-controller --hostname k0s-controller \
   --tmpfs /run `# this is where k0s stores runtime data` \
   --tmpfs /tmp `# allow writing temporary files` \
   -p 6443:6443 `# publish the Kubernetes API server port` \
-  docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+  docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1 \
   k0s controller
 ```
 
@@ -100,7 +100,7 @@ application containers to separate workers.
      -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
      --tmpfs /run `# this is where k0s stores runtime data` \
      --privileged `# this is the easiest way to enable container-in-container workloads` \
-     docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+     docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1 \
      k0s worker $token
    ```
 
@@ -129,7 +129,7 @@ application containers to separate workers.
      --cap-add net_admin \
      --cap-add sys_ptrace \
      --cap-add sys_resource \
-     docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+     docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1 \
      k0s worker "$token"
    ```
 
