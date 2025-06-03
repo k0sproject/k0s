@@ -77,6 +77,9 @@ type ClusterConfig struct {
 // StripDefaults returns a copy of the config where the default values a nilled out
 func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	c = c.DeepCopy() // Clone and overwrite receiver to avoid side effects
+	if c == nil || c.Spec == nil {
+		return c
+	}
 	if reflect.DeepEqual(c.Spec.API, DefaultAPISpec()) {
 		c.Spec.API = nil
 	}
@@ -91,7 +94,8 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	}
 	if reflect.DeepEqual(c.Spec.Network, DefaultNetwork()) {
 		c.Spec.Network = nil
-	} else if c.Spec.Network.NodeLocalLoadBalancing != nil &&
+	} else if c.Spec.Network != nil &&
+		c.Spec.Network.NodeLocalLoadBalancing != nil &&
 		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
 		reflect.DeepEqual(c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
 		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
@@ -111,9 +115,11 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 }
 
 func stripDefaultImages(cfgImages, defaultImages *ClusterImages) {
-	cfgVal := reflect.ValueOf(cfgImages).Elem()
-	defaultVal := reflect.ValueOf(defaultImages).Elem()
-	stripDefaults(cfgVal, defaultVal)
+	if cfgImages != nil && defaultImages != nil {
+		cfgVal := reflect.ValueOf(cfgImages).Elem()
+		defaultVal := reflect.ValueOf(defaultImages).Elem()
+		stripDefaults(cfgVal, defaultVal)
+	}
 }
 
 func stripDefaults(cfgVal, defaultVal reflect.Value) {

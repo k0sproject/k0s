@@ -323,7 +323,17 @@ spec:
 	}
 }
 
-func TestStripDefaults(t *testing.T) {
+func TestClusterConfig_StripDefaults_Zero(t *testing.T) {
+	underTest := ClusterConfig{}
+	assert.Equal(t, &underTest, underTest.StripDefaults())
+}
+
+func TestClusterConfig_StripDefaults_ZeroSpec(t *testing.T) {
+	underTest := ClusterConfig{Spec: &ClusterSpec{}}
+	assert.Equal(t, &underTest, underTest.StripDefaults())
+}
+
+func TestClusterConfig_StripDefaults_DefaultConfig(t *testing.T) {
 	defaultConfig := DefaultClusterConfig()
 	stripped := defaultConfig.StripDefaults()
 	a := assert.New(t)
