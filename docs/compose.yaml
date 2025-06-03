@@ -1,6 +1,6 @@
 services:
   k0s-controller:
-    image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+    image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.1
     container_name: k0s-controller
     hostname: k0s-controller
     network_mode: bridge # other modes are unsupported
