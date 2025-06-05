@@ -27,10 +27,17 @@ jobs:
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
 
-          & wsl --update
+          Write-Host "Updating to WSL 2 ..."
           & wsl --set-default-version 2
-          & wsl --install Ubuntu
-          & wsl --set-default Ubuntu
+          & wsl --update
+
+          Write-Host "Downloading Ubuntu WSL ..."
+          Invoke-WebRequest -Uri https://releases.ubuntu.com/noble/ubuntu-24.04.2-wsl-amd64.wsl -OutFile ubuntu.wsl
+          Write-Host "Importing Ubuntu WSL ..."
+          New-Item -ItemType Directory -Path .\ubuntu | Out-Null
+          & wsl --import Ubuntu .\ubuntu .\ubuntu.wsl
+          Write-Host "Launching WSL ..."
+          & wsl -l
 
           # https://github.com/microsoft/WSL/issues/10138#issuecomment-2380431569
           @'
