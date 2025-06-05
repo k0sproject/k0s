@@ -487,6 +487,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			leaderElector,
 			adminClientFactory,
 			net.DefaultResolver,
+			nodeConfig.PrimaryAddressFamily(),
 		))
 	}
 
@@ -587,7 +588,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			LogLevel:              c.LogLevels.KubeControllerManager,
 			K0sVars:               c.K0sVars,
 			DisableLeaderElection: singleController,
-			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.API.APIAddress()),
+			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.PrimaryAddressFamily()),
 			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
 	}

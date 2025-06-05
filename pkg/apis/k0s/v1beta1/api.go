@@ -101,6 +101,19 @@ func (a *APISpec) APIAddressURL() string {
 	return a.getExternalURIForPort(a.Port)
 }
 
+// DetectPrimaryAddressFamily tries to detect the primary address of the cluster
+// based on the address family of ExternalAddress. If this isn't set it will try
+// to detect it based on the address family of Address.
+// If the address used to detect it, isn't an IP address but a hostname or if
+// both are unset, it will default to IPv4
+func (a *APISpec) DetectPrimaryAddressFamily() PrimaryAddressFamilyType {
+	addr := a.APIAddress()
+	if ip := net.ParseIP(addr); ip != nil && ip.To4() == nil {
+		return PrimaryFamilyIPv6
+	}
+	return PrimaryFamilyIPv4
+}
+
 // K0sControlPlaneAPIAddress returns the controller join APIs address
 func (a *APISpec) K0sControlPlaneAPIAddress() string {
 	return a.getExternalURIForPort(a.K0sAPIPort)
