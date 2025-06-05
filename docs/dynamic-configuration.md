@@ -52,6 +52,7 @@ As with any Kubernetes cluster there are certain things that just cannot be chan
 - `network.serviceCIDR`
 - `network.provider`
 - `network.controlPlaneLoadBalancing`
+- `network.primaryAddressFamily`
 
 During the manual installation of control plane nodes with `k0s install`, all these
 non-changeable options must be defined in the configuration file. This is necessary
