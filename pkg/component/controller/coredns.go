@@ -163,6 +163,13 @@ spec:
                 operator: In
                 values: ['kube-dns']
       {{- end }}
+      topologySpreadConstraints:
+      - topologyKey: topology.kubernetes.io/zone
+        maxSkew: 1
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            k8s-app: kube-dns
       containers:
       - name: coredns
         image: {{ .Image }}
