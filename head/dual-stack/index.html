@@ -1195,6 +1195,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#specifying-the-default-ip-family" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specifying the default IP family
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#custom-cni-providers" class="md-nav__link">
     <span class="md-ellipsis">
       Custom CNI providers
@@ -2299,6 +2308,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#specifying-the-default-ip-family" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specifying the default IP family
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#custom-cni-providers" class="md-nav__link">
     <span class="md-ellipsis">
       Custom CNI providers
@@ -2367,6 +2385,21 @@ the following example configuration:</p>
 <span class="w">      </span><span class="nt">IPv6podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd00::/108</span>
 <span class="w">      </span><span class="nt">IPv6serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd01::/108</span>
 </code></pre></div>
+<h2 id="specifying-the-default-ip-family">Specifying the default IP family<a class="headerlink" href="#specifying-the-default-ip-family" title="Permanent link">#</a></h2>
+<p>In Kubernetes dual stack clusters, by default all the services are single stack,
+including <code>kubernetes.default.svc</code>, which is used to communicate with the kube-servers.</p>
+<p>This is specially importantwhen specifying explicitly <code>spec.api.externalAddress</code> or
+<code>spec.api.address</code>.</p>
+<p>To explicitly define the family which will be used by default use the following
+configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># primaryAddressFamily is optional</span>
+<span class="w">    </span><span class="nt">priamryAddressFamily</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;IPv4|IPv6&gt;</span>
+</code></pre></div>
+<p>If not defined explicitly, k0s will determine it based on <code>spec.api.externalAddress</code>,
+if this field is not defined, k0s will use <code>spec.api.address</code>. If the field used is
+a hostname or both are empty, k0s will use IPv4.</p>
 <h2 id="custom-cni-providers">Custom CNI providers<a class="headerlink" href="#custom-cni-providers" title="Permanent link">#</a></h2>
 <p>While the dual-stack configuration section configures all components managed by
 k0s for dual-stack operation, the custom CNI provider must also be configured

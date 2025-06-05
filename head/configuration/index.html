@@ -2822,6 +2822,10 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <td>Network CIDR to use for cluster VIP services. Defaults to <code>10.96.0.0/12</code>.</td>
 </tr>
 <tr>
+<td><code>primaryAddressFamily</code></td>
+<td>primaryAddressFamily defines the primary family for the cluster. Valid values are empty, <code>IPv4</code>, <code>IPv6</code>. If empty, K0s determines it based on <code>.spec.API.ExternalAddress</code>, if this isn't present it will use <code>.spec.API.Address.</code>. If both addresses are empty or the chosen address is a hostname, defaults to <code>IPv4</code>.</td>
+</tr>
+<tr>
 <td><code>clusterDomain</code></td>
 <td>Cluster Domain to be passed to the <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration">kubelet</a> and the coredns configuration. Defaults to <code>cluster.local</code>.</td>
 </tr>
