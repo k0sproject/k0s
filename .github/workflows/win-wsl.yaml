@@ -84,6 +84,12 @@ jobs:
               type: kine
             network:
               provider: calico
+            images:
+              pause:
+                # FIXME We need to use the upstream pause image here since the
+                # k0sproject's one doesn't ship with a windows build currently.
+                image: k8s.gcr.io/pause
+                version: 3.10.1
           EOF
 
           install -m755 -D -- '$dir/k0s' /usr/local/bin/k0s
