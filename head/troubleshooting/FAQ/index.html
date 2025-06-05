@@ -1808,9 +1808,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#is-k0sproject-really-open-source" class="md-nav__link">
+  <a href="#is-k0s-really-open-source" class="md-nav__link">
     <span class="md-ellipsis">
-      Is k0sproject really open source?
+      Is k0s really open source?
     </span>
   </a>
   
@@ -2335,9 +2335,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#is-k0sproject-really-open-source" class="md-nav__link">
+  <a href="#is-k0s-really-open-source" class="md-nav__link">
     <span class="md-ellipsis">
-      Is k0sproject really open source?
+      Is k0s really open source?
     </span>
   </a>
   
@@ -2384,8 +2384,12 @@ kubectl<span class="w"> </span>...
 <h2 id="why-doesnt-kubectl-get-nodes-list-the-k0s-controllers">Why doesn't <code>kubectl get nodes</code> list the k0s controllers?<a class="headerlink" href="#why-doesnt-kubectl-get-nodes-list-the-k0s-controllers" title="Permanent link">#</a></h2>
 <p>As a default, the control plane does not run kubelet at all, and will not accept any workloads, so the controller will not show up on the node list in kubectl. If you want your controller to accept workloads and run pods, you do so with:
 <code>k0s controller --enable-worker</code> (recommended only as test/dev/POC environments).</p>
-<h2 id="is-k0sproject-really-open-source">Is k0sproject really open source?<a class="headerlink" href="#is-k0sproject-really-open-source" title="Permanent link">#</a></h2>
-<p>Yes, k0sproject is 100% open source. The source code is under Apache 2 and the documentation is under the Creative Commons License. Mirantis, Inc. is the main contributor and sponsor for this OSS project: building all the binaries from upstream, performing necessary security scans and calculating checksums so that it's easy and safe to use. The use of these ready-made binaries are subject to Mirantis EULA and the binaries include only open source software.</p>
+<h2 id="is-k0s-really-open-source">Is k0s really open source?<a class="headerlink" href="#is-k0s-really-open-source" title="Permanent link">#</a></h2>
+<p>Yes, k0s is 100% open source. The source code is licensed under the Apache 2.0
+License, and the documentation under a Creative Commons License. The project is
+part of the <a href="https://www.cncf.io/sandbox-projects/">CNCF Sandbox</a>. While Mirantis, Inc. remains a principal contributor
+and sponsor, k0s adheres to CNCF's open governance and IP policies to ensure
+transparency and community-driven development under a vendor-neutral umbrella.</p>
 <h2 id="a-kubeconfig-created-via-k0s-kubeconfig-has-been-leaked-what-can-i-do">A kubeconfig created via <a href="../../cli/k0s_kubeconfig/"><code>k0s kubeconfig</code></a> has been leaked, what can I do?<a class="headerlink" href="#a-kubeconfig-created-via-k0s-kubeconfig-has-been-leaked-what-can-i-do" title="Permanent link">#</a></h2>
 <p>Kubernetes does not support certificate revocation (see <a href="https://github.com/kubernetes/kubernetes/issues/18982">k/k/18982</a>). This means
 that you cannot disable the leaked credentials. The only way to effectively

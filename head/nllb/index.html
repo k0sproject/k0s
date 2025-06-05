@@ -2425,91 +2425,89 @@ order to bootstrap the cluster:</p>
 <span class="go">⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███</span>
 <span class="go">⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███</span>
 <span class="go">⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████</span>
-<span class="go">k0sctl 0.17.2 Copyright 2023, k0sctl authors.</span>
-<span class="go">By continuing to use k0sctl you agree to these terms:</span>
-<span class="go">https://k0sproject.io/licenses/eula</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Connect to hosts&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: connected&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: connected&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: connected&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: connected&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: connected&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Detect host operating systems&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: is running Alpine Linux v3.17&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: is running Alpine Linux v3.17&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: is running Alpine Linux v3.17&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: is running Alpine Linux v3.17&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: is running Alpine Linux v3.17&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Acquire exclusive host lock&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Prepare hosts&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: installing packages (curl)&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: installing packages (curl, iptables)&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: installing packages (curl)&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: installing packages (curl, iptables)&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: installing packages (curl)&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Gather host facts&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: using k0s-controller-1 as hostname&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: using k0s-worker-1 as hostname&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: using k0s-worker-0 as hostname&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: using k0s-controller-2 as hostname&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: using k0s-controller-0 as hostname&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: discovered eth0 as private interface&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: discovered eth0 as private interface&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: discovered eth0 as private interface&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: discovered eth0 as private interface&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: discovered eth0 as private interface&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Download k0s binaries to local host&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Validate hosts&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Gather k0s facts&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Validate facts&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Upload k0s binaries to hosts&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Configure k0s&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: validating configuration&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: validating configuration&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: validating configuration&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: configuration was changed&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: configuration was changed&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: configuration was changed&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Initialize the k0s cluster&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: installing k0s controller&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: waiting for the k0s service to start&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: waiting for kubernetes api to respond&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Install controllers&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: generating token&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: writing join token&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: installing k0s controller&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: starting service&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: waiting for the k0s service to start&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.184:22: waiting for kubernetes api to respond&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: generating token&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: writing join token&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: installing k0s controller&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: starting service&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: waiting for the k0s service to start&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.113:22: waiting for kubernetes api to respond&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Install workers&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: validating api connection to https://10.81.146.254:6443&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: validating api connection to https://10.81.146.254:6443&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.254:22: generating token&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: writing join token&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: writing join token&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: installing k0s worker&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: installing k0s worker&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: starting service&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: starting service&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.198:22: waiting for node to become ready&quot;</span>
-<span class="go">level=info msg=&quot;[ssh] 10.81.146.51:22: waiting for node to become ready&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Release exclusive host lock&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Running phase: Disconnect from hosts&quot;</span>
-<span class="go">level=info msg=&quot;==&gt; Finished in 3m30s&quot;</span>
-<span class="go">level=info msg=&quot;k0s cluster version v1.33.1+k0s.0 is now installed&quot;</span>
-<span class="go">level=info msg=&quot;Tip: To access the cluster you can now fetch the admin kubeconfig using:&quot;</span>
-<span class="go">level=info msg=&quot;     k0sctl kubeconfig&quot;</span>
+<span class="go">k0sctl v0.21.0 Copyright 2023, k0sctl authors.</span>
+<span class="go">INFO ==&gt; Running phase: Connect to hosts</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: connected</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: connected</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: connected</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: connected</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: connected</span>
+<span class="go">INFO ==&gt; Running phase: Detect host operating systems</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: is running Alpine Linux v3.17</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: is running Alpine Linux v3.17</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: is running Alpine Linux v3.17</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: is running Alpine Linux v3.17</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: is running Alpine Linux v3.17</span>
+<span class="go">INFO ==&gt; Running phase: Acquire exclusive host lock</span>
+<span class="go">INFO ==&gt; Running phase: Prepare hosts</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: installing packages (curl)</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: installing packages (curl, iptables)</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: installing packages (curl)</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: installing packages (curl, iptables)</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: installing packages (curl)</span>
+<span class="go">INFO ==&gt; Running phase: Gather host facts</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: using k0s-controller-1 as hostname</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: using k0s-worker-1 as hostname</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: using k0s-worker-0 as hostname</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: using k0s-controller-2 as hostname</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: using k0s-controller-0 as hostname</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: discovered eth0 as private interface</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: discovered eth0 as private interface</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: discovered eth0 as private interface</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: discovered eth0 as private interface</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: discovered eth0 as private interface</span>
+<span class="go">INFO ==&gt; Running phase: Download k0s binaries to local host</span>
+<span class="go">INFO ==&gt; Running phase: Validate hosts</span>
+<span class="go">INFO ==&gt; Running phase: Gather k0s facts</span>
+<span class="go">INFO ==&gt; Running phase: Validate facts</span>
+<span class="go">INFO ==&gt; Running phase: Upload k0s binaries to hosts</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.33.1+k0s.0</span>
+<span class="go">INFO ==&gt; Running phase: Configure k0s</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: validating configuration</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: validating configuration</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: validating configuration</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: configuration was changed</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: configuration was changed</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: configuration was changed</span>
+<span class="go">INFO ==&gt; Running phase: Initialize the k0s cluster</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: installing k0s controller</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: waiting for the k0s service to start</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: waiting for kubernetes api to respond</span>
+<span class="go">INFO ==&gt; Running phase: Install controllers</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: generating token</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: writing join token</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: installing k0s controller</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: starting service</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: waiting for the k0s service to start</span>
+<span class="go">INFO [ssh] 10.81.146.184:22: waiting for kubernetes api to respond</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: generating token</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: writing join token</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: installing k0s controller</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: starting service</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: waiting for the k0s service to start</span>
+<span class="go">INFO [ssh] 10.81.146.113:22: waiting for kubernetes api to respond</span>
+<span class="go">INFO ==&gt; Running phase: Install workers</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: validating api connection to https://10.81.146.254:6443</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: validating api connection to https://10.81.146.254:6443</span>
+<span class="go">INFO [ssh] 10.81.146.254:22: generating token</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: writing join token</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: writing join token</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: installing k0s worker</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: installing k0s worker</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: starting service</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: starting service</span>
+<span class="go">INFO [ssh] 10.81.146.198:22: waiting for node to become ready</span>
+<span class="go">INFO [ssh] 10.81.146.51:22: waiting for node to become ready</span>
+<span class="go">INFO ==&gt; Running phase: Release exclusive host lock</span>
+<span class="go">INFO ==&gt; Running phase: Disconnect from hosts</span>
+<span class="go">INFO ==&gt; Finished in 3m30s</span>
+<span class="go">INFO k0s cluster version v1.33.1+k0s.0 is now installed</span>
+<span class="go">INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:</span>
+<span class="go">INFO      k0sctl kubeconfig</span>
 </code></pre></div>
 <p>The cluster with the two nodes should be available by now. Setup the kubeconfig
 file in order to interact with it:</p>
