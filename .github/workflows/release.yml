@@ -47,7 +47,6 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       - name: Clean Docker before build
         run: |
@@ -165,7 +164,6 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
       TARGET_OS: windows
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
@@ -234,7 +232,6 @@ jobs:
     runs-on: [self-hosted, linux, arm64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       - name: Set up Docker Context for Buildx
         run: docker context create builders
@@ -321,7 +318,6 @@ jobs:
     runs-on: [self-hosted, linux, arm]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"

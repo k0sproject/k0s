@@ -57,21 +57,16 @@ k0sctl is a single binary, the instructions for downloading and installing of wh
 
 Run `k0sctl apply` to perform the cluster deployment:
 
-```shell
-k0sctl apply --config k0sctl.yaml
-```
+```console
+$ k0sctl apply --config k0sctl.yaml
 
-```shell
 ⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
 ⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███
 ⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
 
-INFO k0sctl 0.0.0 Copyright 2021, Mirantis Inc.
-INFO Anonymized telemetry will be sent to Mirantis.
-INFO By continuing to use k0sctl you agree to these terms:
-INFO https://k0sproject.io/licenses/eula
+k0sctl v0.21.0 Copyright 2023, k0sctl authors.
 INFO ==> Running phase: Connect to hosts
 INFO [ssh] 10.0.0.1:22: connected
 INFO [ssh] 10.0.0.2:22: connected

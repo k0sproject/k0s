@@ -28,9 +28,15 @@ kubectl ...
 As a default, the control plane does not run kubelet at all, and will not accept any workloads, so the controller will not show up on the node list in kubectl. If you want your controller to accept workloads and run pods, you do so with:
 `k0s controller --enable-worker` (recommended only as test/dev/POC environments).
 
-## Is k0sproject really open source?
+## Is k0s really open source?
 
-Yes, k0sproject is 100% open source. The source code is under Apache 2 and the documentation is under the Creative Commons License. Mirantis, Inc. is the main contributor and sponsor for this OSS project: building all the binaries from upstream, performing necessary security scans and calculating checksums so that it's easy and safe to use. The use of these ready-made binaries are subject to Mirantis EULA and the binaries include only open source software.
+Yes, k0s is 100% open source. The source code is licensed under the Apache 2.0
+License, and the documentation under a Creative Commons License. The project is
+part of the [CNCF Sandbox]. While Mirantis, Inc. remains a principal contributor
+and sponsor, k0s adheres to CNCF's open governance and IP policies to ensure
+transparency and community-driven development under a vendor-neutral umbrella.
+
+[CNCF Sandbox]: https://www.cncf.io/sandbox-projects/
 
 ## A kubeconfig created via [`k0s kubeconfig`](../cli/k0s_kubeconfig.md) has been leaked, what can I do?
 
