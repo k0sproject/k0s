@@ -116,8 +116,10 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	}
 
 	if clusterConfig.Spec.Network.DualStack.Enabled {
-		args["node-cidr-mask-size-ipv6"] = "110"
+		args["node-cidr-mask-size-ipv6"] = "117"
 		args["node-cidr-mask-size-ipv4"] = "24"
+	} else if clusterConfig.Spec.Network.IsSingleStackIPv6() {
+		args["node-cidr-mask-size"] = "117"
 	} else {
 		args["node-cidr-mask-size"] = "24"
 	}

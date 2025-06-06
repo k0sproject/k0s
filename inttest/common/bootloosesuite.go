@@ -103,6 +103,7 @@ type BootlooseSuite struct {
 	K0smotronWorkerCount            int
 	WithUpdateServer                bool
 	BootLooseImage                  string
+	Networks                        []string
 
 	ctx      context.Context
 	tearDown func()
@@ -1175,6 +1176,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					Networks:     s.Networks,
 				},
 			},
 			{
@@ -1185,6 +1187,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					Networks:     s.Networks,
 				},
 			},
 			{

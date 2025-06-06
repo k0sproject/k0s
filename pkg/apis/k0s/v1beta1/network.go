@@ -18,7 +18,6 @@ package v1beta1
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"slices"
@@ -106,14 +105,25 @@ func (n *Network) Validate() []error {
 		errors = append(errors, field.NotSupported(field.NewPath("provider"), n.Provider, []string{"kuberouter", "calico", "custom"}))
 	}
 
-	_, _, err := net.ParseCIDR(n.PodCIDR)
+	validCIDRs := true
+	podNetIP, _, err := net.ParseCIDR(n.PodCIDR)
 	if err != nil {
 		errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "invalid CIDR address"))
+		validCIDRs = false
 	}
 
-	_, _, err = net.ParseCIDR(n.ServiceCIDR)
+	serviceNetIP, _, err := net.ParseCIDR(n.ServiceCIDR)
 	if err != nil {
 		errors = append(errors, field.Invalid(field.NewPath("serviceCIDR"), n.ServiceCIDR, "invalid CIDR address"))
+		validCIDRs = false
+	}
+
+	// podCIDR and service CIDR must both be either ipv4 or ipv6, but we should only verify this
+	// if they have a valid IP to begin with because otherwise the error can be confusing
+	if validCIDRs {
+		if (podNetIP.To4() != nil) != (serviceNetIP.To4() != nil) {
+			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "podCIDR and serviceCIDR must be both IPv4 or IPv6"))
+		}
 	}
 
 	if !govalidator.IsDNSName(n.ClusterDomain) {
@@ -131,6 +141,12 @@ func (n *Network) Validate() []error {
 		_, _, err = net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "invalid CIDR address"))
+		}
+		if podNetIP.To4() == nil {
+			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "if DualStack is enabled, podCIDR must be IPv4"))
+		}
+		if serviceNetIP.To4() == nil {
+			errors = append(errors, field.Invalid(field.NewPath("serviceCIDR"), n.ServiceCIDR, "if DualStack is enabled, serviceCIDR must be IPv4"))
 		}
 	}
 
@@ -159,28 +175,20 @@ func (n *Network) DNSAddress() (string, error) {
 		return "", fmt.Errorf("failed to parse service CIDR %q: %w", n.ServiceCIDR, err)
 	}
 
-	address := slices.Clone(ipnet.IP.To4())
-	if address == nil {
-		// The network address is not an IPv4 address. This can only happen if
-		// k0s is running in IPv6-only mode, which is currently not a supported
-		// configuration. In dual-stack mode, the IPv6 CIDR is stored in
-		// n.DualStack.IPv6ServiceCIDR. Error out until it is clear how to
-		// properly calculate the DNS address for a v6 network.
-		return "", fmt.Errorf("%w: DNS address calculation for non-v4 CIDR: %s", errors.ErrUnsupported, n.ServiceCIDR)
-	}
+	addr := slices.Clone(ipnet.IP)
 
-	prefixlen, _ := ipnet.Mask.Size()
-	if prefixlen < 29 {
-		address[3] += 10
+	maskLen, netLen := ipnet.Mask.Size()
+	if netLen-maskLen > 3 {
+		addr[len(addr)-1] += 10
 	} else {
-		address[3] += 2
+		addr[len(addr)-1] += 2
 	}
 
-	if !ipnet.Contains(address) {
+	if !ipnet.Contains(addr) {
 		return "", fmt.Errorf("failed to calculate DNS address: CIDR too narrow: %s", n.ServiceCIDR)
 	}
 
-	return address.String(), nil
+	return addr.String(), nil
 }
 
 // InternalAPIAddresses calculates the internal API address of configured service CIDR block.
@@ -263,4 +271,15 @@ func (n *Network) BuildPodCIDR() string {
 		return n.DualStack.IPv6PodCIDR + "," + n.PodCIDR
 	}
 	return n.PodCIDR
+}
+
+// IsSingleStackIPv6 returns true if the ServiceCIDR is IPv6.
+// This function relies on being called after Validate() and it
+// assumes that n.PodCIDR has a legal value.
+func (n *Network) IsSingleStackIPv6() bool {
+	if n.DualStack.Enabled {
+		return false
+	}
+	ip, _, _ := net.ParseCIDR(n.PodCIDR)
+	return ip.To4() == nil
 }
