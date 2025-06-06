@@ -2350,7 +2350,7 @@
 <p>Using k0s you can create, manage, and configure each of the components, running each as a "naked" process. Thus, there is no container engine running on the controller node.</p>
 <h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h2>
 <p>Kubernetes control plane typically supports only etcd as the datastore. k0s, however, supports many other datastore options in addition to etcd, which it achieves by including <a href="https://github.com/k3s-io/kine">kine</a>. Kine allows the use of a wide variety of backend data stores, such as MySQL, PostgreSQL, SQLite, and dqlite (refer to the <a href="../configuration/#specstorage"><code>spec.storage</code> documentation</a>).</p>
-<p>In the case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster. For example, by joining a new controller node with <code>k0s controller "long-join-token"</code> k0s  atomatically adjusts the etcd cluster membership info to allow the new member to join the cluster.</p>
+<p>In the case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster. For example, by joining a new controller node with <code>k0s controller "long-join-token"</code> k0s  automatically adjusts the etcd cluster membership info to allow the new member to join the cluster.</p>
 <p><strong>Note</strong>: k0s cannot shrink the etcd cluster. As such, to shut down the k0s controller on a node that node must first be manually removed from the etcd cluster.</p>
 <h2 id="worker-node">Worker node<a class="headerlink" href="#worker-node" title="Permanent link">#</a></h2>
 <p><img alt="k0s worker processes" src="k0s_worker_processes.png" /></p>

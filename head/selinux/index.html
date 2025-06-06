@@ -2436,7 +2436,7 @@ sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w">
 <span class="w">      </span><span class="nt">seLinuxOptions</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;s0:c123,c456&quot;</span>
 </code></pre></div>
-<p>After the pod starts, ssh to the worker node on which the pod is running and check the pod process. It should display the label <code>s0:c123,c456</code> that you sepecified in YAML file:</p>
+<p>After the pod starts, ssh to the worker node on which the pod is running and check the pod process. It should display the label <code>s0:c123,c456</code> that you specified in YAML file:</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span>ps<span class="w"> </span>-efZ<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s1">&#39;sleep infinity&#39;</span>
 system_u:system_r:container_t:s0:c123,c456<span class="w"> </span>root<span class="w"> </span><span class="m">3346</span><span class="w"> </span><span class="m">3288</span><span class="w">  </span><span class="m">0</span><span class="w"> </span><span class="m">16</span>:39<span class="w"> </span>?<span class="w">       </span><span class="m">00</span>:00:00<span class="w"> </span>sleep<span class="w"> </span>infinity
 </code></pre></div>

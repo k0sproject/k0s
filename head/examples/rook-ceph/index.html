@@ -2595,7 +2595,7 @@ ls<span class="w"> </span>-l
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
 terraform<span class="w"> </span>apply
 </code></pre></div>
-<p>If you decide to create the VMs manually using AWS GUI, you need to disable source / destination checking. This needs to be disbled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.</p>
+<p>If you decide to create the VMs manually using AWS GUI, you need to disable source / destination checking. This needs to be disabled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.</p>
 <h3 id="3-create-and-attach-the-volumes">3. Create and attach the volumes<a class="headerlink" href="#3-create-and-attach-the-volumes" title="Permanent link">#</a></h3>
 <p>Ceph requires one of the following storage options for storing the data:</p>
 <ul>

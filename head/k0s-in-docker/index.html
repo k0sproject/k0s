@@ -2919,7 +2919,7 @@ three controller and three worker nodes:</p>
 </code></pre></div>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
-<p>Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with <code>--net my-net</code>). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.</p>
+<p>Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with <code>--net my-net</code>). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workarounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="../k0sctl-install/">Install using k0sctl</a>: Deploy multi-node clusters using just one command</li>
