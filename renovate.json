@@ -3,9 +3,13 @@
   "extends": [
     "config:recommended",
     ":configMigration",
-    ":gitSignOff"
+    ":gitSignOff",
+    ":automergeMinor"
   ],
-  "forkProcessing": "enabled",
+  "gitAuthor": "Renovate Bot <renovate@whitesourcesoftware.com>",
+  "labels": [
+    "dependencies"
+  ],
   "enabledManagers": [
     "gomod",
     "custom.regex"
@@ -34,19 +38,37 @@
       ],
       "groupName": "etcd dependencies",
       "groupSlug": "etcd-all"
-    },
-    {
-      "description": "Ensure etcd in Makefile uses github-releases and is enabled",
-      "matchManagers": [
-        "custom.regex"
-      ],
-      "matchPackageNames": [
-        "etcd-io/etcd"
-      ],
-      "enabled": true
     }
   ],
   "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update minimum Go version",
+      "managerFilePatterns": [
+        "**/go.mod"
+      ],
+      "matchStrings": [
+        "^go (?<currentValue>\\d+\\.\\d+)\\.0\\b"
+      ],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version",
+      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+)",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "Update Go toolchain version",
+      "managerFilePatterns": [
+        "**/*"
+      ],
+      "matchStrings": [
+        "\\bgo_version = (?<currentValue>\\d+(\\.\\d+){2})",
+        "\\bgolang/go/blob/go(?<currentValue>\\d+(\\.\\d+){2})"
+      ],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version",
+      "versioningTemplate": "semver"
+    },
     {
       "customType": "regex",
       "description": "Update etcd version in embedded-bins/Makefile.variables",
@@ -54,7 +76,7 @@
         "embedded-bins/Makefile.variables"
       ],
       "matchStrings": [
-        "etcd_version = (?<currentValue>v?[\\d\\.]+)"
+        "etcd_version = (?<currentValue>\\d+(\\.\\d+){2})"
       ],
       "depNameTemplate": "etcd-io/etcd",
       "datasourceTemplate": "github-releases",
@@ -65,11 +87,11 @@
       "description": "Update kine versions across the codebase",
       "managerFilePatterns": [
         "/(^|/)[Mm]akefile(\\.[^/]+)?$/",
-        "**.go"
+        "**/*.go"
       ],
       "matchStrings": [
-        "kine_version = (?<currentValue>[\\d\\.]+)",
-        "\\bkine/blob/v?(?<currentValue>[\\d\\.]+)\\b"
+        "kine_version = (?<currentValue>\\d+(\\.\\d+){2})",
+        "\\bkine/blob/v(?<currentValue>\\d+(\\.\\d+){2})"
       ],
       "depNameTemplate": "k3s-io/kine",
       "datasourceTemplate": "github-releases",
