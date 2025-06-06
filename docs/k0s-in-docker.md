@@ -296,7 +296,7 @@ kube-system   pod/metrics-server-7778865875-fzhx6   1/1     Running   0         
 
 ### No custom Docker networks
 
-Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with `--net my-net`). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.
+Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with `--net my-net`). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workarounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.
 
 ## Next Steps
 

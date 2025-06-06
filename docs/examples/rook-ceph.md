@@ -77,7 +77,7 @@ terraform init
 terraform apply
 ```
 
-If you decide to create the VMs manually using AWS GUI, you need to disable source / destination checking. This needs to be disbled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.
+If you decide to create the VMs manually using AWS GUI, you need to disable source / destination checking. This needs to be disabled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.
 
 ### 3. Create and attach the volumes
 

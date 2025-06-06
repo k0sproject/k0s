@@ -124,7 +124,7 @@ With this config you can start your controller as usual. Any workers will need t
 k0s worker --profile coreos [TOKEN]
 ```
 
-## iptables veresion mismatch
+## iptables version mismatch
 
 If the running kernel has firewall rules created using an iptables version
 newer than the version shipped with k0s, the Kubernetes network will [not

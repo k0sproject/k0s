@@ -200,7 +200,7 @@ As such, k0s provides a conformant Kubernetes which means any ecosystem addon wo
 ## Identity and Access Management
 
 k0s being vanilla upstream Kubernetes thus it supports all the same things as [Kubernetes does](https://kubernetes.io/docs/concepts/security/).
-By default, k0s only sets up certificate authentication but users can fully configure OIDC or webhook authentiction when they need.
+By default, k0s only sets up certificate authentication but users can fully configure OIDC or webhook authentication when they need.
 
 ## Compliance requirements implemented
 

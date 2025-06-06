@@ -555,7 +555,7 @@ The `spec.konnectivity` key is the config file key in which you configure Konnec
 
 ### `spec.telemetry`
 
-To improve the end-user experience k0s is configured by defaul to collect telemetry data from clusters and send it to the k0s development team. To disable the telemetry function, change the `enabled` setting to `false`.
+To improve the end-user experience k0s is configured by default to collect telemetry data from clusters and send it to the k0s development team. To disable the telemetry function, change the `enabled` setting to `false`.
 
 The telemetry interval is ten minutes.
 

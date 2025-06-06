@@ -22,7 +22,7 @@ Install mike: https://github.com/jimporter/mike#installation
   # more navigation links ...
 ```
 
-- Once your changes are pushed to `main`, the "Publish Docs" jos will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22
+- Once your changes are pushed to `main`, the "Publish Docs" job will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22
 - You should see the deployment outcome in the `gh-pages` deployment page: https://github.com/k0sproject/k0s/deployments/activity_log?environment=github-pages
 
 ## Testing docs locally

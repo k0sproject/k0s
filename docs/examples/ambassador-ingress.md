@@ -74,7 +74,7 @@ As you need to create a custom configuration file to install Ambassador Gateway,
     docker rm k0s
     ```
 
-3. Retart your k0s container, this time with additional ports and the above config file mapped into it:
+3. Restart your k0s container, this time with additional ports and the above config file mapped into it:
 
     ```shell
     docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v "$PWD"/k0s.yaml:/k0s.yaml -p 6443:6443 -p 80:80 -p 443:443 -p 8080:8080 docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0
