@@ -82,7 +82,7 @@ spec:
         level: "s0:c123,c456"
 ```
 
-After the pod starts, ssh to the worker node on which the pod is running and check the pod process. It should display the label `s0:c123,c456` that you sepecified in YAML file:
+After the pod starts, ssh to the worker node on which the pod is running and check the pod process. It should display the label `s0:c123,c456` that you specified in YAML file:
 
 ```shell
 $ ps -efZ | grep -F 'sleep infinity'

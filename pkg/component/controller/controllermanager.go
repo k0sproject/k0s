@@ -108,7 +108,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		"v":                                a.LogLevel,
 	}
 
-	// Handle the extra args as last so they can be used to overrride some k0s "hardcodings"
+	// Handle the extra args as last so they can be used to override some k0s "hardcodings"
 	if a.ExtraArgs != "" {
 		// This service uses args without hyphens, so enforce that.
 		extras := flags.Split(strings.ReplaceAll(a.ExtraArgs, "--", ""))

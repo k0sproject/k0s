@@ -116,7 +116,7 @@ func (s *Status) Stop() error {
 	if err := s.httpserver.Shutdown(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
-	// Unix socket doesn't need to be explicitly removed because it's hadled
+	// Unix socket doesn't need to be explicitly removed because it's handled
 	// by httpserver.Shutdown
 	return nil
 }

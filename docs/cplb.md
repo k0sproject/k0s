@@ -83,7 +83,7 @@ spec:
           authPass: "<my password>"
 ```
 
-By default, VRRP Intances use multicast as per [RFC 3768]. It's possible to configure VRRP
+By default, VRRP Instances use multicast as per [RFC 3768]. It's possible to configure VRRP
 instances to use unicast:
 
 ```yaml

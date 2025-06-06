@@ -215,7 +215,7 @@ func (a *APIServer) Stop() error {
 
 // Health-check interface
 func (a *APIServer) Ready() error {
-	// Load client cert so the api can authenitcate the request.
+	// Load client cert so the api can authenticate the request.
 	certFile := path.Join(a.K0sVars.CertRootDir, "admin.crt")
 	keyFile := path.Join(a.K0sVars.CertRootDir, "admin.key")
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)

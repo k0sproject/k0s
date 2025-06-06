@@ -134,7 +134,7 @@ func (s *cplbIPVSSuite) getLBAddress() string {
 	return fmt.Sprintf("%s.%d", strings.Join(parts[:3], "."), lastOctet)
 }
 
-// getUnicastAddreses returns the IP addresses of the controllers. The first IP
+// getUnicastAddresses returns the IP addresses of the controllers. The first IP
 // is the address of the controller with the ID provided.
 func (s *cplbIPVSSuite) getUnicastAddresses(i int) []string {
 	return []string{

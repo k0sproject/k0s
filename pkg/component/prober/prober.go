@@ -34,7 +34,7 @@ type Healthz interface {
 	Healthy() error
 }
 
-// Prober performs health probes on registred components
+// Prober performs health probes on registered components
 type Prober struct {
 	sync.RWMutex
 	l                    *logrus.Entry
@@ -127,7 +127,7 @@ type State struct {
 	Events       map[string][]Event       `json:"events"`
 }
 
-// Run starts the prober workin loop
+// Run starts the prober working loop
 func (p *Prober) Run(ctx context.Context) {
 	p.runOnce.Do(func() {
 		close(p.startCh)

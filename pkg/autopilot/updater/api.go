@@ -98,7 +98,7 @@ func compareSegment(v, o uint64) int {
 
 func comparePrerelease(v, o string) int {
 
-	// split the prelease versions by their part. The separator, per the spec,
+	// split the prerelease versions by their part. The separator, per the spec,
 	// is a .
 	sparts := strings.Split(v, ".")
 	oparts := strings.Split(o, ".")
@@ -115,7 +115,7 @@ func comparePrerelease(v, o string) int {
 
 	// Iterate over each part of the prereleases to compare the differences.
 	for i := range l {
-		// Since the lentgh of the parts can be different we need to create
+		// Since the length of the parts can be different we need to create
 		// a placeholder. This is to avoid out of bounds issues.
 		stemp := ""
 		if i < slen {
