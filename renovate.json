@@ -3,7 +3,8 @@
   "extends": [
     "config:recommended",
     ":configMigration",
-    ":gitSignOff"
+    ":gitSignOff",
+    ":automergeMinor"
   ],
   "gitAuthor": "Renovate Bot <renovate@whitesourcesoftware.com>",
   "labels": [
