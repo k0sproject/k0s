@@ -47,8 +47,8 @@ type CertificateManager struct {
 // the k8s.io transport is implemented in a way
 // that it always compares *tls.Cerificates by ==
 // That means to avoid forced reloading certificates we need to return the same pointer
-// from Curernt() each time.
-// That's why instead of just returnning the parsed certificate each time
+// from Current() each time.
+// That's why instead of just returning the parsed certificate each time
 // loadFromFilesystem checks based on the md5 hashsum of the certificate content
 func (c *CertificateManager) loadFromFilesystem() error {
 

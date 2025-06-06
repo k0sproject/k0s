@@ -63,7 +63,7 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 	s.Require().NoError(err)
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
 
-	// check that we see the expeted warning event
+	// check that we see the expected warning event
 	err = watch.Events(kc.CoreV1().Events("kube-system")).
 		WithFieldSelector(fields.ParseSelectorOrDie("involvedObject.name=k0s")).
 		Until(s.Context(), func(e *corev1.Event) (bool, error) {

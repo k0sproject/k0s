@@ -50,7 +50,7 @@ func NewPlanStateController(name string, logger *logrus.Entry, client crcli.Clie
 }
 
 // Reconcile performs the basic operations for every controller: obtain the plan, copy it,
-// delgate to the handler, and update status if available.
+// delegate to the handler, and update status if available.
 func (c *planStateController) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	logger := c.logger.WithField("controller", c.name)
 

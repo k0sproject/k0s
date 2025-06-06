@@ -295,7 +295,7 @@ func (a *OCIBundleReconciler) unpackBundle(ctx context.Context, client *containe
 	defer r.Close()
 	// WithSkipMissing allows us to skip missing blobs
 	// Without this the importing would fail if the bundle does not images for compatible architectures
-	// because the image manifest still refers to those. E.g. on arm64 containerd would stil try to unpack arm/v8&arm/v7
+	// because the image manifest still refers to those. E.g. on arm64 containerd would still try to unpack arm/v8&arm/v7
 	// images but would fail as those are not present on k0s airgap bundles.
 	images, err := client.Import(ctx, r, containerd.WithSkipMissing())
 	if err != nil {
