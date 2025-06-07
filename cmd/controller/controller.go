@@ -562,10 +562,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		clusterComponents.Add(ctx, &controller.SystemRBAC{Clients: adminClientFactory})
 	}
 
-	if !slices.Contains(flags.DisableComponents, constant.NodeRoleComponentName) {
-		clusterComponents.Add(ctx, controller.NewNodeRole(c.K0sVars, adminClientFactory))
-	}
-
 	if enableKonnectivity {
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
 			K0sVars:       c.K0sVars,

@@ -60,7 +60,6 @@ smoketests := \
 	check-network-conformance-kuberouter-nft \
 	check-nllb \
 	check-noderole \
-	check-noderole-no-taints \
 	check-noderole-single \
 	check-psp \
 	check-reset \
