@@ -72,12 +72,15 @@ const (
 	lbNodeNameFormat           = "lb%d"
 	etcdNodeNameFormat         = "etcd%d"
 	updateServerNodeNameFormat = "updateserver%d"
+	registryNodeNameFormat     = "registry%d"
 
 	defaultK0sBinaryFullPath = "/usr/local/bin/k0s"
 	k0sBindMountFullPath     = "/dist/k0s"
 	k0sNewBindMountFullPath  = "/dist/k0s-new"
 
 	defaultBootLooseImage = "bootloose-alpine"
+
+	registryContainerPort = 5000
 )
 
 // BootlooseSuite defines all the common stuff we need to be able to run k0s testing on bootloose.
@@ -104,6 +107,12 @@ type BootlooseSuite struct {
 	WithUpdateServer                bool
 	BootLooseImage                  string
 	Networks                        []string
+
+	WithRegistry bool
+	// RegistryTLSPath is the path to the folder containing
+	// tls.crt and tls.key files used for registry TLS setup.
+	// If empty, the registry will be set up without TLS.
+	RegistryTLSPath string
 
 	ctx      context.Context
 	tearDown func()
@@ -209,6 +218,10 @@ func (s *BootlooseSuite) SetupSuite() {
 
 	if s.WithLB {
 		s.startHAProxy()
+	}
+
+	if s.WithRegistry {
+		s.Require().NoError(s.waitForRegistryHealthy())
 	}
 }
 
@@ -320,6 +333,13 @@ func (s *BootlooseSuite) LBNode() string {
 	return fmt.Sprintf(lbNodeNameFormat, 0)
 }
 
+func (s *BootlooseSuite) RegistryNode() string {
+	if !s.WithRegistry {
+		s.FailNow("can't get registry node name because it's not enabled for this suite")
+	}
+	return fmt.Sprintf(registryNodeNameFormat, 0)
+}
+
 func (s *BootlooseSuite) ExternalEtcdNode() string {
 	if !s.WithExternalEtcd {
 		s.FailNow("can't get external node name because it's not enabled for this suite")
@@ -369,7 +389,7 @@ func (s *BootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 
 		for _, m := range machines {
 			node := m.Hostname()
-			if strings.HasPrefix(node, "lb") {
+			if strings.HasPrefix(node, "lb") || strings.HasPrefix(node, "registry") {
 				continue
 			}
 
@@ -1177,6 +1197,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 					Volumes:      volumes,
 					PortMappings: portMaps,
 					Networks:     s.Networks,
+					ExtraArgs:    []string{"--add-host=host.docker.internal:host-gateway"},
 				},
 			},
 			{
@@ -1247,6 +1268,13 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 		})
 	}
 
+	if s.WithRegistry {
+		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
+			Spec:  s.generateRegistryMachineSpec(),
+			Count: 1,
+		})
+	}
+
 	bootlooseYaml, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal bootloose configuration: %w", err)
@@ -1271,6 +1299,43 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 	s.clusterConfig = cfg
 	s.cluster = cluster
 	return nil
+}
+
+func (s *BootlooseSuite) generateRegistryMachineSpec() *config.Machine {
+	var volumes []config.Volume
+	registryProtocol := "http"
+	extraArgs := []string{
+		fmt.Sprintf("-e REGISTRY_HTTP_ADDR=0.0.0.0:%d", registryContainerPort),
+		"--health-start-period=1s",
+		"--health-retries=1",
+	}
+
+	if s.RegistryTLSPath != "" {
+		registryProtocol = "https"
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      s.RegistryTLSPath,
+			Destination: "/tls",
+		})
+		extraArgs = append(extraArgs,
+			"-e=REGISTRY_HTTP_TLS_CERTIFICATE=/tls/tls.crt",
+			"-e=REGISTRY_HTTP_TLS_KEY=/tls/tls.key",
+		)
+	}
+	extraArgs = append(extraArgs, fmt.Sprintf("--health-cmd=wget -q --no-check-certificate --spider %s://localhost:%d/v2", registryProtocol, registryContainerPort))
+
+	return &config.Machine{
+		Name:  registryNodeNameFormat,
+		Image: "registry:3.0.0",
+		Cmd:   "/etc/distribution/config.yml",
+		PortMappings: []config.PortMapping{
+			{
+				ContainerPort: uint16(registryContainerPort), // registry port
+			},
+		},
+		Volumes:   volumes,
+		ExtraArgs: extraArgs,
+	}
 }
 
 func cleanupClusterDir(t *testing.T, dir string) {
@@ -1325,6 +1390,16 @@ func (s *BootlooseSuite) GetIPAddress(nodeName string) string {
 	ipAddress, err := ssh.ExecWithOutput(s.Context(), "hostname -i")
 	s.Require().NoError(err)
 	return ipAddress
+}
+
+func (s *BootlooseSuite) GetRegistryHostPort() int {
+	machine, err := s.MachineForName(s.RegistryNode())
+	s.Require().NoError(err)
+
+	hostPort, err := machine.HostPort(registryContainerPort)
+	s.Require().NoError(err)
+
+	return hostPort
 }
 
 // RunCommandController runs a command via SSH on a specified controller node
@@ -1404,6 +1479,28 @@ func (s *BootlooseSuite) WaitForSSH(node string, timeout time.Duration, delay ti
 	}
 
 	return fmt.Errorf("timed out waiting for ssh connection to '%s'", node)
+}
+
+// waitForRegistryHealthy waits until registry node container is in healthy state
+func (s *BootlooseSuite) waitForRegistryHealthy() error {
+	if !s.WithRegistry {
+		return errors.New("registry is not enabled in this suite")
+	}
+
+	s.T().Logf("Waiting for registry to be healthy")
+	registryMachine, err := s.MachineForName(s.RegistryNode())
+	s.Require().NoError(err)
+
+	registryContainer := registryMachine.ContainerName()
+	return wait.PollUntilContextTimeout(s.Context(), 1*time.Second, 30*time.Second, true, func(ctx context.Context) (bool, error) {
+		status, err := exec.Command("docker", "inspect", registryContainer, "--format", "{{.State.Health.Status}}").Output()
+		if err != nil {
+			s.T().Logf("Failed to inspect registry container %s: %v", registryContainer, err)
+			return false, nil
+		}
+		s.T().Logf("Registry container %s status: %s", registryContainer, status)
+		return strings.TrimSpace(string(status)) == "healthy", nil
+	})
 }
 
 // GetUpdateServerIPAddress returns the load balancers ip address
