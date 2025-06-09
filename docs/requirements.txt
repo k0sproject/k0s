@@ -39,4 +39,4 @@ urllib3==1.26.20
 verspec==0.1.0
 watchdog==6.0.0
 wcmatch==10.0
-zipp==3.22.0
+zipp==3.23.0
