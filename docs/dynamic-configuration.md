@@ -18,7 +18,7 @@ In the [k0s configuration options](configuration.md) there are some options that
 - `spec.storage` - these options configure how the local storage (etcd or sqlite) is setup
 - `spec.network.controlPlaneLoadBalancing` - these options configure how [Control Plane Load Balancing](cplb.md) is setup.
 
-In case of HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.
+In case of a HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.
 
 ## Configuration location
 

@@ -12,19 +12,19 @@ k0s comes bundled with [containerd] as the default Container Runtime Interface (
 
 ## containerd configuration
 
-By default k0s manages the full containerd configuration. User has the option of fully overriding, and thus also managing, the configuration themselves.
+By default k0s manages the full containerd configuration. You have the option of fully overriding, and thus also managing, the configuration yourself.
 
 ### User managed containerd configuration
 
-In the default k0s generated configuration there's a "magic" comment telling k0s it is k0s managed:
+In the default k0s generated configuration there's a "magic" comment telling containerd it is managed by k0s:
 
 ```toml
 # k0s_managed=true
 ```
 
-If you wish to take over the configuration management remove this line.
+If you wish to take over the configuration management, remove this line.
 
-To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to `/etc/k0s/containerd.toml`:
+To make changes to the containerd configuration you must first generate a default containerd configuration, with the default values set to `/etc/k0s/containerd.toml`:
 
 ```shell
 containerd config default > /etc/k0s/containerd.toml
@@ -55,7 +55,7 @@ state = "/run/k0s/containerd"
 ## k0s managed dynamic runtime configuration
 
 As of 1.27.1, k0s allows dynamic configuration of containerd CRI runtimes. This
-works by k0s creating a special directory in `/etc/k0s/containerd.d/` where
+works by k0s creating a special directory in `/etc/k0s/containerd.d/`, where
 users can place partial containerd configuration TOML files (i.e. files with a
 `.toml` extension).
 
@@ -219,7 +219,7 @@ helm install nvidia-gpu-operator -n nvidia-gpu-operator \
 
 With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime.
 
-**Note** Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available [here](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html).
+**Note**: Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available [here](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html).
 
 ## Using custom CRI runtimes
 
@@ -240,20 +240,20 @@ Kubernetes.
 In order to use Docker as the container runtime for k0s, the following steps
 need to be taken:
 
-1. Manually install required components.  
+1. Manually install required components.
   On each `k0s worker` and `k0s controller --enable-worker` node, both
   Docker Engine and cri-dockerd need to be installed manually. Follow the
   official [Docker Engine installation guide][install docker] and [cri-dockerd
   installation instructions][install cri-dockerd].
 
-2. Configure and restart affected k0s nodes.  
+2. Configure and restart affected k0s nodes.
   Once installations are complete, the nodes needs to be restarted with the
   `--cri-socket` flag pointing to cri-dockerd's socket, which is typically
   located at `/var/run/cri-dockerd.sock`. For instance, the commands to start a
   node would be as follows:
-  
+
       k0s worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
-  
+
   or, respectively
 
   ```console
