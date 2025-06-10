@@ -2332,7 +2332,7 @@
 <p>When the storage solution implements CSI, kubernetes can communicate with the storage to create and configure persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the <a href="https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/">Kubernetes Blog</a>.</p>
 <p><img alt="k0s storage" src="../img/k0s_storage.png" /></p>
 <h3 id="installing-3rd-party-storage-solutions">Installing 3rd party storage solutions<a class="headerlink" href="#installing-3rd-party-storage-solutions" title="Permanent link">#</a></h3>
-<p>Follow your storage driver's installation instructions. Note that by default the Kubelet installed by k0s uses a slightly different path for its working directory (<code>/varlib/k0s/kubelet</code> instead of <code>/var/lib/kubelet</code>). Consult the CSI driver's configuration documentation on how to customize this path. The actual path can differ if you defined the flag <code>--data-dir</code>.</p>
+<p>Follow your storage driver's installation instructions. Note that by default the Kubelet installed by k0s uses a slightly different path for its working directory (<code>/var/lib/k0s/kubelet</code> instead of <code>/var/lib/kubelet</code>). Consult the CSI driver's configuration documentation on how to customize this path. The actual path can differ if you defined the flag <code>--data-dir</code>.</p>
 <h2 id="example-storage-solutions">Example storage solutions<a class="headerlink" href="#example-storage-solutions" title="Permanent link">#</a></h2>
 <p>Different Kubernetes storage solutions are explained in the <a href="https://kubernetes.io/docs/concepts/storage/volumes/">official Kubernetes storage documentation</a>. All of them can be used with k0s. Here are some popular ones:</p>
 <ul>
@@ -2345,7 +2345,7 @@
 <li>Azure Disk</li>
 <li>Portworx</li>
 </ul>
-<p>If you are looking for a fault-tolerant storage with data replication, you can find a k0s tutorial for configuring Ceph storage with Rook <a href="../examples/rook-ceph/">in here</a>.</p>
+<p>If you are looking for a fault-tolerant storage with data replication, you can follow our <a href="../examples/rook-ceph/">tutorial for configuring Ceph storage with Rook</a>.</p>
 
 
 

@@ -2365,7 +2365,7 @@
 <h1 id="configuration-options-for-worker-nodes">Configuration options for worker nodes<a class="headerlink" href="#configuration-options-for-worker-nodes" title="Permanent link">#</a></h1>
 <p>Although the <code>k0s worker</code> command does not take in any special yaml configuration, there are still methods for configuring the workers to run various components.</p>
 <h2 id="node-labels">Node labels<a class="headerlink" href="#node-labels" title="Permanent link">#</a></h2>
-<p>The <code>k0s worker</code> command accepts the <code>--labels</code> flag, with which you can make the newly joined worker node the register itself, in the Kubernetes API, with the given set of labels.</p>
+<p>The <code>k0s worker</code> command accepts the <code>--labels</code> flag, with which you can make the newly joined worker node register itself, in the Kubernetes API, with the given set of labels.</p>
 <p>For example, running the worker with <code>k0s worker --token-file k0s.token --labels="k0sproject.io/foo=bar,k0sproject.io/other=xyz"</code> results in:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>--show-labels
 </code></pre></div>
@@ -2380,7 +2380,7 @@ controller0<span class="w">   </span>NotReady<span class="w">   </span>control-p
 </code></pre></div>
 <p><strong>Note:</strong> Setting the labels is only effective on the first registration of the node. Changing the labels thereafter has no effect.</p>
 <h2 id="taints">Taints<a class="headerlink" href="#taints" title="Permanent link">#</a></h2>
-<p>The <code>k0s worker</code> command accepts the <code>--taints</code> flag, with which you can make the newly joined worker node the register itself with the given set of taints.</p>
+<p>The <code>k0s worker</code> command accepts the <code>--taints</code> flag, with which you can make the newly joined worker node register itself with the given set of taints.</p>
 <p><strong>Note:</strong> Controller nodes running with <code>--enable-worker</code> are assigned <code>node-role.kubernetes.io/control-plane:NoExecute</code> taint automatically. You can disable default taints using <code>--no-taints</code> parameter.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-o<span class="w"> </span>custom-columns<span class="o">=</span>NAME:.metadata.name,TAINTS:.spec.taints
 </code></pre></div>
@@ -2390,22 +2390,23 @@ worker0<span class="w">       </span>&lt;none&gt;
 </code></pre></div>
 <h2 id="kubelet-configuration">Kubelet configuration<a class="headerlink" href="#kubelet-configuration" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts a generic flag to pass in any set of arguments
-for kubelet process.</p>
+for the kubelet process.</p>
 <p>For example, running <code>k0s worker --token-file=k0s.token
 --kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"</code> passes in the given
 flags to Kubelet as-is. As such, you must confirm that any flags you are passing
 in are properly formatted and valued as k0s will not validate those flags.</p>
 <h3 id="worker-profiles">Worker Profiles<a class="headerlink" href="#worker-profiles" title="Permanent link">#</a></h3>
-<p>Kubelet configuration fields can also be set via a worker profiles. Worker
+<p>Kubelet configuration fields can also be set via worker profiles. Worker
 profiles are defined in the main k0s.yaml and are used to generate ConfigMaps
-containing a custom <code>kubelet.config.k8s.io/v1beta1/KubeletConfiguration</code> object.
-To see examples of k0s.yaml containing worker profiles: <a href="../configuration/#specworkerprofiles">go
-here</a>. For a list of possible Kubelet
-configuration fields: <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">go
-here</a>.</p>
+containing a custom <code>kubelet.config.k8s.io/v1beta1/KubeletConfiguration</code>
+object.
+See also the <a href="../configuration/#configuration-examples">examples of k0s.yaml containing worker
+profiles</a> and the <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">list of possible
+Kubelet configuration
+fields</a>.</p>
 <h2 id="iptables-mode">IPTables Mode<a class="headerlink" href="#iptables-mode" title="Permanent link">#</a></h2>
-<p>k0s detects iptables backend automatically based on the existing records. On a brand-new setup, <code>iptables-nft</code> will be used.<br />
-There is a <code>--iptables-mode</code> flag to specify the mode explicitly. Valid values: <code>nft</code>, <code>legacy</code> and <code>auto</code> (default).</p>
+<p>k0s detects the iptables backend automatically based on the existing records. On a brand-new setup, <code>iptables-nft</code> will be used.
+There is an <code>--iptables-mode</code> flag to specify the mode explicitly. Valid values: <code>nft</code>, <code>legacy</code> and <code>auto</code> (default).</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--iptables-mode<span class="o">=</span>nft
 </code></pre></div>
 

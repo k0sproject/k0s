@@ -2696,7 +2696,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>onlyBindToAddress</code></td>
-<td>The API server binds too all interfaces by default. With this option set to <code>true</code>, the API server will only listen on the IP address configured by the <code>address</code> option (first non-local address by default). This can be necessary with multi-homed control plane nodes.</td>
+<td>The API server binds to all interfaces by default. With this option set to <code>true</code>, the API server will only listen on the IP address configured by the <code>address</code> option (first non-local address by default). This can be necessary with multi-homed control plane nodes.</td>
 </tr>
 <tr>
 <td><code>externalAddress</code></td>
@@ -2769,7 +2769,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tbody>
 </table>
 <h4 id="specstorageetcdexternalcluster"><code>spec.storage.etcd.externalCluster</code><a class="headerlink" href="#specstorageetcdexternalcluster" title="Permanent link">#</a></h4>
-<p>k0s can also work with externally managed Etcd cluster. If this is configured, k0s will NOT set up etcd, it has to be managed manually.</p>
+<p>k0s can also work with an externally managed Etcd cluster. If this is configured, k0s will NOT set up etcd, it has to be managed manually.</p>
 <table>
 <thead>
 <tr>
@@ -2784,19 +2784,19 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>etcdPrefix</code></td>
-<td>Prefix to use for this cluster. The same external Etcd cluster can be used for several k0s clusters, each prefixed with unique prefix to store data with.</td>
+<td>Prefix to use for this cluster. The same external Etcd cluster can be used for several k0s clusters, each prefixed with a unique prefix to store data with.</td>
 </tr>
 <tr>
 <td><code>caFile</code></td>
-<td>CaFile is the host path to a file with Etcd cluster CA certificate.</td>
+<td>CaFile is the host path to a file with the Etcd cluster CA certificate.</td>
 </tr>
 <tr>
 <td><code>clientCertFile</code></td>
-<td>ClientCertFile is the host path to a file with TLS certificate for etcd client.</td>
+<td>ClientCertFile is the host path to a file with the TLS certificate for etcd client.</td>
 </tr>
 <tr>
 <td><code>clientKeyFile</code></td>
-<td>ClientKeyFile is the host path to a file with TLS key for etcd client.</td>
+<td>ClientKeyFile is the host path to a file with the TLS key for etcd client.</td>
 </tr>
 </tbody>
 </table>
@@ -2870,7 +2870,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>ipAutodetectionMethod</code></td>
-<td>Use to force Calico to pick up the interface for pod network inter-node routing (default: <code>""</code>, meaning not set, so that Calico will instead use its defaults). For more information, refer to the <a href="https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods">Calico documentation</a>.</td>
+<td>Used to force Calico to pick up the interface for pod network inter-node routing (default: <code>""</code>, meaning not set, so that Calico will instead use its defaults). For more information, refer to the <a href="https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods">Calico documentation</a>.</td>
 </tr>
 <tr>
 <td><code>envVars</code></td>
@@ -2939,11 +2939,11 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 </tr>
 <tr>
 <td><code>hairpin</code></td>
-<td>Hairpin mode, supported modes <code>Enabled</code>: enabled cluster wide, <code>Allowed</code>: must be allowed per service <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode">using annotations</a>, <code>Disabled</code>: doesn't work at all (default: Enabled)</td>
+<td>Configure <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode">hairpin mode</a>. Supported modes are <code>Enabled</code>: enabled cluster wide, <code>Allowed</code>: must be allowed per service using annotations, <code>Disabled</code>: doesn't work at all (default: <code>Enabled</code>)</td>
 </tr>
 <tr>
 <td><code>hairpinMode</code></td>
-<td><strong>Deprecated</strong> Use <code>hairpin</code> instead. If both <code>hairpin</code> and <code>hairpinMode</code> are defined, this is ignored. If only hairpinMode is configured explicitly activates hairpinMode (https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode).</td>
+<td><strong>Deprecated</strong> Use <code>hairpin</code> instead. If both <code>hairpin</code> and <code>hairpinMode</code> are defined, this is ignored. If only hairpinMode is configured explicitly activates hairpinMode.</td>
 </tr>
 <tr>
 <td><code>ipMasq</code></td>
@@ -3232,7 +3232,7 @@ node-local load balancing.</p>
 <p>Worker profiles are used to manage worker-specific configuration in a
 centralized manner. A ConfigMap is generated for each worker profile. Based on
 the <code>--profile</code> argument given to the <code>k0s worker</code>, the configuration in the
-corresponding ConfigMap is is picked up during startup.</p>
+corresponding ConfigMap is picked up during startup.</p>
 <p>The worker profiles are defined as an array. Each element has following
 properties:</p>
 <table>
@@ -3352,9 +3352,10 @@ by k0s.</p>
 <li><code>spec.images.kuberouter.cni</code></li>
 <li><code>spec.images.kuberouter.cniInstaller</code></li>
 <li><code>spec.images.repository</code>¹</li>
+<li><code>spec.images.default_pull_policy</code>²</li>
 </ul>
-<p>¹ If <code>spec.images.repository</code> is set and not empty, every image will be pulled from <code>images.repository</code></p>
-<p>If <code>spec.images.default_pull_policy</code> is set and not empty, it will be used as a pull policy for each bundled image.</p>
+<p>¹ If <code>spec.images.repository</code> is set and not empty, every image will be pulled from there.</p>
+<p>² If <code>spec.images.default_pull_policy</code> is set and not empty, it will be used as a pull policy for each bundled image.</p>
 <h4 id="image-example">Image example<a class="headerlink" href="#image-example" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nt">images</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">repository</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my.own.repo&quot;</span>

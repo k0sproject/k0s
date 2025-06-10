@@ -2409,13 +2409,13 @@
 <p>k0s comes bundled with <a href="https://github.com/containerd/containerd">containerd</a> as the default Container Runtime Interface (CRI) and <a href="https://github.com/opencontainers/runc">runc</a> as the default low-level runtime. In most cases they don't require any configuration changes. However, if custom configuration is needed, this page provides some examples.</p>
 <p><img alt="k0s_runtime" src="../img/k0s_runtime.png" /></p>
 <h2 id="containerd-configuration">containerd configuration<a class="headerlink" href="#containerd-configuration" title="Permanent link">#</a></h2>
-<p>By default k0s manages the full containerd configuration. User has the option of fully overriding, and thus also managing, the configuration themselves.</p>
+<p>By default k0s manages the full containerd configuration. You have the option of fully overriding, and thus also managing, the configuration yourself.</p>
 <h3 id="user-managed-containerd-configuration">User managed containerd configuration<a class="headerlink" href="#user-managed-containerd-configuration" title="Permanent link">#</a></h3>
-<p>In the default k0s generated configuration there's a "magic" comment telling k0s it is k0s managed:</p>
+<p>In the default k0s generated configuration there's a "magic" comment telling containerd it is managed by k0s:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># k0s_managed=true</span>
 </code></pre></div>
-<p>If you wish to take over the configuration management remove this line.</p>
-<p>To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to <code>/etc/k0s/containerd.toml</code>:</p>
+<p>If you wish to take over the configuration management, remove this line.</p>
+<p>To make changes to the containerd configuration you must first generate a default containerd configuration, with the default values set to <code>/etc/k0s/containerd.toml</code>:</p>
 <div class="highlight"><pre><span></span><code>containerd<span class="w"> </span>config<span class="w"> </span>default<span class="w"> </span>&gt;<span class="w"> </span>/etc/k0s/containerd.toml
 </code></pre></div>
 <p><code>k0s</code> runs containerd with the following default values:</p>
@@ -2436,7 +2436,7 @@
 </code></pre></div>
 <h2 id="k0s-managed-dynamic-runtime-configuration">k0s managed dynamic runtime configuration<a class="headerlink" href="#k0s-managed-dynamic-runtime-configuration" title="Permanent link">#</a></h2>
 <p>As of 1.27.1, k0s allows dynamic configuration of containerd CRI runtimes. This
-works by k0s creating a special directory in <code>/etc/k0s/containerd.d/</code> where
+works by k0s creating a special directory in <code>/etc/k0s/containerd.d/</code>, where
 users can place partial containerd configuration TOML files (i.e. files with a
 <code>.toml</code> extension).</p>
 <p>K0s will automatically pick up these files and add them as containerd
@@ -2563,7 +2563,7 @@ helm<span class="w"> </span>install<span class="w"> </span>nvidia-gpu-operator<s
 <span class="w">  </span>nvidia/gpu-operator
 </code></pre></div>
 <p>With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime.</p>
-<p><strong>Note</strong> Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available <a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html">here</a>.</p>
+<p><strong>Note</strong>: Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available <a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html">here</a>.</p>
 <h2 id="using-custom-cri-runtimes">Using custom CRI runtimes<a class="headerlink" href="#using-custom-cri-runtimes" title="Permanent link">#</a></h2>
 <p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
 <p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;url&gt;</code> (the only supported type is <code>remote</code>).</p>
@@ -2578,14 +2578,14 @@ Kubernetes.</p>
 need to be taken:</p>
 <ol>
 <li>
-<p>Manually install required components.<br />
+<p>Manually install required components.
   On each <code>k0s worker</code> and <code>k0s controller --enable-worker</code> node, both
   Docker Engine and cri-dockerd need to be installed manually. Follow the
   official <a href="https://docs.docker.com/engine/install/">Docker Engine installation guide</a> and <a href="https://github.com/Mirantis/cri-dockerd#using-cri-dockerd">cri-dockerd
   installation instructions</a>.</p>
 </li>
 <li>
-<p>Configure and restart affected k0s nodes.<br />
+<p>Configure and restart affected k0s nodes.
   Once installations are complete, the nodes needs to be restarted with the
   <code>--cri-socket</code> flag pointing to cri-dockerd's socket, which is typically
   located at <code>/var/run/cri-dockerd.sock</code>. For instance, the commands to start a

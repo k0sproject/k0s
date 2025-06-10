@@ -2381,7 +2381,7 @@
 <li><code>spec.storage</code> - these options configure how the local storage (etcd or sqlite) is setup</li>
 <li><code>spec.network.controlPlaneLoadBalancing</code> - these options configure how <a href="../cplb/">Control Plane Load Balancing</a> is setup.</li>
 </ul>
-<p>In case of HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.</p>
+<p>In case of a HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.</p>
 <h2 id="configuration-location">Configuration location<a class="headerlink" href="#configuration-location" title="Permanent link">#</a></h2>
 <p>The cluster wide configuration is stored in the Kubernetes API as a custom resource called <code>clusterconfig</code>. There's currently only one instance named <code>k0s</code>. You can edit the configuration with what ever means possible, for example with:</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>config<span class="w"> </span>edit

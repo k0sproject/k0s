@@ -2436,18 +2436,18 @@
 
 <h1 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h1>
 <h2 id="in-cluster-networking">In-cluster networking<a class="headerlink" href="#in-cluster-networking" title="Permanent link">#</a></h2>
-<p>k0s supports any standard <a href="https://github.com/containernetworking/cni">CNI</a> network providers. For convenience, k0s does come bundled with two built-in providers, <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> and <a href="https://www.projectcalico.org/">Calico</a>.</p>
+<p>k0s supports any standard <a href="https://github.com/containernetworking/cni">CNI</a> network provider. For convenience, k0s does come bundled with two built-in providers, <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> and <a href="https://www.projectcalico.org/">Calico</a>.</p>
 <h3 id="custom-cni-configuration">Custom CNI configuration<a class="headerlink" href="#custom-cni-configuration" title="Permanent link">#</a></h3>
-<p>You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure <code>custom</code> as the <a href="../configuration/#specnetwork">network provider</a> in the k0s configuration file (<code>k0s.yaml</code>). To deploy the CNI provider you want to use, you can deploy it using Helm, plain Kubernetes manifests or any other way.</p>
+<p>You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure <code>custom</code> as the <a href="../configuration/#specnetwork">network provider</a> in the k0s configuration file (<code>k0s.yaml</code>). You can deploy the CNI provider you want to use, either with Helm, plain Kubernetes manifests or any other way.</p>
 <h3 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">#</a></h3>
 <ul>
 <li>When deploying k0s with the default settings, all pods on a node can communicate with all pods on all nodes. No configuration changes are needed to get started.</li>
 <li>Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment.</li>
 </ul>
 <h3 id="kube-router">Kube-router<a class="headerlink" href="#kube-router" title="Permanent link">#</a></h3>
-<p>Kube-router is built into k0s, and so by default the distribution uses it for network provision. Kube-router uses the standard Linux networking stack and toolset, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.</p>
+<p>Kube-router is built into k0s, and so by default the distribution uses it for network provisioning. Kube-router uses the standard Linux networking stack and toolset, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.</p>
 <ul>
-<li>Uses bit less resources (~15%)</li>
+<li>Uses a bit less resources (~15%)</li>
 <li>Does NOT support Windows nodes</li>
 </ul>
 <h3 id="calico">Calico<a class="headerlink" href="#calico" title="Permanent link">#</a></h3>
@@ -2458,7 +2458,7 @@ policies that help secure Kubernetes clusters in demanding use cases. Calico in
 k0s uses VXLAN by default. However, IP in IP is also supported via the <code>bird</code>
 mode.</p>
 <ul>
-<li>Uses bit more resources</li>
+<li>Uses a bit more resources</li>
 <li>Supports Windows nodes</li>
 </ul>
 <h2 id="controller-worker-communication">Controller-Worker communication<a class="headerlink" href="#controller-worker-communication" title="Permanent link">#</a></h2>
@@ -2481,67 +2481,69 @@ mode.</p>
 <td>TCP</td>
 <td>2380</td>
 <td>etcd peers</td>
-<td>controller &lt;-&gt; controller</td>
+<td>controller ⟷ controller</td>
 <td></td>
 </tr>
 <tr>
 <td>TCP</td>
 <td>6443</td>
 <td>kube-apiserver</td>
-<td>worker, CLI =&gt; controller</td>
+<td>worker, CLI ⟶ controller</td>
 <td>Authenticated Kube API using Kube TLS client certs, ServiceAccount tokens with RBAC</td>
 </tr>
 <tr>
 <td>TCP</td>
 <td>179</td>
 <td>kube-router</td>
-<td>worker &lt;-&gt; worker</td>
+<td>worker ⟷ worker</td>
 <td>BGP routing sessions between peers</td>
 </tr>
 <tr>
 <td>UDP</td>
 <td>4789</td>
 <td>Calico</td>
-<td>worker &lt;-&gt; worker</td>
+<td>worker ⟷ worker</td>
 <td>Calico VXLAN overlay</td>
 </tr>
 <tr>
 <td>TCP</td>
 <td>10250</td>
 <td>kubelet</td>
-<td>controller, worker =&gt; host <code>*</code></td>
+<td>controller, worker ⟶ host <code>*</code></td>
 <td>Authenticated kubelet API for the controller node <code>kube-apiserver</code> (and <code>heapster</code>/<code>metrics-server</code> addons) using TLS client certs</td>
 </tr>
 <tr>
 <td>TCP</td>
 <td>9443</td>
 <td>k0s-api</td>
-<td>controller &lt;-&gt; controller</td>
+<td>controller ⟷ controller</td>
 <td>k0s controller join API, TLS with token auth</td>
 </tr>
 <tr>
 <td>TCP</td>
 <td>8132</td>
 <td>konnectivity</td>
-<td>worker &lt;-&gt; controller</td>
+<td>worker ⟷ controller</td>
 <td>Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets</td>
 </tr>
 <tr>
 <td>TCP</td>
 <td>112</td>
 <td>keepalived</td>
-<td>controller &lt;-&gt; controller</td>
+<td>controller ⟷ controller</td>
 <td>Only required for control plane load balancing VRRPInstances. Unless unicast is explicitly enabled, port 122 works on the ip address 224.0.0.18. 224.0.0.18 is a multicast IP address defined in <a href="https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2">RFC 3768</a>.</td>
 </tr>
 </tbody>
 </table>
 <p>You also need enable all traffic to and from the <a href="../configuration/#specnetwork">podCIDR and serviceCIDR</a> subnets on nodes with a worker role.</p>
 <h2 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h2>
-<p><code>iptables</code> can work in two distinct modes, <code>legacy</code> and <code>nftables</code>. k0s autodetects the mode and prefers <code>nftables</code>. To check which mode k0s is configured with check <code>ls -lah /var/lib/k0s/bin/</code>. The <code>iptables</code> link target reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure al component have picked up the same mode you can check via:
-<strong>kube-proxy</strong>: <code>nsenter -t $(pidof kube-proxy) -m iptables -V</code>
-<strong>kube-router</strong>: <code>nsenter -t $(pidof kube-router) -m /sbin/iptables -V</code>
-<strong>calico</strong>: <code>nsenter -t $(pidof -s calico-node) -m iptables -V</code></p>
-<p>There are <a href="https://bugzilla.netfilter.org/show_bug.cgi?id=1632">known</a> version incompatibility issues in iptables versions. k0s ships (in <code>/var/lib/k0s/bin</code>) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different that k0s (and other k8s components) ships with it may cause networking issues. This is based on the fact that iptables being user-space tooling it does not provide any strong version compatibility guarantees.</p>
+<p><code>iptables</code> can work in two distinct modes, <code>legacy</code> and <code>nftables</code>. k0s autodetects the mode and prefers <code>nftables</code>. To check which mode k0s is configured with check <code>ls -lah /var/lib/k0s/bin/</code>. The target of the symbolic link <code>iptables</code> reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure all component have picked up the same mode you can check via:</p>
+<ul>
+<li>kube-proxy: <code>nsenter -t $(pidof kube-proxy) -m iptables -V</code></li>
+<li>kube-router: <code>nsenter -t $(pidof kube-router) -m /sbin/iptables -V</code></li>
+<li>calico: <code>nsenter -t $(pidof -s calico-node) -m iptables -V</code></li>
+</ul>
+<p>There are <a href="https://bugzilla.netfilter.org/show_bug.cgi?id=1632">known</a> version incompatibility issues in iptables versions. k0s ships (in <code>/var/lib/k0s/bin</code>) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different from the one that k0s (and other k8s components) ship, it may cause networking issues. This is due to the fact that iptables, being user-space tooling, does not provide any strong version compatibility guarantees.</p>
 <h2 id="firewalld-k0s">Firewalld &amp; k0s<a class="headerlink" href="#firewalld-k0s" title="Permanent link">#</a></h2>
 <p>If you are using <a href="https://firewalld.org/"><code>firewalld</code></a> on your hosts you need to ensure it is configured to use the same <code>FirewallBackend</code> as k0s and other Kubernetes components use. Otherwise networking will be broken in various ways.</p>
 <p>Here's an example configuration for a tested working networking setup:</p>
@@ -2553,12 +2555,12 @@ public<span class="w"> </span><span class="o">(</span>active<span class="o">)</s
 <span class="w">  </span>sources:<span class="w"> </span><span class="m">10</span>.244.0.0/16<span class="w"> </span><span class="m">10</span>.96.0.0/12
 <span class="w">  </span>services:<span class="w"> </span>cockpit<span class="w"> </span>dhcpv6-client<span class="w"> </span>ssh
 <span class="w">  </span>ports:<span class="w"> </span><span class="m">80</span>/tcp<span class="w"> </span><span class="m">6443</span>/tcp<span class="w"> </span><span class="m">8132</span>/tcp<span class="w"> </span><span class="m">10250</span>/tcp<span class="w"> </span><span class="m">179</span>/tcp<span class="w"> </span><span class="m">179</span>/udp
-<span class="w">  </span>protocols:<span class="w"> </span>
+<span class="w">  </span>protocols:
 <span class="w">  </span>forward:<span class="w"> </span>no
 <span class="w">  </span>masquerade:<span class="w"> </span>yes
-<span class="w">  </span>forward-ports:<span class="w"> </span>
-<span class="w">  </span>source-ports:<span class="w"> </span>
-<span class="w">  </span>icmp-blocks:<span class="w"> </span>
+<span class="w">  </span>forward-ports:
+<span class="w">  </span>source-ports:
+<span class="w">  </span>icmp-blocks:
 <span class="w">  </span>rich<span class="w"> </span>rules:
 </code></pre></div>
 <p>Basic single node firewalld setup:</p>

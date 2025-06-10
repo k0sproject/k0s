@@ -2299,7 +2299,7 @@
 <h1 id="system-components-monitoring">System components monitoring<a class="headerlink" href="#system-components-monitoring" title="Permanent link">#</a></h1>
 <p>Controller nodes <a href="../architecture/#control-plane">are isolated</a> by default, which thus means that a cluster user cannot schedule workloads onto controller nodes.</p>
 <p>k0s provides a mechanism to expose system components for monitoring. System component metrics can give a better look into what is happening inside them. Metrics are particularly useful for building dashboards and alerts.
-You can read more about metrics for Kubernetes system components <a href="https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/">here</a>.</p>
+You can read more about metrics for Kubernetes system components in the <a href="https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/">kubernetes documentation</a>.</p>
 <p><strong>Note:</strong> the mechanism is an opt-in feature, you can enable it on installation:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--enable-metrics-scraper
 </code></pre></div>
@@ -2317,8 +2317,8 @@ deployment.apps/k0s-pushgateway<span class="w">   </span><span class="m">1</span
 NAME<span class="w">                                         </span>DESIRED<span class="w">   </span>CURRENT<span class="w">   </span>READY<span class="w">   </span>AGE
 replicaset.apps/k0s-pushgateway-6c5d8c54cf<span class="w">   </span><span class="m">1</span><span class="w">         </span><span class="m">1</span><span class="w">         </span><span class="m">1</span><span class="w">       </span>43h
 </code></pre></div>
-<p>That's not enough to start scraping these additional metrics. For Prometheus
-Operator](https://prometheus-operator.dev/) based solutions, you can create a
+<p>That's not enough to start scraping these additional metrics. For <a href="https://prometheus-operator.dev/">Prometheus
+Operator</a> based solutions, you can create a
 <code>ServiceMonitor</code> for it like this:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monitoring.coreos.com/v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ServiceMonitor</span>
@@ -2350,7 +2350,7 @@ like this:</p>
 <p><strong>Note:</strong> kube-apiserver metrics are not scrapped since they are accessible via <code>kubernetes</code> endpoint within the cluster.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
 <p><img alt="k0s metrics exposure architecture" src="../img/pushgateway.png" /></p>
-<p>k0s uses pushgateway with TTL to make it possible to detect issues with the metrics delivery. Default TTL is 2 minutes.</p>
+<p>k0s uses a pushgateway with a TTL to make it possible to detect issues with the metrics delivery. The default TTL is 2 minutes.</p>
 
 
 
