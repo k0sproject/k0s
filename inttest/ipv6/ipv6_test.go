@@ -18,6 +18,7 @@ package ipv6
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -45,6 +46,18 @@ spec:
     serviceCIDR: fd01::/108
 `
 
+const k0sConfigWithCalico = `
+spec:
+  images:
+    default_pull_policy: Never
+  api:
+    address: %s
+  network:
+    provider: calico
+    podCIDR: fd00::/108
+    serviceCIDR: fd01::/108
+`
+
 type IPv6Suite struct {
 	common.BootlooseSuite
 }
@@ -52,7 +65,19 @@ type IPv6Suite struct {
 func (s *IPv6Suite) TestK0sGetsUp() {
 	s.validateDockerBridge()
 	ctx := s.Context()
-	k0sConfig := fmt.Sprintf(k0sConfigWithKuberouter, s.getIPv6Address(s.ControllerNode(0)))
+
+	var k0sConfig, cniDS string
+
+	if os.Getenv("K0S_NETWORK") == "kube-router" {
+		s.T().Log("Using kube-router network")
+		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouter, s.getIPv6Address(s.ControllerNode(0)))
+		cniDS = "kube-router"
+	} else {
+		s.T().Log("Using calico network")
+		k0sConfig = fmt.Sprintf(k0sConfigWithCalico, s.getIPv6Address(s.ControllerNode(0)))
+		cniDS = "calico-node"
+	}
+
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 
 	// If there isn't a valid IPv6 DNS docker will write 127.0.0.11 which creates a routing loop.
@@ -73,8 +98,8 @@ func (s *IPv6Suite) TestK0sGetsUp() {
 		s.Equal("bar", labels["k0sproject.io/foo"])
 	}
 
-	s.T().Log("Waiting for kube-router to become ready")
-	s.Require().NoError(common.WaitForKubeRouterReady(ctx, kc), "While waiting for kube-router to become ready")
+	s.T().Logf("Waiting for %s to become ready", cniDS)
+	s.Require().NoErrorf(common.WaitForDaemonSet(ctx, kc, cniDS, "kube-system"), "Waiting for %s to become ready", cniDS)
 	s.T().Log("Waiting for coredns to become ready")
 	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc), "While waiting for CoreDNS to become ready")
 	s.T().Log("Waiting for logs to work")

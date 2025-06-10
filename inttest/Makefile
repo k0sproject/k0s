@@ -104,6 +104,12 @@ check-dualstack-kuberouter-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
 check-dualstack-kuberouter-dynamicconfig: export K0S_NETWORK=kuberouter
 check-dualstack-kuberouter-dynamicconfig: TEST_PACKAGE=dualstack
 
+check-ipv6-kuberouter: export K0S_NETWORK=kuberouter
+check-ipv6-kuberouter: TEST_PACKAGE=ipv6
+
+check-ipv6-calico: export K0S_NETWORK=calico
+check-ipv6-calico: TEST_PACKAGE=ipv6
+
 check-ap-updater: .update-server.stamp
 check-ap-updater-periodic: .update-server.stamp
 check-ap-updater-periodic: TIMEOUT=10m

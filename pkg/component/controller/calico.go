@@ -75,7 +75,8 @@ type calicoConfig struct {
 	ClusterCIDRIPv6      string
 	EnableWireguard      bool
 	FlexVolumeDriverPath string
-	DualStack            bool
+	EnableIPv4           bool
+	EnableIPv6           bool
 	EnvVars              map[string]string
 
 	CalicoCNIImage             string
@@ -196,6 +197,9 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 	if clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod != "" {
 		ipv6AutoDetectionMethod = clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod
 	}
+
+	primaryAFIPv4 := clusterConfig.PrimaryAddressFamily() == v1beta1.PrimaryFamilyIPv4
+	isDualStack := clusterConfig.Spec.Network.DualStack.Enabled
 	config := calicoConfig{
 		MTU:                        clusterConfig.Spec.Network.Calico.MTU,
 		VxlanPort:                  clusterConfig.Spec.Network.Calico.VxlanPort,
@@ -203,9 +207,8 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		EnableWireguard:            clusterConfig.Spec.Network.Calico.EnableWireguard,
 		EnvVars:                    clusterConfig.Spec.Network.Calico.EnvVars,
 		FlexVolumeDriverPath:       clusterConfig.Spec.Network.Calico.FlexVolumeDriverPath,
-		DualStack:                  clusterConfig.Spec.Network.DualStack.Enabled,
-		ClusterCIDRIPv4:            clusterConfig.Spec.Network.PodCIDR,
-		ClusterCIDRIPv6:            clusterConfig.Spec.Network.DualStack.IPv6PodCIDR,
+		EnableIPv4:                 isDualStack || primaryAFIPv4,
+		EnableIPv6:                 isDualStack || !primaryAFIPv4,
 		CalicoCNIImage:             clusterConfig.Spec.Images.Calico.CNI.URI(),
 		CalicoNodeImage:            clusterConfig.Spec.Images.Calico.Node.URI(),
 		CalicoKubeControllersImage: clusterConfig.Spec.Images.Calico.KubeControllers.URI(),
@@ -224,6 +227,14 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		return config, fmt.Errorf("unsupported mode: %q", clusterConfig.Spec.Network.Calico.Mode)
 	}
 
+	if isDualStack {
+		config.ClusterCIDRIPv4 = clusterConfig.Spec.Network.PodCIDR
+		config.ClusterCIDRIPv6 = clusterConfig.Spec.Network.DualStack.IPv6PodCIDR
+	} else if primaryAFIPv4 {
+		config.ClusterCIDRIPv4 = clusterConfig.Spec.Network.PodCIDR
+	} else {
+		config.ClusterCIDRIPv6 = clusterConfig.Spec.Network.PodCIDR
+	}
 	return config, nil
 }
 

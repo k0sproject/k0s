@@ -44,7 +44,8 @@ smoketests := \
 	check-extraargs \
 	check-hacontrolplane \
 	check-hostnameoverride \
-	check-ipv6 \
+	check-ipv6-calico \
+	check-ipv6-kuberouter \
 	check-k0scloudprovider \
 	check-kine \
 	check-kubectl \
