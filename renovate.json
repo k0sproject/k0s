@@ -10,6 +10,11 @@
   "labels": [
     "dependencies"
   ],
+  "baseBranches": [
+    "main",
+    "/^release-1\\.3[0-3]$/"
+  ],
+  "prTitleStrict": true,
   "enabledManagers": [
     "gomod",
     "custom.regex"
@@ -38,6 +43,25 @@
       ],
       "groupName": "etcd dependencies",
       "groupSlug": "etcd-all"
+    },
+    {
+      "description": "Only update the main branch by default",
+      "enabled": false,
+      "prTitleStrict": false,
+      "matchBaseBranches": [
+        "!main"
+      ]
+    },
+    {
+      "description": "Bump Go for release-1.32",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.32"
+      ],
+      "matchDepNames": [
+        "go"
+      ],
+      "allowedVersions": "<=1.23"
     }
   ],
   "customManagers": [
