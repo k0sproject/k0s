@@ -34,7 +34,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sirupsen/logrus"
 )
@@ -182,29 +181,45 @@ func NewClusterConfigInitializer(kubeClientFactory kubeutil.ClientFactoryInterfa
 
 func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Context) error {
 	// We need to wait until the cluster configuration exists or we succeed in creating it.
-	return wait.PollUntilContextTimeout(ctx, 1*time.Second, 20*time.Second, true, func(ctx context.Context) (_ bool, err error) {
+	start := time.Now()
+	for {
+		var err error
 		if i.leaderElector.IsLeader() {
 			err = i.createClusterConfig(ctx)
 			if err == nil {
 				i.log.Debug("Cluster configuration created")
-				return true, nil
+				return nil
 			}
 			if apierrors.IsAlreadyExists(err) {
 				// An already existing configuration is just fine.
 				i.log.Debug("Cluster configuration already exists")
-				return true, nil
+				return nil
 			}
 		} else {
 			err = i.clusterConfigExists(ctx)
 			if err == nil {
 				i.log.Debug("Cluster configuration exists")
-				return true, nil
+				return nil
 			}
 		}
 
-		i.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
-		return false, nil
-	})
+		var log func(...any)
+		if now := time.Now(); now.Sub(start) >= (1 * time.Minute) {
+			start = now
+			log = i.log.WithError(err).Info
+		} else {
+			log = i.log.WithError(err).Debug
+		}
+
+		log("Still trying to ensure the existence of the cluster configuration")
+
+		select {
+		case <-time.After(1 * time.Second):
+			continue
+		case <-ctx.Done():
+			return fmt.Errorf("%w (last error: %w)", context.Cause(ctx), err)
+		}
+	}
 }
 
 func (i *ClusterConfigInitializer) clusterConfigExists(ctx context.Context) error {
