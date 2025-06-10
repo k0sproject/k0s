@@ -10,7 +10,7 @@ When the storage solution implements CSI, kubernetes can communicate with the st
 
 ### Installing 3rd party storage solutions
 
-Follow your storage driver's installation instructions. Note that by default the Kubelet installed by k0s uses a slightly different path for its working directory (`/varlib/k0s/kubelet` instead of `/var/lib/kubelet`). Consult the CSI driver's configuration documentation on how to customize this path. The actual path can differ if you defined the flag `--data-dir`.
+Follow your storage driver's installation instructions. Note that by default the Kubelet installed by k0s uses a slightly different path for its working directory (`/var/lib/k0s/kubelet` instead of `/var/lib/kubelet`). Consult the CSI driver's configuration documentation on how to customize this path. The actual path can differ if you defined the flag `--data-dir`.
 
 ## Example storage solutions
 
@@ -25,4 +25,4 @@ Different Kubernetes storage solutions are explained in the [official Kubernetes
 - Azure Disk
 - Portworx
 
-If you are looking for a fault-tolerant storage with data replication, you can find a k0s tutorial for configuring Ceph storage with Rook [in here](examples/rook-ceph.md).
+If you are looking for a fault-tolerant storage with data replication, you can follow our [tutorial for configuring Ceph storage with Rook](examples/rook-ceph.md).
