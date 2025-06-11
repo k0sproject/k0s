@@ -488,8 +488,8 @@ Nodes under the `images` key all have the same basic structure:
 spec:
   images:
     coredns:
-      image: quay.io/coredns/coredns
-      version: v1.7.0
+      image: quay.io/k0sproject/coredns
+      version: 1.12.2
 ```
 
 If you want the list of default images and their versions to be included, use `k0s config create --include-images`.
