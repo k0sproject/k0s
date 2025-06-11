@@ -24,7 +24,7 @@ means that your bundle can contain multi-arch images, and the import will be
 done using platform compatibility.
 
 [OCI Image Layout]: https://github.com/opencontainers/image-spec/blob/v1.0/image-layout.md
-[GitHub releases page]: https://github.com/k0sproject/k0s/releases/v{{{ extra.k8s_version }}}+k0s.0
+[GitHub releases page]: https://github.com/k0sproject/k0s/releases/{{{ k0s_version }}}
 
 ## Creating image bundles
 
@@ -119,7 +119,7 @@ metadata:
   name: k0s
 spec:
   k0s:
-    version: {{{ extra.k8s_version }}}+k0s.0
+    version: {{{ k0s_version }}}
   hosts:
     - role: controller
       ssh:
