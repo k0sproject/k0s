@@ -120,6 +120,19 @@
       "depNameTemplate": "k3s-io/kine",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Update Python version",
+      "managerFilePatterns": [
+        "docs/Makefile.variables"
+      ],
+      "matchStrings": [
+        "python_version\\s*=\\s*(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "python",
+      "datasourceTemplate": "python-version",
+      "versioningTemplate": "python"
     }
   ]
 }
