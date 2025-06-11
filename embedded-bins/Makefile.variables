@@ -43,7 +43,7 @@ kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1
 kine_build_go_ldflags = "-w -s"
 kine_build_go_ldflags_extra = "-extldflags=-static"
 
-etcd_version = 3.5.21
+etcd_version = 3.6.1
 etcd_buildimage = $(golang_buildimage)
 #etcd_build_go_tags =
 etcd_build_go_cgo_enabled = 0
