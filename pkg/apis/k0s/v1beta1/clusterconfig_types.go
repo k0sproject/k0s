@@ -88,7 +88,7 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 		copy.Spec.Scheduler = nil
 	}
 	if reflect.DeepEqual(c.Spec.Storage, DefaultStorageSpec()) {
-		c.Spec.Storage = nil
+		copy.Spec.Storage = nil
 	}
 	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
 		copy.Spec.Network = nil
