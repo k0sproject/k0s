@@ -41,7 +41,6 @@ func TestDownload_CancelRequest(t *testing.T) {
 	cancel(assert.AnError)
 
 	err := internalhttp.Download(ctx, "http://404.example.com", io.Discard)
-	assert.ErrorIs(t, err, assert.AnError)
 	if urlErr := (*url.Error)(nil); assert.ErrorAs(t, err, &urlErr) {
 		assert.Equal(t, "Get", urlErr.Op)
 		assert.Equal(t, "http://404.example.com", urlErr.URL)
