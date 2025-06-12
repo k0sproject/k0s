@@ -1,6 +1,6 @@
 alpine_version = 3.20
 alpine_patch_version = $(alpine_version).6
-golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
+golang_buildimage=docker.io/library/golang:$(go_version)-alpine3.21
 go_version = 1.23.10
 
 runc_version = 1.1.15
