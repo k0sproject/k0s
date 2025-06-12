@@ -34,7 +34,7 @@ type LeasePool struct {
 	stopCh            chan struct{}
 	leaderStatus      atomic.Bool
 	kubeClientFactory kubeutil.ClientFactoryInterface
-	leaseCancel       context.CancelFunc
+	stop              func()
 
 	acquiredLeaseCallbacks []func()
 	lostLeaseCallbacks     []func()
@@ -72,14 +72,15 @@ func (l *LeasePool) Start(context.Context) error {
 		return err
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	events, err := leasePool.Watch(ctx)
+	events, watchDone, err := leasePool.Watch(ctx)
 	if err != nil {
 		cancel()
 		return err
 	}
-	l.leaseCancel = cancel
 
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		for {
 			select {
 			case <-events.AcquiredLease:
@@ -90,9 +91,17 @@ func (l *LeasePool) Start(context.Context) error {
 				l.log.Info("lost leader lease")
 				l.leaderStatus.Store(false)
 				runCallbacks(l.lostLeaseCallbacks)
+			case <-watchDone:
+				// The channels are unbuffered. This means that it's guaranteed
+				// that we have consumed all pending events on the other
+				// channels in order before seeing the done channel closed.
+				return
 			}
 		}
 	}()
+
+	l.stop = func() { cancel(); <-done }
+
 	return nil
 }
 
@@ -113,8 +122,8 @@ func (l *LeasePool) AddLostLeaseCallback(fn func()) {
 }
 
 func (l *LeasePool) Stop() error {
-	if l.leaseCancel != nil {
-		l.leaseCancel()
+	if l.stop != nil {
+		l.stop()
 	}
 	return nil
 }
