@@ -98,7 +98,6 @@ func (m *ociRegistryManager) GetRegistryClient(rawRegistryURL string) (*registry
 	registryClient, err := registry.NewClient(
 		registry.ClientOptWriter(os.Stdout),
 		registry.ClientOptEnableCache(true),
-		registry.ClientOptBasicAuth(repoCfg.Username, repoCfg.Password),
 		registry.ClientOptHTTPClient(&http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: tlsConfig,
