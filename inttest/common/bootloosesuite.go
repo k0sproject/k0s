@@ -1267,7 +1267,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 
 	if s.WithRegistry {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
-			Spec:  s.generateRegistryMachineSpec(),
+			Spec:  *s.generateRegistryMachineSpec(),
 			Count: 1,
 		})
 	}
