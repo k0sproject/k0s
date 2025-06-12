@@ -20,9 +20,11 @@ import (
 	"bytes"
 	"context"
 	"crypto"
+	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"slices"
@@ -37,6 +39,7 @@ import (
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/local"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
@@ -47,6 +50,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/registry"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -122,20 +126,62 @@ func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir string) []byte {
 
 // pushChartToLocalRegistry pushes a pre-downloaded echo-server chart to the local registry
 func (as *AddonsSuite) pushChartToLocalRegistry() {
+	port := as.GetRegistryHostPort()
 	helmEnv := cli.New()
 
 	cfg := &action.Configuration{}
 	err := cfg.Init(helmEnv.RESTClientGetter(), "", "memory", as.T().Logf)
 	as.Require().NoError(err)
 
+	// Create new http client that ignores TLS verification
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			// Disable TLS verification for local registry
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+		Timeout: 30 * time.Second, // Set a timeout for the HTTP client
+	}
+	// Construct custom resolver so that all traffic to our localhost registry
+	// is done over HTTPS with the custom HTTP client that ignores TLS verification.
+	// This is necessary since by default the resolver has option to switch to plain HTTP for local registries.
+	// See: https://github.com/containerd/containerd/blob/aca9d7631d155fe56468f73b4e8084a71ebfeaba/remotes/docker/registry.go#L176-L185
+	resolverClient := docker.NewResolver(
+		docker.ResolverOptions{
+			Hosts: func(host string) ([]docker.RegistryHost, error) {
+				return []docker.RegistryHost{
+					{
+						Host:         fmt.Sprintf("localhost:%d", port),
+						Path:         "/v2",
+						Scheme:       "https",
+						Capabilities: docker.HostCapabilityPull | docker.HostCapabilityResolve | docker.HostCapabilityPush,
+						Client:       httpClient, // Use the custom HTTP client
+					},
+				}, nil
+			},
+		},
+	)
+
+	registryClient, err := registry.NewClient(
+		registry.ClientOptDebug(true),
+		registry.ClientOptPlainHTTP(),
+		registry.ClientOptResolver(resolverClient),
+	)
+	as.Require().NoError(err)
+
+	cfg.RegistryClient = registryClient
+
 	pushAction := action.NewPushWithOpts(
 		action.WithPushConfig(cfg),
 		action.WithPushOptWriter(os.Stdout),
 		action.WithInsecureSkipTLSVerify(true),
+		action.WithPlainHTTP(false),
 	)
 	pushAction.Settings = helmEnv
-
-	_, err = pushAction.Run(echoServerTgzPath, fmt.Sprintf("oci://localhost:%d/charts", as.GetRegistryHostPort()))
+	registryAddress := fmt.Sprintf("oci://localhost:%d/charts", port)
+	as.T().Logf("Pushing chart %s to local registry: %s", echoServerTgzPath, registryAddress)
+	_, err = pushAction.Run(echoServerTgzPath, registryAddress)
 	as.Require().NoError(err)
 }
 
