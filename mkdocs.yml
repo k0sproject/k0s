@@ -118,11 +118,14 @@ plugins:
   - macros:
       j2_variable_start_string: "{{{"
       j2_variable_end_string: "}}}"
+      modules:
+        - k0s_mkdocs_hacks.macros
   - exclude:
       glob:
         - internal/*
         - "*.etag"
         - custom_theme/*
+        - mkdocs_modules/*
         - Dockerfile.serve-dev
         - k0s
         - k0s.exe
@@ -149,7 +152,6 @@ markdown_extensions:
   - footnotes
 
 extra:
-  k8s_version: !!python/object/apply:os.getenv ["KUBERNETES_VERSION"]
   generator: false
   social:
     - icon: fontawesome/brands/github

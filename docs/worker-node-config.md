@@ -8,24 +8,21 @@ The `k0s worker` command accepts the `--labels` flag, with which you can make th
 
 For example, running the worker with `k0s worker --token-file k0s.token --labels="k0sproject.io/foo=bar,k0sproject.io/other=xyz"` results in:
 
-```shell
-kubectl get node --show-labels
-```
+{% set kubelet_ver = k8s_version + '+k0s' -%}
+{% set kubelet_ver_len = kubelet_ver | length -%}
 
-```shell
-NAME      STATUS     ROLES    AGE   VERSION        LABELS
-worker0   NotReady   <none>   10s   v{{{ extra.k8s_version }}}+k0s  beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,k0sproject.io/foo=bar,k0sproject.io/other=xyz,kubernetes.io/arch=amd64,kubernetes.io/hostname=worker0,kubernetes.io/os=linux
+```console
+$ kubectl get node --show-labels
+NAME      STATUS     ROLES    AGE   {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   LABELS
+worker0   NotReady   <none>   10s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,k0sproject.io/foo=bar,k0sproject.io/other=xyz,kubernetes.io/arch=amd64,kubernetes.io/hostname=worker0,kubernetes.io/os=linux
 ```
 
 Controller worker nodes are assigned `node.k0sproject.io/role=control-plane` and `node-role.kubernetes.io/control-plane=true` labels:
 
-```shell
-kubectl get node --show-labels
-```
-
-```shell
-NAME          STATUS     ROLES           AGE   VERSION        LABELS
-controller0   NotReady   control-plane   10s   v{{{ extra.k8s_version }}}+k0s  beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=worker0,kubernetes.io/os=linux,node.k0sproject.io/role=control-plane,node-role.kubernetes.io/control-plane=true
+```console
+$ kubectl get node --show-labels
+NAME          STATUS     ROLES           AGE   {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   LABELS
+controller0   NotReady   control-plane   10s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=worker0,kubernetes.io/os=linux,node.k0sproject.io/role=control-plane,node-role.kubernetes.io/control-plane=true
 ```
 
 **Note:** Setting the labels is only effective on the first registration of the node. Changing the labels thereafter has no effect.
