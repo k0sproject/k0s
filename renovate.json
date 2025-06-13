@@ -123,6 +123,18 @@
     },
     {
       "customType": "regex",
+      "description": "Update Alpine version",
+      "managerFilePatterns": [
+        "embedded-bins/Makefile.variables"
+      ],
+      "matchStrings": [
+        "alpine_patch_version\\s*=\\s*(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "docker.io/library/alpine",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
       "description": "Update Python version",
       "managerFilePatterns": [
         "docs/Makefile.variables"
