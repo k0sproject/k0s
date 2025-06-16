@@ -85,6 +85,7 @@ jobs:
         id: set_versions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PYTHONPATH: ${{ github.workspace }}/docs/mkdocs_modules
         run: |
           TAGS=$(gh release list -L 1000 -R "$GITHUB_REPOSITORY" | grep "+k0s." | grep -v Draft | cut -f 1 | k0s_sort)
           LATEST=$(echo "${TAGS}" | tail -1)
