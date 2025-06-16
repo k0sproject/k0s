@@ -62,8 +62,9 @@ For information on the required ports and protocols, refer to [networking](netwo
 
 ## External runtime dependencies
 
-k0s strives to be as independent from the OS as possible. The current and past
-external runtime dependencies are documented [here](external-runtime-deps.md).
+k0s strives to be as independent from the operating system as possible. See the
+dedicated section on [external runtime dependencies](external-runtime-deps.md)
+for details on current and past requirements.
 
 To run some automated compatiblility checks on your system, use
 [`k0s sysinfo`](cli/k0s_sysinfo.md).
