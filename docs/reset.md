@@ -82,8 +82,8 @@ K0sctl can be used to connect and reset all cluster nodes in a single command.
     INFO ==> Running phase: Prepare hosts
     INFO ==> Running phase: Gather k0s facts
     INFO [ssh] 13.53.43.63:22: found existing configuration
-    INFO [ssh] 13.53.43.63:22: is running k0s controller version v{{{ extra.k8s_version }}}+k0s.0
-    INFO [ssh] 13.53.218.149:22: is running k0s worker version v{{{ extra.k8s_version }}}+k0s.0
+    INFO [ssh] 13.53.43.63:22: is running k0s controller version {{{ k0s_version }}}
+    INFO [ssh] 13.53.218.149:22: is running k0s worker version {{{ k0s_version }}}
     INFO [ssh] 13.53.43.63:22: checking if worker  has joined
     INFO ==> Running phase: Reset workers
     INFO [ssh] 13.53.218.149:22: reset
