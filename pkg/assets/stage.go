@@ -11,6 +11,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -51,7 +53,8 @@ func BinPath(name string, binDir string) string {
 // Stage ...
 func Stage(dataDir string, name string) error {
 	p := filepath.Join(dataDir, name)
-	logrus.Infof("Staging '%s'", p)
+	log := logrus.WithField("path", p)
+	log.Infof("Staging")
 
 	selfexe, err := os.Executable()
 	if err != nil {
@@ -60,65 +63,47 @@ func Stage(dataDir string, name string) error {
 
 	exinfo, err := os.Stat(selfexe)
 	if err != nil {
-		return fmt.Errorf("unable to stat '%s': %w", selfexe, err)
+		return fmt.Errorf("unable to stat current executable: %w", err)
 	}
 
 	gzname := "bin/" + name + ".gz"
 	bin, embedded := BinData[gzname]
 	if !embedded {
-		logrus.Debug("Skipping not embedded file:", gzname)
+		log.Debug("Skipping not embedded file:", gzname)
 		return nil
 	}
-	logrus.Debugf("%s is at offset %d", gzname, bin.offset)
+	log.Debugf("%s is at offset %d", gzname, bin.offset)
 
 	if !EmbeddedBinaryNeedsUpdate(exinfo, p, bin.originalSize) {
-		logrus.Debug("Re-use existing file:", p)
+		log.Debug("Re-use existing file")
 		return nil
 	}
 
 	infile, err := os.Open(selfexe)
 	if err != nil {
-		return fmt.Errorf("unable to open executable '%s': %w", selfexe, err)
+		return fmt.Errorf("unable to open current executable: %w", err)
 	}
 	defer infile.Close()
 
 	// find location at EOF - BinDataSize + offs
 	if _, err := infile.Seek(-BinDataSize+bin.offset, 2); err != nil {
-		return fmt.Errorf("failed to find embedded file position for '%s': %w", p, err)
+		return fmt.Errorf("failed to find embedded file position for %q: %w", p, err)
 	}
 	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
 	if err != nil {
-		return fmt.Errorf("failed to create gzip reader for '%s': %w", p, err)
+		return fmt.Errorf("failed to create gzip reader for %q: %w", p, err)
 	}
 
-	logrus.Debugf("Writing static file: '%s'", p)
+	log.Debug("Writing static file")
 
-	if err := copyTo(p, gz); err != nil {
-		return fmt.Errorf("unable to copy to '%s': %w", p, err)
-	}
-	if err := os.Chmod(p, 0550); err != nil {
-		return fmt.Errorf("failed to chmod '%s': %w", p, err)
-	}
-
-	// In order to properly determine if an update of an embedded binary file is needed,
-	// the staged embedded binary needs to have the same modification time as the `k0s`
-	// executable.
-	if err := os.Chtimes(p, exinfo.ModTime(), exinfo.ModTime()); err != nil {
-		return fmt.Errorf("failed to set file modification times of '%s': %w", p, err)
-	}
-	return nil
-}
-
-func copyTo(p string, gz io.Reader) error {
-	_ = os.Remove(p)
-	f, err := os.Create(p)
-	if err != nil {
-		return fmt.Errorf("failed to create %s: %w", p, err)
-	}
-	defer f.Close()
-	_, err = io.Copy(f, gz)
-	if err != nil {
-		return fmt.Errorf("failed to write to %s: %w", p, err)
-	}
-	return nil
+	return file.AtomicWithTarget(p).
+		WithPermissions(0750).
+		// In order to properly determine if an update of an embedded binary
+		// file is needed, the staged embedded binary needs to have the same
+		// modification time as the `k0s` executable.
+		WithModificationTime(exinfo.ModTime()).
+		Do(func(dst file.AtomicWriter) error {
+			_, err := io.Copy(dst, gz)
+			return err
+		})
 }
