@@ -3335,20 +3335,20 @@ by k0s.</p>
 <p>² If <code>spec.images.default_pull_policy</code> is set and not empty, it will be used as a pull policy for each bundled image.</p>
 <h4 id="image-example">Image example<a class="headerlink" href="#image-example" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nt">images</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">repository</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my.own.repo&quot;</span>
+<span class="w">  </span><span class="nt">repository</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">airgap-repo.local</span>
 <span class="w">  </span><span class="nt">calico</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">kubecontrollers</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/k0sproject/calico-kube-controllers</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v3.27.3-0</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">repo.acme.corp/k0sproject/calico-kube-controllers</span>
+<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v3.29.4-0</span>
 <span class="w">  </span><span class="nt">metricsserver</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/k0sproject/metrics-server</span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v0.7.2</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">repo.acme.corp/k0sproject/metrics-server</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v0.7.2-0</span>
 </code></pre></div>
 <p>In the runtime the image names are calculated as
-<code>my.own.repo/k0sproject/calico-kube-controllers:v3.27.3-0</code> and
-<code>my.own.repo/metrics-server/metrics-server:v0.7.2</code>. This only affects the the
-images pull location, and thus omitting an image specification here will not
-disable component deployment.</p>
+<code>airgap-repo.local/k0sproject/calico-kube-controllers:v3.29.4-0</code> and
+<code>airgap-repo.local/k0sproject/metrics-server:v0.7.2-0</code>. This only
+affects the the images pull location, and thus omitting an image specification
+here will not disable component deployment.</p>
 <h3 id="specextensionshelm"><code>spec.extensions.helm</code><a class="headerlink" href="#specextensionshelm" title="Permanent link">#</a></h3>
 <p><code>spec.extensions.helm</code> is the config file key in which you configure the list of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap (for more information, refer to <a href="../helm-charts/">Helm Charts</a>).</p>
 <h3 id="speckonnectivity"><code>spec.konnectivity</code><a class="headerlink" href="#speckonnectivity" title="Permanent link">#</a></h3>
