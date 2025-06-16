@@ -16,21 +16,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// EmbeddedBinaryNeedsUpdate returns true if the provided embedded binary file should
-// be updated. This determination is based on the modification times and file sizes of both
-// the provided executable and the embedded executable. It is expected that the embedded binary
-// modification times should match the main `k0s` executable.
-func EmbeddedBinaryNeedsUpdate(exinfo os.FileInfo, embeddedBinaryPath string, size int64) bool {
-	if pathinfo, err := os.Stat(embeddedBinaryPath); err == nil {
-		return !exinfo.ModTime().Equal(pathinfo.ModTime()) || pathinfo.Size() != size
-	}
-
-	// If the stat fails, the file is either missing or permissions are missing
-	// to read this -- let above know that an update should be attempted.
-
-	return true
-}
-
 // BinPath searches for a binary on disk:
 // - in the BinDir folder,
 // - in the PATH.
@@ -80,9 +65,14 @@ func stage(name, path string, perm os.FileMode) error {
 	}
 	log.Debugf("%s is at offset %d", gzname, bin.offset)
 
-	if !EmbeddedBinaryNeedsUpdate(exinfo, path, bin.originalSize) {
-		log.Debug("Re-use existing file")
-		return nil
+	// Skip extraction if the path is up to date, i.e. if its modification time
+	// matches the one of the k0s executable and its file size matches the one
+	// of the to-be-staged file.
+	if info, err := os.Stat(path); err == nil {
+		if !exinfo.IsDir() && exinfo.ModTime().Equal(info.ModTime()) && info.Size() == bin.originalSize {
+			log.Debug("Re-use existing file")
+			return nil
+		}
 	}
 
 	infile, err := os.Open(selfexe)
