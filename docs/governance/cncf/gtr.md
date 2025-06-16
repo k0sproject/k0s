@@ -2,7 +2,7 @@
 
 This document collects information for the [CNCF General Technical Review]. It is built to support the [k0s CNCF Sandbox application] but will be a living document that we update regularly.
 
-[CNCF General Technical Review]: https://github.com/cncf/toc/blob/main/tags/resources/toc-supporting-guides/general-technical-questions.md
+[CNCF General Technical Review]: https://github.com/cncf/toc/blob/main/toc_subprojects/project-reviews-subproject/general-technical-questions.md
 [k0s CNCF Sandbox application]: https://github.com/cncf/sandbox/issues/125
 
 As we are currently applying for the sandbox level, the document only covers the GTR's “Day 0” phase.
