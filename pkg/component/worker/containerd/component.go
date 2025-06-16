@@ -85,7 +85,7 @@ func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
 	for _, bin := range c.binaries {
 		g.Go(func() error {
-			err := assets.Stage(c.K0sVars.BinDir, bin)
+			err := assets.StageExecutable(c.K0sVars.BinDir, bin)
 			// Simply ignore the "running executable" problem on Windows for
 			// now. Whenever there's a permission error on Windows and the
 			// target file exists, log the error and continue.
