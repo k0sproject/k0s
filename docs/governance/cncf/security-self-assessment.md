@@ -1,6 +1,8 @@
-# k0s Security Self-Assessment
+# CNCF TAG-Security self-assessment
 
-This document serves as the k0s project [CNCF security self-assessment](https://tag-security.cncf.io/community/assessments/guide/self-assessment/).
+This document serves as the k0s project [CNCF TAG-Security self-assessment].
+
+[CNCF TAG-Security self-assessment]: https://tag-security.cncf.io/community/assessments/guide/self-assessment/
 
 ## Metadata
 
@@ -9,13 +11,13 @@ This document serves as the k0s project [CNCF security self-assessment](https://
 | Software | https://github.com/k0sproject/k0s |
 | Security Provider | No |
 | Languages | Golang |
-| SBOM | [https://github.com/k0sproject/k0s/releases/download/v1.32.6%2Bk0s.1/spdx.json](https://github.com/k0sproject/k0s/releases/download/v1.32.6%2Bk0s.1/spdx.json)  |
+| SBOM | <https://github.com/k0sproject/k0s/releases/download/{{{ k0s_version | urlencode }}}/spdx.json> |
 
 ## Security links
 
 | Doc | URL |
 | ----- | ----- |
-| Security file | **https://github.com/k0sproject/k0s/blob/main/SECURITY.md** |
+| Security file | <https://github.com/k0sproject/k0s/blob/main/SECURITY.md> |
 
 ## Project Overview
 
