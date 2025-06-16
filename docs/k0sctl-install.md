@@ -80,8 +80,8 @@ INFO [ssh] 10.0.0.1:22: discovered 10.12.18.133 as private address
 INFO ==> Running phase: Validate hosts
 INFO ==> Running phase: Gather k0s facts
 INFO ==> Running phase: Download K0s on the hosts
-INFO [ssh] 10.0.0.2:22: downloading k0s 0.11.0
-INFO [ssh] 10.0.0.1:22: downloading k0s 0.11.0
+INFO [ssh] 10.0.0.2:22: downloading k0s {{{ k0s_version }}}
+INFO [ssh] 10.0.0.1:22: downloading k0s {{{ k0s_version }}}
 INFO ==> Running phase: Configure K0s
 WARN [ssh] 10.0.0.1:22: generating default configuration
 INFO [ssh] 10.0.0.1:22: validating configuration
@@ -98,7 +98,7 @@ INFO [ssh] 10.0.0.2:22: starting service
 INFO [ssh] 10.0.0.2:22: waiting for node to become ready
 INFO ==> Running phase: Disconnect from hosts
 INFO ==> Finished in 2m2s
-INFO k0s cluster version 0.11.0 is now installed
+INFO k0s cluster version {{{ k0s_version }}} is now installed
 INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
 INFO      k0sctl kubeconfig
 ```
