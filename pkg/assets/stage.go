@@ -50,10 +50,16 @@ func BinPath(name string, binDir string) string {
 	return name
 }
 
-// Stage ...
-func Stage(dataDir string, name string) error {
-	p := filepath.Join(dataDir, name)
-	log := logrus.WithField("path", p)
+func StageExecutable(dir, name string) error {
+	path := filepath.Join(dir, name)
+	if err := stage(name, path, 0750); err != nil {
+		return fmt.Errorf("failed to stage %s: %w", path, err)
+	}
+	return nil
+}
+
+func stage(name, path string, perm os.FileMode) error {
+	log := logrus.WithField("path", path)
 	log.Infof("Staging")
 
 	selfexe, err := os.Executable()
@@ -74,7 +80,7 @@ func Stage(dataDir string, name string) error {
 	}
 	log.Debugf("%s is at offset %d", gzname, bin.offset)
 
-	if !EmbeddedBinaryNeedsUpdate(exinfo, p, bin.originalSize) {
+	if !EmbeddedBinaryNeedsUpdate(exinfo, path, bin.originalSize) {
 		log.Debug("Re-use existing file")
 		return nil
 	}
@@ -87,17 +93,17 @@ func Stage(dataDir string, name string) error {
 
 	// find location at EOF - BinDataSize + offs
 	if _, err := infile.Seek(-BinDataSize+bin.offset, 2); err != nil {
-		return fmt.Errorf("failed to find embedded file position for %q: %w", p, err)
+		return fmt.Errorf("failed to find embedded file position: %w", err)
 	}
 	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
 	if err != nil {
-		return fmt.Errorf("failed to create gzip reader for %q: %w", p, err)
+		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 
 	log.Debug("Writing static file")
 
-	return file.AtomicWithTarget(p).
-		WithPermissions(0750).
+	return file.AtomicWithTarget(path).
+		WithPermissions(perm).
 		// In order to properly determine if an update of an embedded binary
 		// file is needed, the staged embedded binary needs to have the same
 		// modification time as the `k0s` executable.

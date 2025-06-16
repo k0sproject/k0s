@@ -60,13 +60,13 @@ var _ manager.Component = (*Kubelet)(nil)
 func (k *Kubelet) Init(_ context.Context) error {
 
 	if runtime.GOOS == "windows" {
-		if err := assets.Stage(k.K0sVars.BinDir, "kubelet.exe"); err != nil {
+		if err := assets.StageExecutable(k.K0sVars.BinDir, "kubelet.exe"); err != nil {
 			return err
 		}
 	}
 
 	if runtime.GOOS == "linux" {
-		if err := assets.Stage(k.K0sVars.BinDir, "kubelet"); err != nil {
+		if err := assets.StageExecutable(k.K0sVars.BinDir, "kubelet"); err != nil {
 			return err
 		}
 	}
