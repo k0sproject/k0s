@@ -15,7 +15,7 @@ In order to create your own image bundle, you need:
   the [containerd Getting Started Guide] for more information.
 
 [Quick Start Guide]: install.md
-[containerd Getting Started Guide]: https://github.com/containerd/containerd/blob/v1.7.27/docs/getting-started.md
+[containerd Getting Started Guide]: https://github.com/containerd/containerd/blob/v{{{ build_var('containerd_version') }}}/docs/getting-started.md
 
 ## 1. Create your own image bundle (optional)
 
@@ -71,7 +71,7 @@ metadata:
   name: k0s-cluster
 spec:
   k0s:
-    version: {{{ extra.k8s_version }}}+k0s.1
+    version: {{{ k0s_version }}}
   hosts:
     - role: controller
       ssh:
