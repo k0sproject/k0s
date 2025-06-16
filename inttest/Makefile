@@ -90,6 +90,10 @@ check-kubeletcertrotate: TIMEOUT=15m
 check-cplb-userspace-extaddr: export K0S_USE_EXTERNAL_ADDRESS=yes
 check-cplb-userspace-extaddr: TEST_PACKAGE=cplb-userspace
 
+check-cplb-userspace-ipv6: export K0S_USE_EXTERNAL_ADDRESS=yes
+check-cplb-userspace-ipv6: export K0S_IPV6_ONLY=yes
+check-cplb-userspace-ipv6: TEST_PACKAGE=cplb-userspace
+
 check-dualstack-calico: export K0S_NETWORK=calico
 check-dualstack-calico: TEST_PACKAGE=dualstack
 

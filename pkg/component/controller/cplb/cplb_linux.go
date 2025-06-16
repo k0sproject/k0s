@@ -57,6 +57,7 @@ type Keepalived struct {
 	LogConfig              bool
 	APIPort                int
 	KubeConfigPath         string
+	PrimaryAFIPv4          bool
 	keepalivedConfig       *keepalivedConfig
 	uid                    int
 	supervisor             *supervisor.Supervisor
@@ -94,6 +95,11 @@ func (k *Keepalived) Start(ctx context.Context) error {
 	if k.Config == nil || (len(k.Config.VRRPInstances) == 0 && len(k.Config.VirtualServers) == 0) {
 		k.log.Warn("No VRRP instances or virtual servers defined, skipping keepalived start")
 		return nil
+	}
+
+	// IPv6 clusters need labels. We only do this process for IPv6 VIPs
+	if err := k.maybeSetAddrLabels(); err != nil {
+		return fmt.Errorf("failed to set address labels: %w", err)
 	}
 
 	// We only need the dummy interface when using IPVS.
@@ -398,7 +404,11 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) err
 func (k *Keepalived) setProxyRoutes() {
 	routes := []tcpproxy.Route{}
 	for _, addr := range k.reconciler.GetIPs() {
-		routes = append(routes, tcpproxy.To(fmt.Sprintf("%s:%d", addr, k.APIPort)))
+		if k.PrimaryAFIPv4 {
+			routes = append(routes, tcpproxy.To(fmt.Sprintf("%s:%d", addr, k.APIPort)))
+		} else {
+			routes = append(routes, tcpproxy.To(fmt.Sprintf("[%s]:%d", addr, k.APIPort)))
+		}
 	}
 
 	if len(routes) == 0 {
@@ -426,7 +436,11 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 				k.log.Infof("Deleting iptables rule to redirect %s", vip)
 			}
 
-			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, "iptables"), cmdArgs...)
+			iptablesBin := "iptables"
+			if !k.PrimaryAFIPv4 {
+				iptablesBin = "ip6tables"
+			}
+			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)

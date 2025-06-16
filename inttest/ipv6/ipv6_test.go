@@ -70,11 +70,11 @@ func (s *IPv6Suite) TestK0sGetsUp() {
 
 	if os.Getenv("K0S_NETWORK") == "kube-router" {
 		s.T().Log("Using kube-router network")
-		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouter, s.getIPv6Address(s.ControllerNode(0)))
+		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouter, s.GetIPv6Address(s.ControllerNode(0)))
 		cniDS = "kube-router"
 	} else {
 		s.T().Log("Using calico network")
-		k0sConfig = fmt.Sprintf(k0sConfigWithCalico, s.getIPv6Address(s.ControllerNode(0)))
+		k0sConfig = fmt.Sprintf(k0sConfigWithCalico, s.GetIPv6Address(s.ControllerNode(0)))
 		cniDS = "calico-node"
 	}
 
@@ -114,16 +114,6 @@ func (s *IPv6Suite) TestK0sGetsUp() {
 		s.Require().NoError(err)
 		s.Require().Containsf(output, "io.cri-containerd.pinned=pinned", "expected %s image to have io.cri-containerd.pinned=pinned label", i)
 	}
-}
-
-func (s *IPv6Suite) getIPv6Address(nodeName string) string {
-	ssh, err := s.SSH(s.Context(), nodeName)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	ipAddress, err := ssh.ExecWithOutput(s.Context(), "ip -6 -oneline addr show eth0 | awk '{print $4}' | grep -v '^fe80' | cut -d/ -f1")
-	s.Require().NoError(err)
-	return ipAddress
 }
 
 func (s *IPv6Suite) validateDockerBridge() {

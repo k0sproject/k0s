@@ -281,6 +281,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			LogConfig:       debug,
 			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
 			APIPort:         nodeConfig.Spec.API.Port,
+			PrimaryAFIPv4:   nodeConfig.PrimaryAddressFamily() == v1beta1.PrimaryFamilyIPv4,
 		})
 	}
 
