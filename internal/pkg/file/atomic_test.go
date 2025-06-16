@@ -14,10 +14,24 @@ import (
 	"strconv"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAtomic_ModificationTime(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "file")
+	leetTime := time.Unix(1337, 0)
+
+	err := AtomicWithTarget(file).WithModificationTime(leetTime).WriteString("leet")
+	require.NoError(t, err)
+
+	stat, err := os.Stat(file)
+	require.NoError(t, err)
+	assert.Equal(t, leetTime, stat.ModTime())
+}
 
 func TestWriteAtomically(t *testing.T) {
 
