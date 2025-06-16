@@ -1,7 +1,9 @@
 name: compose-cluster
 
+x-k0s-image: &k0s-image docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}
+
 x-k0s-controller: &k0s-controller
-  image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+  image: *k0s-image
   networks:
     - k0s-net
   tmpfs:
@@ -27,7 +29,7 @@ x-k0s-controller: &k0s-controller
   restart: on-failure
 
 x-k0s-worker: &k0s-worker
-  image: docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+  image: *k0s-image
   networks:
     - k0s-net
   depends_on:
@@ -59,7 +61,7 @@ networks:
 
 services:
   k0s-lb:
-    image: docker.io/traefik:v3.3.5
+    image: docker.io/library/traefik:v3.3.5
     container_name: k0s-lb
     hostname: k0s-lb
     networks:
@@ -126,7 +128,13 @@ services:
     hostname: k0s-controller-2
     depends_on:
       - k0s-controller-1
-    command: [ k0s, controller, --token-file, /run/secrets/k0sproject.io/tokens/controller ]
+    command:
+      [
+        k0s,
+        controller,
+        --token-file,
+        /run/secrets/k0sproject.io/tokens/controller,
+      ]
     volumes:
       - /var/lib/k0s # this is where k0s stores its data
       - k0s-token-secrets:/var/lib/k0s/manifests/k0s-token-secrets:ro
