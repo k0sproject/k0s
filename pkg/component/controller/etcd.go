@@ -92,7 +92,7 @@ func (e *Etcd) Init(_ context.Context) error {
 			return err
 		}
 	}
-	return assets.Stage(e.K0sVars.BinDir, "etcd")
+	return assets.StageExecutable(e.K0sVars.BinDir, "etcd")
 }
 
 func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdRequest, etcdCaCert, etcdCaCertKey string) ([]string, error) {

@@ -84,7 +84,7 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 	}
 
 	k.log = logrus.WithFields(logrus.Fields{"component": "konnectivity"})
-	if err := assets.Stage(k.K0sVars.BinDir, "konnectivity-server"); err != nil {
+	if err := assets.StageExecutable(k.K0sVars.BinDir, "konnectivity-server"); err != nil {
 		k.EmitWithPayload("failed to stage konnectivity-server", err)
 		return fmt.Errorf("failed to stage konnectivity-server binary %w", err)
 
