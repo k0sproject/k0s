@@ -5,6 +5,9 @@ on:
     tags:
       - v* # Push events to matching v*, i.e. v1.0, v20.15.10
 
+permissions:
+  contents: write
+
 env:
   MAKEFLAGS: -j
   CURL_OPTS: --proto =https --tlsv1.2 --retry 5 --retry-all-errors --silent --show-error --location --fail
