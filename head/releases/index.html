@@ -2310,7 +2310,10 @@
 <h1 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">#</a></h1>
 <p>This page describes how we release and support the k0s project. <a href="https://mirantis.com">Mirantis Inc.</a> can also provide <a href="../commercial-support/">commercial support</a> for k0s.</p>
 <h2 id="upstream-kubernetes-release-support-cycle">Upstream Kubernetes release &amp; support cycle<a class="headerlink" href="#upstream-kubernetes-release-support-cycle" title="Permanent link">#</a></h2>
-<p>This <a href="https://kubernetes.io/releases/">release and support cycle</a> is followed for ALL new minor releases. A minor release can be e.g. 1.25, 1.26 and so on. What this means in practice is that every 4 months there is a new minor release published.</p>
+<p>This <a href="https://kubernetes.io/releases/">release and support cycle</a> is followed
+for ALL new minor releases. A minor release can be e.g. v1.32,
+v1.33 and so on. What this means in practice is that every 4 months
+there is a new minor release published.</p>
 <p>After a minor release is published, the upstream community is maintaining it for 14 months. Maintenance in this case means that upstream Kubernetes provides bug fixes, CVE mitigations and such for 14 months per minor release.</p>
 <p><img alt="Kubernetes release and support cycle" src="../img/k8s_release_cycle.png" /></p>
 <h2 id="k0s-release-and-support-model">k0s release and support model<a class="headerlink" href="#k0s-release-and-support-model" title="Permanent link">#</a></h2>
@@ -2318,7 +2321,14 @@
 <p>k0s project follows closely the upstream Kubernetes release cycle. The only difference to upstream Kubernetes release / maintenance schedule is that our initial release date is always a few weeks behind the upstream Kubernetes version release date as we are building our version of k0s from the officially released version of Kubernetes and need time for testing the final version before shipping.</p>
 <p><img alt="k0s release model" src="../img/k0s_releases.png" /></p>
 <p>Given the fact that upstream Kubernetes provides support and patch releases for a minor version for roughly 14 months, it means that k0s will follow this same model. Each minor release is maintained for roughly 14 months since its initial release.</p>
-<p>k0s project will typically include patches and fixes included in a Kubernetes upstream patch release for the fixes needed in k0s own codebase. For example, if a bug is identified in 1.26 series k0s project will create and ship a fix for it with the next upstream Kubernetes 1.26.x release. In rare cases where a critical bug is identified we may also ship “out of band” patches. Such out-of-band release would be identified in the version string suffix. For example a normal release following Kubernetes upstream would be 1.26.3+k0s.0 whereas a critical out-of-band patch would be identified as 1.26.3+k0s.1.</p>
+<p>k0s project will typically include patches and fixes included in a Kubernetes
+upstream patch release for the fixes needed in k0s own codebase. For example, if
+a bug is identified in v1.33 series k0s project will create and ship
+a fix for it with the next upstream Kubernetes v1.33.x release. In
+rare cases where a critical bug is identified we may also ship "out of band"
+patches. Such out-of-band release would be identified in the version string
+suffix. For example a normal release following Kubernetes upstream would be v1.33.0+k0s.0 whereas a critical out-of-band patch would be identified as
+v1.33.0+k0s.1.</p>
 <h2 id="new-features-and-enhancements">New features and enhancements<a class="headerlink" href="#new-features-and-enhancements" title="Permanent link">#</a></h2>
 <p>The biggest new k0s features will typically only be delivered on top of the latest Kubernetes version, but smaller enhancements can be included in older release tracks as well.</p>
 <h2 id="version-string">Version string<a class="headerlink" href="#version-string" title="Permanent link">#</a></h2>
