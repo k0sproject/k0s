@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -42,7 +43,7 @@ type K0sControllersLeaseCounter struct {
 	KubeClientFactory     kubeutil.ClientFactoryInterface
 	UpdateControllerCount func(uint)
 
-	cancelFunc context.CancelFunc
+	stop func()
 }
 
 var _ manager.Component = (*K0sControllersLeaseCounter)(nil)
@@ -70,35 +71,43 @@ func (l *K0sControllersLeaseCounter) Start(context.Context) error {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	events, err := leasePool.Watch(ctx)
+	events, watchDone, err := leasePool.Watch(ctx)
 	if err != nil {
 		cancel()
 		return err
 	}
-	l.cancelFunc = cancel
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for {
 			select {
 			case <-events.AcquiredLease:
 				log.Info("acquired leader lease")
 			case <-events.LostLease:
 				log.Error("lost leader lease, this should not really happen!?!?!?")
-			case <-ctx.Done():
+			case <-watchDone:
 				return
 			}
 		}
 	}()
 
-	go l.runLeaseCounter(ctx, client)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		l.runLeaseCounter(ctx, client)
+	}()
+
+	l.stop = func() { cancel(); wg.Wait() }
 
 	return nil
 }
 
 // Stop stops the component
 func (l *K0sControllersLeaseCounter) Stop() error {
-	if l.cancelFunc != nil {
-		l.cancelFunc()
+	if l.stop != nil {
+		l.stop()
 	}
 	return nil
 }

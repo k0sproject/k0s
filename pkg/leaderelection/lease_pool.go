@@ -102,9 +102,9 @@ type watchOptions struct {
 type WatchOpt func(options watchOptions) watchOptions
 
 // Watch is the primary function of LeasePool, and starts the leader election process
-func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, error) {
+func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, <-chan struct{}, error) {
 	if p.events != nil {
-		return p.events, nil
+		return p.events, nil, nil
 	}
 
 	watchOptions := watchOptions{
@@ -130,18 +130,22 @@ func (p *LeasePool) Watch(ctx context.Context, opts ...WatchOpt) (*LeaseEvents, 
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	go client.Run(ctx, func(status Status) {
-		if status == StatusLeading {
-			p.config.log.Info("Acquired leader lease")
-			p.events.AcquiredLease <- struct{}{}
-		} else {
-			p.config.log.Info("Lost leader lease")
-			p.events.LostLease <- struct{}{}
-		}
-	})
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		client.Run(ctx, func(status Status) {
+			if status == StatusLeading {
+				p.config.log.Info("Acquired leader lease")
+				p.events.AcquiredLease <- struct{}{}
+			} else {
+				p.config.log.Info("Lost leader lease")
+				p.events.LostLease <- struct{}{}
+			}
+		})
+	}()
 
-	return p.events, nil
+	return p.events, done, nil
 }
