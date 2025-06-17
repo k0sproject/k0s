@@ -1,11 +1,16 @@
 import os
 import re
 import subprocess
+import urllib
 
 def define_env(env):
     @env.filter
     def ljust(value, width):
         return str(value).ljust(width)
+
+    @env.filter
+    def urlencode(value):
+        return urllib.parse.quote_plus(value)
 
     # Export the Go literals as a macro. Don't do it as a variable, as
     # non-existent variables won't fail the docs build and would go unnoticed.
