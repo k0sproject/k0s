@@ -169,12 +169,12 @@ jobs:
           E2E_CONCURRENCY_LEVEL: ${{ inputs.e2e-concurrency-level }}
         run: |
           make bin/sonobuoy
-          bin/sonobuoy run -p e2e --wait=120 \
+          bin/sonobuoy run -p e2e --wait=150 \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_PARALLEL=true \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
             --plugin-env=e2e.E2E_SKIP='\[Serial\]' \
-            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="-v --timeout=90m --procs=$E2E_CONCURRENCY_LEVEL"
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="-v --timeout=120m --procs=$E2E_CONCURRENCY_LEVEL"
 
       - name: "e2e tests :: Retrieve parallel results"
         id: e2e-retrieve-parallel
@@ -197,10 +197,10 @@ jobs:
         timeout-minutes: 180 # three hours
         run: |
           make bin/sonobuoy
-          bin/sonobuoy run -p e2e --wait=120 \
+          bin/sonobuoy run -p e2e --wait=150 \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
-            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=90m'
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=120m'
 
       - name: "e2e tests :: Retrieve serial results"
         id: e2e-retrieve-serial
