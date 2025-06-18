@@ -1,45 +1,17 @@
 # https://docs.fedoraproject.org/en-US/fedora-coreos/provisioning-aws/
 
-data "aws_ami" "fcos_41" {
-  count = var.os == "fcos_41" ? 1 : 0
-
-  owners      = ["125523088429"]
-  name_regex  = "^fedora-coreos-41\\.\\d+\\..+-x86_64"
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["fedora-coreos-41.*.*-x86_64"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  lifecycle {
-    precondition {
-      condition     = var.arch == "x86_64"
-      error_message = "Unsupported architecture for Fedora CoreOS 41."
-    }
-  }
+data "http" "fcos_stable_stream" {
+  count = var.os == "fcos_stable" ? 1 : 0
+  url   = "https://builds.coreos.fedoraproject.org/streams/stable.json"
 }
 
+data "aws_region" "fcos_stable" {}
+
 locals {
-  os_fcos_41 = var.os != "fcos_41" ? {} : {
+  os_fcos_stable = var.os != "fcos_stable" ? {} : {
     node_configs = {
       default = {
-        ami_id = one(data.aws_ami.fcos_41.*.id)
+        ami_id = jsondecode(one(data.http.fcos_stable_stream).body).architectures[var.arch == "arm64" ? "aarch64" : var.arch].images.aws.regions[data.aws_region.fcos_stable.name].image
 
         connection = {
           type     = "ssh"
