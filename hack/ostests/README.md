@@ -76,7 +76,7 @@ tofu apply
 * `debian_10`: Debian GNU/Linux 10 (buster)
 * `debian_11`: Debian GNU/Linux 11 (bullseye)
 * `debian_12`: Debian GNU/Linux 12 (bookworm)
-* `fcos_41`: Fedora CoreOS 41
+* `fcos_stable`: [Fedora CoreOS stable stream](https://docs.fedoraproject.org/en-US/fedora-coreos/getting-started/#_streams)
 * `fedora_41`: Fedora Linux 41 (Cloud Edition)
 * `flatcar`: Flatcar Container Linux by Kinvolk
 * `oracle_8_9`: Oracle Linux Server 8.9
