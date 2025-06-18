@@ -28,7 +28,7 @@ on:
             "al2023",
             "alpine_3_18", "alpine_3_21",
             "centos_9", "centos_10",
-            "debian_10", "debian_11", "debian_12",
+            "debian_11", "debian_12",
             "fcos_41",
             "fedora_41",
             "flatcar",

@@ -7,7 +7,6 @@ locals {
     alpine_3_21         = local.os_alpine_3_21
     centos_9            = local.os_centos_9
     centos_10           = local.os_centos_10
-    debian_10           = local.os_debian_10
     debian_11           = local.os_debian_11
     debian_12           = local.os_debian_12
     fcos_41             = local.os_fcos_41
