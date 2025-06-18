@@ -19,19 +19,37 @@ package addons
 import (
 	"bytes"
 	"context"
+	"crypto"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"path"
 	"slices"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
+	"github.com/cloudflare/cfssl/config"
+	"github.com/cloudflare/cfssl/csr"
+	"github.com/cloudflare/cfssl/helpers"
+	"github.com/cloudflare/cfssl/initca"
+	"github.com/cloudflare/cfssl/signer"
+	"github.com/cloudflare/cfssl/signer/local"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/registry"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -46,8 +64,136 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const (
+	registryCACertContainerPath = "/tmp/registry-ca.crt"
+	echoServerTgzPath           = "./testdata/chart/echo-server-0.5.0.tgz"
+)
+
 type AddonsSuite struct {
 	common.BootlooseSuite
+
+	registryCABytes []byte
+}
+
+func initCA(t *testing.T) (cert *x509.Certificate, key crypto.Signer) {
+	certData, _, keyData, err := initca.New(&csr.CertificateRequest{
+		KeyRequest: csr.NewKeyRequest(),
+		CN:         "Test Registry CA",
+	})
+	require.NoError(t, err)
+
+	cert, err = helpers.ParseCertificatePEM(certData)
+	require.NoError(t, err)
+
+	key, err = helpers.ParsePrivateKeyPEM(keyData)
+	require.NoError(t, err)
+
+	return
+}
+
+func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir string) []byte {
+	caCert, caKey := initCA(t)
+
+	s, err := local.NewSigner(caKey, caCert, signer.DefaultSigAlgo(caKey), &config.Signing{
+		Default: &config.SigningProfile{
+			Usage: []string{
+				"digital signature",
+				"key encipherment",
+				"server auth",
+			},
+			Expiry:       helpers.OneDay,
+			ExpiryString: helpers.OneDay.String(),
+		},
+	})
+	require.NoError(t, err)
+
+	serverCertCSR, serverKey, err := csr.ParseRequest(&csr.CertificateRequest{
+		KeyRequest: csr.NewKeyRequest(),
+		CN:         "Test Registry",
+		Hosts:      []string{"host.docker.internal"},
+	})
+	require.NoError(t, err)
+
+	serverCert, err := s.Sign(signer.SignRequest{Request: string(serverCertCSR)})
+	require.NoError(t, err)
+
+	require.NoError(t, os.WriteFile(path.Join(certsDir, "tls.crt"), serverCert, 0644))
+	require.NoError(t, os.WriteFile(path.Join(certsDir, "tls.key"), serverKey, 0600))
+
+	return serverCert
+}
+
+// pushChartToLocalRegistry pushes a pre-downloaded echo-server chart to the local registry
+func (as *AddonsSuite) pushChartToLocalRegistry() {
+	port := as.GetRegistryHostPort()
+	helmEnv := cli.New()
+
+	cfg := &action.Configuration{}
+	err := cfg.Init(helmEnv.RESTClientGetter(), "", "memory", as.T().Logf)
+	as.Require().NoError(err)
+
+	// Create new http client that ignores TLS verification
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			// Disable TLS verification for local registry
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+		Timeout: 30 * time.Second, // Set a timeout for the HTTP client
+	}
+	// Construct custom resolver so that all traffic to our localhost registry
+	// is done over HTTPS with the custom HTTP client that ignores TLS verification.
+	// This is necessary since by default the resolver has option to switch to plain HTTP for local registries.
+	// See: https://github.com/containerd/containerd/blob/aca9d7631d155fe56468f73b4e8084a71ebfeaba/remotes/docker/registry.go#L176-L185
+	resolverClient := docker.NewResolver(
+		docker.ResolverOptions{
+			Hosts: func(host string) ([]docker.RegistryHost, error) {
+				return []docker.RegistryHost{
+					{
+						Host:         fmt.Sprintf("localhost:%d", port),
+						Path:         "/v2",
+						Scheme:       "https",
+						Capabilities: docker.HostCapabilityPull | docker.HostCapabilityResolve | docker.HostCapabilityPush,
+						Client:       httpClient, // Use the custom HTTP client
+					},
+				}, nil
+			},
+		},
+	)
+
+	registryClient, err := registry.NewClient(
+		registry.ClientOptDebug(true),
+		registry.ClientOptPlainHTTP(),
+		registry.ClientOptResolver(resolverClient),
+	)
+	as.Require().NoError(err)
+
+	cfg.RegistryClient = registryClient
+
+	pushAction := action.NewPushWithOpts(
+		action.WithPushConfig(cfg),
+		action.WithPushOptWriter(os.Stdout),
+		action.WithInsecureSkipTLSVerify(true),
+		action.WithPlainHTTP(false),
+	)
+	pushAction.Settings = helmEnv
+	registryAddress := fmt.Sprintf("oci://localhost:%d/charts", port)
+	as.T().Logf("Pushing chart %s to local registry: %s", echoServerTgzPath, registryAddress)
+	_, err = pushAction.Run(echoServerTgzPath, registryAddress)
+	as.Require().NoError(err)
+}
+
+// uploadRegistryCAToControllers uploads the CA certificate of the local registry to all controller nodes
+func (as *AddonsSuite) uploadRegistryCAToControllers() {
+	for i := range as.ControllerCount {
+		as.PutFile(as.ControllerNode(i), registryCACertContainerPath, string(as.registryCABytes))
+	}
+}
+
+func (as *AddonsSuite) SetupTest() {
+	as.pushChartToLocalRegistry()
+	as.uploadRegistryCAToControllers()
 }
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
@@ -57,7 +203,18 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
 	ociAddonName := "oci-addon"
 	fileAddonName := "tgz-addon"
-	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
+	selfSignedOCIAddonName := "self-signed-oci-addon"
+
+	p := k0sConfigParams{
+		BasicAddonName:      addonName,
+		LocalRegistryCAPath: registryCACertContainerPath,
+		LocalRegistryHost:   "host.docker.internal",
+		LocalRegistryPort:   as.GetRegistryHostPort(),
+	}
+
+	buf := new(bytes.Buffer)
+	as.Require().NoError(k0sConfigWithAddonTemplate.Execute(buf, p))
+	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", buf.String())
 	as.pullHelmChart(as.ControllerNode(0))
 	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml", "--enable-dynamic-config"))
 	as.NoError(as.RunWorkers())
@@ -68,6 +225,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.waitForTestRelease(addonName, "0.4.0", "default", 1)
 	as.waitForTestRelease(ociAddonName, "0.6.0", "default", 1)
 	as.waitForTestRelease(fileAddonName, "0.6.0", "kube-system", 1)
+	as.waitForTestRelease(selfSignedOCIAddonName, "0.6.0", "default", 1)
 
 	as.AssertSomeKubeSystemPods(kc)
 
@@ -397,33 +555,53 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]int
 }
 
 func TestAddonsSuite(t *testing.T) {
+	registryTLSDir := path.Join(t.TempDir(), "registry-tls")
+	require.NoError(t, os.MkdirAll(registryTLSDir, 0755))
 
 	s := AddonsSuite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
+			WithRegistry:    true,
+			RegistryTLSPath: registryTLSDir,
 		},
+		registryCABytes: issueServerCertsWithSelfSignedCA(t, registryTLSDir),
 	}
 
 	suite.Run(t, &s)
-
 }
 
-const k0sConfigWithAddon = `
+type k0sConfigParams struct {
+	BasicAddonName string
+
+	LocalRegistryCAPath string
+	LocalRegistryHost   string
+	LocalRegistryPort   int
+}
+
+const k0sConfigWithAddonRawTemplate = `
 spec:
     extensions:
         helm:
           repositories:
           - name: ealenn
             url: https://ealenn.github.io/charts
+          - name: self-signed-oci
+            url: oci://{{ .LocalRegistryHost }}:{{ .LocalRegistryPort }}
+            caFile: {{ .LocalRegistryCAPath }}
           charts:
-          - name: %s
+          - name: {{ .BasicAddonName }}
             chartname: ealenn/echo-server
             version: "0.3.1"
             values: ""
             namespace: default
           - name: oci-addon
             chartname: oci://ghcr.io/makhov/k0s-charts/echo-server
+            version: "0.5.0"
+            values: ""
+            namespace: default
+          - name: self-signed-oci-addon
+            chartname: oci://{{ .LocalRegistryHost }}:{{ .LocalRegistryPort }}/charts/echo-server
             version: "0.5.0"
             values: ""
             namespace: default
@@ -434,6 +612,8 @@ spec:
             namespace: kube-system
             forceUpgrade: false
 `
+
+var k0sConfigWithAddonTemplate = template.Must(template.New("k0sConfigWithAddon").Parse(k0sConfigWithAddonRawTemplate))
 
 // TODO: this actually duplicates logic from the controller code
 // better to somehow handle it by programmatic api
