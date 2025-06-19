@@ -329,17 +329,17 @@ k0s project follows closely the upstream Kubernetes release cycle. The only diff
 The k0s version string consists of the Kubernetes version and the k0s version. For example:
 
 ```text
-v1.33.1+k0s.1
+v1.33.2+k0s.0
 ```
 
-The Kubernetes version (1.33.1) is the first part, and the last part (k0s.1) reflects the k0s version, which is built on top of the certain Kubernetes version.
+The Kubernetes version (1.33.2) is the first part, and the last part (k0s.0) reflects the k0s version, which is built on top of the certain Kubernetes version.
 
 ## Installation
 
 Here’s an example of how to set a single node cluster:
 
 ```console
-# export K0S_VERSION=v1.33.1+k0s.1
+# export K0S_VERSION=v1.33.2+k0s.0
 # curl -sSfL https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64 -o k0s
 # chmod u+x k0s
 # ./k0s install controller --single && ./k0s start
