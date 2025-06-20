@@ -103,10 +103,10 @@ spec:
 
   commands:
     - k0supdate:
-        version: v{{{ extra.k8s_version }}}+k0s.0
+        version: {{{ k0s_version }}}
         platforms:
           linux-amd64:
-            url: https://github.com/k0sproject/k0s/releases/download/v{{{ extra.k8s_version }}}+k0s.0/k0s-v{{{ extra.k8s_version }}}+k0s.0-amd64
+            url: https://github.com/k0sproject/k0s/releases/download/{{{ k0s_version }}}/k0s-{{{ k0s_version }}}-amd64
             sha256: '0000000000000000000000000000000000000000000000000000000000000000'
         targets:
           controllers:

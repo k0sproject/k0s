@@ -18,7 +18,7 @@ TARGET_VERSION ?= latest
 # gives: "Error: The 'docs_dir' should not be the parent directory of the config file."
 # even if docs_dir is "."
 docs: .require-mkdocs cli
-	cd .. && KUBERNETES_VERSION=$(kubernetes_version) mkdocs build --strict
+	cd .. && PYTHONPATH=$(CURDIR)/mkdocs_modules K0S_VERSION=$$('$(k0s_binary_path)/$(k0s_binary)' version) mkdocs build --strict
 
 .PHONY: .require-mkdocs
 .require-mkdocs:
@@ -41,9 +41,9 @@ endif
 
 .PHONY: k0s k0s.exe
 ifeq ($(TARGET_VERSION),local)
-cli: k0s_binary_path := $(abspath ..)
+docs cli: k0s_binary_path := $(abspath ..)
 else
-cli: k0s_binary_path := $(abspath .)
+docs cli: k0s_binary_path := $(abspath .)
 k0s k0s.exe::
 	[ ! -f '$@.etag' ] || { if [ ! -f '$@' ] || [ '$@.etag' -ot '$@' ]; then rm -- '$@.etag'; fi }
 	touch -- '$@.etag'
@@ -62,10 +62,10 @@ endif
 .PHONY: cli
 ifeq ($(detected_OS),windows)
 cli: k0s.exe
-cli: k0s_binary = k0s.exe
+docs cli: k0s_binary = k0s.exe
 else
 cli: k0s
-cli: k0s_binary = k0s
+docs cli: k0s_binary = k0s
 endif
 cli:
 	rm -rf cli

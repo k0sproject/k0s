@@ -153,7 +153,7 @@ spec:
     k0sBinaryPath: /opt/k0s
     uploadBinary: true
   k0s:
-    version: v{{{ extra.k8s_version }}}+k0s.0
+    version: {{{ k0s_version }}}
     config:
       spec:
         api:
@@ -279,7 +279,7 @@ level=info msg="[ssh] worker-1.k0s.lab:22: waiting for node to become ready"
 level=info msg="==> Running phase: Release exclusive host lock"
 level=info msg="==> Running phase: Disconnect from hosts"
 level=info msg="==> Finished in 2m20s"
-level=info msg="k0s cluster version v{{{ extra.k8s_version }}}+k0s.0  is now installed"
+level=info msg="k0s cluster version {{{ k0s_version }}} is now installed"
 level=info msg="Tip: To access the cluster you can now fetch the admin kubeconfig using:"
 level=info msg="     k0sctl kubeconfig"
 ```
@@ -297,9 +297,9 @@ All three worker nodes are ready:
 ```console
 $ kubectl get nodes
 NAME                   STATUS   ROLES           AGE     VERSION
-worker-0.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
-worker-1.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
-worker-2.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
+worker-0.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
+worker-1.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
+worker-2.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
 ```
 
 Each controller node has a dummy interface with the VIP and /32 netmask,
@@ -355,7 +355,7 @@ And the cluster will be working normally:
 ```console
 $ kubectl get nodes
 NAME                   STATUS   ROLES           AGE     VERSION
-worker-0.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
-worker-1.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
-worker-2.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
+worker-0.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
+worker-1.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
+worker-2.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
 ```
