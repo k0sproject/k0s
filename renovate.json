@@ -145,6 +145,20 @@
       "depNameTemplate": "python",
       "datasourceTemplate": "python-version",
       "versioningTemplate": "python"
+    },
+    {
+      "customType": "regex",
+      "description": "Generic version updates for YAML files",
+      "managerFilePatterns": [
+        "**/*.yaml",
+        "**/*.yml"
+      ],
+      "matchStrings": [
+        ":\\s*[\"']?(?<currentValue>\\S+?)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)(\\s+registryUrl=(?<registryUrl>.+))?\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>.+))?\n"
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "registryUrlTemplate": "{{#if registryUrl}}{{{registryUrl}}}{{/if}}",
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     }
   ]
 }
