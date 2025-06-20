@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -35,27 +36,21 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
 // Konnectivity implements the component interface for konnectivity server
 type Konnectivity struct {
-	K0sVars    *config.CfgVars
-	LogLevel   string
-	SingleNode bool
-	// used for lease lock
-	KubeClientFactory          kubeutil.ClientFactoryInterface
-	NodeConfig                 *v1beta1.ClusterConfig
-	K0sControllersLeaseCounter *K0sControllersLeaseCounter
+	K0sVars     *config.CfgVars
+	LogLevel    string
+	ServerCount func() (uint, <-chan struct{})
 
-	supervisor      *supervisor.Supervisor
-	uid             int
-	serverCount     int
-	serverCountChan <-chan int
-	stopFunc        context.CancelFunc
-	clusterConfig   *v1beta1.ClusterConfig
-	log             *logrus.Entry
+	supervisor *supervisor.Supervisor
+	uid        int
+
+	stopFunc      context.CancelFunc
+	clusterConfig *v1beta1.ClusterConfig
+	log           *logrus.Entry
 
 	*prober.EventEmitter
 }
@@ -97,21 +92,50 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 
 // Run ..
 func (k *Konnectivity) Start(ctx context.Context) error {
-	// Buffered chan to send updates for the count of servers
-	k.serverCountChan = k.K0sControllersLeaseCounter.Subscribe()
+	serverCount, serverCountChanged := k.ServerCount()
 
-	// To make the server start, add "dummy" 0 into the channel
-	if err := k.runServer(0); err != nil {
-		k.EmitWithPayload("failed to run konnectivity server", err)
-		return fmt.Errorf("failed to run konnectivity server: %w", err)
+	if err := k.runServer(serverCount); err != nil {
+		k.EmitWithPayload("failed to start konnectivity server", err)
+		return fmt.Errorf("failed to start konnectivity server: %w", err)
 	}
 
-	go k.watchControllerCountChanges(ctx)
+	go func() {
+		var retry <-chan time.Time
+		for {
+			select {
+			case <-serverCountChanged:
+				prevServerCount := serverCount
+				serverCount, serverCountChanged = k.ServerCount()
+				// restart only if the server count actually changed
+				if serverCount == prevServerCount {
+					continue
+				}
+
+			case <-retry:
+				k.Emit("retrying to start konnectivity server")
+				k.log.Info("Retrying to start konnectivity server")
+
+			case <-ctx.Done():
+				k.Emit("stopped konnectivity server")
+				k.log.Info("stopping konnectivity server reconfig loop")
+				return
+			}
+
+			retry = nil
+
+			if err := k.runServer(serverCount); err != nil {
+				k.EmitWithPayload("failed to start konnectivity server", err)
+				k.log.WithError(err).Errorf("Failed to start konnectivity server")
+				retry = time.After(10 * time.Second)
+				continue
+			}
+		}
+	}()
 
 	return nil
 }
 
-func (k *Konnectivity) serverArgs(count int) []string {
+func (k *Konnectivity) serverArgs(count uint) []string {
 	return stringmap.StringMap{
 		"--uds-name":                 filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
 		"--cluster-cert":             filepath.Join(k.K0sVars.CertRootDir, "server.crt"),
@@ -129,42 +153,14 @@ func (k *Konnectivity) serverArgs(count int) []string {
 		"--v":                        k.LogLevel,
 		"--enable-profiling":         "false",
 		"--delete-existing-uds-file": "true",
-		"--server-count":             strconv.Itoa(count),
+		"--server-count":             strconv.FormatUint(uint64(count), 10),
 		"--server-id":                k.K0sVars.InvocationID,
 		"--proxy-strategies":         "destHost,defaultRoute,default",
 		"--cipher-suites":            constant.AllowedTLS12CipherSuiteNames(),
 	}.ToArgs()
 }
 
-// runs the supervisor and restarts if the calculated server count changes
-func (k *Konnectivity) watchControllerCountChanges(ctx context.Context) {
-	// previousArgs := stringmap.StringMap{}
-	for {
-		k.log.Debug("waiting for server count change")
-		select {
-		case <-ctx.Done():
-			k.Emit("stopped konnectivity server")
-			logrus.Info("stopping konnectivity server reconfig loop")
-			return
-		case count := <-k.serverCountChan:
-			if k.clusterConfig == nil {
-				k.Emit("skipping konnectivity server start, cluster config not yet available")
-				continue
-			}
-			// restart only if the count actually changes and we've got the global config
-			if count != k.serverCount {
-				if err := k.runServer(count); err != nil {
-					k.EmitWithPayload("failed to run konnectivity server", err)
-					logrus.Errorf("failed to run konnectivity server: %s", err)
-					continue
-				}
-			}
-			k.serverCount = count
-		}
-	}
-}
-
-func (k *Konnectivity) runServer(count int) error {
+func (k *Konnectivity) runServer(count uint) error {
 	// Stop supervisor
 	if k.supervisor != nil {
 		k.EmitWithPayload("restarting konnectivity server due to server count change",
@@ -184,12 +180,9 @@ func (k *Konnectivity) runServer(count int) error {
 	}
 	err := k.supervisor.Supervise()
 	if err != nil {
-		k.EmitWithPayload("failed to run konnectivity server", err)
-		k.log.Errorf("failed to start konnectivity supervisor: %s", err)
 		k.supervisor = nil // not to make the next loop to try to stop it first
 		return err
 	}
-	k.serverCount = count
 	k.EmitWithPayload("started konnectivity server", map[string]interface{}{"serverCount": count})
 
 	return nil

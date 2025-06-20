@@ -36,7 +36,7 @@ type ClusterInfo struct {
 	K0sVersion             string
 	StorageType            string
 	ClusterID              string
-	ControlPlaneNodesCount int
+	ControlPlaneNodesCount uint
 	WorkerData             WorkerData
 	CNIProvider            string
 	Arch                   string
@@ -121,7 +121,7 @@ func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, er
 	}
 
 	// Collect control plane node count
-	ci.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(ctx, kc)
+	ci.ControlPlaneNodesCount, err = kubeutil.CountActiveControllerLeases(ctx, kc)
 	if err != nil {
 		return ci, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}

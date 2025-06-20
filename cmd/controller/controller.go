@@ -36,6 +36,7 @@ import (
 	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
 	apclient "github.com/k0sproject/k0s/pkg/autopilot/client"
@@ -218,15 +219,8 @@ func (c *command) start(ctx context.Context) error {
 	logrus.Infof("using storage backend %s", nodeConfig.Spec.Storage.Type)
 	nodeComponents.Add(ctx, storageBackend)
 
-	controllerLeaseCounter := &controller.K0sControllersLeaseCounter{
-		InvocationID:      c.K0sVars.InvocationID,
-		ClusterConfig:     nodeConfig,
-		KubeClientFactory: adminClientFactory,
-	}
-
-	if !c.SingleNode {
-		nodeComponents.Add(ctx, controllerLeaseCounter)
-	}
+	// Assume a single active controller during startup
+	numActiveControllers := value.NewLatest[uint](1)
 
 	if cplb := nodeConfig.Spec.Network.ControlPlaneLoadBalancing; cplb != nil && cplb.Enabled {
 		if c.SingleNode {
@@ -249,13 +243,10 @@ func (c *command) start(ctx context.Context) error {
 
 	if enableKonnectivity {
 		nodeComponents.Add(ctx, &controller.Konnectivity{
-			SingleNode:                 c.SingleNode,
-			LogLevel:                   c.Logging[constant.KonnectivityServerComponentName],
-			K0sVars:                    c.K0sVars,
-			KubeClientFactory:          adminClientFactory,
-			NodeConfig:                 nodeConfig,
-			EventEmitter:               prober.NewEventEmitter(),
-			K0sControllersLeaseCounter: controllerLeaseCounter,
+			K0sVars:      c.K0sVars,
+			LogLevel:     c.Logging[constant.KonnectivityServerComponentName],
+			EventEmitter: prober.NewEventEmitter(),
+			ServerCount:  numActiveControllers.Peek,
 		})
 	}
 
@@ -267,6 +258,15 @@ func (c *command) start(ctx context.Context) error {
 		EnableKonnectivity:        enableKonnectivity,
 		DisableEndpointReconciler: disableEndpointReconciler,
 	})
+
+	if !c.SingleNode {
+		nodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
+			InvocationID:          c.K0sVars.InvocationID,
+			ClusterConfig:         nodeConfig,
+			KubeClientFactory:     adminClientFactory,
+			UpdateControllerCount: numActiveControllers.Set,
+		})
+	}
 
 	var leaderElector interface {
 		leaderelector.Interface
@@ -520,13 +520,10 @@ func (c *command) start(ctx context.Context) error {
 
 	if enableKonnectivity {
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
-			SingleNode:                 c.SingleNode,
-			LogLevel:                   c.Logging[constant.KonnectivityServerComponentName],
-			K0sVars:                    c.K0sVars,
-			KubeClientFactory:          adminClientFactory,
-			NodeConfig:                 nodeConfig,
-			EventEmitter:               prober.NewEventEmitter(),
-			K0sControllersLeaseCounter: controllerLeaseCounter,
+			K0sVars:       c.K0sVars,
+			APIServerHost: nodeConfig.Spec.API.APIAddress(),
+			EventEmitter:  prober.NewEventEmitter(),
+			ServerCount:   numActiveControllers.Peek,
 		})
 	}
 

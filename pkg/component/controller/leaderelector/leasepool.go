@@ -34,7 +34,7 @@ type LeasePool struct {
 	stopCh            chan struct{}
 	leaderStatus      atomic.Value
 	kubeClientFactory kubeutil.ClientFactoryInterface
-	leaseCancel       context.CancelFunc
+	stop              func()
 
 	acquiredLeaseCallbacks []func()
 	lostLeaseCallbacks     []func()
@@ -62,24 +62,26 @@ func (l *LeasePool) Init(_ context.Context) error {
 	return nil
 }
 
-func (l *LeasePool) Start(ctx context.Context) error {
+func (l *LeasePool) Start(context.Context) error {
 	client, err := l.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
 	}
-	leasePool, err := leaderelection.NewLeasePool(ctx, client, l.name, l.invocationID,
-		leaderelection.WithLogger(l.log),
-		leaderelection.WithContext(ctx))
+	leasePool, err := leaderelection.NewLeasePool(client, l.name, l.invocationID,
+		leaderelection.WithLogger(l.log))
 	if err != nil {
 		return err
 	}
-	events, cancel, err := leasePool.Watch()
+	ctx, cancel := context.WithCancel(context.Background())
+	events, watchDone, err := leasePool.Watch(ctx)
 	if err != nil {
+		cancel()
 		return err
 	}
-	l.leaseCancel = cancel
 
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		for {
 			select {
 			case <-events.AcquiredLease:
@@ -90,9 +92,17 @@ func (l *LeasePool) Start(ctx context.Context) error {
 				l.log.Info("lost leader lease")
 				l.leaderStatus.Store(false)
 				runCallbacks(l.lostLeaseCallbacks)
+			case <-watchDone:
+				// The channels are unbuffered. This means that it's guaranteed
+				// that we have consumed all pending events on the other
+				// channels in order before seeing the done channel closed.
+				return
 			}
 		}
 	}()
+
+	l.stop = func() { cancel(); <-done }
+
 	return nil
 }
 
@@ -113,8 +123,8 @@ func (l *LeasePool) AddLostLeaseCallback(fn func()) {
 }
 
 func (l *LeasePool) Stop() error {
-	if l.leaseCancel != nil {
-		l.leaseCancel()
+	if l.stop != nil {
+		l.stop()
 	}
 	return nil
 }
