@@ -43,12 +43,13 @@ type launchDelegate interface {
 	StartWorker(ctx context.Context, conn *SSHConnection) error
 	StopWorker(ctx context.Context, conn *SSHConnection) error
 	ReadK0sLogs(ctx context.Context, conn *SSHConnection, out, err io.Writer) error
+	SetK0sCommand(prefix string) error
 }
 
 // standaloneLaunchDelegate is a launchDelegate that starts controllers and
 // workers in "standalone" mode, i.e. not via some service manager.
 type standaloneLaunchDelegate struct {
-	k0sFullPath     string
+	k0sCommand      string
 	controllerUmask int
 }
 
@@ -64,7 +65,7 @@ func (s *standaloneLaunchDelegate) InitController(ctx context.Context, conn *SSH
 		fmt.Fprintf(&script, "umask %d\n", s.controllerUmask)
 	}
 	fmt.Fprintf(&script, "export ETCD_UNSUPPORTED_ARCH='%s'\n", runtime.GOARCH)
-	fmt.Fprintf(&script, "%s controller --debug %s </dev/null >>/tmp/k0s-controller.log 2>&1 &\n", s.k0sFullPath, strings.Join(k0sArgs, " "))
+	fmt.Fprintf(&script, "%s controller --debug %s </dev/null >>/tmp/k0s-controller.log 2>&1 &\n", s.k0sCommand, strings.Join(k0sArgs, " "))
 	fmt.Fprintln(&script, "disown %1")
 
 	if err := conn.Exec(ctx, "cat >/tmp/start-k0s && chmod +x /tmp/start-k0s", SSHStreams{
@@ -74,6 +75,13 @@ func (s *standaloneLaunchDelegate) InitController(ctx context.Context, conn *SSH
 	}
 
 	return s.StartController(ctx, conn)
+}
+
+// SetControllerPrefixCmd allows to set some command before k0s so that it can
+// be launched with some debugging tools such as strace or delve
+func (s *standaloneLaunchDelegate) SetK0sCommand(command string) error {
+	s.k0sCommand = command
+	return nil
 }
 
 // StartController starts a k0s controller that was initialized in "standalone" mode.
@@ -100,7 +108,7 @@ func (s *standaloneLaunchDelegate) InitWorker(ctx context.Context, conn *SSHConn
 	var script strings.Builder
 	fmt.Fprintln(&script, "#!/usr/bin/env bash")
 	fmt.Fprintln(&script, "set -eu")
-	fmt.Fprintf(&script, "%s worker --debug %s \"$@\" </dev/null >>/tmp/k0s-worker.log 2>&1 &\n", s.k0sFullPath, strings.Join(k0sArgs, " "))
+	fmt.Fprintf(&script, "%s worker --debug %s \"$@\" </dev/null >>/tmp/k0s-worker.log 2>&1 &\n", s.k0sCommand, strings.Join(k0sArgs, " "))
 	fmt.Fprintln(&script, "disown %1")
 
 	if err := conn.Exec(ctx, "cat >/tmp/start-k0s-worker && chmod +x /tmp/start-k0s-worker", SSHStreams{
@@ -134,7 +142,7 @@ func (s *standaloneLaunchDelegate) ReadK0sLogs(ctx context.Context, conn *SSHCon
 }
 
 func (s *standaloneLaunchDelegate) killK0s(ctx context.Context, conn *SSHConnection) error {
-	stopCommand := fmt.Sprintf("kill $(pidof %s | tr \" \" \"\\n\" | sort -n | head -n1) && while pidof %s; do sleep 0.1s; done", s.k0sFullPath, s.k0sFullPath)
+	stopCommand := fmt.Sprintf("kill $(pidof %s | tr \" \" \"\\n\" | sort -n | head -n1) && while pidof %s; do sleep 0.1s; done", s.k0sCommand, s.k0sCommand)
 	if err := conn.Exec(ctx, stopCommand, SSHStreams{}); err != nil {
 		return fmt.Errorf("unable to execute %q: %w", stopCommand, err)
 	}
@@ -169,6 +177,11 @@ func (o *openRCLaunchDelegate) InitController(ctx context.Context, conn *SSHConn
 	}
 
 	return o.StartController(ctx, conn)
+}
+
+// SetK0sCommand isn't implemented in "OpenRC" mode
+func (o *openRCLaunchDelegate) SetK0sCommand(_ string) error {
+	return errors.New("openRCLaunchDelegate.SetK0sCommand isn't implemented")
 }
 
 // StartController starts a k0s controller that was started using OpenRC.
