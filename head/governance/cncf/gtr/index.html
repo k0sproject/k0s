@@ -3554,12 +3554,12 @@ That already allowed us to identify and fix some architecture related issues tha
 <p>k0s project follows closely the upstream Kubernetes release cycle. The only difference in the upstream Kubernetes release/maintenance schedule is that our initial release date is always a few weeks behind the upstream Kubernetes version release date as we are building our version of k0s from the officially released version of Kubernetes and need time for testing the final version before shipping.
 ![][image1]
 The k0s version string consists of the Kubernetes version and the k0s version. For example:</p>
-<div class="highlight"><pre><span></span><code>v1.33.2+k0s.0
+<div class="highlight"><pre><span></span><code>v1.33.2+head
 </code></pre></div>
-<p>The Kubernetes version (1.33.2) is the first part, and the last part (k0s.0) reflects the k0s version, which is built on top of the certain Kubernetes version.</p>
+<p>The Kubernetes version (v1.33.2) is the first part, and the last part (head) reflects the k0s version, which is built on top of the certain Kubernetes version.</p>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">#</a></h2>
 <p>Here’s an example of how to set a single node cluster:</p>
-<div class="highlight"><pre><span></span><code><span class="gp"># </span><span class="nb">export</span><span class="w"> </span><span class="nv">K0S_VERSION</span><span class="o">=</span>v1.33.2+k0s.0
+<div class="highlight"><pre><span></span><code><span class="gp"># </span><span class="nb">export</span><span class="w"> </span><span class="nv">K0S_VERSION</span><span class="o">=</span>v1.33.2+head
 <span class="gp"># </span>curl<span class="w"> </span>-sSfL<span class="w"> </span>https://github.com/k0sproject/k0s/releases/download/<span class="nv">$K0S_VERSION</span>/k0s-<span class="nv">$K0S_VERSION</span>-amd64<span class="w"> </span>-o<span class="w"> </span>k0s
 <span class="gp"># </span>chmod<span class="w"> </span>u+x<span class="w"> </span>k0s
 <span class="gp"># </span>./k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./k0s<span class="w"> </span>start
