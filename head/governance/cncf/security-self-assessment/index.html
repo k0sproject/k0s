@@ -12,24 +12,28 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/cli/k0s_etcd_leave/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/governance/cncf/security-self-assessment/">
       
       
+        <link rel="prev" href="../gtr/">
       
       
-      <link rel="icon" href="../../img/k0s-favicon-192.png">
+        <link rel="next" href="../../../commercial-support/">
+      
+      
+      <link rel="icon" href="../../../img/k0s-favicon-192.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
     
       
-        <title>K0s etcd leave - Documentation</title>
+        <title>TAG-Security self-assessment - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.342714a4.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,9 +52,9 @@
       
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
@@ -83,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-etcd-leave" class="md-skip">
+        <a href="#cncf-tag-security-self-assessment" class="md-skip">
           Skip to content
         </a>
       
@@ -98,12 +102,12 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You are not currently viewing the documentation for the current stable release of k0s.
-  <a href="../../..">
+  <a href="../../../..">
     <strong>Click here to go to the documentation of the current stable release.</strong>
   </a>
 
             </div>
-            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL("../.."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL("../../.."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
           </aside>
         
       </div>
@@ -115,9 +119,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s-favicon-192.png" alt="logo">
+  <img src="../../../img/k0s-favicon-192.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -134,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s etcd leave
+              TAG-Security self-assessment
             
           </span>
         </div>
@@ -252,9 +256,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s-favicon-192.png" alt="logo">
+  <img src="../../../img/k0s-favicon-192.png" alt="logo">
 
     </a>
     Documentation
@@ -281,7 +285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -341,7 +345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../install/" class="md-nav__link">
+      <a href="../../../install/" class="md-nav__link">
         
   
   
@@ -364,7 +368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0sctl-install/" class="md-nav__link">
+      <a href="../../../k0sctl-install/" class="md-nav__link">
         
   
   
@@ -425,7 +429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-multi-node/" class="md-nav__link">
+      <a href="../../../k0s-multi-node/" class="md-nav__link">
         
   
   
@@ -448,7 +452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-in-docker/" class="md-nav__link">
+      <a href="../../../k0s-in-docker/" class="md-nav__link">
         
   
   
@@ -471,7 +475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../experimental-windows/" class="md-nav__link">
+      <a href="../../../experimental-windows/" class="md-nav__link">
         
   
   
@@ -494,7 +498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../raspberry-pi4/" class="md-nav__link">
+      <a href="../../../raspberry-pi4/" class="md-nav__link">
         
   
   
@@ -517,7 +521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../raspberry-pi5/" class="md-nav__link">
+      <a href="../../../raspberry-pi5/" class="md-nav__link">
         
   
   
@@ -540,7 +544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../../../examples/ansible-playbook/" class="md-nav__link">
         
   
   
@@ -563,7 +567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../airgap-install/" class="md-nav__link">
+      <a href="../../../airgap-install/" class="md-nav__link">
         
   
   
@@ -586,7 +590,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../custom-ca/" class="md-nav__link">
+      <a href="../../../custom-ca/" class="md-nav__link">
         
   
   
@@ -617,7 +621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system-requirements/" class="md-nav__link">
+      <a href="../../../system-requirements/" class="md-nav__link">
         
   
   
@@ -640,7 +644,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../external-runtime-deps/" class="md-nav__link">
+      <a href="../../../external-runtime-deps/" class="md-nav__link">
         
   
   
@@ -663,7 +667,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../verifying-signs/" class="md-nav__link">
+      <a href="../../../verifying-signs/" class="md-nav__link">
         
   
   
@@ -731,7 +735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../upgrade/" class="md-nav__link">
+      <a href="../../../upgrade/" class="md-nav__link">
         
   
   
@@ -754,7 +758,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../backup/" class="md-nav__link">
+      <a href="../../../backup/" class="md-nav__link">
         
   
   
@@ -777,7 +781,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../remove_controller/" class="md-nav__link">
+      <a href="../../../remove_controller/" class="md-nav__link">
         
   
   
@@ -800,7 +804,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reset/" class="md-nav__link">
+      <a href="../../../reset/" class="md-nav__link">
         
   
   
@@ -868,7 +872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/" class="md-nav__link">
+      <a href="../../../configuration/" class="md-nav__link">
         
   
   
@@ -891,7 +895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dynamic-configuration/" class="md-nav__link">
+      <a href="../../../dynamic-configuration/" class="md-nav__link">
         
   
   
@@ -914,7 +918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration-validation/" class="md-nav__link">
+      <a href="../../../configuration-validation/" class="md-nav__link">
         
   
   
@@ -937,7 +941,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../worker-node-config/" class="md-nav__link">
+      <a href="../../../worker-node-config/" class="md-nav__link">
         
   
   
@@ -960,7 +964,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../networking/" class="md-nav__link">
+      <a href="../../../networking/" class="md-nav__link">
         
   
   
@@ -983,7 +987,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../runtime/" class="md-nav__link">
+      <a href="../../../runtime/" class="md-nav__link">
         
   
   
@@ -1006,7 +1010,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage/" class="md-nav__link">
+      <a href="../../../storage/" class="md-nav__link">
         
   
   
@@ -1029,7 +1033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system-monitoring/" class="md-nav__link">
+      <a href="../../../system-monitoring/" class="md-nav__link">
         
   
   
@@ -1052,7 +1056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manifests/" class="md-nav__link">
+      <a href="../../../manifests/" class="md-nav__link">
         
   
   
@@ -1075,7 +1079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../helm-charts/" class="md-nav__link">
+      <a href="../../../helm-charts/" class="md-nav__link">
         
   
   
@@ -1098,7 +1102,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cloud-providers/" class="md-nav__link">
+      <a href="../../../cloud-providers/" class="md-nav__link">
         
   
   
@@ -1121,7 +1125,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dual-stack/" class="md-nav__link">
+      <a href="../../../dual-stack/" class="md-nav__link">
         
   
   
@@ -1144,7 +1148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../high-availability/" class="md-nav__link">
+      <a href="../../../high-availability/" class="md-nav__link">
         
   
   
@@ -1167,7 +1171,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../nllb/" class="md-nav__link">
+      <a href="../../../nllb/" class="md-nav__link">
         
   
   
@@ -1190,7 +1194,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cplb/" class="md-nav__link">
+      <a href="../../../cplb/" class="md-nav__link">
         
   
   
@@ -1213,7 +1217,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../shell-completion/" class="md-nav__link">
+      <a href="../../../shell-completion/" class="md-nav__link">
         
   
   
@@ -1236,7 +1240,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-management/" class="md-nav__link">
+      <a href="../../../user-management/" class="md-nav__link">
         
   
   
@@ -1259,7 +1263,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../environment-variables/" class="md-nav__link">
+      <a href="../../../environment-variables/" class="md-nav__link">
         
   
   
@@ -1282,7 +1286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
         
   
   
@@ -1305,7 +1309,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../selinux/" class="md-nav__link">
+      <a href="../../../selinux/" class="md-nav__link">
         
   
   
@@ -1328,7 +1332,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../podsecurity/" class="md-nav__link">
+      <a href="../../../podsecurity/" class="md-nav__link">
         
   
   
@@ -1351,7 +1355,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reinstall-k0sctl/" class="md-nav__link">
+      <a href="../../../reinstall-k0sctl/" class="md-nav__link">
         
   
   
@@ -1419,7 +1423,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../autopilot/" class="md-nav__link">
+      <a href="../../../autopilot/" class="md-nav__link">
         
   
   
@@ -1442,7 +1446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../autopilot-multicommand/" class="md-nav__link">
+      <a href="../../../autopilot-multicommand/" class="md-nav__link">
         
   
   
@@ -1510,7 +1514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../../../examples/metallb-loadbalancer/" class="md-nav__link">
         
   
   
@@ -1533,7 +1537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../../../examples/nginx-ingress/" class="md-nav__link">
         
   
   
@@ -1556,7 +1560,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../../../examples/traefik-ingress/" class="md-nav__link">
         
   
   
@@ -1579,7 +1583,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/rook-ceph/" class="md-nav__link">
+      <a href="../../../examples/rook-ceph/" class="md-nav__link">
         
   
   
@@ -1602,7 +1606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/gitops-flux/" class="md-nav__link">
+      <a href="../../../examples/gitops-flux/" class="md-nav__link">
         
   
   
@@ -1625,7 +1629,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/openebs/" class="md-nav__link">
+      <a href="../../../examples/openebs/" class="md-nav__link">
         
   
   
@@ -1693,7 +1697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/FAQ/" class="md-nav__link">
+      <a href="../../../troubleshooting/FAQ/" class="md-nav__link">
         
   
   
@@ -1716,7 +1720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/logs/" class="md-nav__link">
+      <a href="../../../troubleshooting/logs/" class="md-nav__link">
         
   
   
@@ -1739,7 +1743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/troubleshooting/" class="md-nav__link">
+      <a href="../../../troubleshooting/troubleshooting/" class="md-nav__link">
         
   
   
@@ -1762,7 +1766,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/support-dump/" class="md-nav__link">
+      <a href="../../../troubleshooting/support-dump/" class="md-nav__link">
         
   
   
@@ -1785,7 +1789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/certificate-authorities/" class="md-nav__link">
+      <a href="../../../troubleshooting/certificate-authorities/" class="md-nav__link">
         
   
   
@@ -1853,7 +1857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+      <a href="../../../architecture/" class="md-nav__link">
         
   
   
@@ -1876,7 +1880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../../cli/" class="md-nav__link">
         
   
   
@@ -1899,7 +1903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cis_benchmark/" class="md-nav__link">
+      <a href="../../../cis_benchmark/" class="md-nav__link">
         
   
   
@@ -1926,18 +1930,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -1953,7 +1959,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Governance
@@ -1967,7 +1973,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../security/" class="md-nav__link">
+      <a href="../../../security/" class="md-nav__link">
         
   
   
@@ -1990,7 +1996,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../releases/" class="md-nav__link">
+      <a href="../../../releases/" class="md-nav__link">
         
   
   
@@ -2010,18 +2016,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" checked>
         
           
           <label class="md-nav__link" for="__nav_9_3" id="__nav_9_3_label" tabindex="0">
@@ -2037,7 +2045,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_3">
             <span class="md-nav__icon md-icon"></span>
             CNCF
@@ -2051,7 +2059,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../governance/cncf/gtr/" class="md-nav__link">
+      <a href="../gtr/" class="md-nav__link">
         
   
   
@@ -2071,10 +2079,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../governance/cncf/security-self-assessment/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    TAG-Security self-assessment
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2085,6 +2115,263 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security links
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Project Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      Background
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Actors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Actors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#control-plane" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control Plane
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-store-etcd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Store (etcd)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worker Nodes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#networking-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Networking Layer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Goals
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Goals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#secure-by-default-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secure-by-default configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimized-operational-complexity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minimized operational complexity
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatibility-with-kubernetes-security-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility with Kubernetes security best practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#self-assessment-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Self-assessment use
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Project compliance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secure-development-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secure development practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Secure development practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#development-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development pipeline
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#communication-channels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Communication channels
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-issue-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security issue resolution
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security issue resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue Reporting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incident-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      Incident Response
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Appendix
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#case-studies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Case studies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2112,7 +2399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../commercial-support/" class="md-nav__link">
+      <a href="../../../commercial-support/" class="md-nav__link">
         
   
   
@@ -2134,7 +2421,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adopters/" class="md-nav__link">
+      <a href="../../../adopters/" class="md-nav__link">
         
   
   
@@ -2194,7 +2481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/" class="md-nav__link">
+      <a href="../../../contributors/" class="md-nav__link">
         
   
   
@@ -2217,7 +2504,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../../contributors/github_workflow/" class="md-nav__link">
         
   
   
@@ -2240,7 +2527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/testing/" class="md-nav__link">
+      <a href="../../../contributors/testing/" class="md-nav__link">
         
   
   
@@ -2263,7 +2550,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/docs/" class="md-nav__link">
+      <a href="../../../contributors/docs/" class="md-nav__link">
         
   
   
@@ -2303,6 +2590,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -2311,37 +2600,232 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-etcd-leave" class="md-nav__link">
+  <a href="#metadata" class="md-nav__link">
     <span class="md-ellipsis">
-      k0s etcd leave
+      Metadata
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="k0s etcd leave">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security links
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Project Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      Background
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Actors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Actors">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
+  <a href="#control-plane" class="md-nav__link">
     <span class="md-ellipsis">
-      Options
+      Control Plane
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
+  <a href="#data-store-etcd" class="md-nav__link">
     <span class="md-ellipsis">
-      Options inherited from parent commands
+      Data Store (etcd)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#worker-nodes" class="md-nav__link">
     <span class="md-ellipsis">
-      SEE ALSO
+      Worker Nodes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#networking-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Networking Layer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Goals
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Goals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#secure-by-default-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secure-by-default configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#minimized-operational-complexity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minimized operational complexity
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatibility-with-kubernetes-security-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility with Kubernetes security best practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#self-assessment-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Self-assessment use
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Project compliance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secure-development-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secure development practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Secure development practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#development-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development pipeline
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#communication-channels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Communication channels
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-issue-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security issue resolution
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security issue resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue Reporting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incident-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      Incident Response
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Appendix
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#case-studies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Case studies
     </span>
   </a>
   
@@ -2368,27 +2852,159 @@
 
 
 
-  <h1>K0s etcd leave</h1>
-
-<h2 id="k0s-etcd-leave">k0s etcd leave<a class="headerlink" href="#k0s-etcd-leave" title="Permanent link">#</a></h2>
-<p>Leave the etcd cluster, or remove a specific peer</p>
-<div class="highlight"><pre><span></span><code>k0s etcd leave [flags]
-</code></pre></div>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --data-dir string               Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default &quot;/var/lib/k0s&quot;)
-  -h, --help                          help for leave
-      --peer-address ip-or-dns-name   etcd peer address to remove (default &lt;this node&#39;s peer address&gt;)
-      --status-socket string          Full file path to the socket file. (default: &lt;rundir&gt;/status.sock)
-</code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -d, --debug                  Debug logging (implies verbose logging)
-      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
-  -v, --verbose                Verbose logging
-</code></pre></div>
-<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
+<h1 id="cncf-tag-security-self-assessment">CNCF TAG-Security self-assessment<a class="headerlink" href="#cncf-tag-security-self-assessment" title="Permanent link">#</a></h1>
+<p>This document serves as the k0s project <a href="https://tag-security.cncf.io/community/assessments/guide/self-assessment/">CNCF TAG-Security self-assessment</a>.</p>
+<h2 id="metadata">Metadata<a class="headerlink" href="#metadata" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Assessment Stage</th>
+<th style="text-align: left;">Draft</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Software</td>
+<td style="text-align: left;">https://github.com/k0sproject/k0s</td>
+</tr>
+<tr>
+<td>Security Provider</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td>Languages</td>
+<td style="text-align: left;">Golang</td>
+</tr>
+<tr>
+<td>SBOM</td>
+<td style="text-align: left;"><a href="https://github.com/k0sproject/k0s/releases/download/v1.33.1%2Bhead/spdx.json">https://github.com/k0sproject/k0s/releases/download/v1.33.1%2Bhead/spdx.json</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="security-links">Security links<a class="headerlink" href="#security-links" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Security file</td>
+<td><a href="https://github.com/k0sproject/k0s/blob/main/SECURITY.md">https://github.com/k0sproject/k0s/blob/main/SECURITY.md</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-overview">Project Overview<a class="headerlink" href="#project-overview" title="Permanent link">#</a></h2>
+<p><strong>Description</strong>:</p>
 <ul>
-<li><a href="../k0s_etcd/">k0s etcd</a>    - Manage etcd cluster</li>
+<li>k0s is a lightweight, open-source Kubernetes distribution designed to simplify cluster setup and management. It offers an all-inclusive binary for streamlined operations with minimal dependencies.</li>
 </ul>
+<p><strong>Key Use Cases</strong>:</p>
+<ul>
+<li>Simplifying Kubernetes deployment for edge and production environments.</li>
+<li>Managing distributed workloads at scale with reduced operational overhead.</li>
+</ul>
+<p><strong>Security Goals</strong>:</p>
+<ul>
+<li>Secure defaults for deployment and operation.</li>
+<li>Flexibility for various deployment scenarios while adhering to Kubernetes security best practices.</li>
+</ul>
+<h2 id="background">Background<a class="headerlink" href="#background" title="Permanent link">#</a></h2>
+<h2 id="actors">Actors<a class="headerlink" href="#actors" title="Permanent link">#</a></h2>
+<h3 id="control-plane"><strong>Control Plane</strong><a class="headerlink" href="#control-plane" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Components</strong>: API Server, Scheduler, Controller Manager.</li>
+<li><strong>Role</strong>: Centralized management of the Kubernetes cluster, handling scheduling, API requests, and resource management.</li>
+<li><strong>Security Mechanisms</strong>:<ul>
+<li>Mutual TLS is used to secure communication between control plane components.</li>
+<li>Anonymous access is disabled by default.</li>
+<li>Role-Based Access Control (RBAC) ensures that only authorized users or processes can interact with the API Server.<ul>
+<li>K0s creates minimal RBAC for the system components it manages</li>
+</ul>
+</li>
+<li>Control plane nodes can be physically or logically separated from worker nodes to reduce exposure to potential compromise.<ul>
+<li>This is achieved with <a href="https://github.com/kubernetes-sigs/apiserver-network-proxy">konnectivity</a> and is enabled by default.</li>
+</ul>
+</li>
+<li>K0s creates and manages the CA and other needed certificates<ul>
+<li>Serving and client certs are rotated on each k0s restart<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="data-store-etcd"><strong>Data Store (etcd)</strong><a class="headerlink" href="#data-store-etcd" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Components</strong>: Distributed key-value store for cluster state and secrets.</li>
+<li><strong>Role</strong>: Maintains the state of the cluster, including configuration and sensitive data such as secrets.</li>
+<li><strong>Security Mechanisms</strong>:<ul>
+<li>Etcd API is only exposed on localhost on controller nodes</li>
+<li>Access to etcd is restricted to authenticated and authorized control plane components and secured with mutual TLS</li>
+</ul>
+</li>
+</ul>
+<h3 id="worker-nodes"><strong>Worker Nodes</strong><a class="headerlink" href="#worker-nodes" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Components</strong>: Kubelet, kube-proxy, and container runtimes.</li>
+<li><strong>Role</strong>: Execute workloads and interact with the control plane for orchestration.</li>
+<li><strong>Security Mechanisms</strong>:<ul>
+<li>Worker nodes can be isolated from each other through network policies, preventing direct communication between pods unless explicitly allowed.</li>
+<li>Pod Security Standards (optional) enforce restrictions on workload capabilities, reducing the risk of lateral movement in case of a compromise.</li>
+<li>Kubelet APIs are configured with authentication.</li>
+<li>Kubelet is configured with certificate rotation.</li>
+<li>Worker nodes are joined using revocable bootstrap tokens which can be configured to be short-living too.</li>
+</ul>
+</li>
+</ul>
+<h3 id="networking-layer"><strong>Networking Layer</strong><a class="headerlink" href="#networking-layer" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Components</strong>: Cluster networking via CNI plugins, kube-proxy, or Calico</li>
+<li><strong>Role</strong>: Facilitate communication between pods, services, and external systems.</li>
+<li><strong>Security Mechanisms</strong>:<ul>
+<li>Network segmentation and policy enforcement restrict traffic between pods, nodes, and external endpoints.</li>
+</ul>
+</li>
+</ul>
+<h2 id="goals">Goals<a class="headerlink" href="#goals" title="Permanent link">#</a></h2>
+<p>Security goals for k0s can be summarized as follows:</p>
+<h3 id="secure-by-default-configurations">Secure-by-default configurations<a class="headerlink" href="#secure-by-default-configurations" title="Permanent link">#</a></h3>
+<p>K0s in its default configuration should provide a secure base-level configuration. That includes things like no anonymous authentication, TLS enabled everywhere, RBAC, etc.. While that does NOT include integrations with things like AppArmor and seccomp, those configurations are exposed to users. In general, k0s allows users to finetune pretty much any and all Kubernetes options.</p>
+<h3 id="minimized-operational-complexity">Minimized operational complexity<a class="headerlink" href="#minimized-operational-complexity" title="Permanent link">#</a></h3>
+<p>By minimizing the operational complexity for Kubernetes the users have better and more easy control of their security configurations.</p>
+<h3 id="compatibility-with-kubernetes-security-best-practices">Compatibility with Kubernetes security best practices<a class="headerlink" href="#compatibility-with-kubernetes-security-best-practices" title="Permanent link">#</a></h3>
+<p>k0s adheres to the established security frameworks and guidelines provided by Kubernetes, such as RBAC, network policies, and encryption mechanisms. This ensures that organizations can seamlessly integrate k0s into their existing Kubernetes environments without compromising security standards.</p>
+<h2 id="self-assessment-use">Self-assessment use<a class="headerlink" href="#self-assessment-use" title="Permanent link">#</a></h2>
+<p>This document evaluates the security posture of k0s, identifies existing measures, and highlights areas for improvement. It serves as a reference for stakeholders and to advance k0s at the CNCF Sandbox level.</p>
+<h2 id="project-compliance">Project compliance<a class="headerlink" href="#project-compliance" title="Permanent link">#</a></h2>
+<p>k0s follows the <a href="https://docs.k0sproject.io/stable/cis_benchmark/">CIS Kubernetes Benchmark</a> with documented exceptions.</p>
+<h2 id="secure-development-practices">Secure development practices<a class="headerlink" href="#secure-development-practices" title="Permanent link">#</a></h2>
+<h3 id="development-pipeline">Development pipeline<a class="headerlink" href="#development-pipeline" title="Permanent link">#</a></h3>
+<p><strong>Code Reviews</strong>: All changes undergo peer review by project maintainers.</p>
+<p><strong>Dependency Management</strong>: Regular automated vulnerability scanning and updates of dependencies</p>
+<p><strong>CI/CD Security</strong>: Security checks integrated into CI/CD pipelines. For non-maintainer pull requests, we require approval to run CI which allows us to verify</p>
+<p><strong>Signed-off commits</strong>: All commits are required to be signed-off.</p>
+<h2 id="communication-channels">Communication channels<a class="headerlink" href="#communication-channels" title="Permanent link">#</a></h2>
+<p><strong>Internal:</strong> Internal, between maintainers, communication is handled mostly in Kubernetes Slack <a href="https://kubernetes.slack.com/archives/C07VAPJUECS">#k0s-dev</a> channel, and in Mirantis internal channels for Mirantis core maintainers.</p>
+<p><strong>Inbound:</strong> <a href="https://kubernetes.slack.com/archives/C0809EA06QZ">#k0s-users</a> in Kubernetes Slack and GitHGub issues. Stack Overflow has also a <a href="https://stackoverflow.com/questions/tagged/k0s">k0s tag</a> for related questions.</p>
+<p><strong>External</strong>: k0s does not currently have any mailing lists. There are Mirantis-operated social media accounts that are used for communicating things like new releases etc.. There’s also a <a href="https://medium.com/k0sproject">k0sproject</a> Medium account which is used for blogs.</p>
+<h2 id="security-issue-resolution">Security issue resolution<a class="headerlink" href="#security-issue-resolution" title="Permanent link">#</a></h2>
+<h3 id="issue-reporting"><strong>Issue Reporting</strong><a class="headerlink" href="#issue-reporting" title="Permanent link">#</a></h3>
+<p>Vulnerabilities can be reported via the k0s Github project using Github's <a href="https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability">private security vulnerability reporting</a> feature.</p>
+<h3 id="incident-response"><strong>Incident Response</strong><a class="headerlink" href="#incident-response" title="Permanent link">#</a></h3>
+<p>The k0s maintainers triage and resolve issues. Security patches and advisories are published as needed.</p>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">#</a></h2>
+<h3 id="case-studies">Case studies<a class="headerlink" href="#case-studies" title="Permanent link">#</a></h3>
+<p><a href="https://docs.k0sproject.io/head/adopters/">List of known users</a> along with some case studies.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>The serving and client certs are valid for 1 year per default. Hence upgrading, and thus restarting k0s, at least once a year will rotate the certs automatically.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 
@@ -2480,10 +3096,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.13a4f30d.min.js"></script>
       
     
   </body>
