@@ -82,7 +82,7 @@ metadata:
   name: k0s-cluster
 spec:
   k0s:
-    version: v{{{ extra.k8s_version }}}+k0s.1
+    version: {{{ k0s_version }}}
     config:
       spec:
         network:
@@ -170,11 +170,11 @@ level=info msg="==> Running phase: Validate hosts"
 level=info msg="==> Running phase: Gather k0s facts"
 level=info msg="==> Running phase: Validate facts"
 level=info msg="==> Running phase: Upload k0s binaries to hosts"
-level=info msg="[ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.1"
-level=info msg="[ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.1"
-level=info msg="[ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.1"
-level=info msg="[ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.1"
-level=info msg="[ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.1"
+level=info msg="[ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}"
+level=info msg="[ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}"
+level=info msg="[ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}"
+level=info msg="[ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}"
+level=info msg="[ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}"
 level=info msg="==> Running phase: Configure k0s"
 level=info msg="[ssh] 10.81.146.254:22: validating configuration"
 level=info msg="[ssh] 10.81.146.184:22: validating configuration"
@@ -214,7 +214,7 @@ level=info msg="[ssh] 10.81.146.51:22: waiting for node to become ready"
 level=info msg="==> Running phase: Release exclusive host lock"
 level=info msg="==> Running phase: Disconnect from hosts"
 level=info msg="==> Finished in 3m30s"
-level=info msg="k0s cluster version v{{{ extra.k8s_version }}}+k0s.1 is now installed"
+level=info msg="k0s cluster version {{{ k0s_version }}} is now installed"
 level=info msg="Tip: To access the cluster you can now fetch the admin kubeconfig using:"
 level=info msg="     k0sctl kubeconfig"
 ```
@@ -249,11 +249,14 @@ kubernetes   10.81.146.113:6443,10.81.146.184:6443,10.81.146.254:6443   2m49s
 The first controller is the current k0s leader. The two worker nodes can be
 listed, too:
 
+{% set kubelet_ver = k8s_version + '+k0s' -%}
+{% set kubelet_ver_len = kubelet_ver | length -%}
+
 ```console
 $ kubectl get nodes -owide
-NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-k0s-worker-0   Ready    <none>   2m16s   v{{{ extra.k8s_version }}}+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.27
-k0s-worker-1   Ready    <none>   2m15s   v{{{ extra.k8s_version }}}+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.27
+NAME           STATUS   ROLES    AGE     {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+k0s-worker-0   Ready    <none>   2m16s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://{{{ build_var('containerd_version') }}}
+k0s-worker-1   Ready    <none>   2m15s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://{{{ build_var('containerd_version') }}}
 ```
 
 There is one node-local load balancer pod running for each worker node:
@@ -297,9 +300,9 @@ k0s-controller-1
 $ sed -i s#https://10\\.81\\.146\\.254:6443#https://10.81.146.184:6443#g k0s-kubeconfig
 
 $ kubectl get nodes -owide
-NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-k0s-worker-0   Ready    <none>   3m35s   v{{{ extra.k8s_version }}}+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.27
-k0s-worker-1   Ready    <none>   3m34s   v{{{ extra.k8s_version }}}+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.27
+NAME           STATUS   ROLES    AGE     {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+k0s-worker-0   Ready    <none>   3m35s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://{{{ build_var('containerd_version') }}}
+k0s-worker-1   Ready    <none>   3m34s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://{{{ build_var('containerd_version') }}}
 
 $ kubectl -n kube-system get pods -owide -l app.kubernetes.io/managed-by=k0s,app.kubernetes.io/component=nllb
 NAME                READY   STATUS    RESTARTS   AGE     IP              NODE           NOMINATED NODE   READINESS GATES

@@ -272,10 +272,13 @@ metrics][cadvisor-metrics] when using cri-dockerd.
 
 The successful configuration can be verified by executing the following command:
 
+{% set kubelet_ver = k8s_version + '+k0s' -%}
+{% set kubelet_ver_len = kubelet_ver | length -%}
+
 ```console
 $ kubectl get nodes -o wide
-NAME              STATUS   ROLES    AGE   VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-docker-worker-0   Ready    <none>   15m   v{{{ extra.k8s_version }}}+k0s   172.27.77.155   <none>        Ubuntu 22.04.3 LTS   5.15.0-82-generic   docker://24.0.7
+NAME              STATUS   ROLES    AGE   {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+docker-worker-0   Ready    <none>   15m   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   172.27.77.155   <none>        Ubuntu 22.04.3 LTS   5.15.0-82-generic   docker://24.0.7
 ```
 
 On the worker nodes, the Kubernetes containers should be listed as regular

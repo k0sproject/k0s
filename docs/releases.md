@@ -28,8 +28,14 @@ The biggest new k0s features will typically only be delivered on top of the late
 
 ## Version string
 
+{% set version_parts = k0s_version.split('+', maxsplit=1) -%}
+
 The k0s version string consists of the Kubernetes version and the k0s version. For example:
 
-- v{{{ extra.k8s_version }}}+k0s.1
+```text
+{{{ version_parts | join('+') }}}
+```
 
-The Kubernetes version ({{{ extra.k8s_version }}}) is the first part, and the last part (k0s.1) reflects the k0s version, which is built on top of the certain Kubernetes version.
+The Kubernetes version (`{{{ version_parts[0] }}}`) is the first part, and the
+last part (`{{{ version_parts[1] }}}`) reflects the k0s version, which is built
+on top of the certain Kubernetes version.
