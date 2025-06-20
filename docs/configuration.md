@@ -497,8 +497,8 @@ Nodes under the `images` key all have the same basic structure:
 spec:
   images:
     coredns:
-      image: quay.io/k0sproject/coredns
-      version: 1.12.2
+      image: {{{ src_var('CoreDNSImage') }}}
+      version: {{{ src_var('CoreDNSImageVersion') }}}
 ```
 
 If you want the list of default images and their versions to be included, use `k0s config create --include-images`.
@@ -523,23 +523,26 @@ If `spec.images.default_pull_policy` is set and not empty, it will be used as a 
 
 #### Image example
 
+{% set cali_ver = src_var('CalicoComponentImagesVersion') -%}
+{% set metrics_ver = src_var('MetricsImageVersion') -%}
+
 ```yaml
 images:
-  repository: "my.own.repo"
+  repository: airgap-repo.local
   calico:
     kubecontrollers:
-      image: quay.io/k0sproject/calico-kube-controllers
-      version: v3.27.3-0
+      image: repo.acme.corp/k0sproject/calico-kube-controllers
+      version: {{{ cali_ver }}}
   metricsserver:
-    image: quay.io/k0sproject/metrics-server
-    version: v0.7.2
+    image: repo.acme.corp/k0sproject/metrics-server
+    version: {{{ metrics_ver }}}
 ```
 
 In the runtime the image names are calculated as
-`my.own.repo/k0sproject/calico-kube-controllers:v3.27.3-0` and
-`my.own.repo/metrics-server/metrics-server:v0.7.2`. This only affects the the
-images pull location, and thus omitting an image specification here will not
-disable component deployment.
+`airgap-repo.local/k0sproject/calico-kube-controllers:{{{ cali_ver }}}` and
+`airgap-repo.local/k0sproject/metrics-server:{{{ metrics_ver }}}`. This only
+affects the the images pull location, and thus omitting an image specification
+here will not disable component deployment.
 
 ### `spec.extensions.helm`
 
