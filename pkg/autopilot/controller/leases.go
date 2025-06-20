@@ -88,7 +88,7 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 				}
 
 				ctx, cancel := context.WithCancel(ctx)
-				events, err := leasePool.Watch(ctx)
+				events, watchDone, err := leasePool.Watch(ctx)
 				if err != nil {
 					errorCh <- fmt.Errorf("failed to watch lease pool: %w", err)
 					cancel()
@@ -99,6 +99,7 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 				watchWg.Wait()
 
 				cancel()
+				<-watchDone
 			}
 		}
 	}()
