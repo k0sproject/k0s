@@ -71,6 +71,7 @@ jobs:
       TF_VAR_cache_dir: ${{ github.workspace }}/.cache/k0s-ostests
       TF_VAR_k0s_version: ${{ inputs.k0s-version }}
       TF_VAR_k0sctl_executable_path: ${{ github.workspace }}/.cache/k0sctl
+      TF_VAR_k0sctl_timeout: 30m
       TF_VAR_k0s_network_provider: ${{ inputs.network-provider }}
       TF_VAR_k0s_kube_proxy_mode: ${{ inputs.kube-proxy-mode }}
 
