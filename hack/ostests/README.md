@@ -44,8 +44,9 @@ export AWS_SESSION_TOKEN=...
 export AWS_REGION=...
 ```
 
-Select the desired cluster configuration for OpenTofu. Again, just an example,
-other ways described [here][tf-config].
+Select the desired cluster configuration for OpenTofu. This is just one example;
+other methods of passing configuration options are covered in the [official
+OpenTofu documentation][tf-config].
 
 ```shell
 export TF_VAR_os=alpine_3_21

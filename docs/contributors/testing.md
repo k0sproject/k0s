@@ -27,8 +27,8 @@ Please run the following style and formatting commands and fix/check-in any chan
 
 3. Checking the documentation
 
-   Verify any changes to the documentation by following the instructions
-   [here](docs.md#testing-docs-locally).
+   Follow the [instructions for testing the documentation
+   locally][testing-docs-locally] to verify any changes.
 
 4. Pre-submit Flight Checks
 
@@ -49,6 +49,8 @@ Please run the following style and formatting commands and fix/check-in any chan
    source of the problem.
 
    If you find that all tests passed, you may open a pull request upstream.
+
+[testing-docs-locally]: docs.md#testing-docs-locally
 
 ## Opening A Pull Request
 

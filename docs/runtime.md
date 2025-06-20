@@ -219,7 +219,10 @@ helm install nvidia-gpu-operator -n nvidia-gpu-operator \
 
 With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime.
 
-**Note**: Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available [here](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html).
+**Note**: Detailed installation instructions can be found in the [official
+NVIDIA GPU Operator documentation][install-nvidia-gpu-operator].
+
+[install-nvidia-gpu-operator]: https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html
 
 ## Using custom CRI runtimes
 
