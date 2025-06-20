@@ -109,3 +109,23 @@ jobs:
       aws-access-key-id: ${{ secrets.AWS_TERRAFORM_ID }}
       aws-secret-access-key: ${{ secrets.AWS_TERRAFORM_KEY }}
       aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+  post-actions:
+    name: Post actions
+    needs: [select, e2e-tests]
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3.18.0
+        if: always()
+        with:
+          job_name: "${{ needs.select.outputs.os }} :: ${{ needs.select.outputs.network-provider }}"
+          status: ${{ needs.e2e-tests.result }}
+          fields: workflow,commit,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
