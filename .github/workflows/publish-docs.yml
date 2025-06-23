@@ -15,6 +15,10 @@ jobs:
   build:
     name: Deploy docs
     runs-on: ubuntu-24.04
+
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout k0s
         uses: actions/checkout@v4
@@ -22,7 +26,27 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
+        env:
+          PYTHONPATH: ${{ github.workspace }}/docs/mkdocs_modules
+        run: |
+          .github/workflows/prepare-build-env.sh
+
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            kubernetesVersion="$(./vars.sh kubernetes_version)"
+            k0sVersion="v$kubernetesVersion+head"
+          elif [ "$GITHUB_REF_TYPE" = tag ]; then
+            k0sVersion="$GITHUB_REF_NAME"
+          fi
+
+          [ -n "${k0sVersion-}" ] || {
+            echo Failed to determine k0s version! 1>&2
+            exit 1
+          }
+
+          cat <<EOF | tee "$GITHUB_ENV"
+          PYTHONPATH=$PYTHONPATH
+          K0S_VERSION=$k0sVersion
+          EOF
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
@@ -56,9 +80,8 @@ jobs:
       # This deploys the current docs into gh-pages/head on merges to main
       # The old "main" gets deleted if it exists, head is more descriptive
       - name: mike deploy head
-        if: contains(github.ref, 'refs/heads/main')
-        run: |
-          KUBERNETES_VERSION="$(./vars.sh kubernetes_version)" mike deploy --push head
+        if: github.ref == 'refs/heads/main'
+        run: mike deploy --push head
 
       # If a release has been published, deploy it as a new version
       - name: mike deploy new version
@@ -67,10 +90,7 @@ jobs:
           github.event.action == 'published' &&
           !github.event.release.draft &&
           !github.event.release.prerelease
-        env:
-          VERSION: ${{ github.event.release.tag_name }}
-        run: |
-          KUBERNETES_VERSION="$(./vars.sh kubernetes_version)" mike deploy --push "$VERSION"
+        run: mike deploy --push "$K0S_VERSION"
 
       - name: Update mike version aliases
         if: github.repository == 'k0sproject/k0s'
