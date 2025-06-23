@@ -175,8 +175,6 @@ spec:
         image: {{ .Image }}
         imagePullPolicy: {{ .PullPolicy }}
         resources:
-          limits:
-            memory: 170Mi
           requests:
             cpu: 100m
             memory: 70Mi
