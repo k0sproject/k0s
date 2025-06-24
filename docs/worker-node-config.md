@@ -1,6 +1,6 @@
 # Configuration options for worker nodes
 
-Although the `k0s worker` command does not take in any special yaml configuration, there are still methods for configuring the workers to run various components.
+Although the `k0s worker` command does not take in any special YAML configuration, there are still methods for configuring the workers to run various components.
 
 ## Node labels
 

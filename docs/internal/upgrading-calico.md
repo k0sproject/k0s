@@ -18,7 +18,7 @@ you may follow these steps to upgrade Calico to the latest version:
 **Note:** All manual adjustments should be fairly obvious from the git diff.
 This section attempts to provide a sanity checklist to go through and make sure
 we still have those changes applied. The code blocks in this section are **our modifications**,
-not the calico originals.
+not the Calico originals.
 
 To see the diff **without** CRDs, you can do something like:
 

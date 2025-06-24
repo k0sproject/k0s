@@ -21,15 +21,15 @@ This piece of documentation is best-effort and considered to be augmented and
 extended in the future. The kernel and cgroup requirements are basically taken
 from kubernetes/system-validators. Often there's no real hint as to why they are
 required (although most requirements seem pretty obvious). Also need to check
-for requirements of kube-router and calico.
+for requirements of Kube-router and Calico.
 -->
 
 ### Linux kernel configuration
 
-Needless to say, as k0s operates Kubernetes worker nodes, there's a certain
-number of needed Linux kernel modules and configurations that we need in the
-system. This basically stems from the need to run both containers and also be
-able to set up networking for the containers.
+Needless to say, as k0s operates Kubernetes worker nodes, a certain number of
+Linux kernel modules and configurations are required on the host. This
+essentially stems from the requirement to run containers and set up networking
+for them.
 
 The needed kernel configuration items are listed below. All of them are
 available in Kernel versions 4.3 and above. If running on older kernels, check
@@ -37,7 +37,7 @@ if the distro in use has backported some features; nevertheless, it might meet
 the requirements. k0s will check the Linux kernel release as part of its
 pre-flight checks and issue a warning if it's below 3.10.
 
-The list covers ONLY the k0s/kubernetes components’ needs on worker nodes. Your
+The list covers ONLY the k0s/Kubernetes components' needs on worker nodes. Your
 own workloads may require more.
 
 <!-- Kernel config nesting is taken from the v4.3 kernel's menuconfig structure. -->
@@ -98,13 +98,13 @@ Both [cgroup v1] and [cgroup v2] are supported.
 
 Required [cgroup] controllers:
 
-- cpu
-- cpuacct
-- cpuset
-- memory
-- devices
-- freezer
-- pids
+- `cpu`
+- `cpuacct`
+- `cpuset`
+- `memory`
+- `devices`
+- `freezer`
+- `pids`
 
 Optional cgroup controllers:
 
