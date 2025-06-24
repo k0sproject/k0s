@@ -18,8 +18,10 @@ package ipv6
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -70,11 +72,11 @@ func (s *IPv6Suite) TestK0sGetsUp() {
 
 	if os.Getenv("K0S_NETWORK") == "kube-router" {
 		s.T().Log("Using kube-router network")
-		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouter, s.GetIPv6Address(s.ControllerNode(0)))
+		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouter, s.firstPublicIPv6Address(s.ControllerNode(0)))
 		cniDS = "kube-router"
 	} else {
 		s.T().Log("Using calico network")
-		k0sConfig = fmt.Sprintf(k0sConfigWithCalico, s.GetIPv6Address(s.ControllerNode(0)))
+		k0sConfig = fmt.Sprintf(k0sConfigWithCalico, s.firstPublicIPv6Address(s.ControllerNode(0)))
 		cniDS = "calico-node"
 	}
 
@@ -122,6 +124,29 @@ func (s *IPv6Suite) validateDockerBridge() {
 	output, err := cmd.CombinedOutput()
 	s.Require().NoError(err)
 	s.Require().Containsf(string(output), "false,true", "expected bridge-ipv6 network to have IPv6 enabled")
+}
+
+func (s *IPv6Suite) firstPublicIPv6Address(nodeName string) string {
+	ssh, err := s.SSH(s.Context(), nodeName)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(s.Context(), "ip -6 -oneline addr show eth0 scope global")
+	s.Require().NoError(err)
+
+	// Parse the output line by line
+	for line := range strings.SplitSeq(strings.TrimSpace(output), "\n") {
+		fields := strings.Fields(line)
+		s.Require().GreaterOrEqual(len(fields), 4, "Expected at least 4 fields in the output line")
+
+		ip, _, err := net.ParseCIDR(fields[3])
+		s.Require().NoError(err, "Failed to parse IP address from output line")
+
+		return ip.String()
+	}
+
+	s.Require().Fail("No IPv6 address found on eth0")
+	return ""
 }
 
 func TestAirgapIPv6Suite(t *testing.T) {

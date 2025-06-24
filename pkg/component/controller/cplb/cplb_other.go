@@ -37,7 +37,6 @@ type Keepalived struct {
 	LogConfig       bool
 	APIPort         int
 	KubeConfigPath  string
-	PrimaryAFIPv4   bool
 }
 
 func (k *Keepalived) Init(context.Context) error {

@@ -1392,16 +1392,6 @@ func (s *BootlooseSuite) GetIPAddress(nodeName string) string {
 	return ipAddress
 }
 
-func (s *BootlooseSuite) GetIPv6Address(nodeName string) string {
-	ssh, err := s.SSH(s.Context(), nodeName)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	ipAddress, err := ssh.ExecWithOutput(s.Context(), "ip -6 -oneline addr show eth0 | awk '{print $4}' | grep -v '^fe80' | cut -d/ -f1")
-	s.Require().NoError(err)
-	return ipAddress
-}
-
 func (s *BootlooseSuite) GetRegistryHostPort() int {
 	machine, err := s.MachineForName(s.RegistryNode())
 	s.Require().NoError(err)

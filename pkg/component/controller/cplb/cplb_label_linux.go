@@ -25,34 +25,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// maybeSetAddrLabels sets the labels for the vips to vrrp.AddressLabel
-// so that the real IP is preferred.
-func (k *Keepalived) maybeSetAddrLabels() error {
-	for _, vrrp := range k.Config.VRRPInstances {
-		for _, vip := range vrrp.VirtualIPs {
-			// Only set labels for IPv6 addresses
-			ipAddr, _, err := net.ParseCIDR(vip)
-			if err != nil {
-				return fmt.Errorf("failed to parse CIDR %s: %w", vip, err)
-			}
-
-			// Only set labels for IPv6 addresses
-			if ipAddr.To4() != nil {
-				continue
-			}
-
-			// Set address label for IPv6 VIP
-			if err := setAddressLabel(ipAddr, 128, vrrp.AddressLabel); err != nil {
-				return fmt.Errorf("failed to set address label for %s: %w", ipAddr, err)
-			}
-		}
-	}
-	return nil
-}
-
-func setAddressLabel(ip net.IP, bits int, label uint32) error {
+func setAddressLabel(ip net.IP, label uint32) error {
 	// Use iproute2 as reference for setting the address label.
-	// https://kernel.googlesource.com/pub/scm/network/iproute2/iproute2/+/refs/tags/v6.15.0/ip/ipaddrlabel.c#176
+	// https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/ip/ipaddrlabel.c?h=v4.0.0#n178
 	if ip.To4() != nil {
 		return fmt.Errorf("cannot set address label for IPv4 address %s", ip)
 	}
@@ -61,13 +36,13 @@ func setAddressLabel(ip net.IP, bits int, label uint32) error {
 
 	msg := &IfAddrLabelmsg{
 		Family:    uint8(unix.AF_INET6),
-		PrefixLen: uint8(bits),
+		PrefixLen: uint8(128), // The netmask for IPv6. In CPLB we always use /128.
 	}
 
 	req.AddData(msg)
 
 	// RFC 3484 and 6724 don't specify label size, but iproute2 uses 32 bit labels:
-	// https://kernel.googlesource.com/pub/scm/network/iproute2/iproute2/+/refs/tags/v6.15.0/ip/ipaddrlabel.c#176
+	// https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/ip/ipaddrlabel.c?h=v4.0.0#n178
 	labelBytes := make([]byte, 4)
 	nl.NativeEndian().PutUint32(labelBytes, label)
 
@@ -88,12 +63,12 @@ func setAddressLabel(ip net.IP, bits int, label uint32) error {
 // define it here.
 
 type IfAddrLabelmsg struct {
-	Family    uint8
-	_         uint8
-	PrefixLen uint8
-	Flags     uint8
-	Index     uint32
-	Seq       uint32
+	Family    uint8  // Address family
+	_         uint8  // Reserved
+	PrefixLen uint8  // Prefix length
+	Flags     uint8  // Flags
+	Index     uint32 // Link index
+	Seq       uint32 // Sequence number
 }
 
 const (
@@ -101,17 +76,17 @@ const (
 	IFAL_LABEL   = 2
 )
 
-const SizeOfIfAddrLabelMsg = 12 // Size of IfAddrLabelMsg in bytes
+const sizeOfIfAddrLabelMsg = int(unsafe.Sizeof(IfAddrLabelmsg{}))
 
 func (msg *IfAddrLabelmsg) Len() int {
-	return SizeOfIfAddrLabelMsg
+	return sizeOfIfAddrLabelMsg
 }
 
 func (msg *IfAddrLabelmsg) Serialize() []byte {
-	return (*(*[SizeOfIfAddrLabelMsg]byte)(unsafe.Pointer(msg)))[:]
+	return (*(*[sizeOfIfAddrLabelMsg]byte)(unsafe.Pointer(msg)))[:]
 }
 
-// https://github.com/torvalds/linux/blob/v6.15/include/uapi/linux/if_addrlabel.h
+// https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/include/uapi/linux/if_addrlabel.h?h=v4.0#n15
 // struct ifaddrlblmsg {
 //	__u8		ifal_family;		/* Address family */
 //	__u8		__ifal_reserved;	/* Reserved */

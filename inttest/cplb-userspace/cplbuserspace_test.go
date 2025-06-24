@@ -15,11 +15,13 @@
 package keepalived
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"html/template"
 	"net"
 	"net/http"
 	"net/url"
@@ -58,11 +60,12 @@ spec:
 const extAddrControllerConfig = `
 spec:
   images:
-    # Set to "IfNotPresent" to allow using the airgap bundle on ipv6
-    # environments and to pull on ipv4 ones.
+    # GitHub Actions don't support IPv6, for this reason in the test IPv6-only
+    # we air gap the cluster but in IPv4 we don't. Setting the default pull
+    # policy to "IfNotPresent" works on both environments.
     default_pull_policy: IfNotPresent
   api:
-    externalAddress: %s
+    externalAddress: {{ .ExtAddr }}
   network:
     provider: calico
     controlPlaneLoadBalancing:
@@ -70,46 +73,58 @@ spec:
       type: Keepalived
       keepalived:
         vrrpInstances:
-        - virtualIPs: ["%s"]
+        - virtualIPs: ["{{ .VIP }}"]
           authPass: "123456"
-`
-
-const ipv6CIDRs = `
+{{ if .IsIPv6Only }}
     podCIDR: fd00::/108
     serviceCIDR: fd01::/108
+{{ end }}
 `
+
+func (s *CPLBUserSpaceSuite) getK0sCfg(useExtAddr bool, lb string) string {
+
+	if !useExtAddr {
+		return fmt.Sprintf(nllbControllerConfig, s.lbCIDR(lb))
+	}
+
+	k0sCfg := bytes.NewBuffer([]byte{})
+	data := map[string]interface{}{
+		"ExtAddr":    lb,
+		"VIP":        s.lbCIDR(lb),
+		"IsIPv6Only": s.isIPv6Only,
+	}
+	s.Require().NoError(template.Must(template.New("k0s.yaml").
+		Parse(extAddrControllerConfig)).
+		Execute(k0sCfg, data), "can't execute k0s.yaml template")
+	return k0sCfg.String()
+}
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	useExtAddr := os.Getenv("K0S_USE_EXTERNAL_ADDRESS") == "yes"
-	if useExtAddr {
-		s.T().Log("Using external address")
+	if useExtAddr && s.isIPv6Only {
+		s.T().Log("Using external address in IPv6 mode")
+	} else if useExtAddr {
+		s.T().Log("Using external address in IPv4 mode")
 	} else {
 		s.T().Log("Using CPLB + NLLB")
 	}
-	if s.isIPv6Only {
-		s.T().Log("Running in IPv6-only mode")
-	}
 
 	lb := s.getLBAddress()
+	k0sCfg := s.getK0sCfg(useExtAddr, lb)
+
 	ctx := s.Context()
 	var joinToken string
-
 	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		if useExtAddr {
-			k0sCfg := fmt.Sprintf(extAddrControllerConfig, lb, s.lbCIDR(lb))
-			if s.isIPv6Only {
-				k0sCfg += ipv6CIDRs
-			}
-
-			s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
+		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
+		if s.isIPv6Only {
 			// Note that the token is intentionally empty for the first controller
-			// Disable coreDNS to prevent crashloop backoff due to IPv6 and loop
+			// Disable coreDNS to prevent crashloop backoff in github actions. This happens because
+			// there is no IPv6 connectivity to the outside world in the CI environment and sets the DNS to ::1.
 			s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=endpoint-reconciler,coredns", "--enable-worker", joinToken))
 		} else {
-			s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(nllbControllerConfig, s.lbCIDR(lb)))
 			// Note that the token is intentionally empty for the first controller
 			s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--enable-worker", joinToken))
 		}
@@ -193,7 +208,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 func (s *CPLBUserSpaceSuite) getLBAddress() string {
 	var ip string
 	if s.isIPv6Only {
-		ip = s.GetIPv6Address(s.ControllerNode(0))
+		ip = s.firstPublicIPv6Address(s.ControllerNode(0))
 	} else {
 		ip = s.GetIPAddress(s.ControllerNode(0))
 	}
@@ -284,6 +299,29 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 
 	// Return the signature as a hex string
 	return hex.EncodeToString(signature), nil
+}
+
+func (s *CPLBUserSpaceSuite) firstPublicIPv6Address(nodeName string) string {
+	ssh, err := s.SSH(s.Context(), nodeName)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(s.Context(), "ip -6 -oneline addr show eth0 scope global")
+	s.Require().NoError(err)
+
+	// Parse the output line by line
+	for line := range strings.SplitSeq(strings.TrimSpace(output), "\n") {
+		fields := strings.Fields(line)
+		s.Require().GreaterOrEqual(len(fields), 4, "Expected at least 4 fields in the output line")
+
+		ip, _, err := net.ParseCIDR(fields[3])
+		s.Require().NoError(err, "Failed to parse IP address from output line")
+
+		return ip.String()
+	}
+
+	s.Require().Fail("No IPv6 address found on eth0")
+	return ""
 }
 
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
