@@ -40,7 +40,7 @@ The progress and state of each **Command** is recorded in the **Plan** status.
 
 * Every **Command** in the **Plan** has an associated status entry with the same index
 as the **Command**
-  * ie. The second **Command** in a **Plan** has an index of `1`, and so does its status.
+  * i.e. The second **Command** in a **Plan** has an index of `1`, and so does its status.
 * The status of all **Commands** is taken into consideration when determining if the
 **Plan** is finished.
 
@@ -112,12 +112,12 @@ processed by **autopilot**.
 56:    state: SchedulableWait
 ```
 
-* Lines **7-33** are the two **Commands** that make up this plan -- an `airgapupdate` and `k0supdate`.
+* Lines **7-33** are the two **Commands** that make up this plan - an `airgapupdate` and `k0supdate`.
 * Lines **38-55** are the associated status entries for the two **Commands**.
 
 The state of this **Plan** excerpt is that **autopilot** has successfully processed the **Plan**, and
 has begun processing the `airgapupdate` **Command**. Its status indicates **SignalSent** which means
-that the **Signal Node** has been sent signaling information to perform an airgap update.
+that the **Signal Node** has been sent signaling information to perform an air gapped update.
 
 ---
 
@@ -204,7 +204,7 @@ flowchart TD
 | **InconsistentTargets** | `k0supdate` | **Schedulable** | Indicates that a **Signal Node** probe has failed for any node that was previously discovered during **NewPlan**. |
 | **IncompleteTargets** | `airgapupdate`, `k0supdate` | **NewPlan**, **Schedulable** | Indicates that a **Signal Node** that existed during the discover phase in **NewPlan** no longer exists (ie. no `ControlNode` or `Node` object) |
 | **Restricted** | `airgapupdate`, `k0supdate` | **NewPlan** | Indicates that a **Plan** has requested an update of a **Signal Node** type that contradicts the startup exclusions (the `--exclude-from-plans` argument) |
-| **MissingSignalNode** | `airgapupdate`, `k0supdate` | **Schedulable** | Indicates that a **Signal Node** that existed during the discover phase in **NewPlan** no longer exists (ie. no matching `ControlNode` or `Node` object) |
+| **MissingSignalNode** | `airgapupdate`, `k0supdate` | **Schedulable** | Indicates that a **Signal Node** that existed during the discover phase in **NewPlan** no longer exists (i.e. no matching `ControlNode` or `Node` object) |
 
 ---
 

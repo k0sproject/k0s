@@ -41,9 +41,9 @@ Follow the official Raspberry Pi instructions on [booting Pi OS from the USB dri
 
 [ssh-copy-id]: https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/
 
-### Enable Memory Cgroups
+### Enable the memory cgroup controller
 
-By default, Raspberry Pi OS does not enable memory cgroups. Since k0s requires them to pass its pre-flight checks, enable them:
+Raspberry Pi OS does not enable the memory cgroup controller by default. However, it is required to run containerized workloads, so enable it:
 
 1. Edit /boot/cmdline.txt:
 

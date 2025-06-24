@@ -18,11 +18,11 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
     curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
     ```
 
-    Alternatively you can download it from the [releases page.](https://github.com/k0sproject/k0s/releases/latest) This is required for airgapped environments.
+    Alternatively you can download it from the [releases page.](https://github.com/k0sproject/k0s/releases/latest) This is required for air gapped environments.
 
 2. Install k0s as a service
 
-    The `k0s install` sub-command installs k0s as a system service on the local host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.
+    The `k0s install` sub-command installs k0s as a system service on a host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.
 
     Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:
 
@@ -115,9 +115,9 @@ The removal of k0s is a two-step process.
 
 - [Install using k0sctl](k0sctl-install.md): Deploy multi-node clusters using just one command
 - [Manual Install](k0s-multi-node.md): (Advanced) Manually deploy multi-node clusters
-- [Control plane configuration options](configuration.md): Networking and datastore configuration
+- [Control plane configuration options](configuration.md): Networking and data store configuration
 - [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md): Load balancer or storage configuration
 - [Installing the Traefik Ingress Controller](examples/traefik-ingress.md):
   Ingress deployment information
-- [Airgap/Offline installation](airgap-install.md): Airgap deployment
+- [Air gapped/offline installation](airgap-install.md): Air gaped deployment

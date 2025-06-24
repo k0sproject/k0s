@@ -13,7 +13,7 @@ This guide describes how to enable SELinux in Kubernetes environment provided by
 - SELinux labels are correctly set for k0s installation files of the worker nodes.
 - SELinux is enabled in container runtime such as containerd on the worker nodes.
 
-### Check whether SELinux is enabled on host OS
+### Check whether SELinux is enabled
 
 SELinux is enabled on CentOS and RHEL by default. Below command output indicates SELinux is enabled.
 

@@ -1,6 +1,9 @@
 # Installing Traefik Ingress Controller
 
-You can configure k0s with the [Traefik ingress controller](https://doc.traefik.io/traefik/providers/kubernetes-ingress/), a [MetalLB service loadbalancer](https://metallb.universe.tf/), and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration.
+You can configure k0s with the [Traefik Ingress Controller], a [MetalLB service load balancer], and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration.
+
+[Traefik Ingress Controller]: https://doc.traefik.io/traefik/providers/kubernetes-ingress/
+[MetalLB service load balancer]: https://metallb.io/
 
 ## 1. Configure k0s.yaml
 
@@ -217,4 +220,12 @@ With an available and addressable load balancer present on your cluster, now you
 
 ## Further details
 
-With the Traefik Ingress Controller it is possible to use 3rd party tools, such as [ngrok](https://ngrok.io), to go further and expose your load balancer to the world. In doing this you enable dynamic certificate provisioning through [Let's Encrypt](https://letsencrypt.org/), using either [cert-manager](https://cert-manager.io/docs/) or Traefik's own built-in [ACME provider](https://doc.traefik.io/traefik/v2.0/user-guides/crd-acme/).
+With the Traefik Ingress Controller it is possible to use third party tools,
+such as [ngrok], to go further and expose your load balancer to the world. In
+doing this you enable dynamic certificate provisioning through [Let's Encrypt],
+using either [cert-manager] or Traefik's own built-in [ACME provider].
+
+[ngrok]: https://ngrok.com/
+[Let's Encrypt]: https://letsencrypt.org/
+[cert-manager]: https://cert-manager.io/docs/
+[ACME provider]: https://doc.traefik.io/traefik/v2.0/user-guides/crd-acme/

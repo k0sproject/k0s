@@ -8,17 +8,17 @@ The cluster must be running at least one worker node and control plane on Linux.
 
 ## Run k0s
 
-**Note**: The k0s.exe supervises kubelet.exe and kube-proxy.exe.
+**Note**: k0s supervises `kubelet.exe` and `kube-proxy.exe`.
 
-During the first run, the calico install script is created as `C:\bootstrap.ps1`. This bootstrap script downloads the calico binaries, builds pause container and sets up vSwitch settings.
+During the first run, the Calico install script is created as `C:\bootstrap.ps1`. This bootstrap script downloads the Calico binaries, builds pause container and sets up vSwitch settings.
 
-Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).
+Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up.
 
 ```shell
 k0s worker --cri-socket=remote:npipe:////./pipe/containerd-containerd <token>
 ```
 
-You must initiate the Cluster control with the correct config.
+You must initiate the cluster control with the correct config.
 
 ## Configuration
 
@@ -26,7 +26,7 @@ You must initiate the Cluster control with the correct config.
 
 You must enable strict affinity to run the windows node.
 
-If the `spec.network.calico.withWindowsNodes` field is set to `true` (it is set to `false` by default) the additional calico related manifest `/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml` is created with the following values:
+If the `spec.network.Calico.withWindowsNodes` field is set to `true` (it is set to `false` by default) the additional Calico related manifest `/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml` is created with the following values:
 
 ```yaml
 ---
@@ -38,7 +38,7 @@ spec:
   strictAffinity: true
 ```
 
-Alternately, you can manually execute calicoctl:
+Alternately, you can manually execute `calicoctl`:
 
 ```shell
 calicoctl ipam configure --strictaffinity=true
