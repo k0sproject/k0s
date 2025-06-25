@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # IPv4/IPv6 dual-stack networking
 
 Enabling dual-stack networking in k0s allows your cluster to handle both IPv4 and

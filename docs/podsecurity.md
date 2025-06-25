@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Pod Security Standards
 
 Since Pod Security Policies have been removed in Kubernetes v1.25, Kubernetes

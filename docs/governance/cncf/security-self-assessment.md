@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2025 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # CNCF TAG-Security self-assessment
 
 This document serves as the k0s project [CNCF TAG-Security self-assessment].

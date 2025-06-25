@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Backup/Restore overview
 
 k0s has integrated support for backing up cluster state and configuration. The k0s backup utility is aiming to back up and restore k0s managed parts of the cluster.

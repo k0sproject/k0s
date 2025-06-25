@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2023 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Verifying Signed Binaries
 
 K0smotron team provides signed binaries for k0s. The signatures are created using [cosign](https://docs.sigstore.dev/signing/quickstart/).

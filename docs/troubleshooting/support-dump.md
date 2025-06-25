@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Support Insight
 
 In many cases, especially when looking for [commercial support](../commercial-support.md) there's a need for share the cluster state with other people.

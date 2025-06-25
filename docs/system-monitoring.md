@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # System components monitoring
 
 Controller nodes [are isolated](architecture/index.md#control-plane) by default, which thus means that a cluster user cannot schedule workloads onto controller nodes.

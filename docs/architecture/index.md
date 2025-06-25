@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Architecture
 
 **Note:** As k0s is a dynamic project, the product architecture may occasionally outpace the documentation. The high level concepts and patterns, however, should always apply.

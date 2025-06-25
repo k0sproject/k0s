@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # **Multi-Command Plans**
 
 **Autopilot** relies on a **Plan** for defining the **Commands** that should be

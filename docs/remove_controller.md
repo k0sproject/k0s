@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2023 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Remove or replace a controller
 
 You can manually remove or replace a controller from a multi-node k0s cluster (>=3 controllers) without downtime.
