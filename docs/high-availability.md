@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Control Plane High Availability
 
 You can create high availability for the control plane by distributing the control plane across multiple nodes and installing a load balancer on top. Etcd can be colocated with the controller nodes (default in k0s) to achieve highly available datastore at the same time.

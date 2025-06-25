@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Installing NGINX Ingress Controller
 
 This tutorial covers the installation of [NGINX Ingress controller](https://github.com/kubernetes/ingress-nginx), which is an open source project made by the Kubernetes community. k0s doesn't come with an in-built Ingress controller, but it's easy to deploy NGINX Ingress as shown in this document. Other Ingress solutions can be used as well (see the links at the end of the page).
