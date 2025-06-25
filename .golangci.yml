@@ -103,9 +103,6 @@ linters:
       - std-error-handling
     rules:
       - linters:
-          - goheader
-        source: ^//go:build
-      - linters:
           - staticcheck
         text: '^SA1019:'
     paths:
