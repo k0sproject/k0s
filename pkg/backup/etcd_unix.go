@@ -66,7 +66,7 @@ func (e etcdStep) Backup() (StepResult, error) {
 	lg := zap.NewNop()
 
 	// save snapshot
-	if err = snapshot.Save(ctx, lg, *etcdClient.Config, path); err != nil {
+	if _, err = snapshot.SaveWithVersion(ctx, lg, *etcdClient.Config, path); err != nil {
 		return StepResult{}, err
 	}
 	// add snapshot's path to assets
