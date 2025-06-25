@@ -79,7 +79,9 @@ linters:
       values:
         regexp:
           year: 202[0-9]
-      template-path: .go-header.txt
+      template: |-
+        SPDX-FileCopyrightText: {{year}} k0s authors
+        SPDX-License-Identifier: Apache-2.0
     misspell:
       locale: US
     revive:
