@@ -108,9 +108,6 @@ linters:
       - linters:
           - staticcheck
         text: '^SA1019:'
-      - linters:
-          - goheader
-        path: pkg/component/controller/cplb/tcpproxy/.*
     paths:
       - zz_*
       - build
