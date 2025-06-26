@@ -25,7 +25,6 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -49,9 +48,10 @@ type Component struct {
 	Profile       *workerconfig.Profile
 	OCIBundlePath string
 
-	supervisor  *supervisor.Supervisor
-	confPath    string
-	importsPath string
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	confPath       string
+	importsPath    string
 }
 
 func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
@@ -70,9 +70,15 @@ var _ manager.Component = (*Component)(nil)
 // Init extracts the needed binaries
 func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
-	for _, bin := range executableNames {
+
+	g.Go(func() (err error) {
+		c.executablePath, err = stageExecutable(c.K0sVars.BinDir, executableName)
+		return err
+	})
+	for _, bin := range additionalExecutableNames {
 		g.Go(func() error {
-			return stageExecutable(c.K0sVars.BinDir, bin)
+			_, err := stageExecutable(c.K0sVars.BinDir, bin)
+			return err
 		})
 	}
 	if err := g.Wait(); err != nil {
@@ -112,7 +118,7 @@ func (c *Component) Start(ctx context.Context) error {
 	} else {
 		c.supervisor = &supervisor.Supervisor{
 			Name:    "containerd",
-			BinPath: assets.BinPath("containerd", c.K0sVars.BinDir),
+			BinPath: c.executablePath,
 			RunDir:  c.K0sVars.RunDir,
 			DataDir: c.K0sVars.DataDir,
 			Args: []string{
