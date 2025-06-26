@@ -135,6 +135,9 @@ check-metricsscraper-singlenode: export K0S_SINGLENODE=1
 check-metricsscraper-singlenode: TEST_PACKAGE=metricsscraper
 
 check-nllb: TIMEOUT=15m
+check-nllb-ipv6: TIMEOUT=15m
+check-nllb-ipv6: export K0S_IPV6_ONLY=yes
+check-nllb-ipv6: TEST_PACKAGE=nllb
 
 .PHONY: $(smoketests)
 include Makefile.variables
