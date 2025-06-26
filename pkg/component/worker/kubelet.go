@@ -63,7 +63,7 @@ type Kubelet struct {
 	DualStackEnabled    bool
 
 	configPath string
-	supervisor supervisor.Supervisor
+	supervisor *supervisor.Supervisor
 }
 
 var _ manager.Component = (*Kubelet)(nil)
@@ -183,7 +183,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	args["--hostname-override"] = string(k.NodeName)
 
 	logrus.Debugf("starting kubelet with args: %v", args)
-	k.supervisor = supervisor.Supervisor{
+	k.supervisor = &supervisor.Supervisor{
 		Name:    cmd,
 		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
 		RunDir:  k.K0sVars.RunDir,
@@ -200,7 +200,9 @@ func (k *Kubelet) Start(ctx context.Context) error {
 
 // Stop stops kubelet
 func (k *Kubelet) Stop() error {
-	k.supervisor.Stop()
+	if k.supervisor != nil {
+		k.supervisor.Stop()
+	}
 	return nil
 }
 
