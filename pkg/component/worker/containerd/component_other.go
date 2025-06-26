@@ -8,17 +8,17 @@ package containerd
 import "github.com/k0sproject/k0s/pkg/assets"
 
 const (
+	executableName     = "containerd"
 	defaultConfPath    = "/etc/k0s/containerd.toml"
 	defaultImportsPath = "/etc/k0s/containerd.d/"
 )
 
-var executableNames = [...]string{
-	"containerd",
+var additionalExecutableNames = [...]string{
 	"containerd-shim",
 	"containerd-shim-runc-v2",
 	"runc",
 }
 
-func stageExecutable(dir, name string) error {
+func stageExecutable(dir, name string) (string, error) {
 	return assets.StageExecutable(dir, name)
 }

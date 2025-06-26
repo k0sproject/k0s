@@ -42,8 +42,9 @@ type Etcd struct {
 	K0sVars     *config.CfgVars
 	LogLevel    string
 
-	supervisor *supervisor.Supervisor
-	uid        int
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 }
 
 var _ manager.Component = (*Etcd)(nil)
@@ -80,7 +81,8 @@ func (e *Etcd) Init(_ context.Context) error {
 			return err
 		}
 	}
-	return assets.StageExecutable(e.K0sVars.BinDir, "etcd")
+	e.executablePath, err = assets.StageExecutable(e.K0sVars.BinDir, "etcd")
+	return err
 }
 
 func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdRequest, etcdCaCert, etcdCaCertKey string) ([]string, error) {
@@ -230,7 +232,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 	e.supervisor = &supervisor.Supervisor{
 		Name:          "etcd",
-		BinPath:       assets.BinPath("etcd", e.K0sVars.BinDir),
+		BinPath:       e.executablePath,
 		RunDir:        e.K0sVars.RunDir,
 		DataDir:       e.K0sVars.DataDir,
 		Args:          args.ToArgs(),
