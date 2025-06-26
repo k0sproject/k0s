@@ -40,8 +40,9 @@ type APIServer struct {
 	EnableKonnectivity        bool
 	DisableEndpointReconciler bool
 
-	supervisor *supervisor.Supervisor
-	uid        int
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 }
 
 var _ manager.Component = (*APIServer)(nil)
@@ -83,7 +84,8 @@ func (a *APIServer) Init(_ context.Context) error {
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes API server as root")
 	}
-	return assets.StageExecutable(a.K0sVars.BinDir, kubeAPIComponentName)
+	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeAPIComponentName)
+	return err
 }
 
 // Run runs kube api
@@ -160,7 +162,7 @@ func (a *APIServer) Start(_ context.Context) error {
 
 	a.supervisor = &supervisor.Supervisor{
 		Name:    kubeAPIComponentName,
-		BinPath: assets.BinPath(kubeAPIComponentName, a.K0sVars.BinDir),
+		BinPath: a.executablePath,
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    apiServerArgs,

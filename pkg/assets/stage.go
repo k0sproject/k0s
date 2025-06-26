@@ -5,42 +5,58 @@ package assets
 
 import (
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 
 	"github.com/sirupsen/logrus"
 )
 
-// BinPath searches for a binary on disk:
-// - in the BinDir folder,
-// - in the PATH.
-// The first to be found is the one returned.
-func BinPath(name string, binDir string) string {
-	// Look into the BinDir folder.
-	path := filepath.Join(binDir, name)
-	if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
-		return path
+// Stages the embedded executable with the given name into dir. If the
+// executable is not embedded in the k0s executable, this function first checks
+// if an executable exists at the desired path. If not, it falls back to a PATH
+// lookup. Returns the path to the executable, even if an error occurs.
+func StageExecutable(dir, name string) (string, error) {
+	// Always returning the path, even under error conditions, is kind of a hack
+	// to work around the "running executable" problem on Windows.
+
+	path := filepath.Join(dir, name)
+	err := stage(name, path, 0750)
+	if err == nil {
+		return path, nil
+	}
+
+	// If the executable is not embedded, try to find an existing one.
+	var notEmbedded notEmbeddedError
+	if !errors.As(err, &notEmbedded) {
+		return path, err
+	}
+
+	// First, check if the destination path exists and is not a directory.
+	stat, statErr := os.Stat(path)
+	if statErr == nil {
+		if !stat.IsDir() {
+			logrus.WithField("path", path).WithError(err).Debug("Using existing executable")
+			return path, nil
+		}
+
+		statErr = fmt.Errorf("%w (%s)", syscall.EISDIR, path)
 	}
 
 	// If we still haven't found the executable, look for it in the PATH.
-	if path, err := exec.LookPath(name); err == nil {
-		path, _ := filepath.Abs(path)
-		return path
+	lookedUpPath, lookErr := exec.LookPath(name)
+	if lookErr == nil {
+		logrus.WithField("path", lookedUpPath).WithError(err).Debug("Executable found in PATH")
+		return lookedUpPath, nil
 	}
-	return name
-}
 
-func StageExecutable(dir, name string) error {
-	path := filepath.Join(dir, name)
-	if err := stage(name, path, 0750); err != nil {
-		return fmt.Errorf("failed to stage %s: %w", path, err)
-	}
-	return nil
+	return path, fmt.Errorf("%w, %w, %w", err, statErr, lookErr)
 }
 
 func stage(name, path string, perm os.FileMode) error {
@@ -60,8 +76,7 @@ func stage(name, path string, perm os.FileMode) error {
 	gzname := "bin/" + name + ".gz"
 	bin, embedded := BinData[gzname]
 	if !embedded {
-		log.Debug("Skipping not embedded file:", gzname)
-		return nil
+		return notEmbeddedError(gzname)
 	}
 	log.Debugf("%s is at offset %d", gzname, bin.offset)
 
@@ -73,6 +88,10 @@ func stage(name, path string, perm os.FileMode) error {
 			log.Debug("Re-use existing file")
 			return nil
 		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		// If the error doesn't indicate a non-existing path, then it's likely
+		// that the asset can't be staged anyways, so be fail-fast.
+		return err
 	}
 
 	infile, err := os.Open(selfexe)
@@ -102,4 +121,10 @@ func stage(name, path string, perm os.FileMode) error {
 			_, err := io.Copy(dst, gz)
 			return err
 		})
+}
+
+type notEmbeddedError string
+
+func (e notEmbeddedError) Error() string {
+	return "not an embedded asset: " + string(e)
 }

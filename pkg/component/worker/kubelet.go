@@ -50,8 +50,9 @@ type Kubelet struct {
 	ExtraArgs           stringmap.StringMap
 	DualStackEnabled    bool
 
-	configPath string
-	supervisor *supervisor.Supervisor
+	configPath     string
+	supervisor     *supervisor.Supervisor
+	executablePath string
 }
 
 var _ manager.Component = (*Kubelet)(nil)
@@ -60,13 +61,15 @@ var _ manager.Component = (*Kubelet)(nil)
 func (k *Kubelet) Init(_ context.Context) error {
 
 	if runtime.GOOS == "windows" {
-		if err := assets.StageExecutable(k.K0sVars.BinDir, "kubelet.exe"); err != nil {
+		var err error
+		if k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "kubelet.exe"); err != nil {
 			return err
 		}
 	}
 
 	if runtime.GOOS == "linux" {
-		if err := assets.StageExecutable(k.K0sVars.BinDir, "kubelet"); err != nil {
+		var err error
+		if k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "kubelet"); err != nil {
 			return err
 		}
 	}
@@ -173,7 +176,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	logrus.Debugf("starting kubelet with args: %v", args)
 	k.supervisor = &supervisor.Supervisor{
 		Name:    cmd,
-		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
+		BinPath: k.executablePath,
 		RunDir:  k.K0sVars.RunDir,
 		DataDir: k.K0sVars.DataDir,
 		Args:    args.ToArgs(),
