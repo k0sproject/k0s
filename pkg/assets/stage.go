@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/sirupsen/logrus"
 )
@@ -26,8 +27,9 @@ func StageExecutable(dir, name string) (string, error) {
 	// Always returning the path, even under error conditions, is kind of a hack
 	// to work around the "running executable" problem on Windows.
 
-	path := filepath.Join(dir, name)
-	err := stage(name, path, 0750)
+	executableName := name + constant.ExecutableSuffix
+	path := filepath.Join(dir, executableName)
+	err := stage(executableName, path, 0750)
 	if err == nil {
 		return path, nil
 	}
@@ -50,6 +52,8 @@ func StageExecutable(dir, name string) (string, error) {
 	}
 
 	// If we still haven't found the executable, look for it in the PATH.
+	// Don't pass in the executable suffix here, so that the PathExt environment
+	// variable works as expected on Windows.
 	lookedUpPath, lookErr := exec.LookPath(name)
 	if lookErr == nil {
 		logrus.WithField("path", lookedUpPath).WithError(err).Debug("Executable found in PATH")

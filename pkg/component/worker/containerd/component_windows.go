@@ -13,13 +13,12 @@ import (
 )
 
 const (
-	executableName     = "containerd.exe"
 	defaultConfPath    = `C:\Program Files\containerd\config.toml`
 	defaultImportsPath = `C:\etc\k0s\containerd.d\`
 )
 
 var additionalExecutableNames = [...]string{
-	"containerd-shim-runhcs-v1.exe",
+	"containerd-shim-runhcs-v1",
 }
 
 func stageExecutable(dir, name string) (string, error) {
