@@ -72,8 +72,9 @@ var _ manager.Component = (*Kubelet)(nil)
 func (k *Kubelet) Init(_ context.Context) error {
 
 	if runtime.GOOS == "windows" {
-		err := assets.Stage(k.K0sVars.BinDir, "kubelet.exe", constant.BinDirMode)
-		return err
+		if err := assets.Stage(k.K0sVars.BinDir, "kubelet.exe", constant.BinDirMode); err != nil {
+			return err
+		}
 	}
 
 	if runtime.GOOS == "linux" {
