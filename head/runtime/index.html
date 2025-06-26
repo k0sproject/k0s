@@ -2679,7 +2679,8 @@ helm<span class="w"> </span>install<span class="w"> </span>nvidia-gpu-operator<s
 <span class="w">  </span>nvidia/gpu-operator
 </code></pre></div>
 <p>With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime.</p>
-<p><strong>Note</strong>: Detailed instruction on how to deploy NVIDIA GPU operator on your k0s cluster is available <a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html">here</a>.</p>
+<p><strong>Note</strong>: Detailed installation instructions can be found in the <a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html">official
+NVIDIA GPU Operator documentation</a>.</p>
 <h2 id="using-custom-cri-runtimes">Using custom CRI runtimes<a class="headerlink" href="#using-custom-cri-runtimes" title="Permanent link">#</a></h2>
 <p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
 <p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;url&gt;</code> (the only supported type is <code>remote</code>).</p>
