@@ -9,4 +9,6 @@ const (
 
 	KineSocket           = "kine\\kine.sock:2379"
 	K0sConfigPathDefault = "C:\\etc\\k0s\\k0s.yaml"
+
+	ExecutableSuffix = ".exe"
 )
