@@ -46,6 +46,7 @@ type Manager struct {
 	ExtraArgs             string
 
 	supervisor     *supervisor.Supervisor
+	executablePath string
 	uid            int
 	previousConfig stringmap.StringMap
 }
@@ -80,7 +81,8 @@ func (a *Manager) Init(_ context.Context) error {
 	if err := os.Chown(path.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
 		logrus.Warn("failed to change permissions for the ca.key: ", err)
 	}
-	return assets.StageExecutable(a.K0sVars.BinDir, kubeControllerManagerComponent)
+	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeControllerManagerComponent)
+	return err
 }
 
 // Run runs kube Manager
@@ -154,7 +156,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 
 	a.supervisor = &supervisor.Supervisor{
 		Name:    kubeControllerManagerComponent,
-		BinPath: assets.BinPath(kubeControllerManagerComponent, a.K0sVars.BinDir),
+		BinPath: a.executablePath,
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    args.ToDashedArgs(),

@@ -48,9 +48,10 @@ type Kine struct {
 	Config  *v1beta1.KineConfig
 	K0sVars *config.CfgVars
 
-	supervisor   *supervisor.Supervisor
-	uid          int
-	bypassClient *etcd.Client
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
+	bypassClient   *etcd.Client
 }
 
 var _ manager.Component = (*Kine)(nil)
@@ -108,7 +109,8 @@ func (k *Kine) Init(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can't create bypass etcd client: %w", err)
 	}
-	return assets.StageExecutable(k.K0sVars.BinDir, "kine")
+	k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "kine")
+	return err
 }
 
 // Run runs kine
@@ -117,7 +119,7 @@ func (k *Kine) Start(ctx context.Context) error {
 
 	k.supervisor = &supervisor.Supervisor{
 		Name:    "kine",
-		BinPath: assets.BinPath("kine", k.K0sVars.BinDir),
+		BinPath: k.executablePath,
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
 		Args: []string{
