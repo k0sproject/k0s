@@ -72,7 +72,7 @@ func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
 
 	g.Go(func() (err error) {
-		c.executablePath, err = stageExecutable(c.K0sVars.BinDir, executableName)
+		c.executablePath, err = stageExecutable(c.K0sVars.BinDir, "containerd")
 		return err
 	})
 	for _, bin := range additionalExecutableNames {

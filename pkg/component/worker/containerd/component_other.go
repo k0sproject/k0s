@@ -8,7 +8,6 @@ package containerd
 import "github.com/k0sproject/k0s/pkg/assets"
 
 const (
-	executableName     = "containerd"
 	defaultConfPath    = "/etc/k0s/containerd.toml"
 	defaultImportsPath = "/etc/k0s/containerd.d/"
 )
