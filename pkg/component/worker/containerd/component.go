@@ -49,14 +49,15 @@ const importsPathWindows = "C:\\etc\\k0s\\containerd.d\\"
 
 // Component implements the component interface to manage containerd as a k0s component.
 type Component struct {
-	supervisor    supervisor.Supervisor
 	LogLevel      string
 	K0sVars       *config.CfgVars
 	Profile       *workerconfig.Profile
-	binaries      []string
 	OCIBundlePath string
-	confPath      string
-	importsPath   string
+
+	supervisor  *supervisor.Supervisor
+	binaries    []string
+	confPath    string
+	importsPath string
 }
 
 func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
@@ -134,7 +135,7 @@ func (c *Component) Start(ctx context.Context) error {
 			return fmt.Errorf("failed to start windows server: %w", err)
 		}
 	} else {
-		c.supervisor = supervisor.Supervisor{
+		c.supervisor = &supervisor.Supervisor{
 			Name:    "containerd",
 			BinPath: assets.BinPath("containerd", c.K0sVars.BinDir),
 			RunDir:  c.K0sVars.RunDir,
@@ -334,7 +335,9 @@ func (c *Component) Stop() error {
 	if runtime.GOOS == "windows" {
 		return c.windowsStop()
 	}
-	c.supervisor.Stop()
+	if c.supervisor != nil {
+		c.supervisor.Stop()
+	}
 	return nil
 }
 

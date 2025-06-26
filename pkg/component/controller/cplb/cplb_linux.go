@@ -38,15 +38,16 @@ const (
 
 // Keepalived is the controller for the keepalived process in the control plane load balancing
 type Keepalived struct {
-	K0sVars                *config.CfgVars
-	Config                 *k0sAPI.KeepalivedSpec
-	DetailedLogging        bool
-	LogConfig              bool
-	APIPort                int
-	KubeConfigPath         string
+	K0sVars         *config.CfgVars
+	Config          *k0sAPI.KeepalivedSpec
+	DetailedLogging bool
+	LogConfig       bool
+	APIPort         int
+	KubeConfigPath  string
+
 	keepalivedConfig       *keepalivedConfig
-	uid                    int
 	supervisor             *supervisor.Supervisor
+	uid                    int
 	log                    *logrus.Entry
 	configFilePath         string
 	virtualServersFilePath string
