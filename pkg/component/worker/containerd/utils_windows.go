@@ -17,6 +17,7 @@ limitations under the License.
 package containerd
 
 import (
+	"net/url"
 	"os"
 	"os/exec"
 	"time"
@@ -25,6 +26,14 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
+
+func Address(runDir string) string {
+	return Endpoint(runDir).String()
+}
+
+func Endpoint(_ string) *url.URL {
+	return &url.URL{Scheme: "npipe", Path: "//./pipe/containerd-containerd"}
+}
 
 // PowerShell struct
 type PowerShell struct {

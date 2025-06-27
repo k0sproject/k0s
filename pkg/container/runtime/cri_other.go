@@ -1,5 +1,7 @@
+//go:build !windows
+
 /*
-Copyright 2021 k0s authors
+Copyright 2025 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,17 +19,12 @@ limitations under the License.
 package runtime
 
 import (
-	"context"
 	"net/url"
 )
 
-type ContainerRuntime interface {
-	Ping(ctx context.Context) error
-	ListContainers(ctx context.Context) ([]string, error)
-	RemoveContainer(ctx context.Context, id string) error
-	StopContainer(ctx context.Context, id string) error
-}
-
-func NewContainerRuntime(runtimeEndpoint *url.URL) ContainerRuntime {
-	return newCRIRuntime(runtimeEndpoint)
+func newCRIRuntime(runtimeEndpoint *url.URL) *CRIRuntime {
+	return &CRIRuntime{
+		target:      runtimeEndpoint.String(),
+		dialOptions: defaultGRPCDialOptions,
+	}
 }
