@@ -33,7 +33,13 @@ sudo k0s start
 
 ## Upgrade a k0s cluster using k0sctl
 
-The upgrading of k0s clusters using k0sctl occurs not through a particular command (there is no `upgrade` sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the `k0sctl apply` command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade).
+The upgrading of k0s clusters using k0sctl occurs not through a particular
+command (there is no `upgrade` sub-command in k0sctl) but by way of the
+configuration file. The configuration file describes the desired state of the
+cluster. When you pass the description to the `k0sctl apply` command, the system
+discovers the current state and performs whatever actions are necessary to bring
+the cluster to the desired state. For example, the system might perform an
+upgrade.
 
 ### k0sctl cluster upgrade process
 

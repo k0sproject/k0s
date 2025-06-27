@@ -25,29 +25,29 @@ See [Chart configuration](#chart-configuration) below for more details on how to
 
 ### Repository configuration
 
-| Field    | Default value | Description                                                                                       |
-|----------|---------------|---------------------------------------------------------------------------------------------------|
-| name     | _(required)_  | The repository name                                                                               |
-| url      | _(required)_  | The repository URL                                                                                |
-| insecure | true          | Whether to skip TLS certificate checks when connecting to the repository                          |
-| caFile   | -             | CA bundle file to use when verifying HTTPS-enabled servers                                        |
-| certFile | -             | The TLS certificate file to use for HTTPS client authentication (not supported by OCI registries) |
-| keyfile  | -             | The TLS key file to use for HTTPS client authentication (not supported by OCI registries)         |
-| username | -             | Username for Basic HTTP authentication                                                            |
-| password | -             | Password for Basic HTTP authentication                                                            |
+| Field      | Default value | Description                                                                                       |
+|------------|---------------|---------------------------------------------------------------------------------------------------|
+| `name`     | _(required)_  | The repository name                                                                               |
+| `url`      | _(required)_  | The repository URL                                                                                |
+| `insecure` | `true`        | Whether to skip TLS certificate checks when connecting to the repository                          |
+| `caFile`   | -             | CA bundle file to use when verifying HTTPS-enabled servers                                        |
+| `certFile` | -             | The TLS certificate file to use for HTTPS client authentication (not supported by OCI registries) |
+| `keyfile`  | -             | The TLS key file to use for HTTPS client authentication (not supported by OCI registries)         |
+| `username` | -             | Username for Basic HTTP authentication                                                            |
+| `password` | -             | Password for Basic HTTP authentication                                                            |
 
 ### Chart configuration
 
-| Field        | Default value | Description                                                                            |
-|--------------|---------------|----------------------------------------------------------------------------------------|
-| name         | -             | Release name                                                                           |
-| chartname    | -             | chartname in form "repository/chartname" or path to tgz file                           |
-| version      | -             | version to install                                                                     |
-| timeout      | -             | timeout to wait for release install                                                    |
-| values       | -             | yaml as a string, custom chart values                                                  |
-| namespace    | -             | namespace to install chart into                                                        |
-| forceUpgrade | true          | when set to false, disables the use of the "--force" flag when upgrading the the chart |
-| order        | 0             | order to apply manifest. For equal values, alphanum ordering is used                   |
+| Field          | Default value | Description                                                                               |
+|----------------|---------------|-------------------------------------------------------------------------------------------|
+| `name`         | -             | Release name                                                                              |
+| `chartname`    | -             | Chart name in form `repository/chartname` or path to tgz file                             |
+| `version`      | -             | Chart version to install                                                                  |
+| `timeout`      | -             | Timeout to wait for release install                                                       |
+| `values`       | -             | Custom chart values as YAML formatted string                                              |
+| `namespace`    | -             | Namespace to install the chart into                                                       |
+| `forceUpgrade` | `true`        | When set to `false`, disables the use of the `--force` flag when upgrading the chart      |
+| `order`        | `0`           | Order in which to to apply the manifest. For equal values, alphanumeric ordering is used. |
 
 ## Example
 
@@ -116,7 +116,7 @@ spec:
 
 Example extensions that you can use with Helm charts include:
 
-- Ingress controllers: [Nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefix ingress](https://github.com/traefik/traefik-helm-chart) (refer to the k0s documentation for [Installing the Traefik Ingress Controller](examples/traefik-ingress.md))
+- Ingress controllers: [nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefik ingress](https://github.com/traefik/traefik-helm-chart) (refer to the k0s documentation for [Installing the Traefik Ingress Controller](examples/traefik-ingress.md))
 - Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
 - Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
 

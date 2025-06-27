@@ -14,7 +14,7 @@ You can speed up the use of the `k0s` command by enabling [shell completion](she
 
 ### 1. Download k0s
 
-Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.
+Run the k0s download script to download the latest stable version of k0s and make it executable from `/usr/bin/k0s`.
 
 ```shell
 curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
@@ -52,7 +52,7 @@ sudo k0s install controller -c /etc/k0s/k0s.yaml
 sudo k0s start
 ```
 
-k0s process acts as a "supervisor" for all of the control plane components. In moments the control plane will be up and running.
+k0s process acts as a "supervisor" for the control plane components. In moments the control plane will be up and running.
 
 ### 3. Create a join token
 
@@ -96,7 +96,7 @@ The bearer token embedded in the kubeconfig is a [bootstrap token](https://kuber
 
 ### 5. Add controllers to the cluster
 
-**Note**: Either etcd or an external data store (MySQL or Postgres) via kine must be in use to add new controller nodes to the cluster. Pay strict attention to the [high availability configuration](high-availability.md) and make sure the configuration is identical for all controller nodes.
+**Note**: Either etcd or an external data store (MySQL or PostgreSQL) via kine must be in use to add new controller nodes to the cluster. Pay strict attention to the [high availability configuration](high-availability.md) and make sure the configuration is identical for all controller nodes.
 
 To create a join token for the new controller, run the following command on an existing controller:
 
@@ -111,7 +111,7 @@ sudo k0s install controller --token-file /path/to/token/file -c /etc/k0s/k0s.yam
 ```
 
 Important notice here is that each controller in the cluster must have k0s.yaml otherwise some cluster nodes will use default config values which will lead to inconsistency behavior.
-If your configuration file includes IP addresses (node address, sans, etcd peerAddress), remember to update them accordingly for this specific controller node.
+If your configuration file includes IP addresses (node address, SANs, etcd peer address), remember to update them accordingly for this specific controller node.
 
 ```shell
 sudo k0s start
@@ -158,7 +158,7 @@ sudo cat /var/lib/k0s/pki/admin.conf
 ## Next Steps
 
 - [Install using k0sctl](k0sctl-install.md): Deploy multi-node clusters using just one command
-- [Control plane configuration options](configuration.md): Networking and datastore configuration
+- [Control plane configuration options](configuration.md): Networking and data store configuration
 - [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md): Load balancer or storage configuration
 - [Installing the Traefik Ingress Controller](examples/traefik-ingress.md): Ingress deployment information

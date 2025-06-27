@@ -2,9 +2,9 @@
 
 There are few common cases we've seen where k0s fails to run properly.
 
-## CoreDNS in crashloop
+## CoreDNS in crash-loop
 
-The most common case we've encountered so far has been CoreDNS getting into crashloop on the node(s).
+The most common case we've encountered so far has been CoreDNS getting into crash-loop on the node(s).
 
 With kubectl you see something like this:
 
@@ -46,7 +46,7 @@ Read more at CoreDNS [troubleshooting docs](https://coredns.io/plugins/loop/#tro
 In the logs you probably see etcd not starting up properly.
 
 Etcd is [not fully supported][etcd-platforms] on ARM architecture, thus you need
-to run `k0s controller` and thus also etcd process with env
+to run `k0s controller` and thus also etcd process with the environment variable
 `ETCD_UNSUPPORTED_ARCH=arm`.
 
 As etcd is not fully supported on ARM, it also means that the k0s control plane
@@ -92,7 +92,7 @@ to
 
 ## Pods pending when using cloud providers
 
-Once we enable [cloud provider support](../cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This tain will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.
+Once we enable [cloud provider support](../cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This taint will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.
 
 For troubleshooting your specific cloud provider see its documentation.
 
@@ -131,13 +131,13 @@ newer than the version shipped with k0s, the Kubernetes network will [not
 work](https://www.mirantis.com/blog/networking-problems-after-installing-kubernetes-1-25-or-after-upgrading-your-host-os-this-might-be-your-problem).
 
 To solve this, make sure that the iptables version used on host is same version
-as bundled with k0s. The k0s version is found in  `/var/lib/k0s/bin`.
+as bundled with k0s. The k0s version is found in `/var/lib/k0s/bin`.
 
 ## Profiling
 
-We drop any debug related information and symbols from the compiled binary by utilzing `-w -s` linker flags.
+We drop any debug related information and symbols from the compiled binary by utilizing `-w -s` linker flags.
 
-To keep those symbols use `DEBUG` env variable:
+To keep those symbols use `DEBUG` environment variable:
 
 ```shell
 DEBUG=true make k0s

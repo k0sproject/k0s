@@ -4,7 +4,7 @@
 
 k0s supports a wide range of different storage options by utilizing Container Storage Interface (CSI). All Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.
 
-When the storage solution implements CSI, kubernetes can communicate with the storage to create and configure persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the [Kubernetes Blog](https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/).
+When the storage solution implements CSI, Kubernetes can communicate with the storage to create and configure persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the [Kubernetes Blog](https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/).
 
 ![k0s storage](img/k0s_storage.png)
 
@@ -18,7 +18,7 @@ Different Kubernetes storage solutions are explained in the [official Kubernetes
 
 - Rook-Ceph (Open Source)
 - MinIO (Open Source)
-- Gluster (Open Source)
+- GlusterFS (Open Source)
 - Longhorn (Open Source)
 - Amazon EBS
 - Google Persistent Disk

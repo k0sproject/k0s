@@ -87,7 +87,7 @@ Security goals for k0s can be summarized as follows:
 
 ### Secure-by-default configurations
 
-K0s in its default configuration should provide a secure base-level configuration. That includes things like no anonymous authentication, TLS enabled everywhere, RBAC, etc.. While that does NOT include integrations with things like AppArmor and seccomp, those configurations are exposed to users. In general, k0s allows users to finetune pretty much any and all Kubernetes options.
+K0s in its default configuration should provide a secure base-level configuration. That includes things like no anonymous authentication, TLS enabled everywhere, RBAC, etc. While that does NOT include integrations with things like AppArmor and seccomp, those configurations are exposed to users. In general, k0s allows users to fine-tune pretty much any and all Kubernetes options.
 
 ### Minimized operational complexity
 
@@ -121,15 +121,15 @@ k0s follows the [CIS Kubernetes Benchmark](https://docs.k0sproject.io/stable/cis
 
 **Internal:** Internal, between maintainers, communication is handled mostly in Kubernetes Slack [#k0s-dev](https://kubernetes.slack.com/archives/C07VAPJUECS) channel, and in Mirantis internal channels for Mirantis core maintainers.
 
-**Inbound:** [#k0s-users](https://kubernetes.slack.com/archives/C0809EA06QZ) in Kubernetes Slack and GitHGub issues. Stack Overflow has also a [k0s tag](https://stackoverflow.com/questions/tagged/k0s) for related questions.
+**Inbound:** [#k0s-users](https://kubernetes.slack.com/archives/C0809EA06QZ) in Kubernetes Slack and GitHub issues. Stack Overflow has also a [k0s tag](https://stackoverflow.com/questions/tagged/k0s) for related questions.
 
-**External**: k0s does not currently have any mailing lists. There are Mirantis-operated social media accounts that are used for communicating things like new releases etc.. There’s also a [k0sproject](https://medium.com/k0sproject) Medium account which is used for blogs.
+**External**: k0s does not currently have any mailing lists. There are Mirantis-operated social media accounts that are used for communicating things like new releases etc. There’s also a [k0sproject](https://medium.com/k0sproject) Medium account which is used for blogs.
 
 ## Security issue resolution
 
 ### **Issue Reporting**
 
-Vulnerabilities can be reported via the k0s Github project using Github's [private security vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) feature.
+Vulnerabilities can be reported via the k0s GitHub project using GitHub's [private security vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) feature.
 
 ### **Incident Response**
 
@@ -141,4 +141,4 @@ The k0s maintainers triage and resolve issues. Security patches and advisories a
 
 [List of known users](https://docs.k0sproject.io/head/adopters/) along with some case studies.
 
-[^1]:  The serving and client certs are valid for 1 year per default. Hence upgrading, and thus restarting k0s, at least once a year will rotate the certs automatically.
+[^1]: The serving and client certs are valid for 1 year per default. Hence upgrading, and thus restarting k0s, at least once a year will rotate the certs automatically.

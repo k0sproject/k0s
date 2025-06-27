@@ -6,22 +6,22 @@ This page describes the system requirements for k0s.
 
 The minimum requirements for k0s detailed below are approximations, and thus your results may vary.
 
-| Role                | Memory (RAM) | Virtual CPU (vCPU) |
-|---------------------|--------------|--------------------|
-| Controller node     | 1   GB       | 1 vCPU             |
-| Worker node         | 0.5 GB       | 1 vCPU             |
-| Controller + worker | 1   GB       | 1 vCPU             |
+| Role                | Memory (RAM in GB) | Virtual CPUs (vCPU) |
+|---------------------|--------------------|---------------------|
+| Controller node     |                  1 |                   1 |
+| Worker node         |                0.5 |                   1 |
+| Controller + worker |                  1 |                   1 |
 
 ## Controller node recommendations
 
-| # of Worker nodes | # of Pods    | Recommended RAM | Recommended vCPU |
-|-------------------|--------------|-----------------|------------------|
-| up to   10        | up to   1000 | 1-2   GB        | 1-2   vCPU       |
-| up to   50        | up to   5000 | 2-4   GB        | 2-4   vCPU       |
-| up to  100        | up to  10000 | 4-8   GB        | 2-4   vCPU       |
-| up to  500        | up to  50000 | 8-16  GB        | 4-8   vCPU       |
-| up to 1000        | up to 100000 | 16-32 GB        | 8-16  vCPU       |
-| up to 5000        | up to 150000 | 32-64 GB        | 16-32 vCPU       |
+| # of worker nodes | # of pods | Recommended RAM (in GB) | Recommended vCPU |
+|-------------------|-----------|-------------------------|------------------|
+|                10 |      1000 |                     1-2 |              1-2 |
+|                50 |      5000 |                     2-4 |              2-4 |
+|               100 |     10000 |                     4-8 |              2-4 |
+|               500 |     50000 |                    8-16 |              4-8 |
+|              1000 |    100000 |                   16-32 |             8-16 |
+|              5000 |    150000 |                   32-64 |            16-32 |
 
 k0s has the standard Kubernetes limits for the maximum number of nodes, pods, etc. For more details, see [the Kubernetes considerations for large clusters](https://kubernetes.io/docs/setup/best-practices/cluster-large/).
 
@@ -52,9 +52,9 @@ The specific storage consumption for k0s is as follows:
 
 ## Architecture
 
-- x86-64
-- ARM64
-- ARMv7
+- `x86_64`
+- `aarch64`
+- `armv7l`
 
 ## Networking
 
@@ -73,18 +73,18 @@ To run some automated compatiblility checks on your system, use
 
 The following table shows the measured memory consumption in the cluster of one controller node.
 
-| # of Worker nodes | # of Pods (besides default) | Memory consumption |
-|-------------------|-----------------------------|--------------------|
-| 1                 | 0                           | 510  MB            |
-| 1                 | 100                         | 600  MB            |
-| 20                | 0                           | 660  MB            |
-| 20                | 2000                        | 1000 MB            |
-| 50                | 0                           | 790  MB            |
-| 50                | 5000                        | 1400 MB            |
-| 100               | 0                           | 1000 MB            |
-| 100               | 10000                       | 2300 MB            |
-| 200               | 0                           | 1500 MB            |
-| 200               | 20000                       | 3300 MB            |
+| # of Worker nodes | # of Pods (besides default) | Memory consumption (in MB) |
+|-------------------|-----------------------------|----------------------------|
+|                 1 |                           0 |                        510 |
+|                 1 |                         100 |                        600 |
+|                20 |                           0 |                        660 |
+|                20 |                        2000 |                       1000 |
+|                50 |                           0 |                        790 |
+|                50 |                        5000 |                       1400 |
+|               100 |                           0 |                       1000 |
+|               100 |                       10000 |                       2300 |
+|               200 |                           0 |                       1500 |
+|               200 |                       20000 |                       3300 |
 
 Measurement details:
 

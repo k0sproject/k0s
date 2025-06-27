@@ -3,7 +3,7 @@
 Enabling dual-stack networking in k0s allows your cluster to handle both IPv4 and
 IPv6 addresses. Follow the configuration examples below to set up dual-stack mode.
 
-## Enabling dual-stack using the default CNI (kube-router)
+## Enabling dual-stack using the default CNI (Kube-router)
 
 In order to enable dual-stack networking using the default CNI provider, use the
 following example configuration:
@@ -11,7 +11,7 @@ following example configuration:
 ```yaml
 spec:
   network:
-    # kube-router is the default CNI provider
+    # Kube-router is the default CNI provider
     # provider: kube-router
     podCIDR: 10.244.0.0/16
     serviceCIDR: 10.96.0.0/12
@@ -21,7 +21,7 @@ spec:
       IPv6serviceCIDR: fd01::/108
 ```
 
-This configuration will set up all Kubernetes components and kube-router
+This configuration will set up all Kubernetes components and Kube-router
 accordingly for dual-stack networking.
 
 ## Using Calico as the CNI provider
@@ -47,10 +47,11 @@ spec:
 ## Specifying the default IP family
 
 In Kubernetes dual stack clusters, by default all the services are single stack,
-including `kubernetes.default.svc`, which is used to communicate with the kube-servers.
+including `kubernetes.default.svc`, which is used to communicate with the
+Kubernetes API servers.
 
-This is specially importantwhen specifying explicitly `spec.api.externalAddress` or
-`spec.api.address`.
+This is specially important when specifying explicitly
+`spec.api.externalAddress` or `spec.api.address`.
 
 To explicitly define the family which will be used by default use the following
 configuration:
@@ -64,7 +65,7 @@ spec:
 
 If not defined explicitly, k0s will determine it based on `spec.api.externalAddress`,
 if this field is not defined, k0s will use `spec.api.address`. If the field used is
-a hostname or both are empty, k0s will use IPv4.
+a host name or both are empty, k0s will use IPv4.
 
 ## Custom CNI providers
 

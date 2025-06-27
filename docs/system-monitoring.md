@@ -3,7 +3,7 @@
 Controller nodes [are isolated](architecture/index.md#control-plane) by default, which thus means that a cluster user cannot schedule workloads onto controller nodes.
 
 k0s provides a mechanism to expose system components for monitoring. System component metrics can give a better look into what is happening inside them. Metrics are particularly useful for building dashboards and alerts.
-You can read more about metrics for Kubernetes system components in the [kubernetes documentation](https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/).
+You can read more about metrics for Kubernetes system components in the [Kubernetes documentation](https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/).
 
 **Note:** the mechanism is an opt-in feature, you can enable it on installation:
 
@@ -48,12 +48,14 @@ spec:
       k0s.k0sproject.io/stack: metrics
 ```
 
-Note that it won't clear alerts like "KubeControllerManagerDown" or
-"KubeSchedulerDown" as they are based on Prometheus' internal "up" metrics. But
+Note that it won't clear alerts like `KubeControllerManagerDown` or
+`KubeSchedulerDown` as they are based on Prometheus' internal `up` metrics. But
 you can get rid of these alerts by modifying them to detect a working component
 like this:
 
+```promql
 absent(apiserver_audit_event_total{job="kube-scheduler"})
+```
 
 ## Jobs
 

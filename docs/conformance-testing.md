@@ -4,7 +4,7 @@ We run the conformance testing for the last RC build for a release. Follow the [
 
 In a nutshell, you need to:
 
-- Setup k0s on some VMs/bare metal boxes
+- Setup k0s on some virtual machines or bare metal boxes
 - Download, if you do not already have, [sonobuoy](https://github.com/vmware-tanzu/sonobuoy) tool
 - Run the conformance tests with something like `sonobuoy run --mode=certified-conformance`
 - Wait for couple hours
