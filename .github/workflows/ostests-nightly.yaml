@@ -112,6 +112,7 @@ jobs:
 
   post-actions:
     name: Post actions
+    if: always()
     needs: [select, e2e-tests]
     runs-on: ubuntu-24.04
 
@@ -122,7 +123,6 @@ jobs:
     steps:
       - name: Notify Slack
         uses: 8398a7/action-slack@v3.18.0
-        if: always()
         with:
           job_name: "${{ needs.select.outputs.os }} :: ${{ needs.select.outputs.network-provider }}"
           status: ${{ needs.e2e-tests.result }}
