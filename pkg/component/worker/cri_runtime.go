@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"path/filepath"
-	"runtime"
 	"strings"
+
+	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 )
 
 type RuntimeEndpoint = url.URL
@@ -21,23 +21,7 @@ func GetContainerRuntimeEndpoint(criSocketFlag, k0sRunDir string) (*RuntimeEndpo
 		return parseCRISocketFlag(criSocketFlag)
 	}
 
-	return getContainerRuntimeEndpoint(k0sRunDir), nil
-}
-
-func getContainerRuntimeEndpoint(k0sRunDir string) *RuntimeEndpoint {
-	if runtime.GOOS == "windows" {
-		return &url.URL{Scheme: "npipe", Path: "//./pipe/containerd-containerd"}
-	}
-
-	return &url.URL{Scheme: "unix", Path: filepath.ToSlash(GetContainerdAddress(k0sRunDir))}
-}
-
-func GetContainerdAddress(k0sRunDir string) string {
-	if runtime.GOOS == "windows" {
-		return getContainerRuntimeEndpoint(k0sRunDir).String()
-	}
-
-	return filepath.Join(k0sRunDir, "containerd.sock")
+	return containerd.Endpoint(k0sRunDir), nil
 }
 
 func parseCRISocketFlag(criSocketFlag string) (*RuntimeEndpoint, error) {

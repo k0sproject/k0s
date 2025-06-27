@@ -23,6 +23,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	workercontainerd "github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/debounce"
@@ -52,7 +53,7 @@ var _ manager.Component = (*OCIBundleReconciler)(nil)
 func NewOCIBundleReconciler(vars *config.CfgVars) *OCIBundleReconciler {
 	return &OCIBundleReconciler{
 		ociBundleDir:      vars.OCIBundleDir,
-		containerdAddress: GetContainerdAddress(vars.RunDir),
+		containerdAddress: workercontainerd.Address(vars.RunDir),
 		log:               logrus.WithField("component", "OCIBundleReconciler"),
 		EventEmitter:      prober.NewEventEmitter(),
 		alreadyImported:   map[string]time.Time{},

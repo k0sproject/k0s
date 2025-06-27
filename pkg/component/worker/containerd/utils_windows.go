@@ -4,14 +4,27 @@
 package containerd
 
 import (
+	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/Microsoft/hcsshim"
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
+
+func Address(_ string) string {
+	return `\\.\pipe\containerd-containerd`
+}
+
+func Endpoint(runDir string) *url.URL {
+	return &url.URL{
+		Scheme: "npipe",
+		Path:   filepath.ToSlash(Address(runDir)),
+	}
+}
 
 // PowerShell struct
 type PowerShell struct {
