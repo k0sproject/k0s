@@ -74,9 +74,8 @@ tofu apply
 * `alpine_3_22`: Alpine Linux 3.22
 * `centos_9`: CentOS Stream 9
 * `centos_10`: CentOS Stream 10 (Coughlan)
-* `debian_10`: Debian GNU/Linux 10 (buster)
-* `debian_11`: Debian GNU/Linux 11 (bullseye)
-* `debian_12`: Debian GNU/Linux 12 (bookworm)
+* `debian_11`: Debian GNU/Linux 11 (bullseye) ([supported until 2026-08-31][debian-lts])
+* `debian_12`: Debian GNU/Linux 12 (bookworm) ([supported until 2028-06-30][debian-lts])
 * `fcos_41`: Fedora CoreOS 41
 * `fedora_41`: Fedora Linux 41 (Cloud Edition)
 * `flatcar`: Flatcar Container Linux by Kinvolk
@@ -92,6 +91,8 @@ tofu apply
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2404`: Ubuntu 24.04
 * `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.22)
+
+[debian-lts]: https://wiki.debian.org/LTS
 
 ### `arch`: Node architecture
 
