@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"time"
 
@@ -126,6 +127,14 @@ type VRRPInstance struct {
 	// UnicastSourceIP is the source address for unicast peers.
 	// If not specified, k0s will use the first address of the interface.
 	UnicastSourceIP string `json:"unicastSourceIP,omitempty"`
+
+	// AddressLabel is label for the VRRP instance for IPv6 VIPs.
+	// This value is ignored for IPv4 VIPs. This is used to set the routing preference
+	// as per RFC 6724.
+	// The value must be in the range from 1 to 2^32-1.
+	// If not specificied or set to 0, defaults to 10000.
+	// +kubebuilder:default=10000
+	AddressLabel uint32 `json:"addressLabel,omitempty"`
 }
 
 // validateVRRPInstances validates existing configuration and sets the default
@@ -152,6 +161,13 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 			k.VRRPInstances[i].VirtualRouterID = defaultVirtualRouterID + int32(i)
 		} else if k.VRRPInstances[i].VirtualRouterID < 0 || k.VRRPInstances[i].VirtualRouterID > 255 {
 			errs = append(errs, errors.New("VirtualRouterID must be in the range of 1-255"))
+		}
+
+		if k.VRRPInstances[i].AddressLabel == 0 {
+			k.VRRPInstances[i].AddressLabel = 10000
+		}
+		if k.VRRPInstances[i].AddressLabel == math.MaxUint32 {
+			errs = append(errs, errors.New("AddressLabel 0xffffffff is reserved"))
 		}
 
 		if k.VRRPInstances[i].AdvertIntervalSeconds == 0 {
