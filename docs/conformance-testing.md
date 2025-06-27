@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Kubernetes conformance testing for k0s
 
 We run the conformance testing for the last RC build for a release. Follow the [instructions](https://github.com/cncf/k8s-conformance/blob/master/instructions.md) as the conformance testing repository.

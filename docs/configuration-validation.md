@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Configuration validation
 
 k0s command-line interface has the ability to validate config syntax:

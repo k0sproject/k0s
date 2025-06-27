@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Configuration options
 
 ## Using a configuration file
