@@ -14,7 +14,7 @@ env:
       ["alpine_3_19", "alpine_3_22"],
       ["centos_9", "centos_10"],
       ["debian_11", "debian_12"],
-      ["fcos_41"],
+      ["fcos_stable"],
       ["fedora_41"],
       ["flatcar"],
       ["oracle_8_9", "oracle_9_3"],
