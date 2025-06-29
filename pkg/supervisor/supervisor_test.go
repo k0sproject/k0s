@@ -243,8 +243,6 @@ func TestMultiThread(t *testing.T) {
 
 func TestCleanupPIDFile_Gracefully(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
-		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
 		t.Skip("FIXME: times out on macOS, needs debugging")
 	}
@@ -284,8 +282,6 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 
 func TestCleanupPIDFile_Forcefully(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
-		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
 		t.Skip("FIXME: times out on macOS, needs debugging")
 	}
@@ -319,7 +315,21 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 	t.Cleanup(s.Stop)
 
 	// Expect the previous process to be forcefully terminated.
-	assert.ErrorContains(t, prevCmd.Wait(), "signal: killed")
+	err := prevCmd.Wait()
+	var exitErr *exec.ExitError
+	if assert.ErrorAs(t, err, &exitErr) {
+		assert.False(t, exitErr.Success())
+
+		switch runtime.GOOS {
+		case "windows":
+			assert.Equal(t, 137, exitErr.ExitCode())
+		default:
+			sys := exitErr.Sys()
+			if status, ok := sys.(syscall.WaitStatus); assert.True(t, ok, "not a syscall.WaitStatus: %T", sys) {
+				assert.Equal(t, syscall.SIGKILL, status.Signal())
+			}
+		}
+	}
 
 	// Stop the supervisor and check if the PID file is gone.
 	assert.NoError(t, pingPong.AwaitPing())
@@ -388,10 +398,6 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 }
 
 func TestCleanupPIDFile_BogusPIDFile(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("PID file cleanup not yet implemented on Windows")
-	}
-
 	// Prepare some supervised process that should never be started.
 	s := Supervisor{
 		Name:    t.Name(),
