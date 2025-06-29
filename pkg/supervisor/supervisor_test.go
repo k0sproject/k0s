@@ -243,8 +243,6 @@ func TestMultiThread(t *testing.T) {
 
 func TestCleanupPIDFile_Gracefully(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
-		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
 		t.Skip("PID file cleanup not implemented on macOS")
 	}
@@ -284,8 +282,6 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 
 func TestCleanupPIDFile_LingeringProcess(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
-		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
 		t.Skip("PID file cleanup not implemented on macOS")
 	}

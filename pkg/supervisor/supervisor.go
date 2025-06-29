@@ -289,7 +289,12 @@ func (s *Supervisor) terminateAndWait(ph procHandle) error {
 //   - The process environment contains `_K0S_MANAGED=yes`.
 func (s *Supervisor) isK0sManaged(ph procHandle) (bool, error) {
 	if cmd, err := ph.cmdline(); err != nil {
-		return false, err
+		// Only error out if the error doesn't indicate that getting the command
+		// line is unsupported. In that case, ignore the error and proceed to
+		// the environment check.
+		if !errors.Is(err, errors.ErrUnsupported) {
+			return false, err
+		}
 	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
 		return false, nil
 	}

@@ -8,12 +8,56 @@ import (
 	"os"
 	"syscall"
 
+	internalwindows "github.com/k0sproject/k0s/internal/os/windows"
+
 	"golang.org/x/sys/windows"
 )
 
-// openPID is not implemented on Windows.
-func openPID(int) (procHandle, error) {
+type process struct {
+	pid    uint32
+	handle *internalwindows.ProcHandle
+}
+
+func openPID(pid int) (procHandle, error) {
+	if pid < 1 {
+		return nil, fmt.Errorf("illegal PID: %d", pid)
+	}
+
+	p := uint32(pid)
+	handle, err := internalwindows.OpenProcess(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return &process{p, handle}, nil
+}
+
+func (p *process) Close() error {
+	return p.handle.Close()
+}
+
+// hasTerminated implements procHandle.
+func (p *process) hasTerminated() (bool, error) {
+	return p.handle.Exited()
+}
+
+// cmdline implements [procHandle].
+func (p *process) cmdline() (_ []string, err error) {
 	return nil, syscall.EWINDOWS
+}
+
+// environ implements [procHandle].
+func (p *process) environ() ([]string, error) {
+	return p.handle.Environ()
+}
+
+// requestGracefulTermination implements [procHandle].
+func (p *process) requestGracefulTermination() error {
+	if err := sendCtrlBreak(p.pid); err != nil {
+		return fmt.Errorf("failed to send Ctrl+Break: %w", err)
+	}
+
+	return nil
 }
 
 func requestGracefulTermination(p *os.Process) error {
