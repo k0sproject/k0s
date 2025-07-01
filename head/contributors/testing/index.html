@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../img/k0s-favicon-192.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -2324,15 +2324,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#conformance-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Conformance Testing
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#pre-requisites-for-pr-merge" class="md-nav__link">
     <span class="md-ellipsis">
       Pre-Requisites for PR Merge
@@ -2449,15 +2440,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#conformance-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Conformance Testing
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#pre-requisites-for-pr-merge" class="md-nav__link">
     <span class="md-ellipsis">
       Pre-Requisites for PR Merge
@@ -2546,12 +2528,10 @@ However, a PR will not be reviewed before all tests are green, so to save time a
 <p>You may open a pull request in <a href="https://github.blog/2019-02-14-introducing-draft-pull-requests">draft mode</a>.
 All automated tests will still run against the PR, but the PR will not be assigned for review.
 Once a PR is ready for review, transition it from Draft mode, and code owners will be notified.</p>
-<h3 id="conformance-testing">Conformance Testing<a class="headerlink" href="#conformance-testing" title="Permanent link">#</a></h3>
-<p>Once a PR has been reviewed and all other tests have passed, a code owner will run a full end-to-end conformance test against the PR. This is usually the last step before merging.</p>
 <h3 id="pre-requisites-for-pr-merge">Pre-Requisites for PR Merge<a class="headerlink" href="#pre-requisites-for-pr-merge" title="Permanent link">#</a></h3>
 <p>In order for a PR to be merged, the following conditions should exist:</p>
 <ol>
-<li>The PR has passed all the automated tests (style, build &amp; conformance tests).</li>
+<li>The PR has passed all the automated tests (style, build &amp; tests).</li>
 <li>PR commits have been signed with the <code>--signoff</code> option.</li>
 <li>PR was reviewed and approved by a code owner.</li>
 <li>PR is rebased against upstream's main branch.</li>
@@ -2657,7 +2637,7 @@ rm -rf /path/to/workspace</code>.</p>
       <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>
