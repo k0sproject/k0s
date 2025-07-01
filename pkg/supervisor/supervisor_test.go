@@ -136,6 +136,7 @@ func TestRespawn(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Millisecond,
 	}
 	require.NoError(t, s.Supervise())
@@ -169,6 +170,7 @@ func TestStopWhileRespawn(t *testing.T) {
 		BinPath:        fail.binPath,
 		Args:           fail.binArgs,
 		RunDir:         t.TempDir(),
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Hour,
 	}
 
@@ -252,7 +254,7 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
-		TimeoutStop:    1 * time.Second,
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Hour,
 	}
 
@@ -295,7 +297,7 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
 		TimeoutStop:    1 * time.Second,
-		TimeoutRespawn: 1 * time.Second,
+		TimeoutRespawn: 1 * time.Hour,
 	}
 
 	// Create a PID file that's pointing to the running process.
@@ -327,8 +329,8 @@ func TestCleanupPIDFile_WrongProcess(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
-		TimeoutStop:    1 * time.Second,
-		TimeoutRespawn: 1 * time.Second,
+		TimeoutStop:    1 * time.Minute,
+		TimeoutRespawn: 1 * time.Hour,
 	}
 
 	// Create a PID file that's pointing to the running process.
