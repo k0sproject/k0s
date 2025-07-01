@@ -120,12 +120,56 @@ jobs:
       contents: read
       actions: read
 
+    env:
+      OSTESTS_OS: ${{ needs.select.outputs.os }}
+      OSTESTS_NETWORK_PROVIDER: ${{ needs.select.outputs.network-provider }}
+
     steps:
+      - name: Prepare Slack message
+        id: prepare-slack-message
+        # A jq program that converts the job result into a Slack message.
+        # Message format described here: https://api.slack.com/surfaces/messages#payloads
+        # The block structure can be tested online: https://app.slack.com/block-kit-builder
+        run: |
+          gh api /repos/{owner}/{repo}/actions/runs/{{ github.run_id }}/jobs -q '
+            def fmt_duration:
+              if . >= 3600 then "\(./3600|floor) h \((.%3600/60|floor)) min"
+              elif . >= 60 then "\(./60|floor) min \(.%60) sec"
+              else "\(.) sex"
+              end;
+
+            [.jobs[] | select(.name | startswith("\($ENV.OSTESTS_OS) :: \($ENV.OSTESTS_NETWORK_PROVIDER)"))] | first as $job |
+            ":\(if $job.conclusion == "success" then "rocket" else "collision" end): *Nightly OS test run: \($job.conclusion)*" as $text |
+            [$job.steps[] | select(.conclusion == "failure")] | first as $failedStep | {
+              text: $text, mrkdwn: true,
+              blocks: [
+                {
+                  type: "section",
+                  text: { type: "mrkdwn", text: $text },
+                  accessory: {
+                    type: "button",
+                    text: { type: "plain_text", text: "View job run" },
+                    "url": "\($job.html_url)"
+                  }
+                },
+                {
+                  type: "section",
+                  fields: [
+                    { type: "mrkdwn", text: "*OS:* `\($ENV.OSTESTS_OS)`" },
+                    { type: "mrkdwn", text: "*Provider:* `\($ENV.OSTESTS_NETWORK_PROVIDER)`" },
+                    { type: "mrkdwn", text: "*Attempt:* \($job.run_attempt)" },
+                    { type: "mrkdwn", text: if $failedStep then "*Failed:* `\($failedStep.name)`" else "_All steps succeeded_" end },
+                    { type: "mrkdwn", text: "*Started:* \($job.started_at | fromdateiso8601 | gmtime | strftime("%Y-%m-%d %H:%M")) GMT" },
+                    { type: "mrkdwn", text: "*Took:* \(($job.completed_at | fromdateiso8601) - ($job.started_at | fromdateiso8601) | fmt_duration)" }
+                  ]
+                }
+              ]
+            } | "payload=" + tojson
+          ' >>"$GITHUB_OUTPUT"
+
       - name: Notify Slack
-        uses: 8398a7/action-slack@v3.18.0
+        uses: slackapi/slack-github-action@v2.1.0
         with:
-          job_name: "${{ needs.select.outputs.os }} :: ${{ needs.select.outputs.network-provider }}"
-          status: ${{ needs.e2e-tests.result }}
-          fields: workflow,commit,job,took
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: ${{ steps.prepare-slack-message.outputs.payload }}
