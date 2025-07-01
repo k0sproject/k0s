@@ -99,7 +99,7 @@ jobs:
     with: { target-os: linux, target-arch: amd64 }
 
   e2e-tests:
-    name: "${{ needs.select.outputs.os }} :: ${{ needs.select.outputs.network-provider }}"
+    name: "${{ needs.select.outputs.os }} :: ${{ needs.select.outputs.network-provider }} / e2e tests"
     needs: [select, build]
     uses: ./.github/workflows/ostests-e2e.yaml
     with:
