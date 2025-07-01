@@ -26,10 +26,10 @@ import (
 type CA struct {
 	// The expiration duration of the CA certificate
 	// +kubebuilder:default="87600h"
-	ExpiresAfter metav1.Duration `json:"expiresAfter,omitempty"`
+	ExpiresAfter metav1.Duration `json:"expiresAfter"`
 	// The expiration duration of the server certificate
 	// +kubebuilder:default="8760h"
-	CertificatesExpireAfter metav1.Duration `json:"certificatesExpireAfter,omitempty"`
+	CertificatesExpireAfter metav1.Duration `json:"certificatesExpireAfter"`
 }
 
 // DefaultCA returns default settings for CA

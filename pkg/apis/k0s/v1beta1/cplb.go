@@ -205,7 +205,7 @@ type VirtualServer struct {
 	// microsecond precision. Further precision will be truncated without
 	// warnings. Defaults to 1m.
 	// +kubebuilder:default="1m"
-	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
+	DelayLoop metav1.Duration `json:"delayLoop"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
 	// Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
 	// details refer to keepalived documentation.
