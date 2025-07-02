@@ -416,3 +416,8 @@ func selectCmd(t *testing.T, cmds ...cmd) (_ cmd) {
 	require.Failf(t, "none of those executables in PATH, dunno how to create test process: %s", strings.Join(tested, ", "))
 	return // diverges above
 }
+
+func TestMain(m *testing.M) {
+	pingpong.Hook()
+	os.Exit(m.Run())
+}
