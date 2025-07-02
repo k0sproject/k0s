@@ -159,7 +159,7 @@ jobs:
                     { type: "mrkdwn", text: "*OS:* `\($ENV.OSTESTS_OS)`" },
                     { type: "mrkdwn", text: "*Provider:* `\($ENV.OSTESTS_NETWORK_PROVIDER)`" },
                     { type: "mrkdwn", text: "*Attempt:* \($job.run_attempt)" },
-                    { type: "mrkdwn", text: if $failedStep then "*Failed:* `\($failedStep.name)`" else "_All steps succeeded_" end },
+                    { type: "mrkdwn", text: if $failedStep then "*Failed:* `\($failedStep.name)`" else "_No failed steps._" end },
                     { type: "mrkdwn", text: "*Started:* \($job.started_at | fromdateiso8601 | gmtime | strftime("%Y-%m-%d %H:%M")) GMT" },
                     { type: "mrkdwn", text: "*Took:* \(($job.completed_at | fromdateiso8601) - ($job.started_at | fromdateiso8601) | fmt_duration)" }
                   ]
