@@ -284,8 +284,10 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 
 	// Start some k0s-managed process that won't terminate gracefully.
 	prevCmd, prevPingPong := pingpong.Start(t, pingpong.StartOptions{
-		Env:                           []string{k0sManaged},
-		IgnoreGracefulShutdownRequest: true,
+		Options: pingpong.Options{
+			IgnoreGracefulTerminationRequests: true,
+		},
+		Env: []string{k0sManaged},
 	})
 	require.NoError(t, prevPingPong.AwaitPing())
 

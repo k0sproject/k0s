@@ -35,7 +35,7 @@ import (
 var script []byte
 
 type PingPong struct {
-	IgnoreGracefulShutdownRequest bool // If set, SIGTERM won't terminate the program.
+	Options
 
 	shellPath, pipe, script string
 }
@@ -64,7 +64,7 @@ func (pp *PingPong) BinPath() string {
 
 func (pp *PingPong) BinArgs() []string {
 	var ignoreSIGTERM string
-	if pp.IgnoreGracefulShutdownRequest {
+	if pp.IgnoreGracefulTerminationRequests {
 		ignoreSIGTERM = "1"
 	}
 

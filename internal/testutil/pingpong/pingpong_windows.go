@@ -36,7 +36,7 @@ import (
 var script []byte
 
 type PingPong struct {
-	IgnoreGracefulShutdownRequest bool // Has no effect on Windows.
+	Options
 
 	shellPath string
 	shellArgs []string

@@ -24,15 +24,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type Options struct {
+	// Won't respond to graceful termination requests if true.
+	IgnoreGracefulTerminationRequests bool
+}
+
 type StartOptions struct {
-	Env                           []string
-	IgnoreGracefulShutdownRequest bool
+	Options
+	Env []string
 }
 
 func Start(t *testing.T, opts ...StartOptions) (*exec.Cmd, *PingPong) {
 	pingPong := New(t)
 	for _, opt := range opts {
-		pingPong.IgnoreGracefulShutdownRequest = opt.IgnoreGracefulShutdownRequest
+		pingPong.Options = opt.Options
 	}
 	cmd := exec.Command(pingPong.BinPath(), pingPong.BinArgs()...)
 	cmd.Stdout = os.Stdout
