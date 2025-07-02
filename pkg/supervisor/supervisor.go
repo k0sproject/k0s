@@ -284,8 +284,8 @@ const exitCheckInterval = 200 * time.Millisecond
 // s.TimeoutStop, the process is forcibly terminated.
 func (s *Supervisor) killProcess(ph procHandle) error {
 	// Kill the process pid
-	deadlineTicker := time.NewTicker(s.TimeoutStop)
-	defer deadlineTicker.Stop()
+	deadlineTimer := time.NewTimer(s.TimeoutStop)
+	defer deadlineTimer.Stop()
 	checkTicker := time.NewTicker(exitCheckInterval)
 	defer checkTicker.Stop()
 
@@ -307,7 +307,7 @@ Loop:
 			} else if err != nil {
 				return fmt.Errorf("failed to terminate gracefully: %w", err)
 			}
-		case <-deadlineTicker.C:
+		case <-deadlineTimer.C:
 			break Loop
 		}
 	}
