@@ -120,18 +120,19 @@ jobs:
       contents: read
       actions: read
 
-    env:
-      OSTESTS_OS: ${{ needs.select.outputs.os }}
-      OSTESTS_NETWORK_PROVIDER: ${{ needs.select.outputs.network-provider }}
-
     steps:
       - name: Prepare Slack message
         id: prepare-slack-message
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_REPO: "${{ github.repository }}"
+          OSTESTS_OS: "${{ needs.select.outputs.os }}"
+          OSTESTS_NETWORK_PROVIDER: "${{ needs.select.outputs.network-provider }}"
         # A jq program that converts the job result into a Slack message.
         # Message format described here: https://api.slack.com/surfaces/messages#payloads
         # The block structure can be tested online: https://app.slack.com/block-kit-builder
         run: |
-          gh api /repos/{owner}/{repo}/actions/runs/{{ github.run_id }}/jobs -q '
+          gh api "/repos/{owner}/{repo}/actions/runs/$GITHUB_RUN_ID/jobs" -q '
             def fmt_duration:
               if . >= 3600 then "\(./3600|floor) h \((.%3600/60|floor)) min"
               elif . >= 60 then "\(./60|floor) min \(.%60) sec"
@@ -158,7 +159,7 @@ jobs:
                     { type: "mrkdwn", text: "*OS:* `\($ENV.OSTESTS_OS)`" },
                     { type: "mrkdwn", text: "*Provider:* `\($ENV.OSTESTS_NETWORK_PROVIDER)`" },
                     { type: "mrkdwn", text: "*Attempt:* \($job.run_attempt)" },
-                    { type: "mrkdwn", text: if $failedStep then "*Failed:* `\($failedStep.name)`" else "_All steps succeeded_" end },
+                    { type: "mrkdwn", text: if $failedStep then "*Failed:* `\($failedStep.name)`" else "_No failed steps._" end },
                     { type: "mrkdwn", text: "*Started:* \($job.started_at | fromdateiso8601 | gmtime | strftime("%Y-%m-%d %H:%M")) GMT" },
                     { type: "mrkdwn", text: "*Took:* \(($job.completed_at | fromdateiso8601) - ($job.started_at | fromdateiso8601) | fmt_duration)" }
                   ]
