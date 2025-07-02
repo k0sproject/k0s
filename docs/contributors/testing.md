@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Testing Your Code
 
 k0s uses github actions to run automated tests on any PR, before merging.
