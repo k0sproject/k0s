@@ -22,7 +22,8 @@ import (
 )
 
 // FirstPublicIPv6Address retrieves the first public IPv6 address from the eth0 interface of a node.
-func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string) string {
+// A cplbVIP may be provided so that it can be ignored.
+func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string, cplbVip string) string {
 	ssh, err := s.SSH(s.Context(), nodeName)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -38,7 +39,9 @@ func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string) string {
 		ip, _, err := net.ParseCIDR(fields[3])
 		s.Require().NoError(err, "Failed to parse IP address from output line")
 
-		return ip.String()
+		if ip.String() != cplbVip {
+			return ip.String()
+		}
 	}
 
 	s.Require().Fail("No IPv6 address found on eth0")
@@ -52,7 +55,7 @@ func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string) string {
 func GetCPLBVIP(s *BootlooseSuite, isIPv6Only bool) string {
 	var ip string
 	if isIPv6Only {
-		ip = FirstPublicIPv6Address(s, s.ControllerNode(0))
+		ip = FirstPublicIPv6Address(s, s.ControllerNode(0), "")
 	} else {
 		ip = s.GetIPAddress(s.ControllerNode(0))
 	}
