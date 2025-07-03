@@ -24,7 +24,8 @@ import (
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
-	"github.com/k0sproject/k0s/pkg/component/status"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
@@ -34,10 +35,6 @@ import (
 
 type kubeletCertRotateSuite struct {
 	common.BootlooseSuite
-}
-
-type statusJSON struct {
-	WorkerToAPIConnectionStatus status.ProbeStatus
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -78,9 +75,12 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	s.Require().NoError(err)
 	output, err := workerSSH.ExecWithOutput(s.Context(), "k0s status -ojson")
 	s.Require().NoError(err)
-	status := statusJSON{}
+	var status map[string]any
 	s.Require().NoError(json.Unmarshal([]byte(output), &status))
-	s.Require().True(status.WorkerToAPIConnectionStatus.Success)
+	success, found, err := unstructured.NestedBool(status, "WorkerToAPIConnectionStatus", "Success")
+	s.Require().NoError(err)
+	s.Require().True(found)
+	s.Require().True(success)
 	s.TestApply()
 }
 
