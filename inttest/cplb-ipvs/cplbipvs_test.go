@@ -15,8 +15,10 @@
 package keepalived
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"strconv"
 	"strings"
 	"testing"
@@ -31,7 +33,7 @@ type cplbIPVSSuite struct {
 	common.BootlooseSuite
 }
 
-const haControllerConfig = `
+const cplbCfgTemplate = `
 spec:
   network:
     controlPlaneLoadBalancing:
@@ -39,16 +41,33 @@ spec:
       type: Keepalived
       keepalived:
         vrrpInstances:
-        - virtualIPs: ["%s/16"]
+        - virtualIPs: ["{{ .lbAddr }}/16"]
           authPass: "123456"
-          unicastSourceIP: %s
-          unicastPeers: [%s, %s]
+          unicastSourceIP: {{ .unicastSourceIP }}
+          unicastPeers:
+{{- range .unicastPeers }}
+          - {{ . }}
+{{- end }}
         virtualServers:
-        - ipAddress: %s
+        - ipAddress: {{ .lbAddr }}
     nodeLocalLoadBalancing:
       enabled: true
       type: EnvoyProxy
 `
+
+func (s *cplbIPVSSuite) getK0sCfg(nodeIdx int, lb string) string {
+	k0sCfg := bytes.NewBuffer([]byte{})
+	srcIP, peers := s.getUnicastAddresses(nodeIdx)
+	data := map[string]interface{}{
+		"lbAddr":          lb,
+		"unicastSourceIP": srcIP,
+		"unicastPeers":    peers,
+	}
+	s.Require().NoError(template.Must(template.New("k0s.yaml").
+		Parse(cplbCfgTemplate)).
+		Execute(k0sCfg, data), "can't execute k0s.yaml template")
+	return k0sCfg.String()
+}
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
@@ -59,9 +78,8 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 
 	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		addr := s.getUnicastAddresses(idx)
-		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml",
-			fmt.Sprintf(haControllerConfig, lb, addr[0], addr[1], addr[2], lb))
+		k0sCfg := s.getK0sCfg(idx, lb)
+		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
 
 		// Note that the token is intentionally empty for the first controller
 		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
@@ -134,11 +152,10 @@ func (s *cplbIPVSSuite) getLBAddress() string {
 	return fmt.Sprintf("%s.%d", strings.Join(parts[:3], "."), lastOctet)
 }
 
-// getUnicastAddresses returns the IP addresses of the controllers. The first IP
-// is the address of the controller with the ID provided.
-func (s *cplbIPVSSuite) getUnicastAddresses(i int) []string {
-	return []string{
-		s.GetIPAddress(s.ControllerNode(i % s.ControllerCount)),
+// getUnicastAddresses returns the unicast addresses for the given index and
+// slice with the IP addresses of the next two controllers.
+func (s *cplbIPVSSuite) getUnicastAddresses(i int) (string, []string) {
+	return s.GetIPAddress(s.ControllerNode(i % s.ControllerCount)), []string{
 		s.GetIPAddress(s.ControllerNode((i + 1) % s.ControllerCount)),
 		s.GetIPAddress(s.ControllerNode((i + 2) % s.ControllerCount)),
 	}
