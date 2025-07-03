@@ -66,3 +66,12 @@ func GetCPLBVIP(s *BootlooseSuite, isIPv6Only bool) string {
 
 	return addr.String()
 }
+
+// GetCPLBVIPCIDR returns the CIDR notation for the virtual IP address.
+// Returns /16 for IPv4 and /64 for IPv6.
+func GetCPLBVIPCIDR(ip string, isIPv6Only bool) string {
+	if isIPv6Only {
+		return ip + "/64"
+	}
+	return ip + "/16"
+}

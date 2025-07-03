@@ -83,13 +83,13 @@ spec:
 func (s *CPLBUserSpaceSuite) getK0sCfg(useExtAddr bool, lb string) string {
 
 	if !useExtAddr {
-		return fmt.Sprintf(nllbControllerConfig, s.lbCIDR(lb))
+		return fmt.Sprintf(nllbControllerConfig, common.GetCPLBVIPCIDR(lb, s.isIPv6Only))
 	}
 
 	k0sCfg := bytes.NewBuffer([]byte{})
 	data := map[string]interface{}{
 		"ExtAddr":    lb,
-		"VIP":        s.lbCIDR(lb),
+		"VIP":        common.GetCPLBVIPCIDR(lb, s.isIPv6Only),
 		"IsIPv6Only": s.isIPv6Only,
 	}
 	s.Require().NoError(template.Must(template.New("k0s.yaml").
@@ -199,13 +199,6 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	}
 }
 
-func (s *CPLBUserSpaceSuite) lbCIDR(ip string) string {
-	if s.isIPv6Only {
-		return ip + "/64"
-	}
-	return ip + "/16"
-}
-
 // checkDummy checks that the dummy interface isn't present in the node.
 func (s *CPLBUserSpaceSuite) checkDummy(ctx context.Context, node string) {
 	ssh, err := s.SSH(ctx, node)
@@ -225,7 +218,7 @@ func (s *CPLBUserSpaceSuite) hasVIP(ctx context.Context, node string, vip string
 	output, err := ssh.ExecWithOutput(ctx, "ip --oneline addr show eth0")
 	s.Require().NoError(err)
 
-	return strings.Contains(output, fmt.Sprintf(" %s scope", s.lbCIDR(vip)))
+	return strings.Contains(output, fmt.Sprintf(" %s scope", common.GetCPLBVIPCIDR(vip, s.isIPv6Only)))
 }
 
 // getServerCertSignature connects to the given HTTPS URL and returns the server certificate signature.
