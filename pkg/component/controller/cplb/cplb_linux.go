@@ -96,6 +96,11 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		return nil
 	}
 
+	// IPv6 clusters need labels. We only do this process for IPv6 VIPs
+	if err := k.setVirtualIPAddressLabels(); err != nil {
+		return fmt.Errorf("failed to set address labels: %w", err)
+	}
+
 	// We only need the dummy interface when using IPVS.
 	if len(k.Config.VirtualServers) > 0 {
 		if err := k.configureDummy(); err != nil {
@@ -347,6 +352,31 @@ func (*Keepalived) getLinkAddresses(link netlink.Link) ([]netlink.Addr, []string
 	return linkAddrs, strAddrs, nil
 }
 
+// setVirtualIPAddressLabels sets the labels for the vips to vrrp.AddressLabel
+// so that the real IP is preferred.
+func (k *Keepalived) setVirtualIPAddressLabels() error {
+	for _, vrrp := range k.Config.VRRPInstances {
+		for _, vip := range vrrp.VirtualIPs {
+			// Only set labels for IPv6 addresses
+			ipAddr, _, err := net.ParseCIDR(vip)
+			if err != nil {
+				return fmt.Errorf("failed to parse CIDR %s: %w", vip, err)
+			}
+
+			// Only set labels for IPv6 addresses
+			if ipAddr.To4() != nil {
+				continue
+			}
+
+			// Set address label for IPv6 VIP
+			if err := setAddressLabel(ipAddr, vrrp.AddressLabel); err != nil {
+				return fmt.Errorf("failed to set address label for %s: %w", ipAddr, err)
+			}
+		}
+	}
+	return nil
+}
+
 func (k *Keepalived) generateTemplate(templ *template.Template, path string) error {
 	if err := file.AtomicWithTarget(path).
 		WithPermissions(0400).
@@ -397,8 +427,9 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) err
 
 func (k *Keepalived) setProxyRoutes() {
 	routes := []tcpproxy.Route{}
+	port := strconv.Itoa(k.APIPort)
 	for _, addr := range k.reconciler.GetIPs() {
-		routes = append(routes, tcpproxy.To(fmt.Sprintf("%s:%d", addr, k.APIPort)))
+		routes = append(routes, tcpproxy.To(net.JoinHostPort(addr, port)))
 	}
 
 	if len(routes) == 0 {
@@ -426,7 +457,11 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 				k.log.Infof("Deleting iptables rule to redirect %s", vip)
 			}
 
-			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, "iptables"), cmdArgs...)
+			iptablesBin := "iptables"
+			if ip := net.ParseIP(vip); ip != nil && ip.To4() == nil {
+				iptablesBin = "ip6tables"
+			}
+			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)

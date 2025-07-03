@@ -90,6 +90,10 @@ check-kubeletcertrotate: TIMEOUT=15m
 check-cplb-userspace-extaddr: export K0S_USE_EXTERNAL_ADDRESS=yes
 check-cplb-userspace-extaddr: TEST_PACKAGE=cplb-userspace
 
+check-cplb-userspace-ipv6: export K0S_USE_EXTERNAL_ADDRESS=yes
+check-cplb-userspace-ipv6: export K0S_IPV6_ONLY=yes
+check-cplb-userspace-ipv6: TEST_PACKAGE=cplb-userspace
+
 check-dualstack-calico: export K0S_NETWORK=calico
 check-dualstack-calico: TEST_PACKAGE=dualstack
 
@@ -104,11 +108,11 @@ check-dualstack-kuberouter-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
 check-dualstack-kuberouter-dynamicconfig: export K0S_NETWORK=kuberouter
 check-dualstack-kuberouter-dynamicconfig: TEST_PACKAGE=dualstack
 
-check-ipv6-kuberouter: export K0S_NETWORK=kuberouter
-check-ipv6-kuberouter: TEST_PACKAGE=ipv6
-
 check-ipv6-calico: export K0S_NETWORK=calico
 check-ipv6-calico: TEST_PACKAGE=ipv6
+
+check-ipv6-kuberouter: export K0S_NETWORK=kuberouter
+check-ipv6-kuberouter: TEST_PACKAGE=ipv6
 
 check-ap-updater: .update-server.stamp
 check-ap-updater-periodic: .update-server.stamp

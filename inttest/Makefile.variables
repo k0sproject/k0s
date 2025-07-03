@@ -27,6 +27,7 @@ smoketests := \
 	check-cplb-ipvs \
 	check-cplb-userspace \
 	check-cplb-userspace-extaddr \
+	check-cplb-userspace-ipv6 \
 	check-ctr \
 	check-custom-cidrs \
 	check-customca \

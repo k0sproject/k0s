@@ -105,6 +105,40 @@ When using unicast, k0st does not attempt to detect `unicastSourceIP` and it mus
 
 [RFC 3768]: https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2
 
+#### IPv6 VIPs egress routing preference
+
+In IPv6 there aren't primary addresses, instead the routing preference is determined by the operating system using
+either IP labels or IP rules. K0s Virtual Addresses uses [RFC 6724] IP labels. By default, k0s sets the label to
+10000 so that it still uses the main IP address as a source of egress connections.
+
+This value may be replaced per vrrPInstance:
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["2001:db8:2::1/64"]
+          authPass: "<my password>"
+          addressLabel: 30000
+```
+
+The label value can be verified using iproute2:
+
+```shell
+$ ip addrlabel | grep 2001:db8:2::1
+prefix 2001:db8:2::1/128 label 30000
+```
+
+The prefix always uses netmask 128.
+
+K0s doesn't attempt to modify labels that do not belong to the VIP.
+
+[RFC 6724]: https://datatracker.ietf.org/doc/html/rfc6724
+
 ## Load Balancing
 
 Currently k0s allows to chose one of two load balancing mechanism:
@@ -503,6 +537,8 @@ A real life example of a cluster using using the VIP `17.177.0.102` looks like:
 controller0:/# /var/lib/k0s/bin/iptables-save | grep 6444
 -A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444
 ```
+
+Keep in mind that clusters using IPv6 as a primary address family, should use ip6tables or ip6tables-save.
 
 It the load balancer is not load balancing for whatever reason, you can establish connections to it directly. A good way to see if it's actually load balancing is checking the serving certificate:
 

@@ -15,11 +15,13 @@
 package keepalived
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"html/template"
 	"net"
 	"net/http"
 	"net/url"
@@ -37,6 +39,7 @@ import (
 
 type CPLBUserSpaceSuite struct {
 	common.BootlooseSuite
+	isIPv6Only bool
 }
 
 const nllbControllerConfig = `
@@ -47,7 +50,7 @@ spec:
       type: Keepalived
       keepalived:
         vrrpInstances:
-        - virtualIPs: ["%s/16"]
+        - virtualIPs: ["%s"]
           authPass: "123456"
     nodeLocalLoadBalancing:
       enabled: true
@@ -56,8 +59,13 @@ spec:
 
 const extAddrControllerConfig = `
 spec:
+  images:
+    # GitHub Actions don't support IPv6, for this reason in the test IPv6-only
+    # we air gap the cluster but in IPv4 we don't. Setting the default pull
+    # policy to "IfNotPresent" works on both environments.
+    default_pull_policy: IfNotPresent
   api:
-    externalAddress: %s
+    externalAddress: {{ .ExtAddr }}
   network:
     provider: calico
     controlPlaneLoadBalancing:
@@ -65,31 +73,58 @@ spec:
       type: Keepalived
       keepalived:
         vrrpInstances:
-        - virtualIPs: ["%s/16"]
+        - virtualIPs: ["{{ .VIP }}"]
           authPass: "123456"
+{{ if .IsIPv6Only }}
+    podCIDR: fd00::/108
+    serviceCIDR: fd01::/108
+{{ end }}
 `
+
+func (s *CPLBUserSpaceSuite) getK0sCfg(useExtAddr bool, lb string) string {
+
+	if !useExtAddr {
+		return fmt.Sprintf(nllbControllerConfig, s.lbCIDR(lb))
+	}
+
+	k0sCfg := bytes.NewBuffer([]byte{})
+	data := map[string]interface{}{
+		"ExtAddr":    lb,
+		"VIP":        s.lbCIDR(lb),
+		"IsIPv6Only": s.isIPv6Only,
+	}
+	s.Require().NoError(template.Must(template.New("k0s.yaml").
+		Parse(extAddrControllerConfig)).
+		Execute(k0sCfg, data), "can't execute k0s.yaml template")
+	return k0sCfg.String()
+}
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	useExtAddr := os.Getenv("K0S_USE_EXTERNAL_ADDRESS") == "yes"
-	if useExtAddr {
-		s.T().Log("Using external address")
+	if useExtAddr && s.isIPv6Only {
+		s.T().Log("Using external address in IPv6 mode")
+	} else if useExtAddr {
+		s.T().Log("Using external address in IPv4 mode")
 	} else {
 		s.T().Log("Using CPLB + NLLB")
 	}
+
 	lb := s.getLBAddress()
+	k0sCfg := s.getK0sCfg(useExtAddr, lb)
+
 	ctx := s.Context()
 	var joinToken string
-
 	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		if useExtAddr {
-			s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(extAddrControllerConfig, lb, lb))
+		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
+		if s.isIPv6Only {
 			// Note that the token is intentionally empty for the first controller
-			s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=endpoint-reconciler", "--enable-worker", joinToken))
+			// Disable coreDNS to prevent crashloop backoff in github actions. This happens because
+			// there is no IPv6 connectivity to the outside world in the CI environment and sets the DNS to ::1.
+			s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=endpoint-reconciler,coredns", "--enable-worker", joinToken))
 		} else {
-			s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(nllbControllerConfig, lb))
 			// Note that the token is intentionally empty for the first controller
 			s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--enable-worker", joinToken))
 		}
@@ -171,20 +206,28 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 // subtracts 100. Theoretically this could result in an invalid IP address.
 // This is so that get a virtual IP in the same subnet as the controller.
 func (s *CPLBUserSpaceSuite) getLBAddress() string {
-	ip := s.GetIPAddress(s.ControllerNode(0))
-	addr := net.ParseIP(ip)
-	ipv4 := addr.To4()
-	if ipv4 == nil {
-		s.T().Fatalf("This test doesn't support IPv6: %q", ip)
-	}
-
-	if ipv4[3] >= 154 {
-		ipv4[3] -= 100
+	var ip string
+	if s.isIPv6Only {
+		ip = s.firstPublicIPv6Address(s.ControllerNode(0))
 	} else {
-		ipv4[3] += 100
+		ip = s.GetIPAddress(s.ControllerNode(0))
 	}
 
-	return ipv4.String()
+	addr := net.ParseIP(ip)
+	if addr[15] >= 154 {
+		addr[15] -= 100
+	} else {
+		addr[15] += 100
+	}
+
+	return addr.String()
+}
+
+func (s *CPLBUserSpaceSuite) lbCIDR(ip string) string {
+	if s.isIPv6Only {
+		return ip + "/64"
+	}
+	return ip + "/16"
 }
 
 // checkDummy checks that the dummy interface isn't present in the node.
@@ -206,7 +249,7 @@ func (s *CPLBUserSpaceSuite) hasVIP(ctx context.Context, node string, vip string
 	output, err := ssh.ExecWithOutput(ctx, "ip --oneline addr show eth0")
 	s.Require().NoError(err)
 
-	return strings.Contains(output, fmt.Sprintf("inet %s/16", vip))
+	return strings.Contains(output, fmt.Sprintf(" %s scope", s.lbCIDR(vip)))
 }
 
 // getServerCertSignature connects to the given HTTPS URL and returns the server certificate signature.
@@ -258,13 +301,45 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 	return hex.EncodeToString(signature), nil
 }
 
+func (s *CPLBUserSpaceSuite) firstPublicIPv6Address(nodeName string) string {
+	ssh, err := s.SSH(s.Context(), nodeName)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(s.Context(), "ip -6 -oneline addr show eth0 scope global")
+	s.Require().NoError(err)
+
+	// Parse the output line by line
+	for line := range strings.SplitSeq(strings.TrimSpace(output), "\n") {
+		fields := strings.Fields(line)
+		s.Require().GreaterOrEqual(len(fields), 4, "Expected at least 4 fields in the output line")
+
+		ip, _, err := net.ParseCIDR(fields[3])
+		s.Require().NoError(err, "Failed to parse IP address from output line")
+
+		return ip.String()
+	}
+
+	s.Require().Fail("No IPv6 address found on eth0")
+	return ""
+}
+
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
 // virtual IP is working by joining a node to the cluster using the VIP.
 func TestCPLBUserSpaceSuite(t *testing.T) {
-	suite.Run(t, &CPLBUserSpaceSuite{
+	cplbSuite := &CPLBUserSpaceSuite{
 		common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     1,
 		},
-	})
+		os.Getenv("K0S_IPV6_ONLY") == "yes",
+	}
+
+	if cplbSuite.isIPv6Only {
+		cplbSuite.Networks = []string{"bridge-ipv6"}
+		cplbSuite.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
+	}
+
+	suite.Run(t, cplbSuite)
+
 }
