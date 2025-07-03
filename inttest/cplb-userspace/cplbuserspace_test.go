@@ -206,7 +206,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 func (s *CPLBUserSpaceSuite) getLBAddress() string {
 	var ip string
 	if s.isIPv6Only {
-		ip = s.firstPublicIPv6Address(s.ControllerNode(0))
+		ip = common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(0))
 	} else {
 		ip = s.GetIPAddress(s.ControllerNode(0))
 	}
@@ -293,29 +293,6 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 
 	// Return the signature as a hex string
 	return hex.EncodeToString(signature), nil
-}
-
-func (s *CPLBUserSpaceSuite) firstPublicIPv6Address(nodeName string) string {
-	ssh, err := s.SSH(s.Context(), nodeName)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	output, err := ssh.ExecWithOutput(s.Context(), "ip -6 -oneline addr show eth0 scope global")
-	s.Require().NoError(err)
-
-	// Parse the output line by line
-	for line := range strings.SplitSeq(strings.TrimSpace(output), "\n") {
-		fields := strings.Fields(line)
-		s.Require().GreaterOrEqual(len(fields), 4, "Expected at least 4 fields in the output line")
-
-		ip, _, err := net.ParseCIDR(fields[3])
-		s.Require().NoError(err, "Failed to parse IP address from output line")
-
-		return ip.String()
-	}
-
-	s.Require().Fail("No IPv6 address found on eth0")
-	return ""
 }
 
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
