@@ -58,15 +58,11 @@ You may open a pull request in [draft mode](https://github.blog/2019-02-14-intro
 All automated tests will still run against the PR, but the PR will not be assigned for review.
 Once a PR is ready for review, transition it from Draft mode, and code owners will be notified.
 
-### Conformance Testing
-
-Once a PR has been reviewed and all other tests have passed, a code owner will run a full end-to-end conformance test against the PR. This is usually the last step before merging.
-
 ### Pre-Requisites for PR Merge
 
 In order for a PR to be merged, the following conditions should exist:
 
-1. The PR has passed all the automated tests (style, build & conformance tests).
+1. The PR has passed all the automated tests (style, build & tests).
 2. PR commits have been signed with the `--signoff` option.
 3. PR was reviewed and approved by a code owner.
 4. PR is rebased against upstream's main branch.

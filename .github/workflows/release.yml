@@ -5,6 +5,9 @@ on:
     tags:
       - v* # Push events to matching v*, i.e. v1.0, v20.15.10
 
+permissions:
+  contents: write
+
 env:
   MAKEFLAGS: -j
   CURL_OPTS: --proto =https --tlsv1.2 --retry 5 --retry-all-errors --silent --show-error --location --fail
@@ -133,7 +136,7 @@ jobs:
       - name: Upload Artifact for use in other Jobs
         uses: actions/upload-artifact@v4
         with:
-          name: k0s-amd64
+          name: k0s-linux-amd64
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
@@ -305,7 +308,7 @@ jobs:
       - name: Upload Artifact for use in other Jobs
         uses: actions/upload-artifact@v4
         with:
-          name: k0s-arm64
+          name: k0s-linux-arm64
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
@@ -392,7 +395,7 @@ jobs:
       - name: Upload Artifact for use in other Jobs
         uses: actions/upload-artifact@v4
         with:
-          name: k0s-arm
+          name: k0s-linux-arm
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
@@ -476,17 +479,17 @@ jobs:
       - name: Fetch k0s amd64
         uses: actions/download-artifact@v4
         with:
-          name: k0s-amd64
+          name: k0s-linux-amd64
           path: ./k0s-amd64
       - name: Fetch k0s arm64
         uses: actions/download-artifact@v4
         with:
-          name: k0s-arm64
+          name: k0s-linux-arm64
           path: ./k0s-arm64
       - name: Fetch k0s arm
         uses: actions/download-artifact@v4
         with:
-          name: k0s-arm
+          name: k0s-linux-arm
           path: ./k0s-arm
 
       - name: Make binaries executable
@@ -536,101 +539,46 @@ jobs:
 
   conformance-test:
     needs:
-      - release
       - x64
       - arm64
     strategy:
+      fail-fast: false
       matrix:
         arch: [ amd64, arm64 ]
-        include:
-          - arch: amd64
-            instance-type: c4.xlarge
-          - arch: arm64
-            instance-type: c7g.xlarge
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_TERRAFORM_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_TERRAFORM_KEY }}
-      AWS_DEFAULT_REGION: eu-west-1
-      TF_VERSION: 1.2.2
-      TF_VAR_k0s_binary_path: ${{ github.workspace }}/k0s/k0s
-      TF_VAR_instance_arch: ${{ matrix.arch }}
-      TF_VAR_instance_type: ${{ matrix.instance-type }}
-      KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     name: "K8s Conformance Testing"
+    uses: ./.github/workflows/ostests-e2e.yaml
+    with:
+      e2e-concurrency-level: 1
+      os: debian_12
+      arch: ${{ matrix.arch }}
+      network-provider: kuberouter
+    secrets:
+      aws-access-key-id: ${{ secrets.AWS_TERRAFORM_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_TERRAFORM_KEY }}
+      aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+  conformance-test-upload:
+    name: Upload conformance test results
+    needs: [release, conformance-test]
     runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: ./inttest/sonobuoy/terraform
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ amd64, arm64 ]
+
     steps:
-      - name: Run git checkout
-        uses: actions/checkout@v4
-
-      - name: Prepare build environment
-        working-directory: ./
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Fetch k0s Artifact
+      - name: Download conformance test results
         uses: actions/download-artifact@v4
         with:
-          name: k0s-${{ matrix.arch }}
-          path: ${{ github.workspace }}/k0s
-
-      - name: Launch Test Environment
-        env:
-          TF_VAR_cluster_name: "k0s_conformance"
-          TF_VAR_k0s_version: ${{ needs.release.outputs.tag_name }}
-        run: |
-          # Start SSH Agent
-          eval `ssh-agent -s`
-
-          terraform apply -auto-approve
-
-      - name: Create k0s Cluster using k0sctl
-        run: |
-          # download k0sctl
-          curl $CURL_OPTS --output k0sctl "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-amd64"
-          chmod +x ./k0sctl
-          ./k0sctl apply -c k0sctl.yaml
-
-          # save kubeconfig file
-          ./k0sctl kubeconfig > $KUBECONFIG
-
-      - name: Run Full Conformance Check
-        run: make check-conformance
-        working-directory: ./inttest
-
-      - name: Retrieve Sonobuoy Results
-        run: |
-          make get-conformance-results
-        working-directory: ./inttest
+          path: ostests-e2e
+          pattern: ostests-e2e-*-sonobuoy-results
 
       - name: Upload conformance test result to Release Assets
-        uses: shogo82148/actions-upload-release-asset@v1.7.7 # Allows us to upload a file with wildcard patterns
+        uses: shogo82148/actions-upload-release-asset@v1.7.7
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: inttest/*_sonobuoy_*.tar.gz
+          asset_path: ostests-e2e/*-${{ matrix.arch }}-*/sonobuoy-e2e-serial.tar.gz
           asset_name: sonobuoy-conformance-results-${{ matrix.arch }}-${{ needs.release.outputs.tag_name }}.tar.gz
           asset_content_type: application/gzip
-          overwrite: true # In case we need to re-run the conformance this let's us to overwrite the results tarball
-        if: ${{ always() }}
-      - name: Clean-Up Environment
-        env:
-          TF_VAR_cluster_name: "k0s_conformance"
-          TF_VAR_k0s_version: ${{ needs.release.outputs.tag_name }}
-        run: |
-          terraform destroy -auto-approve
-        if: ${{ always() }}
