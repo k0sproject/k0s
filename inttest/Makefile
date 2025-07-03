@@ -87,6 +87,9 @@ check-customports-dynamicconfig: TEST_PACKAGE=customports
 
 check-kubeletcertrotate: TIMEOUT=15m
 
+check-cplb-ipvs-ipv6: export K0S_IPV6_ONLY=yes
+check-cplb-ipvs-ipv6: TEST_PACKAGE=cplb-ipvs
+
 check-cplb-userspace-extaddr: export K0S_USE_EXTERNAL_ADDRESS=yes
 check-cplb-userspace-extaddr: TEST_PACKAGE=cplb-userspace
 

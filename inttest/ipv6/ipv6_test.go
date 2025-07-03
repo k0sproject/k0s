@@ -70,11 +70,11 @@ func (s *IPv6Suite) TestK0sGetsUp() {
 
 	if os.Getenv("K0S_NETWORK") == "kube-router" {
 		s.T().Log("Using kube-router network")
-		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouter, common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(0)))
+		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouter, common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(0), ""))
 		cniDS = "kube-router"
 	} else {
 		s.T().Log("Using calico network")
-		k0sConfig = fmt.Sprintf(k0sConfigWithCalico, common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(0)))
+		k0sConfig = fmt.Sprintf(k0sConfigWithCalico, common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(0), ""))
 		cniDS = "calico-node"
 	}
 

@@ -18,11 +18,13 @@ package common
 
 import (
 	"net"
+	"slices"
 	"strings"
 )
 
 // FirstPublicIPv6Address retrieves the first public IPv6 address from the eth0 interface of a node.
-func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string) string {
+// A lit of addresses can be excluded
+func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string, excludedIPs ...string) string {
 	ssh, err := s.SSH(s.Context(), nodeName)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -38,7 +40,9 @@ func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string) string {
 		ip, _, err := net.ParseCIDR(fields[3])
 		s.Require().NoError(err, "Failed to parse IP address from output line")
 
-		return ip.String()
+		if ip := ip.String(); !slices.Contains(excludedIPs, ip) {
+			return ip
+		}
 	}
 
 	s.Require().Fail("No IPv6 address found on eth0")
@@ -52,12 +56,13 @@ func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string) string {
 func GetCPLBVIP(s *BootlooseSuite, isIPv6Only bool) string {
 	var ip string
 	if isIPv6Only {
-		ip = FirstPublicIPv6Address(s, s.ControllerNode(0))
+		ip = FirstPublicIPv6Address(s, s.ControllerNode(0), "")
 	} else {
 		ip = s.GetIPAddress(s.ControllerNode(0))
 	}
 
 	addr := net.ParseIP(ip)
+	s.Require().NotNil(addr, "Failed to parse IP address: %s", ip)
 	if addr[15] >= 154 {
 		addr[15] -= 100
 	} else {
