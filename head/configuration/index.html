@@ -3280,6 +3280,10 @@ node-local load balancing.</p>
 <td><code>unicastSourceIP</code></td>
 <td>The source IP address when using unicast. If <code>unicastPeers</code> isn't defined this field is ignored.</td>
 </tr>
+<tr>
+<td><code>addressLabel</code></td>
+<td>The label for the VRRP instance for IPv6 VIPs.  This value is ignored for IPv4 VIPs. This is used to set the routing preference as per RFC 6724. If set to <code>0</code>, uses default value. Default: <code>10000</code></td>
+</tr>
 </tbody>
 </table>
 <h5 id="specnetworkcontrolplaneloadbalancingkeepalivedvirtualservers"><code>spec.network.controlPlaneLoadBalancing.keepalived.virtualServers</code><a class="headerlink" href="#specnetworkcontrolplaneloadbalancingkeepalivedvirtualservers" title="Permanent link">#</a></h5>

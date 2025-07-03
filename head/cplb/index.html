@@ -2806,6 +2806,28 @@ instances to use unicast:</p>
 </code></pre></div>
 <p>When using unicast, k0st does not attempt to detect <code>unicastSourceIP</code> and it must be defined explicitly and
 <code>unicastPeers</code> must include the IP address of the other controllers' <code>unicastSourceIP</code>.</p>
+<h4 id="ipv6-vips-egress-routing-preference">IPv6 VIPs egress routing preference<a class="headerlink" href="#ipv6-vips-egress-routing-preference" title="Permanent link">#</a></h4>
+<p>In IPv6 there aren't primary addresses, instead the routing preference is determined by the operating system using
+either IP labels or IP rules. K0s Virtual Addresses uses <a href="https://datatracker.ietf.org/doc/html/rfc6724">RFC 6724</a> IP labels. By default, k0s sets the label to
+10000 so that it still uses the main IP address as a source of egress connections.</p>
+<p>This value may be replaced per vrrPInstance:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;2001:db8:2::1/64&quot;]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">          </span><span class="nt">addressLabel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30000</span>
+</code></pre></div>
+<p>The label value can be verified using iproute2:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>ip<span class="w"> </span>addrlabel<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">2001</span>:db8:2::1
+prefix<span class="w"> </span><span class="m">2001</span>:db8:2::1/128<span class="w"> </span>label<span class="w"> </span><span class="m">30000</span>
+</code></pre></div>
+<p>The prefix always uses netmask 128.</p>
+<p>K0s doesn't attempt to modify labels that do not belong to the VIP.</p>
 <h2 id="load-balancing">Load Balancing<a class="headerlink" href="#load-balancing" title="Permanent link">#</a></h2>
 <p>Currently k0s allows to chose one of two load balancing mechanism:</p>
 <ol>
@@ -3139,6 +3161,7 @@ load balancer's endpoint list. This component monitors constantly the endpoint <
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>/var/lib/k0s/bin/iptables-save<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">6444</span>
 <span class="go">-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444</span>
 </code></pre></div>
+<p>Keep in mind that clusters using IPv6 as a primary address family, should use ip6tables or ip6tables-save.</p>
 <p>It the load balancer is not load balancing for whatever reason, you can establish connections to it directly. A good way to see if it's actually load balancing is checking the serving certificate:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>ip<span class="w"> </span>-o<span class="w"> </span>addr<span class="w"> </span>s<span class="w"> </span>eth0
 <span class="go">43: eth0    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0\       valid_lft forever preferred_lft forever</span>
