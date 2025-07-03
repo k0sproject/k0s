@@ -44,3 +44,25 @@ func FirstPublicIPv6Address(s *BootlooseSuite, nodeName string) string {
 	s.Require().Fail("No IPv6 address found on eth0")
 	return ""
 }
+
+// GetCPLBVIP returns the IP address of the controller 0 and it adds 100 to
+// the last octet unless it's bigger or equal to 154, in which case it
+// subtracts 100. Theoretically this could result in an invalid IP address.
+// This is so that get a virtual IP in the same subnet as the controller.
+func GetCPLBVIP(s *BootlooseSuite, isIPv6Only bool) string {
+	var ip string
+	if isIPv6Only {
+		ip = FirstPublicIPv6Address(s, s.ControllerNode(0))
+	} else {
+		ip = s.GetIPAddress(s.ControllerNode(0))
+	}
+
+	addr := net.ParseIP(ip)
+	if addr[15] >= 154 {
+		addr[15] -= 100
+	} else {
+		addr[15] += 100
+	}
+
+	return addr.String()
+}

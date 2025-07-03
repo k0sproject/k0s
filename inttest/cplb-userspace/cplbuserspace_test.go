@@ -110,7 +110,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 		s.T().Log("Using CPLB + NLLB")
 	}
 
-	lb := s.getLBAddress()
+	lb := common.GetCPLBVIP(&s.BootlooseSuite, s.isIPv6Only)
 	k0sCfg := s.getK0sCfg(useExtAddr, lb)
 
 	ctx := s.Context()
@@ -197,28 +197,6 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 		attempt++
 		s.Require().LessOrEqual(attempt, 15, "Failed to get a signature from all controllers")
 	}
-}
-
-// getLBAddress returns the IP address of the controller 0 and it adds 100 to
-// the last octet unless it's bigger or equal to 154, in which case it
-// subtracts 100. Theoretically this could result in an invalid IP address.
-// This is so that get a virtual IP in the same subnet as the controller.
-func (s *CPLBUserSpaceSuite) getLBAddress() string {
-	var ip string
-	if s.isIPv6Only {
-		ip = common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(0))
-	} else {
-		ip = s.GetIPAddress(s.ControllerNode(0))
-	}
-
-	addr := net.ParseIP(ip)
-	if addr[15] >= 154 {
-		addr[15] -= 100
-	} else {
-		addr[15] += 100
-	}
-
-	return addr.String()
 }
 
 func (s *CPLBUserSpaceSuite) lbCIDR(ip string) string {

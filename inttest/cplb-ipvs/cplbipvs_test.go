@@ -71,7 +71,7 @@ func (s *cplbIPVSSuite) getK0sCfg(nodeIdx int, lb string) string {
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *cplbIPVSSuite) TestK0sGetsUp() {
-	lb := s.getLBAddress()
+	lb := common.GetCPLBVIP(&s.BootlooseSuite, false)
 	ctx := s.Context()
 	var joinToken string
 
@@ -128,26 +128,6 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	for idx := range s.ControllerCount {
 		s.validateRealServers(ctx, s.ControllerNode(idx), lb, idx == activeNode)
 	}
-}
-
-// getLBAddress returns the IP address of the controller 0 and it adds 100 to
-// the last octet unless it's bigger or equal to 154, in which case it
-// subtracts 100. Theoretically this could result in an invalid IP address.
-func (s *cplbIPVSSuite) getLBAddress() string {
-	ip := s.GetIPAddress(s.ControllerNode(0))
-	parts := strings.Split(ip, ".")
-	if len(parts) != 4 {
-		s.T().Fatalf("Invalid IP address: %q", ip)
-	}
-	lastOctet, err := strconv.Atoi(parts[3])
-	s.Require().NoErrorf(err, "Failed to convert last octet %q to int", parts[3])
-	if lastOctet >= 154 {
-		lastOctet -= 100
-	} else {
-		lastOctet += 100
-	}
-
-	return fmt.Sprintf("%s.%d", strings.Join(parts[:3], "."), lastOctet)
 }
 
 // getUnicastAddresses returns the unicast addresses for the given index and
