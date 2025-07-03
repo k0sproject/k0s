@@ -29,7 +29,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -117,7 +116,6 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	ctx := s.Context()
 	var joinToken string
 	for idx := range s.ControllerCount {
-		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
 		if s.isIPv6Only {
 			// Note that the token is intentionally empty for the first controller

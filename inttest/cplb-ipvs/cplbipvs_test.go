@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 
@@ -77,7 +76,6 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	var joinToken string
 
 	for idx := range s.ControllerCount {
-		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 		k0sCfg := s.getK0sCfg(idx, lb)
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
 
