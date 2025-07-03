@@ -278,10 +278,6 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if err != nil {
-		return "", err
-	}
-
 	// Get the TLS connection state
 	connState := resp.TLS
 	if connState == nil {
