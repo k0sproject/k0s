@@ -39,7 +39,6 @@ contexts:
   name: k0s
 current-context: k0s
 kind: Config
-preferences: {}
 users:
 - name: the user
   user:
