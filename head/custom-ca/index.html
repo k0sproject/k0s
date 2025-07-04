@@ -2415,7 +2415,7 @@
 
 
 <h1 id="install-using-custom-ca-certificates-and-sa-key-pair">Install using custom CA certificates and SA key pair<a class="headerlink" href="#install-using-custom-ca-certificates-and-sa-key-pair" title="Permanent link">#</a></h1>
-<p>k0s generates all needed certificates automatically in the <code>&lt;data-dir&gt;/pki</code> directory (<code>/var/lib/k0s/pki</code>, by default).  </p>
+<p>k0s generates all needed certificates automatically in the <code>&lt;data-dir&gt;/pki</code> directory (<code>/var/lib/k0s/pki</code>, by default).</p>
 <p>But sometimes there is a need to have the CA certificates and SA key pair in advance.
 To make it work, just put files to the <code>&lt;data-dir&gt;/pki</code> and <code>&lt;data-dir&gt;/pki/etcd</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">LIFETIME</span><span class="o">=</span><span class="m">365</span>
@@ -2437,7 +2437,7 @@ openssl<span class="w"> </span>req<span class="w"> </span>-x509<span class="w"> 
 <p>The command above generates a join token and a Secret. A Secret should be deployed to the cluster to authorize the token.
 For example, you can put the Secret under the <a href="../manifests/">manifest</a> directory and it will be deployed automatically.</p>
 <p>Please note that if you are generating a join token for a controller, the port number needs to be 9443 instead of 6443.
-Controller bootstrapping requires talking to the k0s-apiserver instead of the kube-apiserver.
+Controller bootstrapping requires talking to the k0s API server instead of the Kubernetes API server.
 Here's an example of a command for pre-generating a token for a controller.</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>token<span class="w"> </span>pre-shared<span class="w"> </span>--role<span class="w"> </span>controller<span class="w"> </span>--cert<span class="w"> </span>/var/lib/k0s/pki/ca.crt<span class="w"> </span>--url<span class="w"> </span>https://&lt;controller-ip&gt;:9443/
 </code></pre></div>

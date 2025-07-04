@@ -2449,7 +2449,7 @@
 
 
 <h1 id="installing-traefik-ingress-controller">Installing Traefik Ingress Controller<a class="headerlink" href="#installing-traefik-ingress-controller" title="Permanent link">#</a></h1>
-<p>You can configure k0s with the <a href="https://doc.traefik.io/traefik/providers/kubernetes-ingress/">Traefik ingress controller</a>, a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>, and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration.</p>
+<p>You can configure k0s with the <a href="https://doc.traefik.io/traefik/providers/kubernetes-ingress/">Traefik Ingress Controller</a>, a <a href="https://metallb.io/">MetalLB service load balancer</a>, and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration.</p>
 <h2 id="1-configure-k0syaml">1. Configure k0s.yaml<a class="headerlink" href="#1-configure-k0syaml" title="Permanent link">#</a></h2>
 <p>Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their <a href="../../helm-charts/">Helm charts</a> as extensions in the k0s configuration file (<code>k0s.yaml</code>).</p>
 <p><strong>Note:</strong></p>
@@ -2627,7 +2627,10 @@ X-Real-Ip:<span class="w"> </span><span class="m">192</span>.168.0.82
 </li>
 </ol>
 <h2 id="further-details">Further details<a class="headerlink" href="#further-details" title="Permanent link">#</a></h2>
-<p>With the Traefik Ingress Controller it is possible to use 3rd party tools, such as <a href="https://ngrok.io">ngrok</a>, to go further and expose your load balancer to the world. In doing this you enable dynamic certificate provisioning through <a href="https://letsencrypt.org/">Let's Encrypt</a>, using either <a href="https://cert-manager.io/docs/">cert-manager</a> or Traefik's own built-in <a href="https://doc.traefik.io/traefik/v2.0/user-guides/crd-acme/">ACME provider</a>.</p>
+<p>With the Traefik Ingress Controller it is possible to use third party tools,
+such as <a href="https://ngrok.com/">ngrok</a>, to go further and expose your load balancer to the world. In
+doing this you enable dynamic certificate provisioning through <a href="https://letsencrypt.org/">Let's Encrypt</a>,
+using either <a href="https://cert-manager.io/docs/">cert-manager</a> or Traefik's own built-in <a href="https://doc.traefik.io/traefik/v2.0/user-guides/crd-acme/">ACME provider</a>.</p>
 
 
 

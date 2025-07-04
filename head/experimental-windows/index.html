@@ -2551,16 +2551,16 @@
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <p>The cluster must be running at least one worker node and control plane on Linux. You can use Windows to run additional worker nodes.</p>
 <h2 id="run-k0s">Run k0s<a class="headerlink" href="#run-k0s" title="Permanent link">#</a></h2>
-<p><strong>Note</strong>: The k0s.exe supervises kubelet.exe and kube-proxy.exe.</p>
-<p>During the first run, the calico install script is created as <code>C:\bootstrap.ps1</code>. This bootstrap script downloads the calico binaries, builds pause container and sets up vSwitch settings.</p>
-<p>Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).</p>
+<p><strong>Note</strong>: k0s supervises <code>kubelet.exe</code> and <code>kube-proxy.exe</code>.</p>
+<p>During the first run, the Calico install script is created as <code>C:\bootstrap.ps1</code>. This bootstrap script downloads the Calico binaries, builds pause container and sets up vSwitch settings.</p>
+<p>Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up.</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--cri-socket<span class="o">=</span>remote:npipe:////./pipe/containerd-containerd<span class="w"> </span>&lt;token&gt;
 </code></pre></div>
-<p>You must initiate the Cluster control with the correct config.</p>
+<p>You must initiate the cluster control with the correct config.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
 <h3 id="strict-affinity">Strict-affinity<a class="headerlink" href="#strict-affinity" title="Permanent link">#</a></h3>
 <p>You must enable strict affinity to run the windows node.</p>
-<p>If the <code>spec.network.calico.withWindowsNodes</code> field is set to <code>true</code> (it is set to <code>false</code> by default) the additional calico related manifest <code>/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml</code> is created with the following values:</p>
+<p>If the <code>spec.network.Calico.withWindowsNodes</code> field is set to <code>true</code> (it is set to <code>false</code> by default) the additional Calico related manifest <code>/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml</code> is created with the following values:</p>
 <div class="highlight"><pre><span></span><code><span class="nn">---</span>
 <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">crd.projectcalico.org/v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IPAMConfig</span>
@@ -2569,7 +2569,7 @@
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">strictAffinity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
-<p>Alternately, you can manually execute calicoctl:</p>
+<p>Alternately, you can manually execute <code>calicoctl</code>:</p>
 <div class="highlight"><pre><span></span><code>calicoctl<span class="w"> </span>ipam<span class="w"> </span>configure<span class="w"> </span>--strictaffinity<span class="o">=</span><span class="nb">true</span>
 </code></pre></div>
 <h3 id="network-connectivity-in-aws">Network connectivity in AWS<a class="headerlink" href="#network-connectivity-in-aws" title="Permanent link">#</a></h3>

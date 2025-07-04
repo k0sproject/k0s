@@ -1179,7 +1179,7 @@
         <li class="md-nav__item">
   <a href="#enabling-dual-stack-using-the-default-cni-kube-router" class="md-nav__link">
     <span class="md-ellipsis">
-      Enabling dual-stack using the default CNI (kube-router)
+      Enabling dual-stack using the default CNI (Kube-router)
     </span>
   </a>
   
@@ -2408,7 +2408,7 @@
         <li class="md-nav__item">
   <a href="#enabling-dual-stack-using-the-default-cni-kube-router" class="md-nav__link">
     <span class="md-ellipsis">
-      Enabling dual-stack using the default CNI (kube-router)
+      Enabling dual-stack using the default CNI (Kube-router)
     </span>
   </a>
   
@@ -2469,12 +2469,12 @@
 <h1 id="ipv4ipv6-dual-stack-networking">IPv4/IPv6 dual-stack networking<a class="headerlink" href="#ipv4ipv6-dual-stack-networking" title="Permanent link">#</a></h1>
 <p>Enabling dual-stack networking in k0s allows your cluster to handle both IPv4 and
 IPv6 addresses. Follow the configuration examples below to set up dual-stack mode.</p>
-<h2 id="enabling-dual-stack-using-the-default-cni-kube-router">Enabling dual-stack using the default CNI (kube-router)<a class="headerlink" href="#enabling-dual-stack-using-the-default-cni-kube-router" title="Permanent link">#</a></h2>
+<h2 id="enabling-dual-stack-using-the-default-cni-kube-router">Enabling dual-stack using the default CNI (Kube-router)<a class="headerlink" href="#enabling-dual-stack-using-the-default-cni-kube-router" title="Permanent link">#</a></h2>
 <p>In order to enable dual-stack networking using the default CNI provider, use the
 following example configuration:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span>
-<span class="w">    </span><span class="c1"># kube-router is the default CNI provider</span>
+<span class="w">    </span><span class="c1"># Kube-router is the default CNI provider</span>
 <span class="w">    </span><span class="c1"># provider: kube-router</span>
 <span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.244.0.0/16</span>
 <span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span>
@@ -2483,7 +2483,7 @@ following example configuration:</p>
 <span class="w">      </span><span class="nt">IPv6podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd00::/108</span>
 <span class="w">      </span><span class="nt">IPv6serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd01::/108</span>
 </code></pre></div>
-<p>This configuration will set up all Kubernetes components and kube-router
+<p>This configuration will set up all Kubernetes components and Kube-router
 accordingly for dual-stack networking.</p>
 <h2 id="using-calico-as-the-cni-provider">Using Calico as the CNI provider<a class="headerlink" href="#using-calico-as-the-cni-provider" title="Permanent link">#</a></h2>
 <p>Calico does not support IPv6 tunneling in the default <code>vxlan</code> mode, so if you
@@ -2503,9 +2503,10 @@ the following example configuration:</p>
 </code></pre></div>
 <h2 id="specifying-the-default-ip-family">Specifying the default IP family<a class="headerlink" href="#specifying-the-default-ip-family" title="Permanent link">#</a></h2>
 <p>In Kubernetes dual stack clusters, by default all the services are single stack,
-including <code>kubernetes.default.svc</code>, which is used to communicate with the kube-servers.</p>
-<p>This is specially importantwhen specifying explicitly <code>spec.api.externalAddress</code> or
-<code>spec.api.address</code>.</p>
+including <code>kubernetes.default.svc</code>, which is used to communicate with the
+Kubernetes API servers.</p>
+<p>This is specially important when specifying explicitly
+<code>spec.api.externalAddress</code> or <code>spec.api.address</code>.</p>
 <p>To explicitly define the family which will be used by default use the following
 configuration:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
@@ -2515,7 +2516,7 @@ configuration:</p>
 </code></pre></div>
 <p>If not defined explicitly, k0s will determine it based on <code>spec.api.externalAddress</code>,
 if this field is not defined, k0s will use <code>spec.api.address</code>. If the field used is
-a hostname or both are empty, k0s will use IPv4.</p>
+a host name or both are empty, k0s will use IPv4.</p>
 <h2 id="custom-cni-providers">Custom CNI providers<a class="headerlink" href="#custom-cni-providers" title="Permanent link">#</a></h2>
 <p>While the dual-stack configuration section configures all components managed by
 k0s for dual-stack operation, the custom CNI provider must also be configured

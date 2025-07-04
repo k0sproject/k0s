@@ -1400,9 +1400,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#troubleshooting-the-userspace-reverse-proxy-load-balancer" class="md-nav__link">
+  <a href="#troubleshooting-the-user-space-reverse-proxy-load-balancer" class="md-nav__link">
     <span class="md-ellipsis">
-      Troubleshooting the Userspace Reverse Proxy Load Balancer
+      Troubleshooting the user space reverse proxy load balancer
     </span>
   </a>
   
@@ -2692,9 +2692,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#troubleshooting-the-userspace-reverse-proxy-load-balancer" class="md-nav__link">
+  <a href="#troubleshooting-the-user-space-reverse-proxy-load-balancer" class="md-nav__link">
     <span class="md-ellipsis">
-      Troubleshooting the Userspace Reverse Proxy Load Balancer
+      Troubleshooting the user space reverse proxy load balancer
     </span>
   </a>
   
@@ -3092,8 +3092,9 @@ failure condition:</p>
 <span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.33.2+k0s</span>
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h2>
-<p>Although Virtual IPs and Load Balancing work together and are closely related, these are two independent
-processes and must be troubleshooting as two independent features.</p>
+<p>Although Virtual IP addresses and load balancing work together and are closely
+related, these are two independent processes and must be troubleshooting as two
+independent features.</p>
 <h3 id="troubleshooting-virtual-ips">Troubleshooting Virtual IPs<a class="headerlink" href="#troubleshooting-virtual-ips" title="Permanent link">#</a></h3>
 <p>The first thing to check is that the VIP is present in exactly one node at a time,
 for instance if a cluster has an <code>172.17.0.102/16</code> address and the interface is <code>eth0</code>,
@@ -3112,9 +3113,9 @@ the expected output is similar to:</p>
 <span class="go">    inet 172.17.0.3/16 brd 172.17.255.255 scope global eth0</span>
 <span class="go">       valid_lft forever preferred_lft forever</span>
 </code></pre></div>
-<p>If the virtualServers feature is used, there must be a dummy interface on the node
-called <code>dummyvip0</code> which has the VIP but with <code>32</code> netmask. This isn't the VIP and
-has to be there even if the VIP is held by another node.</p>
+<p>If the <code>virtualServers</code> feature is used, there must be a dummy interface on the
+node called <code>dummyvip0</code> which has the VIP, but with a <code>/32</code> bits network mask.
+This isn't the VIP and has to be there even if the VIP is held by another node.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>ip<span class="w"> </span>a<span class="w"> </span>s<span class="w"> </span>dummyvip0<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">172</span>.17.0.102
 <span class="go">    inet 172.17.0.102/32 scope global dummyvip0</span>
 </code></pre></div>
@@ -3129,12 +3130,12 @@ can be filtered with <code>component=keepalived</code>.</p>
 <span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Tue Nov 19 12:56:11 2024: Starting Keepalived v2.2.8 (04/04,2023), git commit v2.2.7-154-g292b299e+&quot; component=keepalived stream=stderr</span>
 <span class="go">[...]</span>
 </code></pre></div>
-<p>The keepalived configuration is stored in a file called keepalived.conf in the k0s run
-directory, by default <code>/run/k0s/keepalived.conf</code>, in this file there should be a
-<code>vrrp_instance</code>section for each <code>vrrpInstance</code>.</p>
+<p>The Keepalived configuration is stored in a file called <code>keepalived.conf</code> in the
+k0s run directory, by default <code>/run/k0s/keepalived.conf</code>, in this file there
+should be a <code>vrrp_instance</code> section for each <code>vrrpInstance</code>.</p>
 <p>Finally, k0s should have two keepalived processes running.</p>
 <h3 id="troubleshooting-the-load-balancers-endpoint-list">Troubleshooting the Load Balancer's Endpoint List<a class="headerlink" href="#troubleshooting-the-load-balancers-endpoint-list" title="Permanent link">#</a></h3>
-<p>Both the userspace reverse proxy load balancer and Keepalived's virtual servers need an endpoint list to
+<p>Both the user space reverse proxy load balancer and Keepalived's virtual servers need an endpoint list to
 do the load balancing. They share a component called <code>cplb-reconciler</code> which responsible for setting the
 load balancer's endpoint list. This component monitors constantly the endpoint <code>kubernetes</code> in the
 <code>default</code>namespace:</p>
@@ -3149,15 +3150,15 @@ load balancer's endpoint list. This component monitors constantly the endpoint <
 <span class="go">time=&quot;2024-11-20 20:29:55&quot; level=info msg=&quot;Updated the list of IPs: [172.17.0.6 172.17.0.7]&quot; component=cplb-reconciler</span>
 <span class="go">time=&quot;2024-11-20 20:29:59&quot; level=info msg=&quot;Updated the list of IPs: [172.17.0.6 172.17.0.7 172.17.0.8]&quot; component=cplb-reconciler</span>
 </code></pre></div>
-<h3 id="troubleshooting-the-userspace-reverse-proxy-load-balancer">Troubleshooting the Userspace Reverse Proxy Load Balancer<a class="headerlink" href="#troubleshooting-the-userspace-reverse-proxy-load-balancer" title="Permanent link">#</a></h3>
-<p>The userspace reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:</p>
+<h3 id="troubleshooting-the-user-space-reverse-proxy-load-balancer">Troubleshooting the user space reverse proxy load balancer<a class="headerlink" href="#troubleshooting-the-user-space-reverse-proxy-load-balancer" title="Permanent link">#</a></h3>
+<p>The user space reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>netstat<span class="w"> </span>-tlpn<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">6444</span>
 <span class="go">tcp        0      0 :::6444                 :::*                    LISTEN      345/k0s</span>
 </code></pre></div>
 <p>Then the requests to the VIP on the apiserver port are forwarded to this socket using one iptables rule:</p>
 <div class="highlight"><pre><span></span><code><span class="go">-A PREROUTING -d &lt;VIP&gt;/32 -p tcp -m tcp --dport &lt;apiserver port&gt; -j REDIRECT --to-ports &lt;userspace proxy port&gt;</span>
 </code></pre></div>
-<p>A real life example of a cluster using using the VIP <code>17.177.0.102</code> looks like:</p>
+<p>A real life example of a cluster using the VIP <code>17.177.0.102</code> looks like:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>/var/lib/k0s/bin/iptables-save<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">6444</span>
 <span class="go">-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444</span>
 </code></pre></div>
@@ -3179,12 +3180,12 @@ load balancer's endpoint list. This component monitors constantly the endpoint <
 <p>Note: You can't query the port 6444 on the localhost address, there is an iptables conflict. You are expected to
 be able to reach the port 6443 on any address and the port 6444 on any address except localhost.</p>
 <h3 id="troubleshooting-keepalived-virtual-servers">Troubleshooting Keepalived Virtual Servers<a class="headerlink" href="#troubleshooting-keepalived-virtual-servers" title="Permanent link">#</a></h3>
-<p>You can verify the keepalived's logs and configuration file using the steps described in the section
+<p>You can verify the Keepalived logs and configuration file using the steps described in the section
 <a href="#troubleshooting-virtual-ips">troubleshooting virtual IPs</a> above.</p>
 <p>When virtual servers are enabled K0s generates two additional files:</p>
 <ul>
 <li><code>keepalived-virtualservers-generated.conf</code>: This file contains the list of control plane nodes that should be balanced to.</li>
-<li><code>keepalived-virtualservers-consumed.conf</code>: This is a symlink which points to <code>keepalived-virtualservers-generated.conf</code>
+<li><code>keepalived-virtualservers-consumed.conf</code>: This is a symbolic link which points to <code>keepalived-virtualservers-generated.conf</code>
 if the Keepalived VRRP instance's current state is <code>master</code> or to <code>/dev/null</code> if it's <code>backup</code>. This file is only generated if
 there is exactly one VRRP instance.</li>
 </ul>

@@ -2479,7 +2479,7 @@
 
 
 <h1 id="configuration-options-for-worker-nodes">Configuration options for worker nodes<a class="headerlink" href="#configuration-options-for-worker-nodes" title="Permanent link">#</a></h1>
-<p>Although the <code>k0s worker</code> command does not take in any special yaml configuration, there are still methods for configuring the workers to run various components.</p>
+<p>Although the <code>k0s worker</code> command does not take in any special YAML configuration, there are still methods for configuring the workers to run various components.</p>
 <h2 id="node-labels">Node labels<a class="headerlink" href="#node-labels" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts the <code>--labels</code> flag, with which you can make the newly joined worker node register itself, in the Kubernetes API, with the given set of labels.</p>
 <p>For example, running the worker with <code>k0s worker --token-file k0s.token --labels="k0sproject.io/foo=bar,k0sproject.io/other=xyz"</code> results in:</p>

@@ -1589,46 +1589,46 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#nodeport-vs-loadbalancer-vs-ingress-controller" class="md-nav__link">
+  <a href="#nodeport-vs-loadbalancer-vs-ingress" class="md-nav__link">
     <span class="md-ellipsis">
-      NodePort vs LoadBalancer vs Ingress controller
+      NodePort vs. LoadBalancer vs. Ingress
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#nginx-ingress-controller" class="md-nav__link">
+  <a href="#ingress-nginx-controller" class="md-nav__link">
     <span class="md-ellipsis">
-      NGINX Ingress Controller
+      Ingress NGINX Controller
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="NGINX Ingress Controller">
+    <nav class="md-nav" aria-label="Ingress NGINX Controller">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#install-nginx-using-nodeport" class="md-nav__link">
+  <a href="#installation-using-nodeport" class="md-nav__link">
     <span class="md-ellipsis">
-      Install NGINX using NodePort
+      Installation using NodePort
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#install-nginx-using-loadbalancer" class="md-nav__link">
+  <a href="#install-using-loadbalancer" class="md-nav__link">
     <span class="md-ellipsis">
-      Install NGINX using LoadBalancer
+      Install using LoadBalancer
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#install-nginx-using-host-network" class="md-nav__link">
+  <a href="#install-using-host-network" class="md-nav__link">
     <span class="md-ellipsis">
-      Install NGINX using host network
+      Install using host network
     </span>
   </a>
   
@@ -1651,7 +1651,7 @@
         <li class="md-nav__item">
   <a href="#alternative-examples-for-ingress-controllers-on-k0s" class="md-nav__link">
     <span class="md-ellipsis">
-      Alternative examples for Ingress Controllers on k0s
+      Alternative examples for ingress controllers on k0s
     </span>
   </a>
   
@@ -2430,46 +2430,46 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#nodeport-vs-loadbalancer-vs-ingress-controller" class="md-nav__link">
+  <a href="#nodeport-vs-loadbalancer-vs-ingress" class="md-nav__link">
     <span class="md-ellipsis">
-      NodePort vs LoadBalancer vs Ingress controller
+      NodePort vs. LoadBalancer vs. Ingress
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#nginx-ingress-controller" class="md-nav__link">
+  <a href="#ingress-nginx-controller" class="md-nav__link">
     <span class="md-ellipsis">
-      NGINX Ingress Controller
+      Ingress NGINX Controller
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="NGINX Ingress Controller">
+    <nav class="md-nav" aria-label="Ingress NGINX Controller">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#install-nginx-using-nodeport" class="md-nav__link">
+  <a href="#installation-using-nodeport" class="md-nav__link">
     <span class="md-ellipsis">
-      Install NGINX using NodePort
+      Installation using NodePort
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#install-nginx-using-loadbalancer" class="md-nav__link">
+  <a href="#install-using-loadbalancer" class="md-nav__link">
     <span class="md-ellipsis">
-      Install NGINX using LoadBalancer
+      Install using LoadBalancer
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#install-nginx-using-host-network" class="md-nav__link">
+  <a href="#install-using-host-network" class="md-nav__link">
     <span class="md-ellipsis">
-      Install NGINX using host network
+      Install using host network
     </span>
   </a>
   
@@ -2492,7 +2492,7 @@
         <li class="md-nav__item">
   <a href="#alternative-examples-for-ingress-controllers-on-k0s" class="md-nav__link">
     <span class="md-ellipsis">
-      Alternative examples for Ingress Controllers on k0s
+      Alternative examples for ingress controllers on k0s
     </span>
   </a>
   
@@ -2515,20 +2515,24 @@
 
 
 <h1 id="installing-nginx-ingress-controller">Installing NGINX Ingress Controller<a class="headerlink" href="#installing-nginx-ingress-controller" title="Permanent link">#</a></h1>
-<p>This tutorial covers the installation of <a href="https://github.com/kubernetes/ingress-nginx">NGINX Ingress controller</a>, which is an open source project made by the Kubernetes community. k0s doesn't come with an in-built Ingress controller, but it's easy to deploy NGINX Ingress as shown in this document. Other Ingress solutions can be used as well (see the links at the end of the page).</p>
-<h2 id="nodeport-vs-loadbalancer-vs-ingress-controller">NodePort vs LoadBalancer vs Ingress controller<a class="headerlink" href="#nodeport-vs-loadbalancer-vs-ingress-controller" title="Permanent link">#</a></h2>
-<p>Kubernetes offers multiple options for exposing services to external networks. The main options are NodePort, LoadBalancer and Ingress controller.</p>
-<p><strong>NodePort</strong>, as the name says, means that a port on a node is configured to route incoming requests to a certain service. The port range is limited to 30000-32767, so you cannot expose commonly used ports like 80 or 443 with NodePort.</p>
+<p>This tutorial covers the installation of <a href="https://github.com/kubernetes/ingress-nginx">Ingress NGINX Controller</a>, which is an
+open source project made by the Kubernetes community. k0s doesn't come with a
+built-in ingress controller, but it's easy to deploy Ingress NGINX Controller as
+shown in this document. Other ingress solutions can be used as well (see the
+links at the end of the page).</p>
+<h2 id="nodeport-vs-loadbalancer-vs-ingress"><code>NodePort</code> vs. <code>LoadBalancer</code> vs. <code>Ingress</code><a class="headerlink" href="#nodeport-vs-loadbalancer-vs-ingress" title="Permanent link">#</a></h2>
+<p>Kubernetes offers multiple options for exposing services to external networks. The main options are <code>NodePort</code>, <code>LoadBalancer</code> and <code>Ingress</code>.</p>
+<p><strong>NodePort</strong>, as the name says, means that a port on a node is configured to route incoming requests to a certain service. The port range is limited to 30000-32767, so you cannot expose commonly used ports like 80 or 443 via <code>NodePort</code>.</p>
 <p><strong>LoadBalancer</strong> is a service, which is typically implemented by the cloud provider as an external service (with additional cost). Load balancers can also be installed internally in the Kubernetes cluster with MetalLB, which is typically used for bare-metal deployments. Load balancer provides a single IP address to access your services, which can run on multiple nodes.</p>
-<p><strong>Ingress controller</strong> helps to consolidate routing rules of multiple applications into one entity. Ingress controller is exposed to an external network with the help of NodePort, LoadBalancer or host network. You can also use Ingress controller to terminate TLS for your domain in one place, instead of terminating TLS for each application separately.</p>
-<h2 id="nginx-ingress-controller">NGINX Ingress Controller<a class="headerlink" href="#nginx-ingress-controller" title="Permanent link">#</a></h2>
-<p>NGINX Ingress Controller is a very popular Ingress for Kubernetes. In many cloud environments, it can be exposed to an external network by using the load balancer offered by the cloud provider. However, cloud load balancers are not necessary. Load balancer can also be implemented with MetalLB, which can be deployed in the same Kubernetes cluster. Another option to expose the Ingress controller to an external network is to use NodePort. The third option is to use host network. All of these alternatives are described in more detail on below, with separate examples.</p>
+<p><strong>Ingress controller</strong> helps to consolidate routing rules of multiple applications into one entity. Ingress controller is exposed to an external network with the help of <code>NodePort</code>, <code>LoadBalancer</code> or host network. You can also use Ingress controller to terminate TLS for your domain in one place, instead of terminating TLS for each application separately.</p>
+<h2 id="ingress-nginx-controller">Ingress NGINX Controller<a class="headerlink" href="#ingress-nginx-controller" title="Permanent link">#</a></h2>
+<p>Ingress NGINX Controller is a very popular ingress for Kubernetes. In many cloud environments, it can be exposed to an external network by using the load balancer offered by the cloud provider. However, cloud load balancers are not necessary. Load balancer can also be implemented with MetalLB, which can be deployed in the same Kubernetes cluster. Another option to expose the Ingress controller to an external network is to use <code>NodePort</code>. The third option is to use host network. All of these alternatives are described in more detail on below, with separate examples.</p>
 <p><img alt="k0s_ingress_controller" src="../../img/k0s_ingress_controller.png" /></p>
-<h3 id="install-nginx-using-nodeport">Install NGINX using NodePort<a class="headerlink" href="#install-nginx-using-nodeport" title="Permanent link">#</a></h3>
-<p>Installing NGINX using NodePort is the most simple example for Ingress Controller as we can avoid the load balancer dependency. NodePort is used for exposing the NGINX Ingress to the external network.</p>
+<h3 id="installation-using-nodeport">Installation using <code>NodePort</code><a class="headerlink" href="#installation-using-nodeport" title="Permanent link">#</a></h3>
+<p>Installing using <code>NodePort</code> is the most simple example for Ingress NGINX Controller as we can avoid the load balancer dependency. <code>NodePort</code> is used for exposing the controller to the external network.</p>
 <ol>
 <li>
-<p>Install NGINX Ingress Controller (using the official manifests by the ingress-nginx project)</p>
+<p>Install Ingress NGINX Controller (using the official manifests from the official <code>ingress-nginx</code> Kubernetes git repository)</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/baremetal/deploy.yaml
 </code></pre></div>
 </li>
@@ -2543,25 +2547,25 @@
 </code></pre></div>
 </li>
 <li>
-<p>From version <code>v1.0.0</code> of the Ingress-NGINX Controller, <a href="https://kubernetes.github.io/ingress-nginx/#what-is-an-ingressclass-and-why-is-it-important-for-users-of-ingress-nginx-controller-now">a ingressclass object is required</a>.</p>
+<p>From version <code>v1.0.0</code> of the Ingress NGINX Controller, <a href="https://kubernetes.github.io/ingress-nginx/#what-is-an-ingressclass-and-why-is-it-important-for-users-of-ingress-nginx-controller-now">a ingressclass object is required</a>.</p>
 <p>In the default installation, an ingressclass object named <code>nginx</code> has already been created.</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>ingress-nginx<span class="w"> </span>get<span class="w"> </span>ingressclasses
 NAME<span class="w">    </span>CONTROLLER<span class="w">             </span>PARAMETERS<span class="w">   </span>AGE
 nginx<span class="w">   </span>k8s.io/ingress-nginx<span class="w">   </span>&lt;none&gt;<span class="w">       </span>162m
 </code></pre></div>
-<p>If this is only instance of the Ingresss-NGINX controller, you should <a href="https://kubernetes.github.io/ingress-nginx/#i-have-only-one-instance-of-the-ingresss-nginx-controller-in-my-cluster-what-should-i-do">add the annotation</a> <code>ingressclass.kubernetes.io/is-default-class</code> in your ingress class:</p>
+<p>If this is only instance of the Ingress NGINX Controller, you should <a href="https://kubernetes.github.io/ingress-nginx/#i-have-only-one-instance-of-the-ingresss-nginx-controller-in-my-cluster-what-should-i-do">add the annotation</a> <code>ingressclass.kubernetes.io/is-default-class</code> in your ingress class:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>ingress-nginx<span class="w"> </span>annotate<span class="w"> </span>ingressclasses<span class="w"> </span>nginx<span class="w"> </span>ingressclass.kubernetes.io/is-default-class<span class="o">=</span><span class="s2">&quot;true&quot;</span>
 </code></pre></div>
 </li>
 <li>
-<p>Try connecting the Ingress controller using the NodePort from the previous step (in the range of 30000-32767)</p>
+<p>Try connecting the controller using the <code>NodePort</code> from the previous step (in the range of 30000-32767)</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>&lt;worker-external-ip&gt;:&lt;node-port&gt;
 </code></pre></div>
-<p>If you don't yet have any backend service configured, you should see "404 Not Found" from nginx. This is ok for now. If you see a response from nginx, the Ingress Controller is running and you can reach it.</p>
+<p>If you don't yet have any backend service configured, you should see "404 Not Found" from nginx. This is okay for now. If you see a response from nginx, the ingress controller is running and you can reach it.</p>
 </li>
 <li>
-<p>Deploy a small test application (httpd web server) to verify your Ingress controller.</p>
-<p>Create the following YAML file and name it "simple-web-server-with-ingress.yaml":</p>
+<p>Deploy a small test application (Apache HTTP Server) to verify your ingress controller.</p>
+<p>Create the following YAML file and name it <code>simple-web-server-with-ingress.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Namespace</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -2624,24 +2628,24 @@ nginx<span class="w">   </span>k8s.io/ingress-nginx<span class="w">   </span>&lt
 </code></pre></div>
 </li>
 <li>
-<p>Verify that you can access your application using the NodePort from step 3.</p>
+<p>Verify that you can access your application using the <code>NodePort</code> from step 3.</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>&lt;worker-external-ip&gt;:&lt;node-port&gt;<span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;Host: web.example.com&#39;</span>
 </code></pre></div>
 <p>If you are successful, you should see <code>&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</code>.</p>
 </li>
 </ol>
-<h3 id="install-nginx-using-loadbalancer">Install NGINX using LoadBalancer<a class="headerlink" href="#install-nginx-using-loadbalancer" title="Permanent link">#</a></h3>
-<p>In this example you'll install NGINX Ingress controller using LoadBalancer on k0s.</p>
+<h3 id="install-using-loadbalancer">Install using <code>LoadBalancer</code><a class="headerlink" href="#install-using-loadbalancer" title="Permanent link">#</a></h3>
+<p>In this example you'll install Ingress NGINX Controller using <code>LoadBalancer</code> on k0s.</p>
 <ol>
 <li>
-<p>Install LoadBalancer</p>
-<p>There are two alternatives to install LoadBalancer on k0s. Follow the links in order to install LoadBalancer.</p>
-<p>- <a href="../metallb-loadbalancer/">MetalLB</a> as a pure SW solution running internally in the k0s cluster
+<p>Install a <code>LoadBalancer</code></p>
+<p>There are two alternatives to install <code>LoadBalancer</code> on k0s. Follow the links in order to install <code>LoadBalancer</code>.</p>
+<p>- <a href="../metallb-loadbalancer/">MetalLB</a> as a pure software solution running internally in the k0s cluster
   - <a href="../../cloud-providers/">Cloud provider's</a> load balancer running outside of the k0s cluster</p>
 </li>
 <li>
-<p>Verify LoadBalancer</p>
-<p>In order to proceed you need to have a load balancer available for the Kubernetes cluster. To verify that it's available, deploy a simple load balancer service.</p>
+<p>Verify <code>LoadBalancer</code></p>
+<p>In order to proceed you need to have a load balancer available for the Kubernetes cluster. To verify that it's available, deploy a simple Service of type <code>LoadBalancer</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Service</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -2657,59 +2661,59 @@ nginx<span class="w">   </span>k8s.io/ingress-nginx<span class="w">   </span>&lt
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>example-load-balancer.yaml
 </code></pre></div>
-<p>Then run the following command to see your LoadBalancer with an external IP address.</p>
+<p>Then run the following command to see your <code>LoadBalancer</code> with an external IP address.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>service<span class="w"> </span>example-load-balancer
 </code></pre></div>
-<p>If the LoadBalancer is not available, you won't get an IP address for EXTERNAL-IP. Instead, it's <code>&lt;pending&gt;</code>. In this case you should go back to the previous step and check your load balancer availability.</p>
+<p>If the <code>LoadBalancer</code> is not available, you won't get an IP address for EXTERNAL-IP. Instead, it's <code>&lt;pending&gt;</code>. In this case you should go back to the previous step and check your load balancer availability.</p>
 <p>If you are successful, you'll see a real IP address and you can proceed further.</p>
 <p>You can delete the example-load-balancer:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>delete<span class="w"> </span>-f<span class="w"> </span>example-load-balancer.yaml
 </code></pre></div>
 </li>
 <li>
-<p>Install NGINX Ingress Controller by following the steps in the previous chapter (step 1 to step 4).</p>
+<p>Install Ingress NGINX Controller by following the steps in the previous chapter (step 1 to step 4).</p>
 </li>
 <li>
-<p>Edit the NGINX Ingress Controller to use LoadBalancer instead of NodePort</p>
+<p>Edit the Ingress NGINX Controller to use <code>LoadBalancer</code> instead of <code>NodePort</code></p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>edit<span class="w"> </span>service<span class="w"> </span>ingress-nginx-controller<span class="w"> </span>-n<span class="w"> </span>ingress-nginx
 </code></pre></div>
-<p>Find the spec.type field and change it from "NodePort" to "LoadBalancer".</p>
+<p>Find the spec.type field and change it from <code>NodePort</code> to <code>LoadBalancer</code>.</p>
 </li>
 <li>
-<p>Check that you can see the ingress-nginx-controller with type LoadBalancer.</p>
+<p>Check that you can see the <code>ingress-nginx</code> service with type <code>LoadBalancer</code>.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>services<span class="w"> </span>-n<span class="w"> </span>ingress-nginx
 </code></pre></div>
 </li>
 <li>
-<p>Try connecting to the Ingress controller</p>
+<p>Try connecting to the ingress controller</p>
 <p>If you used private IP addresses for MetalLB in step 2, you should run the following command from the local network. Use the IP address from the previous step, column EXTERNAL-IP.</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>&lt;EXTERNAL-IP&gt;
 </code></pre></div>
-<p>If you don't yet have any backend service configured, you should see "404 Not Found" from nginx. This is ok for now. If you see a response from nginx, the Ingress Controller is running and you can reach it using LoadBalancer.</p>
+<p>If you don't yet have any backend service configured, you should see "404 Not Found" from nginx. This is okay for now. If you see a response from nginx, the Ingress Controller is running and you can reach it using <code>LoadBalancer</code>.</p>
 </li>
 <li>
-<p>Deploy a small test application (httpd web server) to verify your Ingress.</p>
-<p>Create the YAML file "simple-web-server-with-ingress.yaml" as described in the previous chapter (step 6) and deploy it.</p>
+<p>Deploy a small test application (Apache HTTP Server) to verify your <code>Ingress</code>.</p>
+<p>Create the YAML file <code>simple-web-server-with-ingress.yaml</code> as described in the previous chapter (step 6) and deploy it.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>simple-web-server-with-ingress.yaml
 </code></pre></div>
 </li>
 <li>
-<p>Verify that you can access your application through the LoadBalancer and Ingress controller.</p>
+<p>Verify that you can access your application through the <code>LoadBalancer</code> and ingress controller.</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>&lt;worker-external-ip&gt;<span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;Host: web.example.com&#39;</span>
 </code></pre></div>
 <p>If you are successful, you should see <code>&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</code>.</p>
 </li>
 </ol>
-<h3 id="install-nginx-using-host-network">Install NGINX using host network<a class="headerlink" href="#install-nginx-using-host-network" title="Permanent link">#</a></h3>
-<p>The host network option exposes Ingress directly using the worker nodes' IP addresses. It also allows you to use ports 80 and 443. This option doesn't use any Service objects (ClusterIP, NodePort, LoadBalancer) and it has the limitation that only one Ingress controller Pod may be scheduled on each cluster node.</p>
+<h3 id="install-using-host-network">Install using host network<a class="headerlink" href="#install-using-host-network" title="Permanent link">#</a></h3>
+<p>The host network option exposes Ingress directly using the worker nodes' IP addresses. It also allows you to use ports 80 and 443. This option doesn't use any Service objects (<code>ClusterIP</code>, <code>NodePort</code>, <code>LoadBalancer</code>) and it has the limitation that only one Ingress controller Pod may be scheduled on each cluster node.</p>
 <ol>
 <li>
-<p>Download the official NGINX Ingress Controller manifests:</p>
+<p>Install Ingress NGINX Controller manifests:</p>
 <div class="highlight"><pre><span></span><code>wget<span class="w"> </span>https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/baremetal/deploy.yaml
 </code></pre></div>
 </li>
 <li>
-<p>Edit deploy.yaml. Find the Deployment ingress-nginx-controller and enable the host network option by adding the hostNetwork line:</p>
+<p>Edit <code>deploy.yaml</code>. Find the Deployment ingress-nginx-controller and enable the host network option by adding the <code>hostNetwork</code> line:</p>
 <div class="highlight"><pre><span></span><code>spec:
 <span class="w">  </span>template:
 <span class="w">    </span>spec:
@@ -2723,12 +2727,13 @@ nginx<span class="w">   </span>k8s.io/ingress-nginx<span class="w">   </span>&lt
 </code></pre></div>
 </li>
 <li>
-<p>Try to connect to the Ingress controller, deploy a test application and verify the access. These steps are similar to the previous install methods.</p>
+<p>Try to connect to the ingress controller, deploy a test application and verify the access. These steps are similar to the previous install methods.</p>
 </li>
 </ol>
 <h2 id="additional-information">Additional information<a class="headerlink" href="#additional-information" title="Permanent link">#</a></h2>
-<p>For more information about NGINX Ingress Controller installation, take a look at the official ingress-nginx <a href="https://kubernetes.github.io/ingress-nginx/deploy/">installation guide</a> and <a href="https://kubernetes.github.io/ingress-nginx/deploy/baremetal/">bare-metal considerations</a>.</p>
-<h2 id="alternative-examples-for-ingress-controllers-on-k0s">Alternative examples for Ingress Controllers on k0s<a class="headerlink" href="#alternative-examples-for-ingress-controllers-on-k0s" title="Permanent link">#</a></h2>
+<p>For more information about Ingress NGINX Controller installation, take a look at
+the official <a href="https://kubernetes.github.io/ingress-nginx/deploy/">installation guide</a> and <a href="https://kubernetes.github.io/ingress-nginx/deploy/baremetal/">bare-metal considerations</a>.</p>
+<h2 id="alternative-examples-for-ingress-controllers-on-k0s">Alternative examples for ingress controllers on k0s<a class="headerlink" href="#alternative-examples-for-ingress-controllers-on-k0s" title="Permanent link">#</a></h2>
 <p><a href="../traefik-ingress/">Traefik Ingress</a></p>
 
 

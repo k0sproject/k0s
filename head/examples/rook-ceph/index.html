@@ -1663,9 +1663,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-create-the-vms" class="md-nav__link">
+  <a href="#2-create-the-virtual-machines" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Create the VMs
+      2. Create the virtual machines
     </span>
   </a>
   
@@ -2530,9 +2530,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-create-the-vms" class="md-nav__link">
+  <a href="#2-create-the-virtual-machines" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Create the VMs
+      2. Create the virtual machines
     </span>
   </a>
   
@@ -2666,15 +2666,15 @@
 <p><img alt="k0s_rook_ceph_cluster.png" src="../../img/k0s_rook_ceph_cluster.png" /></p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <ul>
-<li>Linux OS</li>
+<li>Linux</li>
 <li>GitHub access</li>
 <li>AWS account</li>
 <li>Terraform</li>
 </ul>
 <h2 id="deployment-steps">Deployment steps<a class="headerlink" href="#deployment-steps" title="Permanent link">#</a></h2>
 <h3 id="1-preparations">1. Preparations<a class="headerlink" href="#1-preparations" title="Permanent link">#</a></h3>
-<p>In this example we'll use Terraform to create four Ubuntu VMs on AWS. Using Terraform makes the VM deployment fast and repeatable. You can avoid manually setting up everything in the AWS GUI. Moreover, when you have finished with the tutorial, it's very easy to tear down the VMs with Terraform (with one command). However, you can set up the nodes in many different ways and it doesn't make a difference in the following steps.</p>
-<p>We will use k0sctl to create the k0s cluster. k0sctl repo also includes a ready-made Terraform configuration to create the VMs on AWS. We'll use that. Let's start be cloning the k0sctl repo.</p>
+<p>In this example we'll use Terraform to create four Ubuntu virtual machines on AWS. Using Terraform makes the VM deployment fast and repeatable. You can avoid manually setting up everything in the AWS GUI. Moreover, when you have finished with the tutorial, it's very easy to tear down the virtual machines with Terraform (with one command). However, you can set up the nodes in many different ways and it doesn't make a difference in the following steps.</p>
+<p>We will use k0sctl to create the k0s cluster. The k0sctl repository also includes a ready-made Terraform configuration to create the virtual machines on AWS. We'll use that. Let's start be cloning the k0sctl repo.</p>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:k0sproject/k0sctl.git
 </code></pre></div>
 <p>Take a look at the Terraform files</p>
@@ -2704,14 +2704,14 @@ ls<span class="w"> </span>-l
 </code></pre></div>
 <p>Open <code>main.tf</code> to check or modify k0s version near the end of the file.</p>
 <p>You can also configure a different name to your cluster and change the default VM type. <code>t3.small</code> (2 vCPUs, 2 GB RAM) runs just fine for this tutorial.</p>
-<h3 id="2-create-the-vms">2. Create the VMs<a class="headerlink" href="#2-create-the-vms" title="Permanent link">#</a></h3>
+<h3 id="2-create-the-virtual-machines">2. Create the virtual machines<a class="headerlink" href="#2-create-the-virtual-machines" title="Permanent link">#</a></h3>
 <p>For AWS, you need an account. Terraform will use the following environment variable: <code>AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN</code>. You can easily copy-paste them from the AWS portal. For more information, see <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html">the AWS documentation</a>.</p>
 <p><img alt="k0s_rook_ceph_aws_credentials.png" src="../../img/k0s_rook_ceph_aws_credentials.png" /></p>
-<p>When the environment variables are set, you can proceed with Terraform and deploy the VMs.</p>
+<p>When the environment variables are set, you can proceed with Terraform and deploy the virtual machines.</p>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
 terraform<span class="w"> </span>apply
 </code></pre></div>
-<p>If you decide to create the VMs manually using AWS GUI, you need to disable source / destination checking. This needs to be disabled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.</p>
+<p>If you decide to create the virtual machines manually using AWS GUI, you need to disable source / destination checking. This needs to be disabled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.</p>
 <h3 id="3-create-and-attach-the-volumes">3. Create and attach the volumes<a class="headerlink" href="#3-create-and-attach-the-volumes" title="Permanent link">#</a></h3>
 <p>Ceph requires one of the following storage options for storing the data:</p>
 <ul>
@@ -2719,9 +2719,9 @@ terraform<span class="w"> </span>apply
 <li>Raw partitions (no formatted filesystem)</li>
 <li>PVs available from a storage class in block mode</li>
 </ul>
-<p>We will be using raw partititions (AWS EBS volumes), which can be easily attached to the worker node VMs. They are automatically detected by Ceph with its default configuration.</p>
+<p>We will be using raw partitions (AWS EBS volumes), which can be easily attached to the worker node virtual machines. They are automatically detected by Ceph with its default configuration.</p>
 <p>Deploy AWS EBS volumes, one for each worker node. You can manually create three EBS volumes (for example 10 GB each) using the AWS GUI and attach those to your worker nodes. Formatting shouldn't be done. Instead, Ceph handles that part automatically.</p>
-<p>After you have attached the EBS volumes to the worker nodes, log in to one of the workers and check the available block devices:</p>
+<p>After you have attached the EBS volumes to the worker nodes, log in into one of the workers and check the available block devices:</p>
 <div class="highlight"><pre><span></span><code>lsblk<span class="w"> </span>-f
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>NAME<span class="w">        </span>FSTYPE<span class="w">   </span>LABEL<span class="w">           </span>UUID<span class="w">                                 </span>FSAVAIL<span class="w"> </span>FSUSE%<span class="w"> </span>MOUNTPOINT
@@ -2733,9 +2733,9 @@ nvme0n1
 └─nvme0n1p1<span class="w"> </span>ext4<span class="w">     </span>cloudimg-rootfs<span class="w"> </span>e8070c31-bfee-4314-a151-d1332dc23486<span class="w">    </span><span class="m">5</span>.1G<span class="w">    </span><span class="m">33</span>%<span class="w"> </span>/
 nvme1n1
 </code></pre></div>
-<p>The last line (nvme1n1) in this example printout corresponds to the attached EBS volume. Note that it doesn't have any filesystem (FSTYPE is empty). This meets the Ceph storage requirements and you are good to proceed.</p>
+<p>The last line (<code>nvme1n1</code>) in this example printout corresponds to the attached EBS volume. Note that it doesn't have any filesystem (<code>FSTYPE</code> is empty). This meets the Ceph storage requirements and you are good to proceed.</p>
 <h3 id="4-install-k0s-using-k0sctl">4. Install k0s using k0sctl<a class="headerlink" href="#4-install-k0s-using-k0sctl" title="Permanent link">#</a></h3>
-<p>You can use terraform to automatically output a config file for k0sctl with the ip addresses and access details.</p>
+<p>You can use Terraform to automatically output a config file for k0sctl with the IP addresses and access details.</p>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>k0s_cluster<span class="w"> </span>&gt;<span class="w"> </span>k0sctl.yaml
 </code></pre></div>
 <p>After that deploying k0s becomes very easy with the ready-made configuration.</p>
@@ -2757,7 +2757,7 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> <
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>--single-branch<span class="w"> </span>--branch<span class="w"> </span>release-1.7<span class="w"> </span>https://github.com/rook/rook.git
 <span class="nb">cd</span><span class="w"> </span>rook/cluster/examples/kubernetes/ceph
 </code></pre></div>
-<p>We will use mostly the default Rook configuration. However, k0s kubelet drectory must be configured in <code>operator.yaml</code> like this</p>
+<p>We will use mostly the default Rook configuration. However, k0s kubelet directory must be configured in <code>operator.yaml</code> like this</p>
 <div class="highlight"><pre><span></span><code><span class="nt">ROOK_CSI_KUBELET_DIR_PATH</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/kubelet&quot;</span>
 </code></pre></div>
 <p>To create the resources, which are needed by the Rook’s Ceph operator, run</p>
@@ -2800,7 +2800,7 @@ rook-ceph-osd-prepare-ip-172-31-13-183-cnkf9<span class="w">                 </s
 rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt<span class="w">                   </span><span class="m">0</span>/1<span class="w">     </span>Completed<span class="w">   </span><span class="m">0</span><span class="w">          </span>23s
 </code></pre></div>
 <h3 id="8-configure-ceph-block-storage">8. Configure Ceph block storage<a class="headerlink" href="#8-configure-ceph-block-storage" title="Permanent link">#</a></h3>
-<p>Before Ceph can provide storage to your cluster, you need to create a ReplicaPool and a StorageClass. In this example, we use the default configuration to create the block storage.</p>
+<p>Before Ceph can provide storage to your cluster, you need to create a <code>ReplicaPool</code> and a <code>StorageClass</code>. In this example, we use the default configuration to create the block storage.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>./csi/rbd/storageclass.yaml
 </code></pre></div>
 <h3 id="9-request-storage">9. Request storage<a class="headerlink" href="#9-request-storage" title="Permanent link">#</a></h3>
@@ -2817,7 +2817,7 @@ rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt<span class="w">                   </s
 <span class="w">    </span><span class="nt">requests</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2Gi</span>
 </code></pre></div>
-<p>This will create Persistent Volume Claim (PVC) to request a 2 GB block storage from Ceph. Provioning will be done dynamically. You can define the block size freely as long as it fits to the available storage size.</p>
+<p>This will create Persistent Volume Claim (PVC) to request a 2 GB block storage from Ceph. Provisioning will be done dynamically. You can define the block size freely as long as it fits to the available storage size.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>mongo-pvc.yaml
 </code></pre></div>
 <p>You can now check the status of your PVC:</p>
@@ -2830,7 +2830,7 @@ rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt<span class="w">                   </s
 mongo-pvc<span class="w">   </span>Bound<span class="w">    </span>pvc-08337736-65dd-49d2-938c-8197a8871739<span class="w">   </span>2Gi<span class="w">        </span>RWO<span class="w">            </span>rook-ceph-block<span class="w">   </span>6s
 </code></pre></div>
 <h3 id="10-deploy-an-example-application">10. Deploy an example application<a class="headerlink" href="#10-deploy-an-example-application" title="Permanent link">#</a></h3>
-<p>Let's deploy a Mongo database to verify the Ceph storage. Create a new file <code>mongo.yaml</code> with the following content:</p>
+<p>Let's deploy a MongoDB database to verify the Ceph storage. Create a new file <code>mongo.yaml</code> with the following content:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -2862,7 +2862,7 @@ mongo-pvc<span class="w">   </span>Bound<span class="w">    </span>pvc-08337736-
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>mongo.yaml
 </code></pre></div>
 <h3 id="11-access-the-application">11. Access the application<a class="headerlink" href="#11-access-the-application" title="Permanent link">#</a></h3>
-<p>Open the MongoDB shell using the mongo pod:</p>
+<p>Open the MongoDB shell using the MongoDB pod:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>pods
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>NAME<span class="w">                    </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
@@ -2890,14 +2890,14 @@ switched to db testDB
 { &quot;_id&quot; : ObjectId(&quot;6081569da709d344f83b651e&quot;), &quot;name&quot; : &quot;bcd&quot;, &quot;number&quot; : 234 }
 &gt;
 </code></pre></div>
-<p>You can also try to restart the mongo pod or restart the worker nodes to verity that the storage is persistent.</p>
+<p>You can also try to restart the MongoDB pod or restart the worker nodes to verity that the storage is persistent.</p>
 <h3 id="12-clean-up">12. Clean-up<a class="headerlink" href="#12-clean-up" title="Permanent link">#</a></h3>
-<p>You can use Terraform to take down the VMs:</p>
+<p>You can use Terraform to take down the virtual machines:</p>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>destroy
 </code></pre></div>
 <p>Remember to delete the EBS volumes separately.</p>
 <h3 id="conclusions">Conclusions<a class="headerlink" href="#conclusions" title="Permanent link">#</a></h3>
-<p>You have now created a replicated Ceph storage for k0s. All you data is stored to multiple disks at the same time so you have a fault-tolerant solution. You also have enabled dynamic provisioning. Your applications can request the available storage without a manual creation of the persistent volumes each time.</p>
+<p>You have now created a replicated Ceph storage for k0s. All your data is stored to multiple disks at the same time so you have a fault-tolerant solution. You also have enabled dynamic provisioning. Your applications can request the available storage without a manual creation of the persistent volumes each time.</p>
 <p>This was just one example to deploy distributed storage to k0s cluster using an operator. You can easily use different Kubernetes storage solutions with k0s.</p>
 
 

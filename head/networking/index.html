@@ -2561,13 +2561,13 @@
 <li>Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment.</li>
 </ul>
 <h3 id="kube-router">Kube-router<a class="headerlink" href="#kube-router" title="Permanent link">#</a></h3>
-<p>Kube-router is built into k0s, and so by default the distribution uses it for network provisioning. Kube-router uses the standard Linux networking stack and toolset, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.</p>
+<p>Kube-router is built into k0s, and so by default the distribution uses it for network provisioning. Kube-router uses the standard Linux networking stack and tools, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.</p>
 <ul>
 <li>Uses a bit less resources (~15%)</li>
 <li>Does NOT support Windows nodes</li>
 </ul>
 <h3 id="calico">Calico<a class="headerlink" href="#calico" title="Permanent link">#</a></h3>
-<p>In addition to kube-router, k0s also offers <a href="https://www.projectcalico.org/">Calico</a> as an alternative,
+<p>In addition to Kube-router, k0s also offers Calico as an alternative,
 integrated network provider. Calico is a layer 3 container networking solution
 that routes packets to pods. For example, it supports pod-specific network
 policies that help secure Kubernetes clusters in demanding use cases. Calico in
@@ -2596,7 +2596,7 @@ mode.</p>
 <tr>
 <td>TCP</td>
 <td>2380</td>
-<td>etcd peers</td>
+<td>etcd</td>
 <td>controller ⟷ controller</td>
 <td></td>
 </tr>
@@ -2605,7 +2605,7 @@ mode.</p>
 <td>6443</td>
 <td>kube-apiserver</td>
 <td>worker, CLI ⟶ controller</td>
-<td>Authenticated Kube API using Kube TLS client certs, ServiceAccount tokens with RBAC</td>
+<td>Authenticated Kubernetes API using mTLS, ServiceAccount tokens with RBAC</td>
 </tr>
 <tr>
 <td>TCP</td>
@@ -2617,7 +2617,7 @@ mode.</p>
 <tr>
 <td>UDP</td>
 <td>4789</td>
-<td>Calico</td>
+<td>calico</td>
 <td>worker ⟷ worker</td>
 <td>Calico VXLAN overlay</td>
 </tr>
@@ -2626,12 +2626,12 @@ mode.</p>
 <td>10250</td>
 <td>kubelet</td>
 <td>controller, worker ⟶ host <code>*</code></td>
-<td>Authenticated kubelet API for the controller node <code>kube-apiserver</code> (and <code>heapster</code>/<code>metrics-server</code> addons) using TLS client certs</td>
+<td>Authenticated kubelet API for the controller node <code>kube-apiserver</code> (and <code>metrics-server</code> add-ons) using mTLS</td>
 </tr>
 <tr>
 <td>TCP</td>
 <td>9443</td>
-<td>k0s-api</td>
+<td>k0s api</td>
 <td>controller ⟷ controller</td>
 <td>k0s controller join API, TLS with token auth</td>
 </tr>
@@ -2653,13 +2653,13 @@ mode.</p>
 </table>
 <p>You also need enable all traffic to and from the <a href="../configuration/#specnetwork">podCIDR and serviceCIDR</a> subnets on nodes with a worker role.</p>
 <h2 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h2>
-<p><code>iptables</code> can work in two distinct modes, <code>legacy</code> and <code>nftables</code>. k0s autodetects the mode and prefers <code>nftables</code>. To check which mode k0s is configured with check <code>ls -lah /var/lib/k0s/bin/</code>. The target of the symbolic link <code>iptables</code> reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure all component have picked up the same mode you can check via:</p>
+<p><code>iptables</code> can work in two distinct modes, <code>legacy</code> and <code>nftables</code>. k0s auto-detects the mode and prefers <code>nftables</code>. To check which mode k0s is configured with check <code>ls -lah /var/lib/k0s/bin/</code>. The target of the symbolic link <code>iptables</code> reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure all component have picked up the same mode you can check via:</p>
 <ul>
 <li>kube-proxy: <code>nsenter -t $(pidof kube-proxy) -m iptables -V</code></li>
 <li>kube-router: <code>nsenter -t $(pidof kube-router) -m /sbin/iptables -V</code></li>
 <li>calico: <code>nsenter -t $(pidof -s calico-node) -m iptables -V</code></li>
 </ul>
-<p>There are <a href="https://bugzilla.netfilter.org/show_bug.cgi?id=1632">known</a> version incompatibility issues in iptables versions. k0s ships (in <code>/var/lib/k0s/bin</code>) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different from the one that k0s (and other k8s components) ship, it may cause networking issues. This is due to the fact that iptables, being user-space tooling, does not provide any strong version compatibility guarantees.</p>
+<p>There are <a href="https://bugzilla.netfilter.org/show_bug.cgi?id=1632">known</a> version incompatibility issues in iptables versions. k0s ships (in <code>/var/lib/k0s/bin</code>) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different from the one that k0s (and other Kubernetes components) ship, it may cause networking issues. This is due to the fact that iptables, being user-space tooling, does not provide any strong version compatibility guarantees.</p>
 <h2 id="firewalld-k0s">Firewalld &amp; k0s<a class="headerlink" href="#firewalld-k0s" title="Permanent link">#</a></h2>
 <p>If you are using <a href="https://firewalld.org/"><code>firewalld</code></a> on your hosts you need to ensure it is configured to use the same <code>FirewallBackend</code> as k0s and other Kubernetes components use. Otherwise networking will be broken in various ways.</p>
 <p>Here's an example configuration for a tested working networking setup:</p>

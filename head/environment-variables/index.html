@@ -1317,7 +1317,7 @@
         <li class="md-nav__item">
   <a href="#systemd" class="md-nav__link">
     <span class="md-ellipsis">
-      SystemD
+      systemd
     </span>
   </a>
   
@@ -2381,7 +2381,7 @@
         <li class="md-nav__item">
   <a href="#systemd" class="md-nav__link">
     <span class="md-ellipsis">
-      SystemD
+      systemd
     </span>
   </a>
   
@@ -2416,9 +2416,13 @@
 <p><code>k0s install</code> does not support environment variables.</p>
 <p>Setting environment variables for components used by k0s depends on the used init system. The environment variables set in <code>k0scontroller</code> or <code>k0sworker</code> service will be inherited by k0s components, such as <code>etcd</code>, <code>containerd</code>, <code>konnectivity</code>, etc.</p>
 <p>Component specific environment variables can be set in <code>k0scontroller</code> or <code>k0sworker</code> service. For example: for <code>CONTAINERD_HTTPS_PROXY</code>, the prefix <code>CONTAINERD_</code> will be stripped and converted to <code>HTTPS_PROXY</code> in the <code>containerd</code> process.</p>
-<p>For those components having env prefix convention such as <code>ETCD_xxx</code>, they are handled specially, i.e. the prefix will not be stripped. For example, <code>ETCD_MAX_WALS</code> will still be <code>ETCD_MAX_WALS</code> in etcd process.</p>
-<p>The proxy envs <code>HTTP_PROXY</code>, <code>HTTPS_PROXY</code>, <code>NO_PROXY</code> are always overridden by component specific environment variables, so <code>ETCD_HTTPS_PROXY</code> will still be converted to <code>HTTPS_PROXY</code> in etcd process.</p>
-<h2 id="systemd">SystemD<a class="headerlink" href="#systemd" title="Permanent link">#</a></h2>
+<p>For those components having environment prefix convention such as <code>ETCD_xxx</code>,
+they are handled specially, i.e. the prefix will not be stripped. For example,
+<code>ETCD_MAX_WALS</code> will still be <code>ETCD_MAX_WALS</code> in etcd process.</p>
+<p>The proxy environment variables <code>HTTP_PROXY</code>, <code>HTTPS_PROXY</code>, <code>NO_PROXY</code> are
+always overridden by component specific environment variables, so
+<code>ETCD_HTTPS_PROXY</code> will still be converted to <code>HTTPS_PROXY</code> in etcd process.</p>
+<h2 id="systemd">systemd<a class="headerlink" href="#systemd" title="Permanent link">#</a></h2>
 <p>Create a drop-in directory and add config file with a desired environment variable:</p>
 <div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>/etc/systemd/system/k0scontroller.service.d
 tee<span class="w"> </span>-a<span class="w"> </span>/etc/systemd/system/k0scontroller.service.d/http-proxy.conf<span class="w"> </span><span class="s">&lt;&lt;EOT</span>
@@ -2427,7 +2431,8 @@ tee<span class="w"> </span>-a<span class="w"> </span>/etc/systemd/system/k0scont
 <span class="s">EOT</span>
 </code></pre></div>
 <h2 id="openrc">OpenRC<a class="headerlink" href="#openrc" title="Permanent link">#</a></h2>
-<p>Export desired environment variable overriding service configuration in /etc/conf.d directory:</p>
+<p>Export the desired environment variable overriding service configuration in the
+<code>/etc/conf.d</code> directory:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export HTTP_PROXY=&quot;192.168.33.10:3128&quot;&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/etc/conf.d/k0scontroller
 </code></pre></div>
 

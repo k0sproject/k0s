@@ -2700,13 +2700,13 @@
 <p>k0s supports providing only partial configurations. In case of partial configuration is provided, k0s will use the defaults for any missing values.</p>
 <ol>
 <li>
-<p>Generate a yaml config file that uses the default settings.</p>
+<p>Generate a YAML config file that uses the default settings.</p>
 <div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>/etc/k0s
 k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> </span>&gt;<span class="w"> </span>/etc/k0s/k0s.yaml
 </code></pre></div>
 </li>
 <li>
-<p>Modify the new yaml config file according to your needs, refer to <a href="#configuration-file-reference">Configuration file reference</a> below. You can remove the default values if wanted as k0s supports partial configs too.</p>
+<p>Modify the new YAML config file according to your needs, refer to <a href="#configuration-file-reference">Configuration file reference</a> below. You can remove the default values if wanted as k0s supports partial configs too.</p>
 </li>
 <li>
 <p>Install k0s with your new config file.</p>
@@ -2722,7 +2722,7 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </ol>
 <h2 id="configuring-k0s-via-k0sctl">Configuring k0s via k0sctl<a class="headerlink" href="#configuring-k0s-via-k0sctl" title="Permanent link">#</a></h2>
 <p>k0sctl can deploy your configuration options at cluster creation time. Your
-options should be placed in the <code>spec.k0s.config</code> section of the k0sctl's
+options should be placed in the <code>spec.k0s.config</code> section of the k0sctl
 configuration file. See the section on how to install <a href="../k0sctl-install/">k0s via
 k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/README.md">k0sctl README</a> for more information.</p>
 <h2 id="configuration-file-reference">Configuration file reference<a class="headerlink" href="#configuration-file-reference" title="Permanent link">#</a></h2>
@@ -2816,7 +2816,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>externalAddress</code></td>
-<td>The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use when joining new nodes to the cluster.</td>
+<td>The load balancer address (for k0s controllers running behind a load balancer). Configures all cluster components to connect to this address and configures this address for use when joining new nodes to the cluster.</td>
 </tr>
 <tr>
 <td><code>sans</code></td>
@@ -2832,19 +2832,19 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process. Any behavior triggered by these parameters is outside k0s support.</td>
+<td>Map of key-values (strings) for any extra arguments to pass down to Kubernetes API server process. Any behavior triggered by these parameters is outside k0s support.</td>
 </tr>
 <tr>
 <td><code>port</code>¹</td>
-<td>Custom port for kube-api server to listen on (default: 6443)</td>
+<td>Custom port for the Kubernetes API server to listen on (default: 6443)</td>
 </tr>
 <tr>
 <td><code>k0sApiPort</code>¹</td>
-<td>Custom port for k0s-api server to listen on (default: 9443)</td>
+<td>Custom port for k0s API server to listen on (default: 9443)</td>
 </tr>
 </tbody>
 </table>
-<p>¹ If <code>port</code> and <code>k0sApiPort</code> are used with the <code>externalAddress</code> element, the loadbalancer serving at <code>externalAddress</code> must listen on the same ports.</p>
+<p>¹ If <code>port</code> and <code>k0sApiPort</code> are used with the <code>externalAddress</code> element, the load balancer serving at <code>externalAddress</code> must listen on the same ports.</p>
 <h3 id="specstorage"><code>spec.storage</code><a class="headerlink" href="#specstorage" title="Permanent link">#</a></h3>
 <table>
 <thead>
@@ -2876,7 +2876,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>kine.dataSource</code></td>
-<td><a href="https://github.com/k3s-io/kine">kine</a> datasource URL.</td>
+<td><a href="https://github.com/k3s-io/kine">kine</a> data source URL.</td>
 </tr>
 <tr>
 <td><code>etcd.externalCluster</code></td>
@@ -2927,7 +2927,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td>Network provider (valid values: <code>calico</code>, <code>kuberouter</code>, or <code>custom</code>). For <code>custom</code>, you can push any network provider (default: <code>kuberouter</code>). Be aware that it is your responsibility to configure all of the CNI-related setups, including the CNI provider itself and all necessary host levels setups (for example, CNI binaries). <strong>Note:</strong> Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment.</td>
+<td>Network provider (valid values: <code>calico</code>, <code>kuberouter</code>, or <code>custom</code>). For <code>custom</code>, you can push any network provider (default: <code>kuberouter</code>). Be aware that it is your responsibility to configure all the CNI-related setups, including the CNI provider itself and all necessary host levels setups (for example, CNI binaries). <strong>Note:</strong> Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment.</td>
 </tr>
 <tr>
 <td><code>podCIDR</code></td>
@@ -2939,11 +2939,11 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>primaryAddressFamily</code></td>
-<td>primaryAddressFamily defines the primary family for the cluster. Valid values are empty, <code>IPv4</code>, <code>IPv6</code>. If empty, K0s determines it based on <code>.spec.API.ExternalAddress</code>, if this isn't present it will use <code>.spec.API.Address.</code>. If both addresses are empty or the chosen address is a hostname, defaults to <code>IPv4</code>.</td>
+<td>Defines the primary family for the cluster. Valid values are empty, <code>IPv4</code>, <code>IPv6</code>. If empty, K0s determines it based on <code>.spec.API.ExternalAddress</code>, if this isn't present it will use <code>.spec.API.Address.</code>. If both addresses are empty or the chosen address is a host name, defaults to <code>IPv4</code>.</td>
 </tr>
 <tr>
 <td><code>clusterDomain</code></td>
-<td>Cluster Domain to be passed to the <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration">kubelet</a> and the coredns configuration. Defaults to <code>cluster.local</code>.</td>
+<td>Cluster domain to be passed to the <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration">kubelet</a> and the CoreDNS configuration. Defaults to <code>cluster.local</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -2962,7 +2962,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>overlay</code></td>
-<td>Overlay mode: <code>Always</code> (default), <code>CrossSubnet</code> or <code>Never</code> (requires <code>mode=vxlan</code> to disable calico overlay-network).</td>
+<td>Overlay mode: <code>Always</code> (default), <code>CrossSubnet</code> or <code>Never</code> (requires <code>mode=vxlan</code> to disable Calico overlay-network).</td>
 </tr>
 <tr>
 <td><code>vxlanPort</code></td>
@@ -2978,11 +2978,11 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>wireguard</code></td>
-<td>Enable wireguard-based encryption (default: <code>false</code>). Your host system must be wireguard ready (refer to the <a href="https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic">Calico documentation</a> for details).</td>
+<td>Enable WireGuard-based encryption (default: <code>false</code>). Your host system must be WireGuard ready (refer to the <a href="https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic">Calico documentation</a> for details).</td>
 </tr>
 <tr>
 <td><code>flexVolumeDriverPath</code></td>
-<td>The host path for Calicos flex-volume-driver(default: <code>/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds</code>). Change this path only if the default path is unwritable (refer to <a href="https://github.com/projectcalico/calico/issues/2712">Project Calico Issue #2712</a> for details). Ideally, you will pair this option with a custom <code>volumePluginDir</code> in the profile you use for your worker nodes.</td>
+<td>The host path for Calico's flex-volume-driver(default: <code>/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds</code>). Change this path only if the default path cannot be used (refer to <a href="https://github.com/projectcalico/calico/issues/2712">Project Calico Issue #2712</a> for details). Ideally, you will pair this option with a custom <code>volumePluginDir</code> in the profile you use for your worker nodes.</td>
 </tr>
 <tr>
 <td><code>ipAutodetectionMethod</code></td>
@@ -3035,15 +3035,15 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 <tbody>
 <tr>
 <td><code>autoMTU</code></td>
-<td>Autodetection of used MTU (default: <code>true</code>).</td>
+<td>Auto-detection of used MTU (default: <code>true</code>).</td>
 </tr>
 <tr>
 <td><code>mtu</code></td>
-<td>Override MTU setting, if <code>autoMTU</code> must be set to <code>false</code>).</td>
+<td>Override MTU setting, if <code>autoMTU</code> must be set to <code>false</code>.</td>
 </tr>
 <tr>
 <td><code>metricsPort</code></td>
-<td>Kube-router metrics server port. Set to 0 to disable metrics  (default: <code>8080</code>).</td>
+<td>Kube-router metrics server port. Set to 0 to disable metrics (default: <code>8080</code>).</td>
 </tr>
 <tr>
 <td><code>peerRouterIPs</code></td>
@@ -3067,7 +3067,7 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 </tr>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Extra arguments to pass to kube-router. Can be also used to override any k0s managed args. For reference, see kube-router <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#command-line-options">documentation</a>. (default: empty)</td>
+<td>Extra arguments to pass to Kube-router. Can be also used to override any k0s managed arguments. For reference, see Kube-router <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#command-line-options">documentation</a>. (default: empty)</td>
 </tr>
 </tbody>
 </table>
@@ -3095,7 +3095,7 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 </tr>
 <tr>
 <td><code>ipvs</code></td>
-<td>Kube proxy ipvs settings</td>
+<td>Kube proxy IPVS settings</td>
 </tr>
 <tr>
 <td><code>nftables</code></td>
@@ -3118,7 +3118,7 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 <span class="w">  </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">  </span><span class="nt">syncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 </code></pre></div>
-<p>Default kube-proxy ipvs settings:</p>
+<p>Default kube-proxy IPVS settings:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">ipvs</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">excludeCIDRs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">  </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
@@ -3182,7 +3182,7 @@ node-local load balancing.</p>
 </tr>
 <tr>
 <td><code>apiServerBindPort</code></td>
-<td>Port number on which to bind the Envoy load balancer for the Kubernetes API server to on a worker's loopback interface.  Default: <code>7443</code>.</td>
+<td>Port number on which to bind the Envoy load balancer for the Kubernetes API server to on a worker's loopback interface. Default: <code>7443</code>.</td>
 </tr>
 <tr>
 <td><code>konnectivityServerBindPort</code></td>
@@ -3230,11 +3230,11 @@ node-local load balancing.</p>
 </tr>
 <tr>
 <td><code>virtualServers</code></td>
-<td>Configuration options related LoadBalancing. This is an array which allows to configure multiple LBs.</td>
+<td>Configuration options related to load balancing. This is an array which allows to configure multiple load balancers.</td>
 </tr>
 <tr>
 <td><code>userSpaceProxyBindPort</code></td>
-<td>The port the userspace proxy will bind to. This port is for internal use only, but listens on every interface. Default: <code>6444</code></td>
+<td>The port the user space proxy will bind to. This port is for internal use only, but listens on every interface. Default: <code>6444</code></td>
 </tr>
 <tr>
 <td><code>disableLoadBalancer</code></td>
@@ -3254,7 +3254,7 @@ node-local load balancing.</p>
 <tbody>
 <tr>
 <td><code>virtualIPs</code></td>
-<td>VirtualIPs is the list of virtual IP address used by the VRRP instance. Each virtual IP must be a CIDR as defined in RFC 4632 and RFC 4291.A list of the CIDRs handled by the VRRP instance.</td>
+<td>List of virtual IP address used by the VRRP instance. Each virtual IP must be a CIDR as defined in RFC 4632 and RFC 4291.A list of the CIDRs handled by the VRRP instance.</td>
 </tr>
 <tr>
 <td><code>interface</code></td>
@@ -3302,7 +3302,7 @@ node-local load balancing.</p>
 </tr>
 <tr>
 <td><code>delayLoop</code></td>
-<td>Delay timer for check polling. DelayLoop accepts microsecond precision. Further precision will be truncated without warnings. Defaults to <code>1m</code>.</td>
+<td>Delay timer for check polling. Accepts microsecond precision. Further precision will be truncated without warnings. Defaults to <code>1m</code>.</td>
 </tr>
 <tr>
 <td><code>lbAlgo</code></td>
@@ -3310,11 +3310,11 @@ node-local load balancing.</p>
 </tr>
 <tr>
 <td><code>lbKind</code></td>
-<td>Kind of ipvs load balancer. Supported values: <code>NAT</code>, <code>DR</code>, <code>TUN</code>  Default: <code>DR</code>.</td>
+<td>Kind of IPVS load balancer. Supported values: <code>NAT</code>, <code>DR</code>, <code>TUN</code>. Default: <code>DR</code>.</td>
 </tr>
 <tr>
 <td><code>persistenceTimeoutSeconds</code></td>
-<td>Timeout value for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes).</td>
+<td>Timeout for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes).</td>
 </tr>
 </tbody>
 </table>
@@ -3352,7 +3352,7 @@ node-local load balancing.</p>
 <p>Worker profiles are used to manage worker-specific configuration in a
 centralized manner. A ConfigMap is generated for each worker profile. Based on
 the <code>--profile</code> argument given to the <code>k0s worker</code>, the configuration in the
-corresponding ConfigMap is picked up during startup.</p>
+corresponding ConfigMap is picked up during start-up.</p>
 <p>The worker profiles are defined as an array. Each element has following
 properties:</p>
 <table>
@@ -3417,14 +3417,14 @@ by k0s.</p>
 <h3 id="specfeaturegates"><code>spec.featureGates</code><a class="headerlink" href="#specfeaturegates" title="Permanent link">#</a></h3>
 <p>Available components are:</p>
 <ul>
-<li>kube-apiserver</li>
-<li>kube-controller-manager</li>
-<li>kubelet</li>
-<li>kube-scheduler</li>
-<li>kube-proxy</li>
+<li><code>kube-apiserver</code></li>
+<li><code>kube-controller-manager</code></li>
+<li><code>kubelet</code></li>
+<li><code>kube-scheduler</code></li>
+<li><code>kube-proxy</code></li>
 </ul>
-<p>If <code>components</code> are omitted, propagates to all kube components.</p>
-<p>Modifies extraArgs.</p>
+<p>If <code>components</code> is omitted, propagates to all Kubernetes components.</p>
+<p>Modifies <code>extraArgs</code>.</p>
 <h4 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h4>
 <h5 id="generic-feature-gates-example">Generic feature gates example<a class="headerlink" href="#generic-feature-gates-example" title="Permanent link">#</a></h5>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
@@ -3490,8 +3490,8 @@ by k0s.</p>
 <p>In the runtime the image names are calculated as
 <code>airgap-repo.local/k0sproject/calico-kube-controllers:v3.29.4-0</code> and
 <code>airgap-repo.local/k0sproject/metrics-server:v0.7.2-0</code>. This only
-affects the the images pull location, and thus omitting an image specification
-here will not disable component deployment.</p>
+affects the image pull location, and thus omitting an image specification here
+will not disable component deployment.</p>
 <h3 id="specextensionshelm"><code>spec.extensions.helm</code><a class="headerlink" href="#specextensionshelm" title="Permanent link">#</a></h3>
 <p><code>spec.extensions.helm</code> is the config file key in which you configure the list of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap (for more information, refer to <a href="../helm-charts/">Helm Charts</a>).</p>
 <h3 id="speckonnectivity"><code>spec.konnectivity</code><a class="headerlink" href="#speckonnectivity" title="Permanent link">#</a></h3>
@@ -3514,10 +3514,6 @@ they need to fulfill their need for the control plane. Disabling the system
 components happens through a command line flag for the controller process:</p>
 <div class="highlight"><pre><span></span><code>--disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
 </code></pre></div>
-<p><strong>Note:</strong> As of k0s 1.26, the kubelet-config component has been replaced by the
-worker-config component. k0s will issue a warning when the old component name is
-being used. It is scheduled for removal in k0s 1.27. Please update to the new
-component name.</p>
 <p>If you use k0sctl, just add the flag when installing the cluster for the first
 controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
@@ -3527,14 +3523,14 @@ controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--disable-components=metrics-server</span>
 </code></pre></div>
 <p>As seen from the component list, the only always-on component is the Kubernetes
-api-server, without that k0s serves no purpose.</p>
+API server, without that k0s serves no purpose.</p>
 <h2 id="kubelet-root-directory">Kubelet root directory<a class="headerlink" href="#kubelet-root-directory" title="Permanent link">#</a></h2>
-<p>Unlike vanilla kubernetes, k0s by default deploys kubelet's root directory inside
-<code>--data-dir</code>, which defaults to <code>/var/lib/k0s/</code> and kubelet ultimately runs in
-<code>/var/lib/k0s/kubelet</code>. This can result in incompatibilities on external software
-that mounts the kubelet working dir, such as CSI plugins.</p>
+<p>Unlike vanilla Kubernetes, k0s by default deploys kubelet's root directory
+inside <code>--data-dir</code>, which defaults to <code>/var/lib/k0s/</code> and kubelet ultimately
+runs in <code>/var/lib/k0s/kubelet</code>. This can result in incompatibilities on external
+software that mounts the kubelet working directory, such as CSI plugins.</p>
 <p>This can be changed using the flag <code>--kubelet-root-dir</code>, for instance, to use
-kubernetes' default value it can be set up as:</p>
+Kubernetes' default value it can be set up as:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>worker<span class="w"> </span>--token-file<span class="w"> </span>/var/lib/k0s/join-token<span class="w"> </span>--kubelet-root-dir<span class="o">=</span>/var/lib/kubelet
 </code></pre></div>
 <p>Keep in mind that changing the flag in an existing node will not remove existing directories.

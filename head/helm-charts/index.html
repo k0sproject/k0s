@@ -2526,42 +2526,42 @@
 </thead>
 <tbody>
 <tr>
-<td>name</td>
+<td><code>name</code></td>
 <td><em>(required)</em></td>
 <td>The repository name</td>
 </tr>
 <tr>
-<td>url</td>
+<td><code>url</code></td>
 <td><em>(required)</em></td>
 <td>The repository URL</td>
 </tr>
 <tr>
-<td>insecure</td>
-<td>true</td>
+<td><code>insecure</code></td>
+<td><code>true</code></td>
 <td>Whether to skip TLS certificate checks when connecting to the repository</td>
 </tr>
 <tr>
-<td>caFile</td>
+<td><code>caFile</code></td>
 <td>-</td>
 <td>CA bundle file to use when verifying HTTPS-enabled servers</td>
 </tr>
 <tr>
-<td>certFile</td>
+<td><code>certFile</code></td>
 <td>-</td>
 <td>The TLS certificate file to use for HTTPS client authentication (not supported by OCI registries)</td>
 </tr>
 <tr>
-<td>keyfile</td>
+<td><code>keyfile</code></td>
 <td>-</td>
 <td>The TLS key file to use for HTTPS client authentication (not supported by OCI registries)</td>
 </tr>
 <tr>
-<td>username</td>
+<td><code>username</code></td>
 <td>-</td>
 <td>Username for Basic HTTP authentication</td>
 </tr>
 <tr>
-<td>password</td>
+<td><code>password</code></td>
 <td>-</td>
 <td>Password for Basic HTTP authentication</td>
 </tr>
@@ -2578,44 +2578,44 @@
 </thead>
 <tbody>
 <tr>
-<td>name</td>
+<td><code>name</code></td>
 <td>-</td>
 <td>Release name</td>
 </tr>
 <tr>
-<td>chartname</td>
+<td><code>chartname</code></td>
 <td>-</td>
-<td>chartname in form "repository/chartname" or path to tgz file</td>
+<td>Chart name in form <code>repository/chartname</code> or path to tgz file</td>
 </tr>
 <tr>
-<td>version</td>
+<td><code>version</code></td>
 <td>-</td>
-<td>version to install</td>
+<td>Chart version to install</td>
 </tr>
 <tr>
-<td>timeout</td>
+<td><code>timeout</code></td>
 <td>-</td>
-<td>timeout to wait for release install</td>
+<td>Timeout to wait for release install</td>
 </tr>
 <tr>
-<td>values</td>
+<td><code>values</code></td>
 <td>-</td>
-<td>yaml as a string, custom chart values</td>
+<td>Custom chart values as YAML formatted string</td>
 </tr>
 <tr>
-<td>namespace</td>
+<td><code>namespace</code></td>
 <td>-</td>
-<td>namespace to install chart into</td>
+<td>Namespace to install the chart into</td>
 </tr>
 <tr>
-<td>forceUpgrade</td>
-<td>true</td>
-<td>when set to false, disables the use of the "--force" flag when upgrading the the chart</td>
+<td><code>forceUpgrade</code></td>
+<td><code>true</code></td>
+<td>When set to <code>false</code>, disables the use of the <code>--force</code> flag when upgrading the chart</td>
 </tr>
 <tr>
-<td>order</td>
-<td>0</td>
-<td>order to apply manifest. For equal values, alphanum ordering is used</td>
+<td><code>order</code></td>
+<td><code>0</code></td>
+<td>Order in which to to apply the manifest. For equal values, alphanumeric ordering is used.</td>
 </tr>
 </tbody>
 </table>
@@ -2682,7 +2682,7 @@
 </code></pre></div>
 <p>Example extensions that you can use with Helm charts include:</p>
 <ul>
-<li>Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (refer to the k0s documentation for <a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>)</li>
+<li>Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefik ingress</a> (refer to the k0s documentation for <a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>)</li>
 <li>Volume storage providers: <a href="https://openebs.github.io/charts/">OpenEBS</a>, <a href="https://github.com/rook/rook/blob/master/Documentation/helm-operator.md">Rook</a>, <a href="https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/">Longhorn</a></li>
 <li>Monitoring: <a href="https://github.com/prometheus-community/helm-charts/">Prometheus</a>, <a href="https://github.com/grafana/helm-charts">Grafana</a></li>
 </ul>

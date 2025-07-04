@@ -2509,9 +2509,11 @@
 
 
 <h1 id="control-plane-high-availability">Control Plane High Availability<a class="headerlink" href="#control-plane-high-availability" title="Permanent link">#</a></h1>
-<p>You can create high availability for the control plane by distributing the control plane across multiple nodes and installing a load balancer on top. Etcd can be colocated with the controller nodes (default in k0s) to achieve highly available datastore at the same time.</p>
+<p>You can create high availability for the control plane by distributing the control plane across multiple nodes and installing a load balancer on top. Etcd can be co-located with the controller nodes (default in k0s) to achieve highly available data store at the same time.</p>
 <p><img alt="k0s high availability" src="../img/k0s_high_availability.png" /></p>
-<p><strong>Note:</strong> In this context even 2 node controlplane is considered HA even though it's not really HA from etcd point of view. The same requirement for <a href="#load-balancer">LB</a> still applies.</p>
+<p><strong>Note:</strong> In this context, a two-node control plane is considered highly
+available, even though it is not HA from etcd's perspective. The same
+requirement for the <a href="#load-balancer">load balancer</a> still applies.</p>
 <h2 id="network-considerations">Network considerations<a class="headerlink" href="#network-considerations" title="Permanent link">#</a></h2>
 <p>You should plan to allocate the control plane nodes into different zones. This will avoid failures in case one zone fails.</p>
 <p>For etcd high availability it's recommended to configure 3 or 5 controller nodes. For more information, refer to the <a href="https://etcd.io/docs/latest/faq/#why-an-odd-number-of-cluster-members">etcd documentation</a>.</p>
@@ -2522,9 +2524,9 @@
 <li>8132 (for Konnectivity)</li>
 <li>9443 (for controller join API)</li>
 </ul>
-<p>The load balancer can be implemented in many different ways and k0s doesn't have any additional requirements. You can use for example HAProxy, NGINX or your cloud provider's load balancer.</p>
+<p>The load balancer can be implemented in many different ways and k0s doesn't have any additional requirements. You can use for example HAProxy, nginx or your cloud provider's load balancer.</p>
 <h3 id="example-configuration-haproxy">Example configuration: HAProxy<a class="headerlink" href="#example-configuration-haproxy" title="Permanent link">#</a></h3>
-<p>Add the following lines to the end of the haproxy.cfg:</p>
+<p>Add the following lines at the end of <code>haproxy.cfg</code>:</p>
 <div class="highlight"><pre><span></span><code>frontend kubeAPI
     bind :6443
     mode tcp
@@ -2579,7 +2581,7 @@ then share them between controller nodes, or use k0sctl to generate and share
 them automatically.</p>
 <p>The second important aspect is: the load balancer address must be configured to k0s either by using <code>k0s.yaml</code> or by using k0sctl to automatically deploy all controllers with the same configuration:</p>
 <h3 id="configuration-using-k0syaml-for-each-controller">Configuration using k0s.yaml (for each controller)<a class="headerlink" href="#configuration-using-k0syaml-for-each-controller" title="Permanent link">#</a></h3>
-<p>Note to update your load balancer's public ip address into two places.</p>
+<p>Note to update your load balancer's public IP address into two places.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">api</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span>
@@ -2587,7 +2589,8 @@ them automatically.</p>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span>
 </code></pre></div>
 <h3 id="configuration-using-k0sctlyaml-for-k0sctl">Configuration using k0sctl.yaml (for k0sctl)<a class="headerlink" href="#configuration-using-k0sctlyaml-for-k0sctl" title="Permanent link">#</a></h3>
-<p>Add the following lines to the end of the k0sctl.yaml. Note to update your load balancer's public ip address into two places.</p>
+<p>Add the following lines at the end of <code>k0sctl.yaml</code>. Note to update your load
+balancer's public IP address into two places.</p>
 <div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">config</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">spec</span><span class="p">:</span>

@@ -2485,31 +2485,31 @@
 
 
 <h1 id="dynamic-configuration">Dynamic configuration<a class="headerlink" href="#dynamic-configuration" title="Permanent link">#</a></h1>
-<p>k0s comes with the option to enable dynamic configuration for cluster level components. This covers all the components other than etcd (or sqlite) and the Kubernetes api-server. This option enables k0s configuration directly via Kubernetes API as opposed to using a configuration file for all cluster configuration.</p>
+<p>k0s comes with the option to enable dynamic configuration for cluster level components. This covers all the components other than etcd (or SQLite) and the Kubernetes API server. This option enables k0s configuration directly via Kubernetes API as opposed to using a configuration file for all cluster configuration.</p>
 <p>This feature has to be enabled for every controller in the cluster using the <code>--enable-dynamic-config</code> flag in <code>k0s controller</code> or <code>k0s install controller</code> commands. Having both types of controllers in the same cluster will cause a conflict.</p>
 <h2 id="dynamic-vs-static-configuration">Dynamic vs. static configuration<a class="headerlink" href="#dynamic-vs-static-configuration" title="Permanent link">#</a></h2>
 <p>The existing and enabled-by-default method is what we call static configuration. That's the way where the k0s process reads the config from the given YAML file (or uses the default config if no config is given by user) and configures every component accordingly. This means that for any configuration change the cluster admin has to restart all controllers on the cluster and have matching configs on each controller node.</p>
-<p>In dynamic configuration mode the first controller to boot up when the cluster is created will use the given config YAML as a bootstrap configuration and stores it in the Kubernetes API. All the other controllers will find the config existing on the API and will use it as the source-of-truth for configuring all the components except for etcd and kube-apiserver. After the initial cluster bootstrap the source of truth for all controllers is the configuration object in the Kubernetes API.</p>
+<p>In dynamic configuration mode the first controller to boot up when the cluster is created will use the given config YAML as a bootstrap configuration and stores it in the Kubernetes API. All the other controllers will find the config existing on the API and will use it as the source-of-truth for configuring all the components except for etcd and Kubernetes API server. After the initial cluster bootstrap the source of truth for all controllers is the configuration object in the Kubernetes API.</p>
 <h2 id="cluster-configuration-vs-controller-node-configuration">Cluster configuration vs. controller node configuration<a class="headerlink" href="#cluster-configuration-vs-controller-node-configuration" title="Permanent link">#</a></h2>
 <p>In the <a href="../configuration/">k0s configuration options</a> there are some options that are cluster-wide and some that are specific to each controller node in the cluster. The following list outlines which options are controller node specific and have to be configured only via the local file:</p>
 <ul>
 <li><code>spec.api</code> - these options configure how the local Kubernetes API server is setup</li>
-<li><code>spec.storage</code> - these options configure how the local storage (etcd or sqlite) is setup</li>
-<li><code>spec.network.controlPlaneLoadBalancing</code> - these options configure how <a href="../cplb/">Control Plane Load Balancing</a> is setup.</li>
+<li><code>spec.storage</code> - these options configure how the local storage (etcd or SQLite) is setup</li>
+<li><code>spec.network.controlPlaneLoadBalancing</code> - these options configure how to setup <a href="../cplb/">Control Plane Load Balancing</a>.</li>
 </ul>
-<p>In case of a HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.</p>
+<p>In case of an HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.</p>
 <h2 id="configuration-location">Configuration location<a class="headerlink" href="#configuration-location" title="Permanent link">#</a></h2>
 <p>The cluster wide configuration is stored in the Kubernetes API as a custom resource called <code>clusterconfig</code>. There's currently only one instance named <code>k0s</code>. You can edit the configuration with what ever means possible, for example with:</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>config<span class="w"> </span>edit
 </code></pre></div>
 <p>This will open the configuration object for editing in your system's default editor.</p>
 <h2 id="configuration-reconciliation">Configuration reconciliation<a class="headerlink" href="#configuration-reconciliation" title="Permanent link">#</a></h2>
-<p>The dynamic configuration uses the typical operator pattern for operation. k0s controller will detect when the object changes and will reconcile the configuration changes to be reflected to how different components are configured. So say you want to change the MTU setting for kube-router CNI networking you'd change the config to contain e.g.:</p>
+<p>The dynamic configuration uses the typical operator pattern for operation. k0s controller will detect when the object changes and will reconcile the configuration changes to be reflected to how different components are configured. So say you want to change the MTU setting for Kube-router CNI networking you'd change the config to contain e.g.:</p>
 <div class="highlight"><pre><span></span><code><span class="w">    </span><span class="nt">kuberouter</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1350</span>
 <span class="w">      </span><span class="nt">autoMTU</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
-<p>This will change the kube-router related configmap and thus make kube-router to use different MTU settings for new pods.</p>
+<p>This will change the Kube-router related ConfigMap and thus make Kube-router to use different MTU settings for new pods.</p>
 <h2 id="configuration-options">Configuration options<a class="headerlink" href="#configuration-options" title="Permanent link">#</a></h2>
 <p>The configuration object is a 1-to-1 mapping with the existing <a href="../configuration/">configuration YAML</a>. All the configuration options EXCEPT options under <code>spec.api</code> and <code>spec.storage</code> are dynamically reconciled.</p>
 <p>As with any Kubernetes cluster there are certain things that just cannot be changed on-the-fly, this is the list of non-changeable options:</p>

@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#airgapped-installation" class="md-skip">
+        <a href="#air-gapped-installation" class="md-skip">
           Skip to content
         </a>
       
@@ -631,9 +631,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#using-k0s-builtin-tooling" class="md-nav__link">
+  <a href="#using-k0s-built-in-tooling" class="md-nav__link">
     <span class="md-ellipsis">
-      Using k0s builtin tooling
+      Using k0s built-in tooling
     </span>
   </a>
   
@@ -2457,9 +2457,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#using-k0s-builtin-tooling" class="md-nav__link">
+  <a href="#using-k0s-built-in-tooling" class="md-nav__link">
     <span class="md-ellipsis">
-      Using k0s builtin tooling
+      Using k0s built-in tooling
     </span>
   </a>
   
@@ -2546,8 +2546,8 @@
 
 
 
-<h1 id="airgapped-installation">Airgapped Installation<a class="headerlink" href="#airgapped-installation" title="Permanent link">#</a></h1>
-<p>You can install k0s in environments without Internet access. Airgapped
+<h1 id="air-gapped-installation">Air gapped Installation<a class="headerlink" href="#air-gapped-installation" title="Permanent link">#</a></h1>
+<p>You can install k0s in environments without Internet access. Air gapped
 installations require an image bundle that contains all the container images
 that would normally be pulled over the network. K0s uses so-called OCI archives
 for this: Tarball representations of an <a href="https://github.com/opencontainers/image-spec/blob/v1.0/image-layout.md">OCI Image Layout</a>. They allow for
@@ -2569,7 +2569,7 @@ example, on arm/v8, k0s will also import arm/v7, arm/v6, and arm/v5 images. This
 means that your bundle can contain multi-arch images, and the import will be
 done using platform compatibility.</p>
 <h2 id="creating-image-bundles">Creating image bundles<a class="headerlink" href="#creating-image-bundles" title="Permanent link">#</a></h2>
-<h3 id="using-k0s-builtin-tooling">Using k0s builtin tooling<a class="headerlink" href="#using-k0s-builtin-tooling" title="Permanent link">#</a></h3>
+<h3 id="using-k0s-built-in-tooling">Using k0s built-in tooling<a class="headerlink" href="#using-k0s-built-in-tooling" title="Permanent link">#</a></h3>
 <p>k0s ships with the <a href="../cli/k0s_airgap/"><code>k0s airgap</code></a> sub-command, which is
 dedicated for tooling for airgapped environments. It allows for listing the
 required images for a given configuration, as well as bundling them into an OCI

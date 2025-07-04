@@ -1795,9 +1795,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#coredns-in-crashloop" class="md-nav__link">
+  <a href="#coredns-in-crash-loop" class="md-nav__link">
     <span class="md-ellipsis">
-      CoreDNS in crashloop
+      CoreDNS in crash-loop
     </span>
   </a>
   
@@ -2442,9 +2442,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#coredns-in-crashloop" class="md-nav__link">
+  <a href="#coredns-in-crash-loop" class="md-nav__link">
     <span class="md-ellipsis">
-      CoreDNS in crashloop
+      CoreDNS in crash-loop
     </span>
   </a>
   
@@ -2540,8 +2540,8 @@
 
 <h1 id="common-pitfalls">Common Pitfalls<a class="headerlink" href="#common-pitfalls" title="Permanent link">#</a></h1>
 <p>There are few common cases we've seen where k0s fails to run properly.</p>
-<h2 id="coredns-in-crashloop">CoreDNS in crashloop<a class="headerlink" href="#coredns-in-crashloop" title="Permanent link">#</a></h2>
-<p>The most common case we've encountered so far has been CoreDNS getting into crashloop on the node(s).</p>
+<h2 id="coredns-in-crash-loop">CoreDNS in crash-loop<a class="headerlink" href="#coredns-in-crash-loop" title="Permanent link">#</a></h2>
+<p>The most common case we've encountered so far has been CoreDNS getting into crash-loop on the node(s).</p>
 <p>With kubectl you see something like this:</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>--all-namespaces
 NAMESPACE<span class="w">     </span>NAME<span class="w">                                       </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
@@ -2569,7 +2569,7 @@ kube-system<span class="w">   </span>metrics-server-7d4bcb75dd-pqkrs<span class=
 <h2 id="k0s-controller-fails-on-arm-boxes"><code>k0s controller</code> fails on ARM boxes<a class="headerlink" href="#k0s-controller-fails-on-arm-boxes" title="Permanent link">#</a></h2>
 <p>In the logs you probably see etcd not starting up properly.</p>
 <p>Etcd is <a href="https://etcd.io/docs/v3.5/op-guide/supported-platform/#current-support">not fully supported</a> on ARM architecture, thus you need
-to run <code>k0s controller</code> and thus also etcd process with env
+to run <code>k0s controller</code> and thus also etcd process with the environment variable
 <code>ETCD_UNSUPPORTED_ARCH=arm</code>.</p>
 <p>As etcd is not fully supported on ARM, it also means that the k0s control plane
 with etcd itself is not fully supported on ARM either.</p>
@@ -2604,7 +2604,7 @@ with etcd itself is not fully supported on ARM either.</p>
 <li>containerd should be launched with ZFS support and k0s should initialize the cluster correctly</li>
 </ul>
 <h2 id="pods-pending-when-using-cloud-providers">Pods pending when using cloud providers<a class="headerlink" href="#pods-pending-when-using-cloud-providers" title="Permanent link">#</a></h2>
-<p>Once we enable <a href="../../cloud-providers/">cloud provider support</a> on kubelet on worker nodes, kubelet will automatically add a taint <code>node.cloudprovider.kubernetes.io/uninitialized</code> for the node. This tain will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.</p>
+<p>Once we enable <a href="../../cloud-providers/">cloud provider support</a> on kubelet on worker nodes, kubelet will automatically add a taint <code>node.cloudprovider.kubernetes.io/uninitialized</code> for the node. This taint will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.</p>
 <p>For troubleshooting your specific cloud provider see its documentation.</p>
 <h2 id="k0s-not-working-with-read-only-usr">k0s not working with read only <code>/usr</code><a class="headerlink" href="#k0s-not-working-with-read-only-usr" title="Permanent link">#</a></h2>
 <p>By default k0s does not run on nodes where <code>/usr</code> is read only.</p>
@@ -2630,10 +2630,10 @@ with etcd itself is not fully supported on ARM either.</p>
 newer than the version shipped with k0s, the Kubernetes network will <a href="https://www.mirantis.com/blog/networking-problems-after-installing-kubernetes-1-25-or-after-upgrading-your-host-os-this-might-be-your-problem">not
 work</a>.</p>
 <p>To solve this, make sure that the iptables version used on host is same version
-as bundled with k0s. The k0s version is found in  <code>/var/lib/k0s/bin</code>.</p>
+as bundled with k0s. The k0s version is found in <code>/var/lib/k0s/bin</code>.</p>
 <h2 id="profiling">Profiling<a class="headerlink" href="#profiling" title="Permanent link">#</a></h2>
-<p>We drop any debug related information and symbols from the compiled binary by utilzing <code>-w -s</code> linker flags.</p>
-<p>To keep those symbols use <code>DEBUG</code> env variable:</p>
+<p>We drop any debug related information and symbols from the compiled binary by utilizing <code>-w -s</code> linker flags.</p>
+<p>To keep those symbols use <code>DEBUG</code> environment variable:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">DEBUG</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span>make<span class="w"> </span>k0s
 </code></pre></div>
 <p>Any value not equal to the "false" would work.</p>

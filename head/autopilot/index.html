@@ -2924,11 +2924,11 @@
 
 <h1 id="autopilot">Autopilot<a class="headerlink" href="#autopilot" title="Permanent link">#</a></h1>
 <p>A tool for updating your <code>k0s</code> controller and worker nodes using specialized plans.
-There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel <code>edge_release</code>  available. The channel exposes the latest  released version.</p>
+There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel <code>edge_release</code> available. The channel exposes the latest released version.</p>
 <h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">#</a></h2>
 <ul>
 <li>You create a <code>Plan</code> YAML<ul>
-<li>Defining the update payload (new version of <code>k0s</code>, URLs for platforms, etc)</li>
+<li>Defining the update payload (new version of <code>k0s</code>, URLs for platforms, etc.)</li>
 <li>Add definitions for all the nodes that should receive the update.<ul>
 <li>Either statically, or dynamically using label/field selectors</li>
 </ul>
@@ -2979,7 +2979,7 @@ should <strong>not</strong> be of a newer version than the API server.</li>
 </ul>
 <ul>
 <li>How <strong>autopilot</strong> handles this is that when a <code>Plan</code> is applied that has both controller
-and worker nodes, <strong>all</strong> of the controller nodes will be updated first. It is only when
+and worker nodes, <strong>all</strong> the controller nodes will be updated first. It is only when
 <strong>all</strong> controllers have updated <strong>successfully</strong> that worker nodes will receive their
 update instructions.</li>
 </ul>
@@ -3071,7 +3071,7 @@ does nothing with this information.</li>
 </ul>
 <h4 id="speccommands-required"><code>spec.commands[] (required)</code><a class="headerlink" href="#speccommands-required" title="Permanent link">#</a></h4>
 <ul>
-<li>The <code>commands</code> contains all of the commands that should be performed as a part of the plan.</li>
+<li>The <code>commands</code> contains the commands that should be performed as a part of the plan.</li>
 </ul>
 <h3 id="k0supdate-command"><strong><code>k0supdate</code></strong> Command<a class="headerlink" href="#k0supdate-command" title="Permanent link">#</a></h3>
 <h4 id="speccommandsk0supdateversion-string-required"><code>spec.commands[].k0supdate.version &lt;string&gt; (required)</code><a class="headerlink" href="#speccommandsk0supdateversion-string-required" title="Permanent link">#</a></h4>
@@ -3081,9 +3081,9 @@ version before and after update to ensure success.</li>
 </ul>
 <h4 id="speccommandsk0supdateplatformsurl-string-required"><code>spec.commands[].k0supdate.platforms.*.url &lt;string&gt; (required)</code><a class="headerlink" href="#speccommandsk0supdateplatformsurl-string-required" title="Permanent link">#</a></h4>
 <ul>
-<li>An URL providing where the updated binary should be downloaded from, for this specific platform.<ul>
+<li>A URL providing where the updated binary should be downloaded from, for this specific platform.<ul>
 <li>The naming of platforms is a combination of <code>$GOOS</code> and <code>$GOARCH</code>, separated by a hyphen (<code>-</code>)<ul>
-<li>eg: <code>linux-amd64</code>, <code>linux-arm64</code>, <code>linux-arm</code></li>
+<li>e.g.: <code>linux-amd64</code>, <code>linux-arm64</code>, <code>linux-arm</code></li>
 </ul>
 </li>
 <li><strong>Note:</strong> The main supported platform is <code>linux</code>. <strong>Autopilot</strong> may work on other platforms, however

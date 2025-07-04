@@ -2578,7 +2578,7 @@
 <p>You can speed up the use of the <code>k0s</code> command by enabling <a href="../shell-completion/">shell completion</a>.</p>
 <h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
 <h3 id="1-download-k0s">1. Download k0s<a class="headerlink" href="#1-download-k0s" title="Permanent link">#</a></h3>
-<p>Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.</p>
+<p>Run the k0s download script to download the latest stable version of k0s and make it executable from <code>/usr/bin/k0s</code>.</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 </code></pre></div>
 <p>The download script accepts the following environment variables:</p>
@@ -2613,7 +2613,7 @@ k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> 
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
-<p>k0s process acts as a "supervisor" for all of the control plane components. In moments the control plane will be up and running.</p>
+<p>k0s process acts as a "supervisor" for the control plane components. In moments the control plane will be up and running.</p>
 <h3 id="3-create-a-join-token">3. Create a join token<a class="headerlink" href="#3-create-a-join-token" title="Permanent link">#</a></h3>
 <p>You need a token to join workers to the cluster. The token embeds information that enables mutual trust between the worker and controller(s) and which allows the node to join the cluster as worker.</p>
 <p>To get a token, run the following command on one of the existing controller nodes:</p>
@@ -2638,7 +2638,7 @@ k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> 
 </ul>
 <p>The bearer token embedded in the kubeconfig is a <a href="https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/">bootstrap token</a>. For controller join tokens and worker join tokens k0s uses different usage attributes to ensure that k0s can validate the token role on the controller side.</p>
 <h3 id="5-add-controllers-to-the-cluster">5. Add controllers to the cluster<a class="headerlink" href="#5-add-controllers-to-the-cluster" title="Permanent link">#</a></h3>
-<p><strong>Note</strong>: Either etcd or an external data store (MySQL or Postgres) via kine must be in use to add new controller nodes to the cluster. Pay strict attention to the <a href="../high-availability/">high availability configuration</a> and make sure the configuration is identical for all controller nodes.</p>
+<p><strong>Note</strong>: Either etcd or an external data store (MySQL or PostgreSQL) via kine must be in use to add new controller nodes to the cluster. Pay strict attention to the <a href="../high-availability/">high availability configuration</a> and make sure the configuration is identical for all controller nodes.</p>
 <p>To create a join token for the new controller, run the following command on an existing controller:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--role<span class="o">=</span>controller<span class="w"> </span>--expiry<span class="o">=</span>1h<span class="w"> </span>&gt;<span class="w"> </span>token-file
 </code></pre></div>
@@ -2646,7 +2646,7 @@ k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> 
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--token-file<span class="w"> </span>/path/to/token/file<span class="w"> </span>-c<span class="w"> </span>/etc/k0s/k0s.yaml
 </code></pre></div>
 <p>Important notice here is that each controller in the cluster must have k0s.yaml otherwise some cluster nodes will use default config values which will lead to inconsistency behavior.
-If your configuration file includes IP addresses (node address, sans, etcd peerAddress), remember to update them accordingly for this specific controller node.</p>
+If your configuration file includes IP addresses (node address, SANs, etcd peer address), remember to update them accordingly for this specific controller node.</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
 <h3 id="6-check-k0s-status">6. Check k0s status<a class="headerlink" href="#6-check-k0s-status" title="Permanent link">#</a></h3>
@@ -2674,7 +2674,7 @@ k0s<span class="w">    </span>Ready<span class="w">    </span>&lt;none&gt;<span 
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="../k0sctl-install/">Install using k0sctl</a>: Deploy multi-node clusters using just one command</li>
-<li><a href="../configuration/">Control plane configuration options</a>: Networking and datastore configuration</li>
+<li><a href="../configuration/">Control plane configuration options</a>: Networking and data store configuration</li>
 <li><a href="../worker-node-config/">Worker node configuration options</a>: Node labels and kubelet arguments</li>
 <li><a href="../cloud-providers/">Support for cloud providers</a>: Load balancer or storage configuration</li>
 <li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>: Ingress deployment information</li>

@@ -3209,7 +3209,7 @@ As such, it's tailor-made for a variety of use cases, including:</p>
 <h4 id="edge-computing-and-iot">Edge Computing and IoT<a class="headerlink" href="#edge-computing-and-iot" title="Permanent link">#</a></h4>
 <p>Deploying Kubernetes in resource-constrained, far-edge environments where lightweight and efficient solutions are critical.
 Ideal for managing IoT devices, disconnected edge nodes, and remote locations.
-k0s also support airgapped environments by beaing able to automatically load container image bundles and having zero dependencies.</p>
+k0s also support air gapped environments by being able to automatically load container image bundles and having zero dependencies.</p>
 <h4 id="cloud-native-application-hosting">Cloud-Native Application Hosting<a class="headerlink" href="#cloud-native-application-hosting" title="Permanent link">#</a></h4>
 <p>Enabling developers to run containerized applications with minimal operational complexity.
 Suitable for both small-scale setups and large-scale production workloads.</p>
@@ -3237,7 +3237,7 @@ This architecture is good fit for e.g. Edge type use cases or where users want t
 <h3 id="small-and-medium-sized-businesses-smbs">Small and Medium-Sized Businesses (SMBs)<a class="headerlink" href="#small-and-medium-sized-businesses-smbs" title="Permanent link">#</a></h3>
 <ul>
 <li>Looking for a straightforward, cost-effective Kubernetes solution.</li>
-<li>Often lack dedicated Kubernetes experts and benefit from k0s’s ease of deployment and management.</li>
+<li>Often lack dedicated Kubernetes experts and benefit from k0s's ease of deployment and management.</li>
 </ul>
 <h3 id="edge-computing-and-iot-organizations">Edge Computing and IoT Organizations<a class="headerlink" href="#edge-computing-and-iot-organizations" title="Permanent link">#</a></h3>
 <ul>
@@ -3262,14 +3262,14 @@ This architecture is good fit for e.g. Edge type use cases or where users want t
 <h3 id="educational-and-research-institutions">Educational and Research Institutions<a class="headerlink" href="#educational-and-research-institutions" title="Permanent link">#</a></h3>
 <ul>
 <li>Need Kubernetes clusters for experimentation, training, or academic research.</li>
-<li>Value k0s’s simplicity for non-commercial use cases and resource-constrained setups.</li>
+<li>Value k0s's simplicity for non-commercial use cases and resource-constrained setups.</li>
 </ul>
 <h3 id="software-vendors-and-system-integrators">Software Vendors and System Integrators<a class="headerlink" href="#software-vendors-and-system-integrators" title="Permanent link">#</a></h3>
 <ul>
 <li>Deliver Kubernetes-based solutions to clients across various industries.</li>
-<li>Bundle and package k0s with their applications to create "Kubernetes appliances."</li>
+<li>Bundle and package k0s with their applications to create "Kubernetes appliances".</li>
 <li>Ship pre-configured, self-contained solutions for customers without requiring Kubernetes expertise.</li>
-<li>Appreciate k0s’s ease of deployment, lightweight architecture, and flexibility to adapt to different environments.</li>
+<li>Appreciate k0s's ease of deployment, lightweight architecture, and flexibility to adapt to different environments.</li>
 <li>Benefit from its embedded-friendly design, making it ideal for turnkey application deployments in diverse scenarios.</li>
 </ul>
 <h2 id="completed-end-user-research">Completed end-user research<a class="headerlink" href="#completed-end-user-research" title="Permanent link">#</a></h2>
@@ -3286,7 +3286,7 @@ This architecture is good fit for e.g. Edge type use cases or where users want t
 </ul>
 </li>
 <li><strong>Simplified Upgrades</strong><ul>
-<li>Upgrading k0s is as easy as replacing the binary, reducing downtime and operational complexity. To help in orchestrating the cluster upgrade k0s comes with a component called <a href="https://docs.k0sproject.io/stable/autopilot/">autopilot</a> that automates the node ugrade orchestration, including the needed node draining and coordination.</li>
+<li>Upgrading k0s is as easy as replacing the binary, reducing downtime and operational complexity. To help in orchestrating the cluster upgrade k0s comes with a component called <a href="https://docs.k0sproject.io/stable/autopilot/">autopilot</a> that automates the node upgrade orchestration, including the needed node draining and coordination.</li>
 </ul>
 </li>
 <li><strong>Reduced Operational Overhead</strong><ul>
@@ -3298,7 +3298,7 @@ This architecture is good fit for e.g. Edge type use cases or where users want t
 </ul>
 </li>
 </ol>
-<p>As such, k0s provides a conformant Kubernetes which means any ecosystem addon works on k0s.</p>
+<p>As such, k0s provides a conformant Kubernetes which means any ecosystem add-on works on k0s.</p>
 <h2 id="design">Design<a class="headerlink" href="#design" title="Permanent link">#</a></h2>
 <h3 id="design-principles-best-practices">Design principles &amp; best practices<a class="headerlink" href="#design-principles-best-practices" title="Permanent link">#</a></h3>
 <h4 id="design-principles">Design Principles<a class="headerlink" href="#design-principles" title="Permanent link">#</a></h4>
@@ -3320,7 +3320,7 @@ This architecture is good fit for e.g. Edge type use cases or where users want t
 </ul>
 </li>
 <li><strong>Security by Default</strong><ul>
-<li>Secure configurations are baked into k0s from the start, with features like automatic TLS management, disabling anonymous access etc..</li>
+<li>Secure configurations are baked into k0s from the start, with features like automatic TLS management, disabling anonymous access etc.</li>
 </ul>
 </li>
 <li><strong>Ease of Maintenance and Upgrades</strong><ul>
@@ -3364,7 +3364,7 @@ By default, k0s only sets up certificate authentication but users can fully conf
 <li><strong>Control Plane Redundancy</strong><ul>
 <li>To achieve HA, the control plane (API server, etcd, controller manager, and scheduler) must be deployed in a redundant configuration:<ul>
 <li><strong>Multiple Control Plane Nodes</strong>: At least three control plane nodes are recommended to ensure quorum and fault tolerance for etcd. In case kine is used with HA SQL database backend, 2 controller nodes are often sufficient.</li>
-<li><strong>Load Balancer</strong>: A load balancer is required in front of the control plane nodes to distribute API traffic evenly and provide failover.<ul>
+<li><strong>Load Balancer</strong>: A load balancer is required in front of the control plane nodes to distribute API traffic evenly and provide fail-over.<ul>
 <li>k0s offers an embedded control plane load balancer (<a href="https://docs.k0sproject.io/stable/cplb/">CPLB</a>) for use cases where the infrastructure/network does not provide easy ways to create load balancers on its own.</li>
 <li>K0s has a node-local (<a href="https://docs.k0sproject.io/stable/nllb/">NLLB</a>) for worker nodes to automatically re-route API connections to different nodes in case of failures.</li>
 </ul>
@@ -3487,24 +3487,26 @@ By default, k0s only sets up certificate authentication but users can fully conf
 <ul>
 <li><strong>Operating Systems</strong>:<ul>
 <li>Linux (kernel version 4.3 or later)<ul>
-<li>x86-64</li>
-<li>aarch64</li>
-<li>armv7l</li>
+<li><code>x86_64</code></li>
+<li><code>aarch64</code></li>
+<li><code>armv7l</code></li>
 </ul>
 </li>
 <li>Windows Server 2019 (experimental)<ul>
-<li>x86-64</li>
+<li><code>x86_64</code></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
-<p><strong>Note:</strong> k0s is actively tested on armv7 architecture which upstream Kubernetes does not currently do.
-That already allowed us to identify and fix some architecture related issues that haven't been caught upstream, before they hit a stable Kubernetes release.</p>
+<p><strong>Note:</strong> K0s is actively tested on the <code>armv7l</code> architecture, which is not
+currently done by upstream Kubernetes. This has enabled us to identify and
+resolve architecture-related issues that upstream Kubernetes did not detect,
+before they were included in a stable Kubernetes release.</p>
 <p>These specifications ensure compatibility across a wide range of hardware platforms.</p>
 <h3 id="additional-considerations">Additional Considerations<a class="headerlink" href="#additional-considerations" title="Permanent link">#</a></h3>
 <ul>
-<li><strong>Operating System Dependencies</strong>: k0s strives to be as independent from the OS as possible.</li>
+<li><strong>Operating System Dependencies</strong>: k0s strives to be as independent from the operating system as possible.</li>
 <li>The necessary kernel configurations and any external runtime dependencies are documented in the <a href="https://docs.k0sproject.io/stable/system-requirements/">k0s system requirements</a>.</li>
 </ul>
 <h2 id="storage-requirements_1">Storage requirements<a class="headerlink" href="#storage-requirements_1" title="Permanent link">#</a></h2>
@@ -3542,8 +3544,8 @@ That already allowed us to identify and fix some architecture related issues tha
 </ul>
 </li>
 <li><strong>API Evolution and Versioning</strong><ul>
-<li>The k0s API design follows Kubernetes’ API versioning practices, supporting multiple API versions (e.g., v1beta1, v1) for gradual transitions and backward compatibility.<ul>
-<li>We currently support only v1beta1 but are planning for the next version (v2)</li>
+<li>The k0s API design follows Kubernetes’ API versioning practices, supporting multiple API versions (e.g., <code>v1beta1</code>, <code>v1</code>) for gradual transitions and backward compatibility.<ul>
+<li>We currently support only <code>v1beta1</code> but are planning for the next version (<code>v2</code>)</li>
 </ul>
 </li>
 <li>Deprecated APIs are phased out according to Kubernetes release cycles, ensuring compatibility with upstream developments.</li>
@@ -3551,7 +3553,11 @@ That already allowed us to identify and fix some architecture related issues tha
 </li>
 </ol>
 <h2 id="release-process">Release process<a class="headerlink" href="#release-process" title="Permanent link">#</a></h2>
-<p>k0s project follows closely the upstream Kubernetes release cycle. The only difference in the upstream Kubernetes release/maintenance schedule is that our initial release date is always a few weeks behind the upstream Kubernetes version release date as we are building our version of k0s from the officially released version of Kubernetes and need time for testing the final version before shipping.
+<p>The k0s project closely follows the upstream Kubernetes release cycle. The only
+difference in the Kubernetes release and maintenance schedule is that our
+initial release date is always a few weeks after the Kubernetes release date.
+This is because we build our version of k0s from the officially released
+Kubernetes version and need time to test the final version before shipping.
 ![][image1]
 The k0s version string consists of the Kubernetes version and the k0s version. For example:</p>
 <div class="highlight"><pre><span></span><code>v1.33.2+head
@@ -3564,12 +3570,14 @@ The k0s version string consists of the Kubernetes version and the k0s version. F
 <span class="gp"># </span>chmod<span class="w"> </span>u+x<span class="w"> </span>k0s
 <span class="gp"># </span>./k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./k0s<span class="w"> </span>start
 </code></pre></div>
-<p>Naturally, this will spin up k0s with the default configuration. In case the user needs to configure something, they can create a yaml document to describe the <a href="https://docs.k0sproject.io/stable/configuration/">configuration</a>:</p>
+<p>Naturally, this will spin up k0s with the default configuration. In case the
+user needs to configure something, they can create a YAML document to describe
+the <a href="https://docs.k0sproject.io/stable/configuration/">configuration</a>:</p>
 <p>As part of the startup sequence, k0s performs a series of pre-flight checks. This ensures that the system meets the requirements,
 such as all required kernel modules are loaded, enough free disk capacity on the node, and so on.
 If the pre-flight checks fail, k0s will refuse to start unless it's explicitly told to, and the logs will clearly indicate why they failed.</p>
 <p>Additionally, users have the option to run the CNCF Certified Kubernetes Conformance test suite.
-This test suite is executed by the CI for each release (on amd64 and arm64) and its results are made available as release artifacts.</p>
+This test suite is executed by the CI for each release (on <code>x86_64</code> and <code>aarch64</code>) and its results are made available as release artifacts.</p>
 <h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">#</a></h2>
 <h3 id="cncf-security-self-assessment">CNCF Security self-assessment<a class="headerlink" href="#cncf-security-self-assessment" title="Permanent link">#</a></h3>
 <p>See separate <a href="../security-self-assessment/">document</a>.</p>
@@ -3674,20 +3682,20 @@ This test suite is executed by the CI for each release (on amd64 and arm64) and 
 <h4 id="supply-chain-security">Supply Chain Security<a class="headerlink" href="#supply-chain-security" title="Permanent link">#</a></h4>
 <ul>
 <li><strong>Source Code Integrity</strong>:<ul>
-<li>Code hosted on trusted platform on Github.</li>
+<li>Code hosted on trusted platform on GitHub.</li>
 <li>Git used as version control and all changes going through pull request process to ensure integrity.</li>
 </ul>
 </li>
 <li><strong>Build Pipeline Security</strong>:<ul>
-<li>All build pipelines are managed as-code (GH actions yaml) under project repository in GitHub.</li>
+<li>All build pipelines are managed as code using GitHub Actions workflows in the k0s git repository.</li>
 <li>All changes are going through normal review process.</li>
 <li>Non-maintainer PRs require approval to run the CI workflows allowing a maintainer to verify the PR before allowing it to run.</li>
 </ul>
 </li>
 <li><strong>Dependency Transparency</strong>:<ul>
 <li>The project maintains transparency about its dependencies and their versions.</li>
-<li>Automated dependency updates are handled via <strong>Dependabot</strong>.</li>
-<li>A signed SBOM report, in spdx format, is produced for all releases.</li>
+<li>Automated dependency updates are handled by <a href="https://github.com/dependabot">Dependabot</a> and <a href="https://docs.renovatebot.com/">Renovate Bot</a>.</li>
+<li>A signed SBOM report, in SPDX format, is produced for all releases.</li>
 </ul>
 </li>
 </ul>

@@ -2613,7 +2613,7 @@ local testing "cluster":</p>
 <ul>
 <li><code>-d</code> runs the container in detached mode, i.e. in the background.</li>
 <li><code>--name k0s-controller</code> names the container "k0s-controller".</li>
-<li><code>--hostname k0s-controller</code> sets the hostname of the container to
+<li><code>--hostname k0s-controller</code> sets the host name of the container to
   "k0s-controller".</li>
 <li><code>-v /var/lib/k0s -v /var/log/pods</code> creates two Docker volumes and mounts them
   to <code>/var/lib/k0s</code> and <code>/var/log/pods</code> respectively inside the container,
@@ -2814,7 +2814,7 @@ cluster</a>.</p>
 <span class="w">          </span><span class="no">type: kine</span>
 <span class="w">      </span><span class="no"># Any additional configuration goes here ...</span>
 </code></pre></div>
-<p>Below is a more complex example, using traefik as a load balancer, along with
+<p>Below is a more complex example, using Traefik as a load balancer, along with
 three controller and three worker nodes:</p>
 <!-- Kept in its own file to ease local testing. -->
 <div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">compose-cluster</span>
@@ -3045,7 +3045,7 @@ three controller and three worker nodes:</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="../k0sctl-install/">Install using k0sctl</a>: Deploy multi-node clusters using just one command</li>
-<li><a href="../configuration/">Control plane configuration options</a>: Networking and datastore configuration</li>
+<li><a href="../configuration/">Control plane configuration options</a>: Networking and data store configuration</li>
 <li><a href="../worker-node-config/">Worker node configuration options</a>: Node labels and kubelet arguments</li>
 <li><a href="../cloud-providers/">Support for cloud providers</a>: Load balancer or storage configuration</li>
 <li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>: Ingress deployment information</li>

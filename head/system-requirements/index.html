@@ -2528,25 +2528,25 @@
 <thead>
 <tr>
 <th>Role</th>
-<th>Memory (RAM)</th>
-<th>Virtual CPU (vCPU)</th>
+<th>Memory (RAM in GB)</th>
+<th>Virtual CPUs (vCPU)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Controller node</td>
-<td>1   GB</td>
-<td>1 vCPU</td>
+<td>1</td>
+<td>1</td>
 </tr>
 <tr>
 <td>Worker node</td>
-<td>0.5 GB</td>
-<td>1 vCPU</td>
+<td>0.5</td>
+<td>1</td>
 </tr>
 <tr>
 <td>Controller + worker</td>
-<td>1   GB</td>
-<td>1 vCPU</td>
+<td>1</td>
+<td>1</td>
 </tr>
 </tbody>
 </table>
@@ -2554,48 +2554,48 @@
 <table>
 <thead>
 <tr>
-<th># of Worker nodes</th>
-<th># of Pods</th>
-<th>Recommended RAM</th>
+<th># of worker nodes</th>
+<th># of pods</th>
+<th>Recommended RAM (in GB)</th>
 <th>Recommended vCPU</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>up to   10</td>
-<td>up to   1000</td>
-<td>1-2   GB</td>
-<td>1-2   vCPU</td>
+<td>10</td>
+<td>1000</td>
+<td>1-2</td>
+<td>1-2</td>
 </tr>
 <tr>
-<td>up to   50</td>
-<td>up to   5000</td>
-<td>2-4   GB</td>
-<td>2-4   vCPU</td>
+<td>50</td>
+<td>5000</td>
+<td>2-4</td>
+<td>2-4</td>
 </tr>
 <tr>
-<td>up to  100</td>
-<td>up to  10000</td>
-<td>4-8   GB</td>
-<td>2-4   vCPU</td>
+<td>100</td>
+<td>10000</td>
+<td>4-8</td>
+<td>2-4</td>
 </tr>
 <tr>
-<td>up to  500</td>
-<td>up to  50000</td>
-<td>8-16  GB</td>
-<td>4-8   vCPU</td>
+<td>500</td>
+<td>50000</td>
+<td>8-16</td>
+<td>4-8</td>
 </tr>
 <tr>
-<td>up to 1000</td>
-<td>up to 100000</td>
-<td>16-32 GB</td>
-<td>8-16  vCPU</td>
+<td>1000</td>
+<td>100000</td>
+<td>16-32</td>
+<td>8-16</td>
 </tr>
 <tr>
-<td>up to 5000</td>
-<td>up to 150000</td>
-<td>32-64 GB</td>
-<td>16-32 vCPU</td>
+<td>5000</td>
+<td>150000</td>
+<td>32-64</td>
+<td>16-32</td>
 </tr>
 </tbody>
 </table>
@@ -2639,9 +2639,9 @@
 </ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
 <ul>
-<li>x86-64</li>
-<li>ARM64</li>
-<li>ARMv7</li>
+<li><code>x86_64</code></li>
+<li><code>aarch64</code></li>
+<li><code>armv7l</code></li>
 </ul>
 <h2 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h2>
 <p>For information on the required ports and protocols, refer to <a href="../networking/">networking</a>.</p>
@@ -2658,59 +2658,59 @@ for details on current and past requirements.</p>
 <tr>
 <th># of Worker nodes</th>
 <th># of Pods (besides default)</th>
-<th>Memory consumption</th>
+<th>Memory consumption (in MB)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>1</td>
 <td>0</td>
-<td>510  MB</td>
+<td>510</td>
 </tr>
 <tr>
 <td>1</td>
 <td>100</td>
-<td>600  MB</td>
+<td>600</td>
 </tr>
 <tr>
 <td>20</td>
 <td>0</td>
-<td>660  MB</td>
+<td>660</td>
 </tr>
 <tr>
 <td>20</td>
 <td>2000</td>
-<td>1000 MB</td>
+<td>1000</td>
 </tr>
 <tr>
 <td>50</td>
 <td>0</td>
-<td>790  MB</td>
+<td>790</td>
 </tr>
 <tr>
 <td>50</td>
 <td>5000</td>
-<td>1400 MB</td>
+<td>1400</td>
 </tr>
 <tr>
 <td>100</td>
 <td>0</td>
-<td>1000 MB</td>
+<td>1000</td>
 </tr>
 <tr>
 <td>100</td>
 <td>10000</td>
-<td>2300 MB</td>
+<td>2300</td>
 </tr>
 <tr>
 <td>200</td>
 <td>0</td>
-<td>1500 MB</td>
+<td>1500</td>
 </tr>
 <tr>
 <td>200</td>
 <td>20000</td>
-<td>3300 MB</td>
+<td>3300</td>
 </tr>
 </tbody>
 </table>

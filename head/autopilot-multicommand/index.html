@@ -2607,7 +2607,7 @@ current <strong>Command</strong> and <strong>Plan</strong> to abort processing.<
 <ul>
 <li>Every <strong>Command</strong> in the <strong>Plan</strong> has an associated status entry with the same index
 as the <strong>Command</strong><ul>
-<li>ie. The second <strong>Command</strong> in a <strong>Plan</strong> has an index of <code>1</code>, and so does its status.</li>
+<li>i.e. The second <strong>Command</strong> in a <strong>Plan</strong> has an index of <code>1</code>, and so does its status.</li>
 </ul>
 </li>
 <li>The status of all <strong>Commands</strong> is taken into consideration when determining if the
@@ -2676,12 +2676,12 @@ processed by <strong>autopilot</strong>.</p>
 <span class="nt">56:    state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span>
 </code></pre></div>
 <ul>
-<li>Lines <strong>7-33</strong> are the two <strong>Commands</strong> that make up this plan -- an <code>airgapupdate</code> and <code>k0supdate</code>.</li>
+<li>Lines <strong>7-33</strong> are the two <strong>Commands</strong> that make up this plan - an <code>airgapupdate</code> and <code>k0supdate</code>.</li>
 <li>Lines <strong>38-55</strong> are the associated status entries for the two <strong>Commands</strong>.</li>
 </ul>
 <p>The state of this <strong>Plan</strong> excerpt is that <strong>autopilot</strong> has successfully processed the <strong>Plan</strong>, and
 has begun processing the <code>airgapupdate</code> <strong>Command</strong>. Its status indicates <strong>SignalSent</strong> which means
-that the <strong>Signal Node</strong> has been sent signaling information to perform an airgap update.</p>
+that the <strong>Signal Node</strong> has been sent signaling information to perform an air gapped update.</p>
 <hr />
 <h2 id="processing-states"><strong>Processing States</strong><a class="headerlink" href="#processing-states" title="Permanent link">#</a></h2>
 <p>The following are the various states that both <code>Plan</code>s and <code>Command</code>s
@@ -2769,7 +2769,7 @@ and treats all other states as an error.</p>
 <td><strong>MissingSignalNode</strong></td>
 <td><code>airgapupdate</code>, <code>k0supdate</code></td>
 <td><strong>Schedulable</strong></td>
-<td>Indicates that a <strong>Signal Node</strong> that existed during the discover phase in <strong>NewPlan</strong> no longer exists (ie. no matching <code>ControlNode</code> or <code>Node</code> object)</td>
+<td>Indicates that a <strong>Signal Node</strong> that existed during the discover phase in <strong>NewPlan</strong> no longer exists (i.e. no matching <code>ControlNode</code> or <code>Node</code> object)</td>
 </tr>
 </tbody>
 </table>

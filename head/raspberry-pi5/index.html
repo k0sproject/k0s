@@ -603,9 +603,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#enable-memory-cgroups" class="md-nav__link">
+  <a href="#enable-the-memory-cgroup-controller" class="md-nav__link">
     <span class="md-ellipsis">
-      Enable Memory Cgroups
+      Enable the memory cgroup controller
     </span>
   </a>
   
@@ -2526,9 +2526,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#enable-memory-cgroups" class="md-nav__link">
+  <a href="#enable-the-memory-cgroup-controller" class="md-nav__link">
     <span class="md-ellipsis">
-      Enable Memory Cgroups
+      Enable the memory cgroup controller
     </span>
   </a>
   
@@ -2677,8 +2677,8 @@ any issues.</p>
 <p>If your key has a paraphrase, you’ll be prompted for it.</p>
 </li>
 </ol>
-<h3 id="enable-memory-cgroups">Enable Memory Cgroups<a class="headerlink" href="#enable-memory-cgroups" title="Permanent link">#</a></h3>
-<p>By default, Raspberry Pi OS does not enable memory cgroups. Since k0s requires them to pass its pre-flight checks, enable them:</p>
+<h3 id="enable-the-memory-cgroup-controller">Enable the memory cgroup controller<a class="headerlink" href="#enable-the-memory-cgroup-controller" title="Permanent link">#</a></h3>
+<p>Raspberry Pi OS does not enable the memory cgroup controller by default. However, it is required to run containerized workloads, so enable it:</p>
 <ol>
 <li>
 <p>Edit /boot/cmdline.txt:</p>

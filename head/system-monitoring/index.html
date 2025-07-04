@@ -2415,7 +2415,7 @@
 <h1 id="system-components-monitoring">System components monitoring<a class="headerlink" href="#system-components-monitoring" title="Permanent link">#</a></h1>
 <p>Controller nodes <a href="../architecture/#control-plane">are isolated</a> by default, which thus means that a cluster user cannot schedule workloads onto controller nodes.</p>
 <p>k0s provides a mechanism to expose system components for monitoring. System component metrics can give a better look into what is happening inside them. Metrics are particularly useful for building dashboards and alerts.
-You can read more about metrics for Kubernetes system components in the <a href="https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/">kubernetes documentation</a>.</p>
+You can read more about metrics for Kubernetes system components in the <a href="https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/">Kubernetes documentation</a>.</p>
 <p><strong>Note:</strong> the mechanism is an opt-in feature, you can enable it on installation:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--enable-metrics-scraper
 </code></pre></div>
@@ -2450,11 +2450,12 @@ Operator</a> based solutions, you can create a
 <span class="w">      </span><span class="nt">component</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pushgateway</span>
 <span class="w">      </span><span class="nt">k0s.k0sproject.io/stack</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metrics</span>
 </code></pre></div>
-<p>Note that it won't clear alerts like "KubeControllerManagerDown" or
-"KubeSchedulerDown" as they are based on Prometheus' internal "up" metrics. But
+<p>Note that it won't clear alerts like <code>KubeControllerManagerDown</code> or
+<code>KubeSchedulerDown</code> as they are based on Prometheus' internal <code>up</code> metrics. But
 you can get rid of these alerts by modifying them to detect a working component
 like this:</p>
-<p>absent(apiserver_audit_event_total{job="kube-scheduler"})</p>
+<div class="highlight"><pre><span></span><code><span class="kr">absent</span><span class="o">(</span><span class="nv">apiserver_audit_event_total</span><span class="p">{</span><span class="nl">job</span><span class="o">=</span><span class="p">&quot;</span><span class="s">kube-scheduler</span><span class="p">&quot;}</span><span class="o">)</span>
+</code></pre></div>
 <h2 id="jobs">Jobs<a class="headerlink" href="#jobs" title="Permanent link">#</a></h2>
 <p>The list of components which is scrapped by k0s:</p>
 <ul>

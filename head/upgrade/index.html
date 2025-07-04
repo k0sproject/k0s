@@ -2462,7 +2462,13 @@
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
 <h2 id="upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl<a class="headerlink" href="#upgrade-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
-<p>The upgrading of k0s clusters using k0sctl occurs not through a particular command (there is no <code>upgrade</code> sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the <code>k0sctl apply</code> command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade).</p>
+<p>The upgrading of k0s clusters using k0sctl occurs not through a particular
+command (there is no <code>upgrade</code> sub-command in k0sctl) but by way of the
+configuration file. The configuration file describes the desired state of the
+cluster. When you pass the description to the <code>k0sctl apply</code> command, the system
+discovers the current state and performs whatever actions are necessary to bring
+the cluster to the desired state. For example, the system might perform an
+upgrade.</p>
 <h3 id="k0sctl-cluster-upgrade-process">k0sctl cluster upgrade process<a class="headerlink" href="#k0sctl-cluster-upgrade-process" title="Permanent link">#</a></h3>
 <p>The following operations occur during a k0sctl upgrade:</p>
 <ol>

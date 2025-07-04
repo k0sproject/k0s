@@ -2445,7 +2445,7 @@
 <h1 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h1>
 <h2 id="csi">CSI<a class="headerlink" href="#csi" title="Permanent link">#</a></h2>
 <p>k0s supports a wide range of different storage options by utilizing Container Storage Interface (CSI). All Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.</p>
-<p>When the storage solution implements CSI, kubernetes can communicate with the storage to create and configure persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the <a href="https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/">Kubernetes Blog</a>.</p>
+<p>When the storage solution implements CSI, Kubernetes can communicate with the storage to create and configure persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the <a href="https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/">Kubernetes Blog</a>.</p>
 <p><img alt="k0s storage" src="../img/k0s_storage.png" /></p>
 <h3 id="installing-3rd-party-storage-solutions">Installing 3rd party storage solutions<a class="headerlink" href="#installing-3rd-party-storage-solutions" title="Permanent link">#</a></h3>
 <p>Follow your storage driver's installation instructions. Note that by default the Kubelet installed by k0s uses a slightly different path for its working directory (<code>/var/lib/k0s/kubelet</code> instead of <code>/var/lib/kubelet</code>). Consult the CSI driver's configuration documentation on how to customize this path. The actual path can differ if you defined the flag <code>--data-dir</code>.</p>
@@ -2454,7 +2454,7 @@
 <ul>
 <li>Rook-Ceph (Open Source)</li>
 <li>MinIO (Open Source)</li>
-<li>Gluster (Open Source)</li>
+<li>GlusterFS (Open Source)</li>
 <li>Longhorn (Open Source)</li>
 <li>Amazon EBS</li>
 <li>Google Persistent Disk</li>

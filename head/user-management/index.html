@@ -2413,7 +2413,7 @@
 
 
 <h1 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">#</a></h1>
-<p>Kubernetes, and thus k0s, does not have any built-in functionality to manage users. Kubernetes relies solely on external sources for user identification and authentication. A client certificate is considered an external source in this case as Kubernetes api-server "just" validates that the certificate is signed by a trusted CA. This means that it is recommended to use e.g. <a href="../examples/oidc/oidc-cluster-configuration/">OpenID Connect</a> to configure the API server to trust tokens issued by an external Identity Provider.</p>
+<p>Kubernetes, and thus k0s, does not have any built-in functionality to manage users. Kubernetes relies solely on external sources for user identification and authentication. A client certificate is considered an external source in this case as Kubernetes API server "just" validates that the certificate is signed by a trusted CA. This means that it is recommended to use e.g. <a href="../examples/oidc/oidc-cluster-configuration/">OpenID Connect</a> to configure the API server to trust tokens issued by an external Identity Provider.</p>
 <p>k0s comes with some helper commands to create kubeconfig with client certificates for users. There are few caveats that one needs to take into consideration when using client certificates:</p>
 <ul>
 <li>Client certificates have long expiration time, they're valid for one year</li>

@@ -2683,7 +2683,7 @@ helm<span class="w"> </span>install<span class="w"> </span>nvidia-gpu-operator<s
 NVIDIA GPU Operator documentation</a>.</p>
 <h2 id="using-custom-cri-runtimes">Using custom CRI runtimes<a class="headerlink" href="#using-custom-cri-runtimes" title="Permanent link">#</a></h2>
 <p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
-<p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;url&gt;</code> (the only supported type is <code>remote</code>).</p>
+<p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. The option takes input in the form of <code>&lt;type&gt;:&lt;url&gt;</code> (the only supported type is <code>remote</code>).</p>
 <h3 id="using-docker-as-the-container-runtime">Using Docker as the container runtime<a class="headerlink" href="#using-docker-as-the-container-runtime" title="Permanent link">#</a></h3>
 <p>As of Kubernetes 1.24, the use of Docker as a container runtime is <a href="https://kubernetes.io/blog/2020/12/02/dockershim-faq/">no longer
 supported</a> out of the box. However, Mirantis provides
