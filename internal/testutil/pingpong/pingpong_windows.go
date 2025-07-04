@@ -17,85 +17,42 @@ limitations under the License.
 package pingpong
 
 import (
-	_ "embed"
-	"errors"
+	"fmt"
 	"io"
 	"net"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
 	"github.com/Microsoft/go-winio"
 	"github.com/Microsoft/go-winio/pkg/guid"
-	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 )
 
-//go:embed pingpong.ps1
-var script []byte
-
-type PingPong struct {
-	IgnoreGracefulShutdownRequest bool // Has no effect on Windows.
-
-	shellPath string
-	shellArgs []string
-	ping      net.Listener
-	pong      string
-}
-
-func New(t *testing.T) *PingPong {
-	shellPath, err := exec.LookPath("powershell")
-	require.NoError(t, err)
-
-	scriptPath := filepath.Join(t.TempDir(), "pingpong.ps1")
-	require.NoError(t, os.WriteFile(scriptPath, script, 0700))
-
+func newBasePath(t *testing.T) string {
 	guid, err := guid.NewV4()
 	require.NoError(t, err)
 	namespace := t.Name() + "_" + guid.String()
-
-	pingPath := filepath.Join(`\\.\pipe`, namespace, "ping")
-	pongPath := filepath.Join(`\\.\pipe`, namespace, "pong")
-
-	ping, err := winio.ListenPipe(pingPath, nil)
-	require.NoError(t, err, "Failed to listen ping pipe")
-	t.Cleanup(func() { assert.NoError(t, ping.Close(), "Failed to close ping pipe") })
-
-	return &PingPong{
-		shellPath: shellPath,
-		shellArgs: []string{"-noprofile", "-noninteractive", scriptPath, namespace},
-		ping:      ping,
-		pong:      pongPath,
-	}
+	return filepath.Join(`\\.\pipe`, namespace)
 }
 
-func (pp *PingPong) BinPath() string {
-	return pp.shellPath
+func (p Pipe) OpenWriter() (io.WriteCloser, error) {
+	return winio.DialPipe(string(p), nil)
 }
 
-func (pp *PingPong) BinArgs() []string {
-	return pp.shellArgs
-}
-
-func (pp *PingPong) AwaitPing() (err error) {
-	conn, err := pp.ping.Accept()
+func (p Pipe) Listen() (Listener, error) {
+	l, err := winio.ListenPipe(string(p), nil)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to listen: %w", err)
 	}
-	defer func() { err = errors.Join(err, conn.Close()) }()
-
-	_, err = io.ReadAll(conn)
-	return err
+	return &namedPipeListener{l}, nil
 }
 
-func (pp *PingPong) SendPong() (err error) {
-	conn, err := winio.DialPipe(pp.pong, nil)
-	if err != nil {
-		return err
-	}
-	defer func() { err = errors.Join(err, conn.Close()) }()
+// Implements [Listener] on Windows systems.
+type namedPipeListener struct {
+	net.Listener
+}
 
-	_, err = conn.Write([]byte("pong\n"))
-	return err
+func (l *namedPipeListener) Accept() (io.ReadCloser, error) {
+	return l.Listener.Accept()
 }

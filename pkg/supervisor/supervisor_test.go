@@ -136,6 +136,7 @@ func TestRespawn(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Millisecond,
 	}
 	require.NoError(t, s.Supervise())
@@ -169,6 +170,7 @@ func TestStopWhileRespawn(t *testing.T) {
 		BinPath:        fail.binPath,
 		Args:           fail.binArgs,
 		RunDir:         t.TempDir(),
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Hour,
 	}
 
@@ -252,7 +254,7 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
-		TimeoutStop:    1 * time.Second,
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Hour,
 	}
 
@@ -282,8 +284,10 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 
 	// Start some k0s-managed process that won't terminate gracefully.
 	prevCmd, prevPingPong := pingpong.Start(t, pingpong.StartOptions{
-		Env:                           []string{k0sManaged},
-		IgnoreGracefulShutdownRequest: true,
+		Options: pingpong.Options{
+			IgnoreGracefulTerminationRequests: true,
+		},
+		Env: []string{k0sManaged},
 	})
 	require.NoError(t, prevPingPong.AwaitPing())
 
@@ -295,7 +299,7 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
 		TimeoutStop:    1 * time.Second,
-		TimeoutRespawn: 1 * time.Second,
+		TimeoutRespawn: 1 * time.Hour,
 	}
 
 	// Create a PID file that's pointing to the running process.
@@ -327,8 +331,8 @@ func TestCleanupPIDFile_WrongProcess(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
-		TimeoutStop:    1 * time.Second,
-		TimeoutRespawn: 1 * time.Second,
+		TimeoutStop:    1 * time.Minute,
+		TimeoutRespawn: 1 * time.Hour,
 	}
 
 	// Create a PID file that's pointing to the running process.
@@ -411,4 +415,9 @@ func selectCmd(t *testing.T, cmds ...cmd) (_ cmd) {
 
 	require.Failf(t, "none of those executables in PATH, dunno how to create test process: %s", strings.Join(tested, ", "))
 	return // diverges above
+}
+
+func TestMain(m *testing.M) {
+	pingpong.Hook()
+	os.Exit(m.Run())
 }

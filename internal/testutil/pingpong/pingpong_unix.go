@@ -19,76 +19,40 @@ limitations under the License.
 package pingpong
 
 import (
-	_ "embed"
-	"errors"
 	"io"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"syscall"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
-//go:embed pingpong.sh
-var script []byte
-
-type PingPong struct {
-	IgnoreGracefulShutdownRequest bool // If set, SIGTERM won't terminate the program.
-
-	shellPath, pipe, script string
+func newBasePath(t *testing.T) string {
+	return t.TempDir()
 }
 
-func New(t *testing.T) *PingPong {
-	shellPath, err := exec.LookPath("sh")
-	require.NoError(t, err)
-
-	tmpDir := t.TempDir()
-	pp := PingPong{
-		shellPath: shellPath,
-		pipe:      filepath.Join(tmpDir, "pingpong"),
-		script:    filepath.Join(tmpDir, "pingpong.sh"),
-	}
-
-	err = syscall.Mkfifo(pp.pipe, 0600)
-	require.NoError(t, err, "mkfifo failed for %s", pp.pipe)
-	err = os.WriteFile(pp.script, script, 0700)
-	require.NoError(t, err, "Failed to write script file")
-	return &pp
-}
-
-func (pp *PingPong) BinPath() string {
-	return pp.shellPath
-}
-
-func (pp *PingPong) BinArgs() []string {
-	var ignoreSIGTERM string
-	if pp.IgnoreGracefulShutdownRequest {
-		ignoreSIGTERM = "1"
-	}
-
-	return []string{pp.script, pp.pipe, ignoreSIGTERM}
-}
-
-func (pp *PingPong) AwaitPing() (err error) {
-	// The open for reading call will block until the
-	// script tries to open the file for writing.
-	f, err := os.OpenFile(pp.pipe, os.O_RDONLY, 0)
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(io.Discard, f)
-	return errors.Join(err, f.Close())
-}
-
-func (pp *PingPong) SendPong() error {
+func (p Pipe) OpenWriter() (io.WriteCloser, error) {
 	// The open for writing call will block until the
 	// script tries to open the file for reading.
-	f, err := os.OpenFile(pp.pipe, os.O_WRONLY, 0)
-	if err != nil {
-		return err
+	return os.OpenFile(string(p), os.O_WRONLY, 0)
+}
+
+func (p Pipe) Listen() (Listener, error) {
+	if err := syscall.Mkfifo(string(p), 0600); err != nil {
+		return nil, err
 	}
-	_, err = f.WriteString("pong\n")
-	return errors.Join(err, f.Close())
+	return &unixSocketListener{string(p)}, nil
+}
+
+// Implements [Listener] on UNIX systems.
+type unixSocketListener struct {
+	path string
+}
+
+func (f *unixSocketListener) Accept() (io.ReadCloser, error) {
+	// The open for reading call will block until the
+	// script tries to open the file for writing.
+	return os.OpenFile(f.path, os.O_RDONLY, 0)
+}
+
+func (f *unixSocketListener) Close() error {
+	return os.Remove(f.path)
 }
