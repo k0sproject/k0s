@@ -16,6 +16,7 @@ package v1beta2
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -36,8 +37,8 @@ const (
 // +genclient:onlyVerbs=create,delete,list,get,watch,update
 // +genclient:nonNamespaced
 type UpdateConfig struct {
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	metav1.TypeMeta   `json:",omitempty,inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	metav1.TypeMeta   `json:",inline"`
 
 	Spec UpdateSpec `json:"spec"`
 }
@@ -50,9 +51,9 @@ type UpdateSpec struct {
 	// +kubebuilder:default:="https://updates.k0sproject.io"
 	UpdateServer string `json:"updateServer,omitempty"`
 	// UpdateStrategy defines the update strategy to use for this update config
-	UpgradeStrategy UpgradeStrategy `json:"upgradeStrategy,omitempty"`
+	UpgradeStrategy UpgradeStrategy `json:"upgradeStrategy"`
 	// PlanSpec defines the plan spec to use for this update config
-	PlanSpec AutopilotPlanSpec `json:"planSpec,omitempty"`
+	PlanSpec AutopilotPlanSpec `json:"planSpec"`
 }
 
 // AutopilotPlanSpec describes the behavior of the autopilot generated `Plan`
@@ -96,7 +97,7 @@ type UpgradeStrategy struct {
 	// Deprecated: Cron is deprecated and will eventually be ignored
 	Cron string `json:"cron,omitempty"`
 	// Periodic defines the periodic upgrade strategy
-	Periodic PeriodicUpgradeStrategy `json:"periodic,omitempty"`
+	Periodic PeriodicUpgradeStrategy `json:"periodic"`
 }
 
 type PeriodicUpgradeStrategy struct {
@@ -128,13 +129,7 @@ func (p *PeriodicUpgradeStrategy) IsWithinPeriod(t time.Time) bool {
 
 	// Check if the current day is within the specified window days
 	currentDay := t.Weekday().String()
-	isWindowDay := false
-	for _, day := range days {
-		if day == currentDay {
-			isWindowDay = true
-			break
-		}
-	}
+	isWindowDay := slices.Contains(days, currentDay)
 
 	// Check if the current time is within the specified window
 	return isWindowDay &&
@@ -153,7 +148,7 @@ func startTimeForCurrentDay(startTime time.Time) time.Time {
 // +kubebuilder:resource:scope=Cluster
 type UpdateConfigList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []UpdateConfig `json:"items"`
 }

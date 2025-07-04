@@ -116,7 +116,7 @@ type Chart struct {
 	// Timeout specifies the timeout for how long to wait for the chart installation to finish.
 	// A duration string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	// +kubebuilder:validation:XIntOrString
-	Timeout BackwardCompatibleDuration `json:"timeout,omitempty"`
+	Timeout BackwardCompatibleDuration `json:"timeout"`
 	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the chart (default: true).
 	// +optional
 	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
