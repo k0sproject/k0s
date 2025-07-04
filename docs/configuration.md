@@ -6,14 +6,14 @@ k0s can be installed without a config file. In that case the default configurati
 
 k0s supports providing only partial configurations. In case of partial configuration is provided, k0s will use the defaults for any missing values.
 
-1. Generate a yaml config file that uses the default settings.
+1. Generate a YAML config file that uses the default settings.
 
     ```shell
     mkdir -p /etc/k0s
     k0s config create > /etc/k0s/k0s.yaml
     ```
 
-2. Modify the new yaml config file according to your needs, refer to [Configuration file reference](#configuration-file-reference) below. You can remove the default values if wanted as k0s supports partial configs too.
+2. Modify the new YAML config file according to your needs, refer to [Configuration file reference](#configuration-file-reference) below. You can remove the default values if wanted as k0s supports partial configs too.
 
 3. Install k0s with your new config file.
 
@@ -31,7 +31,7 @@ k0s supports providing only partial configurations. In case of partial configura
 ## Configuring k0s via k0sctl
 
 k0sctl can deploy your configuration options at cluster creation time. Your
-options should be placed in the `spec.k0s.config` section of the k0sctl's
+options should be placed in the `spec.k0s.config` section of the k0sctl
 configuration file. See the section on how to install [k0s via
 k0sctl][k0sctl-install] and the [k0sctl README] for more information.
 
@@ -122,15 +122,15 @@ spec:
 |------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `address`                    | IP Address used by cluster components to talk to the API server. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                                      |
 | `onlyBindToAddress`          | The API server binds to all interfaces by default. With this option set to `true`, the API server will only listen on the IP address configured by the `address` option (first non-local address by default). This can be necessary with multi-homed control plane nodes. |
-| `externalAddress`            | The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use when joining new nodes to the cluster.                                                |
+| `externalAddress`            | The load balancer address (for k0s controllers running behind a load balancer). Configures all cluster components to connect to this address and configures this address for use when joining new nodes to the cluster.                                                   |
 | `sans`                       | List of additional addresses to push to API servers serving the certificate.                                                                                                                                                                                              |
 | `ca.expiresAfter`            | The expiration duration of the CA certificate (default: 87600h)                                                                                                                                                                                                           |
 | `ca.certificatesExpireAfter` | The expiration duration of the server certificate (default: 8760h)                                                                                                                                                                                                        |
-| `extraArgs`                  | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process. Any behavior triggered by these parameters is outside k0s support.                                                                                                     |
-| `port`¹                      | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                                                              |
-| `k0sApiPort`¹                | Custom port for k0s-api server to listen on (default: 9443)                                                                                                                                                                                                               |
+| `extraArgs`                  | Map of key-values (strings) for any extra arguments to pass down to Kubernetes API server process. Any behavior triggered by these parameters is outside k0s support.                                                                                                     |
+| `port`¹                      | Custom port for the Kubernetes API server to listen on (default: 6443)                                                                                                                                                                                                    |
+| `k0sApiPort`¹                | Custom port for k0s API server to listen on (default: 9443)                                                                                                                                                                                                               |
 
-¹ If `port` and `k0sApiPort` are used with the `externalAddress` element, the loadbalancer serving at `externalAddress` must listen on the same ports.
+¹ If `port` and `k0sApiPort` are used with the `externalAddress` element, the load balancer serving at `externalAddress` must listen on the same ports.
 
 ### `spec.storage`
 
@@ -141,7 +141,7 @@ spec:
 | `etcd.extraArgs`                  | Map of key-values (strings) for any extra arguments to pass down to etcd process. Any behavior triggered by these parameters is outside k0s support.                   |
 | `etcd.ca.expiresAfter`            | The expiration duration of the CA certificate (default: 87600h)                                                                                                        |
 | `etcd.ca.certificatesExpireAfter` | The expiration duration of the server certificate (default: 8760h)                                                                                                     |
-| `kine.dataSource`                 | [kine](https://github.com/k3s-io/kine) datasource URL.                                                                                                                 |
+| `kine.dataSource`                 | [kine](https://github.com/k3s-io/kine) data source URL.                                                                                                                |
 | `etcd.externalCluster`            | Configuration when etcd is externally managed, i.e. running on dedicated nodes. See [`spec.storage.etcd.externalCluster`](#specstorageetcdexternalcluster)             |
 
 #### `spec.storage.etcd.externalCluster`
@@ -158,25 +158,25 @@ k0s can also work with an externally managed Etcd cluster. If this is configured
 
 ### `spec.network`
 
-| Element                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `provider`             | Network provider (valid values: `calico`, `kuberouter`, or `custom`). For `custom`, you can push any network provider (default: `kuberouter`). Be aware that it is your responsibility to configure all of the CNI-related setups, including the CNI provider itself and all necessary host levels setups (for example, CNI binaries). **Note:** Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment. |
-| `podCIDR`              | Pod network CIDR to use in the cluster. Defaults to `10.244.0.0/16`.                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `serviceCIDR`          | Network CIDR to use for cluster VIP services. Defaults to `10.96.0.0/12`.                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `primaryAddressFamily` | primaryAddressFamily defines the primary family for the cluster. Valid values are empty, `IPv4`, `IPv6`. If empty, K0s determines it based on `.spec.API.ExternalAddress`, if this isn't present it will use `.spec.API.Address.`. If both addresses are empty or the chosen address is a hostname, defaults to `IPv4`.                                                                                                                                                                    |
-| `clusterDomain`        | Cluster Domain to be passed to the [kubelet](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration) and the coredns configuration. Defaults to `cluster.local`.                                                                                                                                                                                                                                                       |
+| Element                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `provider`             | Network provider (valid values: `calico`, `kuberouter`, or `custom`). For `custom`, you can push any network provider (default: `kuberouter`). Be aware that it is your responsibility to configure all the CNI-related setups, including the CNI provider itself and all necessary host levels setups (for example, CNI binaries). **Note:** Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment. |
+| `podCIDR`              | Pod network CIDR to use in the cluster. Defaults to `10.244.0.0/16`.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `serviceCIDR`          | Network CIDR to use for cluster VIP services. Defaults to `10.96.0.0/12`.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `primaryAddressFamily` | Defines the primary family for the cluster. Valid values are empty, `IPv4`, `IPv6`. If empty, K0s determines it based on `.spec.API.ExternalAddress`, if this isn't present it will use `.spec.API.Address.`. If both addresses are empty or the chosen address is a host name, defaults to `IPv4`.                                                                                                                                                                            |
+| `clusterDomain`        | Cluster domain to be passed to the [kubelet](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration) and the CoreDNS configuration. Defaults to `cluster.local`.                                                                                                                                                                                                                                           |
 
 #### `spec.network.calico`
 
 | Element                 | Description                                                                                                                                                                                                                                                                                                                                                                                                     |
-|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `mode`                  | Indicates the Calico backend to use. Either `bird` or `vxlan` (default). The deprecated legacy value `ipip` is also accepted.                                                                                                                                                                                                                                                                                   |
-| `overlay`               | Overlay mode: `Always` (default), `CrossSubnet` or `Never` (requires `mode=vxlan` to disable calico overlay-network).                                                                                                                                                                                                                                                                                           |
+| `overlay`               | Overlay mode: `Always` (default), `CrossSubnet` or `Never` (requires `mode=vxlan` to disable Calico overlay-network).                                                                                                                                                                                                                                                                                           |
 | `vxlanPort`             | The UDP port for VXLAN (default: `4789`).                                                                                                                                                                                                                                                                                                                                                                       |
 | `vxlanVNI`              | The virtual network ID for VXLAN (default: `4096`).                                                                                                                                                                                                                                                                                                                                                             |
 | `mtu`                   | MTU for overlay network (default: `0`, which causes Calico to detect optimal MTU during bootstrap).                                                                                                                                                                                                                                                                                                             |
-| `wireguard`             | Enable wireguard-based encryption (default: `false`). Your host system must be wireguard ready (refer to the [Calico documentation](https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic) for details).                                                                                                                                                                                          |
-| `flexVolumeDriverPath`  | The host path for Calicos flex-volume-driver(default: `/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds`). Change this path only if the default path is unwritable (refer to [Project Calico Issue #2712](https://github.com/projectcalico/calico/issues/2712) for details). Ideally, you will pair this option with a custom `volumePluginDir` in the profile you use for your worker nodes. |
+| `wireguard`             | Enable WireGuard-based encryption (default: `false`). Your host system must be WireGuard ready (refer to the [Calico documentation](https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic) for details).                                                                                                                                                                                          |
+| `flexVolumeDriverPath`  | The host path for Calico's flex-volume-driver(default: `/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds`). Change this path only if the default path cannot be used (refer to [Project Calico Issue #2712](https://github.com/projectcalico/calico/issues/2712) for details). Ideally, you will pair this option with a custom `volumePluginDir` in the profile you use for your worker nodes.       |
 | `ipAutodetectionMethod` | Used to force Calico to pick up the interface for pod network inter-node routing (default: `""`, meaning not set, so that Calico will instead use its defaults). For more information, refer to the [Calico documentation](https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods).                                                                                               |
 | `envVars`               | Map of key-values (strings) for any calico-node [environment variable](https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods).                                                                                                                                                                                                                                                   |
 
@@ -228,15 +228,15 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 
 | Element          | Description                                                                                                                                                                                                                                                                               |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `autoMTU`        | Autodetection of used MTU (default: `true`).                                                                                                                                                                                                                                              |
-| `mtu`            | Override MTU setting, if `autoMTU` must be set to `false`).                                                                                                                                                                                                                               |
-| `metricsPort`    | Kube-router metrics server port. Set to 0 to disable metrics  (default: `8080`).                                                                                                                                                                                                          |
+| `autoMTU`        | Auto-detection of used MTU (default: `true`).                                                                                                                                                                                                                                             |
+| `mtu`            | Override MTU setting, if `autoMTU` must be set to `false`.                                                                                                                                                                                                                                |
+| `metricsPort`    | Kube-router metrics server port. Set to 0 to disable metrics (default: `8080`).                                                                                                                                                                                                           |
 | `peerRouterIPs`  | DEPRECATED: Use extraArgs with peerRouterIPs instead. Comma-separated list of [global peer addresses](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).                                                                                  |
 | `peerRouterASNs` | DEPRECATED: Use extraArgs with peerRouterASNs instead. Comma-separated list of [global peer ASNs](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).                                                                                      |
 | `hairpin`        | Configure [hairpin mode](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode). Supported modes are `Enabled`: enabled cluster wide, `Allowed`: must be allowed per service using annotations, `Disabled`: doesn't work at all (default: `Enabled`) |
 | `hairpinMode`    | **Deprecated** Use `hairpin` instead. If both `hairpin` and `hairpinMode` are defined, this is ignored. If only hairpinMode is configured explicitly activates hairpinMode.                                                                                                               |
 | `ipMasq`         | IP masquerade for traffic originating from the pod network, and destined outside of it (default: false)                                                                                                                                                                                   |
-| `extraArgs`      | Extra arguments to pass to kube-router. Can be also used to override any k0s managed args. For reference, see kube-router [documentation](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#command-line-options). (default: empty)                           |
+| `extraArgs`      | Extra arguments to pass to Kube-router. Can be also used to override any k0s managed arguments. For reference, see Kube-router [documentation](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#command-line-options). (default: empty)                      |
 
 **Note**: Kube-router allows many networking aspects to be configured per node, service, and pod (for more information, refer to the [Kube-router user guide](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md)).
 
@@ -247,7 +247,7 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 | `disabled`          | Disable kube-proxy altogether (default: `false`).                                                                                                          |
 | `mode`              | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `nftables`, `userspace` (default: `iptables`)                                               |
 | `iptables`          | Kube proxy iptables settings                                                                                                                               |
-| `ipvs`              | Kube proxy ipvs settings                                                                                                                                   |
+| `ipvs`              | Kube proxy IPVS settings                                                                                                                                   |
 | `nftables`          | Kube proxy nftables settings                                                                                                                               |
 | `nodePortAddresses` | Kube proxy [nodePortAddresses](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/)                                              |
 | `extraArgs` .       | Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. Any behavior triggered by these parameters is outside k0s support. |
@@ -262,7 +262,7 @@ iptables:
   syncPeriod: 0s
 ```
 
-Default kube-proxy ipvs settings:
+Default kube-proxy IPVS settings:
 
 ```yaml
 ipvs:
@@ -309,7 +309,7 @@ node-local load balancing.
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `image`                      | The OCI image that's being used for the Envoy Pod.                                                                                        |
 | `imagePullPolicy`            | The pull policy being used used for the Envoy Pod. Defaults to `spec.images.default_pull_policy` if omitted.                              |
-| `apiServerBindPort`          | Port number on which to bind the Envoy load balancer for the Kubernetes API server to on a worker's loopback interface.  Default: `7443`. |
+| `apiServerBindPort`          | Port number on which to bind the Envoy load balancer for the Kubernetes API server to on a worker's loopback interface. Default: `7443`.  |
 | `konnectivityServerBindPort` | Port number on which to bind the Envoy load balancer for the konnectivity server to on a worker's loopback interface. Default: `7132`.    |
 
 ##### `spec.network.controlPlaneLoadBalancing`
@@ -331,8 +331,8 @@ Configuration options related to keepalived in [control plane load balancing]
 | Element                  | Description                                                                                                                     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | `vrrpInstances`          | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs.                     |
-| `virtualServers`         | Configuration options related LoadBalancing. This is an array which allows to configure multiple LBs.                           |
-| `userSpaceProxyBindPort` | The port the userspace proxy will bind to. This port is for internal use only, but listens on every interface. Default: `6444`  |
+| `virtualServers`         | Configuration options related to load balancing. This is an array which allows to configure multiple load balancers.            |
+| `userSpaceProxyBindPort` | The port the user space proxy will bind to. This port is for internal use only, but listens on every interface. Default: `6444` |
 | `disableLoadBalancer`    | Disables the load balancer. Default: `false`                                                                                    |
 
 ##### `spec.network.controlPlaneLoadBalancing.keepalived.vrrpInstances`
@@ -341,7 +341,7 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 | Element                 | Description                                                                                                                                                                                                                                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `virtualIPs`            | VirtualIPs is the list of virtual IP address used by the VRRP instance. Each virtual IP must be a CIDR as defined in RFC 4632 and RFC 4291.A list of the CIDRs handled by the VRRP instance.                                                                                                         |
+| `virtualIPs`            | List of virtual IP address used by the VRRP instance. Each virtual IP must be a CIDR as defined in RFC 4632 and RFC 4291.A list of the CIDRs handled by the VRRP instance.                                                                                                                           |
 | `interface`             | The NIC used by the virtual router. If not specified, k0s will use the interface that owns the default route.                                                                                                                                                                                        |
 | `virtualRouterID`       | The VRRP router ID. If not specified, k0s will automatically number the IDs for each VRRP instance, starting with 51. It must be in the range of 1-255, all the control plane nodes must use the same `virtualRouterID`. Other clusters in the same network must not use the same `virtualRouterID`. |
 | `advertIntervalSeconds` | Advertisement interval in seconds. Defaults to 1 second.                                                                                                                                                                                                                                             |
@@ -354,13 +354,13 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 Configuration options required for using VRRP to configure VIPs in control plane load balancing.
 
-| Element                     | Description                                                                                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ipAddress`                 | The load balancer's listen address.                                                                                                              |
-| `delayLoop`                 | Delay timer for check polling. DelayLoop accepts microsecond precision. Further precision will be truncated without warnings. Defaults to `1m`.  |
-| `lbAlgo`                    | Algorithm used by keepalived. Supported algorithms: `rr`, `wrr`, `lc`, `wlc`, `lblc`, `dh`, `sh`, `sed`, `nq`. Default: `rr`.                    |
-| `lbKind`                    | Kind of ipvs load balancer. Supported values: `NAT`, `DR`, `TUN`  Default: `DR`.                                                                 |
-| `persistenceTimeoutSeconds` | Timeout value for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes). |
+| Element                     | Description                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ipAddress`                 | The load balancer's listen address.                                                                                                        |
+| `delayLoop`                 | Delay timer for check polling. Accepts microsecond precision. Further precision will be truncated without warnings. Defaults to `1m`.      |
+| `lbAlgo`                    | Algorithm used by keepalived. Supported algorithms: `rr`, `wrr`, `lc`, `wlc`, `lblc`, `dh`, `sh`, `sed`, `nq`. Default: `rr`.              |
+| `lbKind`                    | Kind of IPVS load balancer. Supported values: `NAT`, `DR`, `TUN`. Default: `DR`.                                                           |
+| `persistenceTimeoutSeconds` | Timeout for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes). |
 
 ### `spec.controllerManager`
 
@@ -379,7 +379,7 @@ Configuration options required for using VRRP to configure VIPs in control plane
 Worker profiles are used to manage worker-specific configuration in a
 centralized manner. A ConfigMap is generated for each worker profile. Based on
 the `--profile` argument given to the `k0s worker`, the configuration in the
-corresponding ConfigMap is picked up during startup.
+corresponding ConfigMap is picked up during start-up.
 
 The worker profiles are defined as an array. Each element has following
 properties:
@@ -448,15 +448,15 @@ spec:
 
 Available components are:
 
-- kube-apiserver
-- kube-controller-manager
-- kubelet
-- kube-scheduler
-- kube-proxy
+- `kube-apiserver`
+- `kube-controller-manager`
+- `kubelet`
+- `kube-scheduler`
+- `kube-proxy`
 
-If `components` are omitted, propagates to all kube components.
+If `components` is omitted, propagates to all Kubernetes components.
 
-Modifies extraArgs.
+Modifies `extraArgs`.
 
 #### Examples
 
@@ -544,8 +544,8 @@ images:
 In the runtime the image names are calculated as
 `airgap-repo.local/k0sproject/calico-kube-controllers:{{{ cali_ver }}}` and
 `airgap-repo.local/k0sproject/metrics-server:{{{ metrics_ver }}}`. This only
-affects the the images pull location, and thus omitting an image specification
-here will not disable component deployment.
+affects the image pull location, and thus omitting an image specification here
+will not disable component deployment.
 
 ### `spec.extensions.helm`
 
@@ -581,11 +581,6 @@ components happens through a command line flag for the controller process:
 --disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
 ```
 
-**Note:** As of k0s 1.26, the kubelet-config component has been replaced by the
-worker-config component. k0s will issue a warning when the old component name is
-being used. It is scheduled for removal in k0s 1.27. Please update to the new
-component name.
-
 If you use k0sctl, just add the flag when installing the cluster for the first
 controller at `spec.hosts.installFlags` in the config file like e.g.:
 
@@ -598,17 +593,17 @@ spec:
 ```
 
 As seen from the component list, the only always-on component is the Kubernetes
-api-server, without that k0s serves no purpose.
+API server, without that k0s serves no purpose.
 
 ## Kubelet root directory
 
-Unlike vanilla kubernetes, k0s by default deploys kubelet's root directory inside
-`--data-dir`, which defaults to `/var/lib/k0s/` and kubelet ultimately runs in
-`/var/lib/k0s/kubelet`. This can result in incompatibilities on external software
-that mounts the kubelet working dir, such as CSI plugins.
+Unlike vanilla Kubernetes, k0s by default deploys kubelet's root directory
+inside `--data-dir`, which defaults to `/var/lib/k0s/` and kubelet ultimately
+runs in `/var/lib/k0s/kubelet`. This can result in incompatibilities on external
+software that mounts the kubelet working directory, such as CSI plugins.
 
 This can be changed using the flag `--kubelet-root-dir`, for instance, to use
-kubernetes' default value it can be set up as:
+Kubernetes' default value it can be set up as:
 
 ```shell
 sudo k0s install worker --token-file /var/lib/k0s/join-token --kubelet-root-dir=/var/lib/kubelet

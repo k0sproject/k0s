@@ -1,6 +1,6 @@
-# Airgapped Installation
+# Air gapped Installation
 
-You can install k0s in environments without Internet access. Airgapped
+You can install k0s in environments without Internet access. Air gapped
 installations require an image bundle that contains all the container images
 that would normally be pulled over the network. K0s uses so-called OCI archives
 for this: Tarball representations of an [OCI Image Layout]. They allow for
@@ -28,7 +28,7 @@ done using platform compatibility.
 
 ## Creating image bundles
 
-### Using k0s builtin tooling
+### Using k0s built-in tooling
 
 k0s ships with the [`k0s airgap`](cli/k0s_airgap.md) sub-command, which is
 dedicated for tooling for airgapped environments. It allows for listing the

@@ -56,7 +56,7 @@ As such, it's tailor-made for a variety of use cases, including:
 
 Deploying Kubernetes in resource-constrained, far-edge environments where lightweight and efficient solutions are critical.
 Ideal for managing IoT devices, disconnected edge nodes, and remote locations.
-k0s also support airgapped environments by beaing able to automatically load container image bundles and having zero dependencies.
+k0s also support air gapped environments by being able to automatically load container image bundles and having zero dependencies.
 
 #### Cloud-Native Application Hosting
 
@@ -105,7 +105,7 @@ The intended types of organizations for using **k0s** are those that prioritize 
 ### Small and Medium-Sized Businesses (SMBs)
 
 * Looking for a straightforward, cost-effective Kubernetes solution.
-* Often lack dedicated Kubernetes experts and benefit from k0s’s ease of deployment and management.
+* Often lack dedicated Kubernetes experts and benefit from k0s's ease of deployment and management.
 
 ### Edge Computing and IoT Organizations
 
@@ -130,14 +130,14 @@ The intended types of organizations for using **k0s** are those that prioritize 
 ### Educational and Research Institutions
 
 * Need Kubernetes clusters for experimentation, training, or academic research.
-* Value k0s’s simplicity for non-commercial use cases and resource-constrained setups.
+* Value k0s's simplicity for non-commercial use cases and resource-constrained setups.
 
 ### Software Vendors and System Integrators
 
 * Deliver Kubernetes-based solutions to clients across various industries.
-* Bundle and package k0s with their applications to create "Kubernetes appliances."
+* Bundle and package k0s with their applications to create "Kubernetes appliances".
 * Ship pre-configured, self-contained solutions for customers without requiring Kubernetes expertise.
-* Appreciate k0s’s ease of deployment, lightweight architecture, and flexibility to adapt to different environments.
+* Appreciate k0s's ease of deployment, lightweight architecture, and flexibility to adapt to different environments.
 * Benefit from its embedded-friendly design, making it ideal for turnkey application deployments in diverse scenarios.
 
 ## Completed end-user research
@@ -153,13 +153,13 @@ k0s simplifies Kubernetes operations by delivering the entire distribution as a 
 2. **Portability and Flexibility**
    * The binary can be easily copied and run on various systems, making it ideal for edge devices, bare-metal servers, or cloud environments.
 3. **Simplified Upgrades**
-   * Upgrading k0s is as easy as replacing the binary, reducing downtime and operational complexity. To help in orchestrating the cluster upgrade k0s comes with a component called [autopilot] that automates the node ugrade orchestration, including the needed node draining and coordination.
+   * Upgrading k0s is as easy as replacing the binary, reducing downtime and operational complexity. To help in orchestrating the cluster upgrade k0s comes with a component called [autopilot] that automates the node upgrade orchestration, including the needed node draining and coordination.
 4. **Reduced Operational Overhead**
    * No need for additional packaging or complex tooling — everything needed to run Kubernetes is included in one binary.
 5. **Developer and Operator Friendly**
    * The single-binary approach removes barriers to entry, enabling faster adoption and simpler workflows for teams of any size.
 
-As such, k0s provides a conformant Kubernetes which means any ecosystem addon works on k0s.
+As such, k0s provides a conformant Kubernetes which means any ecosystem add-on works on k0s.
 
 [autopilot]: https://docs.k0sproject.io/stable/autopilot/
 
@@ -178,7 +178,7 @@ As such, k0s provides a conformant Kubernetes which means any ecosystem addon wo
 4. **Zero Friction, Zero Lock-In**
    * k0s follows a vendor-neutral approach, ensuring users retain full control of their infrastructure. It avoids proprietary tooling, adhering to upstream Kubernetes standards.
 5. **Security by Default**
-   * Secure configurations are baked into k0s from the start, with features like automatic TLS management, disabling anonymous access etc..
+   * Secure configurations are baked into k0s from the start, with features like automatic TLS management, disabling anonymous access etc.
 6. **Ease of Maintenance and Upgrades**
    * The project prioritizes operational simplicity, with upgrades streamlined through single-binary replacements, embedded autopilot for upgrades, and minimal manual intervention.
 7. **Adaptability**
@@ -209,7 +209,7 @@ By default, k0s only sets up certificate authentication but users can fully conf
 1. **Control Plane Redundancy**
    * To achieve HA, the control plane (API server, etcd, controller manager, and scheduler) must be deployed in a redundant configuration:
      * **Multiple Control Plane Nodes**: At least three control plane nodes are recommended to ensure quorum and fault tolerance for etcd. In case kine is used with HA SQL database backend, 2 controller nodes are often sufficient.
-     * **Load Balancer**: A load balancer is required in front of the control plane nodes to distribute API traffic evenly and provide failover.
+     * **Load Balancer**: A load balancer is required in front of the control plane nodes to distribute API traffic evenly and provide fail-over.
        * k0s offers an embedded control plane load balancer ([CPLB]) for use cases where the infrastructure/network does not provide easy ways to create load balancers on its own.
        * K0s has a node-local ([NLLB]) for worker nodes to automatically re-route API connections to different nodes in case of failures.
 2. **Worker Node Scalability**
@@ -274,20 +274,22 @@ k0s requires certain network ports to be open for proper communication between c
 
 * **Operating Systems**:
   * Linux (kernel version 4.3 or later)
-    * x86-64
-    * aarch64
-    * armv7l
+    * `x86_64`
+    * `aarch64`
+    * `armv7l`
   * Windows Server 2019 (experimental)
-    * x86-64
+    * `x86_64`
 
-**Note:** k0s is actively tested on armv7 architecture which upstream Kubernetes does not currently do.
-That already allowed us to identify and fix some architecture related issues that haven't been caught upstream, before they hit a stable Kubernetes release.
+**Note:** K0s is actively tested on the `armv7l` architecture, which is not
+currently done by upstream Kubernetes. This has enabled us to identify and
+resolve architecture-related issues that upstream Kubernetes did not detect,
+before they were included in a stable Kubernetes release.
 
 These specifications ensure compatibility across a wide range of hardware platforms.
 
 ### Additional Considerations
 
-* **Operating System Dependencies**: k0s strives to be as independent from the OS as possible.
+* **Operating System Dependencies**: k0s strives to be as independent from the operating system as possible.
 * The necessary kernel configurations and any external runtime dependencies are documented in the [k0s system requirements].
 
 [k0s system requirements]: https://docs.k0sproject.io/stable/system-requirements/
@@ -318,13 +320,17 @@ These specifications ensure compatibility across a wide range of hardware platfo
    * Like Kubernetes, k0s uses a declarative API model, enabling users to define desired states for resources (e.g., deployments, services, and custom objects).
    * The system continuously reconciles actual states with desired states, ensuring consistent and predictable behavior.
 3. **API Evolution and Versioning**
-   * The k0s API design follows Kubernetes’ API versioning practices, supporting multiple API versions (e.g., v1beta1, v1) for gradual transitions and backward compatibility.
-     * We currently support only v1beta1 but are planning for the next version (v2)
+   * The k0s API design follows Kubernetes’ API versioning practices, supporting multiple API versions (e.g., `v1beta1`, `v1`) for gradual transitions and backward compatibility.
+     * We currently support only `v1beta1` but are planning for the next version (`v2`)
    * Deprecated APIs are phased out according to Kubernetes release cycles, ensuring compatibility with upstream developments.
 
 ## Release process
 
-k0s project follows closely the upstream Kubernetes release cycle. The only difference in the upstream Kubernetes release/maintenance schedule is that our initial release date is always a few weeks behind the upstream Kubernetes version release date as we are building our version of k0s from the officially released version of Kubernetes and need time for testing the final version before shipping.
+The k0s project closely follows the upstream Kubernetes release cycle. The only
+difference in the Kubernetes release and maintenance schedule is that our
+initial release date is always a few weeks after the Kubernetes release date.
+This is because we build our version of k0s from the officially released
+Kubernetes version and need time to test the final version before shipping.
 ![][image1]
 The k0s version string consists of the Kubernetes version and the k0s version. For example:
 
@@ -346,14 +352,16 @@ Here’s an example of how to set a single node cluster:
 
 ```
 
-Naturally, this will spin up k0s with the default configuration. In case the user needs to configure something, they can create a yaml document to describe the [configuration](https://docs.k0sproject.io/stable/configuration/):
+Naturally, this will spin up k0s with the default configuration. In case the
+user needs to configure something, they can create a YAML document to describe
+the [configuration](https://docs.k0sproject.io/stable/configuration/):
 
 As part of the startup sequence, k0s performs a series of pre-flight checks. This ensures that the system meets the requirements,
 such as all required kernel modules are loaded, enough free disk capacity on the node, and so on.
 If the pre-flight checks fail, k0s will refuse to start unless it's explicitly told to, and the logs will clearly indicate why they failed.
 
 Additionally, users have the option to run the CNCF Certified Kubernetes Conformance test suite.
-This test suite is executed by the CI for each release (on amd64 and arm64) and its results are made available as release artifacts.
+This test suite is executed by the CI for each release (on `x86_64` and `aarch64`) and its results are made available as release artifacts.
 
 ## Security
 
@@ -427,13 +435,16 @@ See separate [document](security-self-assessment.md).
 #### Supply Chain Security
 
 * **Source Code Integrity**:
-  * Code hosted on trusted platform on Github.
+  * Code hosted on trusted platform on GitHub.
   * Git used as version control and all changes going through pull request process to ensure integrity.
 * **Build Pipeline Security**:
-  * All build pipelines are managed as-code (GH actions yaml) under project repository in GitHub.
+  * All build pipelines are managed as code using GitHub Actions workflows in the k0s git repository.
   * All changes are going through normal review process.
   * Non-maintainer PRs require approval to run the CI workflows allowing a maintainer to verify the PR before allowing it to run.
 * **Dependency Transparency**:
   * The project maintains transparency about its dependencies and their versions.
-  * Automated dependency updates are handled via **Dependabot**.
-  * A signed SBOM report, in spdx format, is produced for all releases.
+  * Automated dependency updates are handled by [Dependabot] and [Renovate Bot].
+  * A signed SBOM report, in SPDX format, is produced for all releases.
+
+[Dependabot]: https://github.com/dependabot
+[Renovate Bot]: https://docs.renovatebot.com/

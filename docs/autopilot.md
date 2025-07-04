@@ -1,12 +1,12 @@
 # Autopilot
 
 A tool for updating your `k0s` controller and worker nodes using specialized plans.
-There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel `edge_release`  available. The channel exposes the latest  released version.
+There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel `edge_release` available. The channel exposes the latest released version.
 
 ## How it works
 
 * You create a `Plan` YAML
-  * Defining the update payload (new version of `k0s`, URLs for platforms, etc)
+  * Defining the update payload (new version of `k0s`, URLs for platforms, etc.)
   * Add definitions for all the nodes that should receive the update.
     * Either statically, or dynamically using label/field selectors
 * Apply the `Plan`
@@ -54,7 +54,7 @@ resume the **autopilot** operations.
 should **not** be of a newer version than the API server.
 
 * How **autopilot** handles this is that when a `Plan` is applied that has both controller
-and worker nodes, **all** of the controller nodes will be updated first. It is only when
+and worker nodes, **all** the controller nodes will be updated first. It is only when
 **all** controllers have updated **successfully** that worker nodes will receive their
 update instructions.
 
@@ -149,7 +149,7 @@ does nothing with this information.
 
 #### `spec.commands[] (required)`
 
-* The `commands` contains all of the commands that should be performed as a part of the plan.
+* The `commands` contains the commands that should be performed as a part of the plan.
 
 ### **`k0supdate`** Command
 
@@ -160,9 +160,9 @@ version before and after update to ensure success.
 
 #### `spec.commands[].k0supdate.platforms.*.url <string> (required)`
 
-* An URL providing where the updated binary should be downloaded from, for this specific platform.
+* A URL providing where the updated binary should be downloaded from, for this specific platform.
   * The naming of platforms is a combination of `$GOOS` and `$GOARCH`, separated by a hyphen (`-`)
-    * eg: `linux-amd64`, `linux-arm64`, `linux-arm`
+    * e.g.: `linux-amd64`, `linux-arm64`, `linux-arm`
   * **Note:** The main supported platform is `linux`. **Autopilot** may work on other platforms, however
 this has not been tested.
 

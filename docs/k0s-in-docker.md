@@ -41,7 +41,7 @@ Explanation of command line arguments:
 
 - `-d` runs the container in detached mode, i.e. in the background.
 - `--name k0s-controller` names the container "k0s-controller".
-- `--hostname k0s-controller` sets the hostname of the container to
+- `--hostname k0s-controller` sets the host name of the container to
   "k0s-controller".
 - `-v /var/lib/k0s -v /var/log/pods` creates two Docker volumes and mounts them
   to `/var/lib/k0s` and `/var/log/pods` respectively inside the container,
@@ -241,7 +241,7 @@ As an alternative you can run k0s using Docker Compose:
 {% include "compose.yaml" %}
 ```
 
-Below is a more complex example, using traefik as a load balancer, along with
+Below is a more complex example, using Traefik as a load balancer, along with
 three controller and three worker nodes:
 
 <!-- Kept in its own file to ease local testing. -->
@@ -300,7 +300,7 @@ Currently, k0s nodes cannot be run if the containers are configured to use custo
 ## Next Steps
 
 - [Install using k0sctl](k0sctl-install.md): Deploy multi-node clusters using just one command
-- [Control plane configuration options](configuration.md): Networking and datastore configuration
+- [Control plane configuration options](configuration.md): Networking and data store configuration
 - [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md): Load balancer or storage configuration
 - [Installing the Traefik Ingress Controller](examples/traefik-ingress.md): Ingress deployment information

@@ -1,6 +1,6 @@
 # Install using custom CA certificates and SA key pair
 
-k0s generates all needed certificates automatically in the `<data-dir>/pki` directory (`/var/lib/k0s/pki`, by default).  
+k0s generates all needed certificates automatically in the `<data-dir>/pki` directory (`/var/lib/k0s/pki`, by default).
 
 But sometimes there is a need to have the CA certificates and SA key pair in advance.
 To make it work, just put files to the `<data-dir>/pki` and `<data-dir>/pki/etcd`:
@@ -32,7 +32,7 @@ The command above generates a join token and a Secret. A Secret should be deploy
 For example, you can put the Secret under the [manifest](manifests.md) directory and it will be deployed automatically.
 
 Please note that if you are generating a join token for a controller, the port number needs to be 9443 instead of 6443.
-Controller bootstrapping requires talking to the k0s-apiserver instead of the kube-apiserver.
+Controller bootstrapping requires talking to the k0s API server instead of the Kubernetes API server.
 Here's an example of a command for pre-generating a token for a controller.
 
 ```shell

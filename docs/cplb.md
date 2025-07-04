@@ -435,8 +435,9 @@ worker-2.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
 
 ## Troubleshooting
 
-Although Virtual IPs and Load Balancing work together and are closely related, these are two independent
-processes and must be troubleshooting as two independent features.
+Although Virtual IP addresses and load balancing work together and are closely
+related, these are two independent processes and must be troubleshooting as two
+independent features.
 
 ### Troubleshooting Virtual IPs
 
@@ -462,9 +463,9 @@ controller1:/# ip a s eth0
        valid_lft forever preferred_lft forever
 ```
 
-If the virtualServers feature is used, there must be a dummy interface on the node
-called `dummyvip0` which has the VIP but with `32` netmask. This isn't the VIP and
-has to be there even if the VIP is held by another node.
+If the `virtualServers` feature is used, there must be a dummy interface on the
+node called `dummyvip0` which has the VIP, but with a `/32` bits network mask.
+This isn't the VIP and has to be there even if the VIP is held by another node.
 
 ```console
 controller0:/# ip a s dummyvip0 | grep 172.17.0.102
@@ -487,15 +488,15 @@ time="2024-11-19 12:56:11" level=info msg="Tue Nov 19 12:56:11 2024: Starting Ke
 [...]
 ```
 
-The keepalived configuration is stored in a file called keepalived.conf in the k0s run
-directory, by default `/run/k0s/keepalived.conf`, in this file there should be a
-`vrrp_instance`section for each `vrrpInstance`.
+The Keepalived configuration is stored in a file called `keepalived.conf` in the
+k0s run directory, by default `/run/k0s/keepalived.conf`, in this file there
+should be a `vrrp_instance` section for each `vrrpInstance`.
 
 Finally, k0s should have two keepalived processes running.
 
 ### Troubleshooting the Load Balancer's Endpoint List
 
-Both the userspace reverse proxy load balancer and Keepalived's virtual servers need an endpoint list to
+Both the user space reverse proxy load balancer and Keepalived's virtual servers need an endpoint list to
 do the load balancing. They share a component called `cplb-reconciler` which responsible for setting the
 load balancer's endpoint list. This component monitors constantly the endpoint `kubernetes` in the
 `default`namespace:
@@ -516,9 +517,9 @@ time="2024-11-20 20:29:55" level=info msg="Updated the list of IPs: [172.17.0.6 
 time="2024-11-20 20:29:59" level=info msg="Updated the list of IPs: [172.17.0.6 172.17.0.7 172.17.0.8]" component=cplb-reconciler
 ```
 
-### Troubleshooting the Userspace Reverse Proxy Load Balancer
+### Troubleshooting the user space reverse proxy load balancer
 
-The userspace reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:
+The user space reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:
 
 ```console
 controller0:/# netstat -tlpn | grep 6444
@@ -531,7 +532,7 @@ Then the requests to the VIP on the apiserver port are forwarded to this socket 
 -A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <apiserver port> -j REDIRECT --to-ports <userspace proxy port>
 ```
 
-A real life example of a cluster using using the VIP `17.177.0.102` looks like:
+A real life example of a cluster using the VIP `17.177.0.102` looks like:
 
 ```console
 controller0:/# /var/lib/k0s/bin/iptables-save | grep 6444
@@ -562,13 +563,13 @@ be able to reach the port 6443 on any address and the port 6444 on any address e
 
 ### Troubleshooting Keepalived Virtual Servers
 
-You can verify the keepalived's logs and configuration file using the steps described in the section
+You can verify the Keepalived logs and configuration file using the steps described in the section
 [troubleshooting virtual IPs](#troubleshooting-virtual-ips) above.
 
 When virtual servers are enabled K0s generates two additional files:
 
 * `keepalived-virtualservers-generated.conf`: This file contains the list of control plane nodes that should be balanced to.
-* `keepalived-virtualservers-consumed.conf`: This is a symlink which points to `keepalived-virtualservers-generated.conf`
+* `keepalived-virtualservers-consumed.conf`: This is a symbolic link which points to `keepalived-virtualservers-generated.conf`
 if the Keepalived VRRP instance's current state is `master` or to `/dev/null` if it's `backup`. This file is only generated if
 there is exactly one VRRP instance.
 

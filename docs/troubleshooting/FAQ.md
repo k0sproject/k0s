@@ -16,7 +16,7 @@ See also the [Getting Started](https://docs.k0sproject.io/stable/install/) tutor
 
 ## How do I connect to the cluster?
 
-You find the config in `${DATADIR}/pki/admin.conf` (default: `/var/lib/k0s/pki/admin.conf`). Copy this file, and change the `localhost` entry to the public ip of the controller. Use the modified config to connect with kubectl:
+You find the config in `${DATADIR}/pki/admin.conf` (default: `/var/lib/k0s/pki/admin.conf`). Copy this file, and change the `localhost` entry to the public IP address of the controller. Use the modified config to connect with kubectl:
 
 ```shell
 export KUBECONFIG=/path/to/admin.conf
