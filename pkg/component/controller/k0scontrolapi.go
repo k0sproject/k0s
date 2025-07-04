@@ -32,7 +32,7 @@ import (
 type K0SControlAPI struct {
 	RuntimeConfig *config.RuntimeConfig
 
-	supervisor supervisor.Supervisor
+	supervisor *supervisor.Supervisor
 }
 
 var _ manager.Component = (*K0SControlAPI)(nil)
@@ -57,7 +57,7 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 		return err
 	}
 
-	m.supervisor = supervisor.Supervisor{
+	m.supervisor = &supervisor.Supervisor{
 		Name:    "k0s-control-api",
 		BinPath: selfExe,
 		RunDir:  m.RuntimeConfig.Spec.K0sVars.RunDir,
@@ -71,6 +71,8 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 
 // Stop stops k0s api
 func (m *K0SControlAPI) Stop() error {
-	m.supervisor.Stop()
+	if m.supervisor != nil {
+		m.supervisor.Stop()
+	}
 	return nil
 }
