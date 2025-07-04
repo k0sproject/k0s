@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"slices"
 	"testing"
 	"time"
@@ -47,6 +48,7 @@ const kubeSystem = "kube-system"
 
 type suite struct {
 	common.BootlooseSuite
+	isIPv6Only bool
 }
 
 func (s *suite) TestNodeLocalLoadBalancing() {
@@ -55,7 +57,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 	ctx := s.Context()
 
 	{
-		config, err := yaml.Marshal(&v1beta1.ClusterConfig{
+		clusterCfg := &v1beta1.ClusterConfig{
 			Spec: &v1beta1.ClusterSpec{
 				Network: func() *v1beta1.Network {
 					network := v1beta1.DefaultNetwork()
@@ -77,7 +79,15 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 					},
 				},
 			},
-		})
+		}
+		if s.isIPv6Only {
+			s.T().Log("Running in IPv6-only mode")
+			clusterCfg.Spec.Network.PrimaryAddressFamily = v1beta1.PrimaryFamilyIPv6
+			clusterCfg.Spec.Network.PodCIDR = "fd00::/108"
+			clusterCfg.Spec.Network.ServiceCIDR = "fd01::/108"
+		}
+
+		config, err := yaml.Marshal(clusterCfg)
 		s.Require().NoError(err)
 
 		for i := range s.ControllerCount {
@@ -88,7 +98,12 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 	s.Run("controller_and_workers_get_up", func() {
 		s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", controllerArgs))
 
-		s.T().Logf("Starting workers and waiting for cluster to become ready")
+		if s.isIPv6Only {
+			s.T().Log("Setting up IPv6 DNS for workers")
+			s.setUPIPv6DNS()
+		}
+
+		s.T().Log("Starting workers and waiting for cluster to become ready")
 
 		token, err := s.GetJoinToken("worker")
 		s.Require().NoError(err)
@@ -321,12 +336,29 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	return eg.Wait()
 }
 
+func (s *suite) setUPIPv6DNS() {
+	// When docker doesn't have a valid IPv6 DNS server, it will write 127.0.0.11 which creates a DNS loop.
+	// Sice github actions don't have a valid IPv6 DNS server, we need to overwrite it with a valid one.
+	ipv6ResolvConf := `
+nameserver 2606:4700:4700::1111
+nameserver 2001:4860:4860::8888
+`
+	for i := range s.WorkerCount {
+		s.PutFile(s.WorkerNode(i), "/etc/resolv.conf", ipv6ResolvConf)
+	}
+}
+
 func TestNodeLocalLoadBalancingSuite(t *testing.T) {
 	s := suite{
 		common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     2,
 		},
+		os.Getenv("K0S_IPV6_ONLY") == "yes",
+	}
+	if s.isIPv6Only {
+		s.Networks = []string{"bridge-ipv6"}
+		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
 	}
 	testifysuite.Run(t, &s)
 }
