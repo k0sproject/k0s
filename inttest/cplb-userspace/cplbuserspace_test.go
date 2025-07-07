@@ -29,7 +29,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -84,13 +83,13 @@ spec:
 func (s *CPLBUserSpaceSuite) getK0sCfg(useExtAddr bool, lb string) string {
 
 	if !useExtAddr {
-		return fmt.Sprintf(nllbControllerConfig, s.lbCIDR(lb))
+		return fmt.Sprintf(nllbControllerConfig, common.GetCPLBVIPCIDR(lb, s.isIPv6Only))
 	}
 
 	k0sCfg := bytes.NewBuffer([]byte{})
 	data := map[string]interface{}{
 		"ExtAddr":    lb,
-		"VIP":        s.lbCIDR(lb),
+		"VIP":        common.GetCPLBVIPCIDR(lb, s.isIPv6Only),
 		"IsIPv6Only": s.isIPv6Only,
 	}
 	s.Require().NoError(template.Must(template.New("k0s.yaml").
@@ -111,13 +110,12 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 		s.T().Log("Using CPLB + NLLB")
 	}
 
-	lb := s.getLBAddress()
+	lb := common.GetCPLBVIP(&s.BootlooseSuite, s.isIPv6Only)
 	k0sCfg := s.getK0sCfg(useExtAddr, lb)
 
 	ctx := s.Context()
 	var joinToken string
 	for idx := range s.ControllerCount {
-		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
 		if s.isIPv6Only {
 			// Note that the token is intentionally empty for the first controller
@@ -201,35 +199,6 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	}
 }
 
-// getLBAddress returns the IP address of the controller 0 and it adds 100 to
-// the last octet unless it's bigger or equal to 154, in which case it
-// subtracts 100. Theoretically this could result in an invalid IP address.
-// This is so that get a virtual IP in the same subnet as the controller.
-func (s *CPLBUserSpaceSuite) getLBAddress() string {
-	var ip string
-	if s.isIPv6Only {
-		ip = s.firstPublicIPv6Address(s.ControllerNode(0))
-	} else {
-		ip = s.GetIPAddress(s.ControllerNode(0))
-	}
-
-	addr := net.ParseIP(ip)
-	if addr[15] >= 154 {
-		addr[15] -= 100
-	} else {
-		addr[15] += 100
-	}
-
-	return addr.String()
-}
-
-func (s *CPLBUserSpaceSuite) lbCIDR(ip string) string {
-	if s.isIPv6Only {
-		return ip + "/64"
-	}
-	return ip + "/16"
-}
-
 // checkDummy checks that the dummy interface isn't present in the node.
 func (s *CPLBUserSpaceSuite) checkDummy(ctx context.Context, node string) {
 	ssh, err := s.SSH(ctx, node)
@@ -249,7 +218,7 @@ func (s *CPLBUserSpaceSuite) hasVIP(ctx context.Context, node string, vip string
 	output, err := ssh.ExecWithOutput(ctx, "ip --oneline addr show eth0")
 	s.Require().NoError(err)
 
-	return strings.Contains(output, fmt.Sprintf(" %s scope", s.lbCIDR(vip)))
+	return strings.Contains(output, fmt.Sprintf(" %s scope", common.GetCPLBVIPCIDR(vip, s.isIPv6Only)))
 }
 
 // getServerCertSignature connects to the given HTTPS URL and returns the server certificate signature.
@@ -278,10 +247,6 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if err != nil {
-		return "", err
-	}
-
 	// Get the TLS connection state
 	connState := resp.TLS
 	if connState == nil {
@@ -299,29 +264,6 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 
 	// Return the signature as a hex string
 	return hex.EncodeToString(signature), nil
-}
-
-func (s *CPLBUserSpaceSuite) firstPublicIPv6Address(nodeName string) string {
-	ssh, err := s.SSH(s.Context(), nodeName)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	output, err := ssh.ExecWithOutput(s.Context(), "ip -6 -oneline addr show eth0 scope global")
-	s.Require().NoError(err)
-
-	// Parse the output line by line
-	for line := range strings.SplitSeq(strings.TrimSpace(output), "\n") {
-		fields := strings.Fields(line)
-		s.Require().GreaterOrEqual(len(fields), 4, "Expected at least 4 fields in the output line")
-
-		ip, _, err := net.ParseCIDR(fields[3])
-		s.Require().NoError(err, "Failed to parse IP address from output line")
-
-		return ip.String()
-	}
-
-	s.Require().Fail("No IPv6 address found on eth0")
-	return ""
 }
 
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
