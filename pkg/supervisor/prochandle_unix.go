@@ -34,6 +34,7 @@ func newProcHandle(pid int) (procHandle, error) {
 	return unixPID(pid), nil
 }
 
+// cmdline implements [procHandle].
 func (pid unixPID) cmdline() ([]string, error) {
 	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "cmdline"))
 	if err != nil {
@@ -46,6 +47,7 @@ func (pid unixPID) cmdline() ([]string, error) {
 	return strings.Split(string(cmdline), "\x00"), nil
 }
 
+// environ implements [procHandle].
 func (pid unixPID) environ() ([]string, error) {
 	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "environ"))
 	if err != nil {
@@ -58,10 +60,12 @@ func (pid unixPID) environ() ([]string, error) {
 	return strings.Split(string(env), "\x00"), nil
 }
 
-func (pid unixPID) terminateGracefully() error {
+// requestGracefulShutdown implements [procHandle].
+func (pid unixPID) requestGracefulShutdown() error {
 	return syscall.Kill(int(pid), syscall.SIGTERM)
 }
 
-func (pid unixPID) terminateForcibly() error {
+// kill implements [procHandle].
+func (pid unixPID) kill() error {
 	return syscall.Kill(int(pid), syscall.SIGKILL)
 }

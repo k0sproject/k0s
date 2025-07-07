@@ -25,9 +25,9 @@ type procHandle interface {
 	// Reads and returns the process's environment.
 	environ() ([]string, error)
 
-	// Terminates the process gracefully.
-	terminateGracefully() error
+	// Requests graceful process termination.
+	requestGracefulShutdown() error
 
-	// Terminates the process forcibly.
-	terminateForcibly() error
+	// Kills the process.
+	kill() error
 }
