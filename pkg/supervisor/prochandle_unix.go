@@ -28,15 +28,29 @@ import (
 	"syscall"
 )
 
-type unixPID int
+type unixProcess struct {
+	// The PID that was used when opening the process.
+	// Note: Don't rely on [os.Process.Pid] here, as it's not thread safe.
+	pid     int
+	process *os.Process
+}
 
-func newProcHandle(pid int) (procHandle, error) {
-	return unixPID(pid), nil
+func openPID(pid int) (procHandle, error) {
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &unixProcess{pid, process}, nil
+}
+
+func (p *unixProcess) Close() error {
+	return p.process.Release()
 }
 
 // cmdline implements [procHandle].
-func (pid unixPID) cmdline() ([]string, error) {
-	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "cmdline"))
+func (p *unixProcess) cmdline() ([]string, error) {
+	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(p.pid), "cmdline"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
@@ -48,8 +62,8 @@ func (pid unixPID) cmdline() ([]string, error) {
 }
 
 // environ implements [procHandle].
-func (pid unixPID) environ() ([]string, error) {
-	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "environ"))
+func (p *unixProcess) environ() ([]string, error) {
+	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(p.pid), "environ"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
@@ -61,11 +75,11 @@ func (pid unixPID) environ() ([]string, error) {
 }
 
 // requestGracefulShutdown implements [procHandle].
-func (pid unixPID) requestGracefulShutdown() error {
-	return syscall.Kill(int(pid), syscall.SIGTERM)
+func (p *unixProcess) requestGracefulShutdown() error {
+	return p.process.Signal(syscall.SIGTERM)
 }
 
 // kill implements [procHandle].
-func (pid unixPID) kill() error {
-	return syscall.Kill(int(pid), syscall.SIGKILL)
+func (p *unixProcess) kill() error {
+	return p.process.Kill()
 }

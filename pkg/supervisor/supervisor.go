@@ -266,10 +266,11 @@ func (s *Supervisor) maybeKillPidFile() error {
 		return fmt.Errorf("failed to parse PID file %s: %w", s.PidFile, err)
 	}
 
-	ph, err := newProcHandle(p)
+	ph, err := openPID(p)
 	if err != nil {
 		return fmt.Errorf("cannot interact with PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
+	defer ph.Close()
 
 	if err := s.killProcess(ph); err != nil {
 		return fmt.Errorf("failed to kill PID %d from PID file %s: %w", p, s.PidFile, err)

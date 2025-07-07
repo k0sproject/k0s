@@ -16,9 +16,15 @@ limitations under the License.
 
 package supervisor
 
+import (
+	"io"
+)
+
 // A handle to a running process. May be used to inspect the process properties
 // and terminate it.
 type procHandle interface {
+	io.Closer
+
 	// Reads and returns the process's command line.
 	cmdline() ([]string, error)
 

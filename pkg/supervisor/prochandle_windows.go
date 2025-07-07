@@ -20,7 +20,7 @@ import (
 	"syscall"
 )
 
-// newProcHandle is not implemented on Windows.
-func newProcHandle(int) (procHandle, error) {
+// openPID is not implemented on Windows.
+func openPID(int) (procHandle, error) {
 	return nil, syscall.EWINDOWS
 }
