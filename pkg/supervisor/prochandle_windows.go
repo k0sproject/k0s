@@ -24,3 +24,22 @@ import (
 func openPID(int) (procHandle, error) {
 	return nil, syscall.EWINDOWS
 }
+
+func requestGracefulShutdown(p *os.Process) error {
+	// Graceful shutdown not implemented on Windows. This requires attaching to
+	// the target process's console and generating a CTRL+BREAK (or CTRL+C)
+	// event. Since a process can only be attached to a single console at a
+	// time, this would require k0s to detach from its own console, which is
+	// definitely not something that k0s wants to do. There might be ways to do
+	// this by generating the event via a separate helper process, but that's
+	// left open here as a TODO.
+	// https://learn.microsoft.com/en-us/windows/console/freeconsole
+	// https://learn.microsoft.com/en-us/windows/console/attachconsole
+	// https://learn.microsoft.com/en-us/windows/console/generateconsolectrlevent
+	// https://learn.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals
+	if err := p.Kill(); err != nil {
+		return fmt.Errorf("failed to kill process: %w", err)
+	}
+
+	return nil
+}

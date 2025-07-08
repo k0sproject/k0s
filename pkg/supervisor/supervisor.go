@@ -24,7 +24,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"slices"
 	"sort"
 	"strconv"
@@ -80,28 +79,9 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
 		for {
-			if runtime.GOOS == "windows" {
-				// Graceful shutdown not implemented on Windows. This requires
-				// attaching to the target process's console and generating a
-				// CTRL+BREAK (or CTRL+C) event. Since a process can only be
-				// attached to a single console at a time, this would require
-				// k0s to detach from its own console, which is definitely not
-				// something that k0s wants to do. There might be ways to do
-				// this by generating the event via a separate helper process,
-				// but that's left open here as a TODO.
-				// https://learn.microsoft.com/en-us/windows/console/freeconsole
-				// https://learn.microsoft.com/en-us/windows/console/attachconsole
-				// https://learn.microsoft.com/en-us/windows/console/generateconsolectrlevent
-				// https://learn.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals
-				s.log.Infof("Killing pid %d", s.cmd.Process.Pid)
-				if err := s.cmd.Process.Kill(); err != nil {
-					s.log.Warnf("Failed to kill pid %d: %s", s.cmd.Process.Pid, err)
-				}
-			} else {
-				s.log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
-				if err := s.cmd.Process.Signal(syscall.SIGTERM); err != nil {
-					s.log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
-				}
+			s.log.Info("Requesting graceful shutdown")
+			if err := requestGracefulShutdown(s.cmd.Process); err != nil {
+				s.log.WithError(err).Warn("Failed to request graceful shutdown")
 			}
 			select {
 			case <-time.After(s.TimeoutStop):

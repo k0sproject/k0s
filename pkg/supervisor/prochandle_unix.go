@@ -83,3 +83,11 @@ func (p *unixProcess) requestGracefulShutdown() error {
 func (p *unixProcess) kill() error {
 	return p.process.Kill()
 }
+
+func requestGracefulShutdown(p *os.Process) error {
+	if err := p.Signal(syscall.SIGTERM); err != nil {
+		return fmt.Errorf("failed to send SIGTERM: %w", err)
+	}
+
+	return nil
+}
