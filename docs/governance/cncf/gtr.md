@@ -2,7 +2,7 @@
 
 This document collects information for the [CNCF General Technical Review]. It is built to support the [k0s CNCF Sandbox application] but will be a living document that we update regularly.
 
-[CNCF General Technical Review]: https://github.com/cncf/toc/blob/main/tags/resources/toc-supporting-guides/general-technical-questions.md
+[CNCF General Technical Review]: https://github.com/cncf/toc/blob/main/toc_subprojects/project-reviews-subproject/general-technical-questions.md
 [k0s CNCF Sandbox application]: https://github.com/cncf/sandbox/issues/125
 
 As we are currently applying for the sandbox level, the document only covers the GTR's “Day 0” phase.
@@ -329,17 +329,17 @@ k0s project follows closely the upstream Kubernetes release cycle. The only diff
 The k0s version string consists of the Kubernetes version and the k0s version. For example:
 
 ```text
-v1.32.6+k0s.1
+{{{ k0s_version }}}
 ```
 
-The Kubernetes version (1.32.6) is the first part, and the last part (k0s.1) reflects the k0s version, which is built on top of the certain Kubernetes version.
+The Kubernetes version ({{{ k0s_version.split('+') | first }}}) is the first part, and the last part ({{{ k0s_version.split('+') | last }}}) reflects the k0s version, which is built on top of the certain Kubernetes version.
 
 ## Installation
 
 Here’s an example of how to set a single node cluster:
 
 ```console
-# export K0S_VERSION=v1.32.6+k0s.1
+# export K0S_VERSION={{{ k0s_version }}}
 # curl -sSfL https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64 -o k0s
 # chmod u+x k0s
 # ./k0s install controller --single && ./k0s start

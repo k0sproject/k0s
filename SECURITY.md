@@ -1,6 +1,6 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+## Supported versions
 
 Following versions are supported and maintained:
 
@@ -12,7 +12,7 @@ Following versions are supported and maintained:
 | v1.29.x   | ✅        |
 | < v1.29.x | ❌        |
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
 k0s supports responsible disclosure and endeavors to resolve security issues in a reasonable timeframe.
 
