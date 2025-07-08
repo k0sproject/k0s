@@ -105,7 +105,7 @@ func TestGetEnv(t *testing.T) {
 	expected := []string{
 		"HTTPS_PROXY=a.b.c:1080",
 		"PATH=" + dir.PathListJoin(
-			"/var/lib/k0s/bin",
+			filepath.FromSlash("/var/lib/k0s/bin"),
 			"/usr/local/bin",
 		),
 		"_K0S_MANAGED=yes",
@@ -114,7 +114,7 @@ func TestGetEnv(t *testing.T) {
 		"k3=foo_v3",
 		"k4=v4",
 	}
-	actual := getEnv("/var/lib/k0s", "foo", false)
+	actual := getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", false)
 	assert.ElementsMatch(t, expected, actual)
 
 	expected = []string{
@@ -123,7 +123,7 @@ func TestGetEnv(t *testing.T) {
 		"FOO_k3=foo_v3",
 		"HTTPS_PROXY=a.b.c:1080",
 		"PATH=" + dir.PathListJoin(
-			"/var/lib/k0s/bin",
+			filepath.FromSlash("/var/lib/k0s/bin"),
 			"/bin",
 		),
 		"_K0S_MANAGED=yes",
@@ -132,7 +132,7 @@ func TestGetEnv(t *testing.T) {
 		"k3=v3",
 		"k4=v4",
 	}
-	actual = getEnv("/var/lib/k0s", "foo", true)
+	actual = getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", true)
 	assert.ElementsMatch(t, expected, actual)
 }
 

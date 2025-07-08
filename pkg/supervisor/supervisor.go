@@ -10,7 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -97,7 +97,7 @@ func (s *Supervisor) Supervise() error {
 		return nil
 	}
 	s.log = logrus.WithField("component", s.Name)
-	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
+	s.PidFile = filepath.Join(s.RunDir, s.Name) + ".pid"
 
 	if s.TimeoutStop == 0 {
 		s.TimeoutStop = 5 * time.Second
@@ -355,7 +355,7 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 		}
 		switch k {
 		case "PATH":
-			env[i] = "PATH=" + dir.PathListJoin(path.Join(dataDir, "bin"), v)
+			env[i] = "PATH=" + dir.PathListJoin(filepath.Join(dataDir, "bin"), v)
 		default:
 			env[i] = fmt.Sprintf("%s=%s", k, v)
 		}
