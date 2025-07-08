@@ -17,7 +17,10 @@ limitations under the License.
 package supervisor
 
 import (
+	"os"
 	"syscall"
+
+	"golang.org/x/sys/windows"
 )
 
 // openPID is not implemented on Windows.
@@ -26,20 +29,17 @@ func openPID(int) (procHandle, error) {
 }
 
 func requestGracefulShutdown(p *os.Process) error {
-	// Graceful shutdown not implemented on Windows. This requires attaching to
-	// the target process's console and generating a CTRL+BREAK (or CTRL+C)
-	// event. Since a process can only be attached to a single console at a
-	// time, this would require k0s to detach from its own console, which is
-	// definitely not something that k0s wants to do. There might be ways to do
-	// this by generating the event via a separate helper process, but that's
-	// left open here as a TODO.
-	// https://learn.microsoft.com/en-us/windows/console/freeconsole
-	// https://learn.microsoft.com/en-us/windows/console/attachconsole
-	// https://learn.microsoft.com/en-us/windows/console/generateconsolectrlevent
-	// https://learn.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals
-	if err := p.Kill(); err != nil {
-		return fmt.Errorf("failed to kill process: %w", err)
-	}
-
-	return nil
+	// According to https://stackoverflow.com/q/1798771/, the _only_ somewhat
+	// straight-forward option is to send Ctrl+Break events to processes which
+	// have been started with the CREATE_NEW_PROCESS_GROUP flag. Sending Ctrl+C
+	// seems to require at least some helper process. If Ctrl+Break will
+	// _actually_ trigger a graceful process shutdown is dependent of the
+	// program being run. According to the above Stack Overflow question, this
+	// is e.g. not the case for Python.
+	//
+	// Luckily, the Go runtime translates Ctrl+Break events into os.Interrupt
+	// signals, and all of k0s's supervised executables are Go programs, so this
+	// is mostly fine.
+	err := windows.GenerateConsoleCtrlEvent(syscall.CTRL_BREAK_EVENT, uint32(p.Pid))
+	return os.NewSyscallError("GenerateConsoleCtrlEvent", err)
 }
