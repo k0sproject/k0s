@@ -248,6 +248,10 @@ func (s *Supervisor) maybeKillPidFile() error {
 
 	ph, err := openPID(p)
 	if err != nil {
+		if errors.Is(err, syscall.ESRCH) {
+			// No process with the given PID, so no process to kill.
+			return nil
+		}
 		return fmt.Errorf("cannot interact with PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
 	defer ph.Close()
@@ -268,7 +272,7 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 		return err
 	}
 
-	if err := ph.requestGracefulShutdown(); errors.Is(err, syscall.ESRCH) {
+	if err := ph.requestGracefulShutdown(); errors.Is(err, os.ErrProcessDone) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to request graceful termination: %w", err)
@@ -278,7 +282,7 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 		return err
 	}
 
-	if err := ph.kill(); errors.Is(err, syscall.ESRCH) {
+	if err := ph.kill(); errors.Is(err, os.ErrProcessDone) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to kill: %w", err)
@@ -309,7 +313,7 @@ func (s *Supervisor) waitForTermination(ph procHandle) (bool, error) {
 func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 	// only kill process if it has the expected cmd
 	if cmd, err := ph.cmdline(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
+		if errors.Is(err, os.ErrProcessDone) {
 			return false, nil
 		}
 		return false, err
@@ -319,7 +323,7 @@ func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 
 	// only kill process if it has the _KOS_MANAGED env set
 	if env, err := ph.environ(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
+		if errors.Is(err, os.ErrProcessDone) {
 			return false, nil
 		}
 		return false, err
