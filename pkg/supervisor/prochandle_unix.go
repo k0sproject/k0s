@@ -22,10 +22,25 @@ type unixProcess struct {
 	process *os.Process
 }
 
-func openPID(pid int) (procHandle, error) {
-	process, err := os.FindProcess(pid)
+func openPID(pid int) (_ procHandle, err error) {
+	var process *os.Process
+	process, err = os.FindProcess(pid)
 	if err != nil {
 		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, process.Release())
+		}
+	}()
+
+	// FindProcess won't return an error if no such process exists.
+	// Be fail-fast and check it directly by sending "the null signal".
+	// https://www.man7.org/linux/man-pages/man3/kill.3p.html
+	if err := process.Signal(syscall.Signal(0)); err != nil {
+		if errors.Is(err, os.ErrProcessDone) {
+			return nil, syscall.ESRCH
+		}
 	}
 
 	return &unixProcess{pid, process}, nil
@@ -40,7 +55,7 @@ func (p *unixProcess) cmdline() ([]string, error) {
 	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(p.pid), "cmdline"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
+			return nil, fmt.Errorf("%w: %w", os.ErrProcessDone, err)
 		}
 		return nil, fmt.Errorf("failed to read process cmdline: %w", err)
 	}
@@ -53,7 +68,7 @@ func (p *unixProcess) environ() ([]string, error) {
 	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(p.pid), "environ"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
+			return nil, fmt.Errorf("%w: %w", os.ErrProcessDone, err)
 		}
 		return nil, fmt.Errorf("failed to read process environ: %w", err)
 	}
