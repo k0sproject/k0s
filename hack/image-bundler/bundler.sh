@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
+#shellcheck shell=ash
 
-set -eu
+set -euo pipefail
 
 containerd </dev/null >&2 &
 #shellcheck disable=SC2064
@@ -32,6 +33,12 @@ done
   exit 1
 }
 
+out="${TMPDIR-/tmp}/bundle.tar"
 echo Exporting images ... >&2
-ctr images export --platform "$TARGET_PLATFORM" -- - "$@"
+set +x
+ctr images export --platform "$TARGET_PLATFORM" -- - "$@" >"$out"
+sha256sum -- "$out" >&2
+stat -- "$out" >&2
+tar tf "$out" >/dev/null
+cat -- "$out"
 echo Images exported. >&2
