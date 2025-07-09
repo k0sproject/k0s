@@ -60,7 +60,6 @@ nav:
       - MetalLB Load Balancer: examples/metallb-loadbalancer.md
       - NGINX Ingress Controller: examples/nginx-ingress.md
       - Traefik Ingress Controller: examples/traefik-ingress.md
-      - Ambassador API Gateway: examples/ambassador-ingress.md
       - Ceph Storage with Rook: examples/rook-ceph.md
       - GitOps with Flux: examples/gitops-flux.md
       - OpenEBS storage: examples/openebs.md
