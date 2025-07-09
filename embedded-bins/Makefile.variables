@@ -1,7 +1,7 @@
 alpine_patch_version = 3.22.0
 alpine_version = $(word 1,$(subst ., ,$(alpine_patch_version))).$(word 2,$(subst ., ,$(alpine_patch_version)))
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
-go_version = 1.24.4
+go_version = 1.24.5
 
 runc_version = 1.2.6
 runc_buildimage = $(golang_buildimage)
