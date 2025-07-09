@@ -61,8 +61,9 @@ jobs:
           mkdir -p "embedded-bins/staging/$TARGET_OS/bin"
           make --touch airgap-images.txt
           make "airgap-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
-          tar tf "airgap-image-bundle-$TARGET_OS-$TARGET_ARCH.tar" >/dev/null
           sha256sum "airgap-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
+          stat "airgap-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
+          tar tf "airgap-image-bundle-$TARGET_OS-$TARGET_ARCH.tar" >/dev/null
 
       - name: "Upload :: Airgap image bundle"
         uses: actions/upload-artifact@v4
