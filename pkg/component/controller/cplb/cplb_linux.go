@@ -133,12 +133,11 @@ func (k *Keepalived) Start(ctx context.Context) error {
 
 	// In order to make the code simpler, we always create the keepalived template
 	// without the virtual servers, before starting the reconcile loop
-	if err := k.generateTemplate(keepalivedVRRPConfigTemplate, k.configFilePath); err != nil {
+
+	templ := template.Must(template.New("keepalived").Parse(keepalivedVRRPConfigTemplate))
+	if err := k.generateTemplate(templ, k.configFilePath); err != nil {
 		return fmt.Errorf("failed to generate keepalived template: %w", err)
 	}
-
-	// We don't need anymore so we can set it to nil so the garbage collector can clean it up
-	keepalivedVRRPConfigTemplate = nil
 
 	args := []string{
 		"--dont-fork",
@@ -176,9 +175,6 @@ func (k *Keepalived) Start(ctx context.Context) error {
 				if err := k.watchReconcilerUpdatesReverseProxy(ctx); err != nil {
 					k.log.WithError(err).Error("failed to watch reconciler updates")
 				}
-
-				// We don't need so we can set it to nil so the garbage collector can clean it up
-				keepalivedVirtualServersConfigTemplate = nil
 			}
 		}()
 	}
@@ -486,10 +482,11 @@ func (k *Keepalived) watchReconcilerUpdatesKeepalived() {
 	}
 
 	k.log.Info("started watching cplb-reconciler updates")
+	templ := template.Must(template.New("keepalived").Parse(keepalivedVirtualServersConfigTemplate))
 	for range k.updateCh {
 		k.keepalivedConfig.RealServers = k.reconciler.GetIPs()
 		k.log.Infof("cplb-reconciler update, got %s", k.keepalivedConfig.RealServers)
-		if err := k.generateTemplate(keepalivedVirtualServersConfigTemplate, k.virtualServersFilePath); err != nil {
+		if err := k.generateTemplate(templ, k.virtualServersFilePath); err != nil {
 			k.log.Errorf("failed to generate keepalived template: %v", err)
 			continue
 		}
@@ -525,7 +522,7 @@ type keepalivedConfig struct {
 
 const dummyLinkName = "dummyvip0"
 
-var keepalivedVRRPConfigTemplate = template.Must(template.New("keepalived").Parse(`
+const keepalivedVRRPConfigTemplate = `
 {{ $ipvsLoadBalancer := .IPVSLoadBalancer }}
 {{ $k0s := .K0sBin }}
 {{ $runDir := .RunDir }}
@@ -583,9 +580,9 @@ include keepalived-virtualservers-consumed.conf
 include keepalived-virtualservers-generated.conf
 {{ end }}
 {{ end }}
-`))
+`
 
-var keepalivedVirtualServersConfigTemplate = template.Must(template.New("keepalived").Parse(`
+const keepalivedVirtualServersConfigTemplate = `
 {{ $APIServerPort := .APIServerPort }}
 {{ $RealServers := .RealServers }}
 {{ if gt (len $RealServers) 0 }}
@@ -611,4 +608,4 @@ virtual_server {{ .IPAddress }} {{ $APIServerPort }} {
 }
 {{ end }}
 {{ end }}
-`))
+`
