@@ -104,7 +104,7 @@ variable "additional_ingress_cidrs" {
 variable "controller_num_nodes" {
   type        = number
   description = "The number controller nodes to spin up."
-  default     = 3 # Test an HA cluster by default
+  default     = 1
 }
 
 variable "controller_worker_num_nodes" {
@@ -116,5 +116,5 @@ variable "controller_worker_num_nodes" {
 variable "worker_num_nodes" {
   type        = number
   description = "The number worker nodes to spin up."
-  default     = 2 # That's the minimum for conformance tests
+  default     = 1
 }
