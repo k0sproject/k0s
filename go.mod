@@ -53,7 +53,7 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.21
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.39.0
-	golang.org/x/mod v0.25.0
+	golang.org/x/mod v0.26.0
 	golang.org/x/sync v0.15.0
 	golang.org/x/sys v0.34.0
 	golang.org/x/text v0.26.0
