@@ -71,3 +71,12 @@ smoketests := \
 	check-singlenode \
 	check-stackapplier \
 	check-statussocket \
+
+air_gapped_smoketests := \
+	check-airgap \
+	check-ap-airgap \
+	check-cplb-ipvs-ipv6 \
+	check-cplb-userspace-ipv6 \
+	check-ipv6-calico \
+	check-ipv6-kuberouter \
+	check-nllb-ipv6
