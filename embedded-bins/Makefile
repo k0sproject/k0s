@@ -6,6 +6,8 @@ export GOOS
 TARGET_OS ?= linux
 export TARGET_OS
 
+DOCKER ?= docker
+
 # https://reproducible-builds.org/docs/source-date-epoch/#makefile
 # https://reproducible-builds.org/docs/source-date-epoch/#git
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct || date -u +%s)
@@ -35,7 +37,7 @@ clean: IID_FILES = .docker-image.*.stamp
 clean:
 	for i in .container.*; do \
 	  [ -f "$$i" ] || continue; \
-	  docker rm -- "$$(cat -- "$$i")"; \
+	  $(DOCKER) rm -- "$$(cat -- "$$i")"; \
 	  rm -- "$$i"; \
 	done
 	$(clean-iid-files)
@@ -67,14 +69,14 @@ $(bindir)/containerd.exe $(bindir)/containerd-shim-runhcs-v1.exe: .container.con
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	tardir=$$(mktemp -d -- '.$(notdir $@).tmp.XXXXXX') \
 	  && trap "rm -rf -- $$tardir" INT EXIT \
-	  && docker export "$$(cat $<)" \
+	  && $(DOCKER) export "$$(cat $<)" \
 	  | tar -C "$$tardir" -x bin/$(notdir $@) \
 	  && touch -c -- "$$tardir"/bin/$(notdir $@) \
 	  && mv "$$tardir"/bin/$(notdir $@) $@
 
 build_docker_container = \
 	rm -f -- '$@'; \
-	docker create --cidfile='$@' --entrypoint=/dev/null '$(shell cat -- $<)'
+	$(DOCKER) create --cidfile='$@' --entrypoint=/dev/null '$(shell cat -- $<)'
 
 .container.%: .docker-image.%.stamp
 	$(build_docker_container)
@@ -83,7 +85,7 @@ build_docker_container = \
 	$(build_docker_container)
 
 build_docker_image = \
-	docker build --progress=plain --iidfile '$@' -t k0sbuild$(basename $@):latest \
+	$(DOCKER) build --progress=plain --iidfile '$@' -t k0sbuild$(basename $@):latest \
 	  --build-arg BUILDKIT_DOCKERFILE_CHECK=skip=InvalidDefaultArgInFrom \
 	  --build-arg TARGET_OS=$(if $(findstring .windows.stamp,$@),windows,linux) \
 	  --build-arg CONTAINERD_BINS="$(containerd_bins)" \
