@@ -1,33 +1,30 @@
 name: Go lint
+
 on:
   push:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "**.md"
+      - .github/**
+      - "!.github/workflows/lint.yaml"
+      - docs/**
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - mkdocs.yml
+      - renovate.json
   pull_request:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "**.md"
+      - .github/**
+      - "!.github/workflows/lint.yaml"
+      - docs/**
       - LICENSE
-      - README.md
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
-      - '*.md'
+      - mkdocs.yml
+      - renovate.json
 
 env:
   MAKEFLAGS: -j
