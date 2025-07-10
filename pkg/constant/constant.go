@@ -99,8 +99,6 @@ const (
 	KubeRouterCNIImageVersion          = "v2.5.0-iptables1.8.11-0"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion = "1.7.1-k0s.0"
-	OpenEBSRepository                  = "https://openebs.github.io/charts"
-	OpenEBSVersion                     = "3.3.0"
 
 	/* Controller component names */
 
