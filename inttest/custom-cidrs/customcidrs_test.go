@@ -72,7 +72,7 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:  "nginx",
-				Image: "docker.io/library/nginx:1.23.1-alpine",
+				Image: "docker.io/library/nginx:1.29.0-alpine",
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
