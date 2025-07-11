@@ -198,7 +198,7 @@ func (a *APIServer) writeKonnectivityConfig() error {
 // Stop stops APIServer
 func (a *APIServer) Stop() error {
 	if a.supervisor != nil {
-		a.supervisor.Stop()
+		return a.supervisor.Stop()
 	}
 	return nil
 }

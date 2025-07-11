@@ -128,7 +128,7 @@ func (k *Kine) Start(ctx context.Context) error {
 // Stop stops kine
 func (k *Kine) Stop() error {
 	if k.supervisor != nil {
-		k.supervisor.Stop()
+		return k.supervisor.Stop()
 	}
 	return nil
 }
