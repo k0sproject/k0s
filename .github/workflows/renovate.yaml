@@ -3,7 +3,7 @@ name: Renovate
 on:
   workflow_dispatch: # Allows manual triggering
   schedule:
-    - cron: '0 0 * * *' # Runs at 00:00 UTC every day
+    - cron: 23 */4 * * * # At minute 23 past every 4th hour.
 
 jobs:
   renovate:
