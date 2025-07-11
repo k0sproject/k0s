@@ -26,6 +26,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 
+	cliflag "k8s.io/component-base/cli/flag"
+
 	"github.com/spf13/pflag"
 )
 
@@ -75,7 +77,7 @@ type WorkerOptions struct {
 	LogLevels        LogLevels
 	CriSocket        string
 	KubeletExtraArgs string
-	Labels           []string
+	Labels           map[string]string
 	Taints           []string
 	TokenFile        string
 	TokenArg         string
@@ -243,12 +245,17 @@ func GetWorkerFlags() *pflag.FlagSet {
 		f.Deprecated = "it has no effect and will be removed in a future release"
 	})
 
+	if workerOpts.Labels == nil {
+		// cliflag.ConfigurationMap expects the map to be non-nil.
+		workerOpts.Labels = make(map[string]string)
+	}
+
 	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.VarP((*logLevelsFlag)(&workerOpts.LogLevels), "logging", "l", "Logging Levels for the different components")
-	flagset.StringSliceVarP(&workerOpts.Labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
+	flagset.Var((*cliflag.ConfigurationMap)(&workerOpts.Labels), "labels", "Node labels, list of key=value pairs")
 	flagset.StringSliceVarP(&workerOpts.Taints, "taints", "", []string{}, "Node taints, list of key=value:effect strings")
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 	flagset.StringVar(&workerOpts.IPTablesMode, "iptables-mode", "", "iptables mode (valid values: nft, legacy, auto). default: auto")

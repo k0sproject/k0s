@@ -668,7 +668,7 @@ func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, k
 	// opts to start the worker. Needs to be a copy so the original token and
 	// possibly other args won't get messed up.
 	wc := workercmd.Command(*(*config.CLIOptions)(c))
-	wc.Labels = append(wc.Labels, fields.OneTermEqualSelector(constant.K0SNodeRoleLabel, "control-plane").String())
+	wc.Labels[constant.K0SNodeRoleLabel] = "control-plane"
 	if opts.Mode() == config.ControllerPlusWorkerMode && !opts.NoTaints {
 		wc.Taints = append(wc.Taints, constants.ControlPlaneTaint.ToString())
 	}
