@@ -55,6 +55,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/featuregate"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
@@ -139,6 +140,11 @@ func NewControllerCmd() *cobra.Command {
 
 func (c *command) start(ctx context.Context, flags *config.ControllerOptions, debug bool) error {
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
+
+	err := featuregate.DefaultFeatureGates.ConfigureFeatureGates(flags.FeatureGates)
+	if err != nil {
+		return fmt.Errorf("failed to configure feature gates: %w", err)
+	}
 
 	nodeConfig, err := c.K0sVars.NodeConfig()
 	if err != nil {
