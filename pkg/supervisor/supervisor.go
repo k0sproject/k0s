@@ -55,10 +55,10 @@ const k0sManaged = "_K0S_MANAGED=yes"
 
 // processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
-func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
+func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 	waitresult := make(chan error)
 	go func() {
-		waitresult <- s.cmd.Wait()
+		waitresult <- cmd.Wait()
 	}()
 
 	defer os.Remove(s.PidFile)
@@ -67,7 +67,7 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 	case <-ctx.Done():
 		for {
 			s.log.Info("Requesting graceful shutdown")
-			if err := requestGracefulShutdown(s.cmd.Process); err != nil {
+			if err := requestGracefulShutdown(cmd.Process); err != nil {
 				s.log.WithError(err).Warn("Failed to request graceful shutdown")
 			}
 			select {
@@ -81,7 +81,7 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 		if err != nil {
 			s.log.WithError(err).Warn("Failed to wait for process")
 		} else {
-			s.log.Warnf("Process exited: %s", s.cmd.ProcessState)
+			s.log.Warnf("Process exited: %s", cmd.ProcessState)
 		}
 	}
 	return false
@@ -178,7 +178,7 @@ func (s *Supervisor) Supervise() error {
 					s.log.Infof("Restarted (%d)", restarts)
 				}
 				restarts++
-				if s.processWaitQuit(ctx) {
+				if s.processWaitQuit(ctx, s.cmd) {
 					return
 				}
 			}
