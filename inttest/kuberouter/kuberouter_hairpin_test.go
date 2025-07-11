@@ -124,7 +124,7 @@ spec:
     ports:
     - containerPort: 80
   - name: curl
-    image: docker.io/curlimages/curl:7.84.0
+    image: docker.io/curlimages/curl:7.88.1
     command: ["/bin/sh", "-c"]
     args: ["tail -f /dev/null"]
 `
