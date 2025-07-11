@@ -46,6 +46,7 @@ nav:
       - System Components Monitoring: system-monitoring.md
       - Manifest Deployer: manifests.md
       - Helm Charts: helm-charts.md
+      - Feature Gates: feature-gates.md
       - Cloud Providers: cloud-providers.md
       - IPv4/IPv6 dual-stack networking: dual-stack.md
       - Control Plane High Availability: high-availability.md
