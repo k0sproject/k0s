@@ -11,6 +11,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/featuregate"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 
 	cliflag "k8s.io/component-base/cli/flag"
@@ -54,6 +55,7 @@ type ControllerOptions struct {
 	EnableDynamicConfig             bool
 	EnableMetricsScraper            bool
 	KubeControllerManagerExtraArgs  string
+	FeatureGates                    featuregate.FeatureGates
 
 	enableWorker, singleNode bool
 }
@@ -285,6 +287,7 @@ func GetControllerFlags(controllerOpts *ControllerOptions) *pflag.FlagSet {
 	flagset.BoolVar(&controllerOpts.EnableMetricsScraper, "enable-metrics-scraper", false, "enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)")
 	flagset.StringVar(&controllerOpts.KubeControllerManagerExtraArgs, "kube-controller-manager-extra-args", "", "extra args for kube-controller-manager")
 	flagset.BoolVar(&controllerOpts.InitOnly, "init-only", false, "only initialize controller and exit")
+	flagset.Var(&controllerOpts.FeatureGates, "feature-gates", "feature gates to enable (comma separated list of key=value pairs)")
 	return flagset
 }
 

@@ -84,7 +84,11 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 
 		s.T().Logf("init controller")
 		// Note that the token is intentionally empty for the first controller
-		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
+		s.Require().NoError(s.InitController(idx,
+			"--config=/tmp/k0s.yaml",
+			"--disable-components=metrics-server",
+			"--feature-gates=IPv6SingleStack=true",
+			joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
 
 		s.T().Logf("waiting node")

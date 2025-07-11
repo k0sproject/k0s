@@ -49,7 +49,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
 	}
 
-	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components=konnectivity-server,metrics-server"))
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components=konnectivity-server,metrics-server", "--feature-gates=IPv6SingleStack=true"))
 
 	if s.isIPv6Only {
 		s.T().Log("Setting up IPv6 DNS for workers")

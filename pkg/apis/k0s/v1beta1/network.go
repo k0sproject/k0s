@@ -9,6 +9,7 @@ import (
 	"net"
 	"slices"
 
+	"github.com/k0sproject/k0s/pkg/featuregate"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilnet "k8s.io/utils/net"
 
@@ -106,11 +107,17 @@ func (n *Network) Validate() []error {
 		validCIDRs = false
 	}
 
-	// podCIDR and service CIDR must both be either ipv4 or ipv6, but we should only verify this
-	// if they have a valid IP to begin with because otherwise the error can be confusing
 	if validCIDRs {
+		// podCIDR and service CIDR must both be either ipv4 or ipv6, but we should only verify this
+		// if they have a valid IP to begin with because otherwise the error can be confusing
 		if (podNetIP.To4() != nil) != (serviceNetIP.To4() != nil) {
 			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "podCIDR and serviceCIDR must be both IPv4 or IPv6"))
+		}
+
+		// Single stack IPv6 is an alpha feature, so we need to check if the feature gate is enabled, but only report it if both
+		// podCIDR and serviceCIDR are IPv6 have been validated so that the error is easier to understand.
+		if !n.DualStack.Enabled && podNetIP.To4() == nil && !featuregate.IsEnabled(featuregate.IPv6SingleStack) {
+			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "feature gate IPv6SingleStack must be explicitly enabled to use IPv6 single stack"))
 		}
 	}
 

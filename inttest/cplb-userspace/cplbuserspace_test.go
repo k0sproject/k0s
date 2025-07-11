@@ -101,7 +101,12 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 			// Note that the token is intentionally empty for the first controller
 			// Disable coreDNS to prevent crashloop backoff in github actions. This happens because
 			// there is no IPv6 connectivity to the outside world in the CI environment and sets the DNS to ::1.
-			s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=endpoint-reconciler,coredns", "--enable-worker", joinToken))
+			s.Require().NoError(s.InitController(idx,
+				"--config=/tmp/k0s.yaml",
+				"--disable-components=endpoint-reconciler,coredns",
+				"--feature-gates=IPv6SingleStack=true",
+				"--enable-worker",
+				joinToken))
 		} else {
 			// Note that the token is intentionally empty for the first controller
 			s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--enable-worker", joinToken))

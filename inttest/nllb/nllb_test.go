@@ -40,7 +40,7 @@ type suite struct {
 }
 
 func (s *suite) TestNodeLocalLoadBalancing() {
-	const controllerArgs = "--kube-controller-manager-extra-args='--node-monitor-period=3s --node-monitor-grace-period=9s'"
+	const controllerArgs = "--kube-controller-manager-extra-args='--node-monitor-period=3s --node-monitor-grace-period=9s' --feature-gates=IPv6SingleStack=true"
 
 	ctx := s.Context()
 
