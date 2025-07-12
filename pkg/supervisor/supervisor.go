@@ -23,7 +23,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -110,7 +110,7 @@ func (s *Supervisor) Supervise() error {
 		return nil
 	}
 	s.log = logrus.WithField("component", s.Name)
-	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
+	s.PidFile = filepath.Join(s.RunDir, s.Name) + ".pid"
 
 	if s.TimeoutStop == 0 {
 		s.TimeoutStop = 5 * time.Second
@@ -248,6 +248,10 @@ func (s *Supervisor) maybeKillPidFile() error {
 
 	ph, err := openPID(p)
 	if err != nil {
+		if errors.Is(err, syscall.ESRCH) {
+			// No process with the given PID, so no process to kill.
+			return nil
+		}
 		return fmt.Errorf("cannot interact with PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
 	defer ph.Close()
@@ -268,7 +272,7 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 		return err
 	}
 
-	if err := ph.requestGracefulShutdown(); errors.Is(err, syscall.ESRCH) {
+	if err := ph.requestGracefulShutdown(); errors.Is(err, os.ErrProcessDone) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to request graceful termination: %w", err)
@@ -278,7 +282,7 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 		return err
 	}
 
-	if err := ph.kill(); errors.Is(err, syscall.ESRCH) {
+	if err := ph.kill(); errors.Is(err, os.ErrProcessDone) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to kill: %w", err)
@@ -309,17 +313,22 @@ func (s *Supervisor) waitForTermination(ph procHandle) (bool, error) {
 func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 	// only kill process if it has the expected cmd
 	if cmd, err := ph.cmdline(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
+		if errors.Is(err, os.ErrProcessDone) {
 			return false, nil
 		}
-		return false, err
+		// Only error out if the error doesn't indicate that getting the command
+		// line is unsupported. In that case, ignore the error and proceed to
+		// the environment check.
+		if !errors.Is(err, errors.ErrUnsupported) {
+			return false, err
+		}
 	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
 		return false, nil
 	}
 
 	// only kill process if it has the _KOS_MANAGED env set
 	if env, err := ph.environ(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
+		if errors.Is(err, os.ErrProcessDone) {
 			return false, nil
 		}
 		return false, err
@@ -368,7 +377,7 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 		}
 		switch k {
 		case "PATH":
-			env[i] = "PATH=" + dir.PathListJoin(path.Join(dataDir, "bin"), v)
+			env[i] = "PATH=" + dir.PathListJoin(filepath.Join(dataDir, "bin"), v)
 		default:
 			env[i] = fmt.Sprintf("%s=%s", k, v)
 		}
