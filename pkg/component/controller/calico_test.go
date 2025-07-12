@@ -17,54 +17,60 @@ limitations under the License.
 package controller
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 )
 
-type inMemorySaver map[string][]byte
-
-func (i inMemorySaver) Save(dst string, content []byte) error {
-	i[dst] = content
-	return nil
-}
-
 func TestCalicoManifests(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+	newTestInstance := func(t *testing.T) *Calico {
+		k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+		require.NoError(t, err)
+		ctx := t.Context()
+		calico := NewCalico(k0sVars)
+		require.NoError(t, calico.Init(ctx))
+		require.NoError(t, calico.Start(ctx))
+		t.Cleanup(func() { assert.NoError(t, calico.Stop()) })
+		return calico
+	}
+
 	clusterConfig := v1beta1.DefaultClusterConfig()
 	clusterConfig.Spec.Network.Calico = v1beta1.DefaultCalico()
 	clusterConfig.Spec.Network.Provider = "calico"
 	clusterConfig.Spec.Network.KubeRouter = nil
 
 	t.Run("must_write_only_non_crd_on_change", func(t *testing.T) {
-		saver := inMemorySaver{}
-		crdSaver := inMemorySaver{}
-		calico := NewCalico(k0sVars, crdSaver, saver)
+		calico := newTestInstance(t)
 
-		_ = calico.processConfigChanges(calicoConfig{})
+		assert.NoError(t, calico.processConfigChanges(calicoConfig{}))
 
-		for k := range saver {
-			require.NotContains(t, k, "calico-crd")
+		if entries, err := os.ReadDir(filepath.Join(calico.k0sVars.ManifestsDir, "calico")); assert.NoError(t, err) {
+			assert.NotEmpty(t, entries)
+			for _, entry := range entries {
+				assert.NotContains(t, entry.Name(), "calico-crd")
+			}
 		}
-		require.Empty(t, crdSaver)
+		if entries, err := os.ReadDir(filepath.Join(calico.k0sVars.ManifestsDir, "calico_init")); assert.NoError(t, err) {
+			assert.Empty(t, entries)
+		}
 	})
 
 	t.Run("must_have_wireguard_enabled_if_config_has", func(t *testing.T) {
 		clusterConfig.Spec.Network.Calico.EnableWireguard = true
-		saver := inMemorySaver{}
-		crdSaver := inMemorySaver{}
-		calico := NewCalico(k0sVars, crdSaver, saver)
+		calico := newTestInstance(t)
 		cfg, err := calico.getConfig(clusterConfig)
 		require.NoError(t, err)
 		require.NoError(t, calico.processConfigChanges(cfg))
 
-		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
-		require.True(t, foundRaw, "must have daemon set for calico")
+		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.k0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+		require.NoError(t, err, "must have daemon set for calico")
 		spec := daemonSetContainersEnv{}
 		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
 		spec.RequireContainerHasEnvVariable(t, "calico-node", "FELIX_WIREGUARDENABLED", "true")
@@ -72,16 +78,14 @@ func TestCalicoManifests(t *testing.T) {
 
 	t.Run("must_not_have_wireguard_enabled_if_config_has_no", func(t *testing.T) {
 		clusterConfig.Spec.Network.Calico.EnableWireguard = false
-		saver := inMemorySaver{}
-		crdSaver := inMemorySaver{}
-		calico := NewCalico(k0sVars, crdSaver, saver)
+		calico := newTestInstance(t)
 
 		cfg, err := calico.getConfig(clusterConfig)
 		require.NoError(t, err)
 		_ = calico.processConfigChanges(cfg)
 
-		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
-		require.True(t, foundRaw, "must have daemon set for calico")
+		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.k0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+		require.NoError(t, err, "must have daemon set for calico")
 		spec := daemonSetContainersEnv{}
 		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
 		spec.RequireContainerHasNoEnvVariable(t, "calico-node", "FELIX_WIREGUARDENABLED")
@@ -91,9 +95,7 @@ func TestCalicoManifests(t *testing.T) {
 		t.Run("use_IPAutodetectionMethod_for_both_families_by_default", func(t *testing.T) {
 			calicoNetSpec := clusterConfig.Spec.Network.Calico
 			calicoNetSpec.IPAutodetectionMethod = "somemethod"
-			saver := inMemorySaver{}
-			crdSaver := inMemorySaver{}
-			calico := NewCalico(k0sVars, crdSaver, saver)
+			calico := newTestInstance(t)
 			templateContext, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
 			require.Equal(t, calicoNetSpec.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
@@ -102,8 +104,8 @@ func TestCalicoManifests(t *testing.T) {
 			cfg, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
 			_ = calico.processConfigChanges(cfg)
-			daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
-			require.True(t, foundRaw, "must have daemon set for calico")
+			daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.k0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+			require.NoError(t, err, "must have daemon set for calico")
 
 			spec := daemonSetContainersEnv{}
 			require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
@@ -113,9 +115,7 @@ func TestCalicoManifests(t *testing.T) {
 		t.Run("use_IPV6AutodetectionMethod_for_ipv6_if_specified", func(t *testing.T) {
 			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
 			clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod = "anothermethod"
-			saver := inMemorySaver{}
-			crdSaver := inMemorySaver{}
-			calico := NewCalico(k0sVars, crdSaver, saver)
+			calico := newTestInstance(t)
 			templateContext, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
 			require.Equal(t, clusterConfig.Spec.Network.Calico.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
@@ -123,9 +123,9 @@ func TestCalicoManifests(t *testing.T) {
 			cfg, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
 			_ = calico.processConfigChanges(cfg)
-			daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
+			daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.k0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+			require.NoError(t, err, "must have daemon set for calico")
 
-			require.True(t, foundRaw, "must have daemon set for calico")
 			spec := daemonSetContainersEnv{}
 			require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
 			spec.RequireContainerHasEnvVariable(t, "calico-node", "IP6_AUTODETECTION_METHOD", templateContext.IPV6AutodetectionMethod)

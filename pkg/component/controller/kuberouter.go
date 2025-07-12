@@ -20,9 +20,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strconv"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -37,7 +40,6 @@ import (
 type KubeRouter struct {
 	log logrus.FieldLogger
 
-	saver   manifestsSaver
 	k0sVars *config.CfgVars
 
 	previousConfig kubeRouterConfig
@@ -61,17 +63,18 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars, manifestsSaver manifestsSaver) *KubeRouter {
+func NewKubeRouter(k0sVars *config.CfgVars) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
-		saver:   manifestsSaver,
 		k0sVars: k0sVars,
 	}
 }
 
-// Init does nothing
-func (k *KubeRouter) Init(_ context.Context) error { return nil }
+// Init implements [manager.Component].
+func (k *KubeRouter) Init(context.Context) error {
+	return dir.Init(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter"), constant.ManifestsDirMode)
+}
 
 // Stop no-op as nothing running
 func (k *KubeRouter) Stop() error { return nil }
@@ -173,17 +176,17 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
 
-	err = k.saver.Save("kube-router.yaml", output.Bytes())
-	if err != nil {
+	if err := file.AtomicWithTarget(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml")).
+		WithPermissions(constant.CertMode).
+		Write(output.Bytes()); err != nil {
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
+
 	return nil
 }
 
-// Run runs the kube-router reconciler
-func (k *KubeRouter) Start(_ context.Context) error {
-	k.log.Info("starting to dump manifests")
-
+// Start implements [manager.Component].
+func (k *KubeRouter) Start(context.Context) error {
 	return nil
 }
 
