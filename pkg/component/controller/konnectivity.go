@@ -172,7 +172,7 @@ func (k *Konnectivity) runServer(count uint) error {
 	// Stop supervisor
 	if k.supervisor != nil {
 		k.EmitWithPayload("restarting konnectivity server due to server count change",
-			map[string]interface{}{"serverCount": count})
+			map[string]any{"serverCount": count})
 		k.supervisor.Stop()
 	}
 
@@ -189,7 +189,7 @@ func (k *Konnectivity) runServer(count uint) error {
 		k.supervisor = nil // not to make the next loop to try to stop it first
 		return err
 	}
-	k.EmitWithPayload("started konnectivity server", map[string]interface{}{"serverCount": count})
+	k.EmitWithPayload("started konnectivity server", map[string]any{"serverCount": count})
 
 	return nil
 }
