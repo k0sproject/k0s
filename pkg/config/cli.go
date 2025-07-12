@@ -67,6 +67,7 @@ type ControllerOptions struct {
 	EnableDynamicConfig             bool
 	EnableMetricsScraper            bool
 	KubeControllerManagerExtraArgs  string
+	FeatureGates                    string
 
 	enableWorker, singleNode bool
 }
@@ -298,6 +299,7 @@ func GetControllerFlags(controllerOpts *ControllerOptions) *pflag.FlagSet {
 	flagset.BoolVar(&controllerOpts.EnableMetricsScraper, "enable-metrics-scraper", false, "enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)")
 	flagset.StringVar(&controllerOpts.KubeControllerManagerExtraArgs, "kube-controller-manager-extra-args", "", "extra args for kube-controller-manager")
 	flagset.BoolVar(&controllerOpts.InitOnly, "init-only", false, "only initialize controller and exit")
+	flagset.StringVar(&controllerOpts.FeatureGates, "feature-gates", "", "feature gates to enable (comma separated list of key=value pairs)")
 	return flagset
 }
 
