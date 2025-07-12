@@ -1,15 +1,29 @@
 name: Build docs
 
 on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - "**.md"
+      - docs/**
+      - embedded-bins/Makefile.variables
+      - pkg/constant/constant.go
+      - mkdocs.yml
+      - vars.sh
+
   pull_request:
     branches:
       - main
       - release-*
     paths:
-      - mkdocs.yml
-      - embedded-bins/Makefile.variables
-      - CODE_OF_CONDUCT.md
+      - "**.md"
       - docs/**
+      - embedded-bins/Makefile.variables
+      - pkg/constant/constant.go
+      - mkdocs.yml
+      - vars.sh
 
 env:
   MAKEFLAGS: -j

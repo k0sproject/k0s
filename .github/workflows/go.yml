@@ -6,27 +6,44 @@ on:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "**.md"
+      - .github/ISSUE_TEMPLATE/**
+      - .github/workflows/*.yaml
+      - .github/workflows/*.yml
+        # Re-include all called workflow files here
+      - "!.github/workflows/build-airgap-image-bundle.yml"
+      - "!.github/workflows/build-k0s.yml"
+      - "!.github/workflows/smoketest.yaml"
+      - .github/CODEOWNERS
+      - .github/dependabot.yml
+      - docs/**
+      - hack/ostests/**
+      - hack/tool/**
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - mkdocs.yml
+      - renovate.json
+
   pull_request:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "**.md"
+      - .github/ISSUE_TEMPLATE/**
+      - .github/workflows/*.yaml
+      - .github/workflows/*.yml
+        # Re-include all called workflow files here
+      - "!.github/workflows/build-airgap-image-bundle.yml"
+      - "!.github/workflows/build-k0s.yml"
+      - "!.github/workflows/smoketest.yaml"
+      - .github/CODEOWNERS
+      - .github/dependabot.yml
+      - docs/**
+      - hack/ostests/**
+      - hack/tool/**
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - mkdocs.yml
+      - renovate.json
 
 env:
   MAKEFLAGS: -j
