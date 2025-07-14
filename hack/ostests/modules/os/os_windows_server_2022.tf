@@ -41,7 +41,7 @@ locals {
 
       worker = {
         ami_id        = one(data.aws_ami.windows_server_2022.*.id)
-        instance_type = "t3a.medium"
+        instance_type = "t3a.xlarge"
         os_type       = "windows"
         volume        = { size = 50 }
 
@@ -49,7 +49,7 @@ locals {
         # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2launch-v2-task-definitions.html#ec2launch-v2-enableopenssh
         # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2launch-v2.html#ec2launch-v2-directory
         # C:\ProgramData\Amazon\EC2Launch\log\agent.log
-        user_data = jsonencode({ version = 1.1, tasks = [{ task = "enableOpenSsh" }]})
+        user_data = jsonencode({ version = 1.1, tasks = [{ task = "enableOpenSsh" }] })
 
         # Override the default Alpine ready script. Also checks SSH connectivity.
         ready_script = "whoami"
