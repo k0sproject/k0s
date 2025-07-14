@@ -56,7 +56,7 @@ const k0sManaged = "_K0S_MANAGED=yes"
 // processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
 func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
-	waitresult := make(chan error)
+	waitresult := make(chan error, 1)
 	go func() {
 		waitresult <- cmd.Wait()
 	}()
@@ -65,18 +65,22 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 
 	select {
 	case <-ctx.Done():
-		for {
-			s.log.Info("Requesting graceful shutdown")
-			if err := requestGracefulShutdown(cmd.Process); err != nil {
-				s.log.WithError(err).Warn("Failed to request graceful shutdown")
-			}
-			select {
-			case <-time.After(s.TimeoutStop):
-				continue
-			case <-waitresult:
-				return true
+		var exitErr *exec.ExitError
+		err := s.endProcess(cmd, waitresult)
+		// Ignore errors for processes that don't handle signals
+		if errors.Is(err, errProcessShutdownFailed) && errors.As(err, &exitErr) {
+			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.Signal() == syscall.SIGTERM {
+				s.log.Debug("Process didn't handle SIGTERM")
+				err = nil
 			}
 		}
+		if err != nil {
+			s.log.WithError(err).Error("Error while ending process")
+		} else {
+			s.log.Info("Process finished")
+		}
+		return true
+
 	case err := <-waitresult:
 		var exitErr *exec.ExitError
 		switch {
@@ -88,6 +92,104 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 			s.log.WithError(err).Error("Failed to wait for process")
 		}
 		return false
+	}
+}
+
+var errProcessShutdownFailed = errors.New("process shutdown failed")
+
+func (s *Supervisor) endProcess(cmd *exec.Cmd, waitresult <-chan error) error {
+	err := requestGracefulShutdown(cmd.Process)
+	var expectGracefulShutdown bool
+	switch {
+	// Shutdown request sent, wait for process to finish.
+	case err == nil:
+		expectGracefulShutdown = true
+		s.log.Debug("Awaiting graceful process shutdown for ", s.TimeoutStop)
+		select {
+		case err := <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				return nil
+			case errors.As(err, &exitErr):
+				return fmt.Errorf("%w: %w", errProcessShutdownFailed, exitErr)
+			default:
+				return fmt.Errorf("failed to wait for process: %w", exitErr)
+			}
+
+		case <-time.After(s.TimeoutStop):
+			err = fmt.Errorf("timed out after %s while waiting for process to finish", s.TimeoutStop)
+		}
+
+	// The process has finished even before the shutdown could be requested.
+	case errors.Is(err, os.ErrProcessDone):
+		select {
+		case err = <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				err = errors.New("process finished prematurely")
+			case errors.As(err, &exitErr):
+				err = fmt.Errorf("process failed: %w", exitErr)
+			default:
+				err = fmt.Errorf("failed to wait for process: %w", err)
+			}
+
+		default:
+			err = errors.New("process state unavailable")
+		}
+
+		return fmt.Errorf("process exited before shutdown could be requested: %w", err)
+
+	// Something else went wrong
+	default:
+		// Continue with killing the process
+	}
+
+	shutdownErr := err
+	err = cmd.Process.Kill()
+	switch {
+	// Process killed, wait for process to exit.
+	case err == nil:
+		timeoutKill := 30 * time.Second
+		s.log.Debug("Awaiting termination of killed process for ", timeoutKill)
+		select {
+		case <-waitresult:
+			err = errors.New("process has been killed")
+		case <-time.After(timeoutKill):
+			err = fmt.Errorf("timed out after %s while waiting for killed process to terminate, giving up", timeoutKill)
+		}
+		return fmt.Errorf("%w; %w", shutdownErr, err)
+
+	// Process exited before it could be killed.
+	case errors.Is(err, os.ErrProcessDone):
+		select {
+		case err := <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				if expectGracefulShutdown {
+					return nil
+				}
+				return fmt.Errorf("%w; process finished prematurely", shutdownErr)
+
+			case errors.As(err, &exitErr):
+				if expectGracefulShutdown {
+					return fmt.Errorf("%w: %w", errProcessShutdownFailed, exitErr)
+				}
+				return fmt.Errorf("%w; process failed: %w", shutdownErr, exitErr)
+
+			default:
+				return fmt.Errorf("%w; failed to wait for process: %w", shutdownErr, exitErr)
+			}
+
+		default:
+			return fmt.Errorf("%w; process exited but no process state is available", shutdownErr)
+		}
+
+	// Something else went wrong
+	default:
+		return fmt.Errorf("%w; failed to kill process, giving up: %w", shutdownErr, err)
 	}
 }
 
