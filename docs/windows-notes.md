@@ -43,6 +43,8 @@ $path = (Get-Command pwsh).Path
 New-ItemProperty -Path HKLM:\SOFTWARE\OpenSSH -Name DefaultShell -PropertyType String -Value "$path" -Force
 ```
 
+<!-- Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete -->
+
 ## Use PowerShell remote sessions
 
 See [PowerShell remoting over SSH] on Microsoft Learn.
@@ -113,4 +115,40 @@ Invoke-WebRequest -Uri $src -OutFile $dst
 
 $binPath = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
 Expand-Archive -Path $dst -DestinationPath $binPath -Force
+```
+
+## Install k0s worker
+
+```powershell
+$path = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
+Move-Item -Path k0s.exe -Destination $path
+& k0s install worker --token-file \path\to\token-file --debug
+& k0s start
+```
+
+## View k0s logs
+
+```pwsh
+for ($lastRecordId = 0; $true; ) {
+    $filter = @{
+        LogName      = 'Application'
+        ProviderName = 'k0sworker'
+        #StartTime    = (Get-Date).AddSeconds(-10)
+    }
+
+    $newEntries = Get-WinEvent -FilterHashtable $filter |
+        Where-Object { $_.RecordId -gt $lastRecordId } |
+        Sort-Object RecordId
+
+    foreach ($entry in $newEntries) {
+        $template = "[{0}] {1} - {2} - {3}"
+        $message = $entry.Message -replace '\s+', ' '
+        $formatted = $template -f $entry.TimeCreated, $entry.LevelDisplayName, $entry.ProviderName, $message
+        Write-Output $formatted
+
+        $lastRecordId = $entry.RecordId
+    }
+
+    Start-Sleep -Seconds 2
+}
 ```
