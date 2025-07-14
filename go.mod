@@ -55,7 +55,7 @@ require (
 	golang.org/x/sync v0.16.0
 	golang.org/x/sys v0.34.0
 	golang.org/x/text v0.27.0
-	golang.org/x/tools v0.34.0
+	golang.org/x/tools v0.35.0
 	google.golang.org/grpc v1.73.0
 	helm.sh/helm/v3 v3.17.3
 	oras.land/oras-go/v2 v2.5.0
@@ -255,7 +255,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
-	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/term v0.33.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
