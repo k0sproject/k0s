@@ -28,7 +28,7 @@ spec:
         args: ["$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/start.ps1"]
         workingDir: "$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/"
         env:
-        - name: NODE_NAME
+        - name: NODENAME
           valueFrom:
             fieldRef:
               apiVersion: v1
