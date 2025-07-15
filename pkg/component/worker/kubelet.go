@@ -135,7 +135,6 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	case "windows":
 		args["--enforce-node-allocatable"] = ""
 		args["--hairpin-mode"] = "promiscuous-bridge"
-		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
 	}
 
 	if k.CRISocket == "" && runtime.GOOS != "windows" {
