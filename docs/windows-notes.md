@@ -113,15 +113,13 @@ $dst = "$env:TEMP\less.zip"
 
 Invoke-WebRequest -Uri $src -OutFile $dst
 
-$binPath = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
-Expand-Archive -Path $dst -DestinationPath $binPath -Force
+Expand-Archive -Path $dst -DestinationPath (Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps') -Force
 ```
 
 ## Install k0s worker
 
 ```powershell
-$path = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
-Move-Item -Path k0s.exe -Destination $path
+Move-Item -Path k0s.exe -Destination (Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps')
 & k0s install worker --token-file \path\to\token-file --debug
 & k0s start
 ```
@@ -151,4 +149,21 @@ for ($lastRecordId = 0; $true; ) {
 
     Start-Sleep -Seconds 2
 }
+```
+
+## Debug k0s with delve
+
+```pwsh
+$ProgressPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'Stop'
+
+# Install Go
+$src = 'https://go.dev/dl/go1.24.5.windows-amd64.msi'
+$dst = 'go1.24.5.windows-amd64.msi'
+Invoke-WebRequest -Uri $src -OutFile $dst
+Start-Process msiexec.exe -Wait -ArgumentList "/i `"$dst`" /quiet /norestart"
+
+# After relogin
+go install github.com/go-delve/delve/cmd/dlv@latest
+dlv --listen=127.0.0.1:2345 --headless=true --api-version=2 exec -- (Get-Command k0s).Path worker
 ```
