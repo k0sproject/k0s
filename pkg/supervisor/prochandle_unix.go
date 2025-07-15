@@ -15,6 +15,10 @@ import (
 	"syscall"
 )
 
+func ShutdownHelperHook() {
+	// no-op
+}
+
 type unixProcess struct {
 	// The PID that was used when opening the process.
 	// Note: Don't rely on [os.Process.Pid] here, as it's not thread safe.

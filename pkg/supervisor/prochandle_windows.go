@@ -4,18 +4,49 @@
 package supervisor
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
+	"os/signal"
+	"strconv"
 	"syscall"
 
-	internalwindows "github.com/k0sproject/k0s/internal/os/windows"
-
-	"golang.org/x/sys/windows"
+	"github.com/k0sproject/k0s/internal/os/windows"
 )
 
+const shutdownHelperHookMarker = "__K0S_SUPERVISOR_SHUTDOWN_HELPER"
+
+func ShutdownHelperHook() {
+	// React to command lines like "k0s shutdownHelperHookMarker <pid>"
+	if len(os.Args) != 3 || os.Args[1] != shutdownHelperHookMarker {
+		return
+	}
+
+	// Parse the process ID from the command line arguments.
+	var processID uint32
+	if parsed, err := strconv.ParseUint(os.Args[2], 10, 32); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: invalid process ID:", err)
+		os.Exit(1)
+	} else if parsed == 0 {
+		fmt.Fprintln(os.Stderr, "Error: process ID may not be zero")
+		os.Exit(1)
+	} else {
+		processID = uint32(parsed)
+	}
+
+	if err := runShutdownHelper(processID); err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(2)
+	}
+
+	fmt.Fprintln(os.Stderr, "Done.")
+	os.Exit(0)
+}
+
 type process struct {
-	pid    uint32
-	handle *internalwindows.ProcHandle
+	processID uint32
+	handle    *windows.ProcHandle
 }
 
 func openPID(pid int) (procHandle, error) {
@@ -23,13 +54,13 @@ func openPID(pid int) (procHandle, error) {
 		return nil, fmt.Errorf("illegal PID: %d", pid)
 	}
 
-	p := uint32(pid)
-	handle, err := internalwindows.OpenPID(p)
+	processID := uint32(pid)
+	handle, err := windows.OpenProcess(processID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &process{p, handle}, nil
+	return &process{processID, handle}, nil
 }
 
 func (p *process) Close() error {
@@ -48,7 +79,7 @@ func (p *process) environ() ([]string, error) {
 
 // requestGracefulShutdown implements [procHandle].
 func (p *process) requestGracefulShutdown() error {
-	if err := sendCtrlBreak(p.pid); err != nil {
+	if err := sendCtrlBreak(p.processID); err != nil {
 		return fmt.Errorf("failed to send Ctrl+Break: %w", err)
 	}
 
@@ -81,7 +112,34 @@ func requestGracefulShutdown(p *os.Process) error {
 // Luckily, the Go runtime translates Ctrl+Break events into os.Interrupt
 // signals, and all of k0s's supervised executables are Go programs, so this is
 // mostly fine.
-func sendCtrlBreak(pid uint32) error {
-	err := windows.GenerateConsoleCtrlEvent(syscall.CTRL_BREAK_EVENT, pid)
-	return os.NewSyscallError("GenerateConsoleCtrlEvent", err)
+func sendCtrlBreak(processID uint32) error {
+	return windows.GenerateCtrlBreakEvent(processID)
+}
+
+func runShutdownHelper(processID uint32) error {
+	// Prevent this process from receiving any control events
+	_, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	return attachedToProcessConsole(processID, func() error {
+		return windows.GenerateCtrlBreakEvent(processID)
+	})
+}
+
+func attachedToProcessConsole(processID uint32, f func() error) (err error) {
+	// Detach from current console
+	if err := windows.FreeConsole(); err != nil {
+		return err
+	}
+	// Re-attach to parent's console later on
+	defer func() { err = errors.Join(err, windows.AttachConsole(windows.ATTACH_PARENT_PROCESS)) }()
+
+	// Attach to the target's console
+	if err := windows.AttachConsole(processID); err != nil {
+		return err
+	}
+	// Detach from the process console later on
+	defer func() { err = errors.Join(err, windows.FreeConsole()) }()
+
+	return f()
 }

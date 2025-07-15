@@ -21,7 +21,7 @@ import (
 // A Windows process handle.
 type ProcHandle os.File
 
-func OpenPID(processID uint32) (_ *ProcHandle, err error) {
+func OpenProcess(processID uint32) (_ *ProcHandle, err error) {
 	const ACCESS_FLAGS = 0 |
 		windows.PROCESS_QUERY_INFORMATION | // for NtQueryInformationProcess
 		windows.PROCESS_VM_READ | // for ReadProcessMemory
