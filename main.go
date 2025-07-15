@@ -10,6 +10,7 @@ import (
 
 	"github.com/k0sproject/k0s/cmd"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
 //go:generate make codegen
@@ -19,6 +20,8 @@ func init() {
 }
 
 func main() {
+	supervisor.TerminationHelperHook()
+
 	// Make embedded commands work through symlinks such as /usr/local/bin/kubectl (or k0s-kubectl)
 	progN := strings.TrimPrefix(path.Base(os.Args[0]), "k0s-")
 	switch progN {
