@@ -36,6 +36,13 @@ Start-Process msiexec.exe -Wait -ArgumentList "/i `"$dst`" /quiet /norestart"
 Get-Item "C:\Program Files\PowerShell\7\pwsh.exe"
 ```
 
+## Install Containers feature
+
+```pwsh
+Install-WindowsFeature -Name Containers
+Restart-Computer -Force
+```
+
 ## Set the default SSH shell to be PowerShell
 
 ```powershell
