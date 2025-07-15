@@ -27,7 +27,7 @@ func TestProcHandle_Close(t *testing.T) {
 	cmd, pingPong := pingpong.Start(t)
 	require.NoError(t, pingPong.AwaitPing())
 
-	underTest, err := windows.OpenPID(uint32(cmd.Process.Pid))
+	underTest, err := windows.OpenProcess(uint32(cmd.Process.Pid))
 	require.NoError(t, err)
 	assert.NoError(t, underTest.Close())
 	assert.ErrorIs(t, underTest.Close(), fs.ErrClosed)
@@ -35,7 +35,7 @@ func TestProcHandle_Close(t *testing.T) {
 
 func TestProcHandle_NoSuchProcess(t *testing.T) {
 	// We blindly assume that MaxUint32 is unused. YOLO!
-	handle, err := windows.OpenPID(math.MaxUint32)
+	handle, err := windows.OpenProcess(math.MaxUint32)
 	if err == nil {
 		assert.NoError(t, handle.Close())
 	}
@@ -46,7 +46,7 @@ func TestProcHandle_Terminate(t *testing.T) {
 	cmd, pingPong := pingpong.Start(t)
 	require.NoError(t, pingPong.AwaitPing())
 
-	underTest, err := windows.OpenPID(uint32(cmd.Process.Pid))
+	underTest, err := windows.OpenProcess(uint32(cmd.Process.Pid))
 	require.NoError(t, err)
 	t.Cleanup(func() { assert.NoError(t, underTest.Close()) })
 
@@ -65,7 +65,7 @@ func TestProcHandle_IsTerminated(t *testing.T) {
 	cmd, pingPong := pingpong.Start(t)
 	require.NoError(t, pingPong.AwaitPing())
 
-	underTest, err := windows.OpenPID(uint32(cmd.Process.Pid))
+	underTest, err := windows.OpenProcess(uint32(cmd.Process.Pid))
 	require.NoError(t, err)
 	t.Cleanup(func() { assert.NoError(t, underTest.Close()) })
 
@@ -99,7 +99,7 @@ func TestProcHandle_Environ(t *testing.T) {
 	})
 	require.NoError(t, pingPong.AwaitPing())
 
-	underTest, err := windows.OpenPID(uint32(cmd.Process.Pid))
+	underTest, err := windows.OpenProcess(uint32(cmd.Process.Pid))
 	require.NoError(t, err)
 	t.Cleanup(func() { assert.NoError(t, underTest.Close()) })
 
