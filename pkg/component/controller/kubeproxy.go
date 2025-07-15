@@ -338,7 +338,7 @@ spec:
         - /usr/local/bin/kube-proxy
         args:
         {{ range .Args}}
-        - {{ . }} 
+        - {{ . }}
         {{ end }}
         securityContext:
           privileged: true

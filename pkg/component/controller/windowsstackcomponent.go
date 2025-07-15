@@ -149,9 +149,9 @@ func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig)
 		KubeAPIPort:      strconv.Itoa(cfg.Spec.API.Port),
 		IPv4ServiceCIDR:  cfg.Spec.Network.ServiceCIDR,
 		Nameserver:       dns,
-		NodeImage:        "calico/windows:v3.23.5",
-		KubeProxyImage:   "sigwindowstools/kube-proxy",
-		KubeProxyVersion: "v1.27.1-calico-hostprocess",
+		NodeImage:        "docker.io/calico/windows:v3.26.5",
+		KubeProxyImage:   "docker.io/sigwindowstools/kube-proxy",
+		KubeProxyVersion: "v1.33.2-calico-hostprocess",
 	}
 
 	switch cfg.Spec.Network.Calico.Mode {
