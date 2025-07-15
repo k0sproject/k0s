@@ -20,7 +20,10 @@ RUN if [ ! -z "$(which apt)" ]; then \
 
 ARG VERSION
 RUN mkdir -p $GOPATH/src/github.com/containerd/containerd
-RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/containerd/containerd.git $GOPATH/src/github.com/containerd/containerd
+RUN \
+  git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/containerd/containerd.git $GOPATH/src/github.com/containerd/containerd \
+  && wget -O 01.patch https://github.com/containerd/containerd/commit/0eaa09e35a3eca10094173a0b0210c90810a3674.patch \
+  && git -C $GOPATH/src/github.com/containerd/containerd apply "$(realpath 01.patch)"
 WORKDIR /go/src/github.com/containerd/containerd
 
 ARG TARGET_OS \
@@ -32,7 +35,6 @@ ARG TARGET_OS \
   BUILD_GO_LDFLAGS_EXTRA \
   CONTAINERD_BINS
 
-RUN go version
 RUN make \
 	CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
 	SHIM_CGO_ENABLED=${BUILD_SHIM_GO_CGO_ENABLED} \
