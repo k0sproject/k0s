@@ -31,11 +31,7 @@
       ]
     },
     {
-      "description": "Group all etcd updates (go.mod and Makefile) into a single PR",
-      "matchManagers": [
-        "gomod",
-        "custom.regex"
-      ],
+      "description": "Group all etcd updates",
       "enabled": true,
       "matchPackageNames": [
         "go.etcd.io/etcd/**/v3",
@@ -43,6 +39,25 @@
       ],
       "groupName": "etcd dependencies",
       "groupSlug": "etcd-all"
+    },
+    {
+      "description": "Group all konnectivity updates",
+      "enabled": true,
+      "matchDepNames": [
+        "**/apiserver-network-proxy*",
+        "sigs.k8s.io/apiserver-network-proxy/*"
+      ],
+      "groupName": "konnectivity dependencies",
+      "groupSlug": "konnectivity"
+    },
+    {
+      "description": "Group all sonobuoy updates",
+      "enabled": true,
+      "matchDepNames": [
+        "**/sonobuoy"
+      ],
+      "groupName": "sonobuoy dependencies",
+      "groupSlug": "sonobuoy"
     },
     {
       "description": "Only update the main branch by default",
@@ -138,19 +153,6 @@
     },
     {
       "customType": "regex",
-      "description": "Update etcd version in embedded-bins/Makefile.variables",
-      "managerFilePatterns": [
-        "embedded-bins/Makefile.variables"
-      ],
-      "matchStrings": [
-        "etcd_version = (?<currentValue>\\d+(\\.\\d+){2})"
-      ],
-      "depNameTemplate": "etcd-io/etcd",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
       "description": "Update kine versions across the codebase",
       "managerFilePatterns": [
         "/(^|/)[Mm]akefile(\\.[^/]+)?$/",
@@ -166,42 +168,20 @@
     },
     {
       "customType": "regex",
-      "description": "Update Alpine version",
+      "description": "Generic version updates based on comments",
       "managerFilePatterns": [
-        "embedded-bins/Makefile.variables"
-      ],
-      "matchStrings": [
-        "alpine_patch_version[ \\t]*=[ \\t]*(?<currentValue>\\S+)"
-      ],
-      "depNameTemplate": "docker.io/library/alpine",
-      "datasourceTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "description": "Update Python version",
-      "managerFilePatterns": [
-        "docs/Makefile.variables"
-      ],
-      "matchStrings": [
-        "python_version[ \\t]*=[ \\t]*(?<currentValue>\\S+)"
-      ],
-      "depNameTemplate": "python",
-      "datasourceTemplate": "python-version",
-      "versioningTemplate": "python"
-    },
-    {
-      "customType": "regex",
-      "description": "Generic version updates for YAML files",
-      "managerFilePatterns": [
+        "**/Makefile*",
+        "**/Dockerfile*",
         "**/*.yaml",
         "**/*.yml"
       ],
       "matchStrings": [
-        ":[ \\t]*[\"']?(?<currentValue>\\S+?)[\"']?[ \\t]*# renovate: datasource=(?<datasource>\\S+)( registryUrl=(?<registryUrl>.+))? depName=(?<depName>\\S+)( versioning=(?<versioning>.+))?\\n"
+        "# renovate: datasource=(?<datasource>\\S+)( registryUrl=(?<registryUrl>.+))? depName=(?<depName>\\S+)( versioning=(?<versioning>.+))?\\n[^:=\\n]+[:=][ \\t]*[\"']?(?<currentValue>\\S+?)[\"']?[ \\t]*(:?#|\\n)",
+        "[=:][ \\t]*[\"']?(?<currentValue>\\S+?)[\"']?[ \\t]*# renovate: datasource=(?<datasource>\\S+)( registryUrl=(?<registryUrl>.+))? depName=(?<depName>\\S+)( versioning=(?<versioning>.+))?\\n"
       ],
       "datasourceTemplate": "{{{datasource}}}",
-      "registryUrlTemplate": "{{#if registryUrl}}{{{registryUrl}}}{{/if}}",
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
+      "extractVersionTemplate": "^v?(?<version>.+)"
     }
   ]
 }

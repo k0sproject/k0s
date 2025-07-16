@@ -35,10 +35,10 @@ jobs:
 
       - name: Setup Mergiraf
         env:
-          MERGIRAF_VERSION: v0.12.1 # renovate: datasource=gitea-releases registryUrl=https://codeberg.org depName=mergiraf/mergiraf
+          MERGIRAF_VERSION: 0.12.1 # renovate: datasource=gitea-releases registryUrl=https://codeberg.org depName=mergiraf/mergiraf
         run: |
           mkdir .git/mergiraf
-          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo .git/mergiraf/mergiraf.tar.gz "https://codeberg.org/mergiraf/mergiraf/releases/download/$MERGIRAF_VERSION/mergiraf_x86_64-unknown-linux-musl.tar.gz"
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo .git/mergiraf/mergiraf.tar.gz "https://codeberg.org/mergiraf/mergiraf/releases/download/v$MERGIRAF_VERSION/mergiraf_x86_64-unknown-linux-musl.tar.gz"
           tar xvf .git/mergiraf/mergiraf.tar.gz -C .git/mergiraf
           .git/mergiraf/mergiraf --version
           .git/mergiraf/mergiraf languages --gitattributes >.git/info/attributes

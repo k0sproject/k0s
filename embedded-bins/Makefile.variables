@@ -1,8 +1,10 @@
+# renovate: datasource=docker depName=docker.io/library/alpine versioning=docker
 alpine_patch_version = 3.22.1
 alpine_version = $(word 1,$(subst ., ,$(alpine_patch_version))).$(word 2,$(subst ., ,$(alpine_patch_version)))
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
 go_version = 1.24.5
 
+# renovate: datasource=github-releases depName=opencontainers/runc
 runc_version = 1.2.6
 runc_buildimage = $(golang_buildimage)
 runc_build_go_tags = "seccomp"
@@ -43,6 +45,7 @@ kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1
 kine_build_go_ldflags = "-w -s"
 kine_build_go_ldflags_extra = "-extldflags=-static"
 
+# renovate: datasource=github-releases depName=etcd-io/etcd
 etcd_version = 3.6.2
 etcd_buildimage = $(golang_buildimage)
 #etcd_build_go_tags =
@@ -52,8 +55,9 @@ etcd_build_go_cgo_enabled = 0
 etcd_build_go_ldflags = "-w -s"
 #etcd_build_go_ldflags_extra =
 
-konnectivity_buildimage = $(golang_buildimage)
+# renovate: datasource=github-tags depName=kubernetes-sigs/apiserver-network-proxy
 konnectivity_version = 0.32.0
+konnectivity_buildimage = $(golang_buildimage)
 #konnectivity_build_go_tags =
 konnectivity_build_go_cgo_enabled = 0
 #konnectivity_build_go_cgo_cflags =
@@ -64,6 +68,7 @@ konnectivity_build_go_ldflags_extra = "-extldflags=-static"
 iptables_version = 1.8.11
 iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 
+# renovate: datasource=github-releases depName=acassen/keepalived
 keepalived_version = 2.2.8
 keepalived_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 
