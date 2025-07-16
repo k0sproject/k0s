@@ -17,11 +17,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const ipv6ResolvConf = `
-nameserver 2606:4700:4700::1111
-nameserver 2001:4860:4860::8888
-`
-
 const k0sConfigWithKuberouter = `
 spec:
   images:
@@ -70,7 +65,7 @@ func (s *IPv6Suite) TestK0sGetsUp() {
 
 	// If there isn't a valid IPv6 DNS docker will write 127.0.0.11 which creates a routing loop.
 	// Overwrite it with cloudflare's and google's IPv6 DNS. Technically we only need this on the workers.
-	s.PutFile(s.WorkerNode(0), "/etc/resolv.conf", ipv6ResolvConf)
+	common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
 
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 	s.NoError(s.RunWorkers(`--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=:: --event-burst=10 --image-gc-high-threshold=100"`))
