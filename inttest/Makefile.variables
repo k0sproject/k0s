@@ -23,6 +23,7 @@ smoketests := \
 	check-bind-address \
 	check-byocri \
 	check-calico \
+	check-calico-ipv6 \
 	check-capitalhostnames \
 	check-cli \
 	check-clusterreboot \
@@ -80,6 +81,7 @@ smoketests := \
 air_gapped_smoketests := \
 	check-airgap \
 	check-ap-airgap \
+	check-calico-ipv6 \
 	check-cplb-ipvs-ipv6 \
 	check-cplb-userspace-ipv6 \
 	check-ipv6-calico \
