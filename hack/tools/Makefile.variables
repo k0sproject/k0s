@@ -1,2 +1,3 @@
 controller-tools_version = 0.17.1
 golangci-lint_version = 2.1.1
+cosign_version = 2.4.2
