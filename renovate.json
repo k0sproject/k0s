@@ -131,7 +131,7 @@
         "**/*.yml"
       ],
       "matchStrings": [
-        "\\b(?<depName>(docker|quay)\\.io/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*)(:|.*\n.*= \")v?(?<currentValue>[a-z0-9_][\\w.-]{0,127})"
+        "\\b(?<depName>(docker|quay)\\.io/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*)(:|.*\\n.*= \")v?(?<currentValue>[a-z0-9_][\\w.-]{0,127})"
       ],
       "datasourceTemplate": "docker",
       "extractVersionTemplate": "^v?(?<version>[\\w][\\w.-]{0,127})"
@@ -171,7 +171,7 @@
         "embedded-bins/Makefile.variables"
       ],
       "matchStrings": [
-        "alpine_patch_version\\s*=\\s*(?<currentValue>\\S+)"
+        "alpine_patch_version[ \\t]*=[ \\t]*(?<currentValue>\\S+)"
       ],
       "depNameTemplate": "docker.io/library/alpine",
       "datasourceTemplate": "docker"
@@ -183,7 +183,7 @@
         "docs/Makefile.variables"
       ],
       "matchStrings": [
-        "python_version\\s*=\\s*(?<currentValue>\\S+)"
+        "python_version[ \\t]*=[ \\t]*(?<currentValue>\\S+)"
       ],
       "depNameTemplate": "python",
       "datasourceTemplate": "python-version",
@@ -197,7 +197,7 @@
         "**/*.yml"
       ],
       "matchStrings": [
-        ":\\s*[\"']?(?<currentValue>\\S+?)[\"']?\\s*#\\s*renovate:\\s*datasource=(?<datasource>\\S+)(\\s+registryUrl=(?<registryUrl>.+))?\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>.+))?\n"
+        ":[ \\t]*[\"']?(?<currentValue>\\S+?)[\"']?[ \\t]*# renovate: datasource=(?<datasource>\\S+)( registryUrl=(?<registryUrl>.+))? depName=(?<depName>\\S+)( versioning=(?<versioning>.+))?\\n"
       ],
       "datasourceTemplate": "{{{datasource}}}",
       "registryUrlTemplate": "{{#if registryUrl}}{{{registryUrl}}}{{/if}}",
