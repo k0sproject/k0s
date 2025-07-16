@@ -103,7 +103,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v2.4.2/cosign-linux-amd64
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-amd64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
@@ -184,6 +184,9 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
 
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
         env:
@@ -194,7 +197,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v2.4.2/cosign-linux-amd64
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-amd64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.exe.sig k0s.exe
           cat k0s.exe.sig
@@ -261,7 +264,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v2.4.2/cosign-linux-arm64
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-arm64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
@@ -347,7 +350,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v2.4.2/cosign-linux-arm
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-arm
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
