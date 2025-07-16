@@ -18,6 +18,7 @@ package kuberouter
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 
 type KubeRouterHairpinSuite struct {
 	common.BootlooseSuite
+	isIPv6Only bool
 }
 
 func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
@@ -47,12 +49,24 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 				}(),
 			},
 		}
+		if s.isIPv6Only {
+			s.T().Log("Running in IPv6-only mode")
+			clusterCfg.Spec.Network.PodCIDR = "fd00::/108"
+			clusterCfg.Spec.Network.ServiceCIDR = "fd01::/108"
+			clusterCfg.Spec.Network.KubeProxy.NodePortAddresses = []string{"::1/96"}
+		}
+
 		config, err := yaml.Marshal(clusterCfg)
 		s.Require().NoError(err)
 		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
 	}
 
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components=konnectivity-server,metrics-server"))
+
+	if s.isIPv6Only {
+		s.T().Log("Setting up IPv6 DNS for workers")
+		common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
+	}
 	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/test")
 	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/pod.yaml", podManifest)
 	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/service.yaml", serviceManifest)
@@ -116,6 +130,12 @@ func TestKubeRouterHairpinSuite(t *testing.T) {
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},
+		os.Getenv("K0S_IPV6_ONLY") == "yes",
+	}
+	if s.isIPv6Only {
+		s.Networks = []string{"bridge-ipv6"}
+		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle.tar"}
+		s.K0smotronImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
 	}
 	suite.Run(t, &s)
 }

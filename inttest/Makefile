@@ -149,6 +149,9 @@ check-nllb-ipv6: TIMEOUT=15m
 check-nllb-ipv6: export K0S_IPV6_ONLY=yes
 check-nllb-ipv6: TEST_PACKAGE=nllb
 
+check-kuberouter-ipv6: export K0S_IPV6_ONLY=yes
+check-kuberouter-ipv6: TEST_PACKAGE=kuberouter
+
 .PHONY: $(smoketests)
 include Makefile.variables
 
