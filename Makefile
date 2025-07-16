@@ -141,7 +141,7 @@ $(controller_gen_targets): $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt ha
 	rm -rf 'static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
 	gendir="$$(mktemp -d .controller-gen.tmp.XXXXXX)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
-	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
+	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-tools_version) \
 	    paths="./$(dir $@)..." \
 	    object:headerFile=hack/tools/boilerplate.go.txt output:object:dir="$$gendir" \
 	    crd output:crd:dir='static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))' \
