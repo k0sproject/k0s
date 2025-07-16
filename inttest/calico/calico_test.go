@@ -18,6 +18,7 @@ package calico
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -37,6 +38,7 @@ import (
 
 type CalicoSuite struct {
 	common.BootlooseSuite
+	isIPv6Only bool
 }
 
 func (s *CalicoSuite) TestK0sGetsUp() {
@@ -58,12 +60,23 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 				}(),
 			},
 		}
+		if s.isIPv6Only {
+			s.T().Log("Running in IPv6-only mode")
+			clusterCfg.Spec.Network.PodCIDR = "fd00::/108"
+			clusterCfg.Spec.Network.ServiceCIDR = "fd01::/108"
+		}
+
 		config, err := yaml.Marshal(clusterCfg)
 		s.Require().NoError(err)
 		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
 	}
 
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+
+	if s.isIPv6Only {
+		s.T().Log("Setting up IPv6 DNS for workers")
+		common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
+	}
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
@@ -153,6 +166,12 @@ func TestCalicoSuite(t *testing.T) {
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},
+		os.Getenv("K0S_IPV6_ONLY") == "yes",
+	}
+	if s.isIPv6Only {
+		s.Networks = []string{"bridge-ipv6"}
+		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle.tar"}
+		s.K0smotronImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
 	}
 	suite.Run(t, &s)
 }

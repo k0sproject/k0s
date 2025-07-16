@@ -87,6 +87,9 @@ check-customports-dynamicconfig: TEST_PACKAGE=customports
 
 check-kubeletcertrotate: TIMEOUT=15m
 
+check-calico-ipv6: export K0S_IPV6_ONLY=yes
+check-calico-ipv6: TEST_PACKAGE=calico
+
 check-cplb-ipvs-ipv6: export K0S_IPV6_ONLY=yes
 check-cplb-ipvs-ipv6: TEST_PACKAGE=cplb-ipvs
 
@@ -151,12 +154,15 @@ include Makefile.variables
 
 $(smoketests): K0S_PATH ?= $(realpath ../k0s)
 $(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
+# K0SMOTRON_IMAGES_BUNDLE is intended for k0smotron testing, but we're reutilizing it for ipv6 tests
+$(smoketests): K0SMOTRON_IMAGES_BUNDLE ?= $(realpath ../ipv6-image-bundle-linux-$(ARCH).tar)
 $(smoketests): .bootloose-alpine.stamp
 $(smoketests): TEST_PACKAGE ?= $(subst check-,,$@)
 $(smoketests):
 	K0S_PATH='$(K0S_PATH)' \
 	K0S_UPDATE_FROM_PATH='$(K0S_UPDATE_FROM_PATH)' \
 	K0S_IMAGES_BUNDLE='$(K0S_IMAGES_BUNDLE)' \
+	K0SMOTRON_IMAGES_BUNDLE='$(K0SMOTRON_IMAGES_BUNDLE)' \
 	K0S_UPDATE_TO_VERSION='$(K0S_UPDATE_TO_VERSION)' \
 	go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(TEST_PACKAGE)
 .PHONY: clean
