@@ -260,11 +260,12 @@ ipv6-image-bundle-linux-riscv64.tar: embedded-bins/Makefile.variables
 	printf '%s\n' \
 		docker.io/library/nginx:1.29.0-alpine \
 		docker.io/library/alpine:$(alpine_version) \
+		docker.io/curlimages/curl:8.15.0 \
 		| ./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@'
 
 .PHONY: $(smoketests)
 $(air_gapped_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
-check-calico-ipv6: ipv6-image-bundle-linux-$(HOST_ARCH).tar
+check-calico-ipv6 check-kuberouter-ipv6: ipv6-image-bundle-linux-$(HOST_ARCH).tar
 $(smoketests): k0s
 # K0SMOTRON_IMAGES_BUNDLE is repurposed for the IPv6 test images
 	$(MAKE) -C inttest \

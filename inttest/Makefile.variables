@@ -59,6 +59,7 @@ smoketests := \
 	check-kubectl \
 	check-kubeletcertrotate \
 	check-kuberouter \
+	check-kuberouter-ipv6 \
 	check-metrics \
 	check-metricsscraper \
 	check-metricsscraper-singlenode \
@@ -86,4 +87,5 @@ air_gapped_smoketests := \
 	check-cplb-userspace-ipv6 \
 	check-ipv6-calico \
 	check-ipv6-kuberouter \
+	check-kuberouter-ipv6 \
 	check-nllb-ipv6
