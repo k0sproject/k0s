@@ -60,6 +60,19 @@
       "groupSlug": "sonobuoy"
     },
     {
+      "description": "Run codegen if required",
+      "matchDepNames": [
+        "kubernetes-sigs/controller-tools"
+      ],
+      "postUpgradeTasks": {
+        "executionMode": "branch",
+        "commands": [
+          "install-tool golang $(./vars.sh go_version)",
+          "make DOCKER='' EMBEDDED_BINS_BUILDMODE=none codegen"
+        ]
+      }
+    },
+    {
       "description": "Only update the main branch by default",
       "enabled": false,
       "prTitleStrict": false,
