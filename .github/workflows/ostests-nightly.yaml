@@ -8,6 +8,8 @@ on:
     - cron: 30 2 * * *
 
 env:
+  # NOTE: If you update the OS list here,
+  # please also update docs/system-requirements.md for consistency.
   DISTRIBUTIONS: >-
     [
       ["al2023"],

@@ -45,7 +45,11 @@ The specific storage consumption for k0s is as follows:
 
 ## Host operating system
 
-k0s is tested and known to work on the following operating systems and versions:
+k0s runs on Linux and Windows operating systems.
+
+The following operating systems are automatically tested as part of our CI:
+
+<!-- NOTE: Update ostests-nightly.yaml if you change the tested OS list here. -->
 
 | Operating System              | Version/Notes                                                                           |
 |-------------------------------|-----------------------------------------------------------------------------------------|
@@ -61,7 +65,6 @@ k0s is tested and known to work on the following operating systems and versions:
 | Rocky Linux                   | 8.10 (Green Obsidian), 9.5 (Blue Onyx)                                                  |
 | SUSE Linux Enterprise Server  | 15 SP6                                                                                  |
 | Ubuntu                        | 20.04 LTS, 22.04 LTS, 24.04                                                             |
-| Windows Server                | 2022 (runs the control plane on Alpine 3.22)                                            |
 
 **Note:** For detailed Linux-specific requirements, please refer to the [Linux specific requirements].
 
