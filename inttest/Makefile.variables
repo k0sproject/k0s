@@ -52,8 +52,6 @@ smoketests := \
 	check-extraargs \
 	check-hacontrolplane \
 	check-hostnameoverride \
-	check-ipv6-calico \
-	check-ipv6-kuberouter \
 	check-k0scloudprovider \
 	check-kine \
 	check-kubectl \
@@ -85,7 +83,5 @@ air_gapped_smoketests := \
 	check-calico-ipv6 \
 	check-cplb-ipvs-ipv6 \
 	check-cplb-userspace-ipv6 \
-	check-ipv6-calico \
-	check-ipv6-kuberouter \
 	check-kuberouter-ipv6 \
 	check-nllb-ipv6
