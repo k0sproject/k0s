@@ -1,4 +1,5 @@
-sonobuoy_version := 0.57.2
+# renovate: datasource=github-releases depName=vmware-tanzu/sonobuoy
+sonobuoy_version = 0.57.2
 smoketests := \
 	check-addons \
 	check-airgap \

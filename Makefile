@@ -141,7 +141,7 @@ $(controller_gen_targets): $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt ha
 	rm -rf 'static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
 	gendir="$$(mktemp -d .controller-gen.tmp.XXXXXX)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
-	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
+	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-tools_version) \
 	    paths="./$(dir $@)..." \
 	    object:headerFile=hack/tools/boilerplate.go.txt output:object:dir="$$gendir" \
 	    crd output:crd:dir='static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))' \
@@ -230,7 +230,7 @@ lint-copyright:
 .PHONY: lint-go
 lint-go: GOLANGCI_LINT_FLAGS ?=
 lint-go: $(GO_ENV_REQUISITES) go.sum bindata
-	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v$(golangci-lint_version)
+	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/v$(word 1,$(subst ., ,$(golangci-lint_version)))/cmd/golangci-lint@v$(golangci-lint_version)
 	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO_ENV) golangci-lint run --verbose --build-tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
 
 .PHONY: lint
@@ -325,7 +325,7 @@ sign-sbom: sbom/spdx.json
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  ghcr.io/sigstore/cosign/cosign:v2.4.2 \
+	  ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
 	  sign-blob \
 	  --key /k0s/cosign.key \
 	  --tlog-upload=false \
@@ -337,6 +337,6 @@ sign-pub-key:
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  ghcr.io/sigstore/cosign/cosign:v2.4.2 \
+	  ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
 	  public-key \
 	  --key /k0s/cosign.key --output-file /out/cosign.pub
