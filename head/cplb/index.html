@@ -3127,7 +3127,7 @@ can be filtered with <code>component=keepalived</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>journalctl<span class="w"> </span>-u<span class="w"> </span>k0scontroller<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="nv">component</span><span class="o">=</span>keepalived
 <span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Starting to supervise&quot; component=keepalived</span>
 <span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Started successfully, go nuts pid 409&quot; component=keepalived</span>
-<span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Tue Nov 19 12:56:11 2024: Starting Keepalived v2.2.8 (04/04,2023), git commit v2.2.7-154-g292b299e+&quot; component=keepalived stream=stderr</span>
+<span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Tue Nov 19 12:56:11 2024: Starting Keepalived v2.2.8&quot; component=keepalived stream=stderr</span>
 <span class="go">[...]</span>
 </code></pre></div>
 <p>The Keepalived configuration is stored in a file called <code>keepalived.conf</code> in the
