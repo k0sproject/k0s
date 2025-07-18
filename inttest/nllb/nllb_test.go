@@ -323,7 +323,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 func TestNodeLocalLoadBalancingSuite(t *testing.T) {
 	s := suite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     2,
 		},

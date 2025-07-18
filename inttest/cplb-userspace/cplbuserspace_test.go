@@ -37,6 +37,7 @@ import (
 
 type CPLBUserSpaceSuite struct {
 	common.BootlooseSuite
+	useExternalAddress bool
 }
 
 const nllbControllerConfig = `
@@ -72,19 +73,13 @@ spec:
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
-	useExtAddr := os.Getenv("K0S_USE_EXTERNAL_ADDRESS") == "yes"
-	if useExtAddr {
-		s.T().Log("Using external address")
-	} else {
-		s.T().Log("Using CPLB + NLLB")
-	}
 	lb := s.getLBAddress()
 	ctx := s.Context()
 	var joinToken string
 
 	for idx := range s.BootlooseSuite.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
-		if useExtAddr {
+		if s.useExternalAddress {
 			s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(extAddrControllerConfig, lb, lb))
 			// Note that the token is intentionally empty for the first controller
 			s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=endpoint-reconciler", "--enable-worker", joinToken))
@@ -140,7 +135,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 
 	// Verify that controller+worker nodes are working normally.
 	s.T().Log("waiting to see CNI pods ready")
-	if useExtAddr {
+	if s.useExternalAddress {
 		s.Require().NoError(common.WaitForDaemonSet(ctx, client, "calico-node", "kube-system"), "calico-node did not start")
 	} else {
 		s.Require().NoError(common.WaitForKubeRouterReady(ctx, client), "kube router did not start")
@@ -261,10 +256,20 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
 // virtual IP is working by joining a node to the cluster using the VIP.
 func TestCPLBUserSpaceSuite(t *testing.T) {
-	suite.Run(t, &CPLBUserSpaceSuite{
-		common.BootlooseSuite{
+	cplbSuite := &CPLBUserSpaceSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     1,
 		},
-	})
+	}
+
+	target := os.Getenv("K0S_INTTEST_TARGET")
+	switch {
+	case strings.Contains(target, "extaddr"):
+		t.Log("Testing external address")
+		cplbSuite.useExternalAddress = true
+	}
+
+	suite.Run(t, cplbSuite)
+
 }
