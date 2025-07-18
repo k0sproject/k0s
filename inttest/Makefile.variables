@@ -1,5 +1,8 @@
 # renovate: datasource=github-releases depName=vmware-tanzu/sonobuoy
 sonobuoy_version = 0.57.3
+
+helm_version = 3.17.2
+
 smoketests := \
 	check-addons \
 	check-airgap \
