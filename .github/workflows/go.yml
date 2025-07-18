@@ -10,7 +10,8 @@ on:
       - .github/ISSUE_TEMPLATE/**
       - .github/workflows/*.yaml
       - .github/workflows/*.yml
-        # Re-include all called workflow files here
+        # Re-include all workflow files used by this workflow
+      - "!.github/workflows/go.yml"
       - "!.github/workflows/build-airgap-image-bundle.yml"
       - "!.github/workflows/build-k0s.yml"
       - "!.github/workflows/smoketest.yaml"
@@ -32,7 +33,8 @@ on:
       - .github/ISSUE_TEMPLATE/**
       - .github/workflows/*.yaml
       - .github/workflows/*.yml
-        # Re-include all called workflow files here
+        # Re-include all workflow files used by this workflow
+      - "!.github/workflows/go.yml"
       - "!.github/workflows/build-airgap-image-bundle.yml"
       - "!.github/workflows/build-k0s.yml"
       - "!.github/workflows/smoketest.yaml"
