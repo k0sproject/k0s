@@ -1,4 +1,7 @@
 sonobuoy_version := 0.57.2
+
+helm_version = 3.17.2
+
 smoketests := \
 	check-addons \
 	check-airgap \

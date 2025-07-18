@@ -9,6 +9,7 @@ curl = curl --proto '=https' --tlsv1.2 -sSL
 bins = bin/sonobuoy
 
 include ../embedded-bins/Makefile.variables
+include Makefile.variables
 
 .PHONY: all
 all: $(bins) .bootloose-alpine.stamp
@@ -131,7 +132,6 @@ check-metricsscraper-singlenode: TEST_PACKAGE=metricsscraper
 check-nllb: TIMEOUT=15m
 
 .PHONY: $(smoketests)
-include Makefile.variables
 
 $(smoketests): K0S_PATH ?= $(realpath ../k0s)
 $(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
