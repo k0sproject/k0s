@@ -45,8 +45,28 @@ The specific storage consumption for k0s is as follows:
 
 ## Host operating system
 
-- Linux (see [Linux specific requirements] for details)
-- Windows Server 2019
+k0s runs on Linux and Windows operating systems.
+
+The following operating systems are automatically tested as part of our CI:
+
+<!-- NOTE: Update ostests-nightly.yaml if you change the tested OS list here. -->
+
+| Operating System              | Version/Notes                                                                           |
+|-------------------------------|-----------------------------------------------------------------------------------------|
+| Amazon Linux                  | 2023                                                                                    |
+| Alpine Linux                  | 3.19, 3.22                                                                              |
+| CentOS Stream                 | 9, 10 (Coughlan)                                                                        |
+| Debian GNU/Linux              | 11 (bullseye) (supported until 2026-08-31), 12 (bookworm) (supported until 2028-06-30)  |
+| Fedora CoreOS                 | stable stream                                                                           |
+| Fedora Linux                  | 41 (Cloud Edition)                                                                      |
+| Flatcar Container Linux       | by Kinvolk                                                                              |
+| Oracle Linux Server           | 8.9, 9.3                                                                                |
+| Red Hat Enterprise Linux      | 7.9 (Maipo), 8.10 (Ootpa), 9.5 (Plow)                                                   |
+| Rocky Linux                   | 8.10 (Green Obsidian), 9.5 (Blue Onyx)                                                  |
+| SUSE Linux Enterprise Server  | 15 SP6                                                                                  |
+| Ubuntu                        | 20.04 LTS, 22.04 LTS, 24.04                                                             |
+
+**Note:** For detailed Linux-specific requirements, please refer to the [Linux specific requirements].
 
 [Linux specific requirements]: external-runtime-deps.md#linux-specific
 
