@@ -51,6 +51,16 @@
       "groupSlug": "konnectivity"
     },
     {
+      "description": "Group all Helm updates",
+      "enabled": true,
+      "matchDepNames": [
+        "helm.sh/helm/**",
+        "helm/helm"
+      ],
+      "groupName": "Helm dependencies",
+      "groupSlug": "helm"
+    },
+    {
       "description": "Group all sonobuoy updates",
       "enabled": true,
       "matchDepNames": [
