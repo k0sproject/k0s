@@ -83,39 +83,17 @@ check-ap-ha3x3: export K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 check-ap-controllerworker: K0S_UPDATE_FROM_BIN ?= ../k0s
 check-ap-controllerworker: export K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
 
-check-customports-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
-
 check-kubeletcertrotate: TIMEOUT=15m
-
-check-cplb-userspace-extaddr: export K0S_USE_EXTERNAL_ADDRESS=yes
-
-check-dualstack-calico: export K0S_NETWORK=calico
-
-check-dualstack-calico-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
-check-dualstack-calico-dynamicconfig: export K0S_NETWORK=calico
-
-check-dualstack-kuberouter: export K0S_NETWORK=kube-router
-
-check-dualstack-kuberouter-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
-check-dualstack-kuberouter-dynamicconfig: export K0S_NETWORK=kuberouter
 
 check-ap-updater: .update-server.stamp
 check-ap-updater-periodic: .update-server.stamp
 check-ap-updater-periodic: TIMEOUT=10m
 
 check-network-conformance-kuberouter: TIMEOUT=15m
-check-network-conformance-kuberouter: export K0S_NETWORK_CONFORMANCE_CNI=kuberouter
 check-network-conformance-calico: TIMEOUT=15m
-check-network-conformance-calico: export K0S_NETWORK_CONFORMANCE_CNI=calico
 
 check-network-conformance-kuberouter-nft: TIMEOUT=15m
-check-network-conformance-kuberouter-nft: export K0S_NETWORK_CONFORMANCE_CNI=kuberouter
-check-network-conformance-kuberouter-nft: export K0S_NETWORK_CONFORMANCE_PROXY_MODE=nftables
 check-network-conformance-calico-nft: TIMEOUT=15m
-check-network-conformance-calico-nft: export K0S_NETWORK_CONFORMANCE_CNI=calico
-check-network-conformance-calico-nft: export K0S_NETWORK_CONFORMANCE_PROXY_MODE=nftables
-
-check-metricsscraper-singlenode: export K0S_SINGLENODE=1
 
 check-nllb: TIMEOUT=15m
 
