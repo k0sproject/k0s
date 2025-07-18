@@ -38,7 +38,8 @@ import (
 
 type CPLBUserSpaceSuite struct {
 	common.BootlooseSuite
-	isIPv6Only bool
+	isIPv6Only         bool
+	useExternalAddress bool
 }
 
 const nllbControllerConfig = `
@@ -80,9 +81,8 @@ spec:
 {{ end }}
 `
 
-func (s *CPLBUserSpaceSuite) getK0sCfg(useExtAddr bool, lb string) string {
-
-	if !useExtAddr {
+func (s *CPLBUserSpaceSuite) getK0sCfg(lb string) string {
+	if !s.useExternalAddress {
 		return fmt.Sprintf(nllbControllerConfig, common.GetCPLBVIPCIDR(lb, s.isIPv6Only))
 	}
 
@@ -101,17 +101,8 @@ func (s *CPLBUserSpaceSuite) getK0sCfg(useExtAddr bool, lb string) string {
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
-	useExtAddr := os.Getenv("K0S_USE_EXTERNAL_ADDRESS") == "yes"
-	if useExtAddr && s.isIPv6Only {
-		s.T().Log("Using external address in IPv6 mode")
-	} else if useExtAddr {
-		s.T().Log("Using external address in IPv4 mode")
-	} else {
-		s.T().Log("Using CPLB + NLLB")
-	}
-
 	lb := common.GetCPLBVIP(&s.BootlooseSuite, s.isIPv6Only)
-	k0sCfg := s.getK0sCfg(useExtAddr, lb)
+	k0sCfg := s.getK0sCfg(lb)
 
 	ctx := s.Context()
 	var joinToken string
@@ -173,7 +164,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 
 	// Verify that controller+worker nodes are working normally.
 	s.T().Log("waiting to see CNI pods ready")
-	if useExtAddr {
+	if s.useExternalAddress {
 		s.Require().NoError(common.WaitForDaemonSet(ctx, client, "calico-node", "kube-system"), "calico-node did not start")
 	} else {
 		s.Require().NoError(common.WaitForKubeRouterReady(ctx, client), "kube router did not start")
@@ -270,16 +261,24 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 // virtual IP is working by joining a node to the cluster using the VIP.
 func TestCPLBUserSpaceSuite(t *testing.T) {
 	cplbSuite := &CPLBUserSpaceSuite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     1,
 		},
-		os.Getenv("K0S_IPV6_ONLY") == "yes",
 	}
 
-	if cplbSuite.isIPv6Only {
+	target := os.Getenv("K0S_INTTEST_TARGET")
+	switch {
+	case strings.Contains(target, "ipv6"):
+		t.Log("Testing IPv6 only mode")
+		cplbSuite.isIPv6Only = true
+		cplbSuite.useExternalAddress = true
 		cplbSuite.Networks = []string{"bridge-ipv6"}
 		cplbSuite.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
+
+	case strings.Contains(target, "extaddr"):
+		t.Log("Testing external address")
+		cplbSuite.useExternalAddress = true
 	}
 
 	suite.Run(t, cplbSuite)

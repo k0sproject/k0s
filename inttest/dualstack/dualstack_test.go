@@ -96,9 +96,11 @@ func (s *DualstackSuite) SetupSuite() {
 	s.Require().True(isDockerIPv6Enabled, "Please enable IPv6 in docker before running this test")
 	s.BootlooseSuite.SetupSuite()
 
+	target := os.Getenv("K0S_INTTEST_TARGET")
+
 	k0sConfig := k0sConfigWithCalicoDualStack
 
-	if os.Getenv("K0S_NETWORK") == "kube-router" {
+	if strings.Contains(target, "kuberouter") {
 		s.T().Log("Using kube-router network")
 		ipv6Address := s.getIPv6Address(s.ControllerNode(0))
 		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouterDualStack, ipv6Address)
@@ -106,7 +108,7 @@ func (s *DualstackSuite) SetupSuite() {
 	}
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
-	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "dynamicconfig") {
 		s.T().Log("Enabling dynamic config for controller")
 		controllerArgs = append(controllerArgs, "--enable-dynamic-config")
 	}
