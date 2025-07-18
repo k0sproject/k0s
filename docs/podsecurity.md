@@ -3,7 +3,8 @@
 Since Pod Security Policies have been removed in Kubernetes v1.25, Kubernetes
 offers [Pod Security Standards] – a new way to enhance cluster security.
 
-To enable PSS in k0s you need to create an admission controller config file:
+To enable Pod Security Standards in k0s, create an admission controller
+configuration file:
 
     ```yaml
     apiVersion: apiserver.config.k8s.io/v1

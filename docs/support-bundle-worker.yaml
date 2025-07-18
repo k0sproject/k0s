@@ -100,7 +100,7 @@ spec:
         collectorName: "systemctl-k0s-status"
         command: "systemctl"
         args: ["status", "k0s*"]
-    # Systemd Service Configurations for CRI, Kubelet
+    # systemd Service Configurations for CRI, Kubelet
     - run:
         collectorName: "systemctl-cat-journald"
         command: "systemctl"
