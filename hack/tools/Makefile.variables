@@ -3,4 +3,4 @@ controller-tools_version = 0.17.1
 # renovate: datasource=github-releases depName=golangci/golangci-lint
 golangci-lint_version = 2.2.2
 # renovate: datasource=github-releases depName=sigstore/cosign
-cosign_version = 2.5.2
+cosign_version = 2.5.3
