@@ -1,6 +1,5 @@
 ARCH := $(shell go env GOARCH)
 OS := $(shell go env GOOS)
-K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
 sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v${sonobuoy_version}/sonobuoy_${sonobuoy_version}_$(OS)_$(ARCH).tar.gz
 
@@ -77,10 +76,11 @@ check-backup: TIMEOUT=10m
 
 # Autopilot 3x3 HA test can take a while to run
 check-ap-ha3x3: K0S_UPDATE_FROM_BIN ?= ../k0s
-check-ap-ha3x3: K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
+check-ap-ha3x3: export K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
+check-ap-ha3x3: export K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
 check-ap-controllerworker: K0S_UPDATE_FROM_BIN ?= ../k0s
-check-ap-controllerworker: K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
+check-ap-controllerworker: export K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
 
 check-customports-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
 check-customports-dynamicconfig: TEST_PACKAGE=customports
@@ -133,16 +133,10 @@ check-nllb: TIMEOUT=15m
 .PHONY: $(smoketests)
 include Makefile.variables
 
-$(smoketests): K0S_PATH ?= $(realpath ../k0s)
-$(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
-$(smoketests): .bootloose-alpine.stamp
+$(smoketests): export K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
 $(smoketests): TEST_PACKAGE ?= $(subst check-,,$@)
-$(smoketests):
-	K0S_PATH='$(K0S_PATH)' \
-	K0S_UPDATE_FROM_PATH='$(K0S_UPDATE_FROM_PATH)' \
-	K0S_IMAGES_BUNDLE='$(K0S_IMAGES_BUNDLE)' \
-	K0S_UPDATE_TO_VERSION='$(K0S_UPDATE_TO_VERSION)' \
-	go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(TEST_PACKAGE)
+$(smoketests): .bootloose-alpine.stamp
+	K0S_INTTEST_TARGET='$(subst check-,,$@)' go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(TEST_PACKAGE)
 .PHONY: clean
 
 clean:

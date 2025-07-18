@@ -1545,17 +1545,25 @@ func (s *BootlooseSuite) maybeAddBinPath(volumes []config.Volume) ([]config.Volu
 		return volumes, nil
 	}
 
-	binPath := os.Getenv("K0S_PATH")
-	if binPath == "" {
-		return nil, errors.New("failed to locate k0s binary: K0S_PATH environment variable not set")
+	exePathErrMsg := "failed to locate k0s executable"
+	exePath, binPathSet := os.LookupEnv("K0S_PATH")
+	if !binPathSet {
+		exePathErrMsg += ": K0S_PATH environment variable not set"
+		// Assume that inttests are called from the inttest/<test-name> folder,
+		// hence the k0s executable is supposedly located at ../../k0s.
+		var err error
+		exePath, err = filepath.Abs(filepath.Join("..", "..", "k0s"))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", exePathErrMsg, err)
+		}
 	}
 
-	fileInfo, err := os.Stat(binPath)
+	fileInfo, err := os.Stat(exePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to locate k0s binary %s: %w", binPath, err)
+		return nil, fmt.Errorf("%s: %w", exePathErrMsg, err)
 	}
 	if fileInfo.IsDir() {
-		return nil, fmt.Errorf("failed to locate k0s binary %s: is a directory", binPath)
+		return nil, fmt.Errorf("%s: is a directory: %q", exePathErrMsg, exePath)
 	}
 
 	updateFromBinPath := os.Getenv("K0S_UPDATE_FROM_PATH")
@@ -1567,14 +1575,14 @@ func (s *BootlooseSuite) maybeAddBinPath(volumes []config.Volume) ([]config.Volu
 			ReadOnly:    true,
 		}, config.Volume{
 			Type:        "bind",
-			Source:      binPath,
+			Source:      exePath,
 			Destination: k0sNewBindMountFullPath,
 			ReadOnly:    true,
 		})
 	} else {
 		volumes = append(volumes, config.Volume{
 			Type:        "bind",
-			Source:      binPath,
+			Source:      exePath,
 			Destination: k0sBindMountFullPath,
 			ReadOnly:    true,
 		})
