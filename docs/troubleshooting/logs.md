@@ -13,8 +13,10 @@ Jul 08 08:46:26 worker-kppzr-lls2q k0s[1766]: time="2024-07-08 08:46:26" level=i
 
 ### systemd based setups
 
-SystemD uses journal log system for all logs. This means that you can access k0s and all the sub-component logs using `journalctl`. For example if you are interested in kubelet logs, you can run something like `journalctl -u k0sworker | grep component=kubelet`.
+systemd stores logs in its journal. Access k0s and all component logs using
+`journalctl`. For example, to view kubelet logs, run `journalctl -u k0sworker |
+grep component=kubelet`.
 
 ### OpenRC based setups
 
-OpenRC stores logs of services in `/var/log/k0sworker.log`. Again, if you're interested in specific component logs you cat run something like `grep component=kubelet /var/log/k0s.log`.
+openRC stores service logs in `/var/log/k0sworker.log`. To view a specific component log, run `grep component=kubelet /var/log/k0s.log`.
