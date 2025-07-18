@@ -66,33 +66,32 @@ get-conformance-results: bin/sonobuoy
 
 TIMEOUT ?= 6m
 
-check-ctr: TIMEOUT=10m
-
-# Config change smoke runs actually many cases hence a bit longer timeout
-check-configchange: TIMEOUT=8m
-
-# Backup check runs two scenarios
-check-backup: TIMEOUT=10m
+check-ap-controllerworker: K0S_UPDATE_FROM_BIN ?= ../k0s
+check-ap-controllerworker: export K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
 
 # Autopilot 3x3 HA test can take a while to run
 check-ap-ha3x3: K0S_UPDATE_FROM_BIN ?= ../k0s
 check-ap-ha3x3: export K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
 check-ap-ha3x3: export K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
-check-ap-controllerworker: K0S_UPDATE_FROM_BIN ?= ../k0s
-check-ap-controllerworker: export K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
-
-check-kubeletcertrotate: TIMEOUT=15m
-
 check-ap-updater: .update-server.stamp
 check-ap-updater-periodic: .update-server.stamp
 check-ap-updater-periodic: TIMEOUT=10m
 
-check-network-conformance-kuberouter: TIMEOUT=15m
-check-network-conformance-calico: TIMEOUT=15m
+# Backup check runs two scenarios
+check-backup: TIMEOUT=10m
 
-check-network-conformance-kuberouter-nft: TIMEOUT=15m
+# Config change smoke runs actually many cases hence a bit longer timeout
+check-configchange: TIMEOUT=8m
+
+check-ctr: TIMEOUT=10m
+
+check-kubeletcertrotate: TIMEOUT=15m
+
+check-network-conformance-calico: TIMEOUT=15m
 check-network-conformance-calico-nft: TIMEOUT=15m
+check-network-conformance-kuberouter: TIMEOUT=15m
+check-network-conformance-kuberouter-nft: TIMEOUT=15m
 
 check-nllb: TIMEOUT=15m
 
