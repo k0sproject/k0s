@@ -32,3 +32,4 @@ jobs:
         env:
           LOG_LEVEL: debug
           RENOVATE_REPOSITORIES: "${{ github.repository }}"
+          RENOVATE_ALLOWED_COMMANDS: '[".+"]'
