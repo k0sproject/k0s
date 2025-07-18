@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package workerconfig
 
@@ -51,6 +38,8 @@ import (
 )
 
 type kubeletConfig = kubeletv1beta1.KubeletConfiguration
+
+type mockApplierCall = func(resources) error
 
 // TODO: simplify it somehow, it is hard to read and to modify, both tests and implementation
 func TestReconciler_Lifecycle(t *testing.T) {
@@ -792,8 +781,6 @@ func makeKubeletConfig(t *testing.T, mods ...func(*kubeletConfig)) string {
 type mockApplier struct {
 	ptr atomic.Pointer[[]mockApplierCall]
 }
-
-type mockApplierCall = func(resources) error
 
 func (m *mockApplier) expectApply(t *testing.T, retval error) func() resources {
 	ch := make(chan resources, 1)
