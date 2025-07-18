@@ -1,5 +1,7 @@
+//go:build !windows
+
 /*
-Copyright 2020 k0s authors
+Copyright 2025 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,14 +16,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package constant
+package containerd
+
+import "github.com/k0sproject/k0s/pkg/assets"
 
 const (
-	// DataDirDefault is the default directory containing k0s state.
-	DataDirDefault = "C:\\var\\lib\\k0s"
-
-	KineSocket           = "kine\\kine.sock:2379"
-	K0sConfigPathDefault = "C:\\etc\\k0s\\k0s.yaml"
-
-	ExecutableSuffix = ".exe"
+	defaultConfPath    = "/etc/k0s/containerd.toml"
+	defaultImportsPath = "/etc/k0s/containerd.d/"
 )
+
+var additionalExecutableNames = [...]string{
+	"containerd-shim",
+	"containerd-shim-runc-v1",
+	"containerd-shim-runc-v2",
+	"runc",
+}
+
+func stageExecutable(dir, name string) (string, error) {
+	return assets.StageExecutable(dir, name)
+}
