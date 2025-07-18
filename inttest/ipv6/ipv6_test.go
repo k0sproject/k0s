@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -68,7 +69,7 @@ func (s *IPv6Suite) TestK0sGetsUp() {
 
 	var k0sConfig, cniDS string
 
-	if os.Getenv("K0S_NETWORK") == "kube-router" {
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "kuberouter") {
 		s.T().Log("Using kube-router network")
 		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouter, common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(0), ""))
 		cniDS = "kube-router"
