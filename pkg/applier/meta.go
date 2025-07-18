@@ -29,6 +29,9 @@ const (
 	// NameLabel stack label
 	NameLabel = MetaPrefix + "/stack"
 
+	// ManagedLabel defines the label key used to indicate whether a resource is managed by k0s.
+	ManagedLabel = MetaPrefix + "/managed"
+
 	// ChecksumAnnotation defines the annotation key to used for stack checksums
 	ChecksumAnnotation = MetaPrefix + "/stack-checksum"
 
