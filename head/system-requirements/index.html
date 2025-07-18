@@ -2633,10 +2633,69 @@
 </table>
 <p><strong>Note</strong>: The operating system and application requirements must be considered in addition to the k0s part.</p>
 <h2 id="host-operating-system">Host operating system<a class="headerlink" href="#host-operating-system" title="Permanent link">#</a></h2>
-<ul>
-<li>Linux (see <a href="../external-runtime-deps/#linux-specific">Linux specific requirements</a> for details)</li>
-<li>Windows Server 2019</li>
-</ul>
+<p>k0s runs on Linux and Windows operating systems.</p>
+<p>The following operating systems are automatically tested as part of our CI:</p>
+<!-- NOTE: Update ostests-nightly.yaml if you change the tested OS list here. -->
+
+<table>
+<thead>
+<tr>
+<th>Operating System</th>
+<th>Version/Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Amazon Linux</td>
+<td>2023</td>
+</tr>
+<tr>
+<td>Alpine Linux</td>
+<td>3.19, 3.22</td>
+</tr>
+<tr>
+<td>CentOS Stream</td>
+<td>9, 10 (Coughlan)</td>
+</tr>
+<tr>
+<td>Debian GNU/Linux</td>
+<td>11 (bullseye) (supported until 2026-08-31), 12 (bookworm) (supported until 2028-06-30)</td>
+</tr>
+<tr>
+<td>Fedora CoreOS</td>
+<td>stable stream</td>
+</tr>
+<tr>
+<td>Fedora Linux</td>
+<td>41 (Cloud Edition)</td>
+</tr>
+<tr>
+<td>Flatcar Container Linux</td>
+<td>by Kinvolk</td>
+</tr>
+<tr>
+<td>Oracle Linux Server</td>
+<td>8.9, 9.3</td>
+</tr>
+<tr>
+<td>Red Hat Enterprise Linux</td>
+<td>7.9 (Maipo), 8.10 (Ootpa), 9.5 (Plow)</td>
+</tr>
+<tr>
+<td>Rocky Linux</td>
+<td>8.10 (Green Obsidian), 9.5 (Blue Onyx)</td>
+</tr>
+<tr>
+<td>SUSE Linux Enterprise Server</td>
+<td>15 SP6</td>
+</tr>
+<tr>
+<td>Ubuntu</td>
+<td>20.04 LTS, 22.04 LTS, 24.04</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> For detailed Linux-specific requirements, please refer to the <a href="../external-runtime-deps/#linux-specific">Linux specific requirements</a>.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
 <ul>
 <li><code>x86_64</code></li>
