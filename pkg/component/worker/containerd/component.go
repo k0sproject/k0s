@@ -85,7 +85,7 @@ func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.P
 		c.confPath = confPathWindows
 		c.importsPath = importsPathWindows
 	} else {
-		c.binaries = []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"}
+		c.binaries = []string{"containerd", "containerd-shim", "containerd-shim-runc-v2", "runc"}
 		c.confPath = confPathPosix
 		c.importsPath = importsPathPosix
 	}
