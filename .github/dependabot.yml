@@ -56,6 +56,9 @@ updates:
       # sonobuoy
       - dependency-name: github.com/vmware-tanzu/sonobuoy
 
+      # Helm
+      - dependency-name: helm.sh/helm/v3
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
