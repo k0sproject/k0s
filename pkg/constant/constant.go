@@ -73,7 +73,7 @@ const (
 	KubePauseContainerImage            = "quay.io/k0sproject/pause"
 	KubePauseContainerImageVersion     = "3.10.1"
 	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion              = "v1.34.0-alpha.2"
+	KubeProxyImageVersion              = "v1.34.0-beta.0"
 	CoreDNSImage                       = "quay.io/k0sproject/coredns"
 	CoreDNSImageVersion                = "1.12.2"
 	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"
