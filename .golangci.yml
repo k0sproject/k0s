@@ -79,7 +79,9 @@ linters:
       values:
         regexp:
           year: 202[0-9]
-      template-path: .go-header.txt
+      template: |-
+        SPDX-FileCopyrightText: {{year}} k0s authors
+        SPDX-License-Identifier: Apache-2.0
     misspell:
       locale: US
     revive:
@@ -101,14 +103,8 @@ linters:
       - std-error-handling
     rules:
       - linters:
-          - goheader
-        source: ^//go:build
-      - linters:
           - staticcheck
         text: '^SA1019:'
-      - linters:
-          - goheader
-        path: pkg/component/controller/cplb/tcpproxy/.*
     paths:
       - zz_*
       - build
