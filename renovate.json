@@ -51,6 +51,16 @@
       "groupSlug": "konnectivity"
     },
     {
+      "description": "Group all Helm updates",
+      "enabled": true,
+      "matchDepNames": [
+        "helm.sh/helm/**",
+        "helm/helm"
+      ],
+      "groupName": "Helm dependencies",
+      "groupSlug": "helm"
+    },
+    {
       "description": "Group all sonobuoy updates",
       "enabled": true,
       "matchDepNames": [
@@ -58,6 +68,19 @@
       ],
       "groupName": "sonobuoy dependencies",
       "groupSlug": "sonobuoy"
+    },
+    {
+      "description": "Run codegen if required",
+      "matchDepNames": [
+        "kubernetes-sigs/controller-tools"
+      ],
+      "postUpgradeTasks": {
+        "executionMode": "branch",
+        "commands": [
+          "install-tool golang $(./vars.sh go_version)",
+          "make DOCKER='' EMBEDDED_BINS_BUILDMODE=none codegen"
+        ]
+      }
     },
     {
       "description": "Only update the main branch by default",
