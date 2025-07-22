@@ -84,7 +84,7 @@ spec:
         collectorName: "systemctl-k0s-status"
         command: "systemctl"
         args: ["status", "k0s*"]
-    # Systemd Service Configurations
+    # systemd Service Configurations
     - run:
         collectorName: "systemctl-cat-journald"
         command: "systemctl"

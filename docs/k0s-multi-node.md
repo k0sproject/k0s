@@ -6,7 +6,8 @@ You can manually set up k0s nodes by creating a multi-node cluster that is local
 
 **Note**: Before proceeding, make sure to review the [System Requirements](system-requirements.md).
 
-Though the Manual Install material is written for Debian/Ubuntu, you can use it for any Linux distro that is running either a Systemd or OpenRC init system.
+The following steps work on every typical Linux distribution that uses either
+systemd or OpenRC as its init system.
 
 You can speed up the use of the `k0s` command by enabling [shell completion](shell-completion.md).
 
@@ -119,7 +120,7 @@ sudo k0s start
 
 ### 6. Check k0s status
 
-To get general information about your k0s instance's status:
+Run the following command to check the k0s instance status:
 
 ```shell
  sudo k0s status
