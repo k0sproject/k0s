@@ -12,10 +12,6 @@ func ConfigMaps(client Provider[*corev1.ConfigMapList]) *Watcher[corev1.ConfigMa
 	return FromClient[*corev1.ConfigMapList, corev1.ConfigMap](client)
 }
 
-func Endpoints(client Provider[*corev1.EndpointsList]) *Watcher[corev1.Endpoints] {
-	return FromClient[*corev1.EndpointsList, corev1.Endpoints](client)
-}
-
 func EndpointSlices(client Provider[*discoveryv1.EndpointSliceList]) *Watcher[discoveryv1.EndpointSlice] {
 	return FromClient[*discoveryv1.EndpointSliceList, discoveryv1.EndpointSlice](client)
 }

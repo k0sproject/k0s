@@ -397,13 +397,14 @@ func extractAPIServerAddresses(es *discoveryv1.EndpointSlice) ([]k0snet.HostPort
 
 	var ports []uint16
 	for pIdx, port := range es.Ports {
-		if port.Protocol == nil || *port.Protocol != corev1.ProtocolTCP || port.Name == nil || *port.Name != "https" {
+		if port.Protocol == nil || *port.Protocol != corev1.ProtocolTCP ||
+			port.Name == nil || *port.Name != "https" {
 			// FIXME: is a more sophisticated port detection required?
 			// E.g. does the service object need to be inspected?
 			continue
 		}
 		if port.Port == nil || *port.Port < 1 || *port.Port > math.MaxUint16 {
-			path := field.NewPath("subsets").Index(pIdx).Child("ports").Index(pIdx).Child("port")
+			path := field.NewPath("ports").Index(pIdx).Child("port")
 			warning := field.Invalid(path, port.Port, "out of range")
 			warnings = append(warnings, warning)
 			continue

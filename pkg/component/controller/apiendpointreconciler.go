@@ -160,8 +160,8 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, ipAddresses []string) error {
 	ep := &discoveryv1.EndpointSlice{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Endpoints",
-			APIVersion: "v1",
+			Kind:       "EndpointSlice",
+			APIVersion: "discovery.k8s.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
