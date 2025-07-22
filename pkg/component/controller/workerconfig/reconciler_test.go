@@ -22,6 +22,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -858,20 +859,23 @@ func installMockApplier(t *testing.T, underTest *Reconciler) *mockApplier {
 
 func createKubernetesEndpoints(t *testing.T, clients kubernetes.Interface) {
 	t.Helper()
-
-	ep := corev1.Endpoints{
+	ep := discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{ResourceVersion: t.Name()},
-		Subsets: []corev1.EndpointSubset{{
-			Addresses: []corev1.EndpointAddress{
-				{IP: "127.10.10.1"},
+		Endpoints: []discoveryv1.Endpoint{
+			{
+				Addresses: []string{"127.10.10.1"},
 			},
-			Ports: []corev1.EndpointPort{
-				{Name: "https", Port: 6443, Protocol: corev1.ProtocolTCP},
+		},
+		Ports: []discoveryv1.EndpointPort{
+			{
+				Name:     ptr.To("https"),
+				Port:     ptr.To[int32](6443),
+				Protocol: ptr.To(corev1.ProtocolTCP),
 			},
-		}},
+		},
 	}
 
-	_, err := clients.CoreV1().Endpoints("default").Create(t.Context(), &ep, metav1.CreateOptions{})
+	_, err := clients.DiscoveryV1().EndpointSlices("default").Create(t.Context(), &ep, metav1.CreateOptions{})
 	require.NoError(t, err)
 }
 

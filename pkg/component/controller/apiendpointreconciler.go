@@ -16,8 +16,10 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
@@ -125,7 +127,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 		return err
 	}
 
-	epClient := c.CoreV1().Endpoints("default")
+	epClient := c.DiscoveryV1().EndpointSlices("default")
 
 	ep, err := epClient.Get(ctx, "kubernetes", metav1.GetOptions{})
 	if err != nil {
@@ -141,17 +143,8 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 		return nil
 	}
 
-	if len(ep.Subsets) == 0 || needsUpdate(ipStrings, ep) {
-		ep.Subsets = []corev1.EndpointSubset{{
-			Addresses: stringsToEndpointAddresses(ipStrings),
-			Ports: []corev1.EndpointPort{
-				{
-					Name:     "https",
-					Protocol: "TCP",
-					Port:     int32(a.apiServerPort),
-				},
-			},
-		}}
+	if len(ep.Endpoints) == 0 || needsUpdate(ipStrings, ep) {
+		ep.Endpoints = stringsToEndpoints(ipStrings)
 
 		_, err := epClient.Update(ctx, ep, metav1.UpdateOptions{})
 		if err != nil {
@@ -164,8 +157,8 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 	return nil
 }
 
-func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []string) error {
-	ep := &corev1.Endpoints{
+func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, ipAddresses []string) error {
+	ep := &discoveryv1.EndpointSlice{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
@@ -173,16 +166,25 @@ func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 		},
-		Subsets: []corev1.EndpointSubset{{
-			Addresses: stringsToEndpointAddresses(addresses),
-			Ports: []corev1.EndpointPort{
-				{
-					Name:     "https",
-					Protocol: "TCP",
-					Port:     int32(a.apiServerPort),
-				},
+		Endpoints: []discoveryv1.Endpoint{
+			{
+				Addresses:  ipAddresses,
+				Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(true)},
 			},
-		}},
+		},
+
+		Ports: []discoveryv1.EndpointPort{
+			{
+				Name:     ptr.To("https"),
+				Protocol: ptr.To(corev1.ProtocolTCP),
+				Port:     ptr.To(int32(a.apiServerPort)),
+			},
+		},
+	}
+	if a.afnet == "ip4" {
+		ep.AddressType = discoveryv1.AddressTypeIPv4
+	} else {
+		ep.AddressType = discoveryv1.AddressTypeIPv6
 	}
 
 	c, err := a.kubeClientFactory.GetClient()
@@ -190,7 +192,7 @@ func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []
 		return err
 	}
 
-	_, err = c.CoreV1().Endpoints("default").Create(ctx, ep, metav1.CreateOptions{})
+	_, err = c.DiscoveryV1().EndpointSlices("default").Create(ctx, ep, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -198,29 +200,34 @@ func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []
 	return nil
 }
 
-func needsUpdate(newAddresses []string, ep *corev1.Endpoints) bool {
-	currentAddresses := endpointAddressesToStrings(ep.Subsets[0].Addresses)
+func needsUpdate(newAddresses []string, ep *discoveryv1.EndpointSlice) bool {
+	currentAddresses := endpointsToStrings(ep.Endpoints)
 	sort.Strings(currentAddresses)
 	return !reflect.DeepEqual(currentAddresses, newAddresses)
 }
 
-func endpointAddressesToStrings(eps []corev1.EndpointAddress) []string {
-	a := make([]string, len(eps))
+func endpointsToStrings(eps []discoveryv1.Endpoint) []string {
+	var a []string
 
-	for i, e := range eps {
-		a[i] = e.IP
+	for _, e := range eps {
+		a = append(a, e.Addresses...)
 	}
 
 	return a
 }
 
-func stringsToEndpointAddresses(addresses []string) []corev1.EndpointAddress {
-	eps := make([]corev1.EndpointAddress, len(addresses))
+func stringsToEndpoints(addresses []string) []discoveryv1.Endpoint {
+	eps := make([]discoveryv1.Endpoint, len(addresses))
 
 	for i, a := range addresses {
-		eps[i] = corev1.EndpointAddress{
-			IP: a,
+		eps[i] = discoveryv1.Endpoint{
+			Addresses: []string{a},
+			Conditions: discoveryv1.EndpointConditions{
+				// We assume that the API server is always ready when it's the leader
+				Ready: ptr.To(true),
+			},
 		}
+
 	}
 
 	return eps
