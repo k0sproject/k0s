@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/component/worker"
+	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/containerd/containerd/cmd/ctr/app"
@@ -46,7 +46,7 @@ func setDefaultValues(runDir string, flags []cli.Flag) {
 		if f, ok := flag.(cli.StringFlag); ok {
 			switch f.Name {
 			case "address, a":
-				f.Value = worker.GetContainerdAddress(runDir)
+				f.Value = containerd.Address(runDir)
 				flags[i] = f
 			case "namespace, n":
 				f.Value = "k8s.io"

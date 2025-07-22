@@ -16,5 +16,5 @@ type ContainerRuntime interface {
 }
 
 func NewContainerRuntime(runtimeEndpoint *url.URL) ContainerRuntime {
-	return &CRIRuntime{runtimeEndpoint.String()}
+	return newCRIRuntime(runtimeEndpoint)
 }
