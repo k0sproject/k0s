@@ -1,13 +1,13 @@
-ARG ALPINE_VERSION
-ARG GOLANG_IMAGE
+ARG BOOTLOOSE_BASE
 
-FROM docker.io/library/alpine:$ALPINE_VERSION
+FROM $BOOTLOOSE_BASE
 
 ARG TARGETARCH
 ARG CRI_DOCKERD_VERSION=0.3.18 # renovate: datasource=github-releases depName=Mirantis/cri-dockerd
 ARG ETCD_VERSION
 ARG TROUBLESHOOT_VERSION=0.120.3 # renovate: datasource=github-releases depName=replicatedhq/troubleshoot
 ARG HELM_VERSION
+ARG INCLUDE_DEBUG_TOOLS=false
 
 # Apply our changes to the image
 COPY root/ /
@@ -50,22 +50,27 @@ RUN curl --proto '=https' --tlsv1.2 -L https://get.helm.sh/helm-v$HELM_VERSION-l
 # Install etcd for smoke tests with external etcd
 # No arm or riscv64 binaries available (check-externaletcd won't work on ARMv7 or RISC-V)
 RUN if [ "$TARGETARCH" != arm ] && [ "$TARGETARCH" != riscv64 ]; then \
-    curl --proto '=https' --tlsv1.2 -L https://github.com/etcd-io/etcd/releases/download/v$ETCD_VERSION/etcd-v$ETCD_VERSION-linux-$TARGETARCH.tar.gz \
-      | tar xz -C /opt --strip-components=1; \
+  curl --proto '=https' --tlsv1.2 -L https://github.com/etcd-io/etcd/releases/download/v$ETCD_VERSION/etcd-v$ETCD_VERSION-linux-$TARGETARCH.tar.gz \
+  | tar xz -C /opt --strip-components=1; \
   fi
 
 # Install cri-dockerd shim for custom CRI testing
 # No arm or riscv64 binaries available (check-byocri won't work on ARMv7 or RISC-V)
 RUN if [ "$TARGETARCH" != arm ] && [ "$TARGETARCH" != riscv64 ]; then \
-    curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo /tmp/cri-dockerd.tgz https://github.com/Mirantis/cri-dockerd/releases/download/v$CRI_DOCKERD_VERSION/cri-dockerd-$CRI_DOCKERD_VERSION.$TARGETARCH.tgz \
-      && tar xf /tmp/cri-dockerd.tgz --directory /tmp/ \
-      && mv /tmp/cri-dockerd/cri-dockerd /usr/local/bin/cri-dockerd \
-      && rm -rf /tmp/cri-dockerd \
-      && chmod 755 /usr/local/bin/cri-dockerd; \
+  curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo /tmp/cri-dockerd.tgz https://github.com/Mirantis/cri-dockerd/releases/download/v$CRI_DOCKERD_VERSION/cri-dockerd-$CRI_DOCKERD_VERSION.$TARGETARCH.tgz \
+  && tar xf /tmp/cri-dockerd.tgz --directory /tmp/ \
+  && mv /tmp/cri-dockerd/cri-dockerd /usr/local/bin/cri-dockerd \
+  && rm -rf /tmp/cri-dockerd \
+  && chmod 755 /usr/local/bin/cri-dockerd; \
   fi
 
 RUN for u in etcd kube-apiserver kube-scheduler konnectivity-server; do \
-    adduser --system --shell /sbin/nologin --no-create-home --home /var/lib/k0s --disabled-password --gecos '' "$u"; \
+  adduser --system --shell /sbin/nologin --no-create-home --home /var/lib/k0s --disabled-password --gecos '' "$u"; \
   done
+
+RUN if [ "$INCLUDE_DEBUG_TOOLS" = "true" ]; then \
+  apk add --no-cache strace \
+  && go install github.com/go-delve/delve/cmd/dlv@latest; \
+  fi
 
 ADD cri-dockerd.sh /etc/init.d/cri-dockerd

@@ -181,3 +181,39 @@ To run a basic smoke test after build:
 ```shell
 make check-basic
 ```
+
+### Debugging smoke tests
+
+Every smoke test can be executed independently, the complete list of smoke tests is
+available in `inttest/Makefile.variables``
+
+It's possible to attach a debugger to a smoke test but it requires some modifications:
+
+1. k0s must be compiled with symbols: `DEBUG=true make k0s`
+2. The source code must be present in `go/src/github.com/k0sproject/` and
+the go cache in `/run/k0s-build/go`
+
+   ```shell
+   sudo mkdir -p /go/src/github.com/k0sproject/ /run/k0s-build/
+   sudo chown -R $(whoami):$(whoami) /go/src/github.com/k0sproject/ /run/k0s-build/
+   ln -s <K0s source dir>/go/src/github.com/k0sproject/k0s
+   ln -s <K0s source dir>/build/cache/go /run/k0s-build/go
+   ```
+
+3. Modify the inttest to include to run the command that you want to run:
+
+   ```go
+   // SetK0sCommand is only evaluated when Controllers or Workers are initialized
+   // feel free to call it where it's appropriate and change the position.
+   // This example enables the debugger for the controllers but not the workers
+   s.SetK0sCommand("PATH=/usr/local/go/bin:$PATH /go/bin/dlv exec --headless --listen :4040 -- /usr/local/bin/k0s")
+   s.Require().NoError(s.InitController(0, controllerArgs...))
+   s.SetK0sCommand("/usr/local/bin/k0s")
+   s.Require().NoError(s.RunWorkers())
+   ```
+
+4. Launch the tests with `K0S_DEBUG_TEST=true` so that it uses the correct image:
+`K0S_KEEP_AFTER_TESTS=always DEBUG=true K0S_DEBUG_TESTS=true make check-<test name>`
+
+5. Connect to the remote debugger using the correct container IP
+`dlv -connect <container ip address>:4040`

@@ -650,6 +650,12 @@ func (s *BootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 	return s.WaitForKubeAPI(controllerNode, dataDirOpt)
 }
 
+// SetK0sCommand allows to set the command used to launch k0s, so that it
+// can be launched with some debugging tools such as strace or delve
+func (s *BootlooseSuite) SetK0sCommand(command string) {
+	s.Require().NoError(s.launchDelegate.SetK0sCommand(command))
+}
+
 // GetJoinToken generates join token for the asked role
 func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string, error) {
 	// assume we have main on node 0 always
