@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,7 +26,7 @@ type MetricsScraperSuite struct {
 func (s *MetricsScraperSuite) TestK0sGetsUp() {
 	flags := []string{"--enable-metrics-scraper"}
 	expectedJobs := []string{"kube-controller-manager", "kube-scheduler"}
-	if _, singleNode := os.LookupEnv("K0S_SINGLENODE"); singleNode {
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "singlenode") {
 		flags = append(flags, "--single")
 		expectedJobs = append(expectedJobs, "kine")
 	} else {

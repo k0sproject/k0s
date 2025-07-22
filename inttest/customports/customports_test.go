@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -90,7 +91,7 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.PutFile("controller2", "/tmp/k0s.yaml", config)
 
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
-	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "dynamicconfig") {
 		s.T().Log("Enabling dynamic config for controllers")
 		controllerArgs = append(controllerArgs, "--enable-dynamic-config")
 	}

@@ -224,14 +224,15 @@ func (s *cplbIPVSSuite) hasVIP(ctx context.Context, node string, vip string) boo
 // virtual IP is working by joining a node to the cluster using the VIP.
 func TestCPLBIPVSSuite(t *testing.T) {
 	s := &cplbIPVSSuite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     1,
 		},
-		os.Getenv("K0S_IPV6_ONLY") == "yes",
 	}
 
-	if s.isIPv6Only {
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "ipv6") {
+		t.Log("Configuring IPv6 only networking")
+		s.isIPv6Only = true
 		s.Networks = []string{"bridge-ipv6"}
 		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
 	}

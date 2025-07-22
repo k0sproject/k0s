@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -337,13 +338,15 @@ nameserver 2001:4860:4860::8888
 
 func TestNodeLocalLoadBalancingSuite(t *testing.T) {
 	s := suite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     2,
 		},
-		os.Getenv("K0S_IPV6_ONLY") == "yes",
 	}
-	if s.isIPv6Only {
+
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "ipv6") {
+		t.Log("Configuring IPv6 only networking")
+		s.isIPv6Only = true
 		s.Networks = []string{"bridge-ipv6"}
 		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
 	}
