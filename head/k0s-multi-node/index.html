@@ -2574,7 +2574,8 @@
 <p>You can manually set up k0s nodes by creating a multi-node cluster that is locally managed on each node. This involves several steps, to first install each node separately, and to then connect the node together using access tokens.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <p><strong>Note</strong>: Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a>.</p>
-<p>Though the Manual Install material is written for Debian/Ubuntu, you can use it for any Linux distro that is running either a Systemd or OpenRC init system.</p>
+<p>The following steps work on every typical Linux distribution that uses either
+systemd or OpenRC as its init system.</p>
 <p>You can speed up the use of the <code>k0s</code> command by enabling <a href="../shell-completion/">shell completion</a>.</p>
 <h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
 <h3 id="1-download-k0s">1. Download k0s<a class="headerlink" href="#1-download-k0s" title="Permanent link">#</a></h3>
@@ -2650,7 +2651,7 @@ If your configuration file includes IP addresses (node address, SANs, etcd peer 
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
 <h3 id="6-check-k0s-status">6. Check k0s status<a class="headerlink" href="#6-check-k0s-status" title="Permanent link">#</a></h3>
-<p>To get general information about your k0s instance's status:</p>
+<p>Run the following command to check the k0s instance status:</p>
 <div class="highlight"><pre><span></span><code><span class="w"> </span>sudo<span class="w"> </span>k0s<span class="w"> </span>status
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>Version:<span class="w"> </span>v1.34.0-beta.0+head

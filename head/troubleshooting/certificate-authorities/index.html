@@ -2456,8 +2456,8 @@ to all nodes, and then bringing the cluster back online:</p>
 <li>
 <p>Stop k0s on all worker and controller nodes. All the instructions below
    assume that all k0s nodes are using the default data directory
-   <code>/var/lib/k0s</code>. Please adjust accordingly if you're using a different data
-   directory path.</p>
+   <code>/var/lib/k0s</code>. Adjust the path accordingly if a different data directory is
+   used.</p>
 </li>
 <li>
 <p>Delete the Kubernetes CA and SA key pair files from the all the controller
@@ -2479,9 +2479,9 @@ to all nodes, and then bringing the cluster back online:</p>
 <li>
 <p>Choose one controller as the "first" one. Restart k0s on the first
    controller. If this controller is running with the <code>--enable-worker</code> flag,
-   you should <strong>reboot the machine</strong> instead. This will ensure that all
-   processes and pods will be cleanly restarted. After the restart, k0s will
-   have regenerated a new Kubernetes CA and SA key pair.</p>
+   <strong>reboot the machine</strong> instead. This ensures that all processes and pods will
+   be cleanly restarted. After the restart, k0s will have regenerated a new
+   Kubernetes CA and SA key pair.</p>
 </li>
 <li>
 <p>Distribute the new CA and SA key pair to the other controllers: Copy over the
@@ -2512,11 +2512,12 @@ to all nodes, and then bringing the cluster back online:</p>
  <code>/var/lib/k0s/kubelet-bootstrap.conf</code>. Then reboot the machine.</p>
 </li>
 <li>
-<p>When all workers are back online, the <code>kubelet-bootstrap.conf</code> files can be
-   safely removed from the workers. You can also invalidate the token so you
-   don't have to wait for it to expire: Use <a href="../../cli/k0s_token_list/"><code>k0s token list --role
+<p>When all worker nodes are back online, the <code>kubelet-bootstrap.conf</code> files can
+   be safely removed from the worker nodes. The token can be invalidated without
+   waiting for its expiration: Use <a href="../../cli/k0s_token_list/"><code>k0s token list --role
    worker</code></a> to list all tokens and <a href="../../cli/k0s_token_invalidate/"><code>k0s token
-   invalidate &lt;token-id&gt;</code></a> to invalidate them immediately.</p>
+   invalidate &lt;token-id&gt;</code></a> to invalidate them
+   immediately.</p>
 </li>
 </ol>
 <h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">#</a></h2>

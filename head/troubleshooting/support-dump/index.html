@@ -2413,17 +2413,21 @@
 
 
 <h1 id="support-insight">Support Insight<a class="headerlink" href="#support-insight" title="Permanent link">#</a></h1>
-<p>In many cases, especially when looking for <a href="../../commercial-support/">commercial support</a> there's a need for share the cluster state with other people.
-While one could always give access to the live cluster that is not always desired nor even possible.</p>
-<p>For those kind of cases we can lean on the work our friends at <a href="https://troubleshoot.sh">troubleshoot.sh</a> have done.</p>
-<p>With troubleshoot tool you can essentially take a dump of the cluster state and share it with other people. You can even use <a href="https://github.com/replicatedhq/sbctl">sbctl</a> tool to make the dump tarball to act as Kubernetes API.</p>
-<p>Let's look at how this works with k0s.</p>
+<p>In many cases, especially when looking for <a href="../../commercial-support/">commercial support</a>, there's a need
+to share the cluster state with others. While one could always grant access to
+the live cluster, this is not always desirable or possible. For these
+situations, use the work provided by <a href="https://troubleshoot.sh">Troubleshoot</a>.</p>
+<p>The Troubleshoot tool can produce a dump of the cluster state for sharing. The
+[<code>sbctl</code>] tool can expose the dump tarball as a Kubernetes API.</p>
+<p>The following example shows how this works with k0s.</p>
 <h2 id="setting-up">Setting up<a class="headerlink" href="#setting-up" title="Permanent link">#</a></h2>
-<p>To gather all the needed data we need another tool called <a href="https://troubleshoot.sh/docs/support-bundle/introduction/"><code>support-bundle</code></a>.</p>
-<p>You can download it from the <a href="https://github.com/replicatedhq/troubleshoot/releases">releases page</a>, pay attention that you download the right architecture.</p>
+<p>To gather all the needed data, install another tool called [<code>support-bundle</code>].
+Download it from the <a href="https://github.com/replicatedhq/troubleshoot/releases">Troubleshoot releases page</a>. Make sure to select the
+executable for the correct architecture.</p>
 <h2 id="creating-support-bundle">Creating support bundle<a class="headerlink" href="#creating-support-bundle" title="Permanent link">#</a></h2>
 <p>A Support Bundle needs to know what to collect and optionally, what to analyze. This is defined in a YAML file.</p>
-<p>While you can customize the data collection and analysis for your specific needs, we've made a good reference for k0s. These cover the core k0s things like:</p>
+<p>While data collection can be customized to meet specific needs, the following
+reference configuration for k0s covers core elements such as:</p>
 <ul>
 <li>collecting info on the host</li>
 <li>collecting system component statuses from <code>kube-system</code> namespace</li>
@@ -2431,14 +2435,19 @@ While one could always give access to the live cluster that is not always desire
 <li>collecting k0s logs</li>
 <li>checking status of firewalls, anti-virus etc. services which are known to interfere with Kubernetes</li>
 </ul>
-<p>As we need to collect host level info you should run the commands on the hosts directly, on controllers and/or workers.</p>
-<p>To get a support bundle, after setting up the <a href="#setting-up">tooling</a>, you simply run:</p>
+<p>Because host-level information is required, the commands must be run directly on
+the k0s nodes.</p>
+<p>After setting up the <a href="#setting-up">tooling</a>, run the following command to
+generate a support bundle:</p>
 <div class="highlight"><pre><span></span><code>support-bundle<span class="w"> </span>--kubeconfig<span class="w"> </span>/var/lib/k0s/pki/admin.conf<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-&lt;role&gt;.yaml
 </code></pre></div>
-<p>Above <code>&lt;role&gt;</code> refers to either <code>controller</code>or <code>worker</code>. For different roles we collect different things. If you are running a controller with <code>--enable-worker</code> or <code>--single</code>, where it becomes also a worker, you can also get a combined dump:</p>
+<p>Above <code>&lt;role&gt;</code> refers to either <code>controller</code> or <code>worker</code>. Different roles
+require different information. When running a controller with <code>--enable-worker</code>
+or <code>--single</code>, which also makes it a worker, capture a combined dump:</p>
 <div class="highlight"><pre><span></span><code>support-bundle<span class="w"> </span>--kubeconfig<span class="w"> </span>/var/lib/k0s/pki/admin.conf<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-controller.yaml<span class="w"> </span>https://docs.k0sproject.io/stable/support-bundle-worker.yaml
 </code></pre></div>
-<p>Once the data collection and analysis finishes you will get a file called like <code>support-bundle-&lt;timestamp&gt;.tar.gz</code>. The file contains all the collected info which you can share with other people.</p>
+<p>Once the data has been collected, a file named
+<code>support-bundle-&lt;timestamp&gt;.tar.gz</code> will be created. Share this file as needed.</p>
 
 
 

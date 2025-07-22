@@ -2449,10 +2449,13 @@
 
 
 <h1 id="quick-start-guide">Quick Start Guide<a class="headerlink" href="#quick-start-guide" title="Permanent link">#</a></h1>
-<p>On completion of the Quick Start you will have a full Kubernetes cluster with a single node that includes both the controller and the worker. Such a setup is ideal for environments that do not require high-availability and multiple nodes.</p>
+<p>Completing this Quick Start results in a single-node Kubernetes cluster that
+incorporates both the controller and worker roles. This setup is ideal for
+environments that don't require high availability or multiple nodes.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <p><strong>Note</strong>: Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a>.</p>
-<p>Though the Quick Start material is written for Debian/Ubuntu, you can use it for any Linux distro that is running either a Systemd or OpenRC init system.</p>
+<p>The following steps work on every typical Linux distribution that uses either
+systemd or OpenRC as its init system.</p>
 <h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
 <ol>
 <li>
@@ -2460,16 +2463,18 @@
 <p>Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/local/bin/k0s.</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 </code></pre></div>
-<p>Alternatively you can download it from the <a href="https://github.com/k0sproject/k0s/releases/latest">releases page.</a> This is required for air gapped environments.</p>
+<p>Alternatively, download it from the <a href="https://github.com/k0sproject/k0s/releases/latest">k0s releases page</a>. This approach is
+  required in air gapped environments.</p>
 </li>
 <li>
 <p>Install k0s as a service</p>
-<p>The <code>k0s install</code> sub-command installs k0s as a system service on a host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.</p>
+<p>The <code>k0s install</code> sub-command installs k0s as a system service on a host that is running one of the supported init systems: systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.</p>
 <p>Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single
 </code></pre></div>
-<p>NOTE:
-  The <code>--single</code> option will disable features needed for multi-node clusters, so you will not be able to extend this cluster. If you want to be able to extend the cluster in the future, you should use:</p>
+<p><strong>Note</strong>: The <code>--single</code> option disables features needed for multi-node
+  clusters, so the cluster cannot be extended. To retain the ability to expand
+  the cluster in the future, use:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--enable-worker<span class="w"> </span>--no-taints
 </code></pre></div>
 <p>The <code>k0s install controller</code> sub-command accepts the same flags and parameters as the <code>k0s controller</code>. Refer to <a href="../k0s-multi-node/#install-k0s">manual install</a> for a custom config file example.</p>
@@ -2491,7 +2496,7 @@ sudo<span class="w"> </span>systemctl<span class="w"> </span>daemon-reload
 </li>
 <li>
 <p>Check service, logs and k0s status</p>
-<p>To get general information about your k0s instance's status, run:</p>
+<p>Run the following command to check the k0s instance status:</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span>sudo<span class="w"> </span>k0s<span class="w"> </span>status
 Version:<span class="w"> </span>v1.34.0-beta.0+head
 Process<span class="w"> </span>ID:<span class="w"> </span><span class="m">436</span>
@@ -2501,9 +2506,9 @@ Init<span class="w"> </span>System:<span class="w"> </span>linux-systemd
 </code></pre></div>
 </li>
 <li>
-<p>Access your cluster using kubectl</p>
-<p><strong>Note</strong>: k0s includes the Kubernetes command-line tool <em>kubectl</em>.</p>
-<p>Use kubectl to deploy your application or to check your node status:</p>
+<p>Access the cluster using kubectl</p>
+<p><strong>Note</strong>: k0s embeds the Kubernetes command-line tool <em>kubectl</em>.</p>
+<p>Use kubectl to deploy applications or check node status:</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 NAME<span class="w">   </span>STATUS<span class="w">   </span>ROLES<span class="w">    </span>AGE<span class="w">    </span>VERSION
 k0s<span class="w">    </span>Ready<span class="w">    </span>&lt;none&gt;<span class="w">   </span>4m6s<span class="w">   </span>v1.34.0-beta.0+k0s
@@ -2526,7 +2531,8 @@ k0s<span class="w">    </span>Ready<span class="w">    </span>&lt;none&gt;<span 
 </li>
 <li>
 <p>Reboot the system.</p>
-<p>A few small k0s fragments persist even after the reset (for example, iptables). As such, you should initiate a reboot after the running of the <code>k0s reset</code> command.</p>
+<p>A few small k0s fragments persist even after the reset, such as iptables
+  rules. Reboot the machine after running <code>k0s reset</code>.</p>
 </li>
 </ol>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>

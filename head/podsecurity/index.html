@@ -2339,7 +2339,8 @@
 <h1 id="pod-security-standards">Pod Security Standards<a class="headerlink" href="#pod-security-standards" title="Permanent link">#</a></h1>
 <p>Since Pod Security Policies have been removed in Kubernetes v1.25, Kubernetes
 offers <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/">Pod Security Standards</a> – a new way to enhance cluster security.</p>
-<p>To enable PSS in k0s you need to create an admission controller config file:</p>
+<p>To enable Pod Security Standards in k0s, create an admission controller
+configuration file:</p>
 <div class="highlight"><pre><span></span><code>```yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: AdmissionConfiguration
