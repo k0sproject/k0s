@@ -4,15 +4,22 @@
 package supervisor
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strconv"
+	"sync"
 	"syscall"
+	"time"
 
+	internalio "github.com/k0sproject/k0s/internal/io"
 	"github.com/k0sproject/k0s/internal/os/windows"
+
+	"github.com/sirupsen/logrus"
 )
 
 const shutdownHelperHookMarker = "__K0S_SUPERVISOR_SHUTDOWN_HELPER"
@@ -78,12 +85,64 @@ func (p *process) environ() ([]string, error) {
 }
 
 // requestGracefulShutdown implements [procHandle].
+//
+// Windows requires that processes be attached to the same console in order to
+// send console control events to each other. A process can only be attached to
+// one console at a time, and k0s cannot simply detach from its own console to
+// send these events.
+//
+// Instead, spawn a new k0s process in a special "shutdown helper mode" to to
+// send the console events. This helper process can freely detach and reattach
+// consoles without affecting the main k0s process.
+//
+// The shutdown helper process sends Ctrl+Break events because they can be
+// targeted at a specific process group. In contrast, Ctrl+C events are
+// broadcasted to _all_ processes attached to the terminal, which is not
+// desirable for k0s's use case. Whether Ctrl+Break _actually_ triggers a
+// graceful process shutdown depends on the program being run. Luckily, the Go
+// runtime translates Ctrl+Break events into os.Interrupt signals, and all of
+// k0s's supervised executables are Go programs, so this is mostly fine.
 func (p *process) requestGracefulShutdown() error {
-	if err := sendCtrlBreak(p.processID); err != nil {
-		return fmt.Errorf("failed to send Ctrl+Break: %w", err)
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to determine path to k0s executable: %w", err)
 	}
 
-	return nil
+	cmd := exec.Command(exe, shutdownHelperHookMarker, strconv.FormatUint(uint64(p.processID), 10))
+	cmd.Env = []string{}
+
+	var (
+		mu  sync.Mutex
+		out bytes.Buffer
+	)
+	w := internalio.WriterFunc(func(p []byte) (int, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		return out.Write(p)
+	})
+
+	cmd.Stdout, cmd.Stderr = w, w
+	result := make(chan error, 1)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to spawn shutdown helper process: %w", err)
+	}
+	go func() { result <- cmd.Wait() }()
+
+	helperTimeout := 30 * time.Second
+	logrus.Debug("Waiting for supervisor shutdown helper process for ", helperTimeout)
+	select {
+	case err := <-result:
+		if err == nil {
+			return nil
+		}
+		return fmt.Errorf("shutdown helper process failed: %w (%q)", err, bytes.TrimSpace(out.Bytes()))
+
+	case <-time.After(helperTimeout):
+		err := cmd.Process.Kill()
+		mu.Lock()
+		defer mu.Unlock()
+		return errors.Join(fmt.Errorf("timed out while waiting for shutdown helper process to terminate: %q", bytes.TrimSpace(out.Bytes())), err)
+	}
 }
 
 // kill implements [procHandle].
@@ -104,14 +163,15 @@ func requestGracefulShutdown(p *os.Process) error {
 // According to https://stackoverflow.com/q/1798771/, the _only_ somewhat
 // straight-forward option for requesting graceful termination on Windows is to
 // send Ctrl+Break events to processes which have been started with the
-// CREATE_NEW_PROCESS_GROUP flag. Sending Ctrl+C seems to require at least some
-// helper process. If Ctrl+Break will _actually_ trigger a graceful process
-// shutdown is dependent of the program being run. According to the above Stack
-// Overflow question, this is e.g. not the case for Python.
+// CREATE_NEW_PROCESS_GROUP flag. In contrast, Ctrl+C events are broadcasted to
+// _all_ processes attached to the terminal, which is not desirable for k0s's
+// use case: It would send a graceful termination request to itself.
 //
-// Luckily, the Go runtime translates Ctrl+Break events into os.Interrupt
-// signals, and all of k0s's supervised executables are Go programs, so this is
-// mostly fine.
+// Whether Ctrl+Break _actually_ triggers a graceful process shutdown depends on
+// the program being run. According to the above Stack Overflow question, this
+// is e.g. not the case for Python. Luckily, the Go runtime translates
+// Ctrl+Break events into os.Interrupt signals, and all of k0s's supervised
+// executables are Go programs, so this is mostly fine.
 func sendCtrlBreak(processID uint32) error {
 	return windows.GenerateCtrlBreakEvent(processID)
 }
