@@ -18,6 +18,9 @@ type procHandle interface {
 	// Reads and returns the process's environment.
 	environ() ([]string, error)
 
+	// Checks whether the process has terminated or is still running.
+	isTerminated() (bool, error)
+
 	// Requests graceful process termination.
 	requestGracefulShutdown() error
 

@@ -32,15 +32,14 @@ func openPID(pid int) (procHandle, error) {
 		return nil, err
 	}
 
-	// Send "the null signal" to probe if the process actually exists.
-	// https://www.man7.org/linux/man-pages/man3/kill.3p.html
-	if err := process.Signal(syscall.Signal(0)); err != nil {
-		if errors.Is(err, os.ErrProcessDone) {
-			return nil, syscall.ESRCH
-		}
+	p := unixProcess{pid, process}
+	if terminated, err := p.isTerminated(); err != nil {
+		return nil, err
+	} else if terminated {
+		return nil, syscall.ESRCH
 	}
 
-	return &unixProcess{pid, process}, nil
+	return &p, nil
 }
 
 func (p *unixProcess) Close() error {
@@ -71,6 +70,23 @@ func (p *unixProcess) environ() ([]string, error) {
 	}
 
 	return strings.Split(string(env), "\x00"), nil
+}
+
+// isTerminated implements [procHandle].
+func (p *unixProcess) isTerminated() (bool, error) {
+	// Send "the null signal" to probe if the process actually exists. Note that
+	// this will not detect zombie processes. Zombie processes are effectively
+	// terminated, but not yet reaped, i.e. some parent process has still to
+	// wait on them to collect their wait statuses.
+	// https://www.man7.org/linux/man-pages/man3/kill.3p.html
+	if err := p.process.Signal(syscall.Signal(0)); err != nil {
+		if errors.Is(err, os.ErrProcessDone) {
+			return true, nil
+		}
+		return false, err
+	}
+
+	return false, nil
 }
 
 // requestGracefulShutdown implements [procHandle].

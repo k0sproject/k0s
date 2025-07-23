@@ -84,6 +84,11 @@ func (p *process) environ() ([]string, error) {
 	return p.handle.Environ()
 }
 
+// isTerminated implements [procHandle].
+func (p *process) isTerminated() (bool, error) {
+	return p.handle.IsTerminated()
+}
+
 // requestGracefulShutdown implements [procHandle].
 //
 // Windows requires that processes be attached to the same console in order to
