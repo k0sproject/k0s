@@ -116,6 +116,22 @@ func TestContainerdModuleVersions(t *testing.T) {
 	)
 }
 
+func TestKonnectivityModuleVersions(t *testing.T) {
+	konnectivityVersion := getVersion(t, "konnectivity")
+
+	assertPackageModules(t,
+		func(modulePath string) bool {
+			return strings.HasPrefix(modulePath, "sigs.k8s.io/apiserver-network-proxy/")
+		},
+		func(t *testing.T, pkgPath string, module *packages.Module) bool {
+			return !assert.Equal(t, "v"+konnectivityVersion, module.Version,
+				"Module version for package %s doesn't match: %+#v",
+				pkgPath, module,
+			)
+		},
+	)
+}
+
 func getVersion(t *testing.T, component string) string {
 	cmd := exec.Command("sh", "./vars.sh", component+"_version")
 	cmd.Dir = filepath.Join("..", "..")
