@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Releases
 
 This page describes how we release and support the k0s project. [Mirantis Inc.](https://mirantis.com) can also provide [commercial support](commercial-support.md) for k0s.

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Creating a cluster with an Ansible Playbook
 
 Ansible is a popular infrastructure-as-code tool that can use to automate tasks for the purpose of achieving the desired state in a system. With Ansible (and the k0s-Ansible playbook) you can quickly install a multi-node Kubernetes Cluster.

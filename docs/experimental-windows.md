@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Run k0s worker nodes in Windows
 
 **IMPORTANT**: Windows support for k0s is under active development and **must be** considered experimental.

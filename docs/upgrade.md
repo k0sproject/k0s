@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Upgrade
 
 The k0s upgrade is a simple process due to its single binary distribution. The k0s single binary file includes all the necessary parts for the upgrade and essentially the upgrade process is to replace that file and restart the service.

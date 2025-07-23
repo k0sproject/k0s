@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Getting Started
 
 Thank you for taking the time to make a contribution to k0s. The following document is a set of guidelines and instructions for contributing to k0s.

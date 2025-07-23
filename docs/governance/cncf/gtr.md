@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2025 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # General Technical Review (GTR)
 
 This document collects information for the [CNCF General Technical Review]. It is built to support the [k0s CNCF Sandbox application] but will be a living document that we update regularly.

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Installing NGINX Ingress Controller
 
 This tutorial covers the installation of [Ingress NGINX Controller], which is an

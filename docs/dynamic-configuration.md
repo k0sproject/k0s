@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Dynamic configuration
 
 k0s comes with the option to enable dynamic configuration for cluster level components. This covers all the components other than etcd (or SQLite) and the Kubernetes API server. This option enables k0s configuration directly via Kubernetes API as opposed to using a configuration file for all cluster configuration.

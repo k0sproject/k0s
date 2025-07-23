@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Reset (Uninstall)
 
 Resetting k0s nodes essentially reverts them to a pre-k0s state. This operation

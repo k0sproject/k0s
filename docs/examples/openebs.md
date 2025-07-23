@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2023 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # OpenEBS
 
 This tutorial covers the installation of OpenEBS as a Helm extension. OpenEBS

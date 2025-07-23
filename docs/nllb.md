@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2023 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Node-local load balancing
 
 For clusters that don't have an [externally managed load balancer] for the k0s

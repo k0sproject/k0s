@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # User Management
 
 Kubernetes, and thus k0s, does not have any built-in functionality to manage users. Kubernetes relies solely on external sources for user identification and authentication. A client certificate is considered an external source in this case as Kubernetes API server "just" validates that the certificate is signed by a trusted CA. This means that it is recommended to use e.g. [OpenID Connect](./examples/oidc/oidc-cluster-configuration.md) to configure the API server to trust tokens issued by an external Identity Provider.

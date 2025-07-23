@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Install using custom CA certificates and SA key pair
 
 k0s generates all needed certificates automatically in the `<data-dir>/pki` directory (`/var/lib/k0s/pki`, by default).

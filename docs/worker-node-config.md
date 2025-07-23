@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Configuration options for worker nodes
 
 Although the `k0s worker` command does not take in any special YAML configuration, there are still methods for configuring the workers to run various components.

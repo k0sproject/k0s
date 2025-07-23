@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Control plane load balancing
 
 For clusters that don't have an [externally managed load balancer](high-availability.md#load-balancer) for the k0s

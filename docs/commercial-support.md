@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2023 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Commercial support
 
 Commercial support for k0s if offered by [Mirantis Inc.](https://mirantis.com).

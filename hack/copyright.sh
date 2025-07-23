@@ -30,9 +30,14 @@ has_date_copyright(){
 	grep -q -F "SPDX-FileCopyrightText: $DATE k0s authors" "$FILE"
 }
 
-# Deliberately do not search in docs as the date of the matches for the
-# Copyright notice aren't related to the date of the document.
-for i in $(find cmd hack internal inttest pkg static -type f -name '*.go' -not -name 'zz_generated*'); do
+find_files_to_check() {
+    # All the Go files
+    find cmd hack internal inttest pkg static -type f -name '*.go' -not -name 'zz_generated*'
+    # All the markdown documentation, excluding the auto-generated CLI docs
+    find docs -type f -name '*.md' -not -path 'docs/cli/*'
+}
+
+for i in $(find_files_to_check); do
     case "$i" in
     pkg/client/clientset/*)
         if ! has_basic_copyright "$i"; then

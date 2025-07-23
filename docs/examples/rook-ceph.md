@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Installing Ceph Storage with Rook
 
 In this tutorial you'll create a Ceph storage for k0s. Ceph is a highly scalable, distributed storage solution. It offers object, block, and file storage, and it's designed to run on any common hardware. Ceph implements data replication into multiple volumes that makes it fault-tolerant. Another clear advantage of Ceph in Kubernetes is the dynamic provisioning. This means that applications just need to request the storage (persistent volume claim) and Ceph will automatically provision the requested storage without a manual creation of the persistent volume each time.

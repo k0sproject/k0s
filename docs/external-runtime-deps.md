@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # External runtime dependencies
 
 k0s is packaged as a single binary, which includes all the needed components.

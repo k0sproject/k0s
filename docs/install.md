@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Quick Start Guide
 
 Completing this Quick Start results in a single-node Kubernetes cluster that

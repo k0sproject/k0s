@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Upgrading Calico
 
 k0s bundles Kubernetes manifests for Calico. The manifests are retrieved
