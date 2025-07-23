@@ -18,7 +18,6 @@ var _ Validateable = (*ClusterExtensions)(nil)
 type ClusterExtensions struct {
 	// Deprecated: storage is deprecated and will be ignored starting from k0s
 	// 1.31 and onwards: https://docs.k0sproject.io/stable/examples/openebs
-	// +optional
 	Storage *StorageExtension `json:"storage,omitempty"`
 
 	Helm *HelmExtensions `json:"helm,omitempty"`
@@ -107,7 +106,6 @@ type Chart struct {
 	// +optional
 	Timeout BackwardCompatibleDuration `json:"timeout"`
 	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the chart (default: true).
-	// +optional
 	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
 	Order        int   `json:"order,omitempty"`
 }

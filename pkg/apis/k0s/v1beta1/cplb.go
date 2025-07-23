@@ -58,13 +58,12 @@ type KeepalivedSpec struct {
 	// UserspaceProxyPort is the port where the userspace proxy will bind
 	// to. This port is only used internally, but listens on every interface.
 	// Defaults to 6444
+	//
 	// +kubebuilder:default=6444
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	// +optional
 	UserSpaceProxyPort int `json:"userSpaceProxyBindPort,omitempty"`
 	// DisableLoadBalancer disables the load balancer.
-	// +optional
 	DisableLoadBalancer bool `json:"disableLoadBalancer,omitempty"`
 }
 
