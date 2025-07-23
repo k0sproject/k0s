@@ -232,6 +232,18 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 
 	componentManager := manager.New(prober.DefaultProber)
 
+	// When upgrading controller+worker nodes in a multi-node cluster with a load balancer, the API
+	// server address needs to be overridden to point to the local API server. This is needed so
+	// that the kubelet will not connect to an API server that is running a previous version of
+	// k0s which would violate the Kubernetes version skew policy.
+	if controller != nil {
+		directKubeconfigPath, err := worker.CreateDirectKubeletKubeconfig(ctx, c.K0sVars, nodeName)
+		if err != nil {
+			return fmt.Errorf("failed to create direct kubelet kubeconfig: %w", err)
+		}
+		kubeletKubeconfigPath = directKubeconfigPath
+	}
+
 	var staticPods worker.StaticPods
 
 	if workerConfig.NodeLocalLoadBalancing.IsEnabled() {
@@ -244,7 +256,11 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		if err != nil {
 			return fmt.Errorf("failed to create node-local load balancer reconciler: %w", err)
 		}
-		kubeletKubeconfigPath = reconciler.GetKubeletKubeconfigPath()
+		// If this is a worker only node, the kubelet should use the NLLB kubelet kubeconfig path
+		// rather than the direct kubelet kubeconfig path in the controller+worker mode.
+		if controller == nil {
+			kubeletKubeconfigPath = reconciler.GetKubeletKubeconfigPath()
+		}
 		staticPods = sp
 
 		componentManager.Add(ctx, sp)
