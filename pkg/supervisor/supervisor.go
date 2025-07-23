@@ -374,14 +374,16 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 		return err
 	}
 
-	if err := ph.requestGracefulShutdown(); errors.Is(err, os.ErrProcessDone) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to request graceful termination: %w", err)
-	}
+	if err := ph.requestGracefulShutdown(); err != nil {
+		if errors.Is(err, os.ErrProcessDone) {
+			return nil
+		}
 
-	if terminate, err := s.waitForTermination(ph); err != nil || !terminate {
+		s.log.WithError(err).Error("Failed to request graceful process shutdown, killing it now")
+	} else if err := s.waitForTermination(ph); err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		return err
+	} else {
+		s.log.Warn("Timed out while waiting for process to terminate, killing it now")
 	}
 
 	if err := ph.kill(); errors.Is(err, os.ErrProcessDone) {
@@ -393,21 +395,21 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 	return nil
 }
 
-func (s *Supervisor) waitForTermination(ph procHandle) (bool, error) {
-	deadlineTimer := time.NewTimer(s.TimeoutStop)
-	defer deadlineTimer.Stop()
+func (s *Supervisor) waitForTermination(ph procHandle) error {
+	ctx, cancel := context.WithTimeout(context.Background(), s.TimeoutStop)
+	defer cancel()
 	checkTicker := time.NewTicker(exitCheckInterval)
 	defer checkTicker.Stop()
 
 	for {
 		select {
 		case <-checkTicker.C:
-			if shouldKill, err := s.shouldKillProcess(ph); err != nil || !shouldKill {
-				return false, nil
+			if terminated, err := ph.isTerminated(); err != nil || terminated {
+				return err
 			}
 
-		case <-deadlineTimer.C:
-			return true, nil
+		case <-ctx.Done():
+			return context.Cause(ctx)
 		}
 	}
 }
@@ -422,7 +424,7 @@ func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 		// line is unsupported. In that case, ignore the error and proceed to
 		// the environment check.
 		if !errors.Is(err, errors.ErrUnsupported) {
-			return false, err
+			return false, fmt.Errorf("failed to inspect process command line: %w", err)
 		}
 	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
 		return false, nil
@@ -431,7 +433,7 @@ func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 	// only kill process if it has the _KOS_MANAGED env set
 	if env, err := ph.environ(); err != nil {
 		if errors.Is(err, os.ErrProcessDone) {
-			return false, nil
+			return false, fmt.Errorf("failed to inspect process environment: %w", err)
 		}
 		return false, err
 	} else if !slices.Contains(env, k0sManaged) {
