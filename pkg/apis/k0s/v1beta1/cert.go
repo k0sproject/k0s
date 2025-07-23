@@ -12,11 +12,15 @@ import (
 // CA defines the certificates related config options
 type CA struct {
 	// The expiration duration of the CA certificate
+	//
 	// +kubebuilder:default="87600h"
-	ExpiresAfter metav1.Duration `json:"expiresAfter,omitempty"`
+	// +optional
+	ExpiresAfter metav1.Duration `json:"expiresAfter"`
 	// The expiration duration of the server certificate
+	//
 	// +kubebuilder:default="8760h"
-	CertificatesExpireAfter metav1.Duration `json:"certificatesExpireAfter,omitempty"`
+	// +optional
+	CertificatesExpireAfter metav1.Duration `json:"certificatesExpireAfter"`
 }
 
 // DefaultCA returns default settings for CA

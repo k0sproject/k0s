@@ -16,44 +16,44 @@ func TestWorkerProfile(t *testing.T) {
 	t.Run("worker_profile_validation", func(t *testing.T) {
 		cases := []struct {
 			name  string
-			spec  map[string]interface{}
+			spec  map[string]any
 			valid bool
 		}{
 			{
 				name:  "Generic spec is valid",
-				spec:  map[string]interface{}{},
+				spec:  map[string]any{},
 				valid: true,
 			},
 			{
 				name: "Locked field clusterDNS",
-				spec: map[string]interface{}{
+				spec: map[string]any{
 					"clusterDNS": "8.8.8.8",
 				},
 				valid: false,
 			},
 			{
 				name: "Locked field clusterDomain",
-				spec: map[string]interface{}{
+				spec: map[string]any{
 					"clusterDomain": "cluster.org",
 				},
 				valid: false,
 			},
 			{
 				name: "Locked field apiVersion",
-				spec: map[string]interface{}{
+				spec: map[string]any{
 					"apiVersion": "v2",
 				},
 				valid: false,
 			},
 			{
 				name: "Locked field kind",
-				spec: map[string]interface{}{
+				spec: map[string]any{
 					"kind": "Controller",
 				},
 				valid: false,
 			}, {
 				name: "Locked field staticPodURL",
-				spec: map[string]interface{}{
+				spec: map[string]any{
 					"staticPodURL": "foo",
 				},
 				valid: false,

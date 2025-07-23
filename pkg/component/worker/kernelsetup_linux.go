@@ -20,7 +20,7 @@ func hasFilesystem(filesystem string) bool {
 	if err != nil {
 		return false
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		fields := strings.Fields(line)
 		if len(fields) == 2 && fields[1] == filesystem {
 			return true

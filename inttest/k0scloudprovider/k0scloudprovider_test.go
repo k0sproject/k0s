@@ -69,7 +69,7 @@ func (s *K0sCloudProviderSuite) testAddAddress(ctx context.Context, client kuber
 		WithObjectName(nodeName).
 		WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
 		Until(ctx, func(node *corev1.Node) (bool, error) {
-			for _, addr := range strings.Split(addresses, ",") {
+			for addr := range strings.SplitSeq(addresses, ",") {
 				for _, nodeAddr := range node.Status.Addresses {
 					if nodeAddr.Type == corev1.NodeExternalIP {
 						if nodeAddr.Address == addr {

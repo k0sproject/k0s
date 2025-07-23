@@ -47,7 +47,7 @@ var lockedFields = map[string]struct{}{
 
 // Validate validates instance
 func (wp *WorkerProfile) Validate() error {
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	err := json.Unmarshal(wp.Config.Raw, &parsed)
 	if err != nil {
 		return err

@@ -47,7 +47,7 @@ type StaticPod interface {
 	// SetManifest replaces the manifest for this static pod. The new manifest
 	// has to be a valid pod manifest, and needs to have the same namespace and
 	// name that have been used when claiming this pod.
-	SetManifest(podResource interface{}) error
+	SetManifest(podResource any) error
 
 	// Clear removes this static pod manifest from kubelet, leaving it claimed.
 	// A new manifest can be set via SetManifest.
@@ -151,7 +151,7 @@ func newStaticPod(namespace, name string) (*staticPod, error) {
 	return &staticPod, nil
 }
 
-func (p *staticPod) SetManifest(podResource interface{}) error {
+func (p *staticPod) SetManifest(podResource any) error {
 	// convert podResource into JSON
 	var jsonBytes []byte
 	var err error

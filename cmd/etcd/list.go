@@ -36,7 +36,7 @@ func etcdListCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %w", err)
 			}
-			return json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]interface{}{"members": members})
+			return json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]any{"members": members})
 		},
 	}
 

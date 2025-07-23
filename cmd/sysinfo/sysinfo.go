@@ -54,7 +54,7 @@ func NewSysinfoCmd() *cobra.Command {
 				return nil
 
 			case "json":
-				return collectAndPrint(probes, out, func(v interface{}) ([]byte, error) {
+				return collectAndPrint(probes, out, func(v any) ([]byte, error) {
 					return json.MarshalIndent(v, "", "  ")
 				})
 
@@ -151,7 +151,7 @@ func collectAndPrint(probe probes.Probe, out io.Writer, marshal func(any) ([]byt
 	return nil
 }
 
-func (r *cliReporter) printf(format interface{}, args ...interface{}) error {
+func (r *cliReporter) printf(format any, args ...any) error {
 	_, err := io.WriteString(r.w, aurora.Sprintf(format, args...))
 	return err
 }
