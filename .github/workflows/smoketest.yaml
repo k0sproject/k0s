@@ -78,6 +78,13 @@ jobs:
           k0sRealPath="$(realpath "k0s-$K0S_VERSION")"
           echo K0S_UPDATE_FROM_PATH="$k0sRealPath" >>"$GITHUB_ENV"
 
+      - name: "Cache :: GOMODCACHE"
+        uses: actions/cache@v4
+        with:
+          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
+          path: build/cache/go/mod
+          enableCrossOsArchive: true
+
       - name: Run inttest
         env:
           SMOKETEST_NAME: check-${{ inputs.name }}
