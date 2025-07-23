@@ -2442,6 +2442,11 @@
 
 
 
+<!--
+SPDX-FileCopyrightText: 2024 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 <h1 id="logs">Logs<a class="headerlink" href="#logs" title="Permanent link">#</a></h1>
 <p>k0s runs most of the Kubernetes and other system components as plain Linux child processes. As it acts as a watchdog for the child processes it also combines the logs for all such processes into its own log stream.</p>
 <p>k0s adds a "selector" to each components log stream so it is easier to distinguish logs from various components. For example the log stream from kubelet is enhanced with a selector <code>component=kubelet</code>:</p>

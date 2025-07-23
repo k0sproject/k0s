@@ -2484,6 +2484,11 @@
 
 
 
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 <h1 id="dynamic-configuration">Dynamic configuration<a class="headerlink" href="#dynamic-configuration" title="Permanent link">#</a></h1>
 <p>k0s comes with the option to enable dynamic configuration for cluster level components. This covers all the components other than etcd (or SQLite) and the Kubernetes API server. This option enables k0s configuration directly via Kubernetes API as opposed to using a configuration file for all cluster configuration.</p>
 <p>This feature has to be enabled for every controller in the cluster using the <code>--enable-dynamic-config</code> flag in <code>k0s controller</code> or <code>k0s install controller</code> commands. Having both types of controllers in the same cluster will cause a conflict.</p>
