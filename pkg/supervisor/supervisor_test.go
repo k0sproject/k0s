@@ -426,5 +426,6 @@ func selectCmd(t *testing.T, cmds ...cmd) (_ cmd) {
 
 func TestMain(m *testing.M) {
 	pingpong.Hook()
+	TerminationHelperHook()
 	os.Exit(m.Run())
 }
