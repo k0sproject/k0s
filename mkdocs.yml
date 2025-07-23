@@ -7,7 +7,7 @@ repo_name: GitHub
 repo_url: https://github.com/k0sproject/k0s
 copyright:
   Copyright &copy; 2021 k0sproject a Series of LF Projects, LLC.
-  For website terms of use, trademark policy and other project policies please see lfprojects.org/policies/.
+  For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank">Linux Foundation policies</a>.
   - All rights reserved.
 edit_uri: ""
 nav:
