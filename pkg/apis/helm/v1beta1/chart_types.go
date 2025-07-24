@@ -21,14 +21,13 @@ type ChartSpec struct {
 	Namespace   string `json:"namespace,omitempty"`
 	Timeout     string `json:"timeout,omitempty"`
 	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the chart (default: true).
-	// +optional
 	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
 	Order        int   `json:"order,omitempty"`
 }
 
 // YamlValues returns values as map
-func (cs ChartSpec) YamlValues() map[string]interface{} {
-	res := map[string]interface{}{}
+func (cs ChartSpec) YamlValues() map[string]any {
+	res := map[string]any{}
 	if err := yaml.Unmarshal([]byte(cs.Values), &res); err != nil {
 		logrus.WithField("values", cs.Values).Warn("broken yaml values")
 	}
@@ -71,11 +70,14 @@ type ChartStatus struct {
 // +genclient:onlyVerbs=create,delete,list,get,watch,update
 // Chart is the Schema for the charts API
 type Chart struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata"`
 
-	Spec   ChartSpec   `json:"spec,omitempty"`
-	Status ChartStatus `json:"status,omitempty"`
+	// +optional
+	Spec ChartSpec `json:"spec"`
+	// +optional
+	Status ChartStatus `json:"status"`
 }
 
 // +kubebuilder:object:root=true
@@ -83,6 +85,6 @@ type Chart struct {
 // ChartList contains a list of Chart
 type ChartList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []Chart `json:"items"`
 }

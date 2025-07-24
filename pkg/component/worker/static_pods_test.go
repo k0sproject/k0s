@@ -80,7 +80,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 
 		for _, test := range []struct {
 			name string
-			pod  interface{}
+			pod  any
 			err  string
 		}{
 			{
@@ -119,7 +119,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 
 		for _, test := range []struct {
 			name string
-			pod  interface{}
+			pod  any
 		}{
 			{"bytes", []byte(dummyPod)},
 			{"strings", dummyPod},
@@ -347,20 +347,20 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 }
 
-func getContent(t *testing.T, underTest StaticPods) (content map[string]interface{}) {
+func getContent(t *testing.T, underTest StaticPods) (content map[string]any) {
 	require.NoError(t, yaml.Unmarshal(underTest.(*staticPods).content(), &content))
 	return
 }
 
-func newList(t *testing.T, items ...[]byte) map[string]interface{} {
-	parsedItems := []interface{}{}
+func newList(t *testing.T, items ...[]byte) map[string]any {
+	parsedItems := []any{}
 	for _, item := range items {
-		var parsedItem map[string]interface{}
+		var parsedItem map[string]any
 		require.NoError(t, yaml.Unmarshal(item, &parsedItem))
 		parsedItems = append(parsedItems, parsedItem)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"apiVersion": "v1",
 		"kind":       "PodList",
 		"items":      parsedItems,

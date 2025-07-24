@@ -29,8 +29,8 @@ func TestHasValue_StructPtrs(t *testing.T) {
 }
 
 func TestHasValue_Ifaces(t *testing.T) {
-	type Foo interface{}
-	type Bar interface{}
+	type Foo any
+	type Bar any
 
 	ctx := t.Context()
 	assert.False(t, k0scontext.HasValue[Foo](ctx))

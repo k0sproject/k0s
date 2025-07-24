@@ -4,6 +4,7 @@
 package applier
 
 import (
+	"maps"
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/build"
@@ -51,12 +52,8 @@ func (m Meta) With(name, value string) Meta {
 // duplicates.
 func (m Meta) WithAll(other map[string]string) Meta {
 	combined := make(Meta, len(m)+len(other))
-	for n, v := range m {
-		combined[n] = v
-	}
-	for n, v := range other {
-		combined[n] = v
-	}
+	maps.Copy(combined, m)
+	maps.Copy(combined, other)
 
 	return combined
 }

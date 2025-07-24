@@ -173,9 +173,9 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 
 	as.Run("Rename chart in Helm extension", func() { as.renameChart(ctx) })
 
-	values := map[string]interface{}{
+	values := map[string]any{
 		"replicaCount": 2,
-		"image": map[string]interface{}{
+		"image": map[string]any{
 			"pullPolicy": "Always",
 		},
 	}
@@ -461,7 +461,7 @@ func (as *AddonsSuite) checkCustomValues(releaseName string) error {
 	})
 }
 
-func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]interface{}) {
+func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]any) {
 	path := fmt.Sprintf("/var/lib/k0s/manifests/helm/0_helm_extension_%s.yaml", addonName)
 	valuesBytes, err := yaml.Marshal(values)
 	as.Require().NoError(err)

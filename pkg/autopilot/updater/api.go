@@ -97,10 +97,7 @@ func comparePrerelease(v, o string) int {
 	slen := len(sparts)
 	olen := len(oparts)
 
-	l := slen
-	if olen > slen {
-		l = olen
-	}
+	l := max(olen, slen)
 
 	// Iterate over each part of the prereleases to compare the differences.
 	for i := range l {

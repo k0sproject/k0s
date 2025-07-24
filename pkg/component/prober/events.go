@@ -14,9 +14,9 @@ type Eventer interface {
 
 // Event represents a component event
 type Event struct {
-	At      time.Time   `json:"at"`
-	Message string      `json:"message"`
-	Payload interface{} `json:"payload,omitempty"`
+	At      time.Time `json:"at"`
+	Message string    `json:"message"`
+	Payload any       `json:"payload,omitempty"`
 }
 
 // EventEmitter is a helper object to emit events with fire and forget semantics
@@ -30,7 +30,7 @@ func (e *EventEmitter) Emit(message string) {
 }
 
 // EmitWithPayload emits an event with a payload
-func (e *EventEmitter) EmitWithPayload(message string, payload interface{}) {
+func (e *EventEmitter) EmitWithPayload(message string, payload any) {
 	evt := Event{
 		At:      time.Now(),
 		Message: message,

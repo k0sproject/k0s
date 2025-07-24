@@ -256,10 +256,10 @@ func writeLabel(t *testing.T, file string, key string, value string) {
 	t.Helper()
 	contents, err := os.ReadFile(file)
 	require.NoError(t, err)
-	unst := map[interface{}]interface{}{}
+	unst := map[any]any{}
 	err = yaml.Unmarshal(contents, &unst)
 	require.NoError(t, err)
-	unst["metadata"].(map[interface{}]interface{})["labels"].(map[interface{}]interface{})[key] = value
+	unst["metadata"].(map[any]any)["labels"].(map[any]any)[key] = value
 	data, err := yaml.Marshal(unst)
 	require.NoError(t, err)
 	err = os.WriteFile(file, data, 0400)

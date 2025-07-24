@@ -66,7 +66,7 @@ spec:
 
 	for _, field := range []string{"image", "version"} {
 		t.Run(field+"_empty", func(t *testing.T) {
-			c, err := ConfigFromBytes([]byte(fmt.Sprintf(yamlData, field, `""`)))
+			c, err := ConfigFromBytes(fmt.Appendf(nil, yamlData, field, `""`))
 			require.NoError(t, err)
 			require.NotNil(t, c)
 			require.Empty(t, c.Validate())
@@ -91,7 +91,7 @@ spec:
 		},
 	} {
 		t.Run(test.field+"_invalid", func(t *testing.T) {
-			c, err := ConfigFromBytes([]byte(fmt.Sprintf(yamlData, test.field, test.value)))
+			c, err := ConfigFromBytes(fmt.Appendf(nil, yamlData, test.field, test.value))
 			require.NoError(t, err)
 			require.NotNil(t, c)
 			errs := c.Validate()

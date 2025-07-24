@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -107,10 +108,8 @@ func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (ui
 		return 0, fmt.Errorf("etcd member list failed: %w", err)
 	}
 	for _, m := range resp.Members {
-		for _, peerURL := range m.PeerURLs {
-			if peerURL == peerAddress {
-				return m.ID, nil
-			}
+		if slices.Contains(m.PeerURLs, peerAddress) {
+			return m.ID, nil
 		}
 	}
 	return 0, fmt.Errorf("peer not found: %s", peerAddress)

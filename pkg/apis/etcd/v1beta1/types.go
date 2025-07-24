@@ -22,12 +22,15 @@ import (
 // +genclient:onlyVerbs=create,delete,list,get,watch,update,updateStatus,patch
 // +genclient:nonNamespaced
 type EtcdMember struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata"`
 
-	Status Status `json:"status,omitempty"`
+	// +optional
+	Status Status `json:"status"`
 
-	Spec EtcdMemberSpec `json:"spec,omitempty"`
+	// +optional
+	Spec EtcdMemberSpec `json:"spec"`
 }
 
 // +kubebuilder:validation:Enum=Joined;Left
@@ -87,7 +90,9 @@ type JoinCondition struct {
 	Type   ConditionType   `json:"type"`
 	Status ConditionStatus `json:"status"`
 	// Last time the condition transitioned from one status to another.
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	//
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 	// Human-readable message indicating details about last transition.
 	Message string `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
 }
@@ -139,6 +144,6 @@ func (s *Status) SetCondition(t ConditionType, status ConditionStatus, msg strin
 // +kubebuilder:resource:scope=Cluster
 type EtcdMemberList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []EtcdMember `json:"items"`
 }

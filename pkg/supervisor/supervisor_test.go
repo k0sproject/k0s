@@ -247,7 +247,7 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
@@ -291,7 +291,7 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
@@ -324,7 +324,7 @@ func TestCleanupPIDFile_WrongProcess(t *testing.T) {
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
@@ -332,7 +332,7 @@ func TestCleanupPIDFile_WrongProcess(t *testing.T) {
 
 	// Expect the PID file to be replaced with the new PID.
 	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err, "Failed to read PID file") {
-		assert.Equal(t, []byte(fmt.Sprintf("%d\n", s.cmd.Process.Pid)), pid)
+		assert.Equal(t, fmt.Appendf(nil, "%d\n", s.cmd.Process.Pid), pid)
 	}
 
 	// Expect the previous process to be still alive and react to the pong signal.
@@ -354,7 +354,7 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 	// Create a PID file that's pointing to some non-existing process. Note that
 	// this is probably not 100% safe, but we'll assume MaxInt32 will be unused.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", math.MaxInt32)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", math.MaxInt32), 0644))
 
 	// Start to supervise the new process.
 	require.NoError(t, s.Supervise())
@@ -362,7 +362,7 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 
 	// Expect the PID file to be replaced with the new PID.
 	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err, "Failed to read PID file") {
-		assert.Equal(t, []byte(fmt.Sprintf("%d\n", s.cmd.Process.Pid)), pid)
+		assert.Equal(t, fmt.Appendf(nil, "%d\n", s.cmd.Process.Pid), pid)
 	}
 }
 

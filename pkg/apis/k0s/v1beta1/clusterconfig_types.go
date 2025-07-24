@@ -55,8 +55,9 @@ type ClusterConfigStatus struct {
 // +genclient
 // +genclient:onlyVerbs=create,delete,list,get,watch,update
 type ClusterConfig struct {
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	metav1.TypeMeta   `json:",omitempty,inline"`
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   *ClusterSpec         `json:"spec,omitempty"`
 	Status *ClusterConfigStatus `json:"status,omitempty"`
@@ -232,7 +233,7 @@ func (*SchedulerSpec) Validate() []error { return nil }
 // ClusterConfigList contains a list of ClusterConfig
 type ClusterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []ClusterConfig `json:"items"`
 }
 

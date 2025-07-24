@@ -44,7 +44,7 @@ func (s *BootlooseSuite) PutFile(node, path, content string) {
 }
 
 // PutFileTemplate writes content to file on given node using templated data
-func (s *BootlooseSuite) PutFileTemplate(node string, filename string, template string, data interface{}) {
+func (s *BootlooseSuite) PutFileTemplate(node string, filename string, template string, data any) {
 	tw := templatewriter.TemplateWriter{
 		Name:     filepath.Base(filename),
 		Template: template,

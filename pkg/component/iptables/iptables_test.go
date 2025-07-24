@@ -32,7 +32,7 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 		if runtime.GOOS == "windows" {
 			// Add a shim for cmd.exe. Parameter forwarding is imperfect, but
 			// sufficient for these tests.
-			require.NoError(t, file.WriteContentAtomically(path+".cmd", []byte(fmt.Sprintf("@%q %q %%*", sh, path)), 0755))
+			require.NoError(t, file.WriteContentAtomically(path+".cmd", fmt.Appendf(nil, "@%q %q %%*", sh, path), 0755))
 		}
 	}
 

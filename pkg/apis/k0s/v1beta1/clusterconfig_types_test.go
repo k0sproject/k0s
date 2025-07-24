@@ -299,7 +299,7 @@ spec:
 	assert.Equal(t, "profile_YYY", c.Spec.WorkerProfiles[1].Name)
 
 	j := c.Spec.WorkerProfiles[1].Config
-	var parsed map[string]interface{}
+	var parsed map[string]any
 
 	err = json.Unmarshal(j.Raw, &parsed)
 	assert.NoError(t, err)

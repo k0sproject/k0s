@@ -71,7 +71,7 @@ func populateExternalAddress(addrs *[]v1.NodeAddress, node *v1.Node) {
 
 	// Search the nodes annotations for any external IP address definitions.
 	if externalIP, ok := node.Annotations[ExternalIPAnnotation]; ok {
-		for _, addr := range strings.Split(externalIP, ",") {
+		for addr := range strings.SplitSeq(externalIP, ",") {
 			*addrs = append(*addrs, v1.NodeAddress{Type: v1.NodeExternalIP, Address: addr})
 		}
 	}

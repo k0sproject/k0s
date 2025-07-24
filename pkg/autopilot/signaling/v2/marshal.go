@@ -14,7 +14,7 @@ const (
 // Marshal converts a signaling object to a map, including any nested structs
 // that belong to the value. Only fields that have the `autopilot` tag are
 // considered for marshaling.
-func Marshal(m map[string]string, value interface{}) {
+func Marshal(m map[string]string, value any) {
 	fields := reflect.TypeOf(value)
 	values := reflect.ValueOf(value)
 

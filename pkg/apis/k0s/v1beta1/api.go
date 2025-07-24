@@ -27,7 +27,6 @@ type APISpec struct {
 	Address string `json:"address,omitempty"`
 
 	// Whether to only bind to the IP given by the address option.
-	// +optional
 	OnlyBindToAddress bool `json:"onlyBindToAddress,omitempty"`
 
 	// The loadbalancer address (for k0s controllers running behind a loadbalancer)

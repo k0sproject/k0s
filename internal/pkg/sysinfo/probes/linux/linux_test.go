@@ -31,7 +31,7 @@ func TestRequireLinux(t *testing.T) {
 	minix := unameField{"Minix", false}
 
 	expectedErr := errors.New("dummy")
-	expectedPath := func(t *testing.T) interface{} {
+	expectedPath := func(t *testing.T) any {
 		return mock.MatchedBy(func(d probes.ProbeDesc) bool {
 			assert.Equal(t, probes.ProbePath{"os"}, d.Path())
 			assert.Equal(t, "Operating system", d.DisplayName())

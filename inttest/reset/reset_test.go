@@ -82,7 +82,7 @@ func (s *suite) TestReset() {
 		flushStreams()
 		s.NoError(err, "k0s reset didn't exit cleanly")
 
-		for _, path := range strings.Split(string(bytes.TrimSpace(clutteringPaths.Bytes())), "\n") {
+		for path := range strings.SplitSeq(string(bytes.TrimSpace(clutteringPaths.Bytes())), "\n") {
 			if strings.HasPrefix(path, "/var/lib/k0s") {
 				s.NoError(ssh.Exec(ctx, fmt.Sprintf("! test -e %q", path), common.SSHStreams{}), "Failed to verify non-existence of %s", path)
 			} else {

@@ -55,7 +55,7 @@ func (s *plansRemovedAPIsSuite) SetupTest() {
 		Group:    removedCRD.Spec.Group,
 		Version:  removedCRD.Spec.Versions[0].Name,
 		Resource: removedCRD.Spec.Names.Plural,
-	}).Create(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
+	}).Create(ctx, &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": removedCRD.Spec.Group + "/" + removedCRD.Spec.Versions[0].Name,
 		"kind":       removedCRD.Spec.Names.Kind,
 		"metadata": corev1.ObjectMeta{

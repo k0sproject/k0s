@@ -23,12 +23,15 @@ type KubeProxy struct {
 	Disabled bool `json:"disabled,omitempty"`
 	// Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs", "userspace" and "nft"
 	// Defaults to "iptables"
-	Mode               string                         `json:"mode,omitempty"`
-	MetricsBindAddress string                         `json:"metricsBindAddress,omitempty"`
-	IPTables           KubeProxyIPTablesConfiguration `json:"iptables,omitempty"`
-	IPVS               KubeProxyIPVSConfiguration     `json:"ipvs,omitempty"`
-	NFTables           KubeProxyNFTablesConfiguration `json:"nftables,omitempty"`
-	NodePortAddresses  []string                       `json:"nodePortAddresses,omitempty"`
+	Mode               string `json:"mode,omitempty"`
+	MetricsBindAddress string `json:"metricsBindAddress,omitempty"`
+	// +optional
+	IPTables KubeProxyIPTablesConfiguration `json:"iptables"`
+	// +optional
+	IPVS KubeProxyIPVSConfiguration `json:"ipvs"`
+	// +optional
+	NFTables          KubeProxyNFTablesConfiguration `json:"nftables"`
+	NodePortAddresses []string                       `json:"nodePortAddresses,omitempty"`
 
 	// Map of key-values (strings) for any extra arguments to pass down to kube-proxy process
 	// Any behavior triggered by these parameters is outside k0s support.
@@ -38,33 +41,42 @@ type KubeProxy struct {
 // KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
 // @see https://github.com/kubernetes/kube-proxy/blob/v0.34.0-beta.0/config/v1alpha1/types.go#L27-L48
 type KubeProxyIPTablesConfiguration struct {
-	MasqueradeBit      *int32          `json:"masqueradeBit,omitempty"`
-	MasqueradeAll      bool            `json:"masqueradeAll,omitempty"`
-	LocalhostNodePorts *bool           `json:"localhostNodePorts,omitempty"`
-	SyncPeriod         metav1.Duration `json:"syncPeriod,omitempty"`
-	MinSyncPeriod      metav1.Duration `json:"minSyncPeriod,omitempty"`
+	MasqueradeBit      *int32 `json:"masqueradeBit,omitempty"`
+	MasqueradeAll      bool   `json:"masqueradeAll,omitempty"`
+	LocalhostNodePorts *bool  `json:"localhostNodePorts,omitempty"`
+	// +optional
+	SyncPeriod metav1.Duration `json:"syncPeriod"`
+	// +optional
+	MinSyncPeriod metav1.Duration `json:"minSyncPeriod"`
 }
 
 // KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
 // @see https://github.com/kubernetes/kube-proxy/blob/v0.34.0-beta.0/config/v1alpha1/types.go#L52-L78
 type KubeProxyIPVSConfiguration struct {
-	SyncPeriod    metav1.Duration `json:"syncPeriod,omitempty"`
-	MinSyncPeriod metav1.Duration `json:"minSyncPeriod,omitempty"`
+	// +optional
+	SyncPeriod metav1.Duration `json:"syncPeriod"`
+	// +optional
+	MinSyncPeriod metav1.Duration `json:"minSyncPeriod"`
 	Scheduler     string          `json:"scheduler,omitempty"`
 	ExcludeCIDRs  []string        `json:"excludeCIDRs,omitempty"`
 	StrictARP     bool            `json:"strictARP,omitempty"`
-	TCPTimeout    metav1.Duration `json:"tcpTimeout,omitempty"`
-	TCPFinTimeout metav1.Duration `json:"tcpFinTimeout,omitempty"`
-	UDPTimeout    metav1.Duration `json:"udpTimeout,omitempty"`
+	// +optional
+	TCPTimeout metav1.Duration `json:"tcpTimeout"`
+	// +optional
+	TCPFinTimeout metav1.Duration `json:"tcpFinTimeout"`
+	// +optional
+	UDPTimeout metav1.Duration `json:"udpTimeout"`
 }
 
 // KubeProxyNFTablesConfiguration contains nftables-related kube-proxy configuration
 // @see https://github.com/kubernetes/kube-proxy/blob/v0.34.0-beta.0/config/v1alpha1/types.go#L82-L97
 type KubeProxyNFTablesConfiguration struct {
-	SyncPeriod    metav1.Duration `json:"syncPeriod,omitempty"`
+	// +optional
+	SyncPeriod    metav1.Duration `json:"syncPeriod"`
 	MasqueradeBit *int32          `json:"masqueradeBit,omitempty"`
 	MasqueradeAll bool            `json:"masqueradeAll,omitempty"`
-	MinSyncPeriod metav1.Duration `json:"minSyncPeriod,omitempty"`
+	// +optional
+	MinSyncPeriod metav1.Duration `json:"minSyncPeriod"`
 }
 
 // DefaultKubeProxy creates the default config for kube-proxy
