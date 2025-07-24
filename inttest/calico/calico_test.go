@@ -5,6 +5,7 @@ package calico
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -16,17 +17,52 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
 type CalicoSuite struct {
 	common.BootlooseSuite
+	isIPv6Only bool
 }
 
 func (s *CalicoSuite) TestK0sGetsUp() {
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
+
+	{
+		clusterCfg := &v1beta1.ClusterConfig{
+			Spec: &v1beta1.ClusterSpec{
+				Network: func() *v1beta1.Network {
+					network := v1beta1.DefaultNetwork()
+					network.Provider = "calico"
+					network.Calico = &v1beta1.Calico{
+						EnvVars: map[string]string{
+							"TEST_BOOL_VAR":   "true",
+							"TEST_INT_VAR":    "42",
+							"TEST_STRING_VAR": "test",
+						},
+					}
+					return network
+				}(),
+			},
+		}
+		if s.isIPv6Only {
+			clusterCfg.Spec.Network.PodCIDR = "fd00::/108"
+			clusterCfg.Spec.Network.ServiceCIDR = "fd01::/108"
+		}
+
+		config, err := yaml.Marshal(clusterCfg)
+		s.Require().NoError(err)
+		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
+	}
+
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+
+	if s.isIPv6Only {
+		s.T().Log("Setting up IPv6 DNS for workers")
+		common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
+	}
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
@@ -112,21 +148,18 @@ func getAlpineVersion(t *testing.T) string {
 
 func TestCalicoSuite(t *testing.T) {
 	s := CalicoSuite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},
 	}
+
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "ipv6") {
+		t.Log("Configuring IPv6 only networking")
+		s.isIPv6Only = true
+		s.Networks = []string{"bridge-ipv6"}
+		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle.tar"}
+		s.K0smotronImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
+	}
 	suite.Run(t, &s)
 }
-
-const k0sConfig = `
-spec:
-  network:
-    provider: calico
-    calico:
-      envVars:
-        TEST_BOOL_VAR: "true"
-        TEST_INT_VAR: "42"
-        TEST_STRING_VAR: test
-`

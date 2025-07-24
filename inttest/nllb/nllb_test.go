@@ -88,7 +88,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 
 		if s.isIPv6Only {
 			s.T().Log("Setting up IPv6 DNS for workers")
-			s.setUPIPv6DNS()
+			common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
 		}
 
 		s.T().Log("Starting workers and waiting for cluster to become ready")
@@ -322,18 +322,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	}
 
 	return eg.Wait()
-}
-
-func (s *suite) setUPIPv6DNS() {
-	// When docker doesn't have a valid IPv6 DNS server, it will write 127.0.0.11 which creates a DNS loop.
-	// Sice github actions don't have a valid IPv6 DNS server, we need to overwrite it with a valid one.
-	ipv6ResolvConf := `
-nameserver 2606:4700:4700::1111
-nameserver 2001:4860:4860::8888
-`
-	for i := range s.WorkerCount {
-		s.PutFile(s.WorkerNode(i), "/etc/resolv.conf", ipv6ResolvConf)
-	}
 }
 
 func TestNodeLocalLoadBalancingSuite(t *testing.T) {

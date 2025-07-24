@@ -109,6 +109,8 @@ determine_inttest_package = package='$(subst check-,,$@)'; prefix=''; \
   echo "$$package"
 
 $(smoketests): export K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
+# K0SMOTRON_IMAGES_BUNDLE is repurposed for the IPv6 test images
+$(smoketests): export K0SMOTRON_IMAGES_BUNDLE ?= $(realpath ../ipv6-image-bundle-linux-$(ARCH).tar)
 $(smoketests): K0S_INTTEST_PACKAGE ?= $(shell $(determine_inttest_package))
 $(smoketests): .bootloose-alpine.stamp
 	K0S_INTTEST_TARGET=$(subst check-,,$@) go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(K0S_INTTEST_PACKAGE)

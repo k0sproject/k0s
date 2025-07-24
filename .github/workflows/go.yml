@@ -13,6 +13,7 @@ on:
         # Re-include all workflow files used by this workflow
       - "!.github/workflows/go.yml"
       - "!.github/workflows/build-airgap-image-bundle.yml"
+      - "!.github/workflows/build-ipv6-image-bundle.yml
       - "!.github/workflows/build-k0s.yml"
       - "!.github/workflows/smoketest.yaml"
       - .github/CODEOWNERS
@@ -36,6 +37,7 @@ on:
         # Re-include all workflow files used by this workflow
       - "!.github/workflows/go.yml"
       - "!.github/workflows/build-airgap-image-bundle.yml"
+      - "!.github/workflows/build-ipv6-image-bundle.yml
       - "!.github/workflows/build-k0s.yml"
       - "!.github/workflows/smoketest.yaml"
       - .github/CODEOWNERS
@@ -110,6 +112,14 @@ jobs:
     name: "Build :: Airgap image bundle"
     needs: [build-k0s]
     uses: ./.github/workflows/build-airgap-image-bundle.yml
+    with:
+      target-os: linux
+      target-arch: amd64
+
+  build-ipv6-image-bundle:
+    name: "Build :: IPv6 image bundle"
+    needs: [build-k0s]
+    uses: ./.github/workflows/build-ipv6-image-bundle.yml
     with:
       target-os: linux
       target-arch: amd64
@@ -214,7 +224,7 @@ jobs:
         smoke-suite: ${{ fromJson(needs.prepare.outputs.smoketest-matrix) }}
 
     name: "Smoke test :: ${{ matrix.smoke-suite }}"
-    needs: [prepare, build-k0s, build-airgap-image-bundle]
+    needs: [prepare, build-k0s, build-airgap-image-bundle, build-ipv6-image-bundle]
 
     uses: ./.github/workflows/smoketest.yaml
     with:
@@ -320,7 +330,7 @@ jobs:
 
       - name: Unit tests
         run: make check-unit
-      
+
       - name: Create airgap image list
         run: make airgap-images.txt
 
@@ -400,7 +410,7 @@ jobs:
         run: |
           chmod +x k0s
           ./k0s sysinfo
-          
+
       - name: Download airgap bundle
         if: contains(matrix.test, 'airgap')
         uses: actions/download-artifact@v4
