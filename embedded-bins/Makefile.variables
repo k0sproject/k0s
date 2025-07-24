@@ -68,7 +68,7 @@ iptables_version = 1.8.11
 iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 
 # renovate: datasource=github-tags depName=acassen/keepalived
-keepalived_version = 2.2.8
+keepalived_version = 2.3.4
 keepalived_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 
 clean-iid-files = \
