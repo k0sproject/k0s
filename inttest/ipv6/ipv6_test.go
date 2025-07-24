@@ -72,7 +72,7 @@ func (s *IPv6Suite) TestK0sGetsUp() {
 	// Overwrite it with cloudflare's and google's IPv6 DNS. Technically we only need this on the workers.
 	s.PutFile(s.WorkerNode(0), "/etc/resolv.conf", ipv6ResolvConf)
 
-	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--feature-gates=IPv6SingleStack=true"))
 	s.NoError(s.RunWorkers(`--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=:: --event-burst=10 --image-gc-high-threshold=100"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
