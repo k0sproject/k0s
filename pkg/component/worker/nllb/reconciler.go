@@ -102,6 +102,14 @@ func NewReconciler(
 
 	var loadBalancer backend
 	switch workerProfile.NodeLocalLoadBalancing.Type {
+	case v1beta1.NllbTypeCustom:
+		customLBAddress, err := k0snet.NewHostPort(workerProfile.NodeLocalLoadBalancing.Custom.APIHost, workerProfile.NodeLocalLoadBalancing.Custom.APIPort)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create custom node-local load balancer address: %w", err)
+		}
+		loadBalancer = &custom{
+			lbAddress: customLBAddress,
+		}
 	case v1beta1.NllbTypeEnvoyProxy:
 		loadBalancer = &envoyProxy{
 			log:        logrus.WithFields(logrus.Fields{"component": "nllb.envoyProxy"}),

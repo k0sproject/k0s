@@ -835,6 +835,30 @@ spec:
                       node-local load balancing feature.
                       NOTE: This feature is currently unsupported on ARMv7!
                     properties:
+                      custom:
+                        description: |-
+                          customProxy contains configuration options related to the "Custom" type
+                          of load balancing.
+                        properties:
+                          apiHost:
+                            description: |-
+                              APIHost is the host on which the custom load balancer is running.
+                              This can be an IP address or a DNS name.
+                            type: string
+                          apiPort:
+                            description: APIPort is the port on which the custom load
+                              balancer is listening.
+                            type: integer
+                          konnectivityHost:
+                            type: string
+                          konnectivityPort:
+                            type: integer
+                        required:
+                        - apiHost
+                        - apiPort
+                        - konnectivityHost
+                        - konnectivityPort
+                        type: object
                       enabled:
                         default: false
                         description: |-
@@ -897,9 +921,10 @@ spec:
                         default: EnvoyProxy
                         description: |-
                           type indicates the type of the node-local load balancer to deploy on
-                          worker nodes. Currently, the only supported type is "EnvoyProxy".
+                          worker nodes. Currently, the only supported types are "EnvoyProxy" and "Custom".
                         enum:
                         - EnvoyProxy
+                        - Custom
                         type: string
                     type: object
                   podCIDR:

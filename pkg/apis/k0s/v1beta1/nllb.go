@@ -26,23 +26,28 @@ type NodeLocalLoadBalancing struct {
 	Enabled bool `json:"enabled"`
 
 	// type indicates the type of the node-local load balancer to deploy on
-	// worker nodes. Currently, the only supported type is "EnvoyProxy".
+	// worker nodes. Currently, the only supported types are "EnvoyProxy" and "Custom".
 	// +kubebuilder:default=EnvoyProxy
 	Type NllbType `json:"type,omitempty"`
 
 	// envoyProxy contains configuration options related to the "EnvoyProxy" type
 	// of load balancing.
 	EnvoyProxy *EnvoyProxy `json:"envoyProxy,omitempty"`
+
+	// customProxy contains configuration options related to the "Custom" type
+	// of load balancing.
+	Custom *Custom `json:"custom,omitempty"`
 }
 
 // NllbType describes which type of load balancer should be deployed for the
 // node-local load balancing. The default is [NllbTypeEnvoyProxy].
-// +kubebuilder:validation:Enum=EnvoyProxy
+// +kubebuilder:validation:Enum=EnvoyProxy;Custom
 type NllbType string
 
 const (
 	// NllbTypeEnvoyProxy selects Envoy as the backing load balancer.
 	NllbTypeEnvoyProxy NllbType = "EnvoyProxy"
+	NllbTypeCustom     NllbType = "Custom"
 )
 
 // DefaultNodeLocalLoadBalancing returns the default node-local load balancing configuration.
@@ -81,6 +86,10 @@ func (n *NodeLocalLoadBalancing) Validate(path *field.Path) (errs field.ErrorLis
 
 	switch n.Type {
 	case NllbTypeEnvoyProxy:
+	case NllbTypeCustom:
+		if n.Custom == nil {
+			errs = append(errs, field.Required(path.Child("custom"), "custom load balancer configuration must be set if type is Custom"))
+		}
 	case "":
 		if n.IsEnabled() {
 			errs = append(errs, field.Forbidden(path.Child("type"), "need to specify type if enabled"))
@@ -96,6 +105,16 @@ func (n *NodeLocalLoadBalancing) Validate(path *field.Path) (errs field.ErrorLis
 
 func (n *NodeLocalLoadBalancing) IsEnabled() bool {
 	return n != nil && n.Enabled
+}
+
+type Custom struct {
+	// APIHost is the host on which the custom load balancer is running.
+	// This can be an IP address or a DNS name.
+	APIHost string `json:"apiHost"`
+	// APIPort is the port on which the custom load balancer is listening.
+	APIPort          uint16 `json:"apiPort"`
+	KonnectivityHost string `json:"konnectivityHost"`
+	KonnectivityPort uint16 `json:"konnectivityPort"`
 }
 
 // EnvoyProxy describes configuration options required for using Envoy as the
