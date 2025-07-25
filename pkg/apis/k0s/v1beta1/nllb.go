@@ -33,6 +33,10 @@ type NodeLocalLoadBalancing struct {
 	// envoyProxy contains configuration options related to the "EnvoyProxy" type
 	// of load balancing.
 	EnvoyProxy *EnvoyProxy `json:"envoyProxy,omitempty"`
+
+	// customProxy contains configuration options related to the "Custom" type
+	// of load balancing.
+	Custom *Custom `json:"custom,omitempty"`
 }
 
 // NllbType describes which type of load balancer should be deployed for the
@@ -42,6 +46,7 @@ type NllbType string
 
 const (
 	// NllbTypeEnvoyProxy selects Envoy as the backing load balancer.
+	NllbTypeCustom     NllbType = "Custom"
 	NllbTypeEnvoyProxy NllbType = "EnvoyProxy"
 )
 
@@ -96,6 +101,14 @@ func (n *NodeLocalLoadBalancing) Validate(path *field.Path) (errs field.ErrorLis
 
 func (n *NodeLocalLoadBalancing) IsEnabled() bool {
 	return n != nil && n.Enabled
+}
+
+type Custom struct {
+	// Host is the host on which the custom load balancer is running.
+	// This can be an IP address or a DNS name.
+	Host string `json:"host"`
+	// Port is the port on which the custom load balancer is listening.
+	Port uint16 `json:"port"`
 }
 
 // EnvoyProxy describes configuration options required for using Envoy as the
