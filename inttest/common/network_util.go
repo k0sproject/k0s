@@ -59,6 +59,23 @@ func GetCPLBVIP(s *BootlooseSuite, isIPv6Only bool) string {
 	return addr.String()
 }
 
+// ConfigureIPv6ResolvConf writes a resolv.conf file with valid IPv6 DNS servers.
+// This is necessary for the IPv6 tests to work properly on github actions runners
+// because they don't have a valid IPv6 DNS server, which makes docker use localhost,
+// which creates a DNS loop.
+func ConfigureIPv6ResolvConf(s *BootlooseSuite) {
+	const ipv6ResolvConf = `
+nameserver 2606:4700:4700::1111
+nameserver 2001:4860:4860::8888
+`
+	for i := range s.ControllerCount {
+		s.PutFile(s.ControllerNode(i), "/etc/resolv.conf", ipv6ResolvConf)
+	}
+	for i := range s.WorkerCount {
+		s.PutFile(s.WorkerNode(i), "/etc/resolv.conf", ipv6ResolvConf)
+	}
+}
+
 // GetCPLBVIPCIDR returns the CIDR notation for the virtual IP address.
 // Returns /16 for IPv4 and /64 for IPv6.
 func GetCPLBVIPCIDR(ip string, isIPv6Only bool) string {
