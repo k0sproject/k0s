@@ -19,8 +19,9 @@ var _ Validateable = (*Network)(nil)
 
 // Network defines the network related config options
 type Network struct {
-	Calico    *Calico   `json:"calico,omitempty"`
-	DualStack DualStack `json:"dualStack,omitempty"`
+	Calico *Calico `json:"calico,omitempty"`
+	// +optional
+	DualStack DualStack `json:"dualStack"`
 
 	KubeProxy  *KubeProxy  `json:"kubeProxy,omitempty"`
 	KubeRouter *KubeRouter `json:"kuberouter,omitempty"`

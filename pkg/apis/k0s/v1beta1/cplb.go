@@ -58,13 +58,12 @@ type KeepalivedSpec struct {
 	// UserspaceProxyPort is the port where the userspace proxy will bind
 	// to. This port is only used internally, but listens on every interface.
 	// Defaults to 6444
+	//
 	// +kubebuilder:default=6444
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	// +optional
 	UserSpaceProxyPort int `json:"userSpaceProxyBindPort,omitempty"`
 	// DisableLoadBalancer disables the load balancer.
-	// +optional
 	DisableLoadBalancer bool `json:"disableLoadBalancer,omitempty"`
 }
 
@@ -207,8 +206,10 @@ type VirtualServer struct {
 	// DelayLoop is the delay timer for check polling. DelayLoop accepts
 	// microsecond precision. Further precision will be truncated without
 	// warnings. Defaults to 1m.
+	//
 	// +kubebuilder:default="1m"
-	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
+	// +optional
+	DelayLoop metav1.Duration `json:"delayLoop"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
 	// Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
 	// details refer to keepalived documentation.

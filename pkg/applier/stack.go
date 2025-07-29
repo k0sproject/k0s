@@ -383,12 +383,7 @@ func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.Reso
 
 func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
 	resourceID := generateResourceID(resource)
-	for _, id := range s.keepResources {
-		if id == resourceID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.keepResources, resourceID)
 }
 
 func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) (*unstructured.Unstructured, error) {

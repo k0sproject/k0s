@@ -57,7 +57,7 @@ func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) 
 	return status, nil
 }
 
-func doHTTPRequestViaUnixSocket(socketPath string, path string, tgt interface{}) error {
+func doHTTPRequestViaUnixSocket(socketPath string, path string, tgt any) error {
 	httpc := http.Client{
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {

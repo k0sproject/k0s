@@ -18,7 +18,7 @@ import (
 type TemplateWriter struct {
 	Name     string
 	Template string
-	Data     interface{}
+	Data     any
 	Path     string
 }
 

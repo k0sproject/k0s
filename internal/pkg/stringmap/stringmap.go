@@ -3,7 +3,10 @@
 
 package stringmap
 
-import "fmt"
+import (
+	"fmt"
+	"maps"
+)
 
 // StringMap defines map like arguments that can be "evaluated" into args=value pairs
 type StringMap map[string]string
@@ -39,11 +42,7 @@ func (m StringMap) ToDashedArgs() []string {
 
 // Merge merges two maps together
 func (m StringMap) Merge(other StringMap) {
-	if len(other) > 0 {
-		for k, v := range other {
-			m[k] = v
-		}
-	}
+	maps.Copy(m, other)
 }
 
 func (m StringMap) Equals(other StringMap) bool {

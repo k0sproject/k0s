@@ -30,7 +30,7 @@ type telemetryData struct {
 }
 
 // Cannot use properly typed structs as they fail to be parsed properly on segment side :(
-type workerData map[string]interface{}
+type workerData map[string]any
 
 type workerSums struct {
 	cpuTotal int64
@@ -119,7 +119,7 @@ func (c *Component) sendTelemetry(ctx context.Context, analyticsClient analytics
 	}
 
 	hostData := analytics.Context{
-		Extra: map[string]interface{}{"direct": true},
+		Extra: map[string]any{"direct": true},
 	}
 
 	hostData.App.Version = build.Version

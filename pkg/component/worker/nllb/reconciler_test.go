@@ -534,7 +534,7 @@ func (m *staticPodsMock) ClaimStaticPod(namespace, name string) (worker.StaticPo
 
 type staticPodMock struct{ mock.Mock }
 
-func (m *staticPodMock) SetManifest(podResource interface{}) error {
+func (m *staticPodMock) SetManifest(podResource any) error {
 	args := m.Called(podResource)
 	return args.Error(0)
 }

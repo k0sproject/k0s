@@ -129,9 +129,9 @@ type daemonSetContainersEnv struct {
 				Containers []struct {
 					Name string `yaml:"name"`
 					Env  []struct {
-						Name      string      `yaml:"name"`
-						Value     string      `yaml:"value"`
-						ValueFrom interface{} `yaml:"valueFrom"`
+						Name      string `yaml:"name"`
+						Value     string `yaml:"value"`
+						ValueFrom any    `yaml:"valueFrom"`
 					} `yaml:"env"`
 				} `yaml:"containers"`
 				Volumes []struct {
