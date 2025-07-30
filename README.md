@@ -13,6 +13,7 @@
 
 ![k0s-logo-dark](docs/img/k0s-logo-2025-horizontal-inverted.svg#gh-dark-mode-only)
 ![k0s-logo-light](docs/img/k0s-logo-2025-horizontal.svg#gh-light-mode-only)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fk0sproject%2Fk0s.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fk0sproject%2Fk0s?ref=badge_shield)
 
 <!-- Start Overview -->
 ## Overview
@@ -181,3 +182,7 @@ To run a basic smoke test after build:
 ```shell
 make check-basic
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fk0sproject%2Fk0s.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fk0sproject%2Fk0s?ref=badge_large)
