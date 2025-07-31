@@ -5,7 +5,7 @@ package common
 
 import (
 	"github.com/k0sproject/k0s/pkg/telemetry"
-	"github.com/segmentio/analytics-go"
+	"github.com/segmentio/analytics-go/v3"
 )
 
 const eventName = "autopilotTransitionEvent"
