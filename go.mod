@@ -1,6 +1,8 @@
 module github.com/k0sproject/k0s
 
-go 1.24.0
+go 1.24.2
+
+toolchain go1.24.4
 
 // k0s
 require (
@@ -123,7 +125,6 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/docker/docker v27.1.1+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -189,7 +190,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/moby/sys/mountinfo v0.7.2 // indirect
@@ -318,3 +318,5 @@ replace (
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.34.0-beta.0
 	k8s.io/sample-controller => k8s.io/sample-controller v0.34.0-beta.0
 )
+
+replace github.com/k0sproject/bootloose => github.com/juanluisvaladas/bootloose v0.0.0-20250731141544-b3ff922a7ab1
