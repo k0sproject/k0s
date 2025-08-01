@@ -670,25 +670,6 @@ func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 	return string(bytes.TrimSpace(tokenBuf.Bytes())), nil
 }
 
-// ImportK0smotrtonImages imports
-func (s *BootlooseSuite) ImportK0sExtraImages(ctx context.Context) error {
-	for i := range s.WorkerCount {
-		workerNode := s.WorkerNode(i)
-		s.T().Logf("Importing images in %s", workerNode)
-		sshWorker, err := s.SSH(s.Context(), workerNode)
-		if err != nil {
-			return err
-		}
-		defer sshWorker.Disconnect()
-
-		_, err = sshWorker.ExecWithOutput(ctx, "k0s ctr images import "+s.K0sExtraImageBundleMountPoints[0])
-		if err != nil {
-			return fmt.Errorf("failed to import extra images: %w", err)
-		}
-	}
-	return nil
-}
-
 // RunWorkers joins all the workers to the cluster
 func (s *BootlooseSuite) RunWorkers(args ...string) error {
 	token, err := s.GetJoinToken("worker", getDataDirOpt(args))
