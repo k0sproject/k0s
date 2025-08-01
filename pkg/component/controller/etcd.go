@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/client/pkg/v3/tlsutil"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -86,30 +86,32 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 	logrus.Info("Synchronizing etcd config with existing cluster via ", e.JoinClient.Address())
 
 	var etcdResponse v1beta1.EtcdResponse
-	var err error
-	retryErr := retry.Do(
-		func() error {
-			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-			defer cancel()
-			etcdResponse, err = e.JoinClient.JoinEtcd(ctx, etcdRequest)
-			return err
-		},
-		// When joining multiple nodes in parallel, etcd can lose consensus and will return 500 responses
-		// Allow for more time to recover (~ 4 minutes = 0+1+2+4+8+16+32+60+60+60)
-		retry.Attempts(10),
-		retry.Delay(1*time.Second),
-		retry.MaxDelay(60*time.Second),
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.OnRetry(func(attempt uint, err error) {
-			logrus.WithError(err).Debug("Failed to synchronize etcd config in attempt #", attempt+1, ", retrying after backoff")
-		}),
-	)
-	if retryErr != nil {
+
+	// When joining multiple nodes in parallel, etcd can lose consensus and will return 500 responses
+	// Allow for more time to recover (~ 4 minutes = 0+1+2+4+8+16+32+60+60+60)
+	backoff := wait.Backoff{
+		Duration: 1 * time.Second,
+		Factor:   2.0,
+		Jitter:   0.0,
+		Steps:    10,
+		Cap:      60 * time.Second,
+	}
+
+	err := wait.ExponentialBackoffWithContext(ctx, backoff, func(ctx context.Context) (bool, error) {
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		var err error
+		etcdResponse, err = e.JoinClient.JoinEtcd(ctx, etcdRequest)
 		if err != nil {
-			retryErr = err
+			logrus.WithError(err).Debug("Failed to synchronize etcd config, retrying...")
+			return false, err
 		}
-		return nil, fmt.Errorf("failed to synchronize etcd config with existing cluster via %s: %w", e.JoinClient.Address(), retryErr)
+		return true, nil // Success
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to synchronize etcd config with existing cluster via %s: %w", e.JoinClient.Address(), err)
 	}
 
 	logrus.Debugf("got cluster info: %v", etcdResponse.InitialCluster)

@@ -9,6 +9,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -16,9 +17,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/cli-runtime/pkg/resource"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -49,26 +50,26 @@ func (s *SystemRBAC) Init(ctx context.Context) error {
 	}
 
 	var lastErr error
-	if err := retry.Do(
-		func() error {
-			stack := applier.Stack{
-				Name:      SystemRBACStackName,
-				Resources: resources,
-				Clients:   s.Clients,
-			}
-			lastErr := stack.Apply(ctx, true)
-			return lastErr
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.OnRetry(func(attempt uint, err error) {
+	var attempt uint
+	err = wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+		attempt++
+		stack := applier.Stack{
+			Name:      SystemRBACStackName,
+			Resources: resources,
+			Clients:   s.Clients,
+		}
+		lastErr = stack.Apply(ctx, true)
+		if lastErr != nil {
 			logrus.WithFields(logrus.Fields{
 				"component": constant.SystemRBACComponentName,
 				"stack":     SystemRBACStackName,
-				"attempt":   attempt + 1,
-			}).WithError(err).Debug("Failed to apply stack, retrying after backoff")
-		}),
-	); err != nil {
+				"attempt":   attempt,
+			}).WithError(lastErr).Debug("Failed to apply stack, retrying after backoff")
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
 		return fmt.Errorf("failed to apply system RBAC stack: %w", cmp.Or(lastErr, err))
 	}
 

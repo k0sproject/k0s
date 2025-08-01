@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // StackApplier applies a stack whenever the files on disk change.
@@ -111,14 +111,16 @@ func (*StackApplier) triggersApply(event fsnotify.Event) bool {
 func (s *StackApplier) apply(ctx context.Context) {
 	s.log.Info("Applying manifests")
 
-	err := retry.Do(
-		func() error { return s.doApply(ctx) },
-		retry.OnRetry(func(attempt uint, err error) {
-			s.log.WithError(err).Warnf("Failed to apply manifests in attempt #%d, retrying after backoff", attempt+1)
-		}),
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-	)
+	var attempt uint
+	err := wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+		attempt++
+		err := s.doApply(ctx)
+		if err != nil {
+			s.log.WithError(err).Warnf("Failed to apply manifests in attempt #%d, retrying after backoff", attempt)
+			return false, nil
+		}
+		return true, nil
+	})
 
 	if err != nil {
 		s.log.WithError(err).Error("Failed to apply manifests")

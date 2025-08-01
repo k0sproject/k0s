@@ -19,12 +19,12 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // SetupController defines operations that should be run once to completion,
@@ -79,15 +79,18 @@ func (sc *setupController) Run(ctx context.Context) error {
 
 	logger.Infof("Using effective hostname = '%v', kubelet hostname = '%v'", controlNodeName, kubeletNodeName)
 
-	if err := retry.Do(func() error {
+	var lastErr error
+	if err := wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		logger.Infof("Attempting to create controlnode '%s'", controlNodeName)
 		if err := sc.createControlNode(ctx, sc.clientFactory, controlNodeName, kubeletNodeName); err != nil {
-			return fmt.Errorf("create controlnode '%s' attempt failed, retrying: %w", controlNodeName, err)
+			lastErr = fmt.Errorf("create controlnode '%s' attempt failed, retrying: %w", controlNodeName, err)
+			return false, nil
 		}
-
-		return nil
-
+		return true, nil
 	}); err != nil {
+		if lastErr != nil {
+			err = lastErr
+		}
 		return fmt.Errorf("failed to create controlnode '%s' after max attempts: %w", controlNodeName, err)
 	}
 

@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/platforms"
@@ -27,6 +26,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/debounce"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
@@ -68,7 +68,8 @@ func (a *OCIBundleReconciler) Init(_ context.Context) error {
 // containerdClient returns a connected containerd client.
 func (a *OCIBundleReconciler) containerdClient(ctx context.Context) (*containerd.Client, error) {
 	var client *containerd.Client
-	if err := retry.Do(func() (err error) {
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		var err error
 		client, err = containerd.New(
 			a.containerdAddress,
 			containerd.WithDefaultNamespace("k8s.io"),
@@ -77,15 +78,16 @@ func (a *OCIBundleReconciler) containerdClient(ctx context.Context) (*containerd
 			),
 		)
 		if err != nil {
-			return fmt.Errorf("failed to connect to containerd: %w", err)
+			return false, nil
 		}
 		if _, err = client.ListImages(ctx); err != nil {
 			_ = client.Close()
-			return fmt.Errorf("failed to communicate with containerd: %w", err)
+			return false, nil
 		}
-		return nil
-	}, retry.Context(ctx), retry.Delay(time.Second*5)); err != nil {
-		return nil, err
+		return true, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to containerd: %w", err)
 	}
 	return client, nil
 }

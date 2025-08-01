@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/avast/retry-go"
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	etcdclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
@@ -107,20 +106,18 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 
 	// Create the object for this node
 	// Need to be done in retry loop as during the initial startup the etcd might not be stable
-	err = retry.Do(
-		func() error {
-			return e.createMemberObject(ctx, client)
-		},
-		retry.Delay(3*time.Second),
-		retry.Attempts(5),
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.RetryIf(func(retryErr error) bool {
-			log.Debugf("retrying createMemberObject: %v", retryErr)
+	err = wait.PollUntilContextTimeout(ctx, 3*time.Second, 15*time.Second, true, func(ctx context.Context) (bool, error) {
+		err := e.createMemberObject(ctx, client)
+		if err != nil {
 			// During etcd cluster bootstrap, it's common to see k8s giving 500 errors due to etcd timeouts
-			return apierrors.IsInternalError(retryErr)
-		}),
-	)
+			if apierrors.IsInternalError(err) {
+				log.Debugf("retrying createMemberObject: %v", err)
+				return false, nil
+			}
+			return false, err
+		}
+		return true, nil
+	})
 	if err != nil {
 		log.WithError(err).Error("failed to create EtcdMember object for this controller")
 	}
@@ -357,25 +354,21 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		return
 	}
 
-	err = retry.Do(func() error {
-		return etcdClient.DeleteMember(ctx, memberID)
-	},
-		retry.Delay(5*time.Second),
-		retry.LastErrorOnly(true),
-		retry.Attempts(5),
-		retry.Context(ctx),
-		retry.RetryIf(func(err error) bool {
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 25*time.Second, true, func(ctx context.Context) (bool, error) {
+		err := etcdClient.DeleteMember(ctx, memberID)
+		if err != nil {
 			// In case etcd reports unhealthy cluster, retry
 			msg := err.Error()
 			switch {
 			case strings.Contains(msg, "unhealthy cluster"):
-				return true
+				return false, nil
 			case strings.Contains(msg, "leader changed"):
-				return true
+				return false, nil
 			}
-			return false
-		}),
-	)
+			return false, err
+		}
+		return true, nil
+	})
 
 	if err != nil {
 		logrus.

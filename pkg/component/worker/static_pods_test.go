@@ -5,14 +5,12 @@ package worker
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net/http"
 	"runtime"
 	"testing"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
@@ -20,6 +18,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/yaml"
 )
 
@@ -228,13 +227,13 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 			t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
 			var lastLog *logrus.Entry
-			require.NoError(t, retry.Do(func() error {
+			require.NoError(t, wait.PollUntilContextTimeout(t.Context(), 100*time.Millisecond, 5*time.Second, true, func(ctx context.Context) (bool, error) {
 				lastLog = logs.LastEntry()
 				if lastLog == nil {
-					return errors.New("not yet logged")
+					return false, nil
 				}
-				return nil
-			}, retry.Attempts(5)))
+				return true, nil
+			}))
 
 			assert.Equal(t, "Serving HTTP requests", lastLog.Message)
 			assert.Contains(t, lastLog.Data["local_addr"], "127.0.0.1")

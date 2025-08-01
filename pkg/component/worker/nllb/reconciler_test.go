@@ -22,10 +22,10 @@ import (
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
 
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -392,22 +392,23 @@ func TestReconciler_ConfigMgmt(t *testing.T) {
 
 		// then
 		assert.NoError(t,
-			retry.Do(func() error {
+			wait.PollUntilContextTimeout(testContext(t), 100*time.Millisecond, 10*time.Second, true, func(ctx context.Context) (bool, error) {
 				stat, err := os.Stat(envoyConfig)
 				if os.IsNotExist(err) {
-					return err
+					return false, nil // keep trying
 				}
 
 				if err == nil && stat.IsDir() {
+					// This is unrecoverable, we expected a file.
 					err = errors.New("expected a file")
 				}
 
 				if err != nil {
-					return retry.Unrecoverable(err)
+					return false, err
 				}
 
-				return nil
-			}, retry.LastErrorOnly(true)),
+				return true, nil
+			}),
 			"Expected to see an Envoy configuration file",
 		)
 

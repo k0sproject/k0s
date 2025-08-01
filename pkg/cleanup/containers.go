@@ -9,12 +9,13 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/container/runtime"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/mount-utils"
 )
 
@@ -85,16 +86,21 @@ func (c *containers) stopAllContainers() error {
 
 	var pods []string
 	ctx := context.TODO()
-	err := retry.Do(func() error {
+	var lastErr error
+	err := wait.PollUntilContextTimeout(ctx, 1*time.Second, 30*time.Second, true, func(ctx context.Context) (bool, error) {
 		logrus.Debugf("trying to list all pods")
 		var err error
 		pods, err = c.containerRuntime.ListContainers(ctx)
 		if err != nil {
-			return err
+			lastErr = err
+			return false, nil
 		}
-		return nil
-	}, retry.Context(ctx), retry.LastErrorOnly(true))
+		return true, nil
+	})
 	if err != nil {
+		if lastErr != nil {
+			err = lastErr
+		}
 		return fmt.Errorf("failed at listing pods %w", err)
 	}
 	if len(pods) > 0 {

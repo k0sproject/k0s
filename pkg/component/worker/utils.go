@@ -17,11 +17,11 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/kubernetes/pkg/kubelet/certificate/bootstrap"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -78,23 +78,23 @@ func BootstrapKubeletClientConfig(ctx context.Context, k0sVars *config.CfgVars, 
 
 	log.Info("Bootstrapping client configuration")
 
-	if err := retry.Do(
-		func() error {
-			return bootstrap.LoadClientCert(
-				ctx,
-				k0sVars.KubeletAuthConfigPath,
-				bootstrapKubeconfigPath,
-				filepath.Join(k0sVars.KubeletRootDir, "pki"),
-				nodeName,
-			)
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.Delay(1*time.Second),
-		retry.OnRetry(func(attempt uint, err error) {
-			log.WithError(err).WithField("attempt", attempt+1).Debug("Failed to bootstrap client configuration, retrying after backoff")
-		}),
-	); err != nil {
+	var attempt uint
+	err := wait.PollUntilContextTimeout(ctx, 1*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		attempt++
+		err := bootstrap.LoadClientCert(
+			ctx,
+			k0sVars.KubeletAuthConfigPath,
+			bootstrapKubeconfigPath,
+			filepath.Join(k0sVars.KubeletRootDir, "pki"),
+			nodeName,
+		)
+		if err != nil {
+			log.WithError(err).WithField("attempt", attempt).Debug("Failed to bootstrap client configuration, retrying after backoff")
+			return false, nil // retry
+		}
+		return true, nil // success
+	})
+	if err != nil {
 		return fmt.Errorf("failed to bootstrap client configuration: %w", err)
 	}
 

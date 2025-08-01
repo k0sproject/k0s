@@ -15,7 +15,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/bombsimon/logrusr/v4"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
@@ -33,6 +32,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	apiretry "k8s.io/client-go/util/retry"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -430,15 +430,15 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
-	if err := retry.Do(func() error {
+	if err := wait.PollUntilContextCancel(ctx, 500*time.Millisecond, true, func(ctx context.Context) (bool, error) {
 		_, err := mgr.GetRESTMapper().RESTMapping(gk)
 		if err != nil {
 			ec.L.Warn("Extensions CRD is not yet ready, waiting before starting ExtensionsController")
-			return err
+			return false, err
 		}
 		ec.L.Info("Extensions CRD is ready, going nuts")
-		return nil
-	}, retry.Context(ctx)); err != nil {
+		return true, nil
+	}); err != nil {
 		return nil, fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registered, check CRD registration reconciler: %w", err)
 	}
 

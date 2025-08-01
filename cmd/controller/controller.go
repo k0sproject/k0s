@@ -52,9 +52,9 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type command config.CLIOptions
@@ -678,22 +678,24 @@ func joinController(ctx context.Context, tokenArg string, certRootDir string) (*
 	logrus.Info("Joining existing cluster via ", joinClient.Address())
 
 	var caData v1beta1.CaResponse
-	retryErr := retry.Do(
-		func() error {
-			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-			defer cancel()
-			caData, err = joinClient.GetCA(ctx)
-			return err
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.OnRetry(func(attempt uint, err error) {
-			logrus.WithError(err).Debug("Failed to join in attempt #", attempt+1, ", retrying after backoff")
-		}),
-	)
-	if retryErr != nil {
+	var lastErr error
+	var attempt uint
+	retryErr := wait.PollUntilContextTimeout(ctx, time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		attempt++
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		var err error
+		caData, err = joinClient.GetCA(ctx)
 		if err != nil {
-			retryErr = err
+			lastErr = err
+			logrus.WithError(err).Debug("Failed to join in attempt #", attempt, ", retrying after backoff")
+			return false, nil
+		}
+		return true, nil
+	})
+	if retryErr != nil {
+		if lastErr != nil {
+			retryErr = lastErr
 		}
 		return nil, fmt.Errorf("failed to join existing cluster via %s: %w", joinClient.Address(), retryErr)
 	}

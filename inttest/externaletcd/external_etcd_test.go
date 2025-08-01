@@ -4,12 +4,14 @@
 package externaletcd
 
 import (
+	"context"
 	"fmt"
 	"testing"
+	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const k0sConfig = `
@@ -29,10 +31,10 @@ type ExternalEtcdSuite struct {
 
 func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	s.T().Log("starting etcd")
-	err := retry.Do(func() error {
+	err := wait.PollUntilContextTimeout(s.Context(), 100*time.Millisecond, 100*time.Second, true, func(ctx context.Context) (bool, error) {
 		ssh, err := s.SSH(s.Context(), s.ExternalEtcdNode())
 		if err != nil {
-			return err
+			return false, nil
 		}
 		defer ssh.Disconnect()
 
@@ -40,7 +42,7 @@ func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 			"ETCD_ADVERTISE_CLIENT_URLS=\"http://etcd0:2379\" "+
 				"ETCD_LISTEN_CLIENT_URLS=\"http://0.0.0.0:2379\" "+
 				"/opt/etcd > /var/log/etcd.log 2>&1 &")
-		return err
+		return true, err
 	})
 	s.Require().NoError(err)
 

@@ -4,14 +4,16 @@
 package byocri
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/k0sproject/bootloose/pkg/config"
 	"github.com/stretchr/testify/suite"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )
@@ -92,15 +94,14 @@ func (s *BYOCRISuite) runDockerWorker() error {
 	}
 
 	s.T().Log("Waiting for cri-dockerd to start up")
-
-	s.Require().NoError(retry.Do(
-		func() error {
-			_, err = sshWorker.ExecWithOutput(s.Context(), "[ -e /var/run/cri-dockerd.sock ]")
-			return err
-		},
-		retry.LastErrorOnly(true),
-		retry.Context(s.Context()),
-	), "The socket file for cri-dockerd doesn't exist. Is it running?")
+	s.Require().NoError(
+		wait.PollUntilContextCancel(s.Context(), 500*time.Millisecond, true, func(ctx context.Context) (bool, error) {
+			_, err := sshWorker.ExecWithOutput(ctx, "[ -e /var/run/cri-dockerd.sock ]")
+			if err != nil {
+				return false, nil
+			}
+			return true, nil
+		}), "The socket file for cri-dockerd doesn't exist. Is it running?")
 
 	workerCommand := fmt.Sprintf(`nohup /usr/local/bin/k0s worker --debug --cri-socket remote:unix:///var/run/cri-dockerd.sock "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	_, err = sshWorker.ExecWithOutput(s.Context(), workerCommand)

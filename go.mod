@@ -10,7 +10,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/Microsoft/hcsshim v0.11.7
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
-	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bombsimon/logrusr/v4 v4.1.0
 	github.com/cilium/ebpf v0.19.0
 	github.com/cloudflare/cfssl v1.6.4

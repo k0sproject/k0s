@@ -18,7 +18,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/avast/retry-go"
 	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
@@ -359,11 +358,10 @@ func (s *staticPods) Start(ctx context.Context) error {
 		err := srv.Serve(listener)
 
 		// As long as the server isn't closed, try to restart it.
-		for notClosed(err) {
-			err = retry.Do(func() error {
-				log.WithError(err).Error("HTTP server terminated, restarting ...")
-				return srv.ListenAndServe()
-			}, retry.RetryIf(notClosed), retry.Attempts(math.MaxUint))
+		for i := 1; i < math.MaxInt && notClosed(err); i++ {
+			log.WithError(err).Error("HTTP server terminated, restarting ...")
+			err = srv.ListenAndServe()
+
 		}
 
 		log.Info("HTTP server closed")

@@ -21,10 +21,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
@@ -60,32 +60,37 @@ func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func
 	cachedAPIServerAddresses = append(cachedAPIServerAddresses, "") // Always try out the unmodified kubeconfig, too.
 
 	var configMapData map[string]string
-	if err := retry.Do(
-		func() (err error) {
-			configMapData, err = loadConcurrently(ctx, cachedAPIServerAddresses,
-				func(ctx context.Context, address string) (map[string]string, error) {
-					client, err := clientFactory(address)
-					if err != nil {
-						return nil, err
-					}
+	var attempt uint
+	var lastErr error
+	err := wait.PollUntilContextTimeout(ctx, 500*time.Millisecond, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		attempt++
+		var err error
+		configMapData, err = loadConcurrently(ctx, cachedAPIServerAddresses,
+			func(ctx context.Context, address string) (map[string]string, error) {
+				client, err := clientFactory(address)
+				if err != nil {
+					return nil, err
+				}
 
-					cm, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, configMapName, metav1.GetOptions{})
-					if err != nil {
-						return nil, err
-					}
+				cm, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, configMapName, metav1.GetOptions{})
+				if err != nil {
+					return nil, err
+				}
 
-					return cm.Data, nil
-				},
-			)
-			return err
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.Delay(500*time.Millisecond),
-		retry.OnRetry(func(attempt uint, err error) {
-			log.WithError(err).Debugf("Failed to load configuration for worker profile in attempt #%d, retrying after backoff", attempt+1)
-		}),
-	); err != nil {
+				return cm.Data, nil
+			},
+		)
+		if err != nil {
+			lastErr = err
+			log.WithError(err).Debugf("Failed to load configuration for worker profile in attempt #%d, retrying after backoff", attempt)
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		if lastErr != nil {
+			err = lastErr
+		}
 		if apierrors.IsUnauthorized(err) {
 			err = fmt.Errorf("the k0s worker node credentials are invalid, the node needs to be rejoined into the cluster with a fresh bootstrap token: %w", err)
 		}

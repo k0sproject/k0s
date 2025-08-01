@@ -4,6 +4,7 @@
 package containerd
 
 import (
+	"context"
 	"net/url"
 	"os"
 	"os/exec"
@@ -11,8 +12,8 @@ import (
 	"time"
 
 	"github.com/Microsoft/hcsshim"
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func Address(_ string) string {
@@ -56,15 +57,15 @@ func getSourceVip() (string, error) {
 	// make it use winExecute and powershell
 	var vip string
 
-	err := retry.Do(func() error {
+	err := wait.PollUntilContextTimeout(context.TODO(), 5*time.Second, 60*time.Second, true, func(ctx context.Context) (bool, error) {
 		ep, err := hcsshim.GetHNSEndpointByName("Calico_ep")
 		if err != nil {
 			logrus.WithError(err).Warn("can't get Calico_ep endpoint")
-			return err
+			return false, nil
 		}
 		vip = ep.IPAddress.String()
-		return nil
-	}, retry.Delay(time.Second*5))
+		return true, nil
+	})
 	if err != nil {
 		return "", err
 	}
