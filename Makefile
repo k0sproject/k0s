@@ -267,10 +267,9 @@ ipv6-image-bundle-linux-riscv64.tar: embedded-bins/Makefile.variables
 $(air_gapped_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
 check-calico-ipv6 check-kuberouter-ipv6: ipv6-image-bundle-linux-$(HOST_ARCH).tar
 $(smoketests): k0s
-# K0SMOTRON_IMAGES_BUNDLE is repurposed for the IPv6 test images
 	$(MAKE) -C inttest \
 		K0S_IMAGES_BUNDLE='$(CURDIR)/airgap-image-bundle-linux-$(HOST_ARCH).tar' \
-		K0SMOTRON_IMAGES_BUNDLE='$(CURDIR)/ipv6-image-bundle-linux-$(HOST_ARCH).tar' \
+		K0S_EXTRA_IMAGES_BUNDLE='$(CURDIR)/ipv6-image-bundle-linux-$(HOST_ARCH).tar' \
 		$@
 
 .PHONY: smoketests

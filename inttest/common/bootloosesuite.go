@@ -76,24 +76,24 @@ type BootlooseSuite struct {
 
 	/* config knobs (initialized via `initializeDefaults`) */
 
-	LaunchMode                      LaunchMode
-	ControllerCount                 int
-	ControllerUmask                 int
-	ExtraVolumes                    []config.Volume
-	K0sFullPath                     string
-	AirgapImageBundleMountPoints    []string
-	K0smotronImageBundleMountPoints []string
-	K0sAPIExternalPort              int
-	KonnectivityAdminPort           int
-	KonnectivityAgentPort           int
-	KubeAPIExternalPort             int
-	WithExternalEtcd                bool
-	WithLB                          bool
-	WorkerCount                     int
-	K0smotronWorkerCount            int
-	WithUpdateServer                bool
-	BootLooseImage                  string
-	Networks                        []string
+	LaunchMode                     LaunchMode
+	ControllerCount                int
+	ControllerUmask                int
+	ExtraVolumes                   []config.Volume
+	K0sFullPath                    string
+	AirgapImageBundleMountPoints   []string
+	K0sExtraImageBundleMountPoints []string
+	K0sAPIExternalPort             int
+	KonnectivityAdminPort          int
+	KonnectivityAgentPort          int
+	KubeAPIExternalPort            int
+	WithExternalEtcd               bool
+	WithLB                         bool
+	WorkerCount                    int
+	K0smotronWorkerCount           int
+	WithUpdateServer               bool
+	BootLooseImage                 string
+	Networks                       []string
 
 	WithRegistry bool
 	// RegistryTLSPath is the path to the folder containing
@@ -671,7 +671,7 @@ func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 }
 
 // ImportK0smotrtonImages imports
-func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
+func (s *BootlooseSuite) ImportK0sExtraImages(ctx context.Context) error {
 	for i := range s.WorkerCount {
 		workerNode := s.WorkerNode(i)
 		s.T().Logf("Importing images in %s", workerNode)
@@ -681,9 +681,9 @@ func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
 		}
 		defer sshWorker.Disconnect()
 
-		_, err = sshWorker.ExecWithOutput(ctx, "k0s ctr images import "+s.K0smotronImageBundleMountPoints[0])
+		_, err = sshWorker.ExecWithOutput(ctx, "k0s ctr images import "+s.K0sExtraImageBundleMountPoints[0])
 		if err != nil {
-			return fmt.Errorf("failed to import k0smotron images: %w", err)
+			return fmt.Errorf("failed to import extra images: %w", err)
 		}
 	}
 	return nil
@@ -1095,15 +1095,15 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 		}
 	}
 
-	if len(s.K0smotronImageBundleMountPoints) > 0 {
-		path, ok := os.LookupEnv("K0SMOTRON_IMAGES_BUNDLE")
+	if len(s.K0sExtraImageBundleMountPoints) > 0 {
+		path, ok := os.LookupEnv("K0S_EXTRA_IMAGES_BUNDLE")
 		if !ok {
-			return errors.New("cannot bind-mount K0smotron image bundle, environment variable K0SMOTRON_IMAGES_BUNDLE not set")
+			return errors.New("cannot bind-mount k0s extra image bundle, environment variable K0S_EXTRA_IMAGES_BUNDLE not set")
 		} else if !file.Exists(path) {
-			return fmt.Errorf("cannot bind-mount airgap image bundle, no such file: %q", path)
+			return fmt.Errorf("cannot bind-mount k0s extra image bundle, no such file: %q", path)
 		}
 
-		for _, dest := range s.K0smotronImageBundleMountPoints {
+		for _, dest := range s.K0sExtraImageBundleMountPoints {
 			volumes = append(volumes, config.Volume{
 				Type:        "bind",
 				Source:      path,
