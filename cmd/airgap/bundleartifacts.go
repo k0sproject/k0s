@@ -28,10 +28,11 @@ import (
 
 func newAirgapBundleArtifactsCmd(log logrus.FieldLogger, rewriteBundleRef airgap.RewriteRefFunc) *cobra.Command {
 	var (
-		debugFlags internal.DebugFlags
-		outPath    string
-		platform   = platforms.DefaultSpec()
-		bundler    = airgap.OCIArtifactsBundler{
+		debugFlags  internal.DebugFlags
+		outPath     string
+		platform    = platforms.DefaultSpec()
+		concurrency int
+		bundler     = airgap.OCIArtifactsBundler{
 			Log:           log,
 			RewriteTarget: rewriteBundleRef,
 		}
@@ -85,7 +86,7 @@ if no names are given on the command line.`,
 			}
 
 			buffered := bufio.NewWriter(out)
-			if err := bundler.Run(ctx, refs, out); err != nil {
+			if err := bundler.Run(ctx, refs, concurrency, out); err != nil {
 				return err
 			}
 			return buffered.Flush()
@@ -98,6 +99,7 @@ if no names are given on the command line.`,
 	flags.StringVarP(&outPath, "output", "o", "", "output file path (writes to standard output if omitted)")
 	flags.Var((*insecureRegistryFlag)(&bundler.InsecureRegistries), "insecure-registries", "one of no, skip-tls-verify or plain-http")
 	flags.Var((*platformFlag)(&platform), "platform", "the platform to export")
+	flags.IntVar(&concurrency, "concurrency", 3, "number of concurrent requests to the registry (default: 5)")
 	flags.StringArrayVar(&bundler.RegistriesConfigPaths, "registries-config", nil, "paths to the authentication files for OCI registries (uses the standard Docker config if omitted)")
 
 	return cmd

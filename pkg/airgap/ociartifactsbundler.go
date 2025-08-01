@@ -58,7 +58,7 @@ type OCIArtifactsBundler struct {
 	RewriteTarget         RewriteRefFunc
 }
 
-func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, out io.Writer) error {
+func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, concurrency int, out io.Writer) error {
 	var client *http.Client
 	if len := len(refs); len < 1 {
 		b.Log.Warn("No artifacts to bundle")
@@ -76,7 +76,7 @@ func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, o
 
 	copyOpts := oras.CopyOptions{
 		CopyGraphOptions: oras.CopyGraphOptions{
-			Concurrency:    1, // reproducible output
+			Concurrency:    concurrency,
 			FindSuccessors: findSuccessors(b.PlatformMatcher),
 			PreCopy: func(ctx context.Context, desc imagespecv1.Descriptor) error {
 				if desc.MediaType == images.MediaTypeDockerSchema1Manifest {

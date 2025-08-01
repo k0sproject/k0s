@@ -86,6 +86,7 @@ func TestBundleArtifactsCmd_WithPlatforms(t *testing.T) {
 					underTest.SetArgs([]string{
 						"--insecure-registries", insecureRegistriesFlag,
 						"--platform", platform,
+						"--concurrency", "1", // predictable output
 						ref,
 					})
 					underTest.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
