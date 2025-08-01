@@ -159,7 +159,7 @@ func TestCalicoSuite(t *testing.T) {
 		s.isIPv6Only = true
 		s.Networks = []string{"bridge-ipv6"}
 		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle.tar"}
-		s.K0smotronImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
+		s.K0sExtraImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
 	}
 	suite.Run(t, &s)
 }
