@@ -25,7 +25,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/go-cmp v0.7.0
-	github.com/k0sproject/bootloose v0.9.1
+	github.com/k0sproject/bootloose v0.9.2
 	github.com/k0sproject/version v0.7.0
 	github.com/kardianos/service v1.2.4
 	github.com/logrusorgru/aurora/v3 v3.0.0

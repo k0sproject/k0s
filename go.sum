@@ -314,8 +314,8 @@ github.com/jsimonetti/rtnetlink/v2 v2.0.1 h1:xda7qaHDSVOsADNouv7ukSuicKZO7GgVUCX
 github.com/jsimonetti/rtnetlink/v2 v2.0.1/go.mod h1:7MoNYNbb3UaDHtF8udiJo/RH6VsTKP1pqKLUTVCvToE=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
-github.com/k0sproject/bootloose v0.9.1 h1:pdhp3hZefayLtzwbiopFHEZqtsWsips2pj56hUwCDwo=
-github.com/k0sproject/bootloose v0.9.1/go.mod h1:uEIClVUSBiSu1dOdB0jgYe93UigL7UNpapFJHHTl0ZI=
+github.com/k0sproject/bootloose v0.9.2 h1:BwOyRj9FT8c4Odo16hLpcoGi4zI090OpwsPbzB+GUJ0=
+github.com/k0sproject/bootloose v0.9.2/go.mod h1:uEIClVUSBiSu1dOdB0jgYe93UigL7UNpapFJHHTl0ZI=
 github.com/k0sproject/version v0.7.0 h1:pWp60UaA7N9g/wKUz1HN6heFW1M6ioWHEo8glHYlq00=
 github.com/k0sproject/version v0.7.0/go.mod h1:iNV3O8blndsQhxZ8zACfpQhrLDlrTvDlCzx+vgCFtSI=
 github.com/kardianos/service v1.2.4 h1:XNlGtZOYNx2u91urOdg/Kfmc+gfmuIo1Dd3rEi2OgBk=
