@@ -187,6 +187,7 @@ spec:
             - NET_BIND_SERVICE
             drop:
             - all
+          runAsNonRoot: true
           readOnlyRootFilesystem: true
         livenessProbe:
           httpGet:
