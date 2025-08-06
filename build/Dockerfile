@@ -4,7 +4,7 @@ FROM $BUILDIMAGE
 ARG TARGETARCH
 RUN set -ex; \
 # Need to use the gold linker on ARM, Go really wants to have it.
-# https://github.com/golang/go/blob/go1.23.11/src/cmd/link/internal/ld/lib.go##L1661-L1680
+# https://github.com/golang/go/blob/go1.23.12/src/cmd/link/internal/ld/lib.go##L1661-L1680
   case "$TARGETARCH" in \
   arm*) binutils=binutils-gold ;; \
     *)    binutils=binutils ;; \
