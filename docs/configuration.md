@@ -139,15 +139,16 @@ spec:
 
 ### `spec.storage`
 
-| Element                           | Description                                                                                                                                                            |
-|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`                            | Type of the data store (valid values:`etcd` or `kine`). **Note**: Type `etcd` will cause k0s to create and manage an elastic etcd cluster within the controller nodes. |
-| `etcd.peerAddress`                | Node address used for etcd cluster peering.                                                                                                                            |
-| `etcd.extraArgs`                  | Map of key-values (strings) for any extra arguments to pass down to etcd process. Any behavior triggered by these parameters is outside k0s support.                   |
-| `etcd.ca.expiresAfter`            | The expiration duration of the CA certificate (default: 87600h)                                                                                                        |
-| `etcd.ca.certificatesExpireAfter` | The expiration duration of the server certificate (default: 8760h)                                                                                                     |
-| `kine.dataSource`                 | [kine](https://github.com/k3s-io/kine) data source URL.                                                                                                                |
-| `etcd.externalCluster`            | Configuration when etcd is externally managed, i.e. running on dedicated nodes. See [`spec.storage.etcd.externalCluster`](#specstorageetcdexternalcluster)             |
+| Element                           | Description                                                                                                                                                                                                                   |
+|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`                            | Type of the data store (valid values:`etcd` or `kine`). **Note**: Type `etcd` will cause k0s to create and manage an elastic etcd cluster within the controller nodes.                                                        |
+| `etcd.peerAddress`                | Node address used for etcd cluster peering.                                                                                                                                                                                   |
+| `etcd.extraArgs`                  | Map of key-values (strings) for any extra arguments to pass down to etcd process. `extraArgs` are recommeneded over `rawrArgs` if the use case allows it.  Any behavior triggered by these parameters is outside k0s support. |
+| `etcd.rawArgs`                    | Slice of strings for any raw arguments to pass down to the etcd process. These are appeneded after `extraArg`. Any behavior triggered by these parameters is outside k0s support.                                             |
+| `etcd.ca.expiresAfter`            | The expiration duration of the CA certificate (default: 87600h)                                                                                                                                                               |
+| `etcd.ca.certificatesExpireAfter` | The expiration duration of the server certificate (default: 8760h)                                                                                                                                                            |
+| `kine.dataSource`                 | [kine](https://github.com/k3s-io/kine) data source URL.                                                                                                                                                                       |
+| `etcd.externalCluster`            | Configuration when etcd is externally managed, i.e. running on dedicated nodes. See [`spec.storage.etcd.externalCluster`](#specstorageetcdexternalcluster)                                                                    |
 
 #### `spec.storage.etcd.externalCluster`
 

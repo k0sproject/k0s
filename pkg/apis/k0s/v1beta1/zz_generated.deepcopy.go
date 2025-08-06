@@ -562,6 +562,11 @@ func (in *EtcdConfig) DeepCopyInto(out *EtcdConfig) {
 			(*out)[key] = val
 		}
 	}
+	if in.RawArgs != nil {
+		in, out := &in.RawArgs, &out.RawArgs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.CA != nil {
 		in, out := &in.CA, &out.CA
 		*out = new(CA)
