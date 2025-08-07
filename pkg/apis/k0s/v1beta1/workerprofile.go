@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 )
 
 var _ Validateable = (*WorkerProfiles)(nil)
@@ -22,7 +23,7 @@ func (wps WorkerProfiles) Validate() []error {
 	var errors []error
 	for _, p := range wps {
 		if err := p.Validate(); err != nil {
-			errors = append(errors, err)
+			errors = append(errors, err...)
 		}
 	}
 	return errors
@@ -37,26 +38,29 @@ type WorkerProfile struct {
 	Config *runtime.RawExtension `json:"values,omitempty"`
 }
 
-var lockedFields = map[string]struct{}{
-	"clusterDNS":    {},
-	"clusterDomain": {},
-	"apiVersion":    {},
-	"kind":          {},
-	"staticPodURL":  {},
-}
-
 // Validate validates instance
-func (wp *WorkerProfile) Validate() error {
-	var parsed map[string]any
-	err := json.Unmarshal(wp.Config.Raw, &parsed)
-	if err != nil {
-		return err
-	}
+func (wp *WorkerProfile) Validate() []error {
 
-	for field := range parsed {
-		if _, found := lockedFields[field]; found {
-			return fmt.Errorf("field `%s` is prohibited to override in worker profile", field)
-		}
+	var errs []error
+
+	kubeletCfg := &kubeletv1beta1.KubeletConfiguration{}
+	if err := json.Unmarshal(wp.Config.Raw, kubeletCfg); err != nil {
+		errs = append(errs, fmt.Errorf("failed to decode worker profile %q: %w", wp.Name, err))
 	}
-	return nil
+	if kubeletCfg.ClusterDNS != nil {
+		errs = append(errs, fmt.Errorf("field `clusterDNS` is prohibited to override in worker profile %q", wp.Name))
+	}
+	if kubeletCfg.ClusterDomain != "" {
+		errs = append(errs, fmt.Errorf("field `clusterDomain` is prohibited to override in worker profile %q", wp.Name))
+	}
+	if kubeletCfg.APIVersion != "" {
+		errs = append(errs, fmt.Errorf("field `apiVersion` is prohibited to override in worker profile %q", wp.Name))
+	}
+	if kubeletCfg.Kind != "" {
+		errs = append(errs, fmt.Errorf("field `kind` is prohibited to override in worker profile %q", wp.Name))
+	}
+	if kubeletCfg.StaticPodURL != "" {
+		errs = append(errs, fmt.Errorf("field `staticPodURL` is prohibited to override in worker profile %q", wp.Name))
+	}
+	return errs
 }
