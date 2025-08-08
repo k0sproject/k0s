@@ -230,6 +230,12 @@ spec:
         prometheus.io/port: '8093'
     spec:
       securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - all
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
         supplementalGroups: [0]` /* in order to read the projected service account token */ + `
       nodeSelector:
         kubernetes.io/os: linux
