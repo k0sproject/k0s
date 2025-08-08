@@ -231,6 +231,17 @@ func getHostName(imageName string) string {
 }
 
 func overrideRepository(repository string, originalImage string) string {
+	if repository == "" {
+		return originalImage
+	}
+
+	// "Idempotency": if the image already starts with the repository prefix, don't override
+	// This is needed sinice in some cases we run the override multiple times, e.g. when
+	// we unmarshal the config multiple times.
+	if strings.HasPrefix(originalImage, repository) {
+		return originalImage
+	}
+
 	if host := getHostName(originalImage); host != "" {
 		return strings.Replace(originalImage, host, repository, 1)
 	}
