@@ -53,11 +53,11 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.25
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.41.0
-	golang.org/x/mod v0.26.0
+	golang.org/x/mod v0.27.0
 	golang.org/x/sync v0.16.0
 	golang.org/x/sys v0.35.0
 	golang.org/x/text v0.28.0
-	golang.org/x/tools v0.35.0
+	golang.org/x/tools v0.36.0
 	google.golang.org/grpc v1.74.2
 	helm.sh/helm/v3 v3.18.6
 	oras.land/oras-go/v2 v2.6.0
@@ -252,7 +252,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.3 // indirect
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
-	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/term v0.34.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
