@@ -25,8 +25,9 @@ import (
 
 type networkSuite struct {
 	common.BootlooseSuite
-	cni       string
-	proxyMode string
+	cni        string
+	proxyMode  string
+	isIPv6Only bool
 }
 
 func (s *networkSuite) TestK0sGetsUp() {
@@ -45,12 +46,20 @@ func (s *networkSuite) TestK0sGetsUp() {
 				}(),
 			},
 		}
+		if s.isIPv6Only {
+			clusterCfg.Spec.Network.PodCIDR = "fd00::/108"
+			clusterCfg.Spec.Network.ServiceCIDR = "fd01::/108"
+		}
 		config, err := yaml.Marshal(clusterCfg)
 		s.Require().NoError(err)
 		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
 	}
 
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server"))
+
+	if s.isIPv6Only {
+		common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
+	}
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
@@ -150,6 +159,7 @@ func TestNetworkSuite(t *testing.T) {
 		},
 		"kuberouter",
 		"iptables",
+		false,
 	}
 
 	target := os.Getenv("K0S_INTTEST_TARGET")
@@ -158,6 +168,12 @@ func TestNetworkSuite(t *testing.T) {
 	}
 	if strings.HasSuffix(target, "-nft") {
 		s.proxyMode = "nftables"
+	}
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "ipv6") {
+		s.isIPv6Only = true
+		s.Networks = []string{"bridge-ipv6"}
+		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle.tar"}
+		s.K0sExtraImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
 	}
 
 	t.Logf("Testing %s using %s", s.cni, s.proxyMode)

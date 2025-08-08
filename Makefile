@@ -261,6 +261,12 @@ ipv6-image-bundle-linux-riscv64.tar: embedded-bins/Makefile.variables
 		docker.io/library/nginx:1.29.0-alpine \
 		docker.io/library/alpine:$(alpine_version) \
 		docker.io/curlimages/curl:8.15.0 \
+		docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version) \
+		registry.k8s.io/conformance:v$(kubernetes_version) \
+		registry.k8s.io/e2e-test-images/agnhost:2.56 \
+		registry.k8s.io/e2e-test-images/jessie-dnsutils:1.7 \
+		registry.k8s.io/e2e-test-images/nginx:1.14-4 \
+		registry.k8s.io/pause:3.10 \
 		| ./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@'
 
 .PHONY: $(smoketests)
