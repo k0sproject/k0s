@@ -1,2 +1,2 @@
 # renovate: datasource=python-version depName=python versioning=python
-python_version = 3.13.5
+python_version = 3.13.6
