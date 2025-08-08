@@ -225,6 +225,12 @@ func (e *Etcd) Start(ctx context.Context) error {
 		args["--cipher-suites"] = constant.AllowedTLS12CipherSuiteNames()
 	}
 
+	// Remove duplicates between extraArgs and rawArgs
+	for _, arg := range e.Config.RawArgs {
+		key, _, _ := strings.Cut(arg, "=")
+		delete(args, key)
+	}
+
 	logrus.Debugf("starting etcd with args: %v", args)
 
 	e.supervisor = supervisor.Supervisor{
@@ -232,7 +238,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 		BinPath:       assets.BinPath("etcd", e.K0sVars.BinDir),
 		RunDir:        e.K0sVars.RunDir,
 		DataDir:       e.K0sVars.DataDir,
-		Args:          args.ToArgs(),
+		Args:          append(args.ToArgs(), e.Config.RawArgs...),
 		UID:           e.uid,
 		GID:           e.gid,
 		KeepEnvPrefix: true,
