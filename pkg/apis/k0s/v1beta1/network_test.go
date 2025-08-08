@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/utils/ptr"
 
+	"github.com/k0sproject/k0s/pkg/featuregate"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -385,6 +386,32 @@ func (s *NetworkSuite) TestValidation() {
 		errors := n.Validate()
 		if s.Len(errors, 1) {
 			s.ErrorContains(errors[0], "podCIDR and serviceCIDR must be both IPv4 or IPv6")
+		}
+	})
+
+	s.Run("valid_single_stack_ipv6", func() {
+		fg := featuregate.FeatureGates{}
+		s.NoError(fg.Set("IPv6SingleStack=true"), "Expected no error when enabling IPv6SingleStack feature gate")
+		defer func() { featuregate.FlushDefaultFeatureGates(s.T()) }()
+
+		n := DefaultNetwork()
+		n.PodCIDR = "fd00::/108"
+		n.ServiceCIDR = "fd01::/108"
+		errors := n.Validate()
+		s.Nil(errors, "Expected no errors for valid single stack IPv6 CIDRs")
+	})
+
+	s.Run("invalid_single_stack_ipv6_missing_feature_gates", func() {
+		fg := featuregate.FeatureGates{}
+		s.NoError(fg.Set(""), "Expected no error when setting empty feature gates")
+		defer func() { featuregate.FlushDefaultFeatureGates(s.T()) }()
+
+		n := DefaultNetwork()
+		n.PodCIDR = "fd00::/108"
+		n.ServiceCIDR = "fd01::/108"
+		errors := n.Validate()
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], "feature gate IPv6SingleStack must be explicitly enabled to use IPv6 single stack")
 		}
 	})
 
