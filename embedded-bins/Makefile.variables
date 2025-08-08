@@ -2,7 +2,7 @@
 alpine_patch_version = 3.22.1
 alpine_version = $(word 1,$(subst ., ,$(alpine_patch_version))).$(word 2,$(subst ., ,$(alpine_patch_version)))
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
-go_version = 1.24.5
+go_version = 1.24.6
 
 # renovate: datasource=github-releases depName=opencontainers/runc
 runc_version = 1.3.0
