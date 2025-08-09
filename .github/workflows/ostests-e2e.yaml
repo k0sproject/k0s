@@ -99,7 +99,7 @@ jobs:
 
       - name: "Tofu :: Requisites :: Download k0s"
         if: inputs.k0s-version == ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: k0s-linux-${{ inputs.arch }}
           path: ${{ github.workspace }}/.cache
