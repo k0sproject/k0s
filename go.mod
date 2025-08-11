@@ -22,7 +22,7 @@ require (
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-logr/logr v1.4.3
-	github.com/go-openapi/jsonpointer v0.21.1
+	github.com/go-openapi/jsonpointer v0.21.2
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/go-cmp v0.7.0
 	github.com/k0sproject/bootloose v0.9.3
