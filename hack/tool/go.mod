@@ -85,8 +85,8 @@ require (
 	golang.org/x/time v0.10.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/apimachinery v0.34.0-beta.0 // indirect
-	k8s.io/client-go v0.34.0-beta.0 // indirect
+	k8s.io/apimachinery v0.34.0-rc.1 // indirect
+	k8s.io/client-go v0.34.0-rc.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
