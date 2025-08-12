@@ -69,7 +69,7 @@ jobs:
           name: airgap-image-bundle-linux-amd64
 
       - name: Download ipv6 image bundle
-        if: inputs.name == 'calico-ipv6' || inputs.name == 'kuberouter-ipv6'
+        if: inputs.name == 'calico-ipv6' || inputs.name == 'kuberouter-ipv6' || (startsWith(inputs.name, 'network-conformance-') && contains(inputs.name, '-ipv6'))
         uses: actions/download-artifact@v4
         with:
           name: ipv6-image-bundle-linux-amd64

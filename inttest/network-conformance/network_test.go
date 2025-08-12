@@ -18,17 +18,48 @@ import (
 	"github.com/vmware-tanzu/sonobuoy/pkg/dynamic"
 	"golang.org/x/mod/semver"
 	"golang.org/x/sync/errgroup"
+	"sigs.k8s.io/yaml"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
 type networkSuite struct {
 	common.BootlooseSuite
-	cni       string
-	proxyMode string
+	cni        string
+	proxyMode  string
+	isIPv6Only bool
 }
 
 func (s *networkSuite) TestK0sGetsUp() {
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfig, s.cni, s.proxyMode))
+	// Build k0s config from structs and marshal to YAML
+	{
+		clusterCfg := &v1beta1.ClusterConfig{
+			Spec: &v1beta1.ClusterSpec{
+				Network: func() *v1beta1.Network {
+					network := v1beta1.DefaultNetwork()
+					network.Provider = s.cni
+					if network.KubeProxy == nil {
+						network.KubeProxy = v1beta1.DefaultKubeProxy()
+					}
+					network.KubeProxy.Mode = s.proxyMode
+					return network
+				}(),
+			},
+		}
+		if s.isIPv6Only {
+			clusterCfg.Spec.Network.PodCIDR = "fd00::/108"
+			clusterCfg.Spec.Network.ServiceCIDR = "fd01::/108"
+		}
+		config, err := yaml.Marshal(clusterCfg)
+		s.Require().NoError(err)
+		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
+	}
+
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server"))
+
+	if s.isIPv6Only {
+		common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
+	}
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
@@ -128,6 +159,7 @@ func TestNetworkSuite(t *testing.T) {
 		},
 		"kuberouter",
 		"iptables",
+		false,
 	}
 
 	target := os.Getenv("K0S_INTTEST_TARGET")
@@ -137,15 +169,13 @@ func TestNetworkSuite(t *testing.T) {
 	if strings.HasSuffix(target, "-nft") {
 		s.proxyMode = "nftables"
 	}
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "ipv6") {
+		s.isIPv6Only = true
+		s.Networks = []string{"bridge-ipv6"}
+		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle.tar"}
+		s.K0sExtraImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
+	}
 
 	t.Logf("Testing %s using %s", s.cni, s.proxyMode)
 	suite.Run(t, &s)
 }
-
-const k0sConfig = `
-spec:
-  network:
-    provider: %s
-    kubeProxy:
-      mode: %s
-`
