@@ -6,8 +6,10 @@ package v1beta1
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 )
@@ -38,8 +40,20 @@ type WorkerProfile struct {
 }
 
 // Validate validates instance
-func (wp *WorkerProfile) Validate(path *field.Path) []error {
-	return wp.validateConfig(path.Child("values"))
+func (wp *WorkerProfile) Validate(path *field.Path) (errs []error) {
+	// The name is used as part of a ConfigMap name and used as a label value.
+	// Validate it accordingly.
+	if wp.Name == "" {
+		errs = append(errs, field.Required(path.Child("name"), ""))
+	} else if msgs := validation.IsDNS1123Label(wp.Name); len(msgs) > 0 {
+		errs = append(errs, field.Invalid(path.Child("name"), wp.Name, strings.Join(msgs, ", ")))
+	}
+
+	if wp.Config != nil {
+		errs = append(errs, wp.validateConfig(path.Child("values"))...)
+	}
+
+	return errs
 }
 
 func (wp *WorkerProfile) validateConfig(path *field.Path) []error {

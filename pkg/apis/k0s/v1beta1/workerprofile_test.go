@@ -16,6 +16,23 @@ import (
 )
 
 func TestWorkerProfiles(t *testing.T) {
+	t.Run("name validation", func(t *testing.T) {
+		profiles := WorkerProfiles{
+			{Name: ""},
+			{Name: "-me -not -DNS -name"},
+			{Name: "sixty-four-characters-looooooooooooooooooooooooooooooooooooooong"},
+			{Name: "legit"},
+		}
+
+		errs := profiles.Validate(field.NewPath("nameValidation"))
+		require.Lenf(t, errs, 3, "%s", errors.Join(errs...))
+		assert.ErrorContains(t, errs[0], "nameValidation[0].name: Required value")
+		assert.ErrorContains(t, errs[1], "nameValidation[1].name: Invalid value: ")
+		assert.ErrorContains(t, errs[1], "a lowercase RFC 1123 label must consist of ")
+		assert.ErrorContains(t, errs[2], "nameValidation[2].name: Invalid value: ")
+		assert.ErrorContains(t, errs[2], "must be no more than 63 characters")
+	})
+
 	t.Run("worker_profile_validation", func(t *testing.T) {
 		cases := []struct {
 			name string
@@ -87,6 +104,7 @@ func TestWorkerProfiles(t *testing.T) {
 				require.NoError(t, err)
 
 				profiles := WorkerProfiles{{
+					Name:   "test-case",
 					Config: &runtime.RawExtension{Raw: value},
 				}}
 
