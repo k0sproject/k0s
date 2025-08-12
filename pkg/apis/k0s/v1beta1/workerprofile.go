@@ -47,17 +47,17 @@ func (wp *WorkerProfile) Validate() []error {
 	if err := json.Unmarshal(wp.Config.Raw, kubeletCfg); err != nil {
 		errs = append(errs, fmt.Errorf("failed to decode worker profile %q: %w", wp.Name, err))
 	}
-	if kubeletCfg.ClusterDNS != nil {
-		errs = append(errs, fmt.Errorf("field `clusterDNS` is prohibited to override in worker profile %q", wp.Name))
-	}
-	if kubeletCfg.ClusterDomain != "" {
-		errs = append(errs, fmt.Errorf("field `clusterDomain` is prohibited to override in worker profile %q", wp.Name))
-	}
 	if kubeletCfg.APIVersion != "" {
 		errs = append(errs, fmt.Errorf("field `apiVersion` is prohibited to override in worker profile %q", wp.Name))
 	}
 	if kubeletCfg.Kind != "" {
 		errs = append(errs, fmt.Errorf("field `kind` is prohibited to override in worker profile %q", wp.Name))
+	}
+	if kubeletCfg.ClusterDNS != nil {
+		errs = append(errs, fmt.Errorf("field `clusterDNS` is prohibited to override in worker profile %q", wp.Name))
+	}
+	if kubeletCfg.ClusterDomain != "" {
+		errs = append(errs, fmt.Errorf("field `clusterDomain` is prohibited to override in worker profile %q", wp.Name))
 	}
 	if kubeletCfg.StaticPodURL != "" {
 		errs = append(errs, fmt.Errorf("field `staticPodURL` is prohibited to override in worker profile %q", wp.Name))
