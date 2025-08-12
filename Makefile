@@ -264,17 +264,7 @@ ipv6-image-bundle-linux-amd64.tar \
 ipv6-image-bundle-linux-arm64.tar \
 ipv6-image-bundle-linux-arm.tar \
 ipv6-image-bundle-linux-riscv64.tar: ipv6-test-images.txt
-	printf '%s\n' \
-		docker.io/library/nginx:1.29.0-alpine \
-		docker.io/library/alpine:$(alpine_version) \
-		docker.io/curlimages/curl:8.15.0 \
-		docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version) \
-		registry.k8s.io/conformance:v$(kubernetes_version) \
-		registry.k8s.io/e2e-test-images/agnhost:2.56 \
-		registry.k8s.io/e2e-test-images/jessie-dnsutils:1.7 \
-		registry.k8s.io/e2e-test-images/nginx:1.14-4 \
-		registry.k8s.io/pause:3.10 \
-		| ./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@'
+	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <ipv6-test-images.txt
 
 .PHONY: $(smoketests)
 $(air_gapped_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
