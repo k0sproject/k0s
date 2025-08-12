@@ -8,10 +8,9 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 )
-
-var _ Validateable = (*WorkerProfiles)(nil)
 
 // WorkerProfiles profiles collection
 // +listType=map
@@ -19,10 +18,10 @@ var _ Validateable = (*WorkerProfiles)(nil)
 type WorkerProfiles []WorkerProfile
 
 // Validate validates all profiles
-func (wps WorkerProfiles) Validate() []error {
+func (wps WorkerProfiles) Validate(path *field.Path) []error {
 	var errors []error
-	for _, p := range wps {
-		if err := p.Validate(); err != nil {
+	for i, p := range wps {
+		if err := p.Validate(path.Index(i)); err != nil {
 			errors = append(errors, err...)
 		}
 	}
@@ -39,28 +38,49 @@ type WorkerProfile struct {
 }
 
 // Validate validates instance
-func (wp *WorkerProfile) Validate() []error {
+func (wp *WorkerProfile) Validate(path *field.Path) []error {
+	return wp.validateConfig(path.Child("values"))
+}
 
+func (wp *WorkerProfile) validateConfig(path *field.Path) []error {
 	var errs []error
 
+	// Decode the kubelet config.
 	kubeletCfg := &kubeletv1beta1.KubeletConfiguration{}
 	if err := json.Unmarshal(wp.Config.Raw, kubeletCfg); err != nil {
-		errs = append(errs, fmt.Errorf("failed to decode worker profile %q: %w", wp.Name, err))
+		errs = append(errs, (*shortenedFieldError)(field.Invalid(path, wp.Config.Raw, err.Error())))
+	}
+
+	// Check that k0s-reserved config flags remain untouched.
+	reservedField := func(name string) *field.Error {
+		return field.Forbidden(path.Child(name), "may not be used in k0s worker profiles")
 	}
 	if kubeletCfg.APIVersion != "" {
-		errs = append(errs, fmt.Errorf("field `apiVersion` is prohibited to override in worker profile %q", wp.Name))
+		errs = append(errs, reservedField("apiVersion"))
 	}
 	if kubeletCfg.Kind != "" {
-		errs = append(errs, fmt.Errorf("field `kind` is prohibited to override in worker profile %q", wp.Name))
+		errs = append(errs, reservedField("kind"))
 	}
 	if kubeletCfg.ClusterDNS != nil {
-		errs = append(errs, fmt.Errorf("field `clusterDNS` is prohibited to override in worker profile %q", wp.Name))
+		errs = append(errs, reservedField("clusterDNS"))
 	}
 	if kubeletCfg.ClusterDomain != "" {
-		errs = append(errs, fmt.Errorf("field `clusterDomain` is prohibited to override in worker profile %q", wp.Name))
+		errs = append(errs, reservedField("clusterDomain"))
 	}
 	if kubeletCfg.StaticPodURL != "" {
-		errs = append(errs, fmt.Errorf("field `staticPodURL` is prohibited to override in worker profile %q", wp.Name))
+		errs = append(errs, reservedField("staticPodURL"))
 	}
+
 	return errs
+}
+
+// A [field.Error] that won't include the bad value in its error message.
+type shortenedFieldError field.Error
+
+func (e *shortenedFieldError) Error() string {
+	return fmt.Sprintf("%s: %s: %s", e.Field, e.Type, e.Detail)
+}
+
+func (e *shortenedFieldError) Unwrap() error {
+	return (*field.Error)(e)
 }
