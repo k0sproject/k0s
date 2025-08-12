@@ -21,6 +21,7 @@ func TestWorkerProfiles(t *testing.T) {
 			name string
 			spec map[string]any
 			msg  string
+			bad  string
 		}{
 			{
 				name: "Generic spec is valid",
@@ -31,14 +32,16 @@ func TestWorkerProfiles(t *testing.T) {
 				spec: map[string]any{
 					"apiVersion": "v2",
 				},
-				msg: "workerProfiles[0].values.apiVersion: Forbidden: may not be used in k0s worker profiles",
+				msg: `workerProfiles[0].values.apiVersion: Invalid value: "v2": expected "kubelet.config.k8s.io/v1beta1"`,
+				bad: "v2",
 			},
 			{
 				name: "Locked field kind",
 				spec: map[string]any{
 					"kind": "Controller",
 				},
-				msg: "workerProfiles[0].values.kind: Forbidden: may not be used in k0s worker profiles",
+				msg: `workerProfiles[0].values.kind: Invalid value: "Controller": expected "KubeletConfiguration"`,
+				bad: "Controller",
 			},
 			{
 				name: "Locked field clusterDNS",
@@ -95,9 +98,11 @@ func TestWorkerProfiles(t *testing.T) {
 
 					var fieldErr *field.Error
 					if assert.ErrorAs(t, errs[0], &fieldErr) {
-						if fieldErr.Type != field.ErrorTypeForbidden {
-							assert.Equal(t, value, fieldErr.BadValue)
+						bad := any(tc.bad)
+						if fieldErr.Field == "workerProfiles[0].values" {
+							bad = value
 						}
+						assert.Equal(t, bad, fieldErr.BadValue)
 					}
 				}
 			})
