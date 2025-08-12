@@ -388,7 +388,6 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		"scheduler":         s.Scheduler,
 		"storage":           s.Storage,
 		"network":           s.Network,
-		"workerProfiles":    s.WorkerProfiles,
 		"telemetry":         s.Telemetry,
 		"install":           s.Install,
 		"extensions":        s.Extensions,
@@ -398,6 +397,8 @@ func (s *ClusterSpec) Validate() (errs []error) {
 			errs = append(errs, fmt.Errorf("%s: %w", name, err))
 		}
 	}
+
+	errs = append(errs, s.WorkerProfiles.Validate(field.NewPath("workerProfiles"))...)
 
 	for _, err := range s.Images.Validate(field.NewPath("images")) {
 		errs = append(errs, err)

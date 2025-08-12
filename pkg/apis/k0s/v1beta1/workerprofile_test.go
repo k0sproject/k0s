@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TestWorkerProfile worker profile test suite
-func TestWorkerProfile(t *testing.T) {
+func TestWorkerProfiles(t *testing.T) {
 	t.Run("worker_profile_validation", func(t *testing.T) {
 		cases := []struct {
 			name string
@@ -31,49 +31,50 @@ func TestWorkerProfile(t *testing.T) {
 				spec: map[string]any{
 					"apiVersion": "v2",
 				},
-				msg: "field `apiVersion` is prohibited to override in worker profile \"Locked field apiVersion\"",
+				msg: "workerProfiles[0].values.apiVersion: Forbidden: may not be used in k0s worker profiles",
 			},
 			{
 				name: "Locked field kind",
 				spec: map[string]any{
 					"kind": "Controller",
 				},
-				msg: "field `kind` is prohibited to override in worker profile \"Locked field kind\"",
+				msg: "workerProfiles[0].values.kind: Forbidden: may not be used in k0s worker profiles",
 			},
 			{
 				name: "Locked field clusterDNS",
 				spec: map[string]any{
 					"clusterDNS": []string{"8.8.8.8"},
 				},
-				msg: "field `clusterDNS` is prohibited to override in worker profile \"Locked field clusterDNS\"",
+				msg: "workerProfiles[0].values.clusterDNS: Forbidden: may not be used in k0s worker profiles",
 			},
 			{
 				name: "Locked field clusterDomain",
 				spec: map[string]any{
 					"clusterDomain": "cluster.org",
 				},
-				msg: "field `clusterDomain` is prohibited to override in worker profile \"Locked field clusterDomain\"",
+				msg: "workerProfiles[0].values.clusterDomain: Forbidden: may not be used in k0s worker profiles",
 			},
 			{
 				name: "Locked field staticPodURL",
 				spec: map[string]any{
 					"staticPodURL": "foo",
 				},
-				msg: "field `staticPodURL` is prohibited to override in worker profile \"Locked field staticPodURL\"",
-			}, {
+				msg: "workerProfiles[0].values.staticPodURL: Forbidden: may not be used in k0s worker profiles",
+			},
+			{
 				name: "Valid kubelet configuration",
 				spec: map[string]any{
 					"cpuManagerPolicy": "static",
 					"cpuManagerPolicyOptions": map[string]string{
 						"full-pcpus-only": "true",
 					}},
-			}, {
+			},
+			{
 				name: "Invalid kubelet configuration",
 				spec: map[string]any{
 					"cpuManagerPolicyOptions": "full-pcpus-only=true",
 				},
-				msg: "failed to decode worker profile \"Invalid kubelet configuration\": " +
-					"json: cannot unmarshal string into Go struct field KubeletConfiguration.cpuManagerPolicyOptions of type map[string]string",
+				msg: "workerProfiles[0].values: Invalid value: json: cannot unmarshal string into Go struct field KubeletConfiguration.cpuManagerPolicyOptions of type map[string]string",
 			},
 		}
 
@@ -82,16 +83,22 @@ func TestWorkerProfile(t *testing.T) {
 				value, err := json.Marshal(tc.spec)
 				require.NoError(t, err)
 
-				profile := WorkerProfile{
-					Name:   tc.name,
+				profiles := WorkerProfiles{{
 					Config: &runtime.RawExtension{Raw: value},
-				}
+				}}
 
-				errs := profile.Validate()
+				errs := profiles.Validate(field.NewPath("workerProfiles"))
 				if tc.msg == "" {
 					assert.Nilf(t, errs, "%s", errors.Join(errs...))
 				} else if assert.Lenf(t, errs, 1, "%s", errors.Join(errs...)) {
 					assert.Equal(t, tc.msg, errs[0].Error())
+
+					var fieldErr *field.Error
+					if assert.ErrorAs(t, errs[0], &fieldErr) {
+						if fieldErr.Type != field.ErrorTypeForbidden {
+							assert.Equal(t, value, fieldErr.BadValue)
+						}
+					}
 				}
 			})
 		}
