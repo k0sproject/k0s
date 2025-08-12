@@ -63,7 +63,8 @@ func TestWorkerProfiles(t *testing.T) {
 			{
 				name: "Locked field clusterDNS",
 				spec: map[string]any{
-					"clusterDNS": []string{"8.8.8.8"},
+					// These should be valid IPs, but kubelet won't validate the input.
+					"clusterDNS": []string{"bogus"},
 				},
 				msg: "workerProfiles[0].values.clusterDNS: Forbidden: may not be used in k0s worker profiles",
 			},
@@ -95,6 +96,13 @@ func TestWorkerProfiles(t *testing.T) {
 					"cpuManagerPolicyOptions": "full-pcpus-only=true",
 				},
 				msg: "workerProfiles[0].values: Invalid value: json: cannot unmarshal string into Go struct field KubeletConfiguration.cpuManagerPolicyOptions of type map[string]string",
+			},
+			{
+				name: "kubelet configuration validation",
+				spec: map[string]any{
+					"systemCgroups": "system.slice",
+				},
+				msg: `workerProfiles[0].values: Invalid value: invalid configuration: systemCgroups (--system-cgroups) was specified and cgroupRoot (--cgroup-root) was not specified`,
 			},
 		}
 
