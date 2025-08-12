@@ -49,17 +49,22 @@ func (wp *WorkerProfile) validateConfig(path *field.Path) []error {
 	kubeletCfg := &kubeletv1beta1.KubeletConfiguration{}
 	if err := json.Unmarshal(wp.Config.Raw, kubeletCfg); err != nil {
 		errs = append(errs, (*shortenedFieldError)(field.Invalid(path, wp.Config.Raw, err.Error())))
+		return errs
+	}
+
+	// Check that apiVersion and kind are either unspecified or match the expected values.
+	if kubeletCfg.APIVersion != "" && kubeletCfg.APIVersion != kubeletv1beta1.SchemeGroupVersion.String() {
+		detail := fmt.Sprintf("expected %q", kubeletv1beta1.SchemeGroupVersion)
+		errs = append(errs, field.Invalid(path.Child("apiVersion"), kubeletCfg.APIVersion, detail))
+	}
+	if kubeletCfg.Kind != "" && kubeletCfg.Kind != "KubeletConfiguration" {
+		detail := fmt.Sprintf("expected %q", "KubeletConfiguration")
+		errs = append(errs, field.Invalid(path.Child("kind"), kubeletCfg.Kind, detail))
 	}
 
 	// Check that k0s-reserved config flags remain untouched.
 	reservedField := func(name string) *field.Error {
 		return field.Forbidden(path.Child(name), "may not be used in k0s worker profiles")
-	}
-	if kubeletCfg.APIVersion != "" {
-		errs = append(errs, reservedField("apiVersion"))
-	}
-	if kubeletCfg.Kind != "" {
-		errs = append(errs, reservedField("kind"))
 	}
 	if kubeletCfg.ClusterDNS != nil {
 		errs = append(errs, reservedField("clusterDNS"))
