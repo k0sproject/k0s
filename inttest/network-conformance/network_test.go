@@ -128,6 +128,8 @@ func (s *networkSuite) TestK0sGetsUp() {
 		Path:      "/tmp/sonobuoy",
 	})
 	s.Require().NoError(err)
+	s.T().Log("Test status: ", status.Status)
+
 	s.Require().NoError(retrieveResults(r, ec))
 
 	s.T().Log("sonobuoy test status: ", status)
