@@ -27,7 +27,7 @@ func TestWorkerProfile(t *testing.T) {
 			{
 				name: "Locked field clusterDNS",
 				spec: map[string]any{
-					"clusterDNS": "8.8.8.8",
+					"clusterDNS": []string{"8.8.8.8"},
 				},
 				valid: false,
 			},
@@ -55,6 +55,20 @@ func TestWorkerProfile(t *testing.T) {
 				name: "Locked field staticPodURL",
 				spec: map[string]any{
 					"staticPodURL": "foo",
+				},
+				valid: false,
+			}, {
+				name: "Valid kubelet configuration",
+				spec: map[string]any{
+					"cpuManagerPolicy": "static",
+					"cpuManagerPolicyOptions": map[string]string{
+						"full-pcpus-only": "true",
+					}},
+				valid: true,
+			}, {
+				name: "Invalid kubelet configuration",
+				spec: map[string]any{
+					"cpuManagerPolicyOptions": "full-pcpus-only=true",
 				},
 				valid: false,
 			},
