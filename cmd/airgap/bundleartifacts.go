@@ -44,7 +44,12 @@ func newAirgapBundleArtifactsCmd(log logrus.FieldLogger, rewriteBundleRef airgap
 		Long: `Bundles artifacts needed for airgapped installations into a tarball. Fetches the
 artifacts from their OCI registries and bundles them into an OCI Image Layout
 archive (written to standard output by default). Reads names from standard input
-if no names are given on the command line.`,
+if no names are given on the command line.
+
+Note that if you need the tarball to be reproducible, you must specify
+--concurrency=1. This ensures that the images are added in the specified order
+instead of in an arbitrary order based on when they finish downloading.
+`,
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
