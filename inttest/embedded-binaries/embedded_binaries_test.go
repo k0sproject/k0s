@@ -44,7 +44,6 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 		}{
 			{"containerd -v", true, "containerd github.com/containerd/containerd"},
 			{"containerd-shim -v", false, "containerd-shim"},
-			{"containerd-shim-runc-v1 -v", true, "containerd-shim-runc-v1:"},
 			{"containerd-shim-runc-v2 -v", true, "containerd-shim-runc-v2:"},
 			{"etcd --version", true, ""},
 			{"kube-apiserver --version", true, ""},
