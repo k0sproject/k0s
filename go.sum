@@ -316,8 +316,8 @@ github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnr
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/k0sproject/bootloose v0.9.3 h1:m6reb9NgyHlUwubLSBQzRjWI6hMxL9cFrlCUvf5nTqs=
 github.com/k0sproject/bootloose v0.9.3/go.mod h1:w61rHnFjm/V4t4Bc1O1nd3hKtQwV9+Xkx8Ddt5JAkgw=
-github.com/k0sproject/version v0.7.0 h1:pWp60UaA7N9g/wKUz1HN6heFW1M6ioWHEo8glHYlq00=
-github.com/k0sproject/version v0.7.0/go.mod h1:iNV3O8blndsQhxZ8zACfpQhrLDlrTvDlCzx+vgCFtSI=
+github.com/k0sproject/version v0.8.0 h1:Yh1SFDeBqQ7etrGwffY8bWKdbAUjeBOhiZ6oQuuz4sM=
+github.com/k0sproject/version v0.8.0/go.mod h1:iNV3O8blndsQhxZ8zACfpQhrLDlrTvDlCzx+vgCFtSI=
 github.com/kardianos/service v1.2.4 h1:XNlGtZOYNx2u91urOdg/Kfmc+gfmuIo1Dd3rEi2OgBk=
 github.com/kardianos/service v1.2.4/go.mod h1:E4V9ufUuY82F7Ztlu1eN9VXWIQxg8NoLQlmFe0MtrXc=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
