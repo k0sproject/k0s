@@ -38,15 +38,17 @@ const (
 
 // Keepalived is the controller for the keepalived process in the control plane load balancing
 type Keepalived struct {
-	K0sVars                *config.CfgVars
-	Config                 *k0sAPI.KeepalivedSpec
-	DetailedLogging        bool
-	LogConfig              bool
-	APIPort                int
-	KubeConfigPath         string
+	K0sVars         *config.CfgVars
+	Config          *k0sAPI.KeepalivedSpec
+	DetailedLogging bool
+	LogConfig       bool
+	APIPort         int
+	KubeConfigPath  string
+
 	keepalivedConfig       *keepalivedConfig
-	uid                    int
 	supervisor             *supervisor.Supervisor
+	uid                    int
+	executablePath         string
 	log                    *logrus.Entry
 	configFilePath         string
 	virtualServersFilePath string
@@ -73,7 +75,8 @@ func (k *Keepalived) Init(_ context.Context) error {
 
 	k.configFilePath = filepath.Join(k.K0sVars.RunDir, "keepalived.conf")
 	k.virtualServersFilePath = filepath.Join(k.K0sVars.RunDir, "keepalived-virtualservers-generated.conf")
-	return assets.Stage(k.K0sVars.BinDir, "keepalived")
+	k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "keepalived")
+	return err
 }
 
 // Start generates the keepalived configuration and starts the keepalived process
@@ -144,7 +147,7 @@ func (k *Keepalived) Start(ctx context.Context) error {
 	k.log.Infoln("Starting keepalived")
 	k.supervisor = &supervisor.Supervisor{
 		Name:    "keepalived",
-		BinPath: assets.BinPath("keepalived", k.K0sVars.BinDir),
+		BinPath: k.executablePath,
 		Args:    args,
 		RunDir:  k.K0sVars.RunDir,
 		DataDir: k.K0sVars.DataDir,
