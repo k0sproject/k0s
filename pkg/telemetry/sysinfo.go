@@ -21,7 +21,7 @@ package telemetry
 import (
 	"runtime"
 
-	"github.com/segmentio/analytics-go"
+	"github.com/segmentio/analytics-go/v3"
 )
 
 func addSysInfo(d *analytics.Context) {

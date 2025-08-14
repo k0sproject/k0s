@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/segmentio/analytics-go"
+	"github.com/segmentio/analytics-go/v3"
 	"github.com/sirupsen/logrus"
 )
 
