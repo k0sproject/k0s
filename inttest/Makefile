@@ -87,6 +87,8 @@ check-configchange: TIMEOUT=8m
 
 check-ctr: TIMEOUT=10m
 
+check-etcdmember: TIMEOUT=8m
+
 check-kubeletcertrotate: TIMEOUT=15m
 
 check-network-conformance-calico: TIMEOUT=15m
