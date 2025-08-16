@@ -247,8 +247,7 @@ airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar \
 airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
-	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <airgap-images.txt
-
+	./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' <airgap-images.txt
 
 ipv6-test-images.txt: embedded-bins/Makefile.variables $(shell find hack/gen-test-images-list/ -type f)
 	$(GO) run -tags=hack hack/gen-test-images-list/cmd/main.go -o '$@' \

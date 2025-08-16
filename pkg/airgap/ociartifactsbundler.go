@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"math"
 	"net/http"
 	"os"
 	"path"
@@ -56,9 +57,13 @@ type OCIArtifactsBundler struct {
 	RegistriesConfigPaths []string // uses the standard Docker config if empty
 	PlatformMatcher       platforms.MatchComparer
 	RewriteTarget         RewriteRefFunc
+
+	// Limits the maximum number of concurrent artifact copy tasks.
+	// Uses the ORAS default if zero.
+	Concurrency uint
 }
 
-func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, concurrency int, out io.Writer) error {
+func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, out io.Writer) error {
 	var client *http.Client
 	if len := len(refs); len < 1 {
 		b.Log.Warn("No artifacts to bundle")
@@ -76,7 +81,7 @@ func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, c
 
 	copyOpts := oras.CopyOptions{
 		CopyGraphOptions: oras.CopyGraphOptions{
-			Concurrency:    concurrency,
+			Concurrency:    int(min(math.MaxInt, b.Concurrency)),
 			FindSuccessors: findSuccessors(b.PlatformMatcher),
 			PreCopy: func(ctx context.Context, desc imagespecv1.Descriptor) error {
 				if desc.MediaType == images.MediaTypeDockerSchema1Manifest {
