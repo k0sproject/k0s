@@ -38,7 +38,7 @@ func GenImagesList(name string, args ...string) error {
 		"docker.io/library/nginx:1.29.1-alpine",
 		"docker.io/curlimages/curl:8.15.0",
 		"docker.io/library/alpine:" + alpineVersion,
-		"docker.io/sonobuoy/sonobuoy:" + sonobuoyVersion,
+		"docker.io/sonobuoy/sonobuoy:v" + sonobuoyVersion,
 		"registry.k8s.io/conformance:v" + kubernetesVersion,
 		imageutils.GetE2EImage(imageutils.Agnhost),
 		imageutils.GetE2EImage(imageutils.JessieDnsutils),
