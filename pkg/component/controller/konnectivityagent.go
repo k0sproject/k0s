@@ -117,6 +117,12 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 		nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 		if nllb.IsEnabled() {
 			switch nllb.Type {
+			case v1beta1.NllbTypeCustom:
+				k.log.Debugf("Enabling node-local load balancing via %s", nllb.Type)
+				cfg.HostNetwork = true
+				cfg.ProxyServerHost = nllb.Custom.KonnectivityHost
+				cfg.ProxyServerPort = nllb.Custom.KonnectivityPort
+
 			case v1beta1.NllbTypeEnvoyProxy:
 				k.log.Debugf("Enabling node-local load balancing via %s", nllb.Type)
 
