@@ -10,7 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -55,36 +55,142 @@ const k0sManaged = "_K0S_MANAGED=yes"
 
 // processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
-func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
-	waitresult := make(chan error)
+func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
+	waitresult := make(chan error, 1)
 	go func() {
-		waitresult <- s.cmd.Wait()
+		waitresult <- cmd.Wait()
 	}()
 
 	defer os.Remove(s.PidFile)
 
 	select {
 	case <-ctx.Done():
-		for {
-			s.log.Info("Requesting graceful shutdown")
-			if err := requestGracefulShutdown(s.cmd.Process); err != nil {
-				s.log.WithError(err).Warn("Failed to request graceful shutdown")
-			}
-			select {
-			case <-time.After(s.TimeoutStop):
-				continue
-			case <-waitresult:
-				return true
+		var exitErr *exec.ExitError
+		err := s.endProcess(cmd, waitresult)
+		// Ignore errors for processes that don't handle signals
+		if errors.Is(err, errProcessShutdownFailed) && errors.As(err, &exitErr) {
+			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.Signal() == syscall.SIGTERM {
+				s.log.Debug("Process didn't handle SIGTERM")
+				err = nil
 			}
 		}
-	case err := <-waitresult:
 		if err != nil {
-			s.log.WithError(err).Warn("Failed to wait for process")
+			s.log.WithError(err).Error("Error while ending process")
 		} else {
-			s.log.Warnf("Process exited: %s", s.cmd.ProcessState)
+			s.log.Info("Process finished")
 		}
+		return true
+
+	case err := <-waitresult:
+		var exitErr *exec.ExitError
+		switch {
+		case err == nil:
+			s.log.Error("Process finished prematurely")
+		case errors.As(err, &exitErr):
+			s.log.WithError(exitErr).Error("Process failed")
+		default:
+			s.log.WithError(err).Error("Failed to wait for process")
+		}
+		return false
 	}
-	return false
+}
+
+var errProcessShutdownFailed = errors.New("process shutdown failed")
+
+func (s *Supervisor) endProcess(cmd *exec.Cmd, waitresult <-chan error) error {
+	err := requestGracefulShutdown(cmd.Process)
+	var expectGracefulShutdown bool
+	switch {
+	// Shutdown request sent, wait for process to finish.
+	case err == nil:
+		expectGracefulShutdown = true
+		s.log.Debug("Awaiting graceful process shutdown for ", s.TimeoutStop)
+		select {
+		case err := <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				return nil
+			case errors.As(err, &exitErr):
+				return fmt.Errorf("%w: %w", errProcessShutdownFailed, exitErr)
+			default:
+				return fmt.Errorf("failed to wait for process: %w", exitErr)
+			}
+
+		case <-time.After(s.TimeoutStop):
+			err = fmt.Errorf("timed out after %s while waiting for process to finish", s.TimeoutStop)
+		}
+
+	// The process has finished even before the shutdown could be requested.
+	case errors.Is(err, os.ErrProcessDone):
+		select {
+		case err = <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				err = errors.New("process finished prematurely")
+			case errors.As(err, &exitErr):
+				err = fmt.Errorf("process failed: %w", exitErr)
+			default:
+				err = fmt.Errorf("failed to wait for process: %w", err)
+			}
+
+		default:
+			err = errors.New("process state unavailable")
+		}
+
+		return fmt.Errorf("process exited before shutdown could be requested: %w", err)
+
+	// Something else went wrong
+	default:
+		// Continue with killing the process
+	}
+
+	shutdownErr := err
+	err = cmd.Process.Kill()
+	switch {
+	// Process killed, wait for process to exit.
+	case err == nil:
+		timeoutKill := 30 * time.Second
+		s.log.Debug("Awaiting termination of killed process for ", timeoutKill)
+		select {
+		case <-waitresult:
+			err = errors.New("process has been killed")
+		case <-time.After(timeoutKill):
+			err = fmt.Errorf("timed out after %s while waiting for killed process to terminate, giving up", timeoutKill)
+		}
+		return fmt.Errorf("%w; %w", shutdownErr, err)
+
+	// Process exited before it could be killed.
+	case errors.Is(err, os.ErrProcessDone):
+		select {
+		case err := <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				if expectGracefulShutdown {
+					return nil
+				}
+				return fmt.Errorf("%w; process finished prematurely", shutdownErr)
+
+			case errors.As(err, &exitErr):
+				if expectGracefulShutdown {
+					return fmt.Errorf("%w: %w", errProcessShutdownFailed, exitErr)
+				}
+				return fmt.Errorf("%w; process failed: %w", shutdownErr, exitErr)
+
+			default:
+				return fmt.Errorf("%w; failed to wait for process: %w", shutdownErr, exitErr)
+			}
+
+		default:
+			return fmt.Errorf("%w; process exited but no process state is available", shutdownErr)
+		}
+
+	// Something else went wrong
+	default:
+		return fmt.Errorf("%w; failed to kill process, giving up: %w", shutdownErr, err)
+	}
 }
 
 // Supervise Starts supervising the given process
@@ -97,7 +203,7 @@ func (s *Supervisor) Supervise() error {
 		return nil
 	}
 	s.log = logrus.WithField("component", s.Name)
-	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
+	s.PidFile = filepath.Join(s.RunDir, s.Name) + ".pid"
 
 	if s.TimeoutStop == 0 {
 		s.TimeoutStop = 5 * time.Second
@@ -178,7 +284,7 @@ func (s *Supervisor) Supervise() error {
 					s.log.Infof("Restarted (%d)", restarts)
 				}
 				restarts++
-				if s.processWaitQuit(ctx) {
+				if s.processWaitQuit(ctx, s.cmd) {
 					return
 				}
 			}
@@ -235,6 +341,10 @@ func (s *Supervisor) maybeKillPidFile() error {
 
 	ph, err := openPID(p)
 	if err != nil {
+		if errors.Is(err, syscall.ESRCH) {
+			// No process with the given PID, so no process to kill.
+			return nil
+		}
 		return fmt.Errorf("cannot interact with PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
 	defer ph.Close()
@@ -255,7 +365,7 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 		return err
 	}
 
-	if err := ph.requestGracefulShutdown(); errors.Is(err, syscall.ESRCH) {
+	if err := ph.requestGracefulShutdown(); errors.Is(err, os.ErrProcessDone) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to request graceful termination: %w", err)
@@ -265,7 +375,7 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 		return err
 	}
 
-	if err := ph.kill(); errors.Is(err, syscall.ESRCH) {
+	if err := ph.kill(); errors.Is(err, os.ErrProcessDone) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to kill: %w", err)
@@ -296,17 +406,22 @@ func (s *Supervisor) waitForTermination(ph procHandle) (bool, error) {
 func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 	// only kill process if it has the expected cmd
 	if cmd, err := ph.cmdline(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
+		if errors.Is(err, os.ErrProcessDone) {
 			return false, nil
 		}
-		return false, err
+		// Only error out if the error doesn't indicate that getting the command
+		// line is unsupported. In that case, ignore the error and proceed to
+		// the environment check.
+		if !errors.Is(err, errors.ErrUnsupported) {
+			return false, err
+		}
 	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
 		return false, nil
 	}
 
 	// only kill process if it has the _KOS_MANAGED env set
 	if env, err := ph.environ(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
+		if errors.Is(err, os.ErrProcessDone) {
 			return false, nil
 		}
 		return false, err
@@ -355,7 +470,7 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 		}
 		switch k {
 		case "PATH":
-			env[i] = "PATH=" + dir.PathListJoin(path.Join(dataDir, "bin"), v)
+			env[i] = "PATH=" + dir.PathListJoin(filepath.Join(dataDir, "bin"), v)
 		default:
 			env[i] = fmt.Sprintf("%s=%s", k, v)
 		}

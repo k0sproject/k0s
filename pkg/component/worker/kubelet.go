@@ -50,29 +50,20 @@ type Kubelet struct {
 	ExtraArgs           stringmap.StringMap
 	DualStackEnabled    bool
 
-	configPath string
-	supervisor supervisor.Supervisor
+	configPath     string
+	supervisor     *supervisor.Supervisor
+	executablePath string
 }
 
 var _ manager.Component = (*Kubelet)(nil)
 
 // Init extracts the needed binaries
-func (k *Kubelet) Init(_ context.Context) error {
-
-	if runtime.GOOS == "windows" {
-		if err := assets.Stage(k.K0sVars.BinDir, "kubelet.exe"); err != nil {
-			return err
-		}
+func (k *Kubelet) Init(_ context.Context) (err error) {
+	if k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "kubelet"); err != nil {
+		return err
 	}
 
-	if runtime.GOOS == "linux" {
-		if err := assets.Stage(k.K0sVars.BinDir, "kubelet"); err != nil {
-			return err
-		}
-	}
-
-	err := dir.Init(k.K0sVars.KubeletRootDir, constant.DataDirMode)
-	if err != nil {
+	if err = dir.Init(k.K0sVars.KubeletRootDir, constant.DataDirMode); err != nil {
 		return fmt.Errorf("failed to create %s: %w", k.K0sVars.KubeletRootDir, err)
 	}
 
@@ -107,12 +98,6 @@ func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.I
 
 // Run runs kubelet
 func (k *Kubelet) Start(ctx context.Context) error {
-	cmd := "kubelet"
-
-	if runtime.GOOS == "windows" {
-		cmd = "kubelet.exe"
-	}
-
 	logrus.Info("Starting kubelet")
 	args := stringmap.StringMap{
 		"--root-dir":   k.K0sVars.KubeletRootDir,
@@ -171,9 +156,9 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	args["--hostname-override"] = string(k.NodeName)
 
 	logrus.Debugf("starting kubelet with args: %v", args)
-	k.supervisor = supervisor.Supervisor{
-		Name:    cmd,
-		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
+	k.supervisor = &supervisor.Supervisor{
+		Name:    "kubelet",
+		BinPath: k.executablePath,
 		RunDir:  k.K0sVars.RunDir,
 		DataDir: k.K0sVars.DataDir,
 		Args:    args.ToArgs(),
@@ -188,7 +173,9 @@ func (k *Kubelet) Start(ctx context.Context) error {
 
 // Stop stops kubelet
 func (k *Kubelet) Stop() error {
-	k.supervisor.Stop()
+	if k.supervisor != nil {
+		k.supervisor.Stop()
+	}
 	return nil
 }
 

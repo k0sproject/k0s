@@ -25,7 +25,6 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -41,39 +40,27 @@ const containerdTomlHeader = `# k0s_managed=true
 # If you wish to override the config, remove the first line and replace this file with your custom configuration.
 # For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
 `
-const confPathPosix = "/etc/k0s/containerd.toml"
-const confPathWindows = "C:\\Program Files\\containerd\\config.toml"
-
-const importsPathPosix = "/etc/k0s/containerd.d/"
-const importsPathWindows = "C:\\etc\\k0s\\containerd.d\\"
 
 // Component implements the component interface to manage containerd as a k0s component.
 type Component struct {
-	supervisor    supervisor.Supervisor
 	LogLevel      string
 	K0sVars       *config.CfgVars
 	Profile       *workerconfig.Profile
-	binaries      []string
 	OCIBundlePath string
-	confPath      string
-	importsPath   string
+
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	confPath       string
+	importsPath    string
 }
 
 func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
 	c := &Component{
-		LogLevel: logLevel,
-		K0sVars:  vars,
-		Profile:  profile,
-	}
-
-	if runtime.GOOS == "windows" {
-		c.binaries = []string{"containerd.exe", "containerd-shim-runhcs-v1.exe"}
-		c.confPath = confPathWindows
-		c.importsPath = importsPathWindows
-	} else {
-		c.binaries = []string{"containerd", "containerd-shim", "containerd-shim-runc-v2", "runc"}
-		c.confPath = confPathPosix
-		c.importsPath = importsPathPosix
+		LogLevel:    logLevel,
+		K0sVars:     vars,
+		Profile:     profile,
+		confPath:    defaultConfPath,
+		importsPath: defaultImportsPath,
 	}
 	return c
 }
@@ -83,19 +70,14 @@ var _ manager.Component = (*Component)(nil)
 // Init extracts the needed binaries
 func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
-	for _, bin := range c.binaries {
+
+	g.Go(func() (err error) {
+		c.executablePath, err = stageExecutable(c.K0sVars.BinDir, "containerd")
+		return err
+	})
+	for _, bin := range additionalExecutableNames {
 		g.Go(func() error {
-			err := assets.Stage(c.K0sVars.BinDir, bin)
-			// Simply ignore the "running executable" problem on Windows for
-			// now. Whenever there's a permission error on Windows and the
-			// target file exists, log the error and continue.
-			if err != nil &&
-				runtime.GOOS == "windows" &&
-				errors.Is(err, os.ErrPermission) &&
-				file.Exists(filepath.Join(c.K0sVars.BinDir, bin)) {
-				logrus.WithField("component", "containerd").WithError(err).Error("Failed to replace ", bin)
-				return nil
-			}
+			_, err := stageExecutable(c.K0sVars.BinDir, bin)
 			return err
 		})
 	}
@@ -134,9 +116,9 @@ func (c *Component) Start(ctx context.Context) error {
 			return fmt.Errorf("failed to start windows server: %w", err)
 		}
 	} else {
-		c.supervisor = supervisor.Supervisor{
+		c.supervisor = &supervisor.Supervisor{
 			Name:    "containerd",
-			BinPath: assets.BinPath("containerd", c.K0sVars.BinDir),
+			BinPath: c.executablePath,
 			RunDir:  c.K0sVars.RunDir,
 			DataDir: c.K0sVars.DataDir,
 			Args: []string{
@@ -334,7 +316,9 @@ func (c *Component) Stop() error {
 	if runtime.GOOS == "windows" {
 		return c.windowsStop()
 	}
-	c.supervisor.Stop()
+	if c.supervisor != nil {
+		c.supervisor.Stop()
+	}
 	return nil
 }
 

@@ -5,53 +5,67 @@ package assets
 
 import (
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
+
+	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/sirupsen/logrus"
 )
 
-// EmbeddedBinaryNeedsUpdate returns true if the provided embedded binary file should
-// be updated. This determination is based on the modification times and file sizes of both
-// the provided executable and the embedded executable. It is expected that the embedded binary
-// modification times should match the main `k0s` executable.
-func EmbeddedBinaryNeedsUpdate(exinfo os.FileInfo, embeddedBinaryPath string, size int64) bool {
-	if pathinfo, err := os.Stat(embeddedBinaryPath); err == nil {
-		return !exinfo.ModTime().Equal(pathinfo.ModTime()) || pathinfo.Size() != size
+// Stages the embedded executable with the given name into dir. If the
+// executable is not embedded in the k0s executable, this function first checks
+// if an executable exists at the desired path. If not, it falls back to a PATH
+// lookup. Returns the path to the executable, even if an error occurs.
+func StageExecutable(dir, name string) (string, error) {
+	// Always returning the path, even under error conditions, is kind of a hack
+	// to work around the "running executable" problem on Windows.
+
+	executableName := name + constant.ExecutableSuffix
+	path := filepath.Join(dir, executableName)
+	err := stage(executableName, path, 0750)
+	if err == nil {
+		return path, nil
 	}
 
-	// If the stat fails, the file is either missing or permissions are missing
-	// to read this -- let above know that an update should be attempted.
+	// If the executable is not embedded, try to find an existing one.
+	var notEmbedded notEmbeddedError
+	if !errors.As(err, &notEmbedded) {
+		return path, err
+	}
 
-	return true
-}
+	// First, check if the destination path exists and is not a directory.
+	stat, statErr := os.Stat(path)
+	if statErr == nil {
+		if !stat.IsDir() {
+			logrus.WithField("path", path).WithError(err).Debug("Using existing executable")
+			return path, nil
+		}
 
-// BinPath searches for a binary on disk:
-// - in the BinDir folder,
-// - in the PATH.
-// The first to be found is the one returned.
-func BinPath(name string, binDir string) string {
-	// Look into the BinDir folder.
-	path := filepath.Join(binDir, name)
-	if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
-		return path
+		statErr = fmt.Errorf("%w (%s)", syscall.EISDIR, path)
 	}
 
 	// If we still haven't found the executable, look for it in the PATH.
-	if path, err := exec.LookPath(name); err == nil {
-		path, _ := filepath.Abs(path)
-		return path
+	// Don't pass in the executable suffix here, so that the PathExt environment
+	// variable works as expected on Windows.
+	lookedUpPath, lookErr := exec.LookPath(name)
+	if lookErr == nil {
+		logrus.WithField("path", lookedUpPath).WithError(err).Debug("Executable found in PATH")
+		return lookedUpPath, nil
 	}
-	return name
+
+	return path, fmt.Errorf("%w, %w, %w", err, statErr, lookErr)
 }
 
-// Stage ...
-func Stage(dataDir string, name string) error {
-	p := filepath.Join(dataDir, name)
-	logrus.Infof("Staging '%s'", p)
+func stage(name, path string, perm os.FileMode) error {
+	log := logrus.WithField("path", path)
+	log.Infof("Staging")
 
 	selfexe, err := os.Executable()
 	if err != nil {
@@ -60,65 +74,61 @@ func Stage(dataDir string, name string) error {
 
 	exinfo, err := os.Stat(selfexe)
 	if err != nil {
-		return fmt.Errorf("unable to stat '%s': %w", selfexe, err)
+		return fmt.Errorf("unable to stat current executable: %w", err)
 	}
 
 	gzname := "bin/" + name + ".gz"
 	bin, embedded := BinData[gzname]
 	if !embedded {
-		logrus.Debug("Skipping not embedded file:", gzname)
-		return nil
+		return notEmbeddedError(gzname)
 	}
-	logrus.Debugf("%s is at offset %d", gzname, bin.offset)
+	log.Debugf("%s is at offset %d", gzname, bin.offset)
 
-	if !EmbeddedBinaryNeedsUpdate(exinfo, p, bin.originalSize) {
-		logrus.Debug("Re-use existing file:", p)
-		return nil
+	// Skip extraction if the path is up to date, i.e. if its modification time
+	// matches the one of the k0s executable and its file size matches the one
+	// of the to-be-staged file.
+	if info, err := os.Stat(path); err == nil {
+		if !exinfo.IsDir() && exinfo.ModTime().Equal(info.ModTime()) && info.Size() == bin.originalSize {
+			log.Debug("Re-use existing file")
+			return nil
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		// If the error doesn't indicate a non-existing path, then it's likely
+		// that the asset can't be staged anyways, so be fail-fast.
+		return err
 	}
 
 	infile, err := os.Open(selfexe)
 	if err != nil {
-		return fmt.Errorf("unable to open executable '%s': %w", selfexe, err)
+		return fmt.Errorf("unable to open current executable: %w", err)
 	}
 	defer infile.Close()
 
 	// find location at EOF - BinDataSize + offs
 	if _, err := infile.Seek(-BinDataSize+bin.offset, 2); err != nil {
-		return fmt.Errorf("failed to find embedded file position for '%s': %w", p, err)
+		return fmt.Errorf("failed to find embedded file position: %w", err)
 	}
 	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
 	if err != nil {
-		return fmt.Errorf("failed to create gzip reader for '%s': %w", p, err)
+		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 
-	logrus.Debugf("Writing static file: '%s'", p)
+	log.Debug("Writing static file")
 
-	if err := copyTo(p, gz); err != nil {
-		return fmt.Errorf("unable to copy to '%s': %w", p, err)
-	}
-	if err := os.Chmod(p, 0550); err != nil {
-		return fmt.Errorf("failed to chmod '%s': %w", p, err)
-	}
-
-	// In order to properly determine if an update of an embedded binary file is needed,
-	// the staged embedded binary needs to have the same modification time as the `k0s`
-	// executable.
-	if err := os.Chtimes(p, exinfo.ModTime(), exinfo.ModTime()); err != nil {
-		return fmt.Errorf("failed to set file modification times of '%s': %w", p, err)
-	}
-	return nil
+	return file.AtomicWithTarget(path).
+		WithPermissions(perm).
+		// In order to properly determine if an update of an embedded binary
+		// file is needed, the staged embedded binary needs to have the same
+		// modification time as the `k0s` executable.
+		WithModificationTime(exinfo.ModTime()).
+		Do(func(dst file.AtomicWriter) error {
+			_, err := io.Copy(dst, gz)
+			return err
+		})
 }
 
-func copyTo(p string, gz io.Reader) error {
-	_ = os.Remove(p)
-	f, err := os.Create(p)
-	if err != nil {
-		return fmt.Errorf("failed to create %s: %w", p, err)
-	}
-	defer f.Close()
-	_, err = io.Copy(f, gz)
-	if err != nil {
-		return fmt.Errorf("failed to write to %s: %w", p, err)
-	}
-	return nil
+type notEmbeddedError string
+
+func (e notEmbeddedError) Error() string {
+	return "not an embedded asset: " + string(e)
 }

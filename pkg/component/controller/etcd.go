@@ -32,6 +32,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 )
 
+const etcdGID = 0
+
 // Etcd implement the component interface to run etcd
 type Etcd struct {
 	CertManager certificate.Manager
@@ -40,9 +42,9 @@ type Etcd struct {
 	K0sVars     *config.CfgVars
 	LogLevel    string
 
-	supervisor supervisor.Supervisor
-	uid        int
-	gid        int
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 }
 
 var _ manager.Component = (*Etcd)(nil)
@@ -74,12 +76,13 @@ func (e *Etcd) Init(_ context.Context) error {
 	}
 
 	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
-		err = chown(f, e.uid, e.gid)
+		err = recursiveChown(f, e.uid, etcdGID)
 		if err != nil && os.Geteuid() == 0 {
 			return err
 		}
 	}
-	return assets.Stage(e.K0sVars.BinDir, "etcd")
+	e.executablePath, err = assets.StageExecutable(e.K0sVars.BinDir, "etcd")
+	return err
 }
 
 func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdRequest, etcdCaCert, etcdCaCertKey string) ([]string, error) {
@@ -127,7 +130,7 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 			return nil, err
 		}
 		for _, f := range []string{filepath.Dir(etcdCaCertKey), etcdCaCertKey, etcdCaCert} {
-			if err := os.Chown(f, e.uid, e.gid); err != nil && os.Geteuid() == 0 {
+			if err := os.Chown(f, e.uid, etcdGID); err != nil && os.Geteuid() == 0 {
 				return nil, err
 			}
 		}
@@ -227,14 +230,14 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 	logrus.Debugf("starting etcd with args: %v", args)
 
-	e.supervisor = supervisor.Supervisor{
+	e.supervisor = &supervisor.Supervisor{
 		Name:          "etcd",
-		BinPath:       assets.BinPath("etcd", e.K0sVars.BinDir),
+		BinPath:       e.executablePath,
 		RunDir:        e.K0sVars.RunDir,
 		DataDir:       e.K0sVars.DataDir,
 		Args:          args.ToArgs(),
 		UID:           e.uid,
-		GID:           e.gid,
+		GID:           etcdGID,
 		KeepEnvPrefix: true,
 	}
 
@@ -243,11 +246,9 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 // Stop stops etcd
 func (e *Etcd) Stop() error {
-	if e.Config.IsExternalClusterUsed() {
-		return nil
+	if e.supervisor != nil {
+		e.supervisor.Stop()
 	}
-
-	e.supervisor.Stop()
 	return nil
 }
 
@@ -345,8 +346,7 @@ func detectUnsupportedEtcdArch() error {
 	return nil
 }
 
-// for the patch release purpose the solution is in-place to be as least intrusive as possible
-func chown(name string, uid int, gid int) error {
+func recursiveChown(name string, uid, gid int) error {
 	if uid == 0 {
 		return nil
 	}

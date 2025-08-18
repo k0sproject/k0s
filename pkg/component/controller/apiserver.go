@@ -39,9 +39,10 @@ type APIServer struct {
 	Storage                   manager.Component
 	EnableKonnectivity        bool
 	DisableEndpointReconciler bool
-	gid                       int
-	supervisor                supervisor.Supervisor
-	uid                       int
+
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 }
 
 var _ manager.Component = (*APIServer)(nil)
@@ -83,7 +84,8 @@ func (a *APIServer) Init(_ context.Context) error {
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes API server as root")
 	}
-	return assets.Stage(a.K0sVars.BinDir, kubeAPIComponentName)
+	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeAPIComponentName)
+	return err
 }
 
 // Run runs kube api
@@ -158,14 +160,13 @@ func (a *APIServer) Start(_ context.Context) error {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
 
-	a.supervisor = supervisor.Supervisor{
+	a.supervisor = &supervisor.Supervisor{
 		Name:    kubeAPIComponentName,
-		BinPath: assets.BinPath(kubeAPIComponentName, a.K0sVars.BinDir),
+		BinPath: a.executablePath,
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    apiServerArgs,
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 
 	etcdArgs, err := getEtcdArgs(a.ClusterConfig.Spec.Storage, a.K0sVars)
@@ -196,7 +197,9 @@ func (a *APIServer) writeKonnectivityConfig() error {
 
 // Stop stops APIServer
 func (a *APIServer) Stop() error {
-	a.supervisor.Stop()
+	if a.supervisor != nil {
+		a.supervisor.Stop()
+	}
 	return nil
 }
 
