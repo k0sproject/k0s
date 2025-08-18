@@ -17,9 +17,10 @@ import (
 )
 
 type directories struct {
-	dataDir        string
-	kubeletRootDir string
-	runDir         string
+	dataDir           string
+	kubeletRootDir    string
+	containerdRootDir string
+	runDir            string
 }
 
 // Name returns the name of the step
@@ -60,7 +61,7 @@ func (d *directories) Run() error {
 			dataDirMounted = true
 			continue
 		}
-		if isUnderPath(v.Path, d.kubeletRootDir) || isUnderPath(v.Path, d.dataDir) {
+		if isUnderPath(v.Path, d.kubeletRootDir) || isUnderPath(v.Path, d.containerdRootDir) || isUnderPath(v.Path, d.dataDir) {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
 				// if we fail to unmount, try lazy unmount so
@@ -77,6 +78,11 @@ func (d *directories) Run() error {
 	logrus.Debugf("removing kubelet root dir (%s)", d.kubeletRootDir)
 	if err := os.RemoveAll(d.kubeletRootDir); err != nil {
 		return fmt.Errorf("failed to delete k0s kubelet root direcotory: %w", err)
+	}
+
+	logrus.Debugf("removing containerd root dir (%s)", d.containerdRootDir)
+	if err := os.RemoveAll(d.containerdRootDir); err != nil {
+		return fmt.Errorf("failed to delete k0s containerd root directory: %w", err)
 	}
 
 	if dataDirMounted {

@@ -35,9 +35,10 @@ func NewConfig(debug bool, k0sVars *config.CfgVars, systemUsers *k0sv1beta1.Syst
 		&users{systemUsers: systemUsers},
 		&services{},
 		&directories{
-			dataDir:        k0sVars.DataDir,
-			kubeletRootDir: k0sVars.KubeletRootDir,
-			runDir:         k0sVars.RunDir,
+			dataDir:           k0sVars.DataDir,
+			kubeletRootDir:    k0sVars.KubeletRootDir,
+			containerdRootDir: k0sVars.ContainerdRootDir,
+			runDir:            k0sVars.RunDir,
 		},
 		&cni{},
 	}

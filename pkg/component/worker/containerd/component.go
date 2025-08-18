@@ -102,7 +102,7 @@ func (c *Component) Start(ctx context.Context) error {
 		RunDir:  c.K0sVars.RunDir,
 		DataDir: c.K0sVars.DataDir,
 		Args: []string{
-			"--root=" + filepath.Join(c.K0sVars.DataDir, "containerd"),
+			"--root=" + c.K0sVars.ContainerdRootDir,
 			"--state=" + filepath.Join(c.K0sVars.RunDir, "containerd"),
 			"--address=" + Address(c.K0sVars.RunDir),
 			"--log-level=" + c.LogLevel,
