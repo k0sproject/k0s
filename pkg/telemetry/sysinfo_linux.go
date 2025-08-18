@@ -19,7 +19,7 @@ package telemetry
 import (
 	"os"
 
-	"github.com/segmentio/analytics-go"
+	"github.com/segmentio/analytics-go/v3"
 	"github.com/zcalusic/sysinfo"
 )
 
