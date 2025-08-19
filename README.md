@@ -3,6 +3,7 @@
 <!-- When changing this file, consider to change docs/README.md, too! -->
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9994/badge)](https://www.bestpractices.dev/projects/9994)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fk0sproject%2Fk0s.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fk0sproject%2Fk0s?ref=badge_shield)
 [![Go build](https://github.com/k0sproject/k0s/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/k0sproject/k0s/actions/workflows/go.yml?query=branch%3Amain)
 [![OS tests :: Nightly](https://github.com/k0sproject/k0s/actions/workflows/ostests-nightly.yaml/badge.svg)](https://github.com/k0sproject/k0s/actions/workflows/ostests-nightly.yaml)
 ![GitHub Repo stars](https://img.shields.io/github/stars/k0sproject/k0s?color=blueviolet&label=Stargazers)
