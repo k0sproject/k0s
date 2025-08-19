@@ -14,6 +14,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/k0sproject/k0s/pkg/component/worker/cgroup"
+
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -49,8 +51,8 @@ type Kubelet struct {
 	Taints              []string
 	ExtraArgs           stringmap.StringMap
 	DualStackEnabled    bool
+	CgroupManager       cgroup.CgroupManager
 
-	configPath string
 	supervisor supervisor.Supervisor
 }
 
@@ -76,11 +78,10 @@ func (k *Kubelet) Init(_ context.Context) error {
 		return fmt.Errorf("failed to create %s: %w", k.K0sVars.KubeletRootDir, err)
 	}
 
-	runDir := filepath.Join(k.K0sVars.RunDir, "kubelet")
+	runDir := filepath.Dir(k.K0sVars.KubeletConfigPath)
 	if err := dir.Init(runDir, constant.RunDirMode); err != nil {
 		return fmt.Errorf("failed to create %s: %w", runDir, err)
 	}
-	k.configPath = filepath.Join(runDir, "config.yaml")
 
 	return nil
 }
@@ -107,16 +108,17 @@ func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.I
 
 // Run runs kubelet
 func (k *Kubelet) Start(ctx context.Context) error {
+	log := logrus.WithContext(ctx).WithField("component", "kubelet")
 	cmd := "kubelet"
 
 	if runtime.GOOS == "windows" {
 		cmd = "kubelet.exe"
 	}
 
-	logrus.Info("Starting kubelet")
+	log.Info("Starting kubelet")
 	args := stringmap.StringMap{
 		"--root-dir":   k.K0sVars.KubeletRootDir,
-		"--config":     k.configPath,
+		"--config":     k.K0sVars.KubeletConfigPath,
 		"--kubeconfig": k.Kubeconfig,
 		"--v":          k.LogLevel,
 		"--cert-dir":   filepath.Join(k.K0sVars.KubeletRootDir, "pki"),
@@ -144,7 +146,8 @@ func (k *Kubelet) Start(ctx context.Context) error {
 
 	switch runtime.GOOS {
 	case "linux":
-		args["--runtime-cgroups"] = "/system.slice/containerd.service"
+		log.Debugf("Applying cgroup configuration with driver %s", k.CgroupManager.Driver())
+		k.CgroupManager.ApplyToConfig(&k.Configuration)
 
 	case "windows":
 		args["--enforce-node-allocatable"] = ""
@@ -170,7 +173,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	// Pin the node name that has been figured out by k0s
 	args["--hostname-override"] = string(k.NodeName)
 
-	logrus.Debugf("starting kubelet with args: %v", args)
+	log.Debugf("starting kubelet with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
 		Name:    cmd,
 		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
@@ -237,7 +240,7 @@ func (k *Kubelet) writeKubeletConfig() error {
 		return fmt.Errorf("can't marshal kubelet config: %w", err)
 	}
 
-	err = file.WriteContentAtomically(k.configPath, configBytes, 0644)
+	err = file.WriteContentAtomically(k.K0sVars.KubeletConfigPath, configBytes, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}

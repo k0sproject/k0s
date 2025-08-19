@@ -11,6 +11,7 @@ import (
 
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/worker"
+	"github.com/k0sproject/k0s/pkg/component/worker/cgroup"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -81,12 +82,13 @@ func newContainersStep(debug bool, k0sVars *config.CfgVars, criSocketFlag string
 		if debug {
 			logLevel = "debug"
 		}
+		cGroupMgr := cgroup.NewCgroupManager(k0sVars.KubeletConfigPath)
 		containers.managedContainerd = containerd.NewComponent(logLevel, k0sVars, &workerconfig.Profile{
 			PauseImage: &k0sv1beta1.ImageSpec{
 				Image:   constant.KubePauseContainerImage,
 				Version: constant.KubePauseContainerImageVersion,
 			},
-		})
+		}, cGroupMgr)
 	}
 
 	return &containers, nil

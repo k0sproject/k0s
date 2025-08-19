@@ -33,6 +33,7 @@ type CfgVars struct {
 	KineSocketPath             string              // The unix socket path for kine
 	KonnectivitySocketDir      string              // location of konnectivity's socket path
 	KubeletAuthConfigPath      string              // KubeletAuthConfigPath defines the default kubelet auth config path
+	KubeletConfigPath          string              // KubeletConfigPath defines the kubelet config path
 	ManifestsDir               string              // location for all stack manifests
 	RunDir                     string              // location of supervised pid files and sockets
 	KonnectivityKubeConfigPath string              // location for konnectivity kubeconfig
@@ -159,6 +160,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		KineSocketPath:             filepath.Join(runDir, constant.KineSocket),
 		KonnectivitySocketDir:      filepath.Join(runDir, "konnectivity-server"),
 		KubeletAuthConfigPath:      filepath.Join(dataDir, "kubelet.conf"),
+		KubeletConfigPath:          filepath.Join(runDir, "kubelet", "kubelet.yaml"),
 		ManifestsDir:               filepath.Join(dataDir, "manifests"),
 		RunDir:                     runDir,
 		KonnectivityKubeConfigPath: filepath.Join(certDir, "konnectivity.conf"),
