@@ -106,28 +106,77 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 }
 
 func TestOverrideFunction(t *testing.T) {
-	repository := "my.registry"
-	testCases := []struct {
-		Input  string
-		Output string
-	}{
-		{
-			Input:  "repo/image",
-			Output: "my.registry/repo/image",
-		},
-		{
-			Input:  "registry.com/repo/image",
-			Output: "my.registry/repo/image",
-		},
-		{
-			Input:  "image",
-			Output: "my.registry/image",
-		},
-	}
+	t.Run("overrideRepository without path", func(t *testing.T) {
+		repository := "my.registry"
+		testCases := []struct {
+			Input  string
+			Output string
+		}{
+			{
+				Input:  "repo/image",
+				Output: "my.registry/repo/image",
+			},
+			{
+				Input:  "registry.com/repo/image",
+				Output: "my.registry/repo/image",
+			},
+			{
+				Input:  "image",
+				Output: "my.registry/image",
+			},
+		}
 
-	for _, tc := range testCases {
-		assert.Equal(t, tc.Output, overrideRepository(repository, tc.Input))
-	}
+		for _, tc := range testCases {
+			assert.Equal(t, tc.Output, overrideRepository(repository, tc.Input))
+		}
+	})
+	t.Run("overrideRepository with path", func(t *testing.T) {
+		repository := "my.registry/foo"
+		testCases := []struct {
+			Input  string
+			Output string
+		}{
+			{
+				Input:  "repo/image",
+				Output: "my.registry/foo/repo/image",
+			},
+			{
+				Input:  "registry.com/repo/image",
+				Output: "my.registry/foo/repo/image",
+			},
+			{
+				Input:  "image",
+				Output: "my.registry/foo/image",
+			},
+		}
+		for _, tc := range testCases {
+			assert.Equal(t, tc.Output, overrideRepository(repository, tc.Input))
+		}
+	})
+	t.Run("overrideRepository with repo path and double invocation", func(t *testing.T) {
+		repository := "my.registry/foo"
+		testCases := []struct {
+			Input  string
+			Output string
+		}{
+			{
+				Input:  "repo/image",
+				Output: "my.registry/foo/repo/image",
+			},
+			{
+				Input:  "registry.com/repo/image",
+				Output: "my.registry/foo/repo/image",
+			},
+			{
+				Input:  "image",
+				Output: "my.registry/foo/image",
+			},
+		}
+		for _, tc := range testCases {
+			assert.Equal(t, tc.Output, overrideRepository(repository, overrideRepository(repository, tc.Input)))
+		}
+	})
+
 }
 
 func TestImageSpec_Validate(t *testing.T) {
