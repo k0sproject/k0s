@@ -8,7 +8,6 @@ package controller
 import (
 	"context"
 	"fmt"
-
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
@@ -24,6 +23,7 @@ var _ manager.Component = (*Autopilot)(nil)
 type Autopilot struct {
 	K0sVars            *config.CfgVars
 	KubeletExtraArgs   string
+	KubeAPIPort        int
 	AdminClientFactory kubernetes.ClientFactoryInterface
 	Workloads          bool
 }
@@ -44,6 +44,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		KubeConfig:          a.K0sVars.AdminKubeConfigPath,
 		K0sDataDir:          a.K0sVars.DataDir,
 		KubeletExtraArgs:    a.KubeletExtraArgs,
+		KubeAPIPort:         a.KubeAPIPort,
 		Mode:                "controller",
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",

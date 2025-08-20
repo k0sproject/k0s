@@ -193,7 +193,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 
 	leaderMode := event == leaderelection.StatusLeading
 
-	prober, err := NewReadyProber(logger, c.autopilotClientFactory, mgr.GetConfig(), 1*time.Minute)
+	prober, err := NewReadyProber(logger, c.autopilotClientFactory, mgr.GetConfig(), c.cfg.KubeAPIPort, 1*time.Minute)
 	if err != nil {
 		logger.WithError(err).Error("unable to create controller prober")
 		return err
