@@ -222,10 +222,11 @@ func (s *Supervisor) Stop() {
 	}
 }
 
-// maybeKillPidFile checks kills the process in the pidFile if it's has
-// the same binary as the supervisor's and also checks that the env
-// `_KOS_MANAGED=yes`. This function does not delete the old pidFile as
-// this is done by the caller.
+// Checks if the process referenced in the PID file is a k0s-managed process.
+// If so, requests graceful termination and waits for the process to terminate.
+// If it's still running after s.TimeoutStop, the process is killed.
+//
+// The PID file itself is not removed here; that is handled by the caller.
 func (s *Supervisor) maybeKillPidFile() error {
 	pid, err := os.ReadFile(s.PidFile)
 	if os.IsNotExist(err) {
@@ -248,6 +249,15 @@ func (s *Supervisor) maybeKillPidFile() error {
 	}
 	defer ph.Close()
 
+	if managed, err := s.isK0sManaged(ph); err != nil {
+		if errors.Is(err, os.ErrProcessDone) {
+			return nil
+		}
+		return err
+	} else if !managed {
+		return nil
+	}
+
 	if err := s.killProcess(ph); err != nil {
 		return fmt.Errorf("failed to kill PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
@@ -260,10 +270,6 @@ const exitCheckInterval = 200 * time.Millisecond
 // Tries to terminate a process gracefully. If it's still running after
 // s.TimeoutStop, the process is killed.
 func (s *Supervisor) killProcess(ph procHandle) error {
-	if shouldKill, err := s.shouldKillProcess(ph); err != nil || !shouldKill {
-		return err
-	}
-
 	if err := ph.requestGracefulTermination(); errors.Is(err, os.ErrProcessDone) {
 		return nil
 	} else if err != nil {
@@ -292,8 +298,8 @@ func (s *Supervisor) waitForTermination(ph procHandle) (bool, error) {
 	for {
 		select {
 		case <-checkTicker.C:
-			if shouldKill, err := s.shouldKillProcess(ph); err != nil || !shouldKill {
-				return false, nil
+			if terminated, err := ph.hasTerminated(); err != nil || terminated {
+				return false, err
 			}
 
 		case <-deadlineTimer.C:
@@ -302,22 +308,18 @@ func (s *Supervisor) waitForTermination(ph procHandle) (bool, error) {
 	}
 }
 
-func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
-	// only kill process if it has the expected cmd
+// Checks if the process handle refers to a k0s-managed process. A process is
+// considered k0s-managed if:
+//   - The executable path matches.
+//   - The process environment contains `_K0S_MANAGED=yes`.
+func (s *Supervisor) isK0sManaged(ph procHandle) (bool, error) {
 	if cmd, err := ph.cmdline(); err != nil {
-		if errors.Is(err, os.ErrProcessDone) {
-			return false, nil
-		}
 		return false, err
 	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
 		return false, nil
 	}
 
-	// only kill process if it has the _KOS_MANAGED env set
 	if env, err := ph.environ(); err != nil {
-		if errors.Is(err, os.ErrProcessDone) {
-			return false, nil
-		}
 		return false, err
 	} else if !slices.Contains(env, k0sManaged) {
 		return false, nil
