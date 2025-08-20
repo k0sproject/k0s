@@ -87,13 +87,19 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 			}
 		}
 	case err := <-waitresult:
-		if err != nil {
-			s.log.WithError(err).Warn("Failed to wait for process")
-		} else {
-			s.log.Warn("Process exited: ", cmd.ProcessState)
+		var exitErr *exec.ExitError
+		state := cmd.ProcessState
+		switch {
+		case errors.As(err, &exitErr):
+			state = exitErr.ProcessState
+			fallthrough
+		case err == nil:
+			s.log.Error("Process terminated unexpectedly: ", state)
+		default:
+			s.log.WithError(err).Error("Failed to wait for process: ", state)
 		}
+		return false
 	}
-	return false
 }
 
 // Supervise Starts supervising the given process
