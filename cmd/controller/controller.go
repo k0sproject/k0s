@@ -605,6 +605,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	clusterComponents.Add(ctx, &controller.Autopilot{
 		K0sVars:            c.K0sVars,
 		KubeletExtraArgs:   c.KubeletExtraArgs,
+		KubeAPIPort:        nodeConfig.Spec.API.Port,
 		AdminClientFactory: adminClientFactory,
 		Workloads:          controllerMode.WorkloadsEnabled(),
 	})
