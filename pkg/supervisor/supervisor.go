@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -112,7 +113,7 @@ func (s *Supervisor) Supervise() error {
 		s.TimeoutRespawn = 5 * time.Second
 	}
 
-	if err := s.maybeKillPidFile(); err != nil {
+	if err := s.maybeCleanupPIDFile(); err != nil {
 		if !errors.Is(err, errors.ErrUnsupported) {
 			return err
 		}
@@ -224,10 +225,9 @@ func (s *Supervisor) Stop() {
 
 // Checks if the process referenced in the PID file is a k0s-managed process.
 // If so, requests graceful termination and waits for the process to terminate.
-// If it's still running after s.TimeoutStop, the process is killed.
 //
 // The PID file itself is not removed here; that is handled by the caller.
-func (s *Supervisor) maybeKillPidFile() error {
+func (s *Supervisor) maybeCleanupPIDFile() error {
 	pid, err := os.ReadFile(s.PidFile)
 	if os.IsNotExist(err) {
 		return nil
@@ -243,7 +243,7 @@ func (s *Supervisor) maybeKillPidFile() error {
 	ph, err := openPID(p)
 	if err != nil {
 		if errors.Is(err, syscall.ESRCH) {
-			return nil // no such process, nothing to kill
+			return nil // no such process, nothing to cleanup
 		}
 		return fmt.Errorf("cannot interact with PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
@@ -258,8 +258,8 @@ func (s *Supervisor) maybeKillPidFile() error {
 		return nil
 	}
 
-	if err := s.killProcess(ph); err != nil {
-		return fmt.Errorf("failed to kill PID %d from PID file %s: %w", p, s.PidFile, err)
+	if err := s.terminateAndWait(ph); err != nil {
+		return fmt.Errorf("while waiting for termination of PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
 
 	return nil
@@ -267,45 +267,43 @@ func (s *Supervisor) maybeKillPidFile() error {
 
 const exitCheckInterval = 200 * time.Millisecond
 
-// Tries to terminate a process gracefully. If it's still running after
-// s.TimeoutStop, the process is killed.
-func (s *Supervisor) killProcess(ph procHandle) error {
-	if err := ph.requestGracefulTermination(); errors.Is(err, os.ErrProcessDone) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to request graceful termination: %w", err)
-	}
-
-	if terminate, err := s.waitForTermination(ph); err != nil || !terminate {
-		return err
-	}
-
-	if err := ph.kill(); errors.Is(err, os.ErrProcessDone) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to kill: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Supervisor) waitForTermination(ph procHandle) (bool, error) {
-	deadlineTimer := time.NewTimer(s.TimeoutStop)
-	defer deadlineTimer.Stop()
-	checkTicker := time.NewTicker(exitCheckInterval)
-	defer checkTicker.Stop()
-
-	for {
-		select {
-		case <-checkTicker.C:
-			if terminated, err := ph.hasTerminated(); err != nil || terminated {
-				return false, err
+// Tries to gracefully terminate a process and waits for it to exit. If the
+// process is still running after several attempts, it returns an error instead
+// of forcefully killing the process.
+func (s *Supervisor) terminateAndWait(ph procHandle) error {
+	return retry.Do(
+		func() error {
+			if err := ph.requestGracefulTermination(); err != nil {
+				if errors.Is(err, os.ErrProcessDone) {
+					return nil
+				}
+				return fmt.Errorf("failed to request graceful termination: %w", err)
 			}
 
-		case <-deadlineTimer.C:
-			return true, nil
-		}
-	}
+			deadlineTimer := time.NewTimer(s.TimeoutStop)
+			defer deadlineTimer.Stop()
+			checkTicker := time.NewTicker(exitCheckInterval)
+			defer checkTicker.Stop()
+
+			for {
+				select {
+				case <-checkTicker.C:
+					if terminated, err := ph.hasTerminated(); err != nil || terminated {
+						return err
+					}
+				case <-deadlineTimer.C:
+					return errors.New("process did not terminate in time")
+				}
+			}
+		},
+		retry.Attempts(3),
+		retry.Delay(exitCheckInterval),
+		retry.LastErrorOnly(true),
+		retry.OnRetry(func(attempt uint, err error) {
+			log := s.log.WithError(err).WithField("attempt", attempt+1)
+			log.Debug("Error while waiting for process termination, retrying after backoff")
+		}),
+	)
 }
 
 // Checks if the process handle refers to a k0s-managed process. A process is

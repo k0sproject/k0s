@@ -119,11 +119,6 @@ func (p *unixProcess) requestGracefulTermination() error {
 	return requestGracefulTermination(p.process)
 }
 
-// kill implements [procHandle].
-func (p *unixProcess) kill() error {
-	return p.process.Kill()
-}
-
 func isZombie(pid int) (bool, error) {
 	// https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html
 	stat, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "stat"))
