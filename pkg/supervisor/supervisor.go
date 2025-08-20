@@ -57,7 +57,7 @@ const k0sManaged = "_K0S_MANAGED=yes"
 // processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
 func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
-	waitresult := make(chan error)
+	waitresult := make(chan error, 1)
 	go func() {
 		waitresult <- cmd.Wait()
 	}()
@@ -66,24 +66,14 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 
 	select {
 	case <-ctx.Done():
-		for {
-			s.log.Debug("Requesting graceful termination")
-			if err := requestGracefulTermination(cmd.Process); err != nil {
-				if errors.Is(err, os.ErrProcessDone) {
-					s.log.Info("Failed to request graceful termination: process has already terminated")
-				} else {
-					s.log.WithError(err).Error("Failed to request graceful termination")
-				}
-			} else {
-				s.log.Info("Requested graceful termination")
-			}
-			select {
-			case <-time.After(s.TimeoutStop):
-				continue
-			case <-waitresult:
-				return true
-			}
+		err := s.terminateSupervisedProcess(cmd, waitresult)
+		if err != nil {
+			s.log.WithError(err).Error("Error while terminating process")
+		} else {
+			s.log.Info("Process terminated successfully")
 		}
+		return true
+
 	case err := <-waitresult:
 		var exitErr *exec.ExitError
 		state := cmd.ProcessState
@@ -97,6 +87,62 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 			s.log.WithError(err).Error("Failed to wait for process: ", state)
 		}
 		return false
+	}
+}
+
+func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error) error {
+	s.log.Debug("Requesting graceful termination")
+	err := requestGracefulTermination(cmd.Process)
+	switch {
+	case err == nil:
+		// Termination request sent, wait for process to finish.
+		s.log.Debug("Awaiting graceful process termination for ", s.TimeoutStop)
+
+		select {
+		case err := <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				return nil
+			case errors.As(err, &exitErr):
+				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.Signal() == syscall.SIGTERM {
+					return errors.New("process terminated without handling SIGTERM")
+				}
+				return exitErr
+			default:
+				return fmt.Errorf("failed to wait for process: %w", err)
+			}
+
+		case <-time.After(s.TimeoutStop):
+			err = fmt.Errorf("timed out after %s while waiting for process to terminate", s.TimeoutStop)
+		}
+
+		return err
+
+	case errors.Is(err, os.ErrProcessDone):
+		// The process has finished even before the termination could be requested.
+		select {
+		case err = <-waitresult:
+			var exitErr *exec.ExitError
+			state := cmd.ProcessState
+			switch {
+			case errors.As(err, &exitErr):
+				state = exitErr.ProcessState
+				fallthrough
+			case err == nil:
+				err = errors.New(state.String())
+			default:
+				return fmt.Errorf("failed to wait for process: %s (%w)", state, err)
+			}
+		default:
+			err = errors.New("process state unavailable")
+		}
+
+		return fmt.Errorf("process terminated before graceful termination could be requested: %w", err)
+
+	default:
+		// Something else went wrong
+		return fmt.Errorf("failed to request graceful termination: %w", err)
 	}
 }
 
