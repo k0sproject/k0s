@@ -23,7 +23,4 @@ type procHandle interface {
 
 	// Requests graceful process termination.
 	requestGracefulTermination() error
-
-	// Kills the process.
-	kill() error
 }
