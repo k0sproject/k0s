@@ -225,7 +225,7 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 	case "windows":
 		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
-		t.Skip("FIXME: times out on macOS, needs debugging")
+		t.Skip("PID file cleanup not implemented on macOS")
 	}
 
 	// Start some k0s-managed process.
@@ -266,7 +266,7 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 	case "windows":
 		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
-		t.Skip("FIXME: times out on macOS, needs debugging")
+		t.Skip("PID file cleanup not implemented on macOS")
 	}
 
 	// Start some k0s-managed process that won't terminate gracefully.
@@ -367,10 +367,6 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 }
 
 func TestCleanupPIDFile_BogusPIDFile(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("PID file cleanup not yet implemented on Windows")
-	}
-
 	// Prepare some supervised process that should never be started.
 	s := Supervisor{
 		Name:    t.Name(),
