@@ -59,7 +59,7 @@ require (
 	golang.org/x/text v0.28.0
 	golang.org/x/tools v0.36.0
 	google.golang.org/grpc v1.74.2
-	helm.sh/helm/v3 v3.18.5
+	helm.sh/helm/v3 v3.18.6
 	oras.land/oras-go/v2 v2.6.0
 )
 
