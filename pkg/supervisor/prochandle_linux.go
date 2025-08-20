@@ -74,9 +74,9 @@ func (p *unixProcess) environ() ([]string, error) {
 	return strings.Split(string(env), "\x00"), nil
 }
 
-// requestGracefulShutdown implements [procHandle].
-func (p *unixProcess) requestGracefulShutdown() error {
-	return p.process.Signal(syscall.SIGTERM)
+// requestGracefulTermination implements [procHandle].
+func (p *unixProcess) requestGracefulTermination() error {
+	return requestGracefulTermination(p.process)
 }
 
 // kill implements [procHandle].
