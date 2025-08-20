@@ -557,6 +557,7 @@ func (c *command) start(ctx context.Context) error {
 	clusterComponents.Add(ctx, &controller.Autopilot{
 		K0sVars:            c.K0sVars,
 		KubeletExtraArgs:   c.KubeletExtraArgs,
+		KubeAPIPort:        nodeConfig.Spec.API.Port,
 		AdminClientFactory: adminClientFactory,
 		EnableWorker:       c.EnableWorker,
 	})

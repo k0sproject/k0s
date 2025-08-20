@@ -25,6 +25,7 @@ type RootConfig struct {
 	KubeConfig          string
 	K0sDataDir          string
 	KubeletExtraArgs    string
+	KubeAPIPort         int
 	Mode                string
 	ManagerPort         int
 	MetricsBindAddr     string
