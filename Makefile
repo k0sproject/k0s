@@ -266,8 +266,8 @@ ipv6-image-bundle-linux-riscv64.tar: ipv6-test-images.txt
 	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <ipv6-test-images.txt
 
 .PHONY: $(smoketests)
-$(air_gapped_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
-check-calico-ipv6 check-kuberouter-ipv6: ipv6-image-bundle-linux-$(HOST_ARCH).tar
+$(air_gapped_smoketests) $(ipv6_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
+$(ipv6_smoketests): ipv6-image-bundle-linux-$(HOST_ARCH).tar
 $(smoketests): k0s
 	$(MAKE) -C inttest \
 		K0S_IMAGES_BUNDLE='$(CURDIR)/airgap-image-bundle-linux-$(HOST_ARCH).tar' \
