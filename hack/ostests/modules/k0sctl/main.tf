@@ -17,7 +17,7 @@ resource "terraform_data" "k0sctl_apply" {
     }
 
     command = <<-EOF
-      printf %s "$K0SCTL_CONFIG" | env -u SSH_AUTH_SOCK SSH_KNOWN_HOSTS='' "$K0SCTL_EXECUTABLE_PATH" apply --disable-telemetry -c -
+      printf %s "$K0SCTL_CONFIG" | env -u SSH_AUTH_SOCK SSH_KNOWN_HOSTS='' "$K0SCTL_EXECUTABLE_PATH" apply -c -
       EOF
   }
 }
@@ -65,7 +65,7 @@ data "external" "k0s_kubeconfig" {
     "env", "sh", "-ec",
     <<-EOS
       jq '.k0sctl_config | fromjson' |
-        { env -u SSH_AUTH_SOCK SSH_KNOWN_HOSTS='' "$1" kubeconfig --disable-telemetry -c - || echo ~~~FAIL; } |
+        { env -u SSH_AUTH_SOCK SSH_KNOWN_HOSTS='' "$1" kubeconfig -c - || echo ~~~FAIL; } |
         jq --raw-input --slurp "$2"
     EOS
     , "--",
