@@ -57,7 +57,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
 	}
 
-	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--feature-gates=IPv6SingleStack=true"))
 
 	if s.isIPv6Only {
 		s.T().Log("Setting up IPv6 DNS for workers")
