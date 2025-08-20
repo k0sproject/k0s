@@ -23,6 +23,7 @@ func kubeconfigCreateCmd() *cobra.Command {
 	var (
 		groups                  string
 		certificateExpiresAfter time.Duration
+		contextName             string
 	)
 
 	cmd := &cobra.Command{
@@ -38,12 +39,19 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	$ k0s kubeconfig create username --groups [groups]
 
 	customize the expiration duration of the certificate:
-	$ k0s kubeconfig create username --certificate-expires-after 8760h`,
+	$ k0s kubeconfig create username --certificate-expires-after 8760h
+
+	set custom context name:
+	$ k0s kubeconfig create username --context-name my-cluster`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			username := args[0]
 			if username == "" {
 				return errors.New("username cannot be empty")
+			}
+
+			if contextName == "" {
+				return errors.New("context-name cannot be empty")
 			}
 
 			opts, err := config.GetCmdOpts(cmd)
@@ -56,7 +64,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			}
 			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
 
-			kubeconfig, err := createUserKubeconfig(opts.K0sVars, clusterAPIURL, username, groups, certificateExpiresAfter)
+			kubeconfig, err := createUserKubeconfig(opts.K0sVars, clusterAPIURL, username, groups, certificateExpiresAfter, contextName)
 			if err != nil {
 				return err
 			}
@@ -71,10 +79,11 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	flags.AddFlagSet(config.FileInputFlag())
 	flags.StringVar(&groups, "groups", "", "Specify groups")
 	flags.DurationVar(&certificateExpiresAfter, "certificate-expires-after", 8760*time.Hour, "The expiration duration of the certificate")
+	flags.StringVar(&contextName, "context-name", "k0s", "Specify kubeconfig context name")
 	return cmd
 }
 
-func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, groups string, certificateExpiresAfter time.Duration) ([]byte, error) {
+func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, groups string, certificateExpiresAfter time.Duration, contextName string) ([]byte, error) {
 	userReq := certificate.Request{
 		Name:   username,
 		CN:     username,
@@ -90,17 +99,16 @@ func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, grou
 		return nil, fmt.Errorf("failed generate user certificate: %w, check if the control plane is initialized on this node", err)
 	}
 
-	const k0sContextName = "k0s"
 	kubeconfig := clientcmdapi.Config{
-		Clusters: map[string]*clientcmdapi.Cluster{k0sContextName: {
+		Clusters: map[string]*clientcmdapi.Cluster{contextName: {
 			Server:               clusterAPIURL,
 			CertificateAuthority: userReq.CACert,
 		}},
-		Contexts: map[string]*clientcmdapi.Context{k0sContextName: {
-			Cluster:  k0sContextName,
+		Contexts: map[string]*clientcmdapi.Context{contextName: {
+			Cluster:  contextName,
 			AuthInfo: username,
 		}},
-		CurrentContext: k0sContextName,
+		CurrentContext: contextName,
 		AuthInfos: map[string]*clientcmdapi.AuthInfo{username: {
 			ClientCertificateData: []byte(userCert.Cert),
 			ClientKeyData:         []byte(userCert.Key),
