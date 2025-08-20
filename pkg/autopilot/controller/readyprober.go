@@ -18,7 +18,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -33,7 +35,10 @@ import (
 	k8shttpprobe "k8s.io/kubernetes/pkg/probe/http"
 )
 
-const readyzURLFormat = "https://%s:6443/readyz?verbose"
+const (
+	readyzURLFormat   = "https://%s/readyz?verbose"
+	defaultK8sAPIPort = 6443
+)
 
 type ReadyProber interface {
 	Probe() error
@@ -41,6 +46,7 @@ type ReadyProber interface {
 }
 
 type readyProber struct {
+	k8sAPIPort    int
 	log           *logrus.Entry
 	tlsConfig     *tls.Config
 	timeout       time.Duration
@@ -50,10 +56,14 @@ type readyProber struct {
 
 // NewReadyProber creates a new ReadyProber based on a REST configuration, and is
 // populated with PlanCommandTargetStatus targets assigned via AddTargets.
-func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig *rest.Config, timeout time.Duration) (ReadyProber, error) {
+func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig *rest.Config, k8sAPIPort int, timeout time.Duration) (ReadyProber, error) {
 	tlscfg, err := rest.TLSConfigFor(restConfig)
 	if err != nil {
 		return nil, err
+	}
+
+	if k8sAPIPort == 0 {
+		k8sAPIPort = defaultK8sAPIPort
 	}
 
 	return &readyProber{
@@ -61,6 +71,7 @@ func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig 
 		clientFactory: cf,
 		tlsConfig:     tlscfg,
 		timeout:       timeout,
+		k8sAPIPort:    k8sAPIPort,
 	}, nil
 }
 
@@ -107,7 +118,7 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 	}
 
 	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig, false /* followNonLocalRedirects */)
-	url := fmt.Sprintf(readyzURLFormat, address)
+	url := fmt.Sprintf(readyzURLFormat, net.JoinHostPort(address, strconv.Itoa(p.k8sAPIPort)))
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("unable to create HTTP request for '%s': %w", url, err)
