@@ -19,7 +19,7 @@ type procHandle interface {
 	environ() ([]string, error)
 
 	// Requests graceful process termination.
-	requestGracefulShutdown() error
+	requestGracefulTermination() error
 
 	// Kills the process.
 	kill() error

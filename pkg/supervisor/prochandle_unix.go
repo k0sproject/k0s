@@ -11,7 +11,7 @@ import (
 	"syscall"
 )
 
-func requestGracefulShutdown(p *os.Process) error {
+func requestGracefulTermination(p *os.Process) error {
 	if err := p.Signal(syscall.SIGTERM); err != nil {
 		return fmt.Errorf("failed to send SIGTERM: %w", err)
 	}

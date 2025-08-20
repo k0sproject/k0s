@@ -66,9 +66,15 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
 		for {
-			s.log.Info("Requesting graceful shutdown")
-			if err := requestGracefulShutdown(s.cmd.Process); err != nil {
-				s.log.WithError(err).Warn("Failed to request graceful shutdown")
+			s.log.Debug("Requesting graceful termination")
+			if err := requestGracefulTermination(s.cmd.Process); err != nil {
+				if errors.Is(err, os.ErrProcessDone) {
+					s.log.Info("Failed to request graceful termination: process has already terminated")
+				} else {
+					s.log.WithError(err).Error("Failed to request graceful termination")
+				}
+			} else {
+				s.log.Info("Requested graceful termination")
 			}
 			select {
 			case <-time.After(s.TimeoutStop):
@@ -258,7 +264,7 @@ func (s *Supervisor) killProcess(ph procHandle) error {
 		return err
 	}
 
-	if err := ph.requestGracefulShutdown(); errors.Is(err, os.ErrProcessDone) {
+	if err := ph.requestGracefulTermination(); errors.Is(err, os.ErrProcessDone) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to request graceful termination: %w", err)
