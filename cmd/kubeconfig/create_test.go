@@ -44,6 +44,7 @@ func TestKubeconfigCreate(t *testing.T) {
 		"--config", "-",
 		"--data-dir", k0sVars.DataDir,
 		"kubeconfig", "create", "test-user",
+		"--context-name", "my-cluster",
 	})
 	var stdout, stderr bytes.Buffer
 	cmd.SetIn(bytes.NewReader(configData))
@@ -57,6 +58,11 @@ func TestKubeconfigCreate(t *testing.T) {
 	// Write kubeconfig to a file in order to load it afterwards
 	kubeconfigPath := filepath.Join(t.TempDir(), "kubeconfig")
 	require.NoError(t, os.WriteFile(kubeconfigPath, stdout.Bytes(), 0644))
+
+	// Verify that the current context is set as requested
+	rawConfig, err := clientcmd.LoadFromFile(kubeconfigPath)
+	require.NoError(t, err)
+	assert.Equal(t, "my-cluster", rawConfig.CurrentContext)
 
 	// Load the kubeconfig from disk and verify that the API server host is right
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
