@@ -74,15 +74,21 @@ func (s *networkSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
-	var daemonSetName string
+	var daemonSets []string
 	switch s.cni {
 	case "calico":
-		daemonSetName = "calico-node"
+		daemonSets = []string{"calico-node"}
 	case "kuberouter":
-		daemonSetName = "kube-router"
+		daemonSets = []string{"kube-router"}
 	}
-	s.T().Log("waiting to see CNI pods ready for", daemonSetName)
-	s.NoErrorf(common.WaitForDaemonSet(s.Context(), kc, daemonSetName, "kube-system"), "%s did not start", daemonSetName)
+	daemonSets = append(daemonSets, "kube-proxy", "konnectivity-agent")
+	for _, daemonSetName := range daemonSets {
+		s.T().Log("waiting to see CNI pods ready for", daemonSetName)
+		s.NoErrorf(common.WaitForDaemonSet(s.Context(), kc, daemonSetName, "kube-system"), "%s did not start", daemonSetName)
+	}
+
+	s.T().Log("waiting to see coredns pods ready")
+	s.Require().NoError(common.WaitForDeployment(s.Context(), kc, "coredns", "kube-system"))
 
 	restConfig, err := s.GetKubeConfig("controller0")
 	s.Require().NoError(err)
