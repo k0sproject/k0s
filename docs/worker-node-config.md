@@ -77,3 +77,7 @@ There is an `--iptables-mode` flag to specify the mode explicitly. Valid values:
 ```shell
 k0s worker --iptables-mode=nft
 ```
+
+## Cgroup driver detection
+
+k0s automatically detects and manages the cgroup driver (systemd or cgroupfs) for both kubelet and containerd. On upgrades, k0s preserves the previously used driver for compatibility. You can override the driver by specifying `cgroupDriver` in a worker profile or kubelet config. See below for worker profile examples.
