@@ -72,7 +72,7 @@ func TestWriteEnvoyConfigFiles(t *testing.T) {
 					port, perr := evalJSONPath[float64](ep, ".endpoint.address.socket_address.port_value")
 					if assert.NoErrorf(t, errors.Join(herr, perr), "For endpoint %d", i) {
 						iport := int64(port)
-						if assert.InEpsilonf(t, iport, port, 0, "Port is not an integer for endpoint %d", i) {
+						if assert.InEpsilonf(t, iport, port, 0, "APIPort is not an integer for endpoint %d", i) {
 							addrs = append(addrs, fmt.Sprintf("%s:%d", host, iport))
 						}
 					}
