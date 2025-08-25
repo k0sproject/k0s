@@ -34,7 +34,7 @@ func TestWriteEnvoyConfigFiles(t *testing.T) {
 			dir := t.TempDir()
 			params := envoyParams{
 				configDir: dir,
-				bindIP:    net.IPv6loopback,
+				bindIPs:   []net.IP{net.IPv6loopback},
 			}
 			filesParams := envoyFilesParams{}
 			for _, server := range test.servers {
