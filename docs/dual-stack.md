@@ -65,7 +65,7 @@ configuration:
 spec:
   network:
     # primaryAddressFamily is optional
-    priamryAddressFamily: <IPv4|IPv6>
+    primaryAddressFamily: <IPv4|IPv6>
 ```
 
 If not defined explicitly, k0s will determine it based on `spec.api.externalAddress`,
