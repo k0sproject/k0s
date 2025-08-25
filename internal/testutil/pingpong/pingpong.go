@@ -36,6 +36,7 @@ func Start(t *testing.T, opts ...StartOptions) (*exec.Cmd, *PingPong) {
 	cmd := exec.Command(pingPong.BinPath(), pingPong.BinArgs()...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.SysProcAttr = pingPong.sysProcAttr()
 	for _, opt := range opts {
 		cmd.Env = opt.Env
 	}
