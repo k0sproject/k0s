@@ -107,6 +107,7 @@ const (
 	NodeRoleComponentName              = "node-role"
 	WindowsNodeComponentName           = "windows-node"
 	AutopilotComponentName             = "autopilot"
+	UpdateProberComponentName          = "update-prober"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
 	ClusterConfigNamespace  = "kube-system"
