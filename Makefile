@@ -35,6 +35,7 @@ ifeq ($(DOCKER),)
 else
   GO_ENV_REQUISITES ?= .k0sbuild.docker-image.k0s
   GO_ENV ?= $(DOCKER) run --rm \
+  	$(DOCKER_OPTS) \
     -v '$(realpath $(K0S_GO_BUILD_CACHE))':/run/k0s-build \
     -v '$(CURDIR)':/go/src/github.com/k0sproject/k0s \
     -w /go/src/github.com/k0sproject/k0s \
