@@ -589,10 +589,12 @@ func (c *command) start(ctx context.Context) error {
 		EnableWorker:       c.EnableWorker,
 	})
 
-	clusterComponents.Add(ctx, controller.NewUpdateProber(
-		adminClientFactory,
-		leaderElector,
-	))
+	if !slices.Contains(flags.DisableComponents, constant.UpdateProberComponentName) {
+		clusterComponents.Add(ctx, controller.NewUpdateProber(
+			adminClientFactory,
+			leaderElector,
+		))
+	}
 
 	// Add the config source as the last component, so that the reconciliation
 	// starts after all other components have been started.
