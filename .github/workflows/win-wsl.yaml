@@ -32,7 +32,7 @@ jobs:
           & wsl --update
 
           Write-Host "Downloading Ubuntu WSL ..."
-          Invoke-WebRequest -Uri https://releases.ubuntu.com/noble/ubuntu-24.04.2-wsl-amd64.wsl -OutFile ubuntu.wsl
+          Invoke-WebRequest -Uri https://old-releases.ubuntu.com/releases/24.04.2/ubuntu-24.04.2-wsl-amd64.wsl -OutFile ubuntu.wsl
           Write-Host "Importing Ubuntu WSL ..."
           New-Item -ItemType Directory -Path .\ubuntu | Out-Null
           & wsl --import Ubuntu .\ubuntu .\ubuntu.wsl
