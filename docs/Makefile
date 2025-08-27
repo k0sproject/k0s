@@ -91,7 +91,7 @@ clean: clean-k0s
 	rm -rf ../site
 	for i in .docker-image.*.stamp; do \
 	  if [ -f "$$i" ]; then \
-	    docker rmi -f "k0sdocs$$(basename "$$i" .stamp)" && rm -- "$$i";\
+	    $(DOCKER) rmi -f "k0sdocs$$(basename "$$i" .stamp)" && rm -- "$$i";\
 	  fi; \
 	done
 
