@@ -13,11 +13,11 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/autopilot/channels"
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,13 +27,13 @@ import (
 var _ manager.Component = (*UpdateProber)(nil)
 
 type UpdateProber struct {
-	APClientFactory apcli.FactoryInterface
+	APClientFactory kubeutil.ClientFactoryInterface
 	ClusterConfig   *v1beta1.ClusterConfig
 	log             logrus.FieldLogger
 	leaderElector   leaderelector.Interface
 }
 
-func NewUpdateProber(apClientFactory apcli.FactoryInterface, leaderElector leaderelector.Interface) *UpdateProber {
+func NewUpdateProber(apClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *UpdateProber {
 	return &UpdateProber{
 		APClientFactory: apClientFactory,
 		log:             logrus.WithFields(logrus.Fields{"component": "updateprober"}),

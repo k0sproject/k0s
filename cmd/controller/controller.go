@@ -27,7 +27,6 @@ import (
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
-	apclient "github.com/k0sproject/k0s/pkg/autopilot/client"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
@@ -562,12 +561,12 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		Workloads:          controllerMode.WorkloadsEnabled(),
 	})
 
-	clusterComponents.Add(ctx, controller.NewUpdateProber(
-		&apclient.ClientFactory{
-			ClientFactoryInterface: adminClientFactory,
-		},
-		leaderElector,
-	))
+	if !slices.Contains(flags.DisableComponents, constant.UpdateProberComponentName) {
+		clusterComponents.Add(ctx, controller.NewUpdateProber(
+			adminClientFactory,
+			leaderElector,
+		))
+	}
 
 	// Add the config source as the last component, so that the reconciliation
 	// starts after all other components have been started.

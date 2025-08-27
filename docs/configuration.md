@@ -583,7 +583,7 @@ they need to fulfill their need for the control plane. Disabling the system
 components happens through a command line flag for the controller process:
 
 ```text
---disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
+--disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,update-prober,windows-node,worker-config)
 ```
 
 If you use k0sctl, just add the flag when installing the cluster for the first
