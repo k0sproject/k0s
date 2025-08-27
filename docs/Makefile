@@ -96,7 +96,7 @@ clean: clean-k0s
 
 .PHONY: update-pip-requirements
 update-pip-requirements: .docker-image.serve-dev.stamp
-	docker run --rm --entrypoint sh k0sdocs.docker-image.serve-dev -c \
+	docker run --rm --entrypoint sh $(DOCKER_RUN_OPTS) k0sdocs.docker-image.serve-dev -c \
 	'pip install --disable-pip-version-check pip-tools > /dev/null \
 	  && echo pip | pip-compile --allow-unsafe --generate-hashes --output-file - - | grep -E -v "^ *#" \
 	  && echo wheel | pip-compile --allow-unsafe --generate-hashes --output-file - - | grep -E -v "^ *#"' \

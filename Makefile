@@ -35,7 +35,6 @@ ifeq ($(DOCKER),)
 else
   GO_ENV_REQUISITES ?= .k0sbuild.docker-image.k0s
   GO_ENV ?= $(DOCKER) run --rm \
-  	$(DOCKER_OPTS) \
     -v '$(realpath $(K0S_GO_BUILD_CACHE))':/run/k0s-build \
     -v '$(CURDIR)':/go/src/github.com/k0sproject/k0s \
     -w /go/src/github.com/k0sproject/k0s \
@@ -44,7 +43,7 @@ else
     -e CGO_CFLAGS \
     -e GOARCH \
     --user $(BUILD_UID):$(BUILD_GID) \
-    -- '$(shell cat .k0sbuild.docker-image.k0s)'
+    $(DOCKER_RUN_OPTS) -- '$(shell cat .k0sbuild.docker-image.k0s)'
   GO ?= $(GO_ENV) go
 endif
 
@@ -327,7 +326,7 @@ docs-serve-dev:
 	  -e K0S_VERSION=$(VERSION) \
 	  -v "$(CURDIR):/k0s:ro" \
 	  -p '$(DOCS_DEV_PORT):8000' \
-	  k0sdocs.docker-image.serve-dev
+	  $(DOCKER_RUN_OPTS) k0sdocs.docker-image.serve-dev
 
 sbom/spdx.json: go.mod
 	mkdir -p -- '$(dir $@)'
@@ -337,7 +336,7 @@ sbom/spdx.json: go.mod
 	  -v "$(CURDIR)/syft.yaml:/tmp/syft.yaml" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  --user $(BUILD_UID):$(BUILD_GID) \
-	  anchore/syft:v0.90.0 \
+	  $(DOCKER_RUN_OPTS) anchore/syft:v0.90.0 \
 	  /k0s -o spdx-json@2.2=/out/spdx.json -c /tmp/syft.yaml
 
 .PHONY: sign-sbom
@@ -346,7 +345,7 @@ sign-sbom: sbom/spdx.json
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
+	  $(DOCKER_RUN_OPTS) ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
 	  sign-blob \
 	  --key /k0s/cosign.key \
 	  --tlog-upload=false \
@@ -358,6 +357,6 @@ sign-pub-key:
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
+	  $(DOCKER_RUN_OPTS) ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
 	  public-key \
 	  --key /k0s/cosign.key --output-file /out/cosign.pub
