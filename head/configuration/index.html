@@ -3540,7 +3540,7 @@ will not disable component deployment.</p>
 users to build a minimal Kubernetes control plane and use what ever components
 they need to fulfill their need for the control plane. Disabling the system
 components happens through a command line flag for the controller process:</p>
-<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,windows-node,worker-config)
+<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components (valid items: applier-manager,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,update-prober,windows-node,worker-config)
 </code></pre></div>
 <p>If you use k0sctl, just add the flag when installing the cluster for the first
 controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:</p>
