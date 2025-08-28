@@ -1,5 +1,5 @@
 # renovate: datasource=github-releases depName=kubernetes-sigs/controller-tools
-controller-tools_version = 0.18.0
+controller-tools_version = 0.19.0
 # renovate: datasource=github-releases depName=golangci/golangci-lint
 golangci-lint_version = 2.4.0
 # renovate: datasource=github-releases depName=sigstore/cosign
