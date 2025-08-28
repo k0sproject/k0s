@@ -128,6 +128,10 @@ type EtcdConfig struct {
 	// Map of key-values (strings) for any extra arguments you want to pass down to the etcd process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 
+	// Slice of strings with raw arguments to pass to the etcd process
+	// These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+	RawArgs []string `json:"rawArgs,omitempty"`
+
 	// Custom config for CA certificates.
 	CA *CA `json:"ca,omitempty"`
 }

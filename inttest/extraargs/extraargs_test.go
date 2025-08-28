@@ -5,6 +5,7 @@ package extraargs
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -38,7 +39,8 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.NoError(err)
 
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-apiserver", "--disable-admission-plugins=PodSecurity")
-	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/etcd", "--logger=zap")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/etcd", "--log-level=warn")
+	s.checkFlagCount(sshCtrl, "/var/lib/k0s/bin/etcd", "--logger=zap", 3)
 
 	sshWorker, err := s.SSH(s.Context(), s.WorkerNode(0))
 	defer sshWorker.Disconnect()
@@ -47,17 +49,25 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "--config-sync-period=12m0s")
 
 }
-func (s *ExtraArgsSuite) checkFlag(ssh *common.SSHConnection, processName string, flag string) {
+
+func (s *ExtraArgsSuite) checkFlagCount(ssh *common.SSHConnection, processName string, flag string, expectedCount int) {
 	s.T().Logf("Checking flag %s in process %s", flag, processName)
 	pid, err := ssh.ExecWithOutput(s.Context(), "/usr/bin/pgrep "+processName)
 	s.NoError(err)
 
 	flagCount, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("/bin/grep -c -- %s /proc/%s/cmdline", flag, pid))
-	s.NoError(err)
-	if flagCount != "1" {
-		s.T().Fatalf("%s flag %s not found", processName, flag)
+	// If there are no flags, grep returns 1, so we need to ignore this error. Checking the output should beenough.
+	if expectedCount > 0 {
+		s.NoError(err)
+	}
+	if flagCount != strconv.Itoa(expectedCount) {
+		s.T().Fatalf("%s flag %s found %s, expected %d", processName, flag, flagCount, expectedCount)
 	}
 
+}
+
+func (s *ExtraArgsSuite) checkFlag(ssh *common.SSHConnection, processName string, flag string) {
+	s.checkFlagCount(ssh, processName, flag, 1)
 }
 
 func TestExtraArgsSuite(t *testing.T) {
@@ -80,7 +90,11 @@ spec:
   storage:
     etcd:
       extraArgs:
+        log-level: warn
         logger: zap
+      rawArgs:
+      - --logger=zap
+      - --logger=zap
   network:
     kubeProxy:
       extraArgs:
