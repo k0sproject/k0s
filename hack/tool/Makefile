@@ -1,3 +1,4 @@
+DOCKER ?= docker
 ifndef HOST_ARCH
 HOST_HARDWARE := $(shell uname -m)
 ifneq (, $(filter $(HOST_HARDWARE), aarch64 arm64))
@@ -13,4 +14,4 @@ endif
 endif
 
 image:
-	docker build --progress=plain --build-arg ARCH=${HOST_ARCH} --build-arg HARDWARE=${HOST_HARDWARE} -t tool -f ./Dockerfile .
+	$(DOCKER) build --progress=plain --build-arg ARCH=${HOST_ARCH} --build-arg HARDWARE=${HOST_HARDWARE} -t tool -f ./Dockerfile .

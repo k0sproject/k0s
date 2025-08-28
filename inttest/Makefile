@@ -1,5 +1,6 @@
 ARCH := $(shell go env GOARCH)
 OS := $(shell go env GOOS)
+DOCKER ?= docker
 
 sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v${sonobuoy_version}/sonobuoy_${sonobuoy_version}_$(OS)_$(ARCH).tar.gz
 
@@ -29,17 +30,17 @@ bootloose_alpine_build_cmdline := \
 	bootloose-alpine
 
 .bootloose-alpine.stamp: $(shell find bootloose-alpine -type f)
-	docker build --progress=plain --build-arg TARGETARCH=$(ARCH) $(bootloose_alpine_build_cmdline)
+	$(DOCKER) build --progress=plain --build-arg TARGETARCH=$(ARCH) $(bootloose_alpine_build_cmdline)
 	touch $@
 
 # This is a special target to test the bootloose alpine image locally for all supported platforms.
 .PHONY: check-bootloose-alpine-buildx
 check-bootloose-alpine-buildx:
-	docker buildx build --progress=plain --platform linux/amd64,linux/arm64,linux/arm/v7 $(bootloose_alpine_build_cmdline)
+	$(DOCKER) buildx build --progress=plain --platform linux/amd64,linux/arm64,linux/arm/v7 $(bootloose_alpine_build_cmdline)
 
 .bootloose-k0s.stamp: K0S_PATH ?= $(realpath ../k0s)
 .bootloose-k0s.stamp: .bootloose-alpine.stamp
-	docker build --progress=plain \
+	$(DOCKER) build --progress=plain \
 	  --build-arg K0S_PATH=$(notdir $(K0S_PATH)) \
 	  -t bootloose-k0s \
 	  -f bootloose-k0s/Dockerfile \
@@ -47,7 +48,7 @@ check-bootloose-alpine-buildx:
 	touch $@
 
 .update-server.stamp: .bootloose-alpine.stamp update-server/Dockerfile $(wildcard update-server/html/**/*.html)
-	docker build --progress=plain -t update-server --build-arg BASE=bootloose-alpine -f update-server/Dockerfile update-server
+	$(DOCKER) build --progress=plain -t update-server --build-arg BASE=bootloose-alpine -f update-server/Dockerfile update-server
 	touch $@
 
 check-network: bin/sonobuoy
