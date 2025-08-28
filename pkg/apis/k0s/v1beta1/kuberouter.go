@@ -18,8 +18,8 @@ type KubeRouter struct {
 	// Defaults to "Enabled"
 	// +kubebuilder:default=Enabled
 	Hairpin Hairpin `json:"hairpin,omitempty"`
-	// Deprecated: Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
-	//+kubebuilder:deprecatedversion:warning="Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)"
+	// Deprecated: Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:APIPort)
+	//+kubebuilder:deprecatedversion:warning="Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:APIPort)"
 	HairpinMode bool `json:"hairpinMode,omitempty"`
 	// IP masquerade for traffic originating from the pod network, and destined outside of it (default: false)
 	IPMasq bool `json:"ipMasq,omitempty"`
