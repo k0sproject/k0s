@@ -1,129 +1,308 @@
----
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: calico-node-windows
   namespace: kube-system
 spec:
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      "kubernetes.io/os": windows
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
+      k8s-app: calico-node-windows
   template:
     metadata:
       labels:
-        "kubernetes.io/os": windows
+        app.kubernetes.io/name: calico-node-windows
+        k8s-app: calico-node-windows
     spec:
-      serviceAccountName: calico-node
-      securityContext:
-        windowsOptions:
-          hostProcess: true
-          runAsUserName: "NT AUTHORITY\\system"
-      hostNetwork: true
-      tolerations:
-        # Make sure calico-node gets scheduled on all nodes.
-        - effect: NoSchedule
-          operator: Exists
-        # Mark the pod as a critical add-on for rescheduling.
-        - key: CriticalAddonsOnly
-          operator: Exists
-        - effect: NoExecute
-          operator: Exists
-      initContainers:
-        - name: initfilesystem
-          image: mcr.microsoft.com/powershell
-          command: [
-            'powershell.exe',
-            '-C',
-            "New-Item -Path '{{ .CNIBin }}' -ItemType Directory -Force ; New-Item -Path '{{ .CNIConf }}' -ItemType Directory -Force ; $existingRule = Get-NetFirewallRule -DisplayName 'kubectl exec 10250' -ErrorAction SilentlyContinue; if ($existingRule -eq $null) { New-NetFirewallRule -Name 'KubectlExec10250' -Description 'Enable kubectl exec and log' -Action Allow -LocalPort 10250 -Enabled True -DisplayName 'kubectl exec 10250' -Protocol TCP -ErrorAction SilentlyContinue }"
-          ]
-        - name: install
-          image: "{{ .NodeImage }}" 
-          args:
-            - ".\\host-process-install.ps1"
-          imagePullPolicy: IfNotPresent
-          envFrom:
-            - configMapRef:
-                name: calico-windows-config
-          workingDir: "$env:CONTAINER_SANDBOX_MOUNT_POINT"
-          env:
-            - name: NODENAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
       containers:
-        - name: node
-          image: "{{ .NodeImage }}"
-          imagePullPolicy: IfNotPresent
-          args:
-            - "C:/CalicoWindows/node/node-service.ps1"
-          # The node container's working dir is in c:\CalicoWindows on the host,
-          # which is two-levels up from the CONTAINER_SANDBOX_MOUNT_POINT.
-          workingDir: "C:/CalicoWindows"
-          envFrom:
-            - configMapRef:
-                name: calico-windows-config
-          # Calico needs to know the name of the node on which it is running.
-          env:
-            - name: NODENAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
-        - name: felix
-          image: "{{ .NodeImage }}"
-          imagePullPolicy: IfNotPresent
-          args:
-            - "C:/CalicoWindows/felix/felix-service.ps1"
-          # The felix container's working dir is in c:\CalicoWindows on the host,
-          # which is two-levels up from the CONTAINER_SANDBOX_MOUNT_POINT.
-          workingDir: "C:/CalicoWindows"
-          envFrom:
-            - configMapRef:
-                name: calico-windows-config
-          # Calico needs to know the name of the node on which it is running.
-          env:
-            - name: NODENAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
-          livenessProbe:
+      - args:
+        - $env:CONTAINER_SANDBOX_MOUNT_POINT/CalicoWindows/felix-service.ps1
+        env:
+        - name: DATASTORE_TYPE
+          value: kubernetes
+        - name: WAIT_FOR_DATASTORE
+          value: "true"
+        - name: CLUSTER_TYPE
+          value: k8s,windows
+        - name: CALICO_DISABLE_FILE_LOGGING
+          value: "false"
+        - name: FELIX_DEFAULTENDPOINTTOHOSTACTION
+          value: ACCEPT
+        - name: FELIX_HEALTHENABLED
+          value: "true"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        # TODO Pick this up from the k0s calico config
+        - name: VXLAN_VNI
+          value: "4096"
+        - name: VXLAN_ADAPTER
+        - name: CALICO_MANAGE_CNI
+          value: "true"
+        - name: KUBE_NETWORK
+          value: Calico.*
+        # TODO Pick this up from the k0s calico config
+        - name: CALICO_NETWORKING_BACKEND
+          value: vxlan
+        # TODO Pick this up from the k0s calico config
+        - name: IP
+          value: autodetect
+        # TODO Pick this up from the k0s calico config
+        - name: IP_AUTODETECTION_METHOD
+          value: first-found
+        - name: IP6
+          value: none
+        - name: FELIX_IPV6SUPPORT
+          value: "false"
+        # TODO This needs to be fed in from k0s config
+        - name: KUBERNETES_SERVICE_HOST
+          value: 10.96.0.1
+        - name: KUBERNETES_SERVICE_PORT
+          value: "443"
+        image: docker.io/calico/node-windows:v3.29.4
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
             exec:
               command:
-                - c:\\CalicoWindows\\calico-node.exe
-                - -felix-live
-            periodSeconds: 10
-            initialDelaySeconds: 10
-            failureThreshold: 6
-            timeoutSeconds: 10
-          readinessProbe:
-            exec:
-              command:
-                - c:\\CalicoWindows\\calico-node.exe
-                - -felix-ready
-            periodSeconds: 10
-            timeoutSeconds: 10
-        - name: confd
-          image: "{{ .NodeImage }}" 
-          imagePullPolicy: IfNotPresent
-          args:
-            - "C:/CalicoWindows/confd/confd-service.ps1"
-          # The confd container's working dir is in c:\CalicoWindows on the host,
-          # which is two-levels up from the CONTAINER_SANDBOX_MOUNT_POINT.
-          workingDir: "C:/CalicoWindows"
-          envFrom:
-            - configMapRef:
-                name: calico-windows-config
-          # Calico needs to know the name of the node on which it is running.
-          env:
-            - name: NODENAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
+              - $env:CONTAINER_SANDBOX_MOUNT_POINT/CalicoWindows/calico-node.exe
+              - -shutdown
+        livenessProbe:
+          exec:
+            command:
+            - $env:CONTAINER_SANDBOX_MOUNT_POINT/CalicoWindows/calico-node.exe
+            - -felix-live
+          failureThreshold: 6
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 10
+        name: felix
+        readinessProbe:
+          exec:
+            command:
+            - $env:CONTAINER_SANDBOX_MOUNT_POINT/CalicoWindows/calico-node.exe
+            - -felix-ready
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 10
+        resources: {}
+        securityContext:
+          windowsOptions:
+            hostProcess: true
+            runAsUserName: NT AUTHORITY\system
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/log/calico/cni
+          name: cni-log-dir
+        - mountPath: /host/etc/cni/net.d
+          name: cni-net-dir
+        - mountPath: /var/lib/calico
+          name: var-lib-calico
+        - mountPath: /var/run/calico
+          name: var-run-calico
+        workingDir: $env:CONTAINER_SANDBOX_MOUNT_POINT/CalicoWindows/
+      - args:
+        - $env:CONTAINER_SANDBOX_MOUNT_POINT/CalicoWindows/node-service.ps1
+        env:
+        - name: DATASTORE_TYPE
+          value: kubernetes
+        - name: WAIT_FOR_DATASTORE
+          value: "true"
+        - name: CLUSTER_TYPE
+          value: k8s,windows
+        - name: CALICO_DISABLE_FILE_LOGGING
+          value: "false"
+        - name: FELIX_DEFAULTENDPOINTTOHOSTACTION
+          value: ACCEPT
+        - name: FELIX_HEALTHENABLED
+          value: "true"
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: VXLAN_VNI
+          value: "4096"
+        - name: VXLAN_ADAPTER
+        - name: CALICO_MANAGE_CNI
+          value: "true"
+        - name: KUBE_NETWORK
+          value: Calico.*
+        - name: CALICO_NETWORKING_BACKEND
+          value: vxlan
+        - name: IP
+          value: autodetect
+        - name: IP_AUTODETECTION_METHOD
+          value: first-found
+        - name: IP6
+          value: none
+        - name: FELIX_IPV6SUPPORT
+          value: "false"
+        - name: KUBERNETES_SERVICE_HOST
+          value: 10.96.0.1
+        - name: KUBERNETES_SERVICE_PORT
+          value: "443"
+        image: docker.io/calico/node-windows:v3.30.2
+        imagePullPolicy: IfNotPresent
+        name: node
+        resources: {}
+        securityContext:
+          windowsOptions:
+            hostProcess: true
+            runAsUserName: NT AUTHORITY\system
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/log/calico/cni
+          name: cni-log-dir
+        - mountPath: /host/etc/cni/net.d
+          name: cni-net-dir
+        - mountPath: /var/lib/calico
+          name: var-lib-calico
+        - mountPath: /var/run/calico
+          name: var-run-calico
+        workingDir: $env:CONTAINER_SANDBOX_MOUNT_POINT/CalicoWindows/
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      initContainers:
+      - args:
+        - $env:CONTAINER_SANDBOX_MOUNT_POINT/uninstall-calico.ps1
+        env:
+        - name: SLEEP
+          value: "false"
+        - name: CNI_BIN_DIR
+          value: /host/opt/cni/bin
+        - name: CNI_CONF_NAME
+          value: 10-calico.conflist
+        - name: CNI_NET_DIR
+          value: /host/etc/cni/net.d
+        image: docker.io/calico/node-windows:v3.30.2
+        imagePullPolicy: IfNotPresent
+        name: uninstall-calico
+        resources: {}
+        securityContext:
+          windowsOptions:
+            hostProcess: true
+            runAsUserName: NT AUTHORITY\system
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /host/opt/cni/bin
+          name: cni-bin-dir
+        - mountPath: /host/etc/cni/net.d
+          name: cni-net-dir
+      - command:
+        - $env:CONTAINER_SANDBOX_MOUNT_POINT/opt/cni/bin/install.exe
+        env:
+        - name: SLEEP
+          value: "false"
+        - name: CNI_BIN_DIR
+          value: /host/opt/cni/bin
+        - name: CNI_CONF_NAME
+          value: 10-calico.conflist
+        - name: CNI_NET_DIR
+          value: /etc/cni/net.d
+        - name: KUBERNETES_DNS_SERVERS
+          value: 10.96.0.10
+        - name: KUBERNETES_SERVICE_CIDRS
+          value: 10.96.0.0/12
+        - name: VXLAN_VNI
+          value: "4096"
+        - name: KUBERNETES_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: CNI_NETWORK_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              key: config
+              name: calico-windows-config
+        - name: KUBERNETES_SERVICE_HOST
+          value: 10.96.0.1
+        - name: KUBERNETES_SERVICE_PORT
+          value: "443"
+        image: docker.io/calico/cni-windows:v3.30.2
+        imagePullPolicy: IfNotPresent
+        name: install-cni
+        resources: {}
+        securityContext:
+          windowsOptions:
+            hostProcess: true
+            runAsUserName: NT AUTHORITY\system
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /host/opt/cni/bin
+          name: cni-bin-dir
+        - mountPath: /host/etc/cni/net.d
+          name: cni-net-dir
       nodeSelector:
         kubernetes.io/os: windows
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: calico-node
+      serviceAccountName: calico-node
+      terminationGracePeriodSeconds: 5
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /opt/cni/bin
+          type: DirectoryOrCreate
+        name: cni-bin-dir
+      - hostPath:
+          path: /var/log/calico/cni
+          type: DirectoryOrCreate
+        name: cni-log-dir
+      - hostPath:
+          path: /etc/cni/net.d
+          type: ""
+        name: cni-net-dir
+      - hostPath:
+          path: /lib/modules
+          type: ""
+        name: lib-modules
+      - hostPath:
+          path: /var/run/nodeagent
+          type: DirectoryOrCreate
+        name: policysync
+      - hostPath:
+          path: /var/lib/calico
+          type: DirectoryOrCreate
+        name: var-lib-calico
+      - hostPath:
+          path: /var/run/calico
+          type: DirectoryOrCreate
+        name: var-run-calico
+      - hostPath:
+          path: /run/xtables.lock
+          type: FileOrCreate
+        name: xtables-lock
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
