@@ -20,6 +20,11 @@ Environment variables:
   K0S_CONFIG
     Optional configuration for k0s, written to /etc/k0s/config.yaml if set.
 
+  K0S_ENTRYPOINT_REMOUNT_SYSCTLS
+    Set to 1 to force remounting of /proc/sys in read-write mode.
+    Set to 0 to disable remounting.
+    The default is automatic detection.
+
   K0S_ENTRYPOINT_REMOUNT_CGROUP2FS
     Set to 1 to force remounting of the cgroup2 filesystem in read-write mode.
     Set to 0 to disable remounting.
@@ -77,6 +82,46 @@ has_cap_sys_admin() {
   has_effective_capability 21
 }
 
+# Checks if the file system mounted at the given path is read-write.
+is_mount_rw() {
+  local _device mountpoint _fstype opts _rest
+  while read -r _device mountpoint _fstype opts _rest; do
+    if [ "$mountpoint" = "$1" ]; then
+      case "$opts" in
+      rw* | *,rw | *,rw,*) return 0 ;;
+      esac
+      break
+    fi
+  done </proc/mounts
+  return 1
+}
+
+# Remounts the sysctl path in read-write mode, if necessary.
+remount_sysctls() {
+  case "${K0S_ENTRYPOINT_REMOUNT_SYSCTLS-}" in
+  0) return ;; # disabled
+  1) ;;        # enabled
+  *)           # auto detect
+    if is_mount_rw /proc/sys; then
+      return
+    fi
+    has_cap_sys_admin || {
+      if [ $? -eq 1 ]; then
+        echo "$0: won't remount /proc/sys without CAP_SYS_ADMIN (disable with K0S_ENTRYPOINT_REMOUNT_SYSCTLS=0)" >&2
+        return
+      fi
+
+      echo "$0: failed to determine capabilities (disable with K0S_ENTRYPOINT_REMOUNT_SYSCTLS=0)" >&2
+    }
+    ;;
+  esac
+
+  mount --make-rslave / # don't propagate mount events to other namespaces
+  mount -o remount,rw /proc/sys
+
+  [ "${K0S_ENTRYPOINT_QUIET-}" = '1' ] || echo "$0: remounted /proc/sys" >&2
+}
+
 # Checks if the cgroup2 file system is mounted at its well-known path.
 is_cgroupv2() {
   # Check for the magic number of the cgroup2 fs.
@@ -86,16 +131,7 @@ is_cgroupv2() {
 
 # Checks if the file system mounted at the well-known cgroup2 path is read-write.
 is_cgroupfs_rw() {
-  local _device mountpoint _fstype opts _rest
-  while read -r _device mountpoint _fstype opts _rest; do
-    if [ "$mountpoint" = /sys/fs/cgroup ]; then
-      case "$opts" in
-      rw* | *,rw | *,rw,*) return 0 ;;
-      esac
-      break
-    fi
-  done </proc/mounts
-  return 1
+  is_mount_rw /sys/fs/cgroup
 }
 
 # Remounts the cgroup2 file system in read-write mode, if necessary.
@@ -298,12 +334,14 @@ main() {
 
   controller | *)
     # Disable everything that's only required when running nested containers.
+    : "${K0S_ENTRYPOINT_REMOUNT_SYSCTLS:=0}"
     : "${K0S_ENTRYPOINT_REMOUNT_CGROUP2FS:=0}"
     : "${K0S_ENTRYPOINT_ENABLE_CGROUPV2_NESTING:=0}"
     : "${K0S_ENTRYPOINT_DNS_FIXUP:=0}"
     ;;
   esac
 
+  remount_sysctls
   remount_cgroup2fs
   enable_cgroupv2_nesting
   dns_fixup
@@ -314,6 +352,7 @@ main() {
   exec env \
     -u K0S_ENTRYPOINT_QUIET \
     -u K0S_ENTRYPOINT_ROLE \
+    -u K0S_ENTRYPOINT_REMOUNT_SYSCTLS \
     -u K0S_ENTRYPOINT_REMOUNT_CGROUP2FS \
     -u K0S_ENTRYPOINT_ENABLE_CGROUPV2_NESTING \
     -u K0S_ENTRYPOINT_DNS_FIXUP \
