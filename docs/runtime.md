@@ -57,6 +57,14 @@ state = "/run/k0s/containerd"
   address = "/run/k0s/containerd.sock"
 ```
 
+## Automatic cgroup driver detection and upgrade safety
+
+k0s automatically detects the appropriate cgroup driver (systemd or cgroupfs) for your environment. On new installations, k0s will select the best driver based on the host's init system (systemd or otherwise). On upgrades, k0s will preserve the previously used cgroup driver for compatibility and stability.
+
+This detection logic ensures that both kubelet and containerd are always configured to use the same cgroup driver, preventing mismatches and related issues. The detection is performed at startup and is upgrade-safe: if a previous kubelet configuration is found, its cgroup driver setting is respected; otherwise, detection is based on the current environment.
+
+You can still override the cgroup driver by specifying `cgroupDriver` in a the containerd configuration. Make sure you configure both containerd and kubelet to use the same driver.
+
 ## k0s managed dynamic runtime configuration
 
 As of 1.27.1, k0s allows dynamic configuration of containerd CRI runtimes. This
@@ -192,6 +200,10 @@ For more details on how to configure registry hosts, please refer to the
     spec:
       runtimeClassName: gvisor
       containers:
+    k0s supports any container runtime that implements the [CRI] specification.
+
+    ## Automatic cgroup driver detection and upgrade safety
+
       - name: nginx
         image: nginx
     ```

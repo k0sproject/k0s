@@ -27,6 +27,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/worker/cgroup"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
 	containerruntime "github.com/k0sproject/k0s/pkg/container/runtime"
@@ -57,13 +58,16 @@ type Component struct {
 	OCIBundlePath string
 	confPath      string
 	importsPath   string
+	CgroupManager cgroup.CgroupManager // <-- pass in the manager
 }
 
-func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
+// NewComponent now takes a cgroup manager instance
+func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile, cgManager cgroup.CgroupManager) *Component {
 	c := &Component{
-		LogLevel: logLevel,
-		K0sVars:  vars,
-		Profile:  profile,
+		LogLevel:      logLevel,
+		K0sVars:       vars,
+		Profile:       profile,
+		CgroupManager: cgManager,
 	}
 
 	if runtime.GOOS == "windows" {
@@ -75,6 +79,10 @@ func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.P
 		c.confPath = confPathPosix
 		c.importsPath = importsPathPosix
 	}
+
+	log := logrus.WithField("component", "containerd")
+	log.Infof("Detected cgroup driver for containerd: %s", c.CgroupManager.Driver())
+
 	return c
 }
 
@@ -195,6 +203,7 @@ func (c *Component) windowsStop() error {
 }
 
 func (c *Component) setupConfig() error {
+	log := logrus.WithField("component", "containerd")
 	// Check if the config file is user managed
 	// If it is, we should not touch it
 
@@ -204,7 +213,7 @@ func (c *Component) setupConfig() error {
 	}
 
 	if !k0sManaged {
-		logrus.Infof("containerd config file %s is not k0s managed, skipping config generation", c.confPath)
+		log.Infof("containerd config file %s is not k0s managed, skipping config generation", c.confPath)
 		return nil
 	}
 	if err := dir.Init(filepath.Dir(c.confPath), 0755); err != nil {
@@ -214,10 +223,12 @@ func (c *Component) setupConfig() error {
 		return fmt.Errorf("can't create containerd config imports dir: %w", err)
 	}
 
+	log.Infof("Using cgroup driver for containerd: %s", c.CgroupManager.Driver())
 	configurer := &configurer{
-		loadPath:   filepath.Join(c.importsPath, "*.toml"),
-		pauseImage: c.Profile.PauseImage.URI(),
-		log:        logrus.WithField("component", "containerd"),
+		loadPath:     filepath.Join(c.importsPath, "*.toml"),
+		pauseImage:   c.Profile.PauseImage.URI(),
+		log:          log,
+		cgroupDriver: c.CgroupManager.Driver(),
 	}
 
 	config, err := configurer.handleImports()
