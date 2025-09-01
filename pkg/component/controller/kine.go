@@ -28,14 +28,17 @@ import (
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
+const kineGID = 0
+
 // Kine implement the component interface to run kine
 type Kine struct {
-	Config       *v1beta1.KineConfig
-	gid          int
-	K0sVars      *config.CfgVars
-	supervisor   supervisor.Supervisor
-	uid          int
-	bypassClient *etcd.Client
+	Config  *v1beta1.KineConfig
+	K0sVars *config.CfgVars
+
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
+	bypassClient   *etcd.Client
 }
 
 var _ manager.Component = (*Kine)(nil)
@@ -57,7 +60,7 @@ func (k *Kine) Init(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", kineSocketDir, err)
 	}
-	if err := os.Chown(kineSocketDir, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
+	if err := os.Chown(kineSocketDir, k.uid, kineGID); err != nil && os.Geteuid() == 0 {
 		logrus.Warn("failed to chown ", kineSocketDir)
 	}
 
@@ -74,11 +77,11 @@ func (k *Kine) Init(_ context.Context) error {
 			if err != nil {
 				return fmt.Errorf("failed to initialize SQLite database directory: %w", err)
 			}
-			err = os.Chown(dbDir, k.uid, k.gid)
+			err = os.Chown(dbDir, k.uid, kineGID)
 			if err != nil && os.Geteuid() == 0 {
 				return fmt.Errorf("failed to change ownership of SQLite database directory: %w", err)
 			}
-			if err := os.Chown(dbPath, k.uid, k.gid); err != nil && !errors.Is(err, os.ErrNotExist) && os.Geteuid() == 0 {
+			if err := os.Chown(dbPath, k.uid, kineGID); err != nil && !errors.Is(err, os.ErrNotExist) && os.Geteuid() == 0 {
 				logrus.WithError(err).Warn("Failed to change ownership of SQLite database file")
 			}
 		}
@@ -93,16 +96,17 @@ func (k *Kine) Init(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can't create bypass etcd client: %w", err)
 	}
-	return assets.Stage(k.K0sVars.BinDir, "kine")
+	k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "kine")
+	return err
 }
 
 // Run runs kine
 func (k *Kine) Start(ctx context.Context) error {
 	logrus.Info("Starting kine")
 
-	k.supervisor = supervisor.Supervisor{
+	k.supervisor = &supervisor.Supervisor{
 		Name:    "kine",
-		BinPath: assets.BinPath("kine", k.K0sVars.BinDir),
+		BinPath: k.executablePath,
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
 		Args: []string{
@@ -115,7 +119,7 @@ func (k *Kine) Start(ctx context.Context) error {
 			"--metrics-bind-address=:2380",
 		},
 		UID: k.uid,
-		GID: k.gid,
+		GID: kineGID,
 	}
 
 	return k.supervisor.Supervise()
@@ -123,7 +127,9 @@ func (k *Kine) Start(ctx context.Context) error {
 
 // Stop stops kine
 func (k *Kine) Stop() error {
-	k.supervisor.Stop()
+	if k.supervisor != nil {
+		k.supervisor.Stop()
+	}
 	return nil
 }
 

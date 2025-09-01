@@ -56,8 +56,7 @@ func (c *Component) Stop() error {
 func extractIPTablesBinaries(k0sBinDir string, iptablesMode string) (string, error) {
 	cmds := []string{"xtables-legacy-multi", "xtables-nft-multi"}
 	for _, cmd := range cmds {
-		err := assets.Stage(k0sBinDir, cmd)
-		if err != nil {
+		if _, err := assets.StageExecutable(k0sBinDir, cmd); err != nil {
 			return "", err
 		}
 	}

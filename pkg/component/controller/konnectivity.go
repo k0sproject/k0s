@@ -34,8 +34,9 @@ type Konnectivity struct {
 	LogLevel    string
 	ServerCount func() (uint, <-chan struct{})
 
-	supervisor *supervisor.Supervisor
-	uid        int
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 
 	stopFunc      context.CancelFunc
 	clusterConfig *v1beta1.ClusterConfig
@@ -71,9 +72,9 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 	}
 
 	k.log = logrus.WithFields(logrus.Fields{"component": "konnectivity"})
-	if err := assets.Stage(k.K0sVars.BinDir, "konnectivity-server"); err != nil {
+	if k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "konnectivity-server"); err != nil {
 		k.EmitWithPayload("failed to stage konnectivity-server", err)
-		return fmt.Errorf("failed to stage konnectivity-server binary %w", err)
+		return fmt.Errorf("failed to stage konnectivity-server binary: %w", err)
 
 	}
 	defer k.Emit("successfully initialized konnectivity component")
@@ -165,7 +166,7 @@ func (k *Konnectivity) runServer(count uint) error {
 
 	k.supervisor = &supervisor.Supervisor{
 		Name:    "konnectivity",
-		BinPath: assets.BinPath("konnectivity-server", k.K0sVars.BinDir),
+		BinPath: k.executablePath,
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
 		Args:    k.serverArgs(count),
