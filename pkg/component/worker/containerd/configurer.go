@@ -30,7 +30,8 @@ type configurer struct {
 	loadPath   string
 	pauseImage string
 
-	log *logrus.Entry
+	log          *logrus.Entry
+	cgroupDriver string
 }
 
 // Resolves partial containerd configuration files from the import glob path. If
@@ -40,7 +41,7 @@ type configurer struct {
 func (c *configurer) handleImports() (*resolvedConfig, error) {
 	var importPaths []string
 
-	defaultConfig, err := generateDefaultCRIConfig(c.pauseImage)
+	defaultConfig, err := generateDefaultCRIConfig(c.pauseImage, c.cgroupDriver)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate containerd default CRI config: %w", err)
 	}
@@ -91,13 +92,15 @@ func (c *configurer) handleImports() (*resolvedConfig, error) {
 // configuration, using the given image for sandbox containers. Uses the
 // containerd package to generate all the rest, so this will be in sync with
 // containerd's defaults for the CRI plugin.
-func generateDefaultCRIConfig(sandboxContainerImage string) ([]byte, error) {
+func generateDefaultCRIConfig(sandboxContainerImage string, cgroupDriver string) ([]byte, error) {
 	criPluginConfig := criconfig.DefaultConfig()
 	// Set pause image
 	criPluginConfig.SandboxImage = sandboxContainerImage
+	if cgroupDriver != "" {
+		// We need to set this on runc options
+		criPluginConfig.Runtimes["runc"].Options["SystemdCgroup"] = cgroupDriver == "systemd"
+	}
 	if runtime.GOOS == "windows" {
-		// The default config for Windows uses %ProgramFiles%/containerd/cni/{bin,conf}.
-		// Maybe k0s can use the default in the future, so there's no need for this override.
 		criPluginConfig.NetworkPluginBinDir = `c:\opt\cni\bin`
 		criPluginConfig.NetworkPluginConfDir = `c:\opt\cni\conf`
 	}
