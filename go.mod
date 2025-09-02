@@ -40,8 +40,8 @@ require (
 	github.com/rqlite/rqlite v4.6.0+incompatible
 	github.com/segmentio/analytics-go/v3 v3.3.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.9.1
-	github.com/spf13/pflag v1.0.7
+	github.com/spf13/cobra v1.10.1
+	github.com/spf13/pflag v1.0.9
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli v1.22.17
 	github.com/vishvananda/netlink v1.3.1
