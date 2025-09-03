@@ -21,6 +21,11 @@ func (in *APISpec) DeepCopyInto(out *APISpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.RawArgs != nil {
+		in, out := &in.RawArgs, &out.RawArgs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.SANs != nil {
 		in, out := &in.SANs, &out.SANs
 		*out = make([]string, len(*in))

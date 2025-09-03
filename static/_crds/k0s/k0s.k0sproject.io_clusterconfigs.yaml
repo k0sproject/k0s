@@ -85,6 +85,13 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
+                  rawArgs:
+                    description: |-
+                      Slice of strings with raw arguments to pass to the kube-apiserver process
+                      These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                    items:
+                      type: string
+                    type: array
                   sans:
                     description: List of additional addresses to push to API servers
                       serving the certificate
