@@ -39,6 +39,8 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.NoError(err)
 
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-apiserver", "--disable-admission-plugins=PodSecurity")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-controller-manager", "--terminated-pod-gc-threshold=1000")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-controller-manager", "--concurrent-service-syncs=5")
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/etcd", "--log-level=warn")
 	s.checkFlagCount(sshCtrl, "/var/lib/k0s/bin/etcd", "--logger=zap", 3)
 
@@ -90,6 +92,11 @@ spec:
       disable-admission-plugins: PodSecurity
     rawArgs:
     - --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,TaintNodesByCondition,Priority,DefaultTolerationSeconds,DefaultStorageClass,StorageObjectInUseProtection,PersistentVolumeClaimResize,RuntimeClass,CertificateApproval,CertificateSigning,CertificateSubjectRestriction,DefaultIngressClass,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota
+  controllerManager:
+    extraArgs:
+      terminated-pod-gc-threshold: "1000"
+    rawArgs:
+    - --concurrent-service-syncs=5
   storage:
     etcd:
       extraArgs:

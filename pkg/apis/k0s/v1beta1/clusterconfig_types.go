@@ -201,6 +201,10 @@ func (*InstallSpec) Validate() []error { return nil }
 type ControllerManagerSpec struct {
 	// Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+
+	// Slice of strings with raw arguments to pass to the kube-controller-manager process
+	// These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+	RawArgs []string `json:"rawArgs,omitempty"`
 }
 
 var _ Validateable = (*ControllerManagerSpec)(nil)
