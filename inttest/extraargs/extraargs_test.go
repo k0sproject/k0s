@@ -51,6 +51,7 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.NoError(err)
 
 	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "--config-sync-period=12m0s")
+	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "-v=2")
 
 	s.checkFlag(sshWorker, "kube-router", "--enable-cni=true")
 	s.checkFlag(sshWorker, "kube-router", "-v=0")
@@ -122,4 +123,6 @@ spec:
     kubeProxy:
       extraArgs:
         config-sync-period: 12m0s
+      rawArgs:
+      - -v=2
 `

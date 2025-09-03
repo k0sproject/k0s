@@ -36,6 +36,10 @@ type KubeProxy struct {
 	// Map of key-values (strings) for any extra arguments to pass down to kube-proxy process
 	// Any behavior triggered by these parameters is outside k0s support.
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+
+	// Slice of strings with raw arguments to pass to the kube-proxy process
+	// These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+	RawArgs []string `json:"rawArgs,omitempty"`
 }
 
 // KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration

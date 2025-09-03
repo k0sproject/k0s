@@ -789,6 +789,13 @@ spec:
                         items:
                           type: string
                         type: array
+                      rawArgs:
+                        description: |-
+                          Slice of strings with raw arguments to pass to the kube-proxy process
+                          These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   kuberouter:
                     description: KubeRouter defines the kube-router related config
