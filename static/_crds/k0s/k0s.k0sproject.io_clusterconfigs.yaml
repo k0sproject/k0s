@@ -994,6 +994,13 @@ spec:
                       peerAddress:
                         description: Node address used for etcd cluster peering
                         type: string
+                      rawArgs:
+                        description: |-
+                          Slice of strings with raw arguments to pass to the etcd process
+                          These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   kine:
                     description: KineConfig defines the Kine related config options

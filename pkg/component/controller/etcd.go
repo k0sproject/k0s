@@ -235,7 +235,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 		BinPath:       e.executablePath,
 		RunDir:        e.K0sVars.RunDir,
 		DataDir:       e.K0sVars.DataDir,
-		Args:          args.ToArgs(),
+		Args:          append(args.ToArgs(), e.Config.RawArgs...),
 		UID:           e.uid,
 		GID:           etcdGID,
 		KeepEnvPrefix: true,
