@@ -957,6 +957,13 @@ spec:
                     description: Map of key-values (strings) for any extra arguments
                       you want to pass down to Kubernetes scheduler process
                     type: object
+                  rawArgs:
+                    description: |-
+                      Slice of strings with raw arguments to pass to the Kubernetes scheduler process
+                      These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                    items:
+                      type: string
+                    type: array
                 type: object
               storage:
                 description: StorageSpec defines the storage related config options

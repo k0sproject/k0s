@@ -379,9 +379,10 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 ### `spec.scheduler`
 
-| Element     | Description                                                                                                |
-| ----------- | ---------------------------------------------------------------------------------------------------------- |
-| `extraArgs` | Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process. Any behavior triggered by these parameters is outside k0s support. |
+| Element     | Description                                                                                                                                                                                                                                                          |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extraArgs` | Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process. `extraArgs` are recommended over `rawArgs` if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty) |
+| `rawArgs`   | Slice of strings for any raw arguments to pass down to the kube-scheduler process. These are appended after `extraArgs`. Any behavior triggered by these parameters is outside k0s support. (default: empty) |
 
 ### `spec.workerProfiles`
 
