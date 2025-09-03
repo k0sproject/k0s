@@ -48,6 +48,8 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 
 	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "--config-sync-period=12m0s")
 
+	s.checkFlag(sshWorker, "kube-router", "--enable-cni=true")
+	s.checkFlag(sshWorker, "kube-router", "-v=0")
 }
 
 func (s *ExtraArgsSuite) checkFlagCount(ssh *common.SSHConnection, processName string, flag string, expectedCount int) {
@@ -96,6 +98,12 @@ spec:
       - --logger=zap
       - --logger=zap
   network:
+    provider: kuberouter
+    kubeRouter:
+      extraArgs:
+        enable-cni: "true"
+      rawArgs:
+      - -v=0
     kubeProxy:
       extraArgs:
         config-sync-period: 12m0s

@@ -828,6 +828,13 @@ spec:
                           Comma-separated list of global peer ASNs
                           Deprecated: Use extraArgs with peerRouterIPs instead
                         type: string
+                      rawArgs:
+                        description: |-
+                          Slice of strings with raw arguments to pass to the kube-router process
+                          These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   nodeLocalLoadBalancing:
                     description: |-
