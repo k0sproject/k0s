@@ -18,11 +18,7 @@ env:
 jobs:
   build:
     name: ${{ inputs.target-os }}-${{ inputs.target-arch }}
-    runs-on: >-
-      ${{
-           inputs.target-arch == 'arm'   && fromJSON('["self-hosted", "linux", "arm"]')
-        || 'ubuntu-24.04'
-      }}
+    runs-on: ubuntu-24.04
 
     env:
       TARGET_OS: ${{ inputs.target-os }}

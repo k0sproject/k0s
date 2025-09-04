@@ -268,27 +268,18 @@ jobs:
 
   build-arm:
     name: build on armv7
-    if: github.repository == 'k0sproject/k0s'
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [arm] # this is armv7
     runs-on:
-      - self-hosted
       - linux
-      - ${{ matrix.arch }}
+      - arm64
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"
-        if: matrix.arch == 'arm'
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
       - name: Set up Docker Context for Buildx
-        if: matrix.arch != 'arm'
         run: docker context create builders
 
       - name: Set up Docker Buildx
-        if: matrix.arch != 'arm'
         uses: docker/setup-buildx-action@v3
         with:
           endpoint: builders
@@ -310,7 +301,7 @@ jobs:
       - name: Cache embedded binaries
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-embedded-bins-${{ matrix.arch }}-${{ hashFiles('**/embedded-bins/**/*') }}
+          key: ${{ runner.os }}-embedded-bins-arm64-${{ hashFiles('**/embedded-bins/**/*') }}
           path: |
             .bins.linux.stamp
             embedded-bins/staging/linux/bin/
@@ -319,33 +310,33 @@ jobs:
       - name: Cache GOCACHE
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-smoketest-arm-gocache-${{ matrix.arch }}-${{ github.ref_name }}-${{ github.sha }}
+          key: ${{ runner.os }}-smoketest-arm-gocache-arm-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-smoketest-arm-gocache-${{ matrix.arch }}-${{ github.ref_name }}-
+            ${{ runner.os }}-smoketest-arm-gocache-arm-${{ github.ref_name }}-
           path: |
             build/cache/go/build
 
       - name: Cache GOMODCACHE
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-smoketest-arm-gomodcache-${{ matrix.arch }}-${{ hashFiles('go.sum') }}
+          key: ${{ runner.os }}-smoketest-arm-gomodcache-arm-${{ hashFiles('go.sum') }}
           path: |
             build/cache/go/mod
 
       - name: Build
         run: |
-          make bindata
+          linux32 make bindata
           make --touch codegen
-          make build
+          linux32 make build
 
       - name: Upload compiled executable
         uses: actions/upload-artifact@v4
         with:
-          name: k0s-${{ matrix.arch }}
+          name: k0s-arm
           path: k0s
 
       - name: Unit tests
-        run: make check-unit
+        run: linux32 make check-unit
 
       - name: Create airgap image list
         run: make airgap-images.txt
@@ -354,49 +345,44 @@ jobs:
         id: cache-airgap-image-bundle
         uses: actions/cache@v4
         with:
-          key: airgap-image-bundle-linux-${{ matrix.arch }}-${{ hashFiles('Makefile', 'airgap-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
+          key: airgap-image-bundle-linux-arm-${{ hashFiles('Makefile', 'airgap-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
           path: |
             airgap-images.txt
-            airgap-image-bundle-linux-${{ matrix.arch }}.tar
+            airgap-image-bundle-linux-arm.tar
 
       - name: Create airgap image bundle if not cached
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
-        run: make airgap-image-bundle-linux-${{ matrix.arch }}.tar
+        run: linux32 make airgap-image-bundle-linux-arm.tar
 
       - name: Upload airgap bundle
         uses: actions/upload-artifact@v4
         with:
-          name: airgap-image-bundle-linux-${{ matrix.arch }}.tar
-          path: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+          name: airgap-image-bundle-linux-arm.tar
+          path: airgap-image-bundle-linux-arm.tar
 
   # TODO We probably want to separate the smoketest into a separate callable workflow which we can call from the build step
   # This way we could actually fully parallelize the build and smoketest steps. Currently we are limited by the fact that
   # smoke-test step only start after both arm and armv7 builds have finished.
   smoketest-arm:
     name: Smoke test on armv7 -- ${{ matrix.test }}
-    if: github.repository == 'k0sproject/k0s'
     needs: [build-arm]
     strategy:
       fail-fast: false
       matrix:
-        arch: [arm]
         test:
           - check-basic
           - check-calico
           - check-airgap
     runs-on:
-      - self-hosted
       - linux
-      - ${{ matrix.arch }}
+      - arm64
 
     steps:
 
       - name: Set up Docker Context for Buildx
-        if: matrix.arch != 'arm'
         run: docker context create builders
 
       - name: Set up Docker Buildx
-        if: matrix.arch != 'arm'
         uses: docker/setup-buildx-action@v3
         with:
           endpoint: builders
@@ -418,28 +404,28 @@ jobs:
       - name: Download compiled binary
         uses: actions/download-artifact@v5
         with:
-          name: k0s-${{ matrix.arch }}
+          name: k0s-arm
 
       - name: k0s sysinfo
         run: |
           chmod +x k0s
-          ./k0s sysinfo
+          linux32 ./k0s sysinfo
 
       - name: Download airgap bundle
         if: contains(matrix.test, 'airgap')
         uses: actions/download-artifact@v5
         with:
-          name: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+          name: airgap-image-bundle-linux-arm.tar
 
       - name: Run smoketest
-        run: make -C inttest ${{ matrix.test }}
+        run: linux32 make -C inttest ${{ matrix.test }}
 
 
       - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: smoketest-${{ matrix.arch }}-check-basic-files
+          name: smoketest-arm64-check-basic-files
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz
@@ -452,9 +438,9 @@ jobs:
       # post build action. So, as a workaround, ensure that all subdirectories
       # are writable.
       - name: "Post: Fixup directories"
-        if: always() && matrix.arch == 'arm'
+        if: always()
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
       - name: "Docker prune"
-        if: always() && matrix.arch == 'arm'
+        if: always()
         run: docker system prune --force --filter "until=$((24*7))h"
