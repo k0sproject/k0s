@@ -52,7 +52,7 @@ const (
 	ApiserverUser = "kube-apiserver"
 	// SchedulerUser defines the user to use for running k8s scheduler
 	SchedulerUser = "kube-scheduler"
-	// KonnectivityServerUser deinfes the user to use for konnectivity-server
+	// KonnectivityServerUser defines the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
 	// KeepalivedUser defines the user to use for running keepalived
 	KeepalivedUser = "keepalived"
