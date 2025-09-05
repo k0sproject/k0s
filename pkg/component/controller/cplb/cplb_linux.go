@@ -536,7 +536,7 @@ vrrp_instance k0s-vip-{{$i}} {
     notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER"
     notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP"
     {{ end }}
- 
+
 	#advertisement interval, 1 second by default
     advert_int {{ $instance.AdvertIntervalSeconds }}
     authentication {

@@ -1145,6 +1145,11 @@ func (in *VRRPInstance) DeepCopyInto(out *VRRPInstance) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.InterfaceMACAddresses != nil {
+		in, out := &in.InterfaceMACAddresses, &out.InterfaceMACAddresses
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.UnicastPeers != nil {
 		in, out := &in.UnicastPeers, &out.UnicastPeers
 		*out = make([]string, len(*in))

@@ -161,6 +161,39 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 				},
 			},
 			wantErr: true,
+		}, {
+			name: "InterfaceMACAddresses without InterfaceType set to mac",
+			vrrps: []VRRPInstance{{
+				VirtualIPs:            []string{"192.168.1.1/24"},
+				AuthPass:              "123456",
+				InterfaceMACAddresses: []string{"00:11:22:33:44:55"},
+			}},
+			wantErr: true,
+		}, {
+			name: "InterfaceType set to mac without InterfaceMACAddresses",
+			vrrps: []VRRPInstance{{
+				VirtualIPs:    []string{"192.168.1.1/24"},
+				AuthPass:      "123456",
+				InterfaceType: VRRPInterfaceTypeMAC,
+			}},
+			wantErr: true,
+		}, {
+			name: "Invalid InterfaceMACAddresses",
+			vrrps: []VRRPInstance{{
+				VirtualIPs:            []string{"192.168.1.1/24"},
+				AuthPass:              "123456",
+				InterfaceType:         VRRPInterfaceTypeMAC,
+				InterfaceMACAddresses: []string{"invalid-mac"},
+			}},
+			wantErr: true,
+		}, {
+			name: "Invalid InterfaceType",
+			vrrps: []VRRPInstance{{
+				VirtualIPs:    []string{"192.168.1.1/24"},
+				AuthPass:      "123456",
+				InterfaceType: "invalid-type",
+			}},
+			wantErr: true,
 		},
 	}
 

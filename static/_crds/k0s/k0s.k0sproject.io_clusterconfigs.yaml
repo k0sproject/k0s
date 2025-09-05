@@ -632,8 +632,27 @@ spec:
                                   type: string
                                 interface:
                                   description: |-
-                                    Interface specifies the NIC used by the virtual router. If not specified,
-                                    k0s will use the interface that owns the default route.
+                                    Interface specifies the NIC used by the virtual router.
+                                    If not specified, k0s will use the interface that owns the default route.
+                                  type: string
+                                interfaceMACAddresses:
+                                  description: |-
+                                    InterfaceMACAddresses is a list of MAC addresses for the interface.
+                                    MAC addreses are evaluated in order and the first match will be chosen.
+                                    If none of the MAC addresses match, an error is returned and k0s will not start.
+                                  items:
+                                    type: string
+                                  type: array
+                                interfaceType:
+                                  default: interface
+                                  description: |-
+                                    InterfaceType is the type of the interface. If not specified, k0s will use
+                                    interface. Valid values are "interface" and "mac".
+                                    If interfaceType is "mac", k0s will use the field InterfaceMACAddresses,
+                                    otherwise it will use the field Interface.
+                                  enum:
+                                  - interface
+                                  - mac
                                   type: string
                                 unicastPeers:
                                   description: |-
