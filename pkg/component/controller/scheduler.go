@@ -106,7 +106,7 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 		BinPath: a.executablePath,
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
-		Args:    args.ToDashedArgs(),
+		Args:    append(args.ToDashedArgs(), clusterConfig.Spec.Scheduler.RawArgs...),
 		UID:     a.uid,
 	}
 	a.previousConfig = args
