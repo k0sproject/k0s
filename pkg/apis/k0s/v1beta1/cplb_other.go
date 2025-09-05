@@ -13,3 +13,7 @@ import (
 func getDefaultNIC() (string, error) {
 	return "", fmt.Errorf("getDefaultNIC on %s is not supported", runtime.GOOS)
 }
+
+func getNIC(_ string) (string, error) {
+	return "", fmt.Errorf("getNIC on %s is not supported", runtime.GOOS)
+}
