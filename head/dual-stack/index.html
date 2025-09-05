@@ -1206,6 +1206,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Enabling dual-stack using the default CNI (Kube-router)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuring-the-node-cidr-mask-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring the node CIDR mask size
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2435,6 +2450,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Enabling dual-stack using the default CNI (Kube-router)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuring-the-node-cidr-mask-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring the node CIDR mask size
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2513,6 +2543,29 @@ following example configuration:</p>
 </code></pre></div>
 <p>This configuration will set up all Kubernetes components and Kube-router
 accordingly for dual-stack networking.</p>
+<h3 id="configuring-the-node-cidr-mask-size">Configuring the node CIDR mask size<a class="headerlink" href="#configuring-the-node-cidr-mask-size" title="Permanent link">#</a></h3>
+<p>By default, k0s uses a <code>/117</code> node CIDR mask size for IPv6, which provides 2048
+IP addresses per node and a <code>/24</code> for IPv4 which provides 256 addresses per node.</p>
+<p>For IPv6, using the example configuration <code>IPv6PodCIDR: fd00::/108</code>, there
+are 9 bits available for node allocation (117 - 108 = 9) and 11 bits available for
+pod allocation (128 - 117 = 11). This allows for 512 nodes per cluster and 2048
+IPs per node.</p>
+<p>For IPv4, using the default <code>PodCIDR: 10.244.0.0/16</code>, there are 8 bits available
+for node allocation and 8 bits available for pod allocation. This allows for 256
+nodes per cluster and 256 IPs per node.
+per cluster and 256 IPs per node.</p>
+<p>You can customize the node CIDR mask size using the controller manager's extra arguments:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">node-cidr-mask-size-ipv6</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;120&quot;</span>
+<span class="w">      </span><span class="nt">node-cidr-mask-size-ipv4</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;21&quot;</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">IPv6podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd00::/108</span>
+<span class="w">      </span><span class="nt">IPv6serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd01::/108</span>
+</code></pre></div>
 <h2 id="using-calico-as-the-cni-provider">Using Calico as the CNI provider<a class="headerlink" href="#using-calico-as-the-cni-provider" title="Permanent link">#</a></h2>
 <p>Calico does not support IPv6 tunneling in the default <code>vxlan</code> mode, so if you
 prefer to use Calico as your CNI provider, make sure to select <code>bird</code> mode. Use
