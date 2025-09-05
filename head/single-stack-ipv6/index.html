@@ -12,13 +12,13 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/networking/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/single-stack-ipv6/">
       
       
-        <link rel="prev" href="../worker-node-config/">
+        <link rel="prev" href="../dual-stack/">
       
       
-        <link rel="next" href="../runtime/">
+        <link rel="next" href="../high-availability/">
       
       
       <link rel="icon" href="../img/k0s-favicon-192.png">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Networking (CNI) - Documentation</title>
+        <title>IPv6 single-stack networking - Documentation</title>
       
     
     
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#networking" class="md-skip">
+        <a href="#ipv6-single-stack-networking" class="md-skip">
           Skip to content
         </a>
       
@@ -138,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Networking (CNI)
+              IPv6 single-stack networking
             
           </span>
         </div>
@@ -963,32 +963,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Networking (CNI)
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../networking/" class="md-nav__link">
         
   
   
@@ -999,113 +977,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#in-cluster-networking" class="md-nav__link">
-    <span class="md-ellipsis">
-      In-cluster networking
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="In-cluster networking">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#custom-cni-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Custom CNI configuration
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Notes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kube-router" class="md-nav__link">
-    <span class="md-ellipsis">
-      Kube-router
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#calico" class="md-nav__link">
-    <span class="md-ellipsis">
-      Calico
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controller-worker-communication" class="md-nav__link">
-    <span class="md-ellipsis">
-      Controller-Worker communication
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#required-ports-and-protocols" class="md-nav__link">
-    <span class="md-ellipsis">
-      Required ports and protocols
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#iptables" class="md-nav__link">
-    <span class="md-ellipsis">
-      iptables
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#firewalld-k0s" class="md-nav__link">
-    <span class="md-ellipsis">
-      Firewalld &amp; k0s
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1299,10 +1170,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../single-stack-ipv6/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    IPv6 single-stack networking
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1313,6 +1206,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-ipv6-single-stack-using-the-default-cni-kube-router" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enabling IPv6 single-stack using the default CNI (Kube-router)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enabling IPv6 single-stack using the default CNI (Kube-router)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuring-the-node-cidr-mask-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring the node CIDR mask size
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-notes-for-kube-router" class="md-nav__link">
+    <span class="md-ellipsis">
+      Important Notes for Kube-router
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2494,46 +2440,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#in-cluster-networking" class="md-nav__link">
+  <a href="#enabling-ipv6-single-stack-using-the-default-cni-kube-router" class="md-nav__link">
     <span class="md-ellipsis">
-      In-cluster networking
+      Enabling IPv6 single-stack using the default CNI (Kube-router)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="In-cluster networking">
+    <nav class="md-nav" aria-label="Enabling IPv6 single-stack using the default CNI (Kube-router)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#custom-cni-configuration" class="md-nav__link">
+  <a href="#configuring-the-node-cidr-mask-size" class="md-nav__link">
     <span class="md-ellipsis">
-      Custom CNI configuration
+      Configuring the node CIDR mask size
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
+  <a href="#important-notes-for-kube-router" class="md-nav__link">
     <span class="md-ellipsis">
-      Notes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kube-router" class="md-nav__link">
-    <span class="md-ellipsis">
-      Kube-router
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#calico" class="md-nav__link">
-    <span class="md-ellipsis">
-      Calico
+      Important Notes for Kube-router
     </span>
   </a>
   
@@ -2541,42 +2469,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controller-worker-communication" class="md-nav__link">
-    <span class="md-ellipsis">
-      Controller-Worker communication
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#required-ports-and-protocols" class="md-nav__link">
-    <span class="md-ellipsis">
-      Required ports and protocols
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#iptables" class="md-nav__link">
-    <span class="md-ellipsis">
-      iptables
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#firewalld-k0s" class="md-nav__link">
-    <span class="md-ellipsis">
-      Firewalld &amp; k0s
-    </span>
-  </a>
   
 </li>
       
@@ -2597,147 +2489,51 @@
 
 
 <!--
-SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-FileCopyrightText: 2025 k0s authors
 SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
-<h1 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h1>
-<h2 id="in-cluster-networking">In-cluster networking<a class="headerlink" href="#in-cluster-networking" title="Permanent link">#</a></h2>
-<p>k0s supports any standard <a href="https://github.com/containernetworking/cni">CNI</a> network provider. For convenience, k0s does come bundled with two built-in providers, <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> and <a href="https://www.projectcalico.org/">Calico</a>.</p>
-<h3 id="custom-cni-configuration">Custom CNI configuration<a class="headerlink" href="#custom-cni-configuration" title="Permanent link">#</a></h3>
-<p>You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure <code>custom</code> as the <a href="../configuration/#specnetwork">network provider</a> in the k0s configuration file (<code>k0s.yaml</code>). You can deploy the CNI provider you want to use, either with Helm, plain Kubernetes manifests or any other way.</p>
-<h3 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">#</a></h3>
-<ul>
-<li>When deploying k0s with the default settings, all pods on a node can communicate with all pods on all nodes. No configuration changes are needed to get started.</li>
-<li>Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment.</li>
-</ul>
-<h3 id="kube-router">Kube-router<a class="headerlink" href="#kube-router" title="Permanent link">#</a></h3>
-<p>Kube-router is built into k0s, and so by default the distribution uses it for network provisioning. Kube-router uses the standard Linux networking stack and tools, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.</p>
-<ul>
-<li>Uses a bit less resources (~15%)</li>
-<li>Does NOT support Windows nodes</li>
-</ul>
-<h3 id="calico">Calico<a class="headerlink" href="#calico" title="Permanent link">#</a></h3>
-<p>In addition to Kube-router, k0s also offers Calico as an alternative,
-integrated network provider. Calico is a layer 3 container networking solution
-that routes packets to pods. For example, it supports pod-specific network
-policies that help secure Kubernetes clusters in demanding use cases. Calico in
-k0s uses VXLAN by default. However, IP in IP is also supported via the <code>bird</code>
-mode.</p>
-<ul>
-<li>Uses a bit more resources</li>
-<li>Supports Windows nodes</li>
-</ul>
-<h2 id="controller-worker-communication">Controller-Worker communication<a class="headerlink" href="#controller-worker-communication" title="Permanent link">#</a></h2>
-<p>One goal of k0s is to allow for the deployment of an isolated control plane, which may prevent the establishment of an IP route between controller nodes and the pod network. Thus, to enable this communication path (which is mandated by conformance tests), k0s deploys <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/">Konnectivity service</a> to proxy traffic from the API server (control plane) into the worker nodes. This ensures that we can always fulfill all the Kubernetes API functionalities, but still operate the control plane in total isolation from the workers.</p>
-<p><strong>Note</strong>: To allow Konnectivity agents running on the worker nodes to establish the connection, configure your firewalls for outbound access, port 8132. Moreover, configure your firewalls for outbound access, port 6443, in order to access Kube-API from the worker nodes.</p>
-<p><img alt="k0s controller_worker_networking" src="../img/k0s_controller_worker_networking.png" /></p>
-<h2 id="required-ports-and-protocols">Required ports and protocols<a class="headerlink" href="#required-ports-and-protocols" title="Permanent link">#</a></h2>
-<table>
-<thead>
-<tr>
-<th>Protocol</th>
-<th>Port</th>
-<th>Service</th>
-<th>Direction</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>TCP</td>
-<td>2380</td>
-<td>etcd</td>
-<td>controller ⟷ controller</td>
-<td></td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>6443</td>
-<td>kube-apiserver</td>
-<td>worker, CLI ⟶ controller</td>
-<td>Authenticated Kubernetes API using mTLS, ServiceAccount tokens with RBAC</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>179</td>
-<td>kube-router</td>
-<td>worker ⟷ worker</td>
-<td>BGP routing sessions between peers</td>
-</tr>
-<tr>
-<td>UDP</td>
-<td>4789</td>
-<td>calico</td>
-<td>worker ⟷ worker</td>
-<td>Calico VXLAN overlay</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>10250</td>
-<td>kubelet</td>
-<td>controller, worker ⟶ host <code>*</code></td>
-<td>Authenticated kubelet API for the controller node <code>kube-apiserver</code> (and <code>metrics-server</code> add-ons) using mTLS</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>9443</td>
-<td>k0s api</td>
-<td>controller ⟷ controller</td>
-<td>k0s controller join API, TLS with token auth</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>8132</td>
-<td>konnectivity</td>
-<td>worker ⟷ controller</td>
-<td>Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>112</td>
-<td>keepalived</td>
-<td>controller ⟷ controller</td>
-<td>Only required for control plane load balancing VRRPInstances. Unless unicast is explicitly enabled, port 122 works on the ip address 224.0.0.18. 224.0.0.18 is a multicast IP address defined in <a href="https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2">RFC 3768</a>.</td>
-</tr>
-</tbody>
-</table>
-<p>You also need enable all traffic to and from the <a href="../configuration/#specnetwork">podCIDR and serviceCIDR</a> subnets on nodes with a worker role.</p>
-<h2 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h2>
-<p><code>iptables</code> can work in two distinct modes, <code>legacy</code> and <code>nftables</code>. k0s auto-detects the mode and prefers <code>nftables</code>. To check which mode k0s is configured with check <code>ls -lah /var/lib/k0s/bin/</code>. The target of the symbolic link <code>iptables</code> reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure all component have picked up the same mode you can check via:</p>
-<ul>
-<li>kube-proxy: <code>nsenter -t $(pidof kube-proxy) -m iptables -V</code></li>
-<li>kube-router: <code>nsenter -t $(pidof kube-router) -m /sbin/iptables -V</code></li>
-<li>calico: <code>nsenter -t $(pidof -s calico-node) -m iptables -V</code></li>
-</ul>
-<p>There are <a href="https://bugzilla.netfilter.org/show_bug.cgi?id=1632">known</a> version incompatibility issues in iptables versions. k0s ships (in <code>/var/lib/k0s/bin</code>) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different from the one that k0s (and other Kubernetes components) ship, it may cause networking issues. This is due to the fact that iptables, being user-space tooling, does not provide any strong version compatibility guarantees.</p>
-<h2 id="firewalld-k0s">Firewalld &amp; k0s<a class="headerlink" href="#firewalld-k0s" title="Permanent link">#</a></h2>
-<p>If you are using <a href="https://firewalld.org/"><code>firewalld</code></a> on your hosts you need to ensure it is configured to use the same <code>FirewallBackend</code> as k0s and other Kubernetes components use. Otherwise networking will be broken in various ways.</p>
-<p>Here's an example configuration for a tested working networking setup:</p>
-<div class="highlight"><pre><span></span><code><span class="o">[</span>root@rhel-test<span class="w"> </span>~<span class="o">]</span><span class="c1"># firewall-cmd --list-all</span>
-public<span class="w"> </span><span class="o">(</span>active<span class="o">)</span>
-<span class="w">  </span>target:<span class="w"> </span>default
-<span class="w">  </span>icmp-block-inversion:<span class="w"> </span>no
-<span class="w">  </span>interfaces:<span class="w"> </span>eth0
-<span class="w">  </span>sources:<span class="w"> </span><span class="m">10</span>.244.0.0/16<span class="w"> </span><span class="m">10</span>.96.0.0/12
-<span class="w">  </span>services:<span class="w"> </span>cockpit<span class="w"> </span>dhcpv6-client<span class="w"> </span>ssh
-<span class="w">  </span>ports:<span class="w"> </span><span class="m">80</span>/tcp<span class="w"> </span><span class="m">6443</span>/tcp<span class="w"> </span><span class="m">8132</span>/tcp<span class="w"> </span><span class="m">10250</span>/tcp<span class="w"> </span><span class="m">179</span>/tcp<span class="w"> </span><span class="m">179</span>/udp
-<span class="w">  </span>protocols:
-<span class="w">  </span>forward:<span class="w"> </span>no
-<span class="w">  </span>masquerade:<span class="w"> </span>yes
-<span class="w">  </span>forward-ports:
-<span class="w">  </span>source-ports:
-<span class="w">  </span>icmp-blocks:
-<span class="w">  </span>rich<span class="w"> </span>rules:
+<h1 id="ipv6-single-stack-networking">IPv6 single-stack networking<a class="headerlink" href="#ipv6-single-stack-networking" title="Permanent link">#</a></h1>
+<p>K0s introduced experimental IPv6 single-stack networking, allowing clusters to operate
+exclusively with IPv6 addresses. IPv6 single stack is currently in alpha state and requires
+the <a href="../feature-gates/">IPv6SingleStack feature gate</a> to be enabled on every controller.</p>
+<p>IPv6 single-stack is fully compatible with both <a href="../nllb/">node-local load balancing</a> and
+<a href="../cplb/">control plane load balancing</a>.</p>
+<h2 id="enabling-ipv6-single-stack-using-the-default-cni-kube-router">Enabling IPv6 single-stack using the default CNI (Kube-router)<a class="headerlink" href="#enabling-ipv6-single-stack-using-the-default-cni-kube-router" title="Permanent link">#</a></h2>
+<p>In order to enable IPv6 single-stack networking using the default CNI provider, both an IPv6
+<code>podCIDR</code> and <code>serviceCIDR</code> must be provided. Dual stack must not be enabled. Migrations
+to dual stack are possible as long as the primary address family remains IPv6.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd00::/108</span>
+<span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd01::/108</span>
 </code></pre></div>
-<p>Basic single node firewalld setup:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Allow traffic from podCIDR</span>
-$<span class="w"> </span>firewall-cmd<span class="w"> </span>--add-source<span class="o">=</span><span class="m">10</span>.244.0.0/16<span class="w"> </span>--permanent
-<span class="c1"># Allow kubelet API traffic</span>
-$<span class="w"> </span>firewall-cmd<span class="w"> </span>--add-port<span class="o">=</span><span class="m">10250</span>/tcp<span class="w"> </span>--permanent
-<span class="c1"># Apply firewall changes</span>
-$<span class="w"> </span>firewall-cmd<span class="w"> </span>--reload
+<p>Ensure that every controller in the cluster is executed with the
+<a href="../feature-gates/">IPv6SingleStack feature gate</a> enabled:</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>controller<span class="w"> </span>--feature-gates<span class="o">=</span><span class="s2">&quot;IPv6SingleStack=true&quot;</span>
 </code></pre></div>
+<p>This configuration will set up all Kubernetes components and Kube-router for IPv6
+single-stack networking.</p>
+<h3 id="configuring-the-node-cidr-mask-size">Configuring the node CIDR mask size<a class="headerlink" href="#configuring-the-node-cidr-mask-size" title="Permanent link">#</a></h3>
+<p>By default, k0s uses a <code>/117</code> node CIDR mask size for IPv6, which provides
+2048 IP addresses per node and and a <code>/24</code> for IPv4 which provides 256
+addresses per node.</p>
+<p>Using the example configuration <code>IPv6PodCIDR: fd00::/108</code>, there are 9 bits
+available for node allocation (117 - 108 = 9) and 11 bits available for
+pod allocation (128 - 117 = 11). This allows 512 nodes with 2048 IPs per node.</p>
+<p>You can customize the node CIDR mask size using the controller manager's extra arguments:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">node-cidr-mask-size</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;120&quot;</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd00::/108</span>
+<span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd01::/108</span>
+</code></pre></div>
+<p>With a <code>/120</code> node CIDR mask size, the cluster would support more nodes (4096 nodes maximum
+with the <code>/108</code> pod CIDR) but each node would receive 256 IP addresses.</p>
+<h3 id="important-notes-for-kube-router">Important Notes for Kube-router<a class="headerlink" href="#important-notes-for-kube-router" title="Permanent link">#</a></h3>
+<p>Currently kube-router on IPv6 doesn't pass the kubernetes network conformance tests.</p>
 
 
 
