@@ -29,6 +29,36 @@ spec:
 This configuration will set up all Kubernetes components and Kube-router
 accordingly for dual-stack networking.
 
+### Configuring the node CIDR mask size
+
+By default, k0s uses a `/117` node CIDR mask size for IPv6, which provides 2048
+IP addresses per node and a `/24` for IPv4 which provides 256 addresses per node.
+
+For IPv6, using the example configuration `IPv6PodCIDR: fd00::/108`, there
+are 9 bits available for node allocation (117 - 108 = 9) and 11 bits available for
+pod allocation (128 - 117 = 11). This allows for 512 nodes per cluster and 2048
+IPs per node.
+
+For IPv4, using the default `PodCIDR: 10.244.0.0/16`, there are 8 bits available
+for node allocation and 8 bits available for pod allocation. This allows for 256
+nodes per cluster and 256 IPs per node.
+per cluster and 256 IPs per node.
+
+You can customize the node CIDR mask size using the controller manager's extra arguments:
+
+```yaml
+spec:
+  controllerManager:
+    extraArgs:
+      node-cidr-mask-size-ipv6: "120"
+      node-cidr-mask-size-ipv4: "21"
+  network:
+    dualStack:
+      enabled: true
+      IPv6podCIDR: fd00::/108
+      IPv6serviceCIDR: fd01::/108
+```
+
 ## Using Calico as the CNI provider
 
 Calico does not support IPv6 tunneling in the default `vxlan` mode, so if you
