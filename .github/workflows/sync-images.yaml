@@ -32,7 +32,6 @@ jobs:
               type: repository
               tags:
                 allow:
-                  - "^v1.2[7-9].*"
                   - "^v1.3.*"
           EOF
           cat regsync.yaml
