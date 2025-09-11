@@ -72,7 +72,6 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 
 	var errs []error
 	for _, resource := range sortedResources {
-		s.prepareResource(resource)
 		mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
 		if err != nil {
 			errs = append(errs, err)
@@ -82,8 +81,10 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
 			drClient = dynamicClient.Resource(mapping.Resource).Namespace(resource.GetNamespace())
 		} else {
+			resource.SetNamespace("")
 			drClient = dynamicClient.Resource(mapping.Resource)
 		}
+		s.prepareResource(resource)
 		serverResource, err := drClient.Get(ctx, resource.GetName(), metav1.GetOptions{})
 		if apiErrors.IsNotFound(err) {
 			created, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
