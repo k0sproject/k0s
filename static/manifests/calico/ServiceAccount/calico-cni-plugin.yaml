@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.29.3/charts/calico/templates/calico-node.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.29.6/charts/calico/templates/calico-node.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:

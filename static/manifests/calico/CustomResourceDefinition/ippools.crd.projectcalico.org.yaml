@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.29.3/libcalico-go/config/crd/crd.projectcalico.org_ippools.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.29.6/libcalico-go/config/crd/crd.projectcalico.org_ippools.yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
