@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.29.3/charts/calico/templates/calico-kube-controllers-rbac.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.29.6/charts/calico/templates/calico-kube-controllers-rbac.yaml
 # assuming datastore == "kubernetes"
 #
 # Include a clusterrole for the kube-controllers component,
