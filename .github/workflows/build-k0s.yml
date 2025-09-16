@@ -21,6 +21,7 @@ jobs:
     runs-on: >-
       ${{
            inputs.target-arch == 'arm'   && fromJSON('["self-hosted", "linux", "arm"]')
+        || inputs.target-arch == 'arm64' && fromJSON('["self-hosted", "linux", "arm64"]')
         || 'ubuntu-24.04'
       }}
 
