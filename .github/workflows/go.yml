@@ -12,7 +12,7 @@ on:
       - .github/workflows/*.yml
         # Re-include all workflow files used by this workflow
       - "!.github/workflows/go.yml"
-      - "!.github/workflows/build-airgap-image-bundle.yml"
+      - "!.github/workflows/build-image-bundle.yml"
       - "!.github/workflows/build-ipv6-image-bundle.yml"
       - "!.github/workflows/build-k0s.yml"
       - "!.github/workflows/smoketest.yaml"
@@ -36,7 +36,7 @@ on:
       - .github/workflows/*.yml
         # Re-include all workflow files used by this workflow
       - "!.github/workflows/go.yml"
-      - "!.github/workflows/build-airgap-image-bundle.yml"
+      - "!.github/workflows/build-image-bundle.yml"
       - "!.github/workflows/build-ipv6-image-bundle.yml"
       - "!.github/workflows/build-k0s.yml"
       - "!.github/workflows/smoketest.yaml"
@@ -121,7 +121,7 @@ jobs:
 
     name: "Build :: Airgap image bundle"
     needs: [build-k0s]
-    uses: ./.github/workflows/build-airgap-image-bundle.yml
+    uses: ./.github/workflows/build-image-bundle.yml
     with:
       target-os: linux
       target-arch: ${{ matrix.target-arch }}
