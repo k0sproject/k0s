@@ -261,11 +261,15 @@ airgap-image-bundle-linux-arm.tar \
 airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
 	./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' <airgap-images.txt
 
-ipv6-test-images.txt: embedded-bins/Makefile.variables $(shell find hack/gen-test-images-list/ -type f)
-	$(GO) run -tags=hack hack/gen-test-images-list/cmd/main.go -o '$@' \
-		-alpine-version=$(alpine_version) \
-		-kubernetes-version=$(kubernetes_version) \
-		-sonobuoy-version=$(sonobuoy_version)
+ipv6-test-images.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
+	{ \
+	  echo "docker.io/library/nginx:1.29.2-alpine"; \
+	  echo "docker.io/curlimages/curl:8.15.0"; \
+	  echo "docker.io/library/alpine:$(alpine_version)"; \
+	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
+	  echo "registry.k8s.io/conformance:v$(kubernetes_version)"; \
+	  $(GO) run -tags=hack ./hack/gen-test-images-list; \
+	} >'$@'
 
 ipv6-image-bundle-linux-amd64.tar:   TARGET_PLATFORM := linux/amd64
 ipv6-image-bundle-linux-arm64.tar:   TARGET_PLATFORM := linux/arm64
@@ -274,7 +278,7 @@ ipv6-image-bundle-linux-riscv64.tar: TARGET_PLATFORM := linux/riscv64
 ipv6-image-bundle-linux-amd64.tar \
 ipv6-image-bundle-linux-arm64.tar \
 ipv6-image-bundle-linux-arm.tar \
-ipv6-image-bundle-linux-riscv64.tar: ipv6-test-images.txt
+ipv6-image-bundle-linux-riscv64.tar: k0s ipv6-test-images.txt
 	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <ipv6-test-images.txt
 
 .PHONY: $(smoketests)

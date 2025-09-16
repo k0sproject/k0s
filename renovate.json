@@ -159,6 +159,7 @@
       "managerFilePatterns": [
         "**/*.go",
         "**/*.md",
+        "**/*.mk",
         "**/*.patch",
         "**/*.py",
         "**/*.sh",
@@ -166,7 +167,8 @@
         "**/*.tftpl",
         "**/*.txt",
         "**/*.yaml",
-        "**/*.yml"
+        "**/*.yml",
+        "**/Makefile*"
       ],
       "matchStrings": [
         "\\b(?<depName>(docker|quay)\\.io/[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*)(:|.*\\n.*= \")v?(?<currentValue>[a-z0-9_][\\w.-]{0,127})"
