@@ -271,23 +271,23 @@ ipv6-test-images.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack
 	  $(GO) run -tags=hack ./hack/gen-test-images-list; \
 	} >'$@'
 
-ipv6-image-bundle-linux-amd64.tar:   TARGET_PLATFORM := linux/amd64
-ipv6-image-bundle-linux-arm64.tar:   TARGET_PLATFORM := linux/arm64
-ipv6-image-bundle-linux-arm.tar:     TARGET_PLATFORM := linux/arm/v7
-ipv6-image-bundle-linux-riscv64.tar: TARGET_PLATFORM := linux/riscv64
-ipv6-image-bundle-linux-amd64.tar \
-ipv6-image-bundle-linux-arm64.tar \
-ipv6-image-bundle-linux-arm.tar \
-ipv6-image-bundle-linux-riscv64.tar: k0s ipv6-test-images.txt
+ipv6-test-image-bundle-linux-amd64.tar:   TARGET_PLATFORM := linux/amd64
+ipv6-test-image-bundle-linux-arm64.tar:   TARGET_PLATFORM := linux/arm64
+ipv6-test-image-bundle-linux-arm.tar:     TARGET_PLATFORM := linux/arm/v7
+ipv6-test-image-bundle-linux-riscv64.tar: TARGET_PLATFORM := linux/riscv64
+ipv6-test-image-bundle-linux-amd64.tar \
+ipv6-test-image-bundle-linux-arm64.tar \
+ipv6-test-image-bundle-linux-arm.tar \
+ipv6-test-image-bundle-linux-riscv64.tar: k0s ipv6-test-images.txt
 	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <ipv6-test-images.txt
 
 .PHONY: $(smoketests)
 $(air_gapped_smoketests) $(ipv6_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
-$(ipv6_smoketests): ipv6-image-bundle-linux-$(HOST_ARCH).tar
+$(ipv6_smoketests): ipv6-test-image-bundle-linux-$(HOST_ARCH).tar
 $(smoketests): k0s
 	$(MAKE) -C inttest \
 		K0S_IMAGES_BUNDLE='$(CURDIR)/airgap-image-bundle-linux-$(HOST_ARCH).tar' \
-		K0S_EXTRA_IMAGES_BUNDLE='$(CURDIR)/ipv6-image-bundle-linux-$(HOST_ARCH).tar' \
+		K0S_EXTRA_IMAGES_BUNDLE='$(CURDIR)/ipv6-test-mage-bundle-linux-$(HOST_ARCH).tar' \
 		$@
 
 .PHONY: smoketests
