@@ -70,7 +70,7 @@ jobs:
         if: inputs.name == 'calico-ipv6' || inputs.name == 'kuberouter-ipv6' || (startsWith(inputs.name, 'network-conformance-') && contains(inputs.name, '-ipv6'))
         uses: actions/download-artifact@v5
         with:
-          name: ipv6-image-bundle-linux-${{ inputs.arch }}
+          name: ipv6-test-image-bundle-linux-${{ inputs.arch }}
 
       - name: Download k0s reference release
         if: inputs.k0s-reference-version != ''
