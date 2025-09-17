@@ -56,8 +56,8 @@ func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector lead
 
 	return &APIEndpointReconciler{
 		logger:            logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
-		externalAddress:   nodeConfig.Spec.API.ExternalAddress,
-		apiServerPort:     nodeConfig.Spec.API.Port,
+		externalAddress:   nodeConfig.Spec.API.ExternalHost(),
+		apiServerPort:     nodeConfig.Spec.API.ExternalPort(),
 		leaderElector:     leaderElector,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
