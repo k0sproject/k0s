@@ -443,6 +443,10 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
+                  externalAddress:
+                    description: external address to advertise for the konnectivity
+                      agent to connect to
+                    type: string
                 type: object
               network:
                 description: Network defines the network related config options
