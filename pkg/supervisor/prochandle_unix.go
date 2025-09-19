@@ -15,6 +15,10 @@ import (
 	"syscall"
 )
 
+func ShutdownHelperHook() {
+	// no-op
+}
+
 type unixProcess struct {
 	// The PID that was used when opening the process.
 	// Note: Don't rely on [os.Process.Pid] here, as it's not thread safe.
@@ -26,6 +30,14 @@ func openPID(pid int) (procHandle, error) {
 	process, err := os.FindProcess(pid)
 	if err != nil {
 		return nil, err
+	}
+
+	// Send "the null signal" to probe if the process actually exists.
+	// https://www.man7.org/linux/man-pages/man3/kill.3p.html
+	if err := process.Signal(syscall.Signal(0)); err != nil {
+		if errors.Is(err, os.ErrProcessDone) {
+			return nil, syscall.ESRCH
+		}
 	}
 
 	return &unixProcess{pid, process}, nil
@@ -40,7 +52,7 @@ func (p *unixProcess) cmdline() ([]string, error) {
 	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(p.pid), "cmdline"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
+			return nil, fmt.Errorf("%w: %w", os.ErrProcessDone, err)
 		}
 		return nil, fmt.Errorf("failed to read process cmdline: %w", err)
 	}
@@ -53,7 +65,7 @@ func (p *unixProcess) environ() ([]string, error) {
 	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(p.pid), "environ"))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("%w: %w", syscall.ESRCH, err)
+			return nil, fmt.Errorf("%w: %w", os.ErrProcessDone, err)
 		}
 		return nil, fmt.Errorf("failed to read process environ: %w", err)
 	}
