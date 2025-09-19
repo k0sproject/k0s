@@ -38,11 +38,12 @@ type Konnectivity struct {
 	executablePath string
 	uid            int
 
-	stopFunc      context.CancelFunc
 	clusterConfig *v1beta1.ClusterConfig
 	log           *logrus.Entry
 
 	*prober.EventEmitter
+
+	stop func()
 }
 
 var _ manager.Component = (*Konnectivity)(nil)
@@ -85,7 +86,7 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 }
 
 // Run ..
-func (k *Konnectivity) Start(ctx context.Context) error {
+func (k *Konnectivity) Start(_ context.Context) error {
 	serverCount, serverCountChanged := k.ServerCount()
 
 	if err := k.runServer(serverCount); err != nil {
@@ -93,7 +94,11 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to start konnectivity server: %w", err)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
 	go func() {
+		defer close(done)
 		var retry <-chan time.Time
 		for {
 			select {
@@ -125,6 +130,8 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 			}
 		}
 	}()
+
+	k.stop = func() { cancel(); <-done }
 
 	return nil
 }
@@ -200,9 +207,9 @@ func (k *Konnectivity) Healthy() error {
 
 // Stop stops
 func (k *Konnectivity) Stop() error {
-	if k.stopFunc != nil {
-		logrus.Debug("closing konnectivity component context")
-		k.stopFunc()
+	if k.stop != nil {
+		logrus.Debug("stopping konnectivity component")
+		k.stop()
 	}
 	if k.supervisor == nil {
 		return nil
