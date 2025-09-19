@@ -4,6 +4,7 @@
 package supervisor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -69,7 +70,7 @@ func TestSupervisorStart(t *testing.T) {
 
 	for _, s := range testSupervisors {
 		t.Run(s.proc.Name, func(t *testing.T) {
-			err := s.proc.Supervise()
+			err := s.proc.Supervise(t.Context())
 			if s.expectedErrMsg != "" {
 				assert.ErrorContains(t, err, s.expectedErrMsg)
 			} else {
@@ -126,7 +127,7 @@ func TestRespawn(t *testing.T) {
 		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Millisecond,
 	}
-	require.NoError(t, s.Supervise())
+	require.NoError(t, s.Supervise(t.Context()))
 	t.Cleanup(s.Stop)
 
 	// wait til process starts up
@@ -161,7 +162,7 @@ func TestStopWhileRespawn(t *testing.T) {
 		TimeoutRespawn: 1 * time.Hour,
 	}
 
-	if assert.NoError(t, s.Supervise(), "Failed to start") {
+	if assert.NoError(t, s.Supervise(t.Context()), "Failed to start") {
 		// wait til the process exits
 		for process := s.GetProcess(); ; {
 			// Send "the null signal" to probe if the PID still exists
@@ -206,7 +207,7 @@ func TestMultiThread(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	assert.NoError(t, s.Supervise(), "Failed to start")
+	assert.NoError(t, s.Supervise(t.Context()), "Failed to start")
 	t.Cleanup(s.Stop)
 
 	for range 255 {
@@ -214,7 +215,7 @@ func TestMultiThread(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			s.Stop()
-			_ = s.Supervise()
+			_ = s.Supervise(t.Context())
 		}()
 	}
 	wg.Wait()
@@ -250,7 +251,7 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
 	// Start to supervise the new process.
-	require.NoError(t, s.Supervise())
+	require.NoError(t, s.Supervise(t.Context()))
 	t.Cleanup(s.Stop)
 
 	// Expect the previous process to be gracefully terminated.
@@ -295,7 +296,7 @@ func TestCleanupPIDFile_LingeringProcess(t *testing.T) {
 
 	// Start to supervise the new process and expect it to fail because the
 	// previous process won't terminate.
-	err := s.Supervise()
+	err := s.Supervise(t.Context())
 	if !assert.Error(t, err) {
 		s.Stop()
 	} else {
@@ -310,6 +311,53 @@ func TestCleanupPIDFile_LingeringProcess(t *testing.T) {
 	// PID file should still point to the previous PID.
 	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err) {
 		assert.Equal(t, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), pid)
+	}
+}
+
+func TestCleanupPIDFile_Cancel(t *testing.T) {
+	switch runtime.GOOS {
+	case "windows":
+		t.Skip("PID file cleanup not yet implemented on Windows")
+	case "darwin":
+		t.Skip("PID file cleanup not implemented on macOS")
+	}
+
+	cmd, pingPong := pingpong.Start(t, pingpong.StartOptions{
+		Options: pingpong.Options{IgnoreGracefulTerminationRequests: true},
+		Env:     []string{k0sManaged},
+	})
+
+	s := Supervisor{
+		Name:           t.Name(),
+		BinPath:        pingPong.BinPath(),
+		RunDir:         t.TempDir(),
+		Args:           pingPong.BinArgs(),
+		TimeoutStop:    1 * time.Minute,
+		TimeoutRespawn: 1 * time.Hour,
+	}
+
+	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", cmd.Process.Pid), 0644))
+
+	require.NoError(t, pingPong.AwaitPing())
+
+	t.Run("context_timeout", func(t *testing.T) {
+		ctx, cancel := context.WithCancelCause(t.Context())
+		cancel(assert.AnError)
+		err := s.Supervise(ctx)
+		assert.ErrorContains(t, err, "while waiting for termination of PID")
+		assert.ErrorIs(t, err, assert.AnError)
+	})
+
+	t.Run("stop_timeout", func(t *testing.T) {
+		s.TimeoutStop = 1 * time.Nanosecond
+		err := s.Supervise(t.Context())
+		assert.ErrorContains(t, err, "while waiting for termination of PID")
+		assert.ErrorContains(t, err, "process did not terminate in time")
+	})
+
+	if pid, readErr := os.ReadFile(pidFilePath); assert.NoError(t, readErr) {
+		assert.Equal(t, fmt.Appendf(nil, "%d\n", cmd.Process.Pid), pid)
 	}
 }
 
@@ -334,7 +382,7 @@ func TestCleanupPIDFile_WrongProcess(t *testing.T) {
 	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
 	// Start to supervise the new process.
-	require.NoError(t, s.Supervise())
+	require.NoError(t, s.Supervise(t.Context()))
 	t.Cleanup(s.Stop)
 
 	// Expect the PID file to be replaced with the new PID.
@@ -364,7 +412,7 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", math.MaxInt32), 0644))
 
 	// Start to supervise the new process.
-	require.NoError(t, s.Supervise())
+	require.NoError(t, s.Supervise(t.Context()))
 	t.Cleanup(s.Stop)
 
 	// Expect the PID file to be replaced with the new PID.
@@ -386,7 +434,7 @@ func TestCleanupPIDFile_BogusPIDFile(t *testing.T) {
 	require.NoError(t, os.WriteFile(pidFilePath, []byte("rubbish"), 0644))
 
 	// Expect the supervisor to bail out.
-	assert.ErrorContains(t, s.Supervise(), `"rubbish": invalid`)
+	assert.ErrorContains(t, s.Supervise(t.Context()), `"rubbish": invalid`)
 }
 
 type cmd struct {
