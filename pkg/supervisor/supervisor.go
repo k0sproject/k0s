@@ -309,7 +309,14 @@ func (s *Supervisor) isK0sManaged(ph procHandle) (bool, error) {
 }
 
 func (s *Supervisor) awaitTermination(ctx context.Context, ph procHandle) error {
-	s.log.Debug("Polling for process termination")
+	err := ph.awaitTermination(ctx)
+	if !errors.Is(err, errors.ErrUnsupported) {
+		return err
+	}
+
+	// Fall back to polling (old Linux kernels don't have the required syscalls).
+	s.log.WithError(err).Debug("Polling for process termination")
+
 	backoff := wait.Backoff{
 		Duration: 25 * time.Millisecond,
 		Cap:      3 * time.Second,
