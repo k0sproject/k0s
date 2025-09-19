@@ -113,7 +113,7 @@ func (c *Component) Start(ctx context.Context) (err error) {
 		},
 	}
 
-	if err := c.supervisor.Supervise(); err != nil {
+	if err := c.supervisor.Supervise(ctx); err != nil {
 		return err
 	}
 
@@ -252,7 +252,7 @@ func (c *Component) watchDropinConfigs(ctx context.Context) {
 				return false
 			}
 		},
-		Callback: func(fsnotify.Event) { c.restart() },
+		Callback: func(fsnotify.Event) { c.restart(ctx) },
 	}
 
 	// Consume and log any errors from watcher
@@ -274,7 +274,7 @@ func (c *Component) watchDropinConfigs(ctx context.Context) {
 	}
 }
 
-func (c *Component) restart() {
+func (c *Component) restart(ctx context.Context) {
 	log := logrus.WithFields(logrus.Fields{"component": "containerd", "phase": "restart"})
 
 	log.Info("restart requested")
@@ -296,7 +296,7 @@ func (c *Component) restart() {
 	if err := c.supervisor.Stop(); err != nil {
 		log.WithError(err).Error("Failed to stop containerd")
 	}
-	if err := c.supervisor.Supervise(); err != nil {
+	if err := c.supervisor.Supervise(ctx); err != nil {
 		log.WithError(err).Error("Failed to restart containerd")
 	}
 }

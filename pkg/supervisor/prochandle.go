@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-func (s *Supervisor) cleanupPID(pid int) error {
+func (s *Supervisor) cleanupPID(ctx context.Context, pid int) error {
 	ph, err := openPID(pid)
 	if err != nil {
 		if errors.Is(err, syscall.ESRCH) {
@@ -38,7 +38,7 @@ func (s *Supervisor) cleanupPID(pid int) error {
 		return nil
 	}
 
-	if err := s.terminateAndWait(ph); err != nil {
+	if err := s.terminateAndWait(ctx, ph); err != nil {
 		return fmt.Errorf("while waiting for termination of PID %d from PID file %s: %w", pid, s.PidFile, err)
 	}
 
@@ -48,7 +48,7 @@ func (s *Supervisor) cleanupPID(pid int) error {
 // Tries to gracefully terminate a process and waits for it to exit. If the
 // process is still running after several attempts, it returns an error instead
 // of forcefully killing the process.
-func (s *Supervisor) terminateAndWait(ph procHandle) error {
+func (s *Supervisor) terminateAndWait(ctx context.Context, ph procHandle) error {
 	if err := ph.requestGracefulTermination(); err != nil {
 		if errors.Is(err, os.ErrProcessDone) {
 			return nil
@@ -57,7 +57,7 @@ func (s *Supervisor) terminateAndWait(ph procHandle) error {
 	}
 
 	errTimeout := errors.New("process did not terminate in time")
-	ctx, cancel := context.WithTimeoutCause(context.TODO(), s.TimeoutStop, errTimeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, s.TimeoutStop, errTimeout)
 	defer cancel()
 	return s.awaitTermination(ctx, ph)
 }

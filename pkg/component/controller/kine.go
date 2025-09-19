@@ -124,7 +124,7 @@ func (k *Kine) Start(ctx context.Context) error {
 		GID: kineGID,
 	}
 
-	return k.supervisor.Supervise()
+	return k.supervisor.Supervise(ctx)
 }
 
 // Stop stops kine

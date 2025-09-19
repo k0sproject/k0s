@@ -171,7 +171,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		return err
 	}
 
-	return k.supervisor.Supervise()
+	return k.supervisor.Supervise(ctx)
 }
 
 // Stop stops kubelet

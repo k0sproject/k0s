@@ -64,7 +64,7 @@ func (a *Scheduler) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
+func (a *Scheduler) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: Scheduler")
 
 	logrus.Info("Starting kube-scheduler")
@@ -112,5 +112,5 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 		UID:     a.uid,
 	}
 	a.previousConfig = args
-	return a.supervisor.Supervise()
+	return a.supervisor.Supervise(ctx)
 }

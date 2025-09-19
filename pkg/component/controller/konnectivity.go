@@ -88,10 +88,10 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 }
 
 // Run ..
-func (k *Konnectivity) Start(_ context.Context) error {
+func (k *Konnectivity) Start(ctx context.Context) error {
 	serverCount, serverCountChanged := k.ServerCount()
 
-	if err := k.runServer(serverCount); err != nil {
+	if err := k.runServer(ctx, serverCount); err != nil {
 		k.EmitWithPayload("failed to start konnectivity server", err)
 		return fmt.Errorf("failed to start konnectivity server: %w", err)
 	}
@@ -124,7 +124,7 @@ func (k *Konnectivity) Start(_ context.Context) error {
 
 			retry = nil
 
-			if err := k.runServer(serverCount); err != nil {
+			if err := k.runServer(ctx, serverCount); err != nil {
 				k.EmitWithPayload("failed to start konnectivity server", err)
 				k.log.WithError(err).Errorf("Failed to start konnectivity server")
 				retry = time.After(10 * time.Second)
@@ -165,7 +165,7 @@ func (k *Konnectivity) serverArgs(count uint) []string {
 	}.ToArgs()
 }
 
-func (k *Konnectivity) runServer(count uint) error {
+func (k *Konnectivity) runServer(ctx context.Context, count uint) error {
 	// Stop supervisor
 	if k.supervisor != nil {
 		k.EmitWithPayload("restarting konnectivity server due to server count change",
@@ -183,7 +183,7 @@ func (k *Konnectivity) runServer(count uint) error {
 		Args:    k.serverArgs(count),
 		UID:     k.uid,
 	}
-	err := k.supervisor.Supervise()
+	err := k.supervisor.Supervise(ctx)
 	if err != nil {
 		k.supervisor = nil // not to make the next loop to try to stop it first
 		return err
