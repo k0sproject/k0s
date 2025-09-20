@@ -67,6 +67,14 @@ type KeepalivedSpec struct {
 	DisableLoadBalancer bool `json:"disableLoadBalancer,omitempty"`
 }
 
+type VRRPInterfaceType string
+
+const (
+	VRRPInterfaceTypeInterface VRRPInterfaceType = "interface"
+	VRRPInterfaceTypeMAC       VRRPInterfaceType = "mac"
+	VRRPInterfaceTypeDefault   VRRPInterfaceType = ""
+)
+
 // VRRPInstances is a list of VRRPInstance
 // +kubebuilder:validation:MaxItems=255
 type VRRPInstances []VRRPInstance
@@ -79,9 +87,22 @@ type VRRPInstance struct {
 	// +listType=set
 	VirtualIPs []string `json:"virtualIPs"`
 
-	// Interface specifies the NIC used by the virtual router. If not specified,
-	// k0s will use the interface that owns the default route.
+	// InterfaceType is the type of the interface. If not specified, k0s will use
+	// interface. Valid values are "interface" and "mac".
+	// If interfaceType is "mac", k0s will use the field InterfaceMACAddresses,
+	// otherwise it will use the field Interface.
+	// +kubebuilder:validation:Enum=interface;mac
+	// +kubebuilder:default=interface
+	InterfaceType VRRPInterfaceType `json:"interfaceType,omitempty"`
+
+	// Interface specifies the NIC used by the virtual router.
+	// If not specified, k0s will use the interface that owns the default route.
 	Interface string `json:"interface,omitempty"`
+
+	// InterfaceMACAddresses is a list of MAC addresses for the interface.
+	// MAC addreses are evaluated in order and the first match will be chosen.
+	// If none of the MAC addresses match, an error is returned and k0s will not start.
+	InterfaceMACAddresses []string `json:"interfaceMACAddresses,omitempty"`
 
 	// VirtualRouterID is the VRRP router ID. If not specified, k0s will
 	// automatically number the IDs for each VRRP instance, starting with 51.
@@ -131,12 +152,36 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 		getDefaultNICFn = getDefaultNIC
 	}
 	for i := range k.VRRPInstances {
-		if k.VRRPInstances[i].Interface == "" {
-			nic, err := getDefaultNICFn()
-			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to get default NIC: %w", err))
+		switch k.VRRPInstances[i].InterfaceType {
+		case VRRPInterfaceTypeInterface, VRRPInterfaceTypeDefault:
+			if len(k.VRRPInstances[i].InterfaceMACAddresses) != 0 {
+				errs = append(errs, errors.New("InterfaceMACAddresses must not be defined unless InterfaceType is mac"))
 			}
-			k.VRRPInstances[i].Interface = nic
+			if k.VRRPInstances[i].Interface == "" {
+				iface, err := getDefaultNICFn()
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to get default NIC: %w", err))
+				}
+				k.VRRPInstances[i].Interface = iface
+			}
+		case VRRPInterfaceTypeMAC:
+			if len(k.VRRPInstances[i].InterfaceMACAddresses) == 0 {
+				errs = append(errs, errors.New("InterfaceMACAddresses must be defined when InterfaceType is mac"))
+			}
+			for _, mac := range k.VRRPInstances[i].InterfaceMACAddresses {
+				if _, err := net.ParseMAC(mac); err != nil {
+					errs = append(errs, fmt.Errorf("invalid MAC address: %s", mac))
+				}
+			}
+			for _, mac := range k.VRRPInstances[i].InterfaceMACAddresses {
+				iface, err := getNIC(k.VRRPInstances[i].InterfaceMACAddresses)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("error to getting NIC for MAC %s: %w", mac, err))
+				}
+				k.VRRPInstances[i].Interface = iface
+			}
+		default:
+			errs = append(errs, fmt.Errorf("invalid InterfaceType: %s", k.VRRPInstances[i].InterfaceType))
 		}
 
 		if k.VRRPInstances[i].VirtualRouterID == 0 {

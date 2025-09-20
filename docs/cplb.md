@@ -70,9 +70,13 @@ A virtualIP requires:
 2. A user-defined password which should be unique for each cluster. This password is a mechanism to prevent accidental conflicts. It's not encrypted
 and doesn't prevent malicious attacks in any way.
 3. A virtual router ID, which defaults to 51. This virtual router ID **must be unique** in the broadcast domain.
-4. A network interface, if not defined, k0s will chose the network interface that owns the default route.
+4. A network interface selection method. K0s supports three ways to specify the interface:
+   - **Default behavior**: If no interface is specified, k0s will choose the network interface that owns the default route.
+   - **Interface name**: Explicitly specify the interface name (e.g., `eth0`).
+   - **MAC address**: Specify one or more MAC addresses to identify the interface. Check
+     [the k0s configuration options](configuration.md#specnetworkcontrolplaneloadbalancingkeepalivedvrrpinstances) for more details.
 
-Except the network interface, all the other fields must be equal on every control plane node.
+Except the network interface selection, all the other fields must be equal on every control plane node.
 
 This is a minimal example:
 
@@ -86,6 +90,37 @@ spec:
         vrrpInstances:
         - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["172.16.0.100/16"]
           authPass: "<my password>"
+```
+
+For more advanced scenarios, you can explicitly specify the interface by name:
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["172.16.0.100/16"]
+          authPass: "<my password>"
+          interface: "eth0"
+```
+
+Or use MAC addresses to identify the interface (useful in environments where interface names may vary):
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["172.16.0.100/16"]
+          authPass: "<my password>"
+          interfaceType: "mac"
+          interfaceMACAddresses: ["00:11:22:33:44:55", "aa:bb:cc:dd:ee:ff"]
 ```
 
 By default, VRRP Instances use multicast as per [RFC 3768]. It's possible to configure VRRP
@@ -573,8 +608,8 @@ You can verify the Keepalived logs and configuration file using the steps descri
 
 When virtual servers are enabled K0s generates two additional files:
 
-* `keepalived-virtualservers-generated.conf`: This file contains the list of control plane nodes that should be balanced to.
-* `keepalived-virtualservers-consumed.conf`: This is a symbolic link which points to `keepalived-virtualservers-generated.conf`
+- `keepalived-virtualservers-generated.conf`: This file contains the list of control plane nodes that should be balanced to.
+- `keepalived-virtualservers-consumed.conf`: This is a symbolic link which points to `keepalived-virtualservers-generated.conf`
 if the Keepalived VRRP instance's current state is `master` or to `/dev/null` if it's `backup`. This file is only generated if
 there is exactly one VRRP instance.
 
