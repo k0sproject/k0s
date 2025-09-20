@@ -141,7 +141,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
 		MetricsBindAddress:   clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
 		FeatureGates:         clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
-		Args:                 args.ToDashedArgs(),
+		Args:                 append(args.ToDashedArgs(), clusterConfig.Spec.Network.KubeProxy.RawArgs...),
 	}
 
 	nodePortAddresses, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NodePortAddresses)
@@ -338,7 +338,7 @@ spec:
         - /usr/local/bin/kube-proxy
         args:
         {{ range .Args}}
-        - {{ . }} 
+        - {{ . }}
         {{ end }}
         securityContext:
           privileged: true
