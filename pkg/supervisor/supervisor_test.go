@@ -225,7 +225,7 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 	case "windows":
 		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
-		t.Skip("FIXME: times out on macOS, needs debugging")
+		t.Skip("PID file cleanup not implemented on macOS")
 	}
 
 	// Start some k0s-managed process.
@@ -261,12 +261,12 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 	assert.NoFileExists(t, pidFilePath)
 }
 
-func TestCleanupPIDFile_Forcefully(t *testing.T) {
+func TestCleanupPIDFile_LingeringProcess(t *testing.T) {
 	switch runtime.GOOS {
 	case "windows":
 		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
-		t.Skip("FIXME: times out on macOS, needs debugging")
+		t.Skip("PID file cleanup not implemented on macOS")
 	}
 
 	// Start some k0s-managed process that won't terminate gracefully.
@@ -285,7 +285,7 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
-		TimeoutStop:    1 * time.Second,
+		TimeoutStop:    10 * time.Millisecond,
 		TimeoutRespawn: 1 * time.Hour,
 	}
 
@@ -293,17 +293,24 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
 	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
-	// Start to supervise the new process.
-	require.NoError(t, s.Supervise())
-	t.Cleanup(s.Stop)
+	// Start to supervise the new process and expect it to fail because the
+	// previous process won't terminate.
+	err := s.Supervise()
+	if !assert.Error(t, err) {
+		s.Stop()
+	} else {
+		assert.ErrorContains(t, err, "while waiting for termination of PID")
+		assert.ErrorContains(t, err, pidFilePath)
+		assert.ErrorContains(t, err, "process did not terminate in time")
+	}
 
-	// Expect the previous process to be forcefully terminated.
-	assert.ErrorContains(t, prevCmd.Wait(), "signal: killed")
+	// Expect the previous process to still be alive.
+	require.NoError(t, prevPingPong.SendPong())
 
-	// Stop the supervisor and check if the PID file is gone.
-	assert.NoError(t, pingPong.AwaitPing())
-	s.Stop()
-	assert.NoFileExists(t, pidFilePath)
+	// PID file should still point to the previous PID.
+	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err) {
+		assert.Equal(t, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), pid)
+	}
 }
 
 func TestCleanupPIDFile_WrongProcess(t *testing.T) {
@@ -367,10 +374,6 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 }
 
 func TestCleanupPIDFile_BogusPIDFile(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("PID file cleanup not yet implemented on Windows")
-	}
-
 	// Prepare some supervised process that should never be started.
 	s := Supervisor{
 		Name:    t.Name(),

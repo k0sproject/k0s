@@ -15,12 +15,12 @@ func openPID(int) (procHandle, error) {
 	return nil, syscall.EWINDOWS
 }
 
-func requestGracefulShutdown(p *os.Process) error {
+func requestGracefulTermination(p *os.Process) error {
 	// According to https://stackoverflow.com/q/1798771/, the _only_ somewhat
 	// straight-forward option is to send Ctrl+Break events to processes which
 	// have been started with the CREATE_NEW_PROCESS_GROUP flag. Sending Ctrl+C
 	// seems to require at least some helper process. If Ctrl+Break will
-	// _actually_ trigger a graceful process shutdown is dependent of the
+	// _actually_ trigger a graceful process termination is dependent of the
 	// program being run. According to the above Stack Overflow question, this
 	// is e.g. not the case for Python.
 	//

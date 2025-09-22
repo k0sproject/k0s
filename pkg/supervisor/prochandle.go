@@ -12,6 +12,9 @@ import (
 type procHandle interface {
 	io.Closer
 
+	// Checks whether the process has terminated.
+	hasTerminated() (bool, error)
+
 	// Reads and returns the process's command line.
 	cmdline() ([]string, error)
 
@@ -19,8 +22,5 @@ type procHandle interface {
 	environ() ([]string, error)
 
 	// Requests graceful process termination.
-	requestGracefulShutdown() error
-
-	// Kills the process.
-	kill() error
+	requestGracefulTermination() error
 }
