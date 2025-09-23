@@ -11,7 +11,7 @@ import (
 	"math"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -105,7 +105,7 @@ func (s *Supervisor) Supervise() error {
 		return nil
 	}
 	s.log = logrus.WithField("component", s.Name)
-	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
+	s.PidFile = filepath.Join(s.RunDir, s.Name) + ".pid"
 
 	if s.TimeoutStop == 0 {
 		s.TimeoutStop = 5 * time.Second
@@ -289,7 +289,12 @@ func (s *Supervisor) terminateAndWait(ph procHandle) error {
 //   - The process environment contains `_K0S_MANAGED=yes`.
 func (s *Supervisor) isK0sManaged(ph procHandle) (bool, error) {
 	if cmd, err := ph.cmdline(); err != nil {
-		return false, err
+		// Only error out if the error doesn't indicate that getting the command
+		// line is unsupported. In that case, ignore the error and proceed to
+		// the environment check.
+		if !errors.Is(err, errors.ErrUnsupported) {
+			return false, err
+		}
 	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
 		return false, nil
 	}
@@ -364,7 +369,7 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 		}
 		switch k {
 		case "PATH":
-			env[i] = "PATH=" + dir.PathListJoin(path.Join(dataDir, "bin"), v)
+			env[i] = "PATH=" + dir.PathListJoin(filepath.Join(dataDir, "bin"), v)
 		default:
 			env[i] = fmt.Sprintf("%s=%s", k, v)
 		}

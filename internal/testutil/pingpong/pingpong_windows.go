@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"path/filepath"
+	"syscall"
 	"testing"
 
 	"github.com/Microsoft/go-winio"
@@ -25,6 +26,12 @@ func newBasePath(t *testing.T) string {
 
 func (p Pipe) OpenWriter() (io.WriteCloser, error) {
 	return winio.DialPipe(string(p), nil)
+}
+
+func (pp *PingPong) sysProcAttr() *syscall.SysProcAttr {
+	return &syscall.SysProcAttr{
+		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
+	}
 }
 
 func (p Pipe) Listen() (Listener, error) {

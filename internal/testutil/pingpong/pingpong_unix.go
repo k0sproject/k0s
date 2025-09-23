@@ -16,6 +16,10 @@ func newBasePath(t *testing.T) string {
 	return t.TempDir()
 }
 
+func (pp *PingPong) sysProcAttr() *syscall.SysProcAttr {
+	return nil
+}
+
 func (p Pipe) OpenWriter() (io.WriteCloser, error) {
 	// The open for writing call will block until the
 	// script tries to open the file for reading.

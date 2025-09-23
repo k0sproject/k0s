@@ -11,13 +11,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/testutil/pingpong"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -102,17 +102,38 @@ func TestGetEnv(t *testing.T) {
 	t.Setenv("k1", "v1")
 	t.Setenv("FOO_PATH", "/usr/local/bin")
 
-	env := getEnv("/var/lib/k0s", "foo", false)
-	sort.Strings(env)
-	expected := fmt.Sprintf("[HTTPS_PROXY=a.b.c:1080 PATH=/var/lib/k0s/bin%c/usr/local/bin _K0S_MANAGED=yes k1=v1 k2=foo_v2 k3=foo_v3 k4=v4]", os.PathListSeparator)
-	actual := fmt.Sprintf("%s", env)
-	assert.Equal(t, expected, actual)
+	expected := []string{
+		"HTTPS_PROXY=a.b.c:1080",
+		"PATH=" + dir.PathListJoin(
+			filepath.FromSlash("/var/lib/k0s/bin"),
+			"/usr/local/bin",
+		),
+		"_K0S_MANAGED=yes",
+		"k1=v1",
+		"k2=foo_v2",
+		"k3=foo_v3",
+		"k4=v4",
+	}
+	actual := getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", false)
+	assert.ElementsMatch(t, expected, actual)
 
-	env = getEnv("/var/lib/k0s", "foo", true)
-	sort.Strings(env)
-	expected = fmt.Sprintf("[FOO_PATH=/usr/local/bin FOO_k2=foo_v2 FOO_k3=foo_v3 HTTPS_PROXY=a.b.c:1080 PATH=/var/lib/k0s/bin%c/bin _K0S_MANAGED=yes k1=v1 k2=v2 k3=v3 k4=v4]", os.PathListSeparator)
-	actual = fmt.Sprintf("%s", env)
-	assert.Equal(t, expected, actual)
+	expected = []string{
+		"FOO_PATH=/usr/local/bin",
+		"FOO_k2=foo_v2",
+		"FOO_k3=foo_v3",
+		"HTTPS_PROXY=a.b.c:1080",
+		"PATH=" + dir.PathListJoin(
+			filepath.FromSlash("/var/lib/k0s/bin"),
+			"/bin",
+		),
+		"_K0S_MANAGED=yes",
+		"k1=v1",
+		"k2=v2",
+		"k3=v3",
+		"k4=v4",
+	}
+	actual = getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", true)
+	assert.ElementsMatch(t, expected, actual)
 }
 
 func TestRespawn(t *testing.T) {
@@ -222,8 +243,6 @@ func TestMultiThread(t *testing.T) {
 
 func TestCleanupPIDFile_Gracefully(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
-		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
 		t.Skip("PID file cleanup not implemented on macOS")
 	}
@@ -263,8 +282,6 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 
 func TestCleanupPIDFile_LingeringProcess(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
-		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
 		t.Skip("PID file cleanup not implemented on macOS")
 	}
@@ -409,5 +426,6 @@ func selectCmd(t *testing.T, cmds ...cmd) (_ cmd) {
 
 func TestMain(m *testing.M) {
 	pingpong.Hook()
+	TerminationHelperHook()
 	os.Exit(m.Run())
 }
