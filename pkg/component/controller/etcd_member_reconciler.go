@@ -27,6 +27,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	nodeutil "k8s.io/component-helpers/node/util"
 )
 
 var _ manager.Component = (*EtcdMemberReconciler)(nil)
@@ -228,10 +229,10 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 
 	// Convert the memberID to hex string
 	memberIDStr := strconv.FormatUint(memberID, 16)
-	name, err := e.etcdConfig.GetNodeName()
-
+	memberName := e.etcdConfig.GetMemberName()
+	name, err := nodeutil.GetHostname(memberName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get name for etcd member: %w", err)
 	}
 	var em *etcdv1beta1.EtcdMember
 

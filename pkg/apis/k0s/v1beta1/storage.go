@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -172,13 +171,13 @@ func DefaultEtcdConfig() *EtcdConfig {
 
 const etcdNameExtraArg = "name"
 
-// GetNodeName returns the node name for the etcd peer
-func (e *EtcdConfig) GetNodeName() (string, error) {
+// Returns the human-readable member name for the etcd peer, if any.
+func (e *EtcdConfig) GetMemberName() string {
 	if e.ExtraArgs != nil && e.ExtraArgs[etcdNameExtraArg] != "" {
-		return e.ExtraArgs[etcdNameExtraArg], nil
+		return e.ExtraArgs[etcdNameExtraArg]
 	}
 
-	return os.Hostname()
+	return ""
 }
 
 // GetPeerURL returns the URL of PeerAddress
