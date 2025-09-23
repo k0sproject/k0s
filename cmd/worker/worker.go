@@ -17,6 +17,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
+	"github.com/k0sproject/k0s/internal/supervised"
 	"github.com/k0sproject/k0s/pkg/component/iptables"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
@@ -307,6 +308,11 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	if err != nil {
 		return fmt.Errorf("failed to start worker components: %w", err)
 	}
+
+	if supervised := supervised.Get(ctx); supervised != nil {
+		supervised.MarkReady()
+	}
+
 	// Wait for k0s process termination
 	<-ctx.Done()
 	logrus.Info("Shutting down k0s: ", context.Cause(ctx))

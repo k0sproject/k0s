@@ -22,6 +22,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
+	"github.com/k0sproject/k0s/internal/supervised"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
@@ -593,6 +594,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	if controllerMode.WorkloadsEnabled() {
 		return c.startWorker(ctx, nodeName, kubeletExtraArgs, flags)
+	}
+
+	if supervised := supervised.Get(ctx); supervised != nil {
+		supervised.MarkReady()
 	}
 
 	// Wait for k0s process termination
