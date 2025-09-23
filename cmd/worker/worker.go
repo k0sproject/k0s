@@ -309,11 +309,13 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	}
 	// Wait for k0s process termination
 	<-ctx.Done()
-	logrus.Info("Shutting down k0s worker")
+	logrus.Info("Shutting down k0s: ", context.Cause(ctx))
 
 	// Stop components
 	if err := componentManager.Stop(); err != nil {
-		logrus.WithError(err).Error("error while stopping component manager")
+		logrus.WithError(err).Error("Failed to stop worker components")
+	} else {
+		logrus.Info("All worker components stopped")
 	}
 	return nil
 }

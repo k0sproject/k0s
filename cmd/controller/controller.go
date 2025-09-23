@@ -589,23 +589,15 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		}
 	}()
 
-	if controllerMode.WorkloadsEnabled() {
-		perfTimer.Checkpoint("starting-worker")
-		if err := c.startWorker(ctx, nodeName, kubeletExtraArgs, flags); err != nil {
-			logrus.WithError(err).Error("Failed to start controller worker")
-		} else {
-			perfTimer.Checkpoint("started-worker")
-		}
-	}
-
 	perfTimer.Output()
+
+	if controllerMode.WorkloadsEnabled() {
+		return c.startWorker(ctx, nodeName, kubeletExtraArgs, flags)
+	}
 
 	// Wait for k0s process termination
 	<-ctx.Done()
-	logrus.Debug("Context done in main")
-	logrus.Info("Shutting down k0s controller")
-
-	perfTimer.Output()
+	logrus.Info("Shutting down k0s: ", context.Cause(ctx))
 
 	return nil
 }
