@@ -8,10 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"runtime"
-	"syscall"
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -94,10 +92,6 @@ func NewWorkerCmd() *cobra.Command {
 				return err
 			}
 
-			// Set up signal handling
-			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-			defer cancel()
-
 			// Check for legacy CA file (unused on worker-only nodes since 1.33)
 			if legacyCAFile := filepath.Join(c.K0sVars.CertRootDir, "ca.crt"); file.Exists(legacyCAFile) {
 				// Keep the file to allow interop between 1.32 and 1.33.
@@ -116,7 +110,7 @@ func NewWorkerCmd() *cobra.Command {
 				return err
 			}
 
-			return c.Start(ctx, nodeName, kubeletExtraArgs, getBootstrapKubeconfig, nil)
+			return c.Start(cmd.Context(), nodeName, kubeletExtraArgs, getBootstrapKubeconfig, nil)
 		},
 	}
 

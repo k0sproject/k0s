@@ -12,10 +12,8 @@ import (
 	"io/fs"
 	"net"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"slices"
-	"syscall"
 	"time"
 
 	"github.com/k0sproject/k0s/cmd/internal"
@@ -104,9 +102,7 @@ func NewControllerCmd() *cobra.Command {
 				return err
 			}
 
-			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-			defer cancel()
-			return c.start(ctx, &controllerFlags, debugFlags.IsDebug())
+			return c.start(cmd.Context(), &controllerFlags, debugFlags.IsDebug())
 		},
 	}
 

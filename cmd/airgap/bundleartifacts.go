@@ -8,10 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -51,9 +48,6 @@ instead of in an arbitrary order based on when they finish downloading.
 `,
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
-			defer cancel()
-
 			cmd.SilenceUsage = true
 
 			if bundler.Concurrency == 0 {
@@ -94,7 +88,7 @@ instead of in an arbitrary order based on when they finish downloading.
 			}
 
 			buffered := bufio.NewWriter(out)
-			if err := bundler.Run(ctx, refs, out); err != nil {
+			if err := bundler.Run(cmd.Context(), refs, out); err != nil {
 				return err
 			}
 			return buffered.Flush()
