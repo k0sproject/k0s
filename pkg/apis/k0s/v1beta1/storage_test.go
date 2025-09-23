@@ -403,7 +403,7 @@ func TestEtcdConfig_GetNodeName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _ := tt.e.GetNodeName()
+			got := tt.e.GetMemberName()
 			if got != tt.want {
 				t.Errorf("EtcdConfig.GetNodeName() = %v, want %v", got, tt.want)
 			}
