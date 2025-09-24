@@ -6,13 +6,13 @@ package supervised
 import (
 	"context"
 
+	"github.com/k0sproject/k0s/internal/os/windows"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/sys/windows/svc"
 	"github.com/spf13/cobra"
 )
 
 func run(ctx context.Context, main *cobra.Command) error {
-	isService, err := svc.IsWindowsService()
+	isService, err := windows.IsService()
 
 	switch {
 	case err != nil:
