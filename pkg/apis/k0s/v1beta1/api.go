@@ -10,13 +10,12 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
-
+	"github.com/asaskevich/govalidator"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/asaskevich/govalidator"
+	"github.com/k0sproject/k0s/internal/pkg/iface"
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 )
 
 var _ Validateable = (*APISpec)(nil)
@@ -77,9 +76,29 @@ func (a *APISpec) LocalURL() *url.URL {
 // APIAddress ...
 func (a *APISpec) APIAddress() string {
 	if a.ExternalAddress != "" {
-		return a.ExternalAddress
+		return a.ExternalHost()
 	}
 	return a.Address
+}
+
+func (a *APISpec) ExternalHost() string {
+	if a.ExternalAddress != "" {
+		host, _, _ := net.SplitHostPort(a.ExternalAddress)
+		if host != "" {
+			return host
+		}
+	}
+	return a.ExternalAddress
+}
+
+func (a *APISpec) ExternalPort() int {
+	if a.ExternalAddress != "" {
+		_, port, _ := net.SplitHostPort(a.ExternalAddress)
+		if portInt, err := strconv.Atoi(port); port != "" && err == nil {
+			return portInt
+		}
+	}
+	return a.Port
 }
 
 // APIAddressURL returns kube-apiserver external URI
@@ -108,6 +127,11 @@ func (a *APISpec) K0sControlPlaneAPIAddress() string {
 func (a *APISpec) getExternalURIForPort(port int) string {
 	addr := a.Address
 	if a.ExternalAddress != "" {
+		// If ExternalAddress is a full host:port address, return it as is
+		if a.ExternalHost() != a.ExternalAddress {
+			return (&url.URL{Scheme: "https", Host: a.ExternalAddress}).String()
+		}
+
 		addr = a.ExternalAddress
 	}
 	return (&url.URL{Scheme: "https", Host: net.JoinHostPort(addr, strconv.Itoa(port))}).String()
@@ -119,7 +143,7 @@ func (a *APISpec) Sans() []string {
 	sans = append(sans, a.Address)
 	sans = append(sans, a.SANs...)
 	if a.ExternalAddress != "" {
-		sans = append(sans, a.ExternalAddress)
+		sans = append(sans, a.ExternalHost())
 	}
 
 	return stringslice.Unique(sans)
@@ -152,7 +176,7 @@ func (a *APISpec) Validate() []error {
 	}
 
 	if a.ExternalAddress != "" {
-		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalAddress)
+		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalHost())
 		if isAnyAddress(a.ExternalAddress) {
 			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.Address, "invalid INADDR_ANY"))
 		}
