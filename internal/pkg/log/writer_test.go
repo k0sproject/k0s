@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package supervisor
+package log
 
 import (
 	"testing"
@@ -10,17 +10,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLogWriter(t *testing.T) {
+func TestWriter(t *testing.T) {
 	type entry struct {
 		chunk uint
 		msg   string
 	}
 
 	for _, test := range []struct {
-		name    string
-		bufSize int
-		in      []string
-		out     []entry
+		name      string
+		chunkSize int
+		in        []string
+		out       []entry
 	}{
 		{"empty_write", 3,
 			[]string{""},
@@ -64,7 +64,7 @@ func TestLogWriter(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			log, logs := logtest.NewNullLogger()
-			underTest := logWriter{log: log, buf: make([]byte, test.bufSize)}
+			underTest := NewWriter(log, test.chunkSize)
 
 			for _, line := range test.in {
 				underTest.writeBytes([]byte(line))

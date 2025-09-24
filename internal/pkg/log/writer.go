@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package supervisor
+package log
 
 import (
 	"bytes"
@@ -10,25 +10,32 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// logWriter implements [io.Writer] by forwarding whole lines to log. In case
+// Writer implements [io.Writer] by forwarding whole lines to a logger. In case
 // the lines get too long, it logs them in multiple chunks.
 //
 // This is in contrast to logrus's implementation of io.Writer, which simply
 // errors out if the log line gets longer than 64k.
-type logWriter struct {
+type Writer struct {
 	log     logrus.FieldLogger // receives (possibly chunked) log lines
 	buf     []byte             // buffer in which to accumulate chunks; len(buf) determines the chunk length
 	len     int                // current buffer length
 	chunkNo uint               // current chunk number; 0 means "no chunk"
 }
 
+func NewWriter(log logrus.FieldLogger, chunkLen int) *Writer {
+	return &Writer{
+		log: log,
+		buf: make([]byte, chunkLen),
+	}
+}
+
 // Write implements [io.Writer].
-func (w *logWriter) Write(in []byte) (int, error) {
+func (w *Writer) Write(in []byte) (int, error) {
 	w.writeBytes(in)
 	return len(in), nil
 }
 
-func (w *logWriter) writeBytes(in []byte) {
+func (w *Writer) writeBytes(in []byte) {
 	// Fill and drain buffer with available data until everything has been consumed.
 	for rest := in; len(rest) > 0; {
 
