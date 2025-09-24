@@ -35,6 +35,7 @@ kubernetes_build_go_flags = "-v"
 #kubernetes_build_go_ldflags =
 kubernetes_build_go_ldflags_extra = "-extldflags=-static"
 
+# renovate: datasource=github-releases depName=k3s-io/kine
 kine_version = 0.14.6
 kine_buildimage = $(golang_buildimage)
 kine_build_go_tags = nats
