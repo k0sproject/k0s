@@ -158,7 +158,6 @@
         "**/*"
       ],
       "matchStrings": [
-        "\\bgo_version = (?<currentValue>\\d+(\\.\\d+){2})",
         "\\bgolang/go/blob/go(?<currentValue>\\d+(\\.\\d+){2})"
       ],
       "depNameTemplate": "go",
