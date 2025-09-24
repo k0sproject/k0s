@@ -195,7 +195,6 @@
         "**/*.go"
       ],
       "matchStrings": [
-        "kine_version = (?<currentValue>\\d+(\\.\\d+){2})",
         "\\bkine/blob/v(?<currentValue>\\d+(\\.\\d+){2})"
       ],
       "depNameTemplate": "k3s-io/kine",
