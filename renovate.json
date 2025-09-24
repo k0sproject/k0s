@@ -56,6 +56,16 @@
       "groupSlug": "etcd-all"
     },
     {
+      "description": "Group all containerd updates",
+      "enabled": true,
+      "matchDepNames": [
+        "containerd/containerd",
+        "github.com/containerd/containerd"
+      ],
+      "groupName": "containerd dependencies",
+      "groupSlug": "containerd"
+    },
+    {
       "description": "Group all konnectivity updates",
       "enabled": true,
       "matchDepNames": [

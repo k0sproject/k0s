@@ -16,6 +16,7 @@ runc_build_go_tags = "seccomp"
 #runc_build_go_ldflags =
 runc_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
+# renovate: datasource=github-releases depName=containerd/containerd
 containerd_version = 1.7.28
 containerd_buildimage = $(golang_buildimage)
 containerd_build_go_tags = "apparmor,selinux"
