@@ -36,6 +36,10 @@ type KonnectivitySpec struct {
 	// +kubebuilder:validation:Maximum=65535
 	// +kubebuilder:default=8132
 	AgentPort int32 `json:"agentPort,omitempty"`
+
+	// external address to advertise for the konnectivity agent to connect to
+	// +optional
+	ExternalAddress string `json:"externalAddress,omitempty"`
 }
 
 // DefaultKonnectivitySpec builds default KonnectivitySpec
