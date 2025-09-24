@@ -31,6 +31,21 @@
       ]
     },
     {
+      "description": "Ignore some pinned dependencies",
+      "enabled": false,
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchDepNames": [
+        "actions/cache",
+        "cilium/ebpf",
+        "euank/go-kmsg-parser",
+        "kubernetes/system-validators",
+        "projectcalico/calico",
+        "torvalds/linux"
+      ]
+    },
+    {
       "description": "Group all etcd updates",
       "enabled": true,
       "matchPackageNames": [
@@ -153,19 +168,6 @@
     },
     {
       "customType": "regex",
-      "description": "Update Go toolchain version",
-      "managerFilePatterns": [
-        "**/*"
-      ],
-      "matchStrings": [
-        "\\bgolang/go/blob/go(?<currentValue>\\d+(\\.\\d+){2})"
-      ],
-      "depNameTemplate": "go",
-      "datasourceTemplate": "golang-version",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
       "description": "Update container image tags in non-Dockerfiles",
       "managerFilePatterns": [
         "**/*.go",
@@ -189,17 +191,17 @@
     },
     {
       "customType": "regex",
-      "description": "Update kine versions across the codebase",
+      "description": "Update GitHub source code links",
       "managerFilePatterns": [
-        "/(^|/)[Mm]akefile(\\.[^/]+)?$/",
-        "**/*.go"
+        "**/*"
       ],
       "matchStrings": [
-        "\\bkine/blob/v(?<currentValue>\\d+(\\.\\d+){2})"
+        "\\bgithub.com/(?<depName>[a-z0-9][a-z0-9._-]+/[a-z0-9][a-z0-9._-]+)/blob/v(?<currentValue>[a-z0-9][a-z0-9._-]+)/",
+        "\\bgithub.com/golang/(?<depName>go)/blob/go(?<currentValue>[^/]+)/"
       ],
-      "depNameTemplate": "k3s-io/kine",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "semver"
+      "datasourceTemplate": "{{#if (equals depName \"go\")}}golang-version{{else}}github-tags{{/if}}",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v?(?<version>.+)"
     },
     {
       "customType": "regex",
