@@ -8,11 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
-
-	"github.com/Microsoft/hcsshim"
-	"github.com/avast/retry-go"
-	"github.com/sirupsen/logrus"
 )
 
 func Address(_ string) string {
@@ -50,25 +45,6 @@ func (p *PowerShell) execute(args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
-}
-
-func getSourceVip() (string, error) {
-	// make it use winExecute and powershell
-	var vip string
-
-	err := retry.Do(func() error {
-		ep, err := hcsshim.GetHNSEndpointByName("Calico_ep")
-		if err != nil {
-			logrus.WithError(err).Warn("can't get Calico_ep endpoint")
-			return err
-		}
-		vip = ep.IPAddress.String()
-		return nil
-	}, retry.Delay(time.Second*5))
-	if err != nil {
-		return "", err
-	}
-	return vip, nil
 }
 
 func winExecute(args ...string) error {
