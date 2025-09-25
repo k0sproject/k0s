@@ -96,9 +96,10 @@ func TestProcHandle_Environ(t *testing.T) {
 		defer close(exited)
 		<-exit
 		runtime.Gosched()
-		require.NoError(t, pingPong.SendPong())
-		runtime.Gosched()
-		require.NoError(t, cmd.Wait())
+		if assert.NoError(t, pingPong.SendPong()) {
+			runtime.Gosched()
+			assert.NoError(t, cmd.Wait())
+		}
 	}()
 	t.Cleanup(func() { signalExit(); <-exited })
 

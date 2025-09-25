@@ -6,8 +6,9 @@
 package config
 
 import (
-	"golang.org/x/sys/windows"
 	"os"
+
+	"golang.org/x/sys/windows"
 )
 
 // tryLock attempts to acquire the lock. Returns true if successful, false otherwise.
@@ -32,7 +33,7 @@ func tryLock(path string) (*os.File, error) {
 	)
 	if err != nil {
 		file.Close()
-		if err == windows.ERROR_LOCK_VIOLATION {
+		if err == windows.ERROR_LOCK_VIOLATION { //nolint:errorlint // the equal check is okay for syscalls
 			return nil, ErrK0sAlreadyRunning // Lock is already held by another process
 		}
 		return nil, err
