@@ -18,16 +18,27 @@ else
 endif
 endif
 
+ifeq ($(OS),Windows_NT)
+CYGPATH := $(shell cygpath --version >/dev/null 2>&1 && echo cygpath)
+cygpath = $(if $(CYGPATH),$(shell '$(CYGPATH)' -- '$(1)'),$(1))
+PATHSEP := $(if $(CYGPATH),:,;)
+else
+cygpath = $(1)
+PATHSEP := :
+endif
+
+FIND ?= find
+DOCKER ?= docker
+
 K0S_GO_BUILD_CACHE ?= build/cache
 
-GO_SRCS := $(shell find . -type f -name '*.go' -not -path './$(K0S_GO_BUILD_CACHE)/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
+GO_SRCS := $(shell $(FIND) . -type f -name "*.go" -not -path "./$(K0S_GO_BUILD_CACHE)/*" -not -path "./inttest/*" -not -name "*_test.go" -not -name "zz_generated*")
 GO_CHECK_UNIT_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
-DOCKER ?= docker
 # Disable Docker build integration if DOCKER is set to the empty string.
 ifeq ($(DOCKER),)
   GO_ENV_REQUISITES ?=
-  GO_ENV ?= PATH=$(abspath $(K0S_GO_BUILD_CACHE))/go/bin:"$$PATH" \
+  GO_ENV ?= PATH='$(call cygpath,$(abspath $(K0S_GO_BUILD_CACHE))/go/bin)$(PATHSEP)'"$$PATH" \
     GOBIN="$(abspath $(K0S_GO_BUILD_CACHE))/go/bin" \
     GOCACHE="$(abspath $(K0S_GO_BUILD_CACHE))/go/build" \
     GOMODCACHE="$(abspath $(K0S_GO_BUILD_CACHE))/go/mod"
@@ -42,6 +53,7 @@ else
     -e CGO_ENABLED \
     -e CGO_CFLAGS \
     -e GOARCH \
+    -e XDG_CACHE_HOME=/run/k0s-build \
     --user $(BUILD_UID):$(BUILD_GID) \
     $(DOCKER_RUN_OPTS) -- '$(shell cat .k0sbuild.docker-image.k0s)'
   GO ?= $(GO_ENV) go
@@ -132,7 +144,7 @@ api_group_versions := $(foreach path,$(wildcard pkg/apis/*/v*/doc.go),$(path:pkg
 
 # Declare the requisites for the generators operating on API group versions.
 api_group_version_targets := .controller-gen.stamp zz_generated.register.go
-$(foreach gv,$(api_group_versions),$(eval $(foreach t,$(api_group_version_targets),pkg/apis/$(gv)/$(t)): $$(shell find pkg/apis/$(gv)/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')))
+$(foreach gv,$(api_group_versions),$(eval $(foreach t,$(api_group_version_targets),pkg/apis/$(gv)/$(t)): $$(shell $(FIND) pkg/apis/$(gv)/ -maxdepth 1 -type f -name "*.go" -not -name "*_test.go" -not -name "zz_generated*")))
 
 # Run controller-gen for each API group version.
 controller_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp)
@@ -165,7 +177,7 @@ $(register_gen_targets): $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt embe
 # Generate the k0s client-go clientset based on all custom API group versions.
 clientset_input_dirs := $(foreach gv,$(api_group_versions),pkg/apis/$(gv))
 codegen_targets += pkg/client/clientset/.client-gen.stamp
-pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
+pkg/client/clientset/.client-gen.stamp: $(shell $(FIND) $(clientset_input_dirs) -type f -name "*.go" -not -name "*_test.go" -not -name "zz_generated*")
 pkg/client/clientset/.client-gen.stamp: $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	gendir="$$(mktemp -d .client-gen.tmp.XXXXXX)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
