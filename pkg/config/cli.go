@@ -273,6 +273,7 @@ var availableComponents = []string{
 	constant.NetworkProviderComponentName,
 	constant.NodeRoleComponentName,
 	constant.SystemRBACComponentName,
+	constant.UpdateProberComponentName,
 	constant.WindowsNodeComponentName,
 	constant.WorkerConfigComponentName,
 }
