@@ -243,6 +243,8 @@ spec:
     spec:
       priorityClassName: system-node-critical
       serviceAccountName: kube-router
+      nodeSelector:
+        kubernetes.io/os: linux
       initContainers:
         - name: install-cni-bins
           image: {{ .CNIInstallerImage }}
