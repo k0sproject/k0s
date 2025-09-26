@@ -128,7 +128,13 @@ k0s follows the [CIS Kubernetes Benchmark](https://docs.k0sproject.io/stable/cis
 
 **Inbound:** [#k0s-users](https://kubernetes.slack.com/archives/C0809EA06QZ) in Kubernetes Slack and GitHub issues. Stack Overflow has also a [k0s tag](https://stackoverflow.com/questions/tagged/k0s) for related questions.
 
-**External**: k0s does not currently have any mailing lists. There are Mirantis-operated social media accounts that are used for communicating things like new releases etc. There’s also a [k0sproject](https://medium.com/k0sproject) Medium account which is used for blogs.
+**External**: k0s does not currently have any mailing lists. There are
+Mirantis-operated social media accounts that are used for communicating things
+like new releases etc. There’s also a [community blog] which is backed by a
+[GitHub repository][k0sproject/blog].
+
+[community blog]: https://blog.k0sproject.io/
+[k0sproject/blog]: https://github.com/k0sproject/blog
 
 ## Security issue resolution
 
