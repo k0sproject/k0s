@@ -35,18 +35,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-os: [linux, windows]
+        target-os: [linux, windows, darwin]
 
     defaults:
       run:
         shell: bash
 
     env:
-      DOCKER: "${{ matrix.target-os != 'windows' && 'docker' || ''}}"
+      DOCKER: "${{ matrix.target-os == 'linux' && 'docker' || ''}}"
       LOCALAPPDATA: ${{ github.workspace }}\build\cache
 
     name: Lint Go
-    runs-on: ${{ matrix.target-os == 'windows' && 'windows-2025' || 'ubuntu-24.04' }}
+    runs-on: >-
+      ${{
+           matrix.target-os == 'windows' && 'windows-2025'
+        || matrix.target-os == 'darwin'  && 'macos-15'
+        || 'ubuntu-24.04'
+      }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,7 +62,7 @@ jobs:
 
       - name: Set up Go
         uses: actions/setup-go@v5
-        if: matrix.target-os == 'windows'
+        if: matrix.target-os != 'linux'
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
