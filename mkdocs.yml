@@ -142,6 +142,9 @@ markdown_extensions:
   - pymdownx.highlight: {}
   - pymdownx.superfences: {}
   - pymdownx.inlinehilite: {}
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - mdx_truly_sane_lists: # https://github.com/mkdocs/mkdocs/issues/545#issuecomment-522196661
       nested_indent: 2
       truly_sane: true
@@ -164,9 +167,12 @@ extra:
     - icon: fontawesome/brands/x-twitter
       link: https://x.com/k0sproject
       name: k0s on X
-    - icon: fontawesome/brands/medium
-      link: https://medium.com/k0sproject
-      name: k0s on Medium
+    - icon: fontawesome/solid/blog
+      link: https://blog.k0sproject.io/
+      name: The k0sproject community blog
+    - icon: fontawesome/solid/rss
+      link: https://blog.k0sproject.io/index.xml
+      name: RSS feed of the k0sproject community blog
     - icon: fontawesome/brands/slack
       link: https://kubernetes.slack.com/archives/C07VAPJUECS
       name: k0s on the k8s slack
