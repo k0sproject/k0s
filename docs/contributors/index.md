@@ -36,12 +36,15 @@ By contributing, you agree that your contributions will be licensed as followed:
 
 ## Community
 
-Some of you might have noticed we have official community blog hosted on
-[Medium][k0s@medium]. If you are not yet following us, we'd like to invite you
-to do so now! Make sure to [follow us on X][@k0sproject] as well 😊
+Some of you may have noticed that we have a [community blog]. If you're not
+following us [:fontawesome-solid-rss:][blog-rss] yet, we invite you to do so
+now! Make sure to [follow us on X][@k0sproject] as well 😊
 
-The main community communication channel is on [Kubernetes Slack][k8s Slack]. There you'll find like-minded people and reach out for assistance and discussions.
+The main community communication channel is on [Kubernetes Slack][k8s Slack].
+There you'll find like-minded people and reach out for assistance and
+discussions.
 
-[k0s@medium]: https://medium.com/k0sproject
+[community blog]: https://blog.k0sproject.io/
+[blog-rss]: https://blog.k0sproject.io/index.xml
 [@k0sproject]: https://x.com/k0sproject
 [k8s Slack]: https://kubernetes.slack.com/archives/C07VAPJUECS
