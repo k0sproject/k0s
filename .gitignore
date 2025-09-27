@@ -4,10 +4,10 @@
 /airgap-image-bundle-linux-arm.tar
 /airgap-image-bundle-linux-riscv64.tar
 /ipv6-test-images.txt
-/ipv6-image-bundle-linux-amd64.tar
-/ipv6-image-bundle-linux-arm64.tar
-/ipv6-image-bundle-linux-arm.tar
-/ipv6-image-bundle-linux-riscv64.tar
+/ipv6-test-image-bundle-linux-amd64.tar
+/ipv6-test-image-bundle-linux-arm64.tar
+/ipv6-test-image-bundle-linux-arm.tar
+/ipv6-test-image-bundle-linux-riscv64.tar
 /bindata_*
 /build/cache/*
 /k0s
