@@ -10,7 +10,11 @@ import (
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func InitLogging() {
+type ShutdownLoggingFunc func()
+
+func InitLogging() ShutdownLoggingFunc {
+	shutdown := initBackend()
+
 	customFormatter := new(logrus.TextFormatter)
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	customFormatter.FullTimestamp = true
@@ -20,6 +24,8 @@ func InitLogging() {
 	crlog.SetLogger(logrusr.New(logrus.WithField("component", "controller-runtime")))
 
 	SetWarnLevel()
+
+	return shutdown
 }
 
 func SetDebugLevel() {

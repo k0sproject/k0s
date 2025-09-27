@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 
 	"github.com/k0sproject/k0s/cmd/airgap"
@@ -144,8 +143,4 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 			return nil
 		},
 	}
-}
-
-func Execute(ctx context.Context) error {
-	return NewRootCmd().ExecuteContext(ctx)
 }
