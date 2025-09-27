@@ -96,7 +96,7 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 }
 
 // Supervise Starts supervising the given process
-func (s *Supervisor) Supervise() error {
+func (s *Supervisor) Supervise(ctx context.Context) error {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
 	// check if it is already started
@@ -114,7 +114,7 @@ func (s *Supervisor) Supervise() error {
 		s.TimeoutRespawn = 5 * time.Second
 	}
 
-	if err := s.maybeCleanupPIDFile(); err != nil {
+	if err := s.maybeCleanupPIDFile(ctx); err != nil {
 		if !errors.Is(err, errors.ErrUnsupported) {
 			return err
 		}
@@ -122,7 +122,6 @@ func (s *Supervisor) Supervise() error {
 		s.log.WithError(err).Warn("Old process cannot be terminated")
 	}
 
-	var ctx context.Context
 	ctx, s.cancel = context.WithCancel(context.Background())
 	started := make(chan error)
 	s.done = make(chan bool)
@@ -228,7 +227,7 @@ func (s *Supervisor) Stop() {
 // If so, requests graceful termination and waits for the process to terminate.
 //
 // The PID file itself is not removed here; that is handled by the caller.
-func (s *Supervisor) maybeCleanupPIDFile() error {
+func (s *Supervisor) maybeCleanupPIDFile(ctx context.Context) error {
 	pid, err := os.ReadFile(s.PidFile)
 	if os.IsNotExist(err) {
 		return nil
@@ -259,7 +258,7 @@ func (s *Supervisor) maybeCleanupPIDFile() error {
 		return nil
 	}
 
-	if err := s.terminateAndWait(ph); err != nil {
+	if err := s.terminateAndWait(ctx, ph); err != nil {
 		return fmt.Errorf("while waiting for termination of PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
 
@@ -269,7 +268,7 @@ func (s *Supervisor) maybeCleanupPIDFile() error {
 // Tries to gracefully terminate a process and waits for it to exit. If the
 // process is still running after several attempts, it returns an error instead
 // of forcefully killing the process.
-func (s *Supervisor) terminateAndWait(ph procHandle) error {
+func (s *Supervisor) terminateAndWait(ctx context.Context, ph procHandle) error {
 	if err := ph.requestGracefulTermination(); err != nil {
 		if errors.Is(err, os.ErrProcessDone) {
 			return nil
@@ -278,7 +277,7 @@ func (s *Supervisor) terminateAndWait(ph procHandle) error {
 	}
 
 	errTimeout := errors.New("process did not terminate in time")
-	ctx, cancel := context.WithTimeoutCause(context.TODO(), s.TimeoutStop, errTimeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, s.TimeoutStop, errTimeout)
 	defer cancel()
 	return s.awaitTermination(ctx, ph)
 }
@@ -309,7 +308,14 @@ func (s *Supervisor) isK0sManaged(ph procHandle) (bool, error) {
 }
 
 func (s *Supervisor) awaitTermination(ctx context.Context, ph procHandle) error {
-	s.log.Debug("Polling for process termination")
+	err := ph.awaitTermination(ctx)
+	if !errors.Is(err, errors.ErrUnsupported) {
+		return err
+	}
+
+	// Fall back to polling (old Linux kernels don't have the required syscalls).
+	s.log.WithError(err).Debug("Polling for process termination")
+
 	backoff := wait.Backoff{
 		Duration: 25 * time.Millisecond,
 		Cap:      3 * time.Second,

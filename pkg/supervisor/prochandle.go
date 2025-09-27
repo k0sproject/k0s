@@ -4,6 +4,7 @@
 package supervisor
 
 import (
+	"context"
 	"io"
 )
 
@@ -23,4 +24,7 @@ type procHandle interface {
 
 	// Requests graceful process termination.
 	requestGracefulTermination() error
+
+	// Waits until the process terminated.
+	awaitTermination(ctx context.Context) error
 }
