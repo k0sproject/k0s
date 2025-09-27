@@ -96,7 +96,7 @@ func (p *process) environ() ([]string, error) {
 // one console at a time, and k0s cannot simply detach from its own console to
 // send these events.
 //
-// Instead, spawn a new k0s process in a special "termination helper mode" to to
+// Instead, spawn a new k0s process in a special "termination helper mode" to
 // send the console events. This helper process can freely detach and reattach
 // consoles without affecting the main k0s process.
 //
@@ -104,8 +104,8 @@ func (p *process) environ() ([]string, error) {
 // targeted at a specific process group. In contrast, Ctrl+C events are
 // broadcasted to _all_ processes attached to the terminal, which is not
 // desirable for k0s's use case. Whether Ctrl+Break _actually_ triggers a
-// graceful process termination depends on the program being run. Luckily, the Go
-// runtime translates Ctrl+Break events into os.Interrupt signals, and all of
+// graceful process termination depends on the program being run. Luckily, the
+// Go runtime translates Ctrl+Break events into os.Interrupt signals, and all of
 // k0s's supervised executables are Go programs, so this is mostly fine.
 func (p *process) requestGracefulTermination() error {
 	exe, err := os.Executable()

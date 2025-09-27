@@ -124,6 +124,7 @@ With strong enough arguments we might take in new addons, but in general those s
 The requirements for building k0s from source are as follows:
 
 - GNU Make (v3.81 or newer)
+- A POSIX shell
 - coreutils
 - findutils
 - Docker

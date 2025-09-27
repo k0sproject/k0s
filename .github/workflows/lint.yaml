@@ -28,37 +28,99 @@ on:
 
 env:
   MAKEFLAGS: -j
+  EMBEDDED_BINS_BUILDMODE: none
 
 jobs:
-  lint:
-    name: Lint
+  lint-go:
+    strategy:
+      fail-fast: false
+      matrix:
+        target-os: [linux, windows, darwin]
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      DOCKER: "${{ matrix.target-os == 'linux' && 'docker' || ''}}"
+      LOCALAPPDATA: ${{ github.workspace }}\build\cache
+
+    name: Lint Go
+    runs-on: >-
+      ${{
+           matrix.target-os == 'windows' && 'windows-2025'
+        || matrix.target-os == 'darwin'  && 'macos-15'
+        || 'ubuntu-24.04'
+      }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        if: matrix.target-os != 'linux'
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: "Cache :: golangci-lint"
+        uses: actions/cache@v4
+        with:
+          key: lint-${{ matrix.target-os }}-amd64-golangci-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            lint-${{ matrix.target-os }}-amd64-golangci-${{ github.ref_name }}-
+            lint-${{ matrix.target-os }}-amd64-golangci-main-
+          path: |
+            build/cache/go/build
+            build/cache/golangci-lint
+
+      - name: "Cache :: GOMODCACHE"
+        uses: actions/cache/restore@v4
+        with:
+          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
+          path: build/cache/go/mod
+          enableCrossOsArchive: true
+
+      - name: Run linter
+        run: make lint-go $MAKE_EXTRA_ARGS
+
+  lint-codegen:
+    name: Lint generated code
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Go caches
-        uses: actions/cache@v4
+      - name: "Cache :: GOCACHE"
+        uses: actions/cache/restore@v4
         with:
-          key: ${{ runner.os }}-lint-go-caches-${{ hashFiles('go.sum') }}
+          key: build-k0s-linux-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            build-k0s-linux-amd64-gocache-${{ github.ref_name }}-
+            build-k0s-linux-amd64-gocache-main-
           path: |
-            build/cache
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/golangci-lint
+            build/cache/go/build
+
+      - name: "Cache :: GOMODCACHE"
+        uses: actions/cache/restore@v4
+        with:
+          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
+          path: build/cache/go/mod
+          enableCrossOsArchive: true
 
       - name: Check go.mod/go.sum to be consistent
         run: make --always-make go.sum && git diff --exit-code
 
       - name: Check generated code to be consistent
-        run: make codegen EMBEDDED_BINS_BUILDMODE=none && git diff --exit-code
+        run: make codegen && git diff --exit-code
 
-      - name: Run linter
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-        run: |
-          make lint
+      - name: Check copyright headers
+        run: make lint-copyright
 
   validate-os-tests:
     name: Validate OS tests
