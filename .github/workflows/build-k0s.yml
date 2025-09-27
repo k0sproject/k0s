@@ -21,7 +21,7 @@ jobs:
     runs-on: >-
       ${{
            inputs.target-arch == 'arm'   && fromJSON('["self-hosted", "linux", "arm"]')
-        || inputs.target-arch == 'arm64' && fromJSON('["self-hosted", "linux", "arm64"]')
+        || inputs.target-arch == 'arm64' && 'ubuntu-24.04-arm'
         || 'ubuntu-24.04'
       }}
 
@@ -31,11 +31,11 @@ jobs:
 
     steps:
       - name: Set up Docker Context for Buildx
-        if: inputs.target-arch != 'amd64'
+        if: inputs.target-arch == 'arm'
         run: docker context create builders
 
       - name: Set up Docker Buildx
-        if: inputs.target-arch != 'amd64'
+        if: inputs.target-arch == 'arm'
         uses: docker/setup-buildx-action@v3
         with:
           endpoint: builders
