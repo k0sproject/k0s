@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/pkg/k0scontext"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -61,7 +62,12 @@ func (f *DebugFlags) AddToKubectlFlagSet(flags *pflag.FlagSet) {
 
 func (f *DebugFlags) Run(cmd *cobra.Command, _ []string) {
 	if f.logsToStdout {
-		logrus.SetOutput(cmd.OutOrStdout())
+		// Only switch the logrus backend if there's no specific backend
+		// installed already. Setting the logrus output would effectively remove
+		// that backend again.
+		if !k0scontext.HasValue[internallog.Backend](cmd.Context()) {
+			logrus.SetOutput(cmd.OutOrStdout())
+		}
 	}
 
 	switch {
