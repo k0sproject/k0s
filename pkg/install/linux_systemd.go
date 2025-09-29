@@ -25,6 +25,7 @@ KillMode=process
 LimitCORE=infinity
 TasksMax=infinity
 TimeoutStartSec=0
+OOMScoreAdjust=-999
 
 {{- if .ChRoot}}RootDirectory={{.ChRoot|cmd}}{{- end}}
 
