@@ -1,3 +1,5 @@
+//go:build unix
+
 // SPDX-FileCopyrightText: 2022 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
