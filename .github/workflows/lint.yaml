@@ -61,7 +61,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         if: matrix.target-os != 'linux'
         with:
           go-version: ${{ env.GO_VERSION }}
