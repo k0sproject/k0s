@@ -89,6 +89,7 @@ spec:
                     description: |-
                       Slice of strings with raw arguments to pass to the kube-apiserver process
                       These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                      ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
                     items:
                       type: string
                     type: array
@@ -793,6 +794,7 @@ spec:
                         description: |-
                           Slice of strings with raw arguments to pass to the kube-proxy process
                           These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                          ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
                         items:
                           type: string
                         type: array
@@ -853,6 +855,7 @@ spec:
                         description: |-
                           Slice of strings with raw arguments to pass to the kube-router process
                           These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                          ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
                         items:
                           type: string
                         type: array
@@ -968,6 +971,7 @@ spec:
                     description: |-
                       Slice of strings with raw arguments to pass to the Kubernetes scheduler process
                       These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                      ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
                     items:
                       type: string
                     type: array
