@@ -143,7 +143,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		CNIImage:          clusterConfig.Spec.Images.KubeRouter.CNI.URI(),
 		CNIInstallerImage: clusterConfig.Spec.Images.KubeRouter.CNIInstaller.URI(),
 		PullPolicy:        clusterConfig.Spec.Images.DefaultPullPolicy,
-		Args:              args.ToDashedArgs(),
+		Args:              append(args.ToDashedArgs(), clusterConfig.Spec.Network.KubeRouter.RawArgs...),
 	}
 
 	if reflect.DeepEqual(k.previousConfig, cfg) {

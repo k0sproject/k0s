@@ -34,6 +34,11 @@ type APISpec struct {
 	// Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 
+	// Slice of strings with raw arguments to pass to the kube-apiserver process
+	// These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+	// ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
+	RawArgs []string `json:"rawArgs,omitempty"`
+
 	// Custom port for k0s-api server to listen on (default: 9443)
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535

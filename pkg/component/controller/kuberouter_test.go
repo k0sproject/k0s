@@ -221,6 +221,44 @@ func TestExtraArgs(t *testing.T) {
 	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--foo=bar")
 }
 
+func TestRawArgs(t *testing.T) {
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
+	cfg := v1beta1.DefaultClusterConfig()
+	cfg.Spec.Network.Calico = nil
+	cfg.Spec.Network.Provider = "kuberouter"
+	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
+	cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+		"log-level": "debug",
+	}
+	cfg.Spec.Network.KubeRouter.RawArgs = []string{
+		"--log-level=debug",
+		"--log-level=debug",
+	}
+
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
+
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
+
+	resources, err := testutil.ParseManifests(manifestData)
+	require.NoError(t, err)
+	ds, err := findDaemonset(resources)
+	require.NoError(t, err)
+	require.NotNil(t, ds)
+
+	// Verify that both extraArgs and rawArgs are present
+	args := ds.Spec.Template.Spec.Containers[0].Args[len(ds.Spec.Template.Spec.Containers[0].Args)-2:]
+	for _, arg := range args {
+		assert.Equal(t, "--log-level=debug", arg)
+	}
+}
+
 func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error) {
 	var cm corev1.ConfigMap
 	for _, r := range resources {
