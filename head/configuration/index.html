@@ -2883,7 +2883,11 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments to pass down to Kubernetes API server process. Any behavior triggered by these parameters is outside k0s support.</td>
+<td>Map of key-values (strings) for any extra arguments to pass down to Kubernetes API server process. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
+</tr>
+<tr>
+<td><code>rawArgs</code></td>
+<td>Slice of strings for any raw arguments to pass down to the kube-apiserver process. These are appended after <code>extraArgs</code>. If possible, it's recommended to use <code>extraArgs</code> over <code>rawArgs</code>. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
 </tr>
 <tr>
 <td><code>port</code>¹</td>
@@ -2919,7 +2923,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>etcd.rawArgs</code></td>
-<td>Slice of strings for any raw arguments to pass down to the etcd process. These are appeneded after <code>extraArg</code>. Any behavior triggered by these parameters is outside k0s support.</td>
+<td>Slice of strings for any raw arguments to pass down to the etcd process. These are appeneded after <code>extraArg</code>. If possible, it's recommended to use <code>extraArgs</code> over <code>rawArgs</code>. Any behavior triggered by these parameters is outside k0s support.</td>
 </tr>
 <tr>
 <td><code>etcd.ca.expiresAfter</code></td>
@@ -3122,50 +3126,26 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 </tr>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Extra arguments to pass to Kube-router. Can be also used to override any k0s managed arguments. For reference, see Kube-router <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#command-line-options">documentation</a>. (default: empty)</td>
+<td>Extra arguments to pass to Kube-router. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it. Can be also used to override any k0s managed arguments. For reference, see Kube-router <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#command-line-options">documentation</a>. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
+</tr>
+<tr>
+<td><code>rawArgs</code></td>
+<td>Slice of strings for any raw arguments to pass down to the kube-router process. These are appended after <code>extraArgs</code>. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Note</strong>: Kube-router allows many networking aspects to be configured per node, service, and pod (for more information, refer to the <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md">Kube-router user guide</a>).</p>
 <h4 id="specnetworkkubeproxy"><code>spec.network.kubeProxy</code><a class="headerlink" href="#specnetworkkubeproxy" title="Permanent link">#</a></h4>
-<table>
-<thead>
-<tr>
-<th>Element</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>disabled</code></td>
-<td>Disable kube-proxy altogether (default: <code>false</code>).</td>
-</tr>
-<tr>
-<td><code>mode</code></td>
-<td>Kube proxy operating mode, supported modes <code>iptables</code>, <code>ipvs</code>, <code>nftables</code>, <code>userspace</code> (default: <code>iptables</code>)</td>
-</tr>
-<tr>
-<td><code>iptables</code></td>
-<td>Kube proxy iptables settings</td>
-</tr>
-<tr>
-<td><code>ipvs</code></td>
-<td>Kube proxy IPVS settings</td>
-</tr>
-<tr>
-<td><code>nftables</code></td>
-<td>Kube proxy nftables settings</td>
-</tr>
-<tr>
-<td><code>nodePortAddresses</code></td>
-<td>Kube proxy <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">nodePortAddresses</a></td>
-</tr>
-<tr>
-<td><code>extraArgs</code> .</td>
-<td>Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. Any behavior triggered by these parameters is outside k0s support.</td>
-</tr>
-</tbody>
-</table>
+<p>| Element             | Description                                                                                                                                                                                                                                                               |
+---------------------------------------------------------------------------------------------------------|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <code>disabled</code>          | Disable kube-proxy altogether (default: <code>false</code>).                                                                                                                                                                                                                         |
+| <code>mode</code>              | Kube proxy operating mode, supported modes <code>iptables</code>, <code>ipvs</code>, <code>nftables</code>, <code>userspace</code> (default: <code>iptables</code>)                                                                                                                                                              |
+| <code>iptables</code>          | Kube proxy iptables settings                                                                                                                                                                                                                                              |
+| <code>ipvs</code>              | Kube proxy IPVS settings                                                                                                                                                                                                                                                  |
+| <code>nftables</code>          | Kube proxy nftables settings                                                                                                                                                                                                                                              |
+| <code>nodePortAddresses</code> | Kube proxy <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">nodePortAddresses</a>                                                                                                                                                             |
+| <code>extraArgs</code>         | Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty)                         |
+| <code>rawArgs</code>           | Slice of strings for any raw arguments to pass down to the kube-proxy process. These are appended after <code>extraArgs</code>. If possible, it's recommended to use <code>extraArgs</code> over <code>rawArgs</code>. Any behavior triggered by these parameters is outside k0s support. (default: empty) |</p>
 <p>Default kube-proxy iptables settings:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">iptables</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">masqueradeAll</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
@@ -3384,7 +3364,11 @@ node-local load balancing.</p>
 <tbody>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process. Any behavior triggered by these parameters is outside k0s support.</td>
+<td>Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
+</tr>
+<tr>
+<td><code>rawArgs</code></td>
+<td>Slice of strings for any raw arguments to pass down to the kube-controller-manager process. These are appended after <code>extraArgs</code>. If possible, it's recommended to use <code>extraArgs</code> over <code>rawArgs</code>. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
 </tr>
 </tbody>
 </table>
@@ -3399,7 +3383,11 @@ node-local load balancing.</p>
 <tbody>
 <tr>
 <td><code>extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process. Any behavior triggered by these parameters is outside k0s support.</td>
+<td>Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
+</tr>
+<tr>
+<td><code>rawArgs</code></td>
+<td>Slice of strings for any raw arguments to pass down to the kube-scheduler process. These are appended after <code>extraArgs</code>. If possible, it's recommended to use <code>extraArgs</code> over <code>rawArgs</code>. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
 </tr>
 </tbody>
 </table>
