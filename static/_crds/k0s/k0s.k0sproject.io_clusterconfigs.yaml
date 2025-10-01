@@ -85,6 +85,14 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
+                  rawArgs:
+                    description: |-
+                      Slice of strings with raw arguments to pass to the kube-apiserver process
+                      These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                      ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
+                    items:
+                      type: string
+                    type: array
                   sans:
                     description: List of additional addresses to push to API servers
                       serving the certificate
@@ -102,6 +110,13 @@ spec:
                     description: Map of key-values (strings) for any extra arguments
                       you want to pass down to the Kubernetes controller manager process
                     type: object
+                  rawArgs:
+                    description: |-
+                      Slice of strings with raw arguments to pass to the kube-controller-manager process
+                      These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                    items:
+                      type: string
+                    type: array
                 type: object
               extensions:
                 description: ClusterExtensions specifies cluster extensions
@@ -779,6 +794,14 @@ spec:
                         items:
                           type: string
                         type: array
+                      rawArgs:
+                        description: |-
+                          Slice of strings with raw arguments to pass to the kube-proxy process
+                          These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                          ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   kuberouter:
                     description: KubeRouter defines the kube-router related config
@@ -832,6 +855,14 @@ spec:
                           Comma-separated list of global peer ASNs
                           Deprecated: Use extraArgs with peerRouterIPs instead
                         type: string
+                      rawArgs:
+                        description: |-
+                          Slice of strings with raw arguments to pass to the kube-router process
+                          These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                          ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   nodeLocalLoadBalancing:
                     description: |-
@@ -940,6 +971,14 @@ spec:
                     description: Map of key-values (strings) for any extra arguments
                       you want to pass down to Kubernetes scheduler process
                     type: object
+                  rawArgs:
+                    description: |-
+                      Slice of strings with raw arguments to pass to the Kubernetes scheduler process
+                      These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                      ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
+                    items:
+                      type: string
+                    type: array
                 type: object
               storage:
                 description: StorageSpec defines the storage related config options

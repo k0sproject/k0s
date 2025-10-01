@@ -39,6 +39,10 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.NoError(err)
 
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-apiserver", "--disable-admission-plugins=PodSecurity")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-controller-manager", "--terminated-pod-gc-threshold=1000")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-controller-manager", "--concurrent-service-syncs=5")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-scheduler", "--v=4")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-scheduler", "--bind-address=0.0.0.0")
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/etcd", "--log-level=warn")
 	s.checkFlagCount(sshCtrl, "/var/lib/k0s/bin/etcd", "--logger=zap", 3)
 
@@ -47,7 +51,10 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.NoError(err)
 
 	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "--config-sync-period=12m0s")
+	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "-v=2")
 
+	s.checkFlag(sshWorker, "kube-router", "--enable-cni=true")
+	s.checkFlag(sshWorker, "kube-router", "-v=0")
 }
 
 func (s *ExtraArgsSuite) checkFlagCount(ssh *common.SSHConnection, processName string, flag string, expectedCount int) {
@@ -86,7 +93,18 @@ spec:
   api:
     extraArgs:
       disable-admission-plugins: PodSecurity
-      enable-admission-plugins: NamespaceLifecycle,LimitRanger,ServiceAccount,TaintNodesByCondition,Priority,DefaultTolerationSeconds,DefaultStorageClass,StorageObjectInUseProtection,PersistentVolumeClaimResize,RuntimeClass,CertificateApproval,CertificateSigning,CertificateSubjectRestriction,DefaultIngressClass,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota
+    rawArgs:
+    - --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,TaintNodesByCondition,Priority,DefaultTolerationSeconds,DefaultStorageClass,StorageObjectInUseProtection,PersistentVolumeClaimResize,RuntimeClass,CertificateApproval,CertificateSigning,CertificateSubjectRestriction,DefaultIngressClass,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota
+  controllerManager:
+    extraArgs:
+      terminated-pod-gc-threshold: "1000"
+    rawArgs:
+    - --concurrent-service-syncs=5
+  scheduler:
+    extraArgs:
+      v: "4"
+    rawArgs:
+    - --bind-address=0.0.0.0
   storage:
     etcd:
       extraArgs:
@@ -96,7 +114,15 @@ spec:
       - --logger=zap
       - --logger=zap
   network:
+    provider: kuberouter
+    kubeRouter:
+      extraArgs:
+        enable-cni: "true"
+      rawArgs:
+      - -v=0
     kubeProxy:
       extraArgs:
         config-sync-period: 12m0s
+      rawArgs:
+      - -v=2
 `

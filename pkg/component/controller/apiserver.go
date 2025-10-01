@@ -159,6 +159,7 @@ func (a *APIServer) Start(_ context.Context) error {
 	for name, value := range args {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
+	apiServerArgs = append(apiServerArgs, a.ClusterConfig.Spec.API.RawArgs...)
 
 	a.supervisor = &supervisor.Supervisor{
 		Name:    kubeAPIComponentName,
