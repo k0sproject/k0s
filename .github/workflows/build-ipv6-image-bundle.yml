@@ -1,0 +1,73 @@
+name: "Build :: IPv6 image bundle"
+
+on:
+  workflow_call:
+    inputs:
+      target-os:
+        type: string
+        description: The OS to build the IPv6 image bundle for.
+      target-arch:
+        type: string
+        required: true
+        description: The architecture to build the IPv6 image bundle for.
+    outputs:
+      cache-key:
+        description: The IPv6 image bundle's cache key.
+        value: ${{ jobs.build.outputs.cache-key }}
+
+env:
+  MAKEFLAGS: -j
+
+jobs:
+  build:
+    name: "${{ inputs.target-os }}-${{ inputs.target-arch }}"
+    runs-on: ubuntu-24.04
+
+    env:
+      TARGET_OS: ${{ inputs.target-os }}
+      TARGET_ARCH: ${{ inputs.target-arch }}
+
+    steps:
+      - name: "Build :: Checkout"
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: "Download :: k0s"
+        uses: actions/download-artifact@v5
+        with:
+          name: k0s-linux-amd64
+
+        # Capture the calculated image bundle source hash in a separate step, as
+        # the hashFiles function is evaluated before the step execution. So all
+        # the required files need to exist before that.
+      - name: "Cache :: IPv6 image bundle :: Calculate cache key"
+        id: cache-ipv6-image-bundle-calc-key
+        env:
+          HASH_VALUE: ${{ hashFiles('Makefile') }}
+        run: |
+          printf 'cache-key=build-ipv6-image-bundle-%s-%s-%s\n' "$TARGET_OS" "$TARGET_ARCH" "$HASH_VALUE" >> "$GITHUB_OUTPUT"
+
+      - name: "Cache :: IPv6 image bundle"
+        id: cache-ipv6-image-bundle
+        uses: actions/cache@v4
+        with:
+          key: ${{ steps.cache-ipv6-image-bundle-calc-key.outputs.cache-key }}
+          path: ipv6-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
+
+      - name: "Build :: IPv6 image bundle"
+        if: steps.cache-ipv6-image-bundle.outputs.cache-hit != 'true'
+        env:
+          DOCKER: ''
+          EMBEDDED_BINS_BUILDMODE: none
+        run: |
+          chmod +x k0s
+          make --touch k0s
+          make "ipv6-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
+
+      - name: "Upload :: IPv6 image bundle"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipv6-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: ipv6-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
+          compression-level: 0

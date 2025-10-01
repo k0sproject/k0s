@@ -1,16 +1,5 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package common
 
@@ -62,12 +51,12 @@ func NewDownloadController(logger *logrus.Entry, client crcli.Client, delegate a
 func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get download object for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to get download object for node='%s': %w", req.Name, err)
 	}
 
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
 
 	signalNodeCopy := r.delegate.DeepCopy(signalNode)

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # SELinux Overview
 
 SELinux enforces mandatory access control policies that confine user programs and system services, as well as access to files and network resources. Limiting privilege to the minimum required to work reduces or eliminates the ability of these programs and daemons to cause harm if faulty or compromised.
@@ -13,7 +18,7 @@ This guide describes how to enable SELinux in Kubernetes environment provided by
 - SELinux labels are correctly set for k0s installation files of the worker nodes.
 - SELinux is enabled in container runtime such as containerd on the worker nodes.
 
-### Check whether SELinux is enabled on host OS
+### Check whether SELinux is enabled
 
 SELinux is enabled on CentOS and RHEL by default. Below command output indicates SELinux is enabled.
 
@@ -82,7 +87,7 @@ spec:
         level: "s0:c123,c456"
 ```
 
-After the pod starts, ssh to the worker node on which the pod is running and check the pod process. It should display the label `s0:c123,c456` that you sepecified in YAML file:
+After the pod starts, ssh to the worker node on which the pod is running and check the pod process. It should display the label `s0:c123,c456` that you specified in YAML file:
 
 ```shell
 $ ps -efZ | grep -F 'sleep infinity'

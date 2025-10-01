@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -35,11 +22,12 @@ import (
 
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
-	gid            int
-	K0sVars        *config.CfgVars
-	LogLevel       string
-	SingleNode     bool
+	K0sVars               *config.CfgVars
+	LogLevel              string
+	DisableLeaderElection bool
+
 	supervisor     *supervisor.Supervisor
+	executablePath string
 	uid            int
 	previousConfig stringmap.StringMap
 }
@@ -58,7 +46,8 @@ func (a *Scheduler) Init(_ context.Context) error {
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running kube-scheduler as root")
 	}
-	return assets.Stage(a.K0sVars.BinDir, kubeSchedulerComponentName, constant.BinDirMode)
+	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeSchedulerComponentName)
+	return err
 }
 
 // Run runs kube scheduler
@@ -95,7 +84,7 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 		}
 		args[name] = value
 	}
-	if a.SingleNode {
+	if a.DisableLeaderElection {
 		args["leader-elect"] = "false"
 	}
 	args = clusterConfig.Spec.FeatureGates.BuildArgs(args, kubeSchedulerComponentName)
@@ -114,12 +103,11 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 
 	a.supervisor = &supervisor.Supervisor{
 		Name:    kubeSchedulerComponentName,
-		BinPath: assets.BinPath(kubeSchedulerComponentName, a.K0sVars.BinDir),
+		BinPath: a.executablePath,
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    args.ToDashedArgs(),
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 	a.previousConfig = args
 	return a.supervisor.Supervise()

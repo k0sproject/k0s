@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -20,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"slices"
 
+	"github.com/k0sproject/k0s/pkg/featuregate"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilnet "k8s.io/utils/net"
 
@@ -31,8 +20,9 @@ var _ Validateable = (*Network)(nil)
 
 // Network defines the network related config options
 type Network struct {
-	Calico    *Calico   `json:"calico,omitempty"`
-	DualStack DualStack `json:"dualStack,omitempty"`
+	Calico *Calico `json:"calico,omitempty"`
+	// +optional
+	DualStack DualStack `json:"dualStack"`
 
 	KubeProxy  *KubeProxy  `json:"kubeProxy,omitempty"`
 	KubeRouter *KubeRouter `json:"kuberouter,omitempty"`
@@ -59,7 +49,22 @@ type Network struct {
 	// Cluster Domain
 	// +kubebuilder:default="cluster.local"
 	ClusterDomain string `json:"clusterDomain,omitempty"`
+
+	// PrimaryAddressFamily defines the primary family for the cluster.
+	// If empty, k0s determines it based on `.spec.API.ExternalAddress`,
+	// if this isn't present it will use `.spec.API.Address.`.
+	// If both addresses are empty or the chosen address is a hostname, defaults to `IPv4`.
+	// +Kubebuilder:validation:Enum=IPv4;IPv6
+	PrimaryAddressFamily PrimaryAddressFamilyType `json:"primaryAddressFamily,omitempty"`
 }
+
+type PrimaryAddressFamilyType string
+
+const (
+	PrimaryFamilyUnknown PrimaryAddressFamilyType = ""
+	PrimaryFamilyIPv4    PrimaryAddressFamilyType = "IPv4"
+	PrimaryFamilyIPv6    PrimaryAddressFamilyType = "IPv6"
+)
 
 // DefaultNetwork creates the Network config struct with sane default values
 func DefaultNetwork() *Network {
@@ -89,14 +94,31 @@ func (n *Network) Validate() []error {
 		errors = append(errors, field.NotSupported(field.NewPath("provider"), n.Provider, []string{"kuberouter", "calico", "custom"}))
 	}
 
-	_, _, err := net.ParseCIDR(n.PodCIDR)
+	validCIDRs := true
+	podNetIP, _, err := net.ParseCIDR(n.PodCIDR)
 	if err != nil {
 		errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "invalid CIDR address"))
+		validCIDRs = false
 	}
 
-	_, _, err = net.ParseCIDR(n.ServiceCIDR)
+	serviceNetIP, _, err := net.ParseCIDR(n.ServiceCIDR)
 	if err != nil {
 		errors = append(errors, field.Invalid(field.NewPath("serviceCIDR"), n.ServiceCIDR, "invalid CIDR address"))
+		validCIDRs = false
+	}
+
+	if validCIDRs {
+		// podCIDR and service CIDR must both be either ipv4 or ipv6, but we should only verify this
+		// if they have a valid IP to begin with because otherwise the error can be confusing
+		if (podNetIP.To4() != nil) != (serviceNetIP.To4() != nil) {
+			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "podCIDR and serviceCIDR must be both IPv4 or IPv6"))
+		}
+
+		// Single stack IPv6 is an alpha feature, so we need to check if the feature gate is enabled, but only report it if both
+		// podCIDR and serviceCIDR are IPv6 have been validated so that the error is easier to understand.
+		if !n.DualStack.Enabled && podNetIP.To4() == nil && !featuregate.IsEnabled(featuregate.IPv6SingleStack) {
+			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "feature gate IPv6SingleStack must be explicitly enabled to use IPv6 single stack"))
+		}
 	}
 
 	if !govalidator.IsDNSName(n.ClusterDomain) {
@@ -114,6 +136,19 @@ func (n *Network) Validate() []error {
 		_, _, err = net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "invalid CIDR address"))
+		}
+		if podNetIP.To4() == nil {
+			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "if DualStack is enabled, podCIDR must be IPv4"))
+		}
+		if serviceNetIP.To4() == nil {
+			errors = append(errors, field.Invalid(field.NewPath("serviceCIDR"), n.ServiceCIDR, "if DualStack is enabled, serviceCIDR must be IPv4"))
+		}
+	}
+
+	if n.PrimaryAddressFamily != "" {
+		if allowed := []PrimaryAddressFamilyType{PrimaryFamilyIPv4, PrimaryFamilyIPv6}; !slices.Contains(allowed, n.PrimaryAddressFamily) {
+			err := field.NotSupported(field.NewPath("addressFamily"), n.PrimaryAddressFamily, allowed)
+			errors = append(errors, err)
 		}
 	}
 
@@ -135,23 +170,20 @@ func (n *Network) DNSAddress() (string, error) {
 		return "", fmt.Errorf("failed to parse service CIDR %q: %w", n.ServiceCIDR, err)
 	}
 
-	address := ipnet.IP.To4()
-	if IsIPv6String(ipnet.IP.String()) {
-		address = ipnet.IP.To16()
-	}
+	addr := slices.Clone(ipnet.IP)
 
-	prefixlen, _ := ipnet.Mask.Size()
-	if prefixlen < 29 {
-		address[3] = address[3] + 10
+	maskLen, netLen := ipnet.Mask.Size()
+	if netLen-maskLen > 3 {
+		addr[len(addr)-1] += 10
 	} else {
-		address[3] = address[3] + 2
+		addr[len(addr)-1] += 2
 	}
 
-	if !ipnet.Contains(address) {
-		return "", fmt.Errorf("failed to calculate a valid DNS address: %q", address.String())
+	if !ipnet.Contains(addr) {
+		return "", fmt.Errorf("failed to calculate DNS address: CIDR too narrow: %s", n.ServiceCIDR)
 	}
 
-	return address.String(), nil
+	return addr.String(), nil
 }
 
 // InternalAPIAddresses calculates the internal API address of configured service CIDR block.
@@ -189,11 +221,16 @@ func (n *Network) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if n.Provider == "calico" && n.Calico == nil {
-		n.Calico = DefaultCalico()
+	switch n.Provider {
+	case "calico":
+		if n.Calico == nil {
+			n.Calico = DefaultCalico()
+		}
 		n.KubeRouter = nil
-	} else if n.Provider == "kuberouter" && n.KubeRouter == nil {
-		n.KubeRouter = DefaultKubeRouter()
+	case "kuberouter":
+		if n.KubeRouter == nil {
+			n.KubeRouter = DefaultKubeRouter()
+		}
 		n.Calico = nil
 	}
 
@@ -205,18 +242,22 @@ func (n *Network) UnmarshalJSON(data []byte) error {
 }
 
 // BuildServiceCIDR returns actual argument value for service cidr
-func (n *Network) BuildServiceCIDR(addr string) string {
+func (n *Network) BuildServiceCIDR(primaryAddressFamily PrimaryAddressFamilyType) string {
 	if !n.DualStack.Enabled {
 		return n.ServiceCIDR
 	}
-	// because in the dual-stack mode k8s
-	// relies on the ordering of the given CIDRs
-	// we need to first give family on which
-	// api server listens
-	if IsIPv6String(addr) {
+
+	// Because Kubernetes relies on the order of the given CIDRs in dual-stack
+	// mode, the CIDR whose version matches the version of the IP address the
+	// API server is listening on must be specified first.
+	switch primaryAddressFamily {
+	case PrimaryFamilyIPv4:
+		return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR
+	case PrimaryFamilyIPv6:
 		return n.DualStack.IPv6ServiceCIDR + "," + n.ServiceCIDR
+	default:
+		panic(fmt.Sprintf("BuildServiceCIDR called invalid PrimaryAddressFamily %q family. This is theoretically impossible", primaryAddressFamily))
 	}
-	return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR
 }
 
 // BuildPodCIDR returns actual argument value for pod cidr
@@ -225,4 +266,15 @@ func (n *Network) BuildPodCIDR() string {
 		return n.DualStack.IPv6PodCIDR + "," + n.PodCIDR
 	}
 	return n.PodCIDR
+}
+
+// IsSingleStackIPv6 returns true if the ServiceCIDR is IPv6.
+// This function relies on being called after Validate() and it
+// assumes that n.PodCIDR has a legal value.
+func (n *Network) IsSingleStackIPv6() bool {
+	if n.DualStack.Enabled {
+		return false
+	}
+	ip, _, _ := net.ParseCIDR(n.PodCIDR)
+	return ip.To4() == nil
 }

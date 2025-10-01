@@ -1,6 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Run k0s in Docker
 
-You can create a k0s cluster on top of docker. In such a scenario, by default, both controller and worker nodes are run in the same container to provide an easy local testing "cluster".
+You can create a k0s cluster on top of Docker.
 
 ## Prerequisites
 
@@ -8,73 +13,198 @@ You will require a [Docker environment](https://docs.docker.com/get-docker/) run
 
 ## Container images
 
-The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include:
+The k0s OCI images are published to both Docker Hub and GitHub Container
+registry. For simplicity, the examples given here use Docker Hub (GitHub
+requires separate authentication, which is not covered here). The image names
+are as follows:
 
-- docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0
-- ghcr.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0
+- `docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}`
+- `ghcr.io/k0sproject/k0s:{{{ k0s_docker_version }}}`
 
-**Note:** Due to Docker Hub tag validation scheme, we have to use `-` as the k0s version separator instead of the usual `+`. So for example k0s version `v{{{ extra.k8s_version }}}+k0s.0` is tagged as `docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0`.
+**Note:** Due to Docker's tag validation scheme, `-` is used as the k0s version
+separator instead of the usual `+`. For example, k0s version `{{{ k0s_version
+}}}` is tagged as `docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}`.
 
 ## Start k0s
 
-### 1. Initiate k0s
+### 1. Run a controller
 
-You can run your own k0s in Docker:
+By default, running the k0s OCI image will launch a controller with workloads
+enabled (i.e. a controller with the `--enable-worker` flag) to provide an easy
+local testing "cluster":
 
 ```sh
-docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 --cgroupns=host docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 -- k0s controller --enable-worker
+docker run -d --name k0s-controller --hostname k0s-controller \
+  -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
+  --tmpfs /run `# this is where k0s stores runtime data` \
+  --privileged `# this is the easiest way to enable container-in-container workloads` \
+  -p 6443:6443 `# publish the Kubernetes API server port` \
+  docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}
 ```
 
-Flags:
--d: Runs the container in detached mode.
---name k0s: Names the container k0s.
---hostname k0s: Sets the hostname of the container to k0s.
---privileged: Grants the container elevated privileges, required by k0s to function properly inside Docker.
--v /var/lib/k0s: Uses Docker volume. Mounts the docker container’s /var/lib/k0s directory to the host, ensuring that cluster data persists across container restarts.
--p 6443:6443: Exposes port 6443 on the host for the Kubernetes API server, allowing you to interact with the cluster externally.
---cgroupns=host: Configures the container to share the host's cgroup namespace, allowing k0s to monitor system resources accurately.
--- k0s controller --enable-worker: Starts the k0s controller and enables a worker node within the same container, creating a single-node cluster.
+Explanation of command line arguments:
 
-**Note:** This command starts k0s with a worker. You may disable the worker by running it without the flag `--enable-worker`
+- `-d` runs the container in detached mode, i.e. in the background.
+- `--name k0s-controller` names the container "k0s-controller".
+- `--hostname k0s-controller` sets the host name of the container to
+  "k0s-controller".
+- `-v /var/lib/k0s -v /var/log/pods` creates two Docker volumes and mounts them
+  to `/var/lib/k0s` and `/var/log/pods` respectively inside the container,
+  ensuring that cluster data persists across container restarts.
+- `--tmpfs /run` **TODO**
+- `--privileged` gives the container the elevated privileges that k0s needs to
+  function properly within Docker. See the section on [adding additional
+  workers](#2-optional-add-additional-workers) for a more detailed discussion of
+  privileges.
+- `-p 6443:6443` exposes the container's Kubernetes API server port 6443 to the
+  host, allowing you to interact with the cluster externally.
+- `docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}` is the name of the
+  k0s image to run.
 
-### 2. (Optional) Create additional workers
+By default, the k0s image starts a k0s controller with worker components enabled
+within the same container, creating a cluster with a single
+controller-and-worker node using the following command:
 
-You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.
+```Dockerfile
+{% include "../Dockerfile" start="# Start CMD" end="# End CMD" %}
+```
 
-For each required worker:
+Alternatively, a controller-only node can be run like this:
 
-1. Acquire a join token for the worker:
+```sh
+docker run -d --name k0s-controller --hostname k0s-controller \
+  --read-only `# k0s won't write any data outside the below paths` \
+  -v /var/lib/k0s `# this is where k0s stores its data` \
+  --tmpfs /run `# this is where k0s stores runtime data` \
+  --tmpfs /tmp `# allow writing temporary files` \
+  -p 6443:6443 `# publish the Kubernetes API server port` \
+  docker.io/k0sproject/k0s:{{{ k0s_docker_version }}} \
+  k0s controller
+```
 
-    ```sh
-    token=$(docker exec -t -i k0s k0s token create --role=worker)
-    ```
+Note the addition of `k0s controller` to override the image's default command.
+Also note that a controller-only node requires fewer privileges.
+
+### 2. (Optional) Add additional workers
+
+You can add multiple worker nodes to the cluster and then distribute your
+application containers to separate workers.
+
+1. Acquire a [join token](k0s-multi-node.md#3-create-a-join-token) for the
+   worker:
+
+   ```sh
+   token=$(docker exec k0s-controller k0s token create --role=worker)
+   ```
 
 2. Run the container to create and join the new worker:
 
-    ```sh
-    docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s --cgroupns=host  docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0 k0s worker $token
-    ```
+   ```sh
+   docker run -d --name k0s-worker1 --hostname k0s-worker1 \
+     -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
+     --tmpfs /run `# this is where k0s stores runtime data` \
+     --privileged `# this is the easiest way to enable container-in-container workloads` \
+     docker.io/k0sproject/k0s:{{{ k0s_docker_version }}} \
+     k0s worker $token
+   ```
 
-Repeat these steps for each additional worker node needed. Ensure that workers can reach the controller on port 6443.
+   Alternatively, with fine-grained privileges:
+   <!--
+     This setup is partly repeated in compose.yaml. So if things change here,
+     they should probably be reflected in compose.yaml as well.
+
+     Ideally, this example would show a setup with a read-only root file system.
+     Unfortunately, the entrypoint's DNS fixup needs to modify /etc/resolv.conf,
+     so this is not an option at this time. The entrypoint could perhaps try to
+     overmount /etc/resolv.conf, but that stunt is left for the future.
+     Additional paths that should then be added as tmpfs:
+     - /tmp
+     - /etc/cni/net.d
+     - /opt/cni/bin
+   -->
+
+   ```sh
+   docker run -d --name k0s-worker1 --hostname k0s-worker1 \
+     -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
+     --tmpfs /run `# this is where k0s stores runtime data` \
+     --security-opt seccomp=unconfined \
+     --device /dev/kmsg \
+     --cap-add sys_admin \
+     --cap-add net_admin \
+     --cap-add sys_ptrace \
+     --cap-add sys_resource \
+     --cap-add syslog \
+     docker.io/k0sproject/k0s:{{{ k0s_docker_version }}} \
+     k0s worker "$token"
+   ```
+
+   Notes on the security-related flags:
+
+   - `--security-opt seccomp=unconfined` is required for `runc` to access the
+     [session keyring].
+   - `--device /dev/kmsg` makes `/dev/kmsg` visible from inside the container.
+     The kubelet's OOM watcher uses this.
+     <!--
+       Note that this used to work via `-v /dev/kmsg:/dev/kmsg:ro --device-cgroup-rule='c 1:11 r'` as well.
+       Upstream reference: https://github.com/euank/go-kmsg-parser/blob/v2.0.0/kmsgparser/kmsgparser.go#L60
+       Also relevant: KubeletInUserNamespace feature gate (alpha since v1.22)
+       https://kubernetes.io/docs/tasks/administer-cluster/kubelet-in-userns/
+     -->
+
+   Notes on [Linux capabilities]:
+
+   - `CAP_SYS_ADMIN` allows for a variety of administrative tasks, including
+     mounting file systems and managing namespaces, which are necessary for
+     creating and configuring nested containers.
+   - `CAP_NET_ADMIN` allows manipulation of network settings such as interfaces
+     and routes, allowing containers to create isolated or bridged networks, and
+     so on.
+   - `CAP_SYS_PTRACE` allows to inspect and modify processes, used to monitor
+     other containers in a nested environment.
+     <!--
+       Omitting this results in not being able to start containers
+       ("RunContainerError")
+     -->
+   - `CAP_SYS_RESOURCE` allows containers to override resource limits for things
+     like memory or file descriptors, used to manage and adjust resource
+     allocation in nested container environments.
+     <!--
+       Omitting this results in "runc create failed: unable to start container
+       process: can't get final child's PID from pipe: EOF: unknown"
+     -->
+   - `CAP_SYSLOG` allows containers to perform privileged syslog operations.
+     This is required in order to read `/dev/kmsg`.
+
+   Note that more privileges may be required depending on your cluster
+   configuration and workloads.
+
+   Repeat this step for each additional worker node and adjust the container and
+   host names accordingly. Make sure that the workers can reach the controller
+   on the [required ports]. If you are using Docker's default bridged network,
+   this should be the case.
+
+[session keyring]: https://www.man7.org/linux/man-pages/man7/session-keyring.7.html
+[Linux capabilities]: https://www.man7.org/linux/man-pages/man7/capabilities.7.html
+[required ports]: networking.md#controller-worker-communication
 
 ### 3. Access your cluster
 
-a) Using kubectl within the Container
+#### a) Using kubectl within the container
 
 To check cluster status and list nodes, use:
 
 ```sh
-docker exec k0s k0s kubectl get nodes
+docker exec k0s-controller k0s kubectl get nodes
 ```
 
-b) Using kubectl Locally
+#### b) Using kubectl locally
 
 To configure local access to your k0s cluster, follow these steps:
 
 1. Generate the kubeconfig:
 
     ```sh
-    docker exec k0s k0s kubeconfig admin > ~/.kube/k0s.config
+    docker exec k0s-controller k0s kubeconfig admin > ~/.kube/k0s.config
     ```
 
 2. Update kubeconfig with Localhost Access:
@@ -99,48 +229,83 @@ To configure local access to your k0s cluster, follow these steps:
     kubectl get nodes
     ```
 
-c) Use [Lens](https://github.com/lensapp/lens/):
+#### c) Use [Lens]
 
-Access the k0s cluster using Lens by following the instructions [here](https://docs.k8slens.dev/getting-started/add-cluster/).
+Access the k0s cluster using Lens by following the instructions on [how to add a
+cluster].
+
+[Lens]: https://k8slens.dev/
+[how to add a cluster]: https://docs.k8slens.dev/getting-started/add-cluster/
 
 ## Use Docker Compose (alternative)
 
 As an alternative you can run k0s using Docker Compose:
 
+<!-- Kept in its own file to ease local testing. -->
 ```yaml
-version: "3.9"
-services:
-  k0s:
-    container_name: k0s
-    image: docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0
-    command: k0s controller --config=/etc/k0s/config.yaml --enable-worker
-    hostname: k0s
-    privileged: true
-    cgroup: host
-    volumes:
-      - "/var/lib/k0s"
-    ports:
-      - "6443:6443"
-    network_mode: "bridge"
-    environment:
-      K0S_CONFIG: |-
-        apiVersion: k0s.k0sproject.io/v1beta1
-        kind: ClusterConfig
-        metadata:
-          name: k0s
-        # Any additional configuration goes here ...
+{% include "compose.yaml" %}
+```
+
+Below is a more complex example, using Traefik as a load balancer, along with
+three controller and three worker nodes:
+
+<!-- Kept in its own file to ease local testing. -->
+```yaml
+{% include "compose-cluster.yaml" %}
+```
+
+Running the above:
+
+```console
+ ❯ docker compose up -d
+[+] Running 11/11
+ ✔ Network compose-cluster_k0s-net                Created                0.1s
+ ✔ Volume "compose-cluster_k0s-token-secrets"     Created                0.0s
+ ✔ Volume "compose-cluster_k0s-controller-token"  Created                0.0s
+ ✔ Volume "compose-cluster_k0s-worker-token"      Created                0.0s
+ ✔ Container k0s-lb                               Started                0.5s
+ ✔ Container k0s-controller-1                     Started                11.8s
+ ✔ Container k0s-controller-2                     Started                12.2s
+ ✔ Container k0s-worker-1                         Started                12.4s
+ ✔ Container k0s-worker-2                         Started                12.3s
+ ✔ Container k0s-worker-3                         Started                12.1s
+ ✔ Container k0s-controller-3                     Started                12.5s
+```
+
+After a short while:
+
+```console
+$ docker exec k0s-controller-1 k0s kc get node,po -A
+NAME                STATUS   ROLES    AGE     VERSION
+node/k0s-worker-1   Ready    <none>   1m36s   {{{ k8s_version }}}+k0s
+node/k0s-worker-2   Ready    <none>   1m36s   {{{ k8s_version }}}+k0s
+node/k0s-worker-3   Ready    <none>   1m36s   {{{ k8s_version }}}+k0s
+
+NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE
+kube-system   pod/coredns-7d4f7fbd5c-54lxp          1/1     Running   0          1m27s
+kube-system   pod/coredns-7d4f7fbd5c-pwbck          1/1     Running   0          1m27s
+kube-system   pod/konnectivity-agent-5g8pn          1/1     Running   0          1m22s
+kube-system   pod/konnectivity-agent-6rp7r          1/1     Running   0          1m22s
+kube-system   pod/konnectivity-agent-zx9fn          1/1     Running   0          1m22s
+kube-system   pod/kube-proxy-9m77t                  1/1     Running   0          1m36s
+kube-system   pod/kube-proxy-v5vs6                  1/1     Running   0          1m36s
+kube-system   pod/kube-proxy-xfw2h                  1/1     Running   0          1m36s
+kube-system   pod/kube-router-6c62v                 1/1     Running   0          1m36s
+kube-system   pod/kube-router-98ss8                 1/1     Running   0          1m36s
+kube-system   pod/kube-router-lr46f                 1/1     Running   0          1m36s
+kube-system   pod/metrics-server-7778865875-fzhx6   1/1     Running   0          1m37s
 ```
 
 ## Known limitations
 
 ### No custom Docker networks
 
-Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with `--net my-net`). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.
+Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with `--net my-net`). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workarounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.
 
 ## Next Steps
 
 - [Install using k0sctl](k0sctl-install.md): Deploy multi-node clusters using just one command
-- [Control plane configuration options](configuration.md): Networking and datastore configuration
+- [Control plane configuration options](configuration.md): Networking and data store configuration
 - [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md): Load balancer or storage configuration
 - [Installing the Traefik Ingress Controller](examples/traefik-ingress.md): Ingress deployment information

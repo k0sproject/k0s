@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -25,14 +12,18 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"k8s.io/client-go/rest"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 )
@@ -48,7 +39,6 @@ type Metrics struct {
 
 	hostname    string
 	K0sVars     *config.CfgVars
-	saver       manifestsSaver
 	restClient  rest.Interface
 	storageType v1beta1.StorageType
 
@@ -61,7 +51,7 @@ var _ manager.Component = (*Metrics)(nil)
 var _ manager.Reconciler = (*Metrics)(nil)
 
 // NewMetrics creates new Metrics reconciler
-func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubeutil.ClientFactoryInterface, storageType v1beta1.StorageType) (*Metrics, error) {
+func NewMetrics(k0sVars *config.CfgVars, clientCF kubeutil.ClientFactoryInterface, storageType v1beta1.StorageType) (*Metrics, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -82,13 +72,16 @@ func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubeutil
 		storageType: storageType,
 		hostname:    hostname,
 		K0sVars:     k0sVars,
-		saver:       saver,
 		restClient:  restClient,
 	}, nil
 }
 
-// Init does nothing
-func (m *Metrics) Init(_ context.Context) error {
+// Init implements [manager.Component].
+func (m *Metrics) Init(context.Context) error {
+	if err := dir.Init(filepath.Join(m.K0sVars.ManifestsDir, "metrics"), constant.ManifestsDirMode); err != nil {
+		return err
+	}
+
 	var j *job
 	j, err := m.newJob("kube-scheduler", "https://localhost:10259/metrics")
 	if err != nil {
@@ -121,7 +114,8 @@ func (m *Metrics) Init(_ context.Context) error {
 	return nil
 }
 
-// Run runs the metric server reconciler
+// Start implements [manager.Component].
+// Starts the metric server reconciler.
 func (m *Metrics) Start(ctx context.Context) error {
 	ctx, m.tickerDone = context.WithCancel(ctx)
 
@@ -132,7 +126,8 @@ func (m *Metrics) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops the reconciler
+// Stop implements [manager.Component].
+// Stops the metric server reconciler.
 func (m *Metrics) Stop() error {
 	if m.tickerDone != nil {
 		m.tickerDone()
@@ -159,7 +154,9 @@ func (m *Metrics) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		if err != nil {
 			return err
 		}
-		err = m.saver.Save("pushgateway.yaml", output.Bytes())
+		err = file.AtomicWithTarget(filepath.Join(m.K0sVars.ManifestsDir, "metrics", "pushgateway.yaml")).
+			WithPermissions(constant.CertMode).
+			Write(output.Bytes())
 		if err != nil {
 			return err
 		}
@@ -352,11 +349,12 @@ spec:
         app: k0s-observability
     spec:
       tolerations:
-        - key: "CriticalAddonsOnly"
-          operator: "Exists"
-        - key: "node-role.kubernetes.io/master"
-          operator: "Exists"
-          effect: "NoSchedule"
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: prometheus-pushgateway
           image: {{ .Image }}

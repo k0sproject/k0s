@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Helm Charts
 
 Defining your extensions as Helm charts is one of two methods you can use to run k0s with your preferred extensions (the other being through the use of [Manifest Deployer](manifests.md)).
@@ -25,29 +30,29 @@ See [Chart configuration](#chart-configuration) below for more details on how to
 
 ### Repository configuration
 
-| Field    | Default value | Description                                                              |
-|----------|---------------|--------------------------------------------------------------------------|
-| name     | _(required)_  | The repository name                                                      |
-| url      | _(required)_  | The repository URL                                                       |
-| insecure | true          | Whether to skip TLS certificate checks when connecting to the repository |
-| caFile   | -             | CA bundle file to use when verifying HTTPS-enabled servers               |
-| certFile | -             | The TLS certificate file to use for HTTPS client authentication          |
-| keyfile  | -             | The TLS key file to use for HTTPS client authentication                  |
-| username | -             | Username for Basic HTTP authentication                                   |
-| password | -             | Password for Basic HTTP authentication                                   |
+| Field      | Default value | Description                                                                                       |
+|------------|---------------|---------------------------------------------------------------------------------------------------|
+| `name`     | _(required)_  | The repository name                                                                               |
+| `url`      | _(required)_  | The repository URL                                                                                |
+| `insecure` | `true`        | Whether to skip TLS certificate checks when connecting to the repository                          |
+| `caFile`   | -             | CA bundle file to use when verifying HTTPS-enabled servers                                        |
+| `certFile` | -             | The TLS certificate file to use for HTTPS client authentication (not supported by OCI registries) |
+| `keyfile`  | -             | The TLS key file to use for HTTPS client authentication (not supported by OCI registries)         |
+| `username` | -             | Username for Basic HTTP authentication                                                            |
+| `password` | -             | Password for Basic HTTP authentication                                                            |
 
 ### Chart configuration
 
-| Field        | Default value | Description                                                                            |
-|--------------|---------------|----------------------------------------------------------------------------------------|
-| name         | -             | Release name                                                                           |
-| chartname    | -             | chartname in form "repository/chartname" or path to tgz file                           |
-| version      | -             | version to install                                                                     |
-| timeout      | -             | timeout to wait for release install                                                    |
-| values       | -             | yaml as a string, custom chart values                                                  |
-| namespace    | -             | namespace to install chart into                                                        |
-| forceUpgrade | true          | when set to false, disables the use of the "--force" flag when upgrading the the chart |
-| order        | 0             | order to apply manifest. For equal values, alphanum ordering is used                   |
+| Field          | Default value | Description                                                                               |
+|----------------|---------------|-------------------------------------------------------------------------------------------|
+| `name`         | -             | Release name                                                                              |
+| `chartname`    | -             | Chart name in form `repository/chartname` or path to tgz file                             |
+| `version`      | -             | Chart version to install                                                                  |
+| `timeout`      | -             | Timeout to wait for release install                                                       |
+| `values`       | -             | Custom chart values as YAML formatted string                                              |
+| `namespace`    | -             | Namespace to install the chart into                                                       |
+| `forceUpgrade` | `true`        | When set to `false`, disables the use of the `--force` flag when upgrading the chart      |
+| `order`        | `0`           | Order in which to to apply the manifest. For equal values, alphanumeric ordering is used. |
 
 ## Example
 
@@ -67,6 +72,12 @@ spec:
         url: https://can-be-your-own-gitlab-ce-instance.org/api/v4/projects/PROJECTID/packages/helm/main
         username: access-token-name-as-username
         password: access-token-value-as-password
+      - name: oci-registry-with-private-ca
+        # OCI registry URL must not include any path elements
+        url: oci://registry-with-private-ca.com:8080
+        # Currently, only caFile is supported for TLS transport
+        # Setting certFile or keyFile will result in an error
+        caFile: /path/to/ca.crt
       charts:
       - name: prometheus-stack
         chartname: prometheus-community/prometheus
@@ -82,10 +93,20 @@ spec:
               enabled: false
         namespace: default
       # We don't need to specify the repo in the repositories section for OCI charts
+      # unless a custom TLS transport is needed
       - name: oci-chart
         chartname: oci://registry:8080/chart
         version: "0.0.1"
         order: 2
+        values: ""
+        namespace: default
+      # OCI charts that require a custom TLS transport must add a repository entry 
+      # pointing to TLS certificates on the controller node.
+      # In this case, chartname of the chart must include the same registry URL 
+      # previously defined in the repository URL.
+      - name: oci-chart-with-tls
+        chartname: oci://registry-with-private-ca.com:8080/chart
+        version: "0.0.1"
         values: ""
         namespace: default
       # Other way is to use local tgz file with chart
@@ -100,7 +121,7 @@ spec:
 
 Example extensions that you can use with Helm charts include:
 
-- Ingress controllers: [Nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefix ingress](https://github.com/traefik/traefik-helm-chart) (refer to the k0s documentation for [Installing the Traefik Ingress Controller](examples/traefik-ingress.md))
+- Ingress controllers: [nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefik ingress](https://github.com/traefik/traefik-helm-chart) (refer to the k0s documentation for [Installing the Traefik Ingress Controller](examples/traefik-ingress.md))
 - Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
 - Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
 

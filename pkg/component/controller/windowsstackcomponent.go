@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -24,9 +11,12 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/static"
 	"github.com/sirupsen/logrus"
@@ -46,7 +36,6 @@ type WindowsStackComponent struct {
 
 	kubeClientFactory    k8sutil.ClientFactoryInterface
 	k0sVars              *config.CfgVars
-	saver                manifestsSaver
 	prevRenderingContext windowsStackRenderingContext
 }
 
@@ -65,21 +54,21 @@ type windowsStackRenderingContext struct {
 }
 
 // NewWindowsStackComponent creates new WindowsStackComponent reconciler
-func NewWindowsStackComponent(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, saver manifestsSaver) *WindowsStackComponent {
+func NewWindowsStackComponent(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface) *WindowsStackComponent {
 	return &WindowsStackComponent{
 		log:               logrus.WithFields(logrus.Fields{"component": "WindowsNodeController"}),
-		saver:             saver,
 		kubeClientFactory: clientFactory,
 		k0sVars:           k0sVars,
 	}
 }
 
-// Init no-op
-func (n *WindowsStackComponent) Init(_ context.Context) error {
-	return nil
+// Init implements [manager.Component].
+func (n *WindowsStackComponent) Init(context.Context) error {
+	return dir.Init(filepath.Join(n.k0sVars.ManifestsDir, "windows"), constant.ManifestsDirMode)
 }
 
-// Run checks and adds labels
+// Start implements [manager.Component].
+// Runs checks and adds labels.
 func (n *WindowsStackComponent) Start(ctx context.Context) error {
 
 	go func() {
@@ -157,7 +146,7 @@ func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig)
 		CNIBin:           "c:\\\\opt\\\\cni\\\\bin",
 		CNIConf:          "c:\\\\opt\\\\cni\\\\conf",
 		KubeAPIHost:      cfg.Spec.API.Address,
-		KubeAPIPort:      fmt.Sprintf("%d", cfg.Spec.API.Port),
+		KubeAPIPort:      strconv.Itoa(cfg.Spec.API.Port),
 		IPv4ServiceCIDR:  cfg.Spec.Network.ServiceCIDR,
 		Nameserver:       dns,
 		NodeImage:        "calico/windows:v3.23.5",
@@ -177,7 +166,7 @@ func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig)
 	return config, nil
 }
 
-// Stop no-op
+// Stop implements [manager.Component].
 func (n *WindowsStackComponent) Stop() error {
 	return nil
 }
@@ -189,6 +178,8 @@ func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderi
 	if err != nil {
 		return fmt.Errorf("error retrieving manifests: %w", err)
 	}
+
+	targetDir := filepath.Join(n.k0sVars.ManifestsDir, "windows")
 	for _, entry := range manifestDirectories {
 		dir := entry.Name()
 		manifestPaths, err := fs.ReadDir(static.WindowsManifests, dir)
@@ -218,7 +209,9 @@ func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderi
 				Data:     newConfig,
 			}
 			tryAndLog(manifestName, tw.WriteToBuffer(output))
-			tryAndLog(manifestName, n.saver.Save(manifestName, output.Bytes()))
+			tryAndLog(manifestName, file.AtomicWithTarget(filepath.Join(targetDir, manifestName)).
+				WithPermissions(constant.CertMode).
+				Write(output.Bytes()))
 		}
 	}
 	return nil

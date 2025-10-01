@@ -21,8 +21,8 @@ jobs:
     runs-on: >-
       ${{
            inputs.target-arch == 'arm'   && fromJSON('["self-hosted", "linux", "arm"]')
-        || inputs.target-arch == 'arm64' && fromJSON('["self-hosted", "linux", "arm64"]')
-        || 'ubuntu-22.04'
+        || inputs.target-arch == 'arm64' && 'ubuntu-24.04-arm'
+        || 'ubuntu-24.04'
       }}
 
     env:
@@ -31,11 +31,11 @@ jobs:
 
     steps:
       - name: Set up Docker Context for Buildx
-        if: inputs.target-arch != 'amd64'
+        if: inputs.target-arch == 'arm'
         run: docker context create builders
 
       - name: Set up Docker Buildx
-        if: inputs.target-arch != 'amd64'
+        if: inputs.target-arch == 'arm'
         uses: docker/setup-buildx-action@v3
         with:
           endpoint: builders
@@ -80,9 +80,9 @@ jobs:
       - name: "Cache :: GOMODCACHE"
         uses: actions/cache@v4
         with:
-          key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            build/cache/go/mod
+          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
+          path: build/cache/go/mod
+          enableCrossOsArchive: true
 
       - name: "Build :: k0s"
         run: |

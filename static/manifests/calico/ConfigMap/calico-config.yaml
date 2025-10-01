@@ -1,5 +1,5 @@
 ---
-# Source: calico/templates/calico-config.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.29.3/charts/calico/templates/calico-config.yaml
 # This ConfigMap is used to configure a self-hosted Calico installation.
 kind: ConfigMap
 apiVersion: v1
@@ -32,10 +32,8 @@ data:
           "nodename": "__KUBERNETES_NODE_NAME__",
           "mtu": __CNI_MTU__,
           "ipam": {
-              {{ if .DualStack }}
-              "assign_ipv4": "true",
-              "assign_ipv6": "true",
-              {{ end }}
+              "assign_ipv4": "{{ .EnableIPv4 }}",
+              "assign_ipv6": "{{ .EnableIPv6 }}",
               "type": "calico-ipam"
           },
           "policy": {

@@ -1,26 +1,11 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package prober
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -34,7 +19,7 @@ func TestHealthChecks(t *testing.T) {
 		prober := testProber(9)
 		prober.Register("test", &mockComponent{})
 		prober.Register("test2", &mockComponent{})
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		st := prober.State(maxEvents)
 		assert.Len(t, prober.withHealthComponents, 2)
 		assert.Len(t, st.HealthProbes, 2, "should have 2 components in the state")
@@ -46,17 +31,17 @@ func TestHealthChecks(t *testing.T) {
 		prober := testProber(5)
 
 		prober.Register("test", &mockComponent{
-			errors: []error{nil, nil, fmt.Errorf("test1 error"), nil, nil},
+			errors: []error{nil, nil, errors.New("test1 error"), nil, nil},
 		})
 
 		prober.Register("test2", &mockComponent{
-			errors: []error{nil, fmt.Errorf("test2 error"), nil, nil, nil},
+			errors: []error{nil, errors.New("test2 error"), nil, nil, nil},
 		})
 
 		prober.Register("test3", &mockComponent{
-			errors: []error{nil, nil, nil, nil, fmt.Errorf("test3 error")},
+			errors: []error{nil, nil, nil, nil, errors.New("test3 error")},
 		})
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		st := prober.State(maxEvents)
 		assert.Len(t, prober.withHealthComponents, 3)
 		assert.Len(t, st.HealthProbes, 3, "should have 3 components in the state")
@@ -74,17 +59,17 @@ func TestHealthChecks(t *testing.T) {
 		prober := testProber(5)
 
 		prober.Register("test", &mockComponent{
-			errors: []error{nil, nil, fmt.Errorf("test1 error"), nil, nil},
+			errors: []error{nil, nil, errors.New("test1 error"), nil, nil},
 		})
 
 		prober.Register("test2", &mockComponent{
-			errors: []error{nil, fmt.Errorf("test2 error"), nil, nil, nil},
+			errors: []error{nil, errors.New("test2 error"), nil, nil, nil},
 		})
 
 		prober.Register("test3", &mockComponent{
-			errors: []error{nil, nil, nil, nil, fmt.Errorf("test3 error")},
+			errors: []error{nil, nil, nil, nil, errors.New("test3 error")},
 		})
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		st := prober.State(1)
 		assert.Len(t, prober.withHealthComponents, 3)
 		assert.Len(t, st.HealthProbes, 3, "should have 3 components in the state")
@@ -136,7 +121,7 @@ func TestMarshalling(t *testing.T) {
 
 	for _, source := range tests {
 		data, err := json.Marshal(source)
-		assert.NoError(t, err, "marshalling ProbeError shouldn't fail")
+		assert.NoError(t, err, "marshaling ProbeError shouldn't fail")
 
 		target := &ProbeResult{}
 		err = json.Unmarshal(data, target)

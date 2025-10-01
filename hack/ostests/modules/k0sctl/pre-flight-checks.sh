@@ -28,26 +28,26 @@ kubectl() {
   "$@"
 }
 
-countSeenControllers() {
-  kubectl -n kube-system logs "$1" \
-    | grep -F '"Start serving"' \
-    | sed -E 's/.+serverID="([0-9a-f]+)".+/\1/g' \
-    | sort -u \
-    | wc -l
-}
-
 testKonnectivityPods() {
-  pods="$(kubectl -n kube-system get po -l k8s-app=konnectivity-agent --field-selector=status.phase=Running -oname)"
+  nodeIPs=$(kubectl get nodes -o jsonpath='{range .items[*]}{.status.addresses[?(@.type=="InternalIP")].address}{"\n"}{end}')
 
-  seenPods=0
-  for pod in $pods; do
-    seenControllers="$(countSeenControllers "$pod")"
-    echo Pod: "$pod", seen controllers: "$seenControllers" >&2
-    [ "$seenControllers" -ne "$expectedControllers" ] || seenPods=$((seenPods + 1))
+  goodNodes=0
+  for ip in $nodeIPs; do
+    openServerConnections=$(curl -sSf "http://$ip:8093/metrics" | {
+      while read -r metric value; do
+        if [ "$metric" = konnectivity_network_proxy_agent_open_server_connections ]; then
+          echo "$value"
+          break
+        fi
+      done
+    })
+
+    echo Node IP: "$ip", open konnectivity server connections: "$openServerConnections" >&2
+    [ "$openServerConnections" -ne "$expectedControllers" ] || goodNodes=$((goodNodes + 1))
   done
 
-  echo Seen pods with expected amount of controller connections: $seenPods >&2
-  [ $seenPods -eq "$expectedWorkers" ]
+  echo Nodes with expected number of open konnectivity server connections: $goodNodes >&2
+  [ $goodNodes -eq "$expectedWorkers" ]
 }
 
 testCoreDnsDeployment() {

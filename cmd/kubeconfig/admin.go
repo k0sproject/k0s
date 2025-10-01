@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package kubeconfig
 
@@ -26,7 +13,6 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -38,10 +24,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 		Example: `	$ k0s kubeconfig admin > ~/.kube/config
 	$ export KUBECONFIG=~/.kube/config
 	$ kubectl get nodes`,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			// ensure logs don't mess up the output
-			logrus.SetOutput(cmd.ErrOrStderr())
-		},
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
@@ -69,7 +52,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			internalURL := fmt.Sprintf("https://localhost:%d", nodeConfig.Spec.API.Port)
+			internalURL := nodeConfig.Spec.API.LocalURL().String()
 			externalURL := nodeConfig.Spec.API.APIAddressURL()
 			for _, c := range adminConfig.Clusters {
 				if c.Server == internalURL {
@@ -86,6 +69,8 @@ func kubeConfigAdminCmd() *cobra.Command {
 			return err
 		},
 	}
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
+
 	return cmd
 }

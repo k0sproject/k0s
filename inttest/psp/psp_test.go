@@ -1,23 +1,9 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package psp
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -52,14 +38,14 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s kubectl apply -f /tmp/role.yaml", s.K0sFullPath))
+	_, err = ssh.ExecWithOutput(s.Context(), s.K0sFullPath+" kubectl apply -f /tmp/role.yaml")
 	s.NoError(err)
 
 	nonPrivelegedPodReq := &corev1.Pod{
 		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: v1.ObjectMeta{Name: "test-pod-non-privileged"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "pause", Image: "registry.k8s.io/pause"}},
+			Containers: []corev1.Container{{Name: "pause", Image: "quay.io/k0sproject/pause"}},
 		},
 	}
 
@@ -76,7 +62,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 			Containers: []corev1.Container{
 				{
 					Name:  "pause",
-					Image: "registry.k8s.io/pause",
+					Image: "quay.io/k0sproject/pause",
 					SecurityContext: &corev1.SecurityContext{
 						RunAsUser: ptr.To(int64(0)),
 					},

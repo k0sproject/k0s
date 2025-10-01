@@ -1,20 +1,11 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v2
 
 import (
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +26,11 @@ func TestSignalValid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.signal.Validate()
-			assert.Equal(t, test.valid, err == nil, "Test '%s': validate failed - %v", test.name, err)
+			if test.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }
@@ -68,7 +63,11 @@ func TestSignalDataValid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.data.Validate()
-			assert.Equal(t, test.successful, err == nil, "Test '%s': validate failed - %v", test.name, err)
+			if test.successful {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }
@@ -137,7 +136,11 @@ func TestSignalDataUpdateK0sValid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.data.Validate()
-			assert.Equal(t, test.successful, err == nil, "Test '%s': validate failed - %v", test.name, err)
+			if test.successful {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }
@@ -166,9 +169,11 @@ func TestMarshaling(t *testing.T) {
 	// Forward ..
 	assert.NoError(t, signalData1.Marshal(m))
 	assert.NotEmpty(t, m)
-	assert.Equal(t, 2, len(m))
-	assert.Contains(t, m, "k0sproject.io/autopilot-signal-version")
-	assert.Contains(t, m, "k0sproject.io/autopilot-signal-data")
+	mapKeys := slices.Collect(maps.Keys(m))
+	assert.ElementsMatch(t, []string{
+		"k0sproject.io/autopilot-signal-version",
+		"k0sproject.io/autopilot-signal-data",
+	}, mapKeys)
 
 	// .. and backward
 	signalData2 := SignalData{}

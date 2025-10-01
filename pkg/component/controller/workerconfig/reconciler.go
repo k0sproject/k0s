@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package workerconfig
 
@@ -504,11 +491,12 @@ func (r *Reconciler) buildConfigMaps(snapshot *snapshot) ([]*corev1.ConfigMap, e
 	workerProfiles := make(map[string]*workerconfig.Profile)
 
 	workerProfile := r.buildProfile(snapshot)
-	workerProfile.KubeletConfiguration.CgroupsPerQOS = ptr.To(true)
 	workerProfiles["default"] = workerProfile
 
 	workerProfile = r.buildProfile(snapshot)
 	workerProfile.KubeletConfiguration.CgroupsPerQOS = ptr.To(false)
+	workerProfile.KubeletConfiguration.KubeReservedCgroup = ""
+	workerProfile.KubeletConfiguration.KubeletCgroups = ""
 	workerProfiles["default-windows"] = workerProfile
 
 	for _, profile := range snapshot.profiles {
@@ -537,7 +525,7 @@ func (r *Reconciler) buildConfigMaps(snapshot *snapshot) ([]*corev1.ConfigMap, e
 func buildRBACResources(configMaps []*corev1.ConfigMap) []resource {
 	configMapNames := make([]string, len(configMaps))
 	for i, configMap := range configMaps {
-		configMapNames[i] = configMap.ObjectMeta.Name
+		configMapNames[i] = configMap.Name
 	}
 
 	// Not strictly necessary, but it guarantees a stable ordering.
@@ -597,12 +585,15 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			},
 			ClusterDNS:         []string{r.clusterDNSIP.String()},
 			ClusterDomain:      r.clusterDomain,
+			KubeReservedCgroup: "system.slice",
+			KubeletCgroups:     "/system.slice/containerd.service",
 			TLSMinVersion:      "VersionTLS12",
 			TLSCipherSuites:    cipherSuites,
 			FailSwapOn:         ptr.To(false),
 			RotateCertificates: true,
 			ServerTLSBootstrap: true,
 			EventRecordQPS:     ptr.To(int32(0)),
+			VolumePluginDir:    "/usr/libexec/k0s/kubelet-plugins/volume/exec",
 		},
 		PauseImage:             snapshot.pauseImage.DeepCopy(),
 		NodeLocalLoadBalancing: snapshot.nodeLocalLoadBalancing.DeepCopy(),

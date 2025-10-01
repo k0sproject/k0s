@@ -1,24 +1,13 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package airgap
 
 import (
 	"crypto/sha256"
 	"path"
+	"strings"
 
-	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apdl "github.com/k0sproject/k0s/pkg/autopilot/download"
@@ -44,10 +33,11 @@ var _ apsigcomm.DownloadManifestBuilder = (*downloadManfiestBuilderAirgap)(nil)
 // moved to a `Downloading` status. At this point, it will attempt to download
 // the file provided in the update request.
 func registerDownloading(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, k0sDataDir string) error {
-	logger.Infof("Registering 'airgap-downloading' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_airgap_downloading"
+	logger.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named("airgap-downloading").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
@@ -63,7 +53,7 @@ func (b downloadManfiestBuilderAirgap) Build(signalNode crcli.Object, signalData
 			URL:          signalData.Command.AirgapUpdate.URL,
 			ExpectedHash: signalData.Command.AirgapUpdate.Sha256,
 			Hasher:       sha256.New(),
-			DownloadDir:  path.Join(b.k0sDataDir, apconst.K0sImagesDir),
+			DownloadDir:  path.Join(b.k0sDataDir, "images"),
 		},
 		SuccessState: apsigcomm.Completed,
 	}

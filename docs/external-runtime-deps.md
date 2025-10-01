@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # External runtime dependencies
 
 k0s is packaged as a single binary, which includes all the needed components.
@@ -21,15 +26,15 @@ This piece of documentation is best-effort and considered to be augmented and
 extended in the future. The kernel and cgroup requirements are basically taken
 from kubernetes/system-validators. Often there's no real hint as to why they are
 required (although most requirements seem pretty obvious). Also need to check
-for requirements of kube-router and calico.
+for requirements of Kube-router and Calico.
 -->
 
 ### Linux kernel configuration
 
-Needless to say, as k0s operates Kubernetes worker nodes, there's a certain
-number of needed Linux kernel modules and configurations that we need in the
-system. This basically stems from the need to run both containers and also be
-able to set up networking for the containers.
+Needless to say, as k0s operates Kubernetes worker nodes, a certain number of
+Linux kernel modules and configurations are required on the host. This
+essentially stems from the requirement to run containers and set up networking
+for them.
 
 The needed kernel configuration items are listed below. All of them are
 available in Kernel versions 4.3 and above. If running on older kernels, check
@@ -37,29 +42,13 @@ if the distro in use has backported some features; nevertheless, it might meet
 the requirements. k0s will check the Linux kernel release as part of its
 pre-flight checks and issue a warning if it's below 3.10.
 
-The list covers ONLY the k0s/kubernetes components’ needs on worker nodes. Your
+The list covers ONLY the k0s/Kubernetes components' needs on worker nodes. Your
 own workloads may require more.
 
 <!-- Kernel config nesting is taken from the v4.3 kernel's menuconfig structure. -->
 
 - [`CONFIG_CGROUPS`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L927):
   Control Group support
-  - [`CONFIG_CGROUP_FREEZER`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L953):
-    Freezer cgroup subsystem
-  - [`CONFIG_CGROUP_PIDS`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L959):
-    PIDs cgroup subsystem  
-    [kubernetes/kubeadm#2335 (comment)](https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527)
-  - [`CONFIG_CGROUP_DEVICE`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L975):
-    Device controller for cgroups
-  - [`CONFIG_CPUSETS`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L981):
-    Cpuset support
-  - [`CONFIG_CGROUP_CPUACCT`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L996):
-    Simple CPU accounting cgroup subsystem
-  - [`CONFIG_MEMCG`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1005):
-    Memory Resource Controller for Control Groups
-  - _(optional)_ [`CONFIG_CGROUP_HUGETLB`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1055):
-    HugeTLB Resource Controller for Control Groups  
-    [kubernetes/kubeadm#2335 (comment)](https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527)
   - [`CONFIG_CGROUP_SCHED`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081):
     Group CPU scheduler
     - [`CONFIG_FAIR_GROUP_SCHED`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090):
@@ -114,18 +103,18 @@ Both [cgroup v1] and [cgroup v2] are supported.
 
 Required [cgroup] controllers:
 
-- cpu
-- cpuacct
-- cpuset
-- memory
-- devices
-- freezer
-- pids
+- `cpu`
+- `cpuacct`
+- `cpuset`
+- `memory`
+- `devices`
+- `freezer`
+- `pids`
 
 Optional cgroup controllers:
 
 - hugetlb ([kubernetes/kubeadm#2335 (comment)](https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527))
-- blkio ([kubernetes/kubernetes#92287 (comment)](https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587))  
+- blkio ([kubernetes/kubernetes#92287 (comment)](https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587))
    containerd and cri-o will use blkio to track disk I/O and throttling in both
    cgroup v1 and v2.
 
@@ -177,7 +166,7 @@ In order to use containerd in conjunction with [AppArmor], it must be enabled in
 the kernel and the `/sbin/apparmor_parser` executable must be installed on the
 host, otherwise containerd will [disable][cd-aa] AppArmor support.
 
-[cd-aa]: https://github.com/containerd/containerd/blob/v1.7.23/pkg/apparmor/apparmor_linux.go#L34-L45
+[cd-aa]: https://github.com/containerd/containerd/blob/v1.7.27/pkg/apparmor/apparmor_linux.go#L34-L45
 [AppArmor]: https://wiki.ubuntu.com/AppArmor
 
 #### iptables

@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -188,16 +175,13 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 }
 
 type konnectivityAgentConfig struct {
-	ProxyServerHost      string
-	ProxyServerPort      uint16
-	AgentPort            uint16
-	Image                string
-	ServerCount          uint
-	PullPolicy           string
-	HostNetwork          bool
-	BindToNodeIP         bool
-	APIServerPortMapping string
-	FeatureGates         string
+	ProxyServerHost string
+	ProxyServerPort uint16
+	AgentPort       uint16
+	Image           string
+	ServerCount     uint
+	PullPolicy      string
+	HostNetwork     bool
 }
 
 const konnectivityAgentTemplate = `
@@ -245,6 +229,14 @@ spec:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '8093'
     spec:
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - all
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        supplementalGroups: [0]` /* in order to read the projected service account token */ + `
       nodeSelector:
         kubernetes.io/os: linux
       priorityClassName: system-cluster-critical
@@ -276,15 +268,6 @@ spec:
             - --service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token
             - --agent-identifiers=host=$(NODE_IP)
             - --agent-id=$(NODE_IP)
-              {{- if .BindToNodeIP }}
-            - --bind-address=$(NODE_IP)
-              {{- end }}
-              {{- if .APIServerPortMapping }}
-            - --apiserver-port-mapping={{ .APIServerPortMapping }}
-              {{- end }}
-              {{- if .FeatureGates }}
-            - "--feature-gates={{ .FeatureGates }}"
-              {{- end }}
           volumeMounts:
             - mountPath: /var/run/secrets/tokens
               name: konnectivity-agent-token
@@ -292,6 +275,12 @@ spec:
             httpGet:
               port: 8093
               path: /healthz
+            initialDelaySeconds: 15
+            timeoutSeconds: 15
+          readinessProbe:` /* helps to quickly identify pods with connection issues */ + `
+            httpGet:
+              port: 8093
+              path: /readyz
             initialDelaySeconds: 15
             timeoutSeconds: 15
       serviceAccountName: konnectivity-agent

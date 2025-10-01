@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package applier
 
@@ -85,7 +72,6 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 
 	var errs []error
 	for _, resource := range sortedResources {
-		s.prepareResource(resource)
 		mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
 		if err != nil {
 			errs = append(errs, err)
@@ -95,8 +81,10 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
 			drClient = dynamicClient.Resource(mapping.Resource).Namespace(resource.GetNamespace())
 		} else {
+			resource.SetNamespace("")
 			drClient = dynamicClient.Resource(mapping.Resource)
 		}
+		s.prepareResource(resource)
 		serverResource, err := drClient.Get(ctx, resource.GetName(), metav1.GetOptions{})
 		if apiErrors.IsNotFound(err) {
 			created, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
@@ -211,7 +199,7 @@ func (s *Stack) prune(ctx context.Context, mapper meta.ResettableRESTMapper) err
 			}
 		}
 	}
-	s.log.Debug("resources pruned succesfully")
+	s.log.Debug("resources pruned successfully")
 	s.keepResources = []string{}
 
 	return nil
@@ -396,12 +384,7 @@ func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.Reso
 
 func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
 	resourceID := generateResourceID(resource)
-	for _, id := range s.keepResources {
-		if id == resourceID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.keepResources, resourceID)
 }
 
 func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) (*unstructured.Unstructured, error) {

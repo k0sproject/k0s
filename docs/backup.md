@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Backup/Restore overview
 
 k0s has integrated support for backing up cluster state and configuration. The k0s backup utility is aiming to back up and restore k0s managed parts of the cluster.
@@ -5,8 +10,8 @@ k0s has integrated support for backing up cluster state and configuration. The k
 The backups created by `k0s backup` command have following pieces of your cluster:
 
 - certificates (the content of the `<data-dir>/pki` directory)
-- etcd snapshot, if the etcd datastore is used
-- Kine/SQLite snapshot, if the Kine/SQLite datastore is used
+- etcd snapshot, if the etcd data store is used
+- Kine/SQLite snapshot, if the Kine/SQLite data store is used
 - k0s.yaml
 - any custom defined manifests under the `<data-dir>/manifests`
 - any image bundles located under the `<data-dir>/images`
@@ -14,8 +19,8 @@ The backups created by `k0s backup` command have following pieces of your cluste
 
 Parts **NOT** covered by the backup utility:
 
-- PersistentVolumes of any running application
-- datastore, in case something else than etcd or Kine/SQLite is used
+- `PersistentVolumes` of any running application
+- data store, in case something else than etcd or Kine/SQLite is used
 - any configuration to the cluster introduced by manual changes (e.g. changes that weren't saved under the `<data-dir>/manifests`)
 
 Any of the backup/restore related operations MUST be performed on the controller node.
@@ -33,9 +38,9 @@ k0s backup --save-path=<directory>
 The directory used for the `save-path` value must exist and be writable. The default value is the current working directory.
 The command provides backup archive using following naming convention: `k0s_backup_<ISODatetimeString>.tar.gz`
 
-Because of the DateTime usage, it is guaranteed that none of the previously created archives would be overwritten.
+Because of the date/time usage, it is guaranteed that none of the previously created archives would be overwritten.
 
-To output the backup archive to stdout, use `-` as the save path.
+To output the backup archive to standard output, use `-` as the save path.
 
 ### Restore (local)
 
@@ -56,13 +61,13 @@ E.g. steps for N nodes cluster would be:
 - Run controller there
 - Join N-1 new machines to the cluster the same way as for the first setup.
 
-To read the backup archive from stdin, use `-` as the file path.
+To read the backup archive from standard input, use `-` as the file path.
 
 ### Encrypting backups (local)
 
 By using `-` as the save or restore path, it is possible to pipe the backup archive through an encryption utility such as [GnuPG](https://gnupg.org/) or [OpenSSL](https://www.openssl.org/).
 
-Note that unencrypted data will still briefly exist as temporary files on the local file system during the backup archvive generation.
+Note that unencrypted data will still briefly exist as temporary files on the local file system during the backup archive generation.
 
 #### Encrypting backups using GnuPG
 
@@ -92,7 +97,7 @@ uid                  Example User <user@example.com>
 sub   4096R/2F78C251 2022-01-13
 ```
 
-To export the private key for decrypting the backup on another host, note the key ID ("BD33228F" in this example) in the list and use:
+To export the private key for decrypting the backup on another host, note the key ID (`BD33228F` in this example) in the list and use:
 
 ```shell
 gpg --export-secret-keys --armor BD33228F > k0s.key
@@ -106,7 +111,7 @@ k0s backup --save-path - | gpg --encrypt --recipient user@example.com > backup.t
 
 #### Restoring encrypted backups using GnuPG
 
-You must have the private key in your gpg keychain. To import the key that was exported in the previous example, use:
+You must have the private key in your GnuPG keychain. To import the key that was exported in the previous example, use:
 
 ```shell
 gpg --import k0s.key
@@ -140,4 +145,4 @@ To restore cluster state from the archive use the following command:
 k0sctl apply --restore-from /path/to/backup_file.tar.gz
 ```
 
-The control plane load balancer address (externalAddress) needs to remain the same between backup and restore. This is caused by the fact that all worker node components connect to this address and cannot currently be re-configured.
+The control plane load balancer address (`externalAddress`) needs to remain the same between backup and restore. This is caused by the fact that all worker node components connect to this address and cannot currently be re-configured.

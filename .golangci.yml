@@ -1,95 +1,128 @@
-# options for analysis running
+version: "2"
 run:
-  timeout: 15m
-
   build-tags:
     - hack
-  tests: true
   modules-download-mode: readonly
+  tests: true
   allow-parallel-runners: true
-
 linters:
   enable:
-    - depguard  # Checks if package imports are in a list of acceptable packages
-    - errorlint # Find code that will cause problems with Go's error wrapping scheme
-    - gofmt     # Checks whether code was gofmt-ed
-    - goheader  # Checks is file headers matche a given pattern
-    - revive    # Stricter drop-in replacement for golint
-
-linters-settings:
-  depguard:
+    - copyloopvar       # Detects unnecessary copies of loop variables for Go >= 1.22
+    - depguard          # Checks if package imports are in a list of acceptable packages
+    - dupword           # Finds word repetitions
+    - errorlint         # Find code that will cause problems with Go's error wrapping scheme
+    - exptostd          # Detects functions from golang.org/x/exp/ that can be replaced by std functions
+    - gocritic          # another style/metalinter (dynamic rules supported)
+    - goheader          # Checks is file headers matches a given pattern
+    - intrange          # Checking for loops that could use an integer range
+    - iotamixing        # Checks if iotas are being used in const blocks with other non-iota declarations
+    - misspell          # Finds commonly misspelled English words
+    - nilnesserr        # Reports constructs that check for err != nil but return a different nil value error
+    - nolintlint        # Find ill-formed or insufficiently explained nolint directives
+    - nosprintfhostport # Detects misuses of Sprintf to construct hosts with ports in a URL
+    - perfsprint        # Checks for faster fmt.Sprintf alternatives
+    - revive            # Stricter drop-in replacement for golint
+    - testifylint       # Checks usage of github.com/stretchr/testify
+    - unconvert         # Checks for unnecessary type conversions
+    - unparam           # Checks for unused function parameters
+    - usestdlibvars     # Checks for things that are provided by the standard library
+    - usetesting        # Reports usages of functions that have a replacement within the testing package
+  settings:
+    depguard:
+      rules:
+        cloud-provider:
+          list-mode: lax
+          files:
+            - '!**/pkg/k0scloudprovider/*.go'
+          deny:
+            - pkg: k8s.io/cloud-provider
+              desc: >-
+                Usages of the k8s cloud provider are only allowed from within the
+                k0s cloud provider package. This is to ensure that it's not
+                leaking global flags into k0s.
+        inttests:
+          list-mode: lax
+          files:
+            - '!**/inttest/**/*'
+          deny:
+            - pkg: github.com/k0sproject/k0s/inttest
+              desc: Usage of integration test code outside of integration tests.
+        replacements:
+          list-mode: lax
+          deny:
+            - pkg: gopkg.in/yaml.v2
+              desc: Use sigs.k8s.io/yaml.
+            - pkg: gopkg.in/yaml.v3
+              desc: Use sigs.k8s.io/yaml.
+            - pkg: k8s.io/utils/pointer
+              desc: Use k8s.io/utils/ptr.
+        tests:
+          list-mode: lax
+          files:
+            - '!$test'
+            - '!**/internal/testutil/**'
+            - '!**/internal/autopilot/testutil/**'
+            - '!**/inttest/**'
+          deny:
+            - pkg: github.com/k0sproject/k0s/internal/testutil
+              desc: Usage of test code outside of tests.
+            - pkg: github.com/k0sproject/k0s/internal/autopilot/testutil
+              desc: Usage of test code outside of tests.
+            - pkg: github.com/stretchr/testify
+              desc: Usage of test code outside of tests.
+    gocritic:
+      disabled-checks:
+        - singleCaseSwitch
+      settings:
+        ifElseChain:
+          minThreshold: 5
+    goheader:
+      values:
+        regexp:
+          year: 202[0-9]
+      template: |-
+        SPDX-FileCopyrightText: {{year}} k0s authors
+        SPDX-License-Identifier: Apache-2.0
+    misspell:
+      locale: US
+    revive:
+      rules:
+        # This forbids to name variables "close", which seems natural for "close" functions.
+        - name: redefines-builtin-id
+          disabled: true
+    testifylint:
+      enable-all: true
+      disable:
+        - require-error # flags too many legitimate use cases
+        - suite-thelper # flags too many legitimate use cases
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      cloud-provider:
-        list-mode: lax
-        files:
-          - "!**/pkg/k0scloudprovider/*.go"
-        deny:
-          - pkg: k8s.io/cloud-provider
-            desc: >-
-              Usages of the k8s cloud provider are only allowed from within the
-              k0s cloud provider package. This is to ensure that it's not
-              leaking global flags into k0s.
-      replacements:
-        list-mode: lax
-        deny:
-          - pkg: gopkg.in/yaml.v2
-            desc: Use sigs.k8s.io/yaml.
-          - pkg: gopkg.in/yaml.v3
-            desc: Use sigs.k8s.io/yaml.
-          - pkg: k8s.io/utils/pointer
-            desc: Use k8s.io/utils/ptr.
-      tests:
-        list-mode: lax
-        files:
-          - "!$test"
-          - "!**/internal/testutil/**"
-          - "!**/inttest/**"
-          - "!**/pkg/supervisor/pingpong*.go" # only used for testing
-        deny:
-          - pkg: github.com/k0sproject/k0s/internal/testutil
-            desc: Usage of test code outside of tests.
-          - pkg: github.com/stretchr/testify
-            desc: Usage of test code outside of tests.
-      inttests:
-        list-mode: lax
-        files:
-          - "!**/inttest/**/*"
-        deny:
-          - pkg: github.com/k0sproject/k0s/inttest
-            desc: Usage of integration test code outside of integration tests.
-  goheader:
-    template-path: .go-header.txt
-    values:
-      regexp:
-        year: 202[0-9]
-
-  revive:
-    rules:
-      # This forbids to name variables "close", which seems natural for "close" functions.
-      - name: redefines-builtin-id
-        disabled: true
-
+      - linters:
+          - staticcheck
+        text: '^SA1019:'
+    paths:
+      - zz_*
+      - build
+      - docs
+      - embedded-bins
+      - examples
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-dirs-use-default: false
-  exclude-dirs:
-    - build
-    - docs
-    - embedded-bins
-    - examples
-  exclude-files:
-    - "zz_*"
-  exclude-rules:
-    # https://github.com/denis-tingaikin/go-header/issues/18
-    # This means that the header checks are ineffective for all files with build tags.
-    - source: "^//go:build"
-      linters:
-        - goheader
-    # Ignore deprecations: They shouldn't break the CI. If this were the case,
-    # it would be pointless to have them. There's no way in reporting them as
-    # warnings without having a non-zero exit code.
-    # https://github.com/golangci/golangci-lint/pull/3184#issuecomment-1235438429
-    - linters:
-        - staticcheck
-      text: "^SA1019:"
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - zz_*
+      - build
+      - docs
+      - embedded-bins
+      - examples

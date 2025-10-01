@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -87,7 +74,7 @@ func TestValidation(t *testing.T) {
 }
 
 func TestIntegerTimeoutParsing(t *testing.T) {
-	yaml := `
+	yaml := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -100,9 +87,9 @@ spec:
         chartname: prometheus-community/prometheus
         version: "14.6.1"
         timeout: 60000000000
-`
+`)
 
-	c, err := ConfigFromString(yaml)
+	c, err := ConfigFromBytes(yaml)
 	require := require.New(t)
 
 	require.NoError(err)
@@ -115,7 +102,7 @@ spec:
 }
 
 func TestDurationParsing(t *testing.T) {
-	yaml := `
+	yaml := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -128,9 +115,9 @@ spec:
         chartname: prometheus-community/prometheus
         version: "14.6.1"
         timeout: 20m
-`
+`)
 
-	c, err := ConfigFromString(yaml)
+	c, err := ConfigFromBytes(yaml)
 	require := require.New(t)
 
 	require.NoError(err)

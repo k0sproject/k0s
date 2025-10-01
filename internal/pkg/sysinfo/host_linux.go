@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package sysinfo
 
@@ -59,15 +46,6 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 	//  which is the first kernel release that supports all of those configs.
 
 	if s.WorkerRoleEnabled {
-		cgroups := linux.RequireKernelConfig("CGROUPS", "Control Group support")
-		cgroups.RequireKernelConfig("CGROUP_FREEZER", "Freezer cgroup subsystem")
-		cgroups.RequireKernelConfig("CGROUP_PIDS", "PIDs cgroup subsystem")
-		cgroups.RequireKernelConfig("CGROUP_DEVICE", "Device controller for cgroups")
-		cgroups.RequireKernelConfig("CPUSETS", "Cpuset support")
-		cgroups.RequireKernelConfig("CGROUP_CPUACCT", "Simple CPU accounting cgroup subsystem")
-		cgroups.RequireKernelConfig("MEMCG", "Memory Resource Controller for Control Groups")
-		cgroups.AssertKernelConfig("CGROUP_HUGETLB", "HugeTLB Resource Controller for Control Groups")
-		cgSched := cgroups.RequireKernelConfig("CGROUP_SCHED", "Group CPU scheduler")
 		// https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-717996215
 		// > For reference https://github.com/torvalds/linux/blob/v4.3/kernel/sched/core.c#L8511-L8533
 		// >
@@ -75,6 +53,8 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 		// >   currently no way to disable using it in Kubernetes
 		// > - CONFIG_CFS_BANDWIDTH should be set as optional, as long as
 		// >   --cpu-cfs-quota=false actually works when CONFIG_CFS_BANDWIDTH=n
+		cgroups := linux.RequireKernelConfig("CGROUPS", "Control Group support")
+		cgSched := cgroups.RequireKernelConfig("CGROUP_SCHED", "Group CPU scheduler")
 		fairGroupSched := cgSched.RequireKernelConfig("FAIR_GROUP_SCHED", "Group scheduling for SCHED_OTHER")
 		fairGroupSched.AssertKernelConfig("CFS_BANDWIDTH", "CPU bandwidth provisioning for FAIR_GROUP_SCHED")
 		cgroups.AssertKernelConfig("BLK_CGROUP", "Block IO controller")
@@ -151,7 +131,7 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 	ipvs.AssertKernelConfig("IP_VS_WRR", "Weighted round-robin scheduling")
 
 	// IP: Netfilter Configuration
-	netfilter.AssertKernelConfig("NF_CONNTRACK_IPV4", "IPv4 connetion tracking support (required for NAT)") // enables NF_NAT_IPV4, merged into NF_CONNTRACK in Linux 4.19 (a0ae2562c6c4)
+	netfilter.AssertKernelConfig("NF_CONNTRACK_IPV4", "IPv4 connection tracking support (required for NAT)") // enables NF_NAT_IPV4, merged into NF_CONNTRACK in Linux 4.19 (a0ae2562c6c4)
 	netfilter.AssertKernelConfig("NF_REJECT_IPV4", "IPv4 packet rejection")
 	netfilter.AssertKernelConfig("NF_NAT_IPV4", "IPv4 NAT") // depends on NF_CONNTRACK_IPV4, selects NF_NAT, merged into NF_NAT in Linux 5.1 (3bf195ae6037)
 	ipNFIPTables := netfilter.AssertKernelConfig("IP_NF_IPTABLES", "IP tables support")
@@ -162,8 +142,8 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 	netfilter.AssertKernelConfig("NF_DEFRAG_IPV4", "")
 
 	// IPv6: Netfilter Configuration
-	netfilter.AssertKernelConfig("NF_CONNTRACK_IPV6", "IPv6 connetion tracking support (required for NAT)") // enables NF_NAT_IPV6, merged into NF_CONNTRACK in Linux 4.19 (a0ae2562c6c4)
-	netfilter.AssertKernelConfig("NF_NAT_IPV6", "IPv6 NAT")                                                 // depends on NF_CONNTRACK_IPV6, selects NF_NAT, merged into NF_NAT in Linux 5.1 (3bf195ae6037)
+	netfilter.AssertKernelConfig("NF_CONNTRACK_IPV6", "IPv6 connection tracking support (required for NAT)") // enables NF_NAT_IPV6, merged into NF_CONNTRACK in Linux 4.19 (a0ae2562c6c4)
+	netfilter.AssertKernelConfig("NF_NAT_IPV6", "IPv6 NAT")                                                  // depends on NF_CONNTRACK_IPV6, selects NF_NAT, merged into NF_NAT in Linux 5.1 (3bf195ae6037)
 	ip6NFIPTables := netfilter.AssertKernelConfig("IP6_NF_IPTABLES", "IP6 tables support")
 	ip6NFIPTables.AssertKernelConfig("IP6_NF_FILTER", "Packet filtering")
 	ip6NFIPTables.AssertKernelConfig("IP6_NF_MANGLE", "Packet mangling")

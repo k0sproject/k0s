@@ -1,25 +1,12 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package leaderelection
 
 import (
 	"cmp"
 	"context"
-	"fmt"
+	"errors"
 	"sync/atomic"
 	"time"
 
@@ -64,13 +51,13 @@ type LeaseConfig struct {
 // Implements [Config].
 func (c *LeaseConfig) buildLock() (resourcelock.Interface, error) {
 	if c.Namespace == "" {
-		return nil, fmt.Errorf("namespace may not be empty")
+		return nil, errors.New("namespace may not be empty")
 	}
 	if c.Name == "" {
-		return nil, fmt.Errorf("name may not be empty")
+		return nil, errors.New("name may not be empty")
 	}
 	if c.Client == nil {
-		return nil, fmt.Errorf("client may not be nil")
+		return nil, errors.New("client may not be nil")
 	}
 
 	return &resourcelock.LeaseLock{

@@ -1,34 +1,22 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/k0sproject/dig"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,13 +37,15 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
 	cfg.Spec.Network.KubeRouter.IPMasq = true
 
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
-	require.NoError(t, kr.Stop())
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -72,9 +62,9 @@ func TestKubeRouterConfig(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.Equal(t, float64(1450), p.Dig("mtu"))
-	require.Equal(t, true, p.Dig("hairpinMode"))
-	require.Equal(t, true, p.Dig("ipMasq"))
+	assert.InEpsilon(t, 1450, p["mtu"], 0)
+	assert.Equal(t, true, p["hairpinMode"])
+	assert.Equal(t, true, p["ipMasq"])
 }
 
 type hairpinTest struct {
@@ -132,13 +122,15 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
-	require.NoError(t, kr.Stop())
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -154,9 +146,9 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.Nil(t, p.Dig("mtu"))
-	require.Equal(t, true, p.Dig("hairpinMode"))
-	require.Equal(t, false, p.Dig("ipMasq"))
+	assert.NotContains(t, p, "mtu")
+	assert.Equal(t, true, p["hairpinMode"])
+	assert.Equal(t, false, p["ipMasq"])
 }
 
 func TestKubeRouterManualMTUManifests(t *testing.T) {
@@ -168,13 +160,15 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
 	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
 	cfg.Spec.Network.KubeRouter.MTU = 1234
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
-	require.NoError(t, kr.Stop())
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -190,7 +184,7 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.Equal(t, float64(1234), p.Dig("mtu"))
+	assert.InEpsilon(t, 1234, p["mtu"], 0)
 }
 
 func TestExtraArgs(t *testing.T) {
@@ -207,13 +201,15 @@ func TestExtraArgs(t *testing.T) {
 		"run-firewall": "false",
 	}
 
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(context.Background(), cfg))
-	require.NoError(t, kr.Stop())
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -238,31 +234,28 @@ func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error
 		}
 	}
 
-	return cm, fmt.Errorf("kube-router cm not found in manifests")
+	return cm, errors.New("kube-router cm not found in manifests")
 }
 
-func getKubeRouterPlugin(cm corev1.ConfigMap, pluginType string) (dig.Mapping, error) {
-	data := dig.Mapping{}
+func getKubeRouterPlugin(cm corev1.ConfigMap, pluginType string) (map[string]any, error) {
+	var data map[string]any
 	err := json.Unmarshal([]byte(cm.Data["cni-conf.json"]), &data)
 	if err != nil {
 		return data, err
 	}
-	plugins, ok := data.Dig("plugins").([]interface{})
-	if !ok {
-		return data, fmt.Errorf("failed to dig plugins")
-	}
-	for _, p := range plugins {
-		plugin := dig.Mapping(p.(map[string]interface{}))
-		if plugin.DigString("type") == pluginType {
-			return plugin, nil
+	if plugins, ok := data["plugins"].([]any); ok {
+		for _, plugin := range plugins {
+			if p, ok := plugin.(map[string]any); ok && p["type"] == pluginType {
+				return p, nil
+			}
 		}
 	}
 
 	return data, fmt.Errorf("failed to find plugin of type %s", pluginType)
 }
 
-func findDaemonset(resources []*unstructured.Unstructured) (v1.DaemonSet, error) {
-	var ds v1.DaemonSet
+func findDaemonset(resources []*unstructured.Unstructured) (appsv1.DaemonSet, error) {
+	var ds appsv1.DaemonSet
 	for _, r := range resources {
 		if r.GetKind() == "DaemonSet" {
 			err := runtime.DefaultUnstructuredConverter.FromUnstructured(r.Object, &ds)
@@ -274,5 +267,5 @@ func findDaemonset(resources []*unstructured.Unstructured) (v1.DaemonSet, error)
 		}
 	}
 
-	return ds, fmt.Errorf("kube-router ds not found in manifests")
+	return ds, errors.New("kube-router ds not found in manifests")
 }

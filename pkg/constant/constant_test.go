@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package constant
 
@@ -22,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -46,8 +32,9 @@ func TestConstants(t *testing.T) {
 
 	t.Run("KubernetesMajorMinorVersion", func(t *testing.T) {
 		ver := strings.Split(getVersion(t, "kubernetes"), ".")
-		require.GreaterOrEqual(t, len(ver), 2, "failed to spilt Kubernetes version %q", ver)
+		require.GreaterOrEqualf(t, len(ver), 2, "failed to spilt Kubernetes version %q", ver)
 		kubeMajorMinor := ver[0] + "." + ver[1]
+		//nolint:testifylint // kubeMajorMinor _is_ the expected value
 		assert.Equal(t, kubeMajorMinor, KubernetesMajorMinorVersion)
 	})
 }
@@ -60,7 +47,7 @@ func TestTLSCipherSuites(t *testing.T) {
 			return x.ID == cipherSuite
 		})
 		if idx < 0 {
-			assert.Fail(t, "Not in tls.CipherSuites(), potentially insecure", "(0x%04x) %s", cipherSuite, tls.CipherSuiteName(cipherSuite))
+			assert.Failf(t, "Not in tls.CipherSuites(), potentially insecure", "(0x%04x) %s", cipherSuite, tls.CipherSuiteName(cipherSuite))
 		}
 	}
 }
@@ -98,7 +85,7 @@ func TestKubernetesModuleVersions(t *testing.T) {
 func TestEtcdModuleVersions(t *testing.T) {
 	etcdVersion := getVersion(t, "etcd")
 	etcdVersionParts := strings.Split(etcdVersion, ".")
-	require.GreaterOrEqual(t, len(etcdVersionParts), 1, "failed to spilt etcd version %q", etcdVersion)
+	require.GreaterOrEqualf(t, len(etcdVersionParts), 1, "failed to spilt etcd version %q", etcdVersion)
 
 	assertPackageModules(t,
 		func(modulePath string) bool {
@@ -129,27 +116,20 @@ func TestContainerdModuleVersions(t *testing.T) {
 	)
 }
 
-func TestRuncModuleVersions(t *testing.T) {
-	runcVersion := getVersion(t, "runc")
+func TestKonnectivityModuleVersions(t *testing.T) {
+	konnectivityVersion := getVersion(t, "konnectivity")
 
-	numMatched := checkPackageModules(t,
+	assertPackageModules(t,
 		func(modulePath string) bool {
-			return modulePath == "github.com/opencontainers/runc"
+			return strings.HasPrefix(modulePath, "sigs.k8s.io/apiserver-network-proxy/")
 		},
 		func(t *testing.T, pkgPath string, module *packages.Module) bool {
-			return !assert.Equal(t, "v"+runcVersion, module.Version,
+			return !assert.Equal(t, "v"+konnectivityVersion, module.Version,
 				"Module version for package %s doesn't match: %+#v",
 				pkgPath, module,
 			)
 		},
 	)
-
-	if runtime.GOOS == "windows" {
-		// The runc dependency is only a thing on Linux.
-		assert.Zero(t, numMatched, "Expected no packages to to pass the filter on Windows.")
-	} else {
-		assert.NotZero(t, numMatched, "Not a single package passed the filter.")
-	}
 }
 
 func getVersion(t *testing.T, component string) string {
@@ -158,7 +138,7 @@ func getVersion(t *testing.T, component string) string {
 
 	out, err := cmd.Output()
 	require.NoError(t, err)
-	require.NotEmpty(t, out, "failed to get %s version", component)
+	require.NotEmptyf(t, out, "failed to get %s version", component)
 
 	trailingNewlines := regexp.MustCompilePOSIX("(\r?\n)+$")
 	return string(trailingNewlines.ReplaceAll(out, []byte{}))

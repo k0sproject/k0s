@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0scontext_test
 
@@ -33,11 +20,8 @@ func TestWithInactivityTimeout_KeepAlive(t *testing.T) {
 		delay   = timeout / 2           // delay after which the timeout is kept alive once
 	)
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
-
 	// Create a new context. The timeout is ticking ...
-	ctx, _, keepAlive := k0scontext.WithInactivityTimeout(ctx, timeout)
+	ctx, _, keepAlive := k0scontext.WithInactivityTimeout(t.Context(), timeout)
 
 	// Wait for some time, then keep the context alive once.
 	time.Sleep(delay)
@@ -72,8 +56,7 @@ func TestWithInactivityTimeout_KeepAlive(t *testing.T) {
 }
 
 func TestWithInactivityTimeout_Timeout(t *testing.T) {
-	ctx, cancel, _ := k0scontext.WithInactivityTimeout(context.TODO(), 0)
-	t.Cleanup(func() { cancel(nil) })
+	ctx, _, _ := k0scontext.WithInactivityTimeout(t.Context(), 0)
 
 	<-ctx.Done()
 	err, cause := ctx.Err(), context.Cause(ctx)
@@ -85,8 +68,7 @@ func TestWithInactivityTimeout_Timeout(t *testing.T) {
 
 func TestWithInactivityTimeout_Cancel(t *testing.T) {
 	t.Run("Self", func(t *testing.T) {
-		ctx, cancel, _ := k0scontext.WithInactivityTimeout(context.TODO(), time.Hour)
-		t.Cleanup(func() { cancel(nil) })
+		ctx, cancel, _ := k0scontext.WithInactivityTimeout(t.Context(), time.Hour)
 
 		cancel(assert.AnError)
 		<-ctx.Done()
@@ -96,11 +78,8 @@ func TestWithInactivityTimeout_Cancel(t *testing.T) {
 	})
 
 	t.Run("Outer", func(t *testing.T) {
-		ctx, outerCancel := context.WithCancelCause(context.TODO())
-		t.Cleanup(func() { outerCancel(nil) })
-
-		ctx, cancel, _ := k0scontext.WithInactivityTimeout(ctx, time.Hour)
-		t.Cleanup(func() { cancel(nil) })
+		ctx, outerCancel := context.WithCancelCause(t.Context())
+		ctx, _, _ = k0scontext.WithInactivityTimeout(ctx, time.Hour)
 
 		outerCancel(assert.AnError)
 		<-ctx.Done()

@@ -1,21 +1,9 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package utils
 
 import (
-	"context"
 	"testing"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -182,7 +170,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 		client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
 
 		t.Run(test.name, func(t *testing.T) {
-			found, status := ObjectExistsWithPlatform(context.TODO(), client, test.objectName, test.object, test.plan)
+			found, status := ObjectExistsWithPlatform(t.Context(), client, test.objectName, test.object, test.plan)
 			assert.Equal(t, test.expectedFound, found)
 			assert.Equal(t, test.expectedStatus, status)
 		})

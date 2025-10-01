@@ -1,33 +1,15 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package config
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -42,7 +24,7 @@ const (
 var (
 	ErrK0sNotRunning        = errors.New("k0s is not running")
 	ErrK0sAlreadyRunning    = errors.New("an instance of k0s is already running")
-	ErrInvalidRuntimeConfig = errors.New("invalid runtime config")
+	ErrInvalidRuntimeConfig = errors.New("invalid runtime configuration")
 )
 
 // Runtime config is a static copy of the start up config and CfgVars that is used by
@@ -50,8 +32,8 @@ var (
 // It also stores the k0svars, so the original parameters for the controller such as
 // `--data-dir` will be reused by the commands without the user having to specify them again.
 type RuntimeConfig struct {
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	metav1.TypeMeta   `json:",omitempty,inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	metav1.TypeMeta   `json:",inline"`
 
 	Spec *RuntimeConfigSpec `json:"spec"`
 }
@@ -59,97 +41,68 @@ type RuntimeConfig struct {
 type RuntimeConfigSpec struct {
 	NodeConfig *v1beta1.ClusterConfig `json:"nodeConfig"`
 	K0sVars    *CfgVars               `json:"k0sVars"`
-	Pid        int                    `json:"pid"`
+	lockFile   *os.File
 }
 
-func LoadRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
-	content, err := os.ReadFile(k0sVars.RuntimeConfigPath)
+func LoadRuntimeConfig(path string) (*RuntimeConfigSpec, error) {
+	if !isLocked(path + ".lock") {
+		return nil, ErrK0sNotRunning
+	}
+
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// "migrate" old runtime config to allow running commands on a new binary while an old version is still running.
-	// the legacy runtime config gets deleted when the server running on the old binary is stopped.
-	if isLegacy(content) {
-		return migrateLegacyRuntimeConfig(k0sVars, content)
+	config, err := ParseRuntimeConfig(content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse runtime configuration: %w", err)
 	}
 
-	config := &RuntimeConfig{}
-	if err := yaml.Unmarshal(content, config); err != nil {
+	return config.Spec, nil
+}
+
+func ParseRuntimeConfig(content []byte) (*RuntimeConfig, error) {
+	var config RuntimeConfig
+
+	if err := yaml.Unmarshal(content, &config); err != nil {
 		return nil, err
 	}
 
 	if config.APIVersion != v1beta1.ClusterConfigAPIVersion {
-		return nil, fmt.Errorf("%w: invalid api version: %s", ErrInvalidRuntimeConfig, config.APIVersion)
+		return nil, fmt.Errorf("%w: invalid api version: %q", ErrInvalidRuntimeConfig, config.APIVersion)
 	}
 
 	if config.Kind != RuntimeConfigKind {
-		return nil, fmt.Errorf("%w: invalid kind: %s", ErrInvalidRuntimeConfig, config.Kind)
+		return nil, fmt.Errorf("%w: invalid kind: %q", ErrInvalidRuntimeConfig, config.Kind)
 	}
 
-	spec := config.Spec
-	if spec == nil {
+	if config.Spec == nil {
 		return nil, fmt.Errorf("%w: spec is nil", ErrInvalidRuntimeConfig)
 	}
 
-	// If a pid is defined but there's no process found, the instance of k0s is
-	// expected to have died, in which case the existing config is removed and
-	// an error is returned, which allows the controller startup to proceed to
-	// initialize a new runtime config.
-	if spec.Pid != 0 {
-		if err := checkPid(spec.Pid); err != nil {
-			defer func() { _ = spec.Cleanup() }()
-			return nil, errors.Join(ErrK0sNotRunning, err)
-		}
-	}
-
-	return spec, nil
+	return &config, nil
 }
 
-func migrateLegacyRuntimeConfig(k0sVars *CfgVars, content []byte) (*RuntimeConfigSpec, error) {
-	cfg := &v1beta1.ClusterConfig{}
+func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*RuntimeConfig, error) {
+	// A file lock is acquired using `flock(2)` to ensure that only one
+	// instance of the `k0s` process can modify the runtime configuration
+	// at a time. The lock is tied to the lifetime of the `k0s` process,
+	// meaning that if the process terminates unexpectedly, the lock is
+	// automatically released by the operating system. This ensures that
+	// subsequent processes can acquire the lock without manual cleanup.
+	// https://man7.org/linux/man-pages/man2/flock.2.html
+	//
+	// It works similar on Windows, but with LockFileEx
 
-	if err := yaml.Unmarshal(content, cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal legacy runtime config: %w", err)
-	}
-
-	// generate a new runtime config
-	return &RuntimeConfigSpec{K0sVars: k0sVars, NodeConfig: cfg, Pid: os.Getpid()}, nil
-}
-
-func isLegacy(data []byte) bool {
-	scanner := bufio.NewScanner(bytes.NewReader(data))
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.HasPrefix(line, "kind:") {
-			value := strings.TrimSpace(strings.TrimPrefix(line, "kind:"))
-			return value != RuntimeConfigKind
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "error scanning runtime config:", err)
-	}
-
-	return false
-}
-
-func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
-	if _, err := LoadRuntimeConfig(k0sVars); err == nil {
-		return nil, ErrK0sAlreadyRunning
-	}
-
-	nodeConfig, err := k0sVars.NodeConfig()
+	path, err := filepath.Abs(k0sVars.RuntimeConfigPath + ".lock")
 	if err != nil {
-		return nil, fmt.Errorf("load node config: %w", err)
+		return nil, err
 	}
-
-	vars := k0sVars.DeepCopy()
-
-	// don't persist the startup config path in the runtime config
-	vars.StartupConfigPath = ""
+	lockFile, err := tryLock(path)
+	if err != nil {
+		return nil, err
+	}
 
 	cfg := &RuntimeConfig{
 		ObjectMeta: metav1.ObjectMeta{
@@ -162,7 +115,7 @@ func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 		Spec: &RuntimeConfigSpec{
 			NodeConfig: nodeConfig,
 			K0sVars:    k0sVars,
-			Pid:        os.Getpid(),
+			lockFile:   lockFile,
 		},
 	}
 
@@ -171,15 +124,11 @@ func NewRuntimeConfig(k0sVars *CfgVars) (*RuntimeConfigSpec, error) {
 		return nil, err
 	}
 
-	if err := dir.Init(filepath.Dir(k0sVars.RuntimeConfigPath), constant.RunDirMode); err != nil {
-		logrus.Warnf("failed to initialize runtime config dir: %v", err)
-	}
-
 	if err := os.WriteFile(k0sVars.RuntimeConfigPath, content, 0600); err != nil {
 		return nil, fmt.Errorf("failed to write runtime config: %w", err)
 	}
 
-	return cfg.Spec, nil
+	return cfg, nil
 }
 
 func (r *RuntimeConfigSpec) Cleanup() error {
@@ -188,7 +137,15 @@ func (r *RuntimeConfigSpec) Cleanup() error {
 	}
 
 	if err := os.Remove(r.K0sVars.RuntimeConfigPath); err != nil {
-		return fmt.Errorf("failed to clean up runtime config file: %w", err)
+		logrus.Warnf("failed to clean up runtime config file: %v", err)
+	}
+
+	if err := r.lockFile.Close(); err != nil {
+		return fmt.Errorf("failed to close the runtime config file: %w", err)
+	}
+
+	if err := os.Remove(r.lockFile.Name()); err != nil {
+		return fmt.Errorf("failed to delete %s: %w", r.lockFile.Name(), err)
 	}
 	return nil
 }

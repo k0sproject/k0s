@@ -1,28 +1,15 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package manager
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	proberPackage "github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -61,7 +48,7 @@ func TestManagerSuccess(t *testing.T) {
 	m := New(proberPackage.NopProber{})
 	require.NotNil(t, m)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	f1 := &Fake{}
 	m.Add(ctx, f1)
 
@@ -87,9 +74,9 @@ func TestManagerInitFail(t *testing.T) {
 	m := New(proberPackage.NopProber{})
 	require.NotNil(t, m)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	f1 := &Fake{
-		InitErr: fmt.Errorf("failed"),
+		InitErr: assert.AnError,
 	}
 	m.Add(ctx, f1)
 
@@ -107,13 +94,13 @@ func TestManagerRunFail(t *testing.T) {
 	m := New(proberPackage.NopProber{})
 	require.NotNil(t, m)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	f1 := &Fake{}
 	m.Add(ctx, f1)
 
 	f2 := &Fake{
-		RunErr: fmt.Errorf("failed"),
+		RunErr: assert.AnError,
 	}
 	m.Add(ctx, f2)
 
@@ -139,13 +126,13 @@ func TestManagerHealthyFail(t *testing.T) {
 	require.NotNil(t, m)
 	m.ReadyWaitDuration = 1 * time.Millisecond
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	f1 := &Fake{}
 	m.Add(ctx, f1)
 
 	f2 := &Fake{
-		HealthyErr: fmt.Errorf("failed"),
+		HealthyErr: assert.AnError,
 	}
 	m.Add(ctx, f2)
 

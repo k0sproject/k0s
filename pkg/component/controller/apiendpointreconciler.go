@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -40,7 +27,7 @@ import (
 var _ manager.Component = (*APIEndpointReconciler)(nil)
 
 type resolver interface {
-	LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error)
+	LookupIP(ctx context.Context, network, host string) ([]net.IP, error)
 }
 
 // APIEndpointReconciler is the component to reconcile in-cluster API address endpoint based from externalName
@@ -52,20 +39,30 @@ type APIEndpointReconciler struct {
 	leaderElector     leaderelector.Interface
 	kubeClientFactory kubeutil.ClientFactoryInterface
 	resolver          resolver
+	afnet             string
 
 	stopCh chan struct{}
 }
 
 // NewEndpointReconciler creates new endpoint reconciler
-func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface, resolver resolver) *APIEndpointReconciler {
+func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface, resolver resolver, primaryAddressFamily v1beta1.PrimaryAddressFamilyType) *APIEndpointReconciler {
+	var afnet string
+	switch primaryAddressFamily {
+	case v1beta1.PrimaryFamilyIPv4:
+		afnet = "ip4"
+	case v1beta1.PrimaryFamilyIPv6:
+		afnet = "ip6"
+	}
+
 	return &APIEndpointReconciler{
 		logger:            logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
-		externalAddress:   nodeConfig.Spec.API.ExternalAddress,
-		apiServerPort:     nodeConfig.Spec.API.Port,
+		externalAddress:   nodeConfig.Spec.API.ExternalHost(),
+		apiServerPort:     nodeConfig.Spec.API.ExternalPort(),
 		leaderElector:     leaderElector,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
 		resolver:          resolver,
+		afnet:             afnet,
 	}
 }
 
@@ -111,7 +108,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 
 	externalAddress := a.externalAddress
 
-	ipAddrs, err := a.resolver.LookupIPAddr(ctx, externalAddress)
+	ipAddrs, err := a.resolver.LookupIP(ctx, a.afnet, externalAddress)
 	if err != nil {
 		return fmt.Errorf("while resolving external address %q: %w", externalAddress, err)
 	}
@@ -119,7 +116,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 	// Sort the addresses so we can more easily tell if we need to update the endpoints or not
 	ipStrings := make([]string, len(ipAddrs))
 	for i, ipAddr := range ipAddrs {
-		ipStrings[i] = ipAddr.IP.String()
+		ipStrings[i] = ipAddr.String()
 	}
 	sort.Strings(ipStrings)
 

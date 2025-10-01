@@ -1,5 +1,5 @@
 ---
-# Source: calico/templates/calico-node-rbac.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.29.3/charts/calico/templates/calico-node-rbac.yaml
 # Include a clusterrole for the calico-node DaemonSet,
 # and bind it to the calico-node serviceaccount.
 kind: ClusterRole
@@ -62,6 +62,13 @@ rules:
     verbs:
       - watch
       - list
+  # Watch for changes to Kubernetes AdminNetworkPolicies.
+  - apiGroups: ["policy.networking.k8s.io"]
+    resources:
+      - adminnetworkpolicies
+    verbs:
+      - watch
+      - list
   # Used by Calico for policy information.
   - apiGroups: [""]
     resources:
@@ -97,10 +104,17 @@ rules:
       - hostendpoints
       - blockaffinities
       - caliconodestatuses
+      - tiers
     verbs:
       - get
       - list
       - watch
+   # Calico creates some tiers on startup.
+  - apiGroups: ["crd.projectcalico.org"]
+    resources:
+      - tiers
+    verbs:
+      - create
   # Calico must create and update some CRDs on startup.
   - apiGroups: ["crd.projectcalico.org"]
     resources:
@@ -139,6 +153,7 @@ rules:
       - blockaffinities
       - ipamblocks
       - ipamhandles
+      - tiers
     verbs:
       - get
       - list

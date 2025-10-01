@@ -2,10 +2,11 @@ variable "hosts" {
   type = list(
     object({
       name          = string,
+      os_type       = string,
       role          = string,
       is_controller = bool,
       is_worker     = bool,
-      ipv4          = optional(string),
+      ipv4          = string,
       connection = object({
         type     = string
         username = string
@@ -38,6 +39,13 @@ variable "k0sctl_executable_path" {
     condition     = length(var.k0sctl_executable_path) != 0
     error_message = "Path to the k0sctl executable may not be empty."
   }
+}
+
+variable "k0sctl_timeout" {
+  type        = string
+  nullable    = false
+  description = "Overall timeout for k0sctl apply."
+  default     = ""
 }
 
 variable "k0s_version" {

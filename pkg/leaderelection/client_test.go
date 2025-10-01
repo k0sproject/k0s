@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package leaderelection
 
@@ -68,8 +55,7 @@ func TestLeaseConfig_Client(t *testing.T) {
 
 func TestClient_Reacquisition(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
+	ctx, cancel := context.WithCancel(t.Context())
 
 	givenLeaderElectorError := func() func(err error) {
 		var updateErr atomic.Pointer[error]
@@ -142,8 +128,7 @@ func TestClient_Reacquisition(t *testing.T) {
 
 func TestClient_LeadTakeover(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
+	ctx, cancel := context.WithCancel(t.Context())
 
 	// Create two leader election clients, Red and Black.
 	ctxRed, cancelRed := context.WithCancel(ctx)
@@ -180,7 +165,7 @@ func TestClient_LeadTakeover(t *testing.T) {
 			if t.Failed() {
 				return
 			}
-			t.Log("Red took the lead, cancelling Red's context")
+			t.Log("Red took the lead, canceling Red's context")
 			cancelRed()
 		},
 		func(runner string, status Status) {
@@ -197,7 +182,7 @@ func TestClient_LeadTakeover(t *testing.T) {
 			if t.Failed() {
 				return
 			}
-			t.Log("Black took the lead, cancelling Black's context")
+			t.Log("Black took the lead, canceling Black's context")
 			cancelBlack()
 		},
 		func(runner string, status Status) {
@@ -213,7 +198,7 @@ func TestClient_LeadTakeover(t *testing.T) {
 	// Pre-create the acquired lease for Red, so that there are no races when
 	// taking the lead by the two competing leader election client.
 	now := metav1.NewMicroTime(time.Now())
-	_, err = fakeClient.CoordinationV1().Leases("foo").Create(context.TODO(), &coordinationv1.Lease{
+	_, err = fakeClient.CoordinationV1().Leases("foo").Create(t.Context(), &coordinationv1.Lease{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Lease",
 			APIVersion: coordinationv1.SchemeGroupVersion.String(),

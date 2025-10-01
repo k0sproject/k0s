@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package bind_address
 
@@ -47,7 +34,7 @@ func (s *suite) TestCustomizedBindAddress() {
 	ctx := s.Context()
 
 	{
-		for i := 0; i < s.ControllerCount; i++ {
+		for i := range s.ControllerCount {
 			config, err := yaml.Marshal(&v1beta1.ClusterConfig{
 				Spec: &v1beta1.ClusterSpec{
 					API: func() *v1beta1.APISpec {
@@ -89,7 +76,7 @@ func (s *suite) TestCustomizedBindAddress() {
 		s.Require().NoError(err)
 
 		eg, _ := errgroup.WithContext(ctx)
-		for i := 0; i < s.WorkerCount; i++ {
+		for i := range s.WorkerCount {
 			nodeName := s.WorkerNode(i)
 			eg.Go(func() error {
 				if err := s.WaitForNodeReady(nodeName, clients); err != nil {
@@ -100,7 +87,7 @@ func (s *suite) TestCustomizedBindAddress() {
 		}
 		s.Require().NoError(eg.Wait())
 
-		s.Require().NoError(s.checkClusterReadiness(ctx, clients, 1))
+		s.Require().NoError(s.checkClusterReadiness(ctx, clients))
 	})
 
 	s.Run("join_new_controllers", func() {
@@ -117,11 +104,11 @@ func (s *suite) TestCustomizedBindAddress() {
 		s.Require().NoError(err)
 
 		s.T().Logf("Checking if HA cluster is ready")
-		s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount))
+		s.Require().NoError(s.checkClusterReadiness(ctx, clients))
 	})
 }
 
-func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.Clientset, numControllers int, degradedControllers ...string) error {
+func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.Clientset) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
@@ -133,7 +120,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	})
 
 	for _, lease := range []string{"kube-scheduler", "kube-controller-manager"} {
-		lease := lease
 		eg.Go(func() error {
 			id, err := common.WaitForLease(ctx, clients, lease, kubeSystem)
 			if err != nil {
@@ -145,7 +131,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	}
 
 	for _, daemonSet := range []string{"kube-proxy", "konnectivity-agent"} {
-		daemonSet := daemonSet
 		eg.Go(func() error {
 			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, "kube-system"); err != nil {
 				return fmt.Errorf("%s is not ready: %w", daemonSet, err)
@@ -156,7 +141,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	}
 
 	for _, deployment := range []string{"coredns", "metrics-server"} {
-		deployment := deployment
 		eg.Go(func() error {
 			if err := common.WaitForDeployment(ctx, clients, deployment, "kube-system"); err != nil {
 				return fmt.Errorf("%s did not become ready: %w", deployment, err)

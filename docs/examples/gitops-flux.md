@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Using GitOps with Flux
 
 This tutorial describes the benefits of using GitOps with k0s and provides an example of deploying an application with Flux v2.

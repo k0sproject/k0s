@@ -2,7 +2,15 @@ ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
-RUN apk add build-base git linux-headers rsync grep coreutils bash
+
+RUN if [ ! -z "$(which apt)" ]; then \
+       apt update && apt install -y build-essential git rsync grep coreutils bash; \
+    elif [ ! -z "$(which apk)" ]; then \
+       apk add build-base git linux-headers rsync grep coreutils bash; \
+    else \
+       echo "unsupported package manager"; \
+       exit 1; \
+    fi
 
 RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
@@ -17,8 +25,11 @@ ARG TARGET_OS \
   BUILD_GO_LDFLAGS_EXTRA \
   KUBERNETES_BINS
 
+COPY riscv64.patch .
+
 RUN \
   set -ex; \
+  git apply < riscv64.patch; \
   export GOPATH=/go; \
   if [ "${TARGET_OS}" = windows ]; then \
     commands="${KUBERNETES_BINS}"; \
@@ -38,6 +49,7 @@ RUN \
   export SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH; \
   export FORCE_HOST_GO=y; \
   export KUBE_VERBOSE=9; \
+  export KUBE_GIT_TREE_STATE=clean; \
   export KUBE_GIT_VERSION="v$VERSION+k0s"; \
   for cmd in $commands; do \
     make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" WHAT=cmd/$cmd; \
@@ -46,3 +58,4 @@ RUN \
 
 FROM scratch
 COPY --from=build out/* /bin/
+

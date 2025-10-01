@@ -1,20 +1,7 @@
 //go:build unix
 
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package backup
 
@@ -136,7 +123,7 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 	// Create the archive and write the output to the "out" Writer
 	err = createArchive(out, assets, bm.dataDir)
 	if err != nil {
-		logrus.Fatalf("error creating archive: %v", err)
+		return fmt.Errorf("error creating archive: %w", err)
 	}
 
 	destinationFile := filepath.Join(bm.tmpDir, backupFileName)
@@ -164,11 +151,11 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 		return fmt.Errorf("failed to unpack backup archive `%s`: %w", archivePath, err)
 	}
 	defer os.RemoveAll(bm.tmpDir)
-	cfg, err := bm.getConfigForRestore(k0sVars)
+	cfg, err := bm.getConfigForRestore()
 	if err != nil {
 		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %w", err)
 	}
-	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
+	bm.discoverSteps(bm.tmpDir+"/k0s.yaml", cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
 	logrus.Info("Starting restore")
 
 	for _, step := range bm.steps {
@@ -180,11 +167,16 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 	return nil
 }
 
-func (bm Manager) getConfigForRestore(k0sVars *config.CfgVars) (*v1beta1.ClusterConfig, error) {
+func (bm Manager) getConfigForRestore() (*v1beta1.ClusterConfig, error) {
 	configFromBackup := path.Join(bm.tmpDir, "k0s.yaml")
 	logrus.Debugf("Using k0s.yaml from: %s", configFromBackup)
 
-	cfg, err := k0sVars.NodeConfig()
+	bytes, err := os.ReadFile(configFromBackup)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := v1beta1.ConfigFromBytes(bytes)
 	if err != nil {
 		return nil, err
 	}

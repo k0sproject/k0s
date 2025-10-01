@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -20,14 +7,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
+	"strconv"
 
-	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
-
+	"github.com/asaskevich/govalidator"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/asaskevich/govalidator"
+	"github.com/k0sproject/k0s/internal/pkg/iface"
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 )
 
 var _ Validateable = (*APISpec)(nil)
@@ -38,7 +26,6 @@ type APISpec struct {
 	Address string `json:"address,omitempty"`
 
 	// Whether to only bind to the IP given by the address option.
-	// +optional
 	OnlyBindToAddress bool `json:"onlyBindToAddress,omitempty"`
 
 	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
@@ -60,7 +47,11 @@ type APISpec struct {
 	Port int `json:"port,omitempty"`
 
 	// List of additional addresses to push to API servers serving the certificate
+	// +listType=set
 	SANs []string `json:"sans,omitempty"`
+
+	// Custom config for CA certificates.
+	CA *CA `json:"ca,omitempty"`
 }
 
 // DefaultAPISpec default settings for api
@@ -71,12 +62,43 @@ func DefaultAPISpec() *APISpec {
 	return a
 }
 
+func (a *APISpec) LocalURL() *url.URL {
+	var host string
+	if a.OnlyBindToAddress {
+		host = net.JoinHostPort(a.Address, strconv.Itoa(a.Port))
+	} else {
+		host = fmt.Sprintf("localhost:%d", a.Port)
+	}
+
+	return &url.URL{Scheme: "https", Host: host}
+}
+
 // APIAddress ...
 func (a *APISpec) APIAddress() string {
 	if a.ExternalAddress != "" {
-		return a.ExternalAddress
+		return a.ExternalHost()
 	}
 	return a.Address
+}
+
+func (a *APISpec) ExternalHost() string {
+	if a.ExternalAddress != "" {
+		host, _, _ := net.SplitHostPort(a.ExternalAddress)
+		if host != "" {
+			return host
+		}
+	}
+	return a.ExternalAddress
+}
+
+func (a *APISpec) ExternalPort() int {
+	if a.ExternalAddress != "" {
+		_, port, _ := net.SplitHostPort(a.ExternalAddress)
+		if portInt, err := strconv.Atoi(port); port != "" && err == nil {
+			return portInt
+		}
+	}
+	return a.Port
 }
 
 // APIAddressURL returns kube-apiserver external URI
@@ -84,10 +106,17 @@ func (a *APISpec) APIAddressURL() string {
 	return a.getExternalURIForPort(a.Port)
 }
 
-// IsIPv6String returns if ip is IPv6.
-func IsIPv6String(ip string) bool {
-	netIP := net.ParseIP(ip)
-	return netIP != nil && netIP.To4() == nil
+// DetectPrimaryAddressFamily tries to detect the primary address of the cluster
+// based on the address family of ExternalAddress. If this isn't set it will try
+// to detect it based on the address family of Address.
+// If the address used to detect it, isn't an IP address but a hostname or if
+// both are unset, it will default to IPv4
+func (a *APISpec) DetectPrimaryAddressFamily() PrimaryAddressFamilyType {
+	addr := a.APIAddress()
+	if ip := net.ParseIP(addr); ip != nil && ip.To4() == nil {
+		return PrimaryFamilyIPv6
+	}
+	return PrimaryFamilyIPv4
 }
 
 // K0sControlPlaneAPIAddress returns the controller join APIs address
@@ -98,12 +127,14 @@ func (a *APISpec) K0sControlPlaneAPIAddress() string {
 func (a *APISpec) getExternalURIForPort(port int) string {
 	addr := a.Address
 	if a.ExternalAddress != "" {
+		// If ExternalAddress is a full host:port address, return it as is
+		if a.ExternalHost() != a.ExternalAddress {
+			return (&url.URL{Scheme: "https", Host: a.ExternalAddress}).String()
+		}
+
 		addr = a.ExternalAddress
 	}
-	if IsIPv6String(addr) {
-		return fmt.Sprintf("https://[%s]:%d", addr, port)
-	}
-	return fmt.Sprintf("https://%s:%d", addr, port)
+	return (&url.URL{Scheme: "https", Host: net.JoinHostPort(addr, strconv.Itoa(port))}).String()
 }
 
 // Sans return the given SANS plus all local addresses and externalAddress if given
@@ -112,7 +143,7 @@ func (a *APISpec) Sans() []string {
 	sans = append(sans, a.Address)
 	sans = append(sans, a.SANs...)
 	if a.ExternalAddress != "" {
-		sans = append(sans, a.ExternalAddress)
+		sans = append(sans, a.ExternalHost())
 	}
 
 	return stringslice.Unique(sans)
@@ -145,7 +176,7 @@ func (a *APISpec) Validate() []error {
 	}
 
 	if a.ExternalAddress != "" {
-		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalAddress)
+		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalHost())
 		if isAnyAddress(a.ExternalAddress) {
 			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.Address, "invalid INADDR_ANY"))
 		}
@@ -189,5 +220,8 @@ func (a *APISpec) setDefaults() {
 	}
 	if a.Port == 0 {
 		a.Port = 6443
+	}
+	if a.CA == nil {
+		a.CA = DefaultCA()
 	}
 }

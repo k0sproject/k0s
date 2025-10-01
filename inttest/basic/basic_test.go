@@ -1,24 +1,12 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package basic
 
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -58,12 +46,12 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	defer ssh.Disconnect()
 	_, err = ssh.ExecWithOutput(ctx, fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
 	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput(ctx, fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
+	_, err = ssh.ExecWithOutput(ctx, "touch -t 202201010000 "+s.K0sFullPath)
 	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput(ctx, "mkdir -p /run/k0s/konnectivity-server/ && touch -t 202201010000 /run/k0s/konnectivity-server/konnectivity-server.sock")
 	s.Require().NoError(err)
 
-	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
+	dataDirOpt := "--data-dir=" + customDataDir
 	s.Require().NoError(s.InitController(0, dataDirOpt))
 
 	token, err := s.GetJoinToken("worker", dataDirOpt)
@@ -108,7 +96,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	// We need to first wait till we see pod logs, that's a signal that konnectivity tunnels are up and thus we can then connect to kubelet
 	// via the API.
 	s.Require().NoError(common.WaitForPodLogs(ctx, kc, "kube-system"))
-	for i := 0; i < s.WorkerCount; i++ {
+	for i := range s.WorkerCount {
 		node := s.WorkerNode(i)
 		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)
 		s.Require().NoError(common.VerifyKubeletMetrics(ctx, kc, node))
@@ -123,7 +111,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 			out, err := common.PodExecCmdOutput(kc, restConfig, pod.Name, "kube-system", "gobgp global")
 			s.Require().NoError(err)
 			// Check that the output contains the default AS number, that's a sign that gobgp is working
-			s.Assert().Regexp(`AS:\s+64512`, out)
+			s.Regexp(`AS:\s+64512`, out)
 			break
 		}
 	}
@@ -165,7 +153,7 @@ func (s *BasicSuite) verifyKubeletAddressFlag(ctx context.Context, node string) 
 		return err
 	}
 	if output != "--address=0.0.0.0" {
-		return fmt.Errorf("kubelet does not have the address flag set")
+		return errors.New("kubelet does not have the address flag set")
 	}
 
 	return nil
@@ -261,7 +249,7 @@ func (s *BasicSuite) probeCoreDNSAntiAffinity(ctx context.Context, kc *kubernete
 			}
 			nodeName := pod.Spec.NodeName
 			if nodeName == "" {
-				s.T().Logf("Pod %s not scheduled yet: %+v", pod.ObjectMeta.Name, pod.Status)
+				s.T().Logf("Pod %s not scheduled yet: %+v", pod.Name, pod.Status)
 				return false, nil
 			}
 

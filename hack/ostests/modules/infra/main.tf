@@ -1,5 +1,7 @@
 resource "tls_private_key" "ssh" {
-  algorithm = "ED25519"
+  # For Windows instances, AWS enforces RSA, and disallows ed25519 ¯\_(ツ)_/¯
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
 resource "aws_key_pair" "ssh" {
@@ -8,30 +10,51 @@ resource "aws_key_pair" "ssh" {
 }
 
 locals {
-  default_node_config = {
+  default_node_config = merge ({
+    os_type = "linux"
+    volume  = { size = 20 }
+  }, {
     x86_64 = { instance_type = "t3a.small" }
     arm64  = { instance_type = "t4g.small" }
-  }[var.os.arch]
+  }[var.os.arch])
 
-  node_roles = {
+  node_role_templates = {
     controller = {
-      count         = var.controller_num_nodes
-      is_controller = true, is_worker = false,
-      node_config   = merge(local.default_node_config, var.os.node_configs.default, var.os.node_configs.controller)
+      data = {
+        count         = var.controller_num_nodes
+        is_controller = true, is_worker = false,
+      }
+      sources = [for s in [var.os.node_configs.controller, var.os.node_configs.default]: s if s != null]
     }
 
     "controller+worker" = {
-      count         = var.controller_worker_num_nodes
-      is_controller = true, is_worker = true,
-      node_config   = merge(local.default_node_config, var.os.node_configs.default, var.os.node_configs.worker, var.os.node_configs.controller_worker)
+      data = {
+        count         = var.controller_worker_num_nodes
+        is_controller = true, is_worker = true,
+      }
+      sources = [for s in [var.os.node_configs.controller_worker, var.os.node_configs.worker, var.os.node_configs.default]: s if s != null]
     }
 
     worker = {
-      count         = var.worker_num_nodes
-      is_controller = false, is_worker = true,
-      node_config   = merge(local.default_node_config, var.os.node_configs.default, var.os.node_configs.worker)
+      data = {
+        count         = var.worker_num_nodes
+        is_controller = false, is_worker = true,
+      }
+      sources = [for s in [var.os.node_configs.worker, var.os.node_configs.default]: s if s != null]
     }
   }
+
+  node_roles = { for role, tmpl in local.node_role_templates: role => merge(tmpl.data, {
+    node_config = {
+      ami_id        =  coalesce(tmpl.sources.*.ami_id...)
+      instance_type =  coalesce(concat(tmpl.sources, [local.default_node_config]).*.instance_type...)
+      os_type       =  coalesce(concat(tmpl.sources, [local.default_node_config]).*.os_type...)
+      volume        =  coalesce(concat(tmpl.sources, [local.default_node_config]).*.volume...)
+      user_data     =  try(coalesce(tmpl.sources.*.user_data...), null)
+      ready_script  =  try(coalesce(tmpl.sources.*.ready_script...), null)
+      connection    =  coalesce(tmpl.sources.*.connection...)
+    }
+  })}
 
   nodes = merge([for role, params in local.node_roles : {
     for idx in range(params.count) : "${role}-${idx + 1}" => {
@@ -68,7 +91,7 @@ resource "aws_instance" "nodes" {
 
   root_block_device {
     volume_type = "gp2"
-    volume_size = 20
+    volume_size = each.value.node_config.volume.size
   }
 }
 
@@ -76,11 +99,12 @@ resource "terraform_data" "ready_scripts" {
   for_each = { for name, params in local.nodes : name => params if params.node_config.ready_script != null }
 
   connection {
-    type        = each.value.node_config.connection.type
-    user        = each.value.node_config.connection.username
-    private_key = tls_private_key.ssh.private_key_pem
-    host        = aws_instance.nodes[each.key].public_ip
-    agent       = false
+    type            = each.value.node_config.connection.type
+    user            = each.value.node_config.connection.username
+    target_platform = each.value.node_config.os_type == "windows" ? "windows" : "unix"
+    private_key     = tls_private_key.ssh.private_key_pem
+    host            = aws_instance.nodes[each.key].public_ip
+    agent           = false
   }
 
   provisioner "remote-exec" {
@@ -93,10 +117,11 @@ resource "terraform_data" "provisioned_nodes" {
 
   input = [for node in aws_instance.nodes : {
     name          = node.tags.Name,
-    ipv4          = node.public_ip,
+    os_type       = local.nodes[node.tags["ostests.k0sproject.io/node-name"]].node_config.os_type,
     role          = node.tags["k0sctl.k0sproject.io/host-role"]
     is_controller = local.nodes[node.tags["ostests.k0sproject.io/node-name"]].is_controller
     is_worker     = local.nodes[node.tags["ostests.k0sproject.io/node-name"]].is_worker
+    ipv4          = node.public_ip,
     connection    = local.nodes[node.tags["ostests.k0sproject.io/node-name"]].node_config.connection
   }]
 }

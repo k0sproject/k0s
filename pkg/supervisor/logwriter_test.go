@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package supervisor
 
@@ -86,22 +73,22 @@ func TestLogWriter(t *testing.T) {
 			remaining := logs.AllEntries()
 
 			for i, line := range test.out {
-				if !assert.NotEmpty(t, remaining, "Expected additional log entry: %s", line) {
+				if !assert.NotEmptyf(t, remaining, "Expected additional log entry: %s", line) {
 					continue
 				}
 
 				chunk, isChunk := remaining[0].Data["chunk"]
-				assert.Equal(t, line.chunk != 0, isChunk, "Log entry %d chunk mismatch", i)
+				assert.Equalf(t, line.chunk != 0, isChunk, "Log entry %d chunk mismatch", i)
 				if isChunk {
-					assert.Equal(t, line.chunk, chunk, "Log entry %d differs in chunk", i)
+					assert.Equalf(t, line.chunk, chunk, "Log entry %d differs in chunk", i)
 				}
 
-				assert.Equal(t, line.msg, remaining[0].Message, "Log entry %d differs in message", i)
+				assert.Equalf(t, line.msg, remaining[0].Message, "Log entry %d differs in message", i)
 				remaining = remaining[1:]
 			}
 
 			for _, entry := range remaining {
-				assert.Fail(t, "Unexpected log entry", "%s", entry.Message)
+				assert.Failf(t, "Unexpected log entry", "%s", entry.Message)
 			}
 		})
 	}

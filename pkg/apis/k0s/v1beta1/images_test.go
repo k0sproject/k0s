@@ -1,23 +1,9 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -34,7 +20,7 @@ func getConfigYAML(t *testing.T, c *ClusterConfig) []byte {
 }
 
 func TestClusterImages_Customized(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1s
 kind: ClusterConfig
 spec:
@@ -45,15 +31,39 @@ spec:
     coredns:
       image: custom.io/coredns/coredns
       version: 1.0.0
-`
-	cfg, err := ConfigFromString(yamlData)
+`)
+	cfg, err := ConfigFromBytes(yamlData)
 	require.NoError(t, err)
 	a := cfg.Spec.Images
 
 	assert.Equal(t, "custom-repository/my-custom-konnectivity-image:v0.0.1", a.Konnectivity.URI())
 	assert.Equal(t, "1.0.0", a.CoreDNS.Version)
 	assert.Equal(t, "custom.io/coredns/coredns", a.CoreDNS.Image)
-	assert.Equal(t, "registry.k8s.io/metrics-server/metrics-server", a.MetricsServer.Image)
+	assert.Equal(t, "quay.io/k0sproject/metrics-server", a.MetricsServer.Image)
+}
+
+func TestStripDefaultsForDefaultImageList(t *testing.T) {
+	yamlData := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1s
+kind: ClusterConfig
+spec:
+  images:
+    default_pull_policy: Never
+  network:
+    nodeLocalLoadBalancing:
+      enabled: true
+      type: EnvoyProxy
+`)
+
+	cfg, err := ConfigFromBytes(yamlData)
+	require.NoError(t, err)
+
+	strippedCfg := cfg.StripDefaults()
+
+	require.Equal(t, "Never", strippedCfg.Spec.Images.DefaultPullPolicy)
+	require.Nil(t, strippedCfg.Spec.Images.Konnectivity)
+	require.True(t, strippedCfg.Spec.Network.NodeLocalLoadBalancing.Enabled)
+	require.Nil(t, strippedCfg.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image)
 }
 
 func TestImagesRepoOverrideInConfiguration(t *testing.T) {
@@ -63,19 +73,20 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			cfg.Spec.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/apiserver-network-proxy-agent:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/kube-proxy:%s", constant.KubeProxyImageVersion), testingConfig.Spec.Images.KubeProxy.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/coredns:%s", constant.CoreDNSImageVersion), testingConfig.Spec.Images.CoreDNS.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-cni:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.CNI.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-node:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.Node.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-kube-controllers:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.KubeControllers.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-cni:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.CNI.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-node:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.Node.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-kube-controllers:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.KubeControllers.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/kube-router:%s", constant.KubeRouterCNIImageVersion), testingConfig.Spec.Images.KubeRouter.CNI.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/cni-node:%s", constant.KubeRouterCNIInstallerImageVersion), testingConfig.Spec.Images.KubeRouter.CNIInstaller.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/pause:%s", constant.KubePauseContainerImageVersion), testingConfig.Spec.Images.Pause.URI())
+			require.Equal(t, "my.repo/k0sproject/apiserver-network-proxy-agent:"+constant.KonnectivityImageVersion, testingConfig.Spec.Images.Konnectivity.URI())
+			require.Equal(t, "my.repo/k0sproject/metrics-server:"+constant.MetricsImageVersion, testingConfig.Spec.Images.MetricsServer.URI())
+			require.Equal(t, "my.repo/k0sproject/kube-proxy:"+constant.KubeProxyImageVersion, testingConfig.Spec.Images.KubeProxy.URI())
+			require.Equal(t, "my.repo/k0sproject/coredns:"+constant.CoreDNSImageVersion, testingConfig.Spec.Images.CoreDNS.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-cni:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.CNI.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-node:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.Node.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-kube-controllers:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.KubeControllers.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-cni:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.CNI.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-node:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.Node.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-kube-controllers:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.KubeControllers.URI())
+			require.Equal(t, "my.repo/k0sproject/kube-router:"+constant.KubeRouterCNIImageVersion, testingConfig.Spec.Images.KubeRouter.CNI.URI())
+			require.Equal(t, "my.repo/k0sproject/cni-node:"+constant.KubeRouterCNIInstallerImageVersion, testingConfig.Spec.Images.KubeRouter.CNIInstaller.URI())
+			require.Equal(t, "my.repo/k0sproject/pause:"+constant.KubePauseContainerImageVersion, testingConfig.Spec.Images.Pause.URI())
+			require.Equal(t, "my.repo/k0sproject/pushgateway-ttl:"+constant.PushGatewayImageVersion, testingConfig.Spec.Images.PushGateway.URI())
 		})
 		t.Run("config_with_custom_images", func(t *testing.T) {
 			cfg := DefaultClusterConfig()
@@ -83,40 +94,89 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			cfg.Spec.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
-			require.Equal(t, fmt.Sprintf("my.repo/my-custom-image:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/kube-proxy:%s", constant.KubeProxyImageVersion), testingConfig.Spec.Images.KubeProxy.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/coredns:%s", constant.CoreDNSImageVersion), testingConfig.Spec.Images.CoreDNS.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-cni:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.CNI.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-node:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.Node.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/calico-kube-controllers:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.KubeControllers.URI())
+			require.Equal(t, "my.repo/my-custom-image:"+constant.KonnectivityImageVersion, testingConfig.Spec.Images.Konnectivity.URI())
+			require.Equal(t, "my.repo/k0sproject/metrics-server:"+constant.MetricsImageVersion, testingConfig.Spec.Images.MetricsServer.URI())
+			require.Equal(t, "my.repo/k0sproject/kube-proxy:"+constant.KubeProxyImageVersion, testingConfig.Spec.Images.KubeProxy.URI())
+			require.Equal(t, "my.repo/k0sproject/coredns:"+constant.CoreDNSImageVersion, testingConfig.Spec.Images.CoreDNS.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-cni:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.CNI.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-node:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.Node.URI())
+			require.Equal(t, "my.repo/k0sproject/calico-kube-controllers:"+constant.CalicoComponentImagesVersion, testingConfig.Spec.Images.Calico.KubeControllers.URI())
 		})
 	})
 }
 
 func TestOverrideFunction(t *testing.T) {
-	repository := "my.registry"
-	testCases := []struct {
-		Input  string
-		Output string
-	}{
-		{
-			Input:  "repo/image",
-			Output: "my.registry/repo/image",
-		},
-		{
-			Input:  "registry.com/repo/image",
-			Output: "my.registry/repo/image",
-		},
-		{
-			Input:  "image",
-			Output: "my.registry/image",
-		},
-	}
+	t.Run("overrideRepository without path", func(t *testing.T) {
+		repository := "my.registry"
+		testCases := []struct {
+			Input  string
+			Output string
+		}{
+			{
+				Input:  "repo/image",
+				Output: "my.registry/repo/image",
+			},
+			{
+				Input:  "registry.com/repo/image",
+				Output: "my.registry/repo/image",
+			},
+			{
+				Input:  "image",
+				Output: "my.registry/image",
+			},
+		}
 
-	for _, tc := range testCases {
-		assert.Equal(t, tc.Output, overrideRepository(repository, tc.Input))
-	}
+		for _, tc := range testCases {
+			assert.Equal(t, tc.Output, overrideRepository(repository, tc.Input))
+		}
+	})
+	t.Run("overrideRepository with path", func(t *testing.T) {
+		repository := "my.registry/foo"
+		testCases := []struct {
+			Input  string
+			Output string
+		}{
+			{
+				Input:  "repo/image",
+				Output: "my.registry/foo/repo/image",
+			},
+			{
+				Input:  "registry.com/repo/image",
+				Output: "my.registry/foo/repo/image",
+			},
+			{
+				Input:  "image",
+				Output: "my.registry/foo/image",
+			},
+		}
+		for _, tc := range testCases {
+			assert.Equal(t, tc.Output, overrideRepository(repository, tc.Input))
+		}
+	})
+	t.Run("overrideRepository with repo path and double invocation", func(t *testing.T) {
+		repository := "my.registry/foo"
+		testCases := []struct {
+			Input  string
+			Output string
+		}{
+			{
+				Input:  "repo/image",
+				Output: "my.registry/foo/repo/image",
+			},
+			{
+				Input:  "registry.com/repo/image",
+				Output: "my.registry/foo/repo/image",
+			},
+			{
+				Input:  "image",
+				Output: "my.registry/foo/image",
+			},
+		}
+		for _, tc := range testCases {
+			assert.Equal(t, tc.Output, overrideRepository(repository, overrideRepository(repository, tc.Input)))
+		}
+	})
+
 }
 
 func TestImageSpec_Validate(t *testing.T) {

@@ -1,16 +1,5 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta2
 
@@ -29,14 +18,17 @@ import (
 // +genclient:onlyVerbs=create,delete,list,get,watch,update,updateStatus
 // +genclient:nonNamespaced
 type ControlNode struct {
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	metav1.TypeMeta   `json:",omitempty,inline"`
-	Status            ControlNodeStatus `json:"status,omitempty"`
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata"`
+	// +optional
+	Status ControlNodeStatus `json:"status"`
 }
 
 // ControlNodeStatus has the runtime status info of the controller such as address etc.
 type ControlNodeStatus struct {
-	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
+	Addresses  []corev1.NodeAddress `json:"addresses,omitempty"`
+	K0sVersion string               `json:"k0sVersion,omitempty"`
 }
 
 // GetInternalIP returns the internal IP address for the object. Returns empty string if the object does not have InternalIP set.
@@ -55,7 +47,7 @@ func (c *ControlNodeStatus) GetInternalIP() string {
 // +kubebuilder:resource:scope=Cluster
 type ControlNodeList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []ControlNode `json:"items"`
 }
@@ -72,15 +64,17 @@ type ControlNodeList struct {
 // +genclient:onlyVerbs=create,delete,list,get,watch,update
 // +genclient:nonNamespaced
 type Plan struct {
-	metav1.TypeMeta `json:",omitempty,inline"`
-	// Standard object's metadata.
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata"`
 
 	// Spec defines how the plan behaves.
 	Spec PlanSpec `json:"spec"`
 
 	// Status is the most recently observed status of the plan.
-	Status PlanStatus `json:"status,omitempty"`
+	//
+	// +optional
+	Status PlanStatus `json:"status"`
 }
 
 // PlanList is a list of Plan instances.
@@ -89,7 +83,7 @@ type Plan struct {
 // +kubebuilder:resource:scope=Cluster
 type PlanList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []Plan `json:"items"`
 }
@@ -162,10 +156,14 @@ type PlanResourceURL struct {
 // PlanCommandTargets contains the target definitions for both controllers and workers.
 type PlanCommandTargets struct {
 	// Controllers defines how k0s controllers will be discovered and executed.
-	Controllers PlanCommandTarget `json:"controllers,omitempty"`
+	//
+	// +optional
+	Controllers PlanCommandTarget `json:"controllers"`
 
 	// Workers defines how k0s workers will be discovered and executed.
-	Workers PlanCommandTarget `json:"workers,omitempty"`
+	//
+	// +optional
+	Workers PlanCommandTarget `json:"workers"`
 }
 
 // PlanCommandTarget defines how a plan should discover signal nodes that should be considered
@@ -177,7 +175,8 @@ type PlanCommandTarget struct {
 	// Limits impose various limits and restrictions on how discovery and execution should behave.
 	//
 	// +kubebuilder:default={concurrent:1}
-	Limits PlanCommandTargetLimits `json:"limits,omitempty"`
+	// +optional
+	Limits PlanCommandTargetLimits `json:"limits"`
 }
 
 // PlanCommandTargetLimits are limits that can be imposed on a target of a command.

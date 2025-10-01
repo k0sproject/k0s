@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package nllb
 
@@ -20,7 +7,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -47,15 +36,16 @@ const kubeSystem = "kube-system"
 
 type suite struct {
 	common.BootlooseSuite
+	isIPv6Only bool
 }
 
 func (s *suite) TestNodeLocalLoadBalancing() {
-	const controllerArgs = "--kube-controller-manager-extra-args='--node-monitor-period=3s --node-monitor-grace-period=9s'"
+	const controllerArgs = "--kube-controller-manager-extra-args='--node-monitor-period=3s --node-monitor-grace-period=9s' --feature-gates=IPv6SingleStack=true"
 
 	ctx := s.Context()
 
 	{
-		config, err := yaml.Marshal(&v1beta1.ClusterConfig{
+		clusterCfg := &v1beta1.ClusterConfig{
 			Spec: &v1beta1.ClusterSpec{
 				Network: func() *v1beta1.Network {
 					network := v1beta1.DefaultNetwork()
@@ -77,10 +67,18 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 					},
 				},
 			},
-		})
+		}
+		if s.isIPv6Only {
+			s.T().Log("Running in IPv6-only mode")
+			clusterCfg.Spec.Network.PrimaryAddressFamily = v1beta1.PrimaryFamilyIPv6
+			clusterCfg.Spec.Network.PodCIDR = "fd00::/108"
+			clusterCfg.Spec.Network.ServiceCIDR = "fd01::/108"
+		}
+
+		config, err := yaml.Marshal(clusterCfg)
 		s.Require().NoError(err)
 
-		for i := 0; i < s.ControllerCount; i++ {
+		for i := range s.ControllerCount {
 			s.WriteFileContent(s.ControllerNode(i), "/tmp/k0s.yaml", config)
 		}
 	}
@@ -88,7 +86,12 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 	s.Run("controller_and_workers_get_up", func() {
 		s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", controllerArgs))
 
-		s.T().Logf("Starting workers and waiting for cluster to become ready")
+		if s.isIPv6Only {
+			s.T().Log("Setting up IPv6 DNS for workers")
+			common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
+		}
+
+		s.T().Log("Starting workers and waiting for cluster to become ready")
 
 		token, err := s.GetJoinToken("worker")
 		s.Require().NoError(err)
@@ -98,7 +101,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 		s.Require().NoError(err)
 
 		eg, _ := errgroup.WithContext(ctx)
-		for i := 0; i < s.WorkerCount; i++ {
+		for i := range s.WorkerCount {
 			nodeName := s.WorkerNode(i)
 			eg.Go(func() error {
 				if err := s.WaitForNodeReady(nodeName, clients); err != nil {
@@ -130,7 +133,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 	})
 
 	workerNameToRestart := s.WorkerNode(0)
-	for i := 0; i < s.ControllerCount; i++ {
+	for i := range s.ControllerCount {
 		controllerName := s.ControllerNode(i)
 		s.Run(fmt.Sprintf("stop_%s_before_%s", workerNameToRestart, controllerName), func() {
 			err := s.StopWorker(workerNameToRestart)
@@ -216,7 +219,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.Clientset, numControllers int, degradedControllers ...string) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
-	for i := 0; i < numControllers; i++ {
+	for i := range numControllers {
 		nodeName := s.ControllerNode(i)
 		degraded := slices.Contains(degradedControllers, nodeName)
 
@@ -240,7 +243,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 		})
 	}
 
-	for i := 0; i < s.WorkerCount; i++ {
+	for i := range s.WorkerCount {
 		nodeName := s.WorkerNode(i)
 
 		eg.Go(func() error {
@@ -250,7 +253,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 			s.T().Logf("Node %s is ready", nodeName)
 
-			nllbPodName := fmt.Sprintf("nllb-%s", nodeName)
+			nllbPodName := "nllb-" + nodeName
 			if err := common.WaitForPod(ctx, clients, nllbPodName, kubeSystem); err != nil {
 				return fmt.Errorf("Pod %s/%s is not ready: %w", nllbPodName, kubeSystem, err)
 			}
@@ -288,7 +291,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	})
 
 	for _, lease := range []string{"kube-scheduler", "kube-controller-manager"} {
-		lease := lease
 		eg.Go(func() error {
 			id, err := common.WaitForLease(ctx, clients, lease, kubeSystem)
 			if err != nil {
@@ -300,7 +302,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	}
 
 	for _, daemonSet := range []string{"kube-proxy", "konnectivity-agent"} {
-		daemonSet := daemonSet
 		eg.Go(func() error {
 			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, "kube-system"); err != nil {
 				return fmt.Errorf("%s is not ready: %w", daemonSet, err)
@@ -311,7 +312,6 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	}
 
 	for _, deployment := range []string{"coredns", "metrics-server"} {
-		deployment := deployment
 		eg.Go(func() error {
 			if err := common.WaitForDeployment(ctx, clients, deployment, "kube-system"); err != nil {
 				return fmt.Errorf("%s did not become ready: %w", deployment, err)
@@ -326,10 +326,17 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 func TestNodeLocalLoadBalancingSuite(t *testing.T) {
 	s := suite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     2,
 		},
+	}
+
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "ipv6") {
+		t.Log("Configuring IPv6 only networking")
+		s.isIPv6Only = true
+		s.Networks = []string{"bridge-ipv6"}
+		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
 	}
 	testifysuite.Run(t, &s)
 }

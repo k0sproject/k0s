@@ -1,16 +1,7 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package updates
 
@@ -24,7 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -75,7 +65,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 	case apv1beta2.UpdateStrategyTypeCron:
 		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient)
 	case apv1beta2.UpdateStrategyTypePeriodic:
-		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, clusterID, build.Version)
+		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, clusterID, build.Version), nil
 	default:
 		return nil, fmt.Errorf("unknown update strategy type: %s", updateConfig.Spec.UpgradeStrategy.Type)
 	}
@@ -143,7 +133,7 @@ func (u *cronUpdater) checkUpdates() {
 
 	plan := u.toPlan(update)
 
-	err = u.k8sClient.Patch(u.ctx, &plan, client.Apply, patchOpts...)
+	err = u.k8sClient.Patch(u.ctx, &plan, crcli.Apply, patchOpts...)
 	if err != nil {
 		u.log.Errorf("failed to patch plan: %s", err)
 		return

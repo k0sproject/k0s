@@ -1,23 +1,11 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -59,7 +47,7 @@ data:
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("worker-config-fake-%s", constant.KubernetesMajorMinorVersion),
+			Name:      "worker-config-fake-" + constant.KubernetesMajorMinorVersion,
 			Namespace: "kube-system",
 		},
 		Data: map[string]string{
@@ -92,7 +80,7 @@ data:
 	}
 
 	workerProfile, err := func() (*Profile, error) {
-		ctx, cancel := context.WithCancel(context.TODO())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		timer := time.AfterFunc(10*time.Second, func() {
 			assert.Fail(t, "Call to Loader.Load() took too long, check the logs for details")
@@ -163,21 +151,22 @@ func TestWatchProfile(t *testing.T) {
 
 	cacheDir := t.TempDir()
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
-	timer := time.AfterFunc(10*time.Second, func() {
-		assert.Fail(t, "Call to Watcher.Watch() took too long, check the logs for details")
-		cancel()
-	})
-	defer timer.Stop()
+	ctx, cancel := context.WithCancelCause(t.Context())
+	timeout := errors.New("timeout: Watcher.Watch()")
+	timer := time.AfterFunc(10*time.Second, func() { cancel(timeout) })
+	defer func() {
+		timer.Stop()
+		if errors.Is(context.Cause(ctx), timeout) {
+			assert.Fail(t, "Call to Watcher.Watch() took too long, check the logs for details")
+		}
+	}()
 
 	var timesCallbackCalled atomic.Uint32
 	callback := func(p Profile) error {
 		timesCallbackCalled.Add(1)
 		assert.Equal(t, "foo", p.KubeletConfiguration.Kind)
 		timer.Stop()
-		cancel()
+		cancel(nil)
 		return nil
 	}
 

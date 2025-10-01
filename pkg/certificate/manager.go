@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package certificate
 
@@ -26,11 +13,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cloudflare/cfssl/certinfo"
 	"github.com/cloudflare/cfssl/cli"
 	"github.com/cloudflare/cfssl/cli/genkey"
 	"github.com/cloudflare/cfssl/cli/sign"
+	cfsslconfig "github.com/cloudflare/cfssl/config"
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/cloudflare/cfssl/signer"
@@ -64,9 +53,9 @@ type Manager struct {
 }
 
 // EnsureCA makes sure the given CA certs and key is created.
-func (m *Manager) EnsureCA(name, cn string) error {
-	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
-	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", name))
+func (m *Manager) EnsureCA(name, cn string, expiry time.Duration) error {
+	keyFile := filepath.Join(m.K0sVars.CertRootDir, name+".key")
+	certFile := filepath.Join(m.K0sVars.CertRootDir, name+".crt")
 
 	if file.Exists(keyFile) && file.Exists(certFile) {
 		return nil
@@ -78,7 +67,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 	req.KeyRequest.S = 2048
 	req.CN = cn
 	req.CA = &csr.CAConfig{
-		Expiry: "87600h",
+		Expiry: expiry.String(),
 	}
 	cert, _, key, err := initca.New(req)
 	if err != nil {
@@ -99,13 +88,13 @@ func (m *Manager) EnsureCA(name, cn string) error {
 }
 
 // EnsureCertificate creates the specified certificate if it does not already exist
-func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, error) {
+func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Duration) (Certificate, error) {
 
-	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
-	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
+	keyFile := filepath.Join(m.K0sVars.CertRootDir, certReq.Name+".key")
+	certFile := filepath.Join(m.K0sVars.CertRootDir, certReq.Name+".crt")
 
 	// if regenerateCert returns true, it means we need to create the certs
-	if m.regenerateCert(certReq, keyFile, certFile) {
+	if m.regenerateCert(keyFile, certFile) {
 		logrus.Debugf("creating certificate %s", certFile)
 		req := csr.CertificateRequest{
 			KeyRequest: csr.NewKeyRequest(),
@@ -126,8 +115,18 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, 
 			return Certificate{}, err
 		}
 		config := cli.Config{
-			CAFile:    fmt.Sprintf("file:%s", certReq.CACert),
-			CAKeyFile: fmt.Sprintf("file:%s", certReq.CAKey),
+			CAFile:    "file:" + certReq.CACert,
+			CAKeyFile: "file:" + certReq.CAKey,
+			CFG: &cfsslconfig.Config{
+				Signing: &cfsslconfig.Signing{
+					Profiles: map[string]*cfsslconfig.SigningProfile{},
+					Default: &cfsslconfig.SigningProfile{
+						Usage:        []string{"signing", "key encipherment", "server auth", "client auth"},
+						Expiry:       expiry,
+						ExpiryString: expiry.String(),
+					},
+				},
+			},
 		}
 		s, err := sign.SignerFromConfig(config)
 		if err != nil {
@@ -191,7 +190,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int) (Certificate, 
 
 // if regenerateCert does not need to do any changes, it will return false
 // if a change in SAN hosts is detected, if will return true, to re-generate certs
-func (m *Manager) regenerateCert(certReq Request, keyFile string, certFile string) bool {
+func (m *Manager) regenerateCert(keyFile string, certFile string) bool {
 	var cert *certinfo.Certificate
 	var err error
 
@@ -228,8 +227,8 @@ func isManagedByK0s(cert *certinfo.Certificate) bool {
 }
 
 func (m *Manager) CreateKeyPair(name string, k0sVars *config.CfgVars, ownerID int) error {
-	keyFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
-	pubFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.pub", name))
+	keyFile := filepath.Join(k0sVars.CertRootDir, name+".key")
+	pubFile := filepath.Join(k0sVars.CertRootDir, name+".pub")
 
 	if file.Exists(keyFile) && file.Exists(pubFile) {
 		return file.Chown(keyFile, ownerID, constant.CertSecureMode)

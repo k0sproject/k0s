@@ -6,27 +6,48 @@ on:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "**.md"
+      - .github/ISSUE_TEMPLATE/**
+      - .github/workflows/*.yaml
+      - .github/workflows/*.yml
+        # Re-include all workflow files used by this workflow
+      - "!.github/workflows/go.yml"
+      - "!.github/workflows/build-airgap-image-bundle.yml"
+      - "!.github/workflows/build-ipv6-image-bundle.yml"
+      - "!.github/workflows/build-k0s.yml"
+      - "!.github/workflows/smoketest.yaml"
+      - .github/CODEOWNERS
+      - .github/dependabot.yml
+      - docs/**
+      - hack/ostests/**
+      - hack/tool/**
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - mkdocs.yml
+      - renovate.json
+
   pull_request:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "**.md"
+      - .github/ISSUE_TEMPLATE/**
+      - .github/workflows/*.yaml
+      - .github/workflows/*.yml
+        # Re-include all workflow files used by this workflow
+      - "!.github/workflows/go.yml"
+      - "!.github/workflows/build-airgap-image-bundle.yml"
+      - "!.github/workflows/build-ipv6-image-bundle.yml"
+      - "!.github/workflows/build-k0s.yml"
+      - "!.github/workflows/smoketest.yaml"
+      - .github/CODEOWNERS
+      - .github/dependabot.yml
+      - docs/**
+      - hack/ostests/**
+      - hack/tool/**
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - mkdocs.yml
+      - renovate.json
 
 env:
   MAKEFLAGS: -j
@@ -35,7 +56,7 @@ env:
 jobs:
   prepare:
     name: Prepare
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     outputs:
       smoketest-matrix: ${{ steps.generate-smoketest-matrix.outputs.smoketests }}
@@ -78,8 +99,13 @@ jobs:
   build-k0s:
     strategy:
       matrix:
-        target-os: [linux, windows]
-        target-arch: [amd64]
+        include:
+          - target-os: linux
+            target-arch: amd64
+          - target-os: linux
+            target-arch: arm64
+          - target-os: windows
+            target-arch: amd64
 
     name: "Build :: k0s :: ${{ matrix.target-os }}-${{ matrix.target-arch }}"
     uses: ./.github/workflows/build-k0s.yml
@@ -88,9 +114,22 @@ jobs:
       target-arch: ${{ matrix.target-arch }}
 
   build-airgap-image-bundle:
+    strategy:
+      fail-fast: false
+      matrix:
+        target-arch: [amd64, arm64]
+
     name: "Build :: Airgap image bundle"
     needs: [build-k0s]
     uses: ./.github/workflows/build-airgap-image-bundle.yml
+    with:
+      target-os: linux
+      target-arch: ${{ matrix.target-arch }}
+
+  build-ipv6-image-bundle:
+    name: "Build :: IPv6 image bundle"
+    needs: [build-k0s]
+    uses: ./.github/workflows/build-ipv6-image-bundle.yml
     with:
       target-os: linux
       target-arch: amd64
@@ -99,7 +138,7 @@ jobs:
     name: "Build :: SBOM"
     needs: [build-k0s]
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check out code into the Go module directory
@@ -116,10 +155,29 @@ jobs:
           name: spdx.json
           path: sbom/spdx.json
 
+  unittests-k0s:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            runs-on: ubuntu-24.04
+          - name: windows-amd64
+            runs-on: windows-2022
+            target-os: windows
+          - name: macos-arm64
+            runs-on: macos-15
+            target-os: darwin
 
-  unittests-k0s-linux-amd64:
-    name: "Unit tests :: linux-amd64"
-    runs-on: ubuntu-22.04
+    name: "check-unit :: ${{ matrix.name }}"
+    runs-on: "${{ matrix.runs-on }}"
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      EMBEDDED_BINS_BUILDMODE: none
 
     steps:
       - name: Check out code into the Go module directory
@@ -127,79 +185,47 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Prepare unit tests
+        if: matrix.target-os != ''
+        run: |
+          cat <<EOF >>"$GITHUB_ENV"
+          TARGET_OS=${{ matrix.target-os }}
+          DOCKER=
+          UNITTEST_EXTRA_ARGS=BUILD_GO_LDFLAGS_EXTRA=
+          EOF
+
+          echo ::group::Build Environment
+          cat -- "$GITHUB_ENV"
+          echo ::endgroup::
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        if: matrix.target-os != ''
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
       - name: Cache GOCACHE
         uses: actions/cache@v4
         with:
-          key: unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
+          key: unittests-k0s-${{ matrix.name }}-gocache-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-
-            build-k0s-linux-amd64-gocache-${{ github.ref_name }}-
+            unittests-k0s-${{ matrix.name }}-gocache-${{ github.ref_name }}-
           path: |
             build/cache/go/build
 
       - name: Cache GOMODCACHE
         uses: actions/cache@v4
         with:
-          key: unittests-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            build-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            build/cache/go/mod
+          key: unittests-k0s-gomodcache-${{ hashFiles('go.sum') }}
+          path: build/cache/go/mod
+          enableCrossOsArchive: true
 
       - name: Run unit tests
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-        run: make check-unit
-
-  unittests-k0s-windows-amd64:
-    name: "Unit tests :: windows-amd64"
-    runs-on: windows-2022
-
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - name: Check out
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Cache GOCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-
-          path: |
-            ~\AppData\Local\go-build
-
-      - name: Cache GOMODCACHE
-        uses: actions/cache@v4
-        with:
-          key: unittests-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            build-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
-          path: |
-            ~\go\pkg\mod
-
-      - name: Run unit tests
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-          TARGET_OS: windows
-          GO: go
-          GO_ENV: ''
-        run: |
-          make --touch .k0sbuild.docker-image.k0s
-          make check-unit
+        run: make check-unit $UNITTEST_EXTRA_ARGS
 
   smoketests:
     strategy:
@@ -207,11 +233,30 @@ jobs:
       matrix:
         smoke-suite: ${{ fromJson(needs.prepare.outputs.smoketest-matrix) }}
 
-    name: "Smoke test :: ${{ matrix.smoke-suite }}"
-    needs: [prepare, build-k0s, build-airgap-image-bundle]
+    name: "check-${{ matrix.smoke-suite }} :: amd64"
+    needs: [prepare, build-k0s, build-airgap-image-bundle, build-ipv6-image-bundle]
 
     uses: ./.github/workflows/smoketest.yaml
     with:
+      arch: amd64
+      name: ${{ matrix.smoke-suite }}
+
+  smoketests-linux-arm64:
+    strategy:
+      fail-fast: false
+      matrix:
+        smoke-suite:
+          - airgap
+          - basic
+          - network-conformance-calico
+          - network-conformance-kuberouter
+
+    name: "check-${{ matrix.smoke-suite }} :: arm64"
+    needs: [build-k0s, build-airgap-image-bundle]
+
+    uses: ./.github/workflows/smoketest.yaml
+    with:
+      arch: arm64
       name: ${{ matrix.smoke-suite }}
 
   autopilot-tests:
@@ -223,43 +268,26 @@ jobs:
           - controllerworker
           - ha3x3
 
-    name: "Autopilot test :: ${{ matrix.version }} :: ${{ matrix.smoke-suite }}"
+    name: "check-ap-${{ matrix.smoke-suite }} :: ${{ matrix.version }}"
     needs: [prepare, build-k0s]
 
     uses: ./.github/workflows/smoketest.yaml
     with:
+      arch: amd64
       name: ap-${{ matrix.smoke-suite }}
-      job-name: autopilot-test
       k0s-reference-version: ${{ matrix.version }}
 
   build-arm:
-    name: build on armv7/arm64
+    name: "Build :: k0s :: arm"
     if: github.repository == 'k0sproject/k0s'
-    strategy:
-      fail-fast: false
-      matrix:
-        arch:
-          - arm # this is armv7
-          - arm64
     runs-on:
       - self-hosted
       - linux
-      - ${{ matrix.arch }}
+      - arm
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"
-        if: matrix.arch == 'arm'
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
-
-      - name: Set up Docker Context for Buildx
-        if: matrix.arch != 'arm'
-        run: docker context create builders
-
-      - name: Set up Docker Buildx
-        if: matrix.arch != 'arm'
-        uses: docker/setup-buildx-action@v3
-        with:
-          endpoint: builders
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
@@ -278,7 +306,7 @@ jobs:
       - name: Cache embedded binaries
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-embedded-bins-${{ matrix.arch }}-${{ hashFiles('**/embedded-bins/**/*') }}
+          key: ${{ runner.os }}-embedded-bins-arm-${{ hashFiles('**/embedded-bins/**/*') }}
           path: |
             .bins.linux.stamp
             embedded-bins/staging/linux/bin/
@@ -287,16 +315,16 @@ jobs:
       - name: Cache GOCACHE
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-smoketest-arm-gocache-${{ matrix.arch }}-${{ github.ref_name }}-${{ github.sha }}
+          key: ${{ runner.os }}-smoketest-arm-gocache-arm-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-smoketest-arm-gocache-${{ matrix.arch }}-${{ github.ref_name }}-
+            ${{ runner.os }}-smoketest-arm-gocache-arm-${{ github.ref_name }}-
           path: |
             build/cache/go/build
 
       - name: Cache GOMODCACHE
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-smoketest-arm-gomodcache-${{ matrix.arch }}-${{ hashFiles('go.sum') }}
+          key: ${{ runner.os }}-smoketest-arm-gomodcache-arm-${{ hashFiles('go.sum') }}
           path: |
             build/cache/go/mod
 
@@ -309,12 +337,12 @@ jobs:
       - name: Upload compiled executable
         uses: actions/upload-artifact@v4
         with:
-          name: k0s-${{ matrix.arch }}
+          name: k0s-arm
           path: k0s
 
       - name: Unit tests
         run: make check-unit
-      
+
       - name: Create airgap image list
         run: make airgap-images.txt
 
@@ -322,34 +350,31 @@ jobs:
         id: cache-airgap-image-bundle
         uses: actions/cache@v4
         with:
-          key: airgap-image-bundle-linux-${{ matrix.arch }}-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          key: airgap-image-bundle-linux-arm-${{ hashFiles('Makefile', 'airgap-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
           path: |
             airgap-images.txt
-            airgap-image-bundle-linux-${{ matrix.arch }}.tar
+            airgap-image-bundle-linux-arm.tar
 
       - name: Create airgap image bundle if not cached
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
-        run: make airgap-image-bundle-linux-${{ matrix.arch }}.tar
+        run: make airgap-image-bundle-linux-arm.tar
 
       - name: Upload airgap bundle
         uses: actions/upload-artifact@v4
         with:
-          name: airgap-image-bundle-linux-${{ matrix.arch }}.tar
-          path: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+          name: airgap-image-bundle-linux-arm.tar
+          path: airgap-image-bundle-linux-arm.tar
 
   # TODO We probably want to separate the smoketest into a separate callable workflow which we can call from the build step
   # This way we could actually fully parallelize the build and smoketest steps. Currently we are limited by the fact that
   # smoke-test step only start after both arm and armv7 builds have finished.
   smoketest-arm:
-    name: Smoke test on armv7/arm64 -- ${{ matrix.test }}
+    name: "${{ matrix.test }} :: arm"
     if: github.repository == 'k0sproject/k0s'
     needs: [build-arm]
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - arm # this is armv7
-          - arm64
         test:
           - check-basic
           - check-calico
@@ -357,20 +382,9 @@ jobs:
     runs-on:
       - self-hosted
       - linux
-      - ${{ matrix.arch }}
+      - arm
 
     steps:
-
-      - name: Set up Docker Context for Buildx
-        if: matrix.arch != 'arm'
-        run: docker context create builders
-
-      - name: Set up Docker Buildx
-        if: matrix.arch != 'arm'
-        uses: docker/setup-buildx-action@v3
-        with:
-          endpoint: builders
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
         with:
@@ -386,30 +400,29 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Download compiled binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
-          name: k0s-${{ matrix.arch }}
+          name: k0s-arm
 
       - name: k0s sysinfo
         run: |
           chmod +x k0s
           ./k0s sysinfo
-          
+
       - name: Download airgap bundle
         if: contains(matrix.test, 'airgap')
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
-          name: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+          name: airgap-image-bundle-linux-arm.tar
 
       - name: Run smoketest
         run: make -C inttest ${{ matrix.test }}
-
 
       - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: smoketest-${{ matrix.arch }}-check-basic-files
+          name: smoketest-arm-check-basic-files
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz
@@ -422,9 +435,9 @@ jobs:
       # post build action. So, as a workaround, ensure that all subdirectories
       # are writable.
       - name: "Post: Fixup directories"
-        if: always() && matrix.arch == 'arm'
+        if: always()
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
       - name: "Docker prune"
-        if: always() && matrix.arch == 'arm'
+        if: always()
         run: docker system prune --force --filter "until=$((24*7))h"

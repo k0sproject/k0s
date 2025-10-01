@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package common
 
@@ -94,7 +81,7 @@ func (s *standaloneLaunchDelegate) StopController(ctx context.Context, conn *SSH
 // executable is launched directly (vs. started via a service manager).
 func (s *standaloneLaunchDelegate) InitWorker(ctx context.Context, conn *SSHConnection, token string, k0sArgs ...string) error {
 	if token == "" {
-		return fmt.Errorf("got empty token for worker join")
+		return errors.New("got empty token for worker join")
 	}
 
 	var script strings.Builder
@@ -158,7 +145,7 @@ func (o *openRCLaunchDelegate) InitController(ctx context.Context, conn *SSHConn
 	}
 
 	// Configure k0s as a controller w/args
-	controllerArgs := fmt.Sprintf("controller --debug %s", strings.Join(k0sArgs, " "))
+	controllerArgs := "controller --debug " + strings.Join(k0sArgs, " ")
 	if err := configureK0sServiceArgs(ctx, conn, "controller", controllerArgs); err != nil {
 		return fmt.Errorf("failed to configure k0s with '%s'", controllerArgs)
 	}
@@ -253,7 +240,7 @@ func (*openRCLaunchDelegate) ReadK0sLogs(ctx context.Context, conn *SSHConnectio
 // installK0sServiceOpenRC will install an OpenRC k0s-type service (controller/worker)
 // if it does not already exist.
 func (o *openRCLaunchDelegate) installK0sService(ctx context.Context, conn *SSHConnection, k0sType string) error {
-	existsCommand := fmt.Sprintf("/usr/bin/file /etc/init.d/k0s%s", k0sType)
+	existsCommand := "/usr/bin/file /etc/init.d/k0s" + k0sType
 	if _, err := conn.ExecWithOutput(ctx, existsCommand); err != nil {
 		cmd := fmt.Sprintf("%s install %s", o.k0sFullPath, k0sType)
 		if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
@@ -268,7 +255,7 @@ func (o *openRCLaunchDelegate) installK0sService(ctx context.Context, conn *SSHC
 // `/etc/init.d/k0s[controller|worker]` startup script to allow for different
 // configurations at test time, using the same base image.
 func configureK0sServiceArgs(ctx context.Context, conn *SSHConnection, k0sType string, args string) error {
-	k0sServiceFile := fmt.Sprintf("/etc/init.d/k0s%s", k0sType)
+	k0sServiceFile := "/etc/init.d/k0s" + k0sType
 	cmd := fmt.Sprintf("sed -i 's#^command_args=.*$#command_args=\"%s\"#g' %s", args, k0sServiceFile)
 
 	_, err := conn.ExecWithOutput(ctx, cmd)

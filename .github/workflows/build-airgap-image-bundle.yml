@@ -21,7 +21,7 @@ env:
 jobs:
   build:
     name: "${{ inputs.target-os }}-${{ inputs.target-arch }}"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     env:
       TARGET_OS: ${{ inputs.target-os }}
@@ -33,8 +33,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: "Download :: k0s"
+        uses: actions/download-artifact@v5
+        with:
+          name: k0s-linux-amd64
+
       - name: "Download :: Airgap image list"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
 
@@ -44,7 +49,7 @@ jobs:
       - name: "Cache :: Airgap image bundle :: Calculate cache key"
         id: cache-airgap-image-bundle-calc-key
         env:
-          HASH_VALUE: ${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          HASH_VALUE: ${{ hashFiles('Makefile', 'airgap-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
         run: |
           printf 'cache-key=build-airgap-image-bundle-%s-%s-%s\n' "$TARGET_OS" "$TARGET_ARCH" "$HASH_VALUE" >> "$GITHUB_OUTPUT"
 
@@ -57,9 +62,12 @@ jobs:
 
       - name: "Build :: Airgap image bundle"
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
+        env:
+          DOCKER: ''
+          EMBEDDED_BINS_BUILDMODE: none
         run: |
-          mkdir -p "embedded-bins/staging/$TARGET_OS/bin"
-          make --touch airgap-images.txt
+          chmod +x k0s
+          make --touch k0s airgap-images.txt
           make "airgap-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
 
       - name: "Upload :: Airgap image bundle"

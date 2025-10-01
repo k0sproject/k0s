@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package worker
 
@@ -29,13 +16,14 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/platforms"
+	"github.com/containerd/platforms"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	workercontainerd "github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/debounce"
@@ -49,12 +37,13 @@ const (
 
 // OCIBundleReconciler tries to import OCI bundle into the running containerd instance
 type OCIBundleReconciler struct {
-	k0sVars         *config.CfgVars
-	log             *logrus.Entry
-	alreadyImported map[string]time.Time
-	mtx             sync.Mutex
-	cancel          context.CancelFunc
-	end             chan struct{}
+	ociBundleDir      string
+	containerdAddress string
+	log               *logrus.Entry
+	alreadyImported   map[string]time.Time
+	mtx               sync.Mutex
+	cancel            context.CancelFunc
+	end               chan struct{}
 	*prober.EventEmitter
 }
 
@@ -63,25 +52,25 @@ var _ manager.Component = (*OCIBundleReconciler)(nil)
 // NewOCIBundleReconciler builds new reconciler
 func NewOCIBundleReconciler(vars *config.CfgVars) *OCIBundleReconciler {
 	return &OCIBundleReconciler{
-		k0sVars:         vars,
-		log:             logrus.WithField("component", "OCIBundleReconciler"),
-		EventEmitter:    prober.NewEventEmitter(),
-		alreadyImported: map[string]time.Time{},
-		end:             make(chan struct{}),
+		ociBundleDir:      vars.OCIBundleDir,
+		containerdAddress: workercontainerd.Address(vars.RunDir),
+		log:               logrus.WithField("component", "OCIBundleReconciler"),
+		EventEmitter:      prober.NewEventEmitter(),
+		alreadyImported:   map[string]time.Time{},
+		end:               make(chan struct{}),
 	}
 }
 
 func (a *OCIBundleReconciler) Init(_ context.Context) error {
-	return dir.Init(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
+	return dir.Init(a.ociBundleDir, constant.ManifestsDirMode)
 }
 
 // containerdClient returns a connected containerd client.
 func (a *OCIBundleReconciler) containerdClient(ctx context.Context) (*containerd.Client, error) {
 	var client *containerd.Client
-	sock := filepath.Join(a.k0sVars.RunDir, "containerd.sock")
 	if err := retry.Do(func() (err error) {
 		client, err = containerd.New(
-			sock,
+			a.containerdAddress,
 			containerd.WithDefaultNamespace("k8s.io"),
 			containerd.WithDefaultPlatform(
 				platforms.Only(platforms.DefaultSpec()),
@@ -126,14 +115,14 @@ func (a *OCIBundleReconciler) loadAll(ctx context.Context) {
 	defer a.mtx.Unlock()
 
 	a.log.Info("Loading OCI bundles directory")
-	files, err := os.ReadDir(a.k0sVars.OCIBundleDir)
+	files, err := os.ReadDir(a.ociBundleDir)
 	if err != nil {
 		a.log.WithError(err).Errorf("Failed to read bundles directory")
 		return
 	}
 	a.EmitWithPayload("importing OCI bundles", files)
 	for _, file := range files {
-		fpath := filepath.Join(a.k0sVars.OCIBundleDir, file.Name())
+		fpath := filepath.Join(a.ociBundleDir, file.Name())
 		finfo, err := os.Stat(fpath)
 		if err != nil {
 			a.log.WithError(err).Errorf("failed to stat %s", fpath)
@@ -214,7 +203,7 @@ func (a *OCIBundleReconciler) unpinOne(ctx context.Context, image images.Image, 
 		if err := SetImageSources(&image, sources); err != nil {
 			return fmt.Errorf("failed to reset image sources: %w", err)
 		}
-		_, err := isvc.Update(ctx, image, fmt.Sprintf("labels.%s", ImageSourcePathsLabel))
+		_, err := isvc.Update(ctx, image, "labels."+ImageSourcePathsLabel)
 		return err
 	}
 
@@ -237,7 +226,7 @@ func (a *OCIBundleReconciler) installWatcher(ctx context.Context) error {
 		return fmt.Errorf("failed to create watcher: %w", err)
 	}
 
-	if err := watcher.Add(a.k0sVars.OCIBundleDir); err != nil {
+	if err := watcher.Add(a.ociBundleDir); err != nil {
 		return fmt.Errorf("failed to add watcher: %w", err)
 	}
 
@@ -261,7 +250,7 @@ func (a *OCIBundleReconciler) installWatcher(ctx context.Context) error {
 
 	go func() {
 		defer close(a.end)
-		a.log.Infof("Started to watch events on %s", a.k0sVars.OCIBundleDir)
+		a.log.Infof("Started to watch events on %s", a.ociBundleDir)
 		_ = debouncer.Run(ctx)
 		if err := watcher.Close(); err != nil {
 			a.log.Errorf("Failed to close watcher: %s", err)
@@ -294,7 +283,7 @@ func (a *OCIBundleReconciler) unpackBundle(ctx context.Context, client *containe
 	defer r.Close()
 	// WithSkipMissing allows us to skip missing blobs
 	// Without this the importing would fail if the bundle does not images for compatible architectures
-	// because the image manifest still refers to those. E.g. on arm64 containerd would stil try to unpack arm/v8&arm/v7
+	// because the image manifest still refers to those. E.g. on arm64 containerd would still try to unpack arm/v8&arm/v7
 	// images but would fail as those are not present on k0s airgap bundles.
 	images, err := client.Import(ctx, r, containerd.WithSkipMissing())
 	if err != nil {
@@ -302,8 +291,8 @@ func (a *OCIBundleReconciler) unpackBundle(ctx context.Context, client *containe
 	}
 
 	fieldpaths := []string{
-		fmt.Sprintf("labels.%s", ImagePinnedLabel),
-		fmt.Sprintf("labels.%s", ImageSourcePathsLabel),
+		"labels." + ImagePinnedLabel,
+		"labels." + ImageSourcePathsLabel,
 	}
 
 	isvc := client.ImageService()

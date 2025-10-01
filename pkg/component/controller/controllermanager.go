@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -41,12 +28,13 @@ import (
 type Manager struct {
 	K0sVars               *config.CfgVars
 	LogLevel              string
-	SingleNode            bool
+	DisableLeaderElection bool
 	ServiceClusterIPRange string
 	ExtraArgs             string
 
 	supervisor     *supervisor.Supervisor
-	uid, gid       int
+	executablePath string
+	uid            int
 	previousConfig stringmap.StringMap
 }
 
@@ -80,7 +68,8 @@ func (a *Manager) Init(_ context.Context) error {
 	if err := os.Chown(path.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
 		logrus.Warn("failed to change permissions for the ca.key: ", err)
 	}
-	return assets.Stage(a.K0sVars.BinDir, kubeControllerManagerComponent, constant.BinDirMode)
+	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeControllerManagerComponent)
+	return err
 }
 
 // Run runs kube Manager
@@ -108,7 +97,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		"v":                                a.LogLevel,
 	}
 
-	// Handle the extra args as last so they can be used to overrride some k0s "hardcodings"
+	// Handle the extra args as last so they can be used to override some k0s "hardcodings"
 	if a.ExtraArgs != "" {
 		// This service uses args without hyphens, so enforce that.
 		extras := flags.Split(strings.ReplaceAll(a.ExtraArgs, "--", ""))
@@ -116,8 +105,10 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	}
 
 	if clusterConfig.Spec.Network.DualStack.Enabled {
-		args["node-cidr-mask-size-ipv6"] = "110"
+		args["node-cidr-mask-size-ipv6"] = "117"
 		args["node-cidr-mask-size-ipv4"] = "24"
+	} else if clusterConfig.Spec.Network.IsSingleStackIPv6() {
+		args["node-cidr-mask-size"] = "117"
 	} else {
 		args["node-cidr-mask-size"] = "24"
 	}
@@ -132,7 +123,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 			args[name] = value
 		}
 	}
-	if a.SingleNode {
+	if a.DisableLeaderElection {
 		args["leader-elect"] = "false"
 	}
 
@@ -152,12 +143,11 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 
 	a.supervisor = &supervisor.Supervisor{
 		Name:    kubeControllerManagerComponent,
-		BinPath: assets.BinPath(kubeControllerManagerComponent, a.K0sVars.BinDir),
+		BinPath: a.executablePath,
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    args.ToDashedArgs(),
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 	a.previousConfig = args
 	return a.supervisor.Supervise()

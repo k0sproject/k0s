@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller_test
 
@@ -48,13 +35,13 @@ func TestClusterConfigInitializer_Create(t *testing.T) {
 		clients, &leaderElector, initialConfig.DeepCopy(),
 	)
 
-	require.NoError(t, underTest.Init(context.TODO()))
-	require.NoError(t, underTest.Start(context.TODO()))
+	require.NoError(t, underTest.Init(t.Context()))
+	require.NoError(t, underTest.Start(t.Context()))
 	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
 	crds, err := clients.APIExtensionsClient.ApiextensionsV1().
 		CustomResourceDefinitions().
-		List(context.TODO(), metav1.ListOptions{})
+		List(t.Context(), metav1.ListOptions{})
 	if assert.NoError(t, err) && assert.Len(t, crds.Items, 1) {
 		crd := crds.Items[0]
 		assert.Equal(t, "clusterconfigs.k0s.k0sproject.io", crd.Name)
@@ -62,7 +49,7 @@ func TestClusterConfigInitializer_Create(t *testing.T) {
 	}
 	actualConfig, err := clients.K0sClient.K0sV1beta1().
 		ClusterConfigs(constant.ClusterConfigNamespace).
-		Get(context.TODO(), "k0s", metav1.GetOptions{})
+		Get(t.Context(), "k0s", metav1.GetOptions{})
 	if assert.NoError(t, err) {
 		assert.Equal(t, initialConfig, actualConfig)
 	}
@@ -77,8 +64,7 @@ func TestClusterConfigInitializer_NoConfig(t *testing.T) {
 		clients, &leaderElector, initialConfig.DeepCopy(),
 	)
 
-	ctx, cancel := context.WithCancelCause(context.TODO())
-	t.Cleanup(func() { cancel(nil) })
+	ctx, cancel := context.WithCancelCause(t.Context())
 
 	var gets uint
 	abortTest := errors.New("aborting test after some retries")
@@ -111,13 +97,13 @@ func TestClusterConfigInitializer_Exists(t *testing.T) {
 			clients, &leaderElector, initialConfig,
 		)
 
-		require.NoError(t, underTest.Init(context.TODO()))
-		require.NoError(t, underTest.Start(context.TODO()))
+		require.NoError(t, underTest.Init(t.Context()))
+		require.NoError(t, underTest.Start(t.Context()))
 		t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
 		actualConfig, err := clients.K0sClient.K0sV1beta1().
 			ClusterConfigs(constant.ClusterConfigNamespace).
-			Get(context.TODO(), "k0s", metav1.GetOptions{})
+			Get(t.Context(), "k0s", metav1.GetOptions{})
 		if assert.NoError(t, err) {
 			assert.Equal(t, existingConfig, actualConfig)
 		}
@@ -131,7 +117,7 @@ func TestClusterConfigInitializer_Exists(t *testing.T) {
 
 		crds, err := clients.APIExtensionsClient.ApiextensionsV1().
 			CustomResourceDefinitions().
-			List(context.TODO(), metav1.ListOptions{})
+			List(t.Context(), metav1.ListOptions{})
 		if assert.NoError(t, err) {
 			assert.Empty(t, crds.Items, "CRDs shouldn't be applied")
 		}

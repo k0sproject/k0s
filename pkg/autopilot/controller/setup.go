@@ -1,16 +1,7 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -24,6 +15,7 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
+	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
@@ -122,7 +114,7 @@ func createNamespace(ctx context.Context, cf apcli.FactoryInterface, name string
 // for this physical host.
 func (sc *setupController) createControlNode(ctx context.Context, cf apcli.FactoryInterface, name, nodeName string) error {
 	logger := sc.log.WithField("component", "setup")
-	client, err := sc.clientFactory.GetAutopilotClient()
+	client, err := sc.clientFactory.GetK0sClient()
 	if err != nil {
 		return err
 	}
@@ -172,7 +164,8 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	}
 
 	node.Status = apv1beta2.ControlNodeStatus{
-		Addresses: addresses,
+		Addresses:  addresses,
+		K0sVersion: build.Version,
 	}
 
 	logger.Infof("Updating controlnode status '%s'", name)
@@ -227,7 +220,7 @@ func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 	return watch.CRDs(extClient.CustomResourceDefinitions()).
-		WithObjectName(fmt.Sprintf("controlnodes.%s", apv1beta2.GroupName)).
+		WithObjectName("controlnodes."+apv1beta2.GroupName).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryDelay, e := watch.IsRetryable(err); e == nil {
 				sc.log.WithError(err).Debugf(

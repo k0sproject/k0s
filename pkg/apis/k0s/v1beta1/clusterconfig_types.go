@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -20,8 +7,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"reflect"
+	"slices"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -67,8 +55,9 @@ type ClusterConfigStatus struct {
 // +genclient
 // +genclient:onlyVerbs=create,delete,list,get,watch,update
 type ClusterConfig struct {
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	metav1.TypeMeta   `json:",omitempty,inline"`
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   *ClusterSpec         `json:"spec,omitempty"`
 	Status *ClusterConfigStatus `json:"status,omitempty"`
@@ -76,32 +65,127 @@ type ClusterConfig struct {
 
 // StripDefaults returns a copy of the config where the default values a nilled out
 func (c *ClusterConfig) StripDefaults() *ClusterConfig {
-	copy := c.DeepCopy()
-	if reflect.DeepEqual(copy.Spec.API, DefaultAPISpec()) {
-		copy.Spec.API = nil
+	c = c.DeepCopy() // Clone and overwrite receiver to avoid side effects
+	if c == nil || c.Spec == nil {
+		return c
 	}
-	if reflect.DeepEqual(copy.Spec.ControllerManager, DefaultControllerManagerSpec()) {
-		copy.Spec.ControllerManager = nil
+	if reflect.DeepEqual(c.Spec.API, DefaultAPISpec()) {
+		c.Spec.API = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Scheduler, DefaultSchedulerSpec()) {
-		copy.Spec.Scheduler = nil
+	if reflect.DeepEqual(c.Spec.ControllerManager, DefaultControllerManagerSpec()) {
+		c.Spec.ControllerManager = nil
+	}
+	if reflect.DeepEqual(c.Spec.Scheduler, DefaultSchedulerSpec()) {
+		c.Spec.Scheduler = nil
 	}
 	if reflect.DeepEqual(c.Spec.Storage, DefaultStorageSpec()) {
 		c.Spec.Storage = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
-		copy.Spec.Network = nil
+	if reflect.DeepEqual(c.Spec.Network, DefaultNetwork()) {
+		c.Spec.Network = nil
+	} else if c.Spec.Network != nil &&
+		c.Spec.Network.NodeLocalLoadBalancing != nil &&
+		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
+		reflect.DeepEqual(c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
+		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Telemetry, DefaultClusterTelemetry()) {
-		copy.Spec.Telemetry = nil
+	if reflect.DeepEqual(c.Spec.Telemetry, DefaultClusterTelemetry()) {
+		c.Spec.Telemetry = nil
 	}
-	if reflect.DeepEqual(copy.Spec.Images, DefaultClusterImages()) {
-		copy.Spec.Images = nil
+	if reflect.DeepEqual(c.Spec.Images, DefaultClusterImages()) {
+		c.Spec.Images = nil
+	} else {
+		stripDefaultImages(c.Spec.Images, DefaultClusterImages())
 	}
-	if reflect.DeepEqual(copy.Spec.Konnectivity, DefaultKonnectivitySpec()) {
-		copy.Spec.Konnectivity = nil
+	if reflect.DeepEqual(c.Spec.Konnectivity, DefaultKonnectivitySpec()) {
+		c.Spec.Konnectivity = nil
 	}
-	return copy
+	return c
+}
+
+func stripDefaultImages(cfgImages, defaultImages *ClusterImages) {
+	if cfgImages != nil && defaultImages != nil {
+		cfgVal := reflect.ValueOf(cfgImages).Elem()
+		defaultVal := reflect.ValueOf(defaultImages).Elem()
+		stripDefaults(cfgVal, defaultVal)
+	}
+}
+
+// Zeroes out any field in actualValue whose value equals the corresponding
+// field in defaultValue, but only if that field's JSON tag contains
+// "omitempty". Both actualValue and defaultValue must be wrapping the same
+// struct type, actualValue must be addressable so its fields can be set, and
+// defaultValue is never modified. Unexported fields and fields without
+// "omitempty" (including json:\"-\") are left untouched.
+//
+// This logic will be applied recursively, i.e. stripDefaults will be called on
+// nested structs (or pointers to them). All other types will be handled at the
+// top level only.
+func stripDefaults(actualValue, defaultValue reflect.Value) {
+	typ := actualValue.Type()
+	for i := range typ.NumField() {
+		field := typ.Field(i)
+
+		switch field.Type.Kind() {
+		case reflect.Pointer:
+			// Skip fields to be ignored.
+			if !field.IsExported() || !canStrip(field) {
+				continue
+			}
+
+			actualValue, defaultValue := actualValue.Field(i), defaultValue.Field(i)
+
+			// Skip over nil pointers.
+			if actualValue.IsNil() || defaultValue.IsNil() {
+				continue
+			}
+
+			// Dereference pointers.
+			actualElem, defaultElem := actualValue.Elem(), defaultValue.Elem()
+
+			if reflect.DeepEqual(actualElem.Interface(), defaultElem.Interface()) {
+				// Underlying values are equal, nil out pointer.
+				actualValue.SetZero()
+			} else if actualElem.Kind() == reflect.Struct {
+				// Underlying values are different, recurse into the pointed struct.
+				stripDefaults(actualElem, defaultElem)
+				// Nil out pointer if only the zero value remains.
+				if actualElem.IsZero() {
+					actualValue.SetZero()
+				}
+			}
+
+		case reflect.Struct:
+			// Recurse into structs. The omitempty tag is meaningless for them.
+			if field.IsExported() {
+				stripDefaults(actualValue.Field(i), defaultValue.Field(i))
+			}
+
+		default:
+			// Skip fields to be ignored.
+			if !field.IsExported() || !canStrip(field) {
+				continue
+			}
+
+			actualValue, defaultValue := actualValue.Field(i), defaultValue.Field(i)
+			if reflect.DeepEqual(actualValue.Interface(), defaultValue.Interface()) {
+				actualValue.SetZero()
+			}
+		}
+	}
+}
+
+// Indicates whether a struct field is eligible for stripping defaults: it
+// returns true if the JSON tag includes "omitempty" and the field is not
+// explicitly ignored. Fields tagged `json:"-"` (or `json:"-,omitempty"`) are
+// never stripped.
+func canStrip(f reflect.StructField) bool {
+	if name, tags, hasTags := strings.Cut(f.Tag.Get("json"), ","); hasTags && name != "-" {
+		tags := strings.Split(tags, ",")
+		return slices.Contains(tags, "omitempty")
+	}
+
+	return false
 }
 
 // InstallSpec defines the required fields for the `k0s install` command
@@ -149,7 +233,7 @@ func (*SchedulerSpec) Validate() []error { return nil }
 // ClusterConfigList contains a list of ClusterConfig
 type ClusterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []ClusterConfig `json:"items"`
 }
 
@@ -165,30 +249,24 @@ func (s *SchedulerSpec) IsZero() bool {
 	return len(s.ExtraArgs) == 0
 }
 
-func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
-	config := DefaultClusterConfig(defaultStorage...)
-	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, "interval", "podSecurityPolicy")
-	if err != nil {
-		return config, err
-	}
-	if config.Spec == nil {
-		config.Spec = DefaultClusterSpec(defaultStorage...)
-	}
-	return config, nil
+func ConfigFromBytes(bytes []byte) (*ClusterConfig, error) {
+	return DefaultClusterConfig().MergedWithYAML(bytes)
 }
 
-// ConfigFromReader reads the configuration from any reader (can be stdin, file reader, etc)
-func ConfigFromReader(r io.Reader, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
-	input, err := io.ReadAll(r)
+func (c *ClusterConfig) MergedWithYAML(bytes []byte) (*ClusterConfig, error) {
+	merged := c.DeepCopy()
+	err := strictyaml.YamlUnmarshalStrictIgnoringFields(bytes, merged, "interval", "podSecurityPolicy")
 	if err != nil {
 		return nil, err
 	}
-	return ConfigFromString(string(input), defaultStorage...)
+	if merged.Spec == nil {
+		merged.Spec = c.Spec
+	}
+	return merged, nil
 }
 
 // DefaultClusterConfig sets the default ClusterConfig values, when none are given
-func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
-	clusterSpec := DefaultClusterSpec(defaultStorage...)
+func DefaultClusterConfig() *ClusterConfig {
 	return &ClusterConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: GroupVersion.String(),
@@ -198,7 +276,7 @@ func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
 			Name:      constant.ClusterConfigObjectName,
 			Namespace: constant.ClusterConfigNamespace,
 		},
-		Spec: clusterSpec,
+		Spec: DefaultClusterSpec(),
 	}
 }
 
@@ -214,7 +292,10 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if c.Spec != nil && c.Spec.Storage != nil {
 		storage = c.Spec.Storage
 	}
-	c.Spec = DefaultClusterSpec(storage)
+	c.Spec = DefaultClusterSpec()
+	if storage != nil {
+		c.Spec.Storage = storage
+	}
 
 	type config ClusterConfig
 	jc := (*config)(c)
@@ -228,7 +309,10 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	if jc.Spec == nil {
-		jc.Spec = DefaultClusterSpec(storage)
+		jc.Spec = DefaultClusterSpec()
+		if storage != nil {
+			jc.Spec.Storage = storage
+		}
 		return nil
 	}
 	if jc.Spec.Storage == nil {
@@ -268,17 +352,10 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 }
 
 // DefaultClusterSpec default settings
-func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
-	var storage *StorageSpec
-	if defaultStorage == nil || defaultStorage[0] == nil {
-		storage = DefaultStorageSpec()
-	} else {
-		storage = defaultStorage[0]
-	}
-
+func DefaultClusterSpec() *ClusterSpec {
 	spec := &ClusterSpec{
 		Extensions:        DefaultExtensions(),
-		Storage:           storage,
+		Storage:           DefaultStorageSpec(),
 		Network:           DefaultNetwork(),
 		API:               DefaultAPISpec(),
 		ControllerManager: DefaultControllerManagerSpec(),
@@ -311,7 +388,6 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		"scheduler":         s.Scheduler,
 		"storage":           s.Storage,
 		"network":           s.Network,
-		"workerProfiles":    s.WorkerProfiles,
 		"telemetry":         s.Telemetry,
 		"install":           s.Install,
 		"extensions":        s.Extensions,
@@ -322,6 +398,8 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		}
 	}
 
+	errs = append(errs, s.WorkerProfiles.Validate(field.NewPath("workerProfiles"))...)
+
 	for _, err := range s.Images.Validate(field.NewPath("images")) {
 		errs = append(errs, err)
 	}
@@ -331,7 +409,7 @@ func (s *ClusterSpec) Validate() (errs []error) {
 	}
 
 	if s.Network != nil && s.Network.ControlPlaneLoadBalancing != nil {
-		for _, err := range s.Network.ControlPlaneLoadBalancing.Validate(s.API.ExternalAddress) {
+		for _, err := range s.Network.ControlPlaneLoadBalancing.Validate() {
 			errs = append(errs, fmt.Errorf("controlPlaneLoadBalancing: %w", err))
 		}
 	}
@@ -392,6 +470,7 @@ func (c *ClusterConfig) Validate() (errs []error) {
 // - Network.ServiceCIDR
 // - Network.ClusterDomain
 // - Network.ControlPlaneLoadBalancing
+// - Network.PrimaryAddressFamily
 // - Install
 func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 	c = c.DeepCopy()
@@ -402,6 +481,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 			c.Spec.Network.ServiceCIDR = ""
 			c.Spec.Network.ClusterDomain = ""
 			c.Spec.Network.ControlPlaneLoadBalancing = nil
+			c.Spec.Network.PrimaryAddressFamily = ""
 		}
 		c.Spec.Install = nil
 	}
@@ -412,8 +492,15 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 // CRValidator is used to make sure a config CR is created with correct values
 func (c *ClusterConfig) CRValidator() *ClusterConfig {
 	copy := c.DeepCopy()
-	copy.ObjectMeta.Name = "k0s"
-	copy.ObjectMeta.Namespace = "kube-system"
+	copy.Name = "k0s"
+	copy.Namespace = "kube-system"
 
 	return copy
+}
+
+func (c *ClusterConfig) PrimaryAddressFamily() PrimaryAddressFamilyType {
+	if c != nil && c.Spec != nil && c.Spec.Network != nil && c.Spec.Network.PrimaryAddressFamily != PrimaryFamilyUnknown {
+		return c.Spec.Network.PrimaryAddressFamily
+	}
+	return c.Spec.API.DetectPrimaryAddressFamily()
 }

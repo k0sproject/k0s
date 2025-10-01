@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package config
 
@@ -20,10 +7,12 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 )
 
@@ -75,10 +64,9 @@ func TestValidateCmd(t *testing.T) {
 
 	t.Run("malformed config from file", func(t *testing.T) {
 		cmd := NewValidateCmd()
-		tmpfile, _ := os.CreateTemp("", "testconfig")
-		defer os.Remove(tmpfile.Name())
-		_, _ = tmpfile.WriteString("malformed yaml")
-		cmd.SetArgs([]string{"--config", tmpfile.Name()})
+		tmpfile := filepath.Join(t.TempDir(), "testconfig")
+		require.NoError(t, os.WriteFile(tmpfile, []byte("malformed yaml"), 0644))
+		cmd.SetArgs([]string{"--config", tmpfile})
 		errOut := bytes.NewBuffer(nil)
 		cmd.SetErr(errOut)
 		assert.ErrorContains(t, cmd.Execute(), "cannot unmarshal")
@@ -87,10 +75,9 @@ func TestValidateCmd(t *testing.T) {
 
 	t.Run("valid config from file", func(t *testing.T) {
 		cmd := NewValidateCmd()
-		tmpfile, _ := os.CreateTemp("", "testconfig")
-		defer os.Remove(tmpfile.Name())
-		_, _ = tmpfile.Write(validConfig())
-		cmd.SetArgs([]string{"--config", tmpfile.Name()})
+		tmpfile := filepath.Join(t.TempDir(), "testconfig")
+		require.NoError(t, os.WriteFile(tmpfile, validConfig(), 0644))
+		cmd.SetArgs([]string{"--config", tmpfile})
 		errOut := bytes.NewBuffer(nil)
 		cmd.SetErr(errOut)
 		assert.NoError(t, cmd.Execute())

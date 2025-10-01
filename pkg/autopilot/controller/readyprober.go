@@ -1,16 +1,5 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -18,7 +7,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -33,7 +24,10 @@ import (
 	k8shttpprobe "k8s.io/kubernetes/pkg/probe/http"
 )
 
-const readyzURLFormat = "https://%s:6443/readyz?verbose"
+const (
+	readyzURLFormat   = "https://%s/readyz?verbose"
+	defaultK8sAPIPort = 6443
+)
 
 type ReadyProber interface {
 	Probe() error
@@ -41,6 +35,7 @@ type ReadyProber interface {
 }
 
 type readyProber struct {
+	k8sAPIPort    int
 	log           *logrus.Entry
 	tlsConfig     *tls.Config
 	timeout       time.Duration
@@ -50,10 +45,14 @@ type readyProber struct {
 
 // NewReadyProber creates a new ReadyProber based on a REST configuration, and is
 // populated with PlanCommandTargetStatus targets assigned via AddTargets.
-func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig *rest.Config, timeout time.Duration) (ReadyProber, error) {
+func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig *rest.Config, k8sAPIPort int, timeout time.Duration) (ReadyProber, error) {
 	tlscfg, err := rest.TLSConfigFor(restConfig)
 	if err != nil {
 		return nil, err
+	}
+
+	if k8sAPIPort == 0 {
+		k8sAPIPort = defaultK8sAPIPort
 	}
 
 	return &readyProber{
@@ -61,6 +60,7 @@ func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig 
 		clientFactory: cf,
 		tlsConfig:     tlscfg,
 		timeout:       timeout,
+		k8sAPIPort:    k8sAPIPort,
 	}, nil
 }
 
@@ -78,12 +78,7 @@ func (p readyProber) Probe() error {
 	g := errgroup.Group{}
 
 	for _, target := range p.targets {
-		target := target
-		g.Go(func() error {
-			return func(target apv1beta2.PlanCommandTargetStatus) error {
-				return p.probeOne(target)
-			}(target)
-		})
+		g.Go(func() error { return p.probeOne(target) })
 	}
 
 	return g.Wait()
@@ -94,7 +89,7 @@ func (p readyProber) Probe() error {
 func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 	p.log.Infof("Probing %v", target.Name)
 
-	client, err := p.clientFactory.GetAutopilotClient()
+	client, err := p.clientFactory.GetK0sClient()
 	if err != nil {
 		return err
 	}
@@ -112,7 +107,7 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 	}
 
 	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig, false /* followNonLocalRedirects */)
-	url := fmt.Sprintf(readyzURLFormat, address)
+	url := fmt.Sprintf(readyzURLFormat, net.JoinHostPort(address, strconv.Itoa(p.k8sAPIPort)))
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("unable to create HTTP request for '%s': %w", url, err)

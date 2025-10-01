@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package file
 
@@ -24,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+	"time"
 )
 
 // The internal options for atomic file writes.
@@ -31,6 +19,7 @@ type atomicOpts struct {
 	target      string
 	permissions fs.FileMode
 	uid, gid    int
+	mtime       time.Time
 }
 
 func (o *atomicOpts) wantsChmod() bool {
@@ -53,6 +42,12 @@ func AtomicWithTarget(target string) *AtomicOpener {
 // Will rely on the umask if not called.
 func (o *AtomicOpener) WithPermissions(perm os.FileMode) *AtomicOpener {
 	o.permissions = perm.Perm()
+	return o
+}
+
+// The desired modification time for the target file.
+func (o *AtomicOpener) WithModificationTime(mtime time.Time) *AtomicOpener {
+	o.mtime = mtime
 	return o
 }
 
@@ -239,6 +234,12 @@ func (f *Atomic) finish(target string) (err error) {
 
 	if f.wantsChmod() {
 		if err := os.Chmod(f.fd.Name(), f.permissions.Perm()); err != nil {
+			return err
+		}
+	}
+
+	if f.mtime != (time.Time{}) {
+		if err := os.Chtimes(f.fd.Name(), f.mtime, f.mtime); err != nil {
 			return err
 		}
 	}

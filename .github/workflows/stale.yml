@@ -5,7 +5,7 @@ on:
 
 jobs:
   stale:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/stale@v9
         with:
@@ -17,3 +17,4 @@ jobs:
           remove-pr-stale-when-updated: true
           labels-to-remove-when-unstale: "stale"
           exempt-issue-labels: "enhancement"
+          exempt-all-milestones: true

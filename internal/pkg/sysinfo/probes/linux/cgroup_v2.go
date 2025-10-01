@@ -1,20 +1,7 @@
 //go:build linux
 
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package linux
 
@@ -77,7 +64,7 @@ func (g *cgroupV2) detectDevicesController() (cgroupControllerAvailable, error) 
 	case errors.Is(err, os.ErrPermission) && os.Geteuid() != 0:
 		return cgroupControllerAvailable{true, "unknown", "insufficient permissions, try with elevated permissions"}, nil
 	case errors.Is(err, unix.EROFS):
-		return cgroupControllerAvailable{true, "unknown", fmt.Sprintf("read-only file system: %s", g.mountPoint)}, nil
+		return cgroupControllerAvailable{true, "unknown", "read-only file system: " + g.mountPoint}, nil
 
 	case eBPFProgramUnsupported(err):
 		return cgroupControllerAvailable{false, err.Error(), ""}, nil
@@ -190,7 +177,7 @@ func (g *cgroupV2) detectFreezerController() (cgroupControllerAvailable, error) 
 				return cgroupControllerAvailable{true, "unknown", "insufficient permissions, try with elevated permissions"}, nil
 			}
 			if errors.Is(err, unix.EROFS) && os.Geteuid() != 0 {
-				return cgroupControllerAvailable{true, "unknown", fmt.Sprintf("read-only file system: %s", g.mountPoint)}, nil
+				return cgroupControllerAvailable{true, "unknown", "read-only file system: " + g.mountPoint}, nil
 			}
 
 			return cgroupControllerAvailable{}, fmt.Errorf("failed to create temporary cgroup: %w", err)

@@ -1,23 +1,20 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # k0s - The Zero Friction Kubernetes
 
 <!-- When changing this file, consider to change ../README.md, too! -->
 
-![k0s-logo-dark](img/k0s-logo-full-color-dark.svg#only-dark)
-![k0s-logo-light](img/k0s-logo-full-color-light.svg#only-light)
+![k0s-logo-dark](img/k0s-logo-2025-horizontal-inverted.svg#only-dark)
+![k0s-logo-light](img/k0s-logo-2025-horizontal.svg#only-light)
 
 {%
     include-markdown "../README.md"
     start="<!-- Start Overview -->"
     end="<!-- End Overview -->"
 %}
-
-## What happened to GitHub stargazers?
-
-In September 2022 we made a human error while creating some build automation scripts&tools for the GitHub repository. Our automation accidentally changed the repo to a private one for few minutes. That itself is not a big deal and everything was restored quickly. But the nasty side effect is that it also removed all the stargazers at that point. :(
-
-Before that mishap we had 4776 stargazers, making k0s one of the most popular Kubernetes distro out there.
-
-**So if you are reading this, and have not yet starred the [k0s repository](https://github.com/k0sproject/k0s/) we would highly appreciate the :star: to get our numbers closer to what they used to be.**
 
 {%
     include-markdown "../README.md"
@@ -40,6 +37,15 @@ Before that mishap we had 4776 stargazers, making k0s one of the most popular Ku
     start="<!-- Start Join the Community -->"
     end="<!-- End Join the Community -->"
 %}
+
+<!-- Copied over from "Join the Community" because rewriting the link won't work here. -->
+### Adopters
+
+k0s is used across diverse environments, from small-scale far-edge deployments
+to large data centers. Share your use case and add yourself to the list of
+[adopters].
+
+[adopters]: adopters.md
 
 ## Commercial Support
 

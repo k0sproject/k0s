@@ -1,12 +1,17 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Autopilot
 
 A tool for updating your `k0s` controller and worker nodes using specialized plans.
-There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel `edge_release`  available. The channel exposes the latest  released version.
+There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel `edge_release` available. The channel exposes the latest released version.
 
 ## How it works
 
 * You create a `Plan` YAML
-  * Defining the update payload (new version of `k0s`, URLs for platforms, etc)
+  * Defining the update payload (new version of `k0s`, URLs for platforms, etc.)
   * Add definitions for all the nodes that should receive the update.
     * Either statically, or dynamically using label/field selectors
 * Apply the `Plan`
@@ -30,8 +35,8 @@ spec:
   upgradeStrategy:
     type: periodic
     periodic:
-      # The folowing fields configures updates to happen only on Tue or Wed at 13:00-15:00
-      days: [Tuesdsay,Wednesday]
+      # The following fields configures updates to happen only on Tue or Wed at 13:00-15:00
+      days: [Tuesdays,Wednesday]
       startTime: "13:00"
       length: 2h
   planSpec: # This defines the plan to be created IF there are updates available
@@ -54,7 +59,7 @@ resume the **autopilot** operations.
 should **not** be of a newer version than the API server.
 
 * How **autopilot** handles this is that when a `Plan` is applied that has both controller
-and worker nodes, **all** of the controller nodes will be updated first. It is only when
+and worker nodes, **all** the controller nodes will be updated first. It is only when
 **all** controllers have updated **successfully** that worker nodes will receive their
 update instructions.
 
@@ -103,10 +108,10 @@ spec:
 
   commands:
     - k0supdate:
-        version: v{{{ extra.k8s_version }}}+k0s.0
+        version: {{{ k0s_version }}}
         platforms:
           linux-amd64:
-            url: https://github.com/k0sproject/k0s/releases/download/v{{{ extra.k8s_version }}}+k0s.0/k0s-v{{{ extra.k8s_version }}}+k0s.0-amd64
+            url: https://github.com/k0sproject/k0s/releases/download/{{{ k0s_version }}}/k0s-{{{ k0s_version }}}-amd64
             sha256: '0000000000000000000000000000000000000000000000000000000000000000'
         targets:
           controllers:
@@ -149,7 +154,7 @@ does nothing with this information.
 
 #### `spec.commands[] (required)`
 
-* The `commands` contains all of the commands that should be performed as a part of the plan.
+* The `commands` contains the commands that should be performed as a part of the plan.
 
 ### **`k0supdate`** Command
 
@@ -160,9 +165,9 @@ version before and after update to ensure success.
 
 #### `spec.commands[].k0supdate.platforms.*.url <string> (required)`
 
-* An URL providing where the updated binary should be downloaded from, for this specific platform.
+* A URL providing where the updated binary should be downloaded from, for this specific platform.
   * The naming of platforms is a combination of `$GOOS` and `$GOARCH`, separated by a hyphen (`-`)
-    * eg: `linux-amd64`, `linux-arm64`, `linux-arm`
+    * e.g.: `linux-amd64`, `linux-arm64`, `linux-arm`
   * **Note:** The main supported platform is `linux`. **Autopilot** may work on other platforms, however
 this has not been tested.
 
@@ -312,7 +317,7 @@ To read this status, this indicates that:
   waiting for the next opportunity to process a command.
 * There are three controller nodes
   * Two controllers have `SignalCompleted` successfully
-  * One is waiting to be signalled (`SignalPending`)
+  * One is waiting to be signaled (`SignalPending`)
 * There are also three worker nodes
   * All are awaiting signaling updates (`SignalPending`)
 
@@ -396,8 +401,8 @@ spec:
   upgradeStrategy:
     type: periodic
     periodic:
-      # The folowing fields configures updates to happen only on Tue or Wed at 13:00-15:00
-      days: [Tuesdsay,Wednesday]
+      # The following fields configures updates to happen only on Tue or Wed at 13:00-15:00
+      days: [Tuesdays,Wednesday]
       startTime: "13:00"
       length: 2h
   # Optional. Specifies a created Plan object

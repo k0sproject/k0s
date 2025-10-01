@@ -1,26 +1,13 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
 import "fmt"
 
 // Cleans up a slice of interfaces into slice of actual values
-func cleanUpInterfaceArray(in []interface{}) []interface{} {
-	result := make([]interface{}, len(in))
+func cleanUpInterfaceArray(in []any) []any {
+	result := make([]any, len(in))
 	for i, v := range in {
 		result[i] = cleanUpMapValue(v)
 	}
@@ -28,24 +15,24 @@ func cleanUpInterfaceArray(in []interface{}) []interface{} {
 }
 
 // Cleans up the map keys to be strings
-func cleanUpInterfaceMap(in map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
+func cleanUpInterfaceMap(in map[string]any) map[string]any {
+	result := make(map[string]any)
 	for k, v := range in {
-		result[fmt.Sprintf("%v", k)] = cleanUpMapValue(v)
+		result[k] = cleanUpMapValue(v)
 	}
 	return result
 }
 
 // Cleans up the value in the map, recurses in case of arrays and maps
-func cleanUpMapValue(v interface{}) interface{} {
+func cleanUpMapValue(v any) any {
 	// Keep null values as nil to avoid type mismatches
 	if v == nil {
 		return nil
 	}
 	switch v := v.(type) {
-	case []interface{}:
+	case []any:
 		return cleanUpInterfaceArray(v)
-	case map[string]interface{}:
+	case map[string]any:
 		return cleanUpInterfaceMap(v)
 	case string:
 		return v
@@ -62,10 +49,10 @@ func cleanUpMapValue(v interface{}) interface{} {
 
 // CleanUpGenericMap is a helper to "cleanup" generic yaml parsing where nested maps
 // are unmarshalled with type map[interface{}]interface{}
-func CleanUpGenericMap(in map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
+func CleanUpGenericMap(in map[string]any) map[string]any {
+	result := make(map[string]any)
 	for k, v := range in {
-		result[fmt.Sprintf("%v", k)] = cleanUpMapValue(v)
+		result[k] = cleanUpMapValue(v)
 	}
 	return result
 }

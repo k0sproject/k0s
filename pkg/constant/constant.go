@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package constant
 
@@ -65,42 +52,40 @@ const (
 	ApiserverUser = "kube-apiserver"
 	// SchedulerUser defines the user to use for running k8s scheduler
 	SchedulerUser = "kube-scheduler"
-	// KonnectivityServerUser deinfes the user to use for konnectivity-server
+	// KonnectivityServerUser defines the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
 	// KeepalivedUser defines the user to use for running keepalived
 	KeepalivedUser = "keepalived"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
-	KubernetesMajorMinorVersion = "1.31"
+	KubernetesMajorMinorVersion = "1.34"
 	// Indicates if k0s is using a Kubernetes pre-release or a GA version.
 	KubernetesPreRelease = false
 
 	/* Image Constants */
 
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
-	KonnectivityImageVersion           = "v0.31.0"
+	KonnectivityImageVersion           = "v0.33.0"
 	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
 	PushGatewayImageVersion            = "1.4.0-k0s.0"
-	MetricsImage                       = "registry.k8s.io/metrics-server/metrics-server"
-	MetricsImageVersion                = "v0.7.2"
-	KubePauseContainerImage            = "registry.k8s.io/pause"
-	KubePauseContainerImageVersion     = "3.9"
+	MetricsImage                       = "quay.io/k0sproject/metrics-server"
+	MetricsImageVersion                = "v0.7.2-0"
+	KubePauseContainerImage            = "quay.io/k0sproject/pause"
+	KubePauseContainerImageVersion     = "3.10.1"
 	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion              = "v1.31.2"
+	KubeProxyImageVersion              = "v1.34.0"
 	CoreDNSImage                       = "quay.io/k0sproject/coredns"
-	CoreDNSImageVersion                = "1.11.3"
+	CoreDNSImageVersion                = "1.12.2-1"
 	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"
-	EnvoyProxyImageVersion             = "v1.31.1"
+	EnvoyProxyImageVersion             = "v1.34.3"
 	CalicoImage                        = "quay.io/k0sproject/calico-cni"
-	CalicoComponentImagesVersion       = "v3.28.2-0"
+	CalicoComponentImagesVersion       = "v3.29.4-0"
 	CalicoNodeImage                    = "quay.io/k0sproject/calico-node"
 	KubeControllerImage                = "quay.io/k0sproject/calico-kube-controllers"
 	KubeRouterCNIImage                 = "quay.io/k0sproject/kube-router"
-	KubeRouterCNIImageVersion          = "v2.2.1-iptables1.8.9-0"
+	KubeRouterCNIImageVersion          = "v2.5.0-iptables1.8.11-0"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
-	KubeRouterCNIInstallerImageVersion = "1.3.0-k0s.0"
-	OpenEBSRepository                  = "https://openebs.github.io/charts"
-	OpenEBSVersion                     = "3.3.0"
+	KubeRouterCNIInstallerImageVersion = "1.7.1-k0s.0"
 
 	/* Controller component names */
 
@@ -110,6 +95,7 @@ const (
 	CoreDNSComponentname               = "coredns"
 	CsrApproverComponentName           = "csr-approver"
 	HelmComponentName                  = "helm"
+	IptablesBinariesComponentName      = "iptables-binaries"
 	KonnectivityServerComponentName    = "konnectivity-server"
 	KubeControllerManagerComponentName = "kube-controller-manager"
 	KubeProxyComponentName             = "kube-proxy"
@@ -117,17 +103,17 @@ const (
 	WorkerConfigComponentName          = "worker-config"
 	MetricsServerComponentName         = "metrics-server"
 	NetworkProviderComponentName       = "network-provider"
-	SystemRbacComponentName            = "system-rbac"
+	SystemRBACComponentName            = "system-rbac"
 	NodeRoleComponentName              = "node-role"
 	WindowsNodeComponentName           = "windows-node"
 	AutopilotComponentName             = "autopilot"
+	UpdateProberComponentName          = "update-prober"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
 	ClusterConfigNamespace  = "kube-system"
 	ClusterConfigObjectName = "k0s"
 
-	NodeRoleLabelNamespace = "node-role.kubernetes.io"
-	K0SNodeRoleLabel       = "node.k0sproject.io/role"
+	K0SNodeRoleLabel = "node.k0sproject.io/role"
 )
 
 // The list of allowed TLS v1.2 cipher suites. Those should be used for k0s

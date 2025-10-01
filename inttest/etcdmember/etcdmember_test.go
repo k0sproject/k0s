@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package hacontrolplane
 
@@ -20,16 +7,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 )
+
+const basePath = "apis/etcd.k0sproject.io/v1beta1/etcdmembers/%s"
 
 type EtcdMemberSuite struct {
 	common.BootlooseSuite
@@ -56,7 +47,7 @@ func (s *EtcdMemberSuite) getMembers(ctx context.Context, fromControllerIdx int)
 func (s *EtcdMemberSuite) TestDeregistration() {
 	ctx := s.Context()
 	var joinToken string
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 
 		// Note that the token is intentionally empty for the first controller
@@ -72,8 +63,8 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
-		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
+	for idx := range s.ControllerCount {
+		s.Require().Len(s.GetMembers(idx), s.ControllerCount)
 	}
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -81,14 +72,10 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	etcdMemberClient, err := s.EtcdMemberClient(s.ControllerNode(0))
 
 	// Check each node is present in the etcd cluster and reports joined state
-	expectedObjects := []string{"controller0", "controller1", "controller2"}
-
 	// Use errorgroup to wait for all the statuses to be updated
 	eg := errgroup.Group{}
 
-	for i, obj := range expectedObjects {
-		i, obj := i, obj
-
+	for i, obj := range nodes {
 		eg.Go(func() error {
 			s.T().Logf("verifying initial status of %s", obj)
 			em := &etcdv1beta1.EtcdMember{}
@@ -133,12 +120,12 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 
 	// Check that the node is gone from the etcd cluster according to etcd itself
 	members := s.getMembers(ctx, 0)
-	s.Require().Len(members, s.BootlooseSuite.ControllerCount-1)
+	s.Require().Len(members, s.ControllerCount-1)
 	s.Require().NotContains(members, "controller2")
 
 	// Make sure the EtcdMember CR status is successfully updated
 	em := s.getMember(ctx, "controller2")
-	s.Require().Equal(em.Status.ReconcileStatus, "Success")
+	s.Require().Equal(etcdv1beta1.ReconcileStatusSuccess, em.Status.ReconcileStatus)
 	s.Require().Equal(etcdv1beta1.ConditionFalse, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
 
 	// Stop k0s and reset the node
@@ -151,13 +138,13 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 
 	// Final sanity -- ensure all nodes see each other according to etcd
 	members = s.getMembers(ctx, 0)
-	s.Require().Len(members, s.BootlooseSuite.ControllerCount)
+	s.Require().Len(members, s.ControllerCount)
 	s.Require().Contains(members, "controller2")
 
 	// Check the CR is present again
 	em = s.getMember(ctx, "controller2")
 	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
-	s.Require().Equal(false, em.Spec.Leave)
+	s.Require().False(em.Spec.Leave)
 	s.Require().Equal(etcdv1beta1.ConditionTrue, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
 
 	// Check that after restarting the controller, the member is still present
@@ -167,12 +154,46 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	s.Require().NoError(err)
 	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
 
+	// Figure out what node is the leader and mark it as leaving
+	leader := s.getLeader(ctx)
+	s.leaveNode(ctx, leader)
+
 }
 
-const basePath = "apis/etcd.k0sproject.io/v1beta1/etcdmembers/%s"
+// getLeader returns the name of the current k0s leader node by comparing
+// the holder identity of the "k0s-endpoint-reconciler" lease to the per node leases
+func (s *EtcdMemberSuite) getLeader(ctx context.Context) string {
+	// First we need to get all leases in "kube-node-lease" NS
+	kc, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	leases, err := kc.CoordinationV1().Leases("kube-node-lease").List(ctx, metav1.ListOptions{})
+	s.Require().NoError(err)
+	leaseIDs := make(map[string]string)
+	for _, l := range leases.Items {
+		if strings.Contains(l.Name, "k0s-ctrl") {
+			node := strings.ReplaceAll(l.Name, "k0s-ctrl-", "")
+			leaseID := l.Spec.HolderIdentity
+			leaseIDs[*leaseID] = node
+		}
+	}
+	// Next we need to match the "k0s-endpoint-reconciler" lease holder identity to a node name
+	leaderLease, err := kc.CoordinationV1().Leases("kube-node-lease").Get(ctx, "k0s-endpoint-reconciler", metav1.GetOptions{})
+	s.Require().NoError(err)
+	return leaseIDs[*leaderLease.Spec.HolderIdentity]
+
+}
 
 func (s *EtcdMemberSuite) leaveNode(ctx context.Context, name string) {
-	kc, err := s.KubeClient(s.ControllerNode(0))
+	// Get kube client to some other node that we're marking to leave
+	n := ""
+	for _, node := range nodes {
+		if node != name {
+			n = node
+			break
+		}
+	}
+	s.T().Logf("using %s as API server to mark %s for leaving", n, name)
+	kc, err := s.KubeClient(n)
 	s.Require().NoError(err)
 
 	// Patch the EtcdMember CR to set the Leave flag
@@ -185,13 +206,16 @@ func (s *EtcdMemberSuite) leaveNode(ctx context.Context, name string) {
 	err = common.Poll(ctx, func(ctx context.Context) (done bool, err error) {
 		em := &etcdv1beta1.EtcdMember{}
 		err = kc.RESTClient().Get().AbsPath(fmt.Sprintf(basePath, name)).Do(ctx).Into(em)
-		s.Require().NoError(err)
+		if err != nil {
+			// We need to retry on errors since it's very common to hit "etcd leader changed" errors when we're messing with the cluster
+			s.T().Logf("error getting EtcdMember %s, gonna retry: %v", name, err)
+			return false, nil
+		}
 
 		c := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
 		if c == nil {
 			return false, nil
 		}
-		s.T().Logf("JoinStatus = %s, waiting for %s", c.Status, etcdv1beta1.ConditionFalse)
 		return c.Status == etcdv1beta1.ConditionFalse, nil
 
 	})
@@ -209,6 +233,8 @@ func (s *EtcdMemberSuite) getMember(ctx context.Context, name string) *etcdv1bet
 	s.Require().NoError(err)
 	return em
 }
+
+var nodes = []string{"controller0", "controller1", "controller2"}
 
 func TestEtcdMemberSuite(t *testing.T) {
 	s := EtcdMemberSuite{

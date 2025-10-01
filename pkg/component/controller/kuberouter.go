@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -20,8 +7,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path/filepath"
 	"reflect"
+	"strconv"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -36,7 +27,6 @@ import (
 type KubeRouter struct {
 	log logrus.FieldLogger
 
-	saver   manifestsSaver
 	k0sVars *config.CfgVars
 
 	previousConfig kubeRouterConfig
@@ -60,17 +50,18 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars, manifestsSaver manifestsSaver) *KubeRouter {
+func NewKubeRouter(k0sVars *config.CfgVars) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
-		saver:   manifestsSaver,
 		k0sVars: k0sVars,
 	}
 }
 
-// Init does nothing
-func (k *KubeRouter) Init(_ context.Context) error { return nil }
+// Init implements [manager.Component].
+func (k *KubeRouter) Init(context.Context) error {
+	return dir.Init(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter"), constant.ManifestsDirMode)
+}
 
 // Stop no-op as nothing running
 func (k *KubeRouter) Stop() error { return nil }
@@ -111,18 +102,25 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 
 	cniHairpin, globalHairpin := getHairpinConfig(clusterConfig.Spec.Network.KubeRouter)
 
+	isSingleStackIPv6 := clusterConfig.Spec.Network.IsSingleStackIPv6()
 	args := stringmap.StringMap{
 		// k0s set default args
 		"run-router":           "true",
 		"run-firewall":         "true",
 		"run-service-proxy":    "false",
 		"bgp-graceful-restart": "true",
-		"enable-ipv4":          "true",
 		// Args from config values
-		"enable-ipv6":  fmt.Sprintf("%t", clusterConfig.Spec.Network.DualStack.Enabled),
-		"auto-mtu":     fmt.Sprintf("%t", clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
-		"metrics-port": fmt.Sprintf("%d", clusterConfig.Spec.Network.KubeRouter.MetricsPort),
-		"hairpin-mode": fmt.Sprintf("%t", globalHairpin),
+		"enable-ipv4":              strconv.FormatBool(!isSingleStackIPv6),
+		"enable-ipv6":              strconv.FormatBool(clusterConfig.Spec.Network.DualStack.Enabled || isSingleStackIPv6),
+		"auto-mtu":                 strconv.FormatBool(clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
+		"metrics-port":             strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
+		"hairpin-mode":             strconv.FormatBool(globalHairpin),
+		"service-cluster-ip-range": clusterConfig.Spec.Network.ServiceCIDR,
+	}
+
+	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic
+	if isSingleStackIPv6 {
+		args["router-id"] = "generate"
 	}
 
 	// We should not add peering flags if the values are empty
@@ -165,17 +163,17 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
 
-	err = k.saver.Save("kube-router.yaml", output.Bytes())
-	if err != nil {
+	if err := file.AtomicWithTarget(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml")).
+		WithPermissions(constant.CertMode).
+		Write(output.Bytes()); err != nil {
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
+
 	return nil
 }
 
-// Run runs the kube-router reconciler
-func (k *KubeRouter) Start(_ context.Context) error {
-	k.log.Info("starting to dump manifests")
-
+// Start implements [manager.Component].
+func (k *KubeRouter) Start(context.Context) error {
 	return nil
 }
 
@@ -245,6 +243,8 @@ spec:
     spec:
       priorityClassName: system-node-critical
       serviceAccountName: kube-router
+      nodeSelector:
+        kubernetes.io/os: linux
       initContainers:
         - name: install-cni-bins
           image: {{ .CNIInstallerImage }}
@@ -279,13 +279,8 @@ spec:
       tolerations:
       - effect: NoSchedule
         operator: Exists
-      - key: CriticalAddonsOnly
-        operator: Exists
       - effect: NoExecute
         operator: Exists
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
       volumes:
       - name: lib-modules
         hostPath:

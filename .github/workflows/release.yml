@@ -5,6 +5,9 @@ on:
     tags:
       - v* # Push events to matching v*, i.e. v1.0, v20.15.10
 
+permissions:
+  contents: write
+
 env:
   MAKEFLAGS: -j
   CURL_OPTS: --proto =https --tlsv1.2 --retry 5 --retry-all-errors --silent --show-error --location --fail
@@ -15,7 +18,7 @@ jobs:
       TF_VAR_k0s_binary_path: "${{ github.workspace }}/k0s"
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
     name: release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       tag_name: ${{ steps.branch_name.outputs.TAG_NAME }}
@@ -30,7 +33,7 @@ jobs:
           echo TAG_NAME="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
-        uses: shogo82148/actions-create-release@v1.7.6
+        uses: shogo82148/actions-create-release@v1.7.8
         with:
           release_name: ${{ steps.branch_name.outputs.TAG_NAME }}
           draft: true # So we can manually edit before publishing
@@ -47,7 +50,6 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       - name: Clean Docker before build
         run: |
@@ -101,13 +103,13 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v2.3.0/cosign-linux-amd64
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-amd64
           chmod +x ./cosign
-          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
+          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -115,7 +117,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Airgap Image List
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-images.txt
@@ -123,7 +125,7 @@ jobs:
           asset_content_type: text/plain
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -133,11 +135,11 @@ jobs:
       - name: Upload Artifact for use in other Jobs
         uses: actions/upload-artifact@v4
         with:
-          name: k0s-amd64
+          name: k0s-linux-amd64
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-amd64.tar
@@ -165,7 +167,6 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
       TARGET_OS: windows
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
@@ -183,6 +184,9 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
 
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
         env:
@@ -193,9 +197,9 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v2.3.0/cosign-linux-amd64
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-amd64
           chmod +x ./cosign
-          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.exe.sig k0s.exe
+          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.exe.sig k0s.exe
           cat k0s.exe.sig
 
       - name: Clean Docker
@@ -203,7 +207,7 @@ jobs:
           docker system prune --all --volumes --force
 
       - name: Upload Release Assets
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe
@@ -211,7 +215,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe.sig
@@ -234,7 +238,6 @@ jobs:
     runs-on: [self-hosted, linux, arm64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       - name: Set up Docker Context for Buildx
         run: docker context create builders
@@ -261,9 +264,9 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v2.3.0/cosign-linux-arm64
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-arm64
           chmod +x ./cosign
-          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
+          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
 
       - name: Set up Go for smoke tests
@@ -287,7 +290,7 @@ jobs:
             /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -295,7 +298,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -305,11 +308,11 @@ jobs:
       - name: Upload Artifact for use in other Jobs
         uses: actions/upload-artifact@v4
         with:
-          name: k0s-arm64
+          name: k0s-linux-arm64
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-arm64.tar
@@ -321,7 +324,6 @@ jobs:
     runs-on: [self-hosted, linux, arm]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"
@@ -348,9 +350,9 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v2.3.0/cosign-linux-arm
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-arm
           chmod +x ./cosign
-          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload=false --output-file=k0s.sig k0s
+          COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob --key env://COSIGN_KEY --tlog-upload -y --output-file=k0s.sig k0s
           cat k0s.sig
 
       - name: Set up Go for smoke tests
@@ -374,7 +376,7 @@ jobs:
             /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -382,7 +384,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -392,11 +394,11 @@ jobs:
       - name: Upload Artifact for use in other Jobs
         uses: actions/upload-artifact@v4
         with:
-          name: k0s-arm
+          name: k0s-linux-arm
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-arm.tar
@@ -425,10 +427,10 @@ jobs:
       - x64
       - arm64
       - armv7
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Download assets for generating checksums
-        uses: robinraju/release-downloader@v1.11
+        uses: robinraju/release-downloader@v1.12
         with:
           releaseId: ${{ needs.release.outputs.release_id }}
           filename: "*"
@@ -438,7 +440,7 @@ jobs:
         run: |
           cd release_assets && sha256sum -b * > ../sha256sums.txt
       - name: Upload sha256sums.txt
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: sha256sums.txt
@@ -452,7 +454,12 @@ jobs:
       - x64
       - arm64
       - armv7
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -473,20 +480,27 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Fetch k0s amd64
-        uses: actions/download-artifact@v4
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
         with:
-          name: k0s-amd64
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+          registry: quay.io
+
+      - name: Fetch k0s amd64
+        uses: actions/download-artifact@v5
+        with:
+          name: k0s-linux-amd64
           path: ./k0s-amd64
       - name: Fetch k0s arm64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
-          name: k0s-arm64
+          name: k0s-linux-arm64
           path: ./k0s-arm64
       - name: Fetch k0s arm
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
-          name: k0s-arm
+          name: k0s-linux-arm
           path: ./k0s-arm
 
       - name: Make binaries executable
@@ -504,6 +518,7 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           tags: |
             ghcr.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
+            quay.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
             docker.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
           build-args: |
             ALPINE_VERSION=${{ env.ALPINE_PATCH_VERSION }}
@@ -512,7 +527,7 @@ jobs:
   sbom:
     needs:
       - release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Run git checkout
         uses: actions/checkout@v4
@@ -528,7 +543,7 @@ jobs:
           make sign-pub-key
 
       - name: Upload Release Assets - SBOM
-        uses: shogo82148/actions-upload-release-asset@v1.7.8
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./sbom/*
@@ -536,101 +551,46 @@ jobs:
 
   conformance-test:
     needs:
-      - release
       - x64
       - arm64
     strategy:
+      fail-fast: false
       matrix:
         arch: [ amd64, arm64 ]
-        include:
-          - arch: amd64
-            instance-type: c4.xlarge
-          - arch: arm64
-            instance-type: c7g.xlarge
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_TERRAFORM_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_TERRAFORM_KEY }}
-      AWS_DEFAULT_REGION: eu-west-1
-      TF_VERSION: 1.2.2
-      TF_VAR_k0s_binary_path: ${{ github.workspace }}/k0s/k0s
-      TF_VAR_instance_arch: ${{ matrix.arch }}
-      TF_VAR_instance_type: ${{ matrix.instance-type }}
-      KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     name: "K8s Conformance Testing"
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./inttest/sonobuoy/terraform
+    uses: ./.github/workflows/ostests-e2e.yaml
+    with:
+      e2e-concurrency-level: 1
+      os: debian_12
+      arch: ${{ matrix.arch }}
+      network-provider: kuberouter
+    secrets:
+      aws-access-key-id: ${{ secrets.AWS_TERRAFORM_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_TERRAFORM_KEY }}
+      aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+  conformance-test-upload:
+    name: Upload conformance test results
+    needs: [release, conformance-test]
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ amd64, arm64 ]
+
     steps:
-      - name: Run git checkout
-        uses: actions/checkout@v4
-
-      - name: Prepare build environment
-        working-directory: ./
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
+      - name: Download conformance test results
+        uses: actions/download-artifact@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Fetch k0s Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: k0s-${{ matrix.arch }}
-          path: ${{ github.workspace }}/k0s
-
-      - name: Launch Test Environment
-        env:
-          TF_VAR_cluster_name: "k0s_conformance"
-          TF_VAR_k0s_version: ${{ needs.release.outputs.tag_name }}
-        run: |
-          # Start SSH Agent
-          eval `ssh-agent -s`
-
-          terraform apply -auto-approve
-
-      - name: Create k0s Cluster using k0sctl
-        run: |
-          # download k0sctl
-          curl $CURL_OPTS --output k0sctl "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-amd64"
-          chmod +x ./k0sctl
-          ./k0sctl apply -c k0sctl.yaml
-
-          # save kubeconfig file
-          ./k0sctl kubeconfig > $KUBECONFIG
-
-      - name: Run Full Conformance Check
-        run: make check-conformance
-        working-directory: ./inttest
-
-      - name: Retrieve Sonobuoy Results
-        run: |
-          make get-conformance-results
-        working-directory: ./inttest
+          path: ostests-e2e
+          pattern: ostests-e2e-*-sonobuoy-results
 
       - name: Upload conformance test result to Release Assets
-        uses: shogo82148/actions-upload-release-asset@v1.7.8 # Allows us to upload a file with wildcard patterns
+        uses: shogo82148/actions-upload-release-asset@v1.8.2
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: inttest/*_sonobuoy_*.tar.gz
+          asset_path: ostests-e2e/*-${{ matrix.arch }}-*/sonobuoy-e2e-serial.tar.gz
           asset_name: sonobuoy-conformance-results-${{ matrix.arch }}-${{ needs.release.outputs.tag_name }}.tar.gz
           asset_content_type: application/gzip
-          overwrite: true # In case we need to re-run the conformance this let's us to overwrite the results tarball
-        if: ${{ always() }}
-      - name: Clean-Up Environment
-        env:
-          TF_VAR_cluster_name: "k0s_conformance"
-          TF_VAR_k0s_version: ${{ needs.release.outputs.tag_name }}
-        run: |
-          terraform destroy -auto-approve
-        if: ${{ always() }}

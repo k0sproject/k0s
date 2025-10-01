@@ -1,24 +1,12 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package workerconfig
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -31,6 +19,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kube "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,6 +38,8 @@ import (
 )
 
 type kubeletConfig = kubeletv1beta1.KubeletConfiguration
+
+type mockApplierCall = func(resources) error
 
 // TODO: simplify it somehow, it is hard to read and to modify, both tests and implementation
 func TestReconciler_Lifecycle(t *testing.T) {
@@ -96,7 +87,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("reconcile_fails", func(t *testing.T) {
 			underTest := createdReconciler(t, nil)
 
-			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil))
+			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig())
 
 			require.Error(t, err)
 			assert.Equal(t, "cannot reconcile, not started: created", err.Error())
@@ -140,7 +131,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("reconcile_fails", func(t *testing.T) {
 			underTest := initializedReconciler(t, nil)
 
-			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil))
+			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig())
 
 			require.Error(t, err)
 			assert.Equal(t, "cannot reconcile, not started: initialized", err.Error())
@@ -196,7 +187,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 			underTest, mockApplier := startedReconciler(t)
 			applied := mockApplier.expectApply(t, nil)
 
-			assert.NoError(t, underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil)))
+			assert.NoError(t, underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig()))
 
 			assert.NotEmpty(t, applied(), "Expected some resources to be applied")
 		})
@@ -214,7 +205,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Helper()
 		underTest, mockApplier := startedReconciler(t)
 		applied := mockApplier.expectApply(t, nil)
-		require.NoError(t, underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil)))
+		require.NoError(t, underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig()))
 
 		_ = applied() // wait until reconciliation happened
 		return underTest, mockApplier
@@ -242,7 +233,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("another_reconcile_succeeds", func(t *testing.T) {
 			underTest, mockApplier := reconciledReconciler(t)
 			applied := mockApplier.expectApply(t, nil)
-			clusterConfig := v1beta1.DefaultClusterConfig(nil)
+			clusterConfig := v1beta1.DefaultClusterConfig()
 			clusterConfig.Spec.WorkerProfiles = v1beta1.WorkerProfiles{
 				{Name: "foo", Config: &runtime.RawExtension{Raw: []byte("{}")}},
 			}
@@ -291,7 +282,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("reconcile_fails", func(t *testing.T) {
 			underTest := stoppedReconciler(t)
 
-			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil))
+			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig())
 
 			require.Error(t, err)
 			assert.Equal(t, "cannot reconcile, not started: stopped", err.Error())
@@ -327,19 +318,19 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
 
-	require.NoError(t, underTest.Init(context.TODO()))
+	require.NoError(t, underTest.Init(t.Context()))
 
 	createKubernetesEndpoints(t, clients.Client)
 	mockApplier := installMockApplier(t, underTest)
 
-	require.NoError(t, underTest.Start(context.TODO()))
+	require.NoError(t, underTest.Start(t.Context()))
 	t.Cleanup(func() {
 		assert.NoError(t, underTest.Stop())
 	})
 
 	applied := mockApplier.expectApply(t, nil)
 
-	require.NoError(t, underTest.Reconcile(context.TODO(), &v1beta1.ClusterConfig{
+	require.NoError(t, underTest.Reconcile(t.Context(), &v1beta1.ClusterConfig{
 		Spec: &v1beta1.ClusterSpec{
 			FeatureGates: v1beta1.FeatureGates{
 				v1beta1.FeatureGate{
@@ -369,39 +360,50 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 			}, {
 				Name:   "profile_YYY",
 				Config: &runtime.RawExtension{Raw: []byte(`{"authentication": {"webhook": {"cacheTTL": "15s"}}}`)},
+			}, {
+				Name:   "profile_ZZZ",
+				Config: &runtime.RawExtension{Raw: []byte(`{"cgroupsPerQOS": false, "kubeletCgroups": "", "kubeReservedCgroup": ""}`)},
 			}},
 		},
 	}))
 
-	configMaps := map[string]func(t *testing.T, expected *kubeletConfig){
-		"worker-config-default-1.31": func(t *testing.T, expected *kubeletConfig) {
-			expected.CgroupsPerQOS = ptr.To(true)
+	expectedConfigMaps := map[string]func(expected *kubeletConfig){
+		"worker-config-default-1.34": func(expected *kubeletConfig) {
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-default-windows-1.31": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-default-windows-1.34": func(expected *kubeletConfig) {
 			expected.CgroupsPerQOS = ptr.To(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
+			expected.KubeletCgroups = ""
+			expected.KubeReservedCgroup = ""
 		},
 
-		"worker-config-profile_XXX-1.31": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-profile_XXX-1.34": func(expected *kubeletConfig) {
 			expected.Authentication.Anonymous.Enabled = ptr.To(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_YYY-1.31": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-profile_YYY-1.34": func(expected *kubeletConfig) {
 			expected.Authentication.Webhook.CacheTTL = metav1.Duration{Duration: 15 * time.Second}
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
+		},
+
+		"worker-config-profile_ZZZ-1.34": func(expected *kubeletConfig) {
+			expected.CgroupsPerQOS = ptr.To(false)
+			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
+			expected.KubeletCgroups = ""
+			expected.KubeReservedCgroup = ""
 		},
 	}
 
 	appliedResources := applied()
-	assert.Len(t, appliedResources, len(configMaps)+2)
+	assert.Len(t, appliedResources, len(expectedConfigMaps)+2)
 
-	for name, mod := range configMaps {
+	for name, configModFn := range expectedConfigMaps {
 		t.Run(name, func(t *testing.T) {
 			kubelet := requireKubelet(t, appliedResources, name)
-			expected := makeKubeletConfig(t, func(expected *kubeletConfig) { mod(t, expected) })
+			expected := makeKubeletConfig(t, configModFn)
 			assert.JSONEq(t, expected, kubelet)
 		})
 	}
@@ -427,9 +429,9 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, ok, "No resourceNames field")
 
-		assert.Len(t, resourceNames, len(configMaps))
-		for expected := range configMaps {
-			assert.Contains(t, resourceNames, expected)
+		assert.Len(t, resourceNames, len(expectedConfigMaps))
+		for name := range expectedConfigMaps {
+			assert.Contains(t, resourceNames, name)
 		}
 	})
 
@@ -469,7 +471,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 }
 
 func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
-	cluster := v1beta1.DefaultClusterConfig(nil)
+	cluster := v1beta1.DefaultClusterConfig()
 	clients := testutil.NewFakeClientFactory()
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
@@ -489,12 +491,12 @@ func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
 
-	require.NoError(t, underTest.Init(context.TODO()))
+	require.NoError(t, underTest.Init(t.Context()))
 
 	createKubernetesEndpoints(t, clients.Client)
 	mockApplier := installMockApplier(t, underTest)
 
-	require.NoError(t, underTest.Start(context.TODO()))
+	require.NoError(t, underTest.Start(t.Context()))
 	t.Cleanup(func() {
 		assert.NoError(t, underTest.Stop())
 	})
@@ -502,7 +504,7 @@ func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 	expectApply := func(t *testing.T) {
 		t.Helper()
 		applied := mockApplier.expectApply(t, nil)
-		assert.NoError(t, underTest.Reconcile(context.TODO(), cluster))
+		assert.NoError(t, underTest.Reconcile(t.Context(), cluster))
 		appliedResources := applied()
 		assert.NotEmpty(t, applied, "Expected some resources to be applied")
 
@@ -517,13 +519,13 @@ func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 
 	expectCached := func(t *testing.T) {
 		t.Helper()
-		assert.NoError(t, underTest.Reconcile(context.TODO(), cluster))
+		assert.NoError(t, underTest.Reconcile(t.Context(), cluster))
 	}
 
 	expectApplyButFail := func(t *testing.T) {
 		t.Helper()
 		applied := mockApplier.expectApply(t, assert.AnError)
-		assert.ErrorIs(t, underTest.Reconcile(context.TODO(), cluster), assert.AnError)
+		assert.ErrorIs(t, underTest.Reconcile(t.Context(), cluster), assert.AnError)
 		assert.NotEmpty(t, applied(), "Expected some resources to be applied")
 	}
 
@@ -571,20 +573,20 @@ func TestReconciler_runReconcileLoop(t *testing.T) {
 		leaderElector: &leaderelector.Dummy{Leader: true},
 	}
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 
 	// Prepare update channel for two updates.
 	updates, firstDone, secondDone := make(chan updateFunc, 2), make(chan error, 1), make(chan error, 1)
 
 	// Put in the first update.
-	updates <- func(s *snapshot) chan<- error { return firstDone }
+	updates <- func(*snapshot) chan<- error { return firstDone }
 
 	// Put in the second update that'll cancel the context.
-	updates <- func(s *snapshot) chan<- error { cancel(); return secondDone }
+	updates <- func(*snapshot) chan<- error { cancel(); return secondDone }
 
 	underTest.runReconcileLoop(ctx, updates, nil)
 
-	switch ctx.Err() { //nolint:errorlint // as per context contract
+	switch ctx.Err() {
 	case context.Canceled:
 		break // this is the good case
 	case context.DeadlineExceeded:
@@ -619,7 +621,7 @@ func TestReconciler_runReconcileLoop(t *testing.T) {
 
 func TestReconciler_LeaderElection(t *testing.T) {
 	var le mockLeaderElector
-	cluster := v1beta1.DefaultClusterConfig(nil)
+	cluster := v1beta1.DefaultClusterConfig()
 	clients := testutil.NewFakeClientFactory()
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
@@ -644,18 +646,18 @@ func TestReconciler_LeaderElection(t *testing.T) {
 	log.Hooks.Add(&logs)
 	underTest.log = log.WithField("test", t.Name())
 
-	require.NoError(t, underTest.Init(context.TODO()))
+	require.NoError(t, underTest.Init(t.Context()))
 
 	createKubernetesEndpoints(t, clients.Client)
 	mockApplier := installMockApplier(t, underTest)
 
-	require.NoError(t, underTest.Start(context.TODO()))
+	require.NoError(t, underTest.Start(t.Context()))
 	t.Cleanup(func() {
 		assert.NoError(t, underTest.Stop())
 	})
 
 	// Nothing should be applied here, since the leader lease is not acquired.
-	assert.NoError(t, underTest.Reconcile(context.TODO(), cluster))
+	assert.NoError(t, underTest.Reconcile(t.Context(), cluster))
 
 	// Need to wait for two skipped reconciliations: one for the cluster config
 	// reconciliation, and another one for the API servers.
@@ -698,14 +700,14 @@ func TestReconciler_LeaderElection(t *testing.T) {
 }
 
 func testContext(t *testing.T) context.Context {
-	ctx, cancel := context.WithCancel(context.TODO())
-	timeout := time.AfterFunc(10*time.Second, func() {
-		assert.Fail(t, "Test context timed out after 10 seconds")
-		cancel()
-	})
+	timeout := errors.New("timeout: " + t.Name())
+	ctx, cancel := context.WithCancelCause(t.Context())
+	timer := time.AfterFunc(10*time.Second, func() { cancel(timeout) })
 	t.Cleanup(func() {
-		timeout.Stop()
-		cancel()
+		timer.Stop()
+		if errors.Is(context.Cause(ctx), timeout) {
+			assert.Fail(t, "Test context timed out after 10 seconds")
+		}
 	})
 	return ctx
 }
@@ -751,6 +753,8 @@ func makeKubeletConfig(t *testing.T, mods ...func(*kubeletConfig)) string {
 		ClusterDomain:      "test.local",
 		EventRecordQPS:     ptr.To(int32(0)),
 		FailSwapOn:         ptr.To(false),
+		KubeletCgroups:     "/system.slice/containerd.service",
+		KubeReservedCgroup: "system.slice",
 		RotateCertificates: true,
 		ServerTLSBootstrap: true,
 		TLSMinVersion:      "VersionTLS12",
@@ -762,6 +766,7 @@ func makeKubeletConfig(t *testing.T, mods ...func(*kubeletConfig)) string {
 			"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
 			"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
 		},
+		VolumePluginDir: "/usr/libexec/k0s/kubelet-plugins/volume/exec",
 	}
 
 	for _, mod := range mods {
@@ -776,8 +781,6 @@ func makeKubeletConfig(t *testing.T, mods ...func(*kubeletConfig)) string {
 type mockApplier struct {
 	ptr atomic.Pointer[[]mockApplierCall]
 }
-
-type mockApplierCall = func(resources) error
 
 func (m *mockApplier) expectApply(t *testing.T, retval error) func() resources {
 	ch := make(chan resources, 1)
@@ -868,7 +871,7 @@ func createKubernetesEndpoints(t *testing.T, clients kubernetes.Interface) {
 		}},
 	}
 
-	_, err := clients.CoreV1().Endpoints("default").Create(context.TODO(), &ep, metav1.CreateOptions{})
+	_, err := clients.CoreV1().Endpoints("default").Create(t.Context(), &ep, metav1.CreateOptions{})
 	require.NoError(t, err)
 }
 
@@ -911,5 +914,9 @@ func (e *mockLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 }
 
 func (e *mockLeaderElector) AddLostLeaseCallback(func()) {
+	panic("not expected to be called in tests")
+}
+
+func (e *mockLeaderElector) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
 	panic("not expected to be called in tests")
 }

@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -35,12 +22,15 @@ import (
 // +genclient:onlyVerbs=create,delete,list,get,watch,update,updateStatus,patch
 // +genclient:nonNamespaced
 type EtcdMember struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata"`
 
-	Status Status `json:"status,omitempty"`
+	// +optional
+	Status Status `json:"status"`
 
-	Spec EtcdMemberSpec `json:"spec,omitempty"`
+	// +optional
+	Spec EtcdMemberSpec `json:"spec"`
 }
 
 // +kubebuilder:validation:Enum=Joined;Left
@@ -49,6 +39,11 @@ type JoinStatus string
 const (
 	JoinStatusJoined JoinStatus = "Joined"
 	JoinStatusLeft   JoinStatus = "Left"
+)
+
+const (
+	ReconcileStatusSuccess = "Success"
+	ReconcileStatusFailed  = "Failed"
 )
 
 // EtcdMemberSpec defines the desired state of EtcdMember
@@ -95,7 +90,9 @@ type JoinCondition struct {
 	Type   ConditionType   `json:"type"`
 	Status ConditionStatus `json:"status"`
 	// Last time the condition transitioned from one status to another.
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	//
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 	// Human-readable message indicating details about last transition.
 	Message string `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
 }
@@ -147,6 +144,6 @@ func (s *Status) SetCondition(t ConditionType, status ConditionStatus, msg strin
 // +kubebuilder:resource:scope=Cluster
 type EtcdMemberList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []EtcdMember `json:"items"`
 }

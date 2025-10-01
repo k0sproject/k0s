@@ -1,30 +1,19 @@
-# k0s - The Zero Friction Kubernetes by Team Lens
+# k0s - The Zero Friction Kubernetes
 
 <!-- When changing this file, consider to change docs/README.md, too! -->
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9994/badge)](https://www.bestpractices.dev/projects/9994)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fk0sproject%2Fk0s.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fk0sproject%2Fk0s?ref=badge_shield)
 [![Go build](https://github.com/k0sproject/k0s/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/k0sproject/k0s/actions/workflows/go.yml?query=branch%3Amain)
-[![k0s network conformance](https://github.com/k0sproject/k0s/workflows/k0s%20Check%20Network/badge.svg)](https://github.com/k0sproject/k0s/actions/workflows/check-network.yaml)
-[![Go Reference](https://img.shields.io/badge/code%20reference-go.dev-bc42f5.svg)](https://pkg.go.dev/github.com/k0sproject/k0s)
+[![OS tests :: Nightly](https://github.com/k0sproject/k0s/actions/workflows/ostests-nightly.yaml/badge.svg)](https://github.com/k0sproject/k0s/actions/workflows/ostests-nightly.yaml)
 ![GitHub Repo stars](https://img.shields.io/github/stars/k0sproject/k0s?color=blueviolet&label=Stargazers)
 [![Releases](https://img.shields.io/github/downloads/k0sproject/k0s/total.svg)](https://github.com/k0sproject/k0s/tags?label=Downloads)
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/k0sproject/k0s?label=latest%20stable)
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/k0sproject/k0s?include_prereleases&label=latest-release%20%28including+pre-release%29) ![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/k0sproject/k0s/latest)
 
-![k0s-logo-dark](docs/img/k0s-logo-full-color-dark.svg#gh-dark-mode-only)
-![k0s-logo-light](docs/img/k0s-logo-full-color-light.svg#gh-light-mode-only)
-
-## What happened to GitHub stargazers?
-
-In September 2022 we made a human error while creating some build automation scripts&tools for the GitHub repository. Our automation accidentally changed the repo to a private one for few minutes. That itself is not a big deal and everything was restored quickly. But the nasty side effect is that it also removed all the stargazers at that point. :(
-
-Before that mishap we had 4776 stargazers, making k0s one of the most popular Kubernetes distro out there.
-
-**So if you are reading this, and have not yet starred this repo we would highly appreciate the :star: to get our numbers closer to what they used to be.**
-
-## The Repository
-
-This repository ("k0s") is where Team Lens develops the [k0s](https://k8slens.dev/kubernetes) product together with the community. It is backed by a number of Kubernetes and cloud native ecosystem pioneers. This source code is available to everyone under the [Apache License 2.0](./LICENSE).
+![k0s-logo-dark](docs/img/k0s-logo-2025-horizontal-inverted.svg#gh-dark-mode-only)
+![k0s-logo-light](docs/img/k0s-logo-2025-horizontal.svg#gh-light-mode-only)
 
 <!-- Start Overview -->
 ## Overview
@@ -71,13 +60,13 @@ If you'd like to try k0s, please jump in to our:
 <!-- Start Join the Community -->
 ## Join the Community
 
-- [Lens Forums] - Request for support and help from the Lens and k0s community.
+- [k8s Slack] - Reach out for support and help from the k0s community.
 - [GitHub Issues] - Submit your issues and feature requests via GitHub.
 
 We welcome your help in building k0s! If you are interested, we invite you to
 check out the [Contributing Guide] and the [Code of Conduct].
 
-[Lens Forums]: https://forums.k8slens.dev/
+[k8s Slack]: https://kubernetes.slack.com/archives/C07VAPJUECS
 [GitHub Issues]: https://github.com/k0sproject/k0s/issues
 [Contributing Guide]: https://docs.k0sproject.io/stable/contributors/overview/
 [Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
@@ -90,12 +79,14 @@ We currently have a monthly office hours call on the last Tuesday of the month.
 
 To see the call details in your local timezone, check out [https://dateful.com/eventlink/2735919704](https://dateful.com/eventlink/2735919704).
 
+<!-- End Join the Community -->
 ### Adopters
 
-k0s is used in numerous cases and environments. The range we've seen it being adopted ranges from very small far edge deployments to big data center deployments. Please add your use case to [adopters] list.
+k0s is used across diverse environments, from small-scale far-edge deployments
+to large data centers. Share your use case and add yourself to the list of
+[adopters].
 
-[adopters]: docs/adopters.md
-<!-- End Join the Community -->
+[adopters]: ADOPTERS.md
 
 <!-- Start Motivation -->
 ## Motivation
@@ -133,6 +124,7 @@ With strong enough arguments we might take in new addons, but in general those s
 The requirements for building k0s from source are as follows:
 
 - GNU Make (v3.81 or newer)
+- A POSIX shell
 - coreutils
 - findutils
 - Docker
@@ -140,23 +132,34 @@ The requirements for building k0s from source are as follows:
 All of the compilation steps are performed inside Docker containers, no
 installation of Go is required.
 
-The k0s binary can be built in two different ways:
+The k0s binary can be built in different ways:
 
 The "k0s" way, self-contained, all binaries compiled from source, statically
-linked and embedded:
+linked, including embedded binaries:
 
 ```shell
 make
 ```
 
-The "package maintainer" way, without any embedded binaries (requires that the
-required binaries are provided separately at runtime):
+The "package maintainer" way, without building and embedding the required
+binaries. This assumes necessary binaries are provided separately at runtime:
 
 ```shell
 make EMBEDDED_BINS_BUILDMODE=none
 ```
 
-The embedded binaries can be built on their own:
+Docker build integration is enabled by default. However, in environments without
+Docker, you can use the Go toolchain installed on the host system to build k0s
+without embedding binaries. Note that static linking is not possible with
+glibc-based toolchains:
+
+```shell
+make DOCKER='' EMBEDDED_BINS_BUILDMODE=none BUILD_GO_LDFLAGS_EXTRA=''
+```
+
+Note that the k0s build system does not currently support building the embedded
+binaries without Docker. However, the embedded binaries can be built
+independently using Docker:
 
 ```shell
 make -C embedded-bins

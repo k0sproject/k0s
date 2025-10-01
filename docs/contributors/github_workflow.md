@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # GitHub Workflow
 
 This guide assumes you have already cloned the upstream repo to your system via `git clone`, or via `go get github.com/k0sproject/k0s`.

@@ -1,29 +1,14 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -58,22 +43,22 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	s.Require().NoError(err, "failed to SSH into controller")
 	defer ssh.Disconnect()
 
-	s.T().Run("sysinfoSmoketest", func(t *testing.T) {
-		out, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s sysinfo", s.K0sFullPath))
-		assert.NoError(t, err, "k0s sysinfo has non-zero exit code")
-		t.Logf("%s", out)
-		assert.Regexp(t, "\nOperating system: Linux \\(pass\\)\n", out)
-		assert.Regexp(t, "\n  Linux kernel release: ", out)
-		assert.Regexp(t, "\n  CONFIG_CGROUPS: ", out)
-		assert.Regexp(t, "\n  Control Groups: ", out)
-		assert.Regexp(t, "\n    cgroup controller \"[a-z]+\": ", out)
+	s.Run("sysinfoSmoketest", func() {
+		out, err := ssh.ExecWithOutput(s.Context(), s.K0sFullPath+" sysinfo")
+		s.NoError(err, "k0s sysinfo has non-zero exit code")
+		s.T().Logf("%s", out)
+		s.Regexp("\nOperating system: Linux \\(pass\\)\n", out)
+		s.Regexp("\n  Linux kernel release: ", out)
+		s.Regexp("\n  CONFIG_CGROUPS: ", out)
+		s.Regexp("\n  Control Groups: ", out)
+		s.Regexp("\n    cgroup controller \"[a-z]+\": ", out)
 	})
 
-	s.T().Run("k0sInstall", func(t *testing.T) {
+	s.Run("k0sInstall", func() {
 		// Install with some arbitrary kubelet flags so we see those get properly passed to the kubelet
 		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server --kubelet-extra-args='--housekeeping-interval=10s --log-flush-frequency=5s'")
-		assert.NoError(t, err)
-		assert.Equal(t, "", out)
+		s.NoError(err)
+		s.Empty(out)
 	})
 
 	s.Run("k0sStart", func() {

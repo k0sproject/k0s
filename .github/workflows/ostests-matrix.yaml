@@ -8,6 +8,10 @@ on:
       k0s-version:
         type: string
         description: The k0s version to test. Will build k0s from source if empty.
+      k0sctl-version:
+        type: string
+        description: The k0sctl version to use when bootstrapping test clusters.
+        default: 0.25.1 # renovate: datasource=github-releases depName=k0sproject/k0sctl
       e2e-concurrency-level:
         type: number
         description: The number of tests that may be run concurrently.
@@ -23,16 +27,17 @@ on:
         default: >-
           [
             "al2023",
-            "alpine_3_17", "alpine_3_20",
-            "centos_7", "centos_8", "centos_9",
-            "debian_10", "debian_11", "debian_12",
-            "fcos_38",
-            "fedora_38",
+            "alpine_3_19", "alpine_3_22",
+            "centos_9", "centos_10",
+            "debian_11", "debian_12",
+            "fcos_stable",
+            "fedora_41",
             "flatcar",
-            "oracle_7_9", "oracle_8_7", "oracle_9_1",
+            "oracle_8_9", "oracle_9_3",
             "rhel_7", "rhel_8", "rhel_9",
             "rocky_8", "rocky_9",
-            "ubuntu_2004", "ubuntu_2204", "ubuntu_2304"
+            "sles_15",
+            "ubuntu_2004", "ubuntu_2204", "ubuntu_2404"
           ]
       arch:
         type: string
@@ -81,6 +86,7 @@ jobs:
     uses: ./.github/workflows/ostests-e2e.yaml
     with:
       k0s-version: ${{ inputs.k0s-version }}
+      k0sctl-version: ${{ inputs.k0sctl-version }}
       e2e-concurrency-level: ${{ fromJSON(inputs.e2e-concurrency-level) }} # infamous GH workflows bug that looses type information (actions/runner#2206)
       e2e-focus: ${{ inputs.e2e-focus }}
       os: ${{ matrix.os }}

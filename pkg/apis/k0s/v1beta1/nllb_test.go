@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -42,7 +29,7 @@ func TestNodeLocalLoadBalancing_IsEnabled(t *testing.T) {
 }
 
 func TestNodeLocalLoadBalancing_Unmarshal_ImageOverride(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -50,9 +37,9 @@ metadata:
 spec:
   images:
     repository: example.com
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	require.NoError(t, err)
 	errors := c.Validate()
 	require.Nil(t, errors)
@@ -79,7 +66,7 @@ spec:
 
 	for _, field := range []string{"image", "version"} {
 		t.Run(field+"_empty", func(t *testing.T) {
-			c, err := ConfigFromString(fmt.Sprintf(yamlData, field, `""`))
+			c, err := ConfigFromBytes(fmt.Appendf(nil, yamlData, field, `""`))
 			require.NoError(t, err)
 			require.NotNil(t, c)
 			require.Empty(t, c.Validate())
@@ -104,7 +91,7 @@ spec:
 		},
 	} {
 		t.Run(test.field+"_invalid", func(t *testing.T) {
-			c, err := ConfigFromString(fmt.Sprintf(yamlData, test.field, test.value))
+			c, err := ConfigFromBytes(fmt.Appendf(nil, yamlData, test.field, test.value))
 			require.NoError(t, err)
 			require.NotNil(t, c)
 			errs := c.Validate()

@@ -1,16 +1,7 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -23,34 +14,28 @@ import (
 	"github.com/k0sproject/k0s/internal/testutil"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sync/errgroup"
 )
 
-type fakeLeaseWatcher struct {
-	leaseEventStatusCh chan LeaseEventStatus
-	errorsCh           chan error
-}
+type fakeLeaderElector chan leaderelection.Status
 
-var _ LeaseWatcher = (*fakeLeaseWatcher)(nil)
-
-// NewFakeLeaseWatcher creates a LeaseWatcher where the source channel
-// is made available, for simulating lease changes.
-func NewFakeLeaseWatcher() (LeaseWatcher, chan LeaseEventStatus) {
-	leaseEventStatusCh := make(chan LeaseEventStatus, 10)
-	errorsCh := make(chan error, 10)
-
-	return &fakeLeaseWatcher{
-		leaseEventStatusCh: leaseEventStatusCh,
-		errorsCh:           errorsCh,
-	}, leaseEventStatusCh
-}
-
-// StartWatcher for the fake LeaseWatcher just propagates the premade lease event channel
-func (lw *fakeLeaseWatcher) StartWatcher(ctx context.Context, namespace string, name, identity string) (<-chan LeaseEventStatus, <-chan error) {
-	return lw.leaseEventStatusCh, lw.errorsCh
+// Run implements leaderElector.
+func (le fakeLeaderElector) Run(ctx context.Context, callback func(leaderelection.Status)) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case status, ok := <-le:
+			if !ok {
+				return
+			}
+			callback(status)
+		}
+	}
 }
 
 // TestModeSwitch tests the scenario of losing + re-acquiring the kubernetes lease.
@@ -66,54 +51,67 @@ func TestModeSwitch(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotEmpty(t, rootController)
 
-	var startCount, stopCount int
+	awaitFirstStart := make(chan struct{})
+	var seenEvents []string
 
 	// Override the important portions of leasewatcher, and provide wrappers to the start/stop
 	// sub-controller handlers for invocation counting.
-	leaseWatcher, leaseEventStatusCh := NewFakeLeaseWatcher()
-	rootController.leaseWatcherCreator = func(e *logrus.Entry, cf apcli.FactoryInterface) (LeaseWatcher, error) {
-		return leaseWatcher, nil
+	leaseEventStatusCh := make(fakeLeaderElector)
+	rootController.newLeaderElector = func(c leaderelection.Config) (leaderElector, error) {
+		return &leaseEventStatusCh, nil
 	}
-	rootController.startSubHandler = func(ctx context.Context, event LeaseEventStatus) (context.CancelFunc, *errgroup.Group) {
-		startCount++
+	rootController.startSubHandler = func(ctx context.Context, event leaderelection.Status) (context.CancelFunc, *errgroup.Group) {
+		if len(seenEvents) < 1 {
+			close(awaitFirstStart)
+		}
+		seenEvents = append(seenEvents, "start: "+event.String())
 		return rootController.startSubControllers(ctx, event)
 	}
-	rootController.startSubHandlerRoutine = func(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error {
+	rootController.startSubHandlerRoutine = func(ctx context.Context, logger *logrus.Entry, event leaderelection.Status) error {
 		<-ctx.Done()
 		return nil
 	}
-	rootController.stopSubHandler = func(cancel context.CancelFunc, g *errgroup.Group, event LeaseEventStatus) {
-		stopCount++
+	rootController.stopSubHandler = func(cancel context.CancelFunc, g *errgroup.Group, event leaderelection.Status) {
+		seenEvents = append(seenEvents, "stop: "+event.String())
 		rootController.stopSubControllers(cancel, g, event)
 	}
 	rootController.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	// Send alternating lease events, as well as one that is considered redundant
 
 	go func() {
-		logger.Info("Sending pending")
-		leaseEventStatusCh <- LeasePending
+		logger.Info("Awaiting first start")
+		<-awaitFirstStart
 
 		logger.Info("Sending acquired")
-		leaseEventStatusCh <- LeaseAcquired
+		leaseEventStatusCh <- leaderelection.StatusLeading
 
 		logger.Info("Sending acquired (again)")
-		leaseEventStatusCh <- LeaseAcquired
+		leaseEventStatusCh <- leaderelection.StatusLeading
 
 		time.Sleep(1 * time.Second)
+		logger.Info("Canceling context")
 		cancel()
 	}()
 
 	assert.NoError(t, rootController.Run(ctx))
 
-	// Despite the additional send of LeaseAcquired, only two events should
-	// have been processed. The additional 3rd stop event is a result of
-	// the cancelling of the context.
+	assert.Equal(t, []string{
+		// The controller will always start in pending state.
+		"start: pending",
 
-	assert.Equal(t, 2, startCount)
-	assert.Equal(t, 3, stopCount)
+		// The first leading status is observed.
+		"stop: leading",
+		"start: leading",
+
+		// The second leading status is ignored, as the controller is already in
+		// the right state.
+
+		// Finally, the context gets canceled and the controller shuts down.
+		"stop: leading",
+	}, seenEvents)
 }

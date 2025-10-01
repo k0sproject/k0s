@@ -1,30 +1,24 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package cmd_test
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
+	"runtime"
 	"slices"
+	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/k0sproject/k0s/cmd"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestRootCmd_Flags ensures that no unwanted global flags have been registered
@@ -65,4 +59,87 @@ func TestRootCmd_Flags(t *testing.T) {
 
 	assert.Equal(t, expectedVisibleFlags, visibleFlags, "visible flags changed unexpectedly")
 	assert.Equal(t, expectedHiddenFlags, hiddenFlags, "hidden flags changed unexpectedly")
+}
+
+func TestUnknownSubCommandsAreRejected(t *testing.T) {
+	commandsWithArguments := []string{
+		"airgap bundle-artifacts",
+		"kubeconfig create",
+		"token invalidate",
+		"worker",
+	}
+	if runtime.GOOS == "linux" {
+		commandsWithArguments = append(commandsWithArguments,
+			"controller",
+			"restore",
+		)
+	}
+	t.Cleanup(func() {
+		if !t.Failed() {
+			assert.Empty(t, commandsWithArguments, "Some sub-commands are listed unnecessarily")
+		}
+	})
+
+	shouldBeTested := func(t *testing.T, underTest *cobra.Command, subCommand string) {
+		if underTest.ValidArgs != nil {
+			t.Skipf("has ValidArgs: %v", underTest.ValidArgs)
+		}
+		if underTest.Deprecated != "" {
+			t.Skipf("is deprecated")
+		}
+
+		if idx := slices.Index(commandsWithArguments, subCommand); idx >= 0 {
+			commandsWithArguments = slices.Delete(commandsWithArguments, idx, idx+1)
+			t.Skip("accepts arguments")
+		}
+		t.Cleanup(func() {
+			if t.Failed() {
+				t.Logf("If this sub-command accepts arguments, include %q in the above list", subCommand)
+			}
+		})
+	}
+
+	var testCommand func(underTest *cobra.Command, args []string) func(t *testing.T)
+	testCommand = func(underTest *cobra.Command, args []string) func(t *testing.T) {
+		return func(t *testing.T) {
+			for _, cmd := range underTest.Commands() {
+				name, _, _ := strings.Cut(cmd.Use, " ")
+				require.NotEmpty(t, name)
+				t.Run(name, testCommand(cmd, slices.Concat(args, []string{name})))
+			}
+
+			subCommand := strings.Join(args, " ")
+			shouldBeTested(t, underTest, subCommand)
+
+			var stdout, stderr strings.Builder
+			// Reset any "required" annotations on flags
+			underTest.Flags().VisitAll(func(flag *pflag.Flag) {
+				flag.Annotations = nil
+			})
+
+			root := cmd.NewRootCmd()
+
+			root.SetArgs(slices.Concat(args, []string{"bogus"}))
+			root.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
+			root.SetOut(&stdout)
+			root.SetErr(&stderr)
+
+			msg := fmt.Sprintf(`unknown command "bogus" for "k0s %s"`, subCommand)
+			assert.ErrorContains(t, root.Execute(), msg)
+			assert.Equal(t, "Error: "+msg+"\n", stderr.String())
+			assert.Empty(t, stdout.String())
+		}
+	}
+
+	underTest := cmd.NewRootCmd()
+	for _, cmd := range underTest.Commands() {
+		name, _, _ := strings.Cut(cmd.Use, " ")
+		require.NotEmpty(t, name)
+
+		switch name {
+		case "ctr", "kubectl": // Don't test embedded sub-commands
+		default:
+			t.Run(name, testCommand(cmd, []string{name}))
+		}
+	}
 }

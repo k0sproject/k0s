@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package worker
 
@@ -93,7 +80,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 
 		for _, test := range []struct {
 			name string
-			pod  interface{}
+			pod  any
 			err  string
 		}{
 			{
@@ -132,7 +119,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 
 		for _, test := range []struct {
 			name string
-			pod  interface{}
+			pod  any
 		}{
 			{"bytes", []byte(dummyPod)},
 			{"strings", dummyPod},
@@ -190,7 +177,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("fails_to_run_without_init", func(t *testing.T) {
-		err := underTest.Start(context.TODO())
+		err := underTest.Start(t.Context())
 		require.Error(t, err)
 		require.Equal(t, "static_pods component is not yet initialized", err.Error())
 	})
@@ -208,11 +195,11 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("init", func(t *testing.T) {
-		require.NoError(t, underTest.Init(context.TODO()))
+		require.NoError(t, underTest.Init(t.Context()))
 	})
 
 	t.Run("another_init_fails", func(t *testing.T) {
-		err := underTest.Init(context.TODO())
+		err := underTest.Init(t.Context())
 		if assert.Error(t, err) {
 			assert.Equal(t, "static_pods component is already initialized", err.Error())
 		}
@@ -236,11 +223,8 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		assert.Equal(t, "static_pods component is not yet running", err.Error())
 	})
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
-
 	t.Run("runs", func(runT *testing.T) {
-		if assert.NoError(runT, underTest.Start(ctx)) {
+		if assert.NoError(runT, underTest.Start(t.Context())) {
 			t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
 			var lastLog *logrus.Entry
@@ -258,7 +242,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("another_run_fails", func(t *testing.T) {
-		err := underTest.Start(ctx)
+		err := underTest.Start(t.Context())
 		require.Error(t, err)
 		assert.Equal(t, "static_pods component is already running", err.Error())
 	})
@@ -280,10 +264,10 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		url, err := underTest.ManifestURL()
 		require.NoError(t, err)
 
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 		t.Cleanup(cancel)
 
 		req = req.WithContext(ctx)
@@ -291,7 +275,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		require.NoError(t, err)
 		t.Cleanup(func() { assert.NoError(t, resp.Body.Close()) })
 
-		assert.Equal(t, resp.StatusCode, http.StatusOK)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -328,10 +312,10 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 		url, err := underTest.ManifestURL()
 		require.NoError(t, err)
 
-		req, err := http.NewRequest("GET", url, nil)
+		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 		t.Cleanup(cancel)
 
 		resp, err := http.DefaultClient.Do(req.WithContext(ctx))
@@ -351,32 +335,32 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("reinit_fails", func(t *testing.T) {
-		err := underTest.Init(context.TODO())
+		err := underTest.Init(t.Context())
 		require.Error(t, err)
 		assert.Equal(t, "static_pods component is already stopped", err.Error())
 	})
 
 	t.Run("rerun_fails", func(t *testing.T) {
-		err := underTest.Start(context.TODO())
+		err := underTest.Start(t.Context())
 		require.Error(t, err)
 		assert.Equal(t, "static_pods component is already stopped", err.Error())
 	})
 }
 
-func getContent(t *testing.T, underTest StaticPods) (content map[string]interface{}) {
+func getContent(t *testing.T, underTest StaticPods) (content map[string]any) {
 	require.NoError(t, yaml.Unmarshal(underTest.(*staticPods).content(), &content))
 	return
 }
 
-func newList(t *testing.T, items ...[]byte) map[string]interface{} {
-	parsedItems := []interface{}{}
+func newList(t *testing.T, items ...[]byte) map[string]any {
+	parsedItems := []any{}
 	for _, item := range items {
-		var parsedItem map[string]interface{}
+		var parsedItem map[string]any
 		require.NoError(t, yaml.Unmarshal(item, &parsedItem))
 		parsedItems = append(parsedItems, parsedItem)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"apiVersion": "v1",
 		"kind":       "PodList",
 		"items":      parsedItems,

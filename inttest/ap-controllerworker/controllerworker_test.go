@@ -1,16 +1,5 @@
-// Copyright 2024 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controllerworker
 
@@ -57,7 +46,7 @@ func (s *controllerworkerSuite) SetupTest() {
 	// ipAddress := s.GetControllerIPAddress(0)
 	var joinToken string
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.ControllerCount {
 		nodeName, require := s.ControllerNode(idx), s.Require()
 		address := s.GetIPAddress(nodeName)
 
@@ -106,8 +95,8 @@ func (s *controllerworkerSuite) SetupTest() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
-		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
+	for idx := range s.ControllerCount {
+		s.Require().Len(s.GetMembers(idx), s.ControllerCount)
 	}
 }
 
@@ -156,22 +145,23 @@ spec:
 	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
 
-	s.Equal(1, len(plan.Status.Commands))
-	cmd := plan.Status.Commands[0]
+	if s.Len(plan.Status.Commands, 1) {
+		cmd := plan.Status.Commands[0]
 
-	s.Equal(appc.PlanCompleted, cmd.State)
-	s.NotNil(cmd.K0sUpdate)
-	s.NotNil(cmd.K0sUpdate.Controllers)
-	s.Empty(cmd.K0sUpdate.Workers)
+		s.Equal(appc.PlanCompleted, cmd.State)
+		s.NotNil(cmd.K0sUpdate)
+		s.NotNil(cmd.K0sUpdate.Controllers)
+		s.Empty(cmd.K0sUpdate.Workers)
 
-	for _, node := range cmd.K0sUpdate.Controllers {
-		s.Equal(appc.SignalCompleted, node.State)
+		for _, node := range cmd.K0sUpdate.Controllers {
+			s.Equal(appc.SignalCompleted, node.State)
+		}
 	}
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.ControllerCount {
 		nodeName, require := s.ControllerNode(idx), s.Require()
 		require.NoError(s.WaitForNodeReady(nodeName, kc))
 		// Wait till we see kubelet reporting the expected version.

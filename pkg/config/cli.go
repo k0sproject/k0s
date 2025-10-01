@@ -1,66 +1,51 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package config
 
 import (
 	"fmt"
-	"os"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/featuregate"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 
-	"github.com/spf13/cobra"
+	cliflag "k8s.io/component-base/cli/flag"
+
 	"github.com/spf13/pflag"
 )
 
 var (
-	CfgFile        string
-	Debug          bool
-	DebugListenOn  string
-	StatusSocket   string
-	K0sVars        CfgVars
-	workerOpts     WorkerOptions
-	Verbose        bool
-	controllerOpts ControllerOptions
+	CfgFile    string
+	K0sVars    CfgVars
+	workerOpts WorkerOptions
 )
 
 // This struct holds all the CLI options & settings required by the
 // different k0s sub-commands
 type CLIOptions struct {
 	WorkerOptions
-	ControllerOptions
-	CfgFile       string
-	Debug         bool
-	DebugListenOn string
-	K0sVars       *CfgVars
-	Verbose       bool
+	CfgFile string
+	K0sVars *CfgVars
 }
+
+type ControllerMode uint8
+
+const (
+	ControllerOnlyMode ControllerMode = iota
+	ControllerPlusWorkerMode
+	SingleNodeMode
+)
 
 // Shared controller cli flags
 type ControllerOptions struct {
-	EnableWorker      bool
-	SingleNode        bool
 	NoTaints          bool
 	DisableComponents []string
+	InitOnly          bool
 
 	ClusterComponents               *manager.Manager
 	EnableK0sCloudProvider          bool
@@ -70,21 +55,43 @@ type ControllerOptions struct {
 	EnableDynamicConfig             bool
 	EnableMetricsScraper            bool
 	KubeControllerManagerExtraArgs  string
+	FeatureGates                    featuregate.FeatureGates
+
+	enableWorker, singleNode bool
 }
 
 // Shared worker cli flags
 type WorkerOptions struct {
-	CIDRRange        string
 	CloudProvider    bool
 	LogLevels        LogLevels
 	CriSocket        string
 	KubeletExtraArgs string
-	Labels           []string
+	Labels           map[string]string
 	Taints           []string
 	TokenFile        string
 	TokenArg         string
 	WorkerProfile    string
 	IPTablesMode     string
+}
+
+func (m ControllerMode) WorkloadsEnabled() bool {
+	switch m {
+	case ControllerPlusWorkerMode, SingleNodeMode:
+		return true
+	default:
+		return false
+	}
+}
+
+func (o *ControllerOptions) Mode() ControllerMode {
+	switch {
+	case o.singleNode:
+		return SingleNodeMode
+	case o.enableWorker:
+		return ControllerPlusWorkerMode
+	default:
+		return ControllerOnlyMode
+	}
 }
 
 func (o *ControllerOptions) Normalize() error {
@@ -196,25 +203,14 @@ func (f *logLevelsFlag) String() string {
 
 func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
-	flagset.BoolVarP(&Verbose, "verbose", "v", false, "Verbose logging (default: false)")
 	flagset.String("data-dir", constant.DataDirDefault, "Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break!")
-	flagset.StringVar(&StatusSocket, "status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
-	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
+	flagset.String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
 	return flagset
 }
 
-// XX: not a pretty hack, but we need the data-dir flag for the kubectl subcommand
-// XX: when other global flags cannot be used (specifically -d and -c)
 func GetKubeCtlFlagSet() *pflag.FlagSet {
-	debugDefault := false
-	if v, ok := os.LookupEnv("DEBUG"); ok {
-		debugDefault, _ = strconv.ParseBool(v)
-	}
-
 	flagset := &pflag.FlagSet{}
 	flagset.String("data-dir", constant.DataDirDefault, "Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break!")
-	flagset.BoolVar(&Debug, "debug", debugDefault, "Debug logging [$DEBUG]")
 	return flagset
 }
 
@@ -232,12 +228,23 @@ func GetWorkerFlags() *pflag.FlagSet {
 		workerOpts.LogLevels = DefaultLogLevels()
 	}
 
+	flagset.String("cidr-range", "", "")
+	flagset.VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		f.Deprecated = "it has no effect and will be removed in a future release"
+	})
+
+	if workerOpts.Labels == nil {
+		// cliflag.ConfigurationMap expects the map to be non-nil.
+		workerOpts.Labels = make(map[string]string)
+	}
+
+	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
-	flagset.StringVar(&workerOpts.CIDRRange, "cidr-range", "10.96.0.0/12", "HACK: cidr range for the windows worker node")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.VarP((*logLevelsFlag)(&workerOpts.LogLevels), "logging", "l", "Logging Levels for the different components")
-	flagset.StringSliceVarP(&workerOpts.Labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
+	flagset.Var((*cliflag.ConfigurationMap)(&workerOpts.Labels), "labels", "Node labels, list of key=value pairs")
 	flagset.StringSliceVarP(&workerOpts.Taints, "taints", "", []string{}, "Node taints, list of key=value:effect strings")
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 	flagset.StringVar(&workerOpts.IPTablesMode, "iptables-mode", "", "iptables mode (valid values: nft, legacy, auto). default: auto")
@@ -261,17 +268,18 @@ var availableComponents = []string{
 	constant.MetricsServerComponentName,
 	constant.NetworkProviderComponentName,
 	constant.NodeRoleComponentName,
-	constant.SystemRbacComponentName,
+	constant.SystemRBACComponentName,
+	constant.UpdateProberComponentName,
 	constant.WindowsNodeComponentName,
 	constant.WorkerConfigComponentName,
 }
 
-func GetControllerFlags() *pflag.FlagSet {
+func GetControllerFlags(controllerOpts *ControllerOptions) *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
 
-	flagset.BoolVar(&controllerOpts.EnableWorker, "enable-worker", false, "enable worker (default false)")
+	flagset.BoolVar(&controllerOpts.enableWorker, "enable-worker", false, "enable worker (default false)")
 	flagset.StringSliceVar(&controllerOpts.DisableComponents, "disable-components", []string{}, "disable components (valid items: "+strings.Join(availableComponents, ",")+")")
-	flagset.BoolVar(&controllerOpts.SingleNode, "single", false, "enable single node (implies --enable-worker, default false)")
+	flagset.BoolVar(&controllerOpts.singleNode, "single", false, "enable single node (implies --enable-worker, default false)")
 	flagset.BoolVar(&controllerOpts.NoTaints, "no-taints", false, "disable default taints for controller node")
 	flagset.BoolVar(&controllerOpts.EnableK0sCloudProvider, "enable-k0s-cloud-provider", false, "enables the k0s-cloud-provider (default false)")
 	flagset.DurationVar(&controllerOpts.K0sCloudProviderUpdateFrequency, "k0s-cloud-provider-update-frequency", 2*time.Minute, "the frequency of k0s-cloud-provider node updates")
@@ -279,7 +287,8 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
 	flagset.BoolVar(&controllerOpts.EnableMetricsScraper, "enable-metrics-scraper", false, "enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)")
 	flagset.StringVar(&controllerOpts.KubeControllerManagerExtraArgs, "kube-controller-manager-extra-args", "", "extra args for kube-controller-manager")
-	flagset.AddFlagSet(FileInputFlag())
+	flagset.BoolVar(&controllerOpts.InitOnly, "init-only", false, "only initialize controller and exit")
+	flagset.Var(&controllerOpts.FeatureGates, "feature-gates", "feature gates to enable (comma separated list of key=value pairs)")
 	return flagset
 }
 
@@ -301,53 +310,14 @@ func GetCmdOpts(cobraCmd command) (*CLIOptions, error) {
 	}
 
 	// if a runtime config can be loaded, use it to override the k0sVars
-	if rtc, err := LoadRuntimeConfig(k0sVars); err == nil {
+	if rtc, err := LoadRuntimeConfig(k0sVars.RuntimeConfigPath); err == nil {
 		k0sVars = rtc.K0sVars
 	}
 
-	if controllerOpts.SingleNode {
-		controllerOpts.EnableWorker = true
-	}
-
 	return &CLIOptions{
-		ControllerOptions: controllerOpts,
-		WorkerOptions:     workerOpts,
+		WorkerOptions: workerOpts,
 
-		CfgFile:       CfgFile,
-		Debug:         Debug,
-		Verbose:       Verbose,
-		K0sVars:       k0sVars,
-		DebugListenOn: DebugListenOn,
+		CfgFile: CfgFile,
+		K0sVars: k0sVars,
 	}, nil
-}
-
-// CallParentPersistentPreRun runs the parent command's persistent pre-run.
-// Cobra does not do this automatically.
-//
-// See: https://github.com/spf13/cobra/issues/216
-// See: https://github.com/spf13/cobra/blob/v1.4.0/command.go#L833-L843
-func CallParentPersistentPreRun(cmd *cobra.Command, args []string) error {
-	for p := cmd.Parent(); p != nil; p = p.Parent() {
-		preRunE := p.PersistentPreRunE
-		preRun := p.PersistentPreRun
-
-		p.PersistentPreRunE = nil
-		p.PersistentPreRun = nil
-
-		defer func() {
-			p.PersistentPreRunE = preRunE
-			p.PersistentPreRun = preRun
-		}()
-
-		if preRunE != nil {
-			return preRunE(cmd, args)
-		}
-
-		if preRun != nil {
-			preRun(cmd, args)
-			return nil
-		}
-	}
-
-	return nil
 }

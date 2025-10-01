@@ -1,22 +1,10 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package byocri
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -85,7 +73,7 @@ func (s *BYOCRISuite) runDockerWorker() error {
 		return err
 	}
 	if token == "" {
-		return fmt.Errorf("got empty token for worker join")
+		return errors.New("got empty token for worker join")
 	}
 	sshWorker, err := s.SSH(s.Context(), s.WorkerNode(0))
 	if err != nil {

@@ -1,16 +1,7 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -22,17 +13,18 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
-	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sretry "k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
+	crconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,6 +32,8 @@ type rootWorker struct {
 	cfg           aproot.RootConfig
 	log           *logrus.Entry
 	clientFactory apcli.FactoryInterface
+
+	initialized bool
 }
 
 var _ aproot.Root = (*rootWorker)(nil)
@@ -60,6 +54,16 @@ func (w *rootWorker) Run(ctx context.Context) error {
 
 	managerOpts := crman.Options{
 		Scheme: scheme,
+		Controller: crconfig.Controller{
+			// If this controller is already initialized, this means that all
+			// controller-runtime controllers have already been successfully
+			// registered to another manager. However, controller-runtime
+			// maintains a global checklist of controller names and doesn't
+			// currently provide a way to unregister names from discarded
+			// managers. So it's necessary to suppress the global name check
+			// whenever things retried.
+			SkipNameValidation: ptr.To(w.initialized),
+		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: w.cfg.ManagerPort,
 		}),
@@ -69,29 +73,17 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
 	}
 
-	var mgr crman.Manager
-	if err := retry.Do(
-		func() (err error) {
-			mgr, err = cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
-			return err
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.Delay(1*time.Second),
-		retry.OnRetry(func(attempt uint, err error) {
-			logger.WithError(err).Debugf("Failed to start controller manager in attempt #%d, retrying after backoff", attempt+1)
-		}),
-	); err != nil {
-		logger.WithError(err).Fatal("unable to start controller manager")
-	}
-
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
+	var attempt uint
 	return k8sretry.OnError(wait.Backoff{
 		Steps:    120,
 		Duration: 1 * time.Second,
 		Factor:   1.0,
 		Jitter:   0.1,
 	}, func(err error) bool {
+		attempt++
+		logger := logger.WithError(err).WithField("attempt", attempt)
+		logger.Debug("Failed to run controller manager, retrying after backoff")
 		return true
 	}, func() error {
 		cl, err := w.clientFactory.GetClient()
@@ -104,14 +96,28 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		}
 		clusterID := string(ns.UID)
 
+		restConfig, err := w.clientFactory.GetRESTConfig()
+		if err != nil {
+			return err
+		}
+
+		mgr, err := cr.NewManager(restConfig, managerOpts)
+		if err != nil {
+			return fmt.Errorf("failed to create controller manager: %w", err)
+		}
+
 		if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
-			return fmt.Errorf("unable to register 'controlnodes' controllers: %w", err)
+		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
+			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
-		// The controller-runtime start blocks until the context is cancelled.
+
+		// All the controller-runtime controllers have been registered.
+		w.initialized = true
+
+		// The controller-runtime start blocks until the context is canceled.
 		if err := mgr.Start(ctx); err != nil {
 			return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)
 		}

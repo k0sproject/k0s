@@ -13,12 +13,13 @@ else
 sedopt := -i -e
 endif
 
+DOCKER ?= docker
 TARGET_VERSION ?= latest
 # mkdocs.yml refuses to live in the docs-directory, this is why "cd .." is needed
 # gives: "Error: The 'docs_dir' should not be the parent directory of the config file."
 # even if docs_dir is "."
 docs: .require-mkdocs cli
-	cd .. && KUBERNETES_VERSION=$(kubernetes_version) mkdocs build --strict
+	cd .. && PYTHONPATH=$(CURDIR)/mkdocs_modules K0S_VERSION=$$('$(k0s_binary_path)/$(k0s_binary)' version) mkdocs build --strict
 
 .PHONY: .require-mkdocs
 .require-mkdocs:
@@ -41,9 +42,9 @@ endif
 
 .PHONY: k0s k0s.exe
 ifeq ($(TARGET_VERSION),local)
-cli: k0s_binary_path := $(abspath ..)
+docs cli: k0s_binary_path := $(abspath ..)
 else
-cli: k0s_binary_path := $(abspath .)
+docs cli: k0s_binary_path := $(abspath .)
 k0s k0s.exe::
 	[ ! -f '$@.etag' ] || { if [ ! -f '$@' ] || [ '$@.etag' -ot '$@' ]; then rm -- '$@.etag'; fi }
 	touch -- '$@.etag'
@@ -62,10 +63,10 @@ endif
 .PHONY: cli
 ifeq ($(detected_OS),windows)
 cli: k0s.exe
-cli: k0s_binary = k0s.exe
+docs cli: k0s_binary = k0s.exe
 else
 cli: k0s
-cli: k0s_binary = k0s
+docs cli: k0s_binary = k0s
 endif
 cli:
 	rm -rf cli
@@ -76,7 +77,7 @@ cli:
 	ln -s k0s.md cli/README.md
 
 .docker-image.serve-dev.stamp: Dockerfile.serve-dev requirements_pip.txt requirements.txt Makefile.variables ../embedded-bins/Makefile.variables
-	docker build --progress=plain \
+	$(DOCKER) build --progress=plain \
 	  --build-arg PYTHON_IMAGE_VERSION=$(python_version)-alpine$(alpine_version) \
 	  -t 'k0sdocs$(basename $@)' -f '$<' .
 	touch -- '$@'
@@ -90,13 +91,13 @@ clean: clean-k0s
 	rm -rf ../site
 	for i in .docker-image.*.stamp; do \
 	  if [ -f "$$i" ]; then \
-	    docker rmi -f "k0sdocs$$(basename "$$i" .stamp)" && rm -- "$$i";\
+	    $(DOCKER) rmi -f "k0sdocs$$(basename "$$i" .stamp)" && rm -- "$$i";\
 	  fi; \
 	done
 
 .PHONY: update-pip-requirements
 update-pip-requirements: .docker-image.serve-dev.stamp
-	docker run --rm --entrypoint sh k0sdocs.docker-image.serve-dev -c \
+	$(DOCKER) run --rm --entrypoint sh $(DOCKER_RUN_OPTS) k0sdocs.docker-image.serve-dev -c \
 	'pip install --disable-pip-version-check pip-tools > /dev/null \
 	  && echo pip | pip-compile --allow-unsafe --generate-hashes --output-file - - | grep -E -v "^ *#" \
 	  && echo wheel | pip-compile --allow-unsafe --generate-hashes --output-file - - | grep -E -v "^ *#"' \

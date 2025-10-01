@@ -1,21 +1,9 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package airgapupdate
 
 import (
-	"context"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
@@ -54,7 +42,6 @@ func TestSchedulableWait(t *testing.T) {
 		status                    apv1beta2.PlanCommandStatus
 		expectedNextState         apv1beta2.PlanStateType
 		expectedRetry             bool
-		expectedError             bool
 		expectedPlanStatusWorkers []apv1beta2.PlanCommandTargetStatus
 	}{
 		// Worker-only tests
@@ -77,7 +64,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanCompleted,
-			false,
 			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
@@ -104,7 +90,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanSchedulableWait,
 			true,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalCompleted),
@@ -135,7 +120,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanSchedulable,
-			false,
 			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
@@ -168,7 +152,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanSchedulable,
-			false,
 			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
@@ -221,7 +204,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanSchedulableWait,
 			true,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 			},
@@ -266,7 +248,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanSchedulable,
 			false,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
 			},
@@ -310,7 +291,6 @@ func TestSchedulableWait(t *testing.T) {
 				},
 			},
 			appc.PlanCompleted,
-			false,
 			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
@@ -362,7 +342,6 @@ func TestSchedulableWait(t *testing.T) {
 			},
 			appc.PlanApplyFailed,
 			false,
-			false,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalApplyFailed),
 			},
@@ -388,12 +367,12 @@ func TestSchedulableWait(t *testing.T) {
 				[]string{},
 			)
 
-			ctx := context.TODO()
+			ctx := t.Context()
 			nextState, retry, err := provider.SchedulableWait(ctx, "id123", test.command, &test.status)
 
 			assert.Equal(t, test.expectedNextState, nextState)
 			assert.Equal(t, test.expectedRetry, retry)
-			assert.Equal(t, test.expectedError, err != nil, "Unexpected error: %v", err)
+			assert.NoError(t, err)
 			assert.True(t, cmp.Equal(test.expectedPlanStatusWorkers, test.status.AirgapUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
 		})
 	}

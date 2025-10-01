@@ -1,26 +1,20 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0s
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
+	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
@@ -36,6 +30,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 )
+
+const Cordoning = "Cordoning"
 
 // cordoningEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
@@ -72,7 +68,8 @@ type cordoning struct {
 // moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
 // the node.
 func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
-	logger.Infof("Registering 'cordoning' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_cordoning"
+	logger.Info("Registering reconciler: ", name)
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
@@ -81,12 +78,12 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 	}
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-cordoning").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
 			&cordoning{
-				log:       logger.WithFields(logrus.Fields{"reconciler": "cordoning", "object": delegate.Name()}),
+				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,
@@ -98,14 +95,14 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
 	}
 
 	logger := r.log.WithField("signalnode", signalNode.GetName())
 
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
 	if !needsCordoning(signalNode) {
 		logger.Infof("ignoring non worker node")
@@ -156,7 +153,7 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 		var ok bool
 		node, ok = signalNode.(*corev1.Node)
 		if !ok {
-			return fmt.Errorf("failed to cast signalNode to *corev1.Node")
+			return errors.New("failed to cast signalNode to *corev1.Node")
 		}
 	} else {
 		nodeName := signalNode.GetName()
@@ -170,7 +167,7 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 			}
 		}
 
-		//otherwise get node from client
+		// otherwise get node from client
 		if err := r.client.Get(ctx, crcli.ObjectKey{Name: nodeName}, node); err != nil {
 			return fmt.Errorf("failed to get node: %w", err)
 		}
@@ -202,4 +199,17 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 	}
 
 	return nil
+}
+
+func needsCordoning(signalNode crcli.Object) bool {
+	kind := signalNode.GetObjectKind().GroupVersionKind().Kind
+	if kind == "Node" {
+		return true
+	}
+	for k, v := range signalNode.GetAnnotations() {
+		if k == apconst.K0SControlNodeModeAnnotation && v == apconst.K0SControlNodeModeControllerWorker {
+			return true
+		}
+	}
+	return false
 }

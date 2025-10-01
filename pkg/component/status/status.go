@@ -1,18 +1,7 @@
-/*
-Copyright 2021 k0s authors
+//go:build unix
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package status
 
@@ -20,17 +9,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/autopilot/client"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -41,6 +28,7 @@ import (
 type Stater interface {
 	State(maxCount int) prober.State
 }
+
 type Status struct {
 	StatusInformation K0sStatus
 	Prober            Stater
@@ -77,10 +65,6 @@ func (s *Status) Init(_ context.Context) error {
 	var err error
 	s.httpserver = http.Server{
 		Handler: mux,
-	}
-	err = dir.Init(s.StatusInformation.K0sVars.RunDir, 0755)
-	if err != nil {
-		return fmt.Errorf("failed to create %s: %w", s.Socket, err)
 	}
 
 	removeLeftovers(s.Socket)
@@ -119,7 +103,7 @@ func (s *Status) Stop() error {
 	if err := s.httpserver.Shutdown(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
-	// Unix socket doesn't need to be explicitly removed because it's hadled
+	// Unix socket doesn't need to be explicitly removed because it's handled
 	// by httpserver.Shutdown
 	return nil
 }
@@ -153,7 +137,7 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	if sh.client == nil {
 		kubeClient, err := sh.buildWorkerSideKubeAPIClient(ctx)
 		if err != nil {
-			status.WorkerToAPIConnectionStatus.Message = fmt.Sprintf("failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: %s", err.Error())
+			status.WorkerToAPIConnectionStatus.Message = "failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: " + err.Error()
 			return status
 		}
 		sh.client = kubeClient
@@ -167,25 +151,17 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	return status
 }
 
-func (sh *statusHandler) buildWorkerSideKubeAPIClient(ctx context.Context) (kubernetes.Interface, error) {
-	var restConfig *rest.Config
-	var err error
+func (sh *statusHandler) buildWorkerSideKubeAPIClient(ctx context.Context) (client kubernetes.Interface, _ error) {
 	timeout, cancel := context.WithTimeout(ctx, defaultPollTimeout)
 	defer cancel()
 	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
-		if restConfig, err = sh.Status.CertManager.GetRestConfig(ctx); err != nil {
-			return false, nil
-		}
-		return true, nil
+		factory := kubeutil.ClientFactory{LoadRESTConfig: func() (*rest.Config, error) {
+			return sh.Status.CertManager.GetRestConfig(ctx)
+		}}
+
+		client, err = factory.GetClient()
+		return err == nil, nil
 	}); err != nil {
-		return nil, err
-	}
-	factory, err := client.NewClientFactory(restConfig)
-	if err != nil {
-		return nil, err
-	}
-	client, err := factory.GetClient()
-	if err != nil {
 		return nil, err
 	}
 	return client, nil

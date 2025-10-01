@@ -1,18 +1,7 @@
-/*
-Copyright 2021 k0s authors
+//go:build linux
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package cleanup
 
@@ -20,14 +9,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
+	"github.com/k0sproject/k0s/pkg/container/runtime"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
@@ -35,7 +21,8 @@ import (
 )
 
 type containers struct {
-	Config *Config
+	managedContainerd *containerd.Component
+	containerRuntime  runtime.ContainerRuntime
 }
 
 // Name returns the name of the step
@@ -46,23 +33,27 @@ func (c *containers) Name() string {
 // Run removes all the pods and mounts and stops containers afterwards
 // Run starts containerd if custom CRI is not configured
 func (c *containers) Run() error {
-	if !c.isCustomCriUsed() {
-		if err := c.startContainerd(); err != nil {
-			if errors.Is(err, fs.ErrNotExist) || errors.Is(err, exec.ErrNotFound) {
-				logrus.Debugf("containerd binary not found. Skipping container cleanup")
-				return nil
-			}
-			return fmt.Errorf("failed to start containerd: %w", err)
+	if c.managedContainerd != nil {
+		ctx := context.TODO()
+		if err := c.managedContainerd.Init(ctx); err != nil {
+			logrus.WithError(err).Warn("Failed to initialize containerd, skipping container cleanup")
+			return nil
 		}
+		if err := c.managedContainerd.Start(ctx); err != nil {
+			logrus.WithError(err).Warn("Failed to start containerd, skipping container cleanup")
+			return nil
+		}
+		defer func() {
+			if err := c.managedContainerd.Stop(); err != nil {
+				logrus.WithError(err).Warn("Failed to stop containerd")
+			}
+		}()
 	}
 
 	if err := c.stopAllContainers(); err != nil {
 		logrus.Debugf("error stopping containers: %v", err)
 	}
 
-	if !c.isCustomCriUsed() {
-		c.stopContainerd()
-	}
 	return nil
 }
 
@@ -91,48 +82,6 @@ func removeMount(path string) error {
 	return errors.Join(errs...)
 }
 
-func (c *containers) isCustomCriUsed() bool {
-	return c.Config.containerd == nil
-}
-
-func (c *containers) startContainerd() error {
-	logrus.Debugf("starting containerd")
-	args := []string{
-		fmt.Sprintf("--root=%s", filepath.Join(c.Config.dataDir, "containerd")),
-		fmt.Sprintf("--state=%s", filepath.Join(c.Config.runDir, "containerd")),
-		fmt.Sprintf("--address=%s", c.Config.containerd.socketPath),
-	}
-	if file.Exists("/etc/k0s/containerd.toml") {
-		args = append(args, "--config=/etc/k0s/containerd.toml")
-	}
-	cmd := exec.Command(c.Config.containerd.binPath, args...)
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	c.Config.containerd.cmd = cmd
-	logrus.Debugf("started containerd successfully")
-
-	return nil
-}
-
-func (c *containers) stopContainerd() {
-	logrus.Debug("attempting to stop containerd")
-	logrus.Debugf("found containerd pid: %v", c.Config.containerd.cmd.Process.Pid)
-	if err := c.Config.containerd.cmd.Process.Signal(os.Interrupt); err != nil {
-		logrus.Errorf("failed to kill containerd: %v", err)
-	}
-	// if process, didn't exit, wait a few seconds and send SIGKILL
-	if c.Config.containerd.cmd.ProcessState.ExitCode() != -1 {
-		time.Sleep(5 * time.Second)
-
-		if err := c.Config.containerd.cmd.Process.Kill(); err != nil {
-			logrus.Errorf("failed to send SIGKILL to containerd: %v", err)
-		}
-	}
-	logrus.Debug("successfully stopped containerd")
-}
-
 func (c *containers) stopAllContainers() error {
 	var errs []error
 
@@ -141,7 +90,7 @@ func (c *containers) stopAllContainers() error {
 	err := retry.Do(func() error {
 		logrus.Debugf("trying to list all pods")
 		var err error
-		pods, err = c.Config.containerRuntime.ListContainers(ctx)
+		pods, err = c.containerRuntime.ListContainers(ctx)
 		if err != nil {
 			return err
 		}
@@ -151,9 +100,6 @@ func (c *containers) stopAllContainers() error {
 		return fmt.Errorf("failed at listing pods %w", err)
 	}
 	if len(pods) > 0 {
-		if err := removeMount("kubelet/pods"); err != nil {
-			errs = append(errs, err)
-		}
 		if err := removeMount("run/netns"); err != nil {
 			errs = append(errs, err)
 		}
@@ -161,7 +107,7 @@ func (c *containers) stopAllContainers() error {
 
 	for _, pod := range pods {
 		logrus.Debugf("stopping container: %v", pod)
-		err := c.Config.containerRuntime.StopContainer(ctx, pod)
+		err := c.containerRuntime.StopContainer(ctx, pod)
 		if err != nil {
 			if strings.Contains(err.Error(), "443: connect: connection refused") {
 				// on a single node instance, we will see "connection refused" error. this is to be expected
@@ -171,13 +117,13 @@ func (c *containers) stopAllContainers() error {
 				errs = append(errs, fmt.Errorf("failed to stop running pod %s: %w", pod, err))
 			}
 		}
-		err = c.Config.containerRuntime.RemoveContainer(ctx, pod)
+		err = c.containerRuntime.RemoveContainer(ctx, pod)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to remove pod %s: %w", pod, err))
 		}
 	}
 
-	pods, err = c.Config.containerRuntime.ListContainers(ctx)
+	pods, err = c.containerRuntime.ListContainers(ctx)
 	if err == nil && len(pods) == 0 {
 		logrus.Info("successfully removed k0s containers!")
 	}

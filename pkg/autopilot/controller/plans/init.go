@@ -1,16 +1,5 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package plans
 
@@ -46,15 +35,15 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 
 	if leaderMode {
 		if err := registerNewPlanStateController(logger, mgr, cmdProviders); err != nil {
-			return fmt.Errorf("unable to register 'newplan' controller: %w", err)
+			return fmt.Errorf("unable to register newplan controller: %w", err)
 		}
 
 		if err := registerSchedulableWaitStateController(logger, mgr, cmdProviders); err != nil {
-			return fmt.Errorf("unable to register 'schedulablewait' controller: %w", err)
+			return fmt.Errorf("unable to register schedulablewait controller: %w", err)
 		}
 
 		if err := registerSchedulableStateController(logger, mgr, cmdProviders); err != nil {
-			return fmt.Errorf("unable to register 'schedulable' controller: %w", err)
+			return fmt.Errorf("unable to register schedulable controller: %w", err)
 		}
 	}
 
@@ -73,7 +62,7 @@ func registerNewPlanStateController(logger *logrus.Entry, mgr crman.Manager, pro
 		providers...,
 	)
 
-	return registerPlanStateController("newplan", logger, mgr, newPlanEventFilter(), handler, providers)
+	return registerPlanStateController("newplan", logger, mgr, newPlanEventFilter(), handler)
 }
 
 // registerSchedulableWaitStateController registers the 'schedulablewait' plan state controller to
@@ -87,7 +76,7 @@ func registerSchedulableWaitStateController(logger *logrus.Entry, mgr crman.Mana
 		providers...,
 	)
 
-	return registerPlanStateController("schedulablewait", logger, mgr, schedulableWaitEventFilter(), handler, providers)
+	return registerPlanStateController("schedulablewait", logger, mgr, schedulableWaitEventFilter(), handler)
 }
 
 // registerSchedulableStateController registers the 'schedulable' plan state controller to
@@ -101,14 +90,14 @@ func registerSchedulableStateController(logger *logrus.Entry, mgr crman.Manager,
 		providers...,
 	)
 
-	return registerPlanStateController("schedulable", logger, mgr, schedulableEventFilter(), handler, providers)
+	return registerPlanStateController("schedulable", logger, mgr, schedulableEventFilter(), handler)
 }
 
 // registerPlanStateController is a helper for registering a plan state controller into
 // controller-runtime.
-func registerPlanStateController(name string, logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, handler appc.PlanStateHandler, providers []appc.PlanCommandProvider) error {
+func registerPlanStateController(name string, logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, handler appc.PlanStateHandler) error {
 	return cr.NewControllerManagedBy(mgr).
-		Named("planstate-" + name).
+		Named("planstate_" + name).
 		For(&apv1beta2.Plan{}).
 		WithEventFilter(eventFilter).
 		Complete(

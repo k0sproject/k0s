@@ -1,0 +1,35 @@
+name: Renovate
+
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    - cron: 23 */4 * * * # At minute 23 past every 4th hour.
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+
+    # These permissions only affect the stock GitHub Actions token.
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@v43.0.11
+        with:
+          configurationFile: renovate.json
+          # Use the same token as the backport workflow. If this token is
+          # unavailable, i.e. if the workflow is triggered on a fork, use the
+          # stock GitHub Actions token instead ("Allow GitHub Actions to create
+          # and approve pull requests" must be selected in the fork's GitHub
+          # Actions settings).
+          token: "${{ secrets.GH_BACKPORT_TOKEN || github.token }}"
+        env:
+          LOG_LEVEL: debug
+          RENOVATE_REPOSITORIES: "${{ github.repository }}"
+          RENOVATE_ALLOWED_COMMANDS: '[".+"]'

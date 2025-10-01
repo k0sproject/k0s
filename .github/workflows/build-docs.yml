@@ -1,15 +1,29 @@
 name: Build docs
 
 on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - "**.md"
+      - docs/**
+      - embedded-bins/Makefile.variables
+      - pkg/constant/constant.go
+      - mkdocs.yml
+      - vars.sh
+
   pull_request:
     branches:
       - main
       - release-*
     paths:
-      - mkdocs.yml
-      - embedded-bins/Makefile.variables
-      - CODE_OF_CONDUCT.md
+      - "**.md"
       - docs/**
+      - embedded-bins/Makefile.variables
+      - pkg/constant/constant.go
+      - mkdocs.yml
+      - vars.sh
 
 env:
   MAKEFLAGS: -j
@@ -17,7 +31,7 @@ env:
 jobs:
   build:
     name: Build docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout k0s
         uses: actions/checkout@v4
@@ -53,7 +67,7 @@ jobs:
 
   dev-container:
     name: Build docs dev container
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout k0s
         uses: actions/checkout@v4

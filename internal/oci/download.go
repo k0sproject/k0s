@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package oci
 
@@ -89,18 +76,23 @@ func Download(ctx context.Context, url string, target io.Writer, options ...Down
 		return fmt.Errorf("failed to find artifact: %w", err)
 	}
 
-	// get a reader to the blob and copies it to the target.
-	reader, err := repo.Blobs().Fetch(ctx, source)
+	// Get a reader to the blob.
+	raw, err := repo.Blobs().Fetch(ctx, source)
 	if err != nil {
 		return fmt.Errorf("failed to fetch blob: %w", err)
 	}
-	defer reader.Close()
+	defer func() { err = errors.Join(err, raw.Close()) }()
 
-	if _, err := io.Copy(target, reader); err != nil {
+	// Wrap the reader so that its length and digest will be verified.
+	verified := content.NewVerifyReader(raw, source)
+
+	// Copy over the blob to its target.
+	if _, err := io.Copy(target, verified); err != nil {
 		return fmt.Errorf("failed to copy blob: %w", err)
 	}
 
-	return nil
+	// Verify the digest.
+	return verified.Verify()
 }
 
 // Fetches the manifest for the given reference and returns all of its successors.
@@ -144,7 +136,7 @@ func findArtifactDescriptor(all []ocispec.Descriptor, opts downloadOptions) (oci
 		}
 	}
 	if opts.artifactName == "" {
-		return ocispec.Descriptor{}, fmt.Errorf("no artifact descriptors found")
+		return ocispec.Descriptor{}, errors.New("no artifact descriptors found")
 	}
 	return ocispec.Descriptor{}, fmt.Errorf("artifact %q not found", opts.artifactName)
 }

@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package supervisor
 
@@ -20,10 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"math"
 	"os"
 	"os/exec"
-	"path"
-	"runtime"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -33,6 +21,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -44,6 +33,7 @@ type Supervisor struct {
 	BinPath        string
 	RunDir         string
 	DataDir        string
+	Stdin          func() io.Reader
 	Args           []string
 	PidFile        string
 	UID            int
@@ -78,28 +68,15 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
 		for {
-			if runtime.GOOS == "windows" {
-				// Graceful shutdown not implemented on Windows. This requires
-				// attaching to the target process's console and generating a
-				// CTRL+BREAK (or CTRL+C) event. Since a process can only be
-				// attached to a single console at a time, this would require
-				// k0s to detach from its own console, which is definitely not
-				// something that k0s wants to do. There might be ways to do
-				// this by generating the event via a separate helper process,
-				// but that's left open here as a TODO.
-				// https://learn.microsoft.com/en-us/windows/console/freeconsole
-				// https://learn.microsoft.com/en-us/windows/console/attachconsole
-				// https://learn.microsoft.com/en-us/windows/console/generateconsolectrlevent
-				// https://learn.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals
-				s.log.Infof("Killing pid %d", s.cmd.Process.Pid)
-				if err := s.cmd.Process.Kill(); err != nil {
-					s.log.Warnf("Failed to kill pid %d: %s", s.cmd.Process.Pid, err)
+			s.log.Debug("Requesting graceful termination")
+			if err := requestGracefulTermination(s.cmd.Process); err != nil {
+				if errors.Is(err, os.ErrProcessDone) {
+					s.log.Info("Failed to request graceful termination: process has already terminated")
+				} else {
+					s.log.WithError(err).Error("Failed to request graceful termination")
 				}
 			} else {
-				s.log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
-				if err := s.cmd.Process.Signal(syscall.SIGTERM); err != nil {
-					s.log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
-				}
+				s.log.Info("Requested graceful termination")
 			}
 			select {
 			case <-time.After(s.TimeoutStop):
@@ -128,11 +105,7 @@ func (s *Supervisor) Supervise() error {
 		return nil
 	}
 	s.log = logrus.WithField("component", s.Name)
-	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
-	if err := dir.Init(s.RunDir, constant.RunDirMode); err != nil {
-		s.log.Warnf("failed to initialize dir: %v", err)
-		return err
-	}
+	s.PidFile = filepath.Join(s.RunDir, s.Name) + ".pid"
 
 	if s.TimeoutStop == 0 {
 		s.TimeoutStop = 5 * time.Second
@@ -141,7 +114,7 @@ func (s *Supervisor) Supervise() error {
 		s.TimeoutRespawn = 5 * time.Second
 	}
 
-	if err := s.maybeKillPidFile(); err != nil {
+	if err := s.maybeCleanupPIDFile(); err != nil {
 		if !errors.Is(err, errors.ErrUnsupported) {
 			return err
 		}
@@ -174,6 +147,9 @@ func (s *Supervisor) Supervise() error {
 				s.cmd = exec.Command(s.BinPath, s.Args...)
 				s.cmd.Dir = s.DataDir
 				s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix)
+				if s.Stdin != nil {
+					s.cmd.Stdin = s.Stdin()
+				}
 
 				// detach from the process group so children don't
 				// get signals sent directly to parent.
@@ -220,7 +196,7 @@ func (s *Supervisor) Supervise() error {
 
 			select {
 			case <-ctx.Done():
-				s.log.Debug("respawn cancelled")
+				s.log.Debug("respawn canceled")
 				return
 			case <-time.After(s.TimeoutRespawn):
 				s.log.Debug("respawning")
@@ -248,11 +224,11 @@ func (s *Supervisor) Stop() {
 	}
 }
 
-// maybeKillPidFile checks kills the process in the pidFile if it's has
-// the same binary as the supervisor's and also checks that the env
-// `_KOS_MANAGED=yes`. This function does not delete the old pidFile as
-// this is done by the caller.
-func (s *Supervisor) maybeKillPidFile() error {
+// Checks if the process referenced in the PID file is a k0s-managed process.
+// If so, requests graceful termination and waits for the process to terminate.
+//
+// The PID file itself is not removed here; that is handled by the caller.
+func (s *Supervisor) maybeCleanupPIDFile() error {
 	pid, err := os.ReadFile(s.PidFile)
 	if os.IsNotExist(err) {
 		return nil
@@ -265,85 +241,65 @@ func (s *Supervisor) maybeKillPidFile() error {
 		return fmt.Errorf("failed to parse PID file %s: %w", s.PidFile, err)
 	}
 
-	ph, err := newProcHandle(p)
+	ph, err := openPID(p)
 	if err != nil {
+		if errors.Is(err, syscall.ESRCH) {
+			return nil // no such process, nothing to cleanup
+		}
 		return fmt.Errorf("cannot interact with PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
+	defer ph.Close()
 
-	if err := s.killProcess(ph); err != nil {
-		return fmt.Errorf("failed to kill PID %d from PID file %s: %w", p, s.PidFile, err)
-	}
-
-	return nil
-}
-
-const exitCheckInterval = 200 * time.Millisecond
-
-// Tries to terminate a process gracefully. If it's still running after
-// s.TimeoutStop, the process is forcibly terminated.
-func (s *Supervisor) killProcess(ph procHandle) error {
-	// Kill the process pid
-	deadlineTicker := time.NewTicker(s.TimeoutStop)
-	defer deadlineTicker.Stop()
-	checkTicker := time.NewTicker(exitCheckInterval)
-	defer checkTicker.Stop()
-
-Loop:
-	for {
-		select {
-		case <-checkTicker.C:
-			shouldKill, err := s.shouldKillProcess(ph)
-			if err != nil {
-				return err
-			}
-			if !shouldKill {
-				return nil
-			}
-
-			err = ph.terminateGracefully()
-			if errors.Is(err, syscall.ESRCH) {
-				return nil
-			} else if err != nil {
-				return fmt.Errorf("failed to terminate gracefully: %w", err)
-			}
-		case <-deadlineTicker.C:
-			break Loop
+	if managed, err := s.isK0sManaged(ph); err != nil {
+		if errors.Is(err, os.ErrProcessDone) {
+			return nil
 		}
-	}
-
-	shouldKill, err := s.shouldKillProcess(ph)
-	if err != nil {
 		return err
-	}
-	if !shouldKill {
+	} else if !managed {
 		return nil
 	}
 
-	err = ph.terminateForcibly()
-	if errors.Is(err, syscall.ESRCH) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to terminate forcibly: %w", err)
+	if err := s.terminateAndWait(ph); err != nil {
+		return fmt.Errorf("while waiting for termination of PID %d from PID file %s: %w", p, s.PidFile, err)
 	}
+
 	return nil
 }
 
-func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
-	// only kill process if it has the expected cmd
-	if cmd, err := ph.cmdline(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
-			return false, nil
+// Tries to gracefully terminate a process and waits for it to exit. If the
+// process is still running after several attempts, it returns an error instead
+// of forcefully killing the process.
+func (s *Supervisor) terminateAndWait(ph procHandle) error {
+	if err := ph.requestGracefulTermination(); err != nil {
+		if errors.Is(err, os.ErrProcessDone) {
+			return nil
 		}
-		return false, err
+		return fmt.Errorf("failed to request graceful termination: %w", err)
+	}
+
+	errTimeout := errors.New("process did not terminate in time")
+	ctx, cancel := context.WithTimeoutCause(context.TODO(), s.TimeoutStop, errTimeout)
+	defer cancel()
+	return s.awaitTermination(ctx, ph)
+}
+
+// Checks if the process handle refers to a k0s-managed process. A process is
+// considered k0s-managed if:
+//   - The executable path matches.
+//   - The process environment contains `_K0S_MANAGED=yes`.
+func (s *Supervisor) isK0sManaged(ph procHandle) (bool, error) {
+	if cmd, err := ph.cmdline(); err != nil {
+		// Only error out if the error doesn't indicate that getting the command
+		// line is unsupported. In that case, ignore the error and proceed to
+		// the environment check.
+		if !errors.Is(err, errors.ErrUnsupported) {
+			return false, err
+		}
 	} else if len(cmd) > 0 && cmd[0] != s.BinPath {
 		return false, nil
 	}
 
-	//only kill process if it has the _KOS_MANAGED env set
 	if env, err := ph.environ(); err != nil {
-		if errors.Is(err, syscall.ESRCH) {
-			return false, nil
-		}
 		return false, err
 	} else if !slices.Contains(env, k0sManaged) {
 		return false, nil
@@ -352,12 +308,35 @@ func (s *Supervisor) shouldKillProcess(ph procHandle) (bool, error) {
 	return true, nil
 }
 
+func (s *Supervisor) awaitTermination(ctx context.Context, ph procHandle) error {
+	s.log.Debug("Polling for process termination")
+	backoff := wait.Backoff{
+		Duration: 25 * time.Millisecond,
+		Cap:      3 * time.Second,
+		Steps:    math.MaxInt32,
+		Factor:   1.5,
+		Jitter:   0.1,
+	}
+
+	if err := wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+		return ph.hasTerminated()
+	}); err != nil {
+		if err == ctx.Err() { //nolint:errorlint // the equal check is intended
+			return context.Cause(ctx)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 // Prepare the env for exec:
 // - handle component specific env
 // - inject k0s embedded bins into path
 func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 	env := os.Environ()
-	componentPrefix := fmt.Sprintf("%s_", strings.ToUpper(component))
+	componentPrefix := strings.ToUpper(component) + "_"
 
 	// put the component specific env vars in the front.
 	sort.Slice(env, func(i, j int) bool { return strings.HasPrefix(env[i], componentPrefix) })
@@ -390,7 +369,7 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 		}
 		switch k {
 		case "PATH":
-			env[i] = fmt.Sprintf("PATH=%s", dir.PathListJoin(path.Join(dataDir, "bin"), v))
+			env[i] = "PATH=" + dir.PathListJoin(filepath.Join(dataDir, "bin"), v)
 		default:
 			env[i] = fmt.Sprintf("%s=%s", k, v)
 		}

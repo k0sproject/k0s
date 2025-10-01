@@ -1,8 +1,13 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Networking
 
 ## In-cluster networking
 
-k0s supports any standard [CNI] network providers. For convenience, k0s does come bundled with tho built-in providers, [Kube-router] and [Calico].
+k0s supports any standard [CNI] network provider. For convenience, k0s does come bundled with two built-in providers, [Kube-router] and [Calico].
 
 [CNI]: https://github.com/containernetworking/cni
 [Kube-router]: https://github.com/cloudnativelabs/kube-router
@@ -10,7 +15,7 @@ k0s supports any standard [CNI] network providers. For convenience, k0s does com
 
 ### Custom CNI configuration
 
-You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure `custom` as the [network provider] in the k0s configuration file (`k0s.yaml`). To deploy the CNI provider you want to use, you can deploy it using Helm, plain Kubernetes manifests or any other way.
+You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure `custom` as the [network provider] in the k0s configuration file (`k0s.yaml`). You can deploy the CNI provider you want to use, either with Helm, plain Kubernetes manifests or any other way.
 
 [network provider]: configuration.md#specnetwork
 
@@ -21,21 +26,21 @@ You can opt-out of having k0s manage the network setup and choose instead to use
 
 ### Kube-router
 
-Kube-router is built into k0s, and so by default the distribution uses it for network provision. Kube-router uses the standard Linux networking stack and toolset, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.
+Kube-router is built into k0s, and so by default the distribution uses it for network provisioning. Kube-router uses the standard Linux networking stack and tools, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.
 
-- Uses bit less resources (~15%)
+- Uses a bit less resources (~15%)
 - Does NOT support Windows nodes
 
 ### Calico
 
-In addition to kube-router, k0s also offers [Calico] as an alternative,
+In addition to Kube-router, k0s also offers Calico as an alternative,
 integrated network provider. Calico is a layer 3 container networking solution
 that routes packets to pods. For example, it supports pod-specific network
 policies that help secure Kubernetes clusters in demanding use cases. Calico in
 k0s uses VXLAN by default. However, IP in IP is also supported via the `bird`
 mode.
 
-- Uses bit more resources
+- Uses a bit more resources
 - Supports Windows nodes
 
 ## Controller-Worker communication
@@ -48,16 +53,16 @@ One goal of k0s is to allow for the deployment of an isolated control plane, whi
 
 ## Required ports and protocols
 
-| Protocol | Port  | Service        | Direction                      | Notes
-|----------|-------|----------------|--------------------------------|--------
-| TCP      | 2380  | etcd peers     | controller <-> controller      |
-| TCP      | 6443  | kube-apiserver | worker, CLI => controller      | Authenticated Kube API using Kube TLS client certs, ServiceAccount tokens with RBAC
-| TCP      | 179   | kube-router    | worker <-> worker              | BGP routing sessions between peers
-| UDP      | 4789  | Calico         | worker <-> worker              | Calico VXLAN overlay
-| TCP      | 10250 | kubelet        | controller, worker => host `*` | Authenticated kubelet API for the controller node `kube-apiserver` (and `heapster`/`metrics-server` addons) using TLS client certs
-| TCP      | 9443  | k0s-api        | controller <-> controller      | k0s controller join API, TLS with token auth
-| TCP      | 8132  | konnectivity   | worker <-> controller          | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
-| TCP      | 112   | keepalived     | controller <-> controller      | Only required for control plane load balancing vrrpInstances for ip address 224.0.0.18. 224.0.0.18 is a multicast IP address defined in [RFC 3768].
+| Protocol | Port  | Service        | Direction                     | Notes                                                                                                                                                                                                        |
+|----------|-------|----------------|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| TCP      | 2380  | etcd           | controller ⟷ controller       |                                                                                                                                                                                                              |
+| TCP      | 6443  | kube-apiserver | worker, CLI ⟶ controller      | Authenticated Kubernetes API using mTLS, ServiceAccount tokens with RBAC                                                                                                                                     |
+| TCP      | 179   | kube-router    | worker ⟷ worker               | BGP routing sessions between peers                                                                                                                                                                           |
+| UDP      | 4789  | calico         | worker ⟷ worker               | Calico VXLAN overlay                                                                                                                                                                                         |
+| TCP      | 10250 | kubelet        | controller, worker ⟶ host `*` | Authenticated kubelet API for the controller node `kube-apiserver` (and `metrics-server` add-ons) using mTLS                                                                                                 |
+| TCP      | 9443  | k0s api        | controller ⟷ controller       | k0s controller join API, TLS with token auth                                                                                                                                                                 |
+| TCP      | 8132  | konnectivity   | worker ⟷ controller           | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets                                                                                                                          |
+| TCP      | 112   | keepalived     | controller ⟷ controller       | Only required for control plane load balancing VRRPInstances. Unless unicast is explicitly enabled, port 122 works on the ip address 224.0.0.18. 224.0.0.18 is a multicast IP address defined in [RFC 3768]. |
 
 You also need enable all traffic to and from the [podCIDR and serviceCIDR] subnets on nodes with a worker role.
 
@@ -66,12 +71,13 @@ You also need enable all traffic to and from the [podCIDR and serviceCIDR] subne
 
 ## iptables
 
-`iptables` can work in two distinct modes, `legacy` and `nftables`. k0s autodetects the mode and prefers `nftables`. To check which mode k0s is configured with check `ls -lah /var/lib/k0s/bin/`. The `iptables` link target reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure al component have picked up the same mode you can check via:
-**kube-proxy**: `nsenter -t $(pidof kube-proxy) -m iptables -V`
-**kube-router**: `nsenter -t $(pidof kube-router) -m /sbin/iptables -V`
-**calico**: `nsenter -t $(pidof -s calico-node) -m iptables -V`
+`iptables` can work in two distinct modes, `legacy` and `nftables`. k0s auto-detects the mode and prefers `nftables`. To check which mode k0s is configured with check `ls -lah /var/lib/k0s/bin/`. The target of the symbolic link `iptables` reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure all component have picked up the same mode you can check via:
 
-There are [known](https://bugzilla.netfilter.org/show_bug.cgi?id=1632) version incompatibility issues in iptables versions. k0s ships (in `/var/lib/k0s/bin`) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different that k0s (and other k8s components) ships with it may cause networking issues. This is based on the fact that iptables being user-space tooling it does not provide any strong version compatibility guarantees.
+- kube-proxy: `nsenter -t $(pidof kube-proxy) -m iptables -V`
+- kube-router: `nsenter -t $(pidof kube-router) -m /sbin/iptables -V`
+- calico: `nsenter -t $(pidof -s calico-node) -m iptables -V`
+
+There are [known](https://bugzilla.netfilter.org/show_bug.cgi?id=1632) version incompatibility issues in iptables versions. k0s ships (in `/var/lib/k0s/bin`) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different from the one that k0s (and other Kubernetes components) ship, it may cause networking issues. This is due to the fact that iptables, being user-space tooling, does not provide any strong version compatibility guarantees.
 
 ## Firewalld & k0s
 
@@ -88,12 +94,12 @@ public (active)
   sources: 10.244.0.0/16 10.96.0.0/12
   services: cockpit dhcpv6-client ssh
   ports: 80/tcp 6443/tcp 8132/tcp 10250/tcp 179/tcp 179/udp
-  protocols: 
+  protocols:
   forward: no
   masquerade: yes
-  forward-ports: 
-  source-ports: 
-  icmp-blocks: 
+  forward-ports:
+  source-ports:
+  icmp-blocks:
   rich rules:
 ```
 

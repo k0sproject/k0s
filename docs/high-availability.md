@@ -1,10 +1,17 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Control Plane High Availability
 
-You can create high availability for the control plane by distributing the control plane across multiple nodes and installing a load balancer on top. Etcd can be colocated with the controller nodes (default in k0s) to achieve highly available datastore at the same time.
+You can create high availability for the control plane by distributing the control plane across multiple nodes and installing a load balancer on top. Etcd can be co-located with the controller nodes (default in k0s) to achieve highly available data store at the same time.
 
 ![k0s high availability](img/k0s_high_availability.png)
 
-**Note:** In this context even 2 node controlplane is considered HA even though it's not really HA from etcd point of view. The same requirement for [LB](#load-balancer) still applies.
+**Note:** In this context, a two-node control plane is considered highly
+available, even though it is not HA from etcd's perspective. The same
+requirement for the [load balancer](#load-balancer) still applies.
 
 ## Network considerations
 
@@ -20,11 +27,11 @@ Control plane high availability requires a tcp load balancer, which acts as a si
 - 8132 (for Konnectivity)
 - 9443 (for controller join API)
 
-The load balancer can be implemented in many different ways and k0s doesn't have any additional requirements. You can use for example HAProxy, NGINX or your cloud provider's load balancer.
+The load balancer can be implemented in many different ways and k0s doesn't have any additional requirements. You can use for example HAProxy, nginx or your cloud provider's load balancer.
 
 ### Example configuration: HAProxy
 
-Add the following lines to the end of the haproxy.cfg:
+Add the following lines at the end of `haproxy.cfg`:
 
 ```txt
 frontend kubeAPI
@@ -95,7 +102,7 @@ The second important aspect is: the load balancer address must be configured to 
 
 ### Configuration using k0s.yaml (for each controller)
 
-Note to update your load balancer's public ip address into two places.
+Note to update your load balancer's public IP address into two places.
 
 ```yaml
 spec:
@@ -107,7 +114,8 @@ spec:
 
 ### Configuration using k0sctl.yaml (for k0sctl)
 
-Add the following lines to the end of the k0sctl.yaml. Note to update your load balancer's public ip address into two places.
+Add the following lines at the end of `k0sctl.yaml`. Note to update your load
+balancer's public IP address into two places.
 
 ```yaml
   k0s:

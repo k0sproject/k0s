@@ -1,18 +1,7 @@
-/*
-Copyright 2022 k0s authors
+//go:build unix
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package worker
 
@@ -27,6 +16,7 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -78,10 +68,9 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		return errors.New("unable to create an autopilot client -- timed out")
 	}
 
-	autopilotClientFactory, err := apcli.NewClientFactory(restConfig)
-	if err != nil {
-		return fmt.Errorf("creating autopilot client factory error: %w", err)
-	}
+	autopilotClientFactory := &apcli.ClientFactory{ClientFactoryInterface: &kubernetes.ClientFactory{
+		LoadRESTConfig: func() (*rest.Config, error) { return restConfig, nil },
+	}}
 
 	log.Info("Autopilot client factory created, booting up worker root controller")
 	autopilotRoot, err := apcont.NewRootWorker(aproot.RootConfig{

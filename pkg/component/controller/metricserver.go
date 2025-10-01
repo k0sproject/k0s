@@ -1,23 +1,11 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"path"
@@ -214,9 +202,12 @@ spec:
       nodeSelector:
         kubernetes.io/os: linux
       tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
       priorityClassName: system-cluster-critical
       serviceAccountName: metrics-server
       volumes:
@@ -346,7 +337,7 @@ func (m *MetricServer) Reconcile(_ context.Context, clusterConfig *v1beta1.Clust
 // So that's 10m CPU and 30MiB mem per 10 nodes
 func (m *MetricServer) getConfig(ctx context.Context) (metricsConfig, error) {
 	if m.clusterConfig == nil {
-		return metricsConfig{}, fmt.Errorf("cluster config not available yet")
+		return metricsConfig{}, errors.New("cluster config not available yet")
 	}
 	cfg := metricsConfig{
 		Image:      m.clusterConfig.Spec.Images.MetricsServer.URI(),

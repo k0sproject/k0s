@@ -1,26 +1,14 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net"
 	"net/url"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -75,12 +63,17 @@ func DefaultStorageSpec() *StorageSpec {
 func (s *StorageSpec) IsJoinable() bool {
 	switch s.Type {
 	case EtcdStorageType:
-		return !s.Etcd.IsExternalClusterUsed()
+		// Controllers will always be able to connect to an etcd backend, either
+		// by joining as a managed etcd node, or by simply connecting to an
+		// external cluster over the network.
+		return true
+
 	case KineStorageType:
 		return s.Kine.IsJoinable()
-	}
 
-	return false
+	default:
+		return false
+	}
 }
 
 // UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
@@ -133,6 +126,13 @@ type EtcdConfig struct {
 
 	// Map of key-values (strings) for any extra arguments you want to pass down to the etcd process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+
+	// Slice of strings with raw arguments to pass to the etcd process
+	// These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+	RawArgs []string `json:"rawArgs,omitempty"`
+
+	// Custom config for CA certificates.
+	CA *CA `json:"ca,omitempty"`
 }
 
 // ExternalCluster defines external etcd cluster related config options
@@ -165,18 +165,28 @@ func DefaultEtcdConfig() *EtcdConfig {
 		ExternalCluster: nil,
 		PeerAddress:     addr,
 		ExtraArgs:       make(map[string]string),
+		CA:              DefaultCA(),
 	}
 }
 
 const etcdNameExtraArg = "name"
 
-// GetNodeName returns the node name for the etcd peer
-func (e *EtcdConfig) GetNodeName() (string, error) {
+// Returns the human-readable member name for the etcd peer, if any.
+func (e *EtcdConfig) GetMemberName() string {
 	if e.ExtraArgs != nil && e.ExtraArgs[etcdNameExtraArg] != "" {
-		return e.ExtraArgs[etcdNameExtraArg], nil
+		return e.ExtraArgs[etcdNameExtraArg]
 	}
 
-	return os.Hostname()
+	return ""
+}
+
+// GetPeerURL returns the URL of PeerAddress
+func (e *EtcdConfig) GetPeerURL() string {
+	u := &url.URL{
+		Scheme: "https",
+		Host:   net.JoinHostPort(e.PeerAddress, "2380"),
+	}
+	return u.String()
 }
 
 // DefaultKineConfig creates KineConfig with sane defaults
@@ -200,18 +210,24 @@ func (k *KineConfig) IsJoinable() bool {
 
 	switch backend {
 	case "sqlite":
+		// An sqlite backend is only available via the file system.
 		return false
 
 	case "nats":
 		if u, err := url.Parse(dsn); err == nil {
 			if q, err := url.ParseQuery(u.RawQuery); err == nil {
+				// If it's not an embedded NATS, other controllers may
+				// also be able to connect to it over the network.
 				return q.Has("noEmbed")
 			}
 		}
 		return false
-	}
 
-	return true
+	default:
+		// The assumption is that all other backends will
+		// somehow be reachable over the network.
+		return true
+	}
 }
 
 // GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist
@@ -271,19 +287,19 @@ func (e *EtcdConfig) GetKeyFilePath(certDir string) string {
 }
 
 func validateRequiredProperties(e *ExternalCluster) []error {
-	var errors []error
+	var errs []error
 
 	if len(e.Endpoints) == 0 {
-		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot be null or empty"))
+		errs = append(errs, errors.New("spec.storage.etcd.externalCluster.endpoints cannot be null or empty"))
 	} else if slices.Contains(e.Endpoints, "") {
-		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot contain empty strings"))
+		errs = append(errs, errors.New("spec.storage.etcd.externalCluster.endpoints cannot contain empty strings"))
 	}
 
 	if e.EtcdPrefix == "" {
-		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.etcdPrefix cannot be empty"))
+		errs = append(errs, errors.New("spec.storage.etcd.externalCluster.etcdPrefix cannot be empty"))
 	}
 
-	return errors
+	return errs
 }
 
 func validateOptionalTLSProperties(e *ExternalCluster) []error {
@@ -292,7 +308,7 @@ func validateOptionalTLSProperties(e *ExternalCluster) []error {
 	if noTLSPropertyDefined || e.hasAllTLSPropertiesDefined() {
 		return nil
 	}
-	return []error{fmt.Errorf("spec.storage.etcd.externalCluster is invalid: " +
+	return []error{errors.New("spec.storage.etcd.externalCluster is invalid: " +
 		"all TLS properties [caFile,clientCertFile,clientKeyFile] must be defined or none of those")}
 }
 

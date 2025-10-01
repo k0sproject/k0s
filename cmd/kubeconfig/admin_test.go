@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package kubeconfig_test
 
@@ -55,16 +42,16 @@ func TestAdmin(t *testing.T) {
 		},
 	}, adminConfPath))
 
-	rtConfigPath := filepath.Join(dataDir, "run", "k0s.yaml")
-	writeYAML(t, rtConfigPath, &config.RuntimeConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String(), Kind: config.RuntimeConfigKind},
-		Spec: &config.RuntimeConfigSpec{K0sVars: &config.CfgVars{
-			AdminKubeConfigPath: adminConfPath,
-			DataDir:             dataDir,
-			RuntimeConfigPath:   rtConfigPath,
-			StartupConfigPath:   configPath,
-		}},
-	})
+	k0sVars := &config.CfgVars{
+		AdminKubeConfigPath: adminConfPath,
+		DataDir:             dataDir,
+		RuntimeConfigPath:   filepath.Join(dataDir, "run", "k0s.yaml"),
+		StartupConfigPath:   configPath,
+	}
+	require.NoError(t, os.Mkdir(filepath.Dir(k0sVars.RuntimeConfigPath), 0700))
+	cfg, err := config.NewRuntimeConfig(k0sVars, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, cfg.Spec.Cleanup()) })
 
 	var stdout bytes.Buffer
 	var stderr strings.Builder
@@ -89,17 +76,24 @@ func TestAdmin_NoAdminConfig(t *testing.T) {
 	dataDir := t.TempDir()
 
 	configPath := filepath.Join(dataDir, "k0s.yaml")
-	adminConfPath := filepath.Join(dataDir, "admin.conf")
-	rtConfigPath := filepath.Join(dataDir, "run", "k0s.yaml")
-	writeYAML(t, rtConfigPath, &config.RuntimeConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String(), Kind: config.RuntimeConfigKind},
-		Spec: &config.RuntimeConfigSpec{K0sVars: &config.CfgVars{
-			AdminKubeConfigPath: adminConfPath,
-			DataDir:             dataDir,
-			RuntimeConfigPath:   rtConfigPath,
-			StartupConfigPath:   configPath,
+	writeYAML(t, configPath, &v1beta1.ClusterConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1beta1.SchemeGroupVersion.String(), Kind: v1beta1.ClusterConfigKind},
+		Spec: &v1beta1.ClusterSpec{API: &v1beta1.APISpec{
+			Port: 65432, ExternalAddress: "not-here.example.com",
 		}},
 	})
+
+	k0sVars := &config.CfgVars{
+		AdminKubeConfigPath: filepath.Join(dataDir, "admin.conf"),
+		DataDir:             dataDir,
+		RuntimeConfigPath:   filepath.Join(dataDir, "run", "k0s.yaml"),
+		StartupConfigPath:   filepath.Join(dataDir, "k0s.yaml"),
+	}
+	require.NoError(t, os.Mkdir(filepath.Dir(k0sVars.RuntimeConfigPath), 0700))
+
+	cfg, err := config.NewRuntimeConfig(k0sVars, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, cfg.Spec.Cleanup()) })
 
 	var stdout, stderr strings.Builder
 	underTest := cmd.NewRootCmd()
@@ -110,7 +104,7 @@ func TestAdmin_NoAdminConfig(t *testing.T) {
 	assert.Error(t, underTest.Execute())
 
 	assert.Empty(t, stdout.String())
-	msg := fmt.Sprintf("admin config %q not found, check if the control plane is initialized on this node", adminConfPath)
+	msg := fmt.Sprintf("admin config %q not found, check if the control plane is initialized on this node", k0sVars.AdminKubeConfigPath)
 	assert.Equal(t, "Error: "+msg+"\n", stderr.String())
 }
 

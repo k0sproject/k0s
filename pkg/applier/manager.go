@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package applier
 
@@ -32,6 +19,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -46,7 +34,7 @@ type Manager struct {
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	bundleDir string
-	stop      func(reason string)
+	stop      func()
 	log       *logrus.Entry
 
 	LeaderElector leaderelector.Interface
@@ -69,34 +57,33 @@ func (m *Manager) Init(ctx context.Context) error {
 	m.log = logrus.WithField("component", constant.ApplierManagerComponentName)
 	m.bundleDir = m.K0sVars.ManifestsDir
 
-	m.LeaderElector.AddAcquiredLeaseCallback(func() {
-		ctx, cancel := context.WithCancelCause(ctx)
-		stopped := make(chan struct{})
-
-		m.stop = func(reason string) { cancel(errors.New(reason)); <-stopped }
-		go func() {
-			defer close(stopped)
-			wait.UntilWithContext(ctx, m.runWatchers, 1*time.Minute)
-		}()
-	})
-	m.LeaderElector.AddLostLeaseCallback(func() {
-		if m.stop != nil {
-			m.stop("lost leadership")
-		}
-	})
-
-	return err
+	return nil
 }
 
 // Run runs the Manager
-func (m *Manager) Start(_ context.Context) error {
+func (m *Manager) Start(context.Context) error {
+	ctx, cancel := context.WithCancelCause(context.Background())
+	stopped := make(chan struct{})
+
+	m.stop = func() {
+		cancel(errors.New("applier manager is stopping"))
+		<-stopped
+	}
+
+	go func() {
+		defer close(stopped)
+		leaderelection.RunLeaderTasks(ctx, m.LeaderElector.CurrentStatus, func(ctx context.Context) {
+			wait.UntilWithContext(ctx, m.runWatchers, time.Minute)
+		})
+	}()
+
 	return nil
 }
 
 // Stop stops the Manager
 func (m *Manager) Stop() error {
 	if m.stop != nil {
-		m.stop("applier manager is stopping")
+		m.stop()
 	}
 	return nil
 }
@@ -132,6 +119,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 	}
 
 	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil) // satisfy linter, not required for correctness
 	stacks := make(map[string]stack, len(dirs))
 
 	for _, dir := range dirs {

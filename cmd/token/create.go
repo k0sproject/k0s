@@ -1,18 +1,7 @@
-/*
-Copyright 2021 k0s authors
+//go:build unix
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package token
 
@@ -44,16 +33,22 @@ func tokenCreateCmd() *cobra.Command {
 		Example: `k0s token create --role worker --expiry 100h //sets expiration time to 100 hours
 k0s token create --role worker --expiry 10m  //sets expiration time to 10 minutes
 `,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		Args: cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
 			return checkTokenRole(createTokenRole)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
 			}
 
 			expiry, err := time.ParseDuration(tokenExpiry)
+			if err != nil {
+				return err
+			}
+
+			nodeConfig, err := opts.K0sVars.NodeConfig()
 			if err != nil {
 				return err
 			}
@@ -80,11 +75,6 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 					return err
 				}
 
-				nodeConfig, err := opts.K0sVars.NodeConfig()
-				if err != nil {
-					return err
-				}
-
 				bootstrapToken, err = token.CreateKubeletBootstrapToken(cmd.Context(), nodeConfig.Spec.API, opts.K0sVars, createTokenRole, expiry)
 				return err
 			})
@@ -95,11 +85,12 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			return nil
 		},
 	}
-	// append flags
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.Flags().StringVar(&tokenExpiry, "expiry", "0s", "Expiration time of the token. Format 1.5h, 2h45m or 300ms.")
-	cmd.Flags().StringVar(&createTokenRole, "role", "worker", "Either worker or controller")
-	cmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.StringVar(&tokenExpiry, "expiry", "0s", "Expiration time of the token. Format 1.5h, 2h45m or 300ms.")
+	flags.StringVar(&createTokenRole, "role", "worker", "Either worker or controller")
+	flags.BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
 
 	return cmd
 }

@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -67,15 +54,15 @@ func (s *ImageSpec) URI() string {
 
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
-	Konnectivity  ImageSpec `json:"konnectivity,omitempty"`
-	PushGateway   ImageSpec `json:"pushgateway,omitempty"`
-	MetricsServer ImageSpec `json:"metricsserver,omitempty"`
-	KubeProxy     ImageSpec `json:"kubeproxy,omitempty"`
-	CoreDNS       ImageSpec `json:"coredns,omitempty"`
-	Pause         ImageSpec `json:"pause,omitempty"`
+	Konnectivity  *ImageSpec `json:"konnectivity,omitempty"`
+	PushGateway   *ImageSpec `json:"pushgateway,omitempty"`
+	MetricsServer *ImageSpec `json:"metricsserver,omitempty"`
+	KubeProxy     *ImageSpec `json:"kubeproxy,omitempty"`
+	CoreDNS       *ImageSpec `json:"coredns,omitempty"`
+	Pause         *ImageSpec `json:"pause,omitempty"`
 
-	Calico     CalicoImageSpec     `json:"calico,omitempty"`
-	KubeRouter KubeRouterImageSpec `json:"kuberouter,omitempty"`
+	Calico     *CalicoImageSpec     `json:"calico,omitempty"`
+	KubeRouter *KubeRouterImageSpec `json:"kuberouter,omitempty"`
 
 	Repository string `json:"repository,omitempty"`
 
@@ -134,23 +121,24 @@ func (ci *ClusterImages) overrideImageRepositories() {
 	override := func(dst *ImageSpec) {
 		dst.Image = overrideRepository(ci.Repository, dst.Image)
 	}
-	override(&ci.Konnectivity)
-	override(&ci.MetricsServer)
-	override(&ci.KubeProxy)
-	override(&ci.CoreDNS)
-	override(&ci.Calico.CNI)
-	override(&ci.Calico.Node)
-	override(&ci.Calico.KubeControllers)
-	override(&ci.KubeRouter.CNI)
-	override(&ci.KubeRouter.CNIInstaller)
-	override(&ci.Pause)
+	override(ci.Konnectivity)
+	override(ci.MetricsServer)
+	override(ci.KubeProxy)
+	override(ci.CoreDNS)
+	override(ci.Calico.CNI)
+	override(ci.Calico.Node)
+	override(ci.Calico.KubeControllers)
+	override(ci.KubeRouter.CNI)
+	override(ci.KubeRouter.CNIInstaller)
+	override(ci.Pause)
+	override(ci.PushGateway)
 }
 
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
-	CNI             ImageSpec `json:"cni,omitempty"`
-	Node            ImageSpec `json:"node,omitempty"`
-	KubeControllers ImageSpec `json:"kubecontrollers,omitempty"`
+	CNI             *ImageSpec `json:"cni,omitempty"`
+	Node            *ImageSpec `json:"node,omitempty"`
+	KubeControllers *ImageSpec `json:"kubecontrollers,omitempty"`
 }
 
 func (s *CalicoImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
@@ -165,8 +153,8 @@ func (s *CalicoImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
 
 // KubeRouterImageSpec config group for kube-router related images
 type KubeRouterImageSpec struct {
-	CNI          ImageSpec `json:"cni,omitempty"`
-	CNIInstaller ImageSpec `json:"cniInstaller,omitempty"`
+	CNI          *ImageSpec `json:"cni,omitempty"`
+	CNIInstaller *ImageSpec `json:"cniInstaller,omitempty"`
 }
 
 func (s *KubeRouterImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
@@ -182,51 +170,51 @@ func (s *KubeRouterImageSpec) Validate(path *field.Path) (errs field.ErrorList) 
 func DefaultClusterImages() *ClusterImages {
 	return &ClusterImages{
 		DefaultPullPolicy: "IfNotPresent",
-		Konnectivity: ImageSpec{
+		Konnectivity: &ImageSpec{
 			Image:   constant.KonnectivityImage,
 			Version: constant.KonnectivityImageVersion,
 		},
-		PushGateway: ImageSpec{
+		PushGateway: &ImageSpec{
 			Image:   constant.PushGatewayImage,
 			Version: constant.PushGatewayImageVersion,
 		},
-		MetricsServer: ImageSpec{
+		MetricsServer: &ImageSpec{
 			Image:   constant.MetricsImage,
 			Version: constant.MetricsImageVersion,
 		},
-		KubeProxy: ImageSpec{
+		KubeProxy: &ImageSpec{
 			Image:   constant.KubeProxyImage,
 			Version: constant.KubeProxyImageVersion,
 		},
-		CoreDNS: ImageSpec{
+		CoreDNS: &ImageSpec{
 			Image:   constant.CoreDNSImage,
 			Version: constant.CoreDNSImageVersion,
 		},
-		Calico: CalicoImageSpec{
-			CNI: ImageSpec{
+		Calico: &CalicoImageSpec{
+			CNI: &ImageSpec{
 				Image:   constant.CalicoImage,
 				Version: constant.CalicoComponentImagesVersion,
 			},
-			Node: ImageSpec{
+			Node: &ImageSpec{
 				Image:   constant.CalicoNodeImage,
 				Version: constant.CalicoComponentImagesVersion,
 			},
-			KubeControllers: ImageSpec{
+			KubeControllers: &ImageSpec{
 				Image:   constant.KubeControllerImage,
 				Version: constant.CalicoComponentImagesVersion,
 			},
 		},
-		KubeRouter: KubeRouterImageSpec{
-			CNI: ImageSpec{
+		KubeRouter: &KubeRouterImageSpec{
+			CNI: &ImageSpec{
 				Image:   constant.KubeRouterCNIImage,
 				Version: constant.KubeRouterCNIImageVersion,
 			},
-			CNIInstaller: ImageSpec{
+			CNIInstaller: &ImageSpec{
 				Image:   constant.KubeRouterCNIInstallerImage,
 				Version: constant.KubeRouterCNIInstallerImageVersion,
 			},
 		},
-		Pause: ImageSpec{
+		Pause: &ImageSpec{
 			Image:   constant.KubePauseContainerImage,
 			Version: constant.KubePauseContainerImageVersion,
 		},
@@ -243,6 +231,17 @@ func getHostName(imageName string) string {
 }
 
 func overrideRepository(repository string, originalImage string) string {
+	if repository == "" {
+		return originalImage
+	}
+
+	// "Idempotency": if the image already starts with the repository prefix, don't override
+	// This is needed sinice in some cases we run the override multiple times, e.g. when
+	// we unmarshal the config multiple times.
+	if strings.HasPrefix(originalImage, repository) {
+		return originalImage
+	}
+
 	if host := getHostName(originalImage); host != "" {
 		return strings.Replace(originalImage, host, repository, 1)
 	}

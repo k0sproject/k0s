@@ -1,26 +1,16 @@
-/*
-Copyright 2021 k0s authors
+//go:build linux
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package reset
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"runtime"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/cleanup"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -32,35 +22,42 @@ import (
 type command config.CLIOptions
 
 func NewResetCmd() *cobra.Command {
+	var debugFlags internal.DebugFlags
+
 	cmd := &cobra.Command{
-		Use:   "reset",
-		Short: "Uninstall k0s. Must be run as root (or with sudo)",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if runtime.GOOS == "windows" {
-				return fmt.Errorf("currently not supported on windows")
-			}
+		Use:              "reset",
+		Short:            "Uninstall k0s. Must be run as root (or with sudo)",
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
 			}
 			c := (*command)(opts)
-			return c.reset()
+			return c.reset(debugFlags.IsDebug())
 		},
 	}
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.Flags().AddFlagSet(config.GetCriSocketFlag())
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
+
+	debugFlags.AddToFlagSet(cmd.PersistentFlags())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlagSet(config.GetCriSocketFlag())
+	flags.AddFlagSet(config.FileInputFlag())
+	flags.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
+
 	return cmd
 }
 
-func (c *command) reset() error {
+func (c *command) reset(debug bool) error {
 	if os.Geteuid() != 0 {
-		logrus.Fatal("this command must be run as root!")
+		return errors.New("this command must be run as root")
 	}
 
 	k0sStatus, _ := status.GetStatusInfo(c.K0sVars.StatusSocketPath)
 	if k0sStatus != nil && k0sStatus.Pid != 0 {
-		logrus.Fatal("k0s seems to be running! please stop k0s before reset.")
+		return errors.New("k0s seems to be running, please stop k0s before reset")
 	}
 
 	nodeCfg, err := c.K0sVars.NodeConfig()
@@ -72,7 +69,7 @@ func (c *command) reset() error {
 	}
 
 	// Get Cleanup Config
-	cfg, err := cleanup.NewConfig(c.K0sVars, c.CfgFile, c.WorkerOptions.CriSocket)
+	cfg, err := cleanup.NewConfig(debug, c.K0sVars, nodeCfg.Spec.Install.SystemUsers, c.CriSocket)
 	if err != nil {
 		return fmt.Errorf("failed to configure cleanup: %w", err)
 	}

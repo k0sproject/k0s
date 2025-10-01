@@ -1,26 +1,16 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package sysinfo
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -28,42 +18,63 @@ import (
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/term"
+	"sigs.k8s.io/yaml"
 )
 
 func NewSysinfoCmd() *cobra.Command {
-
-	var sysinfoSpec sysinfo.K0sSysinfoSpec
+	var (
+		debugFlags   internal.DebugFlags
+		sysinfoSpec  sysinfo.K0sSysinfoSpec
+		outputFormat string
+	)
 
 	cmd := &cobra.Command{
-		Use:   "sysinfo",
-		Short: "Display system information",
-		Long:  `Runs k0s's pre-flight checks and issues the results to stdout.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:              "sysinfo",
+		Short:            "Display system information",
+		Long:             `Runs k0s's pre-flight checks and issues the results to stdout.`,
+		Args:             cobra.NoArgs,
+		PersistentPreRun: debugFlags.Run,
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			sysinfoSpec.AddDebugProbes = true
 			probes := sysinfoSpec.NewSysinfoProbes()
 			out := cmd.OutOrStdout()
-			cli := &cliReporter{
-				w:      out,
-				colors: aurora.NewAurora(term.IsTerminal(out)),
-			}
 
-			if err := probes.Probe(cli); err != nil {
-				return err
-			}
+			switch outputFormat {
+			case "text":
+				cli := &cliReporter{
+					w:      out,
+					colors: aurora.NewAurora(term.IsTerminal(out)),
+				}
+				if err := probes.Probe(cli); err != nil {
+					return err
+				}
+				if cli.failed {
+					return errors.New("sysinfo failed")
+				}
+				return nil
 
-			if cli.failed {
-				return errors.New("sysinfo failed")
-			}
+			case "json":
+				return collectAndPrint(probes, out, func(v any) ([]byte, error) {
+					return json.MarshalIndent(v, "", "  ")
+				})
 
-			return nil
+			case "yaml":
+				return collectAndPrint(probes, out, yaml.Marshal)
+
+			default:
+				return fmt.Errorf("unknown output format: %q", outputFormat)
+			}
 		},
 	}
+
+	debugFlags.AddToFlagSet(cmd.PersistentFlags())
 
 	// append flags
 	flags := cmd.Flags()
 	flags.BoolVar(&sysinfoSpec.ControllerRoleEnabled, "controller", true, "Include controller-specific sysinfo")
 	flags.BoolVar(&sysinfoSpec.WorkerRoleEnabled, "worker", true, "Include worker-specific sysinfo")
 	flags.StringVar(&sysinfoSpec.DataDir, "data-dir", constant.DataDirDefault, "Data Directory for k0s")
+	flags.StringVarP(&outputFormat, "output", "o", "text", "Output format (valid values: text, json, yaml)")
 
 	return cmd
 }
@@ -121,9 +132,102 @@ func (r *cliReporter) Error(p probes.ProbeDesc, err error) error {
 	)
 }
 
-func (r *cliReporter) printf(format interface{}, args ...interface{}) error {
+func collectAndPrint(probe probes.Probe, out io.Writer, marshal func(any) ([]byte, error)) error {
+	var c resultsCollector
+	if err := probe.Probe(&c); err != nil {
+		return err
+	}
+	bytes, err := marshal(c.results)
+	if err != nil {
+		return err
+	}
+	_, err = out.Write(bytes)
+	if err != nil {
+		return err
+	}
+	if c.failed {
+		return errors.New("sysinfo failed")
+	}
+	return nil
+}
+
+func (r *cliReporter) printf(format any, args ...any) error {
 	_, err := io.WriteString(r.w, aurora.Sprintf(format, args...))
 	return err
+}
+
+type Probe struct {
+	Path        []string      `json:"path"`
+	DisplayName string        `json:"displayName"`
+	Prop        string        `json:"prop"`
+	Message     string        `json:"message"`
+	Category    ProbeCategory `json:"category"`
+	Error       error         `json:"error"`
+}
+
+type ProbeCategory string
+
+const (
+	ProbeCategoryPass     ProbeCategory = "pass"
+	ProbeCategoryWarning  ProbeCategory = "warning"
+	ProbeCategoryRejected ProbeCategory = "rejected"
+	ProbeCategoryError    ProbeCategory = "error"
+)
+
+type resultsCollector struct {
+	results []Probe
+	failed  bool
+}
+
+func (r *resultsCollector) Pass(p probes.ProbeDesc, v probes.ProbedProp) error {
+	r.results = append(r.results, Probe{
+		Path:        probePath(p),
+		DisplayName: p.DisplayName(),
+		Prop:        propString(v),
+		Category:    ProbeCategoryPass,
+	})
+	return nil
+}
+
+func (r *resultsCollector) Warn(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
+	r.results = append(r.results, Probe{
+		Path:        probePath(p),
+		DisplayName: p.DisplayName(),
+		Prop:        propString(v),
+		Message:     msg,
+		Category:    ProbeCategoryWarning,
+	})
+	return nil
+}
+
+func (r *resultsCollector) Reject(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
+	r.failed = true
+	r.results = append(r.results, Probe{
+		Path:        probePath(p),
+		DisplayName: p.DisplayName(),
+		Prop:        propString(v),
+		Message:     msg,
+		Category:    ProbeCategoryRejected,
+	})
+	return nil
+}
+
+func (r *resultsCollector) Error(p probes.ProbeDesc, err error) error {
+	r.failed = true
+	r.results = append(r.results, Probe{
+		Path:        probePath(p),
+		DisplayName: p.DisplayName(),
+		Category:    ProbeCategoryError,
+		Error:       err,
+	})
+	return nil
+}
+
+func probePath(p probes.ProbeDesc) []string {
+	if len(p.Path()) == 0 {
+		return nil
+	}
+	return p.Path()
 }
 
 func propString(p probes.ProbedProp) string {

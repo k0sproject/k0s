@@ -1,22 +1,10 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -71,9 +59,11 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
-					VirtualIPs:            []string{"192.168.1.1/24"},
+					VirtualIPs:            []string{"192.168.1.100/24"},
 					AdvertIntervalSeconds: 1,
 					AuthPass:              "123456",
+					UnicastSourceIP:       "192.168.1.1",
+					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
 			expectedVRRPs: []VRRPInstance{
@@ -83,6 +73,8 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					VirtualIPs:            []string{"192.168.1.1/24"},
 					AdvertIntervalSeconds: 1,
 					AuthPass:              "123456",
+					UnicastSourceIP:       "192.168.1.1",
+					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
 			wantErr: false,
@@ -115,6 +107,60 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 				},
 			},
 			wantErr: true,
+		}, {
+			name: "Unicast Peers without unicast source",
+			vrrps: []VRRPInstance{
+				{
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.100/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
+					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "Invalid unicast peers",
+			vrrps: []VRRPInstance{
+				{
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.100/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
+					UnicastPeers:          []string{"example.com", "192.168.1.3"},
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "Invalid unicast source",
+			vrrps: []VRRPInstance{
+				{
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.100/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
+					UnicastSourceIP:       "example.com",
+					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "Unicast peers includes unicast source",
+			vrrps: []VRRPInstance{
+				{
+					VirtualRouterID:       1,
+					Interface:             "eth0",
+					VirtualIPs:            []string{"192.168.1.100/24"},
+					AdvertIntervalSeconds: 1,
+					AuthPass:              "123456",
+					UnicastSourceIP:       "192.168.1.1",
+					UnicastPeers:          []string{"192.168.1.1", "192.168.1.2", "192.168.1.3"},
+				},
+			},
+			wantErr: true,
 		},
 	}
 
@@ -123,14 +169,14 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 			k := &KeepalivedSpec{
 				VRRPInstances: tt.vrrps,
 			}
-			err := k.validateVRRPInstances(returnNIC)
+			errs := k.validateVRRPInstances(returnNIC)
 			if tt.wantErr {
-				s.Require().NotEmpty(err, "Test case %s expected error. Got none", tt.name)
+				s.Require().Error(errors.Join(errs...))
 			} else {
-				s.Require().Empty(err, "Test case %s expected no errors. Got: %v", tt.name, err)
+				s.Require().Empty(errs)
 				s.T().Log(k.VRRPInstances)
-				s.Require().Equal(len(tt.expectedVRRPs), len(k.VRRPInstances), "Expected and actual VRRPInstances length mismatch")
-				for i := 0; i < len(tt.expectedVRRPs); i++ {
+				s.Require().Len(k.VRRPInstances, len(tt.expectedVRRPs), "Expected and actual VRRPInstances length mismatch")
+				for i := range tt.expectedVRRPs {
 					s.Require().Equal(tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
 					s.Require().Equal(tt.expectedVRRPs[i].VirtualRouterID, k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
 					s.Require().Equal(tt.expectedVRRPs[i].AdvertIntervalSeconds, k.VRRPInstances[i].AdvertIntervalSeconds, "Advertisement interval mismatch")
@@ -264,11 +310,11 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			k := &KeepalivedSpec{VirtualServers: tt.vss}
-			err := k.validateVirtualServers()
+			errs := k.validateVirtualServers()
 			if tt.wantErr {
-				s.Require().NotEmpty(err, "Test case %s expected error. Got none", tt.name)
+				s.Require().Error(errors.Join(errs...))
 			} else {
-				s.Require().Empty(err, "Tedst case %s expected no error. Got: %v", tt.name, err)
+				s.Require().Empty(errs)
 				for i := range tt.expectedVSS {
 					s.Require().Equal(tt.expectedVSS[i].DelayLoop, k.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
 					s.Require().Equal(tt.expectedVSS[i].LBAlgo, k.VirtualServers[i].LBAlgo, "LBalgo mismatch")

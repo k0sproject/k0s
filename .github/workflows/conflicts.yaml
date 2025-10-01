@@ -20,10 +20,10 @@ permissions:
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check for merge conflicts
-        uses: eps1lon/actions-label-merge-conflict@v3.0.2
+        uses: eps1lon/actions-label-merge-conflict@v3.0.3
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           dirtyLabel: merge-conflict

@@ -24,7 +24,7 @@ jobs:
           && startsWith(github.event.label.name, 'backport/')
         )
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,8 +32,22 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_BACKPORT_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Mergiraf
+        env:
+          MERGIRAF_VERSION: 0.15.0 # renovate: datasource=gitea-releases registryUrl=https://codeberg.org depName=mergiraf/mergiraf
+        run: |
+          mkdir .git/mergiraf
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo .git/mergiraf/mergiraf.tar.gz "https://codeberg.org/mergiraf/mergiraf/releases/download/v$MERGIRAF_VERSION/mergiraf_x86_64-unknown-linux-musl.tar.gz"
+          tar xvf .git/mergiraf/mergiraf.tar.gz -C .git/mergiraf
+          .git/mergiraf/mergiraf --version
+          .git/mergiraf/mergiraf languages --gitattributes >.git/info/attributes
+          git config merge.conflictStyle diff3
+          git config merge.mergiraf.name mergiraf
+          git config merge.mergiraf.driver '${{ github.workspace }}/.git/mergiraf/mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
+
       - name: Create backport PRs
-        uses: korthout/backport-action@v3.1.0
+        uses: korthout/backport-action@v3.3.0
         with:
           # Inputs documented here: https://github.com/korthout/backport-action?tab=readme-ov-file#inputs
           github_token: ${{ secrets.GH_BACKPORT_TOKEN }}

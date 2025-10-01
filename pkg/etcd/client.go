@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package etcd
 
@@ -21,6 +8,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -120,10 +108,8 @@ func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (ui
 		return 0, fmt.Errorf("etcd member list failed: %w", err)
 	}
 	for _, m := range resp.Members {
-		for _, peerURL := range m.PeerURLs {
-			if peerURL == peerAddress {
-				return m.ID, nil
-			}
+		if slices.Contains(m.PeerURLs, peerAddress) {
+			return m.ID, nil
 		}
 	}
 	return 0, fmt.Errorf("peer not found: %s", peerAddress)
@@ -157,7 +143,7 @@ func (c *Client) Health(ctx context.Context) error {
 // Write tries to write a new value with a given key and returns indicator if write operation succeed.
 func (c *Client) Write(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
 
-	leaseResp, err := c.client.Lease.Grant(ctx, int64(ttl.Seconds()))
+	leaseResp, err := c.client.Grant(ctx, int64(ttl.Seconds()))
 
 	if err != nil {
 		return false, fmt.Errorf("can't get TTL lease: %w", err)
@@ -180,7 +166,7 @@ func (c *Client) Write(ctx context.Context, key string, value string, ttl time.D
 }
 
 func (c *Client) Read(ctx context.Context, key string) (*clientv3.GetResponse, error) {
-	resp, err := c.client.KV.Get(ctx, key)
+	resp, err := c.client.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("can't read from etcd: %w", err)
 	}

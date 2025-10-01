@@ -1,22 +1,14 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0s
 
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
@@ -39,6 +31,14 @@ const (
 )
 
 type k0sVersionHandlerFunc func() (string, error)
+
+// signalDataUpdateCommandK0sPredicate creates a predicate that ensures that the
+// provided SignalData is an 'k0s' update.
+func signalDataUpdateCommandK0sPredicate() apsigpred.SignalDataPredicate {
+	return func(signalData apsigv2.SignalData) bool {
+		return signalData.Command.K0sUpdate != nil
+	}
+}
 
 // signalControllerEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
@@ -71,13 +71,14 @@ type signalControllerHandler struct {
 //
 // This controller is only interested in changes to its own annotations, and is the main
 // mechanism in identifying incoming autopilot k0s signaling updates.
-func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, clusterID string) error {
+func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, clusterID string, k0sVersionHandler k0sVersionHandlerFunc) error {
 	logr := logger.WithFields(logrus.Fields{"updatetype": "k0s"})
+	name := strings.ToLower(delegate.Name()) + "_k0s_signal"
 
-	logr.Infof("Registering 'signal' reconciler for '%s'", delegate.Name())
+	logr.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-signal").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
@@ -86,11 +87,9 @@ func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilt
 				mgr.GetClient(),
 				delegate,
 				&signalControllerHandler{
-					timeout:   SignalResponseProcessingTimeout,
-					clusterID: clusterID,
-					k0sVersionHandler: func() (string, error) {
-						return getK0sVersion(DefaultK0sStatusSocketPath)
-					},
+					timeout:           SignalResponseProcessingTimeout,
+					clusterID:         clusterID,
+					k0sVersionHandler: k0sVersionHandler,
 				},
 			),
 		)

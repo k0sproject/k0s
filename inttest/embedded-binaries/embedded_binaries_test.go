@@ -1,23 +1,10 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package binaries
 
 import (
-	"fmt"
+	"path"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -57,7 +44,6 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 		}{
 			{"containerd -v", true, "containerd github.com/containerd/containerd"},
 			{"containerd-shim -v", false, "containerd-shim"},
-			{"containerd-shim-runc-v1 -v", true, "containerd-shim-runc-v1:"},
 			{"containerd-shim-runc-v2 -v", true, "containerd-shim-runc-v2:"},
 			{"etcd --version", true, ""},
 			{"kube-apiserver --version", true, ""},
@@ -71,7 +57,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 
 		for _, tc := range testCases {
 			s.Run(tc.cmd, func() {
-				out, err := sshC0.ExecWithOutput(s.Context(), fmt.Sprintf("/var/lib/k0s/bin/%s", tc.cmd))
+				out, err := sshC0.ExecWithOutput(s.Context(), path.Join("/var/lib/k0s/bin", tc.cmd))
 				if tc.checkError {
 					s.Require().NoError(err, tc.cmd, out)
 				}
@@ -93,7 +79,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 
 		for _, tc := range testCases {
 			s.Run("", func() {
-				out, err := sshC1.ExecWithOutput(s.Context(), fmt.Sprintf("/var/lib/k0s/bin/%s", tc.cmd))
+				out, err := sshC1.ExecWithOutput(s.Context(), path.Join("/var/lib/k0s/bin", tc.cmd))
 				if tc.checkError {
 					s.Require().NoError(err, tc.cmd, out)
 				}

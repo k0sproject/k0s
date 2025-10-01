@@ -1,24 +1,12 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -36,6 +24,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 )
 
@@ -49,8 +39,6 @@ var calicoCRDOnce sync.Once
 type Calico struct {
 	log logrus.FieldLogger
 
-	crdSaver   manifestsSaver
-	saver      manifestsSaver
 	prevConfig calicoConfig
 	k0sVars    *config.CfgVars
 }
@@ -62,10 +50,6 @@ const (
 	calicoModeVXLAN calicoMode = "vxlan"
 )
 
-type manifestsSaver interface {
-	Save(dst string, content []byte) error
-}
-
 type calicoConfig struct {
 	MTU                  int
 	Mode                 calicoMode
@@ -75,7 +59,8 @@ type calicoConfig struct {
 	ClusterCIDRIPv6      string
 	EnableWireguard      bool
 	FlexVolumeDriverPath string
-	DualStack            bool
+	EnableIPv4           bool
+	EnableIPv6           bool
 	EnvVars              map[string]string
 
 	CalicoCNIImage             string
@@ -88,24 +73,25 @@ type calicoConfig struct {
 }
 
 // NewCalico creates new Calico reconciler component
-func NewCalico(k0sVars *config.CfgVars, crdSaver manifestsSaver, manifestsSaver manifestsSaver) *Calico {
+func NewCalico(k0sVars *config.CfgVars) *Calico {
 	return &Calico{
 		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
 
-		crdSaver:   crdSaver,
-		saver:      manifestsSaver,
 		prevConfig: calicoConfig{},
 		k0sVars:    k0sVars,
 	}
 }
 
-// Init does nothing
-func (c *Calico) Init(_ context.Context) error {
-	return nil
+// Init implements [manager.Component].
+func (c *Calico) Init(context.Context) error {
+	return errors.Join(
+		dir.Init(filepath.Join(c.k0sVars.ManifestsDir, "calico_init"), constant.ManifestsDirMode),
+		dir.Init(filepath.Join(c.k0sVars.ManifestsDir, "calico"), constant.ManifestsDirMode),
+	)
 }
 
-// Run nothing really running, all logic based on reactive reconcile
-func (c *Calico) Start(_ context.Context) error {
+// Start implements [manager.Component].
+func (c *Calico) Start(context.Context) error {
 	return nil
 }
 
@@ -120,7 +106,7 @@ func (c *Calico) dumpCRDs() error {
 
 	for _, entry := range crds {
 		filename := entry.Name()
-		manifestName := fmt.Sprintf("calico-crd-%s", filename)
+		manifestName := "calico-crd-" + filename
 
 		output := bytes.NewBuffer([]byte{})
 
@@ -130,7 +116,7 @@ func (c *Calico) dumpCRDs() error {
 		}
 
 		tw := templatewriter.TemplateWriter{
-			Name:     fmt.Sprintf("calico-crd-%s", strings.TrimSuffix(filename, filepath.Ext(filename))),
+			Name:     "calico-crd-" + strings.TrimSuffix(filename, filepath.Ext(filename)),
 			Template: string(contents),
 			Data:     emptyStruct,
 		}
@@ -138,7 +124,9 @@ func (c *Calico) dumpCRDs() error {
 			return fmt.Errorf("failed to write calico crd manifests %s: %w", manifestName, err)
 		}
 
-		if err := c.crdSaver.Save(manifestName, output.Bytes()); err != nil {
+		if err := file.AtomicWithTarget(filepath.Join(c.k0sVars.ManifestsDir, "calico_init", manifestName)).
+			WithPermissions(constant.CertMode).
+			Write(output.Bytes()); err != nil {
 			return fmt.Errorf("failed to save calico crd manifest %s: %w", manifestName, err)
 		}
 	}
@@ -184,7 +172,9 @@ func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 				Data:     newConfig,
 			}
 			tryAndLog(manifestName, tw.WriteToBuffer(output))
-			tryAndLog(manifestName, c.saver.Save(manifestName, output.Bytes()))
+			tryAndLog(manifestName, file.AtomicWithTarget(filepath.Join(c.k0sVars.ManifestsDir, "calico", manifestName)).
+				WithPermissions(constant.CertMode).
+				Write(output.Bytes()))
 		}
 	}
 
@@ -196,6 +186,9 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 	if clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod != "" {
 		ipv6AutoDetectionMethod = clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod
 	}
+
+	primaryAFIPv4 := clusterConfig.PrimaryAddressFamily() == v1beta1.PrimaryFamilyIPv4
+	isDualStack := clusterConfig.Spec.Network.DualStack.Enabled
 	config := calicoConfig{
 		MTU:                        clusterConfig.Spec.Network.Calico.MTU,
 		VxlanPort:                  clusterConfig.Spec.Network.Calico.VxlanPort,
@@ -203,9 +196,8 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		EnableWireguard:            clusterConfig.Spec.Network.Calico.EnableWireguard,
 		EnvVars:                    clusterConfig.Spec.Network.Calico.EnvVars,
 		FlexVolumeDriverPath:       clusterConfig.Spec.Network.Calico.FlexVolumeDriverPath,
-		DualStack:                  clusterConfig.Spec.Network.DualStack.Enabled,
-		ClusterCIDRIPv4:            clusterConfig.Spec.Network.PodCIDR,
-		ClusterCIDRIPv6:            clusterConfig.Spec.Network.DualStack.IPv6PodCIDR,
+		EnableIPv4:                 isDualStack || primaryAFIPv4,
+		EnableIPv6:                 isDualStack || !primaryAFIPv4,
 		CalicoCNIImage:             clusterConfig.Spec.Images.Calico.CNI.URI(),
 		CalicoNodeImage:            clusterConfig.Spec.Images.Calico.Node.URI(),
 		CalicoKubeControllersImage: clusterConfig.Spec.Images.Calico.KubeControllers.URI(),
@@ -224,10 +216,18 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		return config, fmt.Errorf("unsupported mode: %q", clusterConfig.Spec.Network.Calico.Mode)
 	}
 
+	if isDualStack {
+		config.ClusterCIDRIPv4 = clusterConfig.Spec.Network.PodCIDR
+		config.ClusterCIDRIPv6 = clusterConfig.Spec.Network.DualStack.IPv6PodCIDR
+	} else if primaryAFIPv4 {
+		config.ClusterCIDRIPv4 = clusterConfig.Spec.Network.PodCIDR
+	} else {
+		config.ClusterCIDRIPv6 = clusterConfig.Spec.Network.PodCIDR
+	}
 	return config, nil
 }
 
-// Stop stops the calico reconciler
+// Stop implements [manager.Component].
 func (c *Calico) Stop() error {
 	return nil
 }

@@ -32,13 +32,14 @@ on:
         type: string
         description: The k0s kube-proxy mode to test.
         default: iptables
-      terraform-version:
+      tofu-version:
         type: string
-        description: The Terraform version to use when provisioning test resources.
-        default: 1.4.6
+        description: The OpenTofu version to use when provisioning test resources.
+        default: 1.10.6 # renovate: datasource=github-releases depName=opentofu/opentofu
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping the test cluster.
+        default: 0.25.1 # renovate: datasource=github-releases depName=k0sproject/k0sctl
     secrets:
       aws-access-key-id:
         description: The AWS access key ID to use when provisioning test resources.
@@ -59,7 +60,7 @@ env:
 jobs:
   e2e-tests:
     name: e2e tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     env:
       E2E_FOCUS: ${{ inputs.e2e-focus }}
@@ -71,6 +72,7 @@ jobs:
       TF_VAR_cache_dir: ${{ github.workspace }}/.cache/k0s-ostests
       TF_VAR_k0s_version: ${{ inputs.k0s-version }}
       TF_VAR_k0sctl_executable_path: ${{ github.workspace }}/.cache/k0sctl
+      TF_VAR_k0sctl_timeout: 30m
       TF_VAR_k0s_network_provider: ${{ inputs.network-provider }}
       TF_VAR_k0s_kube_proxy_mode: ${{ inputs.kube-proxy-mode }}
 
@@ -86,26 +88,23 @@ jobs:
 
       - name: "Workflow run :: Prepare"
         working-directory: ./
-        env:
-          K0SCTL_VERSION: ${{ inputs.k0sctl-version }}
         run: |
           kubernetesVersion="$(./vars.sh kubernetes_version)"
-          k0sctlVersion="${K0SCTL_VERSION:-$(./vars.sh FROM=hack/tool k0sctl_version)}"
 
           set -x
           echo KUBERNETES_VERSION="$kubernetesVersion" >>"$GITHUB_ENV"
-          echo K0SCTL_VERSION="$k0sctlVersion" >>"$GITHUB_ENV"
 
-      - name: "Terraform :: Requisites :: Download k0s"
+      - name: "Tofu :: Requisites :: Download k0s"
         if: inputs.k0s-version == ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: k0s-linux-${{ inputs.arch }}
           path: ${{ github.workspace }}/.cache
 
-      - name: "Terraform :: Requisites :: Prepare"
+      - name: "Tofu :: Requisites :: Prepare"
         env:
           OSTESTS_ARCH: ${{ inputs.arch }}
+          K0SCTL_VERSION: ${{ inputs.k0sctl-version }}
           K0S_VERSION: ${{ inputs.k0s-version }}
           K0S_EXECUTABLE_PATH: ${{ github.workspace }}/.cache/k0s
         run: |
@@ -113,7 +112,7 @@ jobs:
           jq --version
 
           mkdir -p "$(dirname -- "$TF_VAR_k0sctl_executable_path")"
-          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-amd64"
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/v${K0SCTL_VERSION}/k0sctl-linux-amd64"
           chmod +x -- "$TF_VAR_k0sctl_executable_path"
           "$TF_VAR_k0sctl_executable_path" version
 
@@ -131,27 +130,27 @@ jobs:
           fi
           echo TF_VAR_k0s_version="$K0S_VERSION" >>"$GITHUB_ENV"
 
-      - name: "Terraform :: Setup"
-        uses: hashicorp/setup-terraform@v3
+      - name: "Tofu :: Setup"
+        uses: opentofu/setup-opentofu@v1
         with:
-          terraform_version: ${{ inputs.terraform-version }}
-          terraform_wrapper: false
+          tofu_version: ${{ inputs.tofu-version }}
+          tofu_wrapper: false
 
-      - name: "Terraform :: Init"
+      - name: "Tofu :: Init"
         id: tf-init
-        run: terraform init
+        run: tofu init
 
-      - name: "Terraform :: Apply"
+      - name: "Tofu :: Apply"
         id: tf-apply
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
           AWS_SESSION_TOKEN: ${{ secrets.aws-session-token }}
         run: |
-          terraform apply -auto-approve
+          tofu apply -auto-approve
 
           kubeconfigPath="$GITHUB_WORKSPACE/.cache/kubeconfig"
-          terraform output -raw k0s_kubeconfig >"$kubeconfigPath"
+          tofu output -raw k0s_kubeconfig >"$kubeconfigPath"
           echo "KUBECONFIG=$kubeconfigPath" >>"$GITHUB_ENV"
 
       # If concurrency is enabled, tests are executed in two phases. First, all
@@ -169,12 +168,12 @@ jobs:
           E2E_CONCURRENCY_LEVEL: ${{ inputs.e2e-concurrency-level }}
         run: |
           make bin/sonobuoy
-          bin/sonobuoy run -p e2e --wait=120 \
+          bin/sonobuoy run -p e2e --wait=150 \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_PARALLEL=true \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
             --plugin-env=e2e.E2E_SKIP='\[Serial\]' \
-            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="-v --timeout=90m --procs=$E2E_CONCURRENCY_LEVEL"
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="-v --timeout=120m --procs=$E2E_CONCURRENCY_LEVEL"
 
       - name: "e2e tests :: Retrieve parallel results"
         id: e2e-retrieve-parallel
@@ -197,10 +196,10 @@ jobs:
         timeout-minutes: 180 # three hours
         run: |
           make bin/sonobuoy
-          bin/sonobuoy run -p e2e --wait=120 \
+          bin/sonobuoy run -p e2e --wait=150 \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
-            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=90m'
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=120m'
 
       - name: "e2e tests :: Retrieve serial results"
         id: e2e-retrieve-serial
@@ -209,13 +208,13 @@ jobs:
           sonobuoyTarGz="$(make --silent get-conformance-results)"
           mv -- "$sonobuoyTarGz" sonobuoy-e2e-serial.tar.gz
 
-      - name: "Terraform :: Destroy"
+      - name: "Tofu :: Destroy"
         if: always() && steps.tf-init.conclusion == 'success'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
           AWS_SESSION_TOKEN: ${{ secrets.aws-session-token }}
-        run: terraform destroy -auto-approve
+        run: tofu destroy -auto-approve
 
       - name: "e2e tests :: Upload results"
         if: always() && (steps.e2e-retrieve-parallel.conclusion == 'success' || steps.e2e-retrieve-serial.conclusion == 'success')

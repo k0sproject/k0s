@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package kubectl
 
@@ -156,7 +143,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 	}
 
 	execTest := func(t *testing.T, cmdline string, check checkFunc) {
-		cmdline = fmt.Sprintf("PATH=/inttest/bin:/inttest/symlink %s", cmdline)
+		cmdline = "PATH=/inttest/bin:/inttest/symlink " + cmdline
 		t.Log("Executing", cmdline)
 
 		var stdoutBuf bytes.Buffer
@@ -191,9 +178,9 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 
 func requiredValue[V any](t *testing.T, obj map[string]any, key string) V {
 	value, ok := obj[key]
-	require.True(t, ok, "Key %q not found", key)
+	require.Truef(t, ok, "Key %q not found", key)
 	typedValue, ok := value.(V)
-	require.True(t, ok, "Incompatible type for key %q: %+v", key, value)
+	require.Truef(t, ok, "Incompatible type for key %q: %+v", key, value)
 	return typedValue
 }
 
@@ -204,7 +191,7 @@ func checkClientVersion(t *testing.T, v map[string]any) {
 	)
 	assert.Contains(t,
 		requiredValue[string](t, v, "gitVersion"),
-		fmt.Sprintf("v%s", constant.KubernetesMajorMinorVersion),
+		"v"+constant.KubernetesMajorMinorVersion,
 	)
 	assert.Equal(t, "not_available", requiredValue[string](t, v, "gitCommit"))
 	assert.Empty(t, requiredValue[string](t, v, "gitTreeState"))
@@ -221,7 +208,7 @@ func checkServerVersion(t *testing.T, v map[string]any) {
 	)
 	assert.Contains(t,
 		requiredValue[string](t, v, "gitVersion"),
-		fmt.Sprintf("v%s", constant.KubernetesMajorMinorVersion),
+		"v"+constant.KubernetesMajorMinorVersion,
 	)
 	assert.Contains(t, requiredValue[string](t, v, "gitVersion"), "+k0s")
 	assert.NotEmpty(t, requiredValue[string](t, v, "gitCommit"))

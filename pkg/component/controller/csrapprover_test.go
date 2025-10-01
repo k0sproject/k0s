@@ -1,23 +1,9 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
-	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -41,7 +27,7 @@ func TestBasicCRSApprover(t *testing.T) {
 	client, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
 
-	ctx := context.TODO()
+	ctx := t.Context()
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -79,7 +65,7 @@ func TestBasicCRSApprover(t *testing.T) {
 	csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, newCsr.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, csr)
-	assert.True(t, csr.Name == newCsr.Name)
+	assert.Equal(t, newCsr.Name, csr.Name)
 	for _, c := range csr.Status.Conditions {
 		assert.True(t, c.Type == certv1.CertificateApproved && c.Reason == "Autoapproved by K0S CSRApprover" && c.Status == core.ConditionTrue)
 	}

@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package prober
 
@@ -51,7 +38,7 @@ func TestEvents(t *testing.T) {
 		}
 		component.sendEvents(eventsSent...)
 		prober.Register("component_with_events", component)
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		state := prober.State(maxEvents)
 		assert.Len(t, prober.withEventComponents, 1)
 		assert.Len(t, state.Events, 1, "should have 1 component with events")
@@ -71,7 +58,7 @@ func TestEvents(t *testing.T) {
 		emitter.Emit("message3")
 		prober := testProber(10)
 		prober.Register("component_with_events", comp)
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		state := prober.State(maxEvents)
 		assert.Len(t, state.Events, 1)
 		assert.Len(t, state.Events["component_with_events"], 3)
@@ -83,14 +70,14 @@ func TestEvents(t *testing.T) {
 		emitter := &EventEmitter{
 			events: make(chan Event, 10),
 		}
-		for i := 0; i < 20; i++ {
+		for range 20 {
 			emitter.Emit("Test event")
 		}
 	})
 
-	t.Run("emitter_observes_events_emited_by_components_registred_after_run_is_called", func(t *testing.T) {
+	t.Run("emitter_observes_events_emitted_by_components_registred_after_run_is_called", func(t *testing.T) {
 		prober := testProber(0)
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		go prober.Run(ctx)
 		component := newMockWithEvents(3)
 		prober.Register("component_with_events", component)
@@ -137,7 +124,7 @@ func TestEvents(t *testing.T) {
 		prober := testProber(10)
 		prober.Register("component_with_events", comp)
 		prober.Register("component_with_events2", comp2)
-		prober.Run(context.Background())
+		prober.Run(t.Context())
 		state := prober.State(maxEvents)
 
 		assert.Len(t, state.Events, 2)

@@ -1,16 +1,5 @@
-// Copyright 2023 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package channels
 
@@ -19,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
+	"net/url"
 	"time"
 
 	"sigs.k8s.io/yaml"
@@ -36,19 +25,21 @@ func NewChannelClient(server string, channel string, token string) (*ChannelClie
 		Timeout: 10 * time.Second,
 	}
 
-	// If server is a full URL, use that. If not assume it's a hostname and use the default path
-	if strings.HasPrefix(server, "http") {
-		server = strings.TrimSuffix(server, "/")
-	} else {
-		server = fmt.Sprintf("https://%s", server)
+	// If server is a full URL, use that. If not, assume HTTPS.
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	if serverURL.Scheme == "" {
+		serverURL.Scheme = "https"
 	}
 
-	channelURL := fmt.Sprintf("%s/%s/index.yaml", server, channel)
+	channelURL := serverURL.JoinPath(channel, "index.yaml")
 
 	return &ChannelClient{
 		httpClient: httpClient,
 		token:      token,
-		channelURL: channelURL,
+		channelURL: channelURL.String(),
 	}, nil
 }
 
@@ -56,7 +47,7 @@ func (c *ChannelClient) GetLatest(ctx context.Context, headers map[string]string
 
 	var v VersionInfo
 
-	req, err := http.NewRequestWithContext(ctx, "GET", c.channelURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.channelURL, nil)
 	if err != nil {
 		return v, err
 	}
@@ -66,7 +57,7 @@ func (c *ChannelClient) GetLatest(ctx context.Context, headers map[string]string
 	}
 
 	if c.token != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.token))
+		req.Header.Add("Authorization", "Bearer "+c.token)
 	}
 
 	resp, err := c.httpClient.Do(req)

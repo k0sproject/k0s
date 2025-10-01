@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Installing Ceph Storage with Rook
 
 In this tutorial you'll create a Ceph storage for k0s. Ceph is a highly scalable, distributed storage solution. It offers object, block, and file storage, and it's designed to run on any common hardware. Ceph implements data replication into multiple volumes that makes it fault-tolerant. Another clear advantage of Ceph in Kubernetes is the dynamic provisioning. This means that applications just need to request the storage (persistent volume claim) and Ceph will automatically provision the requested storage without a manual creation of the persistent volume each time.
@@ -12,7 +17,7 @@ After the Ceph deployment we'll deploy a sample application (MongoDB) to use the
 
 ## Prerequisites
 
-- Linux OS
+- Linux
 - GitHub access
 - AWS account
 - Terraform
@@ -21,9 +26,9 @@ After the Ceph deployment we'll deploy a sample application (MongoDB) to use the
 
 ### 1. Preparations
 
-In this example we'll use Terraform to create four Ubuntu VMs on AWS. Using Terraform makes the VM deployment fast and repeatable. You can avoid manually setting up everything in the AWS GUI. Moreover, when you have finished with the tutorial, it's very easy to tear down the VMs with Terraform (with one command). However, you can set up the nodes in many different ways and it doesn't make a difference in the following steps.
+In this example we'll use Terraform to create four Ubuntu virtual machines on AWS. Using Terraform makes the VM deployment fast and repeatable. You can avoid manually setting up everything in the AWS GUI. Moreover, when you have finished with the tutorial, it's very easy to tear down the virtual machines with Terraform (with one command). However, you can set up the nodes in many different ways and it doesn't make a difference in the following steps.
 
-We will use k0sctl to create the k0s cluster. k0sctl repo also includes a ready-made Terraform configuration to create the VMs on AWS. We'll use that. Let's start be cloning the k0sctl repo.
+We will use k0sctl to create the k0s cluster. The k0sctl repository also includes a ready-made Terraform configuration to create the virtual machines on AWS. We'll use that. Let's start be cloning the k0sctl repo.
 
 ```sh
 git clone git@github.com:k0sproject/k0sctl.git
@@ -64,20 +69,20 @@ Open `main.tf` to check or modify k0s version near the end of the file.
 
 You can also configure a different name to your cluster and change the default VM type. `t3.small` (2 vCPUs, 2 GB RAM) runs just fine for this tutorial.
 
-### 2. Create the VMs
+### 2. Create the virtual machines
 
 For AWS, you need an account. Terraform will use the following environment variable: `AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN`. You can easily copy-paste them from the AWS portal. For more information, see [the AWS documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html).
 
 ![k0s_rook_ceph_aws_credentials.png](../img/k0s_rook_ceph_aws_credentials.png)
 
-When the environment variables are set, you can proceed with Terraform and deploy the VMs.
+When the environment variables are set, you can proceed with Terraform and deploy the virtual machines.
 
 ```shell
 terraform init
 terraform apply
 ```
 
-If you decide to create the VMs manually using AWS GUI, you need to disable source / destination checking. This needs to be disbled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.
+If you decide to create the virtual machines manually using AWS GUI, you need to disable source / destination checking. This needs to be disabled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.
 
 ### 3. Create and attach the volumes
 
@@ -87,11 +92,11 @@ Ceph requires one of the following storage options for storing the data:
 - Raw partitions (no formatted filesystem)
 - PVs available from a storage class in block mode
 
-We will be using raw partititions (AWS EBS volumes), which can be easily attached to the worker node VMs. They are automatically detected by Ceph with its default configuration.
+We will be using raw partitions (AWS EBS volumes), which can be easily attached to the worker node virtual machines. They are automatically detected by Ceph with its default configuration.
 
 Deploy AWS EBS volumes, one for each worker node. You can manually create three EBS volumes (for example 10 GB each) using the AWS GUI and attach those to your worker nodes. Formatting shouldn't be done. Instead, Ceph handles that part automatically.
 
-After you have attached the EBS volumes to the worker nodes, log in to one of the workers and check the available block devices:
+After you have attached the EBS volumes to the worker nodes, log in into one of the workers and check the available block devices:
 
 ```shell
 lsblk -f
@@ -108,11 +113,11 @@ nvme0n1
 nvme1n1
 ```
 
-The last line (nvme1n1) in this example printout corresponds to the attached EBS volume. Note that it doesn't have any filesystem (FSTYPE is empty). This meets the Ceph storage requirements and you are good to proceed.
+The last line (`nvme1n1`) in this example printout corresponds to the attached EBS volume. Note that it doesn't have any filesystem (`FSTYPE` is empty). This meets the Ceph storage requirements and you are good to proceed.
 
 ### 4. Install k0s using k0sctl
 
-You can use terraform to automatically output a config file for k0sctl with the ip addresses and access details.
+You can use Terraform to automatically output a config file for k0sctl with the IP addresses and access details.
 
 ```shell
 terraform output -raw k0s_cluster > k0sctl.yaml
@@ -152,7 +157,7 @@ git clone --single-branch --branch release-1.7 https://github.com/rook/rook.git
 cd rook/cluster/examples/kubernetes/ceph
 ```
 
-We will use mostly the default Rook configuration. However, k0s kubelet drectory must be configured in `operator.yaml` like this
+We will use mostly the default Rook configuration. However, k0s kubelet directory must be configured in `operator.yaml` like this
 
 ```yaml
 ROOK_CSI_KUBELET_DIR_PATH: "/var/lib/k0s/kubelet"
@@ -214,7 +219,7 @@ rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt                   0/1     Completed  
 
 ### 8. Configure Ceph block storage
 
-Before Ceph can provide storage to your cluster, you need to create a ReplicaPool and a StorageClass. In this example, we use the default configuration to create the block storage.
+Before Ceph can provide storage to your cluster, you need to create a `ReplicaPool` and a `StorageClass`. In this example, we use the default configuration to create the block storage.
 
 ```shell
 kubectl apply -f ./csi/rbd/storageclass.yaml
@@ -238,7 +243,7 @@ spec:
       storage: 2Gi
 ```
 
-This will create Persistent Volume Claim (PVC) to request a 2 GB block storage from Ceph. Provioning will be done dynamically. You can define the block size freely as long as it fits to the available storage size.
+This will create Persistent Volume Claim (PVC) to request a 2 GB block storage from Ceph. Provisioning will be done dynamically. You can define the block size freely as long as it fits to the available storage size.
 
 ```shell
 kubectl apply -f mongo-pvc.yaml
@@ -263,7 +268,7 @@ mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   2Gi        RWO  
 
 ### 10. Deploy an example application
 
-Let's deploy a Mongo database to verify the Ceph storage. Create a new file `mongo.yaml` with the following content:
+Let's deploy a MongoDB database to verify the Ceph storage. Create a new file `mongo.yaml` with the following content:
 
 ```yaml
 apiVersion: apps/v1
@@ -302,7 +307,7 @@ kubectl apply -f mongo.yaml
 
 ### 11. Access the application
 
-Open the MongoDB shell using the mongo pod:
+Open the MongoDB shell using the MongoDB pod:
 
 ```shell
 kubectl get pods
@@ -343,11 +348,11 @@ Read the data:
 >
 ```
 
-You can also try to restart the mongo pod or restart the worker nodes to verity that the storage is persistent.
+You can also try to restart the MongoDB pod or restart the worker nodes to verity that the storage is persistent.
 
 ### 12. Clean-up
 
-You can use Terraform to take down the VMs:
+You can use Terraform to take down the virtual machines:
 
 ```shell
 terraform destroy
@@ -357,6 +362,6 @@ Remember to delete the EBS volumes separately.
 
 ### Conclusions
 
-You have now created a replicated Ceph storage for k0s. All you data is stored to multiple disks at the same time so you have a fault-tolerant solution. You also have enabled dynamic provisioning. Your applications can request the available storage without a manual creation of the persistent volumes each time.
+You have now created a replicated Ceph storage for k0s. All your data is stored to multiple disks at the same time so you have a fault-tolerant solution. You also have enabled dynamic provisioning. Your applications can request the available storage without a manual creation of the persistent volumes each time.
 
 This was just one example to deploy distributed storage to k0s cluster using an operator. You can easily use different Kubernetes storage solutions with k0s.

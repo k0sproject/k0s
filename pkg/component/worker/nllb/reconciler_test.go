@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package nllb
 
@@ -20,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -426,7 +414,7 @@ func TestReconciler_ConfigMgmt(t *testing.T) {
 		configBytes, err := os.ReadFile(envoyConfig)
 		if assert.NoError(t, err) {
 			var yamlConfig any
-			assert.NoError(t, yaml.Unmarshal(configBytes, &yamlConfig), "invalid YAML in config file: %s", string(configBytes))
+			assert.NoErrorf(t, yaml.Unmarshal(configBytes, &yamlConfig), "invalid YAML in config file: %s", string(configBytes))
 		}
 	})
 }
@@ -487,14 +475,15 @@ func writeKubeconfig(t *testing.T) string {
 }
 
 func testContext(t *testing.T) context.Context {
-	ctx, cancel := context.WithCancel(context.TODO())
-	timeout := time.AfterFunc(10*time.Second, func() {
-		assert.Fail(t, "Test context timed out after 10 seconds")
-		cancel()
-	})
+	timeout := errors.New("timeout: " + t.Name())
+	ctx, cancel := context.WithCancelCause(t.Context())
+	timer := time.AfterFunc(10*time.Second, func() { cancel(timeout) })
+
 	t.Cleanup(func() {
-		timeout.Stop()
-		cancel()
+		timer.Stop()
+		if errors.Is(context.Cause(ctx), timeout) {
+			assert.Fail(t, "Test context timed out after 10 seconds")
+		}
 	})
 	return ctx
 }
@@ -533,9 +522,9 @@ func (m *backendMock) updateAPIServers(apiServers []net.HostPort) error {
 
 type staticPodsMock struct{ mock.Mock }
 
-func (m *staticPodsMock) ManifestURL() (string, error) {
+func (m *staticPodsMock) ManifestURL() (*url.URL, error) {
 	args := m.Called()
-	return args.String(0), args.Error(1)
+	return args.Get(0).(*url.URL), args.Error(1)
 }
 
 func (m *staticPodsMock) ClaimStaticPod(namespace, name string) (worker.StaticPod, error) {
@@ -545,7 +534,7 @@ func (m *staticPodsMock) ClaimStaticPod(namespace, name string) (worker.StaticPo
 
 type staticPodMock struct{ mock.Mock }
 
-func (m *staticPodMock) SetManifest(podResource interface{}) error {
+func (m *staticPodMock) SetManifest(podResource any) error {
 	args := m.Called(podResource)
 	return args.Error(0)
 }

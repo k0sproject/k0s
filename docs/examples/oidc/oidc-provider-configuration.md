@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Providers
 
 We use Google Cloud as a provider for the sake of the example. Check your vendor documentation in case if you use some other vendor.

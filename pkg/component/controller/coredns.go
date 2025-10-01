@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -29,8 +16,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/metadata"
 	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -140,13 +129,15 @@ spec:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '9153'
     spec:
+      priorityClassName: system-cluster-critical
       serviceAccountName: coredns
       tolerations:
-        - key: "CriticalAddonsOnly"
-          operator: "Exists"
-        - key: "node-role.kubernetes.io/master"
-          operator: "Exists"
-          effect: "NoSchedule"
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
       nodeSelector:
         kubernetes.io/os: linux
       {{- if not .DisablePodAntiAffinity }}
@@ -161,13 +152,18 @@ spec:
                 operator: In
                 values: ['kube-dns']
       {{- end }}
+      topologySpreadConstraints:
+      - topologyKey: topology.kubernetes.io/zone
+        maxSkew: 1
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            k8s-app: kube-dns
       containers:
       - name: coredns
         image: {{ .Image }}
         imagePullPolicy: {{ .PullPolicy }}
         resources:
-          limits:
-            memory: 170Mi
           requests:
             cpu: 100m
             memory: 70Mi
@@ -193,6 +189,7 @@ spec:
             - NET_BIND_SERVICE
             drop:
             - all
+          runAsNonRoot: true
           readOnlyRootFilesystem: true
         livenessProbe:
           httpGet:
@@ -274,10 +271,9 @@ var _ manager.Reconciler = (*CoreDNS)(nil)
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
-	K0sVars    *config.CfgVars
-	NodeConfig *v1beta1.ClusterConfig
-
-	client                 kubernetes.Interface
+	dnsAddress             string
+	clusterDomain          string
+	client                 metadata.Interface
 	log                    *logrus.Entry
 	manifestDir            string
 	previousConfig         coreDNSConfig
@@ -298,19 +294,27 @@ type coreDNSConfig struct {
 
 // NewCoreDNS creates new instance of CoreDNS component
 func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) (*CoreDNS, error) {
-	manifestDir := path.Join(k0sVars.ManifestsDir, "coredns")
-
-	client, err := clientFactory.GetClient()
+	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress()
 	if err != nil {
 		return nil, err
 	}
-	log := logrus.WithFields(logrus.Fields{"component": "coredns"})
+
+	restConfig, err := clientFactory.GetRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := metadata.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &CoreDNS{
-		client:      client,
-		log:         log,
-		K0sVars:     k0sVars,
-		manifestDir: manifestDir,
-		NodeConfig:  nodeConfig,
+		dnsAddress:    dnsAddress,
+		clusterDomain: nodeConfig.Spec.Network.ClusterDomain,
+		client:        client,
+		log:           logrus.WithField("component", "coredns"),
+		manifestDir:   path.Join(k0sVars.ManifestsDir, "coredns"),
 	}, nil
 }
 
@@ -348,17 +352,9 @@ func (c *CoreDNS) Start(ctx context.Context) error {
 }
 
 func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) (coreDNSConfig, error) {
-	nodeConfig, err := c.K0sVars.NodeConfig()
-	if err != nil {
-		return coreDNSConfig{}, fmt.Errorf("failed to get node config: %w", err)
-	}
-
-	dns, err := nodeConfig.Spec.Network.DNSAddress()
-	if err != nil {
-		return coreDNSConfig{}, err
-	}
-
-	nodes, err := c.client.CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	nodes, err := c.client.Resource(corev1.SchemeGroupVersion.WithResource("nodes")).List(ctx, metav1.ListOptions{
+		LabelSelector: fields.OneTermEqualSelector(corev1.LabelOSStable, string(corev1.Linux)).String(),
+	})
 	if err != nil {
 		return coreDNSConfig{}, err
 	}
@@ -367,8 +363,8 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 
 	config := coreDNSConfig{
 		Replicas:      replicaCount(nodeCount),
-		ClusterDomain: nodeConfig.Spec.Network.ClusterDomain,
-		ClusterDNSIP:  dns,
+		ClusterDomain: c.clusterDomain,
+		ClusterDNSIP:  c.dnsAddress,
 		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
 		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,
 	}

@@ -6,7 +6,8 @@ docs_dir: docs/
 repo_name: GitHub
 repo_url: https://github.com/k0sproject/k0s
 copyright:
-  Copyright &copy; 2021 <a href="https://mirantis.com/">Mirantis Inc.</a>
+  Copyright &copy; 2021 k0sproject a Series of LF Projects, LLC.
+  For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank">Linux Foundation policies</a>.
   - All rights reserved.
 edit_uri: ""
 
@@ -21,8 +22,9 @@ nav:
           - Docker: k0s-in-docker.md
           - Windows (experimental): experimental-windows.md
           - Raspberry Pi 4: raspberry-pi4.md
+          - Raspberry Pi 5: raspberry-pi5.md
           - Ansible Playbook: examples/ansible-playbook.md
-          - Airgap Install: airgap-install.md
+          - Airgapped Installation: airgap-install.md
           - Using custom CA certificate (advanced): custom-ca.md
       - System Requirements: system-requirements.md
       - External runtime dependencies: external-runtime-deps.md
@@ -44,8 +46,10 @@ nav:
       - System Components Monitoring: system-monitoring.md
       - Manifest Deployer: manifests.md
       - Helm Charts: helm-charts.md
+      - Feature Gates: feature-gates.md
       - Cloud Providers: cloud-providers.md
       - IPv4/IPv6 dual-stack networking: dual-stack.md
+      - IPv6 single-stack networking: single-stack-ipv6.md
       - Control Plane High Availability: high-availability.md
       - Node-local load balancing: nllb.md
       - Control plane load balancing: cplb.md
@@ -63,20 +67,25 @@ nav:
       - MetalLB Load Balancer: examples/metallb-loadbalancer.md
       - NGINX Ingress Controller: examples/nginx-ingress.md
       - Traefik Ingress Controller: examples/traefik-ingress.md
-      - Ambassador API Gateway: examples/ambassador-ingress.md
       - Ceph Storage with Rook: examples/rook-ceph.md
       - GitOps with Flux: examples/gitops-flux.md
       - OpenEBS storage: examples/openebs.md
   - Troubleshooting:
-      - FAQ: FAQ.md
-      - Logs: logs.md
-      - Common Pitfalls: troubleshooting.md
-      - Support Insights: support-dump.md
+      - FAQ: troubleshooting/FAQ.md
+      - Logs: troubleshooting/logs.md
+      - Common Pitfalls: troubleshooting/troubleshooting.md
+      - Support Insights: troubleshooting/support-dump.md
+      - Certificate Authorities (CAs): troubleshooting/certificate-authorities.md
   - Reference:
       - Architecture: architecture/index.md
       - Command Line: cli/README.md
       - Kube-bench Security Benchmark: cis_benchmark.md
-  - Releases & Support: releases.md
+  - Governance:
+      - Security policy: security.md
+      - Releases & support model: releases.md
+      - CNCF:
+          - General Technical Review: governance/cncf/gtr.md
+          - TAG-Security self-assessment: governance/cncf/security-self-assessment.md
   - Commercial support: commercial-support.md
   - Adopters: adopters.md
   - Contributing:
@@ -90,8 +99,8 @@ theme:
   highlightjs: true
   language: "en"
   custom_dir: docs/custom_theme
-  favicon: img/k0s_social.png
-  logo: img/k0s_social.png
+  favicon: img/k0s-favicon-192.png
+  logo: img/k0s-favicon-192.png
   palette:
     - scheme: default
       primary: custom
@@ -115,11 +124,14 @@ plugins:
   - macros:
       j2_variable_start_string: "{{{"
       j2_variable_end_string: "}}}"
+      modules:
+        - k0s_mkdocs_hacks.macros
   - exclude:
       glob:
         - internal/*
         - "*.etag"
         - custom_theme/*
+        - mkdocs_modules/*
         - Dockerfile.serve-dev
         - k0s
         - k0s.exe
@@ -132,6 +144,9 @@ markdown_extensions:
   - pymdownx.highlight: {}
   - pymdownx.superfences: {}
   - pymdownx.inlinehilite: {}
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - mdx_truly_sane_lists: # https://github.com/mkdocs/mkdocs/issues/545#issuecomment-522196661
       nested_indent: 2
       truly_sane: true
@@ -146,7 +161,6 @@ markdown_extensions:
   - footnotes
 
 extra:
-  k8s_version: !!python/object/apply:os.getenv ["KUBERNETES_VERSION"]
   generator: false
   social:
     - icon: fontawesome/brands/github
@@ -155,12 +169,15 @@ extra:
     - icon: fontawesome/brands/x-twitter
       link: https://x.com/k0sproject
       name: k0s on X
-    - icon: fontawesome/brands/medium
-      link: https://medium.com/k0sproject
-      name: k0s on Medium
-    - icon: fontawesome/brands/discourse
-      link: https://forums.k8slens.dev/
-      name: k0s on the Lens Forums
+    - icon: fontawesome/solid/blog
+      link: https://blog.k0sproject.io/
+      name: The k0sproject community blog
+    - icon: fontawesome/solid/rss
+      link: https://blog.k0sproject.io/index.xml
+      name: RSS feed of the k0sproject community blog
+    - icon: fontawesome/brands/slack
+      link: https://kubernetes.slack.com/archives/C07VAPJUECS
+      name: k0s on the k8s slack
     - icon: fontawesome/solid/link
       link: https://k0sproject.io/
       name: k0s Website

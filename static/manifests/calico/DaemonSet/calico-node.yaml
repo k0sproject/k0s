@@ -1,5 +1,5 @@
 ---
-# Source: calico/templates/calico-node.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.29.3/charts/calico/templates/calico-node.yaml
 # This manifest installs the calico-node container, as well
 # as the CNI plugins and network config on
 # each master and worker node in a Kubernetes cluster.
@@ -145,9 +145,11 @@ spec:
             # Cluster type to identify the deployment type
             - name: CLUSTER_TYPE
               value: "k8s"
-            # Auto-detect the BGP IP address.
+            # The environment variable IP is only for IPv4. It's the IPv4 equivalent of the env IP6,
+            # but the default behavior is different. Single stack IPv6 clusters require it to be none,
+            # clusters with IPv4, single or dual stack, must set it to autodetect.
             - name: IP
-              value: "autodetect"
+              value: "{{ if .EnableIPv4 }}autodetect{{ else }}none{{ end }}"
             # Auto detect the iptables backend
             - name: FELIX_IPTABLESBACKEND
               value: "auto"
@@ -164,10 +166,10 @@ spec:
               value: "{{ if eq .Mode "bird" }}{{ .Overlay }}{{ else }}Never{{ end }}"
             # Enable or Disable VXLAN on the default IP pool.
             - name: CALICO_IPV4POOL_VXLAN
-              value: "{{ if eq .Mode "vxlan" }}{{ .Overlay }}{{ else }}Never{{ end }}"
+              value: "{{ if and (eq .Mode "vxlan") .EnableIPv4 }}{{ .Overlay }}{{ else }}Never{{ end }}"
             # Enable or Disable VXLAN on the default IPv6 IP pool.
             - name: CALICO_IPV6POOL_VXLAN
-              value: "{{ if eq .Mode "vxlan" }}{{ .Overlay }}{{ else }}Never{{ end }}"
+              value: "{{ if and (eq .Mode "vxlan") .EnableIPv6 }}{{ .Overlay }}{{ else }}Never{{ end }}"
             {{- if eq .Mode "vxlan" }}
             - name: FELIX_VXLANPORT
               value: "{{ .VxlanPort }}"
@@ -196,18 +198,20 @@ spec:
                 configMapKeyRef:
                   name: calico-config
                   key: veth_mtu
+            {{ if .EnableIPv4}}
             # The default IPv4 pool to create on startup if none exists. Pod IPs will be
             # chosen from this range. Changing this value after installation will have
             # no effect. This should fall within `--cluster-cidr`.
             - name: CALICO_IPV4POOL_CIDR
               value: "{{ .ClusterCIDRIPv4 }}"
+            {{ end }}
             # Disable file logging so `kubectl logs` works.
             - name: CALICO_DISABLE_FILE_LOGGING
               value: "true"
             # Set Felix endpoint to host default action to ACCEPT.
             - name: FELIX_DEFAULTENDPOINTTOHOSTACTION
               value: "ACCEPT"
-            {{ if .DualStack  }}
+            {{ if .EnableIPv6  }}
             - name: CALICO_IPV6POOL_NAT_OUTGOING
               value: "true"
             - name: FELIX_IPV6SUPPORT

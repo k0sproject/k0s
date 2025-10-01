@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -45,6 +32,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 )
 
+const etcdGID = 0
+
 // Etcd implement the component interface to run etcd
 type Etcd struct {
 	CertManager certificate.Manager
@@ -53,9 +42,9 @@ type Etcd struct {
 	K0sVars     *config.CfgVars
 	LogLevel    string
 
-	supervisor supervisor.Supervisor
-	uid        int
-	gid        int
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 }
 
 var _ manager.Component = (*Etcd)(nil)
@@ -87,12 +76,13 @@ func (e *Etcd) Init(_ context.Context) error {
 	}
 
 	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
-		err = chown(f, e.uid, e.gid)
+		err = recursiveChown(f, e.uid, etcdGID)
 		if err != nil && os.Geteuid() == 0 {
 			return err
 		}
 	}
-	return assets.Stage(e.K0sVars.BinDir, "etcd", constant.BinDirMode)
+	e.executablePath, err = assets.StageExecutable(e.K0sVars.BinDir, "etcd")
+	return err
 }
 
 func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdRequest, etcdCaCert, etcdCaCertKey string) ([]string, error) {
@@ -107,6 +97,11 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 			etcdResponse, err = e.JoinClient.JoinEtcd(ctx, etcdRequest)
 			return err
 		},
+		// When joining multiple nodes in parallel, etcd can lose consensus and will return 500 responses
+		// Allow for more time to recover (~ 4 minutes = 0+1+2+4+8+16+32+60+60+60)
+		retry.Attempts(10),
+		retry.Delay(1*time.Second),
+		retry.MaxDelay(60*time.Second),
 		retry.Context(ctx),
 		retry.LastErrorOnly(true),
 		retry.OnRetry(func(attempt uint, err error) {
@@ -135,7 +130,7 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 			return nil, err
 		}
 		for _, f := range []string{filepath.Dir(etcdCaCertKey), etcdCaCertKey, etcdCaCert} {
-			if err := os.Chown(f, e.uid, e.gid); err != nil && os.Geteuid() == 0 {
+			if err := os.Chown(f, e.uid, etcdGID); err != nil && os.Geteuid() == 0 {
 				return nil, err
 			}
 		}
@@ -169,7 +164,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 		name = hostName
 	}
 
-	peerURL := fmt.Sprintf("https://%s:2380", e.Config.PeerAddress)
+	peerURL := e.Config.GetPeerURL()
 
 	args := stringmap.StringMap{
 		"--data-dir":                    e.K0sVars.EtcdDataDir,
@@ -191,6 +186,8 @@ func (e *Etcd) Start(ctx context.Context) error {
 		"--enable-pprof":                "false",
 	}
 
+	// Use the main etcd data directory as the source of truth to determine if this node has already joined
+	// See https://etcd.io/docs/v3.5/learning/persistent-storage-files/#bbolt-btree-membersnapdb
 	if file.Exists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 	} else if e.JoinClient != nil {
@@ -217,7 +214,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 	}
 
 	for name, value := range e.Config.ExtraArgs {
-		argName := fmt.Sprintf("--%s", name)
+		argName := "--" + name
 		if _, ok := args[argName]; ok {
 			logrus.Warnf("overriding etcd flag with user provided value: %s", argName)
 		}
@@ -233,14 +230,14 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 	logrus.Debugf("starting etcd with args: %v", args)
 
-	e.supervisor = supervisor.Supervisor{
+	e.supervisor = &supervisor.Supervisor{
 		Name:          "etcd",
-		BinPath:       assets.BinPath("etcd", e.K0sVars.BinDir),
+		BinPath:       e.executablePath,
 		RunDir:        e.K0sVars.RunDir,
 		DataDir:       e.K0sVars.DataDir,
-		Args:          args.ToArgs(),
+		Args:          append(args.ToArgs(), e.Config.RawArgs...),
 		UID:           e.uid,
-		GID:           e.gid,
+		GID:           etcdGID,
 		KeepEnvPrefix: true,
 	}
 
@@ -249,11 +246,9 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 // Stop stops etcd
 func (e *Etcd) Stop() error {
-	if e.Config.IsExternalClusterUsed() {
-		return nil
+	if e.supervisor != nil {
+		e.supervisor.Stop()
 	}
-
-	e.supervisor.Stop()
 	return nil
 }
 
@@ -261,7 +256,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 
-	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca"); err != nil {
+	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca", e.Config.CA.ExpiresAfter.Duration); err != nil {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
@@ -288,7 +283,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")
 		}
 
-		_, err = e.CertManager.EnsureCertificate(etcdCertReq, uid)
+		_, err = e.CertManager.EnsureCertificate(etcdCertReq, uid, e.Config.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 
@@ -306,7 +301,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			},
 		}
 
-		_, err := e.CertManager.EnsureCertificate(etcdCertReq, e.uid)
+		_, err := e.CertManager.EnsureCertificate(etcdCertReq, e.uid, e.Config.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 
@@ -321,7 +316,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 				e.Config.PeerAddress,
 			},
 		}
-		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, e.uid)
+		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, e.uid, e.Config.CA.CertificatesExpireAfter.Duration)
 		return err
 	})
 
@@ -342,7 +337,7 @@ func (e *Etcd) Ready() error {
 }
 
 func detectUnsupportedEtcdArch() error {
-	// https://github.com/etcd-io/etcd/blob/v3.5.13/server/etcdmain/etcd.go#L472-L477
+	// https://github.com/etcd-io/etcd/blob/v3.5.19/server/etcdmain/etcd.go#L472-L477
 	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
 		if os.Getenv("ETCD_UNSUPPORTED_ARCH") != runtime.GOARCH {
 			return fmt.Errorf("running etcd on %s requires ETCD_UNSUPPORTED_ARCH=%s", runtime.GOARCH, runtime.GOARCH)
@@ -351,8 +346,7 @@ func detectUnsupportedEtcdArch() error {
 	return nil
 }
 
-// for the patch release purpose the solution is in-place to be as least intrusive as possible
-func chown(name string, uid int, gid int) error {
+func recursiveChown(name string, uid, gid int) error {
 	if uid == 0 {
 		return nil
 	}

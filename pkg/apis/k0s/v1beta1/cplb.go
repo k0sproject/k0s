@@ -1,24 +1,12 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"time"
 
@@ -67,6 +55,16 @@ type KeepalivedSpec struct {
 	// Configuration options related to the virtual servers. This is an array
 	// which allows to configure multiple load balancers.
 	VirtualServers VirtualServers `json:"virtualServers,omitempty"`
+	// UserspaceProxyPort is the port where the userspace proxy will bind
+	// to. This port is only used internally, but listens on every interface.
+	// Defaults to 6444
+	//
+	// +kubebuilder:default=6444
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	UserSpaceProxyPort int `json:"userSpaceProxyBindPort,omitempty"`
+	// DisableLoadBalancer disables the load balancer.
+	DisableLoadBalancer bool `json:"disableLoadBalancer,omitempty"`
 }
 
 // VRRPInstances is a list of VRRPInstance
@@ -106,6 +104,23 @@ type VRRPInstance struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=8
 	AuthPass string `json:"authPass"`
+
+	// UnicastPeers is a list of unicast peers. If not specified, k0s will use multicast.
+	// If specified, UnicastSourceIP must be specified as well.
+	// +listType=set
+	UnicastPeers []string `json:"unicastPeers,omitempty"`
+
+	// UnicastSourceIP is the source address for unicast peers.
+	// If not specified, k0s will use the first address of the interface.
+	UnicastSourceIP string `json:"unicastSourceIP,omitempty"`
+
+	// AddressLabel is label for the VRRP instance for IPv6 VIPs.
+	// This value is ignored for IPv4 VIPs. This is used to set the routing preference
+	// as per RFC 6724.
+	// The value must be in the range from 1 to 2^32-1.
+	// If not specificied or set to 0, defaults to 10000.
+	// +kubebuilder:default=10000
+	AddressLabel uint32 `json:"addressLabel,omitempty"`
 }
 
 // validateVRRPInstances validates existing configuration and sets the default
@@ -134,6 +149,13 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 			errs = append(errs, errors.New("VirtualRouterID must be in the range of 1-255"))
 		}
 
+		if k.VRRPInstances[i].AddressLabel == 0 {
+			k.VRRPInstances[i].AddressLabel = 10000
+		}
+		if k.VRRPInstances[i].AddressLabel == math.MaxUint32 {
+			errs = append(errs, errors.New("AddressLabel 0xffffffff is reserved"))
+		}
+
 		if k.VRRPInstances[i].AdvertIntervalSeconds == 0 {
 			k.VRRPInstances[i].AdvertIntervalSeconds = defaultAdvertIntervalSeconds
 		}
@@ -153,6 +175,20 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 				errs = append(errs, fmt.Errorf("VirtualIPs must be a CIDR. Got: %s", vip))
 			}
 		}
+
+		if len(k.VRRPInstances[i].UnicastPeers) > 0 {
+			if net.ParseIP(k.VRRPInstances[i].UnicastSourceIP) == nil {
+				errs = append(errs, fmt.Errorf("UnicastPeers require a valid UnicastSourceIP. Got: %s", k.VRRPInstances[i].UnicastSourceIP))
+			}
+			for _, peer := range k.VRRPInstances[i].UnicastPeers {
+				if net.ParseIP(peer) == nil {
+					errs = append(errs, fmt.Errorf("UnicastPeers require valid IP addresses. Got: %s", peer))
+				}
+				if peer == k.VRRPInstances[i].UnicastSourceIP {
+					errs = append(errs, fmt.Errorf("UnicastPeers must not contain the UnicastSourceIP. Got: %s", peer))
+				}
+			}
+		}
 	}
 	return errs
 }
@@ -170,8 +206,10 @@ type VirtualServer struct {
 	// DelayLoop is the delay timer for check polling. DelayLoop accepts
 	// microsecond precision. Further precision will be truncated without
 	// warnings. Defaults to 1m.
+	//
 	// +kubebuilder:default="1m"
-	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
+	// +optional
+	DelayLoop metav1.Duration `json:"delayLoop"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
 	// Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
 	// details refer to keepalived documentation.
@@ -269,7 +307,7 @@ func (k *KeepalivedSpec) validateVirtualServers() []error {
 }
 
 // Validate validates the ControlPlaneLoadBalancingSpec
-func (c *ControlPlaneLoadBalancingSpec) Validate(externalAddress string) (errs []error) {
+func (c *ControlPlaneLoadBalancingSpec) Validate() (errs []error) {
 	if c == nil {
 		return nil
 	}
@@ -282,20 +320,21 @@ func (c *ControlPlaneLoadBalancingSpec) Validate(externalAddress string) (errs [
 		errs = append(errs, fmt.Errorf("unsupported CPLB type: %s. Only allowed value: %s", c.Type, CPLBTypeKeepalived))
 	}
 
-	return append(errs, c.Keepalived.Validate(externalAddress)...)
+	return append(errs, c.Keepalived.Validate()...)
 }
 
 // Validate validates the KeepalivedSpec
-func (k *KeepalivedSpec) Validate(externalAddress string) (errs []error) {
+func (k *KeepalivedSpec) Validate() (errs []error) {
 	if k == nil {
 		return nil
 	}
 
 	errs = append(errs, k.validateVRRPInstances(nil)...)
 	errs = append(errs, k.validateVirtualServers()...)
-	// CPLB reconciler relies in watching kubernetes.default.svc endpoints
-	if externalAddress != "" && len(k.VirtualServers) > 0 {
-		errs = append(errs, errors.New(".spec.api.externalAddress and virtual servers cannot be used together"))
+	if k.UserSpaceProxyPort == 0 {
+		k.UserSpaceProxyPort = 6444
+	} else if k.UserSpaceProxyPort < 1 || k.UserSpaceProxyPort > 65535 {
+		errs = append(errs, errors.New("UserSpaceProxyPort must be in the range of 1-65535"))
 	}
 
 	return errs

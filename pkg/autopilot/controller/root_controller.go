@@ -1,16 +1,7 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -19,15 +10,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/sync/value"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
-	applan "github.com/k0sproject/k0s/pkg/autopilot/controller/plans"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/plans"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
-	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
-	apupdate "github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -35,15 +28,20 @@ import (
 	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
+	crconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-type subControllerStartFunc func(ctx context.Context, event LeaseEventStatus) (context.CancelFunc, *errgroup.Group)
-type subControllerStartRoutineFunc func(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error
-type subControllerStopFunc func(cancel context.CancelFunc, g *errgroup.Group, event LeaseEventStatus)
-type leaseWatcherCreatorFunc func(*logrus.Entry, apcli.FactoryInterface) (LeaseWatcher, error)
+type leaderElector interface {
+	Run(context.Context, func(leaderelection.Status))
+}
+
+type subControllerStartFunc func(ctx context.Context, event leaderelection.Status) (context.CancelFunc, *errgroup.Group)
+type subControllerStartRoutineFunc func(ctx context.Context, logger *logrus.Entry, event leaderelection.Status) error
+type subControllerStopFunc func(cancel context.CancelFunc, g *errgroup.Group, event leaderelection.Status)
+type createLeaderElectorFunc func(leaderelection.Config) (leaderElector, error)
 type setupFunc func(ctx context.Context, cf apcli.FactoryInterface) error
 
 type rootController struct {
@@ -55,7 +53,7 @@ type rootController struct {
 	startSubHandler        subControllerStartFunc
 	startSubHandlerRoutine subControllerStartRoutineFunc
 	stopSubHandler         subControllerStopFunc
-	leaseWatcherCreator    leaseWatcherCreatorFunc
+	newLeaderElector       createLeaderElectorFunc
 	setupHandler           setupFunc
 
 	initialized bool
@@ -76,7 +74,9 @@ func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker
 	c.startSubHandler = c.startSubControllers
 	c.startSubHandlerRoutine = c.startSubControllerRoutine
 	c.stopSubHandler = c.stopSubControllers
-	c.leaseWatcherCreator = NewLeaseWatcher
+	c.newLeaderElector = func(c leaderelection.Config) (leaderElector, error) {
+		return leaderelection.NewClient(c)
+	}
 	c.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
 		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, cfg.KubeletExtraArgs, enableWorker)
 		return setupController.Run(ctx)
@@ -94,36 +94,44 @@ func (c *rootController) Run(ctx context.Context) error {
 		return fmt.Errorf("setup controller failed to complete: %w", err)
 	}
 
-	leaseWatcher, err := c.leaseWatcherCreator(c.log, c.autopilotClientFactory)
+	kubeClient, err := c.autopilotClientFactory.GetClient()
 	if err != nil {
-		return fmt.Errorf("unable to setup lease watcher: %w", err)
+		return fmt.Errorf("failed to get Kubernetes client: %w", err)
 	}
 
-	leaseName := fmt.Sprintf("%s-controller", apconst.AutopilotNamespace)
-	leaseIdentity := c.cfg.InvocationID
+	status := value.NewLatest(leaderelection.StatusPending)
+	le, err := c.newLeaderElector(&leaderelection.LeaseConfig{
+		Namespace: apconst.AutopilotNamespace,
+		Name:      apconst.AutopilotNamespace + "-controller",
+		Identity:  c.cfg.InvocationID,
+		Client:    kubeClient.CoordinationV1(),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create leader elector: %w", err)
+	}
 
-	leaseEventStatusCh, errorCh := leaseWatcher.StartWatcher(ctx, apconst.AutopilotNamespace, leaseName, leaseIdentity)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		le.Run(ctx, status.Set)
+	}()
 
-	var lastLeaseEventStatus LeaseEventStatus
-	var subControllerCancel context.CancelFunc
-	var subControllerErrGroup *errgroup.Group
+	// Start controllers
+	leaseEventStatus, leaseEventStatusExpired := status.Peek()
+	subControllerCancel, subControllerErrGroup := c.startSubHandler(ctx, leaseEventStatus)
 
 	for {
 		select {
-		case err := <-errorCh:
-			return err
-
 		case <-ctx.Done():
 			c.log.Info("Shutting down")
-			c.stopSubHandler(subControllerCancel, subControllerErrGroup, LeaseAcquired)
+			c.stopSubHandler(subControllerCancel, subControllerErrGroup, leaseEventStatus)
+			<-done
 
 			return nil
 
-		case leaseEventStatus, ok := <-leaseEventStatusCh:
-			if !ok {
-				c.log.Warn("lease event status channel closed")
-				return nil
-			}
+		case <-leaseEventStatusExpired:
+			lastLeaseEventStatus := leaseEventStatus
+			leaseEventStatus, leaseEventStatusExpired = status.Peek()
 
 			// Don't terminate controllers on receipt of the same lease event.
 			if lastLeaseEventStatus == leaseEventStatus {
@@ -138,9 +146,6 @@ func (c *rootController) Run(ctx context.Context) error {
 
 			// Start controllers
 			subControllerCancel, subControllerErrGroup = c.startSubHandler(ctx, leaseEventStatus)
-
-			// Remember which mode we're in
-			lastLeaseEventStatus = leaseEventStatus
 		}
 	}
 }
@@ -148,9 +153,19 @@ func (c *rootController) Run(ctx context.Context) error {
 // startSubControllerRoutine is what is executed by default by `startSubControllers`.
 // This creates the controller-runtime manager, registers all required components,
 // and starts it in a goroutine.
-func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error {
+func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *logrus.Entry, event leaderelection.Status) error {
 	managerOpts := crman.Options{
 		Scheme: scheme,
+		Controller: crconfig.Controller{
+			// If this controller is already initialized, this means that all
+			// controller-runtime controllers have already been successfully
+			// registered to another manager. However, controller-runtime
+			// maintains a global checklist of controller names and doesn't
+			// currently provide a way to unregister names from discarded
+			// managers. So it's necessary to suppress the global name check
+			// whenever things are restarted for reconfiguration.
+			SkipNameValidation: ptr.To(c.initialized),
+		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: c.cfg.ManagerPort,
 		}),
@@ -160,17 +175,12 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		HealthProbeBindAddress: c.cfg.HealthProbeBindAddr,
 	}
 
-	// If this controller is already initialized, this means that all
-	// controller-runtime controllers have already been successfully registered
-	// to another manager. However, controller-runtime maintains a global
-	// checklist of controller names and doesn't currently provide a way to
-	// unregister names from discarded managers. So it's necessary to suppress
-	// the global name check whenever things are restarted for reconfiguration.
-	if c.initialized {
-		managerOpts.Controller.SkipNameValidation = ptr.To(true)
+	restConfig, err := c.autopilotClientFactory.GetRESTConfig()
+	if err != nil {
+		return err
 	}
 
-	mgr, err := cr.NewManager(c.autopilotClientFactory.RESTConfig(), managerOpts)
+	mgr, err := cr.NewManager(restConfig, managerOpts)
 	if err != nil {
 		logger.WithError(err).Error("unable to start controller manager")
 		return err
@@ -181,9 +191,9 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return err
 	}
 
-	leaderMode := event == LeaseAcquired
+	leaderMode := event == leaderelection.StatusLeading
 
-	prober, err := NewReadyProber(logger, c.autopilotClientFactory, mgr.GetConfig(), 1*time.Minute)
+	prober, err := NewReadyProber(logger, c.autopilotClientFactory, mgr.GetConfig(), c.cfg.KubeAPIPort, 1*time.Minute)
 	if err != nil {
 		logger.WithError(err).Error("unable to create controller prober")
 		return err
@@ -215,25 +225,25 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	}
 	clusterID := string(ns.UID)
 
-	if err := apsig.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
-		logger.WithError(err).Error("unable to register 'signal' controllers")
+	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
+		logger.WithError(err).Error("unable to register signal controllers")
 		return err
 	}
 
-	if err := applan.RegisterControllers(ctx, logger, mgr, c.kubeClientFactory, leaderMode, delegateMap, c.cfg.ExcludeFromPlans); err != nil {
-		logger.WithError(err).Error("unable to register 'plans' controllers")
+	if err := plans.RegisterControllers(ctx, logger, mgr, c.kubeClientFactory, leaderMode, delegateMap, c.cfg.ExcludeFromPlans); err != nil {
+		logger.WithError(err).Error("unable to register plans controllers")
 		return err
 	}
 
-	if err := apupdate.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID); err != nil {
-		logger.WithError(err).Error("unable to register 'update' controllers")
+	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID); err != nil {
+		logger.WithError(err).Error("unable to register updates controllers")
 		return err
 	}
 
 	// All the controller-runtime controllers have been registered.
 	c.initialized = true
 
-	// The controller-runtime start blocks until the context is cancelled.
+	// The controller-runtime start blocks until the context is canceled.
 	if err := mgr.Start(ctx); err != nil {
 		logger.WithError(err).Error("unable to run controller-runtime manager")
 		return err
@@ -244,15 +254,13 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 
 // startSubControllers starts all of the controllers specific to the leader mode.
 // It is expected that this function runs to completion.
-func (c *rootController) startSubControllers(ctx context.Context, event LeaseEventStatus) (context.CancelFunc, *errgroup.Group) {
-	logger := c.log.WithField("leadermode", event == LeaseAcquired)
+func (c *rootController) startSubControllers(ctx context.Context, event leaderelection.Status) (context.CancelFunc, *errgroup.Group) {
+	logger := c.log.WithField("leadermode", event == leaderelection.StatusLeading)
 	logger.Info("Starting subcontrollers")
 
 	ctx, cancel := context.WithCancel(ctx)
 
-	//wg := sync.WaitGroup{}
 	g, ctx := errgroup.WithContext(ctx)
-	//wg.Add(1)
 
 	g.Go(func() error {
 		logger.Info("Starting controller-runtime subhandlers")
@@ -266,7 +274,7 @@ func (c *rootController) startSubControllers(ctx context.Context, event LeaseEve
 }
 
 // startSubControllers stop all of the controllers specific to the leader mode.
-func (c *rootController) stopSubControllers(cancel context.CancelFunc, g *errgroup.Group, event LeaseEventStatus) {
+func (c *rootController) stopSubControllers(cancel context.CancelFunc, g *errgroup.Group, event leaderelection.Status) {
 	logger := c.log.WithField("leasemode", event)
 	logger.Info("Stopping subcontrollers")
 

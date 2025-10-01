@@ -1,16 +1,5 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package updater
 
@@ -98,7 +87,7 @@ func compareSegment(v, o uint64) int {
 
 func comparePrerelease(v, o string) int {
 
-	// split the prelease versions by their part. The separator, per the spec,
+	// split the prerelease versions by their part. The separator, per the spec,
 	// is a .
 	sparts := strings.Split(v, ".")
 	oparts := strings.Split(o, ".")
@@ -108,14 +97,11 @@ func comparePrerelease(v, o string) int {
 	slen := len(sparts)
 	olen := len(oparts)
 
-	l := slen
-	if olen > slen {
-		l = olen
-	}
+	l := max(olen, slen)
 
 	// Iterate over each part of the prereleases to compare the differences.
-	for i := 0; i < l; i++ {
-		// Since the lentgh of the parts can be different we need to create
+	for i := range l {
+		// Since the length of the parts can be different we need to create
 		// a placeholder. This is to avoid out of bounds issues.
 		stemp := ""
 		if i < slen {

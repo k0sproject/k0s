@@ -1,24 +1,14 @@
 //go:build unix
 
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0s
 
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -61,15 +51,16 @@ func restartedEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
 func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
-	logger.Infof("Registering 'restarted' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_restarted"
+	logger.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-restarted").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
 			&restarted{
-				log:      logger.WithFields(logrus.Fields{"reconciler": "restarted", "object": delegate.Name()}),
+				log:      logger.WithFields(logrus.Fields{"reconciler": "k0s-restarted", "object": delegate.Name()}),
 				client:   mgr.GetClient(),
 				delegate: delegate,
 			},
@@ -88,7 +79,7 @@ func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 func (r *restarted) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
 	}
 
 	logger := r.log.WithField("signalnode", signalNode.GetName())
@@ -105,7 +96,7 @@ func (r *restarted) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
 
 	// Move to the next successful state 'UnCordoning' if our versions match
@@ -115,7 +106,7 @@ func (r *restarted) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 		signalData.Status = apsigv2.NewStatus(UnCordoning)
 
 		if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-			return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+			return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.Name, err)
 		}
 
 		logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)

@@ -1,16 +1,7 @@
-// Copyright 2023 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package updates
 
@@ -45,8 +36,7 @@ type periodicUpdater struct {
 	ticker *time.Ticker
 }
 
-func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID, currentK0sVersion string) (*periodicUpdater, error) {
-
+func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID, currentK0sVersion string) *periodicUpdater {
 	return &periodicUpdater{
 		ctx:               ctx,
 		log:               logrus.WithField("component", "periodic-updater"),
@@ -55,7 +45,7 @@ func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig
 		clusterID:         clusterID,
 		currentK0sVersion: currentK0sVersion,
 		apClientFactory:   apClientFactory,
-	}, nil
+	}
 }
 
 func (u *periodicUpdater) Config() *apv1beta2.UpdateConfig {
@@ -64,7 +54,7 @@ func (u *periodicUpdater) Config() *apv1beta2.UpdateConfig {
 
 func (u *periodicUpdater) Run() error {
 	u.log.Debug("starting periodic updater")
-	checkDuration := time.Duration(10 * time.Minute)
+	checkDuration := 10 * time.Minute
 	// ENV var used only for testing purposes
 	if e := os.Getenv("K0S_UPDATE_PERIOD"); e != "" {
 		cd, err := time.ParseDuration(e)
@@ -76,7 +66,7 @@ func (u *periodicUpdater) Run() error {
 	}
 	u.log.Debugf("using %s for update check period", checkDuration.String())
 	go func() {
-		// Check for update every checkDuration, return when context is cancelled
+		// Check for update every checkDuration, return when context is canceled
 		ticker := time.NewTicker(checkDuration)
 		u.ticker = ticker
 		defer ticker.Stop()

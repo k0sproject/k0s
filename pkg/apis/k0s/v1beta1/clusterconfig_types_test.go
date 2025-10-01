@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -21,35 +8,38 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/stretchr/testify/assert"
+
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestClusterDefaults(t *testing.T) {
-	c, err := ConfigFromString("apiVersion: k0s.k0sproject.io/v1beta1")
+	c, err := ConfigFromBytes([]byte("apiVersion: k0s.k0sproject.io/v1beta1"))
 	assert.NoError(t, err)
 	assert.Equal(t, DefaultStorageSpec(), c.Spec.Storage)
 }
 
 func TestUnknownFieldValidation(t *testing.T) {
-	_, err := ConfigFromString(`
+	_, err := ConfigFromBytes([]byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
-unknown: 1`)
+unknown: 1`))
 
 	assert.Error(t, err)
 }
 
 func TestStorageDefaults(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
   name: foobar
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, EtcdStorageType, c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
@@ -81,11 +71,11 @@ func TestClusterSpecCustomImages(t *testing.T) {
 		},
 	}
 	validTestCase.Spec.Images.DefaultPullPolicy = string(corev1.PullIfNotPresent)
-	validTestCase.Spec.Images.Konnectivity = ImageSpec{
+	validTestCase.Spec.Images.Konnectivity = &ImageSpec{
 		Image:   "foo",
 		Version: "v1",
 	}
-	validTestCase.Spec.Images.PushGateway = ImageSpec{
+	validTestCase.Spec.Images.PushGateway = &ImageSpec{
 		Image:   "bar",
 		Version: "v2@sha256:0000000000000000000000000000000000000000000000000000000000000000",
 	}
@@ -98,17 +88,17 @@ func TestClusterSpecCustomImages(t *testing.T) {
 			Images: DefaultClusterImages(),
 		},
 	}
-	invalidTestCase.Spec.Images.MetricsServer = ImageSpec{
+	invalidTestCase.Spec.Images.MetricsServer = &ImageSpec{
 		Image: "baz",
 		// digest only is currently not supported
 		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
 	}
-	invalidTestCase.Spec.Images.Calico.CNI = ImageSpec{
+	invalidTestCase.Spec.Images.Calico.CNI = &ImageSpec{
 		Image: "qux",
 		// digest only is currently not supported
 		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
 	}
-	invalidTestCase.Spec.Images.KubeRouter.CNI = ImageSpec{
+	invalidTestCase.Spec.Images.KubeRouter.CNI = &ImageSpec{
 		Image: "quux",
 		// digest only is currently not supported
 		Version: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -119,7 +109,7 @@ func TestClusterSpecCustomImages(t *testing.T) {
 }
 
 func TestEtcdDefaults(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -127,9 +117,9 @@ metadata:
 spec:
   storage:
     type: etcd
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, EtcdStorageType, c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
@@ -138,7 +128,7 @@ spec:
 }
 
 func TestNetworkValidation_Custom(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -148,16 +138,16 @@ spec:
     provider: custom
   storage:
     type: etcd
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
 	errors := c.Validate()
-	assert.Equal(t, 0, len(errors))
+	assert.Zero(t, errors)
 }
 
 func TestNetworkValidation_Calico(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -167,16 +157,16 @@ spec:
     provider: calico
   storage:
     type: etcd
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
 	errors := c.Validate()
-	assert.Equal(t, 0, len(errors))
+	assert.Zero(t, errors)
 }
 
 func TestNetworkValidation_Invalid(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -186,9 +176,9 @@ spec:
     provider: invalidProvider
   storage:
     type: etcd
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	if assert.Len(t, errors, 1) {
@@ -197,7 +187,7 @@ spec:
 }
 
 func TestApiExternalAddress(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -206,16 +196,16 @@ spec:
   api:
     externalAddress: foo.bar.com
     address: 1.2.3.4
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://foo.bar.com:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
 }
 
 func TestApiNoExternalAddress(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -223,16 +213,16 @@ metadata:
 spec:
   api:
     address: 1.2.3.4
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://1.2.3.4:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://1.2.3.4:9443", c.Spec.API.K0sControlPlaneAPIAddress())
 }
 
 func TestNullValues(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -248,8 +238,8 @@ spec:
   installConfig: null
   telemetry: null
   konnectivity: null
-`
-	extensionsYamlData := `
+`)
+	extensionsYamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -257,10 +247,11 @@ metadata:
 spec:
   extensions:
     storage: null
-`
+`)
 
-	c, err := ConfigFromString(yamlData)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
+	assert.False(t, c.Spec.Telemetry.IsEnabled())
 	assert.Equal(t, DefaultClusterImages(), c.Spec.Images)
 	assert.Equal(t, DefaultStorageSpec(), c.Spec.Storage)
 	assert.Equal(t, DefaultNetwork(), c.Spec.Network)
@@ -273,13 +264,13 @@ spec:
 	assert.Equal(t, DefaultClusterTelemetry(), c.Spec.Telemetry)
 	assert.Equal(t, DefaultKonnectivitySpec(), c.Spec.Konnectivity)
 
-	e, err := ConfigFromString(extensionsYamlData)
+	e, err := ConfigFromBytes(extensionsYamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, DefaultExtensions(), e.Spec.Extensions)
 }
 
 func TestWorkerProfileConfig(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 metadata:
@@ -300,15 +291,15 @@ spec:
       authentication:
         anonymous:
           enabled: false
-`
-	c, err := ConfigFromString(yamlData)
+`)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(c.Spec.WorkerProfiles))
+	require.Len(t, c.Spec.WorkerProfiles, 2)
 	assert.Equal(t, "profile_XXX", c.Spec.WorkerProfiles[0].Name)
 	assert.Equal(t, "profile_YYY", c.Spec.WorkerProfiles[1].Name)
 
 	j := c.Spec.WorkerProfiles[1].Config
-	var parsed map[string]interface{}
+	var parsed map[string]any
 
 	err = json.Unmarshal(j.Raw, &parsed)
 	assert.NoError(t, err)
@@ -320,14 +311,92 @@ spec:
 	}
 }
 
-func TestStripDefaults(t *testing.T) {
+func TestClusterConfig_StripDefaults_Zero(t *testing.T) {
+	underTest := ClusterConfig{}
+	assert.Equal(t, &underTest, underTest.StripDefaults())
+}
+
+func TestClusterConfig_StripDefaults_ZeroSpec(t *testing.T) {
+	underTest := ClusterConfig{Spec: &ClusterSpec{}}
+	assert.Equal(t, &underTest, underTest.StripDefaults())
+}
+
+func TestClusterConfig_StripDefaults_DefaultConfig(t *testing.T) {
 	defaultConfig := DefaultClusterConfig()
 	stripped := defaultConfig.StripDefaults()
 	a := assert.New(t)
 	a.Nil(stripped.Spec.API)
 	a.Nil(stripped.Spec.ControllerManager)
 	a.Nil(stripped.Spec.Scheduler)
+	a.Nil(stripped.Spec.Storage)
 	a.Nil(stripped.Spec.Network)
+	a.Nil(stripped.Spec.Telemetry)
+	a.Nil(stripped.Spec.Images)
+	a.Nil(stripped.Spec.Konnectivity)
+}
+
+func TestClusterConfig_StripDefaults_Images(t *testing.T) {
+	//nolint:dupword // it's YAML data
+	yaml := `
+spec:
+   images:
+     calico:
+       cni:
+         image: registry.acme.corp/k0sproject/cni
+       kubecontrollers:
+         image: registry.acme.corp/k0sproject/kubecontrollers
+       node:
+         image: registry.acme.corp/k0sproject/node
+     coredns:
+       image: registry.acme.corp/k0sproject/coredns
+     konnectivity:
+       image: registry.acme.corp/k0sproject/konnectivity
+     kubeproxy:
+       image: registry.acme.corp/k0sproject/kubeproxy
+     kuberouter:
+       cni:
+         image: registry.acme.corp/k0sproject/cni
+       cniInstaller:
+         image: registry.acme.corp/k0sproject/cniinstaller
+     metricsserver:
+       image: registry.acme.corp/k0sproject/metricsserver
+     pause:
+       image: registry.acme.corp/k0sproject/pause
+     pushgateway:
+       image: registry.acme.corp/k0sproject/pushgateway
+   network:
+     nodeLocalLoadBalancing:
+       envoyProxy:
+         image:
+           image: registry.acme.corp/k0sproject/image
+`
+
+	input, err := ConfigFromBytes([]byte(yaml))
+	require.NoError(t, err)
+
+	stripped := input.StripDefaults()
+	assert.NotEmpty(t, stripped.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Konnectivity.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.PushGateway.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.MetricsServer.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.KubeProxy.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.CoreDNS.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Pause.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Calico.CNI.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Calico.Node.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.Calico.KubeControllers.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.KubeRouter.CNI.Version)
+	assert.NotEmpty(t, stripped.Spec.Images.KubeRouter.CNIInstaller.Version)
+}
+
+func TestStrippedClusterWideDefaultConfig(t *testing.T) {
+	underTest := DefaultClusterConfig().GetClusterWideConfig().StripDefaults()
+	if assert.NotNil(t, underTest.Spec) {
+		// The network and extensions fields aren't properly handled at the moment.
+		underTest.Spec.Network = nil
+		underTest.Spec.Extensions = nil
+		assert.Zero(t, *underTest.Spec, "%+v", underTest.Spec)
+	}
 }
 
 func TestDefaultClusterConfigYaml(t *testing.T) {
@@ -337,7 +406,7 @@ func TestDefaultClusterConfigYaml(t *testing.T) {
 }
 
 func TestFeatureGates(t *testing.T) {
-	yamlData := `
+	yamlData := []byte(`
     apiVersion: k0s.k0sproject.io/v1beta1
     kind: ClusterConfig
     metadata:
@@ -352,10 +421,10 @@ func TestFeatureGates(t *testing.T) {
         -
           name: feature_ZZZ
           enabled: false
-`
-	c, err := ConfigFromString(yamlData)
+`)
+	c, err := ConfigFromBytes(yamlData)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(c.Spec.FeatureGates))
+	require.Len(t, c.Spec.FeatureGates, 3)
 	assert.Equal(t, "feature_XXX", c.Spec.FeatureGates[0].Name)
 	assert.True(t, c.Spec.FeatureGates[0].Enabled)
 	for _, component := range []string{"x", "y", "z"} {

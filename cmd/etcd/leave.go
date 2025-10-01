@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package etcd
 
@@ -21,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
@@ -38,7 +26,7 @@ func etcdLeaveCmd() *cobra.Command {
 		Use:   "leave",
 		Short: "Leave the etcd cluster, or remove a specific peer",
 		Args:  cobra.NoArgs, // accept peer address via flag, not via arg
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err
@@ -52,7 +40,7 @@ func etcdLeaveCmd() *cobra.Command {
 			peerAddress := nodeConfig.Spec.Storage.Etcd.PeerAddress
 			if peerAddressArg == "" {
 				if peerAddress == "" {
-					return fmt.Errorf("can't leave etcd cluster: this node doesn't have an etcd peer address, check the k0s configuration or use --peer-address")
+					return errors.New("can't leave etcd cluster: this node doesn't have an etcd peer address, check the k0s configuration or use --peer-address")
 				}
 			} else {
 				peerAddress = peerAddressArg
@@ -73,25 +61,26 @@ func etcdLeaveCmd() *cobra.Command {
 			if err := etcdClient.DeleteMember(ctx, peerID); err != nil {
 				logrus.
 					WithField("peerURL", peerURL).
-					WithField("peerID", fmt.Sprintf("%x", peerID)).
+					WithField("peerID", strconv.FormatUint(peerID, 16)).
 					Errorf("Failed to delete node from cluster")
 				return err
 			}
 
 			logrus.
-				WithField("peerID", fmt.Sprintf("%x", peerID)).
+				WithField("peerID", strconv.FormatUint(peerID, 16)).
 				Info("Successfully deleted")
 			return nil
 		},
 	}
 
-	cmd.Flags().AddFlag(&pflag.Flag{
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlag(&pflag.Flag{
 		Name:  "peer-address",
 		Usage: "etcd peer address to remove (default <this node's peer address>)",
 		Value: (*ipOrDNSName)(&peerAddressArg),
 	})
 
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 

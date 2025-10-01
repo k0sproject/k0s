@@ -1,26 +1,16 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package customports
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
+	"net"
+	"net/url"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -101,24 +91,24 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.PutFile("controller2", "/tmp/k0s.yaml", config)
 
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
-	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "dynamicconfig") {
 		s.T().Log("Enabling dynamic config for controllers")
 		controllerArgs = append(controllerArgs, "--enable-dynamic-config")
 	}
 
 	s.Require().NoError(s.InitController(0, controllerArgs...))
 
-	workerToken, err := s.GetJoinToken("worker", "")
+	workerToken, err := s.GetJoinToken("worker")
 	s.Require().NoError(err)
-	s.Require().NoError(s.RunWorkersWithToken("/var/lib/k0s", workerToken))
+	s.Require().NoError(s.RunWorkersWithToken(workerToken))
 
-	kc, err := s.KubeClient("controller0", "")
+	kc, err := s.KubeClient("controller0")
 	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady("worker0", kc)
 	s.Require().NoError(err)
 
-	controllerToken, err := s.GetJoinToken("controller", "")
+	controllerToken, err := s.GetJoinToken("controller")
 	s.Require().NoError(err)
 	controllerArgs = append([]string{controllerToken, ""}, controllerArgs...)
 	s.Require().NoError(s.InitController(1, controllerArgs...))
@@ -129,7 +119,7 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see CNI pods ready")
-	s.Require().NoError(common.WaitForKubeRouterReady(s.Context(), kc), "calico did not start")
+	s.Require().NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 	s.T().Log("waiting to see konnectivity-agent pods ready")
 	s.Require().NoError(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent", "kube-system"), "konnectivity-agent did not start")
 
@@ -138,12 +128,13 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 
 	// https://github.com/k0sproject/k0s/issues/1202
 	s.Run("kubeconfigIncludesExternalAddress", func() {
+		expectedURL := url.URL{Scheme: "https", Host: net.JoinHostPort(ipAddress, strconv.Itoa(kubeAPIPort))}
 		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
 
 		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kubeconfig create user | awk '$1 == \"server:\" {print $2}'")
 		s.Require().NoError(err)
-		s.Require().Equal(fmt.Sprintf("https://%s:%d", ipAddress, kubeAPIPort), out)
+		s.Require().Equal(expectedURL.String(), out)
 	})
 }

@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package file
 
@@ -27,11 +14,24 @@ import (
 	"strconv"
 	"syscall"
 	"testing"
+	"time"
 
-	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAtomic_ModificationTime(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "file")
+	leetTime := time.Unix(1337, 0)
+
+	err := AtomicWithTarget(file).WithModificationTime(leetTime).WriteString("leet")
+	require.NoError(t, err)
+
+	stat, err := os.Stat(file)
+	require.NoError(t, err)
+	assert.Equal(t, leetTime, stat.ModTime())
+}
 
 func TestWriteAtomically(t *testing.T) {
 
@@ -74,7 +74,7 @@ func TestWriteAtomically(t *testing.T) {
 
 	assertPathError := func(t *testing.T, err error, op, dir string) (pathErr *os.PathError, ok bool) {
 		t.Helper()
-		if ok = assert.True(t, errors.As(err, &pathErr), "Not a PathError: %v", err); ok {
+		if assert.ErrorAsf(t, err, &pathErr, "Not a PathError: %v", err) {
 			assert.Equal(t, op, pathErr.Op)
 			assert.Equal(
 				t, dir, filepath.Dir(pathErr.Path),
@@ -84,10 +84,11 @@ func TestWriteAtomically(t *testing.T) {
 		return
 	}
 
-	assertDirEmpty := func(t *testing.T, dir string) bool {
+	assertDirEmpty := func(t *testing.T, dir string) {
 		t.Helper()
 		entries, err := os.ReadDir(dir)
-		return assert.NoError(t, err) && assert.Empty(t, entries)
+		assert.Empty(t, entries)
+		assert.NoError(t, err)
 	}
 
 	t.Run("writeFails", func(t *testing.T) {
@@ -118,10 +119,10 @@ func TestWriteAtomically(t *testing.T) {
 	t.Run("workingDirectoryChanges", func(t *testing.T) {
 		dir := t.TempDir()
 		otherDir := t.TempDir()
-		defer testutil.Chdir(t, dir)()
+		t.Chdir(dir)
 
 		assert.NoError(t, WriteAtomically("file", 0644, func(w io.Writer) error {
-			assert.NoError(t, os.Chdir(otherDir))
+			t.Chdir(otherDir)
 			return nil
 		}))
 		assertDirEmpty(t, otherDir)
@@ -135,7 +136,7 @@ func TestWriteAtomically(t *testing.T) {
 
 		errs := flatten(WriteAtomically(file, 0644, func(file io.Writer) error {
 			a, ok := file.(*Atomic)
-			require.True(t, ok, "Not an Atomic: %T", file)
+			require.Truef(t, ok, "Not an Atomic: %T", file)
 			require.NoError(t, a.fd.Close())
 			return nil
 		}))
@@ -146,7 +147,7 @@ func TestWriteAtomically(t *testing.T) {
 		// The first error should be about the failed attempt to sync the temporary file.
 		if err, ok := assertPathError(t, errs[0], "sync", dir); ok {
 			tempPath = err.Path
-			assert.True(t, errors.Is(err, fs.ErrClosed), "Expected fs.ErrClosed: %v", err.Err)
+			assert.ErrorIsf(t, err, fs.ErrClosed, "Expected fs.ErrClosed: %v", err.Err)
 		}
 
 		// The second error should be about the failed attempt to close the temporary file.
@@ -154,7 +155,7 @@ func TestWriteAtomically(t *testing.T) {
 			if tempPath != "" {
 				assert.Equal(t, tempPath, err.Path, "Temp paths differ between errors")
 			}
-			assert.True(t, errors.Is(err, fs.ErrClosed), "Expected fs.ErrClosed: %v", err.Err)
+			assert.ErrorIsf(t, err, fs.ErrClosed, "Expected fs.ErrClosed: %v", err.Err)
 		}
 
 		assertDirEmpty(t, dir)
@@ -170,7 +171,7 @@ func TestWriteAtomically(t *testing.T) {
 		var tempPath string
 		err := WriteAtomically(file, 0644, func(file io.Writer) error {
 			a, ok := file.(*Atomic)
-			require.True(t, ok, "Not an Atomic: %T", file)
+			require.Truef(t, ok, "Not an Atomic: %T", file)
 			tempPath = a.fd.Name()
 			require.Equal(t, dir, filepath.Dir(tempPath))
 			if runtime.GOOS == "windows" {
@@ -185,7 +186,7 @@ func TestWriteAtomically(t *testing.T) {
 		// The error should be about the failed chmod.
 		if err, ok := assertPathError(t, err, "chmod", dir); ok {
 			assert.Equal(t, tempPath, err.Path, "Error refers to unexpected path")
-			assert.True(t, errors.Is(err, fs.ErrNotExist), "Expected fs.ErrNotExist: %v", err.Err)
+			assert.ErrorIsf(t, err, fs.ErrNotExist, "Expected fs.ErrNotExist: %v", err.Err)
 		}
 
 		assertDirEmpty(t, dir)
@@ -206,7 +207,7 @@ func TestWriteAtomically(t *testing.T) {
 		require.Len(t, errs, 1)
 
 		var linkErr *os.LinkError
-		if assert.True(t, errors.As(errs[0], &linkErr), "Not a LinkError: %#+v", errs[0]) {
+		if assert.ErrorAsf(t, errs[0], &linkErr, "Not a LinkError: %#+v", errs[0]) {
 			assert.Equal(t, "rename", linkErr.Op)
 			assert.Equal(
 				t, dir, filepath.Dir(linkErr.Old),
@@ -214,15 +215,15 @@ func TestWriteAtomically(t *testing.T) {
 			)
 			assert.Equal(t, file, linkErr.New)
 			if runtime.GOOS == "windows" {
-				// https://github.com/golang/go/blob/go1.20/src/syscall/types_windows.go#L11
+				// https://github.com/golang/go/blob/go1.24.6/src/syscall/types_windows.go#L11
 				//revive:disable-next-line:var-naming
 				const ERROR_ACCESS_DENIED syscall.Errno = 5
 				var errno syscall.Errno
 				ok := errors.As(linkErr.Err, &errno)
 				ok = ok && errno == ERROR_ACCESS_DENIED
-				assert.True(t, ok, "Expected ERROR_ACCESS_DENIED: %v", linkErr.Err)
+				assert.Truef(t, ok, "Expected ERROR_ACCESS_DENIED: %v", linkErr.Err)
 			} else {
-				assert.True(t, errors.Is(linkErr.Err, fs.ErrExist), "Expected fs.ErrExist: %v", linkErr.Err)
+				assert.ErrorIsf(t, linkErr.Err, fs.ErrExist, "Expected fs.ErrExist: %v", linkErr.Err)
 			}
 		}
 
@@ -231,7 +232,7 @@ func TestWriteAtomically(t *testing.T) {
 			e := entries[0]
 			name := e.Name()
 			assert.Equal(t, filepath.Base(file), name)
-			assert.True(t, e.IsDir(), "Not a directory: %s", name)
+			assert.Truef(t, e.IsDir(), "Not a directory: %s", name)
 		}
 	})
 
@@ -246,7 +247,7 @@ func TestWriteAtomically(t *testing.T) {
 		var tempPath string
 		errs := flatten(WriteAtomically(file, 0755, func(file io.Writer) error {
 			a, ok := file.(*Atomic)
-			require.True(t, ok, "Not an Atomic: %T", file)
+			require.Truef(t, ok, "Not an Atomic: %T", file)
 			tempPath = a.fd.Name()
 			require.Equal(t, dir, filepath.Dir(tempPath))
 
@@ -274,23 +275,23 @@ func TestWriteAtomically(t *testing.T) {
 
 		// The first error should be about the failed rename.
 		var linkErr *os.LinkError
-		if assert.True(t, errors.As(errs[0], &linkErr), "Not a LinkError: %v", linkErr) {
+		if assert.ErrorAsf(t, errs[0], &linkErr, "Not a LinkError: %v", linkErr) {
 			assert.Equal(t, "rename", linkErr.Op)
 			assert.Equal(t, tempPath, linkErr.Old, "Error refers to unexpected path")
 			assert.Equal(t, file, linkErr.New)
-			assert.True(t, errors.Is(linkErr.Err, fs.ErrExist), "Expected fs.ErrExist: %v", linkErr.Err)
+			assert.ErrorIsf(t, linkErr.Err, fs.ErrExist, "Expected fs.ErrExist: %v", linkErr.Err)
 		}
 
 		// The second error should be about the failed removal.
 		if err, ok := assertPathError(t, errs[1], "remove", dir); ok {
 			assert.Equal(t, tempPath, err.Path, "Error refers to unexpected path")
-			assert.True(t, errors.Is(err, fs.ErrExist), "Expected fs.ErrExist: %v", err.Err)
+			assert.ErrorIsf(t, err, fs.ErrExist, "Expected fs.ErrExist: %v", err.Err)
 		}
 
 		// Expect to see two directories left behind.
 		if entries, err := os.ReadDir(dir); assert.NoError(t, err) && assert.Len(t, entries, 2) {
 			for _, e := range entries {
-				assert.True(t, e.IsDir(), "Not a directory: %s", e.Name())
+				assert.Truef(t, e.IsDir(), "Not a directory: %s", e.Name())
 			}
 		}
 	})

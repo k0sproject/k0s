@@ -4,9 +4,9 @@ ARG GOLANG_IMAGE
 FROM docker.io/library/alpine:$ALPINE_VERSION
 
 ARG TARGETARCH
-ARG CRI_DOCKERD_VERSION=0.3.15
+ARG CRI_DOCKERD_VERSION=0.3.20 # renovate: datasource=github-releases depName=Mirantis/cri-dockerd
 ARG ETCD_VERSION
-ARG TROUBLESHOOT_VERSION=v0.95.1
+ARG TROUBLESHOOT_VERSION=0.122.0 # renovate: datasource=github-releases depName=replicatedhq/troubleshoot
 ARG HELM_VERSION
 
 # Apply our changes to the image
@@ -38,7 +38,7 @@ RUN sed -i -e 's/^\(tty[0-9]\)/# \1/' /etc/inittab
 RUN sed -i -e 's/^root:!:/root::/' /etc/shadow
 
 # Install troublbeshoot support bundle
-RUN curl --proto '=https' --tlsv1.2 -L https://github.com/replicatedhq/troubleshoot/releases/download/$TROUBLESHOOT_VERSION/support-bundle_linux_$TARGETARCH.tar.gz \
+RUN curl --proto '=https' --tlsv1.2 -L https://github.com/replicatedhq/troubleshoot/releases/download/v$TROUBLESHOOT_VERSION/support-bundle_linux_$TARGETARCH.tar.gz \
   | tar xzO support-bundle >/usr/local/bin/kubectl-supportbundle \
   && chmod +x /usr/local/bin/kubectl-supportbundle
 
@@ -48,15 +48,15 @@ RUN curl --proto '=https' --tlsv1.2 -L https://get.helm.sh/helm-v$HELM_VERSION-l
   && chmod +x /usr/local/bin/helm
 
 # Install etcd for smoke tests with external etcd
-# No arm binaries available (check-externaletcd won't work on ARMv7)
-RUN if [ "$TARGETARCH" != arm ]; then \
+# No arm or riscv64 binaries available (check-externaletcd won't work on ARMv7 or RISC-V)
+RUN if [ "$TARGETARCH" != arm ] && [ "$TARGETARCH" != riscv64 ]; then \
     curl --proto '=https' --tlsv1.2 -L https://github.com/etcd-io/etcd/releases/download/v$ETCD_VERSION/etcd-v$ETCD_VERSION-linux-$TARGETARCH.tar.gz \
       | tar xz -C /opt --strip-components=1; \
   fi
 
 # Install cri-dockerd shim for custom CRI testing
-# No arm binaries available (check-byocri won't work on ARMv7)
-RUN if [ "$TARGETARCH" != arm ]; then \
+# No arm or riscv64 binaries available (check-byocri won't work on ARMv7 or RISC-V)
+RUN if [ "$TARGETARCH" != arm ] && [ "$TARGETARCH" != riscv64 ]; then \
     curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo /tmp/cri-dockerd.tgz https://github.com/Mirantis/cri-dockerd/releases/download/v$CRI_DOCKERD_VERSION/cri-dockerd-$CRI_DOCKERD_VERSION.$TARGETARCH.tgz \
       && tar xf /tmp/cri-dockerd.tgz --directory /tmp/ \
       && mv /tmp/cri-dockerd/cri-dockerd /usr/local/bin/cri-dockerd \

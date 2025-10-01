@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package watch_test
 
@@ -36,8 +23,8 @@ import (
 
 func TestWatcher(t *testing.T) {
 	ctx := func() context.Context {
-		ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
-		t.Cleanup(cancel)
+		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+		t.Cleanup(cancel) // satisfy linter, redundant
 		return ctx
 	}()
 
@@ -47,14 +34,14 @@ func TestWatcher(t *testing.T) {
 		t.Run("ContextInitiallyCanceled", func(t *testing.T) {
 			t.Parallel()
 			provider, underTest := newTestWatcher()
-			provider.nextList.ListMeta.ResourceVersion = t.Name()
+			provider.nextList.ResourceVersion = t.Name()
 			provider.watch = func(metav1.ListOptions) error {
 				provider.ch = openEventChanWith()
 				provider.watch = forbiddenWatch(t)
 				return nil
 			}
 
-			ctx, cancel := context.WithCancel(context.TODO())
+			ctx, cancel := context.WithCancel(t.Context())
 			cancel()
 
 			err := underTest.
@@ -75,7 +62,7 @@ func TestWatcher(t *testing.T) {
 			provider.watch = func(metav1.ListOptions) error { return assert.AnError }
 			var callsToErrorCallback int
 
-			ctx, cancel := context.WithCancel(context.TODO())
+			ctx, cancel := context.WithCancel(t.Context())
 
 			err := underTest.
 				WithErrorCallback(func(err error) (time.Duration, error) {
@@ -161,7 +148,7 @@ func TestWatcher(t *testing.T) {
 
 		t.Parallel()
 		provider, underTest := newTestWatcher()
-		provider.nextList.ListMeta.ResourceVersion = t.Name()
+		provider.nextList.ResourceVersion = t.Name()
 		provider.watch = func(metav1.ListOptions) error {
 			provider.ch = closedEventChanWith()
 			provider.watch = forbiddenWatch(t)
@@ -190,11 +177,10 @@ func TestWatcher(t *testing.T) {
 			{apiwatch.Error, "watch error"},
 			{apiwatch.EventType("Bogus"), "unexpected watch event (Bogus)"},
 		} {
-			test := test
 			t.Run(string(test.eventType), func(t *testing.T) {
 				t.Parallel()
 				provider, underTest := newTestWatcher()
-				provider.nextList.ListMeta.ResourceVersion = t.Name()
+				provider.nextList.ResourceVersion = t.Name()
 				provider.watch = func(opts metav1.ListOptions) error {
 					provider.ch = openEventChanWith(apiwatch.Event{
 						Type:   test.eventType,
@@ -233,7 +219,7 @@ func TestWatcher(t *testing.T) {
 	t.Run("SuccessAfterWatch", func(t *testing.T) {
 		t.Parallel()
 		provider, underTest := newTestWatcher()
-		provider.nextList.ListMeta.ResourceVersion = t.Name()
+		provider.nextList.ResourceVersion = t.Name()
 		provider.watch = func(opts metav1.ListOptions) error {
 			assert.Equal(t, t.Name(), opts.ResourceVersion)
 			assert.True(t, opts.AllowWatchBookmarks)
@@ -269,7 +255,7 @@ func TestWatcher(t *testing.T) {
 	t.Run("ResourceVersionTooOld", func(t *testing.T) {
 		t.Parallel()
 		provider, underTest := newTestWatcher()
-		provider.nextList.ListMeta.ResourceVersion = t.Name()
+		provider.nextList.ResourceVersion = t.Name()
 		provider.watch = func(metav1.ListOptions) error {
 			provider.ch = openEventChanWith(apiwatch.Event{
 				Type:   apiwatch.Error,
@@ -311,7 +297,7 @@ func TestWatcher(t *testing.T) {
 	t.Run("WatchConditionError", func(t *testing.T) {
 		t.Parallel()
 		provider, underTest := newTestWatcher()
-		provider.nextList.ListMeta.ResourceVersion = t.Name()
+		provider.nextList.ResourceVersion = t.Name()
 		provider.watch = func(opts metav1.ListOptions) error {
 			provider.ch = openEventChanWith(apiwatch.Event{
 				Type:   apiwatch.Added,
@@ -351,7 +337,7 @@ func TestWatcher(t *testing.T) {
 		}
 
 		provider, underTest := newTestWatcher()
-		provider.nextList.ListMeta.ResourceVersion = t.Name()
+		provider.nextList.ResourceVersion = t.Name()
 		provider.watch = func(opts metav1.ListOptions) error {
 			provider.ch = openEventChanWith(apiwatch.Event{
 				Type:   apiwatch.Added,
@@ -399,7 +385,7 @@ func TestWatcher(t *testing.T) {
 		t.Run("InList", func(t *testing.T) {
 			t.Parallel()
 			provider, underTest := newTestWatcher()
-			provider.nextList.ListMeta.ResourceVersion = "0"
+			provider.nextList.ResourceVersion = "0"
 			provider.nextList.Items = []corev1.ConfigMap{invalidConfigMap}
 			var callsToErrorCallback int
 			var callsToCondition int
@@ -429,7 +415,7 @@ func TestWatcher(t *testing.T) {
 			t.Parallel()
 
 			provider, underTest := newTestWatcher()
-			provider.nextList.ListMeta.ResourceVersion = t.Name()
+			provider.nextList.ResourceVersion = t.Name()
 			provider.watch = func(opts metav1.ListOptions) error {
 				provider.ch = openEventChanWith(apiwatch.Event{
 					Type:   apiwatch.Added,
@@ -478,7 +464,7 @@ func TestWatcher(t *testing.T) {
 		t.Parallel()
 
 		provider, underTest := newTestWatcher()
-		provider.nextList.ListMeta.ResourceVersion = t.Name()
+		provider.nextList.ResourceVersion = t.Name()
 		var second, third func(opts metav1.ListOptions) error
 		provider.watch = func(opts metav1.ListOptions) error {
 			bookmark := unstructured.Unstructured{
@@ -497,7 +483,7 @@ func TestWatcher(t *testing.T) {
 
 			return nil
 		}
-		second = func(opts metav1.ListOptions) error {
+		second = func(opts metav1.ListOptions) error { //nolint:unparam // error required to satisfy interface
 			assert.Equal(t, "the bookmark", opts.ResourceVersion)
 			assert.True(t, opts.AllowWatchBookmarks)
 
@@ -509,7 +495,7 @@ func TestWatcher(t *testing.T) {
 
 			return nil
 		}
-		third = func(opts metav1.ListOptions) error {
+		third = func(opts metav1.ListOptions) error { //nolint:unparam // error required to satisfy interface
 			assert.Equal(t, "someConfigMap", opts.ResourceVersion)
 			assert.True(t, opts.AllowWatchBookmarks)
 
@@ -531,7 +517,7 @@ func TestWatcher(t *testing.T) {
 				switch callsToCondition {
 				case 0:
 					return false, nil
-				default:
+				default: //nolint:gocritic // needed for fallthrough
 					require.Fail(t, "Unexpected call to condition")
 					fallthrough
 				case 1:
@@ -549,7 +535,7 @@ func TestWatcher(t *testing.T) {
 		t.Parallel()
 
 		provider, underTest := newTestWatcher()
-		provider.nextList.ListMeta.ResourceVersion = t.Name()
+		provider.nextList.ResourceVersion = t.Name()
 		provider.watch = func(metav1.ListOptions) error {
 			provider.watch = forbiddenWatch(t)
 			return assert.AnError
@@ -652,7 +638,7 @@ func forbiddenWatch(t *testing.T) func(metav1.ListOptions) error {
 
 func forbiddenErrorCallback(t *testing.T) watch.ErrorCallback {
 	return func(err error) (time.Duration, error) {
-		require.Fail(t, "ErrorCallback shouldn't be called.", "Error was: %v", err)
+		require.Failf(t, "ErrorCallback shouldn't be called.", "Error was: %v", err)
 		return 0, nil
 	}
 }

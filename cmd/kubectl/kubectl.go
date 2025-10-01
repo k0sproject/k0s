@@ -1,22 +1,10 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package kubectl
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -25,9 +13,11 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/component-base/logs"
 	kubectl "k8s.io/kubectl/pkg/cmd"
 	"k8s.io/kubectl/pkg/cmd/plugin"
@@ -69,7 +59,7 @@ func (h *kubectlPluginHandler) Execute(executablePath string, cmdArgs, environme
 func NewK0sKubectlCmd() *cobra.Command {
 	// Create a new kubectl command without a plugin handler.
 	kubectlCmd := kubectl.NewKubectlCommand(kubectl.KubectlOptions{
-		IOStreams: genericclioptions.IOStreams{
+		IOStreams: genericiooptions.IOStreams{
 			In:     os.Stdin,
 			Out:    os.Stdout,
 			ErrOut: os.Stderr,
@@ -103,6 +93,7 @@ func hookKubectlPluginHandler(kubectlCmd *cobra.Command) {
 	// Intercept kubectl's PreRunE, so that generic k0s flags are honored and
 	// kubectl plugins may be handled properly, e.g. so that `k0s kc foo bar`
 	// works as expected when there's a `kubectl-foo` plugin installed.
+	var debugFlags internal.DebugFlags
 	originalPreRunE := kubectlCmd.PersistentPreRunE
 	kubectlCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		handleKubectlPlugins(kubectlCmd)
@@ -125,9 +116,7 @@ func hookKubectlPluginHandler(kubectlCmd *cobra.Command) {
 		logs.InitLogs()
 		cobra.OnFinalize(logs.FlushLogs)
 
-		if err := config.CallParentPersistentPreRun(kubectlCmd, args); err != nil {
-			return err
-		}
+		debugFlags.Run(kubectlCmd, args)
 
 		if err := fallbackToK0sKubeconfig(cmd); err != nil {
 			return err
@@ -135,6 +124,8 @@ func hookKubectlPluginHandler(kubectlCmd *cobra.Command) {
 
 		return originalPreRunE(cmd, args)
 	}
+
+	debugFlags.AddToKubectlFlagSet(kubectlCmd.PersistentFlags())
 }
 
 // handleKubectlPlugins calls kubectl's plugin handler and execs the plugin
@@ -171,7 +162,7 @@ func handleKubectlPlugins(kubectlCmd *cobra.Command) {
 func fallbackToK0sKubeconfig(cmd *cobra.Command) error {
 	kubeconfigFlag := cmd.Flags().Lookup("kubeconfig")
 	if kubeconfigFlag == nil {
-		return fmt.Errorf("kubeconfig flag not found")
+		return errors.New("kubeconfig flag not found")
 	}
 
 	if kubeconfigFlag.Changed {

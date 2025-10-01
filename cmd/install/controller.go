@@ -1,26 +1,18 @@
-/*
-Copyright 2021 k0s authors
+//go:build linux
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package install
 
 import (
 	"errors"
 	"fmt"
+	"os"
+	"testing/iotest"
 
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/spf13/cobra"
 )
@@ -36,15 +28,19 @@ With the controller subcommand you can setup a single node cluster by running:
 
 	k0s install controller --single
 	`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			opts, err := config.GetCmdOpts(cmd)
-			if err != nil {
-				return err
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if os.Geteuid() != 0 {
+				return errors.New("this command must be run as root")
 			}
 
-			c := (*command)(opts)
+			cmd.SetIn(iotest.ErrReader(errors.New("cannot read configuration from standard input when installing k0s")))
+			k0sVars, err := config.NewCfgVars(cmd)
+			if err != nil {
+				return fmt.Errorf("failed to initialize configuration variables: %w", err)
+			}
 
-			nodeConfig, err := c.K0sVars.NodeConfig()
+			nodeConfig, err := k0sVars.NodeConfig()
 			if err != nil {
 				return fmt.Errorf("failed to load node config: %w", err)
 			}
@@ -58,16 +54,26 @@ With the controller subcommand you can setup a single node cluster by running:
 				return err
 			}
 
-			flagsAndVals = append([]string{"controller"}, flagsAndVals...)
-			if err := c.setup("controller", flagsAndVals, installFlags); err != nil {
-				return err
+			systemUsers := nodeConfig.Spec.Install.SystemUsers
+			homeDir := k0sVars.DataDir
+			if err := install.EnsureControllerUsers(systemUsers, homeDir); err != nil {
+				return fmt.Errorf("failed to create controller users: %w", err)
 			}
+
+			args := append([]string{"controller"}, flagsAndVals...)
+			if err := install.InstallService(args, installFlags.envVars, installFlags.force); err != nil {
+				return fmt.Errorf("failed to install controller service: %w", err)
+			}
+
 			return nil
 		},
 	}
-	// append flags
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.Flags().AddFlagSet(config.GetControllerFlags())
-	cmd.Flags().AddFlagSet(config.GetWorkerFlags())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlagSet(config.GetControllerFlags(&config.ControllerOptions{}))
+	flags.AddFlagSet(config.GetWorkerFlags())
+	flags.AddFlagSet(config.FileInputFlag())
+
 	return cmd
 }

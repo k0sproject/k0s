@@ -6,16 +6,14 @@ name: Smoke test
 on:
   workflow_call:
     inputs:
+      arch:
+        type: string
+        required: true
+        description: The architecture to test k0s on.
       name:
         type: string
         required: true
         description: The integration test name to be executed.
-      job-name:
-        type: string
-        default: smoketest
-        description: >-
-          The name to use for the test job.
-          Will be used as a prefix for artifact uploads.
       k0s-reference-version:
         type: string
         description: >-
@@ -27,8 +25,8 @@ permissions:
 
 jobs:
   smoketest:
-    name: ${{ inputs.job-name }}
-    runs-on: ubuntu-22.04
+    name: Test
+    runs-on: ${{ inputs.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
     steps:
       - name: Check out code into the Go module directory
@@ -43,8 +41,8 @@ jobs:
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
-      - name: Prepare Docker for ipv6 dual-stack tests
-        if: contains(inputs.name, 'dualstack')
+      - name: Prepare Docker for ipv6 tests
+        if: contains(inputs.name, 'dualstack') || contains(inputs.name, 'ipv6')
         run: .github/workflows/prepare-docker-ipv6.sh
 
       - name: Set up Go
@@ -53,9 +51,9 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Download compiled executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
-          name: k0s-linux-amd64
+          name: k0s-linux-${{ inputs.arch }}
 
       - name: k0s sysinfo
         run: |
@@ -63,18 +61,25 @@ jobs:
           ./k0s sysinfo
 
       - name: Download airgap image bundle
-        if: contains(inputs.name, 'airgap')
-        uses: actions/download-artifact@v4
+        if: contains(inputs.name, 'airgap') || contains(inputs.name, 'ipv6')
+        uses: actions/download-artifact@v5
         with:
-          name: airgap-image-bundle-linux-amd64
+          name: airgap-image-bundle-linux-${{ inputs.arch }}
+
+      - name: Download ipv6 image bundle
+        if: inputs.name == 'calico-ipv6' || inputs.name == 'kuberouter-ipv6' || (startsWith(inputs.name, 'network-conformance-') && contains(inputs.name, '-ipv6'))
+        uses: actions/download-artifact@v5
+        with:
+          name: ipv6-image-bundle-linux-${{ inputs.arch }}
 
       - name: Download k0s reference release
         if: inputs.k0s-reference-version != ''
         env:
           K0S_VERSION: ${{ inputs.k0s-reference-version }}
         run: |
-          curl --proto '=https' --tlsv1.2 -sSLo "k0s-$K0S_VERSION" --retry 5 --retry-all-errors "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64"
+          curl --proto '=https' --tlsv1.2 -sSLo "k0s-$K0S_VERSION" --retry 5 --retry-all-errors "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-${{ inputs.arch }}"
           chmod +x "k0s-$K0S_VERSION"
+          ./"k0s-$K0S_VERSION" version
           k0sRealPath="$(realpath "k0s-$K0S_VERSION")"
           echo K0S_UPDATE_FROM_PATH="$k0sRealPath" >>"$GITHUB_ENV"
 
@@ -87,7 +92,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.job-name }}-${{ inputs.name }}-files
+          name: ${{ inputs.name }}-${{ inputs.arch }}-files
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz

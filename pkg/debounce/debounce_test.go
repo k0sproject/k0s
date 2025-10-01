@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package debounce
 
@@ -31,7 +18,7 @@ func TestDebounce(t *testing.T) {
 	eventChan := make(chan int32, numEvents)
 	var debounceCalled uint32
 	var lastItem int32
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	debouncer := Debouncer[int32]{
 		Input:   eventChan,
@@ -49,7 +36,7 @@ func TestDebounce(t *testing.T) {
 	runReturned := make(chan error)
 	go func() { runReturned <- debouncer.Run(ctx) }()
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		time.Sleep(10 * time.Millisecond)
 		if atomic.LoadInt32(&lastItem) == numEvents {
 			break
@@ -73,7 +60,7 @@ func TestDebounceStopWithoutActuallyDebouncing(t *testing.T) {
 	const numEvents = 5
 	eventChan := make(chan int, numEvents)
 	var debounceCalled uint32
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	debouncer := Debouncer[int]{
 		Input:    eventChan,
@@ -107,7 +94,7 @@ func TestDebounceStopWithoutActuallyDebouncing(t *testing.T) {
 
 func TestDebouncerReturnsIfInputIsClosed(t *testing.T) {
 	eventChan := make(chan int)
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	debouncer := Debouncer[int]{

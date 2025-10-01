@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2023 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Node-local load balancing
 
 For clusters that don't have an [externally managed load balancer] for the k0s
@@ -82,7 +87,7 @@ metadata:
   name: k0s-cluster
 spec:
   k0s:
-    version: v{{{ extra.k8s_version }}}+k0s.0
+    version: {{{ k0s_version }}}
     config:
       spec:
         network:
@@ -132,91 +137,89 @@ $ k0sctl apply
 ⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
 ⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
 ⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
-k0sctl 0.17.2 Copyright 2023, k0sctl authors.
-By continuing to use k0sctl you agree to these terms:
-https://k0sproject.io/licenses/eula
-level=info msg="==> Running phase: Connect to hosts"
-level=info msg="[ssh] 10.81.146.254:22: connected"
-level=info msg="[ssh] 10.81.146.184:22: connected"
-level=info msg="[ssh] 10.81.146.113:22: connected"
-level=info msg="[ssh] 10.81.146.51:22: connected"
-level=info msg="[ssh] 10.81.146.198:22: connected"
-level=info msg="==> Running phase: Detect host operating systems"
-level=info msg="[ssh] 10.81.146.254:22: is running Alpine Linux v3.17"
-level=info msg="[ssh] 10.81.146.113:22: is running Alpine Linux v3.17"
-level=info msg="[ssh] 10.81.146.184:22: is running Alpine Linux v3.17"
-level=info msg="[ssh] 10.81.146.198:22: is running Alpine Linux v3.17"
-level=info msg="[ssh] 10.81.146.51:22: is running Alpine Linux v3.17"
-level=info msg="==> Running phase: Acquire exclusive host lock"
-level=info msg="==> Running phase: Prepare hosts"
-level=info msg="[ssh] 10.81.146.113:22: installing packages (curl)"
-level=info msg="[ssh] 10.81.146.198:22: installing packages (curl, iptables)"
-level=info msg="[ssh] 10.81.146.254:22: installing packages (curl)"
-level=info msg="[ssh] 10.81.146.51:22: installing packages (curl, iptables)"
-level=info msg="[ssh] 10.81.146.184:22: installing packages (curl)"
-level=info msg="==> Running phase: Gather host facts"
-level=info msg="[ssh] 10.81.146.184:22: using k0s-controller-1 as hostname"
-level=info msg="[ssh] 10.81.146.51:22: using k0s-worker-1 as hostname"
-level=info msg="[ssh] 10.81.146.198:22: using k0s-worker-0 as hostname"
-level=info msg="[ssh] 10.81.146.113:22: using k0s-controller-2 as hostname"
-level=info msg="[ssh] 10.81.146.254:22: using k0s-controller-0 as hostname"
-level=info msg="[ssh] 10.81.146.184:22: discovered eth0 as private interface"
-level=info msg="[ssh] 10.81.146.51:22: discovered eth0 as private interface"
-level=info msg="[ssh] 10.81.146.198:22: discovered eth0 as private interface"
-level=info msg="[ssh] 10.81.146.113:22: discovered eth0 as private interface"
-level=info msg="[ssh] 10.81.146.254:22: discovered eth0 as private interface"
-level=info msg="==> Running phase: Download k0s binaries to local host"
-level=info msg="==> Running phase: Validate hosts"
-level=info msg="==> Running phase: Gather k0s facts"
-level=info msg="==> Running phase: Validate facts"
-level=info msg="==> Running phase: Upload k0s binaries to hosts"
-level=info msg="[ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
-level=info msg="[ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
-level=info msg="[ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
-level=info msg="[ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
-level=info msg="[ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
-level=info msg="==> Running phase: Configure k0s"
-level=info msg="[ssh] 10.81.146.254:22: validating configuration"
-level=info msg="[ssh] 10.81.146.184:22: validating configuration"
-level=info msg="[ssh] 10.81.146.113:22: validating configuration"
-level=info msg="[ssh] 10.81.146.113:22: configuration was changed"
-level=info msg="[ssh] 10.81.146.184:22: configuration was changed"
-level=info msg="[ssh] 10.81.146.254:22: configuration was changed"
-level=info msg="==> Running phase: Initialize the k0s cluster"
-level=info msg="[ssh] 10.81.146.254:22: installing k0s controller"
-level=info msg="[ssh] 10.81.146.254:22: waiting for the k0s service to start"
-level=info msg="[ssh] 10.81.146.254:22: waiting for kubernetes api to respond"
-level=info msg="==> Running phase: Install controllers"
-level=info msg="[ssh] 10.81.146.254:22: generating token"
-level=info msg="[ssh] 10.81.146.184:22: writing join token"
-level=info msg="[ssh] 10.81.146.184:22: installing k0s controller"
-level=info msg="[ssh] 10.81.146.184:22: starting service"
-level=info msg="[ssh] 10.81.146.184:22: waiting for the k0s service to start"
-level=info msg="[ssh] 10.81.146.184:22: waiting for kubernetes api to respond"
-level=info msg="[ssh] 10.81.146.254:22: generating token"
-level=info msg="[ssh] 10.81.146.113:22: writing join token"
-level=info msg="[ssh] 10.81.146.113:22: installing k0s controller"
-level=info msg="[ssh] 10.81.146.113:22: starting service"
-level=info msg="[ssh] 10.81.146.113:22: waiting for the k0s service to start"
-level=info msg="[ssh] 10.81.146.113:22: waiting for kubernetes api to respond"
-level=info msg="==> Running phase: Install workers"
-level=info msg="[ssh] 10.81.146.51:22: validating api connection to https://10.81.146.254:6443"
-level=info msg="[ssh] 10.81.146.198:22: validating api connection to https://10.81.146.254:6443"
-level=info msg="[ssh] 10.81.146.254:22: generating token"
-level=info msg="[ssh] 10.81.146.198:22: writing join token"
-level=info msg="[ssh] 10.81.146.51:22: writing join token"
-level=info msg="[ssh] 10.81.146.198:22: installing k0s worker"
-level=info msg="[ssh] 10.81.146.51:22: installing k0s worker"
-level=info msg="[ssh] 10.81.146.198:22: starting service"
-level=info msg="[ssh] 10.81.146.51:22: starting service"
-level=info msg="[ssh] 10.81.146.198:22: waiting for node to become ready"
-level=info msg="[ssh] 10.81.146.51:22: waiting for node to become ready"
-level=info msg="==> Running phase: Release exclusive host lock"
-level=info msg="==> Running phase: Disconnect from hosts"
-level=info msg="==> Finished in 3m30s"
-level=info msg="k0s cluster version v{{{ extra.k8s_version }}}+k0s.0 is now installed"
-level=info msg="Tip: To access the cluster you can now fetch the admin kubeconfig using:"
-level=info msg="     k0sctl kubeconfig"
+k0sctl v0.21.0 Copyright 2023, k0sctl authors.
+INFO ==> Running phase: Connect to hosts
+INFO [ssh] 10.81.146.254:22: connected
+INFO [ssh] 10.81.146.184:22: connected
+INFO [ssh] 10.81.146.113:22: connected
+INFO [ssh] 10.81.146.51:22: connected
+INFO [ssh] 10.81.146.198:22: connected
+INFO ==> Running phase: Detect host operating systems
+INFO [ssh] 10.81.146.254:22: is running Alpine Linux v3.17
+INFO [ssh] 10.81.146.113:22: is running Alpine Linux v3.17
+INFO [ssh] 10.81.146.184:22: is running Alpine Linux v3.17
+INFO [ssh] 10.81.146.198:22: is running Alpine Linux v3.17
+INFO [ssh] 10.81.146.51:22: is running Alpine Linux v3.17
+INFO ==> Running phase: Acquire exclusive host lock
+INFO ==> Running phase: Prepare hosts
+INFO [ssh] 10.81.146.113:22: installing packages (curl)
+INFO [ssh] 10.81.146.198:22: installing packages (curl, iptables)
+INFO [ssh] 10.81.146.254:22: installing packages (curl)
+INFO [ssh] 10.81.146.51:22: installing packages (curl, iptables)
+INFO [ssh] 10.81.146.184:22: installing packages (curl)
+INFO ==> Running phase: Gather host facts
+INFO [ssh] 10.81.146.184:22: using k0s-controller-1 as hostname
+INFO [ssh] 10.81.146.51:22: using k0s-worker-1 as hostname
+INFO [ssh] 10.81.146.198:22: using k0s-worker-0 as hostname
+INFO [ssh] 10.81.146.113:22: using k0s-controller-2 as hostname
+INFO [ssh] 10.81.146.254:22: using k0s-controller-0 as hostname
+INFO [ssh] 10.81.146.184:22: discovered eth0 as private interface
+INFO [ssh] 10.81.146.51:22: discovered eth0 as private interface
+INFO [ssh] 10.81.146.198:22: discovered eth0 as private interface
+INFO [ssh] 10.81.146.113:22: discovered eth0 as private interface
+INFO [ssh] 10.81.146.254:22: discovered eth0 as private interface
+INFO ==> Running phase: Download k0s binaries to local host
+INFO ==> Running phase: Validate hosts
+INFO ==> Running phase: Gather k0s facts
+INFO ==> Running phase: Validate facts
+INFO ==> Running phase: Upload k0s binaries to hosts
+INFO [ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}
+INFO [ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}
+INFO [ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}
+INFO [ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}
+INFO [ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-{{{ k0s_version }}}
+INFO ==> Running phase: Configure k0s
+INFO [ssh] 10.81.146.254:22: validating configuration
+INFO [ssh] 10.81.146.184:22: validating configuration
+INFO [ssh] 10.81.146.113:22: validating configuration
+INFO [ssh] 10.81.146.113:22: configuration was changed
+INFO [ssh] 10.81.146.184:22: configuration was changed
+INFO [ssh] 10.81.146.254:22: configuration was changed
+INFO ==> Running phase: Initialize the k0s cluster
+INFO [ssh] 10.81.146.254:22: installing k0s controller
+INFO [ssh] 10.81.146.254:22: waiting for the k0s service to start
+INFO [ssh] 10.81.146.254:22: waiting for kubernetes api to respond
+INFO ==> Running phase: Install controllers
+INFO [ssh] 10.81.146.254:22: generating token
+INFO [ssh] 10.81.146.184:22: writing join token
+INFO [ssh] 10.81.146.184:22: installing k0s controller
+INFO [ssh] 10.81.146.184:22: starting service
+INFO [ssh] 10.81.146.184:22: waiting for the k0s service to start
+INFO [ssh] 10.81.146.184:22: waiting for kubernetes api to respond
+INFO [ssh] 10.81.146.254:22: generating token
+INFO [ssh] 10.81.146.113:22: writing join token
+INFO [ssh] 10.81.146.113:22: installing k0s controller
+INFO [ssh] 10.81.146.113:22: starting service
+INFO [ssh] 10.81.146.113:22: waiting for the k0s service to start
+INFO [ssh] 10.81.146.113:22: waiting for kubernetes api to respond
+INFO ==> Running phase: Install workers
+INFO [ssh] 10.81.146.51:22: validating api connection to https://10.81.146.254:6443
+INFO [ssh] 10.81.146.198:22: validating api connection to https://10.81.146.254:6443
+INFO [ssh] 10.81.146.254:22: generating token
+INFO [ssh] 10.81.146.198:22: writing join token
+INFO [ssh] 10.81.146.51:22: writing join token
+INFO [ssh] 10.81.146.198:22: installing k0s worker
+INFO [ssh] 10.81.146.51:22: installing k0s worker
+INFO [ssh] 10.81.146.198:22: starting service
+INFO [ssh] 10.81.146.51:22: starting service
+INFO [ssh] 10.81.146.198:22: waiting for node to become ready
+INFO [ssh] 10.81.146.51:22: waiting for node to become ready
+INFO ==> Running phase: Release exclusive host lock
+INFO ==> Running phase: Disconnect from hosts
+INFO ==> Finished in 3m30s
+INFO k0s cluster version {{{ k0s_version }}} is now installed
+INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
+INFO      k0sctl kubeconfig
 ```
 
 The cluster with the two nodes should be available by now. Setup the kubeconfig
@@ -249,11 +252,14 @@ kubernetes   10.81.146.113:6443,10.81.146.184:6443,10.81.146.254:6443   2m49s
 The first controller is the current k0s leader. The two worker nodes can be
 listed, too:
 
+{% set kubelet_ver = k8s_version + '+k0s' -%}
+{% set kubelet_ver_len = kubelet_ver | length -%}
+
 ```console
 $ kubectl get nodes -owide
-NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-k0s-worker-0   Ready    <none>   2m16s   v{{{ extra.k8s_version }}}+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.23
-k0s-worker-1   Ready    <none>   2m15s   v{{{ extra.k8s_version }}}+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.23
+NAME           STATUS   ROLES    AGE     {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+k0s-worker-0   Ready    <none>   2m16s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://{{{ build_var('containerd_version') }}}
+k0s-worker-1   Ready    <none>   2m15s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://{{{ build_var('containerd_version') }}}
 ```
 
 There is one node-local load balancer pod running for each worker node:
@@ -297,9 +303,9 @@ k0s-controller-1
 $ sed -i s#https://10\\.81\\.146\\.254:6443#https://10.81.146.184:6443#g k0s-kubeconfig
 
 $ kubectl get nodes -owide
-NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-k0s-worker-0   Ready    <none>   3m35s   v{{{ extra.k8s_version }}}+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.23
-k0s-worker-1   Ready    <none>   3m34s   v{{{ extra.k8s_version }}}+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.23
+NAME           STATUS   ROLES    AGE     {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+k0s-worker-0   Ready    <none>   3m35s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://{{{ build_var('containerd_version') }}}
+k0s-worker-1   Ready    <none>   3m34s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://{{{ build_var('containerd_version') }}}
 
 $ kubectl -n kube-system get pods -owide -l app.kubernetes.io/managed-by=k0s,app.kubernetes.io/component=nllb
 NAME                READY   STATUS    RESTARTS   AGE     IP              NODE           NOMINATED NODE   READINESS GATES

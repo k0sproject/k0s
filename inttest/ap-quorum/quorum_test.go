@@ -1,16 +1,5 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package quorum
 
@@ -46,7 +35,7 @@ func (s *quorumSuite) SetupTest() {
 	ipAddress := s.GetControllerIPAddress(0)
 	var joinToken string
 
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+	for idx := range s.ControllerCount {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
@@ -70,8 +59,8 @@ func (s *quorumSuite) SetupTest() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
-		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
+	for idx := range s.ControllerCount {
+		s.Require().Len(s.GetMembers(idx), s.ControllerCount)
 	}
 }
 
@@ -118,16 +107,17 @@ spec:
 	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	s.Require().NoError(err)
 
-	s.Equal(1, len(plan.Status.Commands))
-	cmd := plan.Status.Commands[0]
+	if s.Len(plan.Status.Commands, 1) {
+		cmd := plan.Status.Commands[0]
 
-	s.Equal(appc.PlanCompleted, cmd.State)
-	s.NotNil(cmd.K0sUpdate)
-	s.NotNil(cmd.K0sUpdate.Controllers)
-	s.Empty(cmd.K0sUpdate.Workers)
+		s.Equal(appc.PlanCompleted, cmd.State)
+		s.NotNil(cmd.K0sUpdate)
+		s.NotNil(cmd.K0sUpdate.Controllers)
+		s.Empty(cmd.K0sUpdate.Workers)
 
-	for _, node := range cmd.K0sUpdate.Controllers {
-		s.Equal(appc.SignalCompleted, node.State)
+		for _, node := range cmd.K0sUpdate.Controllers {
+			s.Equal(appc.SignalCompleted, node.State)
+		}
 	}
 }
 

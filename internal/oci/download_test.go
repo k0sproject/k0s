@@ -1,25 +1,11 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package oci_test
 
 import (
 	"bytes"
 	"cmp"
-	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -85,7 +71,7 @@ func TestDownload(t *testing.T) {
 				opts = append(opts, oci.WithDockerAuth(
 					oci.DockerConfig{
 						Auths: map[string]oci.DockerConfigEntry{
-							addr: entry,
+							addr.Host: entry,
 						},
 					},
 				))
@@ -100,8 +86,8 @@ func TestDownload(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			url := fmt.Sprintf("%s/repository/artifact:latest", addr)
-			err := oci.Download(context.TODO(), url, buf, opts...)
+			url := path.Join(addr.Host, "repository", "artifact:latest")
+			err := oci.Download(t.Context(), url, buf, opts...)
 			if tt.Expected != "" {
 				require.NoError(t, err)
 				require.Empty(t, tt.Error)
@@ -117,8 +103,8 @@ func TestDownload(t *testing.T) {
 // startOCIMockServer starts a mock server that will respond to the given test.
 // this mimics the behavior of the real OCI registry. This function returns the
 // address of the server.
-func startOCIMockServer(t *testing.T, tname string, test testFile) string {
-	var serverAddr string
+func startOCIMockServer(t *testing.T, tname string, test testFile) url.URL {
+	var serverURL *url.URL
 
 	starter := httptest.NewTLSServer
 	if test.PlainHTTP {
@@ -128,7 +114,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 	server := starter(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			t.Log(r.Proto, r.Method, r.RequestURI)
-			if !assert.Equal(t, r.Method, http.MethodGet) {
+			if !assert.Equal(t, http.MethodGet, r.Method) {
 				w.WriteHeader(http.StatusMethodNotAllowed)
 				return
 			}
@@ -141,9 +127,9 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 					return
 				}
 				res := map[string]string{"token": tname}
-				marshalled, err := json.Marshal(res)
+				marshaled, err := json.Marshal(res)
 				assert.NoError(t, err)
-				_, _ = w.Write(marshalled)
+				_, _ = w.Write(marshaled)
 				return
 			}
 
@@ -157,7 +143,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 					proto = "http"
 				}
 
-				header := fmt.Sprintf(`Bearer realm="%s://%s/token"`, proto, serverAddr)
+				header := fmt.Sprintf(`Bearer realm="%s://%s/token"`, proto, serverURL.Host)
 				w.Header().Add("WWW-Authenticate", header)
 				w.WriteHeader(http.StatusUnauthorized)
 				return
@@ -195,8 +181,7 @@ func startOCIMockServer(t *testing.T, tname string, test testFile) string {
 	)
 	t.Cleanup(server.Close)
 
-	u, err := url.Parse(server.URL)
+	serverURL, err := url.Parse(server.URL)
 	require.NoError(t, err)
-	serverAddr = u.Host
-	return serverAddr
+	return *serverURL
 }

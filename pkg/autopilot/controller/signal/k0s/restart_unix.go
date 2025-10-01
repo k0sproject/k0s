@@ -1,24 +1,14 @@
 //go:build unix
 
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0s
 
 import (
 	"context"
 	"fmt"
+	"strings"
 	"syscall"
 	"time"
 
@@ -26,6 +16,7 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+	"github.com/k0sproject/k0s/pkg/component/status"
 
 	"github.com/sirupsen/logrus"
 	cr "sigs.k8s.io/controller-runtime"
@@ -34,6 +25,8 @@ import (
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
 )
+
+const Restart = "Restart"
 
 const (
 	restartRequeueDuration = 5 * time.Second
@@ -67,15 +60,16 @@ type restart struct {
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
 func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
-	logger.Infof("Registering 'restart' reconciler for '%s'", delegate.Name())
+	name := strings.ToLower(delegate.Name()) + "_k0s_restart"
+	logger.Info("Registering reconciler: ", name)
 
 	return cr.NewControllerManagedBy(mgr).
-		Named(delegate.Name() + "-restart").
+		Named(name).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
 			&restart{
-				log:      logger.WithFields(logrus.Fields{"reconciler": "restart", "object": delegate.Name()}),
+				log:      logger.WithFields(logrus.Fields{"reconciler": "k0s-restart", "object": delegate.Name()}),
 				client:   mgr.GetClient(),
 				delegate: delegate,
 			},
@@ -92,7 +86,7 @@ func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred
 func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
 	}
 
 	logger := r.log.WithField("signalnode", signalNode.GetName())
@@ -109,7 +103,7 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
 
 	if k0sVersion == signalData.Command.K0sUpdate.Version {
@@ -117,7 +111,7 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 		signalData.Status = apsigv2.NewStatus(UnCordoning)
 
 		if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-			return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.NamespacedName.Name, err)
+			return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.Name, err)
 		}
 
 		logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
@@ -148,4 +142,14 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 	}
 
 	return cr.Result{}, nil
+}
+
+// getK0sPid returns the PID of a running k0s based on its status socket.
+func getK0sPid(statusSocketPath string) (int, error) {
+	status, err := status.GetStatusInfo(statusSocketPath)
+	if err != nil {
+		return -1, err
+	}
+
+	return status.Pid, nil
 }

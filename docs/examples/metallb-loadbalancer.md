@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Installing MetalLB Load Balancer
 
 This tutorial covers the installation of MetalLB load balancer on k0s. k0s doesn't come with an in-built load balancer, but it's easy to deploy MetalLB as shown in this document.

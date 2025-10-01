@@ -1,140 +1,82 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
+	"bytes"
+	"cmp"
 	"context"
+	_ "embed"
 	"fmt"
-	"path"
-	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/cli-runtime/pkg/resource"
+
+	"github.com/avast/retry-go"
+	"github.com/sirupsen/logrus"
 )
+
+const SystemRBACStackName = "bootstraprbac"
 
 // SystemRBAC implements system RBAC reconciler
 type SystemRBAC struct {
-	manifestDir string
+	Clients kubernetes.ClientFactoryInterface
 }
 
 var _ manager.Component = (*SystemRBAC)(nil)
 
-// NewSystemRBAC creates new system level RBAC reconciler
-func NewSystemRBAC(manifestDir string) *SystemRBAC {
-	return &SystemRBAC{manifestDir}
-}
-
-// Init does nothing
-func (s *SystemRBAC) Init(_ context.Context) error {
-	return nil
-}
-
-// Run reconciles the k0s related system RBAC rules
-func (s *SystemRBAC) Start(_ context.Context) error {
-	rbacDir := path.Join(s.manifestDir, "bootstraprbac")
-	err := dir.Init(rbacDir, constant.ManifestsDirMode)
+// Applies the system RBAC manifests to the cluster.
+func (s *SystemRBAC) Init(ctx context.Context) error {
+	infos, err := resource.NewLocalBuilder().
+		Unstructured().
+		Stream(bytes.NewReader(systemRBAC), SystemRBACStackName).
+		Flatten().
+		Do().
+		Infos()
 	if err != nil {
 		return err
 	}
-	tw := templatewriter.TemplateWriter{
-		Name:     "bootstrap-rbac",
-		Template: bootstrapRBACTemplate,
-		Data:     struct{}{},
-		Path:     filepath.Join(rbacDir, "bootstrap-rbac.yaml"),
+
+	resources := make([]*unstructured.Unstructured, len(infos))
+	for i := range infos {
+		resources[i] = infos[i].Object.(*unstructured.Unstructured)
 	}
-	err = tw.Write()
-	if err != nil {
-		return fmt.Errorf("error writing bootstrap-rbac manifests, will NOT retry: %w", err)
+
+	var lastErr error
+	if err := retry.Do(
+		func() error {
+			stack := applier.Stack{
+				Name:      SystemRBACStackName,
+				Resources: resources,
+				Clients:   s.Clients,
+			}
+			lastErr := stack.Apply(ctx, true)
+			return lastErr
+		},
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.OnRetry(func(attempt uint, err error) {
+			logrus.WithFields(logrus.Fields{
+				"component": constant.SystemRBACComponentName,
+				"stack":     SystemRBACStackName,
+				"attempt":   attempt + 1,
+			}).WithError(err).Debug("Failed to apply stack, retrying after backoff")
+		}),
+	); err != nil {
+		return fmt.Errorf("failed to apply system RBAC stack: %w", cmp.Or(lastErr, err))
 	}
+
 	return nil
 }
 
-// Stop does currently nothing
-func (s *SystemRBAC) Stop() error {
-	return nil
-}
+func (s *SystemRBAC) Start(context.Context) error { return nil }
+func (s *SystemRBAC) Stop() error                 { return nil }
 
-const bootstrapRBACTemplate = `
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: kubelet-bootstrap
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:node-bootstrapper
-subjects:
-- apiGroup: rbac.authorization.k8s.io
-  kind: Group
-  name: system:bootstrappers
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: node-autoapprove-bootstrap
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:certificates.k8s.io:certificatesigningrequests:nodeclient
-subjects:
-- apiGroup: rbac.authorization.k8s.io
-  kind: Group
-  name: system:bootstrappers
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: node-autoapprove-certificate-rotation
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:certificates.k8s.io:certificatesigningrequests:selfnodeclient
-subjects:
-- apiGroup: rbac.authorization.k8s.io
-  kind: Group
-  name: system:nodes
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: system:nodes:autopilot
-rules:
-  - apiGroups: ["autopilot.k0sproject.io"]
-    resources: ["*"]
-    verbs: ["*"]
-  - apiGroups: [""]
-    resources: ["nodes", "pods", "pods/eviction", "namespaces"]
-    verbs: ["*"]
-  - apiGroups: ["apps"]
-    resources: ["*"]
-    verbs: ["*"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: system:nodes:autopilot
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:nodes:autopilot
-subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: system:nodes
-`
+//go:embed systemrbac.yaml
+var systemRBAC []byte

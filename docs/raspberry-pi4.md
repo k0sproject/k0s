@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Create a Raspberry Pi 4 cluster
 
 ## Prerequisites
@@ -125,7 +130,7 @@ Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest). For
 example:
 
 ```shell
-wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v{{{ extra.k8s_version }}}+k0s.0/k0s-v{{{ extra.k8s_version }}}+k0s.0-arm64 # replace version number!
+wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/{{{ k0s_version }}}/k0s-{{{ k0s_version }}}-arm64 # replace version number!
 sudo install /tmp/k0s /usr/local/bin/k0s
 ```
 
@@ -142,7 +147,7 @@ At this point you can run `k0s`:
 
 ```console
 ubuntu@ubuntu:~$ k0s version
-v{{{ extra.k8s_version }}}+k0s.0
+{{{ k0s_version }}}
 ```
 
 To check if k0s's [system requirements](system-requirements.md) and [external
@@ -174,13 +179,6 @@ Operating system: Linux (pass)
     cgroup controller "hugetlb": available (pass)
     cgroup controller "blkio": available (via io in version 2) (pass)
   CONFIG_CGROUPS: Control Group support: built-in (pass)
-    CONFIG_CGROUP_FREEZER: Freezer cgroup subsystem: built-in (pass)
-    CONFIG_CGROUP_PIDS: PIDs cgroup subsystem: built-in (pass)
-    CONFIG_CGROUP_DEVICE: Device controller for cgroups: built-in (pass)
-    CONFIG_CPUSETS: Cpuset support: built-in (pass)
-    CONFIG_CGROUP_CPUACCT: Simple CPU accounting cgroup subsystem: built-in (pass)
-    CONFIG_MEMCG: Memory Resource Controller for Control Groups: built-in (pass)
-    CONFIG_CGROUP_HUGETLB: HugeTLB Resource Controller for Control Groups: built-in (pass)
     CONFIG_CGROUP_SCHED: Group CPU scheduler: built-in (pass)
       CONFIG_FAIR_GROUP_SCHED: Group scheduling for SCHED_OTHER: built-in (pass)
         CONFIG_CFS_BANDWIDTH: CPU bandwidth provisioning for FAIR_GROUP_SCHED: built-in (pass)
@@ -218,7 +216,7 @@ Operating system: Linux (pass)
         CONFIG_IP_VS_SH: Source hashing scheduling: module (pass)
         CONFIG_IP_VS_RR: Round-robin scheduling: module (pass)
         CONFIG_IP_VS_WRR: Weighted round-robin scheduling: module (pass)
-      CONFIG_NF_CONNTRACK_IPV4: IPv4 connetion tracking support (required for NAT): unknown (warning)
+      CONFIG_NF_CONNTRACK_IPV4: IPv4 connection tracking support (required for NAT): unknown (warning)
       CONFIG_NF_REJECT_IPV4: IPv4 packet rejection: module (pass)
       CONFIG_NF_NAT_IPV4: IPv4 NAT: unknown (warning)
       CONFIG_IP_NF_IPTABLES: IP tables support: module (pass)
@@ -227,7 +225,7 @@ Operating system: Linux (pass)
         CONFIG_IP_NF_NAT: iptables NAT support: module (pass)
         CONFIG_IP_NF_MANGLE: Packet mangling: module (pass)
       CONFIG_NF_DEFRAG_IPV4: module (pass)
-      CONFIG_NF_CONNTRACK_IPV6: IPv6 connetion tracking support (required for NAT): unknown (warning)
+      CONFIG_NF_CONNTRACK_IPV6: IPv6 connection tracking support (required for NAT): unknown (warning)
       CONFIG_NF_NAT_IPV6: IPv6 NAT: unknown (warning)
       CONFIG_IP6_NF_IPTABLES: IP6 tables support: module (pass)
         CONFIG_IP6_NF_FILTER: Packet filtering: module (pass)
@@ -290,12 +288,15 @@ Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] encoded CSR
 Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] signed certificate with serial number 336800507542010809697469355930007636411790073226
 ```
 
+{% set kubelet_ver = k8s_version + '+k0s' -%}
+{% set kubelet_ver_len = kubelet_ver | length -%}
+
 When the cluster is up, try to have a look:
 
 ```console
 ubuntu@ubuntu:~$ sudo k0s kc get nodes -owide
-NAME     STATUS   ROLES           AGE     VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-ubuntu   Ready    control-plane   4m41s   v{{{ extra.k8s_version }}}+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.23
+NAME     STATUS   ROLES           AGE     {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+ubuntu   Ready    control-plane   4m41s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://{{{ build_var('containerd_version') }}}
 ubuntu@ubuntu:~$ sudo k0s kc get pod -owide -A
 NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE     IP             NODE     NOMINATED NODE   READINESS GATES
 kube-system   kube-proxy-kkv2l                  1/1     Running   0          4m44s   10.152.56.54   ubuntu   <none>           <none>
@@ -452,7 +453,7 @@ As this is a worker node, we cannot access the Kubernetes API via the builtin
 
 ```console
 ubuntu@ubuntu:~$ sudo k0s status
-Version: v{{{ extra.k8s_version }}}+k0s.0
+Version: {{{ k0s_version }}}
 Process ID: 1631
 Role: worker
 Workloads: true
@@ -503,12 +504,16 @@ Using the above kubeconfig, you can now access and use the cluster:
 
 ```console
 ubuntu@ubuntu:~$ KUBECONFIG=/path/to/kubeconfig kubectl get nodes,deployments,pods -owide -A
-NAME          STATUS   ROLES    AGE    VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-node/ubuntu   Ready    <none>   5m1s   v{{{ extra.k8s_version }}}+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.23
+NAME          STATUS   ROLES    AGE    {{{ 'VERSION'   | ljust(kubelet_ver_len) }}}   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+node/ubuntu   Ready    <none>   5m1s   {{{ kubelet_ver | ljust(kubelet_ver_len) }}}   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://{{{ build_var('containerd_version') }}}
 
-NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR
-kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          registry.k8s.io/coredns/coredns:v1.7.0                 k8s-app=kube-dns
-kube-system   deployment.apps/metrics-server   1/1     1            1           33m   metrics-server   registry.k8s.io/metrics-server/metrics-server:v0.7.2   k8s-app=metrics-server
+{% set coredns = src_var('CoreDNSImage') + ':' + src_var('CoreDNSImageVersion') -%}
+{% set metrics_server = src_var('MetricsImage') + ':' + src_var('MetricsImageVersion') -%}
+{% set len = [coredns, metrics_server] | map('length') | max -%}
+
+NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       {{{ 'IMAGES'       | ljust(len) }}}   SELECTOR
+kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          {{{ coredns        | ljust(len) }}}   k8s-app=kube-dns
+kube-system   deployment.apps/metrics-server   1/1     1            1           33m   metrics-server   {{{ metrics_server | ljust(len) }}}   k8s-app=metrics-server
 
 NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE    IP             NODE     NOMINATED NODE   READINESS GATES
 kube-system   pod/coredns-88b745646-pkk5w           1/1     Running   0          33m    10.244.0.5     ubuntu   <none>           <none>

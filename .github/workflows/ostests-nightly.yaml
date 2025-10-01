@@ -8,19 +8,22 @@ on:
     - cron: 30 2 * * *
 
 env:
+  # NOTE: If you update the OS list here,
+  # please also update docs/system-requirements.md for consistency.
   DISTRIBUTIONS: >-
     [
       ["al2023"],
-      ["alpine_3_17", "alpine_3_20"],
-      ["centos_7", "centos_8", "centos_9"],
-      ["debian_10", "debian_11", "debian_12"],
-      ["fcos_38"],
-      ["fedora_38"],
+      ["alpine_3_19", "alpine_3_22"],
+      ["centos_9", "centos_10"],
+      ["debian_11", "debian_12"],
+      ["fcos_stable"],
+      ["fedora_41"],
       ["flatcar"],
-      ["oracle_7_9", "oracle_8_7", "oracle_9_1"],
+      ["oracle_8_9", "oracle_9_3"],
       ["rhel_7", "rhel_8", "rhel_9"],
       ["rocky_8", "rocky_9"],
-      ["ubuntu_2004", "ubuntu_2204", "ubuntu_2304"]
+      ["sles_15"],
+      ["ubuntu_2004", "ubuntu_2204", "ubuntu_2404"]
     ]
   NETWORK_PROVIDERS: >-
     [
@@ -36,7 +39,7 @@ env:
 jobs:
   select:
     name: Select
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     outputs:
       os: ${{ steps.select.outputs.os }}
@@ -50,7 +53,7 @@ jobs:
       # will be chosen at some point.
       - name: Select
         id: select
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const distros = JSON.parse(process.env.DISTRIBUTIONS)
@@ -108,3 +111,68 @@ jobs:
       aws-access-key-id: ${{ secrets.AWS_TERRAFORM_ID }}
       aws-secret-access-key: ${{ secrets.AWS_TERRAFORM_KEY }}
       aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+  post-actions:
+    name: Post actions
+    if: always()
+    needs: [select, e2e-tests]
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Prepare Slack message
+        id: prepare-slack-message
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_REPO: "${{ github.repository }}"
+          OSTESTS_OS: "${{ needs.select.outputs.os }}"
+          OSTESTS_NETWORK_PROVIDER: "${{ needs.select.outputs.network-provider }}"
+        # A jq program that converts the job result into a Slack message.
+        # Message format described here: https://api.slack.com/surfaces/messages#payloads
+        # The block structure can be tested online: https://app.slack.com/block-kit-builder
+        run: |
+          gh api "/repos/{owner}/{repo}/actions/runs/$GITHUB_RUN_ID/jobs" -q '
+            def fmt_duration:
+              if . >= 3600 then "\(./3600|floor) h \((.%3600/60|floor)) min"
+              elif . >= 60 then "\(./60|floor) min \(.%60) sec"
+              else "\(.) sex"
+              end;
+
+            [.jobs[] | select(.name | startswith("\($ENV.OSTESTS_OS) :: \($ENV.OSTESTS_NETWORK_PROVIDER)"))] | first as $job |
+            ":\(if $job.conclusion == "success" then "rocket" else "collision" end): *Nightly OS test run: \($job.conclusion)*" as $text |
+            [$job.steps[] | select(.conclusion == "failure")] | first as $failedStep | {
+              text: $text, mrkdwn: true,
+              blocks: [
+                {
+                  type: "section",
+                  text: { type: "mrkdwn", text: $text },
+                  accessory: {
+                    type: "button",
+                    text: { type: "plain_text", text: "View job run" },
+                    "url": "\($job.html_url)"
+                  }
+                },
+                {
+                  type: "section",
+                  fields: [
+                    { type: "mrkdwn", text: "*OS:* `\($ENV.OSTESTS_OS)`" },
+                    { type: "mrkdwn", text: "*Provider:* `\($ENV.OSTESTS_NETWORK_PROVIDER)`" },
+                    { type: "mrkdwn", text: "*Attempt:* \($job.run_attempt)" },
+                    { type: "mrkdwn", text: if $failedStep then "*Failed:* `\($failedStep.name)`" else "_No failed steps._" end },
+                    { type: "mrkdwn", text: "*Started:* \($job.started_at | fromdateiso8601 | gmtime | strftime("%Y-%m-%d %H:%M")) GMT" },
+                    { type: "mrkdwn", text: "*Took:* \(($job.completed_at | fromdateiso8601) - ($job.started_at | fromdateiso8601) | fmt_duration)" }
+                  ]
+                }
+              ]
+            } | "payload=" + tojson
+          ' >>"$GITHUB_OUTPUT"
+
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: ${{ steps.prepare-slack-message.outputs.payload }}

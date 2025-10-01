@@ -1,29 +1,15 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/suite"
 )
 
@@ -52,7 +38,7 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 					PeerAddress: "",
 				},
 			},
-			want: false,
+			want: true,
 		},
 		{
 			name: "kine-sqlite",
@@ -143,12 +129,12 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 }
 
 func TestKinePartialConfigLoading(t *testing.T) {
-	yaml := `
+	yaml := []byte(`
 spec:
   storage:
     type: kine
-`
-	c, err := ConfigFromString(yaml)
+`)
+	c, err := ConfigFromBytes(yaml)
 	assert.NoError(t, err)
 	assert.Equal(t, KineStorageType, c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)
@@ -377,7 +363,7 @@ func (s *storageSuite) TestIsTLSEnabled() {
 	for _, tt := range storageSpecs {
 		s.Run(tt.desc, func() {
 			result := tt.spec.Etcd.IsTLSEnabled()
-			s.Equal(result, tt.expectedResult)
+			s.Equal(tt.expectedResult, result)
 		})
 	}
 }
@@ -388,22 +374,12 @@ func TestStorageSuite(t *testing.T) {
 	suite.Run(t, storageSuite)
 }
 
-func TestEtcdConfig_GetNodeName(t *testing.T) {
-	require := require.New(t)
-
-	hostname, err := os.Hostname()
-	require.NoError(err)
-
+func TestEtcdConfig_GetMemberName(t *testing.T) {
 	tests := []struct {
 		name string
 		e    *EtcdConfig
 		want string
 	}{
-		{
-			name: "no extra args - default to hostname",
-			e:    &EtcdConfig{},
-			want: hostname,
-		},
 		{
 			name: "node name set in extra args",
 			e: &EtcdConfig{
@@ -416,7 +392,7 @@ func TestEtcdConfig_GetNodeName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _ := tt.e.GetNodeName()
+			got := tt.e.GetMemberName()
 			if got != tt.want {
 				t.Errorf("EtcdConfig.GetNodeName() = %v, want %v", got, tt.want)
 			}

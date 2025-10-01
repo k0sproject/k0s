@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package updates
 
@@ -22,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"strconv"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
@@ -58,7 +46,7 @@ func (ci *ClusterInfo) AsMap() map[string]string {
 	return map[string]string{
 		"K0S_StorageType":            string(ci.StorageType),
 		"K0S_ClusterID":              ci.ClusterID,
-		"K0S_ControlPlaneNodesCount": fmt.Sprintf("%d", ci.ControlPlaneNodesCount),
+		"K0S_ControlPlaneNodesCount": strconv.FormatUint(uint64(ci.ControlPlaneNodesCount), 10),
 		"K0S_WorkerData":             workerData,
 		"K0S_Version":                ci.K0sVersion,
 		"K0S_CNIProvider":            ci.CNIProvider,

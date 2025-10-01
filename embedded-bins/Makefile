@@ -6,12 +6,14 @@ export GOOS
 TARGET_OS ?= linux
 export TARGET_OS
 
+DOCKER ?= docker
+
 # https://reproducible-builds.org/docs/source-date-epoch/#makefile
 # https://reproducible-builds.org/docs/source-date-epoch/#git
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct || date -u +%s)
 
 bindir = staging/${TARGET_OS}/bin
-posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server xtables-legacy-multi xtables-nft-multi keepalived
+posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server xtables-legacy-multi xtables-nft-multi keepalived
 windows_bins = kubelet.exe kube-proxy.exe containerd.exe containerd-shim-runhcs-v1.exe
 
 ifeq ($(TARGET_OS),windows)
@@ -20,7 +22,7 @@ bins = ${windows_bins}
 containerd_bins = containerd containerd-shim-runhcs-v1
 kubernetes_bins = kubelet kube-proxy
 else
-containerd_bins = containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2
+containerd_bins = containerd containerd-shim containerd-shim-runc-v2
 kubernetes_bins = kubelet kube-apiserver kube-scheduler kube-controller-manager
 bins = ${posix_bins}
 endif
@@ -35,7 +37,7 @@ clean: IID_FILES = .docker-image.*.stamp
 clean:
 	for i in .container.*; do \
 	  [ -f "$$i" ] || continue; \
-	  docker rm -- "$$(cat -- "$$i")"; \
+	  $(DOCKER) rm -- "$$(cat -- "$$i")"; \
 	  rm -- "$$i"; \
 	done
 	$(clean-iid-files)
@@ -52,7 +54,7 @@ containers: $(images:%=.container.%)
 docker-images: $(images:%=.docker-image.%.stamp)
 
 $(bindir)/runc: .container.runc
-$(bindir)/containerd $(bindir)/containerd-shim $(bindir)/containerd-shim-runc-v1 $(bindir)/containerd-shim-runc-v2: .container.containerd
+$(bindir)/containerd $(bindir)/containerd-shim $(bindir)/containerd-shim-runc-v2: .container.containerd
 $(bindir)/etcd: .container.etcd
 $(bindir)/kine: .container.kine
 $(bindir)/konnectivity-server: .container.konnectivity
@@ -61,20 +63,20 @@ $(bindir)/xtables-legacy-multi: .container.iptables
 $(bindir)/xtables-nft-multi: .container.iptables
 $(bindir)/keepalived: .container.keepalived
 
-$(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows 
+$(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
 $(bindir)/containerd.exe $(bindir)/containerd-shim-runhcs-v1.exe: .container.containerd.windows
 
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
-	tardir=$$(mktemp -d -- '.$(notdir $@).XXXXXX.tmp') \
+	tardir=$$(mktemp -d -- '.$(notdir $@).tmp.XXXXXX') \
 	  && trap "rm -rf -- $$tardir" INT EXIT \
-	  && docker export "$$(cat $<)" \
+	  && $(DOCKER) export "$$(cat $<)" \
 	  | tar -C "$$tardir" -x bin/$(notdir $@) \
 	  && touch -c -- "$$tardir"/bin/$(notdir $@) \
 	  && mv "$$tardir"/bin/$(notdir $@) $@
 
 build_docker_container = \
 	rm -f -- '$@'; \
-	docker create --cidfile='$@' --entrypoint=/dev/null '$(shell cat -- $<)'
+	$(DOCKER) create --cidfile='$@' --entrypoint=/dev/null '$(shell cat -- $<)'
 
 .container.%: .docker-image.%.stamp
 	$(build_docker_container)
@@ -83,7 +85,8 @@ build_docker_container = \
 	$(build_docker_container)
 
 build_docker_image = \
-	docker build --progress=plain --iidfile '$@' -t k0sbuild$(basename $@):latest \
+	$(DOCKER) build --progress=plain --iidfile '$@' -t k0sbuild$(basename $@):latest \
+	  --build-arg BUILDKIT_DOCKERFILE_CHECK=skip=InvalidDefaultArgInFrom \
 	  --build-arg TARGET_OS=$(if $(findstring .windows.stamp,$@),windows,linux) \
 	  --build-arg CONTAINERD_BINS="$(containerd_bins)" \
 	  --build-arg KUBERNETES_BINS="$(kubernetes_bins)" \

@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: clusterconfigs.k0s.k0sproject.io
 spec:
   group: k0s.k0sproject.io
@@ -45,6 +45,18 @@ spec:
                   address:
                     description: Address on which to connect to the API server.
                     type: string
+                  ca:
+                    description: Custom config for CA certificates.
+                    properties:
+                      certificatesExpireAfter:
+                        default: 8760h
+                        description: The expiration duration of the server certificate
+                        type: string
+                      expiresAfter:
+                        default: 87600h
+                        description: The expiration duration of the CA certificate
+                        type: string
+                    type: object
                   externalAddress:
                     description: The loadbalancer address (for k0s controllers running
                       behind a loadbalancer)
@@ -79,6 +91,7 @@ spec:
                     items:
                       type: string
                     type: array
+                    x-kubernetes-list-type: set
                 type: object
               controllerManager:
                 description: ControllerManagerSpec defines the fields for the ControllerManager
@@ -107,8 +120,8 @@ spec:
                               type: string
                             forceUpgrade:
                               description: 'ForceUpgrade when set to false, disables
-                                the use of the "--force" flag when upgrading the the
-                                chart (default: true).'
+                                the use of the "--force" flag when upgrading the chart
+                                (default: true).'
                               type: boolean
                             name:
                               maxLength: 53
@@ -430,6 +443,10 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
+                  externalAddress:
+                    description: external address to advertise for the konnectivity
+                      agent to connect to
+                    type: string
                 type: object
               network:
                 description: Network defines the network related config options
@@ -508,6 +525,18 @@ spec:
                           Keepalived contains configuration options related to the "Keepalived" type
                           of load balancing.
                         properties:
+                          disableLoadBalancer:
+                            description: DisableLoadBalancer disables the load balancer.
+                            type: boolean
+                          userSpaceProxyBindPort:
+                            default: 6444
+                            description: |-
+                              UserspaceProxyPort is the port where the userspace proxy will bind
+                              to. This port is only used internally, but listens on every interface.
+                              Defaults to 6444
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
                           virtualServers:
                             description: |-
                               Configuration options related to the virtual servers. This is an array
@@ -579,6 +608,16 @@ spec:
                               description: VRRPInstance defines the configuration
                                 options for a VRRP instance.
                               properties:
+                                addressLabel:
+                                  default: 10000
+                                  description: |-
+                                    AddressLabel is label for the VRRP instance for IPv6 VIPs.
+                                    This value is ignored for IPv4 VIPs. This is used to set the routing preference
+                                    as per RFC 6724.
+                                    The value must be in the range from 1 to 2^32-1.
+                                    If not specificied or set to 0, defaults to 10000.
+                                  format: int32
+                                  type: integer
                                 advertIntervalSeconds:
                                   default: 1
                                   description: |-
@@ -599,6 +638,19 @@ spec:
                                   description: |-
                                     Interface specifies the NIC used by the virtual router. If not specified,
                                     k0s will use the interface that owns the default route.
+                                  type: string
+                                unicastPeers:
+                                  description: |-
+                                    UnicastPeers is a list of unicast peers. If not specified, k0s will use multicast.
+                                    If specified, UnicastSourceIP must be specified as well.
+                                  items:
+                                    type: string
+                                  type: array
+                                  x-kubernetes-list-type: set
+                                unicastSourceIP:
+                                  description: |-
+                                    UnicastSourceIP is the source address for unicast peers.
+                                    If not specified, k0s will use the first address of the interface.
                                   type: string
                                 virtualIPs:
                                   description: |-
@@ -663,7 +715,7 @@ spec:
                       iptables:
                         description: |-
                           KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.2/config/v1alpha1/types.go#L27-L48
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.34.0/config/v1alpha1/types.go#L27-L48
                         properties:
                           localhostNodePorts:
                             type: boolean
@@ -680,7 +732,7 @@ spec:
                       ipvs:
                         description: |-
                           KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.2/config/v1alpha1/types.go#L52-L78
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.34.0/config/v1alpha1/types.go#L52-L78
                         properties:
                           excludeCIDRs:
                             items:
@@ -711,7 +763,7 @@ spec:
                       nftables:
                         description: |-
                           KubeProxyNFTablesConfiguration contains nftables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.2/config/v1alpha1/types.go#L82-L97
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.34.0/config/v1alpha1/types.go#L82-L97
                         properties:
                           masqueradeAll:
                             type: boolean
@@ -858,6 +910,13 @@ spec:
                     default: 10.244.0.0/16
                     description: Pod network CIDR to use in the cluster
                     type: string
+                  primaryAddressFamily:
+                    description: |-
+                      PrimaryAddressFamily defines the primary family for the cluster.
+                      If empty, k0s determines it based on `.spec.API.ExternalAddress`,
+                      if this isn't present it will use `.spec.API.Address.`.
+                      If both addresses are empty or the chosen address is a hostname, defaults to `IPv4`.
+                    type: string
                   provider:
                     default: kuberouter
                     description: 'Network provider (valid values: calico, kuberouter,
@@ -888,6 +947,18 @@ spec:
                   etcd:
                     description: EtcdConfig defines etcd related config options
                     properties:
+                      ca:
+                        description: Custom config for CA certificates.
+                        properties:
+                          certificatesExpireAfter:
+                            default: 8760h
+                            description: The expiration duration of the server certificate
+                            type: string
+                          expiresAfter:
+                            default: 87600h
+                            description: The expiration duration of the CA certificate
+                            type: string
+                        type: object
                       externalCluster:
                         description: ExternalCluster defines external etcd cluster
                           related config options
@@ -927,6 +998,13 @@ spec:
                       peerAddress:
                         description: Node address used for etcd cluster peering
                         type: string
+                      rawArgs:
+                        description: |-
+                          Slice of strings with raw arguments to pass to the etcd process
+                          These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   kine:
                     description: KineConfig defines the Kine related config options
@@ -947,7 +1025,7 @@ spec:
                 description: ClusterTelemetry holds telemetry related settings
                 properties:
                   enabled:
-                    default: true
+                    default: false
                     type: boolean
                 type: object
               workerProfiles:
