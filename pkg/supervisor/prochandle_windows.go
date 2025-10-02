@@ -20,6 +20,7 @@ import (
 	"github.com/k0sproject/k0s/internal/os/windows"
 
 	"github.com/sirupsen/logrus"
+	syswindows "golang.org/x/sys/windows"
 )
 
 const terminationHelperHookMarker = "__K0S_SUPERVISOR_TERMINATION_HELPER"
@@ -106,7 +107,10 @@ func (p *process) environ() ([]string, error) {
 }
 
 // requestGracefulTermination implements [procHandle].
-//
+func (p *process) requestGracefulTermination() error {
+	return sendCtrlBreakOnTargetConsole(p.processID)
+}
+
 // Windows requires that processes be attached to the same console in order to
 // send console control events to each other. A process can only be attached to
 // one console at a time, and k0s cannot simply detach from its own console to
@@ -123,13 +127,13 @@ func (p *process) environ() ([]string, error) {
 // graceful process termination depends on the program being run. Luckily, the
 // Go runtime translates Ctrl+Break events into os.Interrupt signals, and all of
 // k0s's supervised executables are Go programs, so this is mostly fine.
-func (p *process) requestGracefulTermination() error {
+func sendCtrlBreakOnTargetConsole(processID uint32) error {
 	exe, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("failed to determine path to k0s executable: %w", err)
 	}
 
-	cmd := exec.Command(exe, terminationHelperHookMarker, strconv.FormatUint(uint64(p.processID), 10))
+	cmd := exec.Command(exe, terminationHelperHookMarker, strconv.FormatUint(uint64(processID), 10))
 	cmd.Env = []string{}
 
 	var (
@@ -169,6 +173,18 @@ func (p *process) requestGracefulTermination() error {
 
 func requestGracefulTermination(p *os.Process) error {
 	if err := sendCtrlBreak(uint32(p.Pid)); err != nil {
+		// Sending a direct Ctrl+Break event might fail if k0s itself is not
+		// attached to a console. This is usually the case when running as a
+		// service. Fall back to the termination helper in this case.
+		var sysErr *os.SyscallError
+		if errors.As(err, &sysErr) && sysErr.Syscall == "GenerateConsoleCtrlEvent" && errors.Is(sysErr.Err, syswindows.ERROR_INVALID_HANDLE) {
+			logrus.Debug("Failed to send Ctrl+Break to process with ID ", p.Pid, ", trying to attach to target console")
+			if pidErr := sendCtrlBreakOnTargetConsole(uint32(p.Pid)); pidErr != nil {
+				return errors.Join(pidErr, err)
+			}
+			return nil
+		}
+
 		return fmt.Errorf("failed to send Ctrl+Break: %w", err)
 	}
 
