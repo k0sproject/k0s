@@ -42,12 +42,28 @@ func TerminationHelperHook() {
 		processID = uint32(parsed)
 	}
 
-	if err := runTerminationHelper(processID); err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+	// Attach to the target process console. This will invalidate the standard
+	// handles, if they are attached to the console. When called by k0s, the
+	// standard handles will be pipes to k0s, so they should remain valid.
+	if err := windows.FreeConsole(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: failed to detach from the current console:", err)
+		os.Exit(2)
+	}
+	if err := windows.AttachConsole(processID); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: failed to attach to the target process console:", err)
 		os.Exit(2)
 	}
 
-	fmt.Fprintln(os.Stderr, "Done.")
+	// Prevent this process from receiving any control events
+	_, _ = signal.NotifyContext(context.Background(), os.Interrupt)
+
+	// Now do the only thing this hook exists for: Send the control event.
+	if err := windows.GenerateCtrlBreakEvent(processID); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: failed to send Ctrl+Break:", err)
+		os.Exit(2)
+	}
+
+	fmt.Fprintln(os.Stderr, "Done")
 	os.Exit(0)
 }
 
@@ -138,6 +154,7 @@ func (p *process) requestGracefulTermination() error {
 	select {
 	case err := <-result:
 		if err == nil {
+			logrus.Debugf("Termination helper process exited (%q)", bytes.TrimSpace(out.Bytes()))
 			return nil
 		}
 		return fmt.Errorf("termination helper process failed: %w (%q)", err, bytes.TrimSpace(out.Bytes()))
@@ -172,32 +189,4 @@ func requestGracefulTermination(p *os.Process) error {
 // executables are Go programs, so this is mostly fine.
 func sendCtrlBreak(processID uint32) error {
 	return windows.GenerateCtrlBreakEvent(processID)
-}
-
-func runTerminationHelper(processID uint32) error {
-	// Prevent this process from receiving any control events
-	_, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
-	return attachedToProcessConsole(processID, func() error {
-		return windows.GenerateCtrlBreakEvent(processID)
-	})
-}
-
-func attachedToProcessConsole(processID uint32, f func() error) (err error) {
-	// Detach from current console
-	if err := windows.FreeConsole(); err != nil {
-		return err
-	}
-	// Re-attach to parent's console later on
-	defer func() { err = errors.Join(err, windows.AttachConsole(windows.ATTACH_PARENT_PROCESS)) }()
-
-	// Attach to the target's console
-	if err := windows.AttachConsole(processID); err != nil {
-		return err
-	}
-	// Detach from the process console later on
-	defer func() { err = errors.Join(err, windows.FreeConsole()) }()
-
-	return f()
 }
