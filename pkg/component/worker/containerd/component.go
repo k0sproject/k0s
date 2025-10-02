@@ -317,7 +317,7 @@ func (c *Component) Stop() error {
 		return c.windowsStop()
 	}
 	if c.supervisor != nil {
-		c.supervisor.Stop()
+		return c.supervisor.Stop()
 	}
 	return nil
 }
