@@ -268,7 +268,9 @@ func (c *Component) restart() {
 	}
 
 	// Fall back to a full stop/start cycle
-	c.supervisor.Stop()
+	if err := c.supervisor.Stop(); err != nil {
+		log.WithError(err).Error("Failed to stop containerd")
+	}
 	if err := c.supervisor.Supervise(); err != nil {
 		log.WithError(err).Error("Failed to restart containerd")
 	}
@@ -277,7 +279,7 @@ func (c *Component) restart() {
 // Stop stops containerd.
 func (c *Component) Stop() error {
 	if c.supervisor != nil {
-		c.supervisor.Stop()
+		return c.supervisor.Stop()
 	}
 	return nil
 }
