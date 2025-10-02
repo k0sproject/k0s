@@ -172,7 +172,7 @@ host, otherwise containerd will [disable][cd-aa] AppArmor support.
 #### iptables
 
 iptables may be executed to detect if there are any existing iptables rules and
-if those are in legacy of nft mode. If iptables is not found, k0s will assume
+if those are in legacy or nft mode. If iptables is not found, k0s will assume
 that there are no pre-existing iptables rules.
 
 #### useradd / adduser
