@@ -174,7 +174,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 // Stop stops kubelet
 func (k *Kubelet) Stop() error {
 	if k.supervisor != nil {
-		k.supervisor.Stop()
+		return k.supervisor.Stop()
 	}
 	return nil
 }
