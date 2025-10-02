@@ -2711,7 +2711,7 @@ the kernel and the <code>/sbin/apparmor_parser</code> executable must be install
 host, otherwise containerd will <a href="https://github.com/containerd/containerd/blob/v1.7.27/pkg/apparmor/apparmor_linux.go#L34-L45">disable</a> AppArmor support.</p>
 <h4 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h4>
 <p>iptables may be executed to detect if there are any existing iptables rules and
-if those are in legacy of nft mode. If iptables is not found, k0s will assume
+if those are in legacy or nft mode. If iptables is not found, k0s will assume
 that there are no pre-existing iptables rules.</p>
 <h4 id="useradd-adduser">useradd / adduser<a class="headerlink" href="#useradd-adduser" title="Permanent link">#</a></h4>
 <p>During <code>k0s install</code> the external tool <code>useradd</code> will be used on the controllers
