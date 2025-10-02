@@ -17,6 +17,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
+func initLogging(context.Context, string) error { return nil }
+
 func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, controller EmbeddingController, certManager *worker.CertificateManager) {
 	// if running inside a controller, status component is already running
 	if controller == nil {

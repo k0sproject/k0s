@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -156,14 +157,8 @@ func (s *Supervisor) Supervise() error {
 				s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
 
 				const maxLogChunkLen = 16 * 1024
-				s.cmd.Stdout = &logWriter{
-					log: s.log.WithField("stream", "stdout"),
-					buf: make([]byte, maxLogChunkLen),
-				}
-				s.cmd.Stderr = &logWriter{
-					log: s.log.WithField("stream", "stderr"),
-					buf: make([]byte, maxLogChunkLen),
-				}
+				s.cmd.Stdout = log.NewWriter(s.log.WithField("stream", "stdout"), maxLogChunkLen)
+				s.cmd.Stderr = log.NewWriter(s.log.WithField("stream", "stderr"), maxLogChunkLen)
 
 				err = s.cmd.Start()
 			}

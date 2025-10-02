@@ -5,6 +5,7 @@ package install
 
 import (
 	"errors"
+	"runtime"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -72,6 +73,10 @@ func InstallService(args []string, envVars []string, force bool) error {
 
 	if len(envVars) > 0 {
 		svcConfig.Option["Environment"] = envVars
+	}
+
+	if runtime.GOOS == "windows" {
+		args = append([]string{"service=" + svcConfig.Name}, args...)
 	}
 
 	svcConfig.Arguments = args
