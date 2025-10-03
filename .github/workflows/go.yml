@@ -12,8 +12,7 @@ on:
       - .github/workflows/*.yml
         # Re-include all workflow files used by this workflow
       - "!.github/workflows/go.yml"
-      - "!.github/workflows/build-airgap-image-bundle.yml"
-      - "!.github/workflows/build-ipv6-image-bundle.yml"
+      - "!.github/workflows/build-image-bundle.yml"
       - "!.github/workflows/build-k0s.yml"
       - "!.github/workflows/smoketest.yaml"
       - .github/CODEOWNERS
@@ -36,8 +35,7 @@ on:
       - .github/workflows/*.yml
         # Re-include all workflow files used by this workflow
       - "!.github/workflows/go.yml"
-      - "!.github/workflows/build-airgap-image-bundle.yml"
-      - "!.github/workflows/build-ipv6-image-bundle.yml"
+      - "!.github/workflows/build-image-bundle.yml"
       - "!.github/workflows/build-k0s.yml"
       - "!.github/workflows/smoketest.yaml"
       - .github/CODEOWNERS
@@ -121,16 +119,18 @@ jobs:
 
     name: "Build :: Airgap image bundle"
     needs: [build-k0s]
-    uses: ./.github/workflows/build-airgap-image-bundle.yml
+    uses: ./.github/workflows/build-image-bundle.yml
     with:
+      image-bundle-name: airgap
       target-os: linux
       target-arch: ${{ matrix.target-arch }}
 
-  build-ipv6-image-bundle:
-    name: "Build :: IPv6 image bundle"
+  build-ipv6-test-image-bundle:
+    name: "Build :: IPv6 test image bundle"
     needs: [build-k0s]
-    uses: ./.github/workflows/build-ipv6-image-bundle.yml
+    uses: ./.github/workflows/build-image-bundle.yml
     with:
+      image-bundle-name: ipv6-test
       target-os: linux
       target-arch: amd64
 
@@ -234,7 +234,11 @@ jobs:
         smoke-suite: ${{ fromJson(needs.prepare.outputs.smoketest-matrix) }}
 
     name: "check-${{ matrix.smoke-suite }} :: amd64"
-    needs: [prepare, build-k0s, build-airgap-image-bundle, build-ipv6-image-bundle]
+    needs:
+      - prepare
+      - build-k0s
+      - build-airgap-image-bundle
+      - build-ipv6-test-image-bundle
 
     uses: ./.github/workflows/smoketest.yaml
     with:
