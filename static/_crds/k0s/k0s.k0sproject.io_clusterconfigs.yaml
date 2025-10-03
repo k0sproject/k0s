@@ -651,8 +651,10 @@ spec:
                                   type: string
                                 interface:
                                   description: |-
-                                    Interface specifies the NIC used by the virtual router. If not specified,
-                                    k0s will use the interface that owns the default route.
+                                    Interface specifies the NIC used by the virtual router.
+                                    If not specified, k0s will use the interface that owns the default route.
+                                    If a MAC address is specified instead of an interface name, k0s will
+                                    try to resolve the interface name based on the MAC address.
                                   type: string
                                 unicastPeers:
                                   description: |-
