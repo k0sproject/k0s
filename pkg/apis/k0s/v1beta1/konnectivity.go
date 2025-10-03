@@ -27,13 +27,19 @@ type KonnectivitySpec struct {
 	// external address to advertise for the konnectivity agent to connect to
 	// +optional
 	ExternalAddress string `json:"externalAddress,omitempty"`
+
+	// HostNetwork controls whether the konnectivity agent should use host networking
+	// +kubebuilder:default=false
+	// +optional
+	HostNetwork bool `json:"hostNetwork,omitempty"`
 }
 
 // DefaultKonnectivitySpec builds default KonnectivitySpec
 func DefaultKonnectivitySpec() *KonnectivitySpec {
 	return &KonnectivitySpec{
-		AgentPort: 8132,
-		AdminPort: 8133,
+		AgentPort:   8132,
+		AdminPort:   8133,
+		HostNetwork: false,
 	}
 }
 
