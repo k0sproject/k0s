@@ -82,7 +82,12 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 			select {
 			case <-time.After(s.TimeoutStop):
 				continue
-			case <-waitresult:
+			case err := <-waitresult:
+				if err != nil {
+					s.log.WithError(err).Error("Failed to wait for process")
+				} else {
+					s.log.Info("Process exited: ", s.cmd.ProcessState)
+				}
 				return true
 			}
 		}
@@ -90,7 +95,7 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 		if err != nil {
 			s.log.WithError(err).Warn("Failed to wait for process")
 		} else {
-			s.log.Warnf("Process exited: %s", s.cmd.ProcessState)
+			s.log.Warnf("Process exited: ", s.cmd.ProcessState)
 		}
 	}
 	return false

@@ -19,6 +19,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/testutil/pingpong"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -274,6 +275,9 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 
 	// Expect the previous process to be gracefully terminated.
 	assert.NoError(t, prevCmd.Wait())
+
+	// Expect the new process to be started.
+	assert.NoError(t, pingPong.AwaitPing())
 
 	// Stop the supervisor and check if the PID file is gone.
 	s.Stop()

@@ -20,7 +20,3 @@ func Endpoint(runDir string) *url.URL {
 		Path:   filepath.ToSlash(Address(runDir)),
 	}
 }
-
-func winExecute(args ...string) error {
-	panic("Invariant broken: this function should never be called on non-winodws platforms")
-}
