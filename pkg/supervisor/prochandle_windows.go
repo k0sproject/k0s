@@ -20,6 +20,7 @@ import (
 	"github.com/k0sproject/k0s/internal/os/windows"
 
 	"github.com/sirupsen/logrus"
+	syswindows "golang.org/x/sys/windows"
 )
 
 const terminationHelperHookMarker = "__K0S_SUPERVISOR_TERMINATION_HELPER"
@@ -42,12 +43,28 @@ func TerminationHelperHook() {
 		processID = uint32(parsed)
 	}
 
-	if err := runTerminationHelper(processID); err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+	// Attach to the target process console. This will invalidate the standard
+	// handles, if they are attached to the console. When called by k0s, the
+	// standard handles will be pipes to k0s, so they should remain valid.
+	if err := windows.FreeConsole(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: failed to detach from the current console:", err)
+		os.Exit(2)
+	}
+	if err := windows.AttachConsole(processID); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: failed to attach to the target process console:", err)
 		os.Exit(2)
 	}
 
-	fmt.Fprintln(os.Stderr, "Done.")
+	// Prevent this process from receiving any control events
+	_, _ = signal.NotifyContext(context.Background(), os.Interrupt)
+
+	// Now do the only thing this hook exists for: Send the control event.
+	if err := windows.GenerateCtrlBreakEvent(processID); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: failed to send Ctrl+Break:", err)
+		os.Exit(2)
+	}
+
+	fmt.Fprintln(os.Stderr, "Done")
 	os.Exit(0)
 }
 
@@ -90,7 +107,10 @@ func (p *process) environ() ([]string, error) {
 }
 
 // requestGracefulTermination implements [procHandle].
-//
+func (p *process) requestGracefulTermination() error {
+	return sendCtrlBreakOnTargetConsole(p.processID)
+}
+
 // Windows requires that processes be attached to the same console in order to
 // send console control events to each other. A process can only be attached to
 // one console at a time, and k0s cannot simply detach from its own console to
@@ -107,13 +127,13 @@ func (p *process) environ() ([]string, error) {
 // graceful process termination depends on the program being run. Luckily, the
 // Go runtime translates Ctrl+Break events into os.Interrupt signals, and all of
 // k0s's supervised executables are Go programs, so this is mostly fine.
-func (p *process) requestGracefulTermination() error {
+func sendCtrlBreakOnTargetConsole(processID uint32) error {
 	exe, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("failed to determine path to k0s executable: %w", err)
 	}
 
-	cmd := exec.Command(exe, terminationHelperHookMarker, strconv.FormatUint(uint64(p.processID), 10))
+	cmd := exec.Command(exe, terminationHelperHookMarker, strconv.FormatUint(uint64(processID), 10))
 	cmd.Env = []string{}
 
 	var (
@@ -138,6 +158,7 @@ func (p *process) requestGracefulTermination() error {
 	select {
 	case err := <-result:
 		if err == nil {
+			logrus.Debugf("Termination helper process exited (%q)", bytes.TrimSpace(out.Bytes()))
 			return nil
 		}
 		return fmt.Errorf("termination helper process failed: %w (%q)", err, bytes.TrimSpace(out.Bytes()))
@@ -152,6 +173,18 @@ func (p *process) requestGracefulTermination() error {
 
 func requestGracefulTermination(p *os.Process) error {
 	if err := sendCtrlBreak(uint32(p.Pid)); err != nil {
+		// Sending a direct Ctrl+Break event might fail if k0s itself is not
+		// attached to a console. This is usually the case when running as a
+		// service. Fall back to the termination helper in this case.
+		var sysErr *os.SyscallError
+		if errors.As(err, &sysErr) && sysErr.Syscall == "GenerateConsoleCtrlEvent" && errors.Is(sysErr.Err, syswindows.ERROR_INVALID_HANDLE) {
+			logrus.Debug("Failed to send Ctrl+Break to process with ID ", p.Pid, ", trying to attach to target console")
+			if pidErr := sendCtrlBreakOnTargetConsole(uint32(p.Pid)); pidErr != nil {
+				return errors.Join(pidErr, err)
+			}
+			return nil
+		}
+
 		return fmt.Errorf("failed to send Ctrl+Break: %w", err)
 	}
 
@@ -172,32 +205,4 @@ func requestGracefulTermination(p *os.Process) error {
 // executables are Go programs, so this is mostly fine.
 func sendCtrlBreak(processID uint32) error {
 	return windows.GenerateCtrlBreakEvent(processID)
-}
-
-func runTerminationHelper(processID uint32) error {
-	// Prevent this process from receiving any control events
-	_, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
-	return attachedToProcessConsole(processID, func() error {
-		return windows.GenerateCtrlBreakEvent(processID)
-	})
-}
-
-func attachedToProcessConsole(processID uint32, f func() error) (err error) {
-	// Detach from current console
-	if err := windows.FreeConsole(); err != nil {
-		return err
-	}
-	// Re-attach to parent's console later on
-	defer func() { err = errors.Join(err, windows.AttachConsole(windows.ATTACH_PARENT_PROCESS)) }()
-
-	// Attach to the target's console
-	if err := windows.AttachConsole(processID); err != nil {
-		return err
-	}
-	// Detach from the process console later on
-	defer func() { err = errors.Join(err, windows.FreeConsole()) }()
-
-	return f()
 }
