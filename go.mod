@@ -57,7 +57,7 @@ require (
 	golang.org/x/sys v0.36.0
 	golang.org/x/text v0.29.0
 	golang.org/x/tools v0.37.0
-	google.golang.org/grpc v1.75.1
+	google.golang.org/grpc v1.76.0
 	helm.sh/helm/v3 v3.18.6
 	oras.land/oras-go/v2 v2.6.0
 )
@@ -260,8 +260,8 @@ require (
 	golang.org/x/time v0.9.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250804133106-a7a43d27e69b // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250804133106-a7a43d27e69b // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
