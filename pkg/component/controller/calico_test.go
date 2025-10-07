@@ -9,19 +9,20 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
+
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"sigs.k8s.io/yaml"
 )
 
 func TestCalicoManifests(t *testing.T) {
 	newTestInstance := func(t *testing.T) *Calico {
-		k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-		require.NoError(t, err)
+		manifestsDir := t.TempDir()
 		ctx := t.Context()
-		calico := NewCalico(k0sVars)
+		calico, err := NewCalico(v1beta1.DefaultClusterConfig(), manifestsDir, func() (*bool, <-chan struct{}) { return ptr.To(true), nil })
+		require.NoError(t, err)
 		require.NoError(t, calico.Init(ctx))
 		require.NoError(t, calico.Start(ctx))
 		t.Cleanup(func() { assert.NoError(t, calico.Stop()) })
@@ -36,15 +37,15 @@ func TestCalicoManifests(t *testing.T) {
 	t.Run("must_write_only_non_crd_on_change", func(t *testing.T) {
 		calico := newTestInstance(t)
 
-		assert.NoError(t, calico.processConfigChanges(calicoConfig{}))
+		assert.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, &calicoClusterConfig{}, false}))
 
-		if entries, err := os.ReadDir(filepath.Join(calico.k0sVars.ManifestsDir, "calico")); assert.NoError(t, err) {
+		if entries, err := os.ReadDir(filepath.Join(calico.manifestsDir, "calico")); assert.NoError(t, err) {
 			assert.NotEmpty(t, entries)
 			for _, entry := range entries {
 				assert.NotContains(t, entry.Name(), "calico-crd")
 			}
 		}
-		if entries, err := os.ReadDir(filepath.Join(calico.k0sVars.ManifestsDir, "calico_init")); assert.NoError(t, err) {
+		if entries, err := os.ReadDir(filepath.Join(calico.manifestsDir, "calico_init")); assert.NoError(t, err) {
 			assert.Empty(t, entries)
 		}
 	})
@@ -54,9 +55,9 @@ func TestCalicoManifests(t *testing.T) {
 		calico := newTestInstance(t)
 		cfg, err := calico.getConfig(clusterConfig)
 		require.NoError(t, err)
-		require.NoError(t, calico.processConfigChanges(cfg))
+		require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}))
 
-		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.k0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
 		require.NoError(t, err, "must have daemon set for calico")
 		spec := daemonSetContainersEnv{}
 		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
@@ -69,9 +70,9 @@ func TestCalicoManifests(t *testing.T) {
 
 		cfg, err := calico.getConfig(clusterConfig)
 		require.NoError(t, err)
-		_ = calico.processConfigChanges(cfg)
+		_ = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true})
 
-		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.k0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
 		require.NoError(t, err, "must have daemon set for calico")
 		spec := daemonSetContainersEnv{}
 		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
@@ -90,8 +91,8 @@ func TestCalicoManifests(t *testing.T) {
 				"IPv6 autodetection was not specified, hence it should be the same as the IPv4 autodetection method.")
 			cfg, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
-			_ = calico.processConfigChanges(cfg)
-			daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.k0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+			_ = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true})
+			daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
 			require.NoError(t, err, "must have daemon set for calico")
 
 			spec := daemonSetContainersEnv{}
@@ -109,8 +110,8 @@ func TestCalicoManifests(t *testing.T) {
 			require.Equal(t, clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod, templateContext.IPV6AutodetectionMethod)
 			cfg, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
-			_ = calico.processConfigChanges(cfg)
-			daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.k0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+			_ = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true})
+			daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
 			require.NoError(t, err, "must have daemon set for calico")
 
 			spec := daemonSetContainersEnv{}
