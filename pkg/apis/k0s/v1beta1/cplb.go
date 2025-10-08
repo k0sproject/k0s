@@ -79,8 +79,10 @@ type VRRPInstance struct {
 	// +listType=set
 	VirtualIPs []string `json:"virtualIPs"`
 
-	// Interface specifies the NIC used by the virtual router. If not specified,
-	// k0s will use the interface that owns the default route.
+	// Interface specifies the NIC used by the virtual router.
+	// If not specified, k0s will use the interface that owns the default route.
+	// If a MAC address is specified instead of an interface name, k0s will
+	// try to resolve the interface name based on the MAC address.
 	Interface string `json:"interface,omitempty"`
 
 	// VirtualRouterID is the VRRP router ID. If not specified, k0s will
@@ -137,6 +139,11 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 				errs = append(errs, fmt.Errorf("failed to get default NIC: %w", err))
 			}
 			k.VRRPInstances[i].Interface = nic
+		} else if _, err := net.ParseMAC(k.VRRPInstances[i].Interface); err == nil {
+			k.VRRPInstances[i].Interface, err = getNIC(k.VRRPInstances[i].Interface)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("failed to get NIC for MAC address %s: %w", k.VRRPInstances[i].Interface, err))
+			}
 		}
 
 		if k.VRRPInstances[i].VirtualRouterID == 0 {

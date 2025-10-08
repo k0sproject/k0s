@@ -64,13 +64,14 @@ spec:
         vrrpInstances:
         - virtualIPs: ["{{ .VIP }}"]
           authPass: "123456"
+          interface: "{{ .Interface }}"
 {{ if .IsIPv6Only }}
     podCIDR: fd00::/108
     serviceCIDR: fd01::/108
 {{ end }}
 `
 
-func (s *CPLBUserSpaceSuite) getK0sCfg(lb string) string {
+func (s *CPLBUserSpaceSuite) getK0sCfg(lb string, nic string) string {
 	if !s.useExternalAddress {
 		return fmt.Sprintf(nllbControllerConfig, common.GetCPLBVIPCIDR(lb, s.isIPv6Only))
 	}
@@ -80,6 +81,7 @@ func (s *CPLBUserSpaceSuite) getK0sCfg(lb string) string {
 		"ExtAddr":    lb,
 		"VIP":        common.GetCPLBVIPCIDR(lb, s.isIPv6Only),
 		"IsIPv6Only": s.isIPv6Only,
+		"Interface":  nic,
 	}
 	s.Require().NoError(template.Must(template.New("k0s.yaml").
 		Parse(extAddrControllerConfig)).
@@ -91,11 +93,19 @@ func (s *CPLBUserSpaceSuite) getK0sCfg(lb string) string {
 // state which we can run tests against.
 func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	lb := common.GetCPLBVIP(&s.BootlooseSuite, s.isIPv6Only)
-	k0sCfg := s.getK0sCfg(lb)
 
 	ctx := s.Context()
 	var joinToken string
 	for idx := range s.ControllerCount {
+		// Test that all NIC selection mechanisms, default, interface name and MAC address work
+		nic := ""
+		switch idx {
+		case 1:
+			nic = "eth0"
+		case 2:
+			nic = s.getMAC(ctx, s.ControllerNode(idx))
+		}
+		k0sCfg := s.getK0sCfg(lb, nic)
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
 		if s.isIPv6Only {
 			// Note that the token is intentionally empty for the first controller
@@ -182,6 +192,15 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 		attempt++
 		s.Require().LessOrEqual(attempt, 15, "Failed to get a signature from all controllers")
 	}
+
+	s.T().Log("Verify that controllers resolved the interface name from the MAC address correctly")
+	for idx := range s.ControllerCount {
+		keepalivedCfg := s.getFile(ctx, s.ControllerNode(idx), "/run/k0s/keepalived.conf")
+		s.Require().Contains(keepalivedCfg, "interface eth0", "Expected keepalived to resolve the interface name from the MAC address")
+		if idx == 2 {
+			s.Require().NotContains(keepalivedCfg, s.getMAC(ctx, s.ControllerNode(idx)), "Expected keepalived to have an interface configured")
+		}
+	}
 }
 
 // checkDummy checks that the dummy interface isn't present in the node.
@@ -249,6 +268,21 @@ func getServerCertSignature(ctx context.Context, url string) (string, error) {
 
 	// Return the signature as a hex string
 	return hex.EncodeToString(signature), nil
+}
+
+func (s *CPLBUserSpaceSuite) getMAC(ctx context.Context, nodeName string) string {
+	return s.getFile(ctx, nodeName, "/sys/class/net/eth0/address")
+}
+
+func (s *CPLBUserSpaceSuite) getFile(ctx context.Context, nodeName string, path string) string {
+	ssh, err := s.SSH(ctx, nodeName)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(ctx, "cat "+path)
+	s.Require().NoError(err)
+
+	return output
 }
 
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
