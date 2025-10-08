@@ -7,10 +7,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"path"
 	"path/filepath"
 	"reflect"
+	"strconv"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -115,6 +117,11 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 			// node-specific values here. A possible solution would be to convert
 			// kube-proxy to a static Pod as well.
 			controlPlaneEndpoint = fmt.Sprintf("https://localhost:%d", nllb.EnvoyProxy.APIServerBindPort)
+
+		case v1beta1.NllbTypeCustom:
+			k.log.Debugf("Enabling node-local load balancing via %s", nllb.Type)
+			customNLLBAddress := net.JoinHostPort(nllb.Custom.APIHost, strconv.Itoa(int(nllb.Custom.APIPort)))
+			controlPlaneEndpoint = "https://" + customNLLBAddress
 
 		default:
 			k.log.Warnf("Unsupported node-local load balancer type (%q), using %q as control plane endpoint", controlPlaneEndpoint)
