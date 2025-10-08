@@ -272,10 +272,6 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
 	}
 
-	if c.WorkerProfile == "default" && runtime.GOOS == "windows" {
-		c.WorkerProfile = "default-windows"
-	}
-
 	if controller == nil && runtime.GOOS == "linux" {
 		componentManager.Add(ctx, &iptables.Component{
 			IPTablesMode: c.IPTablesMode,

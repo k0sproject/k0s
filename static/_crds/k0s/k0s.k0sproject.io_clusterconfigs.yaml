@@ -302,6 +302,35 @@ spec:
                         - image
                         - version
                         type: object
+                      windows:
+                        properties:
+                          cni:
+                            description: ImageSpec container image settings
+                            properties:
+                              image:
+                                minLength: 1
+                                type: string
+                              version:
+                                pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                                type: string
+                            required:
+                            - image
+                            - version
+                            type: object
+                          node:
+                            description: ImageSpec container image settings
+                            properties:
+                              image:
+                                minLength: 1
+                                type: string
+                              version:
+                                pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                                type: string
+                            required:
+                            - image
+                            - version
+                            type: object
+                        type: object
                     type: object
                   coredns:
                     description: ImageSpec container image settings
@@ -421,6 +450,35 @@ spec:
                     type: object
                   repository:
                     type: string
+                  windows:
+                    properties:
+                      kubeproxy:
+                        description: ImageSpec container image settings
+                        properties:
+                          image:
+                            minLength: 1
+                            type: string
+                          version:
+                            pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                            type: string
+                        required:
+                        - image
+                        - version
+                        type: object
+                      pause:
+                        description: ImageSpec container image settings
+                        properties:
+                          image:
+                            minLength: 1
+                            type: string
+                          version:
+                            pattern: ^[\w][\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$
+                            type: string
+                        required:
+                        - image
+                        - version
+                        type: object
+                    type: object
                 type: object
               installConfig:
                 description: InstallSpec defines the required fields for the `k0s

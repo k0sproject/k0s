@@ -1,6 +1,7 @@
 ---
 # Source: https://github.com/projectcalico/calico/blob/v3.29.3/charts/calico/templates/calico-config.yaml
 # This ConfigMap is used to configure a self-hosted Calico installation.
+{{/* Prefer to inject those variables directly, so changing them will trigger rolling updates.
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -10,12 +11,12 @@ data:
   # Typha is disabled.
   typha_service_name: "none"
   # Configure the backend to use.
-  calico_backend: "{{ .Mode }}"
+  calico_backend: "vxlan"
 
   # Configure the MTU to use for workload interfaces and tunnels.
   # By default, MTU is auto-detected, and explicitly setting this field should not be required.
   # You can override auto-detection by providing a non-zero value.
-  veth_mtu: "{{ .MTU }}"
+  veth_mtu: "0"
 
   # The CNI network configuration to install on each node. The special
   # values in this config will be automatically populated.
@@ -32,8 +33,6 @@ data:
           "nodename": "__KUBERNETES_NODE_NAME__",
           "mtu": __CNI_MTU__,
           "ipam": {
-              "assign_ipv4": "{{ .EnableIPv4 }}",
-              "assign_ipv6": "{{ .EnableIPv6 }}",
               "type": "calico-ipam"
           },
           "policy": {
@@ -54,3 +53,4 @@ data:
         }
       ]
     }
+*/}}

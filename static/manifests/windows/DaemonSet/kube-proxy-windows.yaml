@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    k8s-app: kube-proxy
+    k8s-app: kube-proxy-windows
   name: kube-proxy-windows
   namespace: kube-system
 spec:
