@@ -49,6 +49,7 @@ import (
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
+	"k8s.io/utils/ptr"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
@@ -325,6 +326,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			IgnoredStacks: []string{
 				controller.ClusterConfigStackName,
 				controller.SystemRBACStackName,
+				controller.WindowsStackName,
 			},
 			LeaderElector: leaderElector,
 		})
@@ -459,8 +461,25 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		))
 	}
 
+	hasWindowsNodes := func() (*bool, <-chan struct{}) { return ptr.To(false), nil }
+	if !slices.Contains(flags.DisableComponents, constant.WindowsNodeComponentName) {
+		var windowsNodeCount value.Latest[*uint]
+		windowsStack, err := controller.NewWindowsStackComponent(adminClientFactory, windowsNodeCount.Set)
+		if err != nil {
+			return fmt.Errorf("failed to create Windows stack component: %w", err)
+		}
+		clusterComponents.Add(ctx, windowsStack)
+		hasWindowsNodes = func() (*bool, <-chan struct{}) {
+			count, changed := windowsNodeCount.Peek()
+			if count != nil {
+				return ptr.To(*count > 0), changed
+			}
+			return nil, changed
+		}
+	}
+
 	if !slices.Contains(flags.DisableComponents, constant.KubeProxyComponentName) {
-		clusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, nodeConfig))
+		clusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, nodeConfig, hasWindowsNodes))
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.CoreDNSComponentname) {
@@ -473,10 +492,11 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	if !slices.Contains(flags.DisableComponents, constant.NetworkProviderComponentName) {
 		logrus.Infof("Creating network reconcilers")
-		clusterComponents.Add(ctx, controller.NewCalico(c.K0sVars))
-		if !slices.Contains(flags.DisableComponents, constant.WindowsNodeComponentName) {
-			clusterComponents.Add(ctx, controller.NewWindowsStackComponent(c.K0sVars, adminClientFactory))
+		calico, err := controller.NewCalico(nodeConfig, c.K0sVars.ManifestsDir, hasWindowsNodes)
+		if err != nil {
+			return fmt.Errorf("failed to create Calico component: %w", err)
 		}
+		clusterComponents.Add(ctx, calico)
 		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars))
 	}
 

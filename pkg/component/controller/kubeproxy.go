@@ -4,21 +4,26 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/static"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,73 +31,161 @@ import (
 type KubeProxy struct {
 	log logrus.FieldLogger
 
-	nodeConf    *v1beta1.ClusterConfig
-	K0sVars     *config.CfgVars
-	manifestDir string
+	nodeConf        *v1beta1.ClusterConfig
+	K0sVars         *config.CfgVars
+	manifestDir     string
+	hasWindowsNodes func() (*bool, <-chan struct{})
 
-	previousConfig proxyConfig
+	config value.Latest[*proxyConfig]
+	stop   func()
 }
 
 var _ manager.Component = (*KubeProxy)(nil)
 var _ manager.Reconciler = (*KubeProxy)(nil)
 
 // NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) *KubeProxy {
+func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, hasWindowsNodes func() (*bool, <-chan struct{})) *KubeProxy {
 	return &KubeProxy{
 		log: logrus.WithFields(logrus.Fields{"component": "kubeproxy"}),
 
-		nodeConf:    nodeConfig,
-		K0sVars:     k0sVars,
-		manifestDir: path.Join(k0sVars.ManifestsDir, "kubeproxy"),
+		nodeConf:        nodeConfig,
+		K0sVars:         k0sVars,
+		manifestDir:     path.Join(k0sVars.ManifestsDir, "kubeproxy"),
+		hasWindowsNodes: hasWindowsNodes,
 	}
 }
 
-// Init does nothing
-func (k *KubeProxy) Init(_ context.Context) error {
+func (k *KubeProxy) Init(context.Context) error {
+	return dir.Init(k.manifestDir, constant.ManifestsDirMode)
+}
+
+func (k *KubeProxy) Start(context.Context) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+
+		config, configChanged := k.config.Peek()
+		hasWin, hasWinChanged := k.hasWindowsNodes()
+
+		var retry <-chan time.Time
+
+		for {
+			switch {
+			case config == nil:
+				k.log.Debug("Waiting for configuration")
+
+			case !config.Enabled:
+				retry = nil
+				if err := os.RemoveAll(k.manifestDir); err != nil {
+					retry = time.After(1 * time.Minute)
+					k.log.WithError(err).Error("Failed to remove manifests, retrying in one minute")
+				}
+
+			case hasWin == nil:
+				k.log.Debug("Waiting for Windows node info")
+
+			default:
+				retry = nil
+				if err := k.updateManifests(config, *hasWin); err != nil {
+					retry = time.After(10 * time.Second)
+					k.log.WithError(err).Error("Failed to update manifests, retrying in 10 seconds")
+				} else {
+					k.log.Info("Updated manifests")
+				}
+			}
+
+		waitForUpdates:
+			for {
+				select {
+				case <-configChanged:
+					var newConfig *proxyConfig
+					newConfig, configChanged = k.config.Peek()
+					if updateIfChanged(&config, newConfig) {
+						k.log.Info("Cluster configuration changed")
+						break waitForUpdates
+					} else {
+						k.log.Debug("Cluster config unchanged")
+					}
+
+				case <-hasWinChanged:
+					var newHasWin *bool
+					newHasWin, hasWinChanged = k.hasWindowsNodes()
+					if updateIfChanged(&hasWin, newHasWin) {
+						k.log.Info("Windows nodes changed")
+						break waitForUpdates
+					} else {
+						k.log.Debug("Windows nodes unchanged")
+					}
+
+				case <-retry:
+					k.log.Debug("Attempting to update manifests again")
+					break waitForUpdates
+
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	k.stop = func() { cancel(); <-done }
 	return nil
 }
 
-// Run runs the kube-proxy reconciler
-func (k *KubeProxy) Start(_ context.Context) error { return nil }
-
 // Reconcile detects changes in configuration and applies them to the component
 func (k *KubeProxy) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
-	if clusterConfig.Spec.Network.KubeProxy.Disabled {
-		return os.RemoveAll(k.manifestDir)
-	}
-	err := dir.Init(k.manifestDir, constant.ManifestsDirMode)
-	if err != nil {
-		return err
-	}
 	cfg, err := k.getConfig(clusterConfig)
 	if err != nil {
 		return err
 	}
-	if reflect.DeepEqual(cfg, k.previousConfig) {
-		k.log.Infof("current cfg matches existing, not gonna do anything")
-		return nil
+
+	k.config.Set(cfg)
+	return nil
+}
+
+func (k *KubeProxy) Stop() error {
+	if stop := k.stop; stop != nil {
+		stop()
 	}
-	tw := templatewriter.TemplateWriter{
+	return nil
+}
+
+func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error {
+	proxyWindowsTemplate, err := fs.ReadFile(static.WindowsManifests, "DaemonSet/kube-proxy-windows.yaml")
+	if err != nil {
+		return err
+	}
+
+	var buf bytes.Buffer
+
+	if err := (&templatewriter.TemplateWriter{
 		Name:     "kube-proxy",
 		Template: proxyTemplate,
 		Data:     cfg,
-		Path:     filepath.Join(k.manifestDir, "kube-proxy.yaml"),
+	}).WriteToBuffer(&buf); err != nil {
+		return err
 	}
-	err = tw.Write()
-	if err != nil {
-		k.log.Errorf("error writing kube-proxy manifests: %s. will retry", err.Error())
-	}
-	k.previousConfig = cfg
 
-	return nil
+	if includeWindows {
+		if err := (&templatewriter.TemplateWriter{
+			Name:     "kube-proxy-windows",
+			Template: string(proxyWindowsTemplate),
+			Data:     cfg,
+		}).WriteToBuffer(&buf); err != nil {
+			return err
+		}
+	}
+
+	return file.AtomicWithTarget(filepath.Join(k.manifestDir, "kube-proxy.yaml")).Write(buf.Bytes())
 }
 
-// Stop stop the reconcilier
-func (k *KubeProxy) Stop() error {
-	return nil
-}
+func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (*proxyConfig, error) {
+	if clusterConfig.Spec.Network.KubeProxy.Disabled {
+		return &proxyConfig{}, nil
+	}
 
-func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig, error) {
 	controlPlaneEndpoint := k.nodeConf.Spec.API.APIAddressURL()
 	nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 	if nllb.IsEnabled() {
@@ -133,9 +226,11 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 	}
 
 	cfg := proxyConfig{
+		Enabled:              true,
 		ClusterCIDR:          clusterConfig.Spec.Network.BuildPodCIDR(),
 		ControlPlaneEndpoint: controlPlaneEndpoint,
 		Image:                clusterConfig.Spec.Images.KubeProxy.URI(),
+		WindowsImage:         constant.KubeProxyWindowsImage + ":" + constant.KubeProxyWindowsImageVersion,
 		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
 		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
 		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
@@ -146,36 +241,38 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 
 	nodePortAddresses, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NodePortAddresses)
 	if err != nil {
-		return proxyConfig{}, err
+		return nil, err
 	}
 	cfg.NodePortAddresses = string(nodePortAddresses)
 
 	iptables, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.IPTables)
 	if err != nil {
-		return proxyConfig{}, err
+		return nil, err
 	}
 	cfg.IPTables = string(iptables)
 
 	ipvs, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.IPVS)
 	if err != nil {
-		return proxyConfig{}, err
+		return nil, err
 	}
 	cfg.IPVS = string(ipvs)
 
 	nftables, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NFTables)
 	if err != nil {
-		return proxyConfig{}, err
+		return nil, err
 	}
 	cfg.NFTables = string(nftables)
 
-	return cfg, nil
+	return &cfg, nil
 }
 
 type proxyConfig struct {
+	Enabled              bool
 	DualStack            bool
 	ControlPlaneEndpoint string
 	ClusterCIDR          string
 	Image                string
+	WindowsImage         string
 	PullPolicy           string
 	Mode                 string
 	MetricsBindAddress   string

@@ -1,4 +1,5 @@
 ---
+{{ if and .IncludeWindows (eq .Mode "vxlan") -}}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -38,13 +39,13 @@ spec:
           command: [
             'powershell.exe',
             '-C',
-            "New-Item -Path '{{ .CNIBin }}' -ItemType Directory -Force ; New-Item -Path '{{ .CNIConf }}' -ItemType Directory -Force ; $existingRule = Get-NetFirewallRule -DisplayName 'kubectl exec 10250' -ErrorAction SilentlyContinue; if ($existingRule -eq $null) { New-NetFirewallRule -Name 'KubectlExec10250' -Description 'Enable kubectl exec and log' -Action Allow -LocalPort 10250 -Enabled True -DisplayName 'kubectl exec 10250' -Protocol TCP -ErrorAction SilentlyContinue }"
+            "New-Item -Path 'C:\opt\cni\bin' -ItemType Directory -Force ; New-Item -Path 'C:\opt\cni\conf' -ItemType Directory -Force ; $existingRule = Get-NetFirewallRule -DisplayName 'kubectl exec 10250' -ErrorAction SilentlyContinue; if ($existingRule -eq $null) { New-NetFirewallRule -Name 'KubectlExec10250' -Description 'Enable kubectl exec and log' -Action Allow -LocalPort 10250 -Enabled True -DisplayName 'kubectl exec 10250' -Protocol TCP -ErrorAction SilentlyContinue }"
           ]
         - name: install
-          image: "{{ .NodeImage }}" 
+          image: "{{ .CalicoNodeWindowsImage }}"
+          imagePullPolicy: "{{ .PullPolicy }}"
           args:
             - ".\\host-process-install.ps1"
-          imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
                 name: calico-windows-config
@@ -56,8 +57,8 @@ spec:
                   fieldPath: spec.nodeName
       containers:
         - name: node
-          image: "{{ .NodeImage }}"
-          imagePullPolicy: IfNotPresent
+          image: "{{ .CalicoNodeWindowsImage }}"
+          imagePullPolicy: "{{ .PullPolicy }}"
           args:
             - "C:/CalicoWindows/node/node-service.ps1"
           # The node container's working dir is in c:\CalicoWindows on the host,
@@ -74,8 +75,8 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
         - name: felix
-          image: "{{ .NodeImage }}"
-          imagePullPolicy: IfNotPresent
+          image: "{{ .CalicoNodeWindowsImage }}"
+          imagePullPolicy: "{{ .PullPolicy }}"
           args:
             - "C:/CalicoWindows/felix/felix-service.ps1"
           # The felix container's working dir is in c:\CalicoWindows on the host,
@@ -108,8 +109,8 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 10
         - name: confd
-          image: "{{ .NodeImage }}" 
-          imagePullPolicy: IfNotPresent
+          image: "{{ .CalicoNodeWindowsImage }}"
+          imagePullPolicy: "{{ .PullPolicy }}"
           args:
             - "C:/CalicoWindows/confd/confd-service.ps1"
           # The confd container's working dir is in c:\CalicoWindows on the host,
@@ -127,3 +128,4 @@ spec:
                   fieldPath: spec.nodeName
       nodeSelector:
         kubernetes.io/os: windows
+{{ end -}}
