@@ -35,7 +35,7 @@ func GenImagesList(name string, args ...string) error {
 	}
 
 	images := []string{
-		"docker.io/library/nginx:1.29.1-alpine",
+		"docker.io/library/nginx:1.29.2-alpine",
 		"docker.io/curlimages/curl:8.15.0",
 		"docker.io/library/alpine:" + alpineVersion,
 		"docker.io/sonobuoy/sonobuoy:v" + sonobuoyVersion,
