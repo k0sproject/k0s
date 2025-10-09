@@ -5,6 +5,7 @@ package config
 
 import (
 	"fmt"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -239,8 +240,15 @@ func GetWorkerFlags() *pflag.FlagSet {
 		workerOpts.Labels = make(map[string]string)
 	}
 
+	var defaultWorkerProfile string
+	if runtime.GOOS == "windows" {
+		defaultWorkerProfile = "default-windows"
+	} else {
+		defaultWorkerProfile = "default"
+	}
+
 	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
-	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
+	flagset.StringVar(&workerOpts.WorkerProfile, "profile", defaultWorkerProfile, "worker profile to use on the node")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.VarP((*logLevelsFlag)(&workerOpts.LogLevels), "logging", "l", "Logging Levels for the different components")

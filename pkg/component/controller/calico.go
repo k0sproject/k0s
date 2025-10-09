@@ -25,6 +25,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/internal/sync/value"
 )
@@ -61,8 +62,7 @@ type calicoConfig struct {
 }
 
 type calicoNodeConfig struct {
-	KubeAPIHost     string
-	KubeAPIPort     int
+	APIServer       *k0snet.HostPort
 	ServiceCIDRIPv4 string
 	ClusterDNSIP    string
 }
@@ -81,6 +81,7 @@ type calicoClusterConfig struct {
 	EnvVars              map[string]string
 
 	CalicoCNIImage             string
+	CalicoCNIWindowsImage      string
 	CalicoNodeImage            string
 	CalicoNodeWindowsImage     string
 	CalicoKubeControllersImage string
@@ -97,11 +98,15 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		return nil, err
 	}
 
+	apiServer, err := nodeConfig.Spec.API.APIServerHostPort()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Calico{
 		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
 		nodeConfig: calicoNodeConfig{
-			KubeAPIHost:     nodeConfig.Spec.API.ExternalHost(),
-			KubeAPIPort:     nodeConfig.Spec.API.ExternalPort(),
+			APIServer:       apiServer,
 			ServiceCIDRIPv4: nodeConfig.Spec.Network.ServiceCIDR,
 			ClusterDNSIP:    dnsAddress,
 		},
@@ -294,8 +299,9 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (*calicoCluster
 		EnableIPv4:                 isDualStack || primaryAFIPv4,
 		EnableIPv6:                 isDualStack || !primaryAFIPv4,
 		CalicoCNIImage:             clusterConfig.Spec.Images.Calico.CNI.URI(),
+		CalicoCNIWindowsImage:      clusterConfig.Spec.Images.Calico.Windows.CNI.URI(),
 		CalicoNodeImage:            clusterConfig.Spec.Images.Calico.Node.URI(),
-		CalicoNodeWindowsImage:     constant.CalicoNodeWindowsImage + ":" + constant.CalicoNodeWindowsImageVersion,
+		CalicoNodeWindowsImage:     clusterConfig.Spec.Images.Calico.Windows.Node.URI(),
 		CalicoKubeControllersImage: clusterConfig.Spec.Images.Calico.KubeControllers.URI(),
 		Overlay:                    clusterConfig.Spec.Network.Calico.Overlay,
 		IPAutodetectionMethod:      clusterConfig.Spec.Network.Calico.IPAutodetectionMethod,

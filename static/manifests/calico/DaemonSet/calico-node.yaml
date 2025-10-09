@@ -22,6 +22,7 @@ spec:
     metadata:
       labels:
         k8s-app: calico-node
+      {{/* Add annotations for metrics-scraper. */ -}}
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '9091'
@@ -50,32 +51,74 @@ spec:
           image: "{{ .CalicoCNIImage }}"
           imagePullPolicy: {{ .PullPolicy }}
           command: ["/opt/cni/bin/install"]
+          {{/* K0s doesn't support eBPF mode for Calico.
           envFrom:
           - configMapRef:
               # Allow KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT to be overridden for eBPF mode.
               name: kubernetes-services-endpoint
               optional: true
+          */ -}}
           env:
             # Name of the CNI config file to create.
             - name: CNI_CONF_NAME
               value: "10-calico.conflist"
             # The CNI network config to install on each node.
             - name: CNI_NETWORK_CONFIG
-              valueFrom:
-                configMapKeyRef:
-                  name: calico-config
-                  key: cni_network_config
+              {{/* Inline the configuration to trigger rolling updates. */ -}}
+              value: |
+                {
+                  "name": "k8s-pod-network",
+                  "cniVersion": "0.3.1",
+                  "plugins": [
+                    {
+                      "type": "calico",
+                      "log_level": "info",
+                      "log_file_path": "__LOG_FILE_PATH__",
+                      "datastore_type": "kubernetes",
+                      "nodename": "__KUBERNETES_NODE_NAME__",
+                      "mtu": {{ .MTU }},
+                      "ipam": {
+                          "type": "calico-ipam",
+                          {{/* K0s needs to override these for IPv6 support. */ -}}
+                          "assign_ipv4": "{{ .EnableIPv4 }}",
+                          "assign_ipv6": "{{ .EnableIPv6 }}"
+                      },
+                      "policy": {
+                          "type": "k8s"
+                      },
+                      "kubernetes": {
+                          "kubeconfig": "__KUBECONFIG_FILEPATH__"
+                      }
+                    },
+                    {
+                      "type": "portmap",
+                      "snat": true,
+                      "capabilities": {"portMappings": true}
+                    },
+                    {
+                      {{/*
+                        For some reason, this plugin is not included in the
+                        default configuration of the cni-plugin install
+                        executable.
+                      */ -}}
+                      "type": "bandwidth",
+                      "capabilities": {"bandwidth": true}
+                    }
+                  ]
+                }
             # Set the hostname based on the k8s node name.
             - name: KUBERNETES_NODE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            {{/* K0s is templating the MTU directly into the configuration.
             # CNI MTU Config variable
             - name: CNI_MTU
               valueFrom:
                 configMapKeyRef:
                   name: calico-config
                   key: veth_mtu
+            */ -}}
             # Prevents the container from sleeping forever.
             - name: SLEEP
               value: "false"
@@ -86,32 +129,33 @@ spec:
               name: cni-net-dir
           securityContext:
             privileged: true
-        # @twz123: We do not yet support eBPF mode for calico thus these bits are commented out
-        # # This init container mounts the necessary filesystems needed by the BPF data plane
-        # # i.e. bpf at /sys/fs/bpf and cgroup2 at /run/calico/cgroup. Calico-node initialisation is executed
-        # # in best effort fashion, i.e. no failure for errors, to not disrupt pod creation in iptable mode.
-        # - name: "mount-bpffs"
-        #   image: "{{ .CalicoCNIImage }}"
-        #   imagePullPolicy: {{ .PullPolicy }}
-        #   command: ["calico-node", "-init", "-best-effort"]
-        #   volumeMounts:
-        #     - mountPath: /sys/fs
-        #       name: sys-fs
-        #       # Bidirectional is required to ensure that the new mount we make at /sys/fs/bpf propagates to the host
-        #       # so that it outlives the init container.
-        #       mountPropagation: Bidirectional
-        #     - mountPath: /var/run/calico
-        #       name: var-run-calico
-        #       # Bidirectional is required to ensure that the new mount we make at /run/calico/cgroup propagates to the host
-        #       # so that it outlives the init container.
-        #       mountPropagation: Bidirectional
-        #     # Mount /proc/ from host which usually is an init program at /nodeproc. It's needed by mountns binary,
-        #     # executed by calico-node, to mount root cgroup2 fs at /run/calico/cgroup to attach CTLB programs correctly.
-        #     - mountPath: /nodeproc
-        #       name: nodeproc
-        #       readOnly: true
-        #   securityContext:
-        #     privileged: true
+        {{- /* K0s doesn't support eBPF mode for Calico.
+        # This init container mounts the necessary filesystems needed by the BPF data plane
+        # i.e. bpf at /sys/fs/bpf and cgroup2 at /run/calico/cgroup. Calico-node initialisation is executed
+        # in best effort fashion, i.e. no failure for errors, to not disrupt pod creation in iptable mode.
+        - name: "mount-bpffs"
+          image: docker.io/calico/node:v3.29.3
+          imagePullPolicy: IfNotPresent
+          command: ["calico-node", "-init", "-best-effort"]
+          volumeMounts:
+            - mountPath: /sys/fs
+              name: sys-fs
+              # Bidirectional is required to ensure that the new mount we make at /sys/fs/bpf propagates to the host
+              # so that it outlives the init container.
+              mountPropagation: Bidirectional
+            - mountPath: /var/run/calico
+              name: var-run-calico
+              # Bidirectional is required to ensure that the new mount we make at /run/calico/cgroup propagates to the host
+              # so that it outlives the init container.
+              mountPropagation: Bidirectional
+            # Mount /proc/ from host which usually is an init program at /nodeproc. It's needed by mountns binary,
+            # executed by calico-node, to mount root cgroup2 fs at /run/calico/cgroup to attach CTLB programs correctly.
+            - mountPath: /nodeproc
+              name: nodeproc
+              readOnly: true
+          securityContext:
+            privileged: true
+        */}}
       containers:
         # Runs calico-node container on each Kubernetes node. This
         # container programs network policy and routes on each
@@ -138,29 +182,31 @@ spec:
                   fieldPath: spec.nodeName
             # Choose the backend to use.
             - name: CALICO_NETWORKING_BACKEND
-              valueFrom:
-                configMapKeyRef:
-                  name: calico-config
-                  key: calico_backend
+              value: "{{ .Mode }}"
             # Cluster type to identify the deployment type
             - name: CLUSTER_TYPE
-              value: "k8s"
-            # The environment variable IP is only for IPv4. It's the IPv4 equivalent of the env IP6,
-            # but the default behavior is different. Single stack IPv6 clusters require it to be none,
-            # clusters with IPv4, single or dual stack, must set it to autodetect.
+              value: "{{ if eq .Mode "bird" }}k8s,bgp{{ else }}k8s{{ end }}"
+            # Auto-detect the BGP IP address.
             - name: IP
+              {{/*
+                The environment variable IP is only for IPv4. It's the IPv4
+                equivalent of the env IP6, but the default behavior is
+                different. Single stack IPv6 clusters require it to be none,
+                clusters with IPv4, single or dual stack, must set it to
+                autodetect.
+              */ -}}
               value: "{{ if .EnableIPv4 }}autodetect{{ else }}none{{ end }}"
             # Auto detect the iptables backend
             - name: FELIX_IPTABLESBACKEND
               value: "auto"
-            {{ if ne .IPAutodetectionMethod "" }}
+            {{- if ne .IPAutodetectionMethod "" }}
             - name: IP_AUTODETECTION_METHOD
               value: {{ .IPAutodetectionMethod }}
-            {{ end }}
-            {{ if ne .IPV6AutodetectionMethod "" }}
+            {{- end }}
+            {{- if ne .IPV6AutodetectionMethod "" }}
             - name: IP6_AUTODETECTION_METHOD
               value: {{ .IPV6AutodetectionMethod }}
-            {{ end }}
+            {{- end }}
             # Enable IPIP
             - name: CALICO_IPV4POOL_IPIP
               value: "{{ if eq .Mode "bird" }}{{ .Overlay }}{{ else }}Never{{ end }}"
@@ -182,36 +228,27 @@ spec:
             {{- end }}
             # Set MTU for tunnel device used if ipip is enabled
             - name: FELIX_IPINIPMTU
-              valueFrom:
-                configMapKeyRef:
-                  name: calico-config
-                  key: veth_mtu
+              value: "{{ .MTU }}"
             # Set MTU for the VXLAN tunnel device.
             - name: FELIX_VXLANMTU
-              valueFrom:
-                configMapKeyRef:
-                  name: calico-config
-                  key: veth_mtu
+              value: "{{ .MTU }}"
             # Set MTU for the Wireguard tunnel device.
             - name: FELIX_WIREGUARDMTU
-              valueFrom:
-                configMapKeyRef:
-                  name: calico-config
-                  key: veth_mtu
-            {{ if .EnableIPv4}}
+              value: "{{ .MTU }}"
+            {{- if .EnableIPv4 }}
             # The default IPv4 pool to create on startup if none exists. Pod IPs will be
             # chosen from this range. Changing this value after installation will have
             # no effect. This should fall within `--cluster-cidr`.
             - name: CALICO_IPV4POOL_CIDR
               value: "{{ .ClusterCIDRIPv4 }}"
-            {{ end }}
+            {{- end }}
             # Disable file logging so `kubectl logs` works.
             - name: CALICO_DISABLE_FILE_LOGGING
               value: "true"
             # Set Felix endpoint to host default action to ACCEPT.
             - name: FELIX_DEFAULTENDPOINTTOHOSTACTION
               value: "ACCEPT"
-            {{ if .EnableIPv6  }}
+            {{- if .EnableIPv6 }}
             - name: CALICO_IPV6POOL_NAT_OUTGOING
               value: "true"
             - name: FELIX_IPV6SUPPORT
@@ -220,11 +257,11 @@ spec:
               value: "autodetect"
             - name: CALICO_IPV6POOL_CIDR
               value: "{{ .ClusterCIDRIPv6 }}"
-            {{ else }}
+            {{- else }}
             # Disable IPv6 on Kubernetes.
             - name: FELIX_IPV6SUPPORT
               value: "false"
-            {{ end }}
+            {{- end }}
             # Set Felix logging to "info"
             - name: FELIX_LOGSEVERITYSCREEN
               value: "info"
@@ -232,10 +269,13 @@ spec:
               value: "true"
             - name: FELIX_PROMETHEUSMETRICSENABLED
               value: "true"
-            # Disable VXLAN offloading
+            {{/* Disable VXLAN offloading */ -}}
             - name: FELIX_FEATUREDETECTOVERRIDE
               value: ChecksumOffloadBroken=true
-            # Setting custom environment variables. These variables could overwrite the ones specified above.
+            {{/*
+              Setting custom environment variables.
+              These variables could overwrite the ones specified above.
+            */ -}}
             {{ range $name, $value := .EnvVars }}
             - name: {{ $name }}
               value: "{{ $value }}"
@@ -292,11 +332,12 @@ spec:
               readOnly: false
             - name: policysync
               mountPath: /var/run/nodeagent
-            # @jnummelin: We do not yet support eBPF mode for calico thus these bits are commented out
-            # # For eBPF mode, we need to be able to mount the BPF filesystem at /sys/fs/bpf so we mount in the
-            # # parent directory.
-            # - name: bpffs
-            #   mountPath: /sys/fs/bpf
+            {{/* K0s doesn't support eBPF mode for Calico.
+            # For eBPF mode, we need to be able to mount the BPF filesystem at /sys/fs/bpf so we mount in the
+            # parent directory.
+            - name: bpffs
+              mountPath: /sys/fs/bpf
+            */ -}}
             - name: cni-log-dir
               mountPath: /var/log/calico/cni
               readOnly: true
@@ -317,19 +358,20 @@ spec:
           hostPath:
             path: /run/xtables.lock
             type: FileOrCreate
-        # @jnummelin: We do not yet support eBPF mode for calico thus these bits are commented out
-        # - name: sys-fs
-        #   hostPath:
-        #     path: /sys/fs/
-        #     type: DirectoryOrCreate
-        # - name: bpffs
-        #   hostPath:
-        #     path: /sys/fs/bpf
-        #     type: Directory
-        # # mount /proc at /nodeproc to be used by mount-bpffs initContainer to mount root cgroup2 fs.
-        # - name: nodeproc
-        #   hostPath:
-        #     path: /proc
+          {{/* K0s doesn't support eBPF mode for Calico.
+        - name: sys-fs
+          hostPath:
+            path: /sys/fs/
+            type: DirectoryOrCreate
+        - name: bpffs
+          hostPath:
+            path: /sys/fs/bpf
+            type: Directory
+        # mount /proc at /nodeproc to be used by mount-bpffs initContainer to mount root cgroup2 fs.
+        - name: nodeproc
+          hostPath:
+            path: /proc
+          */ -}}
         # Used to install CNI.
         - name: cni-bin-dir
           hostPath:

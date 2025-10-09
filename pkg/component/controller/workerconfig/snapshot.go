@@ -37,6 +37,7 @@ type configSnapshot struct {
 	profiles               v1beta1.WorkerProfiles
 	featureGates           v1beta1.FeatureGates
 	pauseImage             *v1beta1.ImageSpec
+	pauseWindowsImage      *v1beta1.ImageSpec
 }
 
 func (s *snapshot) DeepCopy() *snapshot {
@@ -67,6 +68,9 @@ func (s *configSnapshot) DeepCopyInto(out *configSnapshot) {
 	*out = *s
 	out.nodeLocalLoadBalancing = s.nodeLocalLoadBalancing.DeepCopy()
 	out.profiles = s.profiles.DeepCopy()
+	out.featureGates = s.featureGates.DeepCopy()
+	out.pauseImage = s.pauseImage.DeepCopy()
+	out.pauseWindowsImage = s.pauseWindowsImage.DeepCopy()
 }
 
 // takeConfigSnapshot converts ClusterSpec to a delta snapshot
@@ -86,5 +90,6 @@ func takeConfigSnapshot(spec *v1beta1.ClusterSpec) configSnapshot {
 		spec.WorkerProfiles.DeepCopy(),
 		spec.FeatureGates.DeepCopy(),
 		spec.Images.Pause.DeepCopy(),
+		spec.Images.Windows.Pause.DeepCopy(),
 	}
 }

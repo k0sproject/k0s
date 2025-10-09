@@ -230,7 +230,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (*proxyConfi
 		ClusterCIDR:          clusterConfig.Spec.Network.BuildPodCIDR(),
 		ControlPlaneEndpoint: controlPlaneEndpoint,
 		Image:                clusterConfig.Spec.Images.KubeProxy.URI(),
-		WindowsImage:         constant.KubeProxyWindowsImage + ":" + constant.KubeProxyWindowsImageVersion,
+		WindowsImage:         clusterConfig.Spec.Images.Windows.KubeProxy.URI(),
 		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
 		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
 		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
