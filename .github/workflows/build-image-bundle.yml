@@ -1,0 +1,85 @@
+# SPDX-FileCopyrightText: 2023 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+name: "Build :: Image bundle"
+
+on:
+  workflow_call:
+    inputs:
+      image-bundle-name:
+        type: string
+        description: The name of the image bundle to be built.
+      target-os:
+        type: string
+        description: The OS to build the image bundle for.
+      target-arch:
+        type: string
+        required: true
+        description: The architecture to build the image bundle for.
+    outputs:
+      cache-key:
+        description: The image bundle's cache key.
+        value: ${{ jobs.build.outputs.cache-key }}
+
+env:
+  MAKEFLAGS: -j
+
+jobs:
+  build:
+    name: "${{ inputs.target-os }}-${{ inputs.target-arch }}"
+    runs-on: ubuntu-24.04
+
+    env:
+      IMAGE_BUNDLE_NAME: ${{ inputs.image-bundle-name }}
+      TARGET_OS: ${{ inputs.target-os }}
+      TARGET_ARCH: ${{ inputs.target-arch }}
+
+    steps:
+      - name: "Build :: Checkout"
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: "Download :: k0s"
+        uses: actions/download-artifact@v5
+        with:
+          name: k0s-linux-amd64
+
+      - name: "Download :: Image list"
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ inputs.image-bundle-name }}-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
+
+        # Capture the calculated image bundle source hash in a separate step, as
+        # the hashFiles function is evaluated before the step execution. So all
+        # the required files need to exist before that.
+      - name: "Cache :: Image bundle :: Calculate cache key"
+        id: cache-image-bundle-calc-key
+        env:
+          HASH_VALUE: ${{ hashFiles('Makefile', '${{ inputs.image-bundle-name }}-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
+        run: |
+          printf 'cache-key=build-%s-image-bundle-%s-%s-%s\n' "$IMAGE_BUNDLE_NAME" "$TARGET_OS" "$TARGET_ARCH" "$HASH_VALUE" >> "$GITHUB_OUTPUT"
+
+      - name: "Cache :: Image bundle"
+        id: cache-image-bundle
+        uses: actions/cache@v4
+        with:
+          key: ${{ steps.cache-image-bundle-calc-key.outputs.cache-key }}
+          path: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
+
+      - name: "Build :: Image bundle"
+        if: steps.cache-image-bundle.outputs.cache-hit != 'true'
+        env:
+          DOCKER: ''
+          EMBEDDED_BINS_BUILDMODE: none
+        run: |
+          chmod +x k0s
+          make --touch k0s "$IMAGE_BUNDLE_NAME-images.txt"
+          make "$IMAGE_BUNDLE_NAME-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
+
+      - name: "Upload :: Image bundle"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
+          compression-level: 0

@@ -108,3 +108,14 @@ jobs:
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: airgap-images.txt
+
+      - name: "Build :: IPv6 test image list"
+        if: inputs.target-os != 'windows'
+        run: make ipv6-test-images.txt && cat ipv6-test-images.txt
+
+      - name: "Upload :: IPv6 test image list"
+        if: inputs.target-os != 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipv6-test-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: ipv6-test-images.txt
