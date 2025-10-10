@@ -315,10 +315,16 @@ func kubeConfig(dest string, url *url.URL, caCert, clientCert, clientKey string,
 		return err
 	}
 
-	err = file.WriteContentAtomically(dest, kubeconfig, constant.CertSecureMode)
+	// Use OwnerOnlyMode (0600) for admin.conf, CertSecureMode (0640) for other kubeconfigs
+	fileMode := os.FileMode(constant.CertSecureMode)
+	if filepath.Base(dest) == "admin.conf" {
+		fileMode = constant.OwnerOnlyMode
+	}
+
+	err = file.WriteContentAtomically(dest, kubeconfig, fileMode)
 	if err != nil {
 		return err
 	}
 
-	return file.Chown(dest, ownerID, constant.CertSecureMode)
+	return file.Chown(dest, ownerID, fileMode)
 }
