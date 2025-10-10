@@ -246,7 +246,7 @@ func (k *Kubelet) writeKubeletConfig() error {
 		return fmt.Errorf("can't marshal kubelet config: %w", err)
 	}
 
-	err = file.WriteContentAtomically(k.configPath, configBytes, 0644)
+	err = file.WriteContentAtomically(k.configPath, configBytes, constant.OwnerOnlyMode)
 	if err != nil {
 		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}
