@@ -29,6 +29,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -377,9 +378,9 @@ func (r *Reconciler) reconcileAPIServers(ctx context.Context, updates chan<- upd
 		return err
 	}
 
-	return watch.Endpoints(client.CoreV1().Endpoints("default")).
+	return watch.EndpointSlices(client.DiscoveryV1().EndpointSlices("default")).
 		WithObjectName("kubernetes").
-		Until(ctx, func(endpoints *corev1.Endpoints) (bool, error) {
+		Until(ctx, func(endpoints *discoveryv1.EndpointSlice) (bool, error) {
 			apiServers, err := extractAPIServerAddresses(endpoints)
 			if err != nil {
 				return false, err
@@ -389,57 +390,51 @@ func (r *Reconciler) reconcileAPIServers(ctx context.Context, updates chan<- upd
 		})
 }
 
-func extractAPIServerAddresses(endpoints *corev1.Endpoints) ([]k0snet.HostPort, error) {
+// extractAPIServerAddresses extracts the API server addresses from the given EndpointSlice.
+func extractAPIServerAddresses(es *discoveryv1.EndpointSlice) ([]k0snet.HostPort, error) {
 	var warnings []error
 	apiServers := []k0snet.HostPort{}
 
-	for sIdx, subset := range endpoints.Subsets {
-		var ports []uint16
-		for pIdx, port := range subset.Ports {
+	var ports []uint16
+	for pIdx, port := range es.Ports {
+		if port.Protocol == nil || *port.Protocol != corev1.ProtocolTCP ||
+			port.Name == nil || *port.Name != "https" {
 			// FIXME: is a more sophisticated port detection required?
 			// E.g. does the service object need to be inspected?
-			if port.Protocol != corev1.ProtocolTCP || port.Name != "https" {
-				continue
-			}
-
-			if port.Port < 0 || port.Port > math.MaxUint16 {
-				path := field.NewPath("subsets").Index(sIdx).Child("ports").Index(pIdx).Child("port")
-				warning := field.Invalid(path, port.Port, "out of range")
-				warnings = append(warnings, warning)
-				continue
-			}
-
-			ports = append(ports, uint16(port.Port))
+			continue
 		}
+		if port.Port == nil || *port.Port < 1 || *port.Port > math.MaxUint16 {
+			path := field.NewPath("ports").Index(pIdx).Child("port")
+			warning := field.Invalid(path, port.Port, "out of range")
+			warnings = append(warnings, warning)
+			continue
+		}
+		ports = append(ports, uint16(*port.Port))
+	}
 
-		if len(ports) < 1 {
-			path := field.NewPath("subsets").Index(sIdx)
-			warning := field.Forbidden(path, "no suitable TCP/https ports found")
+	for aIdx, ep := range es.Endpoints {
+		var addr string
+		if len(ep.Addresses) >= 1 {
+			// FIXME: if there are multiple addresses per endpoint, should they all be used?
+			// Is that even possible in this specific scenario?
+			addr = ep.Addresses[0]
+		} else if ep.Hostname != nil && *ep.Hostname != "" {
+			addr = *ep.Hostname
+		} else {
+			path := field.NewPath("addresses").Index(aIdx)
+			warning := field.Forbidden(path, "neither ip nor hostname specified")
 			warnings = append(warnings, warning)
 			continue
 		}
 
-		for aIdx, address := range subset.Addresses {
-			host := address.IP
-			if host == "" {
-				host = address.Hostname
-			}
-			if host == "" {
-				path := field.NewPath("addresses").Index(aIdx)
-				warning := field.Forbidden(path, "neither ip nor hostname specified")
-				warnings = append(warnings, warning)
+		for _, port := range ports {
+			apiServer, err := k0snet.NewHostPort(addr, port)
+			if err != nil {
+				warnings = append(warnings, fmt.Errorf("%s:%d: %w", addr, port, err))
 				continue
 			}
 
-			for _, port := range ports {
-				apiServer, err := k0snet.NewHostPort(host, port)
-				if err != nil {
-					warnings = append(warnings, fmt.Errorf("%s:%d: %w", host, port, err))
-					continue
-				}
-
-				apiServers = append(apiServers, *apiServer)
-			}
+			apiServers = append(apiServers, *apiServer)
 		}
 	}
 
