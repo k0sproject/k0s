@@ -27,7 +27,7 @@ const (
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
 	CertMode = 0644
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
-	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
+	// this relates to files like: kube-apiserver.yaml, certificate files, and more
 	CertSecureMode = 0640
 	// BinDirMode is the expected directory permissions for BinDir
 	BinDirMode = 0755
@@ -41,6 +41,9 @@ const (
 	KineDBDirMode = 0750
 	// keepalived is the expected directory permissions for the Keepalived directory
 	KeepalivedDirMode = 0600
+	// OwnerOnlyMode is the expected file permissions for owner-only access files.
+	// this relates to files like: admin.conf, kubelet config.yaml
+	OwnerOnlyMode = 0600
 
 	/* User accounts for services */
 
