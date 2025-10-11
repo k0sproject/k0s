@@ -141,13 +141,24 @@ func (s *BasicSuite) checkCertPerms(ctx context.Context, node string) error {
 	}
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(ctx, `find /var/lib/k0s/custom-data-dir/pki/  \( -name '*.key' -o -name '*.conf' \) -a \! -perm 0640`)
+	// Check that all .key files have 640 permissions
+	keyOutput, err := ssh.ExecWithOutput(ctx, `find /var/lib/k0s/custom-data-dir/pki/ -name '*.key' -a \! -perm 0640`)
 	if err != nil {
 		return err
 	}
 
-	if output != "" {
-		return fmt.Errorf("some private files having non 640 permissions: %s", output)
+	if keyOutput != "" {
+		return fmt.Errorf("some private key files having non 640 permissions: %s", keyOutput)
+	}
+
+	// Check that .conf files have either 640 or 600 permissions (admin.conf uses 600, others use 640)
+	confOutput, err := ssh.ExecWithOutput(ctx, `find /var/lib/k0s/custom-data-dir/pki/ -name '*.conf' -a \! -perm 0640 -a \! -perm 0600`)
+	if err != nil {
+		return err
+	}
+
+	if confOutput != "" {
+		return fmt.Errorf("some private conf files having non 640/600 permissions: %s", confOutput)
 	}
 
 	return nil
