@@ -140,7 +140,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), kubeConfigAPIUrl, c.CACert, ccmCert.Cert, ccmCert.Key, apiServerUID, constant.CertSecureMode)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), kubeConfigAPIUrl, c.CACert, ccmCert.Cert, ccmCert.Key, apiServerUID, constant.OwnerOnlyMode)
 	})
 
 	eg.Go(func() error {
@@ -164,7 +164,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), kubeConfigAPIUrl, c.CACert, schedulerCert.Cert, schedulerCert.Key, uid, constant.CertSecureMode)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), kubeConfigAPIUrl, c.CACert, schedulerCert.Cert, schedulerCert.Key, uid, constant.OwnerOnlyMode)
 	})
 
 	eg.Go(func() error {
