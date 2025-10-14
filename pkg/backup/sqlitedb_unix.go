@@ -6,12 +6,13 @@
 package backup
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/rqlite/rqlite/db"
 	"github.com/sirupsen/logrus"
+	_ "modernc.org/sqlite"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -19,6 +20,24 @@ import (
 )
 
 const kineBackup = "kine-state-backup.db"
+
+// sqliteDB wraps sql.DB to provide backup functionality
+type sqliteDB struct {
+	*sql.DB
+}
+
+func openDB(path string) (*sqliteDB, error) {
+	db, err := sql.Open("sqlite", path+"?mode=ro")
+	if err != nil {
+		return nil, err
+	}
+	return &sqliteDB{DB: db}, nil
+}
+
+func (db *sqliteDB) Backup(path string) error {
+	_, err := db.Exec(fmt.Sprintf("VACUUM INTO '%s'", path))
+	return err
+}
 
 type sqliteStep struct {
 	dbPath string
@@ -37,10 +56,11 @@ func (s *sqliteStep) Name() string {
 }
 
 func (s *sqliteStep) Backup() (StepResult, error) {
-	kineDB, err := db.Open(s.dbPath)
+	kineDB, err := openDB(s.dbPath)
 	if err != nil {
 		return StepResult{}, err
 	}
+	defer kineDB.Close()
 	path := filepath.Join(s.tmpDir, kineBackup)
 
 	logrus.Debugf("exporting kine db to %v", path)
