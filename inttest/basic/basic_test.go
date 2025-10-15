@@ -138,7 +138,7 @@ func (s *BasicSuite) checkCertPerms(ctx context.Context, node string) error {
 		return fmt.Errorf("some private key files having non 640 permissions: %s", keyOutput)
 	}
 
-	// Check that .conf files have either 640 or 600 permissions (admin.conf uses 600, others use 640)
+	// Check that .conf files have either 640 or 600 permissions (admin.conf, scheduler.conf, and ccm.conf use 600, others use 640)
 	confOutput, err := ssh.ExecWithOutput(ctx, `find /var/lib/k0s/custom-data-dir/pki/ -name '*.conf' -a \! -perm 0640 -a \! -perm 0600`)
 	if err != nil {
 		return err
