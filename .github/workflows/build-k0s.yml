@@ -98,6 +98,15 @@ jobs:
           path: |
             k0s${{ steps.build-prepare.outputs.executable-suffix }}
 
+      - name: "Build :: SBOM"
+        run: make spdx.json
+
+      - name: "Upload :: SBOM"
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: spdx.json
+
       - name: "Build :: Airgap image list"
         if: inputs.target-os != 'windows'
         run: make airgap-images.txt && cat airgap-images.txt

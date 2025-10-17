@@ -134,26 +134,27 @@ jobs:
       target-os: linux
       target-arch: amd64
 
-  generate-sbom:
-    name: "Build :: SBOM"
-    needs: [build-k0s]
+  submit-sbom:
+    name: "Submit :: SBOM"
 
+    if: github.ref == 'refs/heads/main'
+    needs: [build-k0s]
     runs-on: ubuntu-24.04
 
+    permissions:
+      id-token: write
+      contents: write
+
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-
-      - name: Generate SBOM
-        run: |
-          make bindata
-          mkdir -p sbom && chmod 777 sbom
-          make sbom/spdx.json
-
-      - uses: actions/upload-artifact@v4
+      - name: Download
+        uses: actions/download-artifact@v5
         with:
-          name: spdx.json
-          path: sbom/spdx.json
+          name: sbom-linux-amd64
+
+      - name: Submit
+        uses: advanced-security/spdx-dependency-submission-action@v0.1.1
+        with:
+          filePath: spdx.json
 
   unittests-k0s:
     strategy:
