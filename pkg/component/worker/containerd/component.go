@@ -277,7 +277,7 @@ func (c *Component) restart() {
 // Stop stops containerd.
 func (c *Component) Stop() error {
 	if c.supervisor != nil {
-		c.supervisor.Stop()
+		return c.supervisor.Stop()
 	}
 	return nil
 }
