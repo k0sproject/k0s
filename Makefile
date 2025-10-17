@@ -325,6 +325,7 @@ clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-find pkg/apis -type f -name .controller-gen.stamp -delete
 	-rm pkg/client/clientset/.client-gen.stamp
 	-rm -f hack/.copyright.stamp
+	-rm -f spdx.json
 	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C inttest clean
@@ -344,35 +345,12 @@ docs-serve-dev:
 	  -p '$(DOCS_DEV_PORT):8000' \
 	  $(DOCKER_RUN_OPTS) k0sdocs.docker-image.serve-dev
 
-sbom/spdx.json: go.mod
-	mkdir -p -- '$(dir $@)'
+spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	$(DOCKER) run --rm \
-	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
-	  -v "$(CURDIR)/embedded-bins/staging/linux/bin:/k0s/bin" \
-	  -v "$(CURDIR)/syft.yaml:/tmp/syft.yaml" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  --user $(BUILD_UID):$(BUILD_GID) \
-	  $(DOCKER_RUN_OPTS) anchore/syft:v0.90.0 \
-	  /k0s -o spdx-json@2.2=/out/spdx.json -c /tmp/syft.yaml
-
-.PHONY: sign-sbom
-sign-sbom: sbom/spdx.json
-	$(DOCKER) run --rm \
-	  -v "$(CURDIR):/k0s" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  $(DOCKER_RUN_OPTS) ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
-	  sign-blob \
-	  --key /k0s/cosign.key \
-	  --tlog-upload=false \
-	  /k0s/sbom/spdx.json --output-file /out/spdx.json.sig
-
-.PHONY: sign-pub-key
-sign-pub-key:
-	$(DOCKER) run --rm \
-	  -v "$(CURDIR):/k0s" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  $(DOCKER_RUN_OPTS) ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
-	  public-key \
-	  --key /k0s/cosign.key --output-file /out/cosign.pub
+	  -v '$(CURDIR)/syft.yaml':/k0s/syft.yaml:ro \
+	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
+	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
+	  -w /k0s \
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.24.0 \
+	  --source-name k0s --source-version '$(VERSION)' \
+	  -c syft.yaml -o spdx-json@2.2 . >'$@'
