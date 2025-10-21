@@ -108,7 +108,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			return err
 		}
 
-		if err := kubeConfig(c.K0sVars.AdminKubeConfigPath, kubeConfigAPIUrl, c.CACert, adminCert.Cert, adminCert.Key, users.RootUID); err != nil {
+		if err := kubeConfig(c.K0sVars.AdminKubeConfigPath, kubeConfigAPIUrl, c.CACert, adminCert.Cert, adminCert.Key, users.RootUID, constant.OwnerOnlyMode); err != nil {
 			return err
 		}
 
@@ -137,7 +137,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			return err
 		}
 
-		return kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, kubeConfigAPIUrl, c.CACert, konnectivityCert.Cert, konnectivityCert.Key, uid)
+		return kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, kubeConfigAPIUrl, c.CACert, konnectivityCert.Cert, konnectivityCert.Key, uid, constant.CertSecureMode)
 	})
 
 	eg.Go(func() error {
@@ -153,7 +153,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), kubeConfigAPIUrl, c.CACert, ccmCert.Cert, ccmCert.Key, apiServerUID)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), kubeConfigAPIUrl, c.CACert, ccmCert.Cert, ccmCert.Key, apiServerUID, constant.CertSecureMode)
 	})
 
 	eg.Go(func() error {
@@ -177,7 +177,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), kubeConfigAPIUrl, c.CACert, schedulerCert.Cert, schedulerCert.Key, uid)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), kubeConfigAPIUrl, c.CACert, schedulerCert.Cert, schedulerCert.Key, uid, constant.CertSecureMode)
 	})
 
 	eg.Go(func() error {
@@ -287,7 +287,7 @@ func detectLocalIPs(ctx context.Context) ([]string, error) {
 	return localIPs, nil
 }
 
-func kubeConfig(dest string, url *url.URL, caCert, clientCert, clientKey string, ownerID int) error {
+func kubeConfig(dest string, url *url.URL, caCert, clientCert, clientKey string, ownerID int, fileMode os.FileMode) error {
 	// We always overwrite the kubeconfigs as the certs might be regenerated at startup
 	const (
 		clusterName = "local"
@@ -315,10 +315,5 @@ func kubeConfig(dest string, url *url.URL, caCert, clientCert, clientKey string,
 		return err
 	}
 
-	err = file.WriteContentAtomically(dest, kubeconfig, constant.CertSecureMode)
-	if err != nil {
-		return err
-	}
-
-	return file.Chown(dest, ownerID, constant.CertSecureMode)
+	return file.AtomicWithTarget(dest).WithPermissions(fileMode).WithOwner(ownerID).Write(kubeconfig)
 }
