@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/fsnotify/fsnotify"
@@ -55,57 +54,63 @@ func (s *StackApplier) Run(ctx context.Context) error {
 		return nil // The context is already done.
 	}
 
+	trigger := make(chan struct{}, 1)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("failed to create watcher: %w", err)
 	}
-	defer watcher.Close()
 
-	debounceCtx, cancelDebouncer := context.WithCancel(ctx)
-	defer cancelDebouncer()
-
-	debouncer := debounce.Debouncer[fsnotify.Event]{
-		Input:    watcher.Events,
-		Timeout:  1 * time.Second,
-		Filter:   s.triggersApply,
-		Callback: func(fsnotify.Event) { s.apply(debounceCtx) },
-	}
-
-	// Send an artificial event to ensure that an initial apply will happen.
-	go func() { watcher.Events <- fsnotify.Event{} }()
-
-	// Consume and log any errors.
 	go func() {
-		for {
-			err, ok := <-watcher.Errors
-			if !ok {
-				return
+		defer close(trigger)
+		defer func() {
+			if err := watcher.Close(); err != nil {
+				s.log.WithError(err).Error("Failed to close watcher")
 			}
-			s.log.WithError(err).Error("Error while watching stack")
-		}
+		}()
+		err = s.runWatcher(watcher, trigger, ctx.Done())
 	}()
 
-	err = watcher.Add(s.path)
-	if err != nil {
-		return fmt.Errorf("failed to watch %q: %w", s.path, err)
+	if addErr := watcher.Add(s.path); addErr != nil {
+		return fmt.Errorf("failed to watch %q: %w", s.path, addErr)
 	}
 
-	_ = debouncer.Run(debounceCtx)
-	return nil
+	for range trigger {
+		s.apply(ctx)
+	}
+
+	return err
 }
 
-func (*StackApplier) triggersApply(event fsnotify.Event) bool {
-	// Always let the initial apply happen
-	if event == (fsnotify.Event{}) {
-		return true
-	}
+func (s *StackApplier) runWatcher(watcher *fsnotify.Watcher, trigger chan<- struct{}, stop <-chan struct{}) error {
+	const timeout = 1 * time.Second // debounce events for one second
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 
-	// Only consider events on manifest files
-	if match, _ := filepath.Match(manifestFilePattern, filepath.Base(event.Name)); !match {
-		return false
-	}
+	for {
+		select {
+		case err := <-watcher.Errors:
+			return fmt.Errorf("while watching stack: %w", err)
 
-	return true
+		case event := <-watcher.Events:
+			// Only consider events on manifest files
+			if match, _ := filepath.Match(manifestFilePattern, filepath.Base(event.Name)); !match {
+				continue
+			}
+			timer.Reset(timeout)
+
+		case <-timer.C:
+			select {
+			case trigger <- struct{}{}:
+			default:
+			}
+
+		case <-stop:
+			return nil
+		}
+	}
 }
 
 func (s *StackApplier) apply(ctx context.Context) {
