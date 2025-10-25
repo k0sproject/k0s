@@ -88,7 +88,7 @@ const (
 	CalicoCNIImage                        = "quay.io/k0sproject/calico-cni"
 	CalicoComponentImagesVersion          = "v3.29.6-0"
 	CalicoCNIWindowsImage                 = "docker.io/calico/cni-windows"
-	CalicoCNIWindowsImageVersion          = "v3.29.6"
+	CalicoCNIWindowsImageVersion          = "v3.31.0"
 	CalicoNodeImage                       = "quay.io/k0sproject/calico-node"
 	CalicoNodeWindowsImage                = "docker.io/calico/node-windows"
 	CalicoNodeWindowsImageVersion         = "v3.29.6"
