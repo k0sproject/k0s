@@ -69,6 +69,7 @@ jobs:
             pkg/assets/zz_generated_offsets_${{ inputs.target-os }}.go
 
       - name: "Cache :: GOCACHE"
+        id: cache-gocache
         uses: actions/cache@v4
         with:
           key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-${{ github.ref_name }}-${{ github.sha }}
@@ -76,6 +77,12 @@ jobs:
             build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-${{ github.ref_name }}-
           path: |
             build/cache/go/build
+
+      - name: "Cache :: GOCACHE :: Prepare"
+        if: steps.cache-gocache.outputs.cache-hit
+        run: |
+          touch -t "$(TZ=UTC+24 date +%Y%m%d%H%M.%S)" build/cache/_cache_sentinel
+          find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -exec touch -r build/cache/_cache_sentinel {} +
 
       - name: "Cache :: GOMODCACHE"
         uses: actions/cache@v4
@@ -128,3 +135,8 @@ jobs:
         with:
           name: ipv6-test-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: ipv6-test-images.txt
+
+      - name: "Cache :: GOCACHE :: Trim"
+        if: steps.cache-gocache.outputs.cache-hit
+        run: |
+          find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -not -newer build/cache/_cache_sentinel -delete
