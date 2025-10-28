@@ -79,13 +79,6 @@ jobs:
             build/cache/go/build
             build/cache/golangci-lint
 
-      - name: "Cache :: GOMODCACHE"
-        uses: actions/cache/restore@v4
-        with:
-          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
-          path: build/cache/go/mod
-          enableCrossOsArchive: true
-
       - name: Run linter
         env:
           CACHE_HIT_GOLANGCI: "${{ steps.cache-golangci.outputs.cache-hit }}"
@@ -120,13 +113,6 @@ jobs:
             build-k0s-linux-amd64-gocache-main-
           path: |
             build/cache/go/build
-
-      - name: "Cache :: GOMODCACHE"
-        uses: actions/cache/restore@v4
-        with:
-          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
-          path: build/cache/go/mod
-          enableCrossOsArchive: true
 
       - name: Check go.mod/go.sum to be consistent
         run: make --always-make go.sum && git diff --exit-code
