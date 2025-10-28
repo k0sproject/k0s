@@ -30,6 +30,9 @@ env:
   MAKEFLAGS: -j
   EMBEDDED_BINS_BUILDMODE: none
 
+permissions:
+  contents: read
+
 jobs:
   lint-go:
     strategy:
@@ -67,14 +70,13 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
-      - name: "Cache :: golangci-lint"
+      - name: Cache golangci-lint cache
         id: cache-golangci
         uses: actions/cache@v4
         with:
-          key: lint-${{ matrix.target-os }}-amd64-golangci-${{ github.ref_name }}-${{ github.sha }}
+          key: "lint-${{ matrix.target-os }}-amd64-golangci-${{ env.GOLANGCI_LINT_VERSION }}-go-${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: |
-            lint-${{ matrix.target-os }}-amd64-golangci-${{ github.ref_name }}-
-            lint-${{ matrix.target-os }}-amd64-golangci-main-
+            lint-${{ matrix.target-os }}-amd64-golangci-${{ env.GOLANGCI_LINT_VERSION }}-go-${{ env.GO_VERSION }}-
           path: |
             build/cache/go/build
             build/cache/golangci-lint
@@ -103,16 +105,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          preserve-credentials: false
 
-      - name: "Cache :: GOCACHE"
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Restore Go cache
         uses: actions/cache/restore@v4
         with:
-          key: build-k0s-linux-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
+          key: "build-k0s-linux-amd64-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: |
-            build-k0s-linux-amd64-gocache-${{ github.ref_name }}-
-            build-k0s-linux-amd64-gocache-main-
-          path: |
-            build/cache/go/build
+            build-k0s-linux-amd64-gocache-go${{ env.GO_VERSION }}-
+          path: build/cache/go/build
 
       - name: Check go.mod/go.sum to be consistent
         run: make --always-make go.sum && git diff --exit-code

@@ -1,0 +1,46 @@
+name: Go build completed
+
+on:
+  workflow_run:
+    workflows: [Go build]
+    types: [completed]
+
+jobs:
+  # Based on https://github.com/actions/cache/blob/v4.2.0/tips-and-workarounds.md#force-deletion-of-caches-overriding-default-cache-eviction-policy
+  cleanup-actions-caches:
+    name: Cleanup GitHub Actions caches
+    runs-on: ubuntu-latest
+    permissions:
+      # `actions:write` permission is required to delete caches
+      #   See also: https://docs.github.com/en/rest/actions/cache?apiVersion=2022-11-28#delete-a-github-actions-cache-for-a-repository-using-a-cache-id
+      actions: write
+
+    steps:
+      # Group all caches that end with a Git commit hash by branch and keep only the most recently created one.
+      - name: Cleanup
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_REPO: "${{ github.repository }}"
+          QUERY: |
+            [ .actions_caches[]
+              | . + { key_prefix: .key | sub("-[0-9a-f]{40}$"; "") } # Calculate cache prefix
+              | select(.key_prefix != .key)                          # Only keep caches which have the right suffix
+            ]
+            | [
+              group_by([.ref, .key_prefix])[] # Look at all the caches per branch with the same prefix
+              | sort_by(.created_at)          # Sort by creation date ...
+              | reverse                       # ... so that the newest cache is the first in the array
+              | del(.[0])                     # Remove that newest cache, i.e. don't delete it
+            ]
+            | flatten           # Remove the grouping
+            | .[]               # Unpack the resulting flat array
+            | [.id, .ref, .key] # Extract the values to be returned
+            | @sh               # Escape them to be used in POSIX shells
+
+        run: |
+          set -euo pipefail
+          gh api -X GET repos/{owner}/{repo}/actions/caches -q "$QUERY" | while read -r args; do
+            eval "set -- $args"
+            echo Deleting cache with id "$1" from "$2": "$3"
+            gh api -X DELETE repos/{owner}/{repo}/actions/caches/"$1" || :
+          done
