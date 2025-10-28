@@ -179,6 +179,8 @@ jobs:
 
     env:
       EMBEDDED_BINS_BUILDMODE: none
+      # Set SOURCE_DATE_EPOCH to optimize cache usage
+      MAKEFLAGS: -j SOURCE_DATE_EPOCH=315532800
 
     steps:
       - name: Check out code into the Go module directory
@@ -209,15 +211,13 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
-      - name: Cache GOCACHE
+      - name: Cache Go cache
         id: cache-gocache
         uses: actions/cache@v4
         with:
-          key: unittests-k0s-${{ matrix.name }}-gocache-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            unittests-k0s-${{ matrix.name }}-gocache-${{ github.ref_name }}-
-          path: |
-            build/cache/go/build
+          key: "unittests-k0s-${{ matrix.name }}-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
+          restore-keys: "unittests-k0s-${{ matrix.name }}-gocache-go${{ env.GO_VERSION }}-"
+          path: build/cache/go/build
 
       - name: Run unit tests
         env:
@@ -317,35 +317,40 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Cache embedded binaries
+        id: cache-embedded-bins
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-embedded-bins-arm-${{ hashFiles('**/embedded-bins/**/*') }}
-          path: |
-            .bins.linux.stamp
-            embedded-bins/staging/linux/bin/
-            embedded-bins/Makefile.variables
+          key: "build-k0s-linux-arm-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}"
+          path: embedded-bins/staging/linux/bin/
 
-      - name: Cache GOCACHE
+      - name: Cache Go cache
         id: cache-gocache
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-smoketest-arm-gocache-arm-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-smoketest-arm-gocache-arm-${{ github.ref_name }}-
-          path: |
-            build/cache/go/build
+          key: "build-k0s-linux-arm-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
+          restore-keys: "build-k0s-linux-arm-gocache-go${{ env.GO_VERSION }}-"
+          path: build/cache/go/build
 
-      - name: Cache GOCACHE - Prepare
+      - name: Prepare Go cache
         if: steps.cache-gocache.outputs.cache-hit
         run: |
           touch -t "$(TZ=UTC+24 date +%Y%m%d%H%M.%S)" build/cache/_cache_sentinel
           find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -exec touch -r build/cache/_cache_sentinel {} +
 
       - name: Build
+        env:
+          EMBEDDED_BINS_CACHED: "${{ steps.cache-embedded-bins.outputs.cache-hit }}"
         run: |
+          gh --version || echo No gh installed
+          make .k0sbuild.docker-image.k0s
+          touch go.sum
+          if [ "$EMBEDDED_BINS_CACHED" == true ]; then
+            make --touch .bins.linux.stamp
+          fi
           make bindata
           make --touch codegen
           make build
+          echo "k0s binary size: **$(du -sh k0s | cut -f1)**" >>$GITHUB_STEP_SUMMARY
 
       - name: Upload compiled executable
         uses: actions/upload-artifact@v4
@@ -378,7 +383,7 @@ jobs:
           name: airgap-image-bundle-linux-arm.tar
           path: airgap-image-bundle-linux-arm.tar
 
-      - name: Cache GOCACHE - Trim
+      - name: Trim Go cache
         if: steps.cache-gocache.outputs.cache-hit
         run: |
           find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -not -newer build/cache/_cache_sentinel -delete
