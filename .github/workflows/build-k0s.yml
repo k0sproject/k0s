@@ -84,13 +84,6 @@ jobs:
           touch -t "$(TZ=UTC+24 date +%Y%m%d%H%M.%S)" build/cache/_cache_sentinel
           find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -exec touch -r build/cache/_cache_sentinel {} +
 
-      - name: "Cache :: GOMODCACHE"
-        uses: actions/cache@v4
-        with:
-          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
-          path: build/cache/go/mod
-          enableCrossOsArchive: true
-
       - name: "Build :: k0s"
         run: |
           make bindata
