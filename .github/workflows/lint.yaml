@@ -68,6 +68,7 @@ jobs:
           cache: false
 
       - name: "Cache :: golangci-lint"
+        id: cache-golangci
         uses: actions/cache@v4
         with:
           key: lint-${{ matrix.target-os }}-amd64-golangci-${{ github.ref_name }}-${{ github.sha }}
@@ -86,7 +87,21 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Run linter
-        run: make lint-go $MAKE_EXTRA_ARGS
+        env:
+          CACHE_HIT_GOLANGCI: "${{ steps.cache-golangci.outputs.cache-hit }}"
+        run: |
+          if [ -n "$CACHE_HIT_GOLANGCI" ]; then
+            echo Preparing golangci-lint cache
+            touch -t "$(TZ=UTC+24 date +%Y%m%d%H%M.%S)" build/cache/_cache_sentinel
+            find build/cache/go/build build/cache/golangci-lint -type f \( -name '*-a' -o -name '*-d' \) -exec touch -r build/cache/_cache_sentinel {} +
+          fi
+
+          make lint-go $MAKE_EXTRA_ARGS
+
+          if [ -n "$CACHE_HIT_GOLANGCI" ]; then
+            echo Trimming golangci-lint cache
+            find build/cache/go/build build/cache/golangci-lint -type f \( -name '*-a' -o -name '*-d' \) -not -newer build/cache/_cache_sentinel -delete
+          fi
 
   lint-codegen:
     name: Lint generated code
