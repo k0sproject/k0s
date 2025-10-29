@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	// "github.com/k0sproject/k0s/pkg/component/manager"
@@ -47,6 +48,11 @@ func (u *UpdateProber) Init(ctx context.Context) error {
 
 func (u *UpdateProber) Start(ctx context.Context) error {
 	u.log.Debug("starting up")
+	// Check if it's disabled by env variable and return immediately
+	if isCheckUpdatesDisabled() {
+		u.log.Debug("update check interval disabled")
+		return nil
+	}
 	// Check for updates in 30min intervals from default update server
 	// ENV var only to be used for testing purposes
 	updateCheckInterval := 30 * time.Minute
@@ -76,6 +82,10 @@ func (u *UpdateProber) Start(ctx context.Context) error {
 
 func (u *UpdateProber) Stop() error {
 	return nil
+}
+
+func isCheckUpdatesDisabled() bool {
+	return strings.ToUpper(os.Getenv("K0S_UPDATE_CHECK_INTERVAL")) == "DISABLED"
 }
 
 func (u *UpdateProber) checkUpdates(ctx context.Context) {
@@ -176,6 +186,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 			return
 		}
 	} else {
-		u.log.Debugf("no newer version availablen")
+		u.log.Debugf("no newer version available")
 	}
 }
+
