@@ -12,6 +12,7 @@ import (
 )
 
 // NewFakeClientFactory creates new client factory
+//
 // Deprecated: Use [k0stestutil.NewFakeClientFactory] instead.
 func NewFakeClientFactory() client.FactoryInterface {
 	return &fakeClientFactory{
