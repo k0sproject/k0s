@@ -23,6 +23,7 @@ type BackupSuite struct {
 	common.BootlooseSuite
 	backupFunc  func() error
 	restoreFunc func() error
+	useKine     bool
 }
 
 func (s *BackupSuite) getControllerConfig() string {
@@ -35,6 +36,13 @@ func (s *BackupSuite) getControllerConfig() string {
 			},
 		},
 	}
+
+	if s.useKine {
+		config.Spec.Storage = &v1beta1.StorageSpec{
+			Type: v1beta1.KineStorageType,
+		}
+	}
+
 	yaml, err := yaml.Marshal(&config)
 	s.Require().NoError(err)
 	return string(yaml)
@@ -265,5 +273,18 @@ func TestBackupSuiteStream(t *testing.T) {
 	}
 	s.backupFunc = s.takeBackupStdout
 	s.restoreFunc = s.restoreBackupStdin
+	suite.Run(t, &s)
+}
+
+func TestBackupSuiteKine(t *testing.T) {
+	s := BackupSuite{
+		BootlooseSuite: common.BootlooseSuite{
+			ControllerCount: 1,
+			WorkerCount:     2,
+		},
+		useKine: true,
+	}
+	s.backupFunc = s.takeBackup
+	s.restoreFunc = s.restoreBackup
 	suite.Run(t, &s)
 }

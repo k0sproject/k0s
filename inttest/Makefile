@@ -80,8 +80,8 @@ check-ap-updater: .update-server.stamp
 check-ap-updater-periodic: .update-server.stamp
 check-ap-updater-periodic: TIMEOUT=10m
 
-# Backup check runs two scenarios
-check-backup: TIMEOUT=10m
+# Backup check runs multiple scenarios
+check-backup: TIMEOUT=12m
 
 # Config change smoke runs actually many cases hence a bit longer timeout
 check-configchange: TIMEOUT=8m
