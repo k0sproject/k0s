@@ -4,29 +4,20 @@
 package basic
 
 import (
-	"bytes"
-	"html/template"
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/stretchr/testify/suite"
-
-	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const configWithExternaladdress = `
-apiVersion: k0s.k0sproject.io/v1beta1
-kind: ClusterConfig
-metadata:
-  name: k0s
-spec:
-  api:
-    externalAddress: {{ .Address }}
-`
 
 type BackupSuite struct {
 	common.BootlooseSuite
@@ -35,20 +26,23 @@ type BackupSuite struct {
 }
 
 func (s *BackupSuite) getControllerConfig(ipAddress string) string {
-	data := struct {
-		Address string
-	}{
-		Address: ipAddress,
+	config := v1beta1.ClusterConfig{
+		Spec: &v1beta1.ClusterSpec{
+			API: &v1beta1.APISpec{
+				ExternalAddress: ipAddress,
+			},
+		},
 	}
-	content := bytes.NewBuffer([]byte{})
-	s.Require().NoError(template.Must(template.New("k0s.yaml").Parse(configWithExternaladdress)).Execute(content, data), "can't execute k0s.yaml template")
-	return content.String()
+	yaml, err := yaml.Marshal(&config)
+	s.Require().NoError(err)
+	return string(yaml)
 }
 
 func (s *BackupSuite) TestK0sGetsUp() {
 	ipAddress := s.GetControllerIPAddress(0)
 	s.T().Logf("ip address: %s", ipAddress)
 	config := s.getControllerConfig(ipAddress)
+	s.T().Log("Config:", config)
 	s.PutFile("controller0", "/tmp/k0s.yaml", config)
 	s.PutFile("controller1", "/tmp/k0s.yaml", config)
 
@@ -114,7 +108,7 @@ type snapshot struct {
 func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 	// Take some UIDs to be able to verify state has restored properly
 	namespaces := make(map[types.UID]string)
-	nsList, err := kc.CoreV1().Namespaces().List(s.Context(), v1.ListOptions{})
+	nsList, err := kc.CoreV1().Namespaces().List(s.Context(), metav1.ListOptions{})
 	s.Require().NoError(err)
 	for _, n := range nsList.Items {
 		namespaces[n.UID] = n.Name
@@ -122,13 +116,13 @@ func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 
 	services := make(map[types.UID]string)
 	{
-		svc, err := kc.CoreV1().Services("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
+		svc, err := kc.CoreV1().Services("default").Get(s.Context(), "kubernetes", metav1.GetOptions{})
 		s.Require().NoError(err)
 		services[svc.UID] = svc.Name
 	}
 
 	nodes := make(map[types.UID]string)
-	nodeList, err := kc.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
+	nodeList, err := kc.CoreV1().Nodes().List(s.Context(), metav1.ListOptions{})
 	s.Require().NoError(err)
 	for _, n := range nodeList.Items {
 		nodes[n.UID] = n.Name
