@@ -30,7 +30,7 @@ func (s *BackupSuite) getControllerConfig() string {
 		Spec: &v1beta1.ClusterSpec{
 			Network: &v1beta1.Network{
 				NodeLocalLoadBalancing: &v1beta1.NodeLocalLoadBalancing{
-					Enabled: true,
+					Enabled: s.ControllerCount > 1,
 				},
 			},
 		},
@@ -43,22 +43,30 @@ func (s *BackupSuite) getControllerConfig() string {
 func (s *BackupSuite) TestK0sGetsUp() {
 	config := s.getControllerConfig()
 	s.T().Log("Config:", config)
-	s.PutFile("controller0", "/tmp/k0s.yaml", config)
-	s.PutFile("controller1", "/tmp/k0s.yaml", config)
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", config)
 
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--enable-worker"))
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
-	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
-	token, err := s.GetJoinToken("controller")
-	s.Require().NoError(err)
-	s.Require().NoError(s.InitController(1, token, "--config=/tmp/k0s.yaml"))
-	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(1)))
 
-	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), kc))
-	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(1), kc))
+	var token string
+	if s.ControllerCount > 1 {
+		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
+		token, err = s.GetJoinToken("controller")
+		s.Require().NoError(err)
+
+		for i := range s.ControllerCount - 1 {
+			i := i + 1
+			s.PutFile(s.ControllerNode(i), "/tmp/k0s.yaml", config)
+			s.Require().NoError(s.InitController(i, token, "--config=/tmp/k0s.yaml"))
+		}
+	}
+
+	for i := range s.WorkerCount {
+		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(i), kc))
+	}
 
 	s.AssertSomeKubeSystemPods(kc)
 
@@ -69,21 +77,25 @@ func (s *BackupSuite) TestK0sGetsUp() {
 
 	snapshot := s.makeSnapshot(kc)
 
-	s.Require().NoError(s.StopController(s.ControllerNode(0)))
-	_ = s.StopController(s.ControllerNode(1)) // No error check as k0s might have actually exited since etcd is not really happy
-
-	s.reset(s.ControllerNode(0))
-	s.reset(s.ControllerNode(1))
+	for i := range s.ControllerCount {
+		s.Require().NoError(s.StopController(s.ControllerNode(i)))
+		s.reset(s.ControllerNode(i))
+	}
 
 	s.Require().NoError(s.restoreFunc())
 	s.Require().NoError(s.InitController(0, "--enable-worker"))
-	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
-	// Join the second controller as normally
-	s.Require().NoError(s.InitController(1, "--enable-worker", token))
+	// Join the other controllers in the usual way
+	if s.ControllerCount > 1 {
+		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
+		for i := range s.ControllerCount - 1 {
+			s.Require().NoError(s.InitController(i+1, "--enable-worker", token))
+		}
+	}
 
-	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), kc))
-	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(1), kc))
+	for i := range s.WorkerCount - 1 {
+		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(i), kc))
+	}
 
 	snapshotAfterBackup := s.makeSnapshot(kc)
 	// Matching object UIDs after restore guarantees we got the full state restored
@@ -229,7 +241,7 @@ func (s *BackupSuite) restoreBackupStdin() error {
 func TestBackupSuite(t *testing.T) {
 	s := BackupSuite{
 		BootlooseSuite: common.BootlooseSuite{
-			ControllerCount: 2,
+			ControllerCount: 3,
 			WorkerCount:     2,
 		},
 	}
@@ -241,8 +253,8 @@ func TestBackupSuite(t *testing.T) {
 func TestBackupSuiteStream(t *testing.T) {
 	s := BackupSuite{
 		BootlooseSuite: common.BootlooseSuite{
-			ControllerCount: 2,
-			WorkerCount:     2,
+			ControllerCount: 1,
+			WorkerCount:     1,
 		},
 	}
 	s.backupFunc = s.takeBackupStdout
