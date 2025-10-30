@@ -70,6 +70,11 @@ func NewWorkerCmd() *cobra.Command {
 				return err
 			}
 
+			ctx := cmd.Context()
+			if err := initLogging(ctx, opts.K0sVars.DataDir); err != nil {
+				return fmt.Errorf("failed to initialize logging: %w", err)
+			}
+
 			c := (*Command)(opts)
 			if len(args) > 0 {
 				c.TokenArg = args[0]
@@ -111,7 +116,7 @@ func NewWorkerCmd() *cobra.Command {
 				return err
 			}
 
-			return c.Start(cmd.Context(), nodeName, kubeletExtraArgs, getBootstrapKubeconfig, nil)
+			return c.Start(ctx, nodeName, kubeletExtraArgs, getBootstrapKubeconfig, nil)
 		},
 	}
 
@@ -265,10 +270,6 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	if c.CriSocket == "" {
 		componentManager.Add(ctx, containerd.NewComponent(c.LogLevels.Containerd, c.K0sVars, workerConfig))
 		componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
-	}
-
-	if c.WorkerProfile == "default" && runtime.GOOS == "windows" {
-		c.WorkerProfile = "default-windows"
 	}
 
 	if controller == nil && runtime.GOOS == "linux" {

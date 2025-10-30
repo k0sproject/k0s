@@ -140,11 +140,11 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: docker.io/library/nginx:1.29.1-alpine
+    image: docker.io/library/nginx:1.29.3-alpine
     ports:
     - containerPort: 80
   - name: curl
-    image: docker.io/curlimages/curl:8.15.0
+    image: docker.io/curlimages/curl:8.16.0
     command: ["/bin/sh", "-c"]
     args: ["tail -f /dev/null"]
 `

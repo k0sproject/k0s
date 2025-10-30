@@ -10,12 +10,14 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/asaskevich/govalidator"
+	"github.com/k0sproject/k0s/internal/pkg/iface"
+	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
+
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
+	"github.com/asaskevich/govalidator"
 )
 
 var _ Validateable = (*APISpec)(nil)
@@ -84,6 +86,21 @@ func (a *APISpec) APIAddress() string {
 		return a.ExternalHost()
 	}
 	return a.Address
+}
+
+func (a *APISpec) APIServerHostPort() (*k0snet.HostPort, error) {
+	if a.ExternalAddress != "" {
+		if ip := net.ParseIP(a.ExternalAddress); ip != nil {
+			return k0snet.NewHostPort(a.ExternalAddress, uint16(a.Port))
+		}
+		hostPort, err := k0snet.ParseHostPortWithDefault(a.ExternalAddress, uint16(a.Port))
+		if err != nil {
+			return nil, fmt.Errorf("external address is invalid: %w", err)
+		}
+		return hostPort, nil
+	}
+
+	return k0snet.NewHostPort(a.Address, uint16(a.Port))
 }
 
 func (a *APISpec) ExternalHost() string {

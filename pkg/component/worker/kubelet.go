@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	cliflag "k8s.io/component-base/cli/flag"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
+	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
@@ -115,7 +116,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// Kubelet uses a DNS lookup of the node name to figure out the node IP,
 		// but will only pick one for a single family. Do something similar as
 		// kubelet, but for both IPv4 and IPv6.
-		// https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/kubelet/nodestatus/setters.go#L150-L178
+		// https://github.com/kubernetes/kubernetes/blob/v1.34.1/pkg/kubelet/nodestatus/setters.go#L150-L178
 		ipv4, ipv6, err := lookupNodeName(ctx, k.NodeName)
 		if err != nil {
 			logrus.WithError(err).Errorf("failed to lookup %q", k.NodeName)
@@ -134,7 +135,6 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	case "windows":
 		args["--enforce-node-allocatable"] = ""
 		args["--hairpin-mode"] = "promiscuous-bridge"
-		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
 	}
 
 	if k.CRISocket == "" && runtime.GOOS != "windows" {
@@ -224,7 +224,7 @@ func (k *Kubelet) writeKubeletConfig() error {
 		return fmt.Errorf("can't marshal kubelet config: %w", err)
 	}
 
-	err = file.WriteContentAtomically(k.configPath, configBytes, 0644)
+	err = file.WriteContentAtomically(k.configPath, configBytes, constant.OwnerOnlyMode)
 	if err != nil {
 		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}
@@ -311,7 +311,8 @@ func determineKubeletResolvConfPath() *string {
 
 	switch runtime.GOOS {
 	case "windows":
-		return nil
+		// https://github.com/kubernetes/kubernetes/issues/116782#issuecomment-1477536396
+		return ptr.To("")
 
 	case "linux":
 		// https://www.freedesktop.org/software/systemd/man/systemd-resolved.service.html#/etc/resolv.conf

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"reflect"
 	"time"
 
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -256,4 +257,13 @@ func (i *ClusterConfigInitializer) createClusterConfig(ctx context.Context, clie
 	clusterWideConfig := i.initialConfig.GetClusterWideConfig().StripDefaults().CRValidator()
 	_, err := client.Create(ctx, clusterWideConfig, metav1.CreateOptions{})
 	return err
+}
+
+func updateIfChanged[T any](current *T, updated T) bool {
+	if !reflect.DeepEqual(*current, updated) {
+		*current = updated
+		return true
+	}
+
+	return false
 }

@@ -1,8 +1,9 @@
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    k8s-app: kube-proxy
+    k8s-app: kube-proxy-windows
   name: kube-proxy-windows
   namespace: kube-system
 spec:
@@ -21,13 +22,13 @@ spec:
           runAsUserName: "NT AUTHORITY\\system"
       hostNetwork: true
       containers:
-      - image: "{{ .KubeProxyImage }}:{{ .KubeProxyVersion }}"
+      - name: kube-proxy
+        image: "{{ .WindowsImage }}"
+        imagePullPolicy: "{{ .PullPolicy }}"
         args: ["$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/start.ps1"]
         workingDir: "$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/"
-        name: kube-proxy
-        imagePullPolicy: Always
         env:
-        - name: NODE_NAME
+        - name: NODENAME
           valueFrom:
             fieldRef:
               apiVersion: v1

@@ -494,6 +494,7 @@ func (r *Reconciler) buildConfigMaps(snapshot *snapshot) ([]*corev1.ConfigMap, e
 	workerProfiles["default"] = workerProfile
 
 	workerProfile = r.buildProfile(snapshot)
+	workerProfile.PauseImage = snapshot.pauseWindowsImage.DeepCopy()
 	workerProfile.KubeletConfiguration.CgroupsPerQOS = ptr.To(false)
 	workerProfile.KubeletConfiguration.KubeReservedCgroup = ""
 	workerProfile.KubeletConfiguration.KubeletCgroups = ""

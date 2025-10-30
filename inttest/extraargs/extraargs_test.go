@@ -8,9 +8,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/k0sproject/k0s/inttest/common"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type ExtraArgsSuite struct {
@@ -18,6 +20,8 @@ type ExtraArgsSuite struct {
 }
 
 func (s *ExtraArgsSuite) TestK0sGetsUp() {
+	ctx := s.Context()
+
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 
@@ -31,10 +35,7 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 
 	s.AssertSomeKubeSystemPods(kc)
 
-	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
-
-	sshCtrl, err := s.SSH(s.Context(), s.ControllerNode(0))
+	sshCtrl, err := s.SSH(ctx, s.ControllerNode(0))
 	defer sshCtrl.Disconnect()
 	s.NoError(err)
 
@@ -46,13 +47,17 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/etcd", "--log-level=warn")
 	s.checkFlagCount(sshCtrl, "/var/lib/k0s/bin/etcd", "--logger=zap", 3)
 
-	sshWorker, err := s.SSH(s.Context(), s.WorkerNode(0))
+	sshWorker, err := s.SSH(ctx, s.WorkerNode(0))
 	defer sshWorker.Disconnect()
 	s.NoError(err)
 
+	s.T().Log("waiting to see kube-proxy pods ready")
+	s.NoError(common.WaitForDaemonSet(ctx, kc, "kube-proxy", metav1.NamespaceSystem), "kube-proxy did not start")
 	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "--config-sync-period=12m0s")
 	s.checkFlag(sshWorker, "/usr/local/bin/kube-proxy", "-v=2")
 
+	s.T().Log("waiting to see kube-router pods ready")
+	s.NoError(common.WaitForKubeRouterReady(ctx, kc), "kube-router did not start")
 	s.checkFlag(sshWorker, "kube-router", "--enable-cni=true")
 	s.checkFlag(sshWorker, "kube-router", "-v=0")
 }

@@ -133,6 +133,7 @@ $(K0S_GO_BUILD_CACHE):
 
 .k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | $(K0S_GO_BUILD_CACHE)
 	$(DOCKER) build --progress=plain --iidfile '$@' \
+	  --build-arg BUILDKIT_DOCKERFILE_CHECK=skip=InvalidDefaultArgInFrom \
 	  --build-arg BUILDIMAGE=$(GOLANG_IMAGE) \
 	  -t k0sbuild.docker-image.k0s - <build/Dockerfile
 
@@ -261,29 +262,33 @@ airgap-image-bundle-linux-arm.tar \
 airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
 	./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' <airgap-images.txt
 
-ipv6-test-images.txt: embedded-bins/Makefile.variables $(shell find hack/gen-test-images-list/ -type f)
-	$(GO) run -tags=hack hack/gen-test-images-list/cmd/main.go -o '$@' \
-		-alpine-version=$(alpine_version) \
-		-kubernetes-version=$(kubernetes_version) \
-		-sonobuoy-version=$(sonobuoy_version)
+ipv6-test-images.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
+	{ \
+	  echo "docker.io/library/nginx:1.29.3-alpine"; \
+	  echo "docker.io/curlimages/curl:8.16.0"; \
+	  echo "docker.io/library/alpine:$(alpine_version)"; \
+	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
+	  echo "registry.k8s.io/conformance:v$(kubernetes_version)"; \
+	  $(GO) run -tags=hack ./hack/gen-test-images-list; \
+	} >'$@'
 
-ipv6-image-bundle-linux-amd64.tar:   TARGET_PLATFORM := linux/amd64
-ipv6-image-bundle-linux-arm64.tar:   TARGET_PLATFORM := linux/arm64
-ipv6-image-bundle-linux-arm.tar:     TARGET_PLATFORM := linux/arm/v7
-ipv6-image-bundle-linux-riscv64.tar: TARGET_PLATFORM := linux/riscv64
-ipv6-image-bundle-linux-amd64.tar \
-ipv6-image-bundle-linux-arm64.tar \
-ipv6-image-bundle-linux-arm.tar \
-ipv6-image-bundle-linux-riscv64.tar: ipv6-test-images.txt
+ipv6-test-image-bundle-linux-amd64.tar:   TARGET_PLATFORM := linux/amd64
+ipv6-test-image-bundle-linux-arm64.tar:   TARGET_PLATFORM := linux/arm64
+ipv6-test-image-bundle-linux-arm.tar:     TARGET_PLATFORM := linux/arm/v7
+ipv6-test-image-bundle-linux-riscv64.tar: TARGET_PLATFORM := linux/riscv64
+ipv6-test-image-bundle-linux-amd64.tar \
+ipv6-test-image-bundle-linux-arm64.tar \
+ipv6-test-image-bundle-linux-arm.tar \
+ipv6-test-image-bundle-linux-riscv64.tar: k0s ipv6-test-images.txt
 	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <ipv6-test-images.txt
 
 .PHONY: $(smoketests)
 $(air_gapped_smoketests) $(ipv6_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
-$(ipv6_smoketests): ipv6-image-bundle-linux-$(HOST_ARCH).tar
+$(ipv6_smoketests): ipv6-test-image-bundle-linux-$(HOST_ARCH).tar
 $(smoketests): k0s
 	$(MAKE) -C inttest \
 		K0S_IMAGES_BUNDLE='$(CURDIR)/airgap-image-bundle-linux-$(HOST_ARCH).tar' \
-		K0S_EXTRA_IMAGES_BUNDLE='$(CURDIR)/ipv6-image-bundle-linux-$(HOST_ARCH).tar' \
+		K0S_EXTRA_IMAGES_BUNDLE='$(CURDIR)/ipv6-test-mage-bundle-linux-$(HOST_ARCH).tar' \
 		$@
 
 .PHONY: smoketests
@@ -321,6 +326,7 @@ clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-find pkg/apis -type f -name .controller-gen.stamp -delete
 	-rm pkg/client/clientset/.client-gen.stamp
 	-rm -f hack/.copyright.stamp
+	-rm -f spdx.json
 	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C inttest clean
@@ -340,35 +346,12 @@ docs-serve-dev:
 	  -p '$(DOCS_DEV_PORT):8000' \
 	  $(DOCKER_RUN_OPTS) k0sdocs.docker-image.serve-dev
 
-sbom/spdx.json: go.mod
-	mkdir -p -- '$(dir $@)'
+spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	$(DOCKER) run --rm \
-	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
-	  -v "$(CURDIR)/embedded-bins/staging/linux/bin:/k0s/bin" \
-	  -v "$(CURDIR)/syft.yaml:/tmp/syft.yaml" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  --user $(BUILD_UID):$(BUILD_GID) \
-	  $(DOCKER_RUN_OPTS) anchore/syft:v0.90.0 \
-	  /k0s -o spdx-json@2.2=/out/spdx.json -c /tmp/syft.yaml
-
-.PHONY: sign-sbom
-sign-sbom: sbom/spdx.json
-	$(DOCKER) run --rm \
-	  -v "$(CURDIR):/k0s" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  $(DOCKER_RUN_OPTS) ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
-	  sign-blob \
-	  --key /k0s/cosign.key \
-	  --tlog-upload=false \
-	  /k0s/sbom/spdx.json --output-file /out/spdx.json.sig
-
-.PHONY: sign-pub-key
-sign-pub-key:
-	$(DOCKER) run --rm \
-	  -v "$(CURDIR):/k0s" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  $(DOCKER_RUN_OPTS) ghcr.io/sigstore/cosign/cosign:v$(cosign_version) \
-	  public-key \
-	  --key /k0s/cosign.key --output-file /out/cosign.pub
+	  -v '$(CURDIR)/syft.yaml':/k0s/syft.yaml:ro \
+	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
+	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
+	  -w /k0s \
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.36.0 \
+	  --source-name k0s --source-version '$(VERSION)' \
+	  -c syft.yaml -o spdx-json@2.2 . >'$@'

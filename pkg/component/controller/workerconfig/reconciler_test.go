@@ -353,6 +353,16 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 			},
 			Images: &v1beta1.ClusterImages{
 				DefaultPullPolicy: string(corev1.PullNever),
+				Pause: &v1beta1.ImageSpec{
+					Image:   "pause",
+					Version: "pause-version",
+				},
+				Windows: &v1beta1.WindowsImageSpec{
+					Pause: &v1beta1.ImageSpec{
+						Image:   "win-pause",
+						Version: "win-pause-version",
+					},
+				},
 			},
 			WorkerProfiles: v1beta1.WorkerProfiles{{
 				Name:   "profile_XXX",
@@ -402,7 +412,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 
 	for name, configModFn := range expectedConfigMaps {
 		t.Run(name, func(t *testing.T) {
-			kubelet := requireKubelet(t, appliedResources, name)
+			kubelet := requireWorkerProfile(t, appliedResources, name)
 			expected := makeKubeletConfig(t, configModFn)
 			assert.JSONEq(t, expected, kubelet)
 		})
@@ -718,12 +728,22 @@ func newTestLogger(t *testing.T) logrus.FieldLogger {
 	return log.WithField("test", t.Name())
 }
 
-func requireKubelet(t *testing.T, resources []*unstructured.Unstructured, name string) string {
+func requireWorkerProfile(t *testing.T, resources []*unstructured.Unstructured, name string) string {
 	configMap := findResource(t, "No ConfigMap found with name "+name,
 		resources, func(resource *unstructured.Unstructured) bool {
 			return resource.GetKind() == "ConfigMap" && resource.GetName() == name
 		},
 	)
+
+	pauseImage, ok, err := unstructured.NestedString(configMap.Object, "data", "pauseImage")
+	require.NoError(t, err)
+	require.True(t, ok, "No data.pauseImage field")
+	if strings.Contains(name, "windows") {
+		require.JSONEq(t, `{"image":"win-pause","version":"win-pause-version"}`, pauseImage)
+	} else {
+		require.JSONEq(t, `{"image":"pause","version":"pause-version"}`, pauseImage)
+	}
+
 	kubeletConfigYAML, ok, err := unstructured.NestedString(configMap.Object, "data", "kubeletConfiguration")
 	require.NoError(t, err)
 	require.True(t, ok, "No data.kubeletConfiguration field")

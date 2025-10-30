@@ -166,13 +166,13 @@ In order to use containerd in conjunction with [AppArmor], it must be enabled in
 the kernel and the `/sbin/apparmor_parser` executable must be installed on the
 host, otherwise containerd will [disable][cd-aa] AppArmor support.
 
-[cd-aa]: https://github.com/containerd/containerd/blob/v1.7.27/pkg/apparmor/apparmor_linux.go#L34-L45
+[cd-aa]: https://github.com/containerd/containerd/blob/v1.7.28/pkg/apparmor/apparmor_linux.go#L34-L45
 [AppArmor]: https://wiki.ubuntu.com/AppArmor
 
 #### iptables
 
 iptables may be executed to detect if there are any existing iptables rules and
-if those are in legacy of nft mode. If iptables is not found, k0s will assume
+if those are in legacy or nft mode. If iptables is not found, k0s will assume
 that there are no pre-existing iptables rules.
 
 #### useradd / adduser

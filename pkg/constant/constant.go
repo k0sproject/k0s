@@ -27,7 +27,7 @@ const (
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
 	CertMode = 0644
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
-	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
+	// this relates to files like: kube-apiserver.yaml, certificate files, and more
 	CertSecureMode = 0640
 	// BinDirMode is the expected directory permissions for BinDir
 	BinDirMode = 0755
@@ -41,6 +41,9 @@ const (
 	KineDBDirMode = 0750
 	// keepalived is the expected directory permissions for the Keepalived directory
 	KeepalivedDirMode = 0600
+	// OwnerOnlyMode is the expected file permissions for owner-only access files.
+	// this relates to files like: admin.conf, kubelet config.yaml
+	OwnerOnlyMode = 0600
 
 	/* User accounts for services */
 
@@ -64,28 +67,36 @@ const (
 
 	/* Image Constants */
 
-	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
-	KonnectivityImageVersion           = "v0.33.0"
-	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
-	PushGatewayImageVersion            = "1.4.0-k0s.0"
-	MetricsImage                       = "quay.io/k0sproject/metrics-server"
-	MetricsImageVersion                = "v0.7.2-0"
-	KubePauseContainerImage            = "quay.io/k0sproject/pause"
-	KubePauseContainerImageVersion     = "3.10.1"
-	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion              = "v1.34.0"
-	CoreDNSImage                       = "quay.io/k0sproject/coredns"
-	CoreDNSImageVersion                = "1.12.2-1"
-	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"
-	EnvoyProxyImageVersion             = "v1.34.3"
-	CalicoImage                        = "quay.io/k0sproject/calico-cni"
-	CalicoComponentImagesVersion       = "v3.29.4-0"
-	CalicoNodeImage                    = "quay.io/k0sproject/calico-node"
-	KubeControllerImage                = "quay.io/k0sproject/calico-kube-controllers"
-	KubeRouterCNIImage                 = "quay.io/k0sproject/kube-router"
-	KubeRouterCNIImageVersion          = "v2.5.0-iptables1.8.11-0"
-	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
-	KubeRouterCNIInstallerImageVersion = "1.7.1-k0s.0"
+	KonnectivityImage                     = "quay.io/k0sproject/apiserver-network-proxy-agent"
+	KonnectivityImageVersion              = "v0.33.0"
+	PushGatewayImage                      = "quay.io/k0sproject/pushgateway-ttl"
+	PushGatewayImageVersion               = "1.4.0-k0s.0"
+	MetricsImage                          = "quay.io/k0sproject/metrics-server"
+	MetricsImageVersion                   = "v0.7.2-0"
+	KubePauseContainerImage               = "quay.io/k0sproject/pause"
+	KubePauseContainerImageVersion        = "3.10.1"
+	KubePauseWindowsContainerImage        = "k8s.gcr.io/pause"
+	KubePauseWindowsContainerImageVersion = "3.10.1"
+	KubeProxyImage                        = "quay.io/k0sproject/kube-proxy"
+	KubeProxyImageVersion                 = "v1.34.1"
+	KubeProxyWindowsImage                 = "docker.io/sigwindowstools/kube-proxy"
+	KubeProxyWindowsImageVersion          = "v1.34.1-calico-hostprocess"
+	CoreDNSImage                          = "quay.io/k0sproject/coredns"
+	CoreDNSImageVersion                   = "1.13.1"
+	EnvoyProxyImage                       = "quay.io/k0sproject/envoy-distroless"
+	EnvoyProxyImageVersion                = "v1.34.3"
+	CalicoCNIImage                        = "quay.io/k0sproject/calico-cni"
+	CalicoComponentImagesVersion          = "v3.29.6-0"
+	CalicoCNIWindowsImage                 = "docker.io/calico/cni-windows"
+	CalicoCNIWindowsImageVersion          = "v3.29.6"
+	CalicoNodeImage                       = "quay.io/k0sproject/calico-node"
+	CalicoNodeWindowsImage                = "docker.io/calico/node-windows"
+	CalicoNodeWindowsImageVersion         = "v3.29.6"
+	KubeControllerImage                   = "quay.io/k0sproject/calico-kube-controllers"
+	KubeRouterCNIImage                    = "quay.io/k0sproject/kube-router"
+	KubeRouterCNIImageVersion             = "v2.6.1-iptables1.8.11-0"
+	KubeRouterCNIInstallerImage           = "quay.io/k0sproject/cni-node"
+	KubeRouterCNIInstallerImageVersion    = "1.8.0-k0s.0"
 
 	/* Controller component names */
 
