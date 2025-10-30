@@ -25,11 +25,13 @@ type BackupSuite struct {
 	restoreFunc func() error
 }
 
-func (s *BackupSuite) getControllerConfig(ipAddress string) string {
+func (s *BackupSuite) getControllerConfig() string {
 	config := v1beta1.ClusterConfig{
 		Spec: &v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{
-				ExternalAddress: ipAddress,
+			Network: &v1beta1.Network{
+				NodeLocalLoadBalancing: &v1beta1.NodeLocalLoadBalancing{
+					Enabled: true,
+				},
 			},
 		},
 	}
@@ -39,9 +41,7 @@ func (s *BackupSuite) getControllerConfig(ipAddress string) string {
 }
 
 func (s *BackupSuite) TestK0sGetsUp() {
-	ipAddress := s.GetControllerIPAddress(0)
-	s.T().Logf("ip address: %s", ipAddress)
-	config := s.getControllerConfig(ipAddress)
+	config := s.getControllerConfig()
 	s.T().Log("Config:", config)
 	s.PutFile("controller0", "/tmp/k0s.yaml", config)
 	s.PutFile("controller1", "/tmp/k0s.yaml", config)
