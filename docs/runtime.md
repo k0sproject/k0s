@@ -212,14 +212,16 @@ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
 helm repo update
 helm install nvidia-gpu-operator -n nvidia-gpu-operator \
   --create-namespace \
-  --set operator.defaultRuntime=containerd \
-  --set toolkit.env[0].name=CONTAINERD_CONFIG \
-  --set toolkit.env[0].value=/etc/k0s/containerd.d/nvidia.toml \
-  --set toolkit.env[1].name=CONTAINERD_SOCKET \
-  --set toolkit.env[1].value=/run/k0s/containerd.sock \
-  --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS \
-  --set toolkit.env[2].value=nvidia \
-  nvidia/gpu-operator
+  --set "operator.defaultRuntime=containerd" \
+  --set "toolkit.env[0].name=CONTAINERD_CONFIG" \
+  --set "toolkit.env[0].value=/run/k0s/containerd-cri.toml" \
+  --set "toolkit.env[1].name=RUNTIME_DROP_IN_CONFIG" \
+  --set "toolkit.env[1].value=/etc/k0s/containerd.d/nvidia.toml" \
+  --set "toolkit.env[2].name=CONTAINERD_SOCKET" \
+  --set "toolkit.env[2].value=/run/k0s/containerd.sock " \
+  --set "toolkit.env[3].name=CONTAINERD_RUNTIME_CLASS" \
+  --set "toolkit.env[3].value=nvidia" \
+  nvidia/gpu-operator --version v25.10.0
 ```
 
 With this Helm chart values, NVIDIA GPU operator will deploy both driver and toolkit to the GPU nodes and additionally will configure containerd with NVIDIA specific runtime.
