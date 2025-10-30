@@ -81,21 +81,101 @@ There are [known](https://bugzilla.netfilter.org/show_bug.cgi?id=1632) version i
 
 ## Firewalld & k0s
 
-If you are using [`firewalld`](https://firewalld.org/) on your hosts you need to ensure it is configured to use the same `FirewallBackend` as k0s and other Kubernetes components use. Otherwise networking will be broken in various ways.
+If you are using [firewalld] on your hosts, make sure that it runs with the same
+backend (`nftables` or `iptables`) that k0s and the bundled Kubernetes
+components use. Otherwise, kube-proxy, Kube-router, or Calico will program rules
+in the wrong backend, which will result in a networking failure. You can
+configure the active backend via the `FirewallBackend` option in
+`/etc/firewalld/firewalld.conf`.
 
-Here's an example configuration for a tested working networking setup:
+Firewalld is known to be enabled by default in Oracle Linux.
 
-```sh
-[root@rhel-test ~]# firewall-cmd --list-all
+Instead of adding individual ports, create dedicated firewalld services for k0s.
+The k0s automated test suite uses the following XML snippets, so using them will
+ensure that your configuration is aligned with our automated validation process:
+
+Create the service file for controller nodes in
+`/etc/firewalld/services/k0s-controller.xml` as follows:
+
+```xml
+{% include "../hack/ostests/modules/os/k0s-controller.firewalld-service.xml" %}
+```
+
+Create the service file for worker nodes in
+`/etc/firewalld/services/k0s-worker.xml` as follows:
+
+```xml
+{% include "../hack/ostests/modules/os/k0s-worker.firewalld-service.xml" %}
+```
+
+With the services in place, enable them on the nodes. For nodes running
+controller components:
+
+```console
+$ sudo firewall-cmd --permanent --add-service=k0s-controller
+success
+```
+
+For nodes running worker components:
+
+```console
+$ sudo firewall-cmd --permanent --add-service=k0s-worker
+success
+$ sudo firewall-cmd --permanent --add-masquerade
+success
+```
+
+For nodes that run both controller and worker components, i.e. nodes running
+with the `controller --enable-worker` flag, you need to enable both.
+
+Allow traffic from your pod and service networks so that the host accepts
+traffic arriving via the overlay interfaces:
+
+```console
+$ sudo firewall-cmd --permanent --add-source=<podCIDR>
+success
+$ sudo firewall-cmd --permanent --add-source=<serviceCIDR>
+success
+```
+
+Replace `<podCIDR>` and `<serviceCIDR>` with the values configured in
+`k0s.yaml`. When you schedule workloads on controller nodes, add both
+`k0s-controller` and `k0s-worker` services to the machine. Add `--zone=<zone>`
+to the commands if you are configuring a zone other than the default.
+
+Reload firewalld once after applying the permanent changes:
+
+```console
+$ sudo firewall-cmd --reload
+success
+```
+
+For automated image builds where firewalld is not yet running (for example
+during cloud-init), use the offline variant:
+
+```console
+$ sudo firewall-offline-cmd --add-service=k0s-controller
+success
+$ sudo firewall-offline-cmd --add-service=k0s-worker
+success
+$ sudo firewall-offline-cmd --add-masquerade
+success
+$ sudo systemctl reload firewalld
+```
+
+After reloading, you should see the k0s services applied:
+
+```console
+$ sudo firewall-cmd --list-all
 public (active)
   target: default
   icmp-block-inversion: no
   interfaces: eth0
   sources: 10.244.0.0/16 10.96.0.0/12
-  services: cockpit dhcpv6-client ssh
-  ports: 80/tcp 6443/tcp 8132/tcp 10250/tcp 179/tcp 179/udp
+  services: cockpit dhcpv6-client k0s-controller k0s-worker ssh
+  ports:
   protocols:
-  forward: no
+  forward: yes
   masquerade: yes
   forward-ports:
   source-ports:
@@ -103,13 +183,4 @@ public (active)
   rich rules:
 ```
 
-Basic single node firewalld setup:
-
-```sh
-# Allow traffic from podCIDR
-$ firewall-cmd --add-source=10.244.0.0/16 --permanent
-# Allow kubelet API traffic
-$ firewall-cmd --add-port=10250/tcp --permanent
-# Apply firewall changes
-$ firewall-cmd --reload
-```
+[firewalld]: https://firewalld.org/
