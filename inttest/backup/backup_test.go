@@ -89,7 +89,9 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	if s.ControllerCount > 1 {
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 		for i := range s.ControllerCount - 1 {
-			s.Require().NoError(s.InitController(i+1, "--enable-worker", token))
+			i := i + 1
+			s.PutFile(s.ControllerNode(i), "/etc/k0s/k0s.yaml", config)
+			s.Require().NoError(s.InitController(i, "--enable-worker", token))
 		}
 	}
 
@@ -108,7 +110,11 @@ func (s *BackupSuite) reset(name string) {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	s.Require().NoError(ssh.Exec(s.Context(), "k0s reset --debug", common.SSHStreams{}))
+	s.Require().NoError(ssh.Exec(s.Context(), `
+		set -eu
+		k0s reset --debug
+		rm /tmp/k0s.yaml
+	`, common.SSHStreams{}))
 }
 
 type snapshot struct {
@@ -211,7 +217,7 @@ func (s *BackupSuite) restoreBackup() error {
 
 	s.T().Log("restoring controller from file")
 
-	out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s restore --debug $(ls /root/k0s_backup_*.tar.gz)")
+	out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s restore --debug --config-out /etc/k0s/k0s.yaml $(ls /root/k0s_backup_*.tar.gz)")
 	if !s.NoErrorf(err, "restore failed with output: %s", out) {
 		return err
 	}
