@@ -51,15 +51,50 @@ Reads the runtime configuration from standard input.`,
 		Args:             cobra.NoArgs,
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			var run func() error
+			ctx := cmd.Context()
+
+			var server *http.Server
 
 			if runtimeConfig, err := loadRuntimeConfig(cmd.InOrStdin()); err != nil {
 				return err
-			} else if run, err = buildServer(runtimeConfig.Spec.K0sVars, runtimeConfig.Spec.NodeConfig); err != nil {
+			} else if server, err = buildServer(runtimeConfig.Spec.K0sVars, runtimeConfig.Spec.NodeConfig); err != nil {
 				return err
 			}
 
-			return run()
+			listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", server.Addr)
+			if err != nil {
+				return err
+			}
+			defer server.Close()
+
+			logrus.Info("Listening on ", server.Addr, ", start serving")
+
+			serveErr := make(chan error, 1)
+			go func() {
+				defer close(serveErr)
+				serveErr <- server.ServeTLS(listener, "", "")
+			}()
+
+			select {
+			case err = <-serveErr:
+				logrus.WithError(err).Error("Stop serving")
+			case <-ctx.Done():
+				logrus.Info("Stop serving: ", context.Cause(ctx))
+				ctx = context.TODO()
+			}
+
+			ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			defer cancel()
+			if err := server.Shutdown(ctx); err != nil {
+				return fmt.Errorf("server shutdown: %w", err)
+			}
+
+			if errors.Is(<-serveErr, http.ErrServerClosed) {
+				logrus.Info("Good bye")
+				return nil
+			}
+
+			return fmt.Errorf("unexpected server errror: %w", err)
 		},
 	}
 
@@ -77,7 +112,7 @@ Reads the runtime configuration from standard input.`,
 }
 
 func loadRuntimeConfig(stdin io.Reader) (*config.RuntimeConfig, error) {
-	logrus.Info("Reading runtime configuration from standard input ...")
+	logrus.Info("Reading runtime configuration from standard input")
 	bytes, err := io.ReadAll(stdin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from standard input: %w", err)
@@ -91,7 +126,7 @@ func loadRuntimeConfig(stdin io.Reader) (*config.RuntimeConfig, error) {
 	return runtimeConfig, nil
 }
 
-func buildServer(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) (func() error, error) {
+func buildServer(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) (*http.Server, error) {
 	// Single kube client for whole lifetime of the API
 	client, err := kubeutil.NewClientFromFile(k0sVars.AdminKubeConfigPath)
 	if err != nil {
@@ -120,21 +155,25 @@ func buildServer(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) (fu
 		ipAddr = nodeConfig.Spec.API.Address
 	}
 
-	srv := &http.Server{
+	cert, err := tls.LoadX509KeyPair(
+		filepath.Join(k0sVars.CertRootDir, "k0s-api.crt"),
+		filepath.Join(k0sVars.CertRootDir, "k0s-api.key"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &http.Server{
 		Handler: mux,
 		Addr:    net.JoinHostPort(ipAddr, strconv.Itoa(nodeConfig.Spec.API.K0sAPIPort)),
 		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{cert},
 			MinVersion:   tls.VersionTLS12,
 			CipherSuites: constant.AllowedTLS12CipherSuiteIDs,
 		},
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-	}
-
-	cert := filepath.Join(k0sVars.CertRootDir, "k0s-api.crt")
-	key := filepath.Join(k0sVars.CertRootDir, "k0s-api.key")
-
-	return func() error { return srv.ListenAndServeTLS(cert, key) }, nil
+	}, nil
 }
 
 func etcdHandler(certRootDir, etcdCertDir string) http.Handler {
