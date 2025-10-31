@@ -31,7 +31,7 @@ func (m *K0SControlAPI) Init(_ context.Context) error {
 }
 
 // Run runs k0s control api as separate process
-func (m *K0SControlAPI) Start(_ context.Context) error {
+func (m *K0SControlAPI) Start(ctx context.Context) error {
 	// TODO: Make the api process to use some other user
 
 	selfExe, err := os.Executable()
@@ -53,7 +53,7 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 		Stdin:   func() io.Reader { return bytes.NewReader(runtimeConfig) },
 	}
 
-	return m.supervisor.Supervise()
+	return m.supervisor.Supervise(ctx)
 }
 
 // Stop stops k0s api

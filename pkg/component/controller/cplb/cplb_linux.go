@@ -169,7 +169,7 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		}()
 	}
 
-	return k.supervisor.Supervise()
+	return k.supervisor.Supervise(ctx)
 }
 
 // Stops keepalived and cleans up the virtual IPs. This is done so that if the
