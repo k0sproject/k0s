@@ -2712,31 +2712,97 @@ mode.</p>
 </ul>
 <p>There are <a href="https://bugzilla.netfilter.org/show_bug.cgi?id=1632">known</a> version incompatibility issues in iptables versions. k0s ships (in <code>/var/lib/k0s/bin</code>) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different from the one that k0s (and other Kubernetes components) ship, it may cause networking issues. This is due to the fact that iptables, being user-space tooling, does not provide any strong version compatibility guarantees.</p>
 <h2 id="firewalld-k0s">Firewalld &amp; k0s<a class="headerlink" href="#firewalld-k0s" title="Permanent link">#</a></h2>
-<p>If you are using <a href="https://firewalld.org/"><code>firewalld</code></a> on your hosts you need to ensure it is configured to use the same <code>FirewallBackend</code> as k0s and other Kubernetes components use. Otherwise networking will be broken in various ways.</p>
-<p>Here's an example configuration for a tested working networking setup:</p>
-<div class="highlight"><pre><span></span><code><span class="o">[</span>root@rhel-test<span class="w"> </span>~<span class="o">]</span><span class="c1"># firewall-cmd --list-all</span>
-public<span class="w"> </span><span class="o">(</span>active<span class="o">)</span>
-<span class="w">  </span>target:<span class="w"> </span>default
-<span class="w">  </span>icmp-block-inversion:<span class="w"> </span>no
-<span class="w">  </span>interfaces:<span class="w"> </span>eth0
-<span class="w">  </span>sources:<span class="w"> </span><span class="m">10</span>.244.0.0/16<span class="w"> </span><span class="m">10</span>.96.0.0/12
-<span class="w">  </span>services:<span class="w"> </span>cockpit<span class="w"> </span>dhcpv6-client<span class="w"> </span>ssh
-<span class="w">  </span>ports:<span class="w"> </span><span class="m">80</span>/tcp<span class="w"> </span><span class="m">6443</span>/tcp<span class="w"> </span><span class="m">8132</span>/tcp<span class="w"> </span><span class="m">10250</span>/tcp<span class="w"> </span><span class="m">179</span>/tcp<span class="w"> </span><span class="m">179</span>/udp
-<span class="w">  </span>protocols:
-<span class="w">  </span>forward:<span class="w"> </span>no
-<span class="w">  </span>masquerade:<span class="w"> </span>yes
-<span class="w">  </span>forward-ports:
-<span class="w">  </span>source-ports:
-<span class="w">  </span>icmp-blocks:
-<span class="w">  </span>rich<span class="w"> </span>rules:
+<p>If you are using <a href="https://firewalld.org/">firewalld</a> on your hosts, make sure that it runs with the same
+backend (<code>nftables</code> or <code>iptables</code>) that k0s and the bundled Kubernetes
+components use. Otherwise, kube-proxy, Kube-router, or Calico will program rules
+in the wrong backend, which will result in a networking failure. You can
+configure the active backend via the <code>FirewallBackend</code> option in
+<code>/etc/firewalld/firewalld.conf</code>.</p>
+<p>Firewalld is known to be enabled by default in Oracle Linux.</p>
+<p>Instead of adding individual ports, create dedicated firewalld services for k0s.
+The k0s automated test suite uses the following XML snippets, so using them will
+ensure that your configuration is aligned with our automated validation process:</p>
+<p>Create the service file for controller nodes in
+<code>/etc/firewalld/services/k0s-controller.xml</code> as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+<span class="nt">&lt;service&gt;</span>
+<span class="w">  </span><span class="nt">&lt;short&gt;</span>k0s-controller<span class="nt">&lt;/short&gt;</span>
+<span class="w">  </span><span class="nt">&lt;description&gt;</span>k0s<span class="w"> </span>-<span class="w"> </span>The<span class="w"> </span>Zero<span class="w"> </span>Friction<span class="w"> </span>Kubernetes<span class="w"> </span>(controller<span class="w"> </span>node)<span class="nt">&lt;/description&gt;</span>
+
+<span class="w">  </span><span class="cm">&lt;!-- see docs/networking.md: Required ports and protocols --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;2380&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- etcd peers --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;6443&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- kube-apiserver --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;8132&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- konnectivity --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;9443&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- k0s-api --&gt;</span>
+<span class="nt">&lt;/service&gt;</span>
 </code></pre></div>
-<p>Basic single node firewalld setup:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Allow traffic from podCIDR</span>
-$<span class="w"> </span>firewall-cmd<span class="w"> </span>--add-source<span class="o">=</span><span class="m">10</span>.244.0.0/16<span class="w"> </span>--permanent
-<span class="c1"># Allow kubelet API traffic</span>
-$<span class="w"> </span>firewall-cmd<span class="w"> </span>--add-port<span class="o">=</span><span class="m">10250</span>/tcp<span class="w"> </span>--permanent
-<span class="c1"># Apply firewall changes</span>
-$<span class="w"> </span>firewall-cmd<span class="w"> </span>--reload
+<p>Create the service file for worker nodes in
+<code>/etc/firewalld/services/k0s-worker.xml</code> as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+<span class="nt">&lt;service&gt;</span>
+<span class="w">  </span><span class="nt">&lt;short&gt;</span>k0s-worker<span class="nt">&lt;/short&gt;</span>
+<span class="w">  </span><span class="nt">&lt;description&gt;</span>k0s<span class="w"> </span>-<span class="w"> </span>The<span class="w"> </span>Zero<span class="w"> </span>Friction<span class="w"> </span>Kubernetes<span class="w"> </span>(worker<span class="w"> </span>node)<span class="nt">&lt;/description&gt;</span>
+
+<span class="w">  </span><span class="cm">&lt;!-- see docs/networking.md: Required ports and protocols --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;179&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">   </span><span class="cm">&lt;!-- kube-router --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;udp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;4789&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- calico --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;10250&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w"> </span><span class="cm">&lt;!-- kubelet --&gt;</span>
+<span class="nt">&lt;/service&gt;</span>
+</code></pre></div>
+<p>With the services in place, enable them on the nodes. For nodes running
+controller components:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>firewall-cmd<span class="w"> </span>--permanent<span class="w"> </span>--add-service<span class="o">=</span>k0s-controller
+<span class="go">success</span>
+</code></pre></div>
+<p>For nodes running worker components:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>firewall-cmd<span class="w"> </span>--permanent<span class="w"> </span>--add-service<span class="o">=</span>k0s-worker
+<span class="go">success</span>
+<span class="gp">$ </span>sudo<span class="w"> </span>firewall-cmd<span class="w"> </span>--permanent<span class="w"> </span>--add-masquerade
+<span class="go">success</span>
+</code></pre></div>
+<p>For nodes that run both controller and worker components, i.e. nodes running
+with the <code>controller --enable-worker</code> flag, you need to enable both.</p>
+<p>Allow traffic from your pod and service networks so that the host accepts
+traffic arriving via the overlay interfaces:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>firewall-cmd<span class="w"> </span>--permanent<span class="w"> </span>--add-source<span class="o">=</span>&lt;podCIDR&gt;
+<span class="go">success</span>
+<span class="gp">$ </span>sudo<span class="w"> </span>firewall-cmd<span class="w"> </span>--permanent<span class="w"> </span>--add-source<span class="o">=</span>&lt;serviceCIDR&gt;
+<span class="go">success</span>
+</code></pre></div>
+<p>Replace <code>&lt;podCIDR&gt;</code> and <code>&lt;serviceCIDR&gt;</code> with the values configured in
+<code>k0s.yaml</code>. When you schedule workloads on controller nodes, add both
+<code>k0s-controller</code> and <code>k0s-worker</code> services to the machine. Add <code>--zone=&lt;zone&gt;</code>
+to the commands if you are configuring a zone other than the default.</p>
+<p>Reload firewalld once after applying the permanent changes:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>firewall-cmd<span class="w"> </span>--reload
+<span class="go">success</span>
+</code></pre></div>
+<p>For automated image builds where firewalld is not yet running (for example
+during cloud-init), use the offline variant:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>firewall-offline-cmd<span class="w"> </span>--add-service<span class="o">=</span>k0s-controller
+<span class="go">success</span>
+<span class="gp">$ </span>sudo<span class="w"> </span>firewall-offline-cmd<span class="w"> </span>--add-service<span class="o">=</span>k0s-worker
+<span class="go">success</span>
+<span class="gp">$ </span>sudo<span class="w"> </span>firewall-offline-cmd<span class="w"> </span>--add-masquerade
+<span class="go">success</span>
+<span class="gp">$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>reload<span class="w"> </span>firewalld
+</code></pre></div>
+<p>After reloading, you should see the k0s services applied:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>firewall-cmd<span class="w"> </span>--list-all
+<span class="go">public (active)</span>
+<span class="go">  target: default</span>
+<span class="go">  icmp-block-inversion: no</span>
+<span class="go">  interfaces: eth0</span>
+<span class="go">  sources: 10.244.0.0/16 10.96.0.0/12</span>
+<span class="go">  services: cockpit dhcpv6-client k0s-controller k0s-worker ssh</span>
+<span class="go">  ports:</span>
+<span class="go">  protocols:</span>
+<span class="go">  forward: yes</span>
+<span class="go">  masquerade: yes</span>
+<span class="go">  forward-ports:</span>
+<span class="go">  source-ports:</span>
+<span class="go">  icmp-blocks:</span>
+<span class="go">  rich rules:</span>
 </code></pre></div>
 
 
