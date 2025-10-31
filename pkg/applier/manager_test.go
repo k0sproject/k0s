@@ -220,9 +220,9 @@ func TestManager(t *testing.T) {
 
 	deployGV, _ := schema.ParseResourceArg("deployments.v1.apps")
 
-	waitForResource(t, fakes, *deployGV, "kube-system", "nginx")
+	waitForResource(t, fakes, *deployGV, "kube-system", "app")
 
-	r, err = getResource(fakes, *deployGV, "kube-system", "nginx")
+	r, err = getResource(fakes, *deployGV, "kube-system", "app")
 	if assert.NoError(t, err) {
 		assert.Equal(t, "Deployment", r.GetKind())
 		assert.Equal(t, "applier", r.GetLabels()["component"])
