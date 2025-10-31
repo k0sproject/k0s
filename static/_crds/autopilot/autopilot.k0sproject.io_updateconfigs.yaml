@@ -246,6 +246,7 @@ spec:
                   cron:
                     description: |-
                       Cron defines the cron expression for the cron upgrade strategy
+
                       Deprecated: Cron is deprecated and will eventually be ignored
                     type: string
                   periodic:
