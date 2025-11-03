@@ -46,6 +46,16 @@
       ]
     },
     {
+      "description": "Group all Calico updates",
+      "enabled": true,
+      "matchPackageNames": [
+        "docker.io/calico/*",
+        "quay.io/k0sproject/calico-*"
+      ],
+      "groupName": "calico dependencies",
+      "groupSlug": "calico-all"
+    },
+    {
       "description": "Group all etcd updates",
       "enabled": true,
       "matchPackageNames": [
@@ -114,6 +124,18 @@
       "matchBaseBranches": [
         "!main"
       ]
+    },
+    {
+      "description": "Bump Calico for release-1.34",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchDepNames": [
+        "docker.io/calico/*",
+        "quay.io/k0sproject/calico-*"
+      ],
+      "allowedVersions": "<=3.29"
     },
     {
       "description": "Bump Go for release-1.34",
