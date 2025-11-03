@@ -199,6 +199,7 @@ jobs:
           bin/sonobuoy run -p e2e --wait=150 \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
+            --plugin-env=e2e.E2E_SKIP='' \
             --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=120m'
 
       - name: "e2e tests :: Retrieve serial results"
