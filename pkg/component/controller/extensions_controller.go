@@ -15,8 +15,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/avast/retry-go"
-	"github.com/bombsimon/logrusr/v4"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -27,14 +25,20 @@ import (
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
-	"github.com/sirupsen/logrus"
-	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage/driver"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
 	apiretry "k8s.io/client-go/util/retry"
+
+	"github.com/avast/retry-go"
+	"github.com/bombsimon/logrusr/v4"
+	"github.com/sirupsen/logrus"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
+
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -70,7 +74,7 @@ func NewExtensionsController(k0sVars *config.CfgVars, kubeClientFactory kubeutil
 }
 
 const (
-	namespaceToWatch = "kube-system"
+	namespaceToWatch = metav1.NamespaceSystem
 )
 
 // Run runs the extensions controller
@@ -354,7 +358,7 @@ apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:
   name: k0s-addon-chart-{{ .Name }}
-  namespace: "kube-system"
+  namespace: ` + metav1.NamespaceSystem + `
   finalizers:
     - {{ .Finalizer }}
 spec:

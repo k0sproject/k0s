@@ -83,20 +83,20 @@ func Poll(ctx context.Context, condition wait.ConditionWithContextFunc) error {
 // WaitForKubeRouterReady waits to see all kube-router pods healthy as long as
 // the context isn't canceled.
 func WaitForKubeRouterReady(ctx context.Context, kc *kubernetes.Clientset) error {
-	return WaitForDaemonSet(ctx, kc, "kube-router", "kube-system")
+	return WaitForDaemonSet(ctx, kc, "kube-router", metav1.NamespaceSystem)
 }
 
 // WaitForCoreDNSReady waits to see all coredns pods healthy as long as the context isn't canceled.
 // It also waits to see all the related svc endpoints to be ready to make sure coreDNS is actually
 // ready to serve requests.
 func WaitForCoreDNSReady(ctx context.Context, kc *kubernetes.Clientset) error {
-	err := WaitForDeployment(ctx, kc, "coredns", "kube-system")
+	err := WaitForDeployment(ctx, kc, "coredns", metav1.NamespaceSystem)
 	if err != nil {
 		return fmt.Errorf("wait for deployment: %w", err)
 	}
 	// Wait till we see the svc endpoints ready
 	return wait.PollImmediateUntilWithContext(ctx, 100*time.Millisecond, func(ctx context.Context) (bool, error) {
-		epSlices, err := kc.DiscoveryV1().EndpointSlices("kube-system").List(ctx, metav1.ListOptions{
+		epSlices, err := kc.DiscoveryV1().EndpointSlices(metav1.NamespaceSystem).List(ctx, metav1.ListOptions{
 			LabelSelector: "k8s-app=kube-dns",
 		})
 

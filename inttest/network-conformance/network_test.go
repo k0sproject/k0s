@@ -11,16 +11,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
-	"github.com/stretchr/testify/suite"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	sc "github.com/vmware-tanzu/sonobuoy/pkg/client"
 	"github.com/vmware-tanzu/sonobuoy/pkg/dynamic"
 	"golang.org/x/mod/semver"
 	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/yaml"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type networkSuite struct {
@@ -82,7 +84,7 @@ func (s *networkSuite) TestK0sGetsUp() {
 		daemonSetName = "kube-router"
 	}
 	s.T().Log("waiting to see CNI pods ready for", daemonSetName)
-	s.NoErrorf(common.WaitForDaemonSet(s.Context(), kc, daemonSetName, "kube-system"), "%s did not start", daemonSetName)
+	s.NoErrorf(common.WaitForDaemonSet(s.Context(), kc, daemonSetName, metav1.NamespaceSystem), "%s did not start", daemonSetName)
 
 	restConfig, err := s.GetKubeConfig("controller0")
 	s.Require().NoError(err)

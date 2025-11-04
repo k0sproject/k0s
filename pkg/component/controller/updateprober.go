@@ -138,7 +138,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		return
 	}
 	u.log.Debugf("got latest version: %s", v.Version)
-	ksns, err := kc.CoreV1().Namespaces().Get(ctx, "kube-system", metav1.GetOptions{})
+	ksns, err := kc.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
 	if err != nil {
 		u.log.WithError(err).Warn("failed to get kube-system namespace details")
 	}
@@ -155,12 +155,12 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		e := corev1.Event{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
-				Namespace: "kube-system",
+				Namespace: metav1.NamespaceSystem,
 			},
 			InvolvedObject: corev1.ObjectReference{
 				Kind:       "Namespace",
-				Name:       "kube-system",
-				Namespace:  "kube-system",
+				Name:       metav1.NamespaceSystem,
+				Namespace:  metav1.NamespaceSystem,
 				APIVersion: ksns.APIVersion,
 				UID:        ksns.UID,
 			},
@@ -171,7 +171,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 				Component: "k0s",
 			},
 		}
-		if _, err := kc.CoreV1().Events("kube-system").Create(ctx, &e, metav1.CreateOptions{}); err != nil {
+		if _, err := kc.CoreV1().Events(metav1.NamespaceSystem).Create(ctx, &e, metav1.CreateOptions{}); err != nil {
 			u.log.Errorf("failed to create event: %s", err.Error())
 			return
 		}

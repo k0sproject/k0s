@@ -125,7 +125,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 		return err
 	}
 
-	epClient := c.CoreV1().Endpoints("default")
+	epClient := c.CoreV1().Endpoints(metav1.NamespaceDefault)
 
 	ep, err := epClient.Get(ctx, "kubernetes", metav1.GetOptions{})
 	if err != nil {
@@ -190,7 +190,7 @@ func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []
 		return err
 	}
 
-	_, err = c.CoreV1().Endpoints("default").Create(ctx, ep, metav1.CreateOptions{})
+	_, err = c.CoreV1().Endpoints(metav1.NamespaceDefault).Create(ctx, ep, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}

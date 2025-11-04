@@ -19,9 +19,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/token"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -169,15 +171,15 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	// Verify that controller+worker nodes are working normally.
 	s.T().Log("waiting to see CNI pods ready")
 	if s.useExternalAddress {
-		s.Require().NoError(common.WaitForDaemonSet(ctx, client, "calico-node", "kube-system"), "calico-node did not start")
+		s.Require().NoError(common.WaitForDaemonSet(ctx, client, "calico-node", metav1.NamespaceSystem), "calico-node did not start")
 	} else {
 		s.Require().NoError(common.WaitForKubeRouterReady(ctx, client), "kube router did not start")
 	}
 
 	s.T().Log("waiting to see konnectivity-agent pods ready")
-	s.Require().NoError(common.WaitForDaemonSet(ctx, client, "konnectivity-agent", "kube-system"), "konnectivity-agent did not start")
+	s.Require().NoError(common.WaitForDaemonSet(ctx, client, "konnectivity-agent", metav1.NamespaceSystem), "konnectivity-agent did not start")
 	s.T().Log("waiting to get logs from pods")
-	s.Require().NoError(common.WaitForPodLogs(ctx, client, "kube-system"))
+	s.Require().NoError(common.WaitForPodLogs(ctx, client, metav1.NamespaceSystem))
 
 	s.T().Log("Testing that the load balancer is actually balancing the load")
 	// Other stuff may be querying the controller, running the HTTPS request 15 times

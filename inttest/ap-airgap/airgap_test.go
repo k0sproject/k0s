@@ -59,7 +59,7 @@ func (s *airgapSuite) SetupTest() {
 	// Wait until all the cluster components are up.
 	s.Require().NoError(common.WaitForKubeRouterReady(ctx, wClient), "While waiting for kube-router to become ready")
 	s.Require().NoError(common.WaitForCoreDNSReady(ctx, wClient), "While waiting for CoreDNS to become ready")
-	s.Require().NoError(common.WaitForPodLogs(ctx, wClient, "kube-system"), "While waiting for some pod logs")
+	s.Require().NoError(common.WaitForPodLogs(ctx, wClient, metav1.NamespaceSystem), "While waiting for some pod logs")
 
 	// Check that none of the images in the airgap bundle are pinned.
 	// This will happen as soon as k0s imports them after the Autopilot update.
@@ -157,7 +157,7 @@ spec:
 	s.Require().NoError(err)
 	s.Require().NoError(common.WaitForKubeRouterReady(ctx, kc), "While waiting for kube-router to become ready")
 	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc), "While waiting for CoreDNS to become ready")
-	s.Require().NoError(common.WaitForPodLogs(ctx, kc, "kube-system"), "While waiting for some pod logs")
+	s.Require().NoError(common.WaitForPodLogs(ctx, kc, metav1.NamespaceSystem), "While waiting for some pod logs")
 
 	// At that moment we can assume that all pods have at least started.
 	// Inspect the Pulled events if there are some unexpected image pulls.

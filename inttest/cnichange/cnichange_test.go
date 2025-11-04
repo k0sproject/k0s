@@ -7,14 +7,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
-	"github.com/k0sproject/k0s/inttest/common"
-
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type CNIChangeSuite struct {
@@ -31,7 +32,7 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 	s.Require().NoError(err)
 
 	// Wait till we see kube-router DS created
-	err = watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
+	err = watch.DaemonSets(kc.AppsV1().DaemonSets(metav1.NamespaceSystem)).
 		WithObjectName("kube-router").
 		Until(s.Context(), func(ds *appsv1.DaemonSet) (bool, error) {
 			return true, nil
@@ -51,7 +52,7 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
 
 	// check that we see the expected warning event
-	err = watch.Events(kc.CoreV1().Events("kube-system")).
+	err = watch.Events(kc.CoreV1().Events(metav1.NamespaceSystem)).
 		WithFieldSelector(fields.ParseSelectorOrDie("involvedObject.name=k0s")).
 		Until(s.Context(), func(e *corev1.Event) (bool, error) {
 			return e.Type == "Warning" && strings.Contains(e.Message, "cannot change CNI provider from kuberouter to calico"), nil

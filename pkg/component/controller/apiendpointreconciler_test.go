@@ -9,15 +9,16 @@ import (
 	"net"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/internal/testutil"
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/stretchr/testify/assert"
 )
 
 var expectedIPv4Addresses = []string{
@@ -43,7 +44,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 	assert.NoError(t, r.reconcileEndpoints(ctx))
 	client, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
-	_, err = client.CoreV1().Endpoints("default").Get(ctx, "kubernetes", v1.GetOptions{})
+	_, err = client.CoreV1().Endpoints(metav1.NamespaceDefault).Get(ctx, "kubernetes", metav1.GetOptions{})
 	// The reconciler should not make any modification as we're not the leader so the endpoint should not get created
 	assert.Error(t, err)
 	assert.True(t, k8serrors.IsNotFound(err))
@@ -83,11 +84,11 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 
 	existingEp := corev1.Endpoints{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 		},
 		Subsets: []corev1.EndpointSubset{},
@@ -95,7 +96,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	fakeClient, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
 	ctx := t.Context()
-	_, err = fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
+	_, err = fakeClient.CoreV1().Endpoints(metav1.NamespaceDefault).Create(ctx, &existingEp, metav1.CreateOptions{})
 	assert.NoError(t, err)
 	config := getFakeConfig()
 
@@ -110,11 +111,11 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 	existingEp := corev1.Endpoints{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 			Annotations: map[string]string{
 				"foo": "bar",
@@ -130,7 +131,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	fakeClient, _ := fakeFactory.GetClient()
 
 	ctx := t.Context()
-	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
+	_, err := fakeClient.CoreV1().Endpoints(metav1.NamespaceDefault).Create(ctx, &existingEp, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
 	config := getFakeConfig()
@@ -147,11 +148,11 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 func TestReconcilerWithNeedForUpdate(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 	existingEp := corev1.Endpoints{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 			Annotations: map[string]string{
 				"foo": "bar",
@@ -167,7 +168,7 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 	fakeClient, _ := fakeFactory.GetClient()
 
 	ctx := t.Context()
-	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
+	_, err := fakeClient.CoreV1().Endpoints(metav1.NamespaceDefault).Create(ctx, &existingEp, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
 	config := getFakeConfig()
@@ -181,7 +182,7 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 }
 
 func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, clients kubernetes.Interface) *corev1.Endpoints {
-	ep, err := clients.CoreV1().Endpoints("default").Get(t.Context(), "kubernetes", v1.GetOptions{})
+	ep, err := clients.CoreV1().Endpoints(metav1.NamespaceDefault).Get(t.Context(), "kubernetes", metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAddresses, endpointAddressesToStrings(ep.Subsets[0].Addresses))
 

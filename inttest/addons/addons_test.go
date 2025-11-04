@@ -164,10 +164,10 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.Require().NoError(err)
 	err = as.WaitForNodeReady(as.WorkerNode(0), kc)
 	as.NoError(err)
-	as.waitForTestRelease(addonName, "0.4.0", "default", 1)
-	as.waitForTestRelease(ociAddonName, "0.6.0", "default", 1)
-	as.waitForTestRelease(fileAddonName, "0.6.0", "kube-system", 1)
-	as.waitForTestRelease(selfSignedOCIAddonName, "0.6.0", "default", 1)
+	as.waitForTestRelease(addonName, "0.4.0", metav1.NamespaceDefault, 1)
+	as.waitForTestRelease(ociAddonName, "0.6.0", metav1.NamespaceDefault, 1)
+	as.waitForTestRelease(fileAddonName, "0.6.0", metav1.NamespaceSystem, 1)
+	as.waitForTestRelease(selfSignedOCIAddonName, "0.6.0", metav1.NamespaceDefault, 1)
 
 	as.AssertSomeKubeSystemPods(kc)
 
@@ -180,7 +180,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 		},
 	}
 	as.doTestAddonUpdate(addonName, values)
-	chart := as.waitForTestRelease(addonName, "0.6.0", "default", 2)
+	chart := as.waitForTestRelease(addonName, "0.6.0", metav1.NamespaceDefault, 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.deleteRelease(chart)
 	as.deleteUninstalledChart(ctx)
@@ -237,7 +237,7 @@ func (as *AddonsSuite) renameChart(ctx context.Context) {
 		return !hasChart("k0s-addon-chart-tgz-addon") && hasChart("k0s-addon-chart-tgz-renamed-addon"), nil
 	}), "While waiting for Chart resource to be swapped")
 
-	as.waitForTestRelease("tgz-renamed-addon", "0.6.0", "kube-system", 1)
+	as.waitForTestRelease("tgz-renamed-addon", "0.6.0", metav1.NamespaceSystem, 1)
 }
 
 func (as *AddonsSuite) deleteRelease(chart *helmv1beta1.Chart) {
@@ -302,7 +302,7 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 	spec := helmv1beta1.ChartSpec{
 		ChartName:   "whatever",
 		ReleaseName: "nonexistent",
-		Namespace:   "default",
+		Namespace:   metav1.NamespaceDefault,
 		Version:     "1",
 	}
 	status := helmv1beta1.ChartStatus{
@@ -316,7 +316,7 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 	chart := &helmv1beta1.Chart{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bogus",
-			Namespace:  "kube-system",
+			Namespace:  metav1.NamespaceSystem,
 			Finalizers: []string{"helm.k0sproject.io/uninstall-helm-release"},
 		},
 	}
@@ -392,7 +392,7 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 	var lastResourceVersion string
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		err = chartClient.Get(pollCtx, client.ObjectKey{
-			Namespace: "kube-system",
+			Namespace: metav1.NamespaceSystem,
 			Name:      "k0s-addon-chart-" + addonName,
 		}, &chart)
 		if err != nil {
@@ -447,7 +447,7 @@ func (as *AddonsSuite) checkCustomValues(releaseName string) error {
 	}
 	return wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		serverDeployment := releaseName + "-echo-server"
-		d, err := kc.AppsV1().Deployments("default").Get(pollCtx, serverDeployment, metav1.GetOptions{})
+		d, err := kc.AppsV1().Deployments(metav1.NamespaceDefault).Get(pollCtx, serverDeployment, metav1.GetOptions{})
 		if err != nil {
 			if ctxErr := context.Cause(ctx); ctxErr != nil {
 				return false, errors.Join(err, ctxErr)
@@ -480,7 +480,7 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]any
 			ChartName:    "ealenn/echo-server",
 			Values:       string(valuesBytes),
 			Version:      "0.5.0",
-			TargetNS:     "default",
+			TargetNS:     metav1.NamespaceDefault,
 			ForceUpgrade: ptr.To(false),
 		},
 	}
@@ -558,7 +558,7 @@ apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:
   name: k0s-addon-chart-{{ .Name }}
-  namespace: "kube-system"
+  namespace: ` + metav1.NamespaceSystem + `
   finalizers:
     - helm.k0sproject.io/uninstall-helm-release 
 spec:

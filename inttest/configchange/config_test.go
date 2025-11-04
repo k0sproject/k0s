@@ -82,7 +82,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	cfgClient, err := s.getConfigClient()
 	s.Require().NoError(err)
 
-	eventWatch, err := kc.CoreV1().Events("kube-system").Watch(context.Background(), metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
+	eventWatch, err := kc.CoreV1().Events(metav1.NamespaceSystem).Watch(context.Background(), metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
 	s.Require().NoError(err)
 	defer eventWatch.Stop()
 
@@ -132,13 +132,13 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		newConfig.Spec.Network.KubeRouter.MTU = 1300
 
 		// Get the resource version for current kuberouter configmap
-		cml, err := kc.CoreV1().ConfigMaps("kube-system").List(s.Context(), metav1.ListOptions{
+		cml, err := kc.CoreV1().ConfigMaps(metav1.NamespaceSystem).List(s.Context(), metav1.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector("metadata.name", "kube-router-cfg").String(),
 		})
 		s.Require().NoError(err)
 
 		// Get the resource version for the current ds
-		ds, err := kc.AppsV1().DaemonSets("kube-system").List(s.Context(), metav1.ListOptions{
+		ds, err := kc.AppsV1().DaemonSets(metav1.NamespaceSystem).List(s.Context(), metav1.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector("metadata.name", "kube-router").String(),
 		})
 
@@ -154,13 +154,13 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		// Verify MTU setting have been propagated properly
 		// It takes a while to actually apply the changes through stack applier
 		// Start the watch only from last version so we only get changed cm(s) and not the original one
-		configMapWatch, err := kc.CoreV1().ConfigMaps("kube-system").Watch(s.Context(), metav1.ListOptions{
+		configMapWatch, err := kc.CoreV1().ConfigMaps(metav1.NamespaceSystem).Watch(s.Context(), metav1.ListOptions{
 			FieldSelector:   fields.OneTermEqualSelector("metadata.name", "kube-router-cfg").String(),
 			ResourceVersion: cml.ResourceVersion,
 		})
 		s.Require().NoError(err)
 
-		daemonSetWatchChannel, err := kc.AppsV1().DaemonSets("kube-system").Watch(s.Context(), metav1.ListOptions{
+		daemonSetWatchChannel, err := kc.AppsV1().DaemonSets(metav1.NamespaceSystem).Watch(s.Context(), metav1.ListOptions{
 			FieldSelector:   fields.OneTermEqualSelector("metadata.name", "kube-router").String(),
 			ResourceVersion: ds.ResourceVersion,
 		})
@@ -196,7 +196,7 @@ func (s *ConfigSuite) waitForReconcileEvent(eventWatch watch.Interface) (*corev1
 }
 
 func (s *ConfigSuite) clearConfigEvents(kc *kubernetes.Clientset) error {
-	return kc.CoreV1().Events("kube-system").DeleteCollection(s.Context(), metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
+	return kc.CoreV1().Events(metav1.NamespaceSystem).DeleteCollection(s.Context(), metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
 }
 
 // Get the ClusterConfig client from the controller node's kubeconfig.

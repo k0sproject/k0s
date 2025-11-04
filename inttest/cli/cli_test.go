@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 )
@@ -77,10 +80,10 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 		assert.NoError(json.Unmarshal([]byte(output), namespaces))
 
 		assert.Len(namespaces.Items, 4)
-		assert.Equal("default", namespaces.Items[0].Metadata.Name)
-		assert.Equal("kube-node-lease", namespaces.Items[1].Metadata.Name)
-		assert.Equal("kube-public", namespaces.Items[2].Metadata.Name)
-		assert.Equal("kube-system", namespaces.Items[3].Metadata.Name)
+		assert.Equal(metav1.NamespaceDefault, namespaces.Items[0].Metadata.Name)
+		assert.Equal(corev1.NamespaceNodeLease, namespaces.Items[1].Metadata.Name)
+		assert.Equal(metav1.NamespacePublic, namespaces.Items[2].Metadata.Name)
+		assert.Equal(metav1.NamespaceSystem, namespaces.Items[3].Metadata.Name)
 
 		kc, err := s.KubeClient(s.ControllerNode(0))
 		require.NoError(err)
@@ -91,9 +94,9 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 		s.AssertSomeKubeSystemPods(kc)
 
 		// Wait till we see all pods running, otherwise we get into weird timing issues and high probability of leaked containerd shim processes
-		require.NoError(common.WaitForDaemonSet(s.Context(), kc, "kube-proxy", "kube-system"))
+		require.NoError(common.WaitForDaemonSet(s.Context(), kc, "kube-proxy", metav1.NamespaceSystem))
 		require.NoError(common.WaitForKubeRouterReady(s.Context(), kc))
-		require.NoError(common.WaitForDeployment(s.Context(), kc, "coredns", "kube-system"))
+		require.NoError(common.WaitForDeployment(s.Context(), kc, "coredns", metav1.NamespaceSystem))
 
 		// Check that the kubelet extra flags are properly set
 		kubeletCmdLine, err := s.GetKubeletCMDLine(s.ControllerNode(0))

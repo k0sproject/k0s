@@ -76,7 +76,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
-	calicoDaemonset, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), "calico-node", metav1.GetOptions{})
+	calicoDaemonset, err := kc.AppsV1().DaemonSets(metav1.NamespaceSystem).Get(context.TODO(), "calico-node", metav1.GetOptions{})
 	s.Require().NoError(err)
 	var calicoCustomEnvVarsFound int
 	for _, v := range calicoDaemonset.Spec.Template.Spec.Containers[0].Env {
@@ -89,10 +89,10 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see calico pods ready")
-	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node", "kube-system"), "calico did not start")
-	s.NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
+	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node", metav1.NamespaceSystem), "calico did not start")
+	s.NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceSystem))
 
-	createdTargetPod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+	createdTargetPod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx"},
 		Spec: corev1.PodSpec{
@@ -103,12 +103,12 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx", "default"), "nginx pod did not start")
+	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx", metav1.NamespaceDefault), "nginx pod did not start")
 
 	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(s.Context(), createdTargetPod.Name, metav1.GetOptions{})
 	s.Require().NoError(err)
 
-	sourcePod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+	sourcePod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "alpine"},
 		Spec: corev1.PodSpec{
@@ -123,7 +123,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", "default"), "alpine pod did not start")
+	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", metav1.NamespaceDefault), "alpine pod did not start")
 
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
 		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, "/usr/bin/wget -qO- "+targetPod.Status.PodIP)

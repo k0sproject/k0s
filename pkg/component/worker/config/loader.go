@@ -69,7 +69,7 @@ func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func
 						return nil, err
 					}
 
-					cm, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, configMapName, metav1.GetOptions{})
+					cm, err := client.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, configMapName, metav1.GetOptions{})
 					if err != nil {
 						return nil, err
 					}
@@ -143,7 +143,7 @@ func WatchProfile(ctx context.Context, log logrus.FieldLogger, client kubernetes
 	configMapName := configMapNameForProfile(profileName)
 
 	var lastObservedVersion string
-	return watch.ConfigMaps(client.CoreV1().ConfigMaps("kube-system")).
+	return watch.ConfigMaps(client.CoreV1().ConfigMaps(metav1.NamespaceSystem)).
 		WithObjectName(configMapName).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryDelay, e := watch.IsRetryable(err); e == nil {

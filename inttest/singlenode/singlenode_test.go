@@ -15,7 +15,7 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const k0sPartialConfig = `
@@ -67,13 +67,13 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 		})
 
 		s.Run("leader election disabled for scheduler", func() {
-			_, err := kc.CoordinationV1().Leases("kube-system").Get(s.Context(), "kube-scheduler", v1.GetOptions{})
+			_, err := kc.CoordinationV1().Leases(metav1.NamespaceSystem).Get(s.Context(), "kube-scheduler", metav1.GetOptions{})
 			s.Error(err)
 			s.True(apierrors.IsNotFound(err))
 		})
 
 		s.Run("leader election disabled for controller manager", func() {
-			_, err := kc.CoordinationV1().Leases("kube-system").Get(s.Context(), "kube-controller-manager", v1.GetOptions{})
+			_, err := kc.CoordinationV1().Leases(metav1.NamespaceSystem).Get(s.Context(), "kube-controller-manager", metav1.GetOptions{})
 			s.Error(err)
 			s.True(apierrors.IsNotFound(err))
 		})

@@ -11,13 +11,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/stretchr/testify/suite"
-	"golang.org/x/sync/errgroup"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 const basePath = "apis/etcd.k0sproject.io/v1beta1/etcdmembers/%s"
@@ -166,7 +169,7 @@ func (s *EtcdMemberSuite) getLeader(ctx context.Context) string {
 	// First we need to get all leases in "kube-node-lease" NS
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
-	leases, err := kc.CoordinationV1().Leases("kube-node-lease").List(ctx, metav1.ListOptions{})
+	leases, err := kc.CoordinationV1().Leases(corev1.NamespaceNodeLease).List(ctx, metav1.ListOptions{})
 	s.Require().NoError(err)
 	leaseIDs := make(map[string]string)
 	for _, l := range leases.Items {
@@ -177,7 +180,7 @@ func (s *EtcdMemberSuite) getLeader(ctx context.Context) string {
 		}
 	}
 	// Next we need to match the "k0s-endpoint-reconciler" lease holder identity to a node name
-	leaderLease, err := kc.CoordinationV1().Leases("kube-node-lease").Get(ctx, "k0s-endpoint-reconciler", metav1.GetOptions{})
+	leaderLease, err := kc.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, "k0s-endpoint-reconciler", metav1.GetOptions{})
 	s.Require().NoError(err)
 	return leaseIDs[*leaderLease.Spec.HolderIdentity]
 

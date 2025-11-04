@@ -502,7 +502,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 func (c *ClusterConfig) CRValidator() *ClusterConfig {
 	copy := c.DeepCopy()
 	copy.Name = "k0s"
-	copy.Namespace = "kube-system"
+	copy.Namespace = metav1.NamespaceSystem
 
 	return copy
 }

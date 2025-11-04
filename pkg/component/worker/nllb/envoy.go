@@ -102,7 +102,7 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		return errors.New("already started")
 	}
 
-	e.pod, err = e.staticPods.ClaimStaticPod("kube-system", "nllb")
+	e.pod, err = e.staticPods.ClaimStaticPod(metav1.NamespaceSystem, "nllb")
 	if err != nil {
 		e.pod = nil
 		return fmt.Errorf("failed to claim static pod for EnvoyProxy: %w", err)
@@ -256,7 +256,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nllb",
-			Namespace: "kube-system",
+			Namespace: metav1.NamespaceSystem,
 			Labels:    applier.CommonLabels("nllb"),
 		},
 		Spec: corev1.PodSpec{

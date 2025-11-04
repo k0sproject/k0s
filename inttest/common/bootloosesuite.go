@@ -1464,7 +1464,7 @@ func (s *BootlooseSuite) GetUpdateServerIPAddress() string {
 }
 
 func (s *BootlooseSuite) AssertSomeKubeSystemPods(client *kubernetes.Clientset) bool {
-	if pods, err := client.CoreV1().Pods("kube-system").List(s.Context(), metav1.ListOptions{
+	if pods, err := client.CoreV1().Pods(metav1.NamespaceSystem).List(s.Context(), metav1.ListOptions{
 		Limit: 100,
 	}); s.NoError(err) {
 		s.T().Logf("Found %d pods in kube-system", len(pods.Items))

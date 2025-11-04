@@ -891,7 +891,7 @@ func createKubernetesEndpoints(t *testing.T, clients kubernetes.Interface) {
 		}},
 	}
 
-	_, err := clients.CoreV1().Endpoints("default").Create(t.Context(), &ep, metav1.CreateOptions{})
+	_, err := clients.CoreV1().Endpoints(metav1.NamespaceDefault).Create(t.Context(), &ep, metav1.CreateOptions{})
 	require.NoError(t, err)
 }
 

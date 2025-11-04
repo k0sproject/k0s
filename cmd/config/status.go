@@ -6,6 +6,8 @@ package config
 import (
 	"github.com/k0sproject/k0s/pkg/config"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +19,7 @@ func NewStatusCmd() *cobra.Command {
 		Short: "Display dynamic configuration reconciliation status",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			args := []string{"-n", "kube-system", "get", "event", "--field-selector", "involvedObject.name=k0s"}
+			args := []string{"-n", metav1.NamespaceSystem, "get", "event", "--field-selector", "involvedObject.name=k0s"}
 			if outputFormat != "" {
 				args = append(args, "-o", outputFormat)
 			}
