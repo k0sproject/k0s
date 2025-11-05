@@ -8,6 +8,7 @@ package backup
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -27,7 +28,8 @@ type sqliteDB struct {
 }
 
 func openDB(path string) (*sqliteDB, error) {
-	db, err := sql.Open("sqlite", path+"?mode=ro")
+	dsn := (&url.URL{Scheme: "file", Path: path, RawQuery: "mode=ro"}).String()
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}
