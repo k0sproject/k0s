@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -25,11 +26,19 @@ type LeasePool struct {
 	invocationID      string
 	status            value.Latest[leaderelection.Status]
 	kubeClientFactory kubeutil.ClientFactoryInterface
-	stop              func()
+	name              string
+	client            leaseClient
+	resume            value.Latest[time.Time]
+
+	mu   sync.Mutex
+	stop func()
 
 	acquiredLeaseCallbacks []func()
 	lostLeaseCallbacks     []func()
-	name                   string
+}
+
+type leaseClient interface {
+	Run(ctx context.Context, changed func(leaderelection.Status))
 }
 
 var (
@@ -47,35 +56,117 @@ func NewLeasePool(invocationID string, kubeClientFactory kubeutil.ClientFactoryI
 	}
 }
 
-func (l *LeasePool) Init(_ context.Context) error {
+func (l *LeasePool) Init(context.Context) error {
 	return nil
 }
 
 func (l *LeasePool) Start(context.Context) error {
-	kubeClient, err := l.kubeClientFactory.GetClient()
-	if err != nil {
-		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.stop != nil {
+		return nil
 	}
 
-	client, err := leaderelection.NewClient(&leaderelection.LeaseConfig{
-		Namespace: corev1.NamespaceNodeLease,
-		Name:      l.name,
-		Identity:  l.invocationID,
-		Client:    kubeClient.CoordinationV1(),
-	})
-	if err != nil {
-		return err
+	if l.client == nil {
+		kubeClient, err := l.kubeClientFactory.GetClient()
+		if err != nil {
+			return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
+		}
+
+		l.client, err = leaderelection.NewClient(&leaderelection.LeaseConfig{
+			Namespace: corev1.NamespaceNodeLease,
+			Name:      l.name,
+			Identity:  l.invocationID,
+			Client:    kubeClient.CoordinationV1(),
+		})
+		if err != nil {
+			return err
+		}
 	}
 
-	ctx, cancel := context.WithCancelCause(context.Background())
-	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
 
-	wg.Add(2)
-	go func() { defer wg.Done(); client.Run(ctx, l.status.Set) }()
-	go func() { defer wg.Done(); l.invokeCallbacks(ctx) }()
+	go func() {
+		defer close(done)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				l.runClient(ctx.Done())
+			}
+		}
+	}()
 
-	l.stop = func() { cancel(errors.New("lease pool is stopping")); wg.Wait() }
+	l.stop = func() {
+		cancel()
+		<-done
+	}
+
 	return nil
+}
+
+func (l *LeasePool) runClient(stop <-chan struct{}) {
+	resumeUpdated := l.waitForResume(stop)
+	if resumeUpdated == nil {
+		return
+	}
+
+	var reason error
+	{
+		var wg sync.WaitGroup
+
+		ctx, cancel := context.WithCancelCause(context.Background())
+
+		wg.Add(2)
+		go func() { defer wg.Done(); l.client.Run(ctx, l.status.Set) }()
+		go func() { defer wg.Done(); l.invokeCallbacks(ctx) }()
+		defer func() { cancel(reason); wg.Wait() }()
+	}
+
+	select {
+	case <-stop:
+		reason = errors.New("lease pool is stopping")
+	case <-resumeUpdated:
+		reason = errors.New("lease pool is yielding")
+	}
+}
+
+func (l *LeasePool) waitForResume(stop <-chan struct{}) <-chan struct{} {
+	resume, resumeUpdated := l.resume.Peek()
+
+	d := time.Until(resume)
+	if d <= 0 {
+		return resumeUpdated
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	l.log.Info("Yielding until ", resume)
+
+	for {
+		select {
+		case <-stop:
+			return nil
+		case <-resumeUpdated:
+			resume, resumeUpdated = l.resume.Peek()
+			timer.Reset(time.Until(resume))
+			l.log.Info("Yielding until ", resume)
+		case <-timer.C:
+			l.log.Info("Resuming operations")
+			return resumeUpdated
+		}
+	}
+}
+
+func (l *LeasePool) YieldLease() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.stop != nil {
+		l.resume.Set(time.Now().Add(30 * time.Second))
+	}
 }
 
 func (l *LeasePool) invokeCallbacks(ctx context.Context) {
@@ -107,8 +198,12 @@ func (l *LeasePool) AddLostLeaseCallback(fn func()) {
 }
 
 func (l *LeasePool) Stop() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	if l.stop != nil {
 		l.stop()
+		l.stop = nil
+		l.resume.Set(time.Time{})
 	}
 	return nil
 }
