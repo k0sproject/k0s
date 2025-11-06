@@ -19,6 +19,7 @@ package cplb
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"slices"
@@ -166,6 +167,11 @@ func (r *CPLBReconciler) GetIPs() []string {
 			healthyAddrs = append(healthyAddrs, addr)
 		}
 		r.healthCheckers[addr].mu.Unlock()
+	}
+
+	if len(healthyAddrs) == 0 && len(r.healthCheckers) > 0 {
+		r.log.Warn("No healthy API servers detected by CPLBReconciler, returning every known address")
+		return slices.Collect(maps.Keys(r.healthCheckers))
 	}
 	return healthyAddrs
 }
