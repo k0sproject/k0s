@@ -127,38 +127,42 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 	}
 
 	leaderelection.RunLeaderTasks(ctx, e.leaderElector.CurrentStatus, func(ctx context.Context) {
-		var lastObservedVersion string
-		err = watch.EtcdMembers(client).
-			WithErrorCallback(func(err error) (time.Duration, error) {
-				retryDelay, e := watch.IsRetryable(err)
-				if e == nil {
-					log.WithError(err).Debugf(
-						"Encountered transient error while watching etcd members"+
-							", last observed resource version was %q"+
-							", retrying in %s",
-						lastObservedVersion, retryDelay,
-					)
-					return retryDelay, nil
-				}
-				log.WithError(e).Error("bailing out watch")
-				return 0, err
-			}).
-			Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
-				lastObservedVersion = member.ResourceVersion
-				log.Debugf("watch triggered on %s", member.Name)
-				if err := e.resync(ctx, client); err != nil {
-					log.WithError(err).Error("failed to resync etcd members")
-				}
-				// Never stop the watch
-				return false, nil
-			})
-
-		if canceled := context.Cause(ctx); errors.Is(err, canceled) {
-			log.WithError(err).Info("Watch terminated")
-		} else {
-			log.WithError(err).Error("Watch terminated unexpectedly")
-		}
+		e.watchEtcdMembers(ctx, client, log)
 	})
+}
+
+func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) {
+	var lastObservedVersion string
+	err := watch.EtcdMembers(client).
+		WithErrorCallback(func(err error) (time.Duration, error) {
+			retryDelay, e := watch.IsRetryable(err)
+			if e == nil {
+				log.WithError(err).Debugf(
+					"Encountered transient error while watching etcd members"+
+						", last observed resource version was %q"+
+						", retrying in %s",
+					lastObservedVersion, retryDelay,
+				)
+				return retryDelay, nil
+			}
+			log.WithError(e).Error("bailing out watch")
+			return 0, err
+		}).
+		Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
+			lastObservedVersion = member.ResourceVersion
+			log.Debugf("watch triggered on %s", member.Name)
+			if err := e.resync(ctx, client); err != nil {
+				log.WithError(err).Error("failed to resync etcd members")
+			}
+			// Never stop the watch
+			return false, nil
+		})
+
+	if canceled := context.Cause(ctx); errors.Is(err, canceled) {
+		log.WithError(err).Info("Watch terminated")
+	} else {
+		log.WithError(err).Error("Watch terminated unexpectedly")
+	}
 }
 
 func (e *EtcdMemberReconciler) Stop() error {
