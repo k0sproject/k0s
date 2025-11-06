@@ -106,7 +106,7 @@ func (k *Keepalived) Start(ctx context.Context) error {
 	if !k.Config.DisableLoadBalancer && (len(k.Config.VRRPInstances) > 0 || len(k.Config.VirtualServers) > 0) {
 		k.log.Info("Starting CPLB reconciler")
 		updateCh := make(chan struct{}, 1)
-		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, updateCh)
+		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, k.APIPort, updateCh)
 		k.updateCh = updateCh
 		if err := k.reconciler.Start(); err != nil {
 			return fmt.Errorf("failed to start CPLB reconciler: %w", err)
