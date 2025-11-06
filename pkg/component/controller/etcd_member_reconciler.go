@@ -127,11 +127,33 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 	}
 
 	leaderelection.RunLeaderTasks(ctx, e.leaderElector.CurrentStatus, func(ctx context.Context) {
-		e.watchEtcdMembers(ctx, client, log)
+		e.watchAndResync(ctx, client, log)
 	})
 }
 
-func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) {
+func (e *EtcdMemberReconciler) watchAndResync(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) {
+	trigger := make(chan struct{}, 1)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		e.watchEtcdMembers(ctx, client, log, trigger)
+	}()
+	defer func() { <-done }()
+
+	for {
+		select {
+		case <-trigger:
+		case <-ctx.Done():
+			return
+		}
+
+		if err := e.resync(ctx, client); err != nil {
+			log.WithError(err).Error("failed to resync etcd members")
+		}
+	}
+}
+
+func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger, trigger chan<- struct{}) {
 	var lastObservedVersion string
 	err := watch.EtcdMembers(client).
 		WithErrorCallback(func(err error) (time.Duration, error) {
@@ -151,8 +173,9 @@ func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcd
 		Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
 			lastObservedVersion = member.ResourceVersion
 			log.Debugf("watch triggered on %s", member.Name)
-			if err := e.resync(ctx, client); err != nil {
-				log.WithError(err).Error("failed to resync etcd members")
+			select {
+			case trigger <- struct{}{}:
+			default:
 			}
 			// Never stop the watch
 			return false, nil
