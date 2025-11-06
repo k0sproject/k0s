@@ -90,7 +90,7 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 		if err != nil {
 			s.log.WithError(err).Warn("Failed to wait for process")
 		} else {
-			s.log.Warnf("Process exited: ", s.cmd.ProcessState)
+			s.log.Warn("Process exited: ", s.cmd.ProcessState)
 		}
 	}
 	return false
