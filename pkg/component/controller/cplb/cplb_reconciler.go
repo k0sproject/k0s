@@ -13,7 +13,7 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -64,7 +64,7 @@ func (r *CPLBReconciler) Stop() {
 
 func (r *CPLBReconciler) watchAPIServers(ctx context.Context, clientSet kubernetes.Interface) {
 	var lastObservedVersion string
-	_ = watch.Endpoints(clientSet.CoreV1().Endpoints("default")).
+	_ = watch.EndpointSlices(clientSet.DiscoveryV1().EndpointSlices("default")).
 		WithObjectName("kubernetes").
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryAfter, e := watch.IsRetryable(err); e == nil {
@@ -84,7 +84,7 @@ func (r *CPLBReconciler) watchAPIServers(ctx context.Context, clientSet kubernet
 			)
 			return retryAfter, nil
 		}).
-		Until(ctx, func(endpoints *corev1.Endpoints) (bool, error) {
+		Until(ctx, func(endpoints *discoveryv1.EndpointSlice) (bool, error) {
 			if lastObservedVersion != endpoints.ResourceVersion {
 				lastObservedVersion = endpoints.ResourceVersion
 				r.maybeUpdateIPs(endpoints)
@@ -95,11 +95,11 @@ func (r *CPLBReconciler) watchAPIServers(ctx context.Context, clientSet kubernet
 
 // maybeUpdateIPs updates the list of IP addresses if the new list has
 // different addresses
-func (r *CPLBReconciler) maybeUpdateIPs(endpoint *corev1.Endpoints) {
+func (r *CPLBReconciler) maybeUpdateIPs(es *discoveryv1.EndpointSlice) {
 	newAddresses := []string{}
-	for _, subset := range endpoint.Subsets {
-		for _, addr := range subset.Addresses {
-			newAddresses = append(newAddresses, addr.IP)
+	for _, ep := range es.Endpoints {
+		if ep.Conditions.Ready != nil && *ep.Conditions.Ready {
+			newAddresses = append(newAddresses, ep.Addresses...)
 		}
 	}
 

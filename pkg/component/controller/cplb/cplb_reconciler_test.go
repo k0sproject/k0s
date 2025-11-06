@@ -8,7 +8,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
+	"k8s.io/utils/ptr"
 )
 
 type CPLBReconcilerSuite struct {
@@ -24,12 +25,18 @@ func (s *CPLBReconcilerSuite) TestMaybeUpdateIPs() {
 		log:       logrus.WithField("component", "cplb-reconciler-test"),
 	}
 
-	endpoints := &corev1.Endpoints{
-		Subsets: []corev1.EndpointSubset{
+	endpoints := &discoveryv1.EndpointSlice{
+		Endpoints: []discoveryv1.Endpoint{
 			{
-				Addresses: []corev1.EndpointAddress{
-					{IP: "192.168.1.1"},
-					{IP: "192.168.1.2"},
+				Addresses: []string{"192.168.1.1"},
+				Conditions: discoveryv1.EndpointConditions{
+					Ready: ptr.To(true),
+				},
+			},
+			{
+				Addresses: []string{"192.168.1.2"},
+				Conditions: discoveryv1.EndpointConditions{
+					Ready: ptr.To(true),
 				},
 			},
 		},
@@ -54,7 +61,8 @@ func (s *CPLBReconcilerSuite) TestMaybeUpdateIPs() {
 	}
 
 	// test the addresses change when the endpoints change and the channel is notified when the addresses are empty
-	endpoints.Subsets[0].Addresses = []corev1.EndpointAddress{}
+	endpoints.Endpoints = []discoveryv1.Endpoint{}
+
 	reconciler.maybeUpdateIPs(endpoints)
 	select {
 	case <-updateCh:
