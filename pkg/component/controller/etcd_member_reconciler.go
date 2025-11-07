@@ -58,19 +58,25 @@ func (e *EtcdMemberReconciler) Init(_ context.Context) error {
 // This is needed to ensure all the member objects are in sync with the actual etcd cluster
 // We might get stale state if we remove the current leader as the leader will essentially
 // remove itself from the etcd cluster and after that tries to update the member object.
-func (e *EtcdMemberReconciler) resync(ctx context.Context, client etcdclient.EtcdMemberInterface) error {
+func (e *EtcdMemberReconciler) resync(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) bool {
 	// Loop through all the members and run reconcile on them
 	// Use high timeout as etcd/api could be a bit slow when the leader changes
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 	members, err := client.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return err
+		log.WithError(err).Error("Failed to list etcd members")
+		return false
 	}
+
+	var failed bool
 	for _, member := range members.Items {
-		e.reconcileMember(ctx, client, &member)
+		if !e.reconcileMember(ctx, client, &member) {
+			failed = true
+		}
 	}
-	return nil
+
+	return !failed
 }
 
 func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
@@ -127,38 +133,73 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 	}
 
 	leaderelection.RunLeaderTasks(ctx, e.leaderElector.CurrentStatus, func(ctx context.Context) {
-		var lastObservedVersion string
-		err = watch.EtcdMembers(client).
-			WithErrorCallback(func(err error) (time.Duration, error) {
-				retryDelay, e := watch.IsRetryable(err)
-				if e == nil {
-					log.WithError(err).Debugf(
-						"Encountered transient error while watching etcd members"+
-							", last observed resource version was %q"+
-							", retrying in %s",
-						lastObservedVersion, retryDelay,
-					)
-					return retryDelay, nil
-				}
-				log.WithError(e).Error("bailing out watch")
-				return 0, err
-			}).
-			Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
-				lastObservedVersion = member.ResourceVersion
-				log.Debugf("watch triggered on %s", member.Name)
-				if err := e.resync(ctx, client); err != nil {
-					log.WithError(err).Error("failed to resync etcd members")
-				}
-				// Never stop the watch
-				return false, nil
-			})
-
-		if canceled := context.Cause(ctx); errors.Is(err, canceled) {
-			log.WithError(err).Info("Watch terminated")
-		} else {
-			log.WithError(err).Error("Watch terminated unexpectedly")
-		}
+		e.watchAndResync(ctx, client, log)
 	})
+}
+
+func (e *EtcdMemberReconciler) watchAndResync(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) {
+	trigger := make(chan struct{}, 1)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		e.watchEtcdMembers(ctx, client, log, trigger)
+	}()
+	defer func() { <-done }()
+
+	var retry <-chan time.Time
+
+	for {
+		select {
+		case <-retry:
+		case <-trigger:
+			if retry != nil {
+				continue
+			}
+		case <-ctx.Done():
+			return
+		}
+
+		retry = nil
+		if !e.resync(ctx, client, log) {
+			log.Debug("Retrying in ten seconds")
+			retry = time.After(10 * time.Second)
+		}
+	}
+}
+
+func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger, trigger chan<- struct{}) {
+	var lastObservedVersion string
+	err := watch.EtcdMembers(client).
+		WithErrorCallback(func(err error) (time.Duration, error) {
+			retryDelay, e := watch.IsRetryable(err)
+			if e == nil {
+				log.WithError(err).Debugf(
+					"Encountered transient error while watching etcd members"+
+						", last observed resource version was %q"+
+						", retrying in %s",
+					lastObservedVersion, retryDelay,
+				)
+				return retryDelay, nil
+			}
+			log.WithError(e).Error("bailing out watch")
+			return 0, err
+		}).
+		Until(ctx, func(member *etcdv1beta1.EtcdMember) (bool, error) {
+			lastObservedVersion = member.ResourceVersion
+			log.Debugf("watch triggered on %s", member.Name)
+			select {
+			case trigger <- struct{}{}:
+			default:
+			}
+			// Never stop the watch
+			return false, nil
+		})
+
+	if canceled := context.Cause(ctx); errors.Is(err, canceled) {
+		log.WithError(err).Info("Watch terminated")
+	} else {
+		log.WithError(err).Error("Watch terminated unexpectedly")
+	}
 }
 
 func (e *EtcdMemberReconciler) Stop() error {
@@ -290,7 +331,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	return nil
 }
 
-func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdclient.EtcdMemberInterface, member *etcdv1beta1.EtcdMember) {
+func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdclient.EtcdMemberInterface, member *etcdv1beta1.EtcdMember) bool {
 	log := logrus.WithFields(logrus.Fields{
 		"component":   "etcdMemberReconciler",
 		"phase":       "reconcile",
@@ -303,7 +344,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 
 	if !member.Spec.Leave {
 		log.Debug("member not marked for leave, no action needed")
-		return
+		return true
 	}
 
 	etcdClient, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
@@ -315,7 +356,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			log.WithError(err).Error("failed to update member state")
 		}
 
-		return
+		return false
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -330,7 +371,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			log.WithError(err).Error("failed to update member state")
 		}
 
-		return
+		return false
 	}
 
 	// Member marked for leave but no member found in etcd, mark for leaved
@@ -342,20 +383,21 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		member, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
 		if err != nil {
 			log.WithError(err).Error("failed to update EtcdMember status")
+			return false
 		}
 	}
 
 	joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
 	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !ok {
 		log.Debug("member already left, no action needed")
-		return
+		return true
 	}
 
 	// Convert the memberID to uint64
 	memberID, err := strconv.ParseUint(member.Status.MemberID, 16, 64)
 	if err != nil {
 		log.WithError(err).Error("failed to parse memberID")
-		return
+		return false
 	}
 
 	err = retry.Do(func() error {
@@ -388,7 +430,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		if err != nil {
 			log.WithError(err).Error("failed to update EtcdMember status")
 		}
-		return
+		return false
 	}
 
 	// Peer removed successfully, update status
@@ -399,5 +441,8 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	_, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
 	if err != nil {
 		log.WithError(err).Error("failed to update EtcdMember status")
+		return false
 	}
+
+	return true
 }
