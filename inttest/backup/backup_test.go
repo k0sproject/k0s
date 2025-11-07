@@ -142,7 +142,7 @@ func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 
 	services := make(map[types.UID]string)
 	{
-		svc, err := kc.CoreV1().Services("default").Get(s.Context(), "kubernetes", metav1.GetOptions{})
+		svc, err := kc.CoreV1().Services(metav1.NamespaceDefault).Get(s.Context(), "kubernetes", metav1.GetOptions{})
 		s.Require().NoError(err)
 		services[svc.UID] = svc.Name
 	}

@@ -6,9 +6,10 @@ package customdomain
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type CustomDomainSuite struct {
@@ -43,8 +44,8 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 		defer ssh.Disconnect()
 		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc run nginx --image docker.io/nginx:1-alpine")
 		s.Require().NoError(err)
-		s.NoError(common.WaitForPod(s.Context(), kc, "nginx", "default"))
-		s.NoError(common.WaitForPodLogs(s.Context(), kc, "default"))
+		s.NoError(common.WaitForPod(s.Context(), kc, "nginx", metav1.NamespaceDefault))
+		s.NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceDefault))
 		output, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc exec nginx -- cat /etc/resolv.conf")
 		s.Require().NoError(err)
 		s.Contains(output, "search default.svc.something.local svc.something.local something.local")

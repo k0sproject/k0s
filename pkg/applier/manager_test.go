@@ -69,7 +69,7 @@ data: {}
 	t.Cleanup(func() { assert.NoError(t, leaderElector.Stop()) })
 
 	// Wait for the "before" stack to be applied.
-	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps("default")).
+	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps(metav1.NamespaceDefault)).
 		Until(t.Context(), func(item *corev1.ConfigMap) (bool, error) {
 			return item.Name == "before", nil
 		}),
@@ -90,7 +90,7 @@ data: {}
 	), constant.CertMode))
 
 	// Wait for the "after" stack to be applied.
-	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps("default")).
+	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps(metav1.NamespaceDefault)).
 		Until(t.Context(), func(item *corev1.ConfigMap) (bool, error) {
 			return item.Name == "after", nil
 		}),
@@ -142,7 +142,7 @@ data: {}
 	}
 	assert.Equal(t, strings.Join(expectedContent, "\n"), string(content))
 
-	configMaps, err := clients.Client.CoreV1().ConfigMaps("default").List(t.Context(), metav1.ListOptions{})
+	configMaps, err := clients.Client.CoreV1().ConfigMaps(metav1.NamespaceDefault).List(t.Context(), metav1.ListOptions{})
 	if assert.NoError(t, err) {
 		assert.Empty(t, configMaps.Items)
 	}
@@ -185,14 +185,14 @@ func TestManager(t *testing.T) {
 	cmgv, _ := schema.ParseResourceArg("configmaps.v1.")
 	podgv, _ := schema.ParseResourceArg("pods.v1.")
 
-	waitForResource(t, fakes, *cmgv, "kube-system", "applier-test")
-	waitForResource(t, fakes, *podgv, "kube-system", "applier-test")
+	waitForResource(t, fakes, *cmgv, metav1.NamespaceSystem, "applier-test")
+	waitForResource(t, fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 
-	r, err := getResource(fakes, *cmgv, "kube-system", "applier-test")
+	r, err := getResource(fakes, *cmgv, metav1.NamespaceSystem, "applier-test")
 	if assert.NoError(t, err) {
 		assert.Equal(t, "applier", r.GetLabels()["component"])
 	}
-	r, err = getResource(fakes, *podgv, "kube-system", "applier-test")
+	r, err = getResource(fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 	if assert.NoError(t, err) {
 		assert.Equal(t, "Pod", r.GetKind())
 		assert.Equal(t, "applier", r.GetLabels()["component"])
@@ -204,7 +204,7 @@ func TestManager(t *testing.T) {
 
 	t.Log("waiting for pod to be updated")
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		r, err := getResource(fakes, *podgv, "kube-system", "applier-test")
+		r, err := getResource(fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 		if assert.NoError(t, err) {
 			assert.Equal(t, "test", r.GetLabels()["custom1"])
 		}
@@ -220,9 +220,9 @@ func TestManager(t *testing.T) {
 
 	deployGV, _ := schema.ParseResourceArg("deployments.v1.apps")
 
-	waitForResource(t, fakes, *deployGV, "kube-system", "nginx")
+	waitForResource(t, fakes, *deployGV, metav1.NamespaceSystem, "nginx")
 
-	r, err = getResource(fakes, *deployGV, "kube-system", "nginx")
+	r, err = getResource(fakes, *deployGV, metav1.NamespaceSystem, "nginx")
 	if assert.NoError(t, err) {
 		assert.Equal(t, "Deployment", r.GetKind())
 		assert.Equal(t, "applier", r.GetLabels()["component"])
@@ -234,7 +234,7 @@ func TestManager(t *testing.T) {
 
 	t.Log("waiting for pod to be updated")
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		r, err := getResource(fakes, *podgv, "kube-system", "applier-test")
+		r, err := getResource(fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 		if assert.NoError(t, err) {
 			assert.Equal(t, "test", r.GetLabels()["custom2"])
 		}
@@ -247,7 +247,7 @@ func TestManager(t *testing.T) {
 
 	t.Log("waiting for pod to be deleted")
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		_, err := getResource(fakes, *podgv, "kube-system", "applier-test")
+		_, err := getResource(fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 		assert.Truef(t, errors.IsNotFound(err), "Expected a 'not found' error: %v", err)
 	}, 5*time.Second, 100*time.Millisecond)
 }

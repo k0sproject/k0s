@@ -24,7 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -219,7 +219,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	if err != nil {
 		return err
 	}
-	ns, err := cl.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
+	ns, err := cl.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

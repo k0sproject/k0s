@@ -18,7 +18,7 @@ func TestValidation(t *testing.T) {
 			chart := Chart{
 				Name:      "",
 				ChartName: "k0s/chart",
-				TargetNS:  "default",
+				TargetNS:  metav1.NamespaceDefault,
 			}
 			assert.Error(t, chart.Validate())
 		})
@@ -34,7 +34,7 @@ func TestValidation(t *testing.T) {
 			chart := Chart{
 				Name:      "release",
 				ChartName: "",
-				TargetNS:  "default",
+				TargetNS:  metav1.NamespaceDefault,
 			}
 			assert.Error(t, chart.Validate())
 		})
@@ -42,7 +42,7 @@ func TestValidation(t *testing.T) {
 			chart := Chart{
 				Name:      "release",
 				ChartName: "k0s/chart",
-				TargetNS:  "default",
+				TargetNS:  metav1.NamespaceDefault,
 			}
 			assert.NoError(t, chart.Validate())
 		})

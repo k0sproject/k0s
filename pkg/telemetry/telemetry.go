@@ -77,7 +77,7 @@ func (c *Component) collectTelemetry(ctx context.Context, clients kubernetes.Int
 
 func getClusterID(ctx context.Context, clients kubernetes.Interface) (string, error) {
 	ns, err := clients.CoreV1().Namespaces().Get(ctx,
-		"kube-system",
+		metav1.NamespaceSystem,
 		metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("can't find kube-system namespace: %w", err)
@@ -142,7 +142,7 @@ func (c *Component) sendTelemetry(ctx context.Context, analyticsClient analytics
 }
 
 func addCustomData(ctx context.Context, analyticCtx *analytics.Context, clients kubernetes.Interface) {
-	cm, err := clients.CoreV1().ConfigMaps("kube-system").Get(ctx, "k0s-telemetry", metav1.GetOptions{})
+	cm, err := clients.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, "k0s-telemetry", metav1.GetOptions{})
 	if err != nil {
 		return
 	}

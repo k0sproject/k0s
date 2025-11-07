@@ -48,7 +48,7 @@ data:
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "worker-config-fake-" + constant.KubernetesMajorMinorVersion,
-			Namespace: "kube-system",
+			Namespace: metav1.NamespaceSystem,
 		},
 		Data: map[string]string{
 			"nodeLocalLoadBalancing": "{enabled: false}",
@@ -130,7 +130,7 @@ func TestWatchProfile(t *testing.T) {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            fmt.Sprintf("%s-%s-%s", constant.WorkerConfigComponentName, t.Name(), constant.KubernetesMajorMinorVersion),
-			Namespace:       "kube-system",
+			Namespace:       metav1.NamespaceSystem,
 			ResourceVersion: t.Name(),
 		},
 		Data: map[string]string{

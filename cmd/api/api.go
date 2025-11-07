@@ -97,7 +97,7 @@ func buildServer(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) (fu
 	if err != nil {
 		return nil, err
 	}
-	secrets := client.CoreV1().Secrets("kube-system")
+	secrets := client.CoreV1().Secrets(metav1.NamespaceSystem)
 
 	prefix := "/v1beta1"
 	mux := http.NewServeMux()

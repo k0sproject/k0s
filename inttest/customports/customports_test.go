@@ -13,9 +13,11 @@ import (
 	"strings"
 	"testing"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8s "k8s.io/client-go/kubernetes"
+
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
-	k8s "k8s.io/client-go/kubernetes"
 )
 
 type customPortsSuite struct {
@@ -121,10 +123,10 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.T().Log("waiting to see CNI pods ready")
 	s.Require().NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 	s.T().Log("waiting to see konnectivity-agent pods ready")
-	s.Require().NoError(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent", "kube-system"), "konnectivity-agent did not start")
+	s.Require().NoError(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent", metav1.NamespaceSystem), "konnectivity-agent did not start")
 
 	s.T().Log("waiting to get logs from pods")
-	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
+	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceSystem))
 
 	// https://github.com/k0sproject/k0s/issues/1202
 	s.Run("kubeconfigIncludesExternalAddress", func() {

@@ -13,8 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
@@ -26,6 +24,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/supervisor"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Konnectivity implements the component interface for konnectivity server
@@ -148,7 +150,7 @@ func (k *Konnectivity) serverArgs(count uint) []string {
 		"--admin-port":               strconv.FormatInt(int64(k.clusterConfig.Spec.Konnectivity.AdminPort), 10),
 		"--health-bind-address":      "localhost",
 		"--health-port":              "8092",
-		"--agent-namespace":          "kube-system",
+		"--agent-namespace":          metav1.NamespaceSystem,
 		"--agent-service-account":    "konnectivity-agent",
 		"--authentication-audience":  "system:konnectivity-server",
 		"--logtostderr":              "true",

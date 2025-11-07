@@ -54,7 +54,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 
 	s.Require().NoError(common.WaitForKubeRouterReady(ctx, kc), "While waiting for kube-router to become ready")
 	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc), "While waiting for CoreDNS to become ready")
-	s.Require().NoError(common.WaitForPodLogs(ctx, kc, "kube-system"), "While waiting for some pod logs")
+	s.Require().NoError(common.WaitForPodLogs(ctx, kc, metav1.NamespaceSystem), "While waiting for some pod logs")
 
 	// At that moment we can assume that all pods have at least started
 	// We're interested only in image pull events

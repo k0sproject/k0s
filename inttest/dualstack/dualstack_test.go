@@ -123,7 +123,7 @@ func (s *DualstackSuite) SetupSuite() {
 	restConfig, err := s.GetKubeConfig("controller0", "")
 	s.Require().NoError(err)
 
-	createdTargetPod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+	createdTargetPod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker0"},
 		Spec: corev1.PodSpec{
@@ -134,12 +134,12 @@ func (s *DualstackSuite) SetupSuite() {
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx-worker0", "default"), "nginx-worker0 pod did not start")
+	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx-worker0", metav1.NamespaceDefault), "nginx-worker0 pod did not start")
 
 	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(s.Context(), createdTargetPod.Name, metav1.GetOptions{})
 	s.Require().NoError(err)
 
-	sourcePod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+	sourcePod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker1"},
 		Spec: corev1.PodSpec{
@@ -150,7 +150,7 @@ func (s *DualstackSuite) SetupSuite() {
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.NoError(common.WaitForPod(s.Context(), kc, "nginx-worker1", "default"), "nginx-worker1 pod did not start")
+	s.NoError(common.WaitForPod(s.Context(), kc, "nginx-worker1", metav1.NamespaceDefault), "nginx-worker1 pod did not start")
 
 	// test ipv6 address
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {

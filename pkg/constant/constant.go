@@ -6,6 +6,8 @@ package constant
 import (
 	"crypto/tls"
 	"strings"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Network providers
@@ -121,7 +123,7 @@ const (
 	UpdateProberComponentName          = "update-prober"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
-	ClusterConfigNamespace  = "kube-system"
+	ClusterConfigNamespace  = metav1.NamespaceSystem
 	ClusterConfigObjectName = "k0s"
 
 	K0SNodeRoleLabel = "node.k0sproject.io/role"

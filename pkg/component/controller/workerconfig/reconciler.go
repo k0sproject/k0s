@@ -377,7 +377,7 @@ func (r *Reconciler) reconcileAPIServers(ctx context.Context, updates chan<- upd
 		return err
 	}
 
-	return watch.Endpoints(client.CoreV1().Endpoints("default")).
+	return watch.Endpoints(client.CoreV1().Endpoints(metav1.NamespaceDefault)).
 		WithObjectName("kubernetes").
 		Until(ctx, func(endpoints *corev1.Endpoints) (bool, error) {
 			apiServers, err := extractAPIServerAddresses(endpoints)
@@ -534,7 +534,7 @@ func buildRBACResources(configMaps []*corev1.ConfigMap) []resource {
 
 	meta := metav1.ObjectMeta{
 		Name:      fmt.Sprintf("system:bootstrappers:%s-%s", constant.WorkerConfigComponentName, constant.KubernetesMajorMinorVersion),
-		Namespace: "kube-system",
+		Namespace: metav1.NamespaceSystem,
 		Labels:    applier.CommonLabels(constant.WorkerConfigComponentName),
 	}
 
@@ -623,7 +623,7 @@ func toConfigMap(profileName string, profile *workerconfig.Profile) (*corev1.Con
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s-%s", constant.WorkerConfigComponentName, profileName, constant.KubernetesMajorMinorVersion),
-			Namespace: "kube-system",
+			Namespace: metav1.NamespaceSystem,
 			Labels: applier.
 				CommonLabels(constant.WorkerConfigComponentName).
 				With("k0s.k0sproject.io/worker-profile", profileName),

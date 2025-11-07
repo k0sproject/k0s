@@ -32,8 +32,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const kubeSystem = "kube-system"
-
 type suite struct {
 	common.BootlooseSuite
 	isIPv6Only bool
@@ -55,7 +53,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 
 				WorkerProfiles: v1beta1.WorkerProfiles{
 					v1beta1.WorkerProfile{
-						Name: "default",
+						Name: metav1.NamespaceDefault,
 						Config: func() *runtime.RawExtension {
 							kubeletConfig := kubeletv1beta1.KubeletConfiguration{
 								NodeStatusUpdateFrequency: metav1.Duration{Duration: 3 * time.Second},
@@ -194,10 +192,10 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 				},
 			}
 
-			_, err = clients.AppsV1().DaemonSets("kube-system").Create(ctx, &dummyDaemons, metav1.CreateOptions{})
+			_, err = clients.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, &dummyDaemons, metav1.CreateOptions{})
 			s.Require().NoError(err)
 
-			s.NoError(common.WaitForDaemonSet(s.Context(), clients, name, "kube-system"))
+			s.NoError(common.WaitForDaemonSet(s.Context(), clients, name, metav1.NamespaceSystem))
 			s.T().Logf("Dummy DaemonSet %s is ready", name)
 		})
 
@@ -227,7 +225,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 			var holderIdentity string
 			watchLeases := watch.FromClient[*coordinationv1.LeaseList, coordinationv1.Lease]
 
-			err := watchLeases(clients.CoordinationV1().Leases("kube-node-lease")).
+			err := watchLeases(clients.CoordinationV1().Leases(corev1.NamespaceNodeLease)).
 				WithObjectName("k0s-ctrl-"+nodeName).
 				WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
 				Until(ctx, func(lease *coordinationv1.Lease) (bool, error) {
@@ -254,30 +252,30 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 			s.T().Logf("Node %s is ready", nodeName)
 
 			nllbPodName := "nllb-" + nodeName
-			if err := common.WaitForPod(ctx, clients, nllbPodName, kubeSystem); err != nil {
-				return fmt.Errorf("Pod %s/%s is not ready: %w", nllbPodName, kubeSystem, err)
+			if err := common.WaitForPod(ctx, clients, nllbPodName, metav1.NamespaceSystem); err != nil {
+				return fmt.Errorf("Pod %s/%s is not ready: %w", nllbPodName, metav1.NamespaceSystem, err)
 			}
-			s.T().Logf("Pod %s/%s is ready", kubeSystem, nllbPodName)
+			s.T().Logf("Pod %s/%s is ready", metav1.NamespaceSystem, nllbPodName)
 
 			// Test that we get logs, it's a signal that konnectivity tunnels work.
 			var logsErr error
 			if err := wait.PollImmediateUntilWithContext(ctx, 1*time.Second, func(ctx context.Context) (bool, error) {
 				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 				defer cancel()
-				logs, err := clients.CoreV1().Pods(kubeSystem).GetLogs(nllbPodName, &corev1.PodLogOptions{}).Stream(ctx)
+				logs, err := clients.CoreV1().Pods(metav1.NamespaceSystem).GetLogs(nllbPodName, &corev1.PodLogOptions{}).Stream(ctx)
 				if err != nil {
 					if logsErr == nil || err.Error() != logsErr.Error() {
-						s.T().Logf("No logs yet from %s/%s: %v", kubeSystem, nllbPodName, err)
+						s.T().Logf("No logs yet from %s/%s: %v", metav1.NamespaceSystem, nllbPodName, err)
 					}
 					logsErr = err
 					return false, nil
 				}
 				return true, logs.Close()
 			}); err != nil {
-				return fmt.Errorf("failed to get pod logs from %s/%s: %w", kubeSystem, nllbPodName, logsErr)
+				return fmt.Errorf("failed to get pod logs from %s/%s: %w", metav1.NamespaceSystem, nllbPodName, logsErr)
 			}
 
-			s.T().Logf("Got some pod logs from %s/%s", kubeSystem, nllbPodName)
+			s.T().Logf("Got some pod logs from %s/%s", metav1.NamespaceSystem, nllbPodName)
 			return nil
 		})
 	}
@@ -292,7 +290,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 	for _, lease := range []string{"kube-scheduler", "kube-controller-manager"} {
 		eg.Go(func() error {
-			id, err := common.WaitForLease(ctx, clients, lease, kubeSystem)
+			id, err := common.WaitForLease(ctx, clients, lease, metav1.NamespaceSystem)
 			if err != nil {
 				return fmt.Errorf("%s has no leader: %w", lease, err)
 			}
@@ -303,7 +301,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 	for _, daemonSet := range []string{"kube-proxy", "konnectivity-agent"} {
 		eg.Go(func() error {
-			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, "kube-system"); err != nil {
+			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, metav1.NamespaceSystem); err != nil {
 				return fmt.Errorf("%s is not ready: %w", daemonSet, err)
 			}
 			s.T().Log(daemonSet, "is ready")
@@ -313,7 +311,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 	for _, deployment := range []string{"coredns", "metrics-server"} {
 		eg.Go(func() error {
-			if err := common.WaitForDeployment(ctx, clients, deployment, "kube-system"); err != nil {
+			if err := common.WaitForDeployment(ctx, clients, deployment, metav1.NamespaceSystem); err != nil {
 				return fmt.Errorf("%s did not become ready: %w", deployment, err)
 			}
 			s.T().Log(deployment, "is ready")

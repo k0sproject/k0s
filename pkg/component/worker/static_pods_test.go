@@ -47,14 +47,14 @@ func TestStaticPods_Provisioning(t *testing.T) {
 		assert.Equal(t, newList(t), getContent(t, underTest))
 	})
 
-	podUnderTest, err := underTest.ClaimStaticPod("default", "dummy-test")
+	podUnderTest, err := underTest.ClaimStaticPod(metav1.NamespaceDefault, "dummy-test")
 	require.NoError(t, err)
 
 	t.Run("rejects_claims", func(t *testing.T) {
 		for _, test := range []struct{ test, ns, name, err string }{
 			{
 				"pods_without_a_name",
-				"default", "",
+				metav1.NamespaceDefault, "",
 				`invalid name: "": `,
 			},
 			{
@@ -73,7 +73,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 	})
 
 	t.Run("rejects", func(t *testing.T) {
-		_, err = underTest.ClaimStaticPod("default", "dummy-test")
+		_, err = underTest.ClaimStaticPod(metav1.NamespaceDefault, "dummy-test")
 		if assert.Error(t, err) {
 			assert.Equal(t, "default/dummy-test is already claimed", err.Error())
 		}
@@ -132,7 +132,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 	})
 
 	t.Run("sets_pod_manifests", func(t *testing.T) {
-		replaced := `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"dummy-test","namespace":"default"}}`
+		replaced := `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"dummy-test","namespace":"` + metav1.NamespaceDefault + `"}}`
 		expected := newList(t, []byte(replaced))
 
 		assert.NoError(t, podUnderTest.SetManifest(dummyPod))
@@ -166,7 +166,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 
 	underTest := NewStaticPods().(*staticPods)
 	underTest.log = log
-	podUnderTest, err := underTest.ClaimStaticPod("default", "dummy-test")
+	podUnderTest, err := underTest.ClaimStaticPod(metav1.NamespaceDefault, "dummy-test")
 	require.NoError(t, err)
 	assert.NoError(t, podUnderTest.SetManifest(dummyPod))
 

@@ -133,20 +133,20 @@ func TestChartManifestFileName(t *testing.T) {
 	chart := k0sv1beta1.Chart{
 		Name:      "release",
 		ChartName: "k0s/chart",
-		TargetNS:  "default",
+		TargetNS:  metav1.NamespaceDefault,
 	}
 
 	chart1 := k0sv1beta1.Chart{
 		Name:      "release",
 		ChartName: "k0s/chart",
-		TargetNS:  "default",
+		TargetNS:  metav1.NamespaceDefault,
 		Order:     1,
 	}
 
 	chart2 := k0sv1beta1.Chart{
 		Name:      "release",
 		ChartName: "k0s/chart",
-		TargetNS:  "default",
+		TargetNS:  metav1.NamespaceDefault,
 		Order:     2,
 	}
 
@@ -174,7 +174,7 @@ func TestExtensionsController_writeChartManifestFile(t *testing.T) {
 					ChartName: "k0s/chart",
 					Version:   "0.0.1",
 					Values:    "values",
-					TargetNS:  "default",
+					TargetNS:  metav1.NamespaceDefault,
 					Timeout: k0sv1beta1.BackwardCompatibleDuration(
 						metav1.Duration{Duration: 5 * time.Minute},
 					),
@@ -185,7 +185,7 @@ func TestExtensionsController_writeChartManifestFile(t *testing.T) {
 kind: Chart
 metadata:
   name: k0s-addon-chart-release
-  namespace: "kube-system"
+  namespace: ` + metav1.NamespaceSystem + `
   finalizers:
     - helm.k0sproject.io/uninstall-helm-release
 spec:
@@ -207,7 +207,7 @@ spec:
 					ChartName:    "k0s/chart",
 					Version:      "0.0.1",
 					Values:       "values",
-					TargetNS:     "default",
+					TargetNS:     metav1.NamespaceDefault,
 					ForceUpgrade: ptr.To(false),
 					Timeout: k0sv1beta1.BackwardCompatibleDuration(
 						metav1.Duration{Duration: 5 * time.Minute},
@@ -219,7 +219,7 @@ spec:
 kind: Chart
 metadata:
   name: k0s-addon-chart-release
-  namespace: "kube-system"
+  namespace: ` + metav1.NamespaceSystem + `
   finalizers:
     - helm.k0sproject.io/uninstall-helm-release
 spec:

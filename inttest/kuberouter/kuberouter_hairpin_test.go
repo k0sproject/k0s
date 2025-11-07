@@ -10,12 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
-	"github.com/stretchr/testify/suite"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+
 	"sigs.k8s.io/yaml"
+
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type KubeRouterHairpinSuite struct {
@@ -73,7 +76,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 	s.T().Log("waiting to see hairpin pod ready")
-	err = common.WaitForPod(s.Context(), kc, "hairpin-pod", "default")
+	err = common.WaitForPod(s.Context(), kc, "hairpin-pod", metav1.NamespaceDefault)
 	s.Require().NoError(err)
 
 	s.Run("check hairpin mode", func() {

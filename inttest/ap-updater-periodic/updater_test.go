@@ -88,7 +88,7 @@ func (s *plansSingleControllerSuite) verifyUpdateHeaders(kc kubernetes.Interface
 }
 
 func (s *plansSingleControllerSuite) getClusterID(kc kubernetes.Interface) string {
-	ns, err := kc.CoreV1().Namespaces().Get(s.Context(), "kube-system", metav1.GetOptions{})
+	ns, err := kc.CoreV1().Namespaces().Get(s.Context(), metav1.NamespaceSystem, metav1.GetOptions{})
 	s.Require().NoError(err)
 	return fmt.Sprintf("%s:%s", ns.Name, ns.UID)
 }

@@ -15,7 +15,7 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sretry "k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
@@ -90,7 +90,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		ns, err := cl.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
+		ns, err := cl.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}

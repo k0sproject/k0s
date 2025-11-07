@@ -69,7 +69,7 @@ func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, er
 
 	// Collect cluster ID
 	ns, err := kc.CoreV1().Namespaces().Get(ctx,
-		"kube-system",
+		metav1.NamespaceSystem,
 		metav1.GetOptions{})
 	if err != nil {
 		return ci, fmt.Errorf("can't find kube-system namespace: %w", err)

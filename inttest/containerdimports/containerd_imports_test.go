@@ -69,9 +69,9 @@ func (s *ContainerdImportsSuite) TestK0sGetsUp() {
 			},
 		},
 	}
-	_, err = kc.CoreV1().Pods("default").Create(ctx, &pod, metav1.CreateOptions{})
+	_, err = kc.CoreV1().Pods(metav1.NamespaceDefault).Create(ctx, &pod, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(ctx, kc, "foo", "default"))
+	s.Require().NoError(common.WaitForPod(ctx, kc, "foo", metav1.NamespaceDefault))
 
 	s.T().Log("Creating new Pod for default runc runtime")
 	normalNginxPod := corev1.Pod{
@@ -87,9 +87,9 @@ func (s *ContainerdImportsSuite) TestK0sGetsUp() {
 			},
 		},
 	}
-	_, err = kc.CoreV1().Pods("default").Create(ctx, &normalNginxPod, metav1.CreateOptions{})
+	_, err = kc.CoreV1().Pods(metav1.NamespaceDefault).Create(ctx, &normalNginxPod, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(ctx, kc, "normal-nginx", "default"))
+	s.Require().NoError(common.WaitForPod(ctx, kc, "normal-nginx", metav1.NamespaceDefault))
 
 }
 

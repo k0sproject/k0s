@@ -14,13 +14,15 @@ import (
 	uc "github.com/k0sproject/k0s/pkg/autopilot/channels"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcore "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
-	"github.com/sirupsen/logrus"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/k0sproject/version"
+	"github.com/sirupsen/logrus"
+	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type periodicUpdater struct {
@@ -99,7 +101,7 @@ func (u *periodicUpdater) checkForUpdate() {
 	// Check if there's a token configured
 	var token string
 	tokenSecret := &corev1.Secret{}
-	if err := u.k8sClient.Get(ctx, crcli.ObjectKey{Name: "update-server-token", Namespace: "kube-system"}, tokenSecret); err != nil {
+	if err := u.k8sClient.Get(ctx, crcli.ObjectKey{Name: "update-server-token", Namespace: metav1.NamespaceSystem}, tokenSecret); err != nil {
 		u.log.Infof("unable to get update server token: %v", err)
 	} else {
 		token = string(tokenSecret.Data["token"])

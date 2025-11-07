@@ -6,13 +6,12 @@ package psp
 import (
 	"testing"
 
-	"github.com/k0sproject/k0s/inttest/common"
-
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/ptr"
 
+	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -42,8 +41,8 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	s.NoError(err)
 
 	nonPrivelegedPodReq := &corev1.Pod{
-		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: v1.ObjectMeta{Name: "test-pod-non-privileged"},
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test-pod-non-privileged"},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{Name: "pause", Image: "quay.io/k0sproject/pause"}},
 		},
@@ -52,12 +51,12 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	ukc, err := s.UserKubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	_, err = ukc.CoreV1().Pods("default").Create(s.Context(), nonPrivelegedPodReq, v1.CreateOptions{})
+	_, err = ukc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), nonPrivelegedPodReq, metav1.CreateOptions{})
 	s.NoError(err)
 
 	privelegedPodReq := &corev1.Pod{
-		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: v1.ObjectMeta{Name: "test-pod-privileged"},
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test-pod-privileged"},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
@@ -71,7 +70,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 		},
 	}
 
-	_, err = ukc.CoreV1().Pods("default").Create(s.Context(), privelegedPodReq, v1.CreateOptions{})
+	_, err = ukc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), privelegedPodReq, metav1.CreateOptions{})
 	s.NoError(err)
 }
 

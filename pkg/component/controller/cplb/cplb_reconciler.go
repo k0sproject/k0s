@@ -12,9 +12,12 @@ import (
 
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
-	"github.com/sirupsen/logrus"
+
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/sirupsen/logrus"
 )
 
 // CPLBReconciler monitors the endpoints of the "kubernetes" service in the
@@ -64,7 +67,7 @@ func (r *CPLBReconciler) Stop() {
 
 func (r *CPLBReconciler) watchAPIServers(ctx context.Context, clientSet kubernetes.Interface) {
 	var lastObservedVersion string
-	_ = watch.Endpoints(clientSet.CoreV1().Endpoints("default")).
+	_ = watch.Endpoints(clientSet.CoreV1().Endpoints(metav1.NamespaceDefault)).
 		WithObjectName("kubernetes").
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryAfter, e := watch.IsRetryable(err); e == nil {
