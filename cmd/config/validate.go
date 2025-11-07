@@ -25,8 +25,11 @@ func NewValidateCmd() *cobra.Command {
 		Short: "Validate k0s configuration",
 		Long: `Example:
    k0s config validate --config path_to_config.yaml`,
-		Args:             cobra.NoArgs,
-		PersistentPreRun: debugFlags.Run,
+		Args: cobra.NoArgs,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			debugFlags.Run(cmd, args)
+			return internal.CallParentPersistentPreRun(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
 			var bytes []byte
 
