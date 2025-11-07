@@ -55,6 +55,7 @@ The specific storage consumption for k0s is as follows:
 - x86-64
 - ARM64
 - ARMv7
+- RISC-V (No pre-compiled binaries, no CI coverage)
 
 ## Networking
 
