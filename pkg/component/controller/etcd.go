@@ -32,6 +32,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 )
 
+//run CI
+
 const etcdGID = 0
 
 // Etcd implement the component interface to run etcd
