@@ -103,7 +103,7 @@ func (s *BackupSuite) TestK0sGetsUp() {
 		}
 	}
 
-	for i := range s.WorkerCount - 1 {
+	for i := range s.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(i), kc))
 	}
 
