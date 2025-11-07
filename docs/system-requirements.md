@@ -80,6 +80,7 @@ The following operating systems are automatically tested as part of our CI:
 - `x86_64`
 - `aarch64`
 - `armv7l`
+- `riscv64` (No pre-compiled binaries, no CI coverage)
 
 ## Networking
 

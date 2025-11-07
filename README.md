@@ -43,7 +43,7 @@ k0s is distributed as a single binary with zero host OS dependencies besides the
 - Supports custom [Container Runtime Interface (CRI)](docs/runtime.md) plugins (containerd is the default)
 - Supports all Kubernetes storage options with [Container Storage Interface (CSI)](docs/storage.md)
 - Supports a variety of [datastore backends](docs/configuration.md#specstorage): etcd (default for multi-node clusters), SQLite (default for single node clusters), MySQL, and PostgreSQL
-- Supports x86-64, ARM64 and ARMv7
+- Supports x86-64, ARM64, ARMv7 and RISC-V
 - Includes [Konnectivity service](docs/networking.md#controller-worker-communication), CoreDNS and Metrics Server
 <!-- End Key Features -->
 
