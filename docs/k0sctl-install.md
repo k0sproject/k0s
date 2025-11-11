@@ -40,23 +40,47 @@ k0sctl is a single binary, the instructions for downloading and installing of wh
     kind: Cluster
     metadata:
       name: k0s-cluster
+      user: admin
     spec:
       hosts:
-      - role: controller
-        ssh:
-          address: 10.0.0.1 # replace with the controller's IP address
+      - ssh:
+          address: 10.0.0.1
           user: root
-          keyPath: ~/.ssh/id_rsa
-      - role: worker
-        ssh:
-          address: 10.0.0.2 # replace with the worker's IP address
+          port: 22
+          keyPath: null
+        role: controller
+      - ssh:
+          address: 10.0.0.2
           user: root
-          keyPath: ~/.ssh/id_rsa
+          port: 22
+          keyPath: null
+        role: worker
+      options:
+        wait:
+          enabled: true
+        drain:
+          enabled: true
+          gracePeriod: 2m0s
+          timeout: 5m0s
+          force: true
+          ignoreDaemonSets: true
+          deleteEmptyDirData: true
+          podSelector: ""
+          skipWaitForDeleteTimeout: 0s
+        concurrency:
+          limit: 30
+          workerDisruptionPercent: 10
+          uploads: 5
+        evictTaint:
+          enabled: false
+          taint: k0sctl.k0sproject.io/evict=true
+          effect: NoExecute
+          controllerWorkers: false
     ```
 
 2. Provide each host with a valid IP address that is reachable by k0sctl, and the connection details for an SSH connection.
 
- **Note**: Refer to the [k0sctl documentation](https://github.com/k0sproject/k0sctl#configuration-file-spec-fields) for k0sctl configuration specifications.
+ **Note**: Refer to the [k0sctl documentation](https://github.com/k0sproject/k0sctl?tab=readme-ov-file#configuration-file) for k0sctl configuration specifications.
 
 ### 3. Deploy the cluster
 
