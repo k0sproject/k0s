@@ -16,6 +16,8 @@
     "/^release-1\\.3[0-3]$/"
   ],
   "prTitleStrict": true,
+  "commitMessageAction": "Bump",
+  "commitMessageTopic": "{{depName}}",
   "enabledManagers": [
     "gomod",
     "custom.regex"
@@ -84,7 +86,7 @@
         "**/kube-proxy"
       ],
       "groupName": "Kubernetes",
-      "groupSlug": "kubernetes-all",
+      "groupSlug": "kubernetes",
       "commitMessageExtra": "{{~#each upgrades}}{{~#if (equals depName \"k8s.io/kubernetes\")}} to {{{newVersion}}}{{/if}}{{/each~}}",
       "ignoreUnstable": false,
       "respectLatest": false
@@ -105,62 +107,62 @@
       ]
     },
     {
-      "description": "Group all Calico updates",
+      "description": "Group all Calico bumps",
       "enabled": true,
       "matchPackageNames": [
         "docker.io/calico/*",
         "quay.io/k0sproject/calico-*"
       ],
-      "groupName": "calico dependencies",
-      "groupSlug": "calico-all"
+      "groupName": "Calico",
+      "groupSlug": "calico"
     },
     {
-      "description": "Group all etcd updates",
+      "description": "Group all etcd bumps",
       "enabled": true,
       "matchPackageNames": [
         "go.etcd.io/etcd/**/v3",
         "etcd-io/etcd"
       ],
-      "groupName": "etcd dependencies",
-      "groupSlug": "etcd-all"
+      "groupName": "etcd",
+      "groupSlug": "etcd"
     },
     {
-      "description": "Group all containerd updates",
+      "description": "Group all containerd bumps",
       "enabled": true,
       "matchDepNames": [
         "containerd/containerd",
         "github.com/containerd/containerd"
       ],
-      "groupName": "containerd dependencies",
+      "groupName": "containerd",
       "groupSlug": "containerd"
     },
     {
-      "description": "Group all konnectivity updates",
+      "description": "Group all konnectivity bumps",
       "enabled": true,
       "matchDepNames": [
         "**/apiserver-network-proxy*",
         "sigs.k8s.io/apiserver-network-proxy/*"
       ],
-      "groupName": "konnectivity dependencies",
+      "groupName": "konnectivity",
       "groupSlug": "konnectivity"
     },
     {
-      "description": "Group all Helm updates",
+      "description": "Group all Helm bumps",
       "enabled": true,
       "matchDepNames": [
         "helm.sh/helm/**",
         "helm/helm"
       ],
-      "groupName": "Helm dependencies",
+      "groupName": "Helm",
       "groupSlug": "helm"
     },
     {
-      "description": "Group all sonobuoy updates",
+      "description": "Group all sonobuoy bumps",
       "enabled": true,
       "matchDepNames": [
         "**/sonobuoy"
       ],
-      "groupName": "sonobuoy dependencies",
+      "groupName": "sonobuoy",
       "groupSlug": "sonobuoy"
     },
     {
@@ -177,7 +179,7 @@
       }
     },
     {
-      "description": "Only update the main branch by default",
+      "description": "Only bump the main branch by default",
       "enabled": false,
       "prTitleStrict": false,
       "matchBaseBranches": [
@@ -235,7 +237,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Update minimum Go version",
+      "description": "Bump minimum Go version",
       "managerFilePatterns": [
         "**/go.mod"
       ],
@@ -249,7 +251,7 @@
     },
     {
       "customType": "regex",
-      "description": "Update container image tags in non-Dockerfiles",
+      "description": "Bump container image tags in non-Dockerfiles",
       "managerFilePatterns": [
         "**/*.go",
         "**/*.md",
@@ -272,7 +274,7 @@
     },
     {
       "customType": "regex",
-      "description": "Update GitHub source code links",
+      "description": "Bump GitHub source code links",
       "managerFilePatterns": [
         "**/*"
       ],
@@ -286,7 +288,7 @@
     },
     {
       "customType": "regex",
-      "description": "Generic version updates based on comments",
+      "description": "Generic version bumps based on comments",
       "managerFilePatterns": [
         "**/Makefile*",
         "**/Dockerfile*",
