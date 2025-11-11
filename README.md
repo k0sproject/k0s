@@ -68,7 +68,7 @@ check out the [Contributing Guide] and the [Code of Conduct].
 
 [k8s Slack]: https://kubernetes.slack.com/archives/C07VAPJUECS
 [GitHub Issues]: https://github.com/k0sproject/k0s/issues
-[Contributing Guide]: https://docs.k0sproject.io/stable/contributors/overview/
+[Contributing Guide]: https://docs.k0sproject.io/stable/contributors/
 [Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
 
 ### Community hours
