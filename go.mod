@@ -60,6 +60,8 @@ require (
 	google.golang.org/grpc v1.76.0
 	helm.sh/helm/v3 v3.19.0
 	oras.land/oras-go/v2 v2.6.0
+	sigs.k8s.io/controller-runtime v0.22.4
+	sigs.k8s.io/yaml v1.6.0
 )
 
 // Kubernetes
@@ -81,8 +83,6 @@ require (
 	k8s.io/kubernetes v1.34.1
 	k8s.io/mount-utils v0.34.1
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
-	sigs.k8s.io/controller-runtime v0.22.4
-	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
@@ -287,6 +287,7 @@ require (
 // Replacements duplicated from upstream Kubernetes
 replace (
 	// https://github.com/kubernetes/kubernetes/blob/v1.34.1/go.mod#L227-L259
+	// Keep in sync with renovate.json
 	k8s.io/api => k8s.io/api v0.34.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.34.1
 	k8s.io/apimachinery => k8s.io/apimachinery v0.34.1
