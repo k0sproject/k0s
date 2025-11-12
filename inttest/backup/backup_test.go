@@ -72,6 +72,7 @@ func (s *BackupSuite) TestK0sGetsUp() {
 		}
 	}
 
+	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(0), kc))
 	for i := range s.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(i), kc))
 	}
@@ -99,10 +100,11 @@ func (s *BackupSuite) TestK0sGetsUp() {
 		for i := range s.ControllerCount - 1 {
 			i := i + 1
 			s.PutFile(s.ControllerNode(i), "/etc/k0s/k0s.yaml", config)
-			s.Require().NoError(s.InitController(i, "--enable-worker", token))
+			s.Require().NoError(s.InitController(i, token))
 		}
 	}
 
+	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(0), kc))
 	for i := range s.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(i), kc))
 	}
