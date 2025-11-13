@@ -14,7 +14,7 @@ require (
 	github.com/cilium/ebpf v0.19.0
 	github.com/cloudflare/cfssl v1.6.4
 	github.com/containerd/cgroups/v3 v3.1.0
-	github.com/containerd/containerd v1.7.28
+	github.com/containerd/containerd v1.7.29
 	github.com/containerd/platforms v0.2.1
 	github.com/distribution/reference v0.6.0
 	github.com/dustin/go-humanize v1.0.1
