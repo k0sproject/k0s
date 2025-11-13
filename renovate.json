@@ -18,6 +18,9 @@
   "prTitleStrict": true,
   "commitMessageAction": "Bump",
   "commitMessageTopic": "{{depName}}",
+  "vulnerabilityAlerts": {
+    "enabled": false
+  },
   "enabledManagers": [
     "gomod",
     "custom.regex"
