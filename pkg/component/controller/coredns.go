@@ -423,7 +423,7 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		return fmt.Errorf("error calculating coredns configs: %w, will retry", err)
 	}
 	if reflect.DeepEqual(c.previousConfig, cfg) {
-		c.log.Infof("current cfg matches existing, not gonna do anything")
+		c.log.Debug("Configuration is up to date, not gonna do anything")
 		return nil
 	}
 	tw := templatewriter.TemplateWriter{
