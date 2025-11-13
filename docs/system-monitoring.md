@@ -46,6 +46,7 @@ metadata:
 spec:
   endpoints:
   - port: http
+    honorLabels: true 
   selector:
     matchLabels:
       app: k0s-observability
