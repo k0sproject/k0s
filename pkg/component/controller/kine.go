@@ -117,6 +117,8 @@ func (k *Kine) Start(ctx context.Context) error {
 			"--listen-address=unix://" + k.K0sVars.KineSocketPath,
 			// Enable metrics on port 2380. The default is 8080, which clashes with kube-router.
 			"--metrics-bind-address=:2380",
+			// https://github.com/k3s-io/kine/pull/513
+			"--compact-interval=0",
 		},
 		UID: k.uid,
 		GID: kineGID,
