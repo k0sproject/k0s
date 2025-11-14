@@ -32,6 +32,14 @@ func getDefaultNIC() (string, error) {
 	return "", errors.New("default route not found")
 }
 
+func macToInterfaceName(val *string, errs *[]error) {
+	if interfaceName, err := getNIC(*val); err != nil {
+		*errs = append(*errs, fmt.Errorf("failed to get NIC for MAC address %s: %w", *val, err))
+	} else {
+		*val = interfaceName
+	}
+}
+
 func getNIC(mac string) (string, error) {
 	links, err := netlink.LinkList()
 	if err != nil {

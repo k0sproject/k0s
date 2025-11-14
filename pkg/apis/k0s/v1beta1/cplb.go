@@ -140,10 +140,7 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 			}
 			k.VRRPInstances[i].Interface = nic
 		} else if _, err := net.ParseMAC(k.VRRPInstances[i].Interface); err == nil {
-			k.VRRPInstances[i].Interface, err = getNIC(k.VRRPInstances[i].Interface)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to get NIC for MAC address %s: %w", k.VRRPInstances[i].Interface, err))
-			}
+			macToInterfaceName(&k.VRRPInstances[i].Interface, &errs)
 		}
 
 		if k.VRRPInstances[i].VirtualRouterID == 0 {
