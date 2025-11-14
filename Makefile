@@ -207,7 +207,7 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 endif
 
 k0s: TARGET_OS = linux
-k0s: BUILD_GO_CGO_ENABLED = 1
+k0s: BUILD_GO_CGO_ENABLED = 0
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
