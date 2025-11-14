@@ -37,7 +37,7 @@ func openDB(path string) (*sqliteDB, error) {
 }
 
 func (db *sqliteDB) Backup(path string) error {
-	_, err := db.Exec(fmt.Sprintf("VACUUM INTO '%s'", path))
+	_, err := db.Exec("VACUUM INTO ?", path)
 	return err
 }
 
