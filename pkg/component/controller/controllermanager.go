@@ -137,7 +137,9 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	// Stop in case there's process running already and we need to change the config
 	if a.supervisor != nil {
 		logger.Info("reconcile has nothing to do")
-		a.supervisor.Stop()
+		if err := a.supervisor.Stop(); err != nil {
+			logger.WithError(err).Error("Failed to stop executable")
+		}
 		a.supervisor = nil
 	}
 
@@ -156,7 +158,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 // Stop stops Manager
 func (a *Manager) Stop() error {
 	if a.supervisor != nil {
-		a.supervisor.Stop()
+		return a.supervisor.Stop()
 	}
 	return nil
 }
