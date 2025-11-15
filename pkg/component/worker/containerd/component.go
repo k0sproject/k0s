@@ -14,6 +14,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -51,6 +52,8 @@ type Component struct {
 	executablePath string
 	confPath       string
 	importsPath    string
+
+	stop func()
 }
 
 func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
@@ -88,7 +91,7 @@ func (c *Component) Init(ctx context.Context) error {
 }
 
 // Run runs containerd.
-func (c *Component) Start(ctx context.Context) error {
+func (c *Component) Start(ctx context.Context) (err error) {
 	log := logrus.WithField("component", "containerd")
 	log.Info("Starting containerd")
 
@@ -114,11 +117,32 @@ func (c *Component) Start(ctx context.Context) error {
 		return err
 	}
 
-	go c.watchDropinConfigs(ctx)
+	cctx, cancel := context.WithCancelCause(context.Background())
+	var wg sync.WaitGroup
+	stop := func() {
+		cancel(errors.New("containerd component is stopping"))
+		c.supervisor.Stop()
+		wg.Wait()
+	}
+
+	defer func() {
+		if err == nil {
+			c.stop = stop
+		} else {
+			stop()
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wait.UntilWithContext(cctx, c.watchDropinConfigs, 30*time.Second)
+		log.Info("Stopped to watch for drop-ins")
+	}()
 
 	log.Debug("Waiting for containerd")
 	var lastErr error
-	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+	err = wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Duration: 100 * time.Millisecond, Factor: 1.2, Jitter: 0.05, Steps: 30,
 	}, func(ctx context.Context) (bool, error) {
 		rt := containerruntime.NewContainerRuntime(Endpoint(c.K0sVars.RunDir))
@@ -276,8 +300,8 @@ func (c *Component) restart() {
 
 // Stop stops containerd.
 func (c *Component) Stop() error {
-	if c.supervisor != nil {
-		c.supervisor.Stop()
+	if stop := c.stop; stop != nil {
+		stop()
 	}
 	return nil
 }

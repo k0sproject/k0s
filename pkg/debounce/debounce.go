@@ -45,7 +45,7 @@ func (d *Debouncer[T]) Run(ctx context.Context) error {
 	for pendingItem := (*T)(nil); ; {
 		select {
 		case <-ctx.Done():
-			return ctx.Err() // ctx is done, good bye ...
+			return context.Cause(ctx) // ctx is done, good bye ...
 
 		case item, ok := <-d.Input:
 			if !ok {
