@@ -220,9 +220,9 @@ func TestManager(t *testing.T) {
 
 	deployGV, _ := schema.ParseResourceArg("deployments.v1.apps")
 
-	waitForResource(t, fakes, *deployGV, metav1.NamespaceSystem, "nginx")
+	waitForResource(t, fakes, *deployGV, metav1.NamespaceSystem, "app")
 
-	r, err = getResource(fakes, *deployGV, metav1.NamespaceSystem, "nginx")
+	r, err = getResource(fakes, *deployGV, metav1.NamespaceSystem, "app")
 	if assert.NoError(t, err) {
 		assert.Equal(t, "Deployment", r.GetKind())
 		assert.Equal(t, "applier", r.GetLabels()["component"])

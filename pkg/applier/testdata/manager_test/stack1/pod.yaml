@@ -7,5 +7,5 @@ metadata:
     component: applier
 spec:
   containers:
-  - name: nginx
-    image: nginx:1.15
+    - name: app
+      image: registry.example.com/some/app:1

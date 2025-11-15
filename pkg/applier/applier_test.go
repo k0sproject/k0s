@@ -24,7 +24,7 @@ func TestApplierAppliesAllManifestsInADirectory(t *testing.T) {
 apiVersion: v1
 kind: Namespace
 metadata:
-  name:  kube-system
+  name: kube-system
 `
 	template := `
 apiVersion: v1
@@ -48,34 +48,28 @@ items:
         component: applier
     spec:
       containers:
-      - name: nginx
-        image: nginx:1.15
+      - name: app
+        image: registry.example.com/some/app:1
 `
 
 	templateDeployment := `
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
+  name: app
   namespace: kube-system
 spec:
   selector:
     matchLabels:
-      app: nginx
+      app: app
   template:
     metadata:
       labels:
-       app: nginx
+       app: app
     spec:
       containers:
-      - name: nginx
-        image: docker.io/nginx:1-alpine
-        resources:
-          limits:
-            memory: "64Mi"
-            cpu: "100m"
-        ports:
-          - containerPort: 80
+      - name: app
+        image: registry.example.com/some/app:1
 `
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "test-ns.yaml"), []byte(templateNS), 0400))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "test-list.yaml"), []byte(template), 0400))
@@ -99,7 +93,7 @@ spec:
 		assert.Equal(t, "applier", r.GetLabels()["component"])
 	}
 	deployGV, _ := schema.ParseResourceArg("deployments.v1.apps")
-	_, err = fakes.DynamicClient.Resource(*deployGV).Namespace(metav1.NamespaceSystem).Get(ctx, "nginx", metav1.GetOptions{})
+	_, err = fakes.DynamicClient.Resource(*deployGV).Namespace(metav1.NamespaceSystem).Get(ctx, "app", metav1.GetOptions{})
 	assert.NoError(t, err)
 
 	// Attempt to delete the stack with a different applier
@@ -112,7 +106,7 @@ spec:
 	_, err = fakes.DynamicClient.Resource(*podgv).Namespace(metav1.NamespaceSystem).Get(ctx, "applier-test", metav1.GetOptions{})
 	assert.True(t, errors.IsNotFound(err))
 
-	_, err = fakes.DynamicClient.Resource(*deployGV).Namespace(metav1.NamespaceSystem).Get(ctx, "nginx", metav1.GetOptions{})
+	_, err = fakes.DynamicClient.Resource(*deployGV).Namespace(metav1.NamespaceSystem).Get(ctx, "app", metav1.GetOptions{})
 	assert.True(t, errors.IsNotFound(err))
 
 	gvNS, _ := schema.ParseResourceArg("namespaces.v1.")
