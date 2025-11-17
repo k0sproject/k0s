@@ -15,7 +15,6 @@
 package k0supdate
 
 import (
-	"context"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
@@ -466,7 +465,7 @@ func TestNewPlan(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 			}
 
-			ctx := context.TODO()
+			ctx := t.Context()
 			nextState, retry, err := provider.NewPlan(ctx, test.command, &status)
 
 			require.NoError(t, err)

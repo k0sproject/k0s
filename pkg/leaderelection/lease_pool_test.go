@@ -48,9 +48,7 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 		LostLease:     make(chan struct{}, 1),
 	}
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
-	events, _, err := pool.Watch(ctx, withOutputChannels(output))
+	events, _, err := pool.Watch(t.Context(), withOutputChannels(output))
 	require.NoError(t, err)
 
 	done := make(chan struct{})
@@ -88,8 +86,7 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 		LostLease:     make(chan struct{}, 1),
 	}
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	t.Cleanup(cancel)
+	ctx, cancel := context.WithCancel(t.Context())
 	events, _, err := pool.Watch(ctx, withOutputChannels(output))
 	require.NoError(t, err)
 
@@ -131,7 +128,7 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 	}
 
 	givenLeaderElectorError(nil)
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 	events, _, err := pool.Watch(ctx, withOutputChannels(output))
 	require.NoError(t, err)
@@ -175,7 +172,7 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	// Pre-create the acquired lease for the first identity, so that there are
 	// no races when acquiring the lease by the two competing pools.
 	now := metav1.NewMicroTime(time.Now())
-	_, err = fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
+	_, err = fakeClient.CoordinationV1().Leases("test").Create(t.Context(), &coordinationv1.Lease{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Lease",
 			APIVersion: coordinationv1.SchemeGroupVersion.String(),
@@ -193,13 +190,13 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	require.NoError(t, err)
 	t.Log("Pre-created acquired lease for first identity")
 
-	ctx1, cancel1 := context.WithCancel(context.TODO())
+	ctx1, cancel1 := context.WithCancel(t.Context())
 	t.Cleanup(cancel1)
 	events1, watch1Done, err := pool1.Watch(ctx1)
 	require.NoError(t, err)
 	t.Log("Started first lease pool")
 
-	ctx2, cancel2 := context.WithCancel(context.TODO())
+	ctx2, cancel2 := context.WithCancel(t.Context())
 	t.Cleanup(cancel2)
 	events2, watch2Done, err := pool2.Watch(ctx2)
 	require.NoError(t, err)

@@ -73,16 +73,16 @@ data: {}
 `,
 	), constant.CertMode))
 
-	require.NoError(t, leaderElector.Init(context.TODO()))
-	require.NoError(t, underTest.Init(context.TODO()))
-	require.NoError(t, underTest.Start(context.TODO()))
+	require.NoError(t, leaderElector.Init(t.Context()))
+	require.NoError(t, underTest.Init(t.Context()))
+	require.NoError(t, underTest.Start(t.Context()))
 	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
-	require.NoError(t, leaderElector.Start(context.TODO()))
+	require.NoError(t, leaderElector.Start(t.Context()))
 	t.Cleanup(func() { assert.NoError(t, leaderElector.Stop()) })
 
 	// Wait for the "before" stack to be applied.
 	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps("default")).
-		Until(context.TODO(), func(item *corev1.ConfigMap) (bool, error) {
+		Until(t.Context(), func(item *corev1.ConfigMap) (bool, error) {
 			return item.Name == "before", nil
 		}),
 	)
@@ -103,7 +103,7 @@ data: {}
 
 	// Wait for the "after" stack to be applied.
 	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps("default")).
-		Until(context.TODO(), func(item *corev1.ConfigMap) (bool, error) {
+		Until(t.Context(), func(item *corev1.ConfigMap) (bool, error) {
 			return item.Name == "after", nil
 		}),
 	)
@@ -134,11 +134,11 @@ data: {}
 `,
 	), constant.CertMode))
 
-	require.NoError(t, leaderElector.Init(context.TODO()))
-	require.NoError(t, underTest.Init(context.TODO()))
-	require.NoError(t, underTest.Start(context.TODO()))
+	require.NoError(t, leaderElector.Init(t.Context()))
+	require.NoError(t, underTest.Init(t.Context()))
+	require.NoError(t, underTest.Start(t.Context()))
 	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
-	require.NoError(t, leaderElector.Start(context.TODO()))
+	require.NoError(t, leaderElector.Start(t.Context()))
 	t.Cleanup(func() { assert.NoError(t, leaderElector.Stop()) })
 
 	var content []byte
@@ -154,7 +154,7 @@ data: {}
 	}
 	assert.Equal(t, strings.Join(expectedContent, "\n"), string(content))
 
-	configMaps, err := clients.Client.CoreV1().ConfigMaps("default").List(context.TODO(), metav1.ListOptions{})
+	configMaps, err := clients.Client.CoreV1().ConfigMaps("default").List(t.Context(), metav1.ListOptions{})
 	if assert.NoError(t, err) {
 		assert.Empty(t, configMaps.Items)
 	}
@@ -164,7 +164,7 @@ data: {}
 var managerTestData embed.FS
 
 func TestManager(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	dir := t.TempDir()
 

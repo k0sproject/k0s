@@ -28,7 +28,6 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -119,10 +118,10 @@ func TestWriteAtomically(t *testing.T) {
 	t.Run("workingDirectoryChanges", func(t *testing.T) {
 		dir := t.TempDir()
 		otherDir := t.TempDir()
-		defer testutil.Chdir(t, dir)()
+		t.Chdir(dir)
 
 		assert.NoError(t, WriteAtomically("file", 0644, func(w io.Writer) error {
-			assert.NoError(t, os.Chdir(otherDir))
+			t.Chdir(otherDir)
 			return nil
 		}))
 		assertDirEmpty(t, otherDir)
@@ -215,7 +214,7 @@ func TestWriteAtomically(t *testing.T) {
 			)
 			assert.Equal(t, file, linkErr.New)
 			if runtime.GOOS == "windows" {
-				// https://github.com/golang/go/blob/go1.20/src/syscall/types_windows.go#L11
+				// https://github.com/golang/go/blob/go1.24.10/src/syscall/types_windows.go#L11
 				//revive:disable-next-line:var-naming
 				const ERROR_ACCESS_DENIED syscall.Errno = 5
 				var errno syscall.Errno

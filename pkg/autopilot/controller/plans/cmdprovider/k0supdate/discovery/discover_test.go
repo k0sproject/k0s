@@ -15,7 +15,6 @@
 package discovery
 
 import (
-	"context"
 	"testing"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -212,7 +211,7 @@ func TestDiscover(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
 
-			statusNodes, allAccountedFor := DiscoverNodes(context.TODO(), client, &test.target, test.delegate, test.exists)
+			statusNodes, allAccountedFor := DiscoverNodes(t.Context(), client, &test.target, test.delegate, test.exists)
 			assert.True(t, cmp.Equal(test.expectedStatusNodes, statusNodes, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
 			assert.Equal(t, test.expectedAllAccountedFor, allAccountedFor)
 		})

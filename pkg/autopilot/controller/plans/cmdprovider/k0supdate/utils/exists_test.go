@@ -15,7 +15,6 @@
 package utils
 
 import (
-	"context"
 	"testing"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
@@ -182,7 +181,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 		client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
 
 		t.Run(test.name, func(t *testing.T) {
-			found, status := ObjectExistsWithPlatform(context.TODO(), client, test.objectName, test.object, test.plan)
+			found, status := ObjectExistsWithPlatform(t.Context(), client, test.objectName, test.object, test.plan)
 			assert.Equal(t, test.expectedFound, found)
 			assert.Equal(t, test.expectedStatus, status)
 		})
