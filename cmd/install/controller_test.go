@@ -68,6 +68,7 @@ Flags:
       --single                                         enable single node (implies --enable-worker, default false)
       --status-socket string                           Full file path to the socket file. (default: <rundir>/status.sock)
       --taints strings                                 Node taints, list of key=value:effect strings
+      --token-env string                               Environment variable name containing the join-token.
       --token-file string                              Path to the file containing join-token.
 
 Global Flags:
@@ -75,6 +76,7 @@ Global Flags:
       --debugListenOn string   Http listenOn for Debug pprof handler (default ":6060")
   -e, --env stringArray        set environment variable
       --force                  force init script creation
+      --start                  start the service immediately after installation
   -v, --verbose                Verbose logging
 `, out.String())
 }
