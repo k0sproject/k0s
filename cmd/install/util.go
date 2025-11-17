@@ -24,7 +24,7 @@ func cmdFlagsToArgs(cmd *cobra.Command) ([]string, error) {
 			flagsAndVals = append(flagsAndVals, fmt.Sprintf(`--%s=%s`, f.Name, strings.Trim(val, "[]")))
 		default:
 			switch f.Name {
-			case "env", "force":
+			case "env", "force", "start":
 				return
 			case "data-dir", "kubelet-root-dir", "token-file", "config":
 				if absVal, err := filepath.Abs(val); err != nil {
