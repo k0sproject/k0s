@@ -27,9 +27,24 @@ All default values of worker command will be passed to the service stub unless o
 				return errors.New("this command must be run as root")
 			}
 
+			k0sVars, err := config.NewCfgVars(cmd)
+			if err != nil {
+				return fmt.Errorf("failed to initialize configuration variables: %w", err)
+			}
+
+			// Convert --token-env to --token-file
+			tokenFilePath, err := handleTokenEnv(cmd, k0sVars.DataDir)
+			if err != nil {
+				return err
+			}
+
 			flagsAndVals, err := cmdFlagsToArgs(cmd)
 			if err != nil {
 				return err
+			}
+
+			if tokenFilePath != "" {
+				flagsAndVals = append(flagsAndVals, "--token-file="+tokenFilePath)
 			}
 
 			args := append([]string{"worker"}, flagsAndVals...)

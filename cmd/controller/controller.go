@@ -182,10 +182,31 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	var joinClient *token.JoinClient
 
-	if (c.TokenArg != "" || c.TokenFile != "") && c.needToJoin(nodeConfig) {
+	if (c.TokenArg != "" || c.TokenFile != "" || c.TokenEnv != "") && c.needToJoin(nodeConfig) {
+		tokenSources := 0
+		if c.TokenArg != "" {
+			tokenSources++
+		}
+		if c.TokenFile != "" {
+			tokenSources++
+		}
+		if c.TokenEnv != "" {
+			tokenSources++
+		}
+
+		if tokenSources > 1 {
+			return errors.New("you can only pass one token source: either as a CLI argument 'k0s controller [token]', via '--token-file [path]', or via '--token-env [var]'")
+		}
+
 		var tokenData string
 		if c.TokenArg != "" {
 			tokenData = c.TokenArg
+		} else if c.TokenEnv != "" {
+			tokenValue := os.Getenv(c.TokenEnv)
+			if tokenValue == "" {
+				return fmt.Errorf("environment variable %q is not set or is empty", c.TokenEnv)
+			}
+			tokenData = tokenValue
 		} else {
 			data, err := os.ReadFile(c.TokenFile)
 			if err != nil {

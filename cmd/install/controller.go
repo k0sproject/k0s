@@ -49,9 +49,19 @@ With the controller subcommand you can setup a single node cluster by running:
 				return fmt.Errorf("invalid node config: %w", errors.Join(errs...))
 			}
 
+			// Convert --token-env to --token-file
+			tokenFilePath, err := handleTokenEnv(cmd, k0sVars.DataDir)
+			if err != nil {
+				return err
+			}
+
 			flagsAndVals, err := cmdFlagsToArgs(cmd)
 			if err != nil {
 				return err
+			}
+
+			if tokenFilePath != "" {
+				flagsAndVals = append(flagsAndVals, "--token-file="+tokenFilePath)
 			}
 
 			systemUsers := nodeConfig.Spec.Install.SystemUsers
