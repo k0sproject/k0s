@@ -187,9 +187,9 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		if c.TokenArg != "" {
 			tokenData = c.TokenArg
 		} else {
-			data, err := os.ReadFile(c.TokenFile)
+			data, err := token.Load(ctx, c.TokenFile, c.InsecureTokenFetch)
 			if err != nil {
-				return fmt.Errorf("read token file %q: %w", c.TokenFile, err)
+				return fmt.Errorf("read token from %q: %w", c.TokenFile, err)
 			}
 			tokenData = string(data)
 		}
