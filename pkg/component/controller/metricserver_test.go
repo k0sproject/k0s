@@ -17,7 +17,6 @@ limitations under the License.
 package controller
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -35,7 +34,7 @@ func TestGetConfigWithZeroNodes(t *testing.T) {
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
 	fakeFactory := testutil.NewFakeClientFactory()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	metrics := NewMetricServer(k0sVars, fakeFactory)
 	require.NoError(t, metrics.Reconcile(ctx, cfg))
@@ -51,7 +50,7 @@ func TestGetConfigWithSomeNodes(t *testing.T) {
 	require.NoError(t, err)
 	fakeFactory := testutil.NewFakeClientFactory()
 	fakeClient, _ := fakeFactory.GetClient()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	for i := 1; i <= 100; i++ {
 		n := &corev1.Node{
@@ -59,7 +58,7 @@ func TestGetConfigWithSomeNodes(t *testing.T) {
 				Name: fmt.Sprintf("node-%d", i),
 			},
 		}
-		_, err := fakeClient.CoreV1().Nodes().Create(context.TODO(), n, v1.CreateOptions{})
+		_, err := fakeClient.CoreV1().Nodes().Create(t.Context(), n, v1.CreateOptions{})
 		require.NoError(t, err)
 	}
 

@@ -17,7 +17,6 @@ limitations under the License.
 package http_test
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"path"
@@ -384,7 +383,7 @@ func TestDownload_ContentDisposition(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			var fileName string
-			err := internalhttp.Download(context.TODO(), baseURL+"/"+name, io.Discard,
+			err := internalhttp.Download(t.Context(), baseURL+"/"+name, io.Discard,
 				internalhttp.StoreSuggestedRemoteFileNameInto(&fileName),
 			)
 			assert.NoError(t, err)

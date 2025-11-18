@@ -17,7 +17,6 @@ limitations under the License.
 package applier_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -98,7 +97,7 @@ spec:
 	fakes := kubeutil.NewFakeClientFactory()
 	a := applier.NewApplier(dir, fakes)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	err := a.Apply(ctx)
 	assert.NoError(t, err)
 	gv, _ := schema.ParseResourceArg("configmaps.v1.")

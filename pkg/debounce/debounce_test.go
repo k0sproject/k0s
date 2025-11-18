@@ -31,7 +31,7 @@ func TestDebounce(t *testing.T) {
 	eventChan := make(chan int32, numEvents)
 	var debounceCalled uint32
 	var lastItem int32
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	debouncer := Debouncer[int32]{
 		Input:   eventChan,
@@ -73,7 +73,7 @@ func TestDebounceStopWithoutActuallyDebouncing(t *testing.T) {
 	const numEvents = 5
 	eventChan := make(chan int, numEvents)
 	var debounceCalled uint32
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(t.Context())
 
 	debouncer := Debouncer[int]{
 		Input:    eventChan,
@@ -107,7 +107,7 @@ func TestDebounceStopWithoutActuallyDebouncing(t *testing.T) {
 
 func TestDebouncerReturnsIfInputIsClosed(t *testing.T) {
 	eventChan := make(chan int)
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	debouncer := Debouncer[int]{

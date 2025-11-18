@@ -29,6 +29,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/testutil"
+
 	internalhttp "github.com/k0sproject/k0s/internal/http"
 	internalio "github.com/k0sproject/k0s/internal/io"
 
@@ -37,7 +39,7 @@ import (
 )
 
 func TestDownload_CancelRequest(t *testing.T) {
-	ctx, cancel := context.WithCancelCause(context.TODO())
+	ctx, cancel := context.WithCancelCause(t.Context())
 	cancel(assert.AnError)
 
 	err := internalhttp.Download(ctx, "http://404.example.com", io.Discard)
@@ -52,7 +54,7 @@ func TestDownload_NoContent(t *testing.T) {
 	baseURL := startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
-	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	err := internalhttp.Download(t.Context(), baseURL, io.Discard)
 	assert.ErrorContains(t, err, "bad status: 204 No Content")
 }
 
@@ -63,7 +65,7 @@ func TestDownload_ShortDownload(t *testing.T) {
 		assert.NoError(t, err)
 	}))
 
-	err := internalhttp.Download(context.TODO(), baseURL, io.Discard)
+	err := internalhttp.Download(t.Context(), baseURL, io.Discard)
 	assert.ErrorContains(t, err, "while downloading: unexpected EOF")
 }
 
@@ -78,15 +80,14 @@ func TestDownload_ExcessContentLength(t *testing.T) {
 	}))
 
 	var downloaded strings.Builder
-	err := internalhttp.Download(context.TODO(), baseURL, &downloaded)
+	err := internalhttp.Download(t.Context(), baseURL, &downloaded)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "yolo", downloaded.String())
 }
 
 func TestDownload_CancelDownload(t *testing.T) {
-	ctx, cancel := context.WithCancelCause(context.TODO())
-	t.Cleanup(func() { cancel(nil) })
+	ctx, cancel := context.WithCancelCause(t.Context())
 
 	baseURL := startFakeDownloadServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for {
@@ -135,7 +136,7 @@ func TestDownload_RedirectLoop(t *testing.T) {
 	}))
 
 	var downloaded strings.Builder
-	err := internalhttp.Download(context.TODO(), baseURL, &downloaded)
+	err := internalhttp.Download(t.Context(), baseURL, &downloaded)
 
 	assert.Equal(t, expectedRequests, requests.Load())
 	assert.ErrorContains(t, err, "stopped after 10 redirects")
@@ -155,7 +156,7 @@ func startFakeDownloadServer(t *testing.T, handler http.Handler) string {
 	}()
 
 	t.Cleanup(func() {
-		err := server.Shutdown(context.Background())
+		err := server.Shutdown(testutil.ContextBackground())
 		if !assert.NoError(t, err, "Couldn't shutdown HTTP server") {
 			return
 		}

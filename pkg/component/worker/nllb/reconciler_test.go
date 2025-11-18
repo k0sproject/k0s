@@ -487,14 +487,15 @@ func writeKubeconfig(t *testing.T) string {
 }
 
 func testContext(t *testing.T) context.Context {
-	ctx, cancel := context.WithCancel(context.TODO())
-	timeout := time.AfterFunc(10*time.Second, func() {
-		assert.Fail(t, "Test context timed out after 10 seconds")
-		cancel()
-	})
+	timeout := errors.New("timeout: " + t.Name())
+	ctx, cancel := context.WithCancelCause(t.Context())
+	timer := time.AfterFunc(10*time.Second, func() { cancel(timeout) })
+
 	t.Cleanup(func() {
-		timeout.Stop()
-		cancel()
+		timer.Stop()
+		if errors.Is(context.Cause(ctx), timeout) {
+			assert.Fail(t, "Test context timed out after 10 seconds")
+		}
 	})
 	return ctx
 }
