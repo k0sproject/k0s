@@ -35,6 +35,7 @@ type CPLBReconciler struct {
 	log            *logrus.Entry
 	kubeconfigPath string
 	mu             sync.RWMutex
+	wg             sync.WaitGroup
 	updateCh       chan<- struct{}
 	stop           func()
 	healthCheckers map[string]*healthChecker
@@ -47,6 +48,7 @@ func NewCPLBReconciler(kubeconfigPath string, apiPort int, updateCh chan<- struc
 		kubeconfigPath: kubeconfigPath,
 		updateCh:       updateCh,
 		healthCheckers: make(map[string]*healthChecker),
+		wg:             sync.WaitGroup{},
 	}
 }
 
@@ -76,6 +78,7 @@ func (r *CPLBReconciler) Start() error {
 func (r *CPLBReconciler) Stop() {
 	r.log.Debug("Stopping")
 	r.stop()
+	r.wg.Wait()
 	r.log.Info("Stopped")
 }
 
@@ -234,7 +237,8 @@ func (r *CPLBReconciler) newHealthChecker(ctx context.Context, restConfig *rest.
 		updateCh:      r.updateCh,
 		healthCheckFn: healthCheckFn,
 	}
-	go hc.runHealthCheck(c, addr, nil)
+	r.wg.Add(1)
+	go hc.runHealthCheck(c, addr, nil, r.wg.Done)
 	return hc
 }
 
@@ -242,7 +246,8 @@ func (hc *healthChecker) Stop() {
 	hc.cancel()
 }
 
-func (hc *healthChecker) runHealthCheck(ctx context.Context, addr string, c <-chan time.Time) {
+func (hc *healthChecker) runHealthCheck(ctx context.Context, addr string, c <-chan time.Time, done func()) {
+	defer done()
 	if c == nil {
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()

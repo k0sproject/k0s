@@ -49,7 +49,7 @@ func TestHealthCheckerRunHealthCheck(t *testing.T) {
 	}
 	c := make(chan time.Time)
 
-	go hc.runHealthCheck(t.Context(), "192.168.1.1", c)
+	go hc.runHealthCheck(t.Context(), "192.168.1.1", c, func() {})
 	require.False(t, hc.healthy, "Expected the healthChecker to be unhealthy before the first tick")
 
 	c <- time.Now()
