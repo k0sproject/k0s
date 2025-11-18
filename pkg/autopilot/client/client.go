@@ -14,6 +14,7 @@ import (
 )
 
 // FactoryInterface is a collection of kubernetes clientset interfaces.
+//
 // Deprecated: Use [kubeutil.ClientFactoryInterface] instead.
 type FactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)

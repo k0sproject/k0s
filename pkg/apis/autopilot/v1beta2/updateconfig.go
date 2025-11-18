@@ -87,9 +87,12 @@ type UpgradeStrategy struct {
 	// Type defines the type of upgrade strategy
 	// +kubebuilder:validation:Enum=periodic;cron
 	Type string `json:"type,omitempty"`
+
 	// Cron defines the cron expression for the cron upgrade strategy
+	//
 	// Deprecated: Cron is deprecated and will eventually be ignored
 	Cron string `json:"cron,omitempty"`
+
 	// Periodic defines the periodic upgrade strategy
 	//
 	// +optional

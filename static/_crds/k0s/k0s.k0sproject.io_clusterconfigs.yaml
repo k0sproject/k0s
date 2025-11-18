@@ -908,11 +908,13 @@ spec:
                       peerRouterASNs:
                         description: |-
                           Comma-separated list of global peer addresses
+
                           Deprecated: Use extraArgs with peerRouterASNs instead
                         type: string
                       peerRouterIPs:
                         description: |-
                           Comma-separated list of global peer ASNs
+
                           Deprecated: Use extraArgs with peerRouterIPs instead
                         type: string
                       rawArgs:
