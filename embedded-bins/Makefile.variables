@@ -12,7 +12,7 @@ runc_build_go_tags = "seccomp"
 #runc_build_go_ldflags =
 runc_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-containerd_version = 1.7.27
+containerd_version = 1.7.29
 containerd_buildimage = $(golang_buildimage)
 containerd_build_go_tags = "apparmor,selinux"
 containerd_build_shim_go_cgo_enabled = 0
@@ -43,7 +43,7 @@ kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1
 kine_build_go_ldflags = "-w -s"
 kine_build_go_ldflags_extra = "-extldflags=-static"
 
-etcd_version = 3.5.18
+etcd_version = 3.5.25
 etcd_buildimage = $(golang_buildimage)
 #etcd_build_go_tags =
 etcd_build_go_cgo_enabled = 0
