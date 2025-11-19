@@ -1,25 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
+  name: app
   namespace: kube-system
   labels:
     component: applier
 spec:
   selector:
     matchLabels:
-      app: nginx
+      app: app
   template:
     metadata:
       labels:
-       app: nginx
+        app: app
     spec:
       containers:
-      - name: nginx
-        image: docker.io/nginx:1-alpine
-        resources:
-          limits:
-            memory: "64Mi"
-            cpu: "100m"
-        ports:
-          - containerPort: 80
+        - name: app
+          image: registry.example.com/some/app:1

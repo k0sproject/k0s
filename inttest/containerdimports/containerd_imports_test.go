@@ -64,7 +64,7 @@ func (s *ContainerdImportsSuite) TestK0sGetsUp() {
 			Containers: []corev1.Container{
 				{
 					Name:  "foo",
-					Image: "docker.io/nginx:1-alpine",
+					Image: "docker.io/library/nginx:1.29.3-alpine",
 				},
 			},
 		},
@@ -82,7 +82,7 @@ func (s *ContainerdImportsSuite) TestK0sGetsUp() {
 			Containers: []corev1.Container{
 				{
 					Name:  "nginx",
-					Image: "docker.io/nginx:1-alpine",
+					Image: "docker.io/library/nginx:1.29.3-alpine",
 				},
 			},
 		},
