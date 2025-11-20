@@ -9,6 +9,8 @@ const (
 
 	KineSocket           = "kine\\kine.sock:2379"
 	K0sConfigPathDefault = "C:\\etc\\k0s\\k0s.yaml"
+	// StatusSocketPathDefault is the default location of the k0s status named pipe.
+	StatusSocketPathDefault = `\\\\.\\\\pipe\\\\k0s-status`
 
 	ExecutableSuffix = ".exe"
 )
