@@ -4,15 +4,32 @@ kind: ClusterRole
 metadata:
   name: system:nodes:autopilot
 rules:
-  - apiGroups: ["autopilot.k0sproject.io"]
-    resources: ["*"]
-    verbs: ["*"]
+  # Allow Autopilot to read/patch their own Node object for signal annotations
+  # and cordon/uncordon state.
   - apiGroups: [""]
-    resources: ["nodes", "pods", "pods/eviction", "namespaces"]
-    verbs: ["*"]
-  - apiGroups: ["apps"]
-    resources: ["*"]
-    verbs: ["*"]
+    resources: [nodes]
+    verbs: [get, list, watch, update, patch]
+  # Needed by drain to list/delete pods scheduled to the node.
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch, delete]
+  # Drain uses the eviction subresource when available.
+  - apiGroups: [""]
+    resources: [pods/eviction]
+    verbs: [create]
+  # Required to fetch the cluster UID from kube-system.
+  - apiGroups: [""]
+    resources: [namespaces]
+    resourceNames: [kube-system]
+    verbs: [get]
+  # Required by the drain helper to skip DaemonSet-managed pods.
+  - apiGroups: [apps]
+    resources: [daemonsets]
+    verbs: [get, list]
+  # Autopilot signalling uses the plan resources for communication.
+  - apiGroups: [autopilot.k0sproject.io]
+    resources: [plans]
+    verbs: [get, list, watch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
