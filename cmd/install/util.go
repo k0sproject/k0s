@@ -6,6 +6,7 @@ package install
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -24,7 +25,7 @@ func cmdFlagsToArgs(cmd *cobra.Command) ([]string, error) {
 			flagsAndVals = append(flagsAndVals, fmt.Sprintf(`--%s=%s`, f.Name, strings.Trim(val, "[]")))
 		default:
 			switch f.Name {
-			case "env", "force":
+			case "env", "force", "start", "token-env":
 				return
 			case "data-dir", "kubelet-root-dir", "token-file", "config":
 				if absVal, err := filepath.Abs(val); err != nil {
@@ -43,4 +44,29 @@ func cmdFlagsToArgs(cmd *cobra.Command) ([]string, error) {
 	}
 
 	return flagsAndVals, nil
+}
+
+// handleTokenEnv converts --token-env to a token file and returns its path.
+func handleTokenEnv(cmd *cobra.Command, dataDir string) (string, error) {
+	tokenEnvFlag := cmd.Flags().Lookup("token-env")
+	if tokenEnvFlag == nil || !tokenEnvFlag.Changed {
+		return "", nil
+	}
+
+	envVarName := tokenEnvFlag.Value.String()
+	tokenValue := os.Getenv(envVarName)
+	if tokenValue == "" {
+		return "", fmt.Errorf("environment variable %q is not set or is empty", envVarName)
+	}
+
+	tokenFilePath := filepath.Join(dataDir, ".token")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create data directory: %w", err)
+	}
+
+	if err := os.WriteFile(tokenFilePath, []byte(tokenValue), 0600); err != nil {
+		return "", fmt.Errorf("failed to write token file: %w", err)
+	}
+
+	return tokenFilePath, nil
 }
