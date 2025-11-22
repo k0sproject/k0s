@@ -26,12 +26,22 @@ func cmdFlagsToArgs(cmd *cobra.Command) ([]string, error) {
 			switch f.Name {
 			case "env", "force":
 				return
-			case "data-dir", "kubelet-root-dir", "token-file", "config":
+			case "data-dir", "kubelet-root-dir", "config":
 				if absVal, err := filepath.Abs(val); err != nil {
 					err = fmt.Errorf("failed to convert --%s=%s to an absolute path: %w", f.Name, val, err)
 					errs = append(errs, err)
 				} else {
 					val = absVal
+				}
+			case "token-file":
+				// Only convert to absolute path if it's not a URL
+				if !strings.HasPrefix(val, "http://") && !strings.HasPrefix(val, "https://") {
+					if absVal, err := filepath.Abs(val); err != nil {
+						err = fmt.Errorf("failed to convert --%s=%s to an absolute path: %w", f.Name, val, err)
+						errs = append(errs, err)
+					} else {
+						val = absVal
+					}
 				}
 			}
 			flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, val))
