@@ -53,7 +53,7 @@ type Component struct {
 	confPath       string
 	importsPath    string
 
-	stop func()
+	stop func() error
 }
 
 func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
@@ -119,17 +119,18 @@ func (c *Component) Start(ctx context.Context) (err error) {
 
 	cctx, cancel := context.WithCancelCause(context.Background())
 	var wg sync.WaitGroup
-	stop := func() {
+	stop := func() error {
 		cancel(errors.New("containerd component is stopping"))
-		c.supervisor.Stop()
+		err := c.supervisor.Stop()
 		wg.Wait()
+		return err
 	}
 
 	defer func() {
 		if err == nil {
 			c.stop = stop
 		} else {
-			stop()
+			err = errors.Join(err, stop())
 		}
 	}()
 
@@ -292,7 +293,9 @@ func (c *Component) restart() {
 	}
 
 	// Fall back to a full stop/start cycle
-	c.supervisor.Stop()
+	if err := c.supervisor.Stop(); err != nil {
+		log.WithError(err).Error("Failed to stop containerd")
+	}
 	if err := c.supervisor.Supervise(); err != nil {
 		log.WithError(err).Error("Failed to restart containerd")
 	}
@@ -301,7 +304,7 @@ func (c *Component) restart() {
 // Stop stops containerd.
 func (c *Component) Stop() error {
 	if stop := c.stop; stop != nil {
-		stop()
+		return stop()
 	}
 	return nil
 }
