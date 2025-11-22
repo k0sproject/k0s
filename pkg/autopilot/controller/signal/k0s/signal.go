@@ -27,7 +27,6 @@ import (
 
 const (
 	SignalResponseProcessingTimeout = 1 * time.Minute
-	DefaultK0sStatusSocketPath      = "/run/k0s/status.sock"
 )
 
 type k0sVersionHandlerFunc func() (string, error)

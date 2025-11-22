@@ -178,9 +178,6 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	return nil
 }
 
-// TODO re-use from somewhere else
-const DefaultK0sStatusSocketPath = "/run/k0s/status.sock"
-
 func getControlNodeAddresses(hostname string) ([]corev1.NodeAddress, error) {
 	addresses := []corev1.NodeAddress{}
 	apiAddress, err := getControllerAPIAddress()
@@ -201,7 +198,7 @@ func getControlNodeAddresses(hostname string) ([]corev1.NodeAddress, error) {
 }
 
 func getControllerAPIAddress() (string, error) {
-	status, err := status.GetStatusInfo(DefaultK0sStatusSocketPath)
+	status, err := status.GetStatusInfo(status.DefaultSocketPath)
 	if err != nil {
 		return "", err
 	}
