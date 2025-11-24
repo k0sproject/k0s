@@ -63,7 +63,7 @@ func (s *SystemRBAC) Init(ctx context.Context) error {
 				Resources: resources,
 				Clients:   s.Clients,
 			}
-			lastErr := stack.Apply(ctx, true)
+			lastErr = stack.Apply(ctx, true)
 			return lastErr
 		},
 		retry.Context(ctx),
