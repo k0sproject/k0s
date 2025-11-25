@@ -10,17 +10,14 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	"github.com/avast/retry-go"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -85,13 +82,6 @@ func (sc *rootController) createControlNode(ctx context.Context, name, nodeName 
 	// Create the ControlNode object if needed
 	node, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		logger.Info("Autopilot 'controlnodes' CRD not found, waiting...")
-		if err := sc.waitForControlNodesCRD(ctx); err != nil {
-			return fmt.Errorf("while waiting for autopilot 'controlnodes' CRD: %w", err)
-		}
-
-		logger.Info("Autopilot 'controlnodes' CRD found, continuing")
-
 		logger.Infof("ControlNode '%s' not found, creating", name)
 		mode := apconst.K0SControlNodeModeController
 		if sc.enableWorker {
@@ -137,37 +127,4 @@ func (sc *rootController) createControlNode(ctx context.Context, name, nodeName 
 	logger.Infof("Updated controlnode '%s', status: %v", name, node.Status)
 
 	return nil
-}
-
-// waitForControlNodesCRD waits until the controlnodes CRD is established for
-// max 2 minutes.
-func (sc *rootController) waitForControlNodesCRD(ctx context.Context) error {
-	extClient, err := sc.kubeClientFactory.GetAPIExtensionsClient()
-	if err != nil {
-		return fmt.Errorf("unable to obtain extensions client: %w", err)
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
-	defer cancel()
-	return watch.CRDs(extClient.ApiextensionsV1().CustomResourceDefinitions()).
-		WithObjectName("controlnodes."+apv1beta2.GroupName).
-		WithErrorCallback(func(err error) (time.Duration, error) {
-			if retryDelay, e := watch.IsRetryable(err); e == nil {
-				sc.log.WithError(err).Debugf(
-					"Encountered transient error while waiting for autopilot 'controlnodes' CRD, retrying in %s",
-					retryDelay,
-				)
-				return retryDelay, nil
-			}
-			return 0, err
-		}).
-		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
-			for _, cond := range item.Status.Conditions {
-				if cond.Type == extensionsv1.Established {
-					return cond.Status == extensionsv1.ConditionTrue, nil
-				}
-			}
-
-			return false, nil
-		})
 }
