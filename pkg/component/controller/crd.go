@@ -7,11 +7,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"io/fs"
+	"iter"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -134,21 +133,17 @@ func (c CRD) Stop() error {
 
 // Applies this CRD stack. Implements [manager.Component].
 func (c *CRDStack) Init(ctx context.Context) error {
-	var crds []io.Reader
-	if crdFiles, err := fs.ReadDir(static.CRDs, c.assetsDir); err != nil {
-		return fmt.Errorf("failed to read %s CRD stack: %w", c.bundle, err)
-	} else {
-		for _, entry := range crdFiles {
-			filename := entry.Name()
-			content, err := fs.ReadFile(static.CRDs, path.Join(c.assetsDir, filename))
-			if err != nil {
-				return fmt.Errorf("failed to fetch %s CRD manifest %s: %w", c.bundle, filename, err)
-			}
-			crds = append(crds, strings.NewReader("\n---\n"), bytes.NewReader(content))
+	var crds bytes.Buffer
+	for content, err := range eachCRD(c.assetsDir) {
+		if err != nil {
+			return err
 		}
+
+		crds.WriteString("\n---\n")
+		crds.Write(content)
 	}
 
-	if err := applier.ApplyStack(ctx, c.clients, io.MultiReader(crds...), c.bundle, c.stackName); err != nil {
+	if err := applier.ApplyStack(ctx, c.clients, &crds, c.bundle, c.stackName); err != nil {
 		return fmt.Errorf("failed to apply %s CRD stack: %w", c.bundle, err)
 	}
 
@@ -163,4 +158,27 @@ func (c *CRDStack) Start(context.Context) error {
 // Stop implements [manager.Component]. It does nothing.
 func (*CRDStack) Stop() error {
 	return nil
+}
+
+// Iterates over the contents of each CRD in the given asset directory.
+func eachCRD(assetsDir string) iter.Seq2[[]byte, error] {
+	return func(yield func([]byte, error) bool) {
+		crdFiles, err := fs.ReadDir(static.CRDs, assetsDir)
+		if err != nil {
+			yield(nil, fmt.Errorf("failed to read %s CRD stack: %w", assetsDir, err))
+			return
+		}
+
+		for _, entry := range crdFiles {
+			filename := entry.Name()
+			content, err := fs.ReadFile(static.CRDs, path.Join(assetsDir, filename))
+			if err != nil {
+				yield(nil, fmt.Errorf("failed to fetch %s CRD manifest %s: %w", assetsDir, filename, err))
+				return
+			}
+			if !yield(content, nil) {
+				return
+			}
+		}
+	}
 }
