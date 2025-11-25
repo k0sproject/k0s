@@ -20,6 +20,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const AutopilotStackName = "autopilot"
+
 var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
