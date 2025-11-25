@@ -49,6 +49,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const HelmExtensionStackName = "helm"
+
 // Helm watch for Chart crd
 type ExtensionsController struct {
 	L             *logrus.Entry
