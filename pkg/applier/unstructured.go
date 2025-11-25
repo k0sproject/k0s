@@ -5,11 +5,33 @@ package applier
 
 import (
 	"fmt"
+	"io"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/kubernetes/scheme"
 )
+
+// Reads and parses resources read from src, returning them as a slice of
+// unstructured objects.
+func ReadUnstructuredStream(src io.Reader, name string) ([]*unstructured.Unstructured, error) {
+	infos, err := resource.NewLocalBuilder().
+		Unstructured().
+		Stream(src, name).
+		Flatten().
+		Do().
+		Infos()
+	if err != nil {
+		return nil, err
+	}
+
+	resources := make([]*unstructured.Unstructured, len(infos))
+	for i := range infos {
+		resources[i] = infos[i].Object.(*unstructured.Unstructured)
+	}
+	return resources, nil
+}
 
 // ToUnstructured converts the given runtime object to an unstructured one using
 // the given scheme. The scheme can be nil, in which case client-go's default
