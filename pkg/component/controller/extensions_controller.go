@@ -117,6 +117,8 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.Hel
 
 	if err := filepath.WalkDir(ec.manifestsDir, func(path string, entry fs.DirEntry, err error) error {
 		switch {
+		case err != nil:
+			errs = append(errs, fmt.Errorf("while walking through Helm chart manifest directory: %w", err))
 		case !entry.Type().IsRegular():
 			ec.L.Debugf("Keeping %v as it is not a regular file", entry)
 		case slices.Contains(fileNamesToKeep, entry.Name()):
