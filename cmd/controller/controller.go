@@ -447,10 +447,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		))
 	}
 
-	if !slices.Contains(flags.DisableComponents, constant.AutopilotComponentName) {
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "autopilot"))
-	}
-
 	if enableK0sEndpointReconciler {
 		clusterComponents.Add(ctx, controller.NewEndpointReconciler(
 			nodeConfig,
@@ -512,13 +508,15 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		clusterComponents.Add(ctx, metrics)
 	}
 
+	disableAutopilot := slices.Contains(flags.DisableComponents, constant.AutopilotComponentName)
+
 	if !slices.Contains(flags.DisableComponents, constant.WorkerConfigComponentName) {
 		// Create new dedicated leasepool for worker config reconciler
 		leaseName := fmt.Sprintf("k0s-%s-%s", constant.WorkerConfigComponentName, constant.KubernetesMajorMinorVersion)
 		workerConfigLeasePool := leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory, leaseName)
 		clusterComponents.Add(ctx, workerConfigLeasePool)
 
-		reconciler, err := workerconfig.NewReconciler(c.K0sVars, nodeConfig.Spec, adminClientFactory, workerConfigLeasePool, enableKonnectivity)
+		reconciler, err := workerconfig.NewReconciler(c.K0sVars, nodeConfig.Spec, adminClientFactory, workerConfigLeasePool, enableKonnectivity, disableAutopilot)
 		if err != nil {
 			return err
 		}
@@ -528,7 +526,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	if !slices.Contains(flags.DisableComponents, constant.SystemRBACComponentName) {
 		clusterComponents.Add(ctx, &controller.SystemRBAC{
 			Clients:          adminClientFactory,
-			ExcludeAutopilot: slices.Contains(flags.DisableComponents, constant.AutopilotComponentName),
+			ExcludeAutopilot: disableAutopilot,
 		})
 	}
 
@@ -577,13 +575,16 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		logrus.Info("Telemetry is disabled")
 	}
 
-	clusterComponents.Add(ctx, &controller.Autopilot{
-		K0sVars:            c.K0sVars,
-		KubeletExtraArgs:   c.KubeletExtraArgs,
-		KubeAPIPort:        nodeConfig.Spec.API.Port,
-		AdminClientFactory: adminClientFactory,
-		Workloads:          controllerMode.WorkloadsEnabled(),
-	})
+	if !disableAutopilot {
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "autopilot"))
+		clusterComponents.Add(ctx, &controller.Autopilot{
+			K0sVars:            c.K0sVars,
+			KubeletExtraArgs:   c.KubeletExtraArgs,
+			KubeAPIPort:        nodeConfig.Spec.API.Port,
+			AdminClientFactory: adminClientFactory,
+			Workloads:          controllerMode.WorkloadsEnabled(),
+		})
+	}
 
 	if !slices.Contains(flags.DisableComponents, constant.UpdateProberComponentName) {
 		clusterComponents.Add(ctx, controller.NewUpdateProber(

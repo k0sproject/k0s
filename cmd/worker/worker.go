@@ -298,7 +298,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 
 	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
 
-	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, controller, certManager)
+	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, workerConfig, controller, certManager)
 
 	if controller == nil {
 		// if running inside a controller, status component is already running

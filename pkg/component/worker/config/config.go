@@ -27,6 +27,7 @@ type Profile struct {
 	Konnectivity           Konnectivity
 	PauseImage             *v1beta1.ImageSpec
 	DualStackEnabled       bool
+	AutopilotDisabled      bool
 }
 
 func (p *Profile) DeepCopy() *Profile {
@@ -143,6 +144,7 @@ func forEachConfigMapEntry(profile *Profile, f func(fieldName string, ptr any)) 
 		"konnectivity":           &profile.Konnectivity,
 		"pauseImage":             &profile.PauseImage,
 		"dualStackEnabled":       &profile.DualStackEnabled,
+		"autopilotDisabled":      &profile.AutopilotDisabled,
 	} {
 		f(fieldName, ptr)
 	}
