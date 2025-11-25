@@ -30,7 +30,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/clientcmd"
 	apiretry "k8s.io/client-go/util/retry"
 
 	"github.com/avast/retry-go"
@@ -55,7 +54,7 @@ const HelmExtensionStackName = "helm"
 type ExtensionsController struct {
 	L             *logrus.Entry
 	helm          *helm.Commands
-	kubeConfig    string
+	clientFactory kubeutil.ClientFactoryInterface
 	leaderElector leaderelector.Interface
 	manifestsDir  string
 	stop          context.CancelFunc
@@ -69,7 +68,7 @@ func NewExtensionsController(k0sVars *config.CfgVars, kubeClientFactory kubeutil
 	return &ExtensionsController{
 		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
 		helm:          helm.NewCommands(k0sVars),
-		kubeConfig:    k0sVars.AdminKubeConfigPath,
+		clientFactory: kubeClientFactory,
 		leaderElector: leaderElector,
 		manifestsDir:  filepath.Join(k0sVars.ManifestsDir, "helm"),
 	}
@@ -418,7 +417,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 }
 
 func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.Manager, error) {
-	clientConfig, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
+	clientConfig, err := ec.clientFactory.GetRESTConfig()
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
