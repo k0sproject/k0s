@@ -14,12 +14,13 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
+	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
 func initLogging(context.Context, string) error { return nil }
 
-func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, controller EmbeddingController, certManager *worker.CertificateManager) {
+func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, workerConfig *workerconfig.Profile, controller EmbeddingController, certManager *worker.CertificateManager) {
 	// if running inside a controller, status component is already running
 	if controller == nil {
 		m.Add(ctx, &status.Status{
@@ -41,8 +42,10 @@ func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sV
 		})
 	}
 
-	m.Add(ctx, &worker.Autopilot{
-		K0sVars:     k0sVars,
-		CertManager: certManager,
-	})
+	if !workerConfig.AutopilotDisabled {
+		m.Add(ctx, &worker.Autopilot{
+			K0sVars:     k0sVars,
+			CertManager: certManager,
+		})
+	}
 }

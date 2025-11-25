@@ -14,6 +14,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/worker"
+	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
@@ -45,6 +46,6 @@ func initLogging(ctx context.Context, logDir string) error {
 	return nil
 }
 
-func addPlatformSpecificComponents(context.Context, *manager.Manager, *config.CfgVars, EmbeddingController, *worker.CertificateManager) {
+func addPlatformSpecificComponents(context.Context, *manager.Manager, *config.CfgVars, *workerconfig.Profile, EmbeddingController, *worker.CertificateManager) {
 	// no-op
 }

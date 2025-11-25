@@ -59,6 +59,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 			clients,
 			&leaderelector.Dummy{Leader: true},
 			true,
+			false,
 		)
 		require.NoError(t, err)
 		underTest.log = newTestLogger(t)
@@ -314,6 +315,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		clients,
 		&leaderelector.Dummy{Leader: true},
 		true,
+		false,
 	)
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
@@ -497,6 +499,7 @@ func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 		clients,
 		&leaderelector.Dummy{Leader: true},
 		true,
+		false,
 	)
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
@@ -647,6 +650,7 @@ func TestReconciler_LeaderElection(t *testing.T) {
 		clients,
 		&le,
 		true,
+		false,
 	)
 	require.NoError(t, err)
 
