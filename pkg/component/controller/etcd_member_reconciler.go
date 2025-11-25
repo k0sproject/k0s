@@ -23,7 +23,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -108,15 +107,9 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 }
 
 func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
-	err := e.waitForCRD(ctx)
-	if err != nil {
-		log.WithError(err).Errorf("didn't see EtcdMember CRD ready in time")
-		return
-	}
-
 	// Create the object for this node
 	// Need to be done in retry loop as during the initial startup the etcd might not be stable
-	err = retry.Do(
+	err := retry.Do(
 		func() error {
 			return e.createMemberObject(ctx, client)
 		},
@@ -209,50 +202,6 @@ func (e *EtcdMemberReconciler) Stop() error {
 		e.stop()
 	}
 	return nil
-}
-
-func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
-	client, err := e.clientFactory.GetAPIExtensionsClient()
-	if err != nil {
-		return err
-	}
-	var lastObservedVersion string
-	log := logrus.WithField("component", "etcdMemberReconciler")
-	log.Info("waiting to see EtcdMember CRD ready")
-	return watch.CRDs(client.ApiextensionsV1().CustomResourceDefinitions()).
-		WithObjectName(fmt.Sprintf("%s.%s", "etcdmembers", "etcd.k0sproject.io")).
-		WithErrorCallback(func(err error) (time.Duration, error) {
-			if retryAfter, e := watch.IsRetryable(err); e == nil {
-				log.WithError(err).Infof(
-					"Transient error while watching etcdmember CRD"+
-						", last observed version is %q"+
-						", starting over after %s ...",
-					lastObservedVersion, retryAfter,
-				)
-				return retryAfter, nil
-			}
-
-			retryAfter := 10 * time.Second
-			log.WithError(err).Errorf(
-				"Failed to watch for etcdmember CRD"+
-					", last observed version is %q"+
-					", starting over after %s ...",
-				lastObservedVersion, retryAfter,
-			)
-			return retryAfter, nil
-		}).
-		Until(ctx, func(item *apiextensionsv1.CustomResourceDefinition) (bool, error) {
-			lastObservedVersion = item.ResourceVersion
-			for _, cond := range item.Status.Conditions {
-				if cond.Type == apiextensionsv1.Established {
-					log.Infof("EtcdMember CRD status: %s", cond.Status)
-					return cond.Status == apiextensionsv1.ConditionTrue, nil
-				}
-			}
-
-			return false, nil
-		})
-
 }
 
 func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client etcdclient.EtcdMemberInterface) error {
