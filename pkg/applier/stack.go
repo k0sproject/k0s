@@ -10,7 +10,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"slices"
 	"sync"
 	"time"
@@ -25,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
@@ -36,22 +34,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func ApplyStack(ctx context.Context, clients kubernetes.ClientFactoryInterface, src io.Reader, srcName, stackName string) error {
-	infos, err := resource.NewLocalBuilder().
-		Unstructured().
-		Stream(src, srcName).
-		Flatten().
-		Do().
-		Infos()
-	if err != nil {
-		return err
-	}
-
-	resources := make([]*unstructured.Unstructured, len(infos))
-	for i := range infos {
-		resources[i] = infos[i].Object.(*unstructured.Unstructured)
-	}
-
+func ApplyStack(ctx context.Context, clients kubernetes.ClientFactoryInterface, resources []*unstructured.Unstructured, stackName string) error {
 	var lastErr error
 	if err := retry.Do(
 		func() error {

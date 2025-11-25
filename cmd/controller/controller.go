@@ -345,7 +345,9 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
 			IgnoredStacks: []string{
+				controller.AutopilotStackName,
 				controller.ClusterConfigStackName,
+				controller.EtcdMemberStackName,
 				controller.SystemRBACStackName,
 				controller.WindowsStackName,
 			},
@@ -451,7 +453,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	))
 
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "helm"))
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, controller.HelmExtensionStackName))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
 			c.K0sVars,
 			adminClientFactory,
@@ -611,7 +613,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			return fmt.Errorf("failed to parse API address: %w", err)
 		}
 
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "autopilot"))
+		clusterComponents.Add(ctx, controller.NewCRDStack(adminClientFactory, leaderElector, controller.AutopilotStackName))
 		clusterComponents.Add(ctx, &controller.Autopilot{
 			APIAddress:         apiAddress,
 			K0sVars:            c.K0sVars,

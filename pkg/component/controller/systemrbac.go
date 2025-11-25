@@ -32,7 +32,9 @@ func (s *SystemRBAC) Init(ctx context.Context) error {
 		in = io.MultiReader(in, bytes.NewReader(apSystemRBAC))
 	}
 
-	if err := applier.ApplyStack(ctx, s.Clients, in, SystemRBACStackName, SystemRBACStackName); err != nil {
+	if resources, err := applier.ReadUnstructuredStream(in, SystemRBACStackName); err != nil {
+		return fmt.Errorf("failed to read system RBAC stack: %w", err)
+	} else if err := applier.ApplyStack(ctx, s.Clients, resources, SystemRBACStackName); err != nil {
 		return fmt.Errorf("failed to apply system RBAC stack: %w", err)
 	}
 
