@@ -329,6 +329,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 				controller.AutopilotStackName,
 				controller.ClusterConfigStackName,
 				controller.EtcdMemberStackName,
+				controller.HelmExtensionStackName,
 				controller.SystemRBACStackName,
 				controller.WindowsStackName,
 			},
@@ -443,7 +444,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	))
 
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, controller.HelmExtensionStackName))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
 			c.K0sVars,
 			adminClientFactory,
