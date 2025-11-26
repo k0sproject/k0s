@@ -10,6 +10,7 @@ import (
 	"context"
 	"crypto"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -31,7 +32,6 @@ import (
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/local"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -46,11 +46,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	k8s "k8s.io/client-go/kubernetes"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -151,6 +153,7 @@ func (as *AddonsSuite) SetupTest() {
 }
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
+	ctx := as.TContext()
 	crlog.SetLogger(testr.New(as.T()))
 
 	addonName := "test-addon"
@@ -186,17 +189,11 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(kc) })
 	as.Run("Controller restart recovery", func() { as.testControllerRestartRecovery(kc) })
 
-	values := map[string]any{
-		"replicaCount": 2,
-		"image": map[string]any{
-			"pullPolicy": "Always",
-		},
-	}
-	as.doTestAddonUpdate(addonName, values)
+	as.doTestAddonUpdate(ctx, addonName)
 	chart := as.waitForTestRelease(addonName, "0.6.0", metav1.NamespaceDefault, 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.deleteRelease(chart)
-	as.deleteUninstalledChart(as.TContext())
+	as.deleteUninstalledChart(ctx)
 }
 
 func (as *AddonsSuite) pullHelmChart(node string) {
@@ -394,19 +391,22 @@ func (as *AddonsSuite) waitForChartError(addonName, expectedError string) {
 func (as *AddonsSuite) deleteRelease(chart *helmv1beta1.Chart) {
 	ctx := as.Context()
 	as.T().Logf("Deleting chart %s/%s", chart.Namespace, chart.Name)
-	ssh, err := as.SSH(ctx, as.ControllerNode(0))
+	kubeconfig, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
-	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(ctx, "rm /var/lib/k0s/manifests/helm/0_helm_extension_test-addon.yaml")
+	dyn, err := dynamic.NewForConfig(kubeconfig)
 	as.Require().NoError(err)
-	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
-	as.Require().NoError(err)
-	k8sclient, err := k8s.NewForConfig(cfg)
+
+	_, err = patchResource(
+		ctx, dyn.Resource(k0sv1beta1.SchemeGroupVersion.WithResource("clusterconfigs")).Namespace(metav1.NamespaceSystem), "k0s",
+		patchOp{"test", "/spec/extensions/helm/charts/0/name", chart.Status.ReleaseName},
+		patchOp{"remove", "/spec/extensions/helm/charts/0", nil},
+	)
 	as.Require().NoError(err)
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		as.T().Logf("Expecting have no secrets left for release %s/%s", chart.Status.Namespace, chart.Status.ReleaseName)
-		items, err := k8sclient.CoreV1().Secrets(chart.Status.Namespace).List(pollCtx, metav1.ListOptions{
-			LabelSelector: "name=" + chart.Status.ReleaseName,
+		secrets := dyn.Resource(corev1.SchemeGroupVersion.WithResource("secrets"))
+		items, err := secrets.Namespace(chart.Status.Namespace).List(pollCtx, metav1.ListOptions{
+			LabelSelector: fields.OneTermEqualSelector("name", chart.Status.ReleaseName).String(),
 		})
 		if err != nil {
 			if ctxErr := context.Cause(ctx); ctxErr != nil {
@@ -422,19 +422,16 @@ func (as *AddonsSuite) deleteRelease(chart *helmv1beta1.Chart) {
 		return true, nil
 	}))
 
-	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
-	as.Require().NoError(err)
-
 	as.T().Logf("Expecting chart %s/%s to be deleted", chart.Namespace, chart.Name)
 	var lastResourceVersion string
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
-		var found helmv1beta1.Chart
-		err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
+		charts := dyn.Resource(helmv1beta1.SchemeGroupVersion.WithResource("charts"))
+		found, err := charts.Namespace(chart.Namespace).Get(ctx, chart.Name, metav1.GetOptions{})
 		switch {
 		case err == nil:
-			if lastResourceVersion == "" || lastResourceVersion != found.ResourceVersion {
+			if lastResourceVersion == "" || lastResourceVersion != found.GetResourceVersion() {
 				as.T().Log("Chart not yet deleted")
-				lastResourceVersion = found.ResourceVersion
+				lastResourceVersion = found.GetResourceVersion()
 			}
 			return false, nil
 
@@ -596,33 +593,25 @@ func (as *AddonsSuite) checkCustomValues(releaseName string) error {
 	})
 }
 
-func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]any) {
-	path := fmt.Sprintf("/var/lib/k0s/manifests/helm/0_helm_extension_%s.yaml", addonName)
-	valuesBytes, err := yaml.Marshal(values)
+func (as *AddonsSuite) doTestAddonUpdate(ctx context.Context, addonName string) {
+	kubeconfig, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
-	tw := templatewriter.TemplateWriter{
-		Name:     "testChartUpdate",
-		Template: chartCrdTemplate,
-		Data: struct {
-			Name         string
-			ChartName    string
-			Values       string
-			Version      string
-			TargetNS     string
-			ForceUpgrade *bool
-		}{
-			Name:         "test-addon",
-			ChartName:    "ealenn/echo-server",
-			Values:       string(valuesBytes),
-			Version:      "0.5.0",
-			TargetNS:     metav1.NamespaceDefault,
-			ForceUpgrade: ptr.To(false),
-		},
-	}
-	buf := bytes.NewBuffer([]byte{})
-	as.Require().NoError(tw.WriteToBuffer(buf))
+	dyn, err := dynamic.NewForConfig(kubeconfig)
+	as.Require().NoError(err)
 
-	as.PutFile(as.ControllerNode(0), path, buf.String())
+	_, err = patchResource(
+		ctx, dyn.Resource(k0sv1beta1.SchemeGroupVersion.WithResource("clusterconfigs")).Namespace(metav1.NamespaceSystem), "k0s",
+		patchOp{"test", "/spec/extensions/helm/charts/0/name", addonName},
+		patchOp{"replace", "/spec/extensions/helm/charts/0", map[string]any{
+			"name":         addonName,
+			"chartname":    "ealenn/echo-server",
+			"values":       `{"replicaCount": 2, "image": {"pullPolicy": "Always"}}`,
+			"version":      "0.5.0",
+			"namespace":    metav1.NamespaceDefault,
+			"forceUpgrade": false,
+		}},
+	)
+	as.Require().NoError(err)
 }
 
 // testControllerRestartRecovery tests that charts stuck in pending-install state
@@ -793,6 +782,21 @@ func TestAddonsSuite(t *testing.T) {
 	suite.Run(t, &s)
 }
 
+type patchOp = struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value any    `json:"value,omitempty"`
+}
+
+//nolint:unparam // returned object not yet used
+func patchResource(ctx context.Context, c dynamic.ResourceInterface, name string, ops ...patchOp) (*unstructured.Unstructured, error) {
+	if patch, err := json.Marshal(ops); err != nil {
+		return nil, err
+	} else {
+		return c.Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{})
+	}
+}
+
 type k0sConfigParams struct {
 	BasicAddonName string
 
@@ -839,25 +843,3 @@ spec:
 `
 
 var k0sConfigWithAddonTemplate = template.Must(template.New("k0sConfigWithAddon").Parse(k0sConfigWithAddonRawTemplate))
-
-// TODO: this actually duplicates logic from the controller code
-// better to somehow handle it by programmatic api
-const chartCrdTemplate = `
-apiVersion: helm.k0sproject.io/v1beta1
-kind: Chart
-metadata:
-  name: k0s-addon-chart-{{ .Name }}
-  namespace: ` + metav1.NamespaceSystem + `
-  finalizers:
-    - helm.k0sproject.io/uninstall-helm-release 
-spec:
-  chartName: {{ .ChartName }}
-  releaseName: {{ .Name }}
-  values: |
-{{ .Values | nindent 4 }}
-  version: {{ .Version }}
-  namespace: {{ .TargetNS }}
-{{- if ne .ForceUpgrade nil }}
-  forceUpgrade: {{ .ForceUpgrade }}
-{{- end }}
-`
