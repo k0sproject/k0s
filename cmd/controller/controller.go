@@ -346,6 +346,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 				controller.AutopilotStackName,
 				controller.ClusterConfigStackName,
 				controller.EtcdMemberStackName,
+				controller.HelmExtensionStackName,
 				controller.SystemRBACStackName,
 				controller.WindowsStackName,
 			},
@@ -451,9 +452,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	))
 
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, controller.HelmExtensionStackName))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
-			c.K0sVars.ManifestsDir,
 			adminClientFactory,
 			leaderElector,
 		))
@@ -592,7 +591,8 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		if err != nil {
 			return err
 		}
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "etcd", controller.WithStackName("etcd-member")))
+
+		clusterComponents.Add(ctx, controller.NewCRDStack(adminClientFactory, leaderElector, "etcd", controller.WithStackName(controller.EtcdMemberStackName)))
 		clusterComponents.Add(ctx, etcdReconciler)
 	}
 
