@@ -38,13 +38,13 @@ import (
 func TestManager_AppliesStacks(t *testing.T) {
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
-	leaderElector := leaderelector.Dummy{Leader: true}
+	leaderElector := leaderelector.Off()
 	clients := testutil.NewFakeClientFactory()
 
 	underTest := applier.Manager{
 		K0sVars:           k0sVars,
 		KubeClientFactory: clients,
-		LeaderElector:     &leaderElector,
+		LeaderElector:     leaderElector,
 	}
 
 	// A stack that exists on disk before the manager is started.
@@ -100,14 +100,14 @@ data: {}
 func TestManager_IgnoresStacks(t *testing.T) {
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
-	leaderElector := leaderelector.Dummy{Leader: true}
+	leaderElector := leaderelector.Off()
 	clients := testutil.NewFakeClientFactory()
 
 	underTest := applier.Manager{
 		K0sVars:           k0sVars,
 		IgnoredStacks:     []string{"ignored"},
 		KubeClientFactory: clients,
-		LeaderElector:     &leaderElector,
+		LeaderElector:     leaderElector,
 	}
 
 	ignored := filepath.Join(k0sVars.ManifestsDir, "ignored")
