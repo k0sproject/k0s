@@ -42,6 +42,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -311,7 +312,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	// One leader elector per controller
 	if singleController {
-		leaderElector = &leaderelector.Dummy{Leader: true}
+		leaderElector = leaderelector.Off()
 	} else {
 		// The name used to be hardcoded in the component itself
 		// At some point we need to rename this.
@@ -422,7 +423,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	if flags.EnableDynamicConfig {
 		clusterComponents.Add(ctx, controller.NewClusterConfigInitializer(
 			adminClientFactory,
-			leaderElector,
+			func() leaderelection.Status { status, _ := leaderElector.CurrentStatus(); return status },
 			nodeConfig,
 		))
 
@@ -456,7 +457,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	if enableK0sEndpointReconciler {
 		clusterComponents.Add(ctx, controller.NewEndpointReconciler(
 			nodeConfig,
-			leaderElector,
+			func() leaderelection.Status { status, _ := leaderElector.CurrentStatus(); return status },
 			adminClientFactory,
 			net.DefaultResolver,
 			nodeConfig.PrimaryAddressFamily(),
