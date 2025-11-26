@@ -6,8 +6,12 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net"
 	"path/filepath"
+	"strconv"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -16,7 +20,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/sirupsen/logrus"
 )
 
 type KonnectivityAgent struct {
@@ -103,11 +106,26 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 	if err != nil {
 		return err
 	}
+
+	proxyServerHost := k.APIServerHost
+	proxyServerPort := clusterConfig.Spec.Konnectivity.AgentPort
+
+	// We don't use k0snet.ParseHostPortWithDefault here because the API server host might be an IP
+	// literal (IPv6). We don't want to change the current behavior and fail here. So we
+	// just use the standard library function and change default values only if we successfully parsed host and port.
+	host, port, _ := net.SplitHostPort(k.APIServerHost)
+	if host != "" {
+		proxyServerHost = host
+	}
+	if p, _ := strconv.Atoi(port); p != 0 {
+		proxyServerPort = int32(p)
+	}
+
 	cfg := konnectivityAgentConfig{
 		// Since the konnectivity server runs with hostNetwork=true this is the
 		// IP address of the master machine
-		ProxyServerHost: k.APIServerHost,
-		ProxyServerPort: uint16(clusterConfig.Spec.Konnectivity.AgentPort),
+		ProxyServerHost: proxyServerHost,
+		ProxyServerPort: uint16(proxyServerPort),
 		Image:           clusterConfig.Spec.Images.Konnectivity.URI(),
 		ServerCount:     serverCount,
 		PullPolicy:      clusterConfig.Spec.Images.DefaultPullPolicy,
