@@ -6,35 +6,16 @@ package controller
 import (
 	"context"
 	"errors"
-	"fmt"
-	"io/fs"
-	"path"
-	"path/filepath"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/static"
 	"github.com/sirupsen/logrus"
 )
-
-var _ manager.Component = (*CRD)(nil)
-
-// CRD unpacks bundled CRD definitions to the filesystem
-//
-// Deprecated: Use [CRDStack] instead.
-type CRD struct {
-	bundle       string
-	manifestsDir string
-
-	crdOpts
-}
 
 // CRDStack applies bundled CRDs.
 type CRDStack struct {
@@ -51,27 +32,6 @@ type crdOpts struct {
 }
 
 type CRDOption func(*crdOpts)
-
-// NewCRD build new CRD
-//
-// Deprecated: Use [NewCRDStack] instead.
-func NewCRD(manifestsDir, bundle string, opts ...CRDOption) *CRD {
-	var options crdOpts
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	if options.assetsDir == "" {
-		options.stackName = bundle
-		options.assetsDir = bundle
-	}
-
-	return &CRD{
-		bundle:       bundle,
-		manifestsDir: manifestsDir,
-		crdOpts:      options,
-	}
-}
 
 var _ manager.Component = (*CRDStack)(nil)
 
@@ -101,40 +61,6 @@ func WithStackName(stackName string) CRDOption {
 
 func WithCRDAssetsDir(assetsDir string) CRDOption {
 	return func(opts *crdOpts) { opts.assetsDir = assetsDir }
-}
-
-func (c CRD) Init(context.Context) error {
-	return dir.Init(filepath.Join(c.manifestsDir, c.stackName), constant.ManifestsDirMode)
-}
-
-// Run unpacks manifests from bindata
-func (c CRD) Start(context.Context) error {
-	crds, err := fs.ReadDir(static.CRDs, c.assetsDir)
-	if err != nil {
-		return fmt.Errorf("can't unbundle CRD `%s` manifests: %w", c.bundle, err)
-	}
-
-	for _, entry := range crds {
-		filename := entry.Name()
-		src := path.Join(c.assetsDir, filename)
-		dst := filepath.Join(c.manifestsDir, c.stackName, fmt.Sprintf("%s-crd-%s", c.bundle, filename))
-
-		content, err := fs.ReadFile(static.CRDs, src)
-		if err != nil {
-			return fmt.Errorf("failed to fetch CRD %s manifest %s: %w", c.bundle, filename, err)
-		}
-		if err := file.AtomicWithTarget(dst).
-			WithPermissions(constant.CertMode).
-			Write(content); err != nil {
-			return fmt.Errorf("failed to save CRD %s manifest %s to FS: %w", c.bundle, filename, err)
-		}
-	}
-
-	return nil
-}
-
-func (c CRD) Stop() error {
-	return nil
 }
 
 // Init implements [manager.Component]. It does nothing.
