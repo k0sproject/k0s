@@ -80,7 +80,7 @@ func NewWorkerCmd() *cobra.Command {
 				c.TokenArg = args[0]
 			}
 
-			getBootstrapKubeconfig, err := kubeconfigGetterFromJoinToken(c.TokenFile, c.TokenArg)
+			getBootstrapKubeconfig, err := kubeconfigGetterFromJoinToken(c.TokenFile, c.TokenEnv, c.TokenArg)
 			if err != nil {
 				return err
 			}
@@ -150,13 +150,40 @@ func GetNodeName(opts *config.WorkerOptions) (apitypes.NodeName, stringmap.Strin
 	return nodeName, kubeletExtraArgs, nil
 }
 
-func kubeconfigGetterFromJoinToken(tokenFile, tokenArg string) (clientcmd.KubeconfigGetter, error) {
+func kubeconfigGetterFromJoinToken(tokenFile, tokenEnv, tokenArg string) (clientcmd.KubeconfigGetter, error) {
+	tokenSources := 0
 	if tokenArg != "" {
-		if tokenFile != "" {
-			return nil, errors.New("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
+		tokenSources++
+	}
+	if tokenFile != "" {
+		tokenSources++
+	}
+	if tokenEnv != "" {
+		tokenSources++
+	}
+
+	if tokenSources > 1 {
+		return nil, errors.New("you can only pass one token source: either as a CLI argument 'k0s worker [token]', via '--token-file [path]', or via '--token-env [var]'")
+	}
+
+	if tokenArg != "" {
+		kubeconfig, err := loadKubeconfigFromJoinToken(tokenArg)
+		if err != nil {
+			return nil, err
 		}
 
-		kubeconfig, err := loadKubeconfigFromJoinToken(tokenArg)
+		return func() (*clientcmdapi.Config, error) {
+			return kubeconfig, nil
+		}, nil
+	}
+
+	if tokenEnv != "" {
+		tokenValue := os.Getenv(tokenEnv)
+		if tokenValue == "" {
+			return nil, fmt.Errorf("environment variable %q is not set or is empty", tokenEnv)
+		}
+
+		kubeconfig, err := loadKubeconfigFromJoinToken(tokenValue)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +198,7 @@ func kubeconfigGetterFromJoinToken(tokenFile, tokenArg string) (clientcmd.Kubeco
 	}
 
 	return func() (*clientcmdapi.Config, error) {
-		return loadKubeconfigFromTokenFile(tokenFile)
+		return loadKubeconfigFromToken(tokenFile)
 	}, nil
 }
 
@@ -193,7 +220,7 @@ func loadKubeconfigFromJoinToken(tokenData string) (*clientcmdapi.Config, error)
 	return kubeconfig, nil
 }
 
-func loadKubeconfigFromTokenFile(path string) (*clientcmdapi.Config, error) {
+func loadKubeconfigFromToken(path string) (*clientcmdapi.Config, error) {
 	var problem string
 	tokenBytes, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {

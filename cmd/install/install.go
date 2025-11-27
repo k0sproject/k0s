@@ -6,6 +6,8 @@ package install
 import (
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/install"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -13,6 +15,7 @@ import (
 type installFlags struct {
 	force   bool
 	envVars []string
+	start   bool
 }
 
 func NewInstallCmd() *cobra.Command {
@@ -38,9 +41,15 @@ func NewInstallCmd() *cobra.Command {
 	})
 	pflags.BoolVar(&installFlags.force, "force", false, "force init script creation")
 	pflags.StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
+	pflags.BoolVar(&installFlags.start, "start", false, "start the service immediately after installation")
 
 	cmd.AddCommand(installWorkerCmd(&installFlags))
 	addPlatformSpecificCommands(cmd, &installFlags)
 
 	return cmd
+}
+
+// startInstalledService starts (or restarts with force) the installed k0s service.
+func startInstalledService(force bool) error {
+	return install.StartInstalledService(force)
 }

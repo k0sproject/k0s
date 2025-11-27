@@ -70,6 +70,7 @@ type WorkerOptions struct {
 	Labels           map[string]string
 	Taints           []string
 	TokenFile        string
+	TokenEnv         string
 	TokenArg         string
 	WorkerProfile    string
 	IPTablesMode     string
@@ -251,6 +252,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", defaultWorkerProfile, "worker profile to use on the node")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
+	flagset.StringVar(&workerOpts.TokenEnv, "token-env", "", "Environment variable name containing the join-token.")
 	flagset.VarP((*logLevelsFlag)(&workerOpts.LogLevels), "logging", "l", "Logging Levels for the different components")
 	flagset.Var((*cliflag.ConfigurationMap)(&workerOpts.Labels), "labels", "Node labels, list of key=value pairs")
 	flagset.StringSliceVarP(&workerOpts.Taints, "taints", "", []string{}, "Node taints, list of key=value:effect strings")
