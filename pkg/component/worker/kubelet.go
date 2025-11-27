@@ -77,8 +77,8 @@ func (k *Kubelet) Init(_ context.Context) (err error) {
 	return nil
 }
 
-func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.IP, ipv6 net.IP, _ error) {
-	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(nodeName))
+func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ error) {
+	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(k.NodeName))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,15 +117,18 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// but will only pick one for a single family. Do something similar as
 		// kubelet, but for both IPv4 and IPv6.
 		// https://github.com/kubernetes/kubernetes/blob/v1.34.2/pkg/kubelet/nodestatus/setters.go#L150-L178
-		ipv4, ipv6, err := lookupNodeName(ctx, k.NodeName)
-		if err != nil {
-			logrus.WithError(err).Errorf("failed to lookup %q", k.NodeName)
-		} else if ipv4 != nil && ipv6 != nil {
-			// The kubelet will perform some extra validations on the discovered IP
-			// addresses in the private function k8s.io/kubernetes/pkg/kubelet.validateNodeIP
-			// which won't be replicated here.
-			args["--node-ip"] = ipv4.String() + "," + ipv6.String()
+		ipv4, ipv6, err := k.lookupNodeName(ctx)
+		if err == nil && (ipv4 == nil || ipv6 == nil) {
+			err = fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
 		}
+		if err != nil {
+			return fmt.Errorf("failed to detect node IPs for %q: %w", k.NodeName, err)
+		}
+
+		// The kubelet will perform some extra validations on the discovered IP
+		// addresses in the private function k8s.io/kubernetes/pkg/kubelet.validateNodeIP
+		// which won't be replicated here.
+		args["--node-ip"] = ipv4.String() + "," + ipv6.String()
 	}
 
 	switch runtime.GOOS {
