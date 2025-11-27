@@ -16,10 +16,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/applier"
 	k0sv1beta1client "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
-	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/static"
 
 	corev1 "k8s.io/api/core/v1"
@@ -142,7 +142,7 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *k0sv
 type ClusterConfigInitializer struct {
 	log           logrus.FieldLogger
 	clients       kubernetes.ClientFactoryInterface
-	leaderElector leaderelector.Interface
+	leaderStatus  func() leaderelection.Status
 	initialConfig *k0sv1beta1.ClusterConfig
 }
 
@@ -160,11 +160,11 @@ func (i *ClusterConfigInitializer) Start(ctx context.Context) error {
 // Stop implements [manager.Component].
 func (*ClusterConfigInitializer) Stop() error { return nil }
 
-func NewClusterConfigInitializer(clients kubernetes.ClientFactoryInterface, leaderElector leaderelector.Interface, initialConfig *k0sv1beta1.ClusterConfig) *ClusterConfigInitializer {
+func NewClusterConfigInitializer(clients kubernetes.ClientFactoryInterface, leaderStatus func() leaderelection.Status, initialConfig *k0sv1beta1.ClusterConfig) *ClusterConfigInitializer {
 	return &ClusterConfigInitializer{
 		log:           logrus.WithField("component", "clusterConfigInitializer"),
 		clients:       clients,
-		leaderElector: leaderElector,
+		leaderStatus:  leaderStatus,
 		initialConfig: initialConfig,
 	}
 }
@@ -180,7 +180,7 @@ func (i *ClusterConfigInitializer) ensureClusterConfigExistence(ctx context.Cont
 	start := time.Now()
 	var stackApplied bool
 	for {
-		if i.leaderElector.IsLeader() {
+		if i.leaderStatus() == leaderelection.StatusLeading {
 			if stackApplied {
 				err = nil
 			} else {

@@ -42,6 +42,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -311,7 +312,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	// One leader elector per controller
 	if singleController {
-		leaderElector = &leaderelector.Dummy{Leader: true}
+		leaderElector = leaderelector.Off()
 	} else {
 		// The name used to be hardcoded in the component itself
 		// At some point we need to rename this.
@@ -324,7 +325,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
 			IgnoredStacks: []string{
+				controller.AutopilotStackName,
 				controller.ClusterConfigStackName,
+				controller.EtcdMemberStackName,
+				controller.HelmExtensionStackName,
 				controller.SystemRBACStackName,
 				controller.WindowsStackName,
 			},
@@ -373,8 +377,8 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		if err != nil {
 			return err
 		}
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "etcd", controller.WithStackName("etcd-member")))
-		nodeComponents.Add(ctx, etcdReconciler)
+		clusterComponents.Add(ctx, controller.NewCRDStack(adminClientFactory, "etcd", controller.WithStackName(controller.EtcdMemberStackName)))
+		clusterComponents.Add(ctx, etcdReconciler)
 	}
 
 	perfTimer.Checkpoint("starting-certificates-init")
@@ -420,7 +424,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	if flags.EnableDynamicConfig {
 		clusterComponents.Add(ctx, controller.NewClusterConfigInitializer(
 			adminClientFactory,
-			leaderElector,
+			func() leaderelection.Status { status, _ := leaderElector.CurrentStatus(); return status },
 			nodeConfig,
 		))
 
@@ -439,7 +443,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	))
 
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "helm"))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
 			c.K0sVars,
 			adminClientFactory,
@@ -448,13 +451,13 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.AutopilotComponentName) {
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "autopilot"))
+		clusterComponents.Add(ctx, controller.NewCRDStack(adminClientFactory, controller.AutopilotStackName))
 	}
 
 	if enableK0sEndpointReconciler {
 		clusterComponents.Add(ctx, controller.NewEndpointReconciler(
 			nodeConfig,
-			leaderElector,
+			func() leaderelection.Status { status, _ := leaderElector.CurrentStatus(); return status },
 			adminClientFactory,
 			net.DefaultResolver,
 			nodeConfig.PrimaryAddressFamily(),
