@@ -248,6 +248,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 	}
 
 	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
+	flagset.String("containerd-root-dir", "", "Containerd root directory for k0s")
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", defaultWorkerProfile, "worker profile to use on the node")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
