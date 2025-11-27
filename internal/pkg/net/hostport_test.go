@@ -19,6 +19,7 @@ func TestNewHostPort(t *testing.T) {
 	}{
 		{"ipv4", "127.0.0.1", 4711, "127.0.0.1", "127.0.0.1:4711"},
 		{"ipv6", "::1", 4711, "::1", "[::1]:4711"},
+		{"ipv6_zone", "fe80::1%eth0", 4711, "fe80::1%eth0", "[fe80::1%eth0]:4711"},
 		{"dns", "example.com", 4711, "example.com", "example.com:4711"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -59,6 +60,7 @@ func TestParseHostPort(t *testing.T) {
 	}{
 		{"ipv4", "127.0.0.1:4711", "127.0.0.1", 4711, "127.0.0.1:4711"},
 		{"ipv6", "[::1]:4711", "::1", 4711, "[::1]:4711"},
+		{"ipv6_zone", "[fe80::1%eth0]:4711", "fe80::1%eth0", 4711, "[fe80::1%eth0]:4711"},
 		{"dns", "example.com:4711", "example.com", 4711, "example.com:4711"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -75,6 +77,11 @@ func TestParseHostPort(t *testing.T) {
 		{"spaces", "f o o:4711", "host is neither an IP address nor a DNS name"},
 		{"missing_port", "foo", "missing port in address"},
 		{"missing_ipv4_port", "127.0.0.1", "missing port in address"},
+		{"missing_ipv6_port_unspecified", "::", "missing port in address"},
+		{"missing_ipv6_port_localhost", "::1", "missing port in address"},
+		{"missing_ipv6_port_full", "0:0:0:0:0:0:0:1", "missing port in address"},
+		{"missing_ipv6_port_host", "[::1]", "missing port in address"},
+		{"ipv4_address_as_ipv6_host", "[127.0.0.1]", "host is neither an IP address nor a DNS name"},
 		{"empty_port", "foo:", `port is not a positive number: ""`},
 		{"zero_port", "foo:0", "port is zero"},
 		{"negative_port", "foo:-1", `port is not a positive number: "-1"`},
@@ -91,9 +98,14 @@ func TestParseHostPort(t *testing.T) {
 }
 
 func TestParseHostPortWithDefault(t *testing.T) {
-	for _, test := range []struct{ name, host, defaultHostPort, hostPort string }{
-		{"ipv4", "127.0.0.1", "127.0.0.1:4711", "127.0.0.1:1337"},
-		{"host", "yep", "yep:4711", "yep:1337"},
+	for _, test := range []struct{ name, host, parsedHost, defaultHostPort, hostPort string }{
+		{"ipv4", "127.0.0.1", "127.0.0.1", "127.0.0.1:4711", "127.0.0.1:1337"},
+		{"ipv6_unspecified", "::", "::", "[::]:4711", "[::]:1337"},
+		{"ipv6_localhost", "::1", "::1", "[::1]:4711", "[::1]:1337"},
+		{"ipv6_full", "0:0:0:0:0:0:0:1", "0:0:0:0:0:0:0:1", "[0:0:0:0:0:0:0:1]:4711", "[0:0:0:0:0:0:0:1]:1337"},
+		{"ipv6_zone", "fe80::1%eth0", "fe80::1%eth0", "[fe80::1%eth0]:4711", "[fe80::1%eth0]:1337"},
+		{"ipv6_host", "[::1]", "::1", "[::1]:4711", "[::1]:1337"},
+		{"host", "yep", "yep", "yep:4711", "yep:1337"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			hostPort, err := net.ParseHostPortWithDefault(test.host, 0)
@@ -104,14 +116,14 @@ func TestParseHostPortWithDefault(t *testing.T) {
 
 			hostPort, err = net.ParseHostPortWithDefault(test.host, 4711)
 			if assert.NoError(t, err) && assert.NotNil(t, hostPort) {
-				assert.Equal(t, test.host, hostPort.Host())
+				assert.Equal(t, test.parsedHost, hostPort.Host())
 				assert.Equal(t, uint16(4711), hostPort.Port())
 				assert.Equal(t, test.defaultHostPort, hostPort.String())
 			}
 
 			hostPort, err = net.ParseHostPortWithDefault(test.hostPort, 4711)
 			if assert.NoError(t, err) && assert.NotNil(t, hostPort) {
-				assert.Equal(t, test.host, hostPort.Host())
+				assert.Equal(t, test.parsedHost, hostPort.Host())
 				assert.Equal(t, uint16(1337), hostPort.Port())
 				assert.Equal(t, test.hostPort, hostPort.String())
 			}
