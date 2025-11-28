@@ -1,5 +1,3 @@
-//go:build unix
-
 // SPDX-FileCopyrightText: 2021 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
@@ -9,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"runtime"
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -51,7 +50,14 @@ func NewStatusCmd() *cobra.Command {
 
 	pflags := cmd.PersistentFlags()
 	debugFlags.AddToFlagSet(pflags)
-	pflags.String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
+	var socketDefault string
+	if runtime.GOOS == "windows" {
+		socketDefault = status.DefaultSocketPath
+	} else {
+		socketDefault = "<rundir>/status.sock"
+	}
+
+	pflags.String("status-socket", "", "Full path to the k0s status socket (default: "+socketDefault+")")
 
 	cmd.AddCommand(NewStatusSubCmdComponents())
 
