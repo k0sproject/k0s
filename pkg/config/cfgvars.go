@@ -141,9 +141,18 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		runDir = filepath.Join(dataDir, "run")
 	}
 
-	statusSocketPath := filepath.Join(runDir, "status.sock")
-	if runtime.GOOS != "windows" && euid == 0 {
-		statusSocketPath = constant.StatusSocketPathDefault
+	var statusSocketPath string
+	if cobraCmd != nil {
+		if val, err := cobraCmd.Flags().GetString("status-socket"); err == nil {
+			statusSocketPath = val
+		}
+	}
+	if statusSocketPath == "" {
+		if runtime.GOOS == "windows" || euid == 0 {
+			statusSocketPath = constant.StatusSocketPathDefault
+		} else {
+			statusSocketPath = filepath.Join(runDir, "status.sock")
+		}
 	}
 
 	certDir := filepath.Join(dataDir, "pki")
