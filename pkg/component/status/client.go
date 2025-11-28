@@ -1,15 +1,11 @@
-//go:build unix
-
 // SPDX-FileCopyrightText: 2022 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
 package status
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -40,7 +36,7 @@ type ProbeStatus struct {
 // GetStatus returns the status of the k0s process using the status socket
 func GetStatusInfo(socketPath string) (*K0sStatus, error) {
 	status := &K0sStatus{}
-	if err := doHTTPRequestViaUnixSocket(socketPath, "status", status); err != nil {
+	if err := doStatusHTTPRequest(socketPath, "status", status); err != nil {
 		return nil, err
 	}
 	return status, nil
@@ -49,7 +45,7 @@ func GetStatusInfo(socketPath string) (*K0sStatus, error) {
 // GetComponentStatus returns the per-component events and health-checks
 func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) {
 	status := &prober.State{}
-	if err := doHTTPRequestViaUnixSocket(socketPath,
+	if err := doStatusHTTPRequest(socketPath,
 		fmt.Sprintf("components?maxCount=%d", maxCount),
 		status); err != nil {
 		return nil, err
@@ -57,14 +53,10 @@ func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) 
 	return status, nil
 }
 
-func doHTTPRequestViaUnixSocket(socketPath string, path string, tgt any) error {
-	httpc := http.Client{
-		Transport: &http.Transport{
-			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, "unix", socketPath)
-			},
-		},
+func doStatusHTTPRequest(socketPath string, path string, tgt any) error {
+	httpc, err := newStatusHTTPClient(socketPath)
+	if err != nil {
+		return fmt.Errorf("status: can't prepare transport for %q: %w", socketPath, err)
 	}
 
 	response, err := httpc.Get("http://localhost/" + path)
