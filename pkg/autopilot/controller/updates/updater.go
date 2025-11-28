@@ -20,7 +20,6 @@ import (
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
-	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -77,7 +76,7 @@ func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConf
 		schedule = defaultCronSchedule
 	}
 
-	status, err := status.GetStatusInfo(k0s.DefaultK0sStatusSocketPath)
+	status, err := status.GetStatusInfo(status.DefaultSocketPath)
 	if err != nil {
 		return nil, err
 	}
