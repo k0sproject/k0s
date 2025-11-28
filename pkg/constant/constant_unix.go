@@ -11,7 +11,6 @@ const (
 
 	KineSocket           = "kine/kine.sock:2379"
 	K0sConfigPathDefault = "/etc/k0s/k0s.yaml"
-	// StatusSocketPathDefault is the default location of the k0s status socket when running as root.
 	StatusSocketPathDefault = "/run/k0s/status.sock"
 
 	ExecutableSuffix = ""
