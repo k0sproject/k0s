@@ -39,7 +39,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	logger.Infof("Using effective hostname = '%v'", hostname)
 
 	k0sVersionHandler := func() (string, error) {
-		return getK0sVersion(DefaultK0sStatusSocketPath)
+		return getK0sVersion(status.DefaultSocketPath)
 	}
 
 	if err := registerSignalController(logger, mgr, signalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID, k0sVersionHandler); err != nil {
