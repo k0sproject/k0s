@@ -29,6 +29,8 @@ type K0sStatus struct {
 	SingleNode                  bool
 	Args                        []string
 	WorkerToAPIConnectionStatus ProbeStatus
+	KubeSchedulerStatus         ProbeStatus
+	KubeControllerManagerStatus ProbeStatus
 	ClusterConfig               *v1beta1.ClusterConfig
 	K0sVars                     *config.CfgVars
 }

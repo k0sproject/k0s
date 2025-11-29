@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -148,7 +149,49 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 		return status
 	}
 	status.WorkerToAPIConnectionStatus.Success = true
+
+	status.KubeSchedulerStatus = sh.checkLease(ctx, "kube-scheduler")
+	status.KubeControllerManagerStatus = sh.checkLease(ctx, "kube-controller-manager")
+
 	return status
+}
+
+func (sh *statusHandler) checkLease(ctx context.Context, name string) ProbeStatus {
+	lease, err := sh.client.CoordinationV1().Leases(v1.NamespaceSystem).Get(ctx, name, v1.GetOptions{})
+	if err != nil {
+		return ProbeStatus{
+			Success: false,
+			Message: fmt.Sprintf("failed to get lease %s: %s", name, err.Error()),
+		}
+	}
+
+	if lease.Spec.HolderIdentity == nil {
+		return ProbeStatus{
+			Success: false,
+			Message: fmt.Sprintf("lease %s has no holder", name),
+		}
+	}
+
+	if lease.Spec.RenewTime == nil {
+		return ProbeStatus{
+			Success: false,
+			Message: fmt.Sprintf("lease %s has no renew time", name),
+		}
+	}
+
+	// Lease duration is typically 15s. We consider it healthy if renewed within 45s
+	elapsed := time.Since(lease.Spec.RenewTime.Time)
+	if elapsed > 45*time.Second {
+		return ProbeStatus{
+			Success: false,
+			Message: fmt.Sprintf("lease %s expired (last renew: %s ago)", name, elapsed),
+		}
+	}
+
+	return ProbeStatus{
+		Success: true,
+		Message: fmt.Sprintf("Active (holder: %s)", *lease.Spec.HolderIdentity),
+	}
 }
 
 func (sh *statusHandler) buildWorkerSideKubeAPIClient(ctx context.Context) (client kubernetes.Interface, _ error) {
