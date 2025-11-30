@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -88,6 +89,11 @@ func (s *StackApplier) runWatcher(watcher *fsnotify.Watcher, trigger chan<- stru
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
+	// Watch for changes in the path and any symlink targets
+	if err := s.setupSymlinkWatching(watcher); err != nil {
+		s.log.WithError(err).Warn("Failed to setup symlink watching")
+	}
+
 	for {
 		select {
 		case err := <-watcher.Errors:
@@ -96,6 +102,10 @@ func (s *StackApplier) runWatcher(watcher *fsnotify.Watcher, trigger chan<- stru
 		case event := <-watcher.Events:
 			// Only consider events on manifest files
 			if match, _ := filepath.Match(manifestFilePattern, filepath.Base(event.Name)); !match {
+				// Check if this is a symlink creation/removal that might affect manifest files
+				if s.handleSymlinkEvent(watcher, event) {
+					timer.Reset(timeout)
+				}
 				continue
 			}
 			timer.Reset(timeout)
@@ -132,4 +142,90 @@ func (s *StackApplier) apply(ctx context.Context) {
 // DeleteStack deletes the associated stack
 func (s *StackApplier) DeleteStack(ctx context.Context) error {
 	return s.doDelete(ctx)
+}
+
+// setupSymlinkWatching adds watches for symlink targets in the stack path
+func (s *StackApplier) setupSymlinkWatching(watcher *fsnotify.Watcher) error {
+	// Check if the stack path itself is a symlink
+	if s.isPathSymlink(s.path) {
+		resolvedPath, err := filepath.EvalSymlinks(s.path)
+		if err != nil {
+			return fmt.Errorf("failed to resolve stack path symlink: %w", err)
+		}
+		
+		// Add watch for the resolved target
+		if err := watcher.Add(resolvedPath); err != nil {
+			return fmt.Errorf("failed to watch resolved path %q: %w", resolvedPath, err)
+		}
+		s.log.WithField("resolved_path", resolvedPath).Debug("Added watch for symlink target")
+	}
+	
+	// Check for symlinks within the stack directory
+	entries, err := os.ReadDir(s.path)
+	if err != nil {
+		return fmt.Errorf("failed to read stack directory: %w", err)
+	}
+	
+	for _, entry := range entries {
+		fullPath := filepath.Join(s.path, entry.Name())
+		if s.isPathSymlink(fullPath) {
+			resolvedPath, err := filepath.EvalSymlinks(fullPath)
+			if err != nil {
+				s.log.WithError(err).WithField("symlink", fullPath).Warn("Failed to resolve symlink")
+				continue
+			}
+			
+			// Add watch for the resolved target
+			if err := watcher.Add(resolvedPath); err != nil {
+				s.log.WithError(err).WithField("resolved_path", resolvedPath).Warn("Failed to watch symlink target")
+				continue
+			}
+			s.log.WithField("symlink", fullPath).WithField("resolved_path", resolvedPath).Debug("Added watch for symlink target")
+		}
+	}
+	
+	return nil
+}
+
+// handleSymlinkEvent handles filesystem events related to symlinks
+func (s *StackApplier) handleSymlinkEvent(watcher *fsnotify.Watcher, event fsnotify.Event) bool {
+	// Check if the event path is a symlink
+	if !s.isPathSymlink(event.Name) {
+		return false
+	}
+	
+	switch event.Op {
+	case fsnotify.Create:
+		// Symlink created - add watch for its target
+		resolvedPath, err := filepath.EvalSymlinks(event.Name)
+		if err != nil {
+			s.log.WithError(err).WithField("symlink", event.Name).Warn("Failed to resolve new symlink")
+			return false
+		}
+		
+		if err := watcher.Add(resolvedPath); err != nil {
+			s.log.WithError(err).WithField("resolved_path", resolvedPath).Warn("Failed to watch new symlink target")
+			return false
+		}
+		
+		s.log.WithField("symlink", event.Name).WithField("resolved_path", resolvedPath).Debug("Added watch for new symlink target")
+		return true
+		
+	case fsnotify.Remove:
+		// Symlink removed - we don't need to do anything special as the watcher
+		// will automatically stop watching the resolved path
+		s.log.WithField("symlink", event.Name).Debug("Symlink removed")
+		return true
+	}
+	
+	return false
+}
+
+// isPathSymlink checks if the given path is a symlink
+func (s *StackApplier) isPathSymlink(path string) bool {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeSymlink != 0
 }
