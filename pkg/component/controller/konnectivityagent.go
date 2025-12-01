@@ -18,12 +18,11 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 type KonnectivityAgent struct {
-	K0sVars       *config.CfgVars
+	ManifestsDir  string
 	APIServerHost string
 	ServerCount   func() (uint, <-chan struct{})
 
@@ -101,7 +100,7 @@ func (k *KonnectivityAgent) Stop() error {
 }
 
 func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.ClusterConfig, serverCount uint) error {
-	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
+	konnectivityDir := filepath.Join(k.ManifestsDir, "konnectivity")
 	err := dir.Init(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err

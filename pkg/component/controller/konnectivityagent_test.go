@@ -9,7 +9,6 @@ import (
 
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/prober"
-	"github.com/k0sproject/k0s/pkg/config"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -48,11 +47,10 @@ func TestKonnectivityAgent_ProxyServerHostPort(t *testing.T) {
 				expectedHost := cmp.Or(extKonnectivityAddress.expectedHost, apiServerHost.host)
 				expectedPort := cmp.Or(extKonnectivityAddress.expectedPort, "9876")
 
-				k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-				require.NoError(t, err)
+				manifestsDir := t.TempDir()
 
 				underTest := KonnectivityAgent{
-					K0sVars:       k0sVars,
+					ManifestsDir:  manifestsDir,
 					APIServerHost: cmp.Or(extKonnectivityAddress.address, apiServerHost.host),
 					EventEmitter:  prober.NewEventEmitter(),
 				}
@@ -66,7 +64,7 @@ func TestKonnectivityAgent_ProxyServerHostPort(t *testing.T) {
 					},
 				}, 1))
 
-				daemonSet := loadDaemonSet(t, k0sVars.ManifestsDir)
+				daemonSet := loadDaemonSet(t, manifestsDir)
 				containers := daemonSet.Spec.Template.Spec.Containers
 				require.Len(t, containers, 1)
 				args := containers[0].Args
