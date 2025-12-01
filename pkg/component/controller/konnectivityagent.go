@@ -6,14 +6,13 @@ package controller
 import (
 	"context"
 	"fmt"
-	"net"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -106,31 +105,21 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 		return err
 	}
 
-	proxyServerHost := k.KonnectivityServerHost
-	proxyServerPort := clusterConfig.Spec.Konnectivity.AgentPort
-
-	// We don't use k0snet.ParseHostPortWithDefault here because the API server host might be an IP
-	// literal (IPv6). We don't want to change the current behavior and fail here. So we
-	// just use the standard library function and change default values only if we successfully parsed host and port.
-	host, port, _ := net.SplitHostPort(k.KonnectivityServerHost)
-	if host != "" {
-		proxyServerHost = host
-	}
-	if p, _ := strconv.Atoi(port); p != 0 {
-		proxyServerPort = int32(p)
-	}
-
 	cfg := konnectivityAgentConfig{
-		// Since the konnectivity server runs with hostNetwork=true this is the
-		// IP address of the master machine
-		ProxyServerHost: proxyServerHost,
-		ProxyServerPort: uint16(proxyServerPort),
+		ProxyServerHost: k.KonnectivityServerHost,
+		ProxyServerPort: uint16(clusterConfig.Spec.Konnectivity.AgentPort),
 		Image:           clusterConfig.Spec.Images.Konnectivity.URI(),
 		ServerCount:     serverCount,
 		PullPolicy:      clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
-	if clusterConfig.Spec.Network != nil {
+	if externalAddress := clusterConfig.Spec.Konnectivity.ExternalAddress; externalAddress != "" {
+		serverHostPort, err := k0snet.ParseHostPortWithDefault(externalAddress, cfg.ProxyServerPort)
+		if err != nil {
+			return fmt.Errorf("failed to determine proxy server host and port (%q, %d): %w", externalAddress, cfg.ProxyServerPort, err)
+		}
+		cfg.ProxyServerHost, cfg.ProxyServerPort = serverHostPort.Host(), serverHostPort.Port()
+	} else if clusterConfig.Spec.Network != nil {
 		nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 		if nllb.IsEnabled() {
 			switch nllb.Type {
@@ -194,7 +183,6 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 type konnectivityAgentConfig struct {
 	ProxyServerHost string
 	ProxyServerPort uint16
-	AgentPort       uint16
 	Image           string
 	ServerCount     uint
 	PullPolicy      string

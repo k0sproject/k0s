@@ -51,7 +51,7 @@ func TestKonnectivityAgent_ProxyServerHostPort(t *testing.T) {
 
 				underTest := KonnectivityAgent{
 					ManifestsDir:           manifestsDir,
-					KonnectivityServerHost: cmp.Or(extKonnectivityAddress.address, konnectivityServerHost.host),
+					KonnectivityServerHost: konnectivityServerHost.host,
 					EventEmitter:           prober.NewEventEmitter(),
 				}
 
@@ -59,7 +59,8 @@ func TestKonnectivityAgent_ProxyServerHostPort(t *testing.T) {
 					Spec: &k0sv1beta1.ClusterSpec{
 						Images: k0sv1beta1.DefaultClusterImages(),
 						Konnectivity: &k0sv1beta1.KonnectivitySpec{
-							AgentPort: 9876,
+							ExternalAddress: extKonnectivityAddress.address,
+							AgentPort:       9876,
 						},
 					},
 				}, 1))
