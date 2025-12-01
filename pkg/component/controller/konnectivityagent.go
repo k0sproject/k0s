@@ -22,9 +22,9 @@ import (
 )
 
 type KonnectivityAgent struct {
-	ManifestsDir  string
-	APIServerHost string
-	ServerCount   func() (uint, <-chan struct{})
+	ManifestsDir           string
+	KonnectivityServerHost string
+	ServerCount            func() (uint, <-chan struct{})
 
 	configChangeChan chan *v1beta1.ClusterConfig
 	log              *logrus.Entry
@@ -106,13 +106,13 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 		return err
 	}
 
-	proxyServerHost := k.APIServerHost
+	proxyServerHost := k.KonnectivityServerHost
 	proxyServerPort := clusterConfig.Spec.Konnectivity.AgentPort
 
 	// We don't use k0snet.ParseHostPortWithDefault here because the API server host might be an IP
 	// literal (IPv6). We don't want to change the current behavior and fail here. So we
 	// just use the standard library function and change default values only if we successfully parsed host and port.
-	host, port, _ := net.SplitHostPort(k.APIServerHost)
+	host, port, _ := net.SplitHostPort(k.KonnectivityServerHost)
 	if host != "" {
 		proxyServerHost = host
 	}

@@ -542,10 +542,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			konnectivityHost = nodeConfig.Spec.Konnectivity.ExternalAddress
 		}
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
-			ManifestsDir:  c.K0sVars.ManifestsDir,
-			APIServerHost: konnectivityHost,
-			EventEmitter:  prober.NewEventEmitter(),
-			ServerCount:   numActiveControllers.Peek,
+			ManifestsDir:           c.K0sVars.ManifestsDir,
+			KonnectivityServerHost: konnectivityHost,
+			EventEmitter:           prober.NewEventEmitter(),
+			ServerCount:            numActiveControllers.Peek,
 		})
 	}
 

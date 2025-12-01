@@ -21,7 +21,7 @@ import (
 )
 
 func TestKonnectivityAgent_ProxyServerHostPort(t *testing.T) {
-	apiServerHosts := []struct {
+	konnectivityServerHosts := []struct {
 		name, host string
 	}{
 		{"ipv4", "10.0.0.1"},
@@ -41,18 +41,18 @@ func TestKonnectivityAgent_ProxyServerHostPort(t *testing.T) {
 		{"host_ExtPort", "k8s.example.com:5678", "k8s.example.com", "5678"},
 	}
 
-	for _, apiServerHost := range apiServerHosts {
+	for _, konnectivityServerHost := range konnectivityServerHosts {
 		for _, extKonnectivityAddress := range extKonnectivityAddresses {
-			t.Run(apiServerHost.name+"_"+extKonnectivityAddress.name, func(t *testing.T) {
-				expectedHost := cmp.Or(extKonnectivityAddress.expectedHost, apiServerHost.host)
+			t.Run(konnectivityServerHost.name+"_"+extKonnectivityAddress.name, func(t *testing.T) {
+				expectedHost := cmp.Or(extKonnectivityAddress.expectedHost, konnectivityServerHost.host)
 				expectedPort := cmp.Or(extKonnectivityAddress.expectedPort, "9876")
 
 				manifestsDir := t.TempDir()
 
 				underTest := KonnectivityAgent{
-					ManifestsDir:  manifestsDir,
-					APIServerHost: cmp.Or(extKonnectivityAddress.address, apiServerHost.host),
-					EventEmitter:  prober.NewEventEmitter(),
+					ManifestsDir:           manifestsDir,
+					KonnectivityServerHost: cmp.Or(extKonnectivityAddress.address, konnectivityServerHost.host),
+					EventEmitter:           prober.NewEventEmitter(),
 				}
 
 				require.NoError(t, underTest.writeKonnectivityAgent(&k0sv1beta1.ClusterConfig{
