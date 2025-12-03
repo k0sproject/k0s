@@ -1,5 +1,3 @@
-//go:build linux
-
 // SPDX-FileCopyrightText: 2021 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
@@ -25,28 +23,11 @@ type Config struct {
 }
 
 func NewConfig(debug bool, k0sVars *config.CfgVars, systemUsers *k0sv1beta1.SystemUser, criSocketFlag string) (*Config, error) {
-	containers, err := newContainersStep(debug, k0sVars, criSocketFlag)
+	steps, err := buildSteps(debug, k0sVars, systemUsers, criSocketFlag)
 	if err != nil {
 		return nil, err
 	}
-
-	cleanupSteps := []Step{
-		containers,
-		&users{systemUsers: systemUsers},
-		&services{},
-		&directories{
-			dataDir:        k0sVars.DataDir,
-			kubeletRootDir: k0sVars.KubeletRootDir,
-			runDir:         k0sVars.RunDir,
-		},
-		&cni{},
-	}
-
-	if bridge := newBridgeStep(); bridge != nil {
-		cleanupSteps = append(cleanupSteps, bridge)
-	}
-
-	return &Config{cleanupSteps}, nil
+	return &Config{cleanupSteps: steps}, nil
 }
 
 func (c *Config) Cleanup() error {
@@ -54,8 +35,7 @@ func (c *Config) Cleanup() error {
 
 	for _, step := range c.cleanupSteps {
 		logrus.Info("* ", step.Name())
-		err := step.Run()
-		if err != nil {
+		if err := step.Run(); err != nil {
 			logrus.Debug(err)
 			errs = append(errs, err)
 		}
