@@ -1,0 +1,122 @@
+// SPDX-FileCopyrightText: 2025 k0s authors
+// SPDX-License-Identifier: Apache-2.0
+
+package token
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/k0sproject/k0s/pkg/constant"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestGetTokenData_EnvVar(t *testing.T) {
+	testToken := "test-token-data"
+
+	t.Run("reads token from K0S_TOKEN env var", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, testToken)
+
+		token, err := GetTokenData("", "")
+		require.NoError(t, err)
+		assert.Equal(t, testToken, token)
+	})
+
+	t.Run("empty K0S_TOKEN returns empty string", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, "")
+
+		token, err := GetTokenData("", "")
+		require.NoError(t, err)
+		assert.Empty(t, token)
+	})
+
+	t.Run("returns error when multiple token sources provided - env and arg", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, testToken)
+
+		_, err := GetTokenData(testToken, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+		assert.Contains(t, err.Error(), constant.EnvVarToken)
+	})
+
+	t.Run("returns error when multiple token sources provided - env and file", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, testToken)
+
+		_, err := GetTokenData("", "/path/to/token")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+	})
+
+	t.Run("returns error when all three token sources provided", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, testToken)
+
+		_, err := GetTokenData(testToken, "/path/to/token")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+	})
+}
+
+func TestGetTokenData_TokenArg(t *testing.T) {
+	testToken := "test-token-data"
+
+	t.Run("reads token from argument", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, "")
+
+		token, err := GetTokenData(testToken, "")
+		require.NoError(t, err)
+		assert.Equal(t, testToken, token)
+	})
+}
+
+func TestGetTokenData_TokenFile(t *testing.T) {
+	testToken := "test-token-from-file"
+
+	t.Run("reads token from file", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, "")
+
+		tmpDir := t.TempDir()
+		tokenFile := filepath.Join(tmpDir, "token")
+		require.NoError(t, os.WriteFile(tokenFile, []byte(testToken), 0600))
+
+		token, err := GetTokenData("", tokenFile)
+		require.NoError(t, err)
+		assert.Equal(t, testToken, token)
+	})
+
+	t.Run("returns error for non-existent file", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, "")
+
+		_, err := GetTokenData("", "/non/existent/path")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "token file")
+		assert.Contains(t, err.Error(), "not found")
+		assert.Contains(t, err.Error(), "k0s token create")
+	})
+
+	t.Run("returns error for empty file", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, "")
+
+		tmpDir := t.TempDir()
+		tokenFile := filepath.Join(tmpDir, "empty-token")
+		require.NoError(t, os.WriteFile(tokenFile, []byte{}, 0600))
+
+		_, err := GetTokenData("", tokenFile)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "token file")
+		assert.Contains(t, err.Error(), "is empty")
+		assert.Contains(t, err.Error(), "k0s token create")
+	})
+}
+
+func TestGetTokenData_NoToken(t *testing.T) {
+	t.Run("returns empty string when no token provided", func(t *testing.T) {
+		t.Setenv(constant.EnvVarToken, "")
+
+		token, err := GetTokenData("", "")
+		require.NoError(t, err)
+		assert.Empty(t, token)
+	})
+}
