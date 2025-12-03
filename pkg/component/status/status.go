@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -58,7 +57,6 @@ func (s *Status) Init(_ context.Context) error {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	})
-	var err error
 	s.httpserver = http.Server{
 		Handler: mux,
 	}
