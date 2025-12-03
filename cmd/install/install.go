@@ -6,7 +6,6 @@ package install
 import (
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -47,9 +46,4 @@ func NewInstallCmd() *cobra.Command {
 	addPlatformSpecificCommands(cmd, &installFlags)
 
 	return cmd
-}
-
-// startInstalledService starts (or restarts with force) the installed k0s service.
-func startInstalledService(force bool) error {
-	return install.StartInstalledService(force)
 }

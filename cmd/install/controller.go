@@ -66,7 +66,7 @@ With the controller subcommand you can setup a single node cluster by running:
 			}
 
 			if installFlags.start {
-				if err := startInstalledService(installFlags.force); err != nil {
+				if err := install.StartInstalledService(installFlags.force); err != nil {
 					return fmt.Errorf("failed to start controller service: %w", err)
 				}
 			}
