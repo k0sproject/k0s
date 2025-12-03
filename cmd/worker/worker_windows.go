@@ -45,6 +45,6 @@ func initLogging(ctx context.Context, logDir string) error {
 	return nil
 }
 
-func addPlatformSpecificComponents(context.Context, *manager.Manager, *config.CfgVars, EmbeddingController, *worker.CertificateManager) {
+func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, controller EmbeddingController, certManager *worker.CertificateManager) {
 	// no-op
 }

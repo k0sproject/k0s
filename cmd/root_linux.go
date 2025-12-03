@@ -9,7 +9,6 @@ import (
 	"github.com/k0sproject/k0s/cmd/keepalived"
 	"github.com/k0sproject/k0s/cmd/reset"
 	"github.com/k0sproject/k0s/cmd/restore"
-	"github.com/k0sproject/k0s/cmd/status"
 
 	"github.com/spf13/cobra"
 )
@@ -20,5 +19,4 @@ func addPlatformSpecificCommands(root *cobra.Command) {
 	root.AddCommand(keepalived.NewKeepalivedSetStateCmd()) // hidden
 	root.AddCommand(reset.NewResetCmd())
 	root.AddCommand(restore.NewRestoreCmd())
-	root.AddCommand(status.NewStatusCmd())
 }

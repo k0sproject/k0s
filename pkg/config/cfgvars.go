@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/spf13/pflag"
 
@@ -138,6 +139,20 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		runDir = filepath.Join(dataDir, "run")
 	}
 
+	var statusSocketPath string
+	if cobraCmd != nil {
+		if val, err := cobraCmd.Flags().GetString("status-socket"); err == nil {
+			statusSocketPath = val
+		}
+	}
+	if statusSocketPath == "" {
+		if runtime.GOOS == "windows" {
+			statusSocketPath = constant.StatusSocketPathDefault
+		} else {
+			statusSocketPath = filepath.Join(runDir, "status.sock")
+		}
+	}
+
 	certDir := filepath.Join(dataDir, "pki")
 	helmHome := filepath.Join(dataDir, "helmhome")
 
@@ -163,7 +178,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		RunDir:                     runDir,
 		KonnectivityKubeConfigPath: filepath.Join(certDir, "konnectivity.conf"),
 		RuntimeConfigPath:          filepath.Join(runDir, "k0s.yaml"),
-		StatusSocketPath:           filepath.Join(runDir, "status.sock"),
+		StatusSocketPath:           statusSocketPath,
 		StartupConfigPath:          constant.K0sConfigPathDefault,
 
 		// Helm Config
