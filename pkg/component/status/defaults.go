@@ -7,4 +7,7 @@ import "github.com/k0sproject/k0s/pkg/constant"
 
 // DefaultSocketPath is the platform-specific default socket path used by k0s
 // when no explicit status socket is provided.
+//
+// Deprecated: This constant is defined to avoid a circular import in autopilot
+// and will be refactored out.
 const DefaultSocketPath = constant.StatusSocketPathDefault
