@@ -132,10 +132,8 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		return nil, err
 	}
 
-	euid := os.Geteuid()
-
 	var runDir string
-	if euid == 0 {
+	if os.Geteuid() == 0 {
 		runDir = "/run/k0s"
 	} else {
 		runDir = filepath.Join(dataDir, "run")
@@ -148,7 +146,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		}
 	}
 	if statusSocketPath == "" {
-		if runtime.GOOS == "windows" || euid == 0 {
+		if runtime.GOOS == "windows" {
 			statusSocketPath = constant.StatusSocketPathDefault
 		} else {
 			statusSocketPath = filepath.Join(runDir, "status.sock")
