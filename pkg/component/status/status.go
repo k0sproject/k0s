@@ -32,7 +32,6 @@ type Status struct {
 	Socket            string
 	L                 *logrus.Entry
 	httpserver        http.Server
-	listener          net.Listener
 	CertManager       certManager
 }
 
@@ -64,20 +63,19 @@ func (s *Status) Init(_ context.Context) error {
 		Handler: mux,
 	}
 
-	s.listener, err = newStatusListener(s.Socket)
-	if err != nil {
-		s.L.Errorf("failed to create listener %s", err)
-		return err
-	}
-	s.L.Infof("Listening address %s", s.Socket)
-
 	return nil
 }
 
 // Start runs the component
 func (s *Status) Start(_ context.Context) error {
+	listener, err := newStatusListener(s.Socket)
+	if err != nil {
+		s.L.Errorf("failed to create listener %s", err)
+		return err
+	}
+	s.L.Infof("Listening address %s", s.Socket)
 	go func() {
-		if err := s.httpserver.Serve(s.listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := s.httpserver.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.L.Errorf("failed to start status server at %s: %s", s.Socket, err)
 		}
 	}()
@@ -90,9 +88,6 @@ func (s *Status) Stop() error {
 	defer cancel()
 	if err := s.httpserver.Shutdown(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		return err
-	}
-	if s.listener != nil {
-		_ = s.listener.Close()
 	}
 	cleanupStatusListener(s.Socket)
 	return nil
