@@ -78,6 +78,7 @@ smoketests := \
 	check-singlenode \
 	check-stackapplier \
 	check-statussocket \
+	check-windows \
 
 air_gapped_smoketests := \
 	check-airgap \

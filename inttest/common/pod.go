@@ -14,16 +14,28 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-// PodExecCmdOutput exec command on specific pod and wait the command's output.
-func PodExecCmdOutput(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command string) (string, error) {
+func PodExecPowerShell(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command string) (string, error) {
+	cmd := []string{
+		"powershell",
+		"-Command",
+		command,
+	}
+	return podExecCmdOutput(client, config, podName, namespace, cmd)
+}
+
+func PodExecShell(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command string) (string, error) {
 	cmd := []string{
 		"/bin/sh",
 		"-c",
 		command,
 	}
+	return podExecCmdOutput(client, config, podName, namespace, cmd)
+}
+
+func podExecCmdOutput(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command []string) (string, error) {
 	req := client.CoreV1().RESTClient().Post().Resource("pods").Name(podName).Namespace(namespace).SubResource("exec")
 	option := &v1.PodExecOptions{
-		Command: cmd,
+		Command: command,
 		Stdin:   false,
 		Stdout:  true,
 		Stderr:  true,
@@ -47,4 +59,15 @@ func PodExecCmdOutput(client kubernetes.Interface, config *restclient.Config, po
 	}
 
 	return stdout.String(), nil
+}
+
+// PodExecCmdOutput exec command on specific pod and wait the command's output.
+func PodExecCmdOutput(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command string) (string, error) {
+	cmd := []string{
+		"/bin/sh",
+		"-c",
+		command,
+	}
+
+	return podExecCmdOutput(client, config, podName, namespace, cmd)
 }
