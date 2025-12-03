@@ -27,7 +27,8 @@ jobs:
   smoketest:
     name: Test
     runs-on: ${{ inputs.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-
+    # Skip the Windows smoketest here, it has its own workflow.
+    if: ${{ !contains(inputs.name, 'windows') }}
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
