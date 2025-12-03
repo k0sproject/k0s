@@ -8,7 +8,6 @@ package status
 import (
 	"context"
 	"net"
-	"net/http"
 	"os"
 )
 
@@ -28,13 +27,7 @@ func removeLeftovers(socket string) {
 	}
 }
 
-func newStatusHTTPClient(socketPath string) (*http.Client, error) {
-	transport := &http.Transport{
-		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			var d net.Dialer
-			return d.DialContext(ctx, "unix", socketPath)
-		},
-	}
-
-	return &http.Client{Transport: transport}, nil
+func dialSocket(ctx context.Context, socketPath string) (net.Conn, error) {
+	var d net.Dialer
+	return d.DialContext(ctx, "unix", socketPath)
 }

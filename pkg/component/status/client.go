@@ -4,8 +4,10 @@
 package status
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -54,9 +56,13 @@ func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) 
 }
 
 func doStatusHTTPRequest(socketPath string, path string, tgt any) error {
-	httpc, err := newStatusHTTPClient(socketPath)
-	if err != nil {
-		return fmt.Errorf("status: can't prepare transport for %q: %w", socketPath, err)
+	httpc := &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return dialSocket(ctx, socketPath)
+			},
+		},
 	}
 
 	response, err := httpc.Get("http://localhost/" + path)
