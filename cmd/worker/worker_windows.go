@@ -12,10 +12,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/log"
-	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/component/prober"
-	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -49,22 +46,5 @@ func initLogging(ctx context.Context, logDir string) error {
 }
 
 func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, controller EmbeddingController, certManager *worker.CertificateManager) {
-	if controller != nil {
-		return
-	}
-
-	m.Add(ctx, &status.Status{
-		Prober: prober.DefaultProber,
-		StatusInformation: status.K0sStatus{
-			Pid:        os.Getpid(),
-			Role:       "worker",
-			Args:       os.Args,
-			Version:    build.Version,
-			Workloads:  true,
-			SingleNode: false,
-			K0sVars:    k0sVars,
-		},
-		CertManager: certManager,
-		Socket:      k0sVars.StatusSocketPath,
-	})
+	// no-op
 }
