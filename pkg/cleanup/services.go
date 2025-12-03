@@ -1,4 +1,4 @@
-//go:build linux
+//go:build linux || windows
 
 // SPDX-FileCopyrightText: 2021 k0s authors
 // SPDX-License-Identifier: Apache-2.0
