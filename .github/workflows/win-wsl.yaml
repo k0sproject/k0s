@@ -1,44 +1,10 @@
 on:
-  pull_request:
-    branches:
-      - main
-      - release-*
-    paths-ignore:
-      - "**.md"
-      - .github/ISSUE_TEMPLATE/**
-      - .github/workflows/*.yaml
-      - .github/workflows/*.yml
-        # Re-include all workflow files used by this workflow
-      - "!.github/workflows/go.yml"
-      - "!.github/workflows/win-wsl.yml"
-      - "!.github/workflows/build-image-bundle.yml"
-      - "!.github/workflows/build-k0s.yml"
-      - "!.github/workflows/smoketest.yaml"
-      - .github/CODEOWNERS
-      - .github/dependabot.yml
-      - docs/**
-      - hack/ostests/**
-      - hack/tool/**
-      - LICENSE
-      - mkdocs.yml
-      - renovate.json
+
+  workflow_call:
 
 jobs:
-  build-k0s:
-    strategy:
-      matrix:
-        target-os: [linux, windows]
-
-    name: "Build :: k0s :: ${{ matrix.target-os }}-amd64"
-    uses: ./.github/workflows/build-k0s.yml
-    with:
-      target-os: ${{ matrix.target-os }}
-      target-arch: amd64
-
   smoketest:
-    name: Smoketest
-    needs: [build-k0s]
-
+    name: Windows Smoketest
     runs-on: windows-2022
 
     steps:
@@ -47,7 +13,6 @@ jobs:
         with:
           fetch-depth: 0 # for `git describe`
           persist-credentials: false
-
       - name: Pre-create HNS networking
         run: |
           $ErrorActionPreference = "Stop"
@@ -169,7 +134,7 @@ jobs:
           "WSL_IP=$wslIP" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Download compiled binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: k0s-{linux,windows}-amd64
           merge-multiple: true
