@@ -46,9 +46,10 @@ jobs:
         run: .github/workflows/prepare-docker-ipv6.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: false
 
       - name: Download compiled executable
         uses: actions/download-artifact@v5
