@@ -38,9 +38,9 @@ func NewInstallCmd() *cobra.Command {
 		f.Deprecated = "it has no effect and will be removed in a future release"
 		pflags.AddFlag(f)
 	})
-	pflags.BoolVar(&installFlags.force, "force", false, "force init script creation")
-	pflags.StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
-	pflags.BoolVar(&installFlags.start, "start", false, "start the service immediately after installation")
+	pflags.BoolVar(&installFlags.force, "force", false, "Force init script creation")
+	pflags.StringArrayVarP(&installFlags.envVars, "env", "e", nil, "Set environment variables (<name>=<value> or just <name>)")
+	pflags.BoolVar(&installFlags.start, "start", false, "Start the service immediately after installation")
 
 	cmd.AddCommand(installWorkerCmd(&installFlags))
 	addPlatformSpecificCommands(cmd, &installFlags)
