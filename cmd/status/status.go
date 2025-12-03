@@ -114,6 +114,12 @@ func printStatus(w io.Writer, status *status.K0sStatus, output string) {
 		if status.Workloads {
 			fmt.Fprintln(w, "Kube-api probing successful:", status.WorkerToAPIConnectionStatus.Success)
 			fmt.Fprintln(w, "Kube-api probing last error: ", status.WorkerToAPIConnectionStatus.Message)
+
+			fmt.Fprintln(w, "Kube-scheduler probing successful:", status.KubeSchedulerStatus.Success)
+			fmt.Fprintln(w, "Kube-scheduler probing last error: ", status.KubeSchedulerStatus.Message)
+
+			fmt.Fprintln(w, "Kube-controller-manager probing successful:", status.KubeControllerManagerStatus.Success)
+			fmt.Fprintln(w, "Kube-controller-manager probing last error: ", status.KubeControllerManagerStatus.Message)
 		}
 		if status.SysInit != "" {
 			fmt.Fprintln(w, "Init System:", status.SysInit)

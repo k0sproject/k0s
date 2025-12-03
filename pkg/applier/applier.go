@@ -6,6 +6,7 @@ package applier
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
@@ -20,7 +21,83 @@ import (
 const manifestFilePattern = "*.yaml"
 
 func FindManifestFilesInDir(dir string) ([]string, error) {
-	return filepath.Glob(filepath.Join(dir, manifestFilePattern))
+	// Use a map to avoid duplicates
+	fileMap := make(map[string]bool)
+	
+	// First, try to resolve any symlinks in the directory path
+	resolvedDir, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		// If we can't resolve the directory path, use the original directory
+		// This can happen if the directory contains broken symlinks
+		resolvedDir = dir
+	}
+	
+	// Get all yaml files in the resolved directory
+	files, err := filepath.Glob(filepath.Join(resolvedDir, manifestFilePattern))
+	if err != nil {
+		return nil, err
+	}
+	
+	for _, file := range files {
+		// Check if the file is a symlink and if it's broken
+		info, err := os.Lstat(file)
+		if err != nil {
+			continue // Skip if we can't even stat the file
+		}
+		
+		if info.Mode()&os.ModeSymlink != 0 {
+			// It's a symlink, check if it's broken
+			_, err := os.Stat(file)
+			if err != nil {
+				continue // Skip broken symlinks
+			}
+		}
+		
+		fileMap[file] = true
+	}
+	
+	// Also check for symlinks in the original directory that might point to yaml files
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	
+	for _, entry := range entries {
+		fullPath := filepath.Join(dir, entry.Name())
+		
+		// Check if it's a symlink
+		info, err := os.Lstat(fullPath)
+		if err != nil {
+			continue
+		}
+		
+		if info.Mode()&os.ModeSymlink != 0 {
+			// Resolve the symlink
+			resolvedPath, err := filepath.EvalSymlinks(fullPath)
+			if err != nil {
+				// Skip broken symlinks
+				continue
+			}
+			
+			// Check if the resolved path exists and matches our pattern
+			if match, _ := filepath.Match(manifestFilePattern, filepath.Base(resolvedPath)); match {
+				// Verify the resolved file actually exists
+				if _, err := os.Stat(resolvedPath); err == nil {
+					// Add the original symlink path, not the resolved path
+					// This ensures we track changes to the symlink itself
+					fileMap[fullPath] = true
+				}
+			}
+		}
+	}
+	
+	// Convert map back to slice
+	result := make([]string, 0, len(fileMap))
+	for file := range fileMap {
+		result = append(result, file)
+	}
+	
+	return result, nil
 }
 
 // Applier manages all the "static" manifests and applies them on the k8s API

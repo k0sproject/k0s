@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"slices"
@@ -112,7 +113,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 	// Doing it the other way round introduces a race condition when directories
 	// get created after the initial listing but before the watch starts.
 
-	dirs, err := dir.GetAll(m.bundleDir)
+	dirs, err := m.getAllStackDirectories(m.bundleDir)
 	if err != nil {
 		m.log.WithError(err).Error("Failed to read bundle directory")
 		return
@@ -137,6 +138,13 @@ func (m *Manager) runWatchers(ctx context.Context) {
 			case fsnotify.Create:
 				if dir.IsDirectory(event.Name) {
 					m.createStack(ctx, stacks, event.Name)
+				} else if m.isSymlinkToDirectory(event.Name) {
+					resolvedPath, err := filepath.EvalSymlinks(event.Name)
+					if err != nil {
+						m.log.WithError(err).WithField("symlink", event.Name).Warn("Failed to resolve symlink")
+					} else {
+						m.createStack(ctx, stacks, resolvedPath)
+					}
 				}
 			case fsnotify.Remove:
 				m.removeStack(ctx, stacks, event.Name)
@@ -212,4 +220,57 @@ func (m *Manager) removeStack(ctx context.Context, stacks map[string]stack, name
 	}
 
 	log.Info("Stack deleted successfully")
+}
+
+// getAllStackDirectories returns all directories in the given base path,
+// including directories that are targets of symlinks
+func (m *Manager) getAllStackDirectories(base string) ([]string, error) {
+	var dirs []string
+	if !dir.IsDirectory(base) {
+		return dirs, fmt.Errorf("%s is not a directory", base)
+	}
+
+	fileInfos, err := os.ReadDir(base)
+	if err != nil {
+		return dirs, err
+	}
+
+	for _, f := range fileInfos {
+		fullPath := filepath.Join(base, f.Name())
+		
+		// Check if it's a directory
+		if f.IsDir() {
+			dirs = append(dirs, f.Name())
+			continue
+		}
+		
+		// Check if it's a symlink to a directory
+		if m.isSymlinkToDirectory(fullPath) {
+			// Use the symlink name as the stack name (not the resolved target name)
+			dirs = append(dirs, f.Name())
+		}
+	}
+	return dirs, nil
+}
+
+// isSymlinkToDirectory checks if the given path is a symlink that points to a directory
+func (m *Manager) isSymlinkToDirectory(path string) bool {
+	// Get file info to check if it's a symlink
+	info, err := os.Lstat(path)
+	if err != nil {
+		return false
+	}
+	
+	// Check if it's a symlink
+	if info.Mode()&os.ModeSymlink == 0 {
+		return false
+	}
+	
+	// Resolve the symlink and check if the target is a directory
+	resolvedPath, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return false
+	}
+	
+	return dir.IsDirectory(resolvedPath)
 }
