@@ -54,6 +54,7 @@ type Reconciler struct {
 	clientFactory       kubeutil.ClientFactoryInterface
 	leaderElector       leaderelector.Interface
 	konnectivityEnabled bool
+	autopilotDisabled   bool
 
 	mu    sync.Mutex
 	state reconcilerState
@@ -82,7 +83,7 @@ var (
 )
 
 // NewReconciler creates a new reconciler for worker configurations.
-func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled bool) (*Reconciler, error) {
+func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled, autopilotDisabled bool) (*Reconciler, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "workerconfig.Reconciler"})
 
 	clusterDNSIPString, err := nodeSpec.Network.DNSAddress()
@@ -102,6 +103,7 @@ func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clien
 		clientFactory:       clientFactory,
 		leaderElector:       leaderElector,
 		konnectivityEnabled: konnectivityEnabled,
+		autopilotDisabled:   autopilotDisabled,
 
 		state: reconcilerCreated,
 	}
@@ -602,7 +604,8 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			Enabled:   r.konnectivityEnabled,
 			AgentPort: snapshot.konnectivityAgentPort,
 		},
-		DualStackEnabled: snapshot.dualStackEnabled,
+		DualStackEnabled:  snapshot.dualStackEnabled,
+		AutopilotDisabled: r.autopilotDisabled,
 	}
 
 	if workerProfile.NodeLocalLoadBalancing != nil &&
