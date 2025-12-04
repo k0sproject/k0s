@@ -6,47 +6,45 @@ package leaderelector
 import (
 	"context"
 
-	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 )
 
-type Dummy struct {
-	Leader    bool
+// AlwaysLeading is a dummy leader elector that reports itself as the leader
+// forever. Used single-node setups where leader election is unnecessary.
+type AlwaysLeading struct {
+	never     <-chan struct{}
 	callbacks []func()
 }
 
-var _ Interface = (*Dummy)(nil)
-var _ manager.Component = (*Dummy)(nil)
+// Off returns an always-leading leader elector.
+func Off() *AlwaysLeading {
+	return &AlwaysLeading{make(<-chan struct{}), nil}
+}
 
-func (l *Dummy) Init(_ context.Context) error { return nil }
-func (l *Dummy) Stop() error                  { return nil }
-func (l *Dummy) IsLeader() bool               { return l.Leader }
+func (*AlwaysLeading) Init(context.Context) error {
+	return nil
+}
 
-func (l *Dummy) AddAcquiredLeaseCallback(fn func()) {
+func (l *AlwaysLeading) AddAcquiredLeaseCallback(fn func()) {
 	l.callbacks = append(l.callbacks, fn)
 }
 
-var never = make(<-chan struct{})
-
-func (l *Dummy) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
-	var status leaderelection.Status
-	if l.Leader {
-		status = leaderelection.StatusLeading
-	}
-
-	return status, never
+func (*AlwaysLeading) AddLostLeaseCallback(func()) {
 }
 
-func (l *Dummy) AddLostLeaseCallback(func()) {}
-
-func (l *Dummy) Start(_ context.Context) error {
-	if !l.Leader {
-		return nil
-	}
+func (l *AlwaysLeading) Start(context.Context) error {
 	for _, fn := range l.callbacks {
-		if fn != nil {
-			fn()
-		}
+		fn()
 	}
+	return nil
+}
+
+func (*AlwaysLeading) IsLeader() bool { return true }
+
+func (l *AlwaysLeading) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
+	return leaderelection.StatusLeading, l.never
+}
+
+func (*AlwaysLeading) Stop() error {
 	return nil
 }
