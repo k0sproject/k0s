@@ -75,9 +75,15 @@ check out the [Contributing Guide] and the [Code of Conduct].
 
 We will be holding regular community hours. Everyone in the community is welcome to drop by and ask questions, talk about projects, and chat.
 
-We currently have a monthly office hours call on the last Tuesday of the month.
+There's three calls scheduled:
 
-To see the call details in your local timezone, check out [https://dateful.com/eventlink/2735919704](https://dateful.com/eventlink/2735919704).
+- Community office hours - Eastern Hemisphere (EU TZ's)
+- Community office hours - Western Hemisphere (US/Americas TZ's)
+- Maintainers call - Open to everyone but intended for maintainers to sync up on plans and work
+
+All events are published in our public [project calendar].
+
+[project calendar]: https://zoom-lfx.platform.linuxfoundation.org/meetings/k0s?view=month
 
 <!-- End Join the Community -->
 ### Adopters
