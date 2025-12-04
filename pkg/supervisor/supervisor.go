@@ -43,11 +43,10 @@ type Supervisor struct {
 	CleanBeforeFn func() error
 
 	cmd            *exec.Cmd
-	done           chan bool
 	log            logrus.FieldLogger
 	mutex          sync.Mutex
 	startStopMutex sync.Mutex
-	cancel         context.CancelFunc
+	stop           func()
 }
 
 const k0sManaged = "_K0S_MANAGED=yes"
@@ -65,7 +64,7 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
 		for {
-			s.log.Debug("Requesting graceful termination")
+			s.log.Debugf("Requesting graceful termination (%v)", context.Cause(ctx))
 			if err := requestGracefulTermination(s.cmd.Process); err != nil {
 				if errors.Is(err, os.ErrProcessDone) {
 					s.log.Info("Failed to request graceful termination: process has already terminated")
@@ -102,9 +101,8 @@ func (s *Supervisor) Supervise() error {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
 	// check if it is already started
-	if s.cancel != nil {
-		s.log.Warn("Already started")
-		return nil
+	if s.stop != nil {
+		return errors.New("already started")
 	}
 	s.log = logrus.WithField("component", s.Name)
 	s.PidFile = filepath.Join(s.RunDir, s.Name) + ".pid"
@@ -124,15 +122,11 @@ func (s *Supervisor) Supervise() error {
 		s.log.WithError(err).Warn("Old process cannot be terminated")
 	}
 
-	var ctx context.Context
-	ctx, s.cancel = context.WithCancel(context.Background())
-	started := make(chan error)
-	s.done = make(chan bool)
+	ctx, cancel := context.WithCancelCause(context.Background())
+	started, done := make(chan error, 1), make(chan bool)
 
 	go func() {
-		defer func() {
-			close(s.done)
-		}()
+		defer close(done)
 
 		s.log.Info("Starting to supervise")
 		restarts := 0
@@ -192,32 +186,38 @@ func (s *Supervisor) Supervise() error {
 
 			select {
 			case <-ctx.Done():
-				s.log.Debug("respawn canceled")
+				s.log.Debugf("respawn canceled (%v)", context.Cause(ctx))
 				return
 			case <-time.After(s.TimeoutRespawn):
 				s.log.Debug("respawning")
 			}
 		}
 	}()
-	return <-started
+
+	if err := <-started; err != nil {
+		cancel(err)
+		<-done
+		return err
+	}
+
+	s.stop = func() {
+		cancel(errors.New("supervisor is stopping"))
+		<-done
+	}
+	return nil
 }
 
 // Stop stops the supervised
-func (s *Supervisor) Stop() {
+func (s *Supervisor) Stop() error {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
-	if s.cancel == nil || s.log == nil {
-		s.log.Warn("Not started")
-		return
+	if s.stop == nil {
+		return errors.New("not started")
 	}
-	s.log.Debug("Sending stop message")
 
-	s.cancel()
-	s.cancel = nil
-	s.log.Debug("Waiting for stopping is done")
-	if s.done != nil {
-		<-s.done
-	}
+	s.stop()
+	s.stop = nil
+	return nil
 }
 
 // Checks if the process referenced in the PID file is a k0s-managed process.

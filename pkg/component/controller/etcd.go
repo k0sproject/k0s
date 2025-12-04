@@ -247,7 +247,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 // Stop stops etcd
 func (e *Etcd) Stop() error {
 	if e.supervisor != nil {
-		e.supervisor.Stop()
+		return e.supervisor.Stop()
 	}
 	return nil
 }

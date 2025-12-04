@@ -183,7 +183,9 @@ func (k *Keepalived) Stop() error {
 	}
 
 	k.log.Info("Stopping keepalived")
-	k.supervisor.Stop()
+	if err := k.supervisor.Stop(); err != nil {
+		k.log.WithError(err).Error("Failed to stop executable")
+	}
 
 	if len(k.Config.VirtualServers) > 0 {
 		k.log.Info("Deleting dummy interface")
