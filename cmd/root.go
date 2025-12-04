@@ -15,6 +15,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/kubeconfig"
 	"github.com/k0sproject/k0s/cmd/kubectl"
 	"github.com/k0sproject/k0s/cmd/start"
+	"github.com/k0sproject/k0s/cmd/status"
 	"github.com/k0sproject/k0s/cmd/stop"
 	"github.com/k0sproject/k0s/cmd/sysinfo"
 	"github.com/k0sproject/k0s/cmd/token"
@@ -46,6 +47,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(kubectl.NewK0sKubectlCmd())
 	cmd.AddCommand(start.NewStartCmd())
 	cmd.AddCommand(stop.NewStopCmd())
+	cmd.AddCommand(status.NewStatusCmd())
 	cmd.AddCommand(sysinfo.NewSysinfoCmd())
 	cmd.AddCommand(token.NewTokenCmd())
 	cmd.AddCommand(validate.NewValidateCmd()) // hidden+deprecated

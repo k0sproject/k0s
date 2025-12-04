@@ -1,5 +1,3 @@
-//go:build unix
-
 // SPDX-FileCopyrightText: 2021 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
@@ -9,9 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -35,7 +31,6 @@ type Status struct {
 	Socket            string
 	L                 *logrus.Entry
 	httpserver        http.Server
-	listener          net.Listener
 	CertManager       certManager
 }
 
@@ -62,34 +57,23 @@ func (s *Status) Init(_ context.Context) error {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	})
-	var err error
 	s.httpserver = http.Server{
 		Handler: mux,
 	}
 
-	removeLeftovers(s.Socket)
-	s.listener, err = net.Listen("unix", s.Socket)
+	return nil
+}
+
+// Start runs the component
+func (s *Status) Start(_ context.Context) error {
+	listener, err := newStatusListener(s.Socket)
 	if err != nil {
 		s.L.Errorf("failed to create listener %s", err)
 		return err
 	}
 	s.L.Infof("Listening address %s", s.Socket)
-
-	return nil
-}
-
-// removeLeftovers tries to remove leftover sockets that nothing is listening on
-func removeLeftovers(socket string) {
-	_, err := net.Dial("unix", socket)
-	if err != nil {
-		_ = os.Remove(socket)
-	}
-}
-
-// Start runs the component
-func (s *Status) Start(_ context.Context) error {
 	go func() {
-		if err := s.httpserver.Serve(s.listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := s.httpserver.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.L.Errorf("failed to start status server at %s: %s", s.Socket, err)
 		}
 	}()
@@ -103,8 +87,7 @@ func (s *Status) Stop() error {
 	if err := s.httpserver.Shutdown(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
-	// Unix socket doesn't need to be explicitly removed because it's handled
-	// by httpserver.Shutdown
+	cleanupStatusListener(s.Socket)
 	return nil
 }
 

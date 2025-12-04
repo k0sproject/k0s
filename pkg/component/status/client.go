@@ -1,5 +1,3 @@
-//go:build unix
-
 // SPDX-FileCopyrightText: 2022 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
@@ -40,7 +38,7 @@ type ProbeStatus struct {
 // GetStatus returns the status of the k0s process using the status socket
 func GetStatusInfo(socketPath string) (*K0sStatus, error) {
 	status := &K0sStatus{}
-	if err := doHTTPRequestViaUnixSocket(socketPath, "status", status); err != nil {
+	if err := doStatusHTTPRequest(socketPath, "status", status); err != nil {
 		return nil, err
 	}
 	return status, nil
@@ -49,7 +47,7 @@ func GetStatusInfo(socketPath string) (*K0sStatus, error) {
 // GetComponentStatus returns the per-component events and health-checks
 func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) {
 	status := &prober.State{}
-	if err := doHTTPRequestViaUnixSocket(socketPath,
+	if err := doStatusHTTPRequest(socketPath,
 		fmt.Sprintf("components?maxCount=%d", maxCount),
 		status); err != nil {
 		return nil, err
@@ -57,12 +55,12 @@ func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) 
 	return status, nil
 }
 
-func doHTTPRequestViaUnixSocket(socketPath string, path string, tgt any) error {
-	httpc := http.Client{
+func doStatusHTTPRequest(socketPath string, path string, tgt any) error {
+	httpc := &http.Client{
 		Transport: &http.Transport{
+			DisableKeepAlives: true,
 			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, "unix", socketPath)
+				return dialSocket(ctx, socketPath)
 			},
 		},
 	}

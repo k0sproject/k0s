@@ -18,9 +18,11 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/internal/supervised"
+	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/iptables"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
@@ -297,6 +299,27 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
 
 	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, controller, certManager)
+
+	if controller == nil {
+		// if running inside a controller, status component is already running
+		componentManager.Add(ctx, &status.Status{
+			Prober: prober.DefaultProber,
+			StatusInformation: status.K0sStatus{
+				Pid:        os.Getpid(),
+				Role:       "worker",
+				Args:       os.Args,
+				Version:    build.Version,
+				Workloads:  true,
+				SingleNode: false,
+				K0sVars:    c.K0sVars,
+				// worker does not have cluster config. this is only shown in "k0s status -o json".
+				// todo: if it's needed, a worker side config client can be set up and used to load the config
+				ClusterConfig: nil,
+			},
+			CertManager: certManager,
+			Socket:      c.K0sVars.StatusSocketPath,
+		})
+	}
 
 	// extract needed components
 	if err := componentManager.Init(ctx); err != nil {
