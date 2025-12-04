@@ -60,6 +60,8 @@ require (
 	google.golang.org/grpc v1.76.0
 	helm.sh/helm/v3 v3.19.2
 	oras.land/oras-go/v2 v2.6.0
+	sigs.k8s.io/controller-runtime v0.22.2
+	sigs.k8s.io/yaml v1.6.0
 )
 
 // Kubernetes
@@ -81,8 +83,6 @@ require (
 	k8s.io/kubernetes v1.34.2
 	k8s.io/mount-utils v0.34.2
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
-	sigs.k8s.io/controller-runtime v0.22.2
-	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
