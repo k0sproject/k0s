@@ -6,6 +6,7 @@ package k0scontext_test
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/k0scontext"
@@ -14,45 +15,27 @@ import (
 )
 
 func TestWithInactivityTimeout_KeepAlive(t *testing.T) {
-	const (
-		jitter  = 25 * time.Millisecond // tolerable error for assertions
-		timeout = 10 * jitter           // inactivity timeout for the context
-		delay   = timeout / 2           // delay after which the timeout is kept alive once
-	)
+	synctest.Test(t, func(t *testing.T) {
+		// Create a new context. The timeout is ticking ...
+		ctx, _, keepAlive := k0scontext.WithInactivityTimeout(t.Context(), time.Second)
 
-	// Create a new context. The timeout is ticking ...
-	ctx, _, keepAlive := k0scontext.WithInactivityTimeout(t.Context(), timeout)
+		// Send a keep-alive just before the timeout exceeds
+		time.Sleep(time.Second - time.Nanosecond)
+		lastActivity := time.Now()
+		keepAlive()
 
-	// Wait for some time, then keep the context alive once.
-	time.Sleep(delay)
-	start := time.Now()
-	keepAlive()
-	keptAlive := time.Now()
+		// Make sure the timeout has not expired.
+		synctest.Wait()
+		assert.NoError(t, context.Cause(ctx), "Context done, despite a keep-alive")
 
-	// Make sure the timeout has not expired.
-	select {
-	case <-ctx.Done():
-		require.Fail(t, "Context already done, increase the jitter")
-	default:
-	}
-
-	// Now wait for the timeout to expire.
-	<-ctx.Done()
-	done := time.Now()
-
-	var inactivityErr *k0scontext.InactivityError
-	require.ErrorAs(t, context.Cause(ctx), &inactivityErr)
-	assert.Equal(t, timeout, inactivityErr.Timeout)
-	assert.WithinRange(t, inactivityErr.LastActivity, start, keptAlive)
-	assert.Less(t, keptAlive.Sub(start), jitter, "Touching took too long, increase the jitter")
-	assert.WithinRange(t, done,
-		// The earliest tolerable done time: The time just before the context
-		// was last kept alive, plus the timeout itself.
-		start.Add(timeout),
-		// The latest tolerable done time: The time just after the context was
-		// kept alive, plus the timeout itself, plus the jitter.
-		keptAlive.Add(timeout).Add(jitter),
-	)
+		// Push the timeout over the brink now.
+		time.Sleep(time.Second)
+		synctest.Wait()
+		var inactivityErr *k0scontext.InactivityError
+		require.ErrorAs(t, context.Cause(ctx), &inactivityErr)
+		assert.Equal(t, time.Second, inactivityErr.Timeout)
+		assert.Equal(t, lastActivity, inactivityErr.LastActivity)
+	})
 }
 
 func TestWithInactivityTimeout_Timeout(t *testing.T) {
