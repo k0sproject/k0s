@@ -11,6 +11,11 @@ on:
         type: string
         required: true
         description: The architecture to build k0s for.
+      embedded-bins-buildmode:
+        type: string
+        required: false
+        default: docker
+        description: The build mode for embedded binaries (docker or none).
 
 env:
   MAKEFLAGS: -j
@@ -48,6 +53,8 @@ jobs:
 
       - name: "Build :: Prepare"
         id: build-prepare
+        env:
+          EMBEDDED_BINS_BUILDMODE: "${{ inputs.embedded-bins-buildmode }}"
         run: |
           .github/workflows/prepare-build-env.sh
 
@@ -57,7 +64,14 @@ jobs:
           fi
           echo executable-suffix="$executableSuffix" >>"$GITHUB_OUTPUT"
 
+          artifactSuffix=''
+          if [ "$EMBEDDED_BINS_BUILDMODE" = "none" ]; then
+            artifactSuffix=-no-embedded-bins
+          fi
+          echo artifact-suffix="$artifactSuffix" >>"$GITHUB_OUTPUT"
+
       - name: "Cache :: embedded binaries"
+        if: inputs.embedded-bins-buildmode != 'none'
         id: cache-embedded-bins
         uses: actions/cache@v4
         with:
@@ -81,6 +95,7 @@ jobs:
       - name: "Build :: k0s"
         env:
           EMBEDDED_BINS_CACHED: "${{ steps.cache-embedded-bins.outputs.cache-hit }}"
+          EMBEDDED_BINS_BUILDMODE: "${{ inputs.embedded-bins-buildmode }}"
         run: |
           make .k0sbuild.docker-image.k0s
           touch go.sum
@@ -95,7 +110,7 @@ jobs:
       - name: "Upload :: k0s"
         uses: actions/upload-artifact@v5
         with:
-          name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}${{ steps.build-prepare.outputs.artifact-suffix }}
           path: |
             k0s${{ steps.build-prepare.outputs.executable-suffix }}
 
@@ -105,15 +120,15 @@ jobs:
       - name: "Upload :: SBOM"
         uses: actions/upload-artifact@v5
         with:
-          name: sbom-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          name: sbom-${{ inputs.target-os }}-${{ inputs.target-arch }}${{ steps.build-prepare.outputs.artifact-suffix }}
           path: spdx.json
 
       - name: "Build :: Airgap image list"
-        if: inputs.target-os != 'windows'
+        if: inputs.target-os != 'windows' && inputs.embedded-bins-buildmode != 'none'
         run: make airgap-images.txt && cat airgap-images.txt
 
       - name: "Upload :: Airgap image list"
-        if: inputs.target-os != 'windows'
+        if: inputs.target-os != 'windows' && inputs.embedded-bins-buildmode != 'none'
         uses: actions/upload-artifact@v5
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
