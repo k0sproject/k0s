@@ -153,6 +153,7 @@ jobs:
 
       - name: Submit
         uses: advanced-security/spdx-dependency-submission-action@v0.1.1
+        continue-on-error: true
         with:
           filePath: spdx.json
 
