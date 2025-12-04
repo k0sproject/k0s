@@ -11,7 +11,6 @@ import (
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/install"
 
-	"github.com/kardianos/service"
 	"github.com/spf13/cobra"
 )
 
@@ -27,15 +26,7 @@ func NewStartCmd() *cobra.Command {
 			if runtime.GOOS != "windows" && os.Geteuid() != 0 {
 				return errors.New("this command must be run as root")
 			}
-			svc, err := install.InstalledService()
-			if err != nil {
-				return err
-			}
-			status, _ := svc.Status()
-			if status == service.StatusRunning {
-				return errors.New("already running")
-			}
-			return svc.Start()
+			return install.StartInstalledService(false)
 		},
 	}
 
