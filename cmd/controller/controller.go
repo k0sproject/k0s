@@ -6,6 +6,7 @@
 package controller
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -537,15 +538,11 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	if enableKonnectivity {
-		konnectivityHost := nodeConfig.Spec.API.APIAddress()
-		if nodeConfig.Spec.Konnectivity.ExternalAddress != "" {
-			konnectivityHost = nodeConfig.Spec.Konnectivity.ExternalAddress
-		}
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
-			K0sVars:       c.K0sVars,
-			APIServerHost: konnectivityHost,
-			EventEmitter:  prober.NewEventEmitter(),
-			ServerCount:   numActiveControllers.Peek,
+			ManifestsDir:           c.K0sVars.ManifestsDir,
+			KonnectivityServerHost: cmp.Or(nodeConfig.Spec.API.ExternalHost(), nodeConfig.Spec.API.Address),
+			EventEmitter:           prober.NewEventEmitter(),
+			ServerCount:            numActiveControllers.Peek,
 		})
 	}
 
