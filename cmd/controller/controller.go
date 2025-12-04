@@ -502,6 +502,9 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.MetricsServerComponentName) {
+		if !enableKonnectivity && !flags.Mode().WorkloadsEnabled() {
+			logrus.Warn("In order to run metrics-server without konnectivity, this controller must be able to connect to the cluster network")
+		}
 		clusterComponents.Add(ctx, controller.NewMetricServer(c.K0sVars, adminClientFactory))
 	}
 
