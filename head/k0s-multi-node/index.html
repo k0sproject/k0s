@@ -3152,6 +3152,12 @@ k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> 
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
+<p>Alternatively, both steps can be combined with the <code>--start</code> flag:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>-c<span class="w"> </span>/etc/k0s/k0s.yaml<span class="w"> </span>--start
+</code></pre></div>
+<p>The system service can be reinstalled with the <code>--force</code> flag. When combined with <code>--start</code>, it will also restart an already running service:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>-c<span class="w"> </span>/etc/k0s/k0s.yaml<span class="w"> </span>--force<span class="w"> </span>--start
+</code></pre></div>
 <p>k0s process acts as a "supervisor" for the control plane components. In moments the control plane will be up and running.</p>
 <h3 id="3-create-a-join-token">3. Create a join token<a class="headerlink" href="#3-create-a-join-token" title="Permanent link">#</a></h3>
 <p>You need a token to join workers to the cluster. The token embeds information that enables mutual trust between the worker and controller(s) and which allows the node to join the cluster as worker.</p>
@@ -3167,6 +3173,12 @@ k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> 
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>worker<span class="w"> </span>--token-file<span class="w"> </span>/path/to/token/file
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
+</code></pre></div>
+<p>Alternatively, both steps can be combined with the <code>--start</code> flag:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>worker<span class="w"> </span>--token-file<span class="w"> </span>/path/to/token/file<span class="w"> </span>--start
+</code></pre></div>
+<p>The system service can be reinstalled with the <code>--force</code> flag. When combined with <code>--start</code>, it will also restart an already running service:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>worker<span class="w"> </span>--token-file<span class="w"> </span>/path/to/token/file<span class="w"> </span>--force<span class="w"> </span>--start
 </code></pre></div>
 <h4 id="about-join-tokens">About join tokens<a class="headerlink" href="#about-join-tokens" title="Permanent link">#</a></h4>
 <p>The join tokens are base64-encoded <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">kubeconfigs</a> for several reasons:</p>
@@ -3187,6 +3199,12 @@ k0s<span class="w"> </span>config<span class="w"> </span>create<span class="w"> 
 <p>Important notice here is that each controller in the cluster must have k0s.yaml otherwise some cluster nodes will use default config values which will lead to inconsistency behavior.
 If your configuration file includes IP addresses (node address, SANs, etcd peer address), remember to update them accordingly for this specific controller node.</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
+</code></pre></div>
+<p>Alternatively, both steps can be combined with the <code>--start</code> flag:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--token-file<span class="w"> </span>/path/to/token/file<span class="w"> </span>-c<span class="w"> </span>/etc/k0s/k0s.yaml<span class="w"> </span>--start
+</code></pre></div>
+<p>The system service can be reinstalled with the <code>--force</code> flag. When combined with <code>--start</code>, it will also restart an already running service:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--token-file<span class="w"> </span>/path/to/token/file<span class="w"> </span>-c<span class="w"> </span>/etc/k0s/k0s.yaml<span class="w"> </span>--force<span class="w"> </span>--start
 </code></pre></div>
 <h3 id="6-check-k0s-status">6. Check k0s status<a class="headerlink" href="#6-check-k0s-status" title="Permanent link">#</a></h3>
 <p>Run the following command to check the k0s instance status:</p>

@@ -2999,11 +2999,18 @@ systemd or OpenRC as its init system.</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single<span class="w"> </span>--force
 sudo<span class="w"> </span>systemctl<span class="w"> </span>daemon-reload
 </code></pre></div>
+<p>If you need to reinstall and immediately start the service, combine <code>--force</code> with <code>--start</code>:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single<span class="w"> </span>--force<span class="w"> </span>--start
+</code></pre></div>
+<p>When used with <code>--start</code>, the <code>--force</code> flag will also restart an already running service.</p>
 </li>
 <li>
 <p>Start k0s as a service</p>
 <p>To start the k0s service, run:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
+</code></pre></div>
+<p>Alternatively, both steps can be combined by using the <code>--start</code> flag with the install command:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single<span class="w"> </span>--start
 </code></pre></div>
 <p>The k0s service will start automatically after the node restart.</p>
 <p>A minute or two typically passes before the node is ready to deploy applications.</p>
