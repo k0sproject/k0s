@@ -37,6 +37,12 @@ All default values of worker command will be passed to the service stub unless o
 				return fmt.Errorf("failed to install worker service: %w", err)
 			}
 
+			if installFlags.start {
+				if err := install.StartInstalledService(installFlags.force); err != nil {
+					return fmt.Errorf("failed to start worker service: %w", err)
+				}
+			}
+
 			return nil
 		},
 	}
