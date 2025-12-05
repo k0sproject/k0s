@@ -58,6 +58,18 @@ sudo k0s install controller -c /etc/k0s/k0s.yaml
 sudo k0s start
 ```
 
+Alternatively, both steps can be combined with the `--start` flag:
+
+```shell
+sudo k0s install controller -c /etc/k0s/k0s.yaml --start
+```
+
+The system service can be reinstalled with the `--force` flag. When combined with `--start`, it will also restart an already running service:
+
+```shell
+sudo k0s install controller -c /etc/k0s/k0s.yaml --force --start
+```
+
 k0s process acts as a "supervisor" for the control plane components. In moments the control plane will be up and running.
 
 ### 3. Create a join token
@@ -88,6 +100,18 @@ sudo k0s install worker --token-file /path/to/token/file
 
 ```shell
 sudo k0s start
+```
+
+Alternatively, both steps can be combined with the `--start` flag:
+
+```shell
+sudo k0s install worker --token-file /path/to/token/file --start
+```
+
+The system service can be reinstalled with the `--force` flag. When combined with `--start`, it will also restart an already running service:
+
+```shell
+sudo k0s install worker --token-file /path/to/token/file --force --start
 ```
 
 #### About join tokens
@@ -121,6 +145,18 @@ If your configuration file includes IP addresses (node address, SANs, etcd peer 
 
 ```shell
 sudo k0s start
+```
+
+Alternatively, both steps can be combined with the `--start` flag:
+
+```shell
+sudo k0s install controller --token-file /path/to/token/file -c /etc/k0s/k0s.yaml --start
+```
+
+The system service can be reinstalled with the `--force` flag. When combined with `--start`, it will also restart an already running service:
+
+```shell
+sudo k0s install controller --token-file /path/to/token/file -c /etc/k0s/k0s.yaml --force --start
 ```
 
 ### 6. Check k0s status
