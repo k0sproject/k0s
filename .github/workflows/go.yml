@@ -235,7 +235,6 @@ jobs:
             echo Trimming Go cache
             find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -not -newer build/cache/_cache_sentinel -delete
           fi
-  
   smoketests:
     strategy:
       fail-fast: false

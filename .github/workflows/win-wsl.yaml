@@ -73,8 +73,6 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
-
-
           Write-Host "Updating to WSL 2 ..."
           & wsl --set-default-version 2
           & wsl --update
@@ -102,8 +100,6 @@ jobs:
           # some trailing carriage return
           '@ | & wsl tee /etc/systemd/system/keepwsl.service | Out-Null
 
-          & wsl -- base64 /etc/systemd/system/keepwsl.service
-
           & wsl -- systemctl daemon-reload
           & wsl -- systemctl start keepwsl.service
 
@@ -122,7 +118,7 @@ jobs:
 
           # Map Windows localhost ports → WSL ports
           foreach ($p in 6443,8132) {
-            netsh interface portproxy delete v4tov4 listenaddress=$nodeIP listenport=$p 2>$null
+            netsh interface portproxy delete v4tov4 listenaddress=$nodeIP listenport=$p
             netsh interface portproxy add    v4tov4 listenaddress=$nodeIP listenport=$p connectport=$p connectaddress=$wslIP
           }
 
@@ -163,12 +159,6 @@ jobs:
               type: kine
             network:
               provider: calico
-            images:
-              pause:
-                # FIXME We need to use the upstream pause image here since the
-                # k0sproject's one doesn't ship with a windows build currently.
-                image: k8s.gcr.io/pause
-                version: 3.10.1
           EOF
 
           install -m755 -D -- '$dir/k0s' /usr/local/bin/k0s
@@ -265,7 +255,7 @@ jobs:
         run: |
           & kubectl config view
           & kubectl get nodes,pods -A
-          go test ./inttest/windows -v
+          go test -v -count=1 ./inttest/windows
 
       - name: Cluster state
         if: failure()
@@ -281,8 +271,6 @@ jobs:
           & kubectl describe pod -n default
           & kubectl get ipamconfig -A -o yaml
 
-      
-
       - name: Collect logs into workspace
         if: failure()
         run: |
@@ -296,8 +284,6 @@ jobs:
         with:
           name: containers-logs
           path: logs/**
-
-
       - name: k0s controller logs
         if: failure() && steps.start-controller.conclusion == 'success'
         run: |
