@@ -12,13 +12,9 @@ import (
 // EnvVarToken is the environment variable name for the join token
 const EnvVarToken = "K0S_TOKEN"
 
-// GetTokenData resolves the join token from multiple possible sources:
-// CLI argument, token file, or K0S_TOKEN environment variable.
-// Returns the token data or an error if multiple sources are provided.
-// Returns empty string if no token source is available.
-func GetTokenData(tokenArg, tokenFile string) (string, error) {
-	tokenEnvValue := os.Getenv(EnvVarToken)
-
+// CheckSingleTokenSource verifies that at most one token source is provided.
+// Returns an error if multiple sources are specified.
+func CheckSingleTokenSource(tokenArg, tokenFile string) error {
 	tokenSources := 0
 	if tokenArg != "" {
 		tokenSources++
@@ -26,17 +22,22 @@ func GetTokenData(tokenArg, tokenFile string) (string, error) {
 	if tokenFile != "" {
 		tokenSources++
 	}
-	if tokenEnvValue != "" {
+	if os.Getenv(EnvVarToken) != "" {
 		tokenSources++
 	}
 
 	if tokenSources > 1 {
-		return "", fmt.Errorf("you can only pass one token source: either as a CLI argument, via '--token-file [path]', or via the %s environment variable", EnvVarToken)
+		return fmt.Errorf("you can only pass one token source: either as a CLI argument, via '--token-file [path]', or via the %s environment variable", EnvVarToken)
 	}
 
-	if tokenSources == 0 {
-		return "", nil
-	}
+	return nil
+}
+
+// GetTokenData resolves the join token from multiple possible sources:
+// CLI argument, token file, or K0S_TOKEN environment variable.
+// Returns empty string if no token source is available.
+func GetTokenData(tokenArg, tokenFile string) (string, error) {
+	tokenEnvValue := os.Getenv(EnvVarToken)
 
 	if tokenArg != "" {
 		return tokenArg, nil
@@ -44,6 +45,10 @@ func GetTokenData(tokenArg, tokenFile string) (string, error) {
 
 	if tokenEnvValue != "" {
 		return tokenEnvValue, nil
+	}
+
+	if tokenFile == "" {
+		return "", nil
 	}
 
 	var problem string

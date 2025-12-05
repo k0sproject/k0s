@@ -12,6 +12,71 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCheckSingleTokenSource(t *testing.T) {
+	testToken := "test-token-data"
+
+	t.Run("returns nil when no token sources provided", func(t *testing.T) {
+		t.Setenv(EnvVarToken, "")
+
+		err := CheckSingleTokenSource("", "")
+		require.NoError(t, err)
+	})
+
+	t.Run("returns nil when only arg provided", func(t *testing.T) {
+		t.Setenv(EnvVarToken, "")
+
+		err := CheckSingleTokenSource(testToken, "")
+		require.NoError(t, err)
+	})
+
+	t.Run("returns nil when only file provided", func(t *testing.T) {
+		t.Setenv(EnvVarToken, "")
+
+		err := CheckSingleTokenSource("", "/path/to/token")
+		require.NoError(t, err)
+	})
+
+	t.Run("returns nil when only env provided", func(t *testing.T) {
+		t.Setenv(EnvVarToken, testToken)
+
+		err := CheckSingleTokenSource("", "")
+		require.NoError(t, err)
+	})
+
+	t.Run("returns error when multiple token sources provided - env and arg", func(t *testing.T) {
+		t.Setenv(EnvVarToken, testToken)
+
+		err := CheckSingleTokenSource(testToken, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+		assert.Contains(t, err.Error(), EnvVarToken)
+	})
+
+	t.Run("returns error when multiple token sources provided - env and file", func(t *testing.T) {
+		t.Setenv(EnvVarToken, testToken)
+
+		err := CheckSingleTokenSource("", "/path/to/token")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+	})
+
+	t.Run("returns error when multiple token sources provided - arg and file", func(t *testing.T) {
+		t.Setenv(EnvVarToken, "")
+
+		err := CheckSingleTokenSource(testToken, "/path/to/token")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+	})
+
+	t.Run("returns error when all three token sources provided", func(t *testing.T) {
+		t.Setenv(EnvVarToken, testToken)
+
+		err := CheckSingleTokenSource(testToken, "/path/to/token")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+	})
+}
+
 func TestGetTokenData_EnvVar(t *testing.T) {
 	testToken := "test-token-data"
 
@@ -29,31 +94,6 @@ func TestGetTokenData_EnvVar(t *testing.T) {
 		token, err := GetTokenData("", "")
 		require.NoError(t, err)
 		assert.Empty(t, token)
-	})
-
-	t.Run("returns error when multiple token sources provided - env and arg", func(t *testing.T) {
-		t.Setenv(EnvVarToken, testToken)
-
-		_, err := GetTokenData(testToken, "")
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "you can only pass one token source")
-		assert.Contains(t, err.Error(), EnvVarToken)
-	})
-
-	t.Run("returns error when multiple token sources provided - env and file", func(t *testing.T) {
-		t.Setenv(EnvVarToken, testToken)
-
-		_, err := GetTokenData("", "/path/to/token")
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "you can only pass one token source")
-	})
-
-	t.Run("returns error when all three token sources provided", func(t *testing.T) {
-		t.Setenv(EnvVarToken, testToken)
-
-		_, err := GetTokenData(testToken, "/path/to/token")
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "you can only pass one token source")
 	})
 }
 

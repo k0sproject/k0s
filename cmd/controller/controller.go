@@ -93,6 +93,9 @@ func NewControllerCmd() *cobra.Command {
 			if len(args) > 0 {
 				c.TokenArg = args[0]
 			}
+			if err := internal.CheckSingleTokenSource(c.TokenArg, c.TokenFile); err != nil {
+				return err
+			}
 			if err := controllerFlags.Normalize(); err != nil {
 				return err
 			}
