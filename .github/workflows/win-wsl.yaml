@@ -277,6 +277,7 @@ jobs:
           mkdir -Force logs
           if (Test-Path "c:/var/lib/k0s") { Copy-Item -Path "c:/var/lib/k0s/*.log" -Destination "logs" -Force -ErrorAction SilentlyContinue }
           if (Test-Path "c:/var/log") { Copy-Item -Path "c:/var/log" -Destination "logs" -Recurse -Force -ErrorAction SilentlyContinue }
+          & wsl journalctl --boot -u k0scontroller.service | Out-File -FilePath logs/k0scontroller.log -Encoding utf8
 
       - name: Upload k0s & container logs
         uses: actions/upload-artifact@v4
@@ -284,17 +285,3 @@ jobs:
         with:
           name: containers-logs
           path: logs/**
-      - name: k0s controller logs
-        if: failure() && steps.start-controller.conclusion == 'success'
-        run: |
-          & Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | 
-              Select-Object DeviceID, VolumeName,
-              @{n='FreeGB';e={[math]::Round($_.FreeSpace/1GB,2)}},
-              @{n='TotalGB';e={[math]::Round($_.Size/1GB,2)}},
-              @{n='%Free';e={[math]::Round(100*$_.FreeSpace/$_.Size,1)}}
-          & wsl hostname -I
-          & wsl nproc
-          & wsl free -h
-          & wsl df -h
-          & wsl systemctl status k0scontroller.service
-          & wsl journalctl --boot -u k0scontroller.service
