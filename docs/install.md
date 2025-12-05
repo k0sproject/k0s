@@ -62,12 +62,26 @@ systemd or OpenRC as its init system.
     sudo systemctl daemon-reload
     ```
 
+    If you need to reinstall and immediately start the service, combine `--force` with `--start`:
+
+    ```shell
+    sudo k0s install controller --single --force --start
+    ```
+
+    When used with `--start`, the `--force` flag will also restart an already running service.
+
 3. Start k0s as a service
 
     To start the k0s service, run:
 
     ```shell
     sudo k0s start
+    ```
+
+    Alternatively, both steps can be combined by using the `--start` flag with the install command:
+
+    ```shell
+    sudo k0s install controller --single --start
     ```
 
     The k0s service will start automatically after the node restart.
