@@ -184,7 +184,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	var joinClient *token.JoinClient
 
 	if c.needToJoin(nodeConfig) {
-		tokenData, err := token.GetTokenData(c.TokenArg, c.TokenFile)
+		tokenData, err := internal.GetTokenData(c.TokenArg, c.TokenFile)
 		if err != nil {
 			return err
 		}

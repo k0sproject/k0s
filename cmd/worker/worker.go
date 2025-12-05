@@ -156,7 +156,7 @@ func GetNodeName(opts *config.WorkerOptions) (apitypes.NodeName, stringmap.Strin
 }
 
 func kubeconfigGetterFromJoinToken(tokenFile, tokenArg string) (clientcmd.KubeconfigGetter, error) {
-	tokenData, err := token.GetTokenData(tokenArg, tokenFile)
+	tokenData, err := internal.GetTokenData(tokenArg, tokenFile)
 	if err != nil {
 		return nil, err
 	}

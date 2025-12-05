@@ -127,9 +127,6 @@ const (
 	ClusterConfigObjectName = "k0s"
 
 	K0SNodeRoleLabel = "node.k0sproject.io/role"
-
-	// EnvVarToken is the environment variable name for the join token
-	EnvVarToken = "K0S_TOKEN"
 )
 
 // The list of allowed TLS v1.2 cipher suites. Those should be used for k0s

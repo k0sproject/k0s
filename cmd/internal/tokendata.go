@@ -1,22 +1,23 @@
 // SPDX-FileCopyrightText: 2025 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package token
+package internal
 
 import (
 	"errors"
 	"fmt"
 	"os"
-
-	"github.com/k0sproject/k0s/pkg/constant"
 )
+
+// EnvVarToken is the environment variable name for the join token
+const EnvVarToken = "K0S_TOKEN"
 
 // GetTokenData resolves the join token from multiple possible sources:
 // CLI argument, token file, or K0S_TOKEN environment variable.
 // Returns the token data or an error if multiple sources are provided.
 // Returns empty string if no token source is available.
 func GetTokenData(tokenArg, tokenFile string) (string, error) {
-	tokenEnvValue := os.Getenv(constant.EnvVarToken)
+	tokenEnvValue := os.Getenv(EnvVarToken)
 
 	tokenSources := 0
 	if tokenArg != "" {
@@ -30,7 +31,7 @@ func GetTokenData(tokenArg, tokenFile string) (string, error) {
 	}
 
 	if tokenSources > 1 {
-		return "", fmt.Errorf("you can only pass one token source: either as a CLI argument, via '--token-file [path]', or via the %s environment variable", constant.EnvVarToken)
+		return "", fmt.Errorf("you can only pass one token source: either as a CLI argument, via '--token-file [path]', or via the %s environment variable", EnvVarToken)
 	}
 
 	if tokenSources == 0 {
