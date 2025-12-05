@@ -4,91 +4,20 @@
 package windows
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
-	"net/http"
 	"os"
-	"os/exec"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-type WindowsSuite struct {
-	suite.Suite
-	kc         *kubernetes.Clientset
-	restConfig *rest.Config
-}
-
-func TestWindowsSuite(t *testing.T) {
-	suite.Run(t, new(WindowsSuite))
-}
-
-func (s *WindowsSuite) SetupSuite() {
-	// kubeconfig := "/Users/jnummelin/.kube/win-config"
-	kubeconfig := os.Getenv("KUBECONFIG")
-	s.Require().NotEmpty(kubeconfig, "KUBECONFIG must be set for this test to work")
-	s.T().Logf("Using kubeconfig: %s", kubeconfig)
-	var err error
-	s.restConfig, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-	s.Require().NoError(err, "Failed to build kubeconfig")
-	s.kc, err = kubernetes.NewForConfig(s.restConfig)
-	s.Require().NoError(err, "Failed to create Kubernetes client")
-
-	// Get the server address and try to connect to it via go std lib
-	server := s.restConfig.Host
-	s.T().Logf("Trying to connect to Kube API server: %s", server)
-	client := http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-
-	// Test the connection via stdlib client
-	resp, err := client.Get(server + "/version")
-	if err != nil {
-		s.T().Logf("Failed to connect to Kube API server: %v", err)
-	} else {
-		s.T().Logf("Successfully connected to Kube API server, got status: %s", resp.Status)
-	}
-	defer resp.Body.Close()
-
-	// Test the connection using os.Exec for kubectl
-	cmd := exec.Command("kubectl", "version")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err = cmd.Run()
-	if err != nil {
-		s.T().Logf("Failed to connect to Kube API server via kubectl: %v", err)
-	} else {
-		s.T().Logf("Successfully connected to Kube API server via kubectl, got output: %s", out.String())
-	}
-}
-
-func (s *WindowsSuite) TearDownSuite() {
-	s.T().Log("Cleaning up test resources")
-	// Delete nginx and iis pods and svcs
-	err := s.kc.CoreV1().Pods("default").Delete(context.Background(), "iis", metav1.DeleteOptions{})
-	s.T().Log("Deleted IIS pods, error:", err)
-
-	err = s.kc.CoreV1().Pods("default").Delete(context.Background(), "nginx-linux", metav1.DeleteOptions{})
-	s.T().Log("Deleted Nginx pods, error:", err)
-
-	err = s.kc.CoreV1().Services("default").Delete(context.Background(), "iis-windows-svc", metav1.DeleteOptions{})
-	s.T().Log("Deleted IIS service, error:", err)
-	err = s.kc.CoreV1().Services("default").Delete(context.Background(), "nginx-linux-svc", metav1.DeleteOptions{})
-	s.T().Log("Deleted Nginx service, error:", err)
-}
+const testNamespace = "windows-test"
 
 // This test works on an existing cluster where there's 1 or more Windows nodes
 // We test few things:
@@ -97,73 +26,104 @@ func (s *WindowsSuite) TearDownSuite() {
 // TODO
 // - Pod-to-pod networking works across Windows and Linux nodes
 // pod-to-pod is NOT working in CI since Calico borks WSL <--> windows networking
-func (s *WindowsSuite) TestWindows() {
+func TestWindows(t *testing.T) {
+	require := require.New(t)
 
-	ctx := s.T().Context()
+	kubeconfig := os.Getenv("KUBECONFIG")
+	require.NotEmpty(kubeconfig, "KUBECONFIG must be set for this test to work")
+	t.Logf("Using kubeconfig: %s", kubeconfig)
+	var err error
+	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	require.NoError(err, "Failed to build kubeconfig")
+	kc, err := kubernetes.NewForConfig(restConfig)
+	require.NoError(err, "Failed to create Kubernetes client")
 
-	// Wait for all nodes to be ready
-	s.T().Log("Waiting for all nodes to be ready")
-	s.Require().NoError(common.Poll(ctx, func(ctx context.Context) (bool, error) {
-		nodes, err := s.kc.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	ver, err := kc.Discovery().ServerVersion()
+	require.NoError(err, "Failed to get server version")
+	t.Logf("Connected to Kubernetes API server version: %s", ver.GitVersion)
+
+	t.Log("Creating test namespaces")
+	_, err = kc.CoreV1().Namespaces().Create(t.Context(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: testNamespace,
+		},
+	}, metav1.CreateOptions{})
+
+	require.NoError(err, "Failed to create test namespace")
+	t.Cleanup(func() {
+		t.Logf("Deleting test namespace: %s", testNamespace)
+		err := kc.CoreV1().Namespaces().Delete(t.Context(), testNamespace, metav1.DeleteOptions{})
 		if err != nil {
-			return false, err
+			t.Logf("Failed to delete test namespace: %v", err)
+		} else {
+			t.Logf("Test namespace deleted")
 		}
-		if len(nodes.Items) < 2 {
-			s.T().Logf("Waiting for at least 2 nodes, got %d", len(nodes.Items))
-			return false, nil
-		}
+	})
 
-		for _, node := range nodes.Items {
-			// Find the ready condition
-			for _, condition := range node.Status.Conditions {
-				if condition.Type == corev1.NodeReady {
-					s.T().Logf("Node %s condition %s is %s", node.Name, condition.Type, condition.Status)
-					if condition.Status != corev1.ConditionTrue {
-						return false, nil
+	t.Run("Verify nodes come to Ready state", func(t *testing.T) {
+		t.Log("Waiting for all nodes to be ready")
+		require.NoError(common.Poll(t.Context(), func(ctx context.Context) (bool, error) {
+			nodes, err := kc.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+			if err != nil {
+				return false, err
+			}
+			if len(nodes.Items) < 2 {
+				t.Logf("Waiting for at least 2 nodes, got %d", len(nodes.Items))
+				return false, nil
+			}
+
+			for _, node := range nodes.Items {
+				// Find the ready condition
+				for _, condition := range node.Status.Conditions {
+					if condition.Type == corev1.NodeReady {
+						t.Logf("Node %s condition %s is %s", node.Name, condition.Type, condition.Status)
+						if condition.Status != corev1.ConditionTrue {
+							return false, nil
+						}
 					}
 				}
 			}
-		}
-		return true, nil
-	}))
-	s.T().Log("All nodes are ready")
+			return true, nil
+		}))
+		t.Log("All nodes are ready")
+	})
 
-	// Wait for system services to boot up
-	s.T().Log("Waiting for system DaemonSets to be ready")
-	s.T().Log("Waiting for kube-proxy DaemonSet to be ready")
-	s.Require().NoError(common.WaitForDaemonSet(ctx, s.kc, "kube-proxy", "kube-system"))
-	s.T().Log("Waiting for kube-proxy-windows DaemonSet to be ready")
-	s.Require().NoError(common.WaitForDaemonSet(ctx, s.kc, "kube-proxy-windows", "kube-system"))
-	s.T().Log("Waiting for calico-node DaemonSet to be ready")
-	s.Require().NoError(common.WaitForDaemonSet(ctx, s.kc, "calico-node", "kube-system"))
-	s.T().Log("Waiting for calico-node-windows DaemonSet to be ready")
-	s.Require().NoError(common.WaitForDaemonSet(ctx, s.kc, "calico-node-windows", "kube-system"))
-	s.T().Log("All system DaemonSets are ready")
-	// Schedule a test pod on each side
-	// Windows
+	t.Run("Verify system services come up", func(t *testing.T) {
+		t.Log("Waiting for kube-proxy DaemonSet to be ready")
+		require.NoError(common.WaitForDaemonSet(t.Context(), kc, "kube-proxy", metav1.NamespaceSystem))
+		t.Log("Waiting for kube-proxy-windows DaemonSet to be ready")
+		require.NoError(common.WaitForDaemonSet(t.Context(), kc, "kube-proxy-windows", metav1.NamespaceSystem))
+		t.Log("Waiting for calico-node DaemonSet to be ready")
+		require.NoError(common.WaitForDaemonSet(t.Context(), kc, "calico-node", metav1.NamespaceSystem))
+		t.Log("Waiting for calico-node-windows DaemonSet to be ready")
+		require.NoError(common.WaitForDaemonSet(t.Context(), kc, "calico-node-windows", metav1.NamespaceSystem))
+		t.Log("All system DaemonSets are ready")
+	})
 
-	s.T().Log("Creating test pods and services on both Windows and Linux nodes")
-	s.Require().NoError(runWindowsDeployment(ctx, s.kc))
-	s.T().Log("Waiting for Windows test pod to be ready")
-	s.Require().NoError(common.WaitForPod(ctx, s.kc, "iis", "default"))
-	// Linux
-	s.Require().NoError(runLinuxDeployment(ctx, s.kc))
-	s.T().Log("Waiting for Linux test pod to be ready")
-	s.Require().NoError(common.WaitForPod(ctx, s.kc, "nginx-linux", "default"))
+	t.Run("Verify pods can be scheduled on Windows node", func(t *testing.T) {
+		t.Log("Creating test pods and services on both Windows and Linux nodes")
+		require.NoError(runWindowsDeployment(t.Context(), kc))
+		t.Log("Waiting for Windows test pod to be ready")
+		require.NoError(common.WaitForPod(t.Context(), kc, "iis", testNamespace))
+	})
 
-	s.T().Log("Both test pods are running")
+	t.Run("Verify pods can be scheduled on Linux node", func(t *testing.T) {
+		require.NoError(runLinuxDeployment(t.Context(), kc))
+		t.Log("Waiting for Linux test pod to be ready")
+		require.NoError(common.WaitForPod(t.Context(), kc, "nginx-linux", testNamespace))
+
+	})
 
 }
 
 func runLinuxDeployment(ctx context.Context, kc *kubernetes.Clientset) error {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "nginx-linux",
-			Namespace: "default",
-			Labels:    map[string]string{"app": "nginx-linux"},
+			Name:   "nginx-linux",
+			Labels: map[string]string{"app": "nginx-linux"},
 		},
 		Spec: corev1.PodSpec{
-			NodeSelector: map[string]string{"kubernetes.io/os": "linux"},
+			NodeSelector: map[string]string{corev1.LabelOSStable: string(corev1.Linux)},
 			Containers: []corev1.Container{
 				{
 					Name:  "nginx",
@@ -177,14 +137,13 @@ func runLinuxDeployment(ctx context.Context, kc *kubernetes.Clientset) error {
 			},
 		},
 	}
-	_, err := kc.CoreV1().Pods("default").Create(ctx, pod, metav1.CreateOptions{})
+	_, err := kc.CoreV1().Pods(testNamespace).Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "nginx-linux-svc",
-			Namespace: "default",
+			Name: "nginx-linux-svc",
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": "nginx-linux"},
@@ -196,19 +155,18 @@ func runLinuxDeployment(ctx context.Context, kc *kubernetes.Clientset) error {
 			},
 		},
 	}
-	_, err = kc.CoreV1().Services("default").Create(ctx, svc, metav1.CreateOptions{})
+	_, err = kc.CoreV1().Services(testNamespace).Create(ctx, svc, metav1.CreateOptions{})
 	return err
 }
 
 func runWindowsDeployment(ctx context.Context, kc *kubernetes.Clientset) error {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "iis",
-			Namespace: "default",
-			Labels:    map[string]string{"app": "iis-windows"},
+			Name:   "iis",
+			Labels: map[string]string{"app": "iis-windows"},
 		},
 		Spec: corev1.PodSpec{
-			NodeSelector: map[string]string{"kubernetes.io/os": "windows"},
+			NodeSelector: map[string]string{corev1.LabelOSStable: string(corev1.Windows)},
 			Containers: []corev1.Container{
 				{
 					Name:  "iis",
@@ -217,14 +175,13 @@ func runWindowsDeployment(ctx context.Context, kc *kubernetes.Clientset) error {
 			},
 		},
 	}
-	_, err := kc.CoreV1().Pods("default").Create(ctx, pod, metav1.CreateOptions{})
+	_, err := kc.CoreV1().Pods(testNamespace).Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "iis-windows-svc",
-			Namespace: "default",
+			Name: "iis-windows-svc",
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": "iis-windows"},
@@ -236,6 +193,6 @@ func runWindowsDeployment(ctx context.Context, kc *kubernetes.Clientset) error {
 			},
 		},
 	}
-	_, err = kc.CoreV1().Services("default").Create(ctx, svc, metav1.CreateOptions{})
+	_, err = kc.CoreV1().Services(testNamespace).Create(ctx, svc, metav1.CreateOptions{})
 	return err
 }
