@@ -5,6 +5,7 @@ package install
 
 import (
 	"errors"
+	"fmt"
 	"runtime"
 
 	"github.com/kardianos/service"
@@ -121,4 +122,23 @@ func GetServiceConfig(role string) *service.Config {
 		DisplayName: k0sDisplayName,
 		Description: k0sDescription,
 	}
+}
+
+// StartInstalledService starts (or restarts with force) the installed k0s service.
+func StartInstalledService(force bool) error {
+	svc, err := InstalledService()
+	if err != nil {
+		return err
+	}
+	status, _ := svc.Status()
+	if status == service.StatusRunning {
+		if force {
+			if err := svc.Restart(); err != nil {
+				return fmt.Errorf("failed to restart service: %w", err)
+			}
+			return nil
+		}
+		return errors.New("already running")
+	}
+	return svc.Start()
 }
