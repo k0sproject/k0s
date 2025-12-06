@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
@@ -17,12 +16,10 @@ import (
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/status"
-	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -81,7 +78,7 @@ func (sc *setupController) Run(ctx context.Context) error {
 
 	if err := retry.Do(func() error {
 		logger.Infof("Attempting to create controlnode '%s'", controlNodeName)
-		if err := sc.createControlNode(ctx, sc.clientFactory, controlNodeName, kubeletNodeName); err != nil {
+		if err := sc.createControlNode(ctx, controlNodeName, kubeletNodeName); err != nil {
 			return fmt.Errorf("create controlnode '%s' attempt failed, retrying: %w", controlNodeName, err)
 		}
 
@@ -112,7 +109,7 @@ func createNamespace(ctx context.Context, cf apcli.FactoryInterface, name string
 
 // createControlNode creates a new control node, ignoring errors if one already exists
 // for this physical host.
-func (sc *setupController) createControlNode(ctx context.Context, cf apcli.FactoryInterface, name, nodeName string) error {
+func (sc *setupController) createControlNode(ctx context.Context, name, nodeName string) error {
 	logger := sc.log.WithField("component", "setup")
 	client, err := sc.clientFactory.GetK0sClient()
 	if err != nil {
@@ -122,13 +119,6 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	// Create the ControlNode object if needed
 	node, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		logger.Info("Autopilot 'controlnodes' CRD not found, waiting...")
-		if err := sc.waitForControlNodesCRD(ctx, cf); err != nil {
-			return fmt.Errorf("while waiting for autopilot 'controlnodes' CRD: %w", err)
-		}
-
-		logger.Info("Autopilot 'controlnodes' CRD found, continuing")
-
 		logger.Infof("ControlNode '%s' not found, creating", name)
 		mode := apconst.K0SControlNodeModeController
 		if sc.enableWorker {
@@ -204,37 +194,4 @@ func getControllerAPIAddress() (string, error) {
 	}
 
 	return status.ClusterConfig.Spec.API.Address, nil
-}
-
-// waitForControlNodesCRD waits until the controlnodes CRD is established for
-// max 2 minutes.
-func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.FactoryInterface) error {
-	extClient, err := cf.GetExtensionClient()
-	if err != nil {
-		return fmt.Errorf("unable to obtain extensions client: %w", err)
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
-	defer cancel()
-	return watch.CRDs(extClient.CustomResourceDefinitions()).
-		WithObjectName("controlnodes."+apv1beta2.GroupName).
-		WithErrorCallback(func(err error) (time.Duration, error) {
-			if retryDelay, e := watch.IsRetryable(err); e == nil {
-				sc.log.WithError(err).Debugf(
-					"Encountered transient error while waiting for autopilot 'controlnodes' CRD, retrying in %s",
-					retryDelay,
-				)
-				return retryDelay, nil
-			}
-			return 0, err
-		}).
-		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
-			for _, cond := range item.Status.Conditions {
-				if cond.Type == extensionsv1.Established {
-					return cond.Status == extensionsv1.ConditionTrue, nil
-				}
-			}
-
-			return false, nil
-		})
 }
