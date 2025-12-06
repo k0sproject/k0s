@@ -127,6 +127,41 @@ spec:
 	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
 }
 
+func TestKonnectivityDefaults(t *testing.T) {
+	// Test default values
+	defaultSpec := DefaultKonnectivitySpec()
+	assert.Equal(t, int32(8132), defaultSpec.AgentPort)
+	assert.Equal(t, int32(8133), defaultSpec.AdminPort)
+	assert.False(t, defaultSpec.HostNetwork) // New field should default to false
+
+	// Test that defaults are applied in cluster config
+	yamlData := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: test
+`)
+
+	c, err := ConfigFromBytes(yamlData)
+	assert.NoError(t, err)
+	assert.False(t, c.Spec.Konnectivity.HostNetwork)
+
+	// Test explicit HostNetwork configuration
+	yamlDataWithHostNetwork := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: test
+spec:
+  konnectivity:
+    hostNetwork: true
+`)
+
+	c2, err := ConfigFromBytes(yamlDataWithHostNetwork)
+	assert.NoError(t, err)
+	assert.True(t, c2.Spec.Konnectivity.HostNetwork)
+}
+
 func TestNetworkValidation_Custom(t *testing.T) {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
