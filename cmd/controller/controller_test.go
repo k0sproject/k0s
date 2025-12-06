@@ -62,6 +62,7 @@ Flags:
   -h, --help                                           help for controller
       --ignore-pre-flight-checks                       continue even if pre-flight checks fail
       --init-only                                      only initialize controller and exit
+      --insecure-token-fetch                           Skip TLS certificate verification when fetching token from HTTPS URL
       --iptables-mode string                           iptables mode (valid values: nft, legacy, auto). default: auto
       --k0s-cloud-provider-port int                    the port that k0s-cloud-provider binds on (default 10258)
       --k0s-cloud-provider-update-frequency duration   the frequency of k0s-cloud-provider node updates (default 2m0s)
@@ -75,7 +76,7 @@ Flags:
       --single                                         enable single node (implies --enable-worker, default false)
       --status-socket string                           Full file path to the socket file. (default: <rundir>/status.sock)
       --taints strings                                 Node taints, list of key=value:effect strings
-      --token-file string                              Path to the file containing join-token.
+      --token-file string                              Path to the file containing join-token or URL to fetch it from.
   -v, --verbose                                        Verbose logging (default true)
 `, out.String())
 }
