@@ -27,13 +27,18 @@ All default values of worker command will be passed to the service stub unless o
 				return errors.New("this command must be run as root")
 			}
 
+			envVars, err := resolveEnvVars(installFlags.envVars)
+			if err != nil {
+				return err
+			}
+
 			flagsAndVals, err := cmdFlagsToArgs(cmd)
 			if err != nil {
 				return err
 			}
 
 			args := append([]string{"worker"}, flagsAndVals...)
-			if err := install.InstallService(args, installFlags.envVars, installFlags.force); err != nil {
+			if err := install.InstallService(args, envVars, installFlags.force); err != nil {
 				return fmt.Errorf("failed to install worker service: %w", err)
 			}
 

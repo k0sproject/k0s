@@ -34,6 +34,11 @@ With the controller subcommand you can setup a single node cluster by running:
 				return errors.New("this command must be run as root")
 			}
 
+			envVars, err := resolveEnvVars(installFlags.envVars)
+			if err != nil {
+				return err
+			}
+
 			cmd.SetIn(iotest.ErrReader(errors.New("cannot read configuration from standard input when installing k0s")))
 			k0sVars, err := config.NewCfgVars(cmd)
 			if err != nil {
@@ -61,7 +66,7 @@ With the controller subcommand you can setup a single node cluster by running:
 			}
 
 			args := append([]string{"controller"}, flagsAndVals...)
-			if err := install.InstallService(args, installFlags.envVars, installFlags.force); err != nil {
+			if err := install.InstallService(args, envVars, installFlags.force); err != nil {
 				return fmt.Errorf("failed to install controller service: %w", err)
 			}
 
