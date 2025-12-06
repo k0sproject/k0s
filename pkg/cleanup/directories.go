@@ -16,17 +16,6 @@ import (
 	"k8s.io/mount-utils"
 )
 
-type directories struct {
-	dataDir        string
-	kubeletRootDir string
-	runDir         string
-}
-
-// Name returns the name of the step
-func (d *directories) Name() string {
-	return "remove directories step"
-}
-
 // Run removes all kubelet mounts and deletes generated dataDir and runDir
 func (d *directories) Run() error {
 	// unmount any leftover overlays (such as in alpine)
