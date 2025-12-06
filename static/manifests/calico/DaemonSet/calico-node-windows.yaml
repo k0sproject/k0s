@@ -54,7 +54,7 @@ spec:
         - name: CNI_CONF_NAME
           value: 10-calico.conflist
         - name: CNI_NET_DIR
-          value: /host/etc/cni/net.d
+          value: /etc/cni/net.d
         - name: SLEEP
           value: "false"
         volumeMounts:
@@ -71,7 +71,7 @@ spec:
         - name: CNI_BIN_DIR
           value: /host/opt/cni/bin
         - name: CNI_NET_DIR
-          value: /host/etc/cni/net.d
+          value: /etc/cni/net.d
         # Name of the CNI config file to create.
         - name: CNI_CONF_NAME
           value: "10-calico.conflist"
