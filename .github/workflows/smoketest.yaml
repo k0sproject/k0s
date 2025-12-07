@@ -93,7 +93,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.name }}-${{ inputs.arch }}-files
+          name: ${{ inputs.name }}${{ inputs.k0s-reference-version && format('-{0}', inputs.k0s-reference-version) || '' }}-${{ inputs.arch }}-files
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz
