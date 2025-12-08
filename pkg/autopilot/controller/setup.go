@@ -25,6 +25,7 @@ import (
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 )
 
 // SetupController defines operations that should be run once to completion,
@@ -60,11 +61,13 @@ func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sData
 func (sc *setupController) Run(ctx context.Context) error {
 	logger := sc.log.WithField("component", "setup")
 
-	logger.Infof("Creating namespace '%s'", apconst.AutopilotNamespace)
-	if _, err := createNamespace(ctx, sc.clientFactory, apconst.AutopilotNamespace); err != nil {
-		if !errors.IsAlreadyExists(err) {
-			return fmt.Errorf("unable to create required namespace '%s'", apconst.AutopilotNamespace)
-		}
+	logger.Info("Applying namespace ", apconst.AutopilotNamespace)
+	if client, err := sc.clientFactory.GetClient(); err != nil {
+		return fmt.Errorf("unable to create obtain a kube client: %w", err)
+	} else if _, err := client.CoreV1().Namespaces().Apply(
+		ctx, applycorev1.Namespace(apconst.AutopilotNamespace),
+		metav1.ApplyOptions{FieldManager: "k0s", Force: true}); err != nil && !errors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to apply autopilot namespace %s: %w", apconst.AutopilotNamespace, err)
 	}
 
 	controlNodeName, err := apcomm.FindEffectiveHostname()
@@ -92,22 +95,6 @@ func (sc *setupController) Run(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-// createNamespace creates a namespace with the provided name
-func createNamespace(ctx context.Context, cf apcli.FactoryInterface, name string) (*corev1.Namespace, error) {
-	client, err := cf.GetClient()
-	if err != nil {
-		return nil, fmt.Errorf("unable to create obtain a kube client: %w", err)
-	}
-
-	namespace := corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-
-	return client.CoreV1().Namespaces().Create(ctx, &namespace, metav1.CreateOptions{})
 }
 
 // createControlNode creates a new control node, ignoring errors if one already exists
