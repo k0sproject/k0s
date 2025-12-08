@@ -147,7 +147,7 @@ jobs:
 
     steps:
       - name: Download
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: sbom-linux-amd64
 
@@ -426,7 +426,7 @@ jobs:
           cache: false
 
       - name: Download compiled binary
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: k0s-arm
 
@@ -437,7 +437,7 @@ jobs:
 
       - name: Download airgap bundle
         if: contains(matrix.test, 'airgap')
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: airgap-image-bundle-linux-arm.tar
 

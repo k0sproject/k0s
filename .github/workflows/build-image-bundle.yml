@@ -41,12 +41,12 @@ jobs:
           persist-credentials: false
 
       - name: "Download :: k0s"
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: k0s-linux-amd64
 
       - name: "Download :: Image list"
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: ${{ inputs.image-bundle-name }}-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
 
