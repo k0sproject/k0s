@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -152,13 +153,17 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	// Final sanity -- ensure all nodes see each other according to etcd
 	members = s.getMembers(ctx, 0)
 	s.Require().Len(members, s.ControllerCount)
-	s.Require().Contains(members, "controller2")
-
-	// Check the CR is present again
-	em = s.getMember(ctx, "controller2")
-	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
-	s.Require().False(em.Spec.Leave)
-	s.Require().Equal(etcdv1beta1.ConditionTrue, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
+	s.Require().Contains(members, s.ControllerNode(2))
+	s.Require().EventuallyWithT(func(tt *assert.CollectT) {
+		s.Require().NoError(context.Cause(ctx), "Context done")
+		// Check the CR is present again
+		em = s.getMember(ctx, s.ControllerNode(2))
+		assert.Equal(tt, em.Status.PeerAddress, s.GetControllerIPAddress(2))
+		assert.False(tt, em.Spec.Leave, "Node is still flagged to be leaving")
+		if cond := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined); assert.NotNilf(tt, cond, "condition not found: %s", etcdv1beta1.ConditionTypeJoined) {
+			assert.Equal(tt, etcdv1beta1.ConditionTrue, cond.Status, "node not joined yet")
+		}
+	}, 30*time.Second, 1*time.Second)
 
 	// Check that after restarting the controller, the member is still present
 	s.Require().NoError(s.RestartController(s.ControllerNode(2)))
