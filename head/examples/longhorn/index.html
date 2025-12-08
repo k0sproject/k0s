@@ -12,31 +12,31 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/airgap-install/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/examples/longhorn/">
       
       
-        <link rel="prev" href="../examples/ansible-playbook/">
+        <link rel="prev" href="../openebs/">
       
       
-        <link rel="next" href="../custom-ca/">
+        <link rel="next" href="../../troubleshooting/FAQ/">
       
       
         
       
       
-      <link rel="icon" href="../img/k0s-favicon-192.png">
+      <link rel="icon" href="../../img/k0s-favicon-192.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
     
     
       
-        <title>Airgapped Installation - Documentation</title>
+        <title>Longhorn storage - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,9 +55,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
@@ -89,7 +89,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#air-gapped-installation" class="md-skip">
+        <a href="#longhorn" class="md-skip">
           Skip to content
         </a>
       
@@ -104,12 +104,12 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You are not currently viewing the documentation for the current stable release of k0s.
-  <a href="../..">
+  <a href="../../..">
     <strong>Click here to go to the documentation of the current stable release.</strong>
   </a>
 
             </div>
-            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL(".."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL("../.."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
           </aside>
         
       </div>
@@ -121,9 +121,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s-favicon-192.png" alt="logo">
+  <img src="../../img/k0s-favicon-192.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -140,7 +140,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Airgapped Installation
+              Longhorn storage
             
           </span>
         </div>
@@ -258,9 +258,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s-favicon-192.png" alt="logo">
+  <img src="../../img/k0s-favicon-192.png" alt="logo">
 
     </a>
     Documentation
@@ -287,7 +287,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -311,20 +311,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -345,7 +343,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -363,7 +361,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
+      <a href="../../install/" class="md-nav__link">
         
   
   
@@ -391,7 +389,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0sctl-install/" class="md-nav__link">
+      <a href="../../k0sctl-install/" class="md-nav__link">
         
   
   
@@ -416,20 +414,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
         
           
           <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
@@ -450,7 +446,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -468,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-multi-node/" class="md-nav__link">
+      <a href="../../k0s-multi-node/" class="md-nav__link">
         
   
   
@@ -496,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-in-docker/" class="md-nav__link">
+      <a href="../../k0s-in-docker/" class="md-nav__link">
         
   
   
@@ -524,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../experimental-windows/" class="md-nav__link">
+      <a href="../../experimental-windows/" class="md-nav__link">
         
   
   
@@ -552,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi4/" class="md-nav__link">
+      <a href="../../raspberry-pi4/" class="md-nav__link">
         
   
   
@@ -580,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi5/" class="md-nav__link">
+      <a href="../../raspberry-pi5/" class="md-nav__link">
         
   
   
@@ -608,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../ansible-playbook/" class="md-nav__link">
         
   
   
@@ -633,37 +629,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Airgapped Installation
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../airgap-install/" class="md-nav__link">
         
   
   
@@ -679,126 +648,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#creating-image-bundles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Creating image bundles
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Creating image bundles">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-k0s-built-in-tooling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using k0s built-in tooling
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#from-a-running-worker-node" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From a running worker node
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-third-party-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using third-party tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#placing-image-bundles-on-worker-nodes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Placing image bundles on worker nodes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Placing image bundles on worker nodes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#by-hand" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        By hand
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#via-k0sctl" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via k0sctl
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#disable-image-pulling-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Disable image pulling (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -811,7 +660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../custom-ca/" class="md-nav__link">
+      <a href="../../custom-ca/" class="md-nav__link">
         
   
   
@@ -847,7 +696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-requirements/" class="md-nav__link">
+      <a href="../../system-requirements/" class="md-nav__link">
         
   
   
@@ -875,7 +724,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../external-runtime-deps/" class="md-nav__link">
+      <a href="../../external-runtime-deps/" class="md-nav__link">
         
   
   
@@ -903,7 +752,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../verifying-signs/" class="md-nav__link">
+      <a href="../../verifying-signs/" class="md-nav__link">
         
   
   
@@ -985,7 +834,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+      <a href="../../upgrade/" class="md-nav__link">
         
   
   
@@ -1013,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup/" class="md-nav__link">
+      <a href="../../backup/" class="md-nav__link">
         
   
   
@@ -1041,7 +890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../remove_controller/" class="md-nav__link">
+      <a href="../../remove_controller/" class="md-nav__link">
         
   
   
@@ -1069,7 +918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reset/" class="md-nav__link">
+      <a href="../../reset/" class="md-nav__link">
         
   
   
@@ -1151,7 +1000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../configuration/" class="md-nav__link">
         
   
   
@@ -1179,7 +1028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dynamic-configuration/" class="md-nav__link">
+      <a href="../../dynamic-configuration/" class="md-nav__link">
         
   
   
@@ -1207,7 +1056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration-validation/" class="md-nav__link">
+      <a href="../../configuration-validation/" class="md-nav__link">
         
   
   
@@ -1235,7 +1084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../worker-node-config/" class="md-nav__link">
+      <a href="../../worker-node-config/" class="md-nav__link">
         
   
   
@@ -1263,7 +1112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
+      <a href="../../networking/" class="md-nav__link">
         
   
   
@@ -1291,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../runtime/" class="md-nav__link">
+      <a href="../../runtime/" class="md-nav__link">
         
   
   
@@ -1319,7 +1168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
+      <a href="../../storage/" class="md-nav__link">
         
   
   
@@ -1347,7 +1196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-monitoring/" class="md-nav__link">
+      <a href="../../system-monitoring/" class="md-nav__link">
         
   
   
@@ -1375,7 +1224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../manifests/" class="md-nav__link">
+      <a href="../../manifests/" class="md-nav__link">
         
   
   
@@ -1403,7 +1252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../helm-charts/" class="md-nav__link">
+      <a href="../../helm-charts/" class="md-nav__link">
         
   
   
@@ -1431,7 +1280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../feature-gates/" class="md-nav__link">
+      <a href="../../feature-gates/" class="md-nav__link">
         
   
   
@@ -1459,7 +1308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
+      <a href="../../cloud-providers/" class="md-nav__link">
         
   
   
@@ -1487,7 +1336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
+      <a href="../../dual-stack/" class="md-nav__link">
         
   
   
@@ -1515,7 +1364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../single-stack-ipv6/" class="md-nav__link">
+      <a href="../../single-stack-ipv6/" class="md-nav__link">
         
   
   
@@ -1543,7 +1392,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
+      <a href="../../high-availability/" class="md-nav__link">
         
   
   
@@ -1571,7 +1420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../nllb/" class="md-nav__link">
+      <a href="../../nllb/" class="md-nav__link">
         
   
   
@@ -1599,7 +1448,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cplb/" class="md-nav__link">
+      <a href="../../cplb/" class="md-nav__link">
         
   
   
@@ -1627,7 +1476,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
+      <a href="../../shell-completion/" class="md-nav__link">
         
   
   
@@ -1655,7 +1504,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
+      <a href="../../user-management/" class="md-nav__link">
         
   
   
@@ -1683,7 +1532,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../environment-variables/" class="md-nav__link">
+      <a href="../../environment-variables/" class="md-nav__link">
         
   
   
@@ -1711,7 +1560,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../oidc/oidc-cluster-configuration/" class="md-nav__link">
         
   
   
@@ -1739,7 +1588,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../selinux/" class="md-nav__link">
+      <a href="../../selinux/" class="md-nav__link">
         
   
   
@@ -1767,7 +1616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../podsecurity/" class="md-nav__link">
+      <a href="../../podsecurity/" class="md-nav__link">
         
   
   
@@ -1795,7 +1644,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reinstall-k0sctl/" class="md-nav__link">
+      <a href="../../reinstall-k0sctl/" class="md-nav__link">
         
   
   
@@ -1877,7 +1726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../autopilot/" class="md-nav__link">
+      <a href="../../autopilot/" class="md-nav__link">
         
   
   
@@ -1905,7 +1754,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../autopilot-multicommand/" class="md-nav__link">
+      <a href="../../autopilot-multicommand/" class="md-nav__link">
         
   
   
@@ -1937,18 +1786,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -1969,7 +1820,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1987,7 +1838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../metallb-loadbalancer/" class="md-nav__link">
         
   
   
@@ -2015,7 +1866,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../nginx-ingress/" class="md-nav__link">
         
   
   
@@ -2043,7 +1894,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../traefik-ingress/" class="md-nav__link">
         
   
   
@@ -2071,7 +1922,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/rook-ceph/" class="md-nav__link">
+      <a href="../rook-ceph/" class="md-nav__link">
         
   
   
@@ -2099,7 +1950,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/gitops-flux/" class="md-nav__link">
+      <a href="../gitops-flux/" class="md-nav__link">
         
   
   
@@ -2127,7 +1978,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/openebs/" class="md-nav__link">
+      <a href="../openebs/" class="md-nav__link">
         
   
   
@@ -2152,10 +2003,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../examples/longhorn/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Longhorn storage
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2171,6 +2049,159 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#system-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-software" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Software
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-via-k0s-helm-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install via k0s Helm extension
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install via k0s Helm extension">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#single-node-cluster-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single-Node Cluster Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#access-the-longhorn-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access the Longhorn UI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-pvc-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: PVC and Deployment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2237,7 +2268,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/FAQ/" class="md-nav__link">
+      <a href="../../troubleshooting/FAQ/" class="md-nav__link">
         
   
   
@@ -2265,7 +2296,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/logs/" class="md-nav__link">
+      <a href="../../troubleshooting/logs/" class="md-nav__link">
         
   
   
@@ -2293,7 +2324,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/troubleshooting/" class="md-nav__link">
+      <a href="../../troubleshooting/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2321,7 +2352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/support-dump/" class="md-nav__link">
+      <a href="../../troubleshooting/support-dump/" class="md-nav__link">
         
   
   
@@ -2349,7 +2380,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/certificate-authorities/" class="md-nav__link">
+      <a href="../../troubleshooting/certificate-authorities/" class="md-nav__link">
         
   
   
@@ -2431,7 +2462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   
@@ -2459,7 +2490,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/" class="md-nav__link">
+      <a href="../../cli/" class="md-nav__link">
         
   
   
@@ -2487,7 +2518,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cis_benchmark/" class="md-nav__link">
+      <a href="../../cis_benchmark/" class="md-nav__link">
         
   
   
@@ -2569,7 +2600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../security/" class="md-nav__link">
+      <a href="../../security/" class="md-nav__link">
         
   
   
@@ -2597,7 +2628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../releases/" class="md-nav__link">
+      <a href="../../releases/" class="md-nav__link">
         
   
   
@@ -2672,7 +2703,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../governance/cncf/gtr/" class="md-nav__link">
+      <a href="../../governance/cncf/gtr/" class="md-nav__link">
         
   
   
@@ -2700,7 +2731,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../governance/cncf/security-self-assessment/" class="md-nav__link">
+      <a href="../../governance/cncf/security-self-assessment/" class="md-nav__link">
         
   
   
@@ -2743,7 +2774,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../commercial-support/" class="md-nav__link">
+      <a href="../../commercial-support/" class="md-nav__link">
         
   
   
@@ -2770,7 +2801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adopters/" class="md-nav__link">
+      <a href="../../adopters/" class="md-nav__link">
         
   
   
@@ -2844,7 +2875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/" class="md-nav__link">
+      <a href="../../contributors/" class="md-nav__link">
         
   
   
@@ -2872,7 +2903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../contributors/github_workflow/" class="md-nav__link">
         
   
   
@@ -2900,7 +2931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/testing/" class="md-nav__link">
+      <a href="../../contributors/testing/" class="md-nav__link">
         
   
   
@@ -2928,7 +2959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/docs/" class="md-nav__link">
+      <a href="../../contributors/docs/" class="md-nav__link">
         
   
   
@@ -2983,22 +3014,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#creating-image-bundles" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating image bundles
+        Prerequisites
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Creating image bundles">
+    <nav class="md-nav" aria-label="Prerequisites">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#using-k0s-built-in-tooling" class="md-nav__link">
+  <a href="#system-requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using k0s built-in tooling
+        System Requirements
       
     </span>
   </a>
@@ -3006,21 +3037,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#from-a-running-worker-node" class="md-nav__link">
+  <a href="#required-software" class="md-nav__link">
     <span class="md-ellipsis">
       
-        From a running worker node
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-third-party-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using third-party tools
+        Required Software
       
     </span>
   </a>
@@ -3033,22 +3053,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#placing-image-bundles-on-worker-nodes" class="md-nav__link">
+  <a href="#install-via-k0s-helm-extension" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Placing image bundles on worker nodes
+        Install via k0s Helm extension
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Placing image bundles on worker nodes">
+    <nav class="md-nav" aria-label="Install via k0s Helm extension">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#by-hand" class="md-nav__link">
+  <a href="#basic-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        By hand
+        Basic Installation
       
     </span>
   </a>
@@ -3056,10 +3076,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#via-k0sctl" class="md-nav__link">
+  <a href="#verification-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Via k0sctl
+        Verification Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#single-node-cluster-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single-Node Cluster Configuration
       
     </span>
   </a>
@@ -3072,10 +3103,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#disable-image-pulling-optional" class="md-nav__link">
+  <a href="#access-the-longhorn-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Disable image pulling (optional)
+        Access the Longhorn UI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-pvc-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: PVC and Deployment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
       
     </span>
   </a>
@@ -3100,148 +3164,157 @@
 
 
 <!--
-SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-FileCopyrightText: 2025 k0s authors
 SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
-<h1 id="air-gapped-installation">Air gapped Installation<a class="headerlink" href="#air-gapped-installation" title="Permanent link">#</a></h1>
-<p>You can install k0s in environments without Internet access. Air gapped
-installations require an image bundle that contains all the container images
-that would normally be pulled over the network. K0s uses so-called OCI archives
-for this: Tarball representations of an <a href="https://github.com/opencontainers/image-spec/blob/v1.0/image-layout.md">OCI Image Layout</a>. They allow for
-multiple images to be packed into a single file. K0s will watch for image
-bundles in the <code>&lt;data-dir&gt;/images</code> folder will automatically import them into
-the container runtime.</p>
-<p>There are several ways to obtain an image bundle:</p>
+<h1 id="longhorn">Longhorn<a class="headerlink" href="#longhorn" title="Permanent link">#</a></h1>
+<p>This tutorial covers installing Longhorn as a Helm extension on k0s. Longhorn is a distributed block storage system for Kubernetes that provides enterprise-grade features including:</p>
 <ul>
-<li>Use the pre-built image bundles for different target platforms that are
-  created for each k0s release. They contain all the images for the default k0s
-  <a href="../configuration/#specimages">image configuration</a> and can be downloaded from
-  the <a href="https://github.com/k0sproject/k0s/releases/v1.34.2+head">GitHub releases page</a>.</li>
-<li>Create your own image bundle. In this case, you can easily customize the
-  bundle to include container images that are not used by default in k0s.</li>
+<li><strong>Distributed storage</strong>: Provides persistent storage across your cluster nodes</li>
+<li><strong>Snapshots and backups</strong>: Built-in snapshot and backup capabilities for data protection</li>
+<li><strong>Live upgrades</strong>: Zero-downtime upgrades of storage volumes</li>
+<li><strong>High availability</strong>: Automatic failover and replication for data durability</li>
+<li><strong>Cross-cluster disaster recovery</strong>: Backup to external storage systems</li>
 </ul>
-<p><strong>Note:</strong> When importing image bundles, k0s uses <a href="https://pkg.go.dev/github.com/containerd/platforms@v0.2.1#Only">"loose" platform
-matching</a>. For
-example, on arm/v8, k0s will also import arm/v7, arm/v6, and arm/v5 images. This
-means that your bundle can contain multi-arch images, and the import will be
-done using platform compatibility.</p>
-<h2 id="creating-image-bundles">Creating image bundles<a class="headerlink" href="#creating-image-bundles" title="Permanent link">#</a></h2>
-<h3 id="using-k0s-built-in-tooling">Using k0s built-in tooling<a class="headerlink" href="#using-k0s-built-in-tooling" title="Permanent link">#</a></h3>
-<p>k0s ships with the <a href="../cli/k0s_airgap/"><code>k0s airgap</code></a> sub-command, which is
-dedicated for tooling for airgapped environments. It allows for listing the
-required images for a given configuration, as well as bundling them into an OCI
-Image Layout archive.</p>
-<ol>
-<li>
-<p>Create the list of images required by k0s.</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span>--all<span class="w"> </span>&gt;airgap-images.txt
+<p>Longhorn is particularly well-suited for stateful applications that require persistent storage, such as databases, message queues, and content management systems.</p>
+<p>For more information on Longhorn, refer to the <a href="https://longhorn.io/docs/">official documentation</a>.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<p>Before installing Longhorn, ensure your k0s cluster meets these requirements:</p>
+<h3 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">#</a></h3>
+<p>Please refer to the <a href="https://www.suse.com/suse-longhorn/support-matrix/all-supported-versions/longhorn-v1-10-x/">official Longhorn v1.10.x Support Matrix</a> for detailed system requirements.</p>
+<h3 id="required-software">Required Software<a class="headerlink" href="#required-software" title="Permanent link">#</a></h3>
+<p>Longhorn requires the iSCSI initiator utilities to be installed on every node in your cluster:</p>
+<p><strong>Why iSCSI is required</strong>: Longhorn uses iSCSI protocol to provide block storage to pods. The iSCSI initiator allows nodes to connect to Longhorn volumes as if they were local block devices.</p>
+<p>Ubuntu/Debian:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>open-iscsi
 </code></pre></div>
-</li>
-<li>
-<p>Review this list and edit it according to your needs.</p>
-</li>
-<li>
-<p>Create the image bundle.</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>airgap<span class="w"> </span>bundle-artifacts<span class="w"> </span>-v<span class="w"> </span>-o<span class="w"> </span>image-bundle.tar<span class="w"> </span>&lt;airgap-images.txt
+<p>RHEL/CentOS/Rocky:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>yum<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>iscsi-initiator-utils
 </code></pre></div>
-</li>
-</ol>
-<h3 id="from-a-running-worker-node">From a running worker node<a class="headerlink" href="#from-a-running-worker-node" title="Permanent link">#</a></h3>
-<p>As containerd pulls all the images during the k0s worker normal bootstrap, you
-can use it to build the OCI bundle with images.</p>
-<p>Use the following commands on a machine with an installed k0s worker:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>ctr<span class="w"> </span>images<span class="w"> </span><span class="nb">export</span><span class="w"> </span>image-bundle.tar<span class="w"> </span><span class="k">$(</span>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="k">)</span>
+<p>SUSE:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>zypper<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>open-iscsi
 </code></pre></div>
-<h3 id="using-third-party-tools">Using third-party tools<a class="headerlink" href="#using-third-party-tools" title="Permanent link">#</a></h3>
-<p>There are several CLI tools that can help you fetch OCI artifacts and manage OCI
-Image Layouts, such as <a href="https://github.com/containers/skopeo">skopeo</a>, <a href="https://oras.land/">oras</a>, or <a href="https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md">crane</a>. The following is an example
-uses Docker:</p>
-<h4 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">#</a></h4>
-<ol>
-<li>
-<p>Create the list of images required by k0s.</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>airgap<span class="w"> </span>list-images<span class="w"> </span>--all<span class="w"> </span>&gt;airgap-images.txt
+<p>Ensure the iSCSI daemon is enabled and running:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>iscsid
 </code></pre></div>
-</li>
-<li>
-<p>Review this list and edit it according to your needs.</p>
-</li>
-<li>
-<p>Pull the images.</p>
-<div class="highlight"><pre><span></span><code>xargs<span class="w"> </span>-I<span class="o">{}</span><span class="w"> </span>docker<span class="w"> </span>pull<span class="w"> </span><span class="o">{}</span><span class="w"> </span>&lt;airgap-images.txt
-</code></pre></div>
-</li>
-<li>
-<p>Create the bundle.</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>image<span class="w"> </span>save<span class="w"> </span>-o<span class="w"> </span>image-bundle.tar<span class="w"> </span><span class="k">$(</span>xargs<span class="w"> </span>&lt;airgap-images.txt<span class="k">)</span>
-</code></pre></div>
-</li>
-</ol>
-<h2 id="placing-image-bundles-on-worker-nodes">Placing image bundles on worker nodes<a class="headerlink" href="#placing-image-bundles-on-worker-nodes" title="Permanent link">#</a></h2>
-<h3 id="by-hand">By hand<a class="headerlink" href="#by-hand" title="Permanent link">#</a></h3>
-<p>Copy the <code>image-bundle.tar</code> to the target machine into the <code>images</code> directory in
-the k0s data directory. Copy the bundle only to the worker nodes. Controller
-nodes don't use it.</p>
-<div class="highlight"><pre><span></span><code><span class="gp"># </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/var/lib/k0s/images
-<span class="gp"># </span>cp<span class="w"> </span>image-bundle.tar<span class="w"> </span>/var/lib/k0s/images/image-bundle.tar
-</code></pre></div>
-<h3 id="via-k0sctl">Via k0sctl<a class="headerlink" href="#via-k0sctl" title="Permanent link">#</a></h3>
-<p>As an alternative to the previous step, you can use <code>k0sctl</code> to upload image
-bundles to worker nodes. <code>k0sctl</code> can also be used to upload the k0s binary file
-to all nodes. Take a look at this example configuration with one controller and
-one worker node to upload k0s binary and an image bundle:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterConfig</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.34.2+head</span>
-<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
-<span class="w">      </span><span class="nt">ssh</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;controller-ip-address&gt;</span>
-<span class="w">        </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu</span>
-<span class="w">        </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/.ssh/id_rsa</span>
-
-<span class="w">      </span><span class="c1">#  uploadBinary: &lt;boolean&gt;</span>
-<span class="w">      </span><span class="c1">#    When true the k0s binaries are cached and uploaded</span>
-<span class="w">      </span><span class="c1">#    from the host running k0sctl instead of downloading</span>
-<span class="w">      </span><span class="c1">#    directly to the target host.</span>
-<span class="w">      </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-
-<span class="w">      </span><span class="c1">#  k0sBinaryPath: &lt;local filepath&gt;</span>
-<span class="w">      </span><span class="c1">#    Upload a custom or manually downloaded k0s binary</span>
-<span class="w">      </span><span class="c1">#    from a local path on the host running k0sctl to the</span>
-<span class="w">      </span><span class="c1">#    target host.</span>
-<span class="w">      </span><span class="c1"># k0sBinaryPath: path/to/k0s_binary/k0s</span>
-
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
-<span class="w">      </span><span class="nt">ssh</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;worker-ip-address&gt;</span>
-<span class="w">        </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu</span>
-<span class="w">        </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/.ssh/id_rsa</span>
-<span class="w">      </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="nt">files</span><span class="p">:</span>
-<span class="w">        </span><span class="c1"># This airgap bundle file will be uploaded from the k0sctl</span>
-<span class="w">        </span><span class="c1"># host to the specified directory on the target host</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/airgap-bundle-amd64.tar</span>
-<span class="w">          </span><span class="nt">dstDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s/images</span>
-<span class="w">          </span><span class="nt">perm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0755</span>
-</code></pre></div>
-<h2 id="disable-image-pulling-optional">Disable image pulling (optional)<a class="headerlink" href="#disable-image-pulling-optional" title="Permanent link">#</a></h2>
-<p>Use the following k0s configuration to ensure that all pods and pod templates
-managed by k0s contain an <code>imagePullPolicy</code> of <code>Never</code>, ensuring that no images
-are pulled from the Internet at any time.</p>
+<h2 id="install-via-k0s-helm-extension">Install via k0s Helm extension<a class="headerlink" href="#install-via-k0s-helm-extension" title="Permanent link">#</a></h2>
+<p>Add Longhorn as a Helm chart in your k0s ClusterConfig. Apply this configuration through your normal k0s configuration workflow.</p>
+<h3 id="basic-installation">Basic Installation<a class="headerlink" href="#basic-installation" title="Permanent link">#</a></h3>
+<p>The simplest way to install Longhorn is to add it to your k0s ClusterConfig:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterConfig</span>
 <span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
 <span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">images</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">default_pull_policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Never</span>
+<span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">helm</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">repositories</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">longhorn</span>
+<span class="w">          </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://charts.longhorn.io</span>
+<span class="w">      </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">longhorn</span>
+<span class="w">          </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">longhorn/longhorn</span>
+<span class="w">          </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">longhorn-system</span>
+<span class="w">          </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.10.1</span>
 </code></pre></div>
+<h3 id="verification-steps">Verification Steps<a class="headerlink" href="#verification-steps" title="Permanent link">#</a></h3>
+<p>After applying the configuration, verify that Longhorn is properly installed:</p>
+<p><strong>Check pod status</strong>: Wait for all Longhorn components to become ready:</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>longhorn-system<span class="w"> </span>get<span class="w"> </span>pods
+</code></pre></div>
+<p>Expected output should show all pods in <code>Running</code> status. This may take 2-3 minutes.</p>
+<p><strong>Verify StorageClass</strong>: Confirm that the <code>longhorn</code> StorageClass was created:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>storageclass
+NAME<span class="w">                 </span>PROVISIONER<span class="w">          </span>RECLAIMPOLICY<span class="w">   </span>VOLUMEBINDINGMODE<span class="w">   </span>ALLOWVOLUMEEXPANSION<span class="w">   </span>AGE
+longhorn<span class="w"> </span><span class="o">(</span>default<span class="o">)</span><span class="w">   </span>driver.longhorn.io<span class="w">   </span>Delete<span class="w">          </span>Immediate<span class="w">           </span><span class="nb">true</span><span class="w">                   </span>16m
+longhorn-static<span class="w">      </span>driver.longhorn.io<span class="w">   </span>Delete<span class="w">          </span>Immediate<span class="w">           </span><span class="nb">true</span><span class="w">                   </span>16m
+</code></pre></div>
+<p>You should see <code>longhorn</code> listed as a storage class.</p>
+<h3 id="single-node-cluster-configuration">Single-Node Cluster Configuration<a class="headerlink" href="#single-node-cluster-configuration" title="Permanent link">#</a></h3>
+<p>Single-node clusters require setting the default replica count to 1 to prevent scheduling failures, as Longhorn's default of 3 replicas cannot be satisfied on a single node. This setting can be adjusted in the values or post-installation via the UI (Settings &gt; General &gt; Default Replica Count).</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">helm</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">longhorn</span>
+<span class="w">          </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">longhorn/longhorn</span>
+<span class="w">          </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">longhorn-system</span>
+<span class="w">          </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;latest&quot;</span>
+<span class="w">          </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">            </span><span class="no">defaultSettings:</span>
+<span class="w">              </span><span class="no">defaultReplicaCount: 1</span>
+</code></pre></div>
+<h2 id="access-the-longhorn-ui">Access the Longhorn UI<a class="headerlink" href="#access-the-longhorn-ui" title="Permanent link">#</a></h2>
+<p>You can port-forward the frontend service:</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>longhorn-system<span class="w"> </span>port-forward<span class="w"> </span>svc/longhorn-frontend<span class="w"> </span><span class="m">8080</span>:80
+</code></pre></div>
+<p>Then open <a href="http://localhost:8080">http://localhost:8080</a> in your browser.</p>
+<h2 id="example-pvc-and-deployment">Example: PVC and Deployment<a class="headerlink" href="#example-pvc-and-deployment" title="Permanent link">#</a></h2>
+<p>Use this example to create a PVC and mount it in a Deployment using Longhorn.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PersistentVolumeClaim</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app-pvc</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">accessModes</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ReadWriteOnce</span>
+<span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">longhorn</span>
+<span class="w">  </span><span class="nt">resources</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">requests</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5Gi</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">  </span><span class="nt">strategy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Recreate</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">          </span><span class="nt">volumeMounts</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
+<span class="w">              </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/nginx</span>
+<span class="w">      </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
+<span class="w">          </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app-pvc</span>
+</code></pre></div>
+<p>Apply the manifest:</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>nginx.yaml
+</code></pre></div>
+<p>Check the PVC and pod status:</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pvc,pods
+</code></pre></div>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
+<p>Longhorn supports backing up volumes to external storage systems such as S3, NFS, or CIFS. To enable backups:</p>
+<ol>
+<li>Create a backup target secret with your storage credentials</li>
+<li>Configure the backup target URL in Longhorn settings</li>
+<li>Set up recurring backup jobs for automatic protection</li>
+</ol>
+<p>For detailed instructions on configuring backup targets and setting up automated backups, refer to the <a href="https://longhorn.io/docs/1.10.1/snapshots-and-backups/backup-and-restore/set-backup-target/">Longhorn Backup Documentation</a>.</p>
+<h2 id="additional-resources">Additional Resources<a class="headerlink" href="#additional-resources" title="Permanent link">#</a></h2>
+<ul>
+<li><a href="https://longhorn.io/docs/">Longhorn Official Documentation</a></li>
+<li><a href="https://longhorn.io/docs/1.10.1/concepts/">Longhorn Architecture Guide</a></li>
+<li><a href="https://longhorn.io/docs/1.10.1/best-practices/">Best Practices for Production Deployments</a></li>
+<li><a href="https://longhorn.io/docs/1.10.1/troubleshoot/troubleshooting/">Troubleshooting Guide</a></li>
+</ul>
 
 
 
@@ -3343,10 +3416,10 @@ are pulled from the Internet at any time.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
       
     
   </body>
