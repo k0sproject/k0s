@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout k0s
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout k0s
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build docs dev container
         run: make -C docs .docker-image.serve-dev.stamp
