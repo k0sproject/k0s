@@ -70,6 +70,7 @@ nav:
       - Ceph Storage with Rook: examples/rook-ceph.md
       - GitOps with Flux: examples/gitops-flux.md
       - OpenEBS storage: examples/openebs.md
+      - Longhorn storage: examples/longhorn.md
   - Troubleshooting:
       - FAQ: troubleshooting/FAQ.md
       - Logs: troubleshooting/logs.md
