@@ -526,7 +526,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.SystemRBACComponentName) {
-		clusterComponents.Add(ctx, &controller.SystemRBAC{Clients: adminClientFactory})
+		clusterComponents.Add(ctx, &controller.SystemRBAC{
+			Clients:          adminClientFactory,
+			ExcludeAutopilot: slices.Contains(flags.DisableComponents, constant.AutopilotComponentName),
+		})
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.NodeRoleComponentName) {
