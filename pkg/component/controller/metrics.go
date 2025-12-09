@@ -348,6 +348,8 @@ spec:
         component: "pushgateway"
         app: k0s-observability
     spec:
+      nodeSelector:
+        kubernetes.io/os: linux
       tolerations:
         - key: node-role.kubernetes.io/master
           operator: Exists
