@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     env:
-      TOFU_VERSION: 1.10.7 # renovate: datasource=github-releases depName=opentofu/opentofu
+      TOFU_VERSION: 1.10.8 # renovate: datasource=github-releases depName=opentofu/opentofu
 
     defaults:
       run:
