@@ -122,7 +122,7 @@ spec:
 Example extensions that you can use with Helm charts include:
 
 - Ingress controllers: [nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefik ingress](https://github.com/traefik/traefik-helm-chart) (refer to the k0s documentation for [Installing the Traefik Ingress Controller](examples/traefik-ingress.md))
-- Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
+- Volume storage providers: [OpenEBS](https://openebs.github.io/openebs/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
 - Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
 
 ## Helm debug logging
