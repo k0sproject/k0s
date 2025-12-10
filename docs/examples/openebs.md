@@ -14,7 +14,7 @@ configuration:
     helm:
       repositories:
       - name: openebs-internal
-        url: https://openebs.github.io/charts
+        url: https://openebs.github.io/openebs
       charts:
       - name: openebs
         chartname: openebs-internal/openebs
