@@ -7,7 +7,9 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/netip"
 	"runtime"
 	"time"
 
@@ -16,14 +18,13 @@ import (
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 )
@@ -40,18 +41,20 @@ type setupController struct {
 	k0sDataDir       string
 	enableWorker     bool
 	kubeletExtraArgs string
+	apiAddress       netip.Addr
 }
 
 var _ SetupController = (*setupController)(nil)
 
 // NewSetupController creates a `SetupController`
-func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir, kubeletExtraArgs string, enableWorker bool) SetupController {
+func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir, kubeletExtraArgs string, enableWorker bool, apiAddress netip.Addr) SetupController {
 	return &setupController{
 		log:              logger.WithField("controller", "setup"),
 		clientFactory:    cf,
 		k0sDataDir:       k0sDataDir,
 		kubeletExtraArgs: kubeletExtraArgs,
 		enableWorker:     enableWorker,
+		apiAddress:       apiAddress,
 	}
 }
 
@@ -66,7 +69,7 @@ func (sc *setupController) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to create obtain a kube client: %w", err)
 	} else if _, err := client.CoreV1().Namespaces().Apply(
 		ctx, applycorev1.Namespace(apconst.AutopilotNamespace),
-		metav1.ApplyOptions{FieldManager: "k0s", Force: true}); err != nil && !errors.IsAlreadyExists(err) {
+		metav1.ApplyOptions{FieldManager: "k0s", Force: true}); err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to apply autopilot namespace %s: %w", apconst.AutopilotNamespace, err)
 	}
 
@@ -100,6 +103,11 @@ func (sc *setupController) Run(ctx context.Context) error {
 // createControlNode creates a new control node, ignoring errors if one already exists
 // for this physical host.
 func (sc *setupController) createControlNode(ctx context.Context, cf apcli.FactoryInterface, name, nodeName string) error {
+	if !sc.apiAddress.IsValid() {
+		return errors.New("no API address given")
+	}
+	apiAddress := sc.apiAddress.String()
+
 	logger := sc.log.WithField("component", "setup")
 	client, err := sc.clientFactory.GetK0sClient()
 	if err != nil {
@@ -108,7 +116,7 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 
 	// Create the ControlNode object if needed
 	node, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, name, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) {
 		logger.Info("Autopilot 'controlnodes' CRD not found, waiting...")
 		if err := sc.waitForControlNodesCRD(ctx, cf); err != nil {
 			return fmt.Errorf("while waiting for autopilot 'controlnodes' CRD: %w", err)
@@ -145,13 +153,11 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 		return err
 	}
 
-	addresses, err := getControlNodeAddresses(nodeName)
-	if err != nil {
-		return err
-	}
-
 	node.Status = apv1beta2.ControlNodeStatus{
-		Addresses:  addresses,
+		Addresses: []corev1.NodeAddress{
+			{Type: corev1.NodeInternalIP, Address: apiAddress},
+			{Type: corev1.NodeHostName, Address: nodeName},
+		},
 		K0sVersion: build.Version,
 	}
 
@@ -163,34 +169,6 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	logger.Infof("Updated controlnode '%s', status: %v", name, node.Status)
 
 	return nil
-}
-
-func getControlNodeAddresses(hostname string) ([]corev1.NodeAddress, error) {
-	addresses := []corev1.NodeAddress{}
-	apiAddress, err := getControllerAPIAddress()
-	if err != nil {
-		return addresses, err
-	}
-	addresses = append(addresses, corev1.NodeAddress{
-		Type:    corev1.NodeInternalIP,
-		Address: apiAddress,
-	})
-
-	addresses = append(addresses, corev1.NodeAddress{
-		Type:    corev1.NodeHostName,
-		Address: hostname,
-	})
-
-	return addresses, nil
-}
-
-func getControllerAPIAddress() (string, error) {
-	status, err := status.GetStatusInfo(status.DefaultSocketPath)
-	if err != nil {
-		return "", err
-	}
-
-	return status.ClusterConfig.Spec.API.Address, nil
 }
 
 // waitForControlNodesCRD waits until the controlnodes CRD is established for

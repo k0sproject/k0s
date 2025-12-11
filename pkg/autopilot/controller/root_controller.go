@@ -8,6 +8,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/sync/value"
@@ -58,12 +59,12 @@ type rootController struct {
 var _ aproot.Root = (*rootController)(nil)
 
 // NewRootController builds a root for autopilot "controller" operations.
-func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker bool, cf kubernetes.ClientFactoryInterface, acf apcli.FactoryInterface) (aproot.Root, error) {
+func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker bool, acf apcli.FactoryInterface, apiAddress netip.Addr) (aproot.Root, error) {
 	c := &rootController{
 		cfg:                    cfg,
 		log:                    logger,
 		autopilotClientFactory: acf,
-		kubeClientFactory:      cf,
+		kubeClientFactory:      acf.Unwrap(),
 	}
 
 	// Default implementations that can be overridden for testing.
@@ -72,7 +73,7 @@ func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker
 		return leaderelection.NewClient(c)
 	}
 	c.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
-		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, cfg.KubeletExtraArgs, enableWorker)
+		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, cfg.KubeletExtraArgs, enableWorker, apiAddress)
 		return setupController.Run(ctx)
 	}
 
