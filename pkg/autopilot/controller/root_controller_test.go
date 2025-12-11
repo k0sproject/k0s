@@ -19,7 +19,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/sync/errgroup"
 )
 
 type fakeLeaderElector chan leaderelection.Status
@@ -55,23 +54,17 @@ func TestModeSwitch(t *testing.T) {
 
 		var seenEvents []string
 
-		// Override the important portions of leasewatcher, and provide wrappers to the start/stop
-		// sub-controller handlers for invocation counting.
+		// Override the important portions of leasewatcher, and stub out the sub
+		// handler routine to observe start/stop events.
 		leaseEventStatusCh := make(fakeLeaderElector)
 		rootController.newLeaderElector = func(c leaderelection.Config) (leaderElector, error) {
 			return &leaseEventStatusCh, nil
 		}
-		rootController.startSubHandler = func(ctx context.Context, event leaderelection.Status) (context.CancelFunc, *errgroup.Group) {
-			seenEvents = append(seenEvents, "start: "+event.String())
-			return rootController.startSubControllers(ctx, event)
-		}
 		rootController.startSubHandlerRoutine = func(ctx context.Context, logger *logrus.Entry, event leaderelection.Status) error {
+			seenEvents = append(seenEvents, "start: "+event.String())
 			<-ctx.Done()
-			return nil
-		}
-		rootController.stopSubHandler = func(cancel context.CancelFunc, g *errgroup.Group, event leaderelection.Status) {
 			seenEvents = append(seenEvents, "stop: "+event.String())
-			rootController.stopSubControllers(cancel, g, event)
+			return nil
 		}
 		rootController.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
 			return nil
@@ -95,7 +88,7 @@ func TestModeSwitch(t *testing.T) {
 		logger.Info("Sending acquired")
 		leaseEventStatusCh <- leaderelection.StatusLeading
 		synctest.Wait()
-		require.Equal(t, []string{"stop: leading", "start: leading"}, seenEvents)
+		require.Equal(t, []string{"stop: pending", "start: leading"}, seenEvents)
 		seenEvents = seenEvents[0:0]
 
 		// The second leading status is ignored, as the controller is already in
