@@ -23,7 +23,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
@@ -116,15 +115,16 @@ func (c *rootController) Run(ctx context.Context) error {
 
 	// Start controllers
 	leaseEventStatus, leaseEventStatusExpired := status.Peek()
-	subControllerCancel, subControllerErrGroup := c.startSubControllers(ctx, leaseEventStatus)
+	subControllerCancel, errCh := c.startSubControllers(ctx, leaseEventStatus)
 
 	for {
 		select {
 		case <-ctx.Done():
 			c.log.Info("Shutting down")
-			c.stopSubControllers(subControllerCancel, subControllerErrGroup, leaseEventStatus)
 			<-done
-
+			if err := <-errCh; err != nil {
+				return fmt.Errorf("while shutting down sub controllers: %w", err)
+			}
 			return nil
 
 		case <-leaseEventStatusExpired:
@@ -140,10 +140,13 @@ func (c *rootController) Run(ctx context.Context) error {
 			c.log.Infof("Got lease event = %v, reconfiguring controllers", leaseEventStatus)
 
 			// Stop controllers + wait for termination
-			c.stopSubControllers(subControllerCancel, subControllerErrGroup, leaseEventStatus)
+			subControllerCancel(fmt.Errorf("lease status changed: %s", leaseEventStatus))
+			if err := <-errCh; err != nil {
+				c.log.WithError(err).Error("Error while stopping sub controllers")
+			}
 
 			// Start controllers
-			subControllerCancel, subControllerErrGroup = c.startSubControllers(ctx, leaseEventStatus)
+			subControllerCancel, errCh = c.startSubControllers(ctx, leaseEventStatus)
 		}
 	}
 }
@@ -251,35 +254,19 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 }
 
 // startSubControllers starts all of the controllers specific to the leader mode.
-// It is expected that this function runs to completion.
-func (c *rootController) startSubControllers(ctx context.Context, event leaderelection.Status) (context.CancelFunc, *errgroup.Group) {
+func (c *rootController) startSubControllers(ctx context.Context, event leaderelection.Status) (context.CancelCauseFunc, <-chan error) {
 	logger := c.log.WithField("leadermode", event == leaderelection.StatusLeading)
 	logger.Info("Starting subcontrollers")
 
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancelCause(ctx)
+	errCh := make(chan error, 1)
 
-	g, ctx := errgroup.WithContext(ctx)
+	go func() {
+		var err error
+		defer func() { close(errCh); cancel(err) }()
+		err = c.startSubHandlerRoutine(ctx, logger, event)
+		errCh <- err
+	}()
 
-	g.Go(func() error {
-		logger.Info("Starting controller-runtime subhandlers")
-		if err := c.startSubHandlerRoutine(ctx, logger, event); err != nil {
-			return fmt.Errorf("failed to start subhandlers: %w", err)
-		}
-		return nil
-	})
-
-	return cancel, g
-}
-
-// startSubControllers stop all of the controllers specific to the leader mode.
-func (c *rootController) stopSubControllers(cancel context.CancelFunc, g *errgroup.Group, event leaderelection.Status) {
-	logger := c.log.WithField("leasemode", event)
-	logger.Info("Stopping subcontrollers")
-
-	if cancel != nil {
-		cancel()
-		if err := g.Wait(); err != nil {
-			logger.Error(err)
-		}
-	}
+	return cancel, errCh
 }
