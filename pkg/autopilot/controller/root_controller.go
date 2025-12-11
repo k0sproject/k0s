@@ -39,9 +39,7 @@ type leaderElector interface {
 	Run(context.Context, func(leaderelection.Status))
 }
 
-type subControllerStartFunc func(ctx context.Context, event leaderelection.Status) (context.CancelFunc, *errgroup.Group)
 type subControllerStartRoutineFunc func(ctx context.Context, logger *logrus.Entry, event leaderelection.Status) error
-type subControllerStopFunc func(cancel context.CancelFunc, g *errgroup.Group, event leaderelection.Status)
 type createLeaderElectorFunc func(leaderelection.Config) (leaderElector, error)
 type setupFunc func(ctx context.Context, cf apcli.FactoryInterface) error
 
@@ -51,9 +49,7 @@ type rootController struct {
 	kubeClientFactory      kubernetes.ClientFactoryInterface
 	autopilotClientFactory apcli.FactoryInterface
 
-	startSubHandler        subControllerStartFunc
 	startSubHandlerRoutine subControllerStartRoutineFunc
-	stopSubHandler         subControllerStopFunc
 	newLeaderElector       createLeaderElectorFunc
 	setupHandler           setupFunc
 
@@ -72,9 +68,7 @@ func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker
 	}
 
 	// Default implementations that can be overridden for testing.
-	c.startSubHandler = c.startSubControllers
 	c.startSubHandlerRoutine = c.startSubControllerRoutine
-	c.stopSubHandler = c.stopSubControllers
 	c.newLeaderElector = func(c leaderelection.Config) (leaderElector, error) {
 		return leaderelection.NewClient(c)
 	}
@@ -122,13 +116,13 @@ func (c *rootController) Run(ctx context.Context) error {
 
 	// Start controllers
 	leaseEventStatus, leaseEventStatusExpired := status.Peek()
-	subControllerCancel, subControllerErrGroup := c.startSubHandler(ctx, leaseEventStatus)
+	subControllerCancel, subControllerErrGroup := c.startSubControllers(ctx, leaseEventStatus)
 
 	for {
 		select {
 		case <-ctx.Done():
 			c.log.Info("Shutting down")
-			c.stopSubHandler(subControllerCancel, subControllerErrGroup, leaseEventStatus)
+			c.stopSubControllers(subControllerCancel, subControllerErrGroup, leaseEventStatus)
 			<-done
 
 			return nil
@@ -146,10 +140,10 @@ func (c *rootController) Run(ctx context.Context) error {
 			c.log.Infof("Got lease event = %v, reconfiguring controllers", leaseEventStatus)
 
 			// Stop controllers + wait for termination
-			c.stopSubHandler(subControllerCancel, subControllerErrGroup, leaseEventStatus)
+			c.stopSubControllers(subControllerCancel, subControllerErrGroup, leaseEventStatus)
 
 			// Start controllers
-			subControllerCancel, subControllerErrGroup = c.startSubHandler(ctx, leaseEventStatus)
+			subControllerCancel, subControllerErrGroup = c.startSubControllers(ctx, leaseEventStatus)
 		}
 	}
 }
