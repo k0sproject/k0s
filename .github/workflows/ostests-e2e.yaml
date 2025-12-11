@@ -39,7 +39,7 @@ on:
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping the test cluster.
-        default: 0.27.0 # renovate: datasource=github-releases depName=k0sproject/k0sctl
+        default: 0.27.1 # renovate: datasource=github-releases depName=k0sproject/k0sctl
     secrets:
       aws-access-key-id:
         description: The AWS access key ID to use when provisioning test resources.
