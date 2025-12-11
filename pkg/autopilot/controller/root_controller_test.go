@@ -7,15 +7,20 @@ package controller
 
 import (
 	"context"
+	"io/fs"
 	"net/netip"
 	"sync"
 	"testing"
 	"testing/synctest"
 
 	aptu "github.com/k0sproject/k0s/internal/autopilot/testutil"
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
+	"github.com/k0sproject/k0s/static"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +49,19 @@ func (le fakeLeaderElector) Run(ctx context.Context, callback func(leaderelectio
 func TestModeSwitch(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		logger := logrus.New().WithField("app", "autopilot-test")
-		clientFactory := aptu.NewFakeClientFactory()
+		clientFactory := aptu.NewFakeClientFactory(func() *unstructured.Unstructured {
+			raw, err := fs.ReadFile(static.CRDs, "autopilot/autopilot.k0sproject.io_controlnodes.yaml")
+			require.NoError(t, err)
+			var crd unstructured.Unstructured
+			require.NoError(t, yaml.Unmarshal(raw, &crd.Object))
+			require.NoError(t, unstructured.SetNestedSlice(crd.Object, []any{
+				map[string]any{
+					"type":   string(apiextensionsv1.Established),
+					"status": string(apiextensionsv1.ConditionTrue),
+				},
+			}, "status", "conditions"))
+			return &crd
+		}())
 
 		rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, false, clientFactory, netip.IPv4Unspecified())
 		assert.NoError(t, err)
@@ -65,9 +82,6 @@ func TestModeSwitch(t *testing.T) {
 			seenEvents = append(seenEvents, "start: "+event.String())
 			<-ctx.Done()
 			seenEvents = append(seenEvents, "stop: "+event.String())
-			return nil
-		}
-		rootController.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
 			return nil
 		}
 
