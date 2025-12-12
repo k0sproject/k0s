@@ -41,17 +41,17 @@ type leaderElector interface {
 
 type subControllerStartRoutineFunc func(ctx context.Context, logger *logrus.Entry, event leaderelection.Status) error
 type createLeaderElectorFunc func(leaderelection.Config) (leaderElector, error)
-type setupFunc func(ctx context.Context, cf apcli.FactoryInterface) error
 
 type rootController struct {
 	cfg                    aproot.RootConfig
 	log                    *logrus.Entry
 	kubeClientFactory      kubernetes.ClientFactoryInterface
 	autopilotClientFactory apcli.FactoryInterface
+	enableWorker           bool
+	apiAddress             netip.Addr
 
 	startSubHandlerRoutine subControllerStartRoutineFunc
 	newLeaderElector       createLeaderElectorFunc
-	setupHandler           setupFunc
 
 	initialized bool
 }
@@ -65,16 +65,14 @@ func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker
 		log:                    logger,
 		autopilotClientFactory: acf,
 		kubeClientFactory:      acf.Unwrap(),
+		enableWorker:           enableWorker,
+		apiAddress:             apiAddress,
 	}
 
 	// Default implementations that can be overridden for testing.
 	c.startSubHandlerRoutine = c.startSubControllerRoutine
 	c.newLeaderElector = func(c leaderelection.Config) (leaderElector, error) {
 		return leaderelection.NewClient(c)
-	}
-	c.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
-		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, cfg.KubeletExtraArgs, enableWorker, apiAddress)
-		return setupController.Run(ctx)
 	}
 
 	return c, nil
@@ -83,7 +81,7 @@ func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker
 func (c *rootController) Run(ctx context.Context) error {
 	// Create / initialize kubernetes objects as needed
 	if err := wait.PollUntilContextCancel(ctx, 10*time.Second, true, func(ctx context.Context) (done bool, err error) {
-		if err := c.setupHandler(ctx, c.autopilotClientFactory); err != nil {
+		if err := c.setup(ctx); err != nil {
 			c.log.WithError(err).Error("Setup controller failed to complete, retrying in 10 seconds")
 			return false, nil
 		}

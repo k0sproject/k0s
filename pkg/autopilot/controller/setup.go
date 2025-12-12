@@ -9,19 +9,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/netip"
 	"runtime"
 	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	"github.com/avast/retry-go"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,43 +26,14 @@ import (
 	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 )
 
-// SetupController defines operations that should be run once to completion,
-// typically at autopilot startup.
-type SetupController interface {
-	Run(ctx context.Context) error
-}
-
-type setupController struct {
-	log              *logrus.Entry
-	clientFactory    apcli.FactoryInterface
-	k0sDataDir       string
-	enableWorker     bool
-	kubeletExtraArgs string
-	apiAddress       netip.Addr
-}
-
-var _ SetupController = (*setupController)(nil)
-
-// NewSetupController creates a `SetupController`
-func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir, kubeletExtraArgs string, enableWorker bool, apiAddress netip.Addr) SetupController {
-	return &setupController{
-		log:              logger.WithField("controller", "setup"),
-		clientFactory:    cf,
-		k0sDataDir:       k0sDataDir,
-		kubeletExtraArgs: kubeletExtraArgs,
-		enableWorker:     enableWorker,
-		apiAddress:       apiAddress,
-	}
-}
-
-// Run will go through all of the required setup operations that are required for autopilot.
+// setup will go through all of the required setup operations that are required for autopilot.
 // This effectively replaces the manifest concept used in k0s, as there is no guarantee that
 // autopilot has access to the k0s file-system, or even if k0s is used at all.
-func (sc *setupController) Run(ctx context.Context) error {
-	logger := sc.log.WithField("component", "setup")
+func (c *rootController) setup(ctx context.Context) error {
+	logger := c.log.WithField("component", "setup")
 
 	logger.Info("Applying namespace ", apconst.AutopilotNamespace)
-	if client, err := sc.clientFactory.GetClient(); err != nil {
+	if client, err := c.kubeClientFactory.GetClient(); err != nil {
 		return fmt.Errorf("unable to create obtain a kube client: %w", err)
 	} else if _, err := client.CoreV1().Namespaces().Apply(
 		ctx, applycorev1.Namespace(apconst.AutopilotNamespace),
@@ -79,15 +47,15 @@ func (sc *setupController) Run(ctx context.Context) error {
 	}
 
 	kubeletNodeName := controlNodeName
-	if sc.enableWorker {
-		kubeletNodeName = apcomm.FindKubeletHostname(sc.kubeletExtraArgs)
+	if c.enableWorker {
+		kubeletNodeName = apcomm.FindKubeletHostname(c.cfg.KubeletExtraArgs)
 	}
 
 	logger.Infof("Using effective hostname = '%v', kubelet hostname = '%v'", controlNodeName, kubeletNodeName)
 
 	if err := retry.Do(func() error {
 		logger.Infof("Attempting to create controlnode '%s'", controlNodeName)
-		if err := sc.createControlNode(ctx, sc.clientFactory, controlNodeName, kubeletNodeName); err != nil {
+		if err := c.createControlNode(ctx, controlNodeName, kubeletNodeName); err != nil {
 			return fmt.Errorf("create controlnode '%s' attempt failed, retrying: %w", controlNodeName, err)
 		}
 
@@ -102,14 +70,14 @@ func (sc *setupController) Run(ctx context.Context) error {
 
 // createControlNode creates a new control node, ignoring errors if one already exists
 // for this physical host.
-func (sc *setupController) createControlNode(ctx context.Context, cf apcli.FactoryInterface, name, nodeName string) error {
+func (sc *rootController) createControlNode(ctx context.Context, name, nodeName string) error {
 	if !sc.apiAddress.IsValid() {
 		return errors.New("no API address given")
 	}
 	apiAddress := sc.apiAddress.String()
 
 	logger := sc.log.WithField("component", "setup")
-	client, err := sc.clientFactory.GetK0sClient()
+	client, err := sc.kubeClientFactory.GetK0sClient()
 	if err != nil {
 		return err
 	}
@@ -118,7 +86,7 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	node, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		logger.Info("Autopilot 'controlnodes' CRD not found, waiting...")
-		if err := sc.waitForControlNodesCRD(ctx, cf); err != nil {
+		if err := sc.waitForControlNodesCRD(ctx); err != nil {
 			return fmt.Errorf("while waiting for autopilot 'controlnodes' CRD: %w", err)
 		}
 
@@ -173,15 +141,15 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 
 // waitForControlNodesCRD waits until the controlnodes CRD is established for
 // max 2 minutes.
-func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.FactoryInterface) error {
-	extClient, err := cf.GetExtensionClient()
+func (sc *rootController) waitForControlNodesCRD(ctx context.Context) error {
+	extClient, err := sc.kubeClientFactory.GetAPIExtensionsClient()
 	if err != nil {
 		return fmt.Errorf("unable to obtain extensions client: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-	return watch.CRDs(extClient.CustomResourceDefinitions()).
+	return watch.CRDs(extClient.ApiextensionsV1().CustomResourceDefinitions()).
 		WithObjectName("controlnodes."+apv1beta2.GroupName).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryDelay, e := watch.IsRetryable(err); e == nil {
