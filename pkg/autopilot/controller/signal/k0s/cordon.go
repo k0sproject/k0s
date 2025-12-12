@@ -59,6 +59,7 @@ type cordonUncordon struct {
 	client    crcli.Client
 	delegate  apdel.ControllerDelegate
 	clientset *kubernetes.Clientset
+	do        func(*drain.Helper, *corev1.Node) error
 }
 
 type cordoning struct {
@@ -91,6 +92,7 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,
+				do:        cordonAndDrainNode,
 			}},
 		)
 }
@@ -115,7 +117,7 @@ func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 	}
 
 	logger.Infof("starting to cordon node %s", signalNode.GetName())
-	if err := r.drainNode(ctx, signalNode); err != nil {
+	if err := r.run(ctx, signalNode); err != nil {
 		return cr.Result{}, err
 	}
 
@@ -146,11 +148,7 @@ func (r *cordoning) moveToNextState(ctx context.Context, signalNode crcli.Object
 	return nil
 }
 
-// drainNode cordons a node after which drains it
-// draining ignores daemonsets
-func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) error {
-	logger := r.log.WithField("signalnode", signalNode.GetName()).WithField("phase", "drain")
-
+func (r *cordonUncordon) run(ctx context.Context, signalNode crcli.Object) error {
 	node := &corev1.Node{}
 	// if signalNode is a Node cast it to *corev1.Node
 	if signalNode.GetObjectKind().GroupVersionKind().Kind == "Node" {
@@ -177,6 +175,11 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 		}
 	}
 
+	logger := r.log.WithFields(logrus.Fields{
+		"signalnode": signalNode.GetName(),
+		"stream":     "drainer",
+	})
+
 	drainer := &drain.Helper{
 		Client: r.clientset,
 		Force:  true,
@@ -194,15 +197,14 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 		},
 	}
 
+	return r.do(drainer, node)
+}
+
+func cordonAndDrainNode(drainer *drain.Helper, node *corev1.Node) error {
 	if err := drain.RunCordonOrUncordon(drainer, node, true); err != nil {
 		return err
 	}
-
-	if err := drain.RunNodeDrain(drainer, node.Name); err != nil {
-		return err
-	}
-
-	return nil
+	return drain.RunNodeDrain(drainer, node.Name)
 }
 
 func needsCordoning(signalNode crcli.Object) bool {

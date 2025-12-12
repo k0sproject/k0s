@@ -7,12 +7,9 @@ package k0s
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
-	"time"
 
-	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
@@ -24,7 +21,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 	cr "sigs.k8s.io/controller-runtime"
-	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crev "sigs.k8s.io/controller-runtime/pkg/event"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -83,6 +79,7 @@ func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,
+				do:        uncordonNode,
 			}},
 		)
 }
@@ -108,7 +105,7 @@ func (r *uncordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result,
 	}
 
 	logger.Infof("starting to un-cordon node %s", signalNode.GetName())
-	if err := r.unCordonNode(ctx, signalNode); err != nil {
+	if err := r.run(ctx, signalNode); err != nil {
 		return cr.Result{}, err
 	}
 
@@ -138,54 +135,6 @@ func (r *uncordoning) moveToNextState(ctx context.Context, signalNode crcli.Obje
 	return nil
 }
 
-// unCordonNode un-cordons a node
-func (r *uncordoning) unCordonNode(ctx context.Context, signalNode crcli.Object) error {
-	logger := r.log.WithField("signalnode", signalNode.GetName()).WithField("phase", "uncordon")
-
-	node := &corev1.Node{}
-
-	// if signalNode is a Node cast it to *corev1.Node
-	if signalNode.GetObjectKind().GroupVersionKind().Kind == "Node" {
-		var ok bool
-		node, ok = signalNode.(*corev1.Node)
-		if !ok {
-			return errors.New("failed to convert signalNode to Node")
-		}
-	} else {
-		nodeName := signalNode.GetName()
-		controlNode, ok := signalNode.(*autopilotv1beta2.ControlNode)
-		if ok {
-			for _, addr := range controlNode.Status.Addresses {
-				if addr.Type == corev1.NodeHostName {
-					nodeName = addr.Address
-					break
-				}
-			}
-		}
-
-		// otherwise get node from client
-		if err := r.client.Get(ctx, crcli.ObjectKey{Name: nodeName}, node); err != nil {
-			return fmt.Errorf("failed to get node: %w", err)
-		}
-	}
-
-	drainer := &drain.Helper{
-		Client: r.clientset,
-		Force:  true,
-		// negative value to use the pod's terminationGracePeriodSeconds
-		GracePeriodSeconds:  -1,
-		IgnoreAllDaemonSets: true,
-		Ctx:                 ctx,
-		Out:                 logger.Writer(),
-		ErrOut:              logger.Writer(),
-		// We want to proceed even when pods are using emptyDir volumes
-		DeleteEmptyDirData: true,
-		Timeout:            time.Duration(120) * time.Second,
-	}
-
-	if err := drain.RunCordonOrUncordon(drainer, node, false); err != nil {
-		return err
-	}
-
-	return nil
+func uncordonNode(drainer *drain.Helper, node *corev1.Node) error {
+	return drain.RunCordonOrUncordon(drainer, node, false)
 }
