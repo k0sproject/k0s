@@ -59,14 +59,14 @@ jobs:
 
       - name: "Cache :: embedded binaries"
         id: cache-embedded-bins
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}"
           path: embedded-bins/staging/${{ inputs.target-os }}/bin/
 
       - name: "Cache :: Go cache"
         id: cache-gocache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-go${{ env.GO_VERSION }}-"

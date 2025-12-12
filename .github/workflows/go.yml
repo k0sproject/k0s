@@ -213,7 +213,7 @@ jobs:
 
       - name: Cache Go cache
         id: cache-gocache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: "unittests-k0s-${{ matrix.name }}-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: "unittests-k0s-${{ matrix.name }}-gocache-go${{ env.GO_VERSION }}-"
@@ -320,14 +320,14 @@ jobs:
 
       - name: Cache embedded binaries
         id: cache-embedded-bins
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: "build-k0s-linux-arm-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}"
           path: embedded-bins/staging/linux/bin/
 
       - name: Cache Go cache
         id: cache-gocache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: "build-k0s-linux-arm-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: "build-k0s-linux-arm-gocache-go${{ env.GO_VERSION }}-"
@@ -368,7 +368,7 @@ jobs:
 
       - name: Cache airgap image bundle
         id: cache-airgap-image-bundle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: airgap-image-bundle-linux-arm-${{ hashFiles('Makefile', 'airgap-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
           path: |
