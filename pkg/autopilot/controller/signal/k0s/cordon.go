@@ -63,10 +63,6 @@ type cordonUncordon struct {
 	nextState string
 }
 
-type cordoning struct {
-	cordonUncordon
-}
-
 // registerCordoning registers the 'cordoning' controller to the
 // controller-runtime manager.
 //
@@ -88,19 +84,19 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
-			&cordoning{cordonUncordon{
+			&cordonUncordon{
 				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,
 				do:        cordonAndDrainNode,
 				nextState: ApplyingUpdate,
-			}},
+			},
 		)
 }
 
 // Reconcile for the 'cordoning' reconciler will cordon and drain a node
-func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
+func (r *cordonUncordon) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
@@ -118,7 +114,7 @@ func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 		return cr.Result{}, r.moveToNextState(ctx, signalNode)
 	}
 
-	logger.Infof("starting to cordon node %s", signalNode.GetName())
+	logger.Info("Reconciling")
 	if err := r.run(ctx, signalNode); err != nil {
 		return cr.Result{}, err
 	}
