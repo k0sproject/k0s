@@ -11,6 +11,7 @@ import (
 	"time"
 	"unsafe"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -142,7 +143,16 @@ func (t *TransformingObjectTracker) Patch(gvr schema.GroupVersionResource, obj r
 
 // Apply implements testing.ObjectTracker.
 func (t *TransformingObjectTracker) Apply(gvr schema.GroupVersionResource, applyConfiguration runtime.Object, ns string, opts ...metav1.PatchOptions) error {
-	return t.internalized(applyConfiguration, func(obj runtime.Object) error { return t.Inner.Apply(gvr, applyConfiguration, ns, opts...) })
+	return t.internalized(applyConfiguration, func(obj runtime.Object) error {
+		err := t.Inner.Apply(gvr, applyConfiguration, ns, opts...)
+
+		// Translate an apply of a non-existent object into a create.
+		if errors.IsNotFound(err) {
+			return t.Inner.Create(gvr, obj, ns, metav1.CreateOptions{})
+		}
+
+		return err
+	})
 }
 
 // Watch implements testing.ObjectTracker.

@@ -4,11 +4,13 @@
 package applier
 
 import (
+	"cmp"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"slices"
 	"sync"
 	"time"
@@ -23,14 +25,59 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/utils/ptr"
 
+	"github.com/avast/retry-go"
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/sirupsen/logrus"
 )
+
+func ApplyStack(ctx context.Context, clients kubernetes.ClientFactoryInterface, src io.Reader, srcName, stackName string) error {
+	infos, err := resource.NewLocalBuilder().
+		Unstructured().
+		Stream(src, srcName).
+		Flatten().
+		Do().
+		Infos()
+	if err != nil {
+		return err
+	}
+
+	resources := make([]*unstructured.Unstructured, len(infos))
+	for i := range infos {
+		resources[i] = infos[i].Object.(*unstructured.Unstructured)
+	}
+
+	var lastErr error
+	if err := retry.Do(
+		func() error {
+			stack := Stack{
+				Name:      stackName,
+				Resources: resources,
+				Clients:   clients,
+			}
+			lastErr = stack.Apply(ctx, true)
+			return lastErr
+		},
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.OnRetry(func(attempt uint, err error) {
+			logrus.WithFields(logrus.Fields{
+				"component": "applier",
+				"stack":     stackName,
+				"attempt":   attempt + 1,
+			}).WithError(err).Debug("Failed to apply stack, retrying after backoff")
+		}),
+	); err != nil {
+		return cmp.Or(lastErr, err)
+	}
+
+	return nil
+}
 
 // Stack is a k8s resource bundle
 type Stack struct {

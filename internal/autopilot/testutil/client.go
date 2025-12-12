@@ -9,25 +9,26 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // NewFakeClientFactory creates new client factory
 //
 // Deprecated: Use [k0stestutil.NewFakeClientFactory] instead.
-func NewFakeClientFactory() client.FactoryInterface {
-	return &fakeClientFactory{
-		FakeClientFactory: k0stestutil.NewFakeClientFactory(),
+func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
+	return &FakeClientFactory{
+		FakeClientFactory: k0stestutil.NewFakeClientFactory(objects...),
 	}
 }
 
-type fakeClientFactory struct {
+type FakeClientFactory struct {
 	*k0stestutil.FakeClientFactory
 }
 
-var _ client.FactoryInterface = (*fakeClientFactory)(nil)
+var _ client.FactoryInterface = (*FakeClientFactory)(nil)
 
 // Deprecated: Use [fakeClientFactory.GetAPIExtensionsClient] instead.
-func (f fakeClientFactory) GetExtensionClient() (extclient.ApiextensionsV1Interface, error) {
+func (f FakeClientFactory) GetExtensionClient() (extclient.ApiextensionsV1Interface, error) {
 	client, err := f.GetAPIExtensionsClient()
 	if err != nil {
 		return nil, err
@@ -37,6 +38,6 @@ func (f fakeClientFactory) GetExtensionClient() (extclient.ApiextensionsV1Interf
 }
 
 // Implements [client.FactoryInterface]: Returns the backing client factory.
-func (f *fakeClientFactory) Unwrap() kubernetes.ClientFactoryInterface {
+func (f *FakeClientFactory) Unwrap() kubernetes.ClientFactoryInterface {
 	return f.FakeClientFactory
 }
