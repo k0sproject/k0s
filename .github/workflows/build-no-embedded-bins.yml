@@ -1,0 +1,30 @@
+name: "Build :: k0s (no embedded bins)"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - release-*
+      - no-embedded-bins-*
+
+jobs:
+  build-k0s-no-embedded-bins:
+    strategy:
+      matrix:
+        include:
+          - target-os: linux
+            target-arch: amd64
+          - target-os: linux
+            target-arch: arm64
+          - target-os: linux
+            target-arch: arm
+          - target-os: windows
+            target-arch: amd64
+
+    name: "Build :: k0s (no embedded bins) :: ${{ matrix.target-os }}-${{ matrix.target-arch }}"
+    uses: ./.github/workflows/build-k0s.yml
+    with:
+      target-os: ${{ matrix.target-os }}
+      target-arch: ${{ matrix.target-arch }}
+      embedded-bins-buildmode: none
