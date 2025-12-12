@@ -54,10 +54,7 @@ func unCordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crp
 }
 
 type uncordoning struct {
-	log       *logrus.Entry
-	client    crcli.Client
-	delegate  apdel.ControllerDelegate
-	clientset *kubernetes.Clientset
+	cordonUncordon
 }
 
 // registerUncordoning registers the 'uncordoning' controller to the
@@ -81,12 +78,12 @@ func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
-			&uncordoning{
+			&uncordoning{cordonUncordon{
 				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-uncordoning", "object": delegate.Name()}),
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,
-			},
+			}},
 		)
 }
 

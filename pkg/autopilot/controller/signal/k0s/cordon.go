@@ -54,11 +54,15 @@ func cordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 	)
 }
 
-type cordoning struct {
+type cordonUncordon struct {
 	log       *logrus.Entry
 	client    crcli.Client
 	delegate  apdel.ControllerDelegate
 	clientset *kubernetes.Clientset
+}
+
+type cordoning struct {
+	cordonUncordon
 }
 
 // registerCordoning registers the 'cordoning' controller to the
@@ -82,12 +86,12 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
-			&cordoning{
+			&cordoning{cordonUncordon{
 				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,
-			},
+			}},
 		)
 }
 
