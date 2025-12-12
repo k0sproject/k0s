@@ -467,3 +467,20 @@ jobs:
       - name: "Docker prune"
         if: always()
         run: docker system prune --force --filter "until=$((24*7))h"
+
+  # Have a final job that "summarizes" the workflow run. Currently, it does
+  # nothing, but can be added to branch protection rules to capture the overall
+  # outcome of all the dynamic jobs.
+  summarize:
+    name: "Go build :: Summarize"
+    runs-on: ubuntu-24.04
+    needs:
+      - unittests-k0s
+      - smoketests
+      - smoketest-arm
+      - autopilot-tests
+      - generate-sbom
+
+    steps:
+      - name: Summarize
+        run: echo All jobs passed.
