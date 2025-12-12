@@ -80,6 +80,7 @@ func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 				delegate:  delegate,
 				clientset: clientset,
 				do:        uncordonNode,
+				nextState: apsigcomm.Completed,
 			}},
 		)
 }
@@ -101,7 +102,7 @@ func (r *uncordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result,
 	if !needsCordoning(signalNode) {
 		logger.Infof("ignoring non worker node")
 
-		return cr.Result{}, r.moveToNextState(ctx, signalNode, apsigcomm.Completed)
+		return cr.Result{}, r.moveToNextState(ctx, signalNode)
 	}
 
 	logger.Infof("starting to un-cordon node %s", signalNode.GetName())
@@ -109,30 +110,7 @@ func (r *uncordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result,
 		return cr.Result{}, err
 	}
 
-	return cr.Result{}, r.moveToNextState(ctx, signalNode, apsigcomm.Completed)
-}
-
-func (r *uncordoning) moveToNextState(ctx context.Context, signalNode crcli.Object, state string) error {
-	logger := r.log.WithField("signalnode", signalNode.GetName())
-
-	var signalData apsigv2.SignalData
-	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
-		return fmt.Errorf("unable to unmarshal signal data: %w", err)
-	}
-
-	signalData.Status = apsigv2.NewStatus(state)
-	signalNodeCopy := r.delegate.DeepCopy(signalNode)
-
-	if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-		return fmt.Errorf("unable to marshal signal data: %w", err)
-	}
-
-	logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
-	if err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
-		logger.Errorf("Failed to update signal node to status '%s': %v", signalData.Status.Status, err)
-		return err
-	}
-	return nil
+	return cr.Result{}, r.moveToNextState(ctx, signalNode)
 }
 
 func uncordonNode(drainer *drain.Helper, node *corev1.Node) error {
