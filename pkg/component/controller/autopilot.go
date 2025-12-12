@@ -8,6 +8,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/netip"
+
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
@@ -23,6 +25,7 @@ var _ manager.Component = (*Autopilot)(nil)
 type Autopilot struct {
 	K0sVars            *config.CfgVars
 	KubeletExtraArgs   string
+	APIAddress         netip.Addr
 	KubeAPIPort        int
 	AdminClientFactory kubernetes.ClientFactoryInterface
 	Workloads          bool
@@ -49,7 +52,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",
 		HealthProbeBindAddr: "0",
-	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), a.Workloads, a.AdminClientFactory, autopilotClientFactory)
+	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), a.Workloads, autopilotClientFactory, a.APIAddress)
 	if err != nil {
 		return fmt.Errorf("failed to create autopilot controller: %w", err)
 	}
