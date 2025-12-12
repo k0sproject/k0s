@@ -624,3 +624,16 @@ Keep in mind that changing the flag in an existing node will not remove existing
 Equally importantly, some pods such as CSI plugins are likely to mount this directory,
 having inconsistent values across nodes is very likely to cause problems on Deployments and
 DaemonSets.
+
+## Containerd root directory
+
+By default k0s stores containerd state under `--data-dir`, typically
+`/var/lib/k0s/containerd`. The flag `--containerd-root-dir` allows using a
+different location:
+
+```shell
+sudo k0s install worker --token-file /var/lib/k0s/join-token --containerd-root-dir=/var/lib/containerd
+```
+
+Changing the containerd root directory on an existing node will not remove the
+old data.
