@@ -2,7 +2,7 @@
 sonobuoy_version = 0.57.3
 
 # renovate: datasource=github-releases depName=helm/helm
-helm_version = 3.19.2
+helm_version = 3.19.3
 
 smoketests := \
 	check-addons \
