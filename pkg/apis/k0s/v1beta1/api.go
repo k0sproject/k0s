@@ -66,7 +66,9 @@ type APISpec struct {
 func DefaultAPISpec() *APISpec {
 	a := new(APISpec)
 	a.setDefaults()
-	a.SANs, _ = iface.AllAddresses()
+	if sans, err := iface.AllAddresses(); err == nil {
+		a.SANs = stringslice.Unique(sans)
+	}
 	return a
 }
 
