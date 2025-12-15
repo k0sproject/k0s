@@ -532,17 +532,17 @@ jobs:
           registry: quay.io
 
       - name: Fetch k0s amd64
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: k0s-linux-amd64
           path: ./k0s-amd64
       - name: Fetch k0s arm64
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: k0s-linux-arm64
           path: ./k0s-arm64
       - name: Fetch k0s arm
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: k0s-linux-arm
           path: ./k0s-arm
@@ -601,7 +601,7 @@ jobs:
 
     steps:
       - name: Download conformance test results
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: ostests-e2e
           pattern: ostests-e2e-*-sonobuoy-results

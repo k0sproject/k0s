@@ -52,7 +52,7 @@ jobs:
           cache: false
 
       - name: Download compiled executable
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: k0s-linux-${{ inputs.arch }}
 
@@ -63,13 +63,13 @@ jobs:
 
       - name: Download airgap image bundle
         if: contains(inputs.name, 'airgap') || contains(inputs.name, 'ipv6')
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: airgap-image-bundle-linux-${{ inputs.arch }}
 
       - name: Download ipv6 image bundle
         if: inputs.name == 'calico-ipv6' || inputs.name == 'kuberouter-ipv6' || (startsWith(inputs.name, 'network-conformance-') && contains(inputs.name, '-ipv6'))
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: ipv6-test-image-bundle-linux-${{ inputs.arch }}
 
