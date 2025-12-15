@@ -95,7 +95,7 @@ const (
 	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"
 	EnvoyProxyImageVersion             = "v1.32.8"
 	CalicoImage                        = "quay.io/k0sproject/calico-cni"
-	CalicoComponentImagesVersion       = "v3.29.6-0"
+	CalicoComponentImagesVersion       = "v3.29.7-0"
 	CalicoNodeImage                    = "quay.io/k0sproject/calico-node"
 	KubeControllerImage                = "quay.io/k0sproject/calico-kube-controllers"
 	KubeRouterCNIImage                 = "quay.io/k0sproject/kube-router"
