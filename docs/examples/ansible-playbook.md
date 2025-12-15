@@ -13,11 +13,11 @@ Ansible is a popular infrastructure-as-code tool that can use to automate tasks 
 
 You will require the following tools to install k0s on local virtual machines:
 
-| Tool            | Detail                                    |
-|:----------------------|:------------------------------------------|
-| `multipass`  | A lightweight VM manager that uses KVM on Linux, Hyper-V on Windows, and hypervisor.framework on macOS. [Installation information](https://multipass.run/docs)|
-| `ansible`          | An infrastructure as code tool. [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/index.html) |
-| `kubectl`             | Command line tool for running commands against Kubernetes clusters.  [Kubernetes Install Tools](https://docs.ansible.com/ansible/latest/installation_guide/index.html) |
+| Tool        | Detail                                                                                                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `multipass` | A lightweight VM manager that uses KVM on Linux, Hyper-V on Windows, and hypervisor.framework on macOS. [Installation information](https://multipass.run/docs)         |
+| `ansible`   | An infrastructure as code tool. [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/index.html)                                            |
+| `kubectl`   | Command line tool for running commands against Kubernetes clusters.  [Kubernetes Install Tools](https://docs.ansible.com/ansible/latest/installation_guide/index.html) |
 
 ## Create the cluster
 
@@ -80,11 +80,11 @@ You will require the following tools to install k0s on local virtual machines:
 
         Assign the virtual machines to the different host groups, as required by the playbook logic.
 
-        | Host group            | Detail                                    |
-        |:----------------------|:------------------------------------------|
-        | `initial_controller`  | Must contain a single node that creates the worker and controller tokens needed by the other nodes|
-        | `controller`          | Can contain nodes that, together with the host from `initial_controller`, form a highly available isolated control plane |
-        | `worker`              | Must contain at least one node, to allow for the deployment of Kubernetes objects |
+        | Host group             | Detail                                                                                                                                                    |
+        | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+        | `initial_controller`   | Must contain a single node that creates the worker and controller tokens needed by the other nodes                                                        |
+        | `controller`           | Can contain nodes that, together with the host from `initial_controller`, form a highly available isolated control plane                                  |
+        | `worker`               | Must contain at least one node, to allow for the deployment of Kubernetes objects                                                                         |
 
     3. Fill in `inventory/multipass/inventory.yml`. This can be done by direct entry using the metadata provided by `multipass list,`, or you can use the following Python script `multipass_generate_inventory.py`:
 
