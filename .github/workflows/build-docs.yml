@@ -60,7 +60,7 @@ jobs:
         run: make -C docs docs
 
       - name: Upload site/
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: site
           path: site/

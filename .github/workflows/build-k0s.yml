@@ -93,7 +93,7 @@ jobs:
           echo "k0s${{ steps.build-prepare.outputs.executable-suffix }} binary size: **$(du -sh k0s${{ steps.build-prepare.outputs.executable-suffix }} | cut -f1)**" >>$GITHUB_STEP_SUMMARY
 
       - name: "Upload :: k0s"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: |
@@ -103,7 +103,7 @@ jobs:
         run: make spdx.json
 
       - name: "Upload :: SBOM"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: spdx.json
@@ -114,7 +114,7 @@ jobs:
 
       - name: "Upload :: Airgap image list"
         if: inputs.target-os != 'windows'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: airgap-images.txt
@@ -125,7 +125,7 @@ jobs:
 
       - name: "Upload :: IPv6 test image list"
         if: inputs.target-os != 'windows'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ipv6-test-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: ipv6-test-images.txt
