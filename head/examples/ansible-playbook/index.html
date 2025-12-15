@@ -2978,22 +2978,22 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Tool</th>
-<th style="text-align: left;">Detail</th>
+<th>Tool</th>
+<th>Detail</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>multipass</code></td>
-<td style="text-align: left;">A lightweight VM manager that uses KVM on Linux, Hyper-V on Windows, and hypervisor.framework on macOS. <a href="https://multipass.run/docs">Installation information</a></td>
+<td><code>multipass</code></td>
+<td>A lightweight VM manager that uses KVM on Linux, Hyper-V on Windows, and hypervisor.framework on macOS. <a href="https://multipass.run/docs">Installation information</a></td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>ansible</code></td>
-<td style="text-align: left;">An infrastructure as code tool. <a href="https://docs.ansible.com/ansible/latest/installation_guide/index.html">Installation Guide</a></td>
+<td><code>ansible</code></td>
+<td>An infrastructure as code tool. <a href="https://docs.ansible.com/ansible/latest/installation_guide/index.html">Installation Guide</a></td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>kubectl</code></td>
-<td style="text-align: left;">Command line tool for running commands against Kubernetes clusters.  <a href="https://docs.ansible.com/ansible/latest/installation_guide/index.html">Kubernetes Install Tools</a></td>
+<td><code>kubectl</code></td>
+<td>Command line tool for running commands against Kubernetes clusters.  <a href="https://docs.ansible.com/ansible/latest/installation_guide/index.html">Kubernetes Install Tools</a></td>
 </tr>
 </tbody>
 </table>
@@ -3048,11 +3048,11 @@ k0s-7<span class="w"> </span>Running<span class="w"> </span><span class="m">192<
 <p>2. Create the inventory.</p>
 <div class="highlight"><pre><span></span><code>  Assign the virtual machines to the different host groups, as required by the playbook logic.
 
-  | Host group            | Detail                                    |
-  |:----------------------|:------------------------------------------|
-  | `initial_controller`  | Must contain a single node that creates the worker and controller tokens needed by the other nodes|
-  | `controller`          | Can contain nodes that, together with the host from `initial_controller`, form a highly available isolated control plane |
-  | `worker`              | Must contain at least one node, to allow for the deployment of Kubernetes objects |
+  | Host group             | Detail                                                                                                                                                    |
+  | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `initial_controller`   | Must contain a single node that creates the worker and controller tokens needed by the other nodes                                                        |
+  | `controller`           | Can contain nodes that, together with the host from `initial_controller`, form a highly available isolated control plane                                  |
+  | `worker`               | Must contain at least one node, to allow for the deployment of Kubernetes objects                                                                         |
 </code></pre></div>
 <p>3. Fill in <code>inventory/multipass/inventory.yml</code>. This can be done by direct entry using the metadata provided by <code>multipass list,</code>, or you can use the following Python script <code>multipass_generate_inventory.py</code>:</p>
 <div class="highlight"><pre><span></span><code>  ```shell
