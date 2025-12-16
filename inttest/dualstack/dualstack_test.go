@@ -158,7 +158,7 @@ func (s *DualstackSuite) SetupSuite() {
 		podIP := targetPod.Status.PodIPs[1].IP
 		targetIP := net.ParseIP(podIP)
 		s.Require().NotNil(targetIP)
-		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetIP))
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- [%s]", targetIP))
 		s.T().Log(out, err)
 		if err != nil {
 			s.T().Log("error calling ipv6 address: ", err)
