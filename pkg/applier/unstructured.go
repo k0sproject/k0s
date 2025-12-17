@@ -4,8 +4,10 @@
 package applier
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,6 +32,37 @@ func ReadUnstructuredStream(src io.Reader, name string) ([]*unstructured.Unstruc
 	for i := range infos {
 		resources[i] = infos[i].Object.(*unstructured.Unstructured)
 	}
+	return resources, nil
+}
+
+func ReadUnstructuredDir(fsys fs.FS, path string) (resources []*unstructured.Unstructured, _ error) {
+	err := fs.WalkDir(fsys, path, func(path string, d fs.DirEntry, walkErr error) (err error) {
+		if walkErr != nil {
+			return walkErr
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		r, err := fsys.Open(path)
+		if err != nil {
+			return err
+		}
+		defer func() { err = errors.Join(err, r.Close()) }()
+
+		fileResources, err := ReadUnstructuredStream(r, path)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s: %w", path, err)
+		}
+
+		resources = append(resources, fileResources...)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return resources, nil
 }
 

@@ -23,23 +23,11 @@ import (
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 )
 
 // setup will go through all of the required setup operations that are required for autopilot.
-// This effectively replaces the manifest concept used in k0s, as there is no guarantee that
-// autopilot has access to the k0s file-system, or even if k0s is used at all.
 func (c *rootController) setup(ctx context.Context) error {
 	logger := c.log.WithField("component", "setup")
-
-	logger.Info("Applying namespace ", apconst.AutopilotNamespace)
-	if client, err := c.kubeClientFactory.GetClient(); err != nil {
-		return fmt.Errorf("unable to create obtain a kube client: %w", err)
-	} else if _, err := client.CoreV1().Namespaces().Apply(
-		ctx, applycorev1.Namespace(apconst.AutopilotNamespace),
-		metav1.ApplyOptions{FieldManager: "k0s", Force: true}); err != nil && !apierrors.IsAlreadyExists(err) {
-		return fmt.Errorf("failed to apply autopilot namespace %s: %w", apconst.AutopilotNamespace, err)
-	}
 
 	controlNodeName, err := apcomm.FindEffectiveHostname()
 	if err != nil {
