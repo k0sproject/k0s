@@ -14,6 +14,7 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -110,7 +111,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
+		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, true, clusterID, leaderelection.StatusPending, w.cfg.InvocationID); err != nil {
 			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
 
