@@ -11,7 +11,7 @@ on:
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping test clusters.
-        default: 0.27.1 # renovate: datasource=github-releases depName=k0sproject/k0sctl
+        default: 0.28.0 # renovate: datasource=github-releases depName=k0sproject/k0sctl
       e2e-concurrency-level:
         type: number
         description: The number of tests that may be run concurrently.
