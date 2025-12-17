@@ -42,7 +42,7 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
-		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc run nginx --image docker.io/library/nginx:1.29.3-alpine")
+		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc run nginx --image docker.io/library/nginx:1.29.4-alpine")
 		s.Require().NoError(err)
 		s.NoError(common.WaitForPod(s.Context(), kc, "nginx", metav1.NamespaceDefault))
 		s.NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceDefault))

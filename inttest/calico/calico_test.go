@@ -5,6 +5,7 @@ package calico
 
 import (
 	"context"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -96,7 +97,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.29.3-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.29.4-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
@@ -126,7 +127,8 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", metav1.NamespaceDefault), "alpine pod did not start")
 
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
-		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, "/usr/bin/wget -qO- "+targetPod.Status.PodIP)
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace,
+			"/usr/bin/wget -qO- "+net.JoinHostPort(targetPod.Status.PodIP, "80"))
 		if err != nil {
 			return false, err
 		}

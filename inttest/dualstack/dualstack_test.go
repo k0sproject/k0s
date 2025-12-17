@@ -127,7 +127,7 @@ func (s *DualstackSuite) SetupSuite() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker0"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.29.3-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.29.4-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
@@ -143,7 +143,7 @@ func (s *DualstackSuite) SetupSuite() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker1"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.29.3-alpine"}},
+			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.29.4-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker1",
 			},
@@ -158,7 +158,7 @@ func (s *DualstackSuite) SetupSuite() {
 		podIP := targetPod.Status.PodIPs[1].IP
 		targetIP := net.ParseIP(podIP)
 		s.Require().NotNil(targetIP)
-		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetIP))
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- [%s]", targetIP))
 		s.T().Log(out, err)
 		if err != nil {
 			s.T().Log("error calling ipv6 address: ", err)
