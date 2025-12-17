@@ -20,6 +20,7 @@ import (
 	"github.com/bombsimon/logrusr/v4"
 	cfssllog "github.com/cloudflare/cfssl/log"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/grpclog"
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -31,6 +32,7 @@ func InitLogging() {
 
 	cfssllog.SetLogger((*cfsslAdapter)(logrus.WithField("component", "cfssl")))
 	crlog.SetLogger(logrusr.New(logrus.WithField("component", "controller-runtime")))
+	grpclog.SetLoggerV2(&grpcAdapter{logrus.WithField("component", "grpc")})
 
 	SetWarnLevel()
 }
@@ -49,3 +51,7 @@ func SetWarnLevel() {
 	logrus.SetLevel(logrus.WarnLevel)
 	cfssllog.Level = cfssllog.LevelWarning
 }
+
+type grpcAdapter struct{ *logrus.Entry }
+
+func (*grpcAdapter) V(level int) bool { return false }
