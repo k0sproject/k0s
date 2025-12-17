@@ -692,7 +692,7 @@ spec:
                       iptables:
                         description: |-
                           KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.32.10/config/v1alpha1/types.go#L27-L48
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.32.11/config/v1alpha1/types.go#L27-L48
                         properties:
                           localhostNodePorts:
                             type: boolean
@@ -709,7 +709,7 @@ spec:
                       ipvs:
                         description: |-
                           KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.32.10/config/v1alpha1/types.go#L52-L78
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.32.11/config/v1alpha1/types.go#L52-L78
                         properties:
                           excludeCIDRs:
                             items:
@@ -740,7 +740,7 @@ spec:
                       nftables:
                         description: |-
                           KubeProxyNFTablesConfiguration contains nftables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.32.10/config/v1alpha1/types.go#L82-L97
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.32.11/config/v1alpha1/types.go#L82-L97
                         properties:
                           masqueradeAll:
                             type: boolean

@@ -22,7 +22,7 @@ containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_ldflags =
 containerd_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-kubernetes_version = 1.32.10
+kubernetes_version = 1.32.11
 helm_version = 3.17.2
 kubernetes_buildimage = $(golang_buildimage)
 kubernetes_build_go_tags = "providerless"
