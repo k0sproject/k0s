@@ -36,9 +36,15 @@ func (kp *k0supdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, sta
 
 	var allControllersAccountedFor bool
 	status.K0sUpdate.Controllers, allControllersAccountedFor = populateControllerStatus(ctx, kp.client, *cmd.K0sUpdate, kp.controllerDelegateMap)
+	if !allControllersAccountedFor {
+		kp.logger.Warnf("Not all controllers accounted for: %v", status.K0sUpdate.Controllers)
+	}
 
 	var allWorkersAccountedFor bool
 	status.K0sUpdate.Workers, allWorkersAccountedFor = populateWorkerStatus(ctx, kp.client, *cmd.K0sUpdate, kp.controllerDelegateMap)
+	if !allWorkersAccountedFor {
+		kp.logger.Warnf("Not all workers accounted for: %v", status.K0sUpdate.Workers)
+	}
 
 	if !allControllersAccountedFor || !allWorkersAccountedFor {
 		return appc.PlanIncompleteTargets, false, nil
