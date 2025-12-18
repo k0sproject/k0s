@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.29.3/charts/calico/templates/calico-node.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.29.7/charts/calico/templates/calico-node.yaml
 # This manifest installs the calico-node container, as well
 # as the CNI plugins and network config on
 # each master and worker node in a Kubernetes cluster.
