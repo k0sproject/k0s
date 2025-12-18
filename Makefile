@@ -288,7 +288,7 @@ $(ipv6_smoketests): ipv6-test-image-bundle-linux-$(HOST_ARCH).tar
 $(smoketests): k0s
 	$(MAKE) -C inttest \
 		K0S_IMAGES_BUNDLE='$(CURDIR)/airgap-image-bundle-linux-$(HOST_ARCH).tar' \
-		K0S_EXTRA_IMAGES_BUNDLE='$(CURDIR)/ipv6-test-mage-bundle-linux-$(HOST_ARCH).tar' \
+		K0S_EXTRA_IMAGES_BUNDLE='$(CURDIR)/ipv6-test-image-bundle-linux-$(HOST_ARCH).tar' \
 		$@
 
 .PHONY: smoketests
