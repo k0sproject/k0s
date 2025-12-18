@@ -152,7 +152,7 @@ jobs:
           name: sbom-linux-amd64
 
       - name: Submit
-        uses: advanced-security/spdx-dependency-submission-action@v0.1.1
+        uses: advanced-security/spdx-dependency-submission-action@v0.1.2
         with:
           filePath: spdx.json
 
