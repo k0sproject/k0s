@@ -1,5 +1,5 @@
 # renovate: datasource=docker depName=docker.io/library/alpine versioning=docker
-alpine_patch_version = 3.23.0
+alpine_patch_version = 3.23.2
 alpine_version = $(word 1,$(subst ., ,$(alpine_patch_version))).$(word 2,$(subst ., ,$(alpine_patch_version)))
 
 # renovate: datasource=golang-version depName=go
