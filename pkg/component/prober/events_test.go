@@ -6,6 +6,7 @@ package prober
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -76,30 +77,32 @@ func TestEvents(t *testing.T) {
 	})
 
 	t.Run("emitter_observes_events_emitted_by_components_registred_after_run_is_called", func(t *testing.T) {
-		prober := testProber(0)
-		ctx, cancel := context.WithCancel(t.Context())
-		go prober.Run(ctx)
-		component := newMockWithEvents(3)
-		prober.Register("component_with_events", component)
-		component.sendEvents(
-			Event{
-				At:      time.Now(),
-				Message: "Test event 1",
-			},
-			Event{
-				At:      time.Now(),
-				Message: "Test event 2",
-			},
-			Event{
-				At:      time.Now(),
-				Message: "Test event 3",
-			},
-		)
-		time.Sleep(time.Second)
-		st := prober.State(maxEvents)
-		assert.Len(t, st.Events, 1)
-		assert.Len(t, st.Events["component_with_events"], 3)
-		cancel()
+		synctest.Test(t, func(t *testing.T) {
+			prober := testProber(0)
+			ctx, cancel := context.WithCancel(t.Context())
+			go prober.Run(ctx)
+			component := newMockWithEvents(3)
+			prober.Register("component_with_events", component)
+			component.sendEvents(
+				Event{
+					At:      time.Now(),
+					Message: "Test event 1",
+				},
+				Event{
+					At:      time.Now(),
+					Message: "Test event 2",
+				},
+				Event{
+					At:      time.Now(),
+					Message: "Test event 3",
+				},
+			)
+			synctest.Wait()
+			st := prober.State(maxEvents)
+			assert.Len(t, st.Events, 1)
+			assert.Len(t, st.Events["component_with_events"], 3)
+			cancel()
+		})
 	})
 	t.Run("multiple_emitters", func(t *testing.T) {
 		emitter := &EventEmitter{
