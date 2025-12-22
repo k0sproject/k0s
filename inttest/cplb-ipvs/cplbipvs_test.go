@@ -23,6 +23,8 @@ type cplbIPVSSuite struct {
 	isIPv6Only bool
 }
 
+const keepalivedTestMarker = "# k0s-inttest-cplb-ipvs"
+
 const cplbCfgTemplate = `
 spec:
   network:
@@ -34,6 +36,8 @@ spec:
       enabled: true
       type: Keepalived
       keepalived:
+        configTemplateVRRP: /tmp/keepalived-vrrp.conf
+        configTemplateVS: /tmp/keepalived-virtualservers.conf
         vrrpInstances:
         - virtualIPs: ["{{ .lbCIDR }}"]
           authPass: "123456"
@@ -65,6 +69,42 @@ func (s *cplbIPVSSuite) getK0sCfg(nodeIdx int, vip string) string {
 	return k0sCfg.String()
 }
 
+// generateKeepalivedTemplates creates keepalived configuration files by executing
+// k0s keepalived-config commands on the controller and appending an inttest marker.
+func (s *cplbIPVSSuite) generateKeepalivedTemplates(ctx context.Context, idx int) {
+	ssh, err := s.SSH(ctx, s.ControllerNode(idx))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	vsOutput, err := ssh.ExecWithOutput(ctx, "/usr/local/bin/k0s keepalived-config virtualservers")
+	s.Require().NoError(err)
+	vsContent := vsOutput + "\n" + keepalivedTestMarker
+	s.PutFile(s.ControllerNode(idx), "/tmp/keepalived-virtualservers.conf", vsContent)
+
+	vrrpOutput, err := ssh.ExecWithOutput(ctx, "/usr/local/bin/k0s keepalived-config vrrp")
+	s.Require().NoError(err)
+	vrrpContent := vrrpOutput + "\n" + keepalivedTestMarker
+	s.PutFile(s.ControllerNode(idx), "/tmp/keepalived-vrrp.conf", vrrpContent)
+}
+
+// verifyCustomTemplate verifies that the custom template marker is present in the
+// generated keepalived configuration files on the controller node.
+func (s *cplbIPVSSuite) verifyCustomTemplate(ctx context.Context, idx int) {
+	ssh, err := s.SSH(ctx, s.ControllerNode(idx))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	// Verify keepalived.conf contains the marker
+	keepalivedConf, err := ssh.ExecWithOutput(ctx, "cat /run/k0s/keepalived.conf")
+	s.Require().NoError(err)
+	s.Require().Contains(keepalivedConf, keepalivedTestMarker, "keepalived.conf should contain the custom template marker")
+
+	// Verify keepalived-virtualservers-generated.conf contains the marker
+	vsConf, err := ssh.ExecWithOutput(ctx, "cat /run/k0s/keepalived-virtualservers-generated.conf")
+	s.Require().NoError(err)
+	s.Require().Contains(vsConf, keepalivedTestMarker, "keepalived-virtualservers-generated.conf should contain the custom template marker")
+}
+
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *cplbIPVSSuite) TestK0sGetsUp() {
@@ -79,7 +119,8 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	for idx := range s.ControllerCount {
 		s.T().Logf("getting config")
 		k0sCfg := s.getK0sCfg(idx, vip)
-		s.T().Logf("putting file")
+		s.T().Logf("putting files")
+		s.generateKeepalivedTemplates(ctx, idx)
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
 
 		s.T().Logf("init controller")
@@ -138,6 +179,11 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	// Verify that the real servers are present in the ipvsadm output in the active node and missing in the others
 	for idx := range s.ControllerCount {
 		s.validateRealServers(ctx, s.ControllerNode(idx), vip, idx == activeNode)
+	}
+
+	// Verify that the custom templates were used to generate the keepalived configuration
+	for idx := range s.ControllerCount {
+		s.verifyCustomTemplate(ctx, idx)
 	}
 }
 
