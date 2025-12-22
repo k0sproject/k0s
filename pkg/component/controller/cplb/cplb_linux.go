@@ -123,8 +123,10 @@ func (k *Keepalived) Start(ctx context.Context) error {
 
 	// In order to make the code simpler, we always create the keepalived template
 	// without the virtual servers, before starting the reconcile loop
-
-	templ := template.Must(template.New("keepalived").Parse(keepalivedVRRPConfigTemplate))
+	templ, err := k.getTemplate(k.Config.ConfigTemplateVRRP, keepalivedVRRPConfigTemplate, "keepalived-vrrp")
+	if err != nil {
+		return fmt.Errorf("failed to parse keepalived template: %w", err)
+	}
 	if err := k.generateTemplate(templ, k.configFilePath); err != nil {
 		return fmt.Errorf("failed to generate keepalived template: %w", err)
 	}
@@ -157,16 +159,29 @@ func (k *Keepalived) Start(ctx context.Context) error {
 	if k.reconciler != nil {
 		reconcilerDone := make(chan struct{})
 		k.reconcilerDone = reconcilerDone
-		go func() {
-			defer close(reconcilerDone)
-			if len(k.Config.VirtualServers) > 0 {
-				k.watchReconcilerUpdatesKeepalived()
-			} else {
-				if err := k.watchReconcilerUpdatesReverseProxy(ctx); err != nil {
-					k.log.WithError(err).Error("failed to watch reconciler updates")
-				}
+		if len(k.Config.VirtualServers) > 0 {
+			templ, err := k.getTemplate(k.Config.ConfigTemplateVS, keepalivedVirtualServersConfigTemplate, "keepalived-virtualservers")
+			if err != nil {
+				return fmt.Errorf("failed to parse keepalived template: %w", err)
 			}
-		}()
+			// With the default template at this point this generates an empty file, but not be true
+			// with user provided templates.
+			if err := k.generateTemplate(templ, k.virtualServersFilePath); err != nil {
+				return fmt.Errorf("failed to generate keepalived template: %w", err)
+			}
+			go func() {
+				defer close(reconcilerDone)
+				k.watchReconcilerUpdatesKeepalived(templ)
+			}()
+		} else {
+			if err := k.startReverseProxy(); err != nil {
+				return fmt.Errorf("failed to start reverse proxy: %w", err)
+			}
+			go func() {
+				defer close(reconcilerDone)
+				k.watchReconcilerUpdatesReverseProxy(ctx)
+			}()
+		}
 	}
 
 	return k.supervisor.Supervise(ctx)
@@ -382,35 +397,28 @@ func (k *Keepalived) generateTemplate(templ *template.Template, path string) err
 	return nil
 }
 
-func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) error {
+func (k *Keepalived) startReverseProxy() error {
 	k.proxy = tcpproxy.Proxy{}
 	// We don't know how long until we get the first update, so initially we
 	// forward everything to localhost
 	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), []tcpproxy.Route{tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort))})
-
 	if err := k.proxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
 	}
+	return k.redirectToProxyIPTables(iptablesCommandAppend)
+}
 
+func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) {
 	k.log.Info("Waiting for the first cplb-reconciler update")
-
 	select {
 	case <-ctx.Done():
-		return errors.New("context canceled while starting the reverse proxy")
+		k.log.Error("context canceled while starting the reverse proxy")
 	case <-k.updateCh:
 	}
 	k.setProxyRoutes()
-
-	// Do not create the iptables rules until we have the first update and the
-	// proxy is running
-	if err := k.redirectToProxyIPTables(iptablesCommandAppend); err != nil {
-		k.log.Fatal(err)
-	}
-
 	for range k.updateCh {
 		k.setProxyRoutes()
 	}
-	return nil
 }
 
 func (k *Keepalived) setProxyRoutes() {
@@ -459,7 +467,7 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 	return nil
 }
 
-func (k *Keepalived) watchReconcilerUpdatesKeepalived() {
+func (k *Keepalived) watchReconcilerUpdatesKeepalived(templ *template.Template) {
 	// Wait for the supervisor to start keepalived before
 	// watching for endpoint changes
 	process := k.supervisor.GetProcess()
@@ -474,7 +482,6 @@ func (k *Keepalived) watchReconcilerUpdatesKeepalived() {
 	}
 
 	k.log.Info("started watching cplb-reconciler updates")
-	templ := template.Must(template.New("keepalived").Parse(keepalivedVirtualServersConfigTemplate))
 	for range k.updateCh {
 		k.keepalivedConfig.RealServers = k.reconciler.GetIPs()
 		k.log.Infof("cplb-reconciler update, got %s", k.keepalivedConfig.RealServers)
@@ -496,6 +503,18 @@ func (k *Keepalived) watchReconcilerUpdatesKeepalived() {
 func escapeSingleQuotes(s string) string {
 	str := strings.ReplaceAll(s, `\'`, `'`)
 	return strings.ReplaceAll(str, `'`, `\'`)
+}
+
+func (k *Keepalived) getTemplate(path string, defaultTempl string, name string) (*template.Template, error) {
+	templ := defaultTempl
+	if path != "" {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read config template from %s: %w", path, err)
+		}
+		templ = string(content)
+	}
+	return template.New(name).Parse(templ)
 }
 
 // keepalivedConfig contains all the information required by the
