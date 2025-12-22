@@ -595,3 +595,44 @@ TCP  192.168.122.200:6443 rr persistent 360
   and `192.168.122.122` are the control plane nodes.
 
 If there is only one VRRP instance, only the current master should be load balancing.
+
+## Custom Keepalived Templates
+
+**Warning:** Any customization to Keepalived templates is outside the scope of k0s support.
+Template variables are not considered a stable API and templates can break during upgrades. Use at your own risk.
+
+K0s allows you to customize the Keepalived configuration by providing custom Go templates for advanced users
+who need an extra layer of customization. A minimal example would be:
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"]
+          authPass: "<my password>"
+        configTemplateVRRP: /path/to/custom-vrrp-template.conf
+        configTemplateVS: /path/to/custom-virtualservers-template.conf
+```
+
+It is recommended to create custom templates based on the default templates, these can be accessed using the following commands:
+
+```shell
+# View the default VRRP template
+k0s keepalived-config vrrp
+
+# View the default Virtual Servers template
+k0s keepalived-config virtualservers
+```
+
+The templates are only read during the k0s bootstrap. If a template is changed it's required to restart k0s.
+
+### Important Considerations
+
+* **No Support**: Custom template configurations are not officially supported. If you encounter issues with custom templates, you may be asked to reproduce the issue with default templates.
+* **Updates**: When upgrading k0s, review the default templates for any changes that may need to be incorporated into your custom templates.
+* **Testing**: Always test custom templates thoroughly in a non-production environment before deploying to production.
+* **Syntax Validation**: k0s performs minimal validation of custom templates. Invalid Keepalived configuration will cause the CPLB feature to fail.
