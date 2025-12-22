@@ -65,6 +65,16 @@ type KeepalivedSpec struct {
 	UserSpaceProxyPort int `json:"userSpaceProxyBindPort,omitempty"`
 	// DisableLoadBalancer disables the load balancer.
 	DisableLoadBalancer bool `json:"disableLoadBalancer,omitempty"`
+	// ConfigTemplateVRRP specifies the path to a custom Keepalived configuration template for VRRP.
+	// If specified, this template will be used instead of the default configuration.
+	// The template must be a valid Go template and will receive keepalivedConfig as input.
+	// +optional
+	ConfigTemplateVRRP string `json:"configTemplateVRRP,omitempty"`
+	// ConfigTemplateVS specifies the path to a custom Keepalived configuration template for Virtual Servers.
+	// If specified, this template will be used instead of the default configuration.
+	// The template must be a valid Go template and will receive keepalivedConfig as input.
+	// +optional
+	ConfigTemplateVS string `json:"configTemplateVS,omitempty"`
 }
 
 // VRRPInstances is a list of VRRPInstance
