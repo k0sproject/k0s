@@ -77,7 +77,14 @@ func (m *ociRegistryManager) GetRegistryClient(rawRegistryURL string) (*registry
 		tlsConfig.RootCAs = cPool
 	}
 	if repoCfg.CertFile != "" || repoCfg.KeyFile != "" {
-		return nil, fmt.Errorf("repository %s sets certificate and key files, but mTLS is not supported for OCI registries", repoCfg.Name)
+		if repoCfg.CertFile == "" || repoCfg.KeyFile == "" {
+			return nil, fmt.Errorf("repository %s must set both certFile and keyFile for mTLS", repoCfg.Name)
+		}
+		clientCert, err := tls.LoadX509KeyPair(repoCfg.CertFile, repoCfg.KeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("can't load client certificate for repository %s: %w", repoCfg.Name, err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{clientCert}
 	}
 
 	// add applicable options from the Helm's default registry client

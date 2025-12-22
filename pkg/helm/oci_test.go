@@ -134,7 +134,7 @@ func TestOCIRegistryManager_GetRegistryClientErrors(t *testing.T) {
 				CertFile: "path/to/client.crt",
 				KeyFile:  "path/to/client.key",
 			},
-			expectedErr: "mTLS is not supported for OCI registries",
+			expectedErr: "can't load client certificate",
 		},
 	}
 
@@ -144,8 +144,7 @@ func TestOCIRegistryManager_GetRegistryClientErrors(t *testing.T) {
 			require.NoError(t, m.AddRegistry(tc.repoCfg))
 
 			_, err := m.GetRegistryClient(tc.repoCfg.URL)
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tc.expectedErr)
+			require.ErrorContains(t, err, tc.expectedErr)
 		})
 	}
 }
@@ -249,4 +248,75 @@ func TestOCIRegistryManager_GetRegistryClient_Settings(t *testing.T) {
 			require.NotNil(t, client)
 		})
 	}
+}
+
+func TestOCIRegistryManager_mTLS_CertWithoutKeyFails(t *testing.T) {
+	m := newOCIRegistryManager()
+
+	repoCfg := v1beta1.Repository{
+		Name:     "test-repo",
+		URL:      testOCIRegistryURL,
+		CertFile: "/some/path/client.crt",
+	}
+
+	require.NoError(t, m.AddRegistry(repoCfg))
+
+	_, err := m.GetRegistryClient(repoCfg.URL)
+	require.ErrorContains(t, err, "must set both certFile and keyFile")
+}
+
+func TestOCIRegistryManager_mTLS_KeyWithoutCertFails(t *testing.T) {
+	m := newOCIRegistryManager()
+
+	repoCfg := v1beta1.Repository{
+		Name:    "test-repo",
+		URL:     testOCIRegistryURL,
+		KeyFile: "/some/path/client.key",
+	}
+
+	require.NoError(t, m.AddRegistry(repoCfg))
+
+	_, err := m.GetRegistryClient(repoCfg.URL)
+	require.ErrorContains(t, err, "must set both certFile and keyFile")
+}
+
+func TestOCIRegistryManager_mTLS_InvalidCertKeyFails(t *testing.T) {
+	m := newOCIRegistryManager()
+
+	repoCfg := v1beta1.Repository{
+		Name:     "test-repo",
+		URL:      testOCIRegistryURL,
+		CertFile: "/invalid/client.crt",
+		KeyFile:  "/invalid/client.key",
+	}
+
+	require.NoError(t, m.AddRegistry(repoCfg))
+
+	_, err := m.GetRegistryClient(repoCfg.URL)
+	require.ErrorContains(t, err, "can't load client certificate")
+}
+
+func TestOCIRegistryManager_mTLS_Success(t *testing.T) {
+	certsDir := t.TempDir()
+	initCA(t, certsDir)
+
+	// reuse CA cert as dummy client cert
+	clientCert := path.Join(certsDir, caCertFilename)
+	clientKey := path.Join(certsDir, caKeyFilename)
+
+	m := newOCIRegistryManager()
+
+	repoCfg := v1beta1.Repository{
+		Name:     "test-repo",
+		URL:      testOCIRegistryURL,
+		CAFile:   clientCert,
+		CertFile: clientCert,
+		KeyFile:  clientKey,
+	}
+
+	require.NoError(t, m.AddRegistry(repoCfg))
+
+	client, err := m.GetRegistryClient(repoCfg.URL)
+	require.NoError(t, err)
+	require.NotNil(t, client)
 }
