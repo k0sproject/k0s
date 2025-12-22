@@ -12,6 +12,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/ctr"
 	"github.com/k0sproject/k0s/cmd/etcd"
 	"github.com/k0sproject/k0s/cmd/install"
+	"github.com/k0sproject/k0s/cmd/keepalived"
 	"github.com/k0sproject/k0s/cmd/kubeconfig"
 	"github.com/k0sproject/k0s/cmd/kubectl"
 	"github.com/k0sproject/k0s/cmd/start"
@@ -43,6 +44,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(config.NewConfigCmd())
 	cmd.AddCommand(etcd.NewEtcdCmd())
 	cmd.AddCommand(install.NewInstallCmd())
+	cmd.AddCommand(keepalived.NewKeepalivedConfigCmd())
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
 	cmd.AddCommand(kubectl.NewK0sKubectlCmd())
 	cmd.AddCommand(start.NewStartCmd())
