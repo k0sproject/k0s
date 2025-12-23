@@ -64,6 +64,7 @@ func etcdLeaveCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("can't connect to the etcd: %w", err)
 			}
+			defer etcdClient.Close()
 
 			peerID, err := etcdClient.GetPeerIDByAddress(ctx, peerURL)
 			if err != nil {

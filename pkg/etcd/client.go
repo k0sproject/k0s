@@ -136,8 +136,8 @@ func (c *Client) DeleteMember(ctx context.Context, peerID uint64) error {
 }
 
 // Close closes the etcd client
-func (c *Client) Close() {
-	c.client.Close()
+func (c *Client) Close() error {
+	return c.client.Close()
 }
 
 // Health return err if the etcd peer is not reported as healthy
