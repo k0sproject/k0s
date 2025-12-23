@@ -26,7 +26,6 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
 
@@ -119,9 +118,7 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 
 	go func() {
 		defer close(done)
-		wait.UntilWithContext(ctx, func(ctx context.Context) {
-			e.reconcile(ctx, log, client)
-		}, 1*time.Minute)
+		e.reconcile(ctx, log, client)
 	}()
 
 	e.stop = func() {
@@ -133,9 +130,50 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 }
 
 func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
-	leaderelection.RunLeaderTasks(ctx, e.leaderElector.CurrentStatus, func(ctx context.Context) {
-		e.watchAndResync(ctx, client, log)
-	})
+	for {
+		status, statusExpired := e.leaderElector.CurrentStatus()
+		statusCtx, cancelStatus := context.WithCancelCause(ctx)
+
+		go func() {
+			select {
+			case <-statusExpired:
+				// Cancel the reconciliation on leader status changes and
+				// enforce a new loop iteration.
+				cancelStatus(errors.New("leader status changed"))
+			case <-statusCtx.Done():
+			}
+		}()
+
+		switch status {
+		case leaderelection.StatusLeading:
+			e.watchAndResync(statusCtx, client, log)
+		default:
+			<-statusCtx.Done()
+		}
+
+		// Bail out if the context has been canceled.
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		// Short-circuit to the next loop iteration on leader status changes.
+		select {
+		case <-statusCtx.Done():
+			continue
+		default:
+		}
+
+		// Reconciliation exited early, probably due to an error. Back off and restart.
+		cancelStatus(nil)
+		select {
+		case <-time.After(30 * time.Second):
+			continue
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (e *EtcdMemberReconciler) watchAndResync(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) {
