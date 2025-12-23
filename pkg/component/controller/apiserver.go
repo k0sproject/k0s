@@ -89,7 +89,7 @@ func (a *APIServer) Init(_ context.Context) error {
 }
 
 // Run runs kube api
-func (a *APIServer) Start(_ context.Context) error {
+func (a *APIServer) Start(ctx context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 	args := stringmap.StringMap{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
@@ -176,7 +176,7 @@ func (a *APIServer) Start(_ context.Context) error {
 	}
 	a.supervisor.Args = append(a.supervisor.Args, etcdArgs...)
 
-	return a.supervisor.Supervise()
+	return a.supervisor.Supervise(ctx)
 }
 
 func (a *APIServer) writeKonnectivityConfig() error {

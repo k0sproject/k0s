@@ -241,7 +241,7 @@ func (e *Etcd) Start(ctx context.Context) error {
 		KeepEnvPrefix: true,
 	}
 
-	return e.supervisor.Supervise()
+	return e.supervisor.Supervise(ctx)
 }
 
 // Stop stops etcd

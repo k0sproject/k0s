@@ -90,14 +90,14 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 		if err != nil {
 			s.log.WithError(err).Warn("Failed to wait for process")
 		} else {
-			s.log.Warnf("Process exited: ", s.cmd.ProcessState)
+			s.log.Warn("Process exited: ", s.cmd.ProcessState)
 		}
 	}
 	return false
 }
 
 // Supervise Starts supervising the given process
-func (s *Supervisor) Supervise() error {
+func (s *Supervisor) Supervise(ctx context.Context) error {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
 	// check if it is already started
@@ -114,7 +114,7 @@ func (s *Supervisor) Supervise() error {
 		s.TimeoutRespawn = 5 * time.Second
 	}
 
-	if err := s.maybeCleanupPIDFile(); err != nil {
+	if err := s.maybeCleanupPIDFile(ctx); err != nil {
 		if !errors.Is(err, errors.ErrUnsupported) {
 			return err
 		}
@@ -224,7 +224,7 @@ func (s *Supervisor) Stop() error {
 // If so, requests graceful termination and waits for the process to terminate.
 //
 // The PID file itself is not removed here; that is handled by the caller.
-func (s *Supervisor) maybeCleanupPIDFile() error {
+func (s *Supervisor) maybeCleanupPIDFile(ctx context.Context) error {
 	pid, err := os.ReadFile(s.PidFile)
 	if os.IsNotExist(err) {
 		return nil
@@ -237,7 +237,7 @@ func (s *Supervisor) maybeCleanupPIDFile() error {
 		return fmt.Errorf("failed to parse PID file %s: %w", s.PidFile, err)
 	}
 
-	return s.cleanupPID(p)
+	return s.cleanupPID(ctx, p)
 }
 
 // Prepare the env for exec:

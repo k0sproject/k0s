@@ -6,11 +6,12 @@
 package supervisor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"runtime"
 )
 
-func (s *Supervisor) cleanupPID(pid int) error {
+func (s *Supervisor) cleanupPID(_ context.Context, pid int) error {
 	return fmt.Errorf("%w on %s: cleanup for PID %d from PID file %s", errors.ErrUnsupported, runtime.GOOS, pid, s.PidFile)
 }
