@@ -368,24 +368,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		CertManager: worker.NewCertificateManager(c.K0sVars.KubeletAuthConfigPath),
 	})
 
-	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
-		etcdReconciler, err := controller.NewEtcdMemberReconciler(
-			adminClientFactory,
-			c.K0sVars,
-			nodeConfig.Spec.Storage.Etcd,
-			leaderElector,
-			func() uint {
-				num, _ := numActiveControllers.Peek()
-				return num
-			},
-		)
-		if err != nil {
-			return err
-		}
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "etcd", controller.WithStackName("etcd-member")))
-		nodeComponents.Add(ctx, etcdReconciler)
-	}
-
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
 		ClusterSpec: nodeConfig.Spec,
@@ -574,6 +556,24 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.PrimaryAddressFamily()),
 			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
+	}
+
+	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+		etcdReconciler, err := controller.NewEtcdMemberReconciler(
+			adminClientFactory,
+			c.K0sVars,
+			nodeConfig.Spec.Storage.Etcd,
+			leaderElector,
+			func() uint {
+				num, _ := numActiveControllers.Peek()
+				return num
+			},
+		)
+		if err != nil {
+			return err
+		}
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "etcd", controller.WithStackName("etcd-member")))
+		clusterComponents.Add(ctx, etcdReconciler)
 	}
 
 	if telemetry.IsEnabled() {
