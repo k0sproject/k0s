@@ -47,6 +47,7 @@ func (e etcdStep) Backup() (StepResult, error) {
 	if err != nil {
 		return StepResult{}, err
 	}
+	defer etcdClient.Close()
 	path := filepath.Join(e.tmpDir, etcdBackup)
 
 	// disable etcd's logging

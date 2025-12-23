@@ -262,6 +262,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	if err != nil {
 		return err
 	}
+	defer etcdClient.Close()
 
 	memberID, err := etcdClient.GetPeerIDByAddress(ctx, e.etcdConfig.GetPeerURL())
 	if err != nil {
@@ -358,6 +359,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 
 		return false
 	}
+	defer etcdClient.Close()
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
