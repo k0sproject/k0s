@@ -380,28 +380,28 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 	}))
 
 	expectedConfigMaps := map[string]func(expected *kubeletConfig){
-		"worker-config-default-1.34": func(expected *kubeletConfig) {
+		"worker-config-default-1.35": func(expected *kubeletConfig) {
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-default-windows-1.34": func(expected *kubeletConfig) {
+		"worker-config-default-windows-1.35": func(expected *kubeletConfig) {
 			expected.CgroupsPerQOS = ptr.To(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 			expected.KubeletCgroups = ""
 			expected.KubeReservedCgroup = ""
 		},
 
-		"worker-config-profile_XXX-1.34": func(expected *kubeletConfig) {
+		"worker-config-profile_XXX-1.35": func(expected *kubeletConfig) {
 			expected.Authentication.Anonymous.Enabled = ptr.To(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_YYY-1.34": func(expected *kubeletConfig) {
+		"worker-config-profile_YYY-1.35": func(expected *kubeletConfig) {
 			expected.Authentication.Webhook.CacheTTL = metav1.Duration{Duration: 15 * time.Second}
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_ZZZ-1.34": func(expected *kubeletConfig) {
+		"worker-config-profile_ZZZ-1.35": func(expected *kubeletConfig) {
 			expected.CgroupsPerQOS = ptr.To(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 			expected.KubeletCgroups = ""
