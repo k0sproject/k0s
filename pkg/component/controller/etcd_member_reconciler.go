@@ -84,6 +84,11 @@ func (e *EtcdMemberReconciler) resync(ctx context.Context, client etcdclient.Etc
 func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 	log := logrus.WithField("component", "EtcdMemberReconciler")
 
+	err := e.waitForCRD(ctx)
+	if err != nil {
+		return fmt.Errorf("didn't see EtcdMember CRD ready in time: %w", err)
+	}
+
 	client, err := e.clientFactory.GetEtcdMemberClient()
 	if err != nil {
 		return err
@@ -108,15 +113,9 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 }
 
 func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
-	err := e.waitForCRD(ctx)
-	if err != nil {
-		log.WithError(err).Errorf("didn't see EtcdMember CRD ready in time")
-		return
-	}
-
 	// Create the object for this node
 	// Need to be done in retry loop as during the initial startup the etcd might not be stable
-	err = retry.Do(
+	err := retry.Do(
 		func() error {
 			return e.createMemberObject(ctx, client)
 		},
@@ -212,6 +211,9 @@ func (e *EtcdMemberReconciler) Stop() error {
 }
 
 func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
+	ctx, cancel := context.WithTimeoutCause(ctx, 2*time.Minute, errors.New("EtcdMember CRD did not become established in time"))
+	defer cancel()
+
 	client, err := e.clientFactory.GetAPIExtensionsClient()
 	if err != nil {
 		return err

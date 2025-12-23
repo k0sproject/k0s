@@ -637,6 +637,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	// Wait for k0s process termination
+	logrus.Info("Controller has started")
 	<-ctx.Done()
 	logrus.Info("Shutting down k0s: ", context.Cause(ctx))
 
