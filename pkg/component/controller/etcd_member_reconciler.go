@@ -94,6 +94,26 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 		return err
 	}
 
+	// Create the object for this node
+	// Need to be done in retry loop as during the initial startup the etcd might not be stable
+	err = retry.Do(
+		func() error {
+			return e.createMemberObject(ctx, client)
+		},
+		retry.Delay(3*time.Second),
+		retry.Attempts(5),
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.RetryIf(func(retryErr error) bool {
+			log.Debugf("retrying createMemberObject: %v", retryErr)
+			// During etcd cluster bootstrap, it's common to see k8s giving 500 errors due to etcd timeouts
+			return apierrors.IsInternalError(retryErr)
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create EtcdMember object for this controller: %w", err)
+	}
+
 	ctx, cancel := context.WithCancelCause(context.Background())
 	done := make(chan struct{})
 
@@ -113,26 +133,6 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 }
 
 func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
-	// Create the object for this node
-	// Need to be done in retry loop as during the initial startup the etcd might not be stable
-	err := retry.Do(
-		func() error {
-			return e.createMemberObject(ctx, client)
-		},
-		retry.Delay(3*time.Second),
-		retry.Attempts(5),
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.RetryIf(func(retryErr error) bool {
-			log.Debugf("retrying createMemberObject: %v", retryErr)
-			// During etcd cluster bootstrap, it's common to see k8s giving 500 errors due to etcd timeouts
-			return apierrors.IsInternalError(retryErr)
-		}),
-	)
-	if err != nil {
-		log.WithError(err).Error("failed to create EtcdMember object for this controller")
-	}
-
 	leaderelection.RunLeaderTasks(ctx, e.leaderElector.CurrentStatus, func(ctx context.Context) {
 		e.watchAndResync(ctx, client, log)
 	})
