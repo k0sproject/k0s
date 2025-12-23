@@ -177,24 +177,29 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 }
 
 func (e *EtcdMemberReconciler) watchAndResync(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) {
+	log.Info("Starting to watch and resync etcd member objects")
+
 	trigger := make(chan struct{}, 1)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		e.watchEtcdMembers(ctx, client, log, trigger)
-	}()
-	defer func() { <-done }()
+	go e.watchEtcdMembers(ctx, client, log, trigger)
 
 	var retry <-chan time.Time
 
 	for {
 		select {
 		case <-retry:
-		case <-trigger:
+		case _, ok := <-trigger:
+			if !ok {
+				// The trigger goroutine exited. Return and wait for a restart.
+				return
+			}
 			if retry != nil {
+				// A retry is still pending. Ignore the trigger.
 				continue
 			}
 		case <-ctx.Done():
+			for range trigger {
+				// Wait for trigger goroutine to exit.
+			}
 			return
 		}
 
@@ -207,6 +212,8 @@ func (e *EtcdMemberReconciler) watchAndResync(ctx context.Context, client etcdcl
 }
 
 func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger, trigger chan<- struct{}) {
+	defer close(trigger)
+
 	var lastObservedVersion string
 	err := watch.EtcdMembers(client).
 		WithErrorCallback(func(err error) (time.Duration, error) {
