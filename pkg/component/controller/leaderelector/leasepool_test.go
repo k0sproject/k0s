@@ -7,7 +7,6 @@ import (
 	"context"
 	"io"
 	"testing"
-	"testing/synctest"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/leaderelection"
@@ -17,87 +16,78 @@ import (
 )
 
 func TestLeasePool_YieldSuspendsAndResumes(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		underTest, client := newLeasePoolForTest(t, 1)
+	underTest, client := newLeasePoolForTest(t, 1)
 
-		// Start the lease pool.
-		require.NoError(t, underTest.Start(t.Context()))
-		t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
-		synctest.Wait()
-		firstRun := client.nextRun()
-		require.NotNil(t, firstRun, "Client hasn't been started")
-		require.NoError(t, context.Cause(firstRun), "First client run finished unexpectedly early")
+	// Start the lease pool.
+	require.NoError(t, underTest.Start(t.Context()))
+	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
+	firstRun := client.nextRun()
+	require.NoError(t, context.Cause(firstRun.ctx), "First client run finished unexpectedly early")
 
-		// Yield!
-		underTest.YieldLease()
-		synctest.Wait()
-		require.ErrorContains(t, context.Cause(firstRun), "lease pool is yielding")
+	// Yield!
+	startYieldTime := time.Now()
+	underTest.yieldLease(100 * time.Millisecond)
+	require.ErrorContains(t, waitForContextDone(t, firstRun.ctx, time.Second), "lease pool is yielding")
 
-		// Ensure the yield duration is respected.
-		time.Sleep(30*time.Second - time.Nanosecond)
-		synctest.Wait()
-		require.Nil(t, client.nextRun(), "Client has been restarted during yield period")
+	// Ensure the yield duration is respected.
+	client.assertNoRun(50 * time.Millisecond)
+	midYieldTime := time.Now()
 
-		// Ensure a second yield will extend the yield period.
-		underTest.YieldLease()
-		time.Sleep(30*time.Second - time.Nanosecond)
-		synctest.Wait()
-		require.Nil(t, client.nextRun(), "Client has been restarted during extended yield period")
-		time.Sleep(time.Nanosecond) // Advance time beyond the yield duration.
-		synctest.Wait()
+	// Ensure a second yield will extend the yield period.
+	underTest.yieldLease(100 * time.Millisecond)
+	require.Less(t, time.Since(startYieldTime), 100*time.Millisecond, "Test execution was too slow, please retry")
 
-		// Check that the client has been restarted.
-		secondRun := client.nextRun()
-		require.NotNil(t, secondRun, "Client hasn't been restarted after yielding")
-		require.NotSame(t, firstRun, secondRun)
-		require.NoError(t, context.Cause(secondRun), "Second client run finished unexpectedly early")
+	// Check that the client has been restarted.
+	secondRun := client.nextRun()
 
-		// Stop it again.
-		require.NoError(t, underTest.Stop())
-		require.ErrorContains(t, context.Cause(secondRun), "lease pool is stopping")
-	})
+	require.NotSame(t, firstRun.ctx, secondRun.ctx)
+	require.NoError(t, context.Cause(secondRun.ctx), "Second client run finished unexpectedly early")
+	assert.GreaterOrEqual(t, secondRun.time.Sub(midYieldTime), 100*time.Millisecond, "Second run started too early")
+
+	// Stop it again.
+	require.NoError(t, underTest.Stop())
+	require.ErrorContains(t, waitForContextDone(t, secondRun.ctx, time.Second), "lease pool is stopping")
 }
 
 func TestLeasePool_StopWhileYielding(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		underTest, client := newLeasePoolForTest(t, 1)
+	underTest, client := newLeasePoolForTest(t, 1)
 
-		// Start the lease pool.
-		require.NoError(t, underTest.Start(t.Context()))
-		t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
-		synctest.Wait()
-		firstRun := client.nextRun()
-		require.NotNil(t, firstRun, "Client hasn't been started")
-		require.NoError(t, context.Cause(firstRun), "First client run finished unexpectedly early")
+	// Start the lease pool.
+	require.NoError(t, underTest.Start(t.Context()))
+	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
+	firstRun := client.nextRun()
+	require.NoError(t, context.Cause(firstRun.ctx), "First client run finished unexpectedly early")
 
-		// Yield!
-		underTest.YieldLease()
-		synctest.Wait()
-		require.ErrorContains(t, context.Cause(firstRun), "lease pool is yielding")
+	// Yield!
+	underTest.yieldLease(time.Hour)
+	require.ErrorContains(t, waitForContextDone(t, firstRun.ctx, time.Second), "lease pool is yielding")
 
-		// Stop it while yielded.
-		require.NoError(t, underTest.Stop())
-		synctest.Wait()
-		require.Nil(t, client.nextRun(), "Client has been restarted unexpectedly")
-	})
+	// Stop it while yielded.
+	require.NoError(t, underTest.Stop())
+	client.assertNoRun(time.Millisecond)
 }
 
 func newLeasePoolForTest(t *testing.T, bufferSize uint) (*LeasePool, *fakeLeaseClient) {
 	nullLogger := logrus.New()
 	nullLogger.SetOutput(io.Discard)
 
-	client := fakeLeaseClient{t, make(chan context.Context, bufferSize)}
+	client := fakeLeaseClient{t, make(chan run, bufferSize)}
 	return &LeasePool{log: logrus.NewEntry(nullLogger), client: &client}, &client
+}
+
+type run = struct {
+	ctx  context.Context
+	time time.Time
 }
 
 type fakeLeaseClient struct {
 	t    *testing.T
-	runs chan context.Context
+	runs chan run
 }
 
 func (f *fakeLeaseClient) Run(ctx context.Context, changed func(leaderelection.Status)) {
 	select {
-	case f.runs <- ctx:
+	case f.runs <- run{ctx, time.Now()}:
 	default:
 		assert.Fail(f.t, "channel is full")
 	}
@@ -107,13 +97,34 @@ func (f *fakeLeaseClient) Run(ctx context.Context, changed func(leaderelection.S
 	changed(leaderelection.StatusPending)
 }
 
-func (f *fakeLeaseClient) nextRun() context.Context {
+func (f *fakeLeaseClient) nextRun() run {
 	f.t.Helper()
 	select {
-	case ctx := <-f.runs:
-		require.NotNil(f.t, ctx, "Empty context in lease pool run")
-		return ctx
-	default:
+	case run := <-f.runs:
+		require.NotNil(f.t, run.ctx, "Empty context in lease pool run")
+		return run
+	case <-time.After(time.Second):
+		require.FailNow(f.t, "Timed out waiting for next lease pool run")
+		return run{}
+	}
+}
+
+func (f *fakeLeaseClient) assertNoRun(duration time.Duration) {
+	f.t.Helper()
+	select {
+	case run := <-f.runs:
+		require.FailNowf(f.t, "Client has been restarted unexpectedly", "%v", run)
+	case <-time.After(duration):
+	}
+}
+
+func waitForContextDone(t *testing.T, ctx context.Context, timeout time.Duration) error {
+	t.Helper()
+	select {
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	case <-time.After(timeout):
+		require.FailNow(t, "Timed out waiting for context to finish")
 		return nil
 	}
 }

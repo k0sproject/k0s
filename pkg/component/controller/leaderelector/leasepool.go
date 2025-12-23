@@ -162,10 +162,14 @@ func (l *LeasePool) waitForResume(stop <-chan struct{}) <-chan struct{} {
 }
 
 func (l *LeasePool) YieldLease() {
+	l.yieldLease(30 * time.Second)
+}
+
+func (l *LeasePool) yieldLease(duration time.Duration) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	if l.stop != nil {
-		l.resume.Set(time.Now().Add(30 * time.Second))
+		l.resume.Set(time.Now().Add(duration))
 	}
 }
 
