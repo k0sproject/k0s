@@ -409,7 +409,7 @@ func retry(ctx context.Context, errorCallback ErrorCallback, runWatch func(conte
 			select {
 			case <-ctx.Done():
 				timer.Stop()
-				return ctx.Err()
+				return context.Cause(ctx)
 			case <-timer.C:
 				continue
 			}

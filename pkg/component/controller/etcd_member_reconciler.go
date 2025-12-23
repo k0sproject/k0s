@@ -32,22 +32,24 @@ import (
 
 var _ manager.Component = (*EtcdMemberReconciler)(nil)
 
-func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface) (*EtcdMemberReconciler, error) {
+func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface, controllerCount func() uint) (*EtcdMemberReconciler, error) {
 
 	return &EtcdMemberReconciler{
-		clientFactory: kubeClientFactory,
-		k0sVars:       k0sVars,
-		etcdConfig:    etcdConfig,
-		leaderElector: leaderElector,
+		clientFactory:   kubeClientFactory,
+		k0sVars:         k0sVars,
+		etcdConfig:      etcdConfig,
+		leaderElector:   leaderElector,
+		controllerCount: controllerCount,
 	}, nil
 }
 
 type EtcdMemberReconciler struct {
-	clientFactory kubeutil.ClientFactoryInterface
-	k0sVars       *config.CfgVars
-	etcdConfig    *v1beta1.EtcdConfig
-	leaderElector leaderelector.Interface
-	stop          func()
+	clientFactory   kubeutil.ClientFactoryInterface
+	k0sVars         *config.CfgVars
+	etcdConfig      *v1beta1.EtcdConfig
+	leaderElector   leaderelector.Interface
+	controllerCount func() uint
+	stop            func()
 }
 
 func (e *EtcdMemberReconciler) Init(_ context.Context) error {
@@ -345,6 +347,41 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	if !member.Spec.Leave {
 		log.Debug("member not marked for leave, no action needed")
 		return true
+	}
+
+	if e.etcdConfig.PeerAddress == member.Status.PeerAddress {
+		if count := e.controllerCount(); count < 2 {
+			msg := "The only active controller cannot leave the etcd cluster" +
+				"; either bring another controller online or clear spec.leave"
+			log.Error(msg)
+			member.Status.Message = msg
+			member.Status.ReconcileStatus = ""
+			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+				log.WithError(err).Error("Failed to update member state")
+			}
+			return false
+		}
+
+		if le, ok := e.leaderElector.(interface{ YieldLease() }); ok {
+			msg := "Waiting for another controller to take over"
+			log.Info(msg)
+			member.Status.Message = msg
+			member.Status.ReconcileStatus = ""
+			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+				log.WithError(err).Error("Failed to update member state")
+			}
+			le.YieldLease()
+		} else {
+			msg := "Requested to leave the etcd cluster, but cannot yield the lease"
+			log.Error(msg)
+			member.Status.Message = msg
+			member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
+			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+				log.WithError(err).Error("Failed to update member state")
+			}
+		}
+
+		return false
 	}
 
 	etcdClient, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
