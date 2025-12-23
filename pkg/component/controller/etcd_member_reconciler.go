@@ -23,15 +23,22 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	nodeutil "k8s.io/component-helpers/node/util"
+)
+
+const (
+	shutdownOnLeaveLabelName = "k0s.k0sproject.io/shutdown-on-leave"
+	shutdownLabelName        = "k0s.k0sproject.io/shutdown"
 )
 
 var _ manager.Component = (*EtcdMemberReconciler)(nil)
 
-func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface, controllerCount func() uint) (*EtcdMemberReconciler, error) {
+func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface, controllerCount func() uint, shutdown context.CancelCauseFunc) (*EtcdMemberReconciler, error) {
 
 	return &EtcdMemberReconciler{
 		clientFactory:   kubeClientFactory,
@@ -39,6 +46,7 @@ func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, 
 		etcdConfig:      etcdConfig,
 		leaderElector:   leaderElector,
 		controllerCount: controllerCount,
+		shutdown:        shutdown,
 	}, nil
 }
 
@@ -48,17 +56,18 @@ type EtcdMemberReconciler struct {
 	etcdConfig      *v1beta1.EtcdConfig
 	leaderElector   leaderelector.Interface
 	controllerCount func() uint
+	shutdown        context.CancelCauseFunc
 	stop            func()
 }
 
+// Init implements [manager.Component].
 func (e *EtcdMemberReconciler) Init(_ context.Context) error {
 	return nil
 }
 
-// resync does a full resync of the etcd members when the leader changes
-// This is needed to ensure all the member objects are in sync with the actual etcd cluster
-// We might get stale state if we remove the current leader as the leader will essentially
-// remove itself from the etcd cluster and after that tries to update the member object.
+// Reconciles every EtcdMember object against the live etcd cluster state. This
+// avoids stale state after leader changes, especially when the leader removes
+// itself and can no longer update its own EtcdMember status.
 func (e *EtcdMemberReconciler) resync(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) bool {
 	// Loop through all the members and run reconcile on them
 	// Use high timeout as etcd/api could be a bit slow when the leader changes
@@ -80,8 +89,9 @@ func (e *EtcdMemberReconciler) resync(ctx context.Context, client etcdclient.Etc
 	return !failed
 }
 
+// Waits for CRDs, creates this node's EtcdMember, and launches the reconcile loop.
 func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
-	log := logrus.WithField("component", "EtcdMemberReconciler")
+	log := logrus.WithField("component", "etcdMemberReconciler")
 
 	err := e.waitForCRD(ctx)
 	if err != nil {
@@ -129,6 +139,8 @@ func (e *EtcdMemberReconciler) Start(ctx context.Context) error {
 	return nil
 }
 
+// Drives the leader-aware control loop: leaders watch/resync members, followers
+// only wait for a shutdown signal and yield to the leader on changes.
 func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
 	for {
 		status, statusExpired := e.leaderElector.CurrentStatus()
@@ -147,8 +159,9 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 		switch status {
 		case leaderelection.StatusLeading:
 			e.watchAndResync(statusCtx, client, log)
-		default:
-			<-statusCtx.Done()
+
+		case leaderelection.StatusPending:
+			e.shutdownIfMarked(statusCtx, log, client)
 		}
 
 		// Bail out if the context has been canceled.
@@ -176,6 +189,8 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 	}
 }
 
+// Runs a watch that triggers a full resync; retries resync on failure. This
+// balances prompt reactions to events with a full reconciliation.
 func (e *EtcdMemberReconciler) watchAndResync(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger) {
 	log.Info("Starting to watch and resync etcd member objects")
 
@@ -211,6 +226,8 @@ func (e *EtcdMemberReconciler) watchAndResync(ctx context.Context, client etcdcl
 	}
 }
 
+// Watches EtcdMember objects and signals when any change occurs. The reconciler
+// uses the trigger to kick off a resync rather than handling per-event deltas.
 func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcdclient.EtcdMemberInterface, log logrus.FieldLogger, trigger chan<- struct{}) {
 	defer close(trigger)
 
@@ -248,6 +265,30 @@ func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcd
 	}
 }
 
+// Waits for the shutdown label on this member and then requests a k0s shutdown.
+func (e *EtcdMemberReconciler) shutdownIfMarked(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
+	name := e.etcdConfig.GetMemberName()
+	name, err := nodeutil.GetHostname(name)
+	if err != nil {
+		log.WithError(err).Error("Failed to get name for etcd member")
+		return
+	}
+
+	log.Info("Starting to watch etcd member object ", name, " using invocation ID ", e.k0sVars.InvocationID)
+	err = watch.EtcdMembers(client).
+		WithObjectName(name).
+		WithLabels(labels.Set{shutdownLabelName: e.k0sVars.InvocationID}).
+		Until(ctx, func(*etcdv1beta1.EtcdMember) (bool, error) { return true, nil })
+
+	if err == nil {
+		log.Info("Etcd member marked for shutdown; stopping components and waiting for external termination")
+		e.shutdown(errors.New("etcd member marked for shutdown"))
+	} else if ctxErr := context.Cause(ctx); !errors.Is(err, ctxErr) {
+		log.WithError(err).Error("Error watching etcd member object")
+	}
+}
+
+// Cancels the reconcile loop and waits for it to exit.
 func (e *EtcdMemberReconciler) Stop() error {
 	if e.stop != nil {
 		e.stop()
@@ -255,6 +296,8 @@ func (e *EtcdMemberReconciler) Stop() error {
 	return nil
 }
 
+// Blocks until the EtcdMember CRD is established so the controller can safely
+// create/watch EtcdMember resources.
 func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
 	ctx, cancel := context.WithTimeoutCause(ctx, 2*time.Minute, errors.New("EtcdMember CRD did not become established in time"))
 	defer cancel()
@@ -302,6 +345,9 @@ func (e *EtcdMemberReconciler) waitForCRD(ctx context.Context) error {
 
 }
 
+// Ensures there's an EtcdMember object for this controller node, stamping
+// identity/labels so other controllers can coordinate safe leave/shutdown
+// flows.
 func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client etcdclient.EtcdMemberInterface) error {
 	log := logrus.WithFields(logrus.Fields{"component": "etcdMemberReconciler", "phase": "createMemberObject"})
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -336,6 +382,9 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 			em = &etcdv1beta1.EtcdMember{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
+					Labels: map[string]string{
+						shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
+					},
 				},
 				Spec: etcdv1beta1.EtcdMemberSpec{
 					Leave: false,
@@ -361,6 +410,8 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 		}
 	}
 
+	em.Labels = labels.Merge(em.Labels, labels.Set{shutdownOnLeaveLabelName: e.k0sVars.InvocationID})
+	delete(em.Labels, shutdownLabelName) // Clear any lingering shutdown request on re-join.
 	em.Spec.Leave = false
 
 	log.Debug("EtcdMember object already exists, updating it")
@@ -380,6 +431,9 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	return nil
 }
 
+// Applies the leave/shutdown protocol for a single EtcdMember. It prevents the
+// last controller from leaving, waits for active controllers to stop, then
+// removes the etcd member and updates status accordingly.
 func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdclient.EtcdMemberInterface, member *etcdv1beta1.EtcdMember) bool {
 	log := logrus.WithFields(logrus.Fields{
 		"component":   "etcdMemberReconciler",
@@ -484,6 +538,48 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		return false
 	}
 
+	if memberInvocationID, ok := member.Labels[shutdownOnLeaveLabelName]; ok && memberInvocationID != "" {
+		clients, err := e.clientFactory.GetClient()
+		if err != nil {
+			log.WithError(err).Error("Failed to get Kubernetes client")
+			return false
+		}
+
+		if memberLease, err := clients.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, "k0s-ctrl-"+member.Name, metav1.GetOptions{}); err != nil {
+			log.WithError(err).Error("Failed to get etcd member lease")
+			msg := "Failed to get k0s controller lease: " + err.Error()
+			if apierrors.IsNotFound(err) {
+				msg = "No k0s controller lease found"
+			}
+			member.Status.Message = msg
+			member.Status.ReconcileStatus = ""
+			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+				log.WithError(err).Error("Failed to update member state")
+			}
+			return false
+		} else if ident := memberLease.Spec.HolderIdentity; ident != nil && *ident == memberInvocationID && kubeutil.IsValidLease(*memberLease) {
+			if member.Labels[shutdownLabelName] != memberInvocationID {
+				log.Info("Requesting member shutdown before deletion")
+				member.Labels[shutdownLabelName] = memberInvocationID
+				if _, err := client.Update(ctx, member, metav1.UpdateOptions{}); err != nil {
+					log.WithError(err).Error("Failed to update member")
+					return false
+				}
+				return true
+			}
+
+			msg := "Member is still active; waiting for it to shutdown"
+			log.Info(msg)
+			member.Status.Message = msg
+			member.Status.ReconcileStatus = ""
+			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+				log.WithError(err).Error("Failed to update member state")
+			}
+			return false
+		}
+	}
+
+	log.Debug("Deleting member from cluster")
 	err = retry.Do(func() error {
 		return etcdClient.DeleteMember(ctx, memberID)
 	},
@@ -505,9 +601,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	)
 
 	if err != nil {
-		logrus.
-			WithError(err).
-			Errorf("Failed to delete etcd peer from cluster")
+		log.WithError(err).Errorf("Failed to delete member from cluster")
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
 		member.Status.Message = err.Error()
 		_, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
@@ -518,7 +612,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	}
 
 	// Peer removed successfully, update status
-	log.Info("reconcile succeeded")
+	log.Info("Member has been deleted from cluster")
 	member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
 	member.Status.Message = "Member removed from cluster"
 	member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())

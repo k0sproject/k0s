@@ -106,7 +106,23 @@ func NewControllerCmd() *cobra.Command {
 				return err
 			}
 
-			return c.start(cmd.Context(), &controllerFlags, debugFlags.IsDebug())
+			ctx := cmd.Context()
+			if err := c.start(ctx, &controllerFlags, debugFlags.IsDebug()); err != nil {
+				return err
+			}
+
+			// Components may have stopped themselves (for example, after an
+			// etcd leave request), but the process lifetime is still governed
+			// by external signals/init systems.
+			select {
+			case <-ctx.Done():
+			default:
+				logrus.Info("Awaiting process shutdown")
+				<-ctx.Done()
+				logrus.Info("Shutting down process: ", context.Cause(ctx))
+			}
+
+			return nil
 		},
 	}
 
@@ -123,6 +139,9 @@ func NewControllerCmd() *cobra.Command {
 }
 
 func (c *command) start(ctx context.Context, flags *config.ControllerOptions, debug bool) error {
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
+
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
 	nodeConfig, err := c.K0sVars.NodeConfig()
@@ -567,6 +586,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 				num, _ := numActiveControllers.Peek()
 				return num
 			},
+			cancel,
 		)
 		if err != nil {
 			return err
