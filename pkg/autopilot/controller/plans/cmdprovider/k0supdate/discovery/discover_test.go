@@ -24,17 +24,17 @@ import (
 // TestDiscover covers the scenarios of turning target objects into matching status objects,
 // with proper status.
 func TestDiscover(t *testing.T) {
-	alwaysExists := func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-		return true, nil
+	alwaysFound := func(name string) (SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
+		return SignalObjectFilterResultFound, nil
 	}
 
-	alwaysExistsExceptFor := func(exception string) SignalObjectExistsFunc {
-		return func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
+	alwaysExistsExceptFor := func(exception string) SignalObjectFilterFunc {
+		return func(name string) (SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
 			if name == exception {
-				return false, &appc.SignalMissingNode
+				return SignalObjectFilterResultMissing, &appc.SignalMissingNode
 			}
 
-			return true, nil
+			return SignalObjectFilterResultFound, nil
 		}
 	}
 
@@ -43,7 +43,7 @@ func TestDiscover(t *testing.T) {
 		target                  apv1beta2.PlanCommandTarget
 		delegate                apdel.ControllerDelegate
 		objects                 []crcli.Object
-		exists                  SignalObjectExistsFunc
+		filter                  SignalObjectFilterFunc
 		expectedStatusNodes     []apv1beta2.PlanCommandTargetStatus
 		expectedAllAccountedFor bool
 	}{
@@ -58,7 +58,7 @@ func TestDiscover(t *testing.T) {
 			},
 			apdel.ControlNodeControllerDelegate(),
 			[]crcli.Object{},
-			alwaysExists,
+			alwaysFound,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
@@ -104,8 +104,8 @@ func TestDiscover(t *testing.T) {
 					},
 				},
 			},
-			alwaysExists,
-			[]apv1beta2.PlanCommandTargetStatus{},
+			alwaysFound,
+			nil,
 			true,
 		},
 		{
@@ -141,7 +141,7 @@ func TestDiscover(t *testing.T) {
 					},
 				},
 			},
-			alwaysExists,
+			alwaysFound,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
 			},
@@ -178,7 +178,7 @@ func TestDiscover(t *testing.T) {
 					},
 				},
 			},
-			alwaysExists,
+			alwaysFound,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("controller1", appc.SignalPending),
@@ -200,8 +200,8 @@ func TestDiscover(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
 
-			statusNodes, allAccountedFor := DiscoverNodes(t.Context(), client, &test.target, test.delegate, test.exists)
-			assert.True(t, cmp.Equal(test.expectedStatusNodes, statusNodes, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
+			statusNodes, allAccountedFor := DiscoverNodes(t.Context(), client, &test.target, test.delegate, test.filter)
+			assert.Empty(t, cmp.Diff(test.expectedStatusNodes, statusNodes, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
 			assert.Equal(t, test.expectedAllAccountedFor, allAccountedFor)
 		})
 	}
