@@ -25,9 +25,10 @@ helm:
   - name: oci-registry-with-private-ca
     # OCI registry URL must not include any path elements
     url: oci://registry-with-private-ca.com:8080
-    # Currently, only caFile is supported for TLS transport
-    # Setting certFile or keyFile will result in an error
+    # certFile and keyFile can be provided to enable mTLS
     caFile: /path/to/ca.crt
+    certFile: /path/to/client.crt
+    keyFile: /path/to/client.key
   charts:
   - name: prometheus-stack
     chartname: prometheus-community/prometheus
