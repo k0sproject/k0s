@@ -338,6 +338,11 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	}
 
 	// Wait for k0s process termination
+	if controller != nil {
+		logrus.Info("Controller has started")
+	} else {
+		logrus.Info("Worker has started")
+	}
 	<-ctx.Done()
 	logrus.Info("Shutting down k0s: ", context.Cause(ctx))
 

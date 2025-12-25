@@ -106,7 +106,23 @@ func NewControllerCmd() *cobra.Command {
 				return err
 			}
 
-			return c.start(cmd.Context(), &controllerFlags, debugFlags.IsDebug())
+			ctx := cmd.Context()
+			if err := c.start(ctx, &controllerFlags, debugFlags.IsDebug()); err != nil {
+				return err
+			}
+
+			// Components may have stopped themselves (for example, after an
+			// etcd leave request), but the process lifetime is still governed
+			// by external signals/init systems.
+			select {
+			case <-ctx.Done():
+			default:
+				logrus.Info("Awaiting process shutdown")
+				<-ctx.Done()
+				logrus.Info("Shutting down process: ", context.Cause(ctx))
+			}
+
+			return nil
 		},
 	}
 
@@ -123,6 +139,9 @@ func NewControllerCmd() *cobra.Command {
 }
 
 func (c *command) start(ctx context.Context, flags *config.ControllerOptions, debug bool) error {
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
+
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
 	nodeConfig, err := c.K0sVars.NodeConfig()
@@ -370,24 +389,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		CertManager: worker.NewCertificateManager(c.K0sVars.KubeletAuthConfigPath),
 	})
 
-	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
-		etcdReconciler, err := controller.NewEtcdMemberReconciler(
-			adminClientFactory,
-			c.K0sVars,
-			nodeConfig.Spec.Storage.Etcd,
-			leaderElector,
-			func() uint {
-				num, _ := numActiveControllers.Peek()
-				return num
-			},
-		)
-		if err != nil {
-			return err
-		}
-		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "etcd", controller.WithStackName("etcd-member")))
-		nodeComponents.Add(ctx, etcdReconciler)
-	}
-
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
 		ClusterSpec: nodeConfig.Spec,
@@ -575,6 +576,25 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		})
 	}
 
+	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+		etcdReconciler, err := controller.NewEtcdMemberReconciler(
+			adminClientFactory,
+			c.K0sVars,
+			nodeConfig.Spec.Storage.Etcd,
+			leaderElector,
+			func() uint {
+				num, _ := numActiveControllers.Peek()
+				return num
+			},
+			cancel,
+		)
+		if err != nil {
+			return err
+		}
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "etcd", controller.WithStackName("etcd-member")))
+		clusterComponents.Add(ctx, etcdReconciler)
+	}
+
 	if telemetry.IsEnabled() {
 		clusterComponents.Add(ctx, &telemetry.Component{
 			K0sVars:           c.K0sVars,
@@ -645,6 +665,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	// Wait for k0s process termination
+	logrus.Info("Controller has started")
 	<-ctx.Done()
 	logrus.Info("Shutting down k0s: ", context.Cause(ctx))
 
