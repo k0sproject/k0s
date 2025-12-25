@@ -235,7 +235,6 @@ jobs:
             echo Trimming Go cache
             find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -not -newer build/cache/_cache_sentinel -delete
           fi
-
   smoketests:
     strategy:
       fail-fast: false
@@ -317,7 +316,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
-
       - name: Cache embedded binaries
         id: cache-embedded-bins
         uses: actions/cache@v4
@@ -424,7 +422,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
-
       - name: Download compiled binary
         uses: actions/download-artifact@v6
         with:
@@ -467,3 +464,8 @@ jobs:
       - name: "Docker prune"
         if: always()
         run: docker system prune --force --filter "until=$((24*7))h"
+  
+  win-wsl-smoketest:
+    name: "Windows WSL Smoketest"
+    needs: [build-k0s]
+    uses: ./.github/workflows/win-wsl.yaml
