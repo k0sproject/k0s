@@ -57,6 +57,19 @@ func (s *CustomCASuite) TestK0sGetsUp() {
 	newCert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/ca.crt")
 	s.Require().NoError(err)
 	s.Equal(cert, newCert)
+
+	// Validate that k0s renews certificates with custom CA
+	k0sAPICert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/k0s-api.crt")
+	s.Require().NoError(err, "Failed to obtain k0s-api certificate")
+	s.Require().NoError(s.StopController(s.ControllerNode(0)))
+	s.Require().NoError(s.StartController(s.ControllerNode(0)))
+
+	_, err = s.KubeClient(s.ControllerNode(0)) // Wait for the API to be ready after restart
+	s.Require().NoError(err, "Failed to obtain Kubernetes client after controller restart")
+	newK0sAPICert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/k0s-api.crt")
+	s.Require().NoError(err, "Failed to obtain new k0s certificate")
+	s.Require().NotEqual(k0sAPICert, newK0sAPICert, "k0s-api certificate was not renewed")
+
 }
 
 func TestCustomCASuite(t *testing.T) {
