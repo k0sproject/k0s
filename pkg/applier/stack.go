@@ -4,6 +4,7 @@
 package applier
 
 import (
+	"cmp"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -28,9 +29,38 @@ import (
 	"k8s.io/client-go/restmapper"
 	"k8s.io/utils/ptr"
 
+	"github.com/avast/retry-go"
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/sirupsen/logrus"
 )
+
+func ApplyStack(ctx context.Context, clients kubernetes.ClientFactoryInterface, resources []*unstructured.Unstructured, stackName string) error {
+	var lastErr error
+	if err := retry.Do(
+		func() error {
+			stack := Stack{
+				Name:      stackName,
+				Resources: resources,
+				Clients:   clients,
+			}
+			lastErr = stack.Apply(ctx, true)
+			return lastErr
+		},
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.OnRetry(func(attempt uint, err error) {
+			logrus.WithFields(logrus.Fields{
+				"component": "applier",
+				"stack":     stackName,
+				"attempt":   attempt + 1,
+			}).WithError(err).Debug("Failed to apply stack, retrying after backoff")
+		}),
+	); err != nil {
+		return cmp.Or(lastErr, err)
+	}
+
+	return nil
+}
 
 // Stack is a k8s resource bundle
 type Stack struct {
