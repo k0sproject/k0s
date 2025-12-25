@@ -202,6 +202,7 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 			sendError(err, resp)
 			return
 		}
+		defer etcdClient.Close()
 
 		memberList, err := etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
 		if err != nil {

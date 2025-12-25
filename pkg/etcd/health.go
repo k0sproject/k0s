@@ -18,6 +18,7 @@ func CheckEtcdReady(ctx context.Context, certDir string, etcdCertDir string, etc
 		logrus.Errorf("failed to initialize etcd client: %v", err)
 		return err
 	}
+	defer c.Close()
 
 	return c.Health(ctx)
 }
