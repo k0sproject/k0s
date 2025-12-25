@@ -54,7 +54,12 @@ func (aup *airgapupdate) CommandID() string {
 // populateWorkerStatus is a specialization of `DiscoverNodes` for working
 // with `v1.Node` signal node objects.
 func populateWorkerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandAirgapUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
-	return appkd.DiscoverNodes(ctx, client, &update.Workers, dm["worker"], func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-		return appku.ObjectExistsWithPlatform(ctx, client, name, &v1.Node{}, update.Platforms)
+	return appkd.DiscoverNodes(ctx, client, &update.Workers, dm["worker"], func(name string) (appkd.SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
+		exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, &v1.Node{}, update.Platforms)
+		if exists {
+			return appkd.SignalObjectFilterResultFound, state
+		} else {
+			return appkd.SignalObjectFilterResultMissing, state
+		}
 	})
 }

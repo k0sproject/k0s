@@ -14,13 +14,18 @@ import (
 
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
+	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 	cr "sigs.k8s.io/controller-runtime"
@@ -34,10 +39,9 @@ const UnCordoning = "UnCordoning"
 
 // unCordoningEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
-func unCordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
+func unCordoningEventFilter(handler apsigpred.ErrorHandler) crpred.Predicate {
 	return crpred.And(
 		crpred.AnnotationChangedPredicate{},
-		apsigpred.SignalNamePredicate(hostname),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
 			signalDataUpdateCommandK0sPredicate(),
 			apsigpred.SignalDataStatusPredicate(UnCordoning),
@@ -54,10 +58,12 @@ func unCordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crp
 }
 
 type uncordoning struct {
-	log       *logrus.Entry
-	client    crcli.Client
-	delegate  apdel.ControllerDelegate
-	clientset *kubernetes.Clientset
+	log         *logrus.Entry
+	client      crcli.Client
+	delegate    apdel.ControllerDelegate
+	clientset   *kubernetes.Clientset
+	nodeName    types.NodeName
+	leaseStatus leaderelection.Status
 }
 
 // registerUncordoning registers the 'uncordoning' controller to the
@@ -66,7 +72,7 @@ type uncordoning struct {
 // This controller is only interested when autopilot signaling annotations have
 // moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
 // the node.
-func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, nodeName types.NodeName, leaseStatus leaderelection.Status) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_uncordoning"
 	logger.Info("Registering reconciler: ", name)
 
@@ -82,10 +88,12 @@ func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 		WithEventFilter(eventFilter).
 		Complete(
 			&uncordoning{
-				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-uncordoning", "object": delegate.Name()}),
-				client:    mgr.GetClient(),
-				delegate:  delegate,
-				clientset: clientset,
+				log:         logger.WithFields(logrus.Fields{"reconciler": "k0s-uncordoning", "object": delegate.Name()}),
+				client:      mgr.GetClient(),
+				delegate:    delegate,
+				clientset:   clientset,
+				nodeName:    nodeName,
+				leaseStatus: leaseStatus,
 			},
 		)
 }
@@ -104,6 +112,13 @@ func (r *uncordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result,
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
 
+	if reason, err := r.isIgnored(ctx, signalNode); err != nil {
+		return cr.Result{}, fmt.Errorf("failed to determine if this node should be ignored: %w", err)
+	} else if reason != "" {
+		logger.Debug("Ignoring this node: ", reason)
+		return cr.Result{}, nil
+	}
+
 	if !needsCordoning(signalNode) {
 		logger.Infof("ignoring non worker node")
 
@@ -116,6 +131,51 @@ func (r *uncordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result,
 	}
 
 	return cr.Result{}, r.moveToNextState(ctx, signalNode, apsigcomm.Completed)
+}
+
+// Determines whether the request should be ignored. This enables the migration
+// from Autopilot deployments that manage (un-)cordoning on each individual node
+// to deployments that manage (un-)cordoning via the Autopilot controller.
+func (r *uncordoning) isIgnored(ctx context.Context, signalNode crcli.Object) (reason string, _ error) {
+	if r.leaseStatus == leaderelection.StatusLeading {
+		if types.NodeName(signalNode.GetName()) == r.nodeName {
+			// It's us and we're leading. Go for it!
+			return "", nil
+		}
+
+		if !needsCordoning(signalNode) {
+			// If it's not a worker node, there's no node lease to be checked.
+			return "", nil
+		}
+
+		// Check the node lease if it needs to be reconciled by us.
+		nodeLease, err := r.clientset.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, signalNode.GetName(), metav1.GetOptions{})
+
+		switch {
+		case err != nil:
+			return "", fmt.Errorf("failed to get node lease: %w", err)
+		case nodeLease.Labels[apconst.ManagesCordoningLabel] == "false":
+			return "", nil
+		default:
+			return "node manages cordoning on its own", nil
+		}
+	}
+
+	// Check if the current autopilot leader is managing the reconciliation for us.
+	apLease, err := r.clientset.CoordinationV1().Leases(apconst.AutopilotNamespace).Get(ctx, apconst.AutopilotNamespace+"-controller", metav1.GetOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to get autopilot controller lease: %w", err)
+	}
+
+	ident := apLease.Spec.HolderIdentity
+	switch {
+	case ident == nil || *ident == "" || !kubeutil.IsValidLease(*apLease):
+		return "", errors.New("autopilot controller lease is invalid")
+	case apLease.Labels[apconst.ManagesCordoningLabel] == *ident:
+		return "autopilot controller takes care of reconciliation", nil
+	default:
+		return "", nil
+	}
 }
 
 func (r *uncordoning) moveToNextState(ctx context.Context, signalNode crcli.Object, state string) error {

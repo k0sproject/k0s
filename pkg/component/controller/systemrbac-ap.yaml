@@ -10,10 +10,12 @@ rules:
     resources: [nodes]
     verbs: [get, list, watch, update, patch]
   # Needed by drain to list/delete pods scheduled to the node.
+  # TODO: Remove in v1.36+
   - apiGroups: [""]
     resources: [pods]
     verbs: [get, list, watch, delete]
   # Drain uses the eviction subresource when available.
+  # TODO: Remove in v1.36+
   - apiGroups: [""]
     resources: [pods/eviction]
     verbs: [create]
@@ -23,6 +25,7 @@ rules:
     resourceNames: [kube-system]
     verbs: [get]
   # Required by the drain helper to skip DaemonSet-managed pods.
+  # TODO: Remove in v1.36+
   - apiGroups: [apps]
     resources: [daemonsets]
     verbs: [get, list]

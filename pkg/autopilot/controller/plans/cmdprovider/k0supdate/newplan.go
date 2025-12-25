@@ -13,7 +13,6 @@ import (
 	appku "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/utils"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
-	v1 "k8s.io/api/core/v1"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -69,15 +68,34 @@ func (kp *k0supdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, sta
 // with `apv1beta2.ControlNode` signal node objects.
 func populateControllerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandK0sUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
 	return appkd.DiscoverNodes(ctx, client, &update.Targets.Controllers, dm["controller"],
-		func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-			return appku.ObjectExistsWithPlatform(ctx, client, name, &apv1beta2.ControlNode{}, update.Platforms)
+		func(name string) (appkd.SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
+			if exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, &apv1beta2.ControlNode{}, update.Platforms); exists {
+				return appkd.SignalObjectFilterResultFound, state
+			} else {
+				return appkd.SignalObjectFilterResultMissing, state
+			}
 		})
 }
 
 // populateWorkerStatus is a specialization of `DiscoverNodes` for working
 // with `v1.Node` signal node objects.
 func populateWorkerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandK0sUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
-	return appkd.DiscoverNodes(ctx, client, &update.Targets.Workers, dm["worker"], func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-		return appku.ObjectExistsWithPlatform(ctx, client, name, &v1.Node{}, update.Platforms)
+	worker := dm["worker"]
+	return appkd.DiscoverNodes(ctx, client, &update.Targets.Workers, worker, func(name string) (appkd.SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
+		exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, worker.CreateObject(), update.Platforms)
+		if !exists {
+			return appkd.SignalObjectFilterResultMissing, state
+		}
+
+		// Ensure this is a pure worker, i.e. there's no corresponding
+		// controller object. Signals for controllers with embedded workers are
+		// purely handled via their controller objects.
+		controller := dm["controller"]
+		exists, _ = appku.ObjectExistsWithPlatform(ctx, client, name, controller.CreateObject(), update.Platforms)
+		if exists {
+			return appkd.SignalObjectFilterResultIgnore, state
+		}
+
+		return appkd.SignalObjectFilterResultFound, state
 	})
 }
