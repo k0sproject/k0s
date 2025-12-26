@@ -325,6 +325,21 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
+	s.Run("invalid_ipv6_service_cidr_prefix_too_large", func() {
+		fg := featuregate.FeatureGates{}
+		s.NoError(fg.Set("IPv6SingleStack=true"))
+		defer func() { featuregate.FlushDefaultFeatureGates(s.T()) }()
+
+		n := DefaultNetwork()
+		n.PodCIDR = "fd00::/108"
+		n.ServiceCIDR = "fd01::/120"
+
+		errors := n.Validate()
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], "IPv6 service CIDR prefix must be <= 108")
+		}
+	})
+
 	s.Run("invalid_ipv6_pod_cidr", func() {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()

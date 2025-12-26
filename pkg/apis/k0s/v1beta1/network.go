@@ -101,7 +101,7 @@ func (n *Network) Validate() []error {
 		validCIDRs = false
 	}
 
-	serviceNetIP, _, err := net.ParseCIDR(n.ServiceCIDR)
+	serviceNetIP, serviceNet, err := net.ParseCIDR(n.ServiceCIDR)
 	if err != nil {
 		errors = append(errors, field.Invalid(field.NewPath("serviceCIDR"), n.ServiceCIDR, "invalid CIDR address"))
 		validCIDRs = false
@@ -112,6 +112,15 @@ func (n *Network) Validate() []error {
 		// if they have a valid IP to begin with because otherwise the error can be confusing
 		if (podNetIP.To4() != nil) != (serviceNetIP.To4() != nil) {
 			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "podCIDR and serviceCIDR must be both IPv4 or IPv6"))
+		}
+
+		// Validate IPv6 ServiceCIDR prefix length per Kubernetes requirements (<= /108).
+		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/cmd/kube-apiserver/app/options/validation.go#L52-L58
+		if serviceNetIP.To4() == nil {
+			ones, bits := serviceNet.Mask.Size()
+			if bits == 128 && ones > 108 {
+				errors = append(errors, field.Invalid(field.NewPath("serviceCIDR"), n.ServiceCIDR, "IPv6 service CIDR prefix must be <= 108"))
+			}
 		}
 
 		// Single stack IPv6 is an alpha feature, so we need to check if the feature gate is enabled, but only report it if both
@@ -133,11 +142,20 @@ func (n *Network) Validate() []error {
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6podCIDR"), n.DualStack.IPv6PodCIDR, "invalid CIDR address"))
 		}
-		_, _, err = net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
+		ip, ipNet, err := net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "invalid CIDR address"))
+		} else if ip.To4() == nil {
+			ones, bits := ipNet.Mask.Size()
+
+			// https://github.com/kubernetes/kubernetes/blob/v1.34.3/cmd/kube-apiserver/app/options/validation.go#L39
+			maxCIDRBits := 20
+			if bits-ones > maxCIDRBits {
+				errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "IPv6 service CIDR prefix must be <= 108"))
+			}
 		}
 		if podNetIP.To4() == nil {
+
 			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "if DualStack is enabled, podCIDR must be IPv4"))
 		}
 		if serviceNetIP.To4() == nil {
