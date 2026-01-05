@@ -36,8 +36,8 @@ See [Chart configuration](#chart-configuration) below for more details on how to
 | `url`      | _(required)_  | The repository URL                                                                                |
 | `insecure` | `true`        | Whether to skip TLS certificate checks when connecting to the repository                          |
 | `caFile`   | -             | CA bundle file to use when verifying HTTPS-enabled servers                                        |
-| `certFile` | -             | The TLS certificate file to use for HTTPS client authentication (not supported by OCI registries) |
-| `keyfile`  | -             | The TLS key file to use for HTTPS client authentication (not supported by OCI registries)         |
+| `certFile` | -             | The TLS certificate file to use for HTTPS client authentication (mTLS)                            |
+| `keyFile`  | -             | The TLS key file to use for HTTPS client authentication (mTLS)                                    |
 | `username` | -             | Username for Basic HTTP authentication                                                            |
 | `password` | -             | Password for Basic HTTP authentication                                                            |
 
