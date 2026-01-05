@@ -19,7 +19,6 @@ on:
       - .github/dependabot.yml
       - docs/**
       - hack/ostests/**
-      - hack/tool/**
       - LICENSE
       - mkdocs.yml
       - renovate.json
@@ -42,7 +41,6 @@ on:
       - .github/dependabot.yml
       - docs/**
       - hack/ostests/**
-      - hack/tool/**
       - LICENSE
       - mkdocs.yml
       - renovate.json
