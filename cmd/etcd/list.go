@@ -32,6 +32,7 @@ func etcdListCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %w", err)
 			}
+			defer etcdClient.Close()
 			members, err := etcdClient.ListMembers(ctx)
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %w", err)
