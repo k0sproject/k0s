@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -79,6 +80,76 @@ func TestNewPlan(t *testing.T) {
 							Discovery: apv1beta2.PlanCommandTargetDiscovery{
 								Static: &apv1beta2.PlanCommandTargetDiscoveryStatic{
 									Nodes: []string{"worker0"},
+								},
+							},
+						},
+					},
+				},
+			},
+			appc.PlanSchedulableWait,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
+			},
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+			},
+			[]string{},
+		},
+
+		// A controller+worker scenario where a plan lists the controller as
+		// controller, and the worker as worker, even if the controller is
+		// represented by both a ControlNode and a Node object.
+		{
+			"ControllerPlusWorkerAndWorker",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ControlNode",
+						APIVersion: apv1beta2.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "controller0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+					},
+				},
+				&corev1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "controller0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+					},
+				},
+				&corev1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: corev1.SchemeGroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "worker0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
+					Platforms: apv1beta2.PlanPlatformResourceURLMap{
+						"theOS-theArch": {},
+					},
+					Targets: apv1beta2.PlanCommandTargets{
+						Controllers: apv1beta2.PlanCommandTarget{
+							Discovery: apv1beta2.PlanCommandTargetDiscovery{
+								Selector: &apv1beta2.PlanCommandTargetDiscoverySelector{
+									Labels: fields.OneTermEqualSelector(corev1.LabelOSStable, "theOS").String(),
+								},
+							},
+						},
+						Workers: apv1beta2.PlanCommandTarget{
+							Discovery: apv1beta2.PlanCommandTargetDiscovery{
+								Selector: &apv1beta2.PlanCommandTargetDiscoverySelector{
+									Labels: fields.OneTermEqualSelector(corev1.LabelOSStable, "theOS").String(),
 								},
 							},
 						},
@@ -461,8 +532,8 @@ func TestNewPlan(t *testing.T) {
 			assert.Equal(t, test.expectedNextState, nextState)
 			assert.False(t, retry)
 			if assert.NotNil(t, status.K0sUpdate) {
-				assert.True(t, cmp.Equal(test.expectedPlanStatusControllers, status.K0sUpdate.Controllers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
-				assert.True(t, cmp.Equal(test.expectedPlanStatusWorkers, status.K0sUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
+				assert.Empty(t, cmp.Diff(test.expectedPlanStatusControllers, status.K0sUpdate.Controllers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")), "Mismatch in discovered controllers")
+				assert.Empty(t, cmp.Diff(test.expectedPlanStatusWorkers, status.K0sUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")), "Mismatch in discovered workers")
 			}
 		})
 	}
