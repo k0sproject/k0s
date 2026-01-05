@@ -1,0 +1,3076 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
+      
+      
+        <meta name="author" content="Mirantis, Inc.">
+      
+      
+        <link rel="canonical" href="https://docs.k0sproject.io/v1.32.11+k0s.0/cplb/">
+      
+      
+        <link rel="prev" href="../nllb/">
+      
+      
+        <link rel="next" href="../shell-completion/">
+      
+      
+      <link rel="icon" href="../img/k0s-favicon-192.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>Control plane load balancing - Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-JMV1409T2T');
+  </script>
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#control-plane-load-balancing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You are not currently viewing the documentation for the current stable release of k0s.
+  <a href="../..">
+    <strong>Click here to go to the documentation of the current stable release.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../img/k0s-favicon-192.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Control plane load balancing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../img/k0s-favicon-192.png" alt="logo">
+
+    </a>
+    Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Installation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0sctl-install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using k0sctl
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Alternative Methods
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Alternative Methods
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0s-multi-node/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manual (advanced)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0s-in-docker/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experimental-windows/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Windows (experimental)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../raspberry-pi4/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Raspberry Pi 4
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/ansible-playbook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible Playbook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../airgap-install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Airgap Install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom-ca/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using custom CA certificate (advanced)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system-requirements/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    System Requirements
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../external-runtime-deps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    External runtime dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../verifying-signs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Verifying Signed Binaries
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Maintenance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backup/Restore
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../remove_controller/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Remove/Replace a controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reset/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reset (Uninstall)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Usage
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration Options
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dynamic-configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dynamic Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration-validation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration Validation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../worker-node-config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Worker Node Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../networking/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Networking (CNI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runtime/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Runtime (CRI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Storage (CSI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system-monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    System Components Monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manifests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manifest Deployer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../helm-charts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helm Charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-providers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cloud Providers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dual-stack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    IPv4/IPv6 dual-stack networking
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../high-availability/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Plane High Availability
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nllb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Node-local load balancing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Control plane load balancing
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Control plane load balancing
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compatibility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controller-worker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Controller + worker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      External address
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-local-load-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node Local Load Balancing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtual-ips-high-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Virtual IPs - High availability
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Virtual IPs - High availability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-a-vip-virtual-ip" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is a VIP (virtual IP)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-vips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring VIPs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#load-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load Balancing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Load Balancing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load-balancing-userspace-reverse-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load Balancing - Userspace Reverse Proxy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keepalived-virtual-servers-load-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keepalived Virtual Servers Load Balancing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-example-using-k0sctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full example using k0sctl
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-virtual-ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Virtual IPs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-the-load-balancers-endpoint-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting the Load Balancer's Endpoint List
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-the-userspace-reverse-proxy-load-balancer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting the Userspace Reverse Proxy Load Balancer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-keepalived-virtual-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Keepalived Virtual Servers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell-completion/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shell Completion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-management/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User Management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../environment-variables/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration of Environment Variables
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenID Connect
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../selinux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SELinux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../podsecurity/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pod Security Standards
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reinstall-k0sctl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Re-install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Auto Updates
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Auto Updates
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autopilot/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autopilot-multicommand/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Multi-Command Plans
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Extensions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Extensions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MetalLB Load Balancer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/nginx-ingress/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NGINX Ingress Controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/traefik-ingress/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Traefik Ingress Controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/rook-ceph/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ceph Storage with Rook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/gitops-flux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitOps with Flux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/openebs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenEBS storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Troubleshooting
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/FAQ/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    FAQ
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/logs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/troubleshooting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common Pitfalls
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/support-dump/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Support Insights
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/certificate-authorities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Certificate Authorities (CAs)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Command Line
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cis_benchmark/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kube-bench Security Benchmark
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Governance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Governance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security policy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releases & support model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_9_3" id="__nav_9_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    CNCF
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            CNCF
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../governance/cncf/gtr/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General Technical Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../governance/cncf/security-self-assessment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TAG-Security self-assessment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commercial-support/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Commercial support
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adopters/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adopters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/github_workflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitHub Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compatibility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#single-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controller-worker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Controller + worker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      External address
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-local-load-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node Local Load Balancing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtual-ips-high-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Virtual IPs - High availability
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Virtual IPs - High availability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-a-vip-virtual-ip" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is a VIP (virtual IP)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-vips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring VIPs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#load-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load Balancing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Load Balancing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load-balancing-userspace-reverse-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load Balancing - Userspace Reverse Proxy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keepalived-virtual-servers-load-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keepalived Virtual Servers Load Balancing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-example-using-k0sctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full example using k0sctl
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-virtual-ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Virtual IPs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-the-load-balancers-endpoint-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting the Load Balancer's Endpoint List
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-the-userspace-reverse-proxy-load-balancer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting the Userspace Reverse Proxy Load Balancer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-keepalived-virtual-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Keepalived Virtual Servers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="control-plane-load-balancing">Control plane load balancing<a class="headerlink" href="#control-plane-load-balancing" title="Permanent link">#</a></h1>
+<p>For clusters that don't have an <a href="../high-availability/#load-balancer">externally managed load balancer</a> for the k0s
+control plane, there is another option to get a highly available control plane called control plane load balancing (CPLB).</p>
+<p>CPLB provides clusters a highly available VIP (virtual IP) and load balancing for <strong>accessing the cluster externally</strong>.
+For internal traffic (nodes to control plane) k0s provides <a href="../nllb/">NLLB</a>. Both features are fully compatible and it's
+recommended to use both together if you don't have an external load balancer.</p>
+<p>Load balancing means that an IP address will forward the traffic to every control plane node, Virtual IPs mean that
+this IP address will be present on at least one node at a time.</p>
+<p>CPLB relies on <a href="https://www.keepalived.org">keepalived</a> for highly available VIPs. Internally, Keepalived uses the
+<a href="https://datatracker.ietf.org/doc/html/rfc3768">VRRP protocol</a>. Load Balancing can be done through either userspace
+reverse proxy implemented in k0s (recommended for simplicity), or it can use Keepalived's virtual servers feature,
+which ultimately relies on IPVS.</p>
+<h2 id="compatibility">Compatibility<a class="headerlink" href="#compatibility" title="Permanent link">#</a></h2>
+<p>CPLB depends on multiple technologies to work together as a whole, making it difficult to work on every single scenario.</p>
+<h3 id="single-node">Single node<a class="headerlink" href="#single-node" title="Permanent link">#</a></h3>
+<p>CPLB is incompatible with running as a <a href="../k0s-single-node/">single node</a>. This means k0s must not be started using the <code>--single</code> flag.</p>
+<h3 id="controller-worker">Controller + worker<a class="headerlink" href="#controller-worker" title="Permanent link">#</a></h3>
+<p>K0s only supports the userspace reverse proxy load balancer. Keepalived's VirtualServers are not supported with controller + worker.</p>
+<p>Both Kube-Router and Calico managed by k0s are supported with the userspace reverse proxy load balancer, however, k0s creates iptables
+rules in the control plane nodes which may be incompatible with custom CNI plugins.</p>
+<h3 id="external-address">External address<a class="headerlink" href="#external-address" title="Permanent link">#</a></h3>
+<p>If <a href="../configuration/#specapi"><code>spec.api.externalAddress</code></a> is defined it's mandatory to disable
+the <a href="../configuration/#disabling-controller-components"><code>endpoint-reconciler</code> component</a> using the flag <code>--disable-components=endpoint-reconciler</code>.</p>
+<h3 id="node-local-load-balancing">Node Local Load Balancing<a class="headerlink" href="#node-local-load-balancing" title="Permanent link">#</a></h3>
+<p>CPLB is fully compatible with <a href="../nllb/">NLLB</a>, however NLLB is incompatible with <a href="../configuration/#specapi"><code>spec.api.externalAddress</code></a>.</p>
+<h2 id="virtual-ips-high-availability">Virtual IPs - High availability<a class="headerlink" href="#virtual-ips-high-availability" title="Permanent link">#</a></h2>
+<h3 id="what-is-a-vip-virtual-ip">What is a VIP (virtual IP)<a class="headerlink" href="#what-is-a-vip-virtual-ip" title="Permanent link">#</a></h3>
+<p>A virtual IP is an IP address that isn't tied to a single network interface,
+instead it floats between multiple servers. This is a failover mechanism that
+grants that there is always at least a functioning server and removes a single
+point of failure.</p>
+<h3 id="configuring-vips">Configuring VIPs<a class="headerlink" href="#configuring-vips" title="Permanent link">#</a></h3>
+<p>CPLB relies internally on Keepalived's VRRP Instances. A VRRP Instance is a
+server that will manage one or more VIPs. Most users will need exactly one
+VRRP instance with exactly one VIP, however k0s allows multiple VRRP servers
+with multiple VIPs for more advanced use cases such as network segmentation.</p>
+<p>A virtualIP requires:</p>
+<ol>
+<li>A user-defined CIDR address which must be routable in the network. For most installations, this will be in the same CIDR as the physical interface.
+<strong>WARNING:</strong> K0s is not aware of external IP address management and the administrator is responsible for ensuring that IP addresses aren't colliding.</li>
+<li>A user-defined password which should be unique for each cluster. This password is a mechanism to prevent accidental conflicts. It's not encrypted
+and doesn't prevent malicious attacks in any way.</li>
+<li>A virtual router ID, which defaults to 51. This virtual router ID <strong>must be unique</strong> in the broadcast domain.</li>
+<li>A network interface, if not defined, k0s will chose the network interface that owns the default route.</li>
+</ol>
+<p>Except the network interface, all the other fields must be equal on every control plane node.</p>
+<p>This is a minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+</code></pre></div>
+<p>By default, VRRP Intances use multicast as per <a href="https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2">RFC 3768</a>. It's possible to configure VRRP
+instances to use unicast:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">          </span><span class="nt">unicastSourceIP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ip address of this controller&gt;</span>
+<span class="w">          </span><span class="nt">unicastPeers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">&lt;ip address of other controllers&gt;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>When using unicast, k0st does not attempt to detect <code>unicastSourceIP</code> and it must be defined explicitly and
+<code>unicastPeers</code> must include the IP address of the other controllers' <code>unicastSourceIP</code>.</p>
+<h2 id="load-balancing">Load Balancing<a class="headerlink" href="#load-balancing" title="Permanent link">#</a></h2>
+<p>Currently k0s allows to chose one of two load balancing mechanism:</p>
+<ol>
+<li>A userspace reverse proxy running in the k0s process. This is the default and recommended setting.</li>
+<li>For users who may need extra performance or more flexible algorithms, k0s can use the keepalived virtual servers load balancer feature.</li>
+</ol>
+<p>All control plane nodes must use the same load balancing mechanism. Different Load balancing mechanism
+is not supported and has undefined behavior.</p>
+<h3 id="load-balancing-userspace-reverse-proxy">Load Balancing - Userspace Reverse Proxy<a class="headerlink" href="#load-balancing-userspace-reverse-proxy" title="Permanent link">#</a></h3>
+<p>This is the default behavior, in order to enable it simple configure a VIP
+using a VRRP instance.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+</code></pre></div>
+<h3 id="keepalived-virtual-servers-load-balancing">Keepalived Virtual Servers Load Balancing<a class="headerlink" href="#keepalived-virtual-servers-load-balancing" title="Permanent link">#</a></h3>
+<p>The Keepalived virtual servers Load Balancing is more performant than the userspace reverse proxy load balancer. However, it's
+ not recommended because it has some drawbacks:</p>
+<ol>
+<li>It's incompatible with controller+worker.</li>
+<li>May not work on every infrastructure.</li>
+<li>Troubleshooting is significantly more complex.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">        </span><span class="nt">virtualServers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ipAddress</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">without</span><span class="nv"> </span><span class="s">netmask&gt;&quot;</span><span class="w"> </span><span class="c1"># for instance 172.16.0.100</span>
+</code></pre></div>
+<h2 id="full-example-using-k0sctl">Full example using <code>k0sctl</code><a class="headerlink" href="#full-example-using-k0sctl" title="Permanent link">#</a></h2>
+<p>The following example shows a full <code>k0sctl</code> configuration file featuring three
+controllers and three workers with control plane load balancing enabled.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller-0.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller-1.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller-2.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-0.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-1.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-2.k0s.lab</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/k0s</span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.32.11+k0s.0</span>
+<span class="w">    </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">controlPlaneLoadBalancing</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
+<span class="w">            </span><span class="nt">keepalived</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">vrrpInstances</span><span class="p">:</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;192.168.122.200/24&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">                </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Example</span>
+<span class="w">          </span><span class="nt">nodeLocalLoadBalancing</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional, but CPLB will often be used with NLLB.</span>
+<span class="w">            </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EnvoyProxy</span>
+</code></pre></div>
+<p>Save the above configuration into a file called <code>k0sctl.yaml</code> and apply it in
+order to bootstrap the cluster:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>k0sctl<span class="w"> </span>apply
+<span class="go">⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███</span>
+<span class="go">⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███</span>
+<span class="go">⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███</span>
+<span class="go">⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███</span>
+<span class="go">⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████</span>
+<span class="go">k0sctl  Copyright 2023, k0sctl authors.</span>
+<span class="go">Anonymized telemetry of usage will be sent to the authors.</span>
+<span class="go">By continuing to use k0sctl you agree to these terms:</span>
+<span class="go">https://k0sproject.io/licenses/eula</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Connect to hosts&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: connected&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Detect host operating systems&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Acquire exclusive host lock&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Prepare hosts&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Gather host facts&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: using worker-2.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: using controller-0.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: using controller-2.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: using controller-1.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: using worker-1.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: using worker-0.k0s.lab as hostname&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: discovered eth0 as private interface&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: discovered 192.168.122.210 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: discovered 192.168.122.37 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: discovered 192.168.122.87 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: discovered 192.168.122.185 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: discovered 192.168.122.81 as private address&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: discovered 192.168.122.219 as private address&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Validate hosts&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Validate facts&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Download k0s binaries to local host&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Upload k0s binaries to hosts&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: uploading k0s binary from /opt/k0s&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Install k0s binaries on hosts&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: validating configuration&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: validating configuration&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: validating configuration&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Configure k0s&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: installing new configuration&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: installing new configuration&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: installing new configuration&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Initialize the k0s cluster&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: installing k0s controller&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: waiting for the k0s service to start&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: waiting for kubernetes api to respond&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Install controllers&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: installing k0s controller&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: waiting for the k0s service to start&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-1.k0s.lab:22: waiting for kubernetes api to respond&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: installing k0s controller&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: waiting for the k0s service to start&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-2.k0s.lab:22: waiting for kubernetes api to respond&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Install workers&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: validating api connection to https://192.168.122.200:6443&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating a join token for worker 1&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating a join token for worker 2&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] controller-0.k0s.lab:22: generating a join token for worker 3&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: writing join token&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: installing k0s worker&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: installing k0s worker&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: installing k0s worker&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: starting service&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-2.k0s.lab:22: waiting for node to become ready&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-0.k0s.lab:22: waiting for node to become ready&quot;</span>
+<span class="go">level=info msg=&quot;[ssh] worker-1.k0s.lab:22: waiting for node to become ready&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Release exclusive host lock&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Running phase: Disconnect from hosts&quot;</span>
+<span class="go">level=info msg=&quot;==&gt; Finished in 2m20s&quot;</span>
+<span class="go">level=info msg=&quot;k0s cluster version v1.32.11+k0s.0 is now installed&quot;</span>
+<span class="go">level=info msg=&quot;Tip: To access the cluster you can now fetch the admin kubeconfig using:&quot;</span>
+<span class="go">level=info msg=&quot;     k0sctl kubeconfig&quot;</span>
+</code></pre></div>
+<p>The cluster with the two nodes should be available by now. Setup the kubeconfig
+file in order to interact with it:</p>
+<div class="highlight"><pre><span></span><code><span class="go">k0sctl kubeconfig &gt; k0s-kubeconfig</span>
+<span class="go">export KUBECONFIG=$(pwd)/k0s-kubeconfig</span>
+</code></pre></div>
+<p>All three worker nodes are ready:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+<span class="go">NAME                   STATUS   ROLES           AGE     VERSION</span>
+<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.11+k0s</span>
+<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.11+k0s</span>
+<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.11+k0s</span>
+</code></pre></div>
+<p>Only one controller has the VIP:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span>controller-<span class="o">{</span><span class="m">0</span>..2<span class="o">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$i</span><span class="w"> </span><span class="p">;</span><span class="w"> </span>ssh<span class="w"> </span><span class="nv">$i</span><span class="w"> </span>--<span class="w"> </span>ip<span class="w"> </span>-4<span class="w"> </span>--oneline<span class="w"> </span>addr<span class="w"> </span>show<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>eth0<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<span class="go">controller-0</span>
+<span class="go">2: eth0    inet 192.168.122.37/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2381sec preferred_lft 2381sec</span>
+<span class="go">2: eth0    inet 192.168.122.200/24 scope global secondary eth0\       valid_lft forever preferred_lft forever</span>
+<span class="go">controller-1</span>
+<span class="go">2: eth0    inet 192.168.122.185/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2390sec preferred_lft 2390sec</span>
+<span class="go">controller-2</span>
+<span class="go">2: eth0    inet 192.168.122.87/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2399sec preferred_lft 2399sec</span>
+</code></pre></div>
+<p>The cluster is using control plane load balancing and is able to tolerate the
+outage of one controller node. Shutdown the first controller to simulate a
+failure condition:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>ssh<span class="w"> </span>controller-0<span class="w"> </span><span class="s1">&#39;sudo poweroff&#39;</span>
+<span class="go">Connection to 192.168.122.37 closed by remote host.</span>
+</code></pre></div>
+<p>Control plane load balancing provides high availability, the VIP will have moved to a different node:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span>controller-<span class="o">{</span><span class="m">1</span>..2<span class="o">}</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$i</span><span class="w"> </span><span class="p">;</span><span class="w"> </span>ssh<span class="w"> </span><span class="nv">$i</span><span class="w"> </span>--<span class="w"> </span>ip<span class="w"> </span>-4<span class="w"> </span>--oneline<span class="w"> </span>addr<span class="w"> </span>show<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>eth0<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<span class="go">controller-1</span>
+<span class="go">2: eth0    inet 192.168.122.185/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2173sec preferred_lft 2173sec</span>
+<span class="go">2: eth0    inet 192.168.122.200/24 scope global secondary eth0\       valid_lft forever preferred_lft forever</span>
+<span class="go">controller-2</span>
+<span class="go">2: eth0    inet 192.168.122.87/24 brd 192.168.122.255 scope global dynamic noprefixroute eth0\       valid_lft 2182sec preferred_lft 2182sec</span>
+<span class="go">````</span>
+
+<span class="go">And the cluster will be working normally:</span>
+
+<span class="go">```console</span>
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+<span class="go">NAME                   STATUS   ROLES           AGE     VERSION</span>
+<span class="go">worker-0.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.11+k0s</span>
+<span class="go">worker-1.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.11+k0s</span>
+<span class="go">worker-2.k0s.lab       Ready    &lt;none&gt;          8m51s   v1.32.11+k0s</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h2>
+<p>Although Virtual IPs and Load Balancing work together and are closely related, these are two independent
+processes and must be troubleshooting as two independent features.</p>
+<h3 id="troubleshooting-virtual-ips">Troubleshooting Virtual IPs<a class="headerlink" href="#troubleshooting-virtual-ips" title="Permanent link">#</a></h3>
+<p>The first thing to check is that the VIP is present in exactly one node at a time,
+for instance if a cluster has an <code>172.17.0.102/16</code> address and the interface is <code>eth0</code>,
+the expected output is similar to:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>ip<span class="w"> </span>a<span class="w"> </span>s<span class="w"> </span>eth0
+<span class="go">53: eth0@if54: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1500 qdisc noqueue state UP</span>
+<span class="go">    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff</span>
+<span class="go">    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0</span>
+<span class="go">       valid_lft forever preferred_lft forever</span>
+<span class="go">    inet 172.17.0.102/16 scope global secondary eth0</span>
+<span class="go">       valid_lft forever preferred_lft forever</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">controller1:/# </span>ip<span class="w"> </span>a<span class="w"> </span>s<span class="w"> </span>eth0
+<span class="go">55: eth0@if56: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1500 qdisc noqueue state UP</span>
+<span class="go">    link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff</span>
+<span class="go">    inet 172.17.0.3/16 brd 172.17.255.255 scope global eth0</span>
+<span class="go">       valid_lft forever preferred_lft forever</span>
+</code></pre></div>
+<p>If the virtualServers feature is used, there must be a dummy interface on the node
+called <code>dummyvip0</code> which has the VIP but with <code>32</code> netmask. This isn't the VIP and
+has to be there even if the VIP is held by another node.</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>ip<span class="w"> </span>a<span class="w"> </span>s<span class="w"> </span>dummyvip0<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">172</span>.17.0.102
+<span class="go">    inet 172.17.0.102/32 scope global dummyvip0</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">controller1:/# </span>ip<span class="w"> </span>a<span class="w"> </span>s<span class="w"> </span>dummyvip0<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">172</span>.17.0.102
+<span class="go">    inet 172.17.0.102/32 scope global dummyvip0</span>
+</code></pre></div>
+<p>If this isn't present in the nodes, keepalived logs can be seen in the k0s-logs, and
+can be filtered with <code>component=keepalived</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>journalctl<span class="w"> </span>-u<span class="w"> </span>k0scontroller<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="nv">component</span><span class="o">=</span>keepalived
+<span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Starting to supervise&quot; component=keepalived</span>
+<span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Started successfully, go nuts pid 409&quot; component=keepalived</span>
+<span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Tue Nov 19 12:56:11 2024: Starting Keepalived v2.2.8 (04/04,2023), git commit v2.2.7-154-g292b299e+&quot; component=keepalived stream=stderr</span>
+<span class="go">[...]</span>
+</code></pre></div>
+<p>The keepalived configuration is stored in a file called keepalived.conf in the k0s run
+directory, by default <code>/run/k0s/keepalived.conf</code>, in this file there should be a
+<code>vrrp_instance</code>section for each <code>vrrpInstance</code>.</p>
+<p>Finally, k0s should have two keepalived processes running.</p>
+<h3 id="troubleshooting-the-load-balancers-endpoint-list">Troubleshooting the Load Balancer's Endpoint List<a class="headerlink" href="#troubleshooting-the-load-balancers-endpoint-list" title="Permanent link">#</a></h3>
+<p>Both the userspace reverse proxy load balancer and Keepalived's virtual servers need an endpoint list to
+do the load balancing. They share a component called <code>cplb-reconciler</code> which responsible for setting the
+load balancer's endpoint list. This component monitors constantly the endpoint <code>kubernetes</code> in the
+<code>default</code>namespace:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>kubectl<span class="w"> </span>get<span class="w"> </span>ep<span class="w"> </span>kubernetes<span class="w"> </span>-n<span class="w"> </span>default
+<span class="go">NAME         ENDPOINTS                                         AGE</span>
+<span class="go">kubernetes   172.17.0.6:6443,172.17.0.7:6443,172.17.0.8:6443   9m14s</span>
+</code></pre></div>
+<p>You can see the <code>cplb-reconciler</code> updates by running:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>journalctl<span class="w"> </span>-u<span class="w"> </span>k0scontroller<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="nv">component</span><span class="o">=</span>cplb-reconciler
+<span class="go">time=&quot;2024-11-20 20:29:28&quot; level=error msg=&quot;Failed to watch API server endpoints, last observed version is \&quot;\&quot;, starting over in 10s ...&quot; component=cplb-reconciler error=&quot;Get \&quot;https://172.17.0.6:6443/api/v1/namespaces/default/endpoints?fieldSelector=metadata.name%3Dkubernetes&amp;timeout=30s&amp;timeoutSeconds=30\&quot;: dial tcp 172.17.0.6:6443: connect: connection refused&quot;</span>
+<span class="go">time=&quot;2024-11-20 20:29:38&quot; level=info msg=&quot;Updated the list of IPs: [172.17.0.6]&quot; component=cplb-reconciler</span>
+<span class="go">time=&quot;2024-11-20 20:29:55&quot; level=info msg=&quot;Updated the list of IPs: [172.17.0.6 172.17.0.7]&quot; component=cplb-reconciler</span>
+<span class="go">time=&quot;2024-11-20 20:29:59&quot; level=info msg=&quot;Updated the list of IPs: [172.17.0.6 172.17.0.7 172.17.0.8]&quot; component=cplb-reconciler</span>
+</code></pre></div>
+<h3 id="troubleshooting-the-userspace-reverse-proxy-load-balancer">Troubleshooting the Userspace Reverse Proxy Load Balancer<a class="headerlink" href="#troubleshooting-the-userspace-reverse-proxy-load-balancer" title="Permanent link">#</a></h3>
+<p>The userspace reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>netstat<span class="w"> </span>-tlpn<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">6444</span>
+<span class="go">tcp        0      0 :::6444                 :::*                    LISTEN      345/k0s</span>
+</code></pre></div>
+<p>Then the requests to the VIP on the apiserver port are forwarded to this socket using one iptables rule:</p>
+<div class="highlight"><pre><span></span><code><span class="go">-A PREROUTING -d &lt;VIP&gt;/32 -p tcp -m tcp --dport &lt;apiserver port&gt; -j REDIRECT --to-ports &lt;userspace proxy port&gt;</span>
+</code></pre></div>
+<p>A real life example of a cluster using using the VIP <code>17.177.0.102</code> looks like:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>/var/lib/k0s/bin/iptables-save<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">6444</span>
+<span class="go">-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444</span>
+</code></pre></div>
+<p>It the load balancer is not load balancing for whatever reason, you can establish connections to it directly. A good way to see if it's actually load balancing is checking the serving certificate:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>ip<span class="w"> </span>-o<span class="w"> </span>addr<span class="w"> </span>s<span class="w"> </span>eth0
+<span class="go">43: eth0    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0\       valid_lft forever preferred_lft forever</span>
+<span class="go">43: eth0    inet 172.17.0.102/16 scope global secondary eth0\       valid_lft forever preferred_lft forever</span>
+
+<span class="gp">controller0:/# </span>openssl<span class="w"> </span>s_client<span class="w"> </span>-connect<span class="w"> </span><span class="m">172</span>.17.0.102:6444<span class="w">  </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="p">|</span><span class="w"> </span>openssl<span class="w"> </span>x509<span class="w"> </span>-noout<span class="w"> </span>-fingerprint
+<span class="go">SHA1 Fingerprint=B7:90:E6:E4:E1:EE:5B:19:72:99:02:28:54:36:D9:84:D5:39:67:8B</span>
+<span class="gp">controller0:/# </span>openssl<span class="w"> </span>s_client<span class="w"> </span>-connect<span class="w"> </span><span class="m">172</span>.17.0.102:6444<span class="w">  </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="p">|</span><span class="w"> </span>openssl<span class="w"> </span>x509<span class="w"> </span>-noout<span class="w"> </span>-fingerprint
+<span class="go">SHA1 Fingerprint=89:94:5C:E5:50:7E:40:B2:E5:20:E7:70:E8:58:91:ED:63:B0:EC:65</span>
+<span class="gp">controller0:/# </span>openssl<span class="w"> </span>s_client<span class="w"> </span>-connect<span class="w"> </span><span class="m">172</span>.17.0.102:6444<span class="w">  </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="p">|</span><span class="w"> </span>openssl<span class="w"> </span>x509<span class="w"> </span>-noout<span class="w"> </span>-fingerprint
+<span class="go">SHA1 Fingerprint=49:0D:79:FD:79:6F:A0:E4:9D:BA:A1:65:9C:C5:54:CF:E5:20:BF:A8</span>
+<span class="gp">controller0:/# </span>openssl<span class="w"> </span>s_client<span class="w"> </span>-connect<span class="w"> </span><span class="m">172</span>.17.0.102:6444<span class="w">  </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="p">|</span><span class="w"> </span>openssl<span class="w"> </span>x509<span class="w"> </span>-noout<span class="w"> </span>-fingerprint
+<span class="go">SHA1 Fingerprint=B7:90:E6:E4:E1:EE:5B:19:72:99:02:28:54:36:D9:84:D5:39:67:8B</span>
+</code></pre></div>
+<p>Note: You can't query the port 6444 on the localhost address, there is an iptables conflict. You are expected to
+be able to reach the port 6443 on any address and the port 6444 on any address except localhost.</p>
+<h3 id="troubleshooting-keepalived-virtual-servers">Troubleshooting Keepalived Virtual Servers<a class="headerlink" href="#troubleshooting-keepalived-virtual-servers" title="Permanent link">#</a></h3>
+<p>You can verify the keepalived's logs and configuration file using the steps described in the section
+<a href="#troubleshooting-virtual-ips">troubleshooting virtual IPs</a> IPs above. Additionally, you can check
+the actual IPVS configuration using <code>ipvsadm</code>:</p>
+<p><code>console
+controller0:/# ipvsadm --save -n
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.122.200:6443 rr persistent 360
+  -&gt; 192.168.122.185:6443              Route   1      0          0
+  -&gt; 192.168.122.87:6443               Route   1      0          0
+  -&gt; 192.168.122.122:6443              Route   1      0          0</code></p>
+<p>In this example <code>192.168.122.200</code> is the virtual IP, and <code>192.168.122.185</code>, <code>192.168.122.87</code>
+  and <code>192.168.122.122</code> are the control plane nodes.</p>
+<p>All control plane nodes are expected to have the same output.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2021 k0sproject a Series of LF Projects, LLC. For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank">Linux Foundation policies</a>. - All rights reserved.
+    </div>
+  
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/k0sproject/k0s" target="_blank" rel="noopener" title="k0s on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://x.com/k0sproject" target="_blank" rel="noopener" title="k0s on X" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8l164.9-188.5L26.8 48h145.6l100.5 132.9zm-24.8 373.8h39.1L151.1 88h-42z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://medium.com/k0sproject" target="_blank" rel="noopener" title="k0s on Medium" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M180.5 74.262C80.813 74.262 0 155.633 0 256s80.819 181.738 180.5 181.738S361 356.373 361 256 280.191 74.262 180.5 74.262m288.25 10.646c-49.845 0-90.245 76.619-90.245 171.095s40.406 171.1 90.251 171.1 90.251-76.619 90.251-171.1H559c0-94.503-40.4-171.095-90.248-171.095Zm139.506 17.821c-17.526 0-31.735 68.628-31.735 153.274s14.2 153.274 31.735 153.274S640 340.631 640 256c0-84.649-14.215-153.271-31.742-153.271Z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://kubernetes.slack.com/archives/C07VAPJUECS" target="_blank" rel="noopener" title="k0s on the k8s slack" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M94.12 315.1c0 25.9-21.16 47.06-47.06 47.06S0 341 0 315.1s21.16-47.06 47.06-47.06h47.06zm23.72 0c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06v117.84c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06zm47.06-188.98c-25.9 0-47.06-21.16-47.06-47.06S139 32 164.9 32s47.06 21.16 47.06 47.06v47.06zm0 23.72c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06H47.06C21.16 243.96 0 222.8 0 196.9s21.16-47.06 47.06-47.06zm188.98 47.06c0-25.9 21.16-47.06 47.06-47.06S448 171 448 196.9s-21.16 47.06-47.06 47.06h-47.06zm-23.72 0c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06V79.06c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06zM283.1 385.88c25.9 0 47.06 21.16 47.06 47.06S309 480 283.1 480s-47.06-21.16-47.06-47.06v-47.06zm0-23.72c-25.9 0-47.06-21.16-47.06-47.06s21.16-47.06 47.06-47.06h117.84c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://k0sproject.io/" target="_blank" rel="noopener" title="k0s Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6 31.5 31.5 31.5 82.5 0 114L422.3 334.8c-31.5 31.5-82.5 31.5-114 0-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5 50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5l112.2-112.3c31.5-31.5 82.5-31.5 114 0 27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+    
+  </body>
+</html>
