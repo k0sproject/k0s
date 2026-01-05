@@ -1,0 +1,287 @@
+on:
+
+  workflow_call:
+
+jobs:
+  smoketest:
+    name: Windows Smoketest
+    runs-on: windows-2022
+
+    steps:
+      - name: "Build :: Checkout"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # for `git describe`
+          persist-credentials: false
+      - name: Pre-create HNS networking
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          Write-Host "Disabling Windows Firewall"
+          & Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+
+          # Download the MS helpers and load them
+          $u = "https://raw.githubusercontent.com/Microsoft/SDN/master/Kubernetes/windows/hns.psm1"
+          Invoke-WebRequest -Uri $u -OutFile c:/hns.psm1
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          Unblock-File 'C:\hns.psm1'            # removes the "downloaded from internet" mark
+          Import-Module 'C:\hns.psm1' -Force
+
+          Write-Host "Detecting primary network adapter"
+          $dest = '8.8.8.8'
+          $best = Find-NetRoute -RemoteIPAddress $dest | Select-Object -First 1
+          $vxlanAdapter = (Get-NetAdapter -InterfaceIndex $best.InterfaceIndex).Name
+          Write-Host "Using adapter: $vxlanAdapter"
+          Write-Host "Creating overlay network"
+          New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30" -Gateway "192.168.255.1" -Name "External" -SubnetPolicies @(@{Type = "VSID"; VSID = 9999; }) -AdapterName $vxlanAdapter -Verbose
+
+          Start-Sleep -s 20s
+          Write-Host "Overlay network created succesfully"
+
+          Write-Host "Trick Calico NOT the re-create the overlay network by setting up last boot time reg key"
+          $softwareRegistryKey = "HKLM:\Software\Tigera"
+          $calicoRegistryKey = $softwareRegistryKey + "\Calico"
+
+          if (! (Test-Path $softwareRegistryKey))
+          {
+              New-Item $softwareRegistryKey
+          }
+          if (! (Test-Path $calicoRegistryKey))
+          {
+              New-Item $calicoRegistryKey
+          }
+          # Set the Calico last boot time to system last boottime
+          $bootTime = (Get-CimInstance win32_operatingsystem | select @{LABEL='LastBootUpTime';EXPRESSION={$_.lastbootuptime}}).LastBootUpTime
+          if (($bootTime -EQ $null) -OR ($bootTime.length -EQ 0))
+          {
+              throw "Failed to get last boot time"
+          }
+      
+          # This function is used in conjunction with Get-StoredLastBootTime, which
+          # returns a string, so convert the datetime value to a string using the "general" standard format.
+          $systemBootTime = $bootTime.ToString("G")
+          Set-ItemProperty -Path $calicoRegistryKey -Name "LastBootTime" -Value $systemBootTime
+
+      - name: Configure WSL to NOT do local port forwarding
+        run: |
+          @"
+          [wsl2]
+          localhostForwarding=false
+          networkingMode=nat
+          "@ | Out-File -FilePath "$env:UserProfile\.wslconfig" -Encoding ascii
+      - name: Prepare WSL
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          Write-Host "Updating to WSL 2 ..."
+          & wsl --set-default-version 2
+          & wsl --update
+
+          Write-Host "Downloading Ubuntu WSL ..."
+          Invoke-WebRequest -Uri https://old-releases.ubuntu.com/releases/24.04.2/ubuntu-24.04.2-wsl-amd64.wsl -OutFile ubuntu.wsl
+          Write-Host "Importing Ubuntu WSL ..."
+          New-Item -ItemType Directory -Path .\ubuntu | Out-Null
+          & wsl --import Ubuntu .\ubuntu .\ubuntu.wsl
+                    Write-Host "Launching WSL ..."
+          & wsl -l
+
+          # https://github.com/microsoft/WSL/issues/10138#issuecomment-2380431569
+          @'
+          [Unit]
+          Description=A simple service to keep WSL alive
+          Documentation=https://github.com/gardengim/keepwsl
+
+          [Service]
+          ExecStart=/mnt/c/Windows/System32/wsl.exe sleep infinity
+          Restart=always
+
+          [Install]
+          WantedBy=default.target
+          # some trailing carriage return
+          '@ | & wsl tee /etc/systemd/system/keepwsl.service | Out-Null
+
+          & wsl -- systemctl daemon-reload
+          & wsl -- systemctl start keepwsl.service
+
+      - name: Persistent port forwards win -> WSL
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          # Find WSL IP
+          $wslIP = (wsl.exe -e sh -lc "hostname -I | cut -f 1 -d ' '").Trim()
+
+          # Find the IP of the primary interface to bind stuff to
+          $dest = '8.8.8.8'
+          $best = Find-NetRoute -RemoteIPAddress $dest | Select-Object -First 1
+          $nodeIP = (Get-NetIPAddress -InterfaceIndex $best.InterfaceIndex -AddressFamily IPv4).IPAddress
+          Write-Host "Found primary IP of the runner: $nodeIP"
+
+          # Map Windows localhost ports → WSL ports
+          foreach ($p in 6443,8132) {
+            netsh interface portproxy delete v4tov4 listenaddress=$nodeIP listenport=$p
+            netsh interface portproxy add    v4tov4 listenaddress=$nodeIP listenport=$p connectport=$p connectaddress=$wslIP
+          }
+
+          # Show what we have
+          netsh interface portproxy show v4tov4
+
+          # Put node and WSL IPs to GH env
+          "NODE_IP=$nodeIP" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "WSL_IP=$wslIP" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Download compiled binaries
+        uses: actions/download-artifact@v5
+        with:
+          pattern: k0s-{linux,windows}-amd64
+          merge-multiple: true
+
+      - name: Install and start k0s controller
+        id: start-controller
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          & ./k0s.exe version
+
+          $dir = Resolve-Path .
+          $dir = "/mnt/$((Split-Path -Qualifier $dir).ToLower()[0])$((Split-Path -NoQualifier $dir) -replace '\\','/')"
+
+          @"
+          mkdir /etc/k0s
+          cat <<EOF >/etc/k0s/k0s.yaml
+          spec:
+            api:
+              address: ${env:NODE_IP}
+              sans:
+                - ${env:WSL_IP}
+                - ${env:NODE_IP}
+            storage:
+              type: kine
+            network:
+              provider: calico
+          EOF
+
+          install -m755 -D -- '$dir/k0s' /usr/local/bin/k0s
+
+          k0s install controller --debug --enable-worker --no-taints --disable-components metrics-server,konnectivity-server
+          # Do not use "k0s start" here, as its error reporting is poor.
+          systemctl start k0scontroller.service
+          # some trailing carriage return
+          "@ -replace "`r`n", "`n" | & wsl bash -euo pipefail
+
+          # Wait that we get connection to the kube api on WSL IP
+          
+      - name: Prepare kubeconfig
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          for ($attempt = 1; $true; $attempt++) {
+            try {
+              Write-Host "Getting kubeconfig (attempt $attempt) ..."
+              & wsl k0s kubeconfig admin | Out-File -FilePath kubeconfig -Encoding utf8
+            }
+            catch {
+              if ($attempt -gt 5) {
+                throw
+              }
+
+              Write-Warning "Failed to get kubeconfig: $_"
+              & wsl -- systemctl status k0scontroller.service
+              Start-Sleep -Seconds 5
+              continue
+            }
+
+            Write-Host "Kubeconfig written to file"
+            break
+          }
+
+          "KUBECONFIG=" + (Resolve-Path "kubeconfig").Path | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Wait for kube api
+        run: |
+          for ($attempt = 1; $true; $attempt++) {
+            try {
+              Write-Host "Verifying kube API access (attempt $attempt) ..."
+              & kubectl get nodes
+            }
+            catch {
+              if ($attempt -gt 15) {
+                throw
+              }
+
+              Write-Warning "Failed to access API: $_"
+              & wsl -- systemctl status k0scontroller.service
+              Start-Sleep -Seconds 5
+              continue
+            }
+
+            Write-Host "API access verified successfully"
+            break
+          }
+
+      - name: Get join token
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          for ($attempt = 1; $true; $attempt++) {
+            try {
+              Write-Host "Getting join token (attempt $attempt) ..."
+              & wsl k0s token create --role=worker | Out-File -FilePath k0s-worker-token -Encoding utf8
+            }
+            catch {
+              if ($attempt -gt 15) {
+                throw
+              }
+
+              Write-Warning "Failed to get join token: $_"
+              & wsl -- systemctl status k0scontroller.service
+              Start-Sleep -Seconds 5
+              continue
+            }
+
+            Write-Host "Join token written to file"
+            break
+          }
+        
+      - name: Install & Start k0s worker
+        run: |
+          & .\k0s.exe install worker --token-file=k0s-worker-token --debug --kubelet-extra-args="--hostname-override=windowsworker"
+          & .\k0s.exe start
+
+      - name: Windows smoke test
+        timeout-minutes: 15
+        run: |
+          & kubectl config view
+          & kubectl get nodes,pods -A
+          go test -v -count=1 ./inttest/windows
+
+      - name: Cluster state
+        if: failure()
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+
+          & kubectl get nodes,pods,ds,deployments -A -owide
+
+          & kubectl -n kube-system get ds calico-node-windows -o yaml
+
+          # Describe the tests pods
+          & kubectl describe pod -n default
+          & kubectl get ipamconfig -A -o yaml
+
+      - name: Collect logs into workspace
+        if: failure()
+        run: |
+          mkdir -Force logs
+          if (Test-Path "c:/var/lib/k0s") { Copy-Item -Path "c:/var/lib/k0s/*.log" -Destination "logs" -Force -ErrorAction SilentlyContinue }
+          if (Test-Path "c:/var/log") { Copy-Item -Path "c:/var/log" -Destination "logs" -Recurse -Force -ErrorAction SilentlyContinue }
+          & wsl journalctl --boot -u k0scontroller.service | Out-File -FilePath logs/k0scontroller.log -Encoding utf8
+
+      - name: Upload k0s & container logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: containers-logs
+          path: logs/**
