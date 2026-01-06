@@ -108,6 +108,11 @@ func (r *restarted) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
 	}
 
+	if signalData.Status != nil && signalData.Status.Status != Restart {
+		logger.Debug("Ignoring signal status ", signalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
 	// Move to the next successful state 'UnCordoning' if our versions match
 
 	if k0sVersion == signalData.Command.K0sUpdate.Version || signalData.Command.K0sUpdate.ForceUpdate {

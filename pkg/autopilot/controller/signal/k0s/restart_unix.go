@@ -115,6 +115,11 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
 	}
 
+	if signalData.Status != nil && signalData.Status.Status != Restart {
+		logger.Debug("Ignoring signal status ", signalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
 	if k0sVersion == signalData.Command.K0sUpdate.Version {
 		signalNodeCopy := r.delegate.DeepCopy(signalNode)
 		signalData.Status = apsigv2.NewStatus(UnCordoning)
