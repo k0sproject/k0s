@@ -81,6 +81,11 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 		return cr.Result{}, nil
 	}
 
+	if sctx.SignalData.Status != nil {
+		sctx.Log.Debug("Ignoring signal with status ", sctx.SignalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
 	sctx.Log.Infof("Found available signaling update request")
 
 	// We have no way at the moment to identify what version an airgap bundle is, or what version is
