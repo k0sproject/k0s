@@ -187,9 +187,7 @@ spec:
 	}
 }
 
-// TestQuorumSuite sets up a suite using 3 controllers for quorum, and runs various
-// autopilot upgrade scenarios against them.
-func TestQuorumSuite(t *testing.T) {
+func TestControllerWorkerSuite(t *testing.T) {
 	suite.Run(t, &controllerworkerSuite{
 		common.BootlooseSuite{
 			ControllerCount: 3,
