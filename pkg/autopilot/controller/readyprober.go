@@ -47,7 +47,6 @@ type readyProber struct {
 	log           *logrus.Entry
 	tlsConfig     *tls.Config
 	timeout       time.Duration
-	targets       []apv1beta2.PlanCommandTargetStatus
 	clientFactory apcli.FactoryInterface
 }
 
@@ -71,20 +70,12 @@ func newReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig 
 	}, nil
 }
 
-// addTargets adds all of the `PlanCommandTargetStatus` targets that should
-// be probed into the prober.
-func (p *readyProber) addTargets(targets []apv1beta2.PlanCommandTargetStatus) {
-	p.targets = targets
-}
-
-// probe starts goroutines for each of the provided targets and starts their probe.
-// As errors are received, they are collected in a single errors channel for post
-// inspection. This function blocks until *all* spawned goroutines have completed
-// or timed-out.
-func (p readyProber) probe() error {
+// Probes the given targets concurrently. Returns the first target probe error
+// that is encountered, if any.
+func (p *readyProber) probeTargets(targets []apv1beta2.PlanCommandTargetStatus) error {
 	g := errgroup.Group{}
 
-	for _, target := range p.targets {
+	for _, target := range targets {
 		g.Go(func() error { return p.probeOne(target) })
 	}
 
