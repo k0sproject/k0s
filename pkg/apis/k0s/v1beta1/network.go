@@ -138,15 +138,19 @@ func (n *Network) Validate() []error {
 		if n.Provider == "calico" && n.Calico.Mode != CalicoModeBIRD {
 			errors = append(errors, field.Forbidden(field.NewPath("calico", "mode"), fmt.Sprintf("dual-stack for calico is only supported for mode `%s`", CalicoModeBIRD)))
 		}
-		_, _, err := net.ParseCIDR(n.DualStack.IPv6PodCIDR)
+		ipv6PodIP, _, err := net.ParseCIDR(n.DualStack.IPv6PodCIDR)
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6podCIDR"), n.DualStack.IPv6PodCIDR, "invalid CIDR address"))
+		} else if ipv6PodIP.To4() != nil {
+			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6podCIDR"), n.DualStack.IPv6PodCIDR, "must be an IPv6 CIDR, not IPv4"))
 		}
-		ip, ipNet, err := net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
+		ipv6SvcIP, ipv6SvcNet, err := net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "invalid CIDR address"))
-		} else if ip.To4() == nil {
-			ones, bits := ipNet.Mask.Size()
+		} else if ipv6SvcIP.To4() != nil {
+			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "must be an IPv6 CIDR, not IPv4"))
+		} else {
+			ones, bits := ipv6SvcNet.Mask.Size()
 
 			// https://github.com/kubernetes/kubernetes/blob/v1.34.3/cmd/kube-apiserver/app/options/validation.go#L39
 			maxCIDRBits := 20

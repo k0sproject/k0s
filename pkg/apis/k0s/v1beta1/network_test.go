@@ -356,6 +356,32 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
+	s.Run("dualstack_ipv6_podcidr_rejects_ipv4", func() {
+		n := DefaultNetwork()
+		n.DualStack.Enabled = true
+		n.PodCIDR = "10.244.0.0/16"
+		n.ServiceCIDR = "10.96.0.0/12"
+		n.DualStack.IPv6PodCIDR = "10.0.0.0/24"
+		n.DualStack.IPv6ServiceCIDR = "fd01::/108"
+
+		errs := n.Validate()
+		s.NotEmpty(errs)
+		s.ErrorContains(errs[0], "must be an IPv6 CIDR")
+	})
+
+	s.Run("dualstack_ipv6_servicecidr_rejects_ipv4", func() {
+		n := DefaultNetwork()
+		n.DualStack.Enabled = true
+		n.PodCIDR = "10.244.0.0/16"
+		n.ServiceCIDR = "10.96.0.0/12"
+		n.DualStack.IPv6PodCIDR = "fd00::/108"
+		n.DualStack.IPv6ServiceCIDR = "10.96.0.0/12"
+
+		errs := n.Validate()
+		s.NotEmpty(errs)
+		s.ErrorContains(errs[0], "must be an IPv6 CIDR")
+	})
+
 	s.Run("invalid_mode_for_kube_proxy", func() {
 		n := DefaultNetwork()
 		n.KubeProxy.Mode = "foobar"
