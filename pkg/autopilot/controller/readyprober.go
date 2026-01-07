@@ -1,3 +1,5 @@
+//go:build unix
+
 // Copyright 2021 k0s authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,11 +42,6 @@ const (
 	defaultK8sAPIPort = 6443
 )
 
-type ReadyProber interface {
-	Probe() error
-	AddTargets(targets []apv1beta2.PlanCommandTargetStatus)
-}
-
 type readyProber struct {
 	k8sAPIPort    int
 	log           *logrus.Entry
@@ -54,9 +51,8 @@ type readyProber struct {
 	clientFactory apcli.FactoryInterface
 }
 
-// NewReadyProber creates a new ReadyProber based on a REST configuration, and is
-// populated with PlanCommandTargetStatus targets assigned via AddTargets.
-func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig *rest.Config, k8sAPIPort int, timeout time.Duration) (ReadyProber, error) {
+// Creates a new readyProber based on restConfig.
+func newReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig *rest.Config, k8sAPIPort int, timeout time.Duration) (*readyProber, error) {
 	tlscfg, err := rest.TLSConfigFor(restConfig)
 	if err != nil {
 		return nil, err
@@ -75,17 +71,17 @@ func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig 
 	}, nil
 }
 
-// AddTargets adds all of the `PlanCommandTargetStatus` targets that should
+// addTargets adds all of the `PlanCommandTargetStatus` targets that should
 // be probed into the prober.
-func (p *readyProber) AddTargets(targets []apv1beta2.PlanCommandTargetStatus) {
+func (p *readyProber) addTargets(targets []apv1beta2.PlanCommandTargetStatus) {
 	p.targets = targets
 }
 
-// Probe starts goroutines for each of the provided targets and starts their probe.
+// probe starts goroutines for each of the provided targets and starts their probe.
 // As errors are received, they are collected in a single errors channel for post
 // inspection. This function blocks until *all* spawned goroutines have completed
 // or timed-out.
-func (p readyProber) Probe() error {
+func (p readyProber) probe() error {
 	g := errgroup.Group{}
 
 	for _, target := range p.targets {
