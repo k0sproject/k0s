@@ -70,7 +70,7 @@ func TestNodeReady(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expectedReady, delegate.K0sUpdateReady(apv1beta2.PlanCommandK0sUpdateStatus{}, test.node))
+			assert.Equal(t, test.expectedReady, delegate.K0sUpdateReady(t.Context(), apv1beta2.PlanCommandK0sUpdateStatus{}, test.node))
 		})
 	}
 }
