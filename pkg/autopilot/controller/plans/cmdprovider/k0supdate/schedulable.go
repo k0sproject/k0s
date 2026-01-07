@@ -65,7 +65,7 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 	// in order to move onto the next signal node candidate, or requeue if this is the last remaining
 	// candidate.
 
-	updateReadyStatus := signalNodeDelegate.K0sUpdateReady(*status.K0sUpdate, signalNode)
+	updateReadyStatus := signalNodeDelegate.K0sUpdateReady(ctx, *status.K0sUpdate, signalNode)
 	if updateReadyStatus != apdel.CanUpdate {
 		if updateReadyStatus == apdel.Inconsistent {
 			// If we're inconsistent, there is nothing else we can do -- operator intervention

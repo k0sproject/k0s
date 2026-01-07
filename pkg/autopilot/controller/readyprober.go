@@ -72,11 +72,11 @@ func newReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig 
 
 // Probes the given targets concurrently. Returns the first target probe error
 // that is encountered, if any.
-func (p *readyProber) probeTargets(targets []apv1beta2.PlanCommandTargetStatus) error {
-	g := errgroup.Group{}
+func (p *readyProber) probeTargets(ctx context.Context, targets []apv1beta2.PlanCommandTargetStatus) error {
+	g, ctx := errgroup.WithContext(ctx)
 
 	for _, target := range targets {
-		g.Go(func() error { return p.probeOne(target) })
+		g.Go(func() error { return p.probeOne(ctx, target) })
 	}
 
 	return g.Wait()
@@ -84,7 +84,7 @@ func (p *readyProber) probeTargets(targets []apv1beta2.PlanCommandTargetStatus) 
 
 // probeOne will lookup the IP address of a target, and then proceed to query a
 // well-known endpoint for service readiness.
-func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
+func (p readyProber) probeOne(ctx context.Context, target apv1beta2.PlanCommandTargetStatus) error {
 	p.log.Infof("Probing %v", target.Name)
 
 	client, err := p.clientFactory.GetAutopilotClient()
@@ -92,7 +92,7 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
+	ctx, cancel := context.WithTimeout(ctx, p.timeout)
 	defer cancel()
 	controlnode, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, target.Name, metav1.GetOptions{})
 	if err != nil {
@@ -106,7 +106,7 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 
 	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig, false /* followNonLocalRedirects */)
 	url := fmt.Sprintf(readyzURLFormat, net.JoinHostPort(address, strconv.Itoa(p.k8sAPIPort)))
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("unable to create HTTP request for '%s': %w", url, err)
 	}

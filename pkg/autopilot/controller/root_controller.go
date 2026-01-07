@@ -194,8 +194,8 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	delegateMap := map[string]apdel.ControllerDelegate{
 		apdel.ControllerDelegateWorker: apdel.NodeControllerDelegate(),
 		apdel.ControllerDelegateController: apdel.ControlNodeControllerDelegate(apdel.WithReadyForUpdateFunc(
-			func(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) apdel.K0sUpdateReadyStatus {
-				if err := prober.probeTargets(status.Controllers); err != nil {
+			func(ctx context.Context, status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) apdel.K0sUpdateReadyStatus {
+				if err := prober.probeTargets(ctx, status.Controllers); err != nil {
 					logger.WithError(err).Error("Plan can not be applied to controllers (failed unanimous)")
 					return apdel.Inconsistent
 				}
