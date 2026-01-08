@@ -1,4 +1,4 @@
 # renovate: datasource=github-releases depName=kubernetes-sigs/controller-tools
 controller-tools_version = 0.20.0
 # renovate: datasource=github-releases depName=golangci/golangci-lint
-golangci-lint_version = 2.7.2
+golangci-lint_version = 2.8.0
