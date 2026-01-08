@@ -171,6 +171,7 @@ func etcdHandler(certRootDir, etcdCertDir string) http.Handler {
 			sendError(err, resp)
 			return
 		}
+		defer etcdClient.Close()
 
 		memberList, err := etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
 		if err != nil {
