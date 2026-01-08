@@ -7,12 +7,15 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"maps"
 	"sync/atomic"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	coordinationv1client "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -42,6 +45,9 @@ type LeaseConfig struct {
 	// The unique name identifying this client across all participants in the election.
 	Identity string
 
+	// Labels to be set on the lease.
+	Labels map[string]string
+
 	// The Kubernetes client used to manage the Lease resource.
 	Client coordinationv1client.LeasesGetter
 
@@ -59,11 +65,15 @@ func (c *LeaseConfig) buildLock() (resourcelock.Interface, error) {
 	if c.Client == nil {
 		return nil, errors.New("client may not be nil")
 	}
+	if err := validation.ValidateLabels(c.Labels, field.NewPath("Labels")).ToAggregate(); err != nil {
+		return nil, err
+	}
 
 	return &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
 			Namespace: c.Namespace,
 			Name:      c.Name,
+			Labels:    maps.Clone(c.Labels),
 		},
 		Client: c.Client,
 		LockConfig: resourcelock.ResourceLockConfig{
