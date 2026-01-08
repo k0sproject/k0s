@@ -338,8 +338,8 @@ Similar to the **Plan Status**, the individual nodes can have their own statuses
 | ------ | ----------- |
 | `SignalPending` | The node is available and awaiting an update signal |
 | `SignalSent` | Update signaling has been successfully applied to this node. |
-| `MissingPlatform` | This node is a platform that an update has not been provided for. |
-| `MissingSignalNode` | This node does have an associated `Node` (worker) or `ControlNode` (controller) object. |
+| `SignalMissingPlatform` | This node is a platform that an update has not been provided for. |
+| `SignalMissingNode` | This node does have an associated `Node` (worker) or `ControlNode` (controller) object. |
 
 ## UpdateConfig
 
