@@ -67,12 +67,12 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 
 	updateReadyStatus := signalNodeDelegate.K0sUpdateReady(ctx, *status.K0sUpdate, signalNode)
 	if updateReadyStatus != apdel.CanUpdate {
-		if updateReadyStatus == apdel.Inconsistent {
-			// If we're inconsistent, there is nothing else we can do -- operator intervention
+		if updateReadyStatus == apdel.Incomplete {
+			// If we're incomplete, there is nothing else we can do -- operator intervention
 			// is now required.
 
-			logger.Warn("Inconsistent targets detected, unable to process.")
-			return appc.PlanInconsistentTargets, false, nil
+			logger.Warn("Incomplete targets detected, unable to process.")
+			return appc.PlanIncompleteTargets, false, nil
 		}
 
 		// Request a requeue with the current status

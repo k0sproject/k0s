@@ -31,6 +31,10 @@ func Plans(client Provider[*autopilotv1beta2.PlanList]) *Watcher[autopilotv1beta
 	return FromClient[*autopilotv1beta2.PlanList, autopilotv1beta2.Plan](client)
 }
 
+func ControlNodes(client Provider[*autopilotv1beta2.ControlNodeList]) *Watcher[autopilotv1beta2.ControlNode] {
+	return FromClient[*autopilotv1beta2.ControlNodeList, autopilotv1beta2.ControlNode](client)
+}
+
 func Charts(client Provider[*helmv1beta1.ChartList]) *Watcher[helmv1beta1.Chart] {
 	return FromClient[*helmv1beta1.ChartList, helmv1beta1.Chart](client)
 }
