@@ -15,9 +15,9 @@ import (
 type K0sUpdateReadyStatus string
 
 const (
-	CanUpdate    K0sUpdateReadyStatus = "CanUpdate"
-	NotReady     K0sUpdateReadyStatus = "NotReady"
-	Inconsistent K0sUpdateReadyStatus = "Inconsistent"
+	CanUpdate  K0sUpdateReadyStatus = "CanUpdate"
+	NotReady   K0sUpdateReadyStatus = "NotReady"
+	Incomplete K0sUpdateReadyStatus = "Incomplete"
 )
 
 type ControllerDelegateMap map[string]ControllerDelegate
