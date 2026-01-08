@@ -6,12 +6,29 @@ package install
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
+
+func resolveEnvVars(in []string) ([]string, error) {
+	out := make([]string, len(in))
+	for i, evar := range in {
+		if strings.Contains(evar, "\x00") {
+			return nil, errors.New("NUL byte in environment variable")
+		}
+		if name, _, hasValue := strings.Cut(evar, "="); hasValue {
+			out[i] = evar
+		} else {
+			out[i] = name + "=" + os.Getenv(name)
+		}
+	}
+
+	return out, nil
+}
 
 func cmdFlagsToArgs(cmd *cobra.Command) ([]string, error) {
 	var flagsAndVals []string
