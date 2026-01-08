@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -193,11 +194,15 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 
 	leaderMode := event == leaderelection.StatusLeading
 
-	prober, err := newReadyProber(logger, c.autopilotClientFactory, mgr.GetConfig(), c.cfg.KubeAPIPort, 1*time.Minute)
+	k0sClient, err := c.kubeClientFactory.GetK0sClient()
 	if err != nil {
-		logger.WithError(err).Error("unable to create controller prober")
-		return err
+		return fmt.Errorf("failed to get k0s client: %w", err)
 	}
+	tlsConfig, err := rest.TLSConfigFor(mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("failed to get Kubernetes TLS config: %w", err)
+	}
+	prober := newReadyProber(logger, k0sClient, tlsConfig, c.cfg.KubeAPIPort, 1*time.Minute)
 
 	delegateMap := map[string]apdel.ControllerDelegate{
 		apdel.ControllerDelegateWorker: apdel.NodeControllerDelegate(),
