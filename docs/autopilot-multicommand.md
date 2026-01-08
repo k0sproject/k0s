@@ -200,7 +200,6 @@ flowchart TD
     Errors --> InconsistentTargets
     Errors --> IncompleteTargets
     Errors --> Restricted
-    Errors --> MissingPlatform
     Errors --> MissingSignalNode
 ```
 
