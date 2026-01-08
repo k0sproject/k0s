@@ -19,7 +19,6 @@ var (
 	PlanInconsistentTargets apv1beta2.PlanStateType = "InconsistentTargets"
 	PlanIncompleteTargets   apv1beta2.PlanStateType = "IncompleteTargets"
 	PlanRestricted          apv1beta2.PlanStateType = "Restricted"
-	PlanMissingSignalNode   apv1beta2.PlanStateType = "MissingSignalNode"
 	PlanApplyFailed         apv1beta2.PlanStateType = "ApplyFailed"
 )
 
