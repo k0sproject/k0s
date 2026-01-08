@@ -54,11 +54,13 @@ func cordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 	)
 }
 
-type cordoning struct {
+type cordonUncordon struct {
 	log       *logrus.Entry
 	client    crcli.Client
 	delegate  apdel.ControllerDelegate
 	clientset *kubernetes.Clientset
+	do        func(*drain.Helper, *corev1.Node) error
+	nextState string
 }
 
 // registerCordoning registers the 'cordoning' controller to the
@@ -82,17 +84,19 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
-			&cordoning{
+			&cordonUncordon{
 				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
 				client:    mgr.GetClient(),
 				delegate:  delegate,
 				clientset: clientset,
+				do:        cordonAndDrainNode,
+				nextState: ApplyingUpdate,
 			},
 		)
 }
 
 // Reconcile for the 'cordoning' reconciler will cordon and drain a node
-func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
+func (r *cordonUncordon) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
@@ -107,28 +111,27 @@ func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 	if !needsCordoning(signalNode) {
 		logger.Infof("ignoring non worker node")
 
-		return cr.Result{}, r.moveToNextState(ctx, signalNode, ApplyingUpdate)
+		return cr.Result{}, r.moveToNextState(ctx, signalNode)
 	}
 
-	logger.Infof("starting to cordon node %s", signalNode.GetName())
-	if err := r.drainNode(ctx, signalNode); err != nil {
+	logger.Info("Reconciling")
+	if err := r.run(ctx, signalNode); err != nil {
 		return cr.Result{}, err
 	}
 
-	return cr.Result{}, r.moveToNextState(ctx, signalNode, ApplyingUpdate)
+	return cr.Result{}, r.moveToNextState(ctx, signalNode)
 }
 
-func (r *cordoning) moveToNextState(ctx context.Context, signalNode crcli.Object, state string) error {
+func (r *cordonUncordon) moveToNextState(ctx context.Context, signalNode crcli.Object) error {
 	logger := r.log.WithField("signalnode", signalNode.GetName())
 
-	signalNodeCopy := r.delegate.DeepCopy(signalNode)
-
 	var signalData apsigv2.SignalData
-	if err := signalData.Unmarshal(signalNodeCopy.GetAnnotations()); err != nil {
+	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
 		return fmt.Errorf("unable to unmarshal signal data: %w", err)
 	}
 
-	signalData.Status = apsigv2.NewStatus(state)
+	signalData.Status = apsigv2.NewStatus(r.nextState)
+	signalNodeCopy := r.delegate.DeepCopy(signalNode)
 
 	if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
 		return fmt.Errorf("unable to marshal signal data: %w", err)
@@ -142,11 +145,7 @@ func (r *cordoning) moveToNextState(ctx context.Context, signalNode crcli.Object
 	return nil
 }
 
-// drainNode cordons a node after which drains it
-// draining ignores daemonsets
-func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) error {
-	logger := r.log.WithField("signalnode", signalNode.GetName()).WithField("phase", "drain")
-
+func (r *cordonUncordon) run(ctx context.Context, signalNode crcli.Object) error {
 	node := &corev1.Node{}
 	// if signalNode is a Node cast it to *corev1.Node
 	if signalNode.GetObjectKind().GroupVersionKind().Kind == "Node" {
@@ -173,6 +172,11 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 		}
 	}
 
+	logger := r.log.WithFields(logrus.Fields{
+		"signalnode": signalNode.GetName(),
+		"stream":     "drainer",
+	})
+
 	drainer := &drain.Helper{
 		Client: r.clientset,
 		Force:  true,
@@ -190,15 +194,14 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 		},
 	}
 
+	return r.do(drainer, node)
+}
+
+func cordonAndDrainNode(drainer *drain.Helper, node *corev1.Node) error {
 	if err := drain.RunCordonOrUncordon(drainer, node, true); err != nil {
 		return err
 	}
-
-	if err := drain.RunNodeDrain(drainer, node.Name); err != nil {
-		return err
-	}
-
-	return nil
+	return drain.RunNodeDrain(drainer, node.Name)
 }
 
 func needsCordoning(signalNode crcli.Object) bool {
