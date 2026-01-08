@@ -200,7 +200,7 @@ flowchart TD
     Errors --> InconsistentTargets
     Errors --> IncompleteTargets
     Errors --> Restricted
-    Errors --> MissingSignalNode
+    Errors -. no longer in use .-> MissingSignalNode
 ```
 
 | Error State | Command | States | Description |
@@ -208,7 +208,7 @@ flowchart TD
 | **InconsistentTargets** | `k0supdate` | **Schedulable** | Indicates that a **Signal Node** probe has failed for any node that was previously discovered during **NewPlan**. |
 | **IncompleteTargets** | `airgapupdate`, `k0supdate` | **NewPlan**, **Schedulable** | Indicates that a **Signal Node** that existed during the discover phase in **NewPlan** no longer exists (ie. no `ControlNode` or `Node` object) |
 | **Restricted** | `airgapupdate`, `k0supdate` | **NewPlan** | Indicates that a **Plan** has requested an update of a **Signal Node** type that contradicts the startup exclusions (the `--exclude-from-plans` argument) |
-| **MissingSignalNode** | `airgapupdate`, `k0supdate` | **Schedulable** | Indicates that a **Signal Node** that existed during the discover phase in **NewPlan** no longer exists (i.e. no matching `ControlNode` or `Node` object) |
+| **~~MissingSignalNode~~** | `airgapupdate`, `k0supdate` | **Schedulable** | Legacy state used by older k0s releases to indicate **IncompleteTargets**; no longer in use. |
 
 ---
 
