@@ -51,14 +51,14 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 	signalNodeDelegate, ok := kp.controllerDelegateMap[nextLabel]
 	if !ok {
 		logger.Warnf("Missing signal delegate for '%s'", nextLabel)
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	nodeKey := signalNodeDelegate.CreateNamespacedName(nextForSignal.Name)
 	signalNode := signalNodeDelegate.CreateObject()
 	if err := kp.client.Get(ctx, nodeKey, signalNode); err != nil {
 		logger.Warnf("Unable to find signal node '%s' for signal: %v", nodeKey, err)
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	// If the found signal node is not ready to accept an update, either complete this reconciliation
