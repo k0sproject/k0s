@@ -16,10 +16,9 @@ var (
 	PlanCompleted       apv1beta2.PlanStateType = "Completed"
 	PlanWarning         apv1beta2.PlanStateType = "Warning"
 
-	PlanInconsistentTargets apv1beta2.PlanStateType = "InconsistentTargets"
-	PlanIncompleteTargets   apv1beta2.PlanStateType = "IncompleteTargets"
-	PlanRestricted          apv1beta2.PlanStateType = "Restricted"
-	PlanApplyFailed         apv1beta2.PlanStateType = "ApplyFailed"
+	PlanIncompleteTargets apv1beta2.PlanStateType = "IncompleteTargets"
+	PlanRestricted        apv1beta2.PlanStateType = "Restricted"
+	PlanApplyFailed       apv1beta2.PlanStateType = "ApplyFailed"
 )
 
 // PlanCommandStatusType
