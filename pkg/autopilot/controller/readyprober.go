@@ -17,6 +17,7 @@
 package controller
 
 import (
+	"cmp"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -26,48 +27,35 @@ import (
 	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-	"k8s.io/client-go/rest"
 	k8sprobe "k8s.io/kubernetes/pkg/probe"
 	k8shttpprobe "k8s.io/kubernetes/pkg/probe/http"
 )
 
-const (
-	readyzURLFormat   = "https://%s/readyz?verbose"
-	defaultK8sAPIPort = 6443
-)
+const readyzURLFormat = "https://%s/readyz?verbose"
 
 type readyProber struct {
-	k8sAPIPort    int
-	log           *logrus.Entry
-	tlsConfig     *tls.Config
-	timeout       time.Duration
-	clientFactory apcli.FactoryInterface
+	k8sAPIPort int
+	log        *logrus.Entry
+	tlsConfig  *tls.Config
+	timeout    time.Duration
+	client     k0sclientset.Interface
 }
 
-// Creates a new readyProber based on restConfig.
-func newReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig *rest.Config, k8sAPIPort int, timeout time.Duration) (*readyProber, error) {
-	tlscfg, err := rest.TLSConfigFor(restConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	if k8sAPIPort == 0 {
-		k8sAPIPort = defaultK8sAPIPort
-	}
-
+// Creates a new readyProber.
+func newReadyProber(logger *logrus.Entry, client k0sclientset.Interface, tlsConfig *tls.Config, k8sAPIPort int, timeout time.Duration) *readyProber {
 	return &readyProber{
-		log:           logger,
-		clientFactory: cf,
-		tlsConfig:     tlscfg,
-		timeout:       timeout,
-		k8sAPIPort:    k8sAPIPort,
-	}, nil
+		log:        logger,
+		client:     client,
+		tlsConfig:  tlsConfig,
+		timeout:    timeout,
+		k8sAPIPort: cmp.Or(k8sAPIPort, 6443),
+	}
 }
 
 // Probes the given targets concurrently. Returns the first target probe error
@@ -87,14 +75,9 @@ func (p *readyProber) probeTargets(ctx context.Context, targets []apv1beta2.Plan
 func (p readyProber) probeOne(ctx context.Context, target apv1beta2.PlanCommandTargetStatus) error {
 	p.log.Infof("Probing %v", target.Name)
 
-	client, err := p.clientFactory.GetAutopilotClient()
-	if err != nil {
-		return err
-	}
-
 	ctx, cancel := context.WithTimeout(ctx, p.timeout)
 	defer cancel()
-	controlnode, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, target.Name, metav1.GetOptions{})
+	controlnode, err := p.client.AutopilotV1beta2().ControlNodes().Get(ctx, target.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
