@@ -31,13 +31,14 @@ type periodicUpdater struct {
 	updateConfig    apv1beta2.UpdateConfig
 	k8sClient       crcli.Client
 	apClientFactory apcli.FactoryInterface
+	collector       *ClusterInfoCollector
 
 	currentK0sVersion string
 
 	ticker *time.Ticker
 }
 
-func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, currentK0sVersion string) *periodicUpdater {
+func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, collector *ClusterInfoCollector, currentK0sVersion string) *periodicUpdater {
 	return &periodicUpdater{
 		ctx:               ctx,
 		log:               logrus.WithField("component", "periodic-updater"),
@@ -45,6 +46,7 @@ func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig
 		k8sClient:         k8sClient,
 		currentK0sVersion: currentK0sVersion,
 		apClientFactory:   apClientFactory,
+		collector:         collector,
 	}
 }
 
@@ -112,13 +114,8 @@ func (u *periodicUpdater) checkForUpdate() {
 		return
 	}
 
-	k8sClient, err := u.apClientFactory.GetClient()
-	if err != nil {
-		u.log.Errorf("failed to create k8s client: %v", err)
-		return
-	}
 	// Collect cluster info
-	ci, err := CollectData(ctx, k8sClient)
+	ci, err := u.collector.CollectData(ctx)
 	if err != nil {
 		u.log.Errorf("failed to collect cluster info: %s", err.Error())
 		return

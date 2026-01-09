@@ -47,6 +47,7 @@ type rootController struct {
 	log                    *logrus.Entry
 	kubeClientFactory      kubernetes.ClientFactoryInterface
 	autopilotClientFactory apcli.FactoryInterface
+	clusterInfoCollector   *updates.ClusterInfoCollector
 	enableWorker           bool
 	apiAddress             netip.Addr
 
@@ -59,12 +60,13 @@ type rootController struct {
 var _ aproot.Root = (*rootController)(nil)
 
 // NewRootController builds a root for autopilot "controller" operations.
-func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker bool, acf apcli.FactoryInterface, apiAddress netip.Addr) (aproot.Root, error) {
+func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker bool, acf apcli.FactoryInterface, clusterInfoCollector *updates.ClusterInfoCollector, apiAddress netip.Addr) (aproot.Root, error) {
 	c := &rootController{
 		cfg:                    cfg,
 		log:                    logger,
 		autopilotClientFactory: acf,
 		kubeClientFactory:      acf.Unwrap(),
+		clusterInfoCollector:   clusterInfoCollector,
 		enableWorker:           enableWorker,
 		apiAddress:             apiAddress,
 	}
@@ -235,7 +237,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return err
 	}
 
-	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID); err != nil {
+	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, c.clusterInfoCollector, leaderMode, clusterID); err != nil {
 		logger.WithError(err).Error("unable to register updates controllers")
 		return err
 	}

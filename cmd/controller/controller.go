@@ -28,6 +28,7 @@ import (
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
@@ -607,6 +608,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	if !disableAutopilot {
+		client, err := adminClientFactory.GetClient()
+		if err != nil {
+			return err
+		}
 		apiAddress, err := netip.ParseAddr(nodeConfig.Spec.API.Address)
 		if err != nil {
 			return fmt.Errorf("failed to parse API address: %w", err)
@@ -614,19 +619,25 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "autopilot"))
 		clusterComponents.Add(ctx, &controller.Autopilot{
-			APIAddress:         apiAddress,
-			K0sVars:            c.K0sVars,
-			KubeletExtraArgs:   c.KubeletExtraArgs,
-			KubeAPIPort:        nodeConfig.Spec.API.Port,
-			AdminClientFactory: adminClientFactory,
-			Workloads:          controllerMode.WorkloadsEnabled(),
+			APIAddress:           apiAddress,
+			K0sVars:              c.K0sVars,
+			KubeletExtraArgs:     c.KubeletExtraArgs,
+			KubeAPIPort:          nodeConfig.Spec.API.Port,
+			AdminClientFactory:   adminClientFactory,
+			ClusterInfoCollector: updates.NewClusterInfoCollector(nodeConfig, client),
+			Workloads:            controllerMode.WorkloadsEnabled(),
 		})
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.UpdateProberComponentName) {
+		client, err := adminClientFactory.GetClient()
+		if err != nil {
+			return err
+		}
 		clusterComponents.Add(ctx, controller.NewUpdateProber(
 			adminClientFactory,
 			leaderElector,
+			updates.NewClusterInfoCollector(nodeConfig, client),
 		))
 	}
 

@@ -31,13 +31,15 @@ type UpdateProber struct {
 	ClusterConfig   *v1beta1.ClusterConfig
 	log             logrus.FieldLogger
 	leaderElector   leaderelector.Interface
+	collector       *updates.ClusterInfoCollector
 }
 
-func NewUpdateProber(apClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *UpdateProber {
+func NewUpdateProber(apClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, collector *updates.ClusterInfoCollector) *UpdateProber {
 	return &UpdateProber{
 		APClientFactory: apClientFactory,
 		log:             logrus.WithFields(logrus.Fields{"component": "updateprober"}),
 		leaderElector:   leaderElector,
+		collector:       collector,
 	}
 }
 
@@ -123,7 +125,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 	}
 
 	// Collect cluster info
-	ci, err := updates.CollectData(ctx, kc)
+	ci, err := u.collector.CollectData(ctx)
 	if err != nil {
 		u.log.Errorf("failed to collect cluster info: %s", err.Error())
 		return
@@ -138,10 +140,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		return
 	}
 	u.log.Debugf("got latest version: %s", v.Version)
-	ksns, err := kc.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
-	if err != nil {
-		u.log.WithError(err).Warn("failed to get kube-system namespace details")
-	}
+
 	// Check if current version is outdated
 	isNewer, err := v.IsNewerThan(build.Version)
 	if err != nil {
@@ -158,11 +157,11 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 				Namespace: metav1.NamespaceSystem,
 			},
 			InvolvedObject: corev1.ObjectReference{
+				APIVersion: corev1.SchemeGroupVersion.String(),
 				Kind:       "Namespace",
 				Name:       metav1.NamespaceSystem,
 				Namespace:  metav1.NamespaceSystem,
-				APIVersion: ksns.APIVersion,
-				UID:        ksns.UID,
+				UID:        ci.ClusterID,
 			},
 			Reason:  "NewVersionAvailable",
 			Message: "New version available: " + v.Version,
