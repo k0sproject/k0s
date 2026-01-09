@@ -22,7 +22,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +31,7 @@ import (
 
 // Konnectivity implements the component interface for konnectivity server
 type Konnectivity struct {
+	Spec        *v1beta1.KonnectivitySpec // FIXME: This should be reconciled via dynamic config
 	K0sVars     *config.CfgVars
 	LogLevel    string
 	ServerCount func() (uint, <-chan struct{})
@@ -40,8 +40,7 @@ type Konnectivity struct {
 	executablePath string
 	uid            int
 
-	clusterConfig *v1beta1.ClusterConfig
-	log           *logrus.Entry
+	log *logrus.Entry
 
 	*prober.EventEmitter
 
@@ -81,8 +80,6 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 
 	}
 	defer k.Emit("successfully initialized konnectivity component")
-
-	k.clusterConfig = k0scontext.GetNodeConfig(ctx)
 
 	return nil
 }
@@ -146,8 +143,8 @@ func (k *Konnectivity) serverArgs(count uint) []string {
 		"--kubeconfig":               k.K0sVars.KonnectivityKubeConfigPath,
 		"--mode":                     "grpc",
 		"--server-port":              "0",
-		"--agent-port":               strconv.FormatInt(int64(k.clusterConfig.Spec.Konnectivity.AgentPort), 10),
-		"--admin-port":               strconv.FormatInt(int64(k.clusterConfig.Spec.Konnectivity.AdminPort), 10),
+		"--agent-port":               strconv.FormatInt(int64(k.Spec.AgentPort), 10),
+		"--admin-port":               strconv.FormatInt(int64(k.Spec.AdminPort), 10),
 		"--health-bind-address":      "localhost",
 		"--health-port":              "8092",
 		"--agent-namespace":          metav1.NamespaceSystem,

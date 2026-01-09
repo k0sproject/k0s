@@ -292,6 +292,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	if enableKonnectivity {
 		nodeComponents.Add(ctx, &controller.Konnectivity{
+			Spec:         nodeConfig.Spec.Konnectivity,
 			K0sVars:      c.K0sVars,
 			LogLevel:     c.LogLevels.Konnectivity,
 			EventEmitter: prober.NewEventEmitter(),
