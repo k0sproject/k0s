@@ -17,7 +17,7 @@ const maxEvents = 100
 func TestEvents(t *testing.T) {
 	t.Run("prober_collects_emitted_events", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			prober := testProber(5)
+			prober := testProber()
 			component := newMockWithEvents(100)
 			eventsSent := []Event{
 				{
@@ -59,7 +59,7 @@ func TestEvents(t *testing.T) {
 			emitter.Emit("message1")
 			emitter.Emit("message2")
 			emitter.Emit("message3")
-			prober := testProber(10)
+			prober := testProber()
 			prober.Register("component_with_events", comp)
 			runProberToCompletion(t, prober, 0)
 			state := prober.State(maxEvents)
@@ -81,7 +81,7 @@ func TestEvents(t *testing.T) {
 
 	t.Run("emitter_observes_events_emitted_by_components_registred_after_run_is_called", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			prober := testProber(0)
+			prober := testProber()
 			component := newMockWithEvents(3)
 			prober.Register("component_with_events", component)
 			component.sendEvents(
@@ -127,7 +127,7 @@ func TestEvents(t *testing.T) {
 			_ = comp2
 			emitter2.Emit("message4")
 			emitter2.Emit("message5")
-			prober := testProber(10)
+			prober := testProber()
 			prober.Register("component_with_events", comp)
 			prober.Register("component_with_events2", comp2)
 			runProberToCompletion(t, prober, 0)

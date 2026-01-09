@@ -21,10 +21,10 @@ func TestHealthChecks(t *testing.T) {
 	t.Run("prober_stores_not_more_than_n_last_results_for_each_component", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 
-			prober := testProber(9)
+			prober := testProber()
 			prober.Register("test", &mockComponent{})
 			prober.Register("test2", &mockComponent{})
-			runProberToCompletion(t, prober, 9*time.Millisecond)
+			runProberToCompletion(t, prober, 9*healthCheckInterval /* 9 iterations */)
 			st := prober.State(maxEvents)
 			assert.Len(t, prober.withHealthComponents, 2)
 			assert.Len(t, st.HealthProbes, 2, "should have 2 components in the state")
@@ -35,7 +35,7 @@ func TestHealthChecks(t *testing.T) {
 
 	t.Run("prober_stores_and_overrides_error_results", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			prober := testProber(5)
+			prober := testProber()
 
 			prober.Register("test", &mockComponent{
 				errors: []error{nil, nil, errors.New("test1 error"), nil, nil},
@@ -48,7 +48,7 @@ func TestHealthChecks(t *testing.T) {
 			prober.Register("test3", &mockComponent{
 				errors: []error{nil, nil, nil, nil, errors.New("test3 error")},
 			})
-			runProberToCompletion(t, prober, 5*time.Millisecond)
+			runProberToCompletion(t, prober, 5*healthCheckInterval /* 5 iterations */)
 			st := prober.State(maxEvents)
 			assert.Len(t, prober.withHealthComponents, 3)
 			assert.Len(t, st.HealthProbes, 3, "should have 3 components in the state")
@@ -65,7 +65,7 @@ func TestHealthChecks(t *testing.T) {
 	})
 	t.Run("state_has_no_more_than_requested_count_of_events_and_probes", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			prober := testProber(5)
+			prober := testProber()
 
 			prober.Register("test", &mockComponent{
 				errors: []error{nil, nil, errors.New("test1 error"), nil, nil},
@@ -78,7 +78,7 @@ func TestHealthChecks(t *testing.T) {
 			prober.Register("test3", &mockComponent{
 				errors: []error{nil, nil, nil, nil, errors.New("test3 error")},
 			})
-			runProberToCompletion(t, prober, 5*time.Millisecond)
+			runProberToCompletion(t, prober, 5*healthCheckInterval /* 5 iterations */)
 			st := prober.State(1)
 			assert.Len(t, prober.withHealthComponents, 3)
 			assert.Len(t, st.HealthProbes, 3, "should have 3 components in the state")
@@ -90,12 +90,8 @@ func TestHealthChecks(t *testing.T) {
 	})
 }
 
-func testProber(iterations int) *Prober {
+func testProber() *Prober {
 	p := New()
-	p.interval = 1 * time.Millisecond
-	p.probesTrackLength = 3
-	p.eventsTrackLength = 3
-	p.stopAfterIterationNum = iterations
 	l, _ := test.NewNullLogger()
 	p.l = l.WithField("test", "prober")
 	return p
@@ -113,9 +109,9 @@ func runProberToCompletion(t *testing.T, prober *Prober, duration time.Duration)
 
 	if duration > 0 {
 		time.Sleep(duration)
-	} else {
-		cancel()
 	}
+
+	cancel()
 
 	synctest.Wait() // Wait until the prober exited.
 	assert.True(t, done.Load(), "Prober didn't exit")

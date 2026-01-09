@@ -21,36 +21,34 @@ type Healthz interface {
 	Healthy() error
 }
 
+const (
+	healthCheckInterval = 10 * time.Second
+	probesTrackLength   = 3
+	eventsTrackLength   = 3
+)
+
 // Prober performs health probes on registered components
 type Prober struct {
 	sync.RWMutex
 	l                    *logrus.Entry
-	interval             time.Duration
 	withHealthComponents map[string]Healthz
 	withEventComponents  map[string]Eventer
 
-	probesTrackLength int
-	healthCheckState  map[string]*ring.Ring
+	healthCheckState map[string]*ring.Ring
 
 	closeCh chan struct{}
 	startCh chan struct{}
 	runOnce sync.Once
 
-	eventsTrackLength int
-	eventState        map[string]*ring.Ring
-	// mostly for the test purposes
-	stopAfterIterationNum int
+	eventState map[string]*ring.Ring
 }
 
 // New creates a new prober
 func New() *Prober {
 	return &Prober{
 		l:                    logrus.WithFields(logrus.Fields{"component": "prober"}),
-		interval:             10 * time.Second,
 		withHealthComponents: make(map[string]Healthz),
 		withEventComponents:  make(map[string]Eventer),
-		eventsTrackLength:    3,
-		probesTrackLength:    3,
 		healthCheckState:     make(map[string]*ring.Ring),
 		eventState:           make(map[string]*ring.Ring),
 		closeCh:              make(chan struct{}),
@@ -71,15 +69,15 @@ func (p *Prober) State(maxCount int) State {
 	}
 	for name, r := range p.healthCheckState {
 		maxCount := maxCount
-		state.HealthProbes[name] = make([]ProbeResult, 0, p.probesTrackLength*len(p.withHealthComponents))
+		state.HealthProbes[name] = make([]ProbeResult, 0, probesTrackLength*len(p.withHealthComponents))
 		r.Do(func(v any) {
 			if v == nil {
 				return
 			}
 			state.HealthProbes[name] = append(state.HealthProbes[name], v.(ProbeResult))
 		})
-		if maxCount >= p.probesTrackLength {
-			maxCount = p.probesTrackLength
+		if maxCount >= probesTrackLength {
+			maxCount = probesTrackLength
 		}
 		if maxCount > len(state.HealthProbes[name]) {
 			maxCount = len(state.HealthProbes[name])
@@ -88,15 +86,15 @@ func (p *Prober) State(maxCount int) State {
 	}
 	for name, r := range p.eventState {
 		maxCount := maxCount
-		state.Events[name] = make([]Event, 0, p.eventsTrackLength*len(p.withEventComponents))
+		state.Events[name] = make([]Event, 0, eventsTrackLength*len(p.withEventComponents))
 		r.Do(func(v any) {
 			if v == nil {
 				return
 			}
 			state.Events[name] = append(state.Events[name], v.(Event))
 		})
-		if maxCount >= p.eventsTrackLength {
-			maxCount = p.eventsTrackLength
+		if maxCount >= eventsTrackLength {
+			maxCount = eventsTrackLength
 		}
 		if maxCount > len(state.Events[name]) {
 			maxCount = len(state.Events[name])
@@ -124,8 +122,7 @@ func (p *Prober) Run(ctx context.Context) {
 }
 
 func (p *Prober) healthCheckLoop(ctx context.Context) {
-	epoch := 0
-	ticker := time.NewTicker(p.interval)
+	ticker := time.NewTicker(healthCheckInterval)
 	for {
 		select {
 		case <-ctx.Done():
@@ -133,13 +130,6 @@ func (p *Prober) healthCheckLoop(ctx context.Context) {
 		case at := <-ticker.C:
 			p.l.Debug("Probing components")
 			p.checkComponentsHealth(at)
-			// limit amount of iterations for the test purposes
-			if p.stopAfterIterationNum > 0 {
-				epoch++
-				if epoch >= p.stopAfterIterationNum {
-					return
-				}
-			}
 		}
 	}
 }
@@ -147,7 +137,7 @@ func (p *Prober) checkComponentsHealth(at time.Time) {
 	for name, component := range p.withHealthComponents {
 		p.Lock()
 		if _, ok := p.healthCheckState[name]; !ok {
-			p.healthCheckState[name] = ring.New(p.probesTrackLength)
+			p.healthCheckState[name] = ring.New(probesTrackLength)
 		}
 		// TODO: add back-off logic
 		p.healthCheckState[name].Value = ProbeResult{
@@ -162,7 +152,7 @@ func (p *Prober) checkComponentsHealth(at time.Time) {
 
 func (p *Prober) spawnEventCollector(name string, component Eventer) {
 	p.Lock()
-	p.eventState[name] = ring.New(p.eventsTrackLength)
+	p.eventState[name] = ring.New(eventsTrackLength)
 	p.Unlock()
 	go func() {
 		<-p.startCh // wait for the start signal
