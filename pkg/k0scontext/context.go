@@ -12,39 +12,7 @@ package k0scontext
 
 import (
 	"context"
-
-	k0sapi "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
-
-// Key represents a string key used for storing and retrieving values in a context.
-type Key string
-
-// Context keys for storing k0s project configuration data in a context.
-const (
-	ContextNodeConfigKey    Key = "k0s_node_config"
-	ContextClusterConfigKey Key = "k0s_cluster_config"
-)
-
-// FromContext retrieves a value from the context associated with the given key
-// and attempts to cast it to the specified type. It returns the value or nil if
-// not found.
-func FromContext[out any](ctx context.Context, key Key) *out {
-	v, ok := ctx.Value(key).(*out)
-	if !ok {
-		return nil
-	}
-	return v
-}
-
-// GetNodeConfig retrieves the k0s NodeConfig from the context, or nil if not found.
-func GetNodeConfig(ctx context.Context) *k0sapi.ClusterConfig {
-	cfg, ok := ctx.Value(ContextNodeConfigKey).(*k0sapi.ClusterConfig)
-	if !ok {
-		return nil
-	}
-
-	return cfg
-}
 
 // keyType is used to create unique keys based on the types of the values stored in a context.
 type keyType[T any] struct{}
