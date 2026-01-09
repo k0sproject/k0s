@@ -66,7 +66,7 @@ The following operating systems are automatically tested as part of our CI:
 | Fedora Linux                  | 41 (Cloud Edition)                                                                      |
 | Flatcar Container Linux       | by Kinvolk                                                                              |
 | Oracle Linux Server           | 8.9, 9.3                                                                                |
-| Red Hat Enterprise Linux      | 7.9 (Maipo), 8.10 (Ootpa), 9.5 (Plow)                                                   |
+| Red Hat Enterprise Linux      | 7.9 (Maipo), 8.10 (Ootpa), 9.7 (Plow)                                                   |
 | Rocky Linux                   | 8.10 (Green Obsidian), 9.5 (Blue Onyx)                                                  |
 | SUSE Linux Enterprise Server  | 15 SP6                                                                                  |
 | Ubuntu                        | 20.04 LTS, 22.04 LTS, 24.04                                                             |
