@@ -32,19 +32,17 @@ type periodicUpdater struct {
 	k8sClient       crcli.Client
 	apClientFactory apcli.FactoryInterface
 
-	clusterID         string
 	currentK0sVersion string
 
 	ticker *time.Ticker
 }
 
-func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID, currentK0sVersion string) *periodicUpdater {
+func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, currentK0sVersion string) *periodicUpdater {
 	return &periodicUpdater{
 		ctx:               ctx,
 		log:               logrus.WithField("component", "periodic-updater"),
 		updateConfig:      updateConfig,
 		k8sClient:         k8sClient,
-		clusterID:         clusterID,
 		currentK0sVersion: currentK0sVersion,
 		apClientFactory:   apClientFactory,
 	}
