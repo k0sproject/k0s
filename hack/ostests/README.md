@@ -83,7 +83,7 @@ tofu apply
 * `oracle_9_3`: Oracle Linux Server 9.3
 * `rhel_7`: Red Hat Enterprise Linux Server 7.9 (Maipo)
 * `rhel_8`: Red Hat Enterprise Linux 8.10 (Ootpa)
-* `rhel_9`: Red Hat Enterprise Linux 9.5 (Plow)
+* `rhel_9`: Red Hat Enterprise Linux 9.7 (Plow)
 * `rocky_8`: Rocky Linux 8.10 (Green Obsidian)
 * `rocky_9`: Rocky Linux 9.5 (Blue Onyx)
 * `sles_15`: SUSE Linux Enterprise Server 15 SP6
@@ -156,6 +156,16 @@ See Kubernetes's [IPVS README] for details.
   README, then do `tofu apply -var=os=<the-os-id>`. When done, don't
   forget to clean up: `tofu destroy -var=os=<the-os-id>`.
 * Update the [nightly trigger] and [matrix workflow] with the new OS ID.
+
+### Updating the existing OS versions
+
+New OS version usually mean just updating the OS AMI filtering criteria.
+To test the AMI filtering locally, you can do the following:
+
+```sh
+tofu apply -refresh-only -target=module.os.data.aws_ami.<the-os-id>
+tofu state show "module.os.data.aws_ami.<the-os-id>[0]"
+```
 
 ## GitHub Actions workflows
 
