@@ -5,7 +5,6 @@ package airgap
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -13,7 +12,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -56,25 +54,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc), "While waiting for CoreDNS to become ready")
 	s.Require().NoError(common.WaitForPodLogs(ctx, kc, metav1.NamespaceSystem), "While waiting for some pod logs")
 
-	// At that moment we can assume that all pods have at least started
-	// We're interested only in image pull events
-	events, err := kc.CoreV1().Events("").List(ctx, metav1.ListOptions{
-		FieldSelector: fields.AndSelectors(
-			fields.OneTermEqualSelector("involvedObject.kind", "Pod"),
-			fields.OneTermEqualSelector("reason", "Pulled"),
-		).String(),
-	})
-	s.Require().NoError(err)
-
-	for _, event := range events.Items {
-		if !strings.HasSuffix(event.Message, "already present on machine") {
-			s.Fail("Unexpected Pulled event", event.Message)
-		} else {
-			s.T().Log("Observed Pulled event:", event.Message)
-		}
-	}
-
-	// Check that all the images have io.cri-containerd.pinned=pinned label
+	// Check that all the images have io.cri-containerd.pinned=pinned label and that images cannot be pulled in airgap environment
 	ssh, err := s.SSH(ctx, s.WorkerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -82,6 +62,10 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 		output, err := ssh.ExecWithOutput(ctx, fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
 		s.Require().NoError(err)
 		s.Require().Containsf(output, "io.cri-containerd.pinned=pinned", "expected %s image to have io.cri-containerd.pinned=pinned label", i)
+
+		_, err = ssh.ExecWithOutput(ctx, `k0s ctr pull `+i)
+		s.Require().Errorf(err, "expected k0s ctr pull %s to fail in airgap environment", i)
+
 	}
 }
 
