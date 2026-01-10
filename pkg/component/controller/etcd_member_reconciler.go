@@ -36,6 +36,8 @@ const (
 	shutdownLabelName        = "k0s.k0sproject.io/shutdown"
 )
 
+const EtcdMemberStackName = "etcd-member"
+
 var _ manager.Component = (*EtcdMemberReconciler)(nil)
 
 func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface, controllerCount func() uint, shutdown context.CancelCauseFunc) (*EtcdMemberReconciler, error) {
