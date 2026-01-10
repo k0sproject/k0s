@@ -11,7 +11,7 @@ permissions:
 env:
   MAKEFLAGS: -j
   CURL_OPTS: --proto =https --tlsv1.2 --retry 5 --retry-all-errors --silent --show-error --location --fail
-  COSIGN_VERSION: "3.0.3" # renovate: datasource=github-releases depName=sigstore/cosign
+  COSIGN_VERSION: "3.0.4" # renovate: datasource=github-releases depName=sigstore/cosign
 
 jobs:
   release:
