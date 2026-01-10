@@ -37,14 +37,14 @@ func (aup *airgapupdate) Schedulable(ctx context.Context, planID string, cmd apv
 	signalNodeDelegate, ok := aup.controllerDelegateMap["worker"]
 	if !ok {
 		logger.Warnf("Missing signal delegate for '%s'", "worker")
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	nodeKey := signalNodeDelegate.CreateNamespacedName(nextForSignal.Name)
 	signalNode := signalNodeDelegate.CreateObject()
 	if err := aup.client.Get(ctx, nodeKey, signalNode); err != nil {
 		logger.Warnf("Unable to find signal node '%s' for signal: %v", nodeKey, err)
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	logger.Infof("Sending signaling to node='%s'", nextForSignal.Name)
