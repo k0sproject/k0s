@@ -26,6 +26,7 @@ type updateController struct {
 	log           *logrus.Entry
 	client        crcli.Client
 	clientFactory apcli.FactoryInterface
+	collector     *ClusterInfoCollector
 
 	clusterID string
 
@@ -33,7 +34,7 @@ type updateController struct {
 	parentCtx context.Context
 }
 
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, clientFactory apcli.FactoryInterface, leaderMode bool, clusterID string) error {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, clientFactory apcli.FactoryInterface, collector *ClusterInfoCollector, leaderMode bool, clusterID string) error {
 	return cr.NewControllerManagedBy(mgr).
 		Named("updater").
 		For(&apv1beta2.UpdateConfig{}).
@@ -42,6 +43,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 				log:           logger.WithField("reconciler", "updater"),
 				client:        mgr.GetClient(),
 				clientFactory: clientFactory,
+				collector:     collector,
 				clusterID:     clusterID,
 				updaters:      make(map[string]updater),
 				parentCtx:     ctx,
@@ -92,7 +94,7 @@ func (u *updateController) Reconcile(ctx context.Context, req cr.Request) (cr.Re
 	}
 	u.log.Debugf("creating new updater for '%s'", req.NamespacedName)
 	// Create new updater
-	updater, err := newUpdater(u.parentCtx, *updaterConfig, u.client, u.clientFactory, u.clusterID, token)
+	updater, err := newUpdater(u.parentCtx, *updaterConfig, u.client, u.clientFactory, u.clusterID, u.collector, token)
 	if err != nil {
 		u.log.Errorf("failed to create updater for '%s': %s", req.NamespacedName, err)
 		return cr.Result{}, err
