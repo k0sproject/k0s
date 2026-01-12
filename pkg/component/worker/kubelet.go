@@ -131,7 +131,7 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 		ip := ipaddr.IP
 		isIPOnLooback, err := IsIPOnLoopback(ip)
 		if err != nil {
-			logrus.WithError(err).Errorf("failed to check if ip addresses (%s) is on looback interface", ip)
+			logrus.WithError(err).Errorf("failed to check if ip address (%s) is on looback interface", ip)
 		}
 		return (ip.To4() == nil && ip.To16() == nil) || ip.IsLoopback() || ip.IsMulticast() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() || isIPOnLooback
 	})
