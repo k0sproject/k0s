@@ -426,6 +426,20 @@ func (s *ClusterSpec) Validate() (errs []error) {
 	return
 }
 
+// APIServerURLForHostNetworkPods returns the effective API server URL for
+// host-network components running on worker nodes (like kube-proxy and kube-router).
+// When node-local load balancing is enabled, it returns the localhost URL;
+// otherwise, it returns the standard API server URL.
+func (s *ClusterSpec) APIServerURLForHostNetworkPods() string {
+	if s.Network != nil {
+		nllb := s.Network.NodeLocalLoadBalancing
+		if nllb.IsEnabled() && nllb.Type == NllbTypeEnvoyProxy {
+			return fmt.Sprintf("https://localhost:%d", nllb.EnvoyProxy.APIServerBindPort)
+		}
+	}
+	return s.API.APIAddressURL()
+}
+
 func (s *ClusterSpec) ValidateNodeLocalLoadBalancing() (errs field.ErrorList) {
 	if s.Network == nil || !s.Network.NodeLocalLoadBalancing.IsEnabled() {
 		return
