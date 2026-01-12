@@ -89,7 +89,7 @@ func removeIf[T any](slice []T, predicate func(T) bool) []T {
 	return slice[:idx]
 }
 
-func getLoobackIPAddresses() ([]net.IP, error) {
+func getLoopbackIPAddresses() ([]net.IP, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get network interfaces: %w", err)
@@ -125,7 +125,7 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 		return nil, nil, err
 	}
 
-	loobackIPAddrs, err := getLoobackIPAddresses()
+	loopbackIPAddrs, err := getLoopbackIPAddresses()
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to get ip addresses on looback interface: %s", err)
 	}
@@ -137,7 +137,7 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 			ip.IsMulticast() ||
 			ip.IsLinkLocalUnicast() ||
 			ip.IsUnspecified() ||
-			slices.IndexFunc(loobackIPAddrs, func(loobackIp net.IP) bool { return loobackIp.Equal(ip) }) != -1
+			slices.IndexFunc(loopbackIPAddrs, func(loobackIp net.IP) bool { return loobackIp.Equal(ip) }) != -1
 	})
 
 	for _, addr := range ipaddrs {
