@@ -134,6 +134,14 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	// Override or add args from config
 	args.Merge(clusterConfig.Spec.Network.KubeRouter.ExtraArgs)
 
+	// Always set --master flag to the effective API server URL (considering NLLB)
+	args["master"] = clusterConfig.Spec.APIServerURLForHostNetworkPods()
+
+	// Warn if kube-proxy is disabled but no service proxy is configured
+	if clusterConfig.Spec.Network.KubeProxy.Disabled && args["run-service-proxy"] != "true" {
+		k.log.Warn("kube-proxy is disabled but kube-router is not configured to run service proxy (run-service-proxy: true). Ensure another component is providing service proxy functionality.")
+	}
+
 	cfg := kubeRouterConfig{
 		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.IsAutoMTU(),
 		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,
