@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -88,17 +89,18 @@ func removeIf[T any](slice []T, predicate func(T) bool) []T {
 	return slice[:idx]
 }
 
-func IsIPOnLoopback(targetIP net.IP) (bool, error) {
+func getLoobackIPAddresses() ([]net.IP, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		return false, fmt.Errorf("failed to get network interfaces: %w", err)
+		return nil, fmt.Errorf("failed to get network interfaces: %w", err)
 	}
 
+	var ipaddrs []net.IP
 	for _, iface := range interfaces {
 		if iface.Flags&net.FlagLoopback != 0 {
 			addrs, err := iface.Addrs()
 			if err != nil {
-				return false, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
+				return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
 			}
 
 			for _, addr := range addrs {
@@ -110,14 +112,11 @@ func IsIPOnLoopback(targetIP net.IP) (bool, error) {
 					ip = v.IP
 				}
 
-				if ip != nil && ip.Equal(targetIP) {
-					return true, nil
-				}
+				ipaddrs = append(ipaddrs, ip)
 			}
 		}
 	}
-
-	return false, nil
+	return ipaddrs, nil
 }
 
 func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ error) {
@@ -126,13 +125,19 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 		return nil, nil, err
 	}
 
+	loobackIpAddrs, err := getLoobackIPAddresses()
+	if err != nil {
+		logrus.WithError(err).Errorf("failed to get ip addresses on looback interface: %s", err)
+	}
+
 	ipaddrs = removeIf(ipaddrs, func(ipaddr net.IPAddr) bool {
 		ip := ipaddr.IP
-		isIPOnLooback, err := IsIPOnLoopback(ip)
-		if err != nil {
-			logrus.WithError(err).Errorf("failed to check if ip address (%s) is on looback interface", ip)
-		}
-		return (ip.To4() == nil && ip.To16() == nil) || ip.IsLoopback() || ip.IsMulticast() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() || isIPOnLooback
+		return (ip.To4() == nil && ip.To16() == nil) ||
+			ip.IsLoopback() ||
+			ip.IsMulticast() ||
+			ip.IsLinkLocalUnicast() ||
+			ip.IsUnspecified() ||
+			slices.IndexFunc(loobackIpAddrs, func(loobackIp net.IP) bool { return loobackIp.Equal(ip) }) != -1
 	})
 
 	for _, addr := range ipaddrs {
