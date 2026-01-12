@@ -29,6 +29,9 @@ spec:
 This configuration will set up all Kubernetes components and Kube-router
 accordingly for dual-stack networking.
 
+> [!IMPORTANT]
+> A working system DNS resolver returning both IPv4 & IPv6 for the node hostname is necessary. See [issue](https://github.com/k0sproject/k0s/issues/6771).
+
 ### Configuring the node CIDR mask size
 
 By default, k0s uses a `/117` node CIDR mask size for IPv6, which provides 2048
