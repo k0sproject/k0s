@@ -77,11 +77,64 @@ func (k *Kubelet) Init(_ context.Context) (err error) {
 	return nil
 }
 
+func removeIf[T any](slice []T, predicate func(T) bool) []T {
+	idx := 0
+	for _, element := range slice {
+		if !predicate(element) {
+			slice[idx] = element
+			idx++
+		}
+	}
+	return slice[:idx]
+}
+
+func IsIPOnLoopback(targetIP net.IP) (bool, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return false, fmt.Errorf("failed to get network interfaces: %w", err)
+	}
+
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagLoopback != 0 {
+			addrs, err := iface.Addrs()
+			if err != nil {
+				return false, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
+			}
+
+			for _, addr := range addrs {
+				var ip net.IP
+				switch v := addr.(type) {
+				case *net.IPNet:
+					ip = v.IP
+				case *net.IPAddr:
+					ip = v.IP
+				}
+
+				if ip != nil && ip.Equal(targetIP) {
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
+}
+
 func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ error) {
 	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(k.NodeName))
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// As required by k8s.io/kubernetes/pkg/kubelet.validateNodeIP
+	ipaddrs = removeIf(ipaddrs, func(ipaddr net.IPAddr) bool {
+		ip := ipaddr.IP
+		isIPOnLooback, err := IsIPOnLoopback(ip)
+		if err != nil {
+			logrus.WithError(err).Errorf("failed to check if ip addresses (%s) is on looback interface", ip)
+		}
+		return (ip.To4() == nil && ip.To16() == nil) || ip.IsLoopback() || ip.IsMulticast() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() || isIPOnLooback
+	})
 
 	for _, addr := range ipaddrs {
 		if ipv4 == nil && addr.IP.To4() != nil {
