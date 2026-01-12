@@ -5,7 +5,6 @@ package controller
 
 import (
 	"bytes"
-	"cmp"
 	"context"
 	_ "embed"
 	"fmt"
@@ -13,14 +12,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/cli-runtime/pkg/resource"
-
-	"github.com/avast/retry-go"
-	"github.com/sirupsen/logrus"
 )
 
 const SystemRBACStackName = "bootstraprbac"
@@ -40,43 +32,10 @@ func (s *SystemRBAC) Init(ctx context.Context) error {
 		in = io.MultiReader(in, bytes.NewReader(apSystemRBAC))
 	}
 
-	infos, err := resource.NewLocalBuilder().
-		Unstructured().
-		Stream(in, SystemRBACStackName).
-		Flatten().
-		Do().
-		Infos()
-	if err != nil {
-		return err
-	}
-
-	resources := make([]*unstructured.Unstructured, len(infos))
-	for i := range infos {
-		resources[i] = infos[i].Object.(*unstructured.Unstructured)
-	}
-
-	var lastErr error
-	if err := retry.Do(
-		func() error {
-			stack := applier.Stack{
-				Name:      SystemRBACStackName,
-				Resources: resources,
-				Clients:   s.Clients,
-			}
-			lastErr := stack.Apply(ctx, true)
-			return lastErr
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.OnRetry(func(attempt uint, err error) {
-			logrus.WithFields(logrus.Fields{
-				"component": constant.SystemRBACComponentName,
-				"stack":     SystemRBACStackName,
-				"attempt":   attempt + 1,
-			}).WithError(err).Debug("Failed to apply stack, retrying after backoff")
-		}),
-	); err != nil {
-		return fmt.Errorf("failed to apply system RBAC stack: %w", cmp.Or(lastErr, err))
+	if resources, err := applier.ReadUnstructuredStream(in, SystemRBACStackName); err != nil {
+		return fmt.Errorf("failed to read system RBAC stack: %w", err)
+	} else if err := applier.ApplyStack(ctx, s.Clients, resources, SystemRBACStackName); err != nil {
+		return fmt.Errorf("failed to apply system RBAC stack: %w", err)
 	}
 
 	return nil
