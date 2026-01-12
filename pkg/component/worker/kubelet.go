@@ -126,7 +126,6 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 		return nil, nil, err
 	}
 
-	// As required by k8s.io/kubernetes/pkg/kubelet.validateNodeIP
 	ipaddrs = removeIf(ipaddrs, func(ipaddr net.IPAddr) bool {
 		ip := ipaddr.IP
 		isIPOnLooback, err := IsIPOnLoopback(ip)
