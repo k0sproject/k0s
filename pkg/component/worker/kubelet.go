@@ -125,7 +125,7 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 		return nil, nil, err
 	}
 
-	loobackIpAddrs, err := getLoobackIPAddresses()
+	loobackIPAddrs, err := getLoobackIPAddresses()
 	if err != nil {
 		logrus.WithError(err).Errorf("failed to get ip addresses on looback interface: %s", err)
 	}
@@ -137,7 +137,7 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 			ip.IsMulticast() ||
 			ip.IsLinkLocalUnicast() ||
 			ip.IsUnspecified() ||
-			slices.IndexFunc(loobackIpAddrs, func(loobackIp net.IP) bool { return loobackIp.Equal(ip) }) != -1
+			slices.IndexFunc(loobackIPAddrs, func(loobackIp net.IP) bool { return loobackIp.Equal(ip) }) != -1
 	})
 
 	for _, addr := range ipaddrs {
