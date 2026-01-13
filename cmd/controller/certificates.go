@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
@@ -252,7 +253,7 @@ func (c *Certificates) generateSANList(ctx context.Context) ([]string, error) {
 	}
 	hostnames = append(hostnames, internalAPIAddress...)
 
-	return hostnames, nil
+	return stringslice.Unique(hostnames), nil
 }
 
 func detectLocalIPs(ctx context.Context) ([]string, error) {
