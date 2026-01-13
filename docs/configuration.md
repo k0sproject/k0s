@@ -59,8 +59,6 @@ spec:
     address: 192.168.68.104
     k0sApiPort: 9443
     port: 6443
-    sans:
-    - 192.168.68.104
     ca:
       expiresAfter: 87600h
       certificatesExpireAfter: 8760h
