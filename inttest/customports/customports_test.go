@@ -36,8 +36,6 @@ spec:
     externalAddress: {{ .Address }}
     port: {{ .KubePort }}
     k0sApiPort: {{ .K0sPort }}
-    sans:
-      - {{ .Address }}
   konnectivity:
     agentPort: {{ .KonnectivityAgentPort }}
     adminPort: {{ .KonnectivityAdminPort }}
