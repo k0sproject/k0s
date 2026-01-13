@@ -351,10 +351,7 @@ func (s *staticPods) Start(ctx context.Context) error {
 
 	// Fire up the goroutine to accept HTTP connections.
 	notClosed := func(err error) bool { return !errors.Is(err, http.ErrServerClosed) }
-	s.stopped.Add(1)
-	go func() {
-		defer s.stopped.Done()
-
+	s.stopped.Go(func() {
 		log.Info("Serving HTTP requests")
 		err := srv.Serve(listener)
 
@@ -367,7 +364,7 @@ func (s *staticPods) Start(ctx context.Context) error {
 		}
 
 		log.Info("HTTP server closed")
-	}()
+	})
 
 	// Store the handles.
 	s.hostAddr = addr
@@ -442,17 +439,14 @@ func (s *staticPods) Stop() error {
 
 	// Fire up a goroutine for every claimed pod that drops
 	// it concurrently, so that there's no deadlocks.
-	for _, claimedPod := range claimedPods {
-		pod := claimedPod
-		s.stopped.Add(1)
-		go func() {
-			defer s.stopped.Done()
+	for _, pod := range claimedPods {
+		s.stopped.Go(func() {
 			pod.mu.Lock()
 			defer pod.mu.Unlock()
 			pod.update = nil
 			pod.drop = nil
 			pod.manifestPtr.Store([]byte{})
-		}()
+		})
 	}
 
 	s.mu.Unlock()
