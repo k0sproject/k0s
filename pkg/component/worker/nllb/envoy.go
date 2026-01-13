@@ -303,6 +303,10 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 					},
 				}},
 			},
+			// without this, kubernetes might try to evict the mirror pod
+			Tolerations: []corev1.Toleration{{
+				Operator: corev1.TolerationOpExists,
+			}},
 		},
 	}
 }
