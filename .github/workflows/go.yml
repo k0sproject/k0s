@@ -309,8 +309,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        # https://github.com/actions/setup-go/pull/666
-        uses: actions/setup-go@b551c4cd70271da7ce09faf55f722b5e270c54d1
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
@@ -416,7 +415,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
