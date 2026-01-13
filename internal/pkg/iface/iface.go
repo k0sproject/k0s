@@ -8,6 +8,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,6 +22,8 @@ func AllAddresses() ([]string, error) {
 	for i, addr := range addresses {
 		strings[i] = addr.String()
 	}
+	// De-duplicate in case some interfaces share the same address
+	strings = stringslice.Unique(strings)
 	return strings, nil
 }
 
