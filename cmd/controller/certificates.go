@@ -179,42 +179,10 @@ func (c *Certificates) Init(ctx context.Context) error {
 		return err
 	})
 
-	hostnames := []string{
-		"kubernetes",
-		"kubernetes.default",
-		"kubernetes.default.svc",
-		"kubernetes.default.svc.cluster",
-		"kubernetes.svc." + c.ClusterSpec.Network.ClusterDomain,
-		"localhost",
-		"127.0.0.1",
-	}
-
-	localIPs, err := detectLocalIPs(ctx)
+	hostnames, err := c.generateSANList(ctx)
 	if err != nil {
-		return fmt.Errorf("error detecting local IP: %w", err)
+		return fmt.Errorf("failed to generate SAN list: %w", err)
 	}
-	hostnames = append(hostnames, localIPs...)
-	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
-
-	// Add to SANs the IPs from the control plane load balancer
-	cplb := c.ClusterSpec.Network.ControlPlaneLoadBalancing
-	if cplb != nil && cplb.Enabled && cplb.Keepalived != nil {
-		for _, v := range cplb.Keepalived.VRRPInstances {
-			for _, vip := range v.VirtualIPs {
-				ip, _, err := net.ParseCIDR(vip)
-				if err != nil {
-					return fmt.Errorf("error parsing virtualIP %s: %w", vip, err)
-				}
-				hostnames = append(hostnames, ip.String())
-			}
-		}
-	}
-
-	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddresses()
-	if err != nil {
-		return err
-	}
-	hostnames = append(hostnames, internalAPIAddress...)
 
 	eg.Go(func() error {
 		serverReq := certificate.Request{
@@ -244,6 +212,47 @@ func (c *Certificates) Init(ctx context.Context) error {
 	})
 
 	return eg.Wait()
+}
+
+func (c *Certificates) generateSANList(ctx context.Context) ([]string, error) {
+	hostnames := []string{
+		"kubernetes",
+		"kubernetes.default",
+		"kubernetes.default.svc",
+		"kubernetes.default.svc.cluster",
+		"kubernetes.svc." + c.ClusterSpec.Network.ClusterDomain,
+		"localhost",
+		"127.0.0.1",
+	}
+
+	localIPs, err := detectLocalIPs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error detecting local IP: %w", err)
+	}
+	hostnames = append(hostnames, localIPs...)
+	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
+
+	// Add to SANs the IPs from the control plane load balancer
+	cplb := c.ClusterSpec.Network.ControlPlaneLoadBalancing
+	if cplb != nil && cplb.Enabled && cplb.Keepalived != nil {
+		for _, v := range cplb.Keepalived.VRRPInstances {
+			for _, vip := range v.VirtualIPs {
+				ip, _, err := net.ParseCIDR(vip)
+				if err != nil {
+					return nil, fmt.Errorf("error parsing virtualIP %s: %w", vip, err)
+				}
+				hostnames = append(hostnames, ip.String())
+			}
+		}
+	}
+
+	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddresses()
+	if err != nil {
+		return nil, err
+	}
+	hostnames = append(hostnames, internalAPIAddress...)
+
+	return hostnames, nil
 }
 
 func detectLocalIPs(ctx context.Context) ([]string, error) {
