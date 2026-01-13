@@ -226,12 +226,17 @@ func (c *Certificates) generateSANList(ctx context.Context) ([]string, error) {
 		"127.0.0.1",
 	}
 
-	localIPs, err := detectLocalIPs(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error detecting local IP: %w", err)
+	if externalHost := c.ClusterSpec.API.ExternalHost(); externalHost != "" {
+		hostnames = append(hostnames, externalHost)
 	}
-	hostnames = append(hostnames, localIPs...)
-	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
+	hostnames = append(hostnames, c.ClusterSpec.API.Address)
+	hostnames = append(hostnames, c.ClusterSpec.API.SANs...)
+
+	if localIPs, err := detectLocalIPs(ctx); err != nil {
+		return nil, fmt.Errorf("error detecting local IP: %w", err)
+	} else {
+		hostnames = append(hostnames, localIPs...)
+	}
 
 	// Add to SANs the IPs from the control plane load balancer
 	cplb := c.ClusterSpec.Network.ControlPlaneLoadBalancing
@@ -278,6 +283,19 @@ func detectLocalIPs(ctx context.Context) ([]string, error) {
 		ip := addr.IP
 		if ip.To4() != nil || ip.To16() != nil {
 			localIPs = append(localIPs, ip.String())
+		}
+	}
+
+	ifaceAddrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list network interfaces: %w", err)
+	}
+
+	for _, a := range ifaceAddrs {
+		if ipnet, ok := a.(*net.IPNet); ok {
+			if ipnet.IP.To4() != nil || ipnet.IP.To16() != nil {
+				localIPs = append(localIPs, ipnet.IP.String())
+			}
 		}
 	}
 
