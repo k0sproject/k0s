@@ -464,15 +464,19 @@ func (s *staticPods) Ready() error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, url.JoinPath("_healthz").String(), nil)
-	if err != nil {
-		return err
-	}
+	// Create a one-shot HTTP client.
+	client := http.Client{Transport: &http.Transport{DisableKeepAlives: true}}
+	defer client.CloseIdleConnections()
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
 
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.JoinPath("_healthz").String(), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
