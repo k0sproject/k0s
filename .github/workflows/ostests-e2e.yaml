@@ -35,7 +35,7 @@ on:
       tofu-version:
         type: string
         description: The OpenTofu version to use when provisioning test resources.
-        default: 1.11.2 # renovate: datasource=github-releases depName=opentofu/opentofu
+        default: 1.11.3 # renovate: datasource=github-releases depName=opentofu/opentofu
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping the test cluster.
