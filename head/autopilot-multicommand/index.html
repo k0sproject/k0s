@@ -3298,11 +3298,10 @@ The core <strong>autopilot</strong> functionality is only interested when in the
 4 core states (<strong>NewPlan</strong>, <strong>SchedulableWait</strong>, <strong>Schedulable</strong>, <strong>Completed</strong>),
 and treats all other states as an error.</p>
 <pre class="mermaid"><code>flowchart TD
-    Errors --&gt; InconsistentTargets
+    Errors -. no longer in use .-&gt; InconsistentTargets
     Errors --&gt; IncompleteTargets
     Errors --&gt; Restricted
-    Errors --&gt; MissingPlatform
-    Errors --&gt; MissingSignalNode</code></pre>
+    Errors -. no longer in use .-&gt; MissingSignalNode</code></pre>
 <table>
 <thead>
 <tr>
@@ -3314,10 +3313,10 @@ and treats all other states as an error.</p>
 </thead>
 <tbody>
 <tr>
-<td><strong>InconsistentTargets</strong></td>
+<td><strong><del>InconsistentTargets</del></strong></td>
 <td><code>k0supdate</code></td>
 <td><strong>Schedulable</strong></td>
-<td>Indicates that a <strong>Signal Node</strong> probe has failed for any node that was previously discovered during <strong>NewPlan</strong>.</td>
+<td>Legacy state used by older k0s releases to indicate controller readiness failures; no longer in use.</td>
 </tr>
 <tr>
 <td><strong>IncompleteTargets</strong></td>
@@ -3332,10 +3331,10 @@ and treats all other states as an error.</p>
 <td>Indicates that a <strong>Plan</strong> has requested an update of a <strong>Signal Node</strong> type that contradicts the startup exclusions (the <code>--exclude-from-plans</code> argument)</td>
 </tr>
 <tr>
-<td><strong>MissingSignalNode</strong></td>
+<td><strong><del>MissingSignalNode</del></strong></td>
 <td><code>airgapupdate</code>, <code>k0supdate</code></td>
 <td><strong>Schedulable</strong></td>
-<td>Indicates that a <strong>Signal Node</strong> that existed during the discover phase in <strong>NewPlan</strong> no longer exists (i.e. no matching <code>ControlNode</code> or <code>Node</code> object)</td>
+<td>Legacy state used by older k0s releases to indicate <strong>IncompleteTargets</strong>; no longer in use.</td>
 </tr>
 </tbody>
 </table>

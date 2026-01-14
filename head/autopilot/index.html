@@ -3631,10 +3631,10 @@ additional changes to the plan (other than status) will be recognized.<ul>
 <h3 id="controller-quorum-safety">Controller Quorum Safety<a class="headerlink" href="#controller-quorum-safety" title="Permanent link">#</a></h3>
 <ul>
 <li>Prior to scheduling a controller update, <strong>autopilot</strong> queries the API server of <strong>all</strong>
-  controllers to ensure that they report a successful <code>/ready</code></li>
+  controllers to ensure that they report a successful <code>/ready</code>.</li>
 <li>Only once all controllers are <code>/ready</code> will the current controller get sent update signaling.</li>
-<li>In the event that <strong>any</strong> controller reports a non-ready, the <code>Plan</code> transitions into an
-  <code>InconsistentTargets</code> state, and the <code>Plan</code> execution ends.</li>
+<li>If a previously discovered controller target can no longer be resolved, the <code>Plan</code> transitions
+  into an <code>IncompleteTargets</code> state and execution ends. Transient readiness failures requeue.</li>
 </ul>
 <h3 id="controllers-update-sequentially">Controllers Update Sequentially<a class="headerlink" href="#controllers-update-sequentially" title="Permanent link">#</a></h3>
 <ul>
@@ -3882,8 +3882,8 @@ update operation. There are a number of statuses available:</p>
 <td>Yes</td>
 </tr>
 <tr>
-<td><code>InconsistentTargets</code></td>
-<td>A controller has reported itself as not-ready during the selection of the next controller to update.</td>
+<td><del><code>InconsistentTargets</code></del></td>
+<td>Legacy state used by older k0s releases to indicate controller readiness failures; no longer in use.</td>
 <td>Yes</td>
 </tr>
 <tr>
@@ -3927,11 +3927,11 @@ update operation. There are a number of statuses available:</p>
 <td>Update signaling has been successfully applied to this node.</td>
 </tr>
 <tr>
-<td><code>MissingPlatform</code></td>
+<td><code>SignalMissingPlatform</code></td>
 <td>This node is a platform that an update has not been provided for.</td>
 </tr>
 <tr>
-<td><code>MissingSignalNode</code></td>
+<td><code>SignalMissingNode</code></td>
 <td>This node does have an associated <code>Node</code> (worker) or <code>ControlNode</code> (controller) object.</td>
 </tr>
 </tbody>
