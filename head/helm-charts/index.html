@@ -3117,6 +3117,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 </tr>
 </tbody>
 </table>
+<p><strong>Note:</strong> k0s supports only classic Helm chart repositories that provide a valid <code>index.yaml</code>. Direct links to chart folders or files (for example raw GitHub URLs) are not recognized as Helm repositories and will not work unless they follow the full Helm repository structure. For details on how a valid Helm chart repository must be structured, see: https://helm.sh/docs/topics/chart_repository/#create-a-chart-repository</p>
 <h3 id="chart-configuration">Chart configuration<a class="headerlink" href="#chart-configuration" title="Permanent link">#</a></h3>
 <table>
 <thead>
@@ -3187,9 +3188,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci-registry-with-private-ca</span>
 <span class="w">        </span><span class="c1"># OCI registry URL must not include any path elements</span>
 <span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci://registry-with-private-ca.com:8080</span>
-<span class="w">        </span><span class="c1"># Currently, only caFile is supported for TLS transport</span>
-<span class="w">        </span><span class="c1"># Setting certFile or keyFile will result in an error</span>
+<span class="w">        </span><span class="c1"># certFile and keyFile can be provided to enable mTLS</span>
 <span class="w">        </span><span class="nt">caFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/ca.crt</span>
+<span class="w">        </span><span class="nt">certFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/client.crt</span>
+<span class="w">        </span><span class="nt">keyFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/client.key</span>
 <span class="w">      </span><span class="nt">charts</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
 <span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
