@@ -67,12 +67,7 @@ get-conformance-results: bin/sonobuoy
 
 TIMEOUT ?= 6m
 
-check-ap-controllerworker: K0S_UPDATE_FROM_BIN ?= ../k0s
-check-ap-controllerworker: export K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
-
 # Autopilot 3x3 HA test can take a while to run
-check-ap-ha3x3: K0S_UPDATE_FROM_BIN ?= ../k0s
-check-ap-ha3x3: export K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
 check-ap-ha3x3: export K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
 check-ap-updater: .update-server.stamp
