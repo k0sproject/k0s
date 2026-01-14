@@ -1518,26 +1518,31 @@ func (s *BootlooseSuite) maybeAddBinPath(volumes []config.Volume) ([]config.Volu
 		return nil, fmt.Errorf("%s: is a directory: %q", exePathErrMsg, exePath)
 	}
 
-	updateFromBinPath := os.Getenv("K0S_UPDATE_FROM_PATH")
-	if updateFromBinPath != "" {
-		volumes = append(volumes, config.Volume{
-			Type:        "bind",
-			Source:      updateFromBinPath,
-			Destination: k0sBindMountFullPath,
-			ReadOnly:    true,
-		}, config.Volume{
-			Type:        "bind",
-			Source:      exePath,
-			Destination: k0sNewBindMountFullPath,
-			ReadOnly:    true,
-		})
+	fromK0sPath, updatingFromOtherVersion := os.LookupEnv("K0S_UPDATE_FROM_PATH")
+	if updatingFromOtherVersion {
+		errMsg := "failed to locate k0s executable to update from (check the K0S_UPDATE_FROM_PATH environment variable)"
+		if fromK0sPath, err = filepath.Abs(fromK0sPath); err != nil {
+			return nil, fmt.Errorf("%s: %w", errMsg, err)
+		} else if fileInfo, err := os.Stat(fromK0sPath); err != nil {
+			return nil, fmt.Errorf("%s: %w", errMsg, err)
+		} else if fileInfo.IsDir() {
+			return nil, fmt.Errorf("%s: is a directory: %q", exePathErrMsg, fromK0sPath)
+		}
 	} else {
-		volumes = append(volumes, config.Volume{
-			Type:        "bind",
-			Source:      exePath,
-			Destination: k0sBindMountFullPath,
-			ReadOnly:    true,
-		})
+		fromK0sPath = exePath
 	}
+
+	volumes = append(volumes, config.Volume{
+		Type:        "bind",
+		Source:      fromK0sPath,
+		Destination: k0sBindMountFullPath,
+		ReadOnly:    true,
+	}, config.Volume{
+		Type:        "bind",
+		Source:      exePath,
+		Destination: k0sNewBindMountFullPath,
+		ReadOnly:    true,
+	})
+
 	return volumes, nil
 }
