@@ -118,7 +118,7 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 
 	loopbackIPAddrs, err := getLoopbackIPAddresses()
 	if err != nil {
-		logrus.WithError(err).Errorf("failed to get ip addresses on loopback interface: %s", err)
+		logrus.WithError(err).Errorf("failed to get ip addresses on loopback interface")
 	}
 
 	for _, addr := range ipaddrs {
