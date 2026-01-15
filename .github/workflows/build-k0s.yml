@@ -46,6 +46,10 @@ jobs:
           fetch-depth: 0 # for `git describe`
           persist-credentials: false
 
+      - name: "Build :: Reclaim runner disk space"
+        if: inputs.target-arch != 'arm'
+        run: .github/workflows/reclaim-runner-disk-space.bash
+
       - name: "Build :: Prepare"
         id: build-prepare
         run: |
