@@ -136,7 +136,32 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 			break
 		}
 	}
+
+	if ipv4 == nil || ipv6 == nil {
+		return ipv4, ipv6, fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
+	}
 	return ipv4, ipv6, nil
+}
+
+func resolveNodeAddress() (ipv4 net.IP, ipv6 net.IP, err error) {
+	ipv4, err = utilnet.ResolveBindAddress(net.IPv4zero)
+	if err != nil {
+		return nil, ipv6, fmt.Errorf("node default gateway interface scanning didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
+	}
+
+	ipv6, err = utilnet.ResolveBindAddress(net.IPv6unspecified)
+	if err != nil || ipv6.To4() != nil {
+		return ipv4, nil, fmt.Errorf("node default gateway interface scanning didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
+	}
+
+	return ipv4, ipv6, err
+}
+
+func Coalesce[T any](first *T, second *T) *T {
+	if first != nil {
+		return first
+	}
+	return second
 }
 
 // Run runs kubelet
@@ -160,21 +185,16 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// kubelet, but for both IPv4 and IPv6.
 		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/pkg/kubelet/nodestatus/setters.go#L150-L178
 		ipv4, ipv6, err := k.lookupNodeName(ctx)
-		if err == nil && (ipv4 == nil || ipv6 == nil) {
-			logrus.Warnf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
-		}
-		// If failed to get IP addresses via DNS try to get them from the network interface used as default gateway
-		if ipv4 == nil {
-			ipv4, err = utilnet.ResolveBindAddress(net.IPv4zero)
+		if err != nil {
+			logrus.Warnf("%s", err)
+
+			fallbackIPv4, fallbackIPv6, err := resolveNodeAddress()
 			if err != nil {
-				logrus.WithError(err).Warnf("failed to get an IPv4 address from the network interface used as a default gateway")
+				logrus.Warnf("%s", err)
 			}
-		}
-		if ipv6 == nil {
-			ipv6, err = utilnet.ResolveBindAddress(net.IPv6unspecified)
-			if err != nil {
-				logrus.WithError(err).Warnf("failed to get an IPv6 address from the network interface used as a default gateway")
-			}
+
+			ipv4 = *Coalesce(&ipv4, &fallbackIPv4)
+			ipv6 = *Coalesce(&ipv6, &fallbackIPv6)
 		}
 
 		if ipv4 == nil || ipv6 == nil {
