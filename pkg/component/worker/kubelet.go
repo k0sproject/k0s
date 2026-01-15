@@ -175,7 +175,8 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	if k.DualStackEnabled && k.ExtraArgs["--node-ip"] == "" {
 		// Kubelet uses a DNS lookup of the node name to figure out the node IP,
 		// but will only pick one for a single family. Do something similar as
-		// kubelet, but for both IPv4 and IPv6.
+		// kubelet, but for both IPv4 and IPv6 and fallback to scanning the
+		// interface used a default gateway.
 		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/pkg/kubelet/nodestatus/setters.go#L150-L178
 		ipv4, ipv6, err := k.lookupNodeName(ctx)
 		if err != nil {
