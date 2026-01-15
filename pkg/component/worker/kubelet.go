@@ -157,13 +157,6 @@ func resolveNodeAddress() (ipv4 net.IP, ipv6 net.IP, err error) {
 	return ipv4, ipv6, err
 }
 
-func Coalesce[T any](first *T, second *T) *T {
-	if first != nil {
-		return first
-	}
-	return second
-}
-
 // Run runs kubelet
 func (k *Kubelet) Start(ctx context.Context) error {
 	logrus.Info("Starting kubelet")
@@ -193,8 +186,12 @@ func (k *Kubelet) Start(ctx context.Context) error {
 				logrus.Warnf("%s", err)
 			}
 
-			ipv4 = *Coalesce(&ipv4, &fallbackIPv4)
-			ipv6 = *Coalesce(&ipv6, &fallbackIPv6)
+			if ipv4 == nil {
+				ipv4 = fallbackIPv4
+			}
+			if ipv6 == nil {
+				ipv6 = fallbackIPv6
+			}
 		}
 
 		if ipv4 == nil || ipv6 == nil {
