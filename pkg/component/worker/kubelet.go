@@ -113,6 +113,7 @@ func getLoopbackIPAddresses() ([]net.IP, error) {
 func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ error) {
 	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(k.NodeName))
 	if err != nil {
+		logrus.WithError(err).Errorf("failed to lookup ip addresses")
 		return nil, nil, err
 	}
 
