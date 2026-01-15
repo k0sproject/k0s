@@ -36,6 +36,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+import utilnet "k8s.io/apimachinery/pkg/util/net"
+
 // Kubelet is the component implementation to manage kubelet
 type Kubelet struct {
 	NodeName            apitypes.NodeName
@@ -158,10 +160,24 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/pkg/kubelet/nodestatus/setters.go#L150-L178
 		ipv4, ipv6, err := k.lookupNodeName(ctx)
 		if err == nil && (ipv4 == nil || ipv6 == nil) {
-			err = fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
+			logrus.WithError(err).Warnf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
 		}
-		if err != nil {
-			return fmt.Errorf("failed to detect node IPs for %q: %w", k.NodeName, err)
+		// If failed to get IP addresses via DNS try to get them from the network interface used as default gateway
+		if ipv4 == nil {
+			ipv4, err = utilnet.ResolveBindAddress(net.IPv4zero)
+			if err != nil {
+				logrus.WithError(err).Warnf("failed to get an IPv4 address from the network interface used as a default gateway")
+			}
+		}
+		if ipv6 == nil {
+			ipv6, err = utilnet.ResolveBindAddress(net.IPv6unspecified)
+			if err != nil {
+				logrus.WithError(err).Warnf("failed to get an IPv6 address from the network interface used as a default gateway")
+			}
+		}
+
+		if ipv4 == nil || ipv6 == nil {
+			return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
 		}
 
 		// The kubelet will perform some extra validations on the discovered IP
