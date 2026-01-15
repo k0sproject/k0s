@@ -78,17 +78,6 @@ func (k *Kubelet) Init(_ context.Context) (err error) {
 	return nil
 }
 
-func removeIf[T any](slice []T, predicate func(T) bool) []T {
-	idx := 0
-	for _, element := range slice {
-		if !predicate(element) {
-			slice[idx] = element
-			idx++
-		}
-	}
-	return slice[:idx]
-}
-
 func getLoopbackIPAddresses() ([]net.IP, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
@@ -130,17 +119,10 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 		logrus.WithError(err).Errorf("failed to get ip addresses on loopback interface: %s", err)
 	}
 
-	ipaddrs = removeIf(ipaddrs, func(ipaddr net.IPAddr) bool {
-		ip := ipaddr.IP
-		return (ip.To4() == nil && ip.To16() == nil) ||
-			ip.IsLoopback() ||
-			ip.IsMulticast() ||
-			ip.IsLinkLocalUnicast() ||
-			ip.IsUnspecified() ||
-			slices.IndexFunc(loopbackIPAddrs, func(loopbackIp net.IP) bool { return loopbackIp.Equal(ip) }) != -1
-	})
-
 	for _, addr := range ipaddrs {
+		if ip := addr.IP; !ip.IsGlobalUnicast() || slices.ContainsFunc(loopbackIPAddrs, ip.Equal) {
+			continue
+		}
 		if ipv4 == nil && addr.IP.To4() != nil {
 			ipv4 = addr.IP
 		} else if ipv6 == nil && addr.IP.To16() != nil && addr.IP.To4() == nil {
