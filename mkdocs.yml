@@ -142,6 +142,7 @@ plugins:
 
 markdown_extensions:
   - pymdownx.highlight: {}
+  - pymdownx.tilde: {}
   - pymdownx.superfences: {}
   - pymdownx.inlinehilite: {}
   - pymdownx.emoji:
