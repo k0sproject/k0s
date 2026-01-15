@@ -29,10 +29,23 @@ type K0sStatus struct {
 	WorkerToAPIConnectionStatus ProbeStatus
 	ClusterConfig               *v1beta1.ClusterConfig
 	K0sVars                     *config.CfgVars
+	CNI                         *CNI
 }
 type ProbeStatus struct {
 	Message string
 	Success bool
+}
+
+type CNI struct {
+	Provider   string
+	Health     string
+	Components []string
+	Error      string
+}
+
+func (c *CNI) Fail(format string, a ...interface{}) {
+	c.Health = "Degraded"
+	c.Error = fmt.Sprintf(format, a...)
 }
 
 // GetStatus returns the status of the k0s process using the status socket

@@ -7,8 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -125,12 +127,72 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 		}
 		sh.client = kubeClient
 	}
-	_, err := sh.client.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
+	nodes, err := sh.client.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		status.WorkerToAPIConnectionStatus.Message = err.Error()
 		return status
 	}
 	status.WorkerToAPIConnectionStatus.Success = true
+
+	status.CNI = &CNI{
+		Health: "Healthy",
+	}
+
+	for _, node := range nodes.Items {
+		for _, cond := range node.Status.Conditions {
+			if cond.Type == "NetworkUnavailable" && cond.Status == "True" {
+				status.CNI.Fail("Node %s reports NetworkUnavailable: %s", node.Name, cond.Message)
+			}
+		}
+	}
+
+	if status.ClusterConfig != nil && status.ClusterConfig.Spec.Network.Provider != "" {
+		status.CNI.Provider = status.ClusterConfig.Spec.Network.Provider
+	}
+
+	pods, err := sh.client.CoreV1().Pods("kube-system").List(ctx, v1.ListOptions{
+		LabelSelector: "k8s-app in (kube-router, calico-node, calico-kube-controllers)",
+	})
+
+	if err != nil {
+		status.CNI.Fail("failed to list kube-system pods: %v", err)
+	} else {
+		for _, pod := range pods.Items {
+			app := pod.Labels["k8s-app"]
+
+			if status.CNI.Provider == "" {
+				if strings.Contains(app, "calico") {
+					status.CNI.Provider = "calico"
+				} else if app == "kube-router" {
+					status.CNI.Provider = "kuberouter"
+				}
+			}
+
+			isReady := false
+			if pod.Status.Phase == "Running" {
+				for _, cond := range pod.Status.Conditions {
+					if cond.Type == "Ready" && cond.Status == "True" {
+						isReady = true
+						break
+					}
+				}
+			}
+
+			status.CNI.Components = append(
+				status.CNI.Components,
+				fmt.Sprintf("%s (Ready: %t)", pod.Name, isReady),
+			)
+
+			if !isReady {
+				status.CNI.Fail("Component %s is in %s state", pod.Name, pod.Status.Phase)
+			}
+		}
+	}
+
+	if len(status.CNI.Components) == 0 && status.CNI.Health == "Healthy" {
+		status.CNI.Fail("No CNI components found")
+	}
+
 	return status
 }
 

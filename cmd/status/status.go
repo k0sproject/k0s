@@ -127,6 +127,22 @@ func printStatus(w io.Writer, status *status.K0sStatus, output string) {
 		if status.StubFile != "" {
 			fmt.Fprintln(w, "Service file:", status.StubFile)
 		}
+		if status.CNI != nil {
+			fmt.Fprintln(w, "\nCNI Status:")
+			fmt.Fprintln(w, " Provider:", status.CNI.Provider)
+			fmt.Fprintln(w, " Health:", status.CNI.Health)
+
+			if len(status.CNI.Components) > 0 {
+				fmt.Fprintln(w, " Components:")
+				for _, c := range status.CNI.Components {
+					fmt.Fprintf(w, "   - %s\n", c)
+				}
+			}
+
+			if status.CNI.Error != "" {
+				fmt.Fprintln(w, "Error:", status.CNI.Error)
+			}
+		}
 
 	}
 }
