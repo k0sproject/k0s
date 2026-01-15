@@ -32,7 +32,9 @@ accordingly for dual-stack networking.
 ### How Auto-detection Works
 By default, k0s attempts to auto-detect the node's IPv4 and IPv6 addresses to facilitate dual-stack networking. This is necessary because the upstream Kubelet does not natively support node IP auto-detection when running in dual-stack mode.
 
-If you do not manually specify node IPs, k0s replicates the Kubelet's logic by attempting to resolve the node's hostname via the system DNS resolver to find associated IPv4 and IPv6 addresses.
+If you do not manually specify node IPs, k0s replicates the Kubelet's logic by:
+- **DNS Lookup:** Attempting to resolve the node's hostname via the system DNS resolver to find associated IPv4 and IPv6 addresses.
+- **Interface Scanning:** Looking up IPs directly via the local network interface used as a default gateway.
 
 > [!IMPORTANT]
 > For the DNS Lookup mechanism to work reliably, your system resolver must be able to return both address families for the node hostname.

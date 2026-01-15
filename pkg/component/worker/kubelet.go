@@ -160,7 +160,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/pkg/kubelet/nodestatus/setters.go#L150-L178
 		ipv4, ipv6, err := k.lookupNodeName(ctx)
 		if err == nil && (ipv4 == nil || ipv6 == nil) {
-			logrus.WithError(err).Warnf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
+			logrus.Warnf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
 		}
 		// If failed to get IP addresses via DNS try to get them from the network interface used as default gateway
 		if ipv4 == nil {
