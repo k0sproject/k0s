@@ -77,7 +77,10 @@ func NewControllerCmd() *cobra.Command {
 
 	or CLI flag:
 	$ k0s controller --token-file [path_to_file]
-	Note: Token can be passed either as a CLI argument or as a flag`,
+
+	or environment variable:
+	$ K0S_TOKEN=[token] k0s controller
+	Note: Token can be passed either as a CLI argument, a flag, or an environment variable`,
 		Args:             cobra.MaximumNArgs(1),
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -91,8 +94,8 @@ func NewControllerCmd() *cobra.Command {
 			if len(args) > 0 {
 				c.TokenArg = args[0]
 			}
-			if c.TokenArg != "" && c.TokenFile != "" {
-				return errors.New("you can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
+			if err := internal.CheckSingleTokenSource(c.TokenArg, c.TokenFile); err != nil {
+				return err
 			}
 			if err := controllerFlags.Normalize(); err != nil {
 				return err
@@ -200,20 +203,16 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	var joinClient *token.JoinClient
 
-	if (c.TokenArg != "" || c.TokenFile != "") && c.needToJoin(nodeConfig) {
-		var tokenData string
-		if c.TokenArg != "" {
-			tokenData = c.TokenArg
-		} else {
-			data, err := os.ReadFile(c.TokenFile)
-			if err != nil {
-				return fmt.Errorf("read token file %q: %w", c.TokenFile, err)
-			}
-			tokenData = string(data)
-		}
-		joinClient, err = joinController(ctx, tokenData, c.K0sVars.CertRootDir)
+	if c.needToJoin(nodeConfig) {
+		tokenData, err := internal.GetTokenData(c.TokenArg, c.TokenFile)
 		if err != nil {
-			return fmt.Errorf("failed to join controller: %w", err)
+			return err
+		}
+		if tokenData != "" {
+			joinClient, err = joinController(ctx, tokenData, c.K0sVars.CertRootDir)
+			if err != nil {
+				return fmt.Errorf("failed to join controller: %w", err)
+			}
 		}
 	}
 
