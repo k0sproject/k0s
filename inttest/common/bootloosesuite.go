@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -31,6 +32,7 @@ import (
 	etcdmemberclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
@@ -271,12 +273,30 @@ func (s *BootlooseSuite) waitForSSH(ctx context.Context) {
 // will take the context as parameter.
 func (s *BootlooseSuite) Context() context.Context {
 	ctx, t := s.ctx, s.T()
-	require.NotNil(t, ctx, "No suite context installed")
-	if t == nil {
+	if t != nil {
+		require.NotNil(t, ctx, "No suite context installed")
+		return k0scontext.WithValue(ctx, t)
+	}
+
+	if ctx != nil {
 		return ctx
 	}
 
-	return k0scontext.WithValue(ctx, t)
+	panic("no suite context installed")
+}
+
+func (s *BootlooseSuite) TContext() context.Context {
+	ctx, cancel := context.WithCancelCause(s.Context())
+	go func() {
+		t := k0scontext.Value[*testing.T](ctx)
+		tctx := t.Context()
+		select {
+		case <-ctx.Done():
+		case <-tctx.Done():
+			cancel(fmt.Errorf("context of %s is done: %w", t.Name(), context.Cause(tctx)))
+		}
+	}()
+	return ctx
 }
 
 // ControllerNode gets the node name of given controller index
@@ -848,6 +868,23 @@ func (s *BootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username 
 	}
 	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
 	return cfg, nil
+}
+
+func (s *BootlooseSuite) ClientFactory(node string, k0sKubeconfigArgs ...string) *kubeutil.ClientFactory {
+	var lbAddr string
+	if s.WithLB {
+		lbAddr = s.GetLBAddress()
+	}
+	return &kubeutil.ClientFactory{
+		LoadRESTConfig: func() (*rest.Config, error) {
+			restConfig, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
+			if err != nil || lbAddr == "" {
+				return restConfig, err
+			}
+			restConfig.Host = net.JoinHostPort(lbAddr, strconv.Itoa(s.KubeAPIExternalPort))
+			return restConfig, nil
+		},
+	}
 }
 
 // KubeClient return kube client by loading the admin access config from given node
