@@ -446,3 +446,85 @@ func TestFeatureGates(t *testing.T) {
 
 	assert.False(t, c.Spec.FeatureGates[2].Enabled)
 }
+
+func TestAPIServerURLForHostNetworkPods(t *testing.T) {
+	t.Run("returns_API_address_when_NLLB_disabled", func(t *testing.T) {
+		spec := &ClusterSpec{
+			API: &APISpec{
+				Address: "10.0.0.1",
+				Port:    6443,
+			},
+			Network: &Network{
+				NodeLocalLoadBalancing: &NodeLocalLoadBalancing{
+					Enabled: false,
+				},
+			},
+		}
+		assert.Equal(t, "https://10.0.0.1:6443", spec.APIServerURLForHostNetworkPods())
+	})
+
+	t.Run("returns_external_address_when_set", func(t *testing.T) {
+		spec := &ClusterSpec{
+			API: &APISpec{
+				Address:         "10.0.0.1",
+				ExternalAddress: "api.example.com",
+				Port:            6443,
+			},
+			Network: &Network{
+				NodeLocalLoadBalancing: &NodeLocalLoadBalancing{
+					Enabled: false,
+				},
+			},
+		}
+		assert.Equal(t, "https://api.example.com:6443", spec.APIServerURLForHostNetworkPods())
+	})
+
+	t.Run("returns_localhost_when_NLLB_enabled", func(t *testing.T) {
+		spec := &ClusterSpec{
+			API: &APISpec{
+				Address: "10.0.0.1",
+				Port:    6443,
+			},
+			Network: &Network{
+				NodeLocalLoadBalancing: &NodeLocalLoadBalancing{
+					Enabled: true,
+					Type:    NllbTypeEnvoyProxy,
+					EnvoyProxy: &EnvoyProxy{
+						APIServerBindPort: 7443,
+					},
+				},
+			},
+		}
+		assert.Equal(t, "https://localhost:7443", spec.APIServerURLForHostNetworkPods())
+	})
+
+	t.Run("returns_localhost_with_custom_port", func(t *testing.T) {
+		spec := &ClusterSpec{
+			API: &APISpec{
+				Address: "10.0.0.1",
+				Port:    6443,
+			},
+			Network: &Network{
+				NodeLocalLoadBalancing: &NodeLocalLoadBalancing{
+					Enabled: true,
+					Type:    NllbTypeEnvoyProxy,
+					EnvoyProxy: &EnvoyProxy{
+						APIServerBindPort: 8443,
+					},
+				},
+			},
+		}
+		assert.Equal(t, "https://localhost:8443", spec.APIServerURLForHostNetworkPods())
+	})
+
+	t.Run("handles_nil_network", func(t *testing.T) {
+		spec := &ClusterSpec{
+			API: &APISpec{
+				Address: "10.0.0.1",
+				Port:    6443,
+			},
+			Network: nil,
+		}
+		assert.Equal(t, "https://10.0.0.1:6443", spec.APIServerURLForHostNetworkPods())
+	})
+}
