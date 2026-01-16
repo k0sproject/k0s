@@ -105,7 +105,11 @@ func TestUnknownSubCommandsAreRejected(t *testing.T) {
 			for _, cmd := range underTest.Commands() {
 				name, _, _ := strings.Cut(cmd.Use, " ")
 				require.NotEmpty(t, name)
-				t.Run(name, testCommand(cmd, slices.Concat(args, []string{name})))
+				switch name {
+				case "member-update": // Don't test comands with positional args
+				default:
+					t.Run(name, testCommand(cmd, slices.Concat(args, []string{name})))
+				}
 			}
 
 			subCommand := strings.Join(args, " ")
