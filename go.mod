@@ -58,7 +58,7 @@ require (
 	golang.org/x/tools v0.41.0
 	google.golang.org/grpc v1.78.0
 	helm.sh/helm/v3 v3.19.5
-	modernc.org/sqlite v1.44.0
+	modernc.org/sqlite v1.44.1
 	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.22.4
 	sigs.k8s.io/yaml v1.6.0
@@ -276,7 +276,7 @@ require (
 	k8s.io/kms v0.34.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/metrics v0.34.3 // indirect
-	modernc.org/libc v1.67.4 // indirect
+	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
