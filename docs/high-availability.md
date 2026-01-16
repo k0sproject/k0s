@@ -108,8 +108,6 @@ Note to update your load balancer's public IP address into two places.
 spec:
   api:
     externalAddress: <load balancer public ip address>
-    sans:
-    - <load balancer public ip address>
 ```
 
 ### Configuration using k0sctl.yaml (for k0sctl)
@@ -123,8 +121,6 @@ balancer's public IP address into two places.
       spec:
         api:
           externalAddress: <load balancer public ip address>
-          sans:
-          - <load balancer public ip address>
 ```
 
 For greater detail about k0s configuration, refer to the [Full configuration file reference](configuration.md).
