@@ -80,34 +80,14 @@ func (k *Kubelet) Init(_ context.Context) (err error) {
 	return nil
 }
 
-func getLoopbackIPAddresses() ([]net.IP, error) {
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get network interfaces: %w", err)
+func Map[T any, R any](input []T, transform func(T) R) []R {
+	result := make([]R, len(input))
+
+	for i, v := range input {
+		result[i] = transform(v)
 	}
 
-	var ipaddrs []net.IP
-	for _, iface := range interfaces {
-		if iface.Flags&net.FlagLoopback != 0 {
-			addrs, err := iface.Addrs()
-			if err != nil {
-				return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
-			}
-
-			for _, addr := range addrs {
-				var ip net.IP
-				switch v := addr.(type) {
-				case *net.IPNet:
-					ip = v.IP
-				case *net.IPAddr:
-					ip = v.IP
-				}
-
-				ipaddrs = append(ipaddrs, ip)
-			}
-		}
-	}
-	return ipaddrs, nil
+	return result
 }
 
 func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ error) {
@@ -117,13 +97,23 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 		return nil, nil, err
 	}
 
-	loopbackIPAddrs, err := getLoopbackIPAddresses()
+	interfaceAddrs, err := net.InterfaceAddrs()
 	if err != nil {
-		logrus.WithError(err).Errorf("failed to get ip addresses on loopback interface")
+		logrus.WithError(err).Errorf("failed to retrieve local network interface addresses")
 	}
+	interfaceIPs := Map(interfaceAddrs, func(addr net.Addr) net.IP {
+		var ip net.IP
+		switch v := addr.(type) {
+		case *net.IPNet:
+			ip = v.IP
+		case *net.IPAddr:
+			ip = v.IP
+		}
+		return ip
+	})
 
 	for _, addr := range ipaddrs {
-		if ip := addr.IP; !ip.IsGlobalUnicast() || slices.ContainsFunc(loopbackIPAddrs, ip.Equal) {
+		if ip := addr.IP; !ip.IsGlobalUnicast() || !slices.ContainsFunc(interfaceIPs, ip.Equal) {
 			continue
 		}
 		if ipv4 == nil && addr.IP.To4() != nil {
