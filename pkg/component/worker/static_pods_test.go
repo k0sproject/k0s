@@ -40,8 +40,8 @@ spec:
 `
 
 func TestStaticPods_Provisioning(t *testing.T) {
-
 	underTest := NewStaticPods()
+	underTest.(*staticPods).log, _ = newTestLogger(t)
 
 	t.Run("content_is_initlially_empty", func(t *testing.T) {
 		assert.Equal(t, newList(t), getContent(t, underTest))
@@ -161,8 +161,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 }
 
 func TestStaticPods_Lifecycle(t *testing.T) {
-	log, logs := test.NewNullLogger()
-	log.SetLevel(logrus.DebugLevel)
+	log, logs := newTestLogger(t)
 
 	underTest := NewStaticPods().(*staticPods)
 	underTest.log = log
@@ -365,4 +364,25 @@ func newList(t *testing.T, items ...[]byte) map[string]any {
 		"kind":       "PodList",
 		"items":      parsedItems,
 	}
+}
+
+func newTestLogger(t *testing.T) (*logrus.Logger, *test.Hook) {
+	t.Helper()
+	log, logs := test.NewNullLogger()
+	log.SetLevel(logrus.DebugLevel)
+	t.Cleanup(func() {
+		t.Helper()
+		if !t.Failed() {
+			return
+		}
+		entries := logs.AllEntries()
+		for _, entry := range entries {
+			t.Log("Captured log:", entry.Level, entry.Message, entry.Data)
+		}
+		if len(entries) == 0 {
+			t.Log("No log entries captured")
+		}
+	})
+
+	return log, logs
 }
