@@ -10,13 +10,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
+	authv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -34,6 +35,10 @@ type Status struct {
 	L                 *logrus.Entry
 	httpserver        http.Server
 	CertManager       certManager
+
+	WorkerClient       kubernetes.Interface
+	AdminClient        kubernetes.Interface
+	AdminClientFactory *kubeutil.ClientFactory
 }
 
 type certManager interface {
@@ -95,7 +100,6 @@ func (s *Status) Stop() error {
 
 type statusHandler struct {
 	Status *Status
-	client kubernetes.Interface
 }
 
 // ServerHTTP implementation of handler interface
@@ -113,84 +117,106 @@ const (
 	defaultPollTimeout  = 5 * time.Minute
 )
 
+func addCNICondition(cni *CNI, status, reason, message string) {
+	cni.Conditions = append(cni.Conditions, Condition{
+		Type:    "CNIReady",
+		Status:  status,
+		Reason:  reason,
+		Message: message,
+	})
+}
+
+func (sh *statusHandler) checkCNIDaemonSet(ds *appsv1.DaemonSet, cni *CNI) {
+	desired := ds.Status.DesiredNumberScheduled
+	ready := ds.Status.NumberReady
+
+	if desired > 0 && ready == desired {
+		addCNICondition(cni, "True", "AllReady", fmt.Sprintf("%s DaemonSet reports %d/%d ready", ds.Name, ready, desired))
+	} else {
+		addCNICondition(cni, "False", "NotReady", fmt.Sprintf("%s DaemonSet reports %d/%d ready", ds.Name, ready, desired))
+	}
+}
+
+func (sh *statusHandler) checkCalicoDeployment(deploy *appsv1.Deployment, cni *CNI) {
+	ready := deploy.Status.ReadyReplicas
+	total := deploy.Status.Replicas
+
+	if ready == total {
+		addCNICondition(cni, "True", "AllComponetsReady", fmt.Sprintf("Calico kube-controllers reports %d/%d ready", ready, total))
+	} else {
+		addCNICondition(cni, "False", "ComponentsNotReady", fmt.Sprintf("Calico kube-controllers reports %d/%d ready", ready, total))
+	}
+}
+
 func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
+	if sh.Status.AdminClient == nil && sh.Status.AdminClientFactory != nil {
+		client, err := sh.Status.AdminClientFactory.GetClient()
+		if err == nil {
+			sh.Status.AdminClient = client
+		}
+	}
+
 	status := sh.Status.StatusInformation
 	if !status.Workloads {
 		return status
 	}
 
-	if sh.client == nil {
+	if sh.Status.WorkerClient == nil {
 		kubeClient, err := sh.buildWorkerSideKubeAPIClient(ctx)
 		if err != nil {
 			status.WorkerToAPIConnectionStatus.Message = "failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: " + err.Error()
-			return status
 		}
-		sh.client = kubeClient
+		sh.Status.WorkerClient = kubeClient
 	}
-	nodes, err := sh.client.CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	_, err := sh.Status.WorkerClient.AuthenticationV1().SelfSubjectReviews().Create(ctx, &authv1.SelfSubjectReview{}, v1.CreateOptions{})
 	if err != nil {
 		status.WorkerToAPIConnectionStatus.Message = err.Error()
-		return status
 	}
 	status.WorkerToAPIConnectionStatus.Success = true
 
 	status.CNI = &CNI{
-		Health: "Healthy",
+		Conditions: []Condition{},
 	}
 
-	for _, node := range nodes.Items {
-		for _, cond := range node.Status.Conditions {
-			if cond.Type == "NetworkUnavailable" && cond.Status == "True" {
-				status.CNI.Fail("Node %s reports NetworkUnavailable: %s", node.Name, cond.Message)
-			}
+	apiClient := sh.Status.AdminClient
+	if apiClient == nil {
+		addCNICondition(status.CNI, "Unknown", "AdminClientNotReady", "Admin API client not initialized yet")
+		return status
+	}
+
+	provider := ""
+	if status.ClusterConfig != nil {
+		provider = status.ClusterConfig.Spec.Network.Provider
+	}
+
+	switch provider {
+	case "kuberouter":
+		ds, err := apiClient.AppsV1().DaemonSets("kube-system").
+			Get(ctx, "kube-router", v1.GetOptions{})
+		if err == nil {
+			sh.checkCNIDaemonSet(ds, status.CNI)
+		} else {
+			addCNICondition(status.CNI, "False", "NotFound",
+				"kube-router DaemonSet not found")
 		}
-	}
 
-	if status.ClusterConfig != nil && status.ClusterConfig.Spec.Network.Provider != "" {
-		status.CNI.Provider = status.ClusterConfig.Spec.Network.Provider
-	}
-
-	pods, err := sh.client.CoreV1().Pods("kube-system").List(ctx, v1.ListOptions{
-		LabelSelector: "k8s-app in (kube-router, calico-node, calico-kube-controllers)",
-	})
-
-	if err != nil {
-		status.CNI.Fail("failed to list kube-system pods: %v", err)
-	} else {
-		for _, pod := range pods.Items {
-			app := pod.Labels["k8s-app"]
-
-			if status.CNI.Provider == "" {
-				if strings.Contains(app, "calico") {
-					status.CNI.Provider = "calico"
-				} else if app == "kube-router" {
-					status.CNI.Provider = "kuberouter"
-				}
+	case "calico":
+		ds, err := apiClient.AppsV1().DaemonSets("kube-system").
+			Get(ctx, "calico-node", v1.GetOptions{})
+		if err == nil {
+			sh.checkCNIDaemonSet(ds, status.CNI)
+			deploy, err := apiClient.AppsV1().Deployments("kube-system").
+				Get(ctx, "calico-kube-controllers", v1.GetOptions{})
+			if err == nil {
+				sh.checkCalicoDeployment(deploy, status.CNI)
 			}
-
-			isReady := false
-			if pod.Status.Phase == "Running" {
-				for _, cond := range pod.Status.Conditions {
-					if cond.Type == "Ready" && cond.Status == "True" {
-						isReady = true
-						break
-					}
-				}
-			}
-
-			status.CNI.Components = append(
-				status.CNI.Components,
-				fmt.Sprintf("%s (Ready: %t)", pod.Name, isReady),
-			)
-
-			if !isReady {
-				status.CNI.Fail("Component %s is in %s state", pod.Name, pod.Status.Phase)
-			}
+		} else {
+			addCNICondition(status.CNI, "False", "NotFound",
+				"calico-node DaemonSet not found")
 		}
-	}
 
-	if len(status.CNI.Components) == 0 && status.CNI.Health == "Healthy" {
-		status.CNI.Fail("No CNI components found")
+	default:
+		addCNICondition(status.CNI, "Unknown", "CustomProvider", "")
 	}
 
 	return status

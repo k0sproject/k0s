@@ -36,16 +36,15 @@ type ProbeStatus struct {
 	Success bool
 }
 
-type CNI struct {
-	Provider   string
-	Health     string
-	Components []string
-	Error      string
+type Condition struct {
+	Type    string
+	Status  string
+	Reason  string
+	Message string
 }
 
-func (c *CNI) Fail(format string, a ...interface{}) {
-	c.Health = "Degraded"
-	c.Error = fmt.Sprintf(format, a...)
+type CNI struct {
+	Conditions []Condition
 }
 
 // GetStatus returns the status of the k0s process using the status socket
