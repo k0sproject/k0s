@@ -29,10 +29,22 @@ type K0sStatus struct {
 	WorkerToAPIConnectionStatus ProbeStatus
 	ClusterConfig               *v1beta1.ClusterConfig
 	K0sVars                     *config.CfgVars
+	CNI                         *CNI
 }
 type ProbeStatus struct {
 	Message string
 	Success bool
+}
+
+type Condition struct {
+	Type    string
+	Status  string
+	Reason  string
+	Message string
+}
+
+type CNI struct {
+	Conditions []Condition
 }
 
 // GetStatus returns the status of the k0s process using the status socket
