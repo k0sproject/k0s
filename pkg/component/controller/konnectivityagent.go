@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -106,19 +107,25 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 	}
 
 	cfg := konnectivityAgentConfig{
-		ProxyServerHost: k.KonnectivityServerHost,
-		ProxyServerPort: uint16(clusterConfig.Spec.Konnectivity.AgentPort),
-		Image:           clusterConfig.Spec.Images.Konnectivity.URI(),
-		ServerCount:     serverCount,
-		PullPolicy:      clusterConfig.Spec.Images.DefaultPullPolicy,
+		ProxyServerHosts: []string{k.KonnectivityServerHost},
+		ProxyServerPort:  uint16(clusterConfig.Spec.Konnectivity.AgentPort),
+		Image:            clusterConfig.Spec.Images.Konnectivity.URI(),
+		ServerCount:      serverCount,
+		PullPolicy:       clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
-	if externalAddress := clusterConfig.Spec.Konnectivity.ExternalAddress; externalAddress != "" {
+	// Check if multiple server addresses are configured for HA
+	if serverAddresses := clusterConfig.Spec.Konnectivity.ServerAddresses; len(serverAddresses) > 0 {
+		cfg.ProxyServerHosts = serverAddresses
+		cfg.SyncForever = true // Enable sync-forever for multi-server setups
+		k.log.Debugf("Using multiple konnectivity server addresses: %v", serverAddresses)
+	} else if externalAddress := clusterConfig.Spec.Konnectivity.ExternalAddress; externalAddress != "" {
 		serverHostPort, err := k0snet.ParseHostPortWithDefault(externalAddress, cfg.ProxyServerPort)
 		if err != nil {
 			return fmt.Errorf("failed to determine proxy server host and port (%q, %d): %w", externalAddress, cfg.ProxyServerPort, err)
 		}
-		cfg.ProxyServerHost, cfg.ProxyServerPort = serverHostPort.Host(), serverHostPort.Port()
+		cfg.ProxyServerHosts = []string{serverHostPort.Host()}
+		cfg.ProxyServerPort = serverHostPort.Port()
 	} else if clusterConfig.Spec.Network != nil {
 		nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 		if nllb.IsEnabled() {
@@ -146,7 +153,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 				// would require some shenanigans to pull in node-specific
 				// values here. A possible solution would be to convert the
 				// konnectivity agent to a static Pod as well.
-				cfg.ProxyServerHost = "localhost"
+				cfg.ProxyServerHosts = []string{"localhost"}
 
 				if nllb.EnvoyProxy.KonnectivityServerBindPort != nil {
 					cfg.ProxyServerPort = uint16(*nllb.EnvoyProxy.KonnectivityServerBindPort)
@@ -159,7 +166,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 		}
 	}
 
-	if cfg == k.previousConfig {
+	if reflect.DeepEqual(cfg, k.previousConfig) {
 		k.log.Debug("agent configs match, no need to reconcile")
 		return nil
 	}
@@ -181,12 +188,13 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 }
 
 type konnectivityAgentConfig struct {
-	ProxyServerHost string
-	ProxyServerPort uint16
-	Image           string
-	ServerCount     uint
-	PullPolicy      string
-	HostNetwork     bool
+	ProxyServerHosts []string
+	ProxyServerPort  uint16
+	Image            string
+	ServerCount      uint
+	PullPolicy       string
+	HostNetwork      bool
+	SyncForever      bool
 }
 
 const konnectivityAgentTemplate = `
@@ -268,8 +276,13 @@ spec:
           args:
             - --logtostderr=true
             - --ca-cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            - --proxy-server-host={{ .ProxyServerHost }}
+            {{- range .ProxyServerHosts }}
+            - --proxy-server-host={{ . }}
+            {{- end }}
             - --proxy-server-port={{ .ProxyServerPort }}
+            {{- if .SyncForever }}
+            - --sync-forever=true
+            {{- end }}
             - --service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token
             - --agent-identifiers=host=$(NODE_IP)
             - --agent-id=$(NODE_IP)
