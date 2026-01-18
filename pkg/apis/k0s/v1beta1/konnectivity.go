@@ -27,6 +27,13 @@ type KonnectivitySpec struct {
 	// external address to advertise for the konnectivity agent to connect to
 	// +optional
 	ExternalAddress string `json:"externalAddress,omitempty"`
+
+	// serverAddresses is a list of konnectivity server addresses for HA setups.
+	// When specified, agents will connect to all servers for proper load distribution.
+	// This is useful in multi-controller setups where using a single VIP would cause
+	// all agents to connect to only one server.
+	// +optional
+	ServerAddresses []string `json:"serverAddresses,omitempty"`
 }
 
 // DefaultKonnectivitySpec builds default KonnectivitySpec
