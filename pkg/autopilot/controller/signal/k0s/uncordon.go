@@ -68,12 +68,13 @@ func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 		WithEventFilter(eventFilter).
 		Complete(
 			&cordonUncordon{
-				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-uncordoning", "object": delegate.Name()}),
-				client:    mgr.GetClient(),
-				delegate:  delegate,
-				clientset: clientset,
-				do:        uncordonNode,
-				nextState: apsigcomm.Completed,
+				log:          logger.WithFields(logrus.Fields{"reconciler": "k0s-uncordoning", "object": delegate.Name()}),
+				client:       mgr.GetClient(),
+				delegate:     delegate,
+				clientset:    clientset,
+				currentState: UnCordoning,
+				do:           uncordonNode,
+				nextState:    apsigcomm.Completed,
 			},
 		)
 }

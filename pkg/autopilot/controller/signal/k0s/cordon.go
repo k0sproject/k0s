@@ -55,12 +55,13 @@ func cordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 }
 
 type cordonUncordon struct {
-	log       *logrus.Entry
-	client    crcli.Client
-	delegate  apdel.ControllerDelegate
-	clientset *kubernetes.Clientset
-	do        func(*drain.Helper, *corev1.Node) error
-	nextState string
+	log          *logrus.Entry
+	client       crcli.Client
+	delegate     apdel.ControllerDelegate
+	clientset    *kubernetes.Clientset
+	currentState string
+	do           func(*drain.Helper, *corev1.Node) error
+	nextState    string
 }
 
 // registerCordoning registers the 'cordoning' controller to the
@@ -85,12 +86,13 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 		WithEventFilter(eventFilter).
 		Complete(
 			&cordonUncordon{
-				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
-				client:    mgr.GetClient(),
-				delegate:  delegate,
-				clientset: clientset,
-				do:        cordonAndDrainNode,
-				nextState: ApplyingUpdate,
+				log:          logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
+				client:       mgr.GetClient(),
+				delegate:     delegate,
+				clientset:    clientset,
+				currentState: Cordoning,
+				do:           cordonAndDrainNode,
+				nextState:    ApplyingUpdate,
 			},
 		)
 }
@@ -107,6 +109,11 @@ func (r *cordonUncordon) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 	var signalData apsigv2.SignalData
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
+	}
+
+	if signalData.Status != nil && signalData.Status.Status != r.currentState {
+		logger.Debug("Ignoring signal status ", signalData.Status.Status)
+		return cr.Result{}, nil
 	}
 	if !needsCordoning(signalNode) {
 		logger.Infof("ignoring non worker node")
