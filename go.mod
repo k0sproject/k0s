@@ -58,7 +58,7 @@ require (
 	golang.org/x/tools v0.41.0
 	google.golang.org/grpc v1.78.0
 	helm.sh/helm/v3 v3.19.5
-	modernc.org/sqlite v1.44.1
+	modernc.org/sqlite v1.44.2
 	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.22.4
 	sigs.k8s.io/yaml v1.6.0
