@@ -527,4 +527,15 @@ func TestAPIServerURLForHostNetworkPods(t *testing.T) {
 		}
 		assert.Equal(t, "https://10.0.0.1:6443", spec.APIServerURLForHostNetworkPods())
 	})
+
+	t.Run("handles_custom_ports", func(t *testing.T) {
+		spec := &ClusterSpec{
+			API: &APISpec{
+				Address: "10.0.0.1",
+				Port:    7443,
+			},
+			Network: nil,
+		}
+		assert.Equal(t, "https://10.0.0.1:7443", spec.APIServerURLForHostNetworkPods())
+	})
 }
