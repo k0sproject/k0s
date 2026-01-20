@@ -135,7 +135,11 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	args.Merge(clusterConfig.Spec.Network.KubeRouter.ExtraArgs)
 
 	// Always set --master flag to the effective API server URL (considering NLLB)
-	args["master"] = clusterConfig.Spec.APIServerURLForHostNetworkPods()
+	nodeConfig, err := k.k0sVars.NodeConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get node config: %w", err)
+	}
+	args["master"] = nodeConfig.Spec.APIServerURLForHostNetworkPods()
 
 	// Warn if kube-proxy is disabled but no service proxy is configured
 	if clusterConfig.Spec.Network.KubeProxy.Disabled && args["run-service-proxy"] != "true" {
@@ -166,7 +170,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		Data:     cfg,
 	}
 
-	err := tw.WriteToBuffer(output)
+	err = tw.WriteToBuffer(output)
 	if err != nil {
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
