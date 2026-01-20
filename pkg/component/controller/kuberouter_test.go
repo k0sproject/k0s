@@ -22,52 +22,201 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-func TestKubeRouterConfig(t *testing.T) {
+func TestKubeRouterManifests(t *testing.T) {
+	tests := []struct {
+		name            string
+		setupNodeCfg    func(*v1beta1.ClusterConfig)
+		setupClusterCfg func(*v1beta1.ClusterConfig)
+		assertDS        func(*testing.T, *appsv1.DaemonSet)
+		assertCM        func(*testing.T, *corev1.ConfigMap)
+	}{
+		{
+			name: "custom config with MTU, peering, hairpin, and ipmasq",
+			setupClusterCfg: func(cfg *v1beta1.ClusterConfig) {
+				cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
+				cfg.Spec.Network.KubeRouter.MTU = 1450
+				cfg.Spec.Network.KubeRouter.PeerRouterASNs = "12345,67890"
+				cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
+				cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
+				cfg.Spec.Network.KubeRouter.IPMasq = true
+			},
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-ips=1.2.3.4,4.3.2.1")
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-asns=12345,67890")
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=false")
+			},
+			assertCM: func(t *testing.T, cm *corev1.ConfigMap) {
+				p, err := getKubeRouterPlugin(*cm, "bridge")
+				require.NoError(t, err)
+				assert.InEpsilon(t, 1450, p["mtu"], 0)
+				assert.Equal(t, true, p["hairpinMode"])
+				assert.Equal(t, true, p["ipMasq"])
+			},
+		},
+		{
+			name: "default manifests",
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=true")
+			},
+			assertCM: func(t *testing.T, cm *corev1.ConfigMap) {
+				p, err := getKubeRouterPlugin(*cm, "bridge")
+				require.NoError(t, err)
+				assert.NotContains(t, p, "mtu")
+				assert.Equal(t, true, p["hairpinMode"])
+				assert.Equal(t, false, p["ipMasq"])
+			},
+		},
+		{
+			name: "manual MTU",
+			setupClusterCfg: func(cfg *v1beta1.ClusterConfig) {
+				cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
+				cfg.Spec.Network.KubeRouter.MTU = 1234
+			},
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--auto-mtu=false")
+			},
+			assertCM: func(t *testing.T, cm *corev1.ConfigMap) {
+				p, err := getKubeRouterPlugin(*cm, "bridge")
+				require.NoError(t, err)
+				assert.InEpsilon(t, 1234, p["mtu"], 0)
+			},
+		},
+		{
+			name: "extra args",
+			setupClusterCfg: func(cfg *v1beta1.ClusterConfig) {
+				cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+					"foo":          "bar",
+					"run-firewall": "false",
+				}
+			},
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-firewall=false")
+				assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--foo=bar")
+			},
+		},
+		{
+			name: "raw args",
+			setupClusterCfg: func(cfg *v1beta1.ClusterConfig) {
+				cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+					"log-level": "debug",
+				}
+				cfg.Spec.Network.KubeRouter.RawArgs = []string{
+					"--log-level=debug",
+					"--log-level=debug",
+				}
+			},
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				// Verify that both extraArgs and rawArgs are present
+				args := ds.Spec.Template.Spec.Containers[0].Args[len(ds.Spec.Template.Spec.Containers[0].Args)-2:]
+				for _, arg := range args {
+					assert.Equal(t, "--log-level=debug", arg)
+				}
+			},
+		},
+		{
+			name: "with service proxy",
+			setupClusterCfg: func(cfg *v1beta1.ClusterConfig) {
+				cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+					"run-service-proxy": "true",
+				}
+				cfg.Spec.Network.KubeProxy.Disabled = true
+			},
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-service-proxy=true")
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://10.0.0.1:6443")
+			},
+		},
+		{
+			name: "with service proxy and external address",
+			setupNodeCfg: func(cfg *v1beta1.ClusterConfig) {
+				cfg.Spec.API.ExternalAddress = "api.example.com"
+			},
+			setupClusterCfg: func(cfg *v1beta1.ClusterConfig) {
+				cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+					"run-service-proxy": "true",
+				}
+				cfg.Spec.Network.KubeProxy.Disabled = true
+				cfg.Spec.API.ExternalAddress = "api.example.com"
+			},
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-service-proxy=true")
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://api.example.com:6443")
+			},
+		},
+		{
+			name: "always sets master",
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://10.0.0.1:6443")
+			},
+		},
+		{
+			name: "with NLLB",
+			setupNodeCfg: func(cfg *v1beta1.ClusterConfig) {
+				cfg.Spec.Network.NodeLocalLoadBalancing = &v1beta1.NodeLocalLoadBalancing{
+					Enabled: true,
+					Type:    v1beta1.NllbTypeEnvoyProxy,
+					EnvoyProxy: &v1beta1.EnvoyProxy{
+						APIServerBindPort: 7443,
+					},
+				}
+			},
+			assertDS: func(t *testing.T, ds *appsv1.DaemonSet) {
+				require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://localhost:7443")
+			},
+		},
+	}
 
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
-	cfg.Spec.Network.KubeRouter.MTU = 1450
-	cfg.Spec.Network.KubeRouter.PeerRouterASNs = "12345,67890"
-	cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
-	cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
-	cfg.Spec.Network.KubeRouter.IPMasq = true
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			manifestDir := t.TempDir()
 
-	manifestDir := t.TempDir()
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.Address = "10.0.0.1"
+			nodeConfig := v1beta1.DefaultClusterConfig()
+			// Set default API configuration
+			nodeConfig.Spec.API.Port = 6443
+			nodeConfig.Spec.API.Address = "10.0.0.1"
+			if tt.setupNodeCfg != nil {
+				tt.setupNodeCfg(nodeConfig)
+			}
 
-	ctx := t.Context()
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
+			cfg := v1beta1.DefaultClusterConfig()
+			cfg.Spec.Network.Calico = nil
+			cfg.Spec.Network.Provider = "kuberouter"
+			cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
+			// Set default API configuration
+			cfg.Spec.API.Port = 6443
+			cfg.Spec.API.Address = "10.0.0.1"
+			if tt.setupClusterCfg != nil {
+				tt.setupClusterCfg(cfg)
+			}
 
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
+			ctx := t.Context()
+			kr := NewKubeRouter(nodeConfig, manifestDir)
+			require.NoError(t, kr.Init(ctx))
+			require.NoError(t, kr.Start(ctx))
+			t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+			require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-ips=1.2.3.4,4.3.2.1")
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-asns=12345,67890")
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=false")
+			manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
+			assert.NoError(t, err, "must have manifests for kube-router")
 
-	cm, err := findConfig(resources)
-	require.NoError(t, err)
-	require.NotNil(t, cm)
+			resources, err := testutil.ParseManifests(manifestData)
+			require.NoError(t, err)
 
-	p, err := getKubeRouterPlugin(cm, "bridge")
-	require.NoError(t, err)
-	assert.InEpsilon(t, 1450, p["mtu"], 0)
-	assert.Equal(t, true, p["hairpinMode"])
-	assert.Equal(t, true, p["ipMasq"])
+			if tt.assertDS != nil {
+				ds, err := findDaemonset(resources)
+				require.NoError(t, err)
+				require.NotNil(t, ds)
+				tt.assertDS(t, &ds)
+			}
+
+			if tt.assertCM != nil {
+				cm, err := findConfig(resources)
+				require.NoError(t, err)
+				require.NotNil(t, cm)
+				tt.assertCM(t, &cm)
+			}
+		})
+	}
 }
 
 type hairpinTest struct {
@@ -116,310 +265,6 @@ func TestGetHairpinConfig(t *testing.T) {
 		}
 
 	}
-}
-
-func TestKubeRouterDefaultManifests(t *testing.T) {
-
-	manifestDir := t.TempDir()
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.Address = "10.0.0.1"
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	ctx := t.Context()
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=true")
-
-	cm, err := findConfig(resources)
-	require.NoError(t, err)
-	require.NotNil(t, cm)
-
-	p, err := getKubeRouterPlugin(cm, "bridge")
-	require.NoError(t, err)
-	assert.NotContains(t, p, "mtu")
-	assert.Equal(t, true, p["hairpinMode"])
-	assert.Equal(t, false, p["ipMasq"])
-}
-
-func TestKubeRouterManualMTUManifests(t *testing.T) {
-
-	manifestDir := t.TempDir()
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.Address = "10.0.0.1"
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
-	cfg.Spec.Network.KubeRouter.MTU = 1234
-	ctx := t.Context()
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--auto-mtu=false")
-
-	cm, err := findConfig(resources)
-	require.NoError(t, err)
-	require.NotNil(t, cm)
-
-	p, err := getKubeRouterPlugin(cm, "bridge")
-	require.NoError(t, err)
-	assert.InEpsilon(t, 1234, p["mtu"], 0)
-}
-
-func TestExtraArgs(t *testing.T) {
-	manifestDir := t.TempDir()
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.Address = "10.0.0.1"
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
-		// Add some random arg
-		"foo": "bar",
-		// Override the default arg
-		"run-firewall": "false",
-	}
-
-	ctx := t.Context()
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-firewall=false")
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--foo=bar")
-}
-
-func TestRawArgs(t *testing.T) {
-	manifestDir := t.TempDir()
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.Address = "10.0.0.1"
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
-		"log-level": "debug",
-	}
-	cfg.Spec.Network.KubeRouter.RawArgs = []string{
-		"--log-level=debug",
-		"--log-level=debug",
-	}
-
-	ctx := t.Context()
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	// Verify that both extraArgs and rawArgs are present
-	args := ds.Spec.Template.Spec.Containers[0].Args[len(ds.Spec.Template.Spec.Containers[0].Args)-2:]
-	for _, arg := range args {
-		assert.Equal(t, "--log-level=debug", arg)
-	}
-}
-
-func TestKubeRouterWithServiceProxy(t *testing.T) {
-
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.Address = "10.0.0.1"
-
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
-		"run-service-proxy": "true",
-	}
-	cfg.Spec.Network.KubeProxy.Disabled = true
-	cfg.Spec.API.Address = "10.0.0.1"
-	cfg.Spec.API.Port = 6443
-
-	manifestDir := t.TempDir()
-	ctx := t.Context()
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	// Verify that --master flag is injected with the API server URL
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-service-proxy=true")
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://10.0.0.1:6443")
-}
-
-func TestKubeRouterWithServiceProxyAndExternalAddress(t *testing.T) {
-
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
-		"run-service-proxy": "true",
-	}
-	cfg.Spec.Network.KubeProxy.Disabled = true
-	cfg.Spec.API.Address = "10.0.0.1"
-	cfg.Spec.API.ExternalAddress = "api.example.com"
-	cfg.Spec.API.Port = 6443
-
-	ctx := t.Context()
-	manifestDir := t.TempDir()
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.ExternalAddress = "api.example.com"
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	// Verify that --master flag uses external address when available
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-service-proxy=true")
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://api.example.com:6443")
-}
-
-func TestKubeRouterAlwaysSetsMaxter(t *testing.T) {
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	// No run-service-proxy set
-	cfg.Spec.API.Address = "10.0.0.1"
-	cfg.Spec.API.Port = 6443
-
-	ctx := t.Context()
-	manifestDir := t.TempDir()
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.Address = "10.0.0.1"
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	// Verify that --master flag is always set, even without service-proxy
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://10.0.0.1:6443")
-}
-
-func TestKubeRouterWithNLLB(t *testing.T) {
-	manifestDir := t.TempDir()
-	nodeConfig := v1beta1.DefaultClusterConfig()
-	nodeConfig.Spec.API.Port = 6443
-	nodeConfig.Spec.API.Address = "10.0.0.1"
-	nodeConfig.Spec.Network.NodeLocalLoadBalancing = &v1beta1.NodeLocalLoadBalancing{
-		Enabled: true,
-		Type:    v1beta1.NllbTypeEnvoyProxy,
-		EnvoyProxy: &v1beta1.EnvoyProxy{
-			APIServerBindPort: 7443,
-		},
-	}
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.API.Address = "10.0.0.1"
-	cfg.Spec.API.Port = 6443
-
-	ctx := t.Context()
-	kr := NewKubeRouter(nodeConfig, manifestDir)
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	// Verify that --master flag uses localhost when NLLB is enabled
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://localhost:7443")
 }
 
 func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error) {
