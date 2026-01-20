@@ -13,6 +13,8 @@ import (
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/sirupsen/logrus"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -90,6 +92,10 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 	// .. and update the node
 
 	if err := kp.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
+		if apierrors.IsConflict(err) {
+			logger.WithError(err).Warn("Conflict updating signal node to ", nextForSignal.Name, ", retrying")
+			return status.State, true, nil
+		}
 		logger.Warnf("Unable to update signalnode with signaling: %v", err)
 		return status.State, false, fmt.Errorf("unable to update signalnode with signaling: %w", err)
 	}
