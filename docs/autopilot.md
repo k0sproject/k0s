@@ -75,10 +75,10 @@ additional changes to the plan (other than status) will be recognized.
 ### Controller Quorum Safety
 
 * Prior to scheduling a controller update, **autopilot** queries the API server of **all**
-  controllers to ensure that they report a successful `/ready`
+  controllers to ensure that they report a successful `/ready`.
 * Only once all controllers are `/ready` will the current controller get sent update signaling.
-* In the event that **any** controller reports a non-ready, the `Plan` transitions into an
-  `InconsistentTargets` state, and the `Plan` execution ends.
+* If a previously discovered controller target can no longer be resolved, the `Plan` transitions
+  into an `IncompleteTargets` state and execution ends. Transient readiness failures requeue.
 
 ### Controllers Update Sequentially
 
@@ -329,7 +329,7 @@ update operation. There are a number of statuses available:
 | Status | Description | Ends Plan? |
 | ------ | ----------- | ---------- |
 | `IncompleteTargets` | There are nodes in the resolved `Plan` that do not have associated `Node` (worker) or `ControlNode` (controller) objects. | Yes |
-| `InconsistentTargets` | A controller has reported itself as not-ready during the selection of the next controller to update. | Yes |
+| ~~`InconsistentTargets`~~ | Legacy state used by older k0s releases to indicate controller readiness failures; no longer in use. | Yes |
 | `Schedulable` | Indicates that the `Plan` can be re-evaluated to determine which next node to update. | No |
 | `SchedulableWait` | Scheduling operations are in progress, and no further update scheduling should occur. | No |
 | `Completed` | The `Plan` has run successfully to completion. | Yes |
@@ -343,8 +343,8 @@ Similar to the **Plan Status**, the individual nodes can have their own statuses
 | ------ | ----------- |
 | `SignalPending` | The node is available and awaiting an update signal |
 | `SignalSent` | Update signaling has been successfully applied to this node. |
-| `MissingPlatform` | This node is a platform that an update has not been provided for. |
-| `MissingSignalNode` | This node does have an associated `Node` (worker) or `ControlNode` (controller) object. |
+| `SignalMissingPlatform` | This node is a platform that an update has not been provided for. |
+| `SignalMissingNode` | This node does have an associated `Node` (worker) or `ControlNode` (controller) object. |
 
 ## UpdateConfig
 
