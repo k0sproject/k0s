@@ -13,7 +13,6 @@ import (
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -24,8 +23,7 @@ import (
 )
 
 func TestKubeRouterConfig(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -37,14 +35,19 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
 	cfg.Spec.Network.KubeRouter.IPMasq = true
 
+	manifestDir := t.TempDir()
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.Address = "10.0.0.1"
+
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
@@ -116,20 +119,23 @@ func TestGetHairpinConfig(t *testing.T) {
 }
 
 func TestKubeRouterDefaultManifests(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+
+	manifestDir := t.TempDir()
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.Address = "10.0.0.1"
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
@@ -152,8 +158,11 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 }
 
 func TestKubeRouterManualMTUManifests(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+
+	manifestDir := t.TempDir()
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.Address = "10.0.0.1"
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -161,13 +170,13 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
 	cfg.Spec.Network.KubeRouter.MTU = 1234
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
@@ -188,8 +197,10 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 }
 
 func TestExtraArgs(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+	manifestDir := t.TempDir()
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.Address = "10.0.0.1"
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -202,13 +213,13 @@ func TestExtraArgs(t *testing.T) {
 	}
 
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
@@ -222,8 +233,10 @@ func TestExtraArgs(t *testing.T) {
 }
 
 func TestRawArgs(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+	manifestDir := t.TempDir()
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.Address = "10.0.0.1"
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -237,13 +250,13 @@ func TestRawArgs(t *testing.T) {
 	}
 
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
@@ -260,8 +273,11 @@ func TestRawArgs(t *testing.T) {
 }
 
 func TestKubeRouterWithServiceProxy(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.Address = "10.0.0.1"
+
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -273,14 +289,15 @@ func TestKubeRouterWithServiceProxy(t *testing.T) {
 	cfg.Spec.API.Address = "10.0.0.1"
 	cfg.Spec.API.Port = 6443
 
+	manifestDir := t.TempDir()
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
@@ -295,8 +312,7 @@ func TestKubeRouterWithServiceProxy(t *testing.T) {
 }
 
 func TestKubeRouterWithServiceProxyAndExternalAddress(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
+
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -310,13 +326,17 @@ func TestKubeRouterWithServiceProxyAndExternalAddress(t *testing.T) {
 	cfg.Spec.API.Port = 6443
 
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	manifestDir := t.TempDir()
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.ExternalAddress = "api.example.com"
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
@@ -331,8 +351,6 @@ func TestKubeRouterWithServiceProxyAndExternalAddress(t *testing.T) {
 }
 
 func TestKubeRouterAlwaysSetsMaxter(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -342,13 +360,17 @@ func TestKubeRouterAlwaysSetsMaxter(t *testing.T) {
 	cfg.Spec.API.Port = 6443
 
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	manifestDir := t.TempDir()
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.Address = "10.0.0.1"
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
@@ -362,30 +384,32 @@ func TestKubeRouterAlwaysSetsMaxter(t *testing.T) {
 }
 
 func TestKubeRouterWithNLLB(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.API.Address = "10.0.0.1"
-	cfg.Spec.API.Port = 6443
-	cfg.Spec.Network.NodeLocalLoadBalancing = &v1beta1.NodeLocalLoadBalancing{
+	manifestDir := t.TempDir()
+	nodeConfig := v1beta1.DefaultClusterConfig()
+	nodeConfig.Spec.API.Port = 6443
+	nodeConfig.Spec.API.Address = "10.0.0.1"
+	nodeConfig.Spec.Network.NodeLocalLoadBalancing = &v1beta1.NodeLocalLoadBalancing{
 		Enabled: true,
 		Type:    v1beta1.NllbTypeEnvoyProxy,
 		EnvoyProxy: &v1beta1.EnvoyProxy{
 			APIServerBindPort: 7443,
 		},
 	}
+	cfg := v1beta1.DefaultClusterConfig()
+	cfg.Spec.Network.Calico = nil
+	cfg.Spec.Network.Provider = "kuberouter"
+	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
+	cfg.Spec.API.Address = "10.0.0.1"
+	cfg.Spec.API.Port = 6443
 
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(nodeConfig, manifestDir)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
 	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	manifestData, err := os.ReadFile(filepath.Join(manifestDir, "kuberouter", "kube-router.yaml"))
 	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
