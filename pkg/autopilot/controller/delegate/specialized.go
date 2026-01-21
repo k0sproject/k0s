@@ -15,6 +15,8 @@
 package delegate
 
 import (
+	"context"
+
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 
 	v1 "k8s.io/api/core/v1"
@@ -57,7 +59,7 @@ func ControlNodeControllerDelegate(opts ...ControllerDelegateOption) ControllerD
 		func() crcli.ObjectList {
 			return &apv1beta2.ControlNodeList{}
 		},
-		func(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus {
+		func(ctx context.Context, status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus {
 			return CanUpdate
 		},
 		func(list crcli.ObjectList, status apv1beta2.PlanCommandTargetStateType) []apv1beta2.PlanCommandTargetStatus {
@@ -103,7 +105,7 @@ func NodeControllerDelegate(opts ...ControllerDelegateOption) ControllerDelegate
 		func() crcli.ObjectList {
 			return &v1.NodeList{}
 		},
-		func(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus {
+		func(_ context.Context, _ apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus {
 			if node, ok := obj.(*v1.Node); ok {
 				for _, cond := range node.Status.Conditions {
 					if cond.Type == v1.NodeReady && cond.Status == v1.ConditionTrue {

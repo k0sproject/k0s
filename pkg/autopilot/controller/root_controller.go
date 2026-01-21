@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -34,6 +35,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -191,21 +193,28 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 
 	leaderMode := event == LeaseAcquired
 
-	prober, err := NewReadyProber(logger, c.autopilotClientFactory, mgr.GetConfig(), c.cfg.KubeAPIPort, 1*time.Minute)
+	k0sClient, err := c.kubeClientFactory.GetK0sClient()
 	if err != nil {
-		logger.WithError(err).Error("unable to create controller prober")
-		return err
+		return fmt.Errorf("failed to get k0s client: %w", err)
 	}
+	tlsConfig, err := rest.TLSConfigFor(mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("failed to get Kubernetes TLS config: %w", err)
+	}
+	prober := newReadyProber(logger, k0sClient, tlsConfig, c.cfg.KubeAPIPort, 1*time.Minute)
 
 	delegateMap := map[string]apdel.ControllerDelegate{
 		apdel.ControllerDelegateWorker: apdel.NodeControllerDelegate(),
 		apdel.ControllerDelegateController: apdel.ControlNodeControllerDelegate(apdel.WithReadyForUpdateFunc(
-			func(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) apdel.K0sUpdateReadyStatus {
-				prober.AddTargets(status.Controllers)
+			func(ctx context.Context, status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) apdel.K0sUpdateReadyStatus {
+				if err := prober.probeTargets(ctx, status.Controllers); err != nil {
+					if errors.Is(err, errReadyProbeTargetResolutionFailed) {
+						logger.WithError(err).Error("Plan can not be applied to controllers (failed unanimous)")
+						return apdel.Incomplete
+					}
 
-				if err := prober.Probe(); err != nil {
-					logger.WithError(err).Error("Plan can not be applied to controllers (failed unanimous)")
-					return apdel.Inconsistent
+					logger.WithError(err).Warn("Failed to ensure the readiness of all target controllers")
+					return apdel.NotReady
 				}
 
 				return apdel.CanUpdate

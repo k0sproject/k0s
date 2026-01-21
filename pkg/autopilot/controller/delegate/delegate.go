@@ -15,6 +15,8 @@
 package delegate
 
 import (
+	"context"
+
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -24,9 +26,9 @@ import (
 type K0sUpdateReadyStatus string
 
 const (
-	CanUpdate    K0sUpdateReadyStatus = "CanUpdate"
-	NotReady     K0sUpdateReadyStatus = "NotReady"
-	Inconsistent K0sUpdateReadyStatus = "Inconsistent"
+	CanUpdate  K0sUpdateReadyStatus = "CanUpdate"
+	NotReady   K0sUpdateReadyStatus = "NotReady"
+	Incomplete K0sUpdateReadyStatus = "Incomplete"
 )
 
 type ControllerDelegateMap map[string]ControllerDelegate
@@ -42,7 +44,7 @@ type ControllerDelegate interface {
 	DeepCopy(crcli.Object) crcli.Object
 
 	// K0sUpdate features
-	K0sUpdateReady(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus
+	K0sUpdateReady(ctx context.Context, status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus
 }
 
 type createObjectFunc func() crcli.Object
@@ -50,7 +52,7 @@ type createObjectListFunc func() crcli.ObjectList
 type objectListToPlanCommandTargetStatusFunc func(list crcli.ObjectList, status apv1beta2.PlanCommandTargetStateType) []apv1beta2.PlanCommandTargetStatus
 type createNamespacedNameFunc func(name string) types.NamespacedName
 type deepCopyFunc func(obj crcli.Object) crcli.Object
-type k0sUpdateReadyFunc func(apv1beta2.PlanCommandK0sUpdateStatus, crcli.Object) K0sUpdateReadyStatus
+type k0sUpdateReadyFunc func(context.Context, apv1beta2.PlanCommandK0sUpdateStatus, crcli.Object) K0sUpdateReadyStatus
 
 type controllerDelegate struct {
 	name                                string
@@ -78,8 +80,8 @@ func (d controllerDelegate) CreateObjectList() crcli.ObjectList {
 }
 
 // K0sUpdateReady determines if the delegate object can accept an update.
-func (d controllerDelegate) K0sUpdateReady(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus {
-	return d.k0sUpdateReady(status, obj)
+func (d controllerDelegate) K0sUpdateReady(ctx context.Context, status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus {
+	return d.k0sUpdateReady(ctx, status, obj)
 }
 
 // ObjectListToPlanCommandTargetStatus converts an ObjectList to a slice of PlanCommandTargetStatus
