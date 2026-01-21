@@ -260,7 +260,8 @@ airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar \
 airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
-	./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' <airgap-images.txt
+	set -- $$(cat airgap-images.txt) && \
+	$(GO_ENV) ./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' "$$@"
 
 ipv6-test-images.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
 	{ \
@@ -280,7 +281,8 @@ ipv6-test-image-bundle-linux-amd64.tar \
 ipv6-test-image-bundle-linux-arm64.tar \
 ipv6-test-image-bundle-linux-arm.tar \
 ipv6-test-image-bundle-linux-riscv64.tar: k0s ipv6-test-images.txt
-	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <ipv6-test-images.txt
+	set -- $$(cat ipv6-test-images.txt) && \
+	$(GO_ENV) ./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' "$$@"
 
 .PHONY: $(smoketests)
 $(air_gapped_smoketests) $(ipv6_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
