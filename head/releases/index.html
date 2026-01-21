@@ -2994,8 +2994,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <p>This page describes how we release and support the k0s project. <a href="https://mirantis.com">Mirantis Inc.</a> can also provide <a href="../commercial-support/">commercial support</a> for k0s.</p>
 <h2 id="upstream-kubernetes-release-support-cycle">Upstream Kubernetes release &amp; support cycle<a class="headerlink" href="#upstream-kubernetes-release-support-cycle" title="Permanent link">#</a></h2>
 <p>This <a href="https://kubernetes.io/releases/">release and support cycle</a> is followed
-for ALL new minor releases. A minor release can be e.g. v1.33,
-v1.34 and so on. What this means in practice is that every 4 months
+for ALL new minor releases. A minor release can be e.g. v1.34,
+v1.35 and so on. What this means in practice is that every 4 months
 there is a new minor release published.</p>
 <p>After a minor release is published, the upstream community is maintaining it for 14 months. Maintenance in this case means that upstream Kubernetes provides bug fixes, CVE mitigations and such for 14 months per minor release.</p>
 <p><img alt="Kubernetes release and support cycle" src="../img/k8s_release_cycle.png" /></p>
@@ -3006,19 +3006,19 @@ there is a new minor release published.</p>
 <p>Given the fact that upstream Kubernetes provides support and patch releases for a minor version for roughly 14 months, it means that k0s will follow this same model. Each minor release is maintained for roughly 14 months since its initial release.</p>
 <p>k0s project will typically include patches and fixes included in a Kubernetes
 upstream patch release for the fixes needed in k0s own codebase. For example, if
-a bug is identified in v1.34 series k0s project will create and ship
-a fix for it with the next upstream Kubernetes v1.34.x release. In
+a bug is identified in v1.35 series k0s project will create and ship
+a fix for it with the next upstream Kubernetes v1.35.x release. In
 rare cases where a critical bug is identified we may also ship "out of band"
 patches. Such out-of-band release would be identified in the version string
-suffix. For example a normal release following Kubernetes upstream would be v1.34.0+k0s.0 whereas a critical out-of-band patch would be identified as
-v1.34.0+k0s.1.</p>
+suffix. For example a normal release following Kubernetes upstream would be v1.35.0+k0s.0 whereas a critical out-of-band patch would be identified as
+v1.35.0+k0s.1.</p>
 <h2 id="new-features-and-enhancements">New features and enhancements<a class="headerlink" href="#new-features-and-enhancements" title="Permanent link">#</a></h2>
 <p>The biggest new k0s features will typically only be delivered on top of the latest Kubernetes version, but smaller enhancements can be included in older release tracks as well.</p>
 <h2 id="version-string">Version string<a class="headerlink" href="#version-string" title="Permanent link">#</a></h2>
 <p>The k0s version string consists of the Kubernetes version and the k0s version. For example:</p>
-<div class="highlight"><pre><span></span><code>v1.34.3+head
+<div class="highlight"><pre><span></span><code>v1.35.0+head
 </code></pre></div>
-<p>The Kubernetes version (<code>v1.34.3</code>) is the first part, and the
+<p>The Kubernetes version (<code>v1.35.0</code>) is the first part, and the
 last part (<code>head</code>) reflects the k0s version, which is built
 on top of the certain Kubernetes version.</p>
 
