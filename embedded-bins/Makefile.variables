@@ -13,8 +13,8 @@ runc_build_go_tags = "seccomp"
 #runc_build_go_cgo_enabled =
 #runc_build_go_cgo_cflags =
 #runc_build_go_flags =
-#runc_build_go_ldflags =
-runc_build_go_ldflags_extra = "-w -s -extldflags=-static"
+runc_build_go_ldflags = -w -s
+runc_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=containerd/containerd
 containerd_version = 1.7.30
@@ -24,8 +24,8 @@ containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_cgo_enabled =
 #containerd_build_go_cgo_cflags =
 #containerd_build_go_flags =
-#containerd_build_go_ldflags =
-containerd_build_go_ldflags_extra = "-w -s -extldflags=-static"
+containerd_build_go_ldflags = -w -s
+containerd_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 kubernetes_version = 1.35.0
@@ -35,7 +35,7 @@ kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_cflags =
 kubernetes_build_go_flags = "-v"
 #kubernetes_build_go_ldflags =
-kubernetes_build_go_ldflags_extra = "-extldflags=-static"
+kubernetes_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=k3s-io/kine
 kine_version = 0.14.10
@@ -46,8 +46,8 @@ kine_build_go_tags = nats
 kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1
 
 #kine_build_go_flags =
-kine_build_go_ldflags = "-w -s"
-kine_build_go_ldflags_extra = "-extldflags=-static"
+kine_build_go_ldflags = -w -s
+kine_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=etcd-io/etcd
 etcd_version = 3.6.7
@@ -56,7 +56,7 @@ etcd_buildimage = $(golang_buildimage)
 etcd_build_go_cgo_enabled = 0
 #etcd_build_go_cgo_cflags =
 #etcd_build_go_flags =
-etcd_build_go_ldflags = "-w -s"
+etcd_build_go_ldflags = -w -s
 #etcd_build_go_ldflags_extra =
 
 # renovate: datasource=github-tags depName=kubernetes-sigs/apiserver-network-proxy
@@ -66,8 +66,8 @@ konnectivity_buildimage = $(golang_buildimage)
 konnectivity_build_go_cgo_enabled = 0
 #konnectivity_build_go_cgo_cflags =
 konnectivity_build_go_flags = "-a"
-konnectivity_build_go_ldflags = "-w -s"
-konnectivity_build_go_ldflags_extra = "-extldflags=-static"
+konnectivity_build_go_ldflags = -w -s
+konnectivity_build_go_ldflags_extra = -extldflags=-static
 
 iptables_version = 1.8.11
 iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
