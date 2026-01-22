@@ -1563,7 +1563,7 @@ func (s *BootlooseSuite) maybeAddBinPath(volumes []config.Volume) ([]config.Volu
 		} else if fileInfo, err := os.Stat(fromK0sPath); err != nil {
 			return nil, fmt.Errorf("%s: %w", errMsg, err)
 		} else if fileInfo.IsDir() {
-			return nil, fmt.Errorf("%s: is a directory: %q", exePathErrMsg, fromK0sPath)
+			return nil, fmt.Errorf("%s: is a directory: %q", errMsg, fromK0sPath)
 		}
 	} else {
 		fromK0sPath = exePath
