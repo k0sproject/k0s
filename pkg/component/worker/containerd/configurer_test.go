@@ -4,11 +4,13 @@
 package containerd
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 
-	serverconfig "github.com/containerd/containerd/services/server/config"
+	serverconfig "github.com/containerd/containerd/v2/cmd/containerd/server/config"
+	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/assert"
@@ -19,8 +21,9 @@ func TestConfigurer_HandleImports(t *testing.T) {
 	t.Run("should merge configuration files containing CRI plugin configuration sections", func(t *testing.T) {
 		importsPath := t.TempDir()
 		criRuntimeConfig := `
+version = 3
 [plugins]
-  [plugins."io.containerd.grpc.v1.cri".containerd]
+  [plugins."io.containerd.cri.v1.images"]
     snapshotter = "zfs"
 `
 		err := os.WriteFile(filepath.Join(importsPath, "foo.toml"), []byte(criRuntimeConfig), 0644)
@@ -43,14 +46,18 @@ func TestConfigurer_HandleImports(t *testing.T) {
 
 		// Load the criRuntimeConfig and verify the settings are correct
 		var containerdConfig serverconfig.Config
-		require.NoError(t, serverconfig.LoadConfig(criConfigPath, &containerdConfig))
+		require.NoError(t, serverconfig.LoadConfig(context.Background(), criConfigPath, &containerdConfig))
 
-		assert.Equal(t, 2, containerdConfig.Version)
-		criPluginConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
-		require.NotNil(t, criPluginConfig, "No CRI plugin configuration section found")
-		sandboxImage := criPluginConfig.Get("sandbox_image")
+		assert.Equal(t, 3, containerdConfig.Version)
+
+		imagesConf := containerdConfig.Plugins["io.containerd.cri.v1.images"]
+		require.NotNil(t, imagesConf, "No CRI images plugin configuration section found")
+
+		imagesConfTree, _ := toml.TreeFromMap(imagesConf.(map[string]any))
+
+		sandboxImage := imagesConfTree.GetPath([]string{"pinned_images", "sandbox"})
 		assert.Equal(t, "pause:42", sandboxImage, "Custom pause image not found in CRI configuration")
-		snapshotter := criPluginConfig.GetPath([]string{"containerd", "snapshotter"})
+		snapshotter := imagesConfTree.GetPath([]string{"snapshotter"})
 		assert.Equal(t, "zfs", snapshotter, "Overridden snapshotter not found in CRI configuration")
 	})
 
@@ -68,7 +75,7 @@ func TestConfigurer_HandleImports(t *testing.T) {
 		importsPath := t.TempDir()
 		criRuntimeConfig := `
 foo = "bar"
-version = 2
+version = 3
 `
 		nonCriConfigPath := filepath.Join(importsPath, "foo.toml")
 		err := os.WriteFile(nonCriConfigPath, []byte(criRuntimeConfig), 0644)
