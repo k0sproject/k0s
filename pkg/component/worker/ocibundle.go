@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/images"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/platforms"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"

@@ -13,7 +13,6 @@ const (
 )
 
 var additionalExecutableNames = [...]string{
-	"containerd-shim",
 	"containerd-shim-runc-v2",
 	"runc",
 }
