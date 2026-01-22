@@ -228,9 +228,11 @@ func (s *BasicSuite) verifyContainerdDefaultConfig(ctx context.Context) {
 
 	var parsedConfig struct {
 		Plugins struct {
-			CRI struct {
-				SandboxImage string `toml:"sandbox_image"`
-			} `toml:"io.containerd.grpc.v1.cri"`
+			CRIIMages struct {
+				PinnedImages struct {
+					Sandbox string `toml:"sandbox"`
+				} `toml:"pinned_images"`
+			} `toml:"io.containerd.cri.v1.images"`
 		} `toml:"plugins"`
 	}
 
@@ -242,7 +244,7 @@ func (s *BasicSuite) verifyContainerdDefaultConfig(ctx context.Context) {
 	s.Equal((&v1beta1.ImageSpec{
 		Image:   constant.KubePauseContainerImage,
 		Version: constant.KubePauseContainerImageVersion,
-	}).URI(), parsedConfig.Plugins.CRI.SandboxImage)
+	}).URI(), parsedConfig.Plugins.CRIIMages.PinnedImages.Sandbox)
 }
 
 func (s *BasicSuite) probeCoreDNSAntiAffinity(ctx context.Context, kc *kubernetes.Clientset) error {
