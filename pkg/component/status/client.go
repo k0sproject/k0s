@@ -13,6 +13,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type K0sStatus struct {
@@ -29,7 +30,7 @@ type K0sStatus struct {
 	WorkerToAPIConnectionStatus ProbeStatus
 	ClusterConfig               *v1beta1.ClusterConfig
 	K0sVars                     *config.CfgVars
-	CNI                         *CNI
+	Conditions                  []Condition
 }
 type ProbeStatus struct {
 	Message string
@@ -38,13 +39,9 @@ type ProbeStatus struct {
 
 type Condition struct {
 	Type    string
-	Status  string
+	Status  corev1.ConditionStatus
 	Reason  string
 	Message string
-}
-
-type CNI struct {
-	Conditions []Condition
 }
 
 // GetStatus returns the status of the k0s process using the status socket

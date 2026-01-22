@@ -14,10 +14,13 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	authv1 "k8s.io/api/authentication/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -47,7 +50,9 @@ type certManager interface {
 
 var _ manager.Component = (*Status)(nil)
 
-const defaultMaxEvents = 5
+const (
+	defaultMaxEvents = 5
+)
 
 // Init initializes component
 func (s *Status) Init(_ context.Context) error {
@@ -115,47 +120,48 @@ func (sh *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 const (
 	defaultPollDuration = 1 * time.Second
 	defaultPollTimeout  = 5 * time.Minute
+
+	cniReady             = "AllReady"
+	cniNotReady          = "NotReady"
+	cniComponentNotReady = "ComponentsNotReady"
+	cniNotFound          = "NotFound"
+	cniError             = "Error"
 )
 
-func addCNICondition(cni *CNI, status, reason, message string) {
-	cni.Conditions = append(cni.Conditions, Condition{
-		Type:    "CNIReady",
+func addCNICondition(conditions *[]Condition, status corev1.ConditionStatus, reason, message string) {
+	*conditions = append(*conditions, Condition{
+		Type:    "Ready",
 		Status:  status,
 		Reason:  reason,
 		Message: message,
 	})
 }
 
-func (sh *statusHandler) checkCNIDaemonSet(ds *appsv1.DaemonSet, cni *CNI) {
+func (sh *statusHandler) checkCNIDaemonSet(ds *appsv1.DaemonSet, conditions *[]Condition) {
 	desired := ds.Status.DesiredNumberScheduled
 	ready := ds.Status.NumberReady
 
 	if desired > 0 && ready == desired {
-		addCNICondition(cni, "True", "AllReady", fmt.Sprintf("%s DaemonSet reports %d/%d ready", ds.Name, ready, desired))
+		addCNICondition(conditions, corev1.ConditionTrue, cniReady, fmt.Sprintf("%s DaemonSet reports %d/%d ready", ds.Name, ready, desired))
 	} else {
-		addCNICondition(cni, "False", "NotReady", fmt.Sprintf("%s DaemonSet reports %d/%d ready", ds.Name, ready, desired))
+		addCNICondition(conditions, corev1.ConditionFalse, cniNotReady, fmt.Sprintf("%s DaemonSet reports %d/%d ready", ds.Name, ready, desired))
 	}
 }
 
-func (sh *statusHandler) checkCalicoDeployment(deploy *appsv1.Deployment, cni *CNI) {
-	ready := deploy.Status.ReadyReplicas
-	total := deploy.Status.Replicas
-
-	if ready == total {
-		addCNICondition(cni, "True", "AllComponetsReady", fmt.Sprintf("Calico kube-controllers reports %d/%d ready", ready, total))
-	} else {
-		addCNICondition(cni, "False", "ComponentsNotReady", fmt.Sprintf("Calico kube-controllers reports %d/%d ready", ready, total))
+func (sh *statusHandler) checkCalicoDeployment(deploy *appsv1.Deployment, conditions *[]Condition) {
+	for _, c := range deploy.Status.Conditions {
+		if c.Type == appsv1.DeploymentAvailable {
+			if c.Status == corev1.ConditionTrue {
+				addCNICondition(conditions, corev1.ConditionTrue, cniReady, "Calico kube-controllers deployment is available")
+			} else {
+				addCNICondition(conditions, corev1.ConditionFalse, cniComponentNotReady, "Calico kube-controllers deployment is not available")
+			}
+			return
+		}
 	}
 }
 
 func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
-	if sh.Status.AdminClient == nil && sh.Status.AdminClientFactory != nil {
-		client, err := sh.Status.AdminClientFactory.GetClient()
-		if err == nil {
-			sh.Status.AdminClient = client
-		}
-	}
-
 	status := sh.Status.StatusInformation
 	if !status.Workloads {
 		return status
@@ -174,13 +180,10 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	}
 	status.WorkerToAPIConnectionStatus.Success = true
 
-	status.CNI = &CNI{
-		Conditions: []Condition{},
-	}
+	status.Conditions = []Condition{}
 
-	apiClient := sh.Status.AdminClient
-	if apiClient == nil {
-		addCNICondition(status.CNI, "Unknown", "AdminClientNotReady", "Admin API client not initialized yet")
+	apiClient, err := sh.Status.AdminClientFactory.GetClient()
+	if err != nil || apiClient == nil {
 		return status
 	}
 
@@ -190,33 +193,32 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	}
 
 	switch provider {
-	case "kuberouter":
-		ds, err := apiClient.AppsV1().DaemonSets("kube-system").
-			Get(ctx, "kube-router", v1.GetOptions{})
+	case constant.CNIProviderKubeRouter:
+		ds, err := apiClient.AppsV1().DaemonSets(v1.NamespaceSystem).Get(ctx, "kube-router", v1.GetOptions{})
 		if err == nil {
-			sh.checkCNIDaemonSet(ds, status.CNI)
+			sh.checkCNIDaemonSet(ds, &status.Conditions)
+		} else if apierrors.IsNotFound(err) {
+			addCNICondition(&status.Conditions, corev1.ConditionFalse, cniNotFound, "kube-router DaemonSet not found")
 		} else {
-			addCNICondition(status.CNI, "False", "NotFound",
-				"kube-router DaemonSet not found")
+			addCNICondition(&status.Conditions, corev1.ConditionUnknown, cniError, err.Error())
 		}
 
-	case "calico":
-		ds, err := apiClient.AppsV1().DaemonSets("kube-system").
-			Get(ctx, "calico-node", v1.GetOptions{})
+	case constant.CNIProviderCalico:
+		ds, err := apiClient.AppsV1().DaemonSets(v1.NamespaceSystem).Get(ctx, "calico-node", v1.GetOptions{})
 		if err == nil {
-			sh.checkCNIDaemonSet(ds, status.CNI)
-			deploy, err := apiClient.AppsV1().Deployments("kube-system").
-				Get(ctx, "calico-kube-controllers", v1.GetOptions{})
+			sh.checkCNIDaemonSet(ds, &status.Conditions)
+			deploy, err := apiClient.AppsV1().Deployments(v1.NamespaceSystem).Get(ctx, "calico-kube-controllers", v1.GetOptions{})
 			if err == nil {
-				sh.checkCalicoDeployment(deploy, status.CNI)
+				sh.checkCalicoDeployment(deploy, &status.Conditions)
 			}
+		} else if apierrors.IsNotFound(err) {
+			addCNICondition(&status.Conditions, corev1.ConditionFalse, cniNotFound, "calico-node DaemonSet not found")
 		} else {
-			addCNICondition(status.CNI, "False", "NotFound",
-				"calico-node DaemonSet not found")
+			addCNICondition(&status.Conditions, corev1.ConditionUnknown, cniError, err.Error())
 		}
 
 	default:
-		addCNICondition(status.CNI, "Unknown", "CustomProvider", "")
+		addCNICondition(&status.Conditions, corev1.ConditionUnknown, "CustomProvider", "")
 	}
 
 	return status
