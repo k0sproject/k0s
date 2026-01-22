@@ -21,7 +21,6 @@ const (
 const containerRuntimeExecLabel = "system_u:object_r:container_runtime_exec_t:s0"
 
 var additionalExecutableNames = [...]string{
-	"containerd-shim",
 	"containerd-shim-runc-v2",
 	"runc",
 }

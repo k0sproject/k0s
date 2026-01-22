@@ -106,7 +106,7 @@ func TestContainerdModuleVersions(t *testing.T) {
 
 	assertPackageModules(t,
 		func(modulePath string) bool {
-			return modulePath == "github.com/containerd/containerd"
+			return modulePath == "github.com/containerd/containerd/v2"
 		},
 		func(t *testing.T, pkgPath string, module *packages.Module) bool {
 			return !assert.Equal(t, "v"+containerdVersion, module.Version,
