@@ -109,6 +109,7 @@ func runProberToCompletion(t *testing.T, prober *Prober, duration time.Duration)
 
 	if duration > 0 {
 		time.Sleep(duration)
+		synctest.Wait() // Ensure all pending tick callbacks are processed before canceling
 	}
 
 	cancel()
