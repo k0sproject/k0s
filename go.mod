@@ -57,7 +57,7 @@ require (
 	golang.org/x/text v0.33.0
 	golang.org/x/tools v0.41.0
 	google.golang.org/grpc v1.78.0
-	helm.sh/helm/v3 v3.19.5
+	helm.sh/helm/v3 v3.20.0
 	modernc.org/sqlite v1.44.3
 	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.22.4
@@ -222,7 +222,7 @@ require (
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	github.com/rubenv/sql-migrate v1.8.0 // indirect
+	github.com/rubenv/sql-migrate v1.8.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
