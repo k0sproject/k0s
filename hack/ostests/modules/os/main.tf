@@ -3,7 +3,7 @@ locals {
 
   os = {
     al2023              = local.os_al2023
-    alpine_3_19         = local.os_alpine_3_19
+    alpine_3_20         = local.os_alpine_3_20
     alpine_3_23         = local.os_alpine_3_23
     centos_9            = local.os_centos_9
     centos_10           = local.os_centos_10

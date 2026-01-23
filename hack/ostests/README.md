@@ -70,7 +70,7 @@ tofu apply
 ### `os`: Operating system stack
 
 * `al2023`: Amazon Linux 2023
-* `alpine_3_19`: Alpine Linux 3.19
+* `alpine_3_20`: Alpine Linux 3.20
 * `alpine_3_23`: Alpine Linux 3.23
 * `centos_9`: CentOS Stream 9
 * `centos_10`: CentOS Stream 10 (Coughlan)
