@@ -36,8 +36,8 @@ data "aws_ami" "windows_server_2022" {
 locals {
   os_windows_server_2022 = var.os != "windows_server_2022" ? {} : {
     node_configs = {
-      default    = local.os_alpine_3_22.node_configs.default
-      controller = local.os_alpine_3_22.node_configs.controller
+      default    = local.os_alpine_3_23.node_configs.default
+      controller = local.os_alpine_3_23.node_configs.controller
 
       worker = {
         ami_id        = one(data.aws_ami.windows_server_2022.*.id)
