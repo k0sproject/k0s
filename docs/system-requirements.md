@@ -59,7 +59,7 @@ The following operating systems are automatically tested as part of our CI:
 | Operating System              | Version/Notes                                                                           |
 |-------------------------------|-----------------------------------------------------------------------------------------|
 | Amazon Linux                  | 2023                                                                                    |
-| Alpine Linux                  | 3.19, 3.22                                                                              |
+| Alpine Linux                  | 3.19, 3.23                                                                              |
 | CentOS Stream                 | 9, 10 (Coughlan)                                                                        |
 | Debian GNU/Linux              | 11 (bullseye) (supported until 2026-08-31), 12 (bookworm) (supported until 2028-06-30)  |
 | Fedora CoreOS                 | stable stream                                                                           |
