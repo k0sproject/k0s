@@ -615,13 +615,13 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			return fmt.Errorf("failed to parse API address: %w", err)
 		}
 
-		clusterComponents.Add(ctx, controller.NewCRDStack(adminClientFactory, leaderElector, controller.AutopilotStackName))
 		clusterComponents.Add(ctx, &controller.Autopilot{
 			APIAddress:           apiAddress,
 			K0sVars:              c.K0sVars,
 			KubeletExtraArgs:     c.KubeletExtraArgs,
 			KubeAPIPort:          nodeConfig.Spec.API.Port,
 			AdminClientFactory:   adminClientFactory,
+			LeaderElector:        leaderElector,
 			ClusterInfoCollector: updates.NewClusterInfoCollector(nodeConfig, client),
 			Workloads:            controllerMode.WorkloadsEnabled(),
 		})
