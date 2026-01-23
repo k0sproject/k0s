@@ -126,11 +126,15 @@ See GitHub's docs on how to [create a pull request from a fork][pr-from-fork].
 
 ### Get a code review
 
-Once your pull request has been opened it will be assigned to one or more reviewers, and will go through a series of smoke tests.
+Once your pull request has been opened it will be assigned to one or more
+reviewers, and will go through a series of [smoke tests].
 
-Commit changes made in response to review comments should be added to the same branch on your fork.
+Commit changes made in response to review comments should be added to the same
+branch on your fork.
 
 Very small PRs are easy to review. Very large PRs are very difficult to review.
+
+[smoke tests]: testing.md#integration-tests-aka-inttests-or-smoketests
 
 ### Squashing Commits
 
