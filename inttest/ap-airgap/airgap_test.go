@@ -161,7 +161,7 @@ spec:
 
 	// At that moment we can assume that all pods have at least started.
 	// Inspect the Pulled events if there are some unexpected image pulls.
-	events, err := kc.CoreV1().Events("").List(ctx, metav1.ListOptions{
+	events, err := kc.CoreV1().Events(metav1.NamespaceAll).List(ctx, metav1.ListOptions{
 		FieldSelector: fields.AndSelectors(
 			fields.OneTermEqualSelector("involvedObject.kind", "Pod"),
 			fields.OneTermEqualSelector("reason", "Pulled"),
@@ -171,7 +171,7 @@ spec:
 
 	for _, event := range events.Items {
 		if event.LastTimestamp.After(updateStart) {
-			if !strings.HasSuffix(event.Message, "already present on machine") {
+			if !strings.HasSuffix(event.Message, "already present on machine and can be accessed by the pod") {
 				s.Fail("Unexpected Pulled event", event.Message)
 			} else {
 				s.T().Log("Observed Pulled event:", event.Message)
