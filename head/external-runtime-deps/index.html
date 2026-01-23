@@ -3108,10 +3108,10 @@ own workloads may require more.</p>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081"><code>CONFIG_CGROUP_SCHED</code></a>:
   Group CPU scheduler<ul>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090"><code>CONFIG_FAIR_GROUP_SCHED</code></a>:
-  Group scheduling for SCHED_OTHER<br />
-<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-717996215">kubernetes/kubeadm#2335 (comment)</a><ul>
+  Group scheduling for SCHED_OTHER<br>
+  <a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-717996215">kubernetes/kubeadm#2335 (comment)</a><ul>
 <li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1095"><code>CONFIG_CFS_BANDWIDTH</code></a>:
-  CPU bandwidth provisioning for FAIR_GROUP_SCHED<br />
+  CPU bandwidth provisioning for FAIR_GROUP_SCHED<br>
   Required if CPU CFS quota enforcement is enabled for containers that
   specify CPU limits (<code>--cpu-cfs-quota</code>).</li>
 </ul>
@@ -3119,8 +3119,8 @@ own workloads may require more.</p>
 </ul>
 </li>
 <li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1119"><code>CONFIG_BLK_CGROUP</code></a>:
-  Block IO controller<br />
-<a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a></li>
+  Block IO controller<br>
+  <a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a></li>
 </ul>
 </li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168"><code>CONFIG_NAMESPACES</code></a>:
@@ -3180,10 +3180,10 @@ and, if enabled as a module, to load the <code>configs</code> module: <code>modp
 </ul>
 <p>Optional cgroup controllers:</p>
 <ul>
-<li>hugetlb (<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a>)</li>
-<li>blkio (<a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a>)
-   containerd and cri-o will use blkio to track disk I/O and throttling in both
-   cgroup v1 and v2.</li>
+<li><code>hugetlb</code> (<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a>)</li>
+<li><code>blkio</code> (<a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a>)<br>
+  containerd and cri-o will use blkio to track disk I/O and throttling in both
+  cgroup v1 and v2.</li>
 </ul>
 <h3 id="no-integration-with-name-service-switch-nss-apis">No integration with Name Service Switch (NSS) APIs<a class="headerlink" href="#no-integration-with-name-service-switch-nss-apis" title="Permanent link">#</a></h3>
 <p>The k0s Linux binaries are by default statically linked against <a href="https://musl.libc.org/">musl libc</a>.
@@ -3218,7 +3218,7 @@ if those are in legacy or nft mode. If iptables is not found, k0s will assume
 that there are no pre-existing iptables rules.</p>
 <h4 id="useradd-adduser">useradd / adduser<a class="headerlink" href="#useradd-adduser" title="Permanent link">#</a></h4>
 <p>During <code>k0s install</code> the external tool <code>useradd</code> will be used on the controllers
-to create system user accounts for k0s. If this does exist it will fall-back to
+to create system user accounts for k0s. If this doesn't exist it will fall-back to
 busybox's <code>adduser</code>.</p>
 <h4 id="userdel-deluser">userdel / deluser<a class="headerlink" href="#userdel-deluser" title="Permanent link">#</a></h4>
 <p><code>k0s reset</code> will execute either <code>userdel</code> or <code>deluser</code> to clean up system user
