@@ -12,9 +12,11 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 	cr "sigs.k8s.io/controller-runtime"
@@ -27,10 +29,9 @@ const UnCordoning = "UnCordoning"
 
 // unCordoningEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
-func unCordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
+func unCordoningEventFilter(handler apsigpred.ErrorHandler) crpred.Predicate {
 	return crpred.And(
 		crpred.AnnotationChangedPredicate{},
-		apsigpred.SignalNamePredicate(hostname),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
 			signalDataUpdateCommandK0sPredicate(),
 			apsigpred.SignalDataStatusPredicate(UnCordoning),
@@ -52,7 +53,7 @@ func unCordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crp
 // This controller is only interested when autopilot signaling annotations have
 // moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
 // the node.
-func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, nodeName types.NodeName, leaseStatus leaderelection.Status) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_uncordoning"
 	logger.Info("Registering reconciler: ", name)
 
@@ -68,12 +69,15 @@ func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 		WithEventFilter(eventFilter).
 		Complete(
 			&cordonUncordon{
-				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-uncordoning", "object": delegate.Name()}),
-				client:    mgr.GetClient(),
-				delegate:  delegate,
-				clientset: clientset,
-				do:        uncordonNode,
-				nextState: apsigcomm.Completed,
+				log:          logger.WithFields(logrus.Fields{"reconciler": "k0s-uncordoning", "object": delegate.Name()}),
+				client:       mgr.GetClient(),
+				delegate:     delegate,
+				clientset:    clientset,
+				currentState: UnCordoning,
+				nodeName:     nodeName,
+				leaseStatus:  leaseStatus,
+				do:           uncordonNode,
+				nextState:    apsigcomm.Completed,
 			},
 		)
 }

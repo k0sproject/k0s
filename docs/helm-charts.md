@@ -41,6 +41,8 @@ See [Chart configuration](#chart-configuration) below for more details on how to
 | `username` | -             | Username for Basic HTTP authentication                                                            |
 | `password` | -             | Password for Basic HTTP authentication                                                            |
 
+**Note:** k0s supports only classic Helm chart repositories that provide a valid `index.yaml`. Direct links to chart folders or files (for example raw GitHub URLs) are not recognized as Helm repositories and will not work unless they follow the full Helm repository structure. For details on how a valid Helm chart repository must be structured, see: https://helm.sh/docs/topics/chart_repository/#create-a-chart-repository
+
 ### Chart configuration
 
 | Field          | Default value | Description                                                                               |
@@ -75,9 +77,10 @@ spec:
       - name: oci-registry-with-private-ca
         # OCI registry URL must not include any path elements
         url: oci://registry-with-private-ca.com:8080
-        # Currently, only caFile is supported for TLS transport
-        # Setting certFile or keyFile will result in an error
+        # certFile and keyFile can be provided to enable mTLS
         caFile: /path/to/ca.crt
+        certFile: /path/to/client.crt
+        keyFile: /path/to/client.key
       charts:
       - name: prometheus-stack
         chartname: prometheus-community/prometheus

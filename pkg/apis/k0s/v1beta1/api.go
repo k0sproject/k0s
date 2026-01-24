@@ -66,7 +66,6 @@ type APISpec struct {
 func DefaultAPISpec() *APISpec {
 	a := new(APISpec)
 	a.setDefaults()
-	a.SANs, _ = iface.AllAddresses()
 	return a
 }
 

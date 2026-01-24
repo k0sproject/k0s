@@ -14,7 +14,9 @@ import (
 	"testing/synctest"
 
 	aptu "github.com/k0sproject/k0s/internal/autopilot/testutil"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/static"
 
@@ -63,7 +65,7 @@ func TestModeSwitch(t *testing.T) {
 			return &crd
 		}())
 
-		rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, false, clientFactory, netip.IPv4Unspecified())
+		rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, false, clientFactory, updates.NewClusterInfoCollector(v1beta1.DefaultClusterConfig(), clientFactory.Client), netip.IPv4Unspecified())
 		assert.NoError(t, err)
 
 		rootController, ok := rootControllerInterface.(*rootController)

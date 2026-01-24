@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -18,7 +17,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/avast/retry-go"
 	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
@@ -84,9 +82,8 @@ type staticPods struct {
 	contentPtr  atomic.Value // Store only when mu is locked, concurrent Load is okay
 	claimedPods map[staticPodID]*staticPod
 
-	hostAddr   string // guaranteed to be initialized when started, immutable afterwards
-	stopSignal context.CancelFunc
-	stopped    sync.WaitGroup
+	hostAddr    string // guaranteed to be initialized when started, immutable afterwards
+	closeServer func() error
 }
 
 var _ manager.Ready = (*staticPods)(nil)
@@ -260,8 +257,8 @@ func (s *staticPods) update() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Don't update anything if this instance has been stopped already.
-	if s.peekLifecycle() >= staticPodsStopped {
+	// Don't update anything if this instance is not started anymore.
+	if s.peekLifecycle() > staticPodsStarted {
 		return
 	}
 
@@ -273,8 +270,8 @@ func (s *staticPods) drop(id staticPodID) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// No need to drop anything if this instance has been stopped already.
-	if s.peekLifecycle() >= staticPodsStopped {
+	// No need to drop anything if this instance is not started anymore.
+	if s.peekLifecycle() > staticPodsStarted {
 		return
 	}
 
@@ -346,39 +343,76 @@ func (s *staticPods) Start(ctx context.Context) error {
 	// Initialize a new HTTP server for static pods.
 	addr := listener.Addr().String()
 	log := s.log.WithField("local_addr", addr)
-	srv, cancelFunc := newStaticPodsServer(log, s.content)
+	srv := newStaticPodsServer(log, s.content)
 	srv.Addr = addr
 
 	// Fire up the goroutine to accept HTTP connections.
-	notClosed := func(err error) bool { return !errors.Is(err, http.ErrServerClosed) }
-	s.stopped.Add(1)
+	log.Info("Serving HTTP requests")
+	var serveErr error
+	stopServing, doneServing := make(chan struct{}), make(chan struct{})
 	go func() {
-		defer s.stopped.Done()
+		defer close(doneServing)
 
-		log.Info("Serving HTTP requests")
+		retryAfter := time.After(10 * time.Second)
 		err := srv.Serve(listener)
 
-		// As long as the server isn't closed, try to restart it.
-		for notClosed(err) {
-			err = retry.Do(func() error {
-				log.WithError(err).Error("HTTP server terminated, restarting ...")
-				return srv.ListenAndServe()
-			}, retry.RetryIf(notClosed), retry.Attempts(math.MaxUint))
-		}
+		for {
+			select {
+			case <-stopServing:
+				if !errors.Is(err, http.ErrServerClosed) {
+					serveErr = fmt.Errorf("unexpected HTTP server error: %w", err)
+				}
+				return
+			default:
+			}
 
-		log.Info("HTTP server closed")
+			log.WithError(err).Error("HTTP server terminated unexpectedly")
+
+			select {
+			case <-retryAfter:
+				retryAfter = time.After(10 * time.Second)
+				err = srv.ListenAndServe()
+			case <-stopServing:
+				serveErr = fmt.Errorf("HTTP server terminated unexpectedly: %w", err)
+				return
+			}
+		}
 	}()
 
 	// Store the handles.
 	s.hostAddr = addr
-	s.stopSignal = cancelFunc
+	s.closeServer = func() error {
+		select {
+		case <-stopServing:
+		default:
+			close(stopServing)
+		}
+
+		err := srv.Close()
+		if err == nil {
+			log.Info("HTTP server closed")
+			<-doneServing
+			return serveErr
+		}
+
+		err = fmt.Errorf("while closing HTTP server: %w", err)
+		select {
+		case <-doneServing:
+			if serveErr != nil {
+				return errors.Join(serveErr, err)
+			}
+		default:
+		}
+
+		return err
+	}
 
 	// This instance started successfully, everything is setup and running.
 	s.transition(staticPodsStarting, staticPodsStarted)
 	return nil
 }
 
-func newStaticPodsServer(log logrus.FieldLogger, contentFn func() []byte) (*http.Server, context.CancelFunc) {
+func newStaticPodsServer(log logrus.FieldLogger, contentFn func() []byte) *http.Server {
 	mux := http.NewServeMux()
 
 	// The main endpoint to be consumed by the kubelet.
@@ -400,32 +434,17 @@ func newStaticPodsServer(log logrus.FieldLogger, contentFn func() []byte) (*http
 			w.WriteHeader(http.StatusNoContent)
 		})))
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	srv := &http.Server{
+	return &http.Server{
 		Handler:      mux,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-		BaseContext:  func(net.Listener) context.Context { return ctx },
 	}
-
-	// Fire up a goroutine that'll close the HTTP server whenever the context is canceled.
-	go func() {
-		<-ctx.Done()
-		log.Debug("Closing HTTP server")
-		if err := srv.Close(); err != nil {
-			log.WithError(err).Warn("Failed to close HTTP server")
-		} else {
-			log.Debug("HTTP server closed")
-		}
-	}()
-
-	return srv, cancelFunc
 }
 
 func (s *staticPods) Stop() error {
 	s.mu.Lock()
 
-	if !s.transition(staticPodsStarted, staticPodsStopped) {
+	if !s.transition(staticPodsStarted, staticPodsStopping) {
 		lifecycle := s.peekLifecycle()
 		if lifecycle < staticPodsStarted {
 			s.mu.Unlock()
@@ -433,34 +452,31 @@ func (s *staticPods) Stop() error {
 		}
 	}
 
-	// Signal the HTTP server to stop.
-	s.stopSignal()
-
 	// Swap out all the claimed pods.
 	claimedPods := s.claimedPods
 	s.claimedPods = map[staticPodID]*staticPod{}
 
 	// Fire up a goroutine for every claimed pod that drops
 	// it concurrently, so that there's no deadlocks.
-	for _, claimedPod := range claimedPods {
-		pod := claimedPod
-		s.stopped.Add(1)
-		go func() {
-			defer s.stopped.Done()
+	var wg sync.WaitGroup
+	for _, pod := range claimedPods {
+		wg.Go(func() {
 			pod.mu.Lock()
 			defer pod.mu.Unlock()
 			pod.update = nil
 			pod.drop = nil
 			pod.manifestPtr.Store([]byte{})
-		}()
+		})
 	}
 
 	s.mu.Unlock()
 
-	s.stopped.Wait()
+	err := s.closeServer()
+	wg.Wait()
 	s.contentPtr.Store([]byte{})
 
-	return nil
+	s.transition(staticPodsStopping, staticPodsStopped)
+	return err
 }
 
 // Health-check interface
@@ -470,15 +486,19 @@ func (s *staticPods) Ready() error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, url.JoinPath("_healthz").String(), nil)
-	if err != nil {
-		return err
-	}
+	// Create a one-shot HTTP client.
+	client := http.Client{Transport: &http.Transport{DisableKeepAlives: true}}
+	defer client.CloseIdleConnections()
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
 
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.JoinPath("_healthz").String(), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -496,6 +516,7 @@ const (
 	staticPodsInitialized
 	staticPodsStarting
 	staticPodsStarted
+	staticPodsStopping
 	staticPodsStopped
 )
 
@@ -505,6 +526,8 @@ func (l staticPodsLifecycle) String() string {
 		return "initialized"
 	case staticPodsStarted:
 		return "running"
+	case staticPodsStopping:
+		return "stopping"
 	case staticPodsStopped:
 		return "stopped"
 	default:

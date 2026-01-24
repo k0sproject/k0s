@@ -13,7 +13,7 @@ env:
   DISTRIBUTIONS: >-
     [
       ["al2023"],
-      ["alpine_3_19", "alpine_3_22"],
+      ["alpine_3_20", "alpine_3_23"],
       ["centos_9", "centos_10"],
       ["debian_11", "debian_12"],
       ["fcos_stable"],
@@ -138,7 +138,7 @@ jobs:
             def fmt_duration:
               if . >= 3600 then "\(./3600|floor) h \((.%3600/60|floor)) min"
               elif . >= 60 then "\(./60|floor) min \(.%60) sec"
-              else "\(.) sex"
+              else "\(.) sec"
               end;
 
             [.jobs[] | select(.name | startswith("\($ENV.OSTESTS_OS) :: \($ENV.OSTESTS_NETWORK_PROVIDER)"))] | first as $job |

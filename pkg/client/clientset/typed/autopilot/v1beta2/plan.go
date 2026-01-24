@@ -11,6 +11,7 @@ import (
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	gentype "k8s.io/client-go/gentype"
 )
@@ -25,10 +26,14 @@ type PlansGetter interface {
 type PlanInterface interface {
 	Create(ctx context.Context, plan *autopilotv1beta2.Plan, opts v1.CreateOptions) (*autopilotv1beta2.Plan, error)
 	Update(ctx context.Context, plan *autopilotv1beta2.Plan, opts v1.UpdateOptions) (*autopilotv1beta2.Plan, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, plan *autopilotv1beta2.Plan, opts v1.UpdateOptions) (*autopilotv1beta2.Plan, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*autopilotv1beta2.Plan, error)
 	List(ctx context.Context, opts v1.ListOptions) (*autopilotv1beta2.PlanList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *autopilotv1beta2.Plan, err error)
 	PlanExpansion
 }
 

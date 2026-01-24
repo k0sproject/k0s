@@ -49,7 +49,7 @@ other methods of passing configuration options are covered in the [official
 OpenTofu documentation][tf-config].
 
 ```shell
-export TF_VAR_os=alpine_3_22
+export TF_VAR_os=alpine_3_23
 export TF_VAR_arch=x86_64
 export TF_VAR_k0s_version=stable
 export TF_VAR_k0s_network_provider=calico
@@ -70,8 +70,8 @@ tofu apply
 ### `os`: Operating system stack
 
 * `al2023`: Amazon Linux 2023
-* `alpine_3_19`: Alpine Linux 3.19
-* `alpine_3_22`: Alpine Linux 3.22
+* `alpine_3_20`: Alpine Linux 3.20
+* `alpine_3_23`: Alpine Linux 3.23
 * `centos_9`: CentOS Stream 9
 * `centos_10`: CentOS Stream 10 (Coughlan)
 * `debian_11`: Debian GNU/Linux 11 (bullseye) ([supported until 2026-08-31][debian-lts])
@@ -90,7 +90,7 @@ tofu apply
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2404`: Ubuntu 24.04
-* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.22)
+* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.23)
 
 [debian-lts]: https://wiki.debian.org/LTS
 
@@ -111,7 +111,7 @@ Assuming the AWS credentials are available, it can be used like this:
 
 ```sh
 tofu init
-export TF_VAR_os=alpine_3_22
+export TF_VAR_os=alpine_3_23
 export TF_VAR_k0sctl_skip=true
 tofu apply
 tofu output -json | jq -r '
@@ -183,7 +183,7 @@ workflow] that exposes more knobs and can be triggered manually, e.g. via [gh]:
 
 ```console
 $ gh workflow run ostests-matrix.yaml --ref some/experimental/branch \
-  -f oses='["alpine_3_22"]' \
+  -f oses='["alpine_3_23"]' \
   -f network-providers='["calico"]'
 ✓ Created workflow_dispatch event for ostests-matrix.yaml at some/experimental/branch
 

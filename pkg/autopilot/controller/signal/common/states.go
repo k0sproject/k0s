@@ -4,8 +4,9 @@
 package common
 
 const (
-	Completed = "Completed"
-	Failed    = "Failed"
+	Downloading = "Downloading"
+	Completed   = "Completed"
+	Failed      = "Failed"
 
 	FailedDownload = "FailedDownload"
 )

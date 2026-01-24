@@ -21,6 +21,7 @@ k0s sysinfo
 ```
 
 ## Linux specific
+
 <!--
 This piece of documentation is best-effort and considered to be augmented and
 extended in the future. The kernel and cgroup requirements are basically taken
@@ -52,14 +53,14 @@ own workloads may require more.
   - [`CONFIG_CGROUP_SCHED`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081):
     Group CPU scheduler
     - [`CONFIG_FAIR_GROUP_SCHED`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090):
-      Group scheduling for SCHED_OTHER  
+      Group scheduling for SCHED_OTHER<br>
       [kubernetes/kubeadm#2335 (comment)](https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-717996215)
       - _(optional)_ [`CONFIG_CFS_BANDWIDTH`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1095):
-        CPU bandwidth provisioning for FAIR_GROUP_SCHED  
+        CPU bandwidth provisioning for FAIR_GROUP_SCHED<br>
         Required if CPU CFS quota enforcement is enabled for containers that
         specify CPU limits (`--cpu-cfs-quota`).
   - _(optional)_ [`CONFIG_BLK_CGROUP`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1119):
-    Block IO controller  
+    Block IO controller<br>
     [kubernetes/kubernetes#92287 (comment)](https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587)
 - [`CONFIG_NAMESPACES`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168):
   Namespaces support
@@ -113,14 +114,16 @@ Required [cgroup] controllers:
 
 Optional cgroup controllers:
 
-- hugetlb ([kubernetes/kubeadm#2335 (comment)](https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527))
-- blkio ([kubernetes/kubernetes#92287 (comment)](https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587))
-   containerd and cri-o will use blkio to track disk I/O and throttling in both
-   cgroup v1 and v2.
+- `hugetlb` ([kubernetes/kubeadm#2335 (comment)])
+- `blkio` ([kubernetes/kubernetes#92287 (comment)])<br>
+  containerd and cri-o will use blkio to track disk I/O and throttling in both
+  cgroup v1 and v2.
 
 [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
 [cgroup v1]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/
 [cgroup v2]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html
+[kubernetes/kubeadm#2335 (comment)]: https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527
+[kubernetes/kubernetes#92287 (comment)]: https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587
 
 ### No integration with Name Service Switch (NSS) APIs
 
@@ -178,7 +181,7 @@ that there are no pre-existing iptables rules.
 #### useradd / adduser
 
 During `k0s install` the external tool `useradd` will be used on the controllers
-to create system user accounts for k0s. If this does exist it will fall-back to
+to create system user accounts for k0s. If this doesn't exist it will fall-back to
 busybox's `adduser`.
 
 #### userdel / deluser
@@ -197,6 +200,7 @@ External `id` will be executed as a fallback if local user lookup fails, in case
 NSS is used.
 
 ## Windows specific
+
 <!--
 The kubernetes/system-validators require certain Windows versions starting with
 Windows Server 2016. k0s states that it requires Windows Server 2019, though.

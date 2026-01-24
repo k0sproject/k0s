@@ -12,6 +12,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/bombsimon/logrusr/v4"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -87,7 +88,7 @@ func (c *CertificateManager) GetRestConfig(ctx context.Context) (*rest.Config, e
 		return nil, err
 	}
 	transportConfig := rest.AnonymousClientConfig(restConfig)
-	if _, err := k8skubeletcert.UpdateTransport(ctx.Done(), transportConfig, c, 0); err != nil {
+	if _, err := k8skubeletcert.UpdateTransport(logrusr.New(logrus.WithField("component", "worker-certificate-manager")), ctx.Done(), transportConfig, c, 0); err != nil {
 		return nil, err
 	}
 
