@@ -155,7 +155,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		if ipv4 == nil {
 			ipv4, err = apinet.ResolveBindAddress(net.IPv4zero)
 			if err != nil {
-				logrus.Errorf("node default gateway interface scanning didn't return an address for IPv4")
+				logrus.Errorf("failed to determine preferred IPv4 address: %w", err)
 			}
 			return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
 		}
@@ -163,7 +163,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		if ipv6 == nil {
 			ipv6, err = apinet.ResolveBindAddress(net.IPv6unspecified)
 			if err != nil || ipv6.To4() != nil {
-				logrus.Errorf("node default gateway interface scanning didn't return an address for IPv6")
+				logrus.Errorf("failed to determine preferred IPv6 address: %w", err)
 			}
 			return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
 		}
