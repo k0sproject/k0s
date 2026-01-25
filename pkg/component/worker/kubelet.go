@@ -156,16 +156,16 @@ func (k *Kubelet) Start(ctx context.Context) error {
 			ipv4, err = apinet.ResolveBindAddress(net.IPv4zero)
 			if err != nil {
 				logrus.Errorf("failed to determine preferred IPv4 address: %w", err)
+				return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
 			}
-			return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
 		}
 
 		if ipv6 == nil {
 			ipv6, err = apinet.ResolveBindAddress(net.IPv6unspecified)
 			if err != nil || ipv6.To4() != nil {
 				logrus.Errorf("failed to determine preferred IPv6 address: %w", err)
+				return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
 			}
-			return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
 		}
 
 		// The kubelet will perform some extra validations on the discovered IP
