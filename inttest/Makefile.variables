@@ -29,6 +29,7 @@ smoketests := \
 	check-clusterreboot \
 	check-cnichange \
 	check-configchange \
+	check-containerd-deprecations \
 	check-containerdimports \
 	check-cplb-ipvs \
 	check-cplb-ipvs-ipv6 \
