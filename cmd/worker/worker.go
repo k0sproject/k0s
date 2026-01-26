@@ -269,9 +269,16 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		componentManager.Add(ctx, reconciler)
 	}
 
+	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
+
 	if c.CriSocket == "" {
 		componentManager.Add(ctx, containerd.NewComponent(c.LogLevels.Containerd, c.K0sVars, workerConfig))
 		componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
+		componentManager.Add(ctx, containerd.NewDeprecationMonitor(
+			containerd.Address(c.K0sVars.RunDir),
+			certManager,
+			nodeName,
+		))
 	}
 
 	if controller == nil && runtime.GOOS == "linux" {
@@ -295,8 +302,6 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 			ExtraArgs:           kubeletExtraArgs,
 			DualStackEnabled:    workerConfig.DualStackEnabled,
 		})
-
-	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
 
 	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, workerConfig, controller, certManager)
 
