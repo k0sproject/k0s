@@ -51,28 +51,28 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 	signalNodeDelegate, ok := kp.controllerDelegateMap[nextLabel]
 	if !ok {
 		logger.Warnf("Missing signal delegate for '%s'", nextLabel)
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	nodeKey := signalNodeDelegate.CreateNamespacedName(nextForSignal.Name)
 	signalNode := signalNodeDelegate.CreateObject()
 	if err := kp.client.Get(ctx, nodeKey, signalNode); err != nil {
 		logger.Warnf("Unable to find signal node '%s' for signal: %v", nodeKey, err)
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	// If the found signal node is not ready to accept an update, either complete this reconciliation
 	// in order to move onto the next signal node candidate, or requeue if this is the last remaining
 	// candidate.
 
-	updateReadyStatus := signalNodeDelegate.K0sUpdateReady(*status.K0sUpdate, signalNode)
+	updateReadyStatus := signalNodeDelegate.K0sUpdateReady(ctx, *status.K0sUpdate, signalNode)
 	if updateReadyStatus != apdel.CanUpdate {
-		if updateReadyStatus == apdel.Inconsistent {
-			// If we're inconsistent, there is nothing else we can do -- operator intervention
+		if updateReadyStatus == apdel.Incomplete {
+			// If we're incomplete, there is nothing else we can do -- operator intervention
 			// is now required.
 
-			logger.Warn("Inconsistent targets detected, unable to process.")
-			return appc.PlanInconsistentTargets, false, nil
+			logger.Warn("Incomplete targets detected, unable to process.")
+			return appc.PlanIncompleteTargets, false, nil
 		}
 
 		// Request a requeue with the current status
