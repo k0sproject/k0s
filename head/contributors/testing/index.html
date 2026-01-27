@@ -2822,6 +2822,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#integration-tests-aka-inttests-or-smoketests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration tests (a.k.a. inttests or smoketests)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration tests (a.k.a. inttests or smoketests)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-local-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging local failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-ci-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging CI failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-ci-on-your-fork" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running CI on your fork
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#opening-a-pull-request" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2953,6 +3025,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#integration-tests-aka-inttests-or-smoketests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration tests (a.k.a. inttests or smoketests)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration tests (a.k.a. inttests or smoketests)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-local-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging local failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-ci-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging CI failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-ci-on-your-fork" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running CI on your fork
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#opening-a-pull-request" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3025,8 +3169,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
 <h1 id="testing-your-code">Testing Your Code<a class="headerlink" href="#testing-your-code" title="Permanent link">#</a></h1>
-<p>k0s uses github actions to run automated tests on any PR, before merging.
-However, a PR will not be reviewed before all tests are green, so to save time and prevent your PR from going stale, it is best to test it before submitting the PR.</p>
+<p>k0s uses GitHub Actions to run automated tests on any pull request before
+merging it. However, your PR will not be reviewed until all tests are green. To
+save time and prevent your PR from going stale, it is best to run the tests
+before submitting the PR.</p>
 <h2 id="run-local-verifications">Run Local Verifications<a class="headerlink" href="#run-local-verifications" title="Permanent link">#</a></h2>
 <p>Please run the following style and formatting commands and fix/check-in any changes:</p>
 <ol>
@@ -3069,6 +3215,59 @@ However, a PR will not be reviewed before all tests are green, so to save time a
 <p>If you find that all tests passed, you may open a pull request upstream.</p>
 </li>
 </ol>
+<h2 id="integration-tests-aka-inttests-or-smoketests">Integration tests (a.k.a. inttests or smoketests)<a class="headerlink" href="#integration-tests-aka-inttests-or-smoketests" title="Permanent link">#</a></h2>
+<p>The integration tests are located in the inttest directory and are run in CI as
+"smoketests". These tests use Docker and <a href="https://github.com/k0sproject/bootloose">bootloose-based</a> nodes to
+launch k0s clusters locally.</p>
+<h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h3>
+<ul>
+<li>Docker (Linux) with the ability to run privileged containers.</li>
+<li>Sufficient disk space for the bootloose images and test artifacts.</li>
+</ul>
+<h3 id="running-locally">Running locally<a class="headerlink" href="#running-locally" title="Permanent link">#</a></h3>
+<p>You can run a single integration test by calling <code>make</code> from the repository
+root:</p>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>check-&lt;name&gt;
+</code></pre></div>
+<p>Examples:</p>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>check-basic
+make<span class="w"> </span>check-ap-airgap
+</code></pre></div>
+<p>Some tests, such as those related to airgap and IPv6, require image bundles. The
+Makefile automatically builds and integrates those when you run <code>make
+check-...</code>. The underlying environment variables are:</p>
+<ul>
+<li><code>K0S_IMAGES_BUNDLE</code> (airgap bundle)</li>
+<li><code>K0S_EXTRA_IMAGES_BUNDLE</code> (IPv6 bundle)</li>
+</ul>
+<h3 id="debugging-local-failures">Debugging local failures<a class="headerlink" href="#debugging-local-failures" title="Permanent link">#</a></h3>
+<p>When a test fails, the suite writes logs and a <a href="https://github.com/replicatedhq/troubleshoot?tab=readme-ov-file#support-bundle">support bundle</a> to the temporary
+directory (as determined by <a href="https://pkg.go.dev/os#TempDir">os.TempDir</a>), e.g.:</p>
+<ul>
+<li><code>/tmp/controller*.out.log</code>, <code>/tmp/controller*.err.log</code></li>
+<li><code>/tmp/worker*.out.log</code>, <code>/tmp/worker*.err.log</code></li>
+<li><code>/tmp/support-bundle.tar.gz</code></li>
+</ul>
+<p>Start by inspecting the logs. You can also use <a href="https://github.com/replicatedhq/sbctl?tab=readme-ov-file#command-line-tool-for-examining-k8s-resources-in-troubleshoots-support-bundles">sbctl</a> with the support bundle
+to inspect the state of the test cluster at the end of the test execution.</p>
+<h3 id="debugging-ci-failures">Debugging CI failures<a class="headerlink" href="#debugging-ci-failures" title="Permanent link">#</a></h3>
+<p>When a CI run fails, the aforementioned files are uploaded and attached as job
+artifacts. In the GitHub Actions UI, open the failed job, download and extract
+the artifact for that test (named <code>&lt;smoketest-name&gt;-&lt;arch&gt;-files</code> or similar)
+and extract it. You can then use the extracted files in the same way described
+in the previous section.</p>
+<h3 id="running-ci-on-your-fork">Running CI on your fork<a class="headerlink" href="#running-ci-on-your-fork" title="Permanent link">#</a></h3>
+<p>The k0s GitHub Action workflows use GitHub's hosted runners whenever possible.
+This allows you to run the same CI workflows on your fork by pushing to the main
+branch or opening a pull request on your fork. Ensure that GitHub Actions are
+enabled for the forked repository. Note that forked repositories do not have
+access to k0s's ARMv7 runners; therefore, all ARMv7-related workflow runs will
+be skipped.</p>
+<p>Running the CI on your fork may provide faster feedback than running it on a
+pull request against the k0s repository because running the GitHub workflows for
+pull requests requires approval from a k0s maintainer. Additionally, it allows
+you to tinker with the tests and workflows however you like to debug things.
+This could be useful if you cannot run the smoketests locally.</p>
 <h2 id="opening-a-pull-request">Opening A Pull Request<a class="headerlink" href="#opening-a-pull-request" title="Permanent link">#</a></h2>
 <h3 id="draft-mode">Draft Mode<a class="headerlink" href="#draft-mode" title="Permanent link">#</a></h3>
 <p>You may open a pull request in <a href="https://github.blog/2019-02-14-introducing-draft-pull-requests">draft mode</a>.
