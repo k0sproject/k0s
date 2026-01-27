@@ -18,8 +18,7 @@ ARG TARGET_OS \
   BUILD_GO_TAGS \
   BUILD_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
-  BUILD_GO_LDFLAGS \
-  BUILD_GO_LDFLAGS_EXTRA
+  BUILD_GO_LDFLAGS
 
 # for mockgen and protoc-gen-* versions, see:
 # https://github.com/kubernetes-sigs/apiserver-network-proxy/tree/release-0.30?tab=readme-ov-file#mockgen
@@ -32,7 +31,7 @@ RUN go install go.uber.org/mock/mockgen@v0.4.0 && \
     go build \
         ${BUILD_GO_FLAGS} \
         -tags="${BUILD_GO_TAGS}" \
-        -ldflags="${BUILD_GO_LDFLAGS} ${BUILD_GO_LDFLAGS_EXTRA}" \
+        -ldflags="${BUILD_GO_LDFLAGS}" \
         -o bin/proxy-server cmd/server/main.go
 
 FROM scratch
