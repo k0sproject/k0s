@@ -7,13 +7,13 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 k0s comes with the option to enable dynamic configuration for cluster level components. This covers all the components other than etcd (or SQLite) and the Kubernetes API server. This option enables k0s configuration directly via Kubernetes API as opposed to using a configuration file for all cluster configuration.
 
-This feature has to be enabled for every controller in the cluster using the `--enable-dynamic-config` flag in `k0s controller` or `k0s install controller` commands. Having both types of controllers in the same cluster will cause a conflict.
+This feature has to be enabled on every controller in the cluster using the `--enable-dynamic-config` flag in `k0s controller` or `k0s install controller` commands. Mixing controllers with and without dynamic configuration enabled in the same cluster will cause a conflict.
 
 ## Dynamic vs. static configuration
 
 The existing and enabled-by-default method is what we call static configuration. That's the way where the k0s process reads the config from the given YAML file (or uses the default config if no config is given by user) and configures every component accordingly. This means that for any configuration change the cluster admin has to restart all controllers on the cluster and have matching configs on each controller node.
 
-In dynamic configuration mode the first controller to boot up when the cluster is created will use the given config YAML as a bootstrap configuration and stores it in the Kubernetes API. All the other controllers will find the config existing on the API and will use it as the source-of-truth for configuring all the components except for etcd and Kubernetes API server. After the initial cluster bootstrap the source of truth for all controllers is the configuration object in the Kubernetes API.
+In dynamic configuration mode, the first controller to start when the cluster is created uses the provided YAML as the bootstrap configuration and stores it in the Kubernetes API. All other controllers retrieve the existing configuration from the Kubernetes API and use it to configure all components except etcd and the Kubernetes API server. After the initial cluster bootstrap, the configuration object in the Kubernetes API becomes the source of truth for all controllers.
 
 ## Cluster configuration vs. controller node configuration
 
