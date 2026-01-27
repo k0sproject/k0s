@@ -352,6 +352,6 @@ spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
 	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
 	  -w /k0s \
-	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.40.1 \
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.41.0 \
 	  --source-name k0s --source-version '$(VERSION)' \
 	  -c syft.yaml -o spdx-json@2.2 . >'$@'
