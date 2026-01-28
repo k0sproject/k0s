@@ -13,7 +13,6 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -148,18 +147,6 @@ func (a *APISpec) getExternalURIForPort(port int) string {
 		addr = a.ExternalAddress
 	}
 	return (&url.URL{Scheme: "https", Host: net.JoinHostPort(addr, strconv.Itoa(port))}).String()
-}
-
-// Sans return the given SANS plus all local addresses and externalAddress if given
-func (a *APISpec) Sans() []string {
-	sans, _ := iface.AllAddresses()
-	sans = append(sans, a.Address)
-	sans = append(sans, a.SANs...)
-	if a.ExternalAddress != "" {
-		sans = append(sans, a.ExternalHost())
-	}
-
-	return stringslice.Unique(sans)
 }
 
 func isAnyAddress(address string) bool {

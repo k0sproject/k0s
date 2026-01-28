@@ -18,20 +18,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const k0sPartialConfig = `
-spec:
-  api:
-    sans:
-    - 1.2.3.4
-`
-
 type SingleNodeSuite struct {
 	common.BootlooseSuite
 }
 
 func (s *SingleNodeSuite) TestK0sGetsUp() {
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sPartialConfig)
-	s.NoError(s.InitController(0, "--single", "--config=/tmp/k0s.yaml"))
+	s.NoError(s.InitController(0, "--single"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
