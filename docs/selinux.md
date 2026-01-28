@@ -64,7 +64,7 @@ sudo restorecon -R -v ${DATA_DIR}/containerd
 Add below lines to `/etc/k0s/containerd.toml` of the worker nodes. You need to restart k0s service on the node to make the change take effect.
 
 ```toml
-[plugins."io.containerd.grpc.v1.cri"]
+[plugins.'io.containerd.cri.v1.runtime']
   enable_selinux = true
 ```
 
