@@ -49,7 +49,7 @@ k0s install worker --token-file $TOKEN_FILE
 k0s start
 ```
 
-**Note**: k0s supervises `kubelet.exe` and `kube-proxy.exe`. During the first run, the Calico install script is created as `C:\bootstrap.ps1`. This bootstrap script downloads the Calico binaries, builds pause container and sets up vSwitch settings.
+**Note**: k0s supervises `kubelet.exe` and `kube-proxy.exe`.
 
 ## Configuration
 
