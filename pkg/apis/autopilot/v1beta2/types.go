@@ -70,7 +70,6 @@ type ControlNodeList struct {
 // +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.state"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +genclient
-// +genclient:onlyVerbs=create,delete,list,get,watch,update
 // +genclient:nonNamespaced
 type Plan struct {
 	metav1.TypeMeta `json:",omitempty,inline"`

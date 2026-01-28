@@ -112,6 +112,11 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 		return cr.Result{}, nil
 	}
 
+	if sctx.SignalData != nil && sctx.SignalData.Status != nil {
+		sctx.Log.Debug("Ignoring signal with status ", sctx.SignalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
 	sctx.Log.Infof("Found available signaling update request")
 
 	// Confirm that the installed version of k0s requires an update
@@ -124,7 +129,7 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 	sctx.Log.Infof("Current version of k0s = '%s', requested version = '%s'", k0sVersion, sctx.SignalData.Command.K0sUpdate.Version)
 
 	// Move to 'Completed' if we match versions on a non-forced update. Otherwise, proceed to 'Downloading'
-	var status = Downloading
+	var status = apsigcomm.Downloading
 	if k0sVersion == sctx.SignalData.Command.K0sUpdate.Version && !sctx.SignalData.Command.K0sUpdate.ForceUpdate {
 		status = apsigcomm.Completed
 	}
