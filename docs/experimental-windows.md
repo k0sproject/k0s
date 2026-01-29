@@ -9,7 +9,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 ## Prerequisites
 
-The cluster must be running at least one worker node and control plane on Linux. You can use Windows to run additional worker nodes.
+- The cluster must be running at least one worker node and control plane on Linux. You can use Windows to run additional worker nodes. **Supported Windows versions**: Windows Server 2019 and Windows Server 2022.
 
 ## Installation
 
@@ -53,30 +53,6 @@ k0s start
 ```
 
 **Note**: k0s supervises `kubelet.exe` and `kube-proxy.exe`.
-
-## Configuration
-
-### Strict-affinity
-
-You must enable strict affinity to run the Windows node.
-
-If the `spec.network.Calico.withWindowsNodes` field is set to `true` (it is set to `false` by default) the additional Calico related manifest `/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml` is created with the following values:
-
-```yaml
----
-apiVersion: crd.projectcalico.org/v1
-kind: IPAMConfig
-metadata:
-  name: default
-spec:
-  strictAffinity: true
-```
-
-Alternately, you can manually execute `calicoctl`:
-
-```shell
-calicoctl ipam configure --strictaffinity=true
-```
 
 ### Network connectivity in AWS
 
