@@ -17,7 +17,6 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/sirupsen/logrus"
@@ -27,7 +26,8 @@ import (
 type KubeRouter struct {
 	log logrus.FieldLogger
 
-	k0sVars *config.CfgVars
+	manifestDir string
+	nodeConfig  *v1beta1.ClusterConfig
 
 	previousConfig kubeRouterConfig
 }
@@ -50,17 +50,18 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars) *KubeRouter {
+func NewKubeRouter(nodeConfig *v1beta1.ClusterConfig, manifestDir string) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
-		k0sVars: k0sVars,
+		manifestDir: manifestDir,
+		nodeConfig:  nodeConfig,
 	}
 }
 
 // Init implements [manager.Component].
 func (k *KubeRouter) Init(context.Context) error {
-	return dir.Init(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter"), constant.ManifestsDirMode)
+	return dir.Init(filepath.Join(k.manifestDir, "kuberouter"), constant.ManifestsDirMode)
 }
 
 // Stop no-op as nothing running
@@ -95,7 +96,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		return nil
 	}
 
-	existingCNI := existingCNIProvider(k.k0sVars.ManifestsDir)
+	existingCNI := existingCNIProvider(k.manifestDir)
 	if existingCNI != "" && existingCNI != constant.CNIProviderKubeRouter {
 		return fmt.Errorf("cannot change CNI provider from %s to %s", existingCNI, constant.CNIProviderKubeRouter)
 	}
@@ -134,6 +135,14 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	// Override or add args from config
 	args.Merge(clusterConfig.Spec.Network.KubeRouter.ExtraArgs)
 
+	// Always set --master flag to the effective API server URL (considering NLLB)
+	args["master"] = k.nodeConfig.Spec.APIServerURLForHostNetworkPods()
+
+	// Warn if kube-proxy is disabled but no service proxy is configured
+	if clusterConfig.Spec.Network.KubeProxy.Disabled && args["run-service-proxy"] != "true" {
+		k.log.Warn("kube-proxy is disabled but kube-router is not configured to run service proxy (run-service-proxy: true). Ensure another component is providing service proxy functionality.")
+	}
+
 	cfg := kubeRouterConfig{
 		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.IsAutoMTU(),
 		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,
@@ -163,7 +172,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
 
-	if err := file.AtomicWithTarget(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml")).
+	if err := file.AtomicWithTarget(filepath.Join(k.manifestDir, "kuberouter", "kube-router.yaml")).
 		WithPermissions(constant.CertMode).
 		Write(output.Bytes()); err != nil {
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
