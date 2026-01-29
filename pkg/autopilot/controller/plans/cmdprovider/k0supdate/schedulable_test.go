@@ -15,6 +15,9 @@
 package k0supdate
 
 import (
+	"context"
+	"errors"
+	"sync/atomic"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
@@ -23,15 +26,20 @@ import (
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apimruntime "k8s.io/apimachinery/pkg/runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
-	crfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/stretchr/testify/assert"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
 // TestSchedulable tests the reconcile function of the `scheduleable` controller.
@@ -47,6 +55,7 @@ func TestSchedulable(t *testing.T) {
 		expectedRetry                 bool
 		expectedPlanStatusControllers []apv1beta2.PlanCommandTargetStatus
 		expectedPlanStatusWorkers     []apv1beta2.PlanCommandTargetStatus
+		conflictUpdate                bool
 	}{
 		// Ensures that if a controller is completed, no additional execution will occur.
 		{
@@ -97,6 +106,7 @@ func TestSchedulable(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalCompleted),
 			},
 			nil,
+			false,
 		},
 
 		// Ensures that a signal node can be sent a signal, and individually transition
@@ -150,6 +160,60 @@ func TestSchedulable(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalSent),
 			},
 			nil,
+			false,
+		},
+
+		// Ensures conflicts on update request a retry and preserve status.
+		{
+			"ConflictRequeues",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ControlNode",
+						APIVersion: "autopilot.k0sproject.io/v1beta2",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "controller0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
+					Version: "v99.99.99",
+					Platforms: apv1beta2.PlanPlatformResourceURLMap{
+						"theOS-theArch": {
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-theOS-theArch",
+							Sha256: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+						},
+					},
+					Targets: apv1beta2.PlanCommandTargets{
+						Controllers: apv1beta2.PlanCommandTarget{
+							Discovery: apv1beta2.PlanCommandTargetDiscovery{
+								Static: &apv1beta2.PlanCommandTargetDiscoveryStatic{
+									Nodes: []string{"controller0"},
+								},
+							},
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommandStatus{
+				ID:    123,
+				State: appc.PlanSchedulable,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Controllers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
+					},
+				},
+			},
+			appc.PlanSchedulable,
+			true,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
+			},
+			nil,
+			true,
 		},
 	}
 
@@ -158,7 +222,23 @@ func TestSchedulable(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
+			builder := fake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme)
+			if test.conflictUpdate {
+				var conflictOnce atomic.Bool
+				builder.WithInterceptorFuncs(interceptor.Funcs{
+					Update: func(ctx context.Context, client crcli.WithWatch, obj crcli.Object, opts ...crcli.UpdateOption) error {
+						if !conflictOnce.Swap(true) {
+							return apierrors.NewConflict(schema.GroupResource{
+								Group:    "autopilot.k0sproject.io",
+								Resource: "controlnodes",
+							}, obj.GetName(), errors.New("injected conflict"))
+						}
+						return client.Update(ctx, obj, opts...)
+					},
+				})
+				t.Cleanup(func() { assert.True(t, conflictOnce.Load(), "Conflict hasn't been injected.") })
+			}
+			client := builder.Build()
 
 			provider := NewK0sUpdatePlanCommandProvider(
 				logrus.NewEntry(logrus.StandardLogger()),
