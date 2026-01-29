@@ -99,6 +99,9 @@ build_docker_image = \
 	  --build-arg BUILD_SHIM_GO_CGO_ENABLED=$($(patsubst %/Dockerfile,%,$<)_build_shim_go_cgo_enabled) \
 	  --build-arg BUILD_GO_FLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_flags) \
 	  --build-arg BUILD_GO_LDFLAGS='$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags) $($(patsubst %/Dockerfile,%,$<)_build_go_ldflags_extra)' \
+	  --build-arg BUILD_CFLAGS='$($(patsubst %/Dockerfile,%,$<)_build_cflags)' \
+	  --build-arg BUILD_LDFLAGS='$($(patsubst %/Dockerfile,%,$<)_build_ldflags)' \
+	  --build-arg BUILD_CONFIGURE_FLAGS='$($(patsubst %/Dockerfile,%,$<)_build_configure_flags)' \
 	  -- $(dir $<)
 
 .docker-image.%.stamp: %/Dockerfile Makefile.variables
