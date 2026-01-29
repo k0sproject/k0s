@@ -257,6 +257,11 @@ jobs:
           & kubectl get nodes,pods -A
           go test -v -count=1 ./inttest/windows
 
+      - name: Stop & reset k0s worker
+        run: |
+          & .\k0s.exe stop --debug
+          & .\k0s.exe reset --debug
+
       - name: Cluster state
         if: failure()
         run: |
