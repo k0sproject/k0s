@@ -65,6 +65,9 @@ iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 
 keepalived_version = 2.2.8
 keepalived_buildimage = docker.io/library/alpine:$(alpine_patch_version)
+keepalived_build_cflags = -static -s
+keepalived_build_ldflags = -static
+keepalived_build_configure_flags = --disable-dynamic-linking
 
 clean-iid-files = \
 	for i in $(IID_FILES); do \
