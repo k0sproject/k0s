@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,7 +36,8 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: false}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
+	leaderStatus := func() leaderelection.Status { return leaderelection.StatusPending }
+	r := NewEndpointReconciler(config, leaderStatus, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	ctx := t.Context()
 	assert.NoError(t, r.Init(ctx))
@@ -70,7 +71,8 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 		fakeFactory := testutil.NewFakeClientFactory()
 		config := getFakeConfig()
 
-		r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, test.afnet)
+		leaderStatus := func() leaderelection.Status { return leaderelection.StatusLeading }
+		r := NewEndpointReconciler(config, leaderStatus, fakeFactory, fakeResolver{}, test.afnet)
 
 		ctx := t.Context()
 		assert.NoError(t, r.Init(ctx))
@@ -100,7 +102,8 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	assert.NoError(t, err)
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
+	leaderStatus := func() leaderelection.Status { return leaderelection.StatusLeading }
+	r := NewEndpointReconciler(config, leaderStatus, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	assert.NoError(t, r.Init(ctx))
 
@@ -136,7 +139,8 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
+	leaderStatus := func() leaderelection.Status { return leaderelection.StatusLeading }
+	r := NewEndpointReconciler(config, leaderStatus, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	assert.NoError(t, r.Init(ctx))
 
@@ -173,7 +177,8 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
+	leaderStatus := func() leaderelection.Status { return leaderelection.StatusLeading }
+	r := NewEndpointReconciler(config, leaderStatus, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
