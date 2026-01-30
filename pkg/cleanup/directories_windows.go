@@ -7,7 +7,6 @@ package cleanup
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,23 +19,20 @@ import (
 
 // Run removes the k0s data, kubelet root, and run directories.
 func (d *directories) Run() error {
-	var errs []error
 	paths := dedupePaths([]string{d.kubeletRootDir, d.dataDir, d.runDir})
 	for _, path := range paths {
 		if path == "" {
 			continue
 		}
-		if err := removeDirectory(path); err != nil {
-			errs = append(errs, err)
-		}
+		removeDirectory(path)
 	}
-	return errors.Join(errs...)
+	return nil
 }
 
-func removeDirectory(path string) error {
+func removeDirectory(path string) {
 	err := os.RemoveAll(path)
 	if err == nil || errors.Is(err, os.ErrNotExist) {
-		return nil
+		return
 	}
 
 	// Deletion failed, try taking ownership and resetting permissions.
@@ -59,24 +55,20 @@ func removeDirectory(path string) error {
 		}),
 	)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("failed to delete %s: %w", path, err)
+		logrus.WithError(err).Warnf("failed to delete %s", path)
 	}
-	return nil
 }
 
 // takeOwnership uses takeown and icacls to take ownership and grant full
 // control to administrators, handling containerd snapshots with restrictive ACLs.
+// These commands may return non-zero exit codes even when partially successful,
+// so we rely on the subsequent RemoveAll to determine actual success.
 func takeOwnership(path string) {
-	if out, err := exec.Command("takeown", "/F", path, "/R", "/A", "/D", "Y").CombinedOutput(); err != nil {
-		logrus.WithError(err).Debugf("takeown failed for %s: %s", path, string(out))
-	} else {
-		logrus.Debugf("took ownership of %s", path)
+	if out, err := exec.Command("takeown", "/F", path, "/R", "/A", "/D", "Y", "/Q").CombinedOutput(); err != nil {
+		logrus.WithError(err).Debugf("takeown for %s: %s", path, strings.TrimSpace(string(out)))
 	}
-
 	if out, err := exec.Command("icacls", path, "/grant", "administrators:F", "/T", "/C", "/Q").CombinedOutput(); err != nil {
-		logrus.WithError(err).Debugf("icacls failed for %s: %s", path, string(out))
-	} else {
-		logrus.Debugf("granted permissions on %s", path)
+		logrus.WithError(err).Debugf("icacls for %s: %s", path, strings.TrimSpace(string(out)))
 	}
 }
 
