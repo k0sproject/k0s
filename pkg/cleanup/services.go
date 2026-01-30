@@ -33,6 +33,7 @@ func (s *services) Run() error {
 			}
 		} else {
 			logrus.Infof("uninstalled k0s%s service", role)
+			return nil
 		}
 	}
 
