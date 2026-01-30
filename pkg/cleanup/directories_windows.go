@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -18,8 +19,6 @@ import (
 )
 
 // Run removes the k0s data, kubelet root, and run directories.
-// On Windows, files like containerd VHDX snapshots may remain locked briefly
-// after processes exit, so we retry with backoff.
 func (d *directories) Run() error {
 	var errs []error
 	paths := dedupePaths([]string{d.kubeletRootDir, d.dataDir, d.runDir})
@@ -27,26 +26,58 @@ func (d *directories) Run() error {
 		if path == "" {
 			continue
 		}
-		err := retry.Do(
-			func() error {
-				return os.RemoveAll(path)
-			},
-			retry.Attempts(5),
-			retry.Delay(2*time.Second),
-			retry.DelayType(retry.BackOffDelay),
-			retry.LastErrorOnly(true),
-			retry.RetryIf(func(err error) bool {
-				return err != nil && !errors.Is(err, os.ErrNotExist)
-			}),
-			retry.OnRetry(func(n uint, err error) {
-				logrus.WithError(err).Debugf("Retrying deletion of %s (attempt %d)", path, n+1)
-			}),
-		)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			errs = append(errs, fmt.Errorf("failed to delete %s: %w", path, err))
+		if err := removeDirectory(path); err != nil {
+			errs = append(errs, err)
 		}
 	}
 	return errors.Join(errs...)
+}
+
+func removeDirectory(path string) error {
+	err := os.RemoveAll(path)
+	if err == nil || errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	// Deletion failed, try taking ownership and resetting permissions.
+	logrus.Debugf("initial deletion of %s failed, attempting to take ownership", path)
+	takeOwnership(path)
+
+	err = retry.Do(
+		func() error {
+			return os.RemoveAll(path)
+		},
+		retry.Attempts(5),
+		retry.Delay(2*time.Second),
+		retry.DelayType(retry.BackOffDelay),
+		retry.LastErrorOnly(true),
+		retry.RetryIf(func(err error) bool {
+			return err != nil && !errors.Is(err, os.ErrNotExist)
+		}),
+		retry.OnRetry(func(n uint, err error) {
+			logrus.WithError(err).Debugf("retrying deletion of %s (attempt %d)", path, n+1)
+		}),
+	)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to delete %s: %w", path, err)
+	}
+	return nil
+}
+
+// takeOwnership uses takeown and icacls to take ownership and grant full
+// control to administrators, handling containerd snapshots with restrictive ACLs.
+func takeOwnership(path string) {
+	if out, err := exec.Command("takeown", "/F", path, "/R", "/A", "/D", "Y").CombinedOutput(); err != nil {
+		logrus.WithError(err).Debugf("takeown failed for %s: %s", path, string(out))
+	} else {
+		logrus.Debugf("took ownership of %s", path)
+	}
+
+	if out, err := exec.Command("icacls", path, "/grant", "administrators:F", "/T", "/C", "/Q").CombinedOutput(); err != nil {
+		logrus.WithError(err).Debugf("icacls failed for %s: %s", path, string(out))
+	} else {
+		logrus.Debugf("granted permissions on %s", path)
+	}
 }
 
 func dedupePaths(paths []string) []string {
