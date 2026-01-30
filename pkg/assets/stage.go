@@ -4,7 +4,8 @@
 package assets
 
 import (
-	"compress/gzip"
+	"archive/zip"
+	"compress/bzip2"
 	"errors"
 	"fmt"
 	"io"
@@ -16,7 +17,9 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/sirupsen/logrus"
+	"github.com/ulikunitz/xz/lzma"
 )
 
 // Stages the embedded executable with the given name into dir. If the
@@ -77,18 +80,50 @@ func stage(name, path string, perm os.FileMode) error {
 		return fmt.Errorf("unable to stat current executable: %w", err)
 	}
 
-	gzname := "bin/" + name + ".gz"
-	bin, embedded := BinData[gzname]
-	if !embedded {
-		return notEmbeddedError(gzname)
+	zipFile, err := zip.OpenReader(selfexe)
+	if err != nil {
+		return fmt.Errorf("while staging %q: %w", name, err)
 	}
-	log.Debugf("%s is at offset %d", gzname, bin.offset)
+	defer func() { err = errors.Join(err, zipFile.Close()) }()
+
+	zipFile.RegisterDecompressor( /* bzip2: */ 12, func(r io.Reader) io.ReadCloser {
+		return io.NopCloser(bzip2.NewReader(r))
+	})
+	zipFile.RegisterDecompressor( /* lzma: */ 14, func(lzmaReader io.Reader) io.ReadCloser {
+		lzmaReader, err := lzma.NewReader(lzmaReader)
+		if err != nil {
+			return io.NopCloser(&deferredReaderError{err})
+		}
+		return io.NopCloser(lzmaReader)
+	})
+	zipFile.RegisterDecompressor(zstd.ZipMethodWinZip, func(r io.Reader) io.ReadCloser {
+		decoder, err := zstd.NewReader(r)
+		if err != nil {
+			return io.NopCloser(&deferredReaderError{err})
+		}
+		return &closingZSTDDecoder{decoder}
+	})
+
+	var (
+		fileToExtract *zip.File
+		fileInfo      os.FileInfo
+	)
+	for _, archivedFile := range zipFile.File {
+		if archivedFile.Name == name {
+			fileToExtract = archivedFile
+			fileInfo = fileToExtract.FileInfo()
+			break
+		}
+	}
+	if fileToExtract == nil || fileInfo.IsDir() {
+		return notEmbeddedError(name)
+	}
 
 	// Skip extraction if the path is up to date, i.e. if its modification time
 	// matches the one of the k0s executable and its file size matches the one
 	// of the to-be-staged file.
 	if info, err := os.Stat(path); err == nil {
-		if !exinfo.IsDir() && exinfo.ModTime().Equal(info.ModTime()) && info.Size() == bin.originalSize {
+		if !exinfo.IsDir() && exinfo.ModTime().Equal(info.ModTime()) && info.Size() == fileInfo.Size() {
 			log.Debug("Re-use existing file")
 			return nil
 		}
@@ -98,20 +133,15 @@ func stage(name, path string, perm os.FileMode) error {
 		return err
 	}
 
-	infile, err := os.Open(selfexe)
+	// Get a reader for the uncompressed file contents
+	contents, err := fileToExtract.Open()
 	if err != nil {
-		return fmt.Errorf("unable to open current executable: %w", err)
+		if errors.Is(err, zip.ErrAlgorithm) {
+			err = fmt.Errorf("%w (compression method %d)", err, fileToExtract.Method)
+		}
+		return fmt.Errorf("while extracting %q: %w", name, err)
 	}
-	defer infile.Close()
-
-	// find location at EOF - BinDataSize + offs
-	if _, err := infile.Seek(-BinDataSize+bin.offset, 2); err != nil {
-		return fmt.Errorf("failed to find embedded file position: %w", err)
-	}
-	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
-	if err != nil {
-		return fmt.Errorf("failed to create gzip reader: %w", err)
-	}
+	defer func() { err = errors.Join(err, contents.Close()) }()
 
 	log.Debug("Writing static file")
 
@@ -122,7 +152,7 @@ func stage(name, path string, perm os.FileMode) error {
 		// modification time as the `k0s` executable.
 		WithModificationTime(exinfo.ModTime()).
 		Do(func(dst file.AtomicWriter) error {
-			_, err := io.Copy(dst, gz)
+			_, err := io.Copy(dst, contents)
 			return err
 		})
 }
@@ -131,4 +161,17 @@ type notEmbeddedError string
 
 func (e notEmbeddedError) Error() string {
 	return "not an embedded asset: " + string(e)
+}
+
+type deferredReaderError struct{ err error }
+
+func (d *deferredReaderError) Read(p []byte) (n int, err error) { return 0, d.err }
+
+type closingZSTDDecoder struct {
+	*zstd.Decoder
+}
+
+func (d *closingZSTDDecoder) Close() error {
+	d.Decoder.Close()
+	return nil
 }

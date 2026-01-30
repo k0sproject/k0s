@@ -193,17 +193,14 @@ pkg/client/clientset/.client-gen.stamp: $(GO_ENV_REQUISITES) hack/tools/boilerpl
 	  && mv -f -- "$$gendir/out/clientset" pkg/client/.
 	touch -- '$@'
 
-ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
-BUILD_GO_TAGS += noembedbins
-else
-codegen_targets += pkg/assets/zz_generated_offsets_$(TARGET_OS).go
-zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
-pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
-pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: $(GO_ENV_REQUISITES) go.sum
-	GOOS=${GOHOSTOS} $(GO) run -tags=hack hack/gen-bindata/cmd/main.go -o bindata_$(zz_os) -pkg assets \
-	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
-	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
+ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
+.bins.%.stamp: embedded-bins/Makefile.variables
+	$(MAKE) -C embedded-bins TARGET_OS=$(@:.bins.%.stamp=%)
+	touch -- '$@'
+
+codegen_targets += bindata_$(TARGET_OS)
+bindata_$(TARGET_OS): $(GO_ENV_REQUISITES) go.sum .bins.$(TARGET_OS).stamp hack/zip-files/*
+	CGO_ENABLED=0 $(GO) run -tags=hack hack/zip-files/main.go embedded-bins/staging/$(TARGET_OS)/bin/* >$@
 endif
 
 k0s: TARGET_OS = linux
@@ -220,12 +217,6 @@ ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
 endif
 	@printf '\n%s size: %s\n\n' '$@' "$$(du -sh -- $@ | cut -f1)"
 
-.bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
-	$(MAKE) -C embedded-bins \
-	  TARGET_OS=$(patsubst .bins.%.stamp,%,$@) \
-	  SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
-	touch $@
-
 .PHONY: codegen
 codegen: $(codegen_targets)
 
@@ -233,7 +224,7 @@ codegen: $(codegen_targets)
 .PHONY: bindata
 bindata:
 ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+bindata: bindata_$(TARGET_OS)
 endif
 
 .PHONY: lint-copyright
@@ -323,7 +314,7 @@ clean-airgap-image-bundles:
 
 .PHONY: clean
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
-	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata*
+	-rm -f k0s k0s.exe .bins.*stamp bindata*
 	-rm -rf $(K0S_GO_BUILD_CACHE)
 	-find pkg/apis -type f -name .controller-gen.stamp -delete
 	-rm pkg/client/clientset/.client-gen.stamp
