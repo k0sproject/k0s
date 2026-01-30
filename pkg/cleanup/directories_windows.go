@@ -64,7 +64,7 @@ func removeDirectory(path string) {
 // These commands may return non-zero exit codes even when partially successful,
 // so we rely on the subsequent RemoveAll to determine actual success.
 func takeOwnership(path string) {
-	if out, err := exec.Command("takeown", "/F", path, "/R", "/A", "/D", "Y", "/Q").CombinedOutput(); err != nil {
+	if out, err := exec.Command("takeown", "/F", path, "/R", "/A", "/D", "Y").CombinedOutput(); err != nil {
 		logrus.WithError(err).Debugf("takeown for %s: %s", path, strings.TrimSpace(string(out)))
 	}
 	if out, err := exec.Command("icacls", path, "/grant", "administrators:F", "/T", "/C", "/Q").CombinedOutput(); err != nil {
