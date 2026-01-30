@@ -11,6 +11,7 @@ import (
 	"os/exec"
 
 	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/sirupsen/logrus"
 )
 
 type services struct{}
@@ -25,8 +26,13 @@ func (s *services) Run() error {
 	var errs []error
 
 	for _, role := range []string{"controller", "worker"} {
-		if err := install.UninstallService(role); err != nil && (!errors.Is(err, fs.ErrNotExist) && !isExitCode(err, 1)) {
-			errs = append(errs, err)
+		logrus.Debugf("attempting to uninstall k0s%s service", role)
+		if err := install.UninstallService(role); err != nil {
+			if !errors.Is(err, fs.ErrNotExist) && !isExitCode(err, 1) {
+				errs = append(errs, err)
+			}
+		} else {
+			logrus.Infof("uninstalled k0s%s service", role)
 		}
 	}
 
