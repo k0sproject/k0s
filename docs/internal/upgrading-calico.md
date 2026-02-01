@@ -14,9 +14,8 @@ you may follow these steps to upgrade Calico to the latest version:
 1. run `./hack/get-calico.sh <version>`
 2. check the git diff to see if it looks sensible
 3. re-apply our manual adjustments (documented below)
-4. run `make bindata-manifests`
-5. compile, pray, and test
-6. commit and create a PR
+4. compile, pray, and test
+5. commit and create a PR
 
 [official Calico repo]: https://github.com/projectcalico/calico/blob/master/manifests/calico.yaml
 
