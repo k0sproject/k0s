@@ -595,33 +595,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-k0s" class="md-nav__link">
+  <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run k0s
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-generate-worker-token-from-control-plane" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Generate worker token from control plane
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-enable-windows-containers-feature" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        2. Enable Windows Containers feature
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
-  <a href="#strict-affinity" class="md-nav__link">
+  <a href="#3-download-and-install-k0s" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Strict-affinity
+        3. Download and install k0s
       
     </span>
   </a>
@@ -2994,33 +3005,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-k0s" class="md-nav__link">
+  <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run k0s
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-generate-worker-token-from-control-plane" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Generate worker token from control plane
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-enable-windows-containers-feature" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        2. Enable Windows Containers feature
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
-  <a href="#strict-affinity" class="md-nav__link">
+  <a href="#3-download-and-install-k0s" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Strict-affinity
+        3. Download and install k0s
       
     </span>
   </a>
@@ -3107,29 +3129,36 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <h1 id="run-k0s-worker-nodes-in-windows">Run k0s worker nodes in Windows<a class="headerlink" href="#run-k0s-worker-nodes-in-windows" title="Permanent link">#</a></h1>
 <p><strong>IMPORTANT</strong>: Windows support for k0s is under active development and <strong>must be</strong> considered experimental.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
-<p>The cluster must be running at least one worker node and control plane on Linux. You can use Windows to run additional worker nodes.</p>
-<h2 id="run-k0s">Run k0s<a class="headerlink" href="#run-k0s" title="Permanent link">#</a></h2>
+<ul>
+<li>The cluster must be running at least one worker node and control plane on Linux. You can use Windows to run additional worker nodes. <strong>Supported Windows versions</strong>: Windows Server 2019 and Windows Server 2022.</li>
+</ul>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">#</a></h2>
+<h3 id="1-generate-worker-token-from-control-plane">1. Generate worker token from control plane<a class="headerlink" href="#1-generate-worker-token-from-control-plane" title="Permanent link">#</a></h3>
+<p>On your Linux control plane node, generate a worker token:</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--role<span class="o">=</span>worker<span class="w"> </span>&gt;<span class="w"> </span>worker-token.txt
+</code></pre></div>
+<p>Transfer this <code>worker-token.txt</code> file to your Windows node at <code>C:\k0s-token.txt</code>.</p>
+<h3 id="2-enable-windows-containers-feature">2. Enable Windows Containers feature<a class="headerlink" href="#2-enable-windows-containers-feature" title="Permanent link">#</a></h3>
+<p>Open PowerShell as Administrator on the Windows node and run:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">Install-WindowsFeature</span> <span class="n">-Name</span> <span class="n">Containers</span>
+</code></pre></div>
+<p><strong>Note</strong>: A system reboot is required after enabling this feature.</p>
+<h3 id="3-download-and-install-k0s">3. Download and install k0s<a class="headerlink" href="#3-download-and-install-k0s" title="Permanent link">#</a></h3>
+<p>After rebooting, open PowerShell as Administrator and run:</p>
+<div class="highlight"><pre><span></span><code><span class="c"># Set variables</span>
+<span class="nv">$K0S_VERSION</span> <span class="p">=</span> <span class="s2">&quot;v1.34.3+k0s.0&quot;</span>
+<span class="nv">$TOKEN_FILE</span> <span class="p">=</span> <span class="s2">&quot;C:\k0s-token.txt&quot;</span>
+
+<span class="c"># Download k0s</span>
+<span class="nv">$encodedVersion</span> <span class="p">=</span> <span class="nv">$K0S_VERSION</span><span class="p">.</span><span class="n">Replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="s1">&#39;%2B&#39;</span><span class="p">)</span>
+<span class="nv">$url</span> <span class="p">=</span> <span class="s2">&quot;https://github.com/k0sproject/k0s/releases/download/$encodedVersion/k0s-$K0S_VERSION-amd64.exe&quot;</span>
+<span class="nb">Invoke-WebRequest</span> <span class="n">-Uri</span> <span class="nv">$url</span> <span class="n">-OutFile</span> <span class="s2">&quot;$env:LOCALAPPDATA\Microsoft\WindowsApps\k0s.exe&quot;</span>
+
+<span class="c"># Install and start k0s worker</span>
+<span class="n">k0s</span> <span class="n">install</span> <span class="n">worker</span> <span class="p">-</span><span class="n">-token</span><span class="o">-file</span> <span class="nv">$TOKEN_FILE</span>
+<span class="n">k0s</span> <span class="nb">start</span>
+</code></pre></div>
 <p><strong>Note</strong>: k0s supervises <code>kubelet.exe</code> and <code>kube-proxy.exe</code>.</p>
-<p>During the first run, the Calico install script is created as <code>C:\bootstrap.ps1</code>. This bootstrap script downloads the Calico binaries, builds pause container and sets up vSwitch settings.</p>
-<p>Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up.</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--cri-socket<span class="o">=</span>remote:npipe:////./pipe/containerd-containerd<span class="w"> </span>&lt;token&gt;
-</code></pre></div>
-<p>You must initiate the cluster control with the correct config.</p>
-<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
-<h3 id="strict-affinity">Strict-affinity<a class="headerlink" href="#strict-affinity" title="Permanent link">#</a></h3>
-<p>You must enable strict affinity to run the windows node.</p>
-<p>If the <code>spec.network.Calico.withWindowsNodes</code> field is set to <code>true</code> (it is set to <code>false</code> by default) the additional Calico related manifest <code>/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml</code> is created with the following values:</p>
-<div class="highlight"><pre><span></span><code><span class="nn">---</span>
-<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">crd.projectcalico.org/v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IPAMConfig</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">strictAffinity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</code></pre></div>
-<p>Alternately, you can manually execute <code>calicoctl</code>:</p>
-<div class="highlight"><pre><span></span><code>calicoctl<span class="w"> </span>ipam<span class="w"> </span>configure<span class="w"> </span>--strictaffinity<span class="o">=</span><span class="nb">true</span>
-</code></pre></div>
 <h3 id="network-connectivity-in-aws">Network connectivity in AWS<a class="headerlink" href="#network-connectivity-in-aws" title="Permanent link">#</a></h3>
 <p>Disable the <code>Change Source/Dest. Check</code> option for the network interface attached to your EC2 instance. In AWS, the console option for the network interface is in the <strong>Actions</strong> menu.</p>
 <h2 id="useful-commands">Useful commands<a class="headerlink" href="#useful-commands" title="Permanent link">#</a></h2>
