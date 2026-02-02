@@ -55,19 +55,20 @@ systemd or OpenRC as its init system.
     sudo k0s install controller -e ETCD_UNSUPPORTED_ARCH=arm
     ```
 
-    The system service can be reinstalled with the `--force` flag:
+    `k0s install` fails if the service is already installed. Use the `--force`
+    flag to replace the existing service definition:
 
     ```shell
     sudo k0s install controller --single --force
     ```
 
-    If you need to reinstall and immediately start the service, combine `--force` with `--start`:
+    This doesn't stop or restart an already running service, so the changes
+    only take effect once the service gets restarted. To restart it right away,
+    combine `--force` with `--start`:
 
     ```shell
     sudo k0s install controller --single --force --start
     ```
-
-    When used with `--start`, the `--force` flag will also restart an already running service.
 
 3. Start k0s as a service
 
