@@ -14,7 +14,9 @@ environments that don't require high availability or multiple nodes.
 **Note**: Before proceeding, make sure to review the [System Requirements](system-requirements.md).
 
 The following steps work on every typical Linux distribution that uses either
-systemd or OpenRC as its init system.
+systemd or OpenRC as its init system. On other init systems, `k0s install`
+fails, and k0s has to be started from a service definition of your own. The
+other sub-commands work everywhere.
 
 ## Install k0s
 

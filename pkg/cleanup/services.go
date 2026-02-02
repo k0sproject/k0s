@@ -8,11 +8,9 @@ package cleanup
 import (
 	"context"
 	"errors"
-	"io/fs"
-	"os/exec"
 
 	"github.com/k0sproject/k0s/pkg/install"
-	"github.com/kardianos/service"
+	"github.com/k0sproject/k0s/pkg/sysservice"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,13 +22,16 @@ func (s *services) Name() string {
 }
 
 // Run uninstalls k0s services that are found on the host
-func (s *services) Run(context.Context) error {
+func (s *services) Run(ctx context.Context) error {
 	var errs []error
 
 	for _, role := range []string{"controller", "worker"} {
 		logrus.Debugf("attempting to uninstall k0s%s service", role)
-		if err := install.UninstallService(role); err != nil {
-			if !errors.Is(err, service.ErrNotInstalled) && !errors.Is(err, fs.ErrNotExist) && !isExitCode(err, 1) {
+		if err := install.UninstallService(ctx, role); err != nil {
+			// Nothing to clean up if there's no service, and none can have
+			// been installed in the first place without a supported init
+			// system.
+			if !errors.Is(err, sysservice.ErrNotInstalled) && !errors.Is(err, sysservice.ErrUnsupportedInitSystem) {
 				errs = append(errs, err)
 			}
 		} else {
@@ -40,9 +41,4 @@ func (s *services) Run(context.Context) error {
 	}
 
 	return errors.Join(errs...)
-}
-
-func isExitCode(err error, exitcode int) bool {
-	e, ok := errors.AsType[*exec.ExitError](err)
-	return ok && e.ExitCode() == exitcode
 }

@@ -10,8 +10,8 @@ import (
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/pkg/sysservice"
 
-	"github.com/kardianos/service"
 	"github.com/spf13/cobra"
 )
 
@@ -27,18 +27,20 @@ func NewStopCmd() *cobra.Command {
 			if runtime.GOOS != "windows" && os.Geteuid() != 0 {
 				return errors.New("this command must be run as root")
 			}
-			svc, err := install.InstalledService()
+
+			ctx := cmd.Context()
+			svc, err := install.InstalledService(ctx)
 			if err != nil {
 				return err
 			}
-			status, err := svc.Status()
+			status, err := svc.Status(ctx)
 			if err != nil {
 				return err
 			}
-			if status == service.StatusStopped {
+			if status == sysservice.StatusStopped {
 				return errors.New("already stopped")
 			}
-			return svc.Stop()
+			return svc.Stop(ctx)
 		},
 	}
 
