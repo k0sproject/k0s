@@ -6,12 +6,11 @@
 package cleanup
 
 import (
+	"context"
 	"errors"
-	"io/fs"
-	"os/exec"
+	"os"
 
 	"github.com/k0sproject/k0s/pkg/install"
-	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,13 +22,13 @@ func (s *services) Name() string {
 }
 
 // Run uninstalls k0s services that are found on the host
-func (s *services) Run() error {
+func (s *services) Run(ctx context.Context) error {
 	var errs []error
 
 	for _, role := range []string{"controller", "worker"} {
 		logrus.Debugf("attempting to uninstall k0s%s service", role)
-		if err := install.UninstallService(role); err != nil {
-			if !errors.Is(err, service.ErrNotInstalled) && !errors.Is(err, fs.ErrNotExist) && !isExitCode(err, 1) {
+		if err := install.UninstallService(ctx, role); err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
 				errs = append(errs, err)
 			}
 		} else {
@@ -39,9 +38,4 @@ func (s *services) Run() error {
 	}
 
 	return errors.Join(errs...)
-}
-
-func isExitCode(err error, exitcode int) bool {
-	var e *exec.ExitError
-	return errors.As(err, &e) && e.ExitCode() == exitcode
 }

@@ -7,6 +7,7 @@ package cleanup
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -19,7 +20,7 @@ import (
 )
 
 // Run removes Windows CNI artifacts.
-func (c *cni) Run() error {
+func (c *cni) Run(ctx context.Context) error {
 	removeCNIConfigFiles()
 	removeCalicoServices()
 	cleanupHNSArtifacts()

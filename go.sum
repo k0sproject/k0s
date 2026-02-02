@@ -315,8 +315,6 @@ github.com/k0sproject/bootloose v0.9.6 h1:gXm/k79cLLXSTs8XRw1TuNH9p4al5ZbAuKNrm1
 github.com/k0sproject/bootloose v0.9.6/go.mod h1:CwSOfAP1jQO+SB4zFZbpNVRbuQJu4u79DiDzoLc1TGw=
 github.com/k0sproject/version v0.8.0 h1:Yh1SFDeBqQ7etrGwffY8bWKdbAUjeBOhiZ6oQuuz4sM=
 github.com/k0sproject/version v0.8.0/go.mod h1:iNV3O8blndsQhxZ8zACfpQhrLDlrTvDlCzx+vgCFtSI=
-github.com/kardianos/service v1.2.4 h1:XNlGtZOYNx2u91urOdg/Kfmc+gfmuIo1Dd3rEi2OgBk=
-github.com/kardianos/service v1.2.4/go.mod h1:E4V9ufUuY82F7Ztlu1eN9VXWIQxg8NoLQlmFe0MtrXc=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kisielk/sqlstruct v0.0.0-20201105191214-5f3e10d3ab46 h1:veS9QfglfvqAw2e+eeNT/SbGySq8ajECXJ9e4fPoLhY=
