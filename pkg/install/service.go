@@ -4,11 +4,12 @@
 package install
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"runtime"
+	"os"
 
-	"github.com/kardianos/service"
+	"github.com/k0sproject/k0s/pkg/sysservice"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,128 +18,117 @@ var (
 	k0sDescription = "k0s - Zero Friction Kubernetes"
 )
 
-type Program struct{}
-
-func (p *Program) Start(service.Service) error {
-	// Start should not block. Do the actual work async.
-	return nil
-}
-
-func (p *Program) Stop(service.Service) error {
-	// Stop should not block. Return with a few seconds.
-	return nil
-}
-
 // InstalledService returns a k0s service if one has been installed on the host or an error otherwise.
-func InstalledService() (service.Service, error) {
-	prg := &Program{}
+func InstalledService(ctx context.Context) (sysservice.Service, error) {
 	for _, role := range []string{"controller", "worker"} {
-		c := GetServiceConfig(role)
-		s, err := service.New(prg, c)
+		spec, err := GetServiceSpec(role)
 		if err != nil {
 			return nil, err
 		}
-		_, err = s.Status()
+		svc, err := sysservice.New(spec)
+		if err != nil {
+			return nil, err
+		}
 
-		if err != nil && errors.Is(err, service.ErrNotInstalled) {
-			continue
-		}
+		st, err := svc.Status(ctx)
 		if err != nil {
 			return nil, err
 		}
-		return s, nil
+		if st != sysservice.StatusNotInstalled {
+			return svc, nil
+		}
 	}
 
-	var s service.Service
-	return s, errors.New("k0s has not been installed as a service")
+	return nil, errors.New("k0s has not been installed as a service")
 }
 
 // InstallService installs the k0s service, per the given arguments, and the detected platform
-func InstallService(args []string, envVars []string, force bool) error {
-	var svcConfig *service.Config
+func InstallService(ctx context.Context, args []string, envVars []string, force bool) error {
+	var spec sysservice.Spec
+	var err error
 
-	prg := &Program{}
 	for _, v := range args {
 		if v == "controller" || v == "worker" {
-			svcConfig = GetServiceConfig(v)
+			spec, err = GetServiceSpec(v)
+			if err != nil {
+				return err
+			}
 			break
 		}
 	}
 
-	s, err := service.New(prg, svcConfig)
+	svc, err := sysservice.New(spec)
 	if err != nil {
 		return err
 	}
 
-	configureServicePlatform(s, svcConfig)
-
-	if len(envVars) > 0 {
-		svcConfig.Option["Environment"] = envVars
-	}
-
-	if runtime.GOOS == "windows" {
-		args = append([]string{"service=" + svcConfig.Name}, args...)
-	}
-
-	svcConfig.Arguments = args
+	spec.Args = args
 
 	if force {
-		logrus.Infof("Uninstalling %s service", svcConfig.Name)
-		err = s.Uninstall()
-		if err != nil && !errors.Is(err, service.ErrNotInstalled) {
+		logrus.Infof("Uninstalling %s service", spec.Name)
+		err = svc.Uninstall(ctx)
+		if err != nil {
 			logrus.Warnf("failed to uninstall service: %v", err)
 		}
 	}
 
-	logrus.Infof("Installing %s service", svcConfig.Name)
-	return s.Install()
+	logrus.Infof("Installing %s service", spec.Name)
+	return svc.Install(ctx)
 }
 
 func UninstallService(role string) error {
-	prg := &Program{}
-
+	ctx := context.Background()
 	if role == "controller+worker" {
 		role = "controller"
 	}
 
-	svcConfig := GetServiceConfig(role)
-	s, err := service.New(prg, svcConfig)
+	spec, err := GetServiceSpec(role)
+	if err != nil {
+		return err
+	}
+	svc, err := sysservice.New(spec)
 	if err != nil {
 		return err
 	}
 
-	return s.Uninstall()
+	return svc.Uninstall(ctx)
 }
 
-func GetServiceConfig(role string) *service.Config {
+func GetServiceSpec(role string) (sysservice.Spec, error) {
 	var k0sDisplayName string
 
 	if role == "controller" || role == "worker" {
 		k0sDisplayName = "k0s " + role
 		k0sServiceName = "k0s" + role
 	}
-	return &service.Config{
+
+	k0sExec, err := os.Executable()
+	if err != nil {
+		return sysservice.Spec{}, err
+	}
+	return sysservice.Spec{
 		Name:        k0sServiceName,
 		DisplayName: k0sDisplayName,
 		Description: k0sDescription,
-	}
+		Exec:        k0sExec,
+	}, nil
 }
 
 // StartInstalledService starts (or restarts with force) the installed k0s service.
-func StartInstalledService(force bool) error {
-	svc, err := InstalledService()
+func StartInstalledService(ctx context.Context, force bool) error {
+	svc, err := InstalledService(ctx)
 	if err != nil {
 		return err
 	}
-	status, _ := svc.Status()
-	if status == service.StatusRunning {
+	status, _ := svc.Status(ctx)
+	if status == sysservice.StatusRunning {
 		if force {
-			if err := svc.Restart(); err != nil {
+			if err := svc.Restart(ctx); err != nil {
 				return fmt.Errorf("failed to restart service: %w", err)
 			}
 			return nil
 		}
 		return errors.New("already running")
 	}
-	return svc.Start()
+	return svc.Start(ctx)
 }
