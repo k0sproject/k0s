@@ -53,12 +53,14 @@ const HelmExtensionStackName = "helm"
 
 // Helm watch for Chart crd
 type ExtensionsController struct {
-	L             *logrus.Entry
-	helm          *helm.Commands
-	kubeConfig    string
-	leaderElector leaderelector.Interface
-	manifestsDir  string
-	stop          context.CancelFunc
+	L                 *logrus.Entry
+	helm              *helm.Commands
+	kubeConfig        string
+	kubeClientFactory kubeutil.ClientFactoryInterface
+	leaderElector     leaderelector.Interface
+	manifestsDir      string
+	repoStateTracker  *repoStateTracker
+	stop              context.CancelFunc
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
@@ -67,11 +69,13 @@ var _ manager.Reconciler = (*ExtensionsController)(nil)
 // NewExtensionsController builds new HelmAddons
 func NewExtensionsController(k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
-		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
-		helm:          helm.NewCommands(k0sVars),
-		kubeConfig:    k0sVars.AdminKubeConfigPath,
-		leaderElector: leaderElector,
-		manifestsDir:  filepath.Join(k0sVars.ManifestsDir, "helm"),
+		L:                 logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
+		helm:              helm.NewCommands(k0sVars),
+		kubeConfig:        k0sVars.AdminKubeConfigPath,
+		kubeClientFactory: kubeClientFactory,
+		leaderElector:     leaderElector,
+		manifestsDir:      filepath.Join(k0sVars.ManifestsDir, "helm"),
+		repoStateTracker:  newRepoStateTracker(),
 	}
 }
 
@@ -83,20 +87,20 @@ const (
 func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0sv1beta1.ClusterConfig) error {
 	ec.L.Info("Extensions reconciliation started")
 	defer ec.L.Info("Extensions reconciliation finished")
-	return ec.reconcileHelmExtensions(clusterConfig.Spec.Extensions.Helm)
+	return ec.reconcileHelmExtensions(ctx, clusterConfig.Spec.Extensions.Helm)
 }
 
 // reconcileHelmExtensions creates instance of Chart CR for each chart of the config file
 // it also reconciles repositories settings
 // the actual helm install/update/delete management is done by ChartReconciler structure
-func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.HelmExtensions) error {
+func (ec *ExtensionsController) reconcileHelmExtensions(ctx context.Context, helmSpec *k0sv1beta1.HelmExtensions) error {
 	if helmSpec == nil {
 		return nil
 	}
 
 	var errs []error
 	for _, repo := range helmSpec.Repositories {
-		if err := ec.addRepo(repo); err != nil {
+		if err := ec.addRepo(ctx, repo); err != nil {
 			errs = append(errs, fmt.Errorf("can't init repository %q: %w", repo.URL, err))
 		}
 	}
@@ -170,11 +174,34 @@ func isChartManifestFileName(fileName string) bool {
 	return regexp.MustCompile(`^-?[0-9]+_helm_extension_.+\.yaml$`).MatchString(fileName)
 }
 
+// extractRepoName extracts the repository name from a chart name
+// Returns empty string if the chart doesn't reference a repository (local path or OCI)
+func extractRepoName(chartName string) string {
+	// Skip OCI URLs
+	if regexp.MustCompile(`^oci://`).MatchString(chartName) {
+		return ""
+	}
+
+	// Skip local paths (absolute or relative)
+	if regexp.MustCompile(`^[./]|^[a-zA-Z]:`).MatchString(chartName) {
+		return ""
+	}
+
+	// Extract repository name from "repo/chart" format
+	parts := regexp.MustCompile(`/`).Split(chartName, 2)
+	if len(parts) > 1 {
+		return parts[0]
+	}
+
+	return ""
+}
+
 type ChartReconciler struct {
 	client.Client
-	helm          *helm.Commands
-	leaderElector leaderelector.Interface
-	L             *logrus.Entry
+	helm             *helm.Commands
+	leaderElector    leaderelector.Interface
+	repoStateTracker *repoStateTracker
+	L                *logrus.Entry
 }
 
 func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -210,6 +237,41 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 
 		return reconcile.Result{}, nil
 	}
+
+	// Check if the chart's repository is ready before proceeding
+	if repoName := extractRepoName(chartInstance.Spec.ChartName); repoName != "" {
+		if state := cr.repoStateTracker.GetState(repoName); state != nil {
+			var statusErr error
+			switch state.Status {
+			case RepoStatusPending:
+				cr.L.Debugf("Repository %q for chart %q is pending initialization, requeuing", repoName, chartInstance.Name)
+				statusErr = fmt.Errorf("waiting for repository %q to initialize", repoName)
+			case RepoStatusRetriableError:
+				cr.L.Warnf("Repository %q for chart %q has retriable error: %s, requeuing", repoName, chartInstance.Name, state.LastError)
+				statusErr = fmt.Errorf("repository %q not ready: %s", repoName, state.LastError)
+			case RepoStatusPermanentError:
+				cr.L.Errorf("Repository %q for chart %q has permanent error: %s", repoName, chartInstance.Name, state.LastError)
+				statusErr = fmt.Errorf("repository %q has permanent error: %s", repoName, state.LastError)
+			}
+
+			if statusErr != nil {
+				// Update chart status to reflect repository issue
+				if err := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
+					return cr.updateStatus(ctx, chartInstance, nil, statusErr)
+				}); err != nil {
+					cr.L.WithError(err).Warn("Failed to update chart status with repository error")
+				}
+
+				// For permanent errors, don't requeue
+				if state.Status == RepoStatusPermanentError {
+					return reconcile.Result{}, statusErr
+				}
+				// For pending/retriable, requeue
+				return reconcile.Result{RequeueAfter: 30 * time.Second}, statusErr
+			}
+		}
+	}
+
 	cr.L.Debugf("Install or update reconciliation request: %s", req)
 	if err := cr.updateOrInstallChart(ctx, chartInstance); err != nil {
 		return reconcile.Result{Requeue: true}, fmt.Errorf("can't update or install chart: %w", err)
@@ -351,8 +413,98 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 	return nil
 }
 
-func (ec *ExtensionsController) addRepo(repo k0sv1beta1.Repository) error {
+func (ec *ExtensionsController) addRepo(ctx context.Context, repo k0sv1beta1.Repository) error {
+	// If repository uses secret-based credentials, initialize asynchronously
+	if repo.CredentialsFrom != nil {
+		ec.repoStateTracker.MarkPending(repo)
+		ec.L.Infof("Repository %q requires secret-based credentials, initializing asynchronously", repo.Name)
+
+		go ec.initRepoWithRetry(ctx, repo)
+		return nil
+	}
+
+	// Otherwise, initialize synchronously as before
 	return ec.helm.AddRepository(repo)
+}
+
+// initRepoWithRetry attempts to initialize a repository with exponential backoff
+func (ec *ExtensionsController) initRepoWithRetry(ctx context.Context, repo k0sv1beta1.Repository) {
+	backoff := 1 * time.Second
+	maxBackoff := 5 * time.Minute
+
+	for {
+		// Try to initialize the repository
+		err := ec.initRepoWithSecret(ctx, repo)
+		if err == nil {
+			ec.repoStateTracker.MarkReady(repo)
+			ec.L.Infof("Successfully initialized repository %q", repo.Name)
+			return
+		}
+
+		// Check if it's a permanent error
+		var permErr permanentError
+		if errors.As(err, &permErr) {
+			ec.repoStateTracker.MarkPermanentError(repo, err)
+			ec.L.WithError(err).Errorf("Permanent error initializing repository %q", repo.Name)
+			return
+		}
+
+		// Retriable error - schedule retry with backoff
+		ec.repoStateTracker.MarkRetriableError(repo, err, backoff)
+		ec.L.WithError(err).Warnf("Failed to initialize repository %q, retrying in %v", repo.Name, backoff)
+
+		// Wait for backoff duration or context cancellation
+		timer := time.NewTimer(backoff)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			ec.L.Infof("Stopping repository initialization for %q: context cancelled", repo.Name)
+			return
+		case <-timer.C:
+			// Increase backoff exponentially, up to max
+			backoff = backoff * 2
+			if backoff > maxBackoff {
+				backoff = maxBackoff
+			}
+		}
+	}
+}
+
+// permanentError wraps an error to indicate it's permanent and shouldn't be retried
+type permanentError struct {
+	err error
+}
+
+func (p permanentError) Error() string {
+	return p.err.Error()
+}
+
+// initRepoWithSecret initializes a repository by fetching credentials from a secret
+func (ec *ExtensionsController) initRepoWithSecret(ctx context.Context, repo k0sv1beta1.Repository) error {
+	client, err := ec.kubeClientFactory.GetClient()
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes client: %w", err)
+	}
+
+	username, password, isPermanent, err := resolveBasicAuthSecret(ctx, client, repo.CredentialsFrom.SecretRef, repo.Name)
+	if err != nil {
+		if isPermanent {
+			return permanentError{err: err}
+		}
+		return err
+	}
+
+	// Create a copy of the repo with resolved credentials
+	repoWithCreds := repo
+	repoWithCreds.Username = username
+	repoWithCreds.Password = password
+
+	// Initialize the repository
+	if err := ec.helm.AddRepository(repoWithCreds); err != nil {
+		return fmt.Errorf("failed to add repository: %w", err)
+	}
+
+	return nil
 }
 
 const chartCrdTemplate = `
@@ -461,10 +613,11 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 			),
 		).
 		Complete(&ChartReconciler{
-			Client:        mgr.GetClient(),
-			leaderElector: ec.leaderElector, // TODO: drop in favor of controller-runtime lease manager?
-			helm:          ec.helm,
-			L:             ec.L.WithField("extensions_type", "helm"),
+			Client:           mgr.GetClient(),
+			leaderElector:    ec.leaderElector, // TODO: drop in favor of controller-runtime lease manager?
+			helm:             ec.helm,
+			repoStateTracker: ec.repoStateTracker,
+			L:                ec.L.WithField("extensions_type", "helm"),
 		}); err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}

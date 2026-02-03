@@ -180,6 +180,31 @@ spec:
                               description: The TLS certificate file to use for HTTPS
                                 client authentication.
                               type: string
+                            credentialsFrom:
+                              description: |-
+                                CredentialsFrom contains a reference to a secret from which to obtain credentials.
+                                Takes precedence over Username and Password if both are specified.
+                              properties:
+                                secretRef:
+                                  description: SecretRef is a reference to a secret
+                                    containing repository credentials.
+                                  properties:
+                                    name:
+                                      description: Name is the name of the secret.
+                                      minLength: 1
+                                      type: string
+                                    namespace:
+                                      description: Namespace is the namespace of the
+                                        secret.
+                                      minLength: 1
+                                      type: string
+                                  required:
+                                  - name
+                                  - namespace
+                                  type: object
+                              required:
+                              - secretRef
+                              type: object
                             insecure:
                               description: Whether to skip TLS certificate checks
                                 when connecting to the repository.

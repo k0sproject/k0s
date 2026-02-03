@@ -179,6 +179,25 @@ type Repository struct {
 	Username string `json:"username,omitempty"`
 	// Password for Basic HTTP authentication.
 	Password string `json:"password,omitempty"`
+	// CredentialsFrom contains a reference to a secret from which to obtain credentials.
+	// Takes precedence over Username and Password if both are specified.
+	CredentialsFrom *RepositoryCredentialsFrom `json:"credentialsFrom,omitempty"`
+}
+
+// RepositoryCredentialsFrom specifies where to obtain credentials for a repository
+type RepositoryCredentialsFrom struct {
+	// SecretRef is a reference to a secret containing repository credentials.
+	SecretRef SecretReference `json:"secretRef"`
+}
+
+// SecretReference contains information to locate a secret
+type SecretReference struct {
+	// Namespace is the namespace of the secret.
+	// +kubebuilder:validation:MinLength=1
+	Namespace string `json:"namespace"`
+	// Name is the name of the secret.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
 }
 
 func (r *Repository) IsInsecure() bool {
@@ -194,6 +213,14 @@ func (r *Repository) Validate() error {
 	}
 	if r.URL == "" {
 		return errors.New("repository must have URL field not empty")
+	}
+	if r.CredentialsFrom != nil {
+		if r.CredentialsFrom.SecretRef.Namespace == "" {
+			return errors.New("repository credentialsFrom.secretRef.namespace must not be empty")
+		}
+		if r.CredentialsFrom.SecretRef.Name == "" {
+			return errors.New("repository credentialsFrom.secretRef.name must not be empty")
+		}
 	}
 	return nil
 }
