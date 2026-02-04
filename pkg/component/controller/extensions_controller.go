@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -51,14 +53,53 @@ import (
 
 const HelmExtensionStackName = "helm"
 
+// repositoryCache provides thread-safe access to Helm repository configurations
+type repositoryCache struct {
+	cache sync.Map
+}
+
+// get retrieves a repository configuration by key (repo name for traditional, hostname for OCI)
+// Returns nil if not found.
+func (rc *repositoryCache) get(key string) *k0sv1beta1.Repository {
+	value, ok := rc.cache.Load(key)
+	if !ok {
+		return nil
+	}
+	repo := value.(k0sv1beta1.Repository)
+	return &repo
+}
+
+// update replaces the entire cache contents with the provided repositories
+func (rc *repositoryCache) update(repositories []k0sv1beta1.Repository) {
+	// Clear existing cache
+	rc.cache.Range(func(key, value interface{}) bool {
+		rc.cache.Delete(key)
+		return true
+	})
+
+	// Populate with new repositories
+	// OCI repos are keyed by hostname, traditional repos by name
+	for _, repo := range repositories {
+		if strings.HasPrefix(repo.URL, "oci://") {
+			// Extract hostname from OCI URL and use as key
+			hostname := strings.TrimPrefix(repo.URL, "oci://")
+			hostname = strings.Split(hostname, "/")[0]
+			rc.cache.Store(hostname, repo)
+		} else {
+			// Traditional repo: use name as key
+			rc.cache.Store(repo.Name, repo)
+		}
+	}
+}
+
 // Helm watch for Chart crd
 type ExtensionsController struct {
-	L             *logrus.Entry
-	helm          *helm.Commands
-	kubeConfig    string
-	leaderElector leaderelector.Interface
-	manifestsDir  string
-	stop          context.CancelFunc
+	L               *logrus.Entry
+	kubeConfig      string
+	leaderElector   leaderelector.Interface
+	manifestsDir    string
+	stop            context.CancelFunc
+	repositoryCache *repositoryCache
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
@@ -67,11 +108,11 @@ var _ manager.Reconciler = (*ExtensionsController)(nil)
 // NewExtensionsController builds new HelmAddons
 func NewExtensionsController(k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
-		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
-		helm:          helm.NewCommands(k0sVars),
-		kubeConfig:    k0sVars.AdminKubeConfigPath,
-		leaderElector: leaderElector,
-		manifestsDir:  filepath.Join(k0sVars.ManifestsDir, "helm"),
+		L:               logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
+		kubeConfig:      k0sVars.AdminKubeConfigPath,
+		leaderElector:   leaderElector,
+		manifestsDir:    filepath.Join(k0sVars.ManifestsDir, "helm"),
+		repositoryCache: &repositoryCache{},
 	}
 }
 
@@ -94,13 +135,10 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.Hel
 		return nil
 	}
 
-	var errs []error
-	for _, repo := range helmSpec.Repositories {
-		if err := ec.addRepo(repo); err != nil {
-			errs = append(errs, fmt.Errorf("can't init repository %q: %w", repo.URL, err))
-		}
-	}
+	// Update repository cache
+	ec.repositoryCache.update(helmSpec.Repositories)
 
+	var errs []error
 	var fileNamesToKeep []string
 	for _, chart := range helmSpec.Charts {
 		fileName := chartManifestFileName(&chart)
@@ -172,9 +210,10 @@ func isChartManifestFileName(fileName string) bool {
 
 type ChartReconciler struct {
 	client.Client
-	helm          *helm.Commands
-	leaderElector leaderelector.Interface
-	L             *logrus.Entry
+	kubeConfig      string
+	repositoryCache *repositoryCache
+	leaderElector   leaderelector.Interface
+	L               *logrus.Entry
 }
 
 func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -220,7 +259,14 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 }
 
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Chart) error {
-	if err := cr.helm.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
+	// Create ephemeral Helm commands without repository (uninstall doesn't need it)
+	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, nil)
+	if err != nil {
+		return fmt.Errorf("can't create Helm commands: %w", err)
+	}
+	defer cleanup()
+
+	if err := helmCmd.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
 		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
@@ -272,10 +318,24 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			cr.L.WithError(err).Error("Failed to update status for chart release, give up", chart.Name)
 		}
 	}()
+
+	// Extract repository from chart name and look it up
+	repo, err := cr.extractAndLookupRepository(chart.Spec.ChartName)
+	if err != nil {
+		return fmt.Errorf("can't lookup repository for chart %q: %w", chart.Spec.ChartName, err)
+	}
+
+	// Create ephemeral Helm commands with repository
+	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, repo)
+	if err != nil {
+		return fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
+	}
+	defer cleanup()
+
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
 		cr.L.Tracef("Start update or install %s", chart.Spec.ChartName)
-		chartRelease, err = cr.helm.InstallChart(ctx,
+		chartRelease, err = helmCmd.InstallChart(ctx,
 			chart.Spec.ChartName,
 			chart.Spec.Version,
 			chart.Spec.ReleaseName,
@@ -291,7 +351,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			return nil
 		}
 		// update
-		chartRelease, err = cr.helm.UpgradeChart(ctx,
+		chartRelease, err = helmCmd.UpgradeChart(ctx,
 			chart.Spec.ChartName,
 			chart.Spec.Version,
 			chart.Status.ReleaseName,
@@ -310,6 +370,46 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		cr.L.WithError(err).Error("Failed to update status for chart release, give up", chart.Name)
 	}
 	return nil
+}
+
+// extractAndLookupRepository extracts the repository name or OCI hostname from chartName
+// and looks it up in the repository cache. Returns a pointer to the repository config or nil
+// if no repository configuration is needed (e.g., local path charts, OCI charts without auth).
+func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*k0sv1beta1.Repository, error) {
+	// Check if it's a local path (absolute or relative)
+	if filepath.IsAbs(chartName) || strings.HasPrefix(chartName, ".") {
+		// Local chart, no repository needed
+		return nil, nil
+	}
+
+	// Check if it's an OCI chart
+	if strings.HasPrefix(chartName, "oci://") {
+		// Extract hostname from OCI URL
+		repoURL := strings.TrimPrefix(chartName, "oci://")
+		// Remove the chart path, keep only the hostname
+		parts := strings.Split(repoURL, "/")
+		if len(parts) > 0 {
+			hostname := parts[0]
+			// Look up repository by hostname (OCI repos are keyed by hostname)
+			// For OCI charts, repository configuration is optional (allows anonymous access)
+			return cr.repositoryCache.get(hostname), nil
+		}
+		return nil, fmt.Errorf("invalid OCI chart URL format: %s", chartName)
+	}
+
+	// Traditional format: "reponame/chartname"
+	parts := strings.SplitN(chartName, "/", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid chart name format (expected 'reponame/chartname'): %s", chartName)
+	}
+
+	repoName := parts[0]
+	repo := cr.repositoryCache.get(repoName)
+	if repo == nil {
+		return nil, fmt.Errorf("repository '%s' not found in cluster configuration", repoName)
+	}
+
+	return repo, nil
 }
 
 func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
@@ -349,10 +449,6 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 		return updErr
 	}
 	return nil
-}
-
-func (ec *ExtensionsController) addRepo(repo k0sv1beta1.Repository) error {
-	return ec.helm.AddRepository(repo)
 }
 
 const chartCrdTemplate = `
@@ -461,10 +557,11 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 			),
 		).
 		Complete(&ChartReconciler{
-			Client:        mgr.GetClient(),
-			leaderElector: ec.leaderElector, // TODO: drop in favor of controller-runtime lease manager?
-			helm:          ec.helm,
-			L:             ec.L.WithField("extensions_type", "helm"),
+			Client:          mgr.GetClient(),
+			kubeConfig:      ec.kubeConfig,
+			repositoryCache: ec.repositoryCache,
+			leaderElector:   ec.leaderElector, // TODO: drop in favor of controller-runtime lease manager?
+			L:               ec.L.WithField("extensions_type", "helm"),
 		}); err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
