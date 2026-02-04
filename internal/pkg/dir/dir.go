@@ -8,7 +8,61 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/opencontainers/selinux/go-selinux"
 )
+
+type DirOptions struct {
+	path         string
+	perm         os.FileMode
+	seLinuxLabel string
+}
+
+// InitWithOptions prepares directory initialization with the given path.
+func InitWithOptions(path string) *DirOptions {
+	return &DirOptions{
+		path: path,
+	}
+}
+
+// WithPermissions sets the desired permissions for the directory.
+func (o *DirOptions) WithPermissions(perm os.FileMode) *DirOptions {
+	o.perm = perm
+	return o
+}
+
+// WithSELinuxLabel sets the desired SELinux label for the directory.
+// Will only be applied if SELinux is enabled.
+func (o *DirOptions) WithSELinuxLabel(label string) *DirOptions {
+	o.seLinuxLabel = label
+	return o
+}
+
+// Apply creates the directory with the specified options.
+func (o *DirOptions) Apply() error {
+	if o.path == "" {
+		return errors.New("init dir: path cannot be empty")
+	}
+
+	// Create directory
+	if err := os.MkdirAll(o.path, o.perm); err != nil {
+		return err
+	}
+
+	// Set permissions
+	if err := os.Chmod(o.path, o.perm); err != nil {
+		return err
+	}
+
+	// Set SELinux label if specified and enabled
+	if o.seLinuxLabel != "" && selinux.GetEnabled() {
+		if err := selinux.SetFileLabel(o.path, o.seLinuxLabel); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 // IsDirectory check the given path exists and is a directory
 func IsDirectory(name string) bool {
@@ -37,14 +91,7 @@ func GetAll(base string) ([]string, error) {
 
 // Init creates a path if it does not exist, and verifies its permissions, if it does
 func Init(path string, perm os.FileMode) error {
-	if path == "" {
-		return errors.New("init dir: path cannot be empty")
-	}
-	// if directory doesn't exist, this will create it
-	if err := os.MkdirAll(path, perm); err != nil {
-		return err
-	}
-	return os.Chmod(path, perm)
+	return InitWithOptions(path).WithPermissions(perm).Apply()
 }
 
 // PathListJoin uses the OS path list separator to join a list of strings for things like PATH=x:y:z
