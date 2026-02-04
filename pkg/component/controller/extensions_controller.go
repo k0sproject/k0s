@@ -28,6 +28,7 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,6 +53,15 @@ import (
 )
 
 const HelmExtensionStackName = "helm"
+
+// secretNotReadyError indicates that a required secret is not yet available
+type secretNotReadyError struct {
+	err error
+}
+
+func (e *secretNotReadyError) Error() string {
+	return e.err.Error()
+}
 
 // repositoryCache provides thread-safe access to Helm repository configurations
 type repositoryCache struct {
@@ -251,6 +261,12 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	}
 	cr.L.Debugf("Install or update reconciliation request: %s", req)
 	if err := cr.updateOrInstallChart(ctx, chartInstance); err != nil {
+		// Check if this is a secret not ready error
+		var secretErr *secretNotReadyError
+		if errors.As(err, &secretErr) {
+			cr.L.Debugf("Chart %s waiting for credentials secret, will retry in 30s", req)
+			return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
+		}
 		return reconcile.Result{Requeue: true}, fmt.Errorf("can't update or install chart: %w", err)
 	}
 
@@ -323,6 +339,24 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	repo, err := cr.extractAndLookupRepository(chart.Spec.ChartName)
 	if err != nil {
 		return fmt.Errorf("can't lookup repository for chart %q: %w", chart.Spec.ChartName, err)
+	}
+
+	// Resolve repository credentials from secret if specified
+	repo, err = cr.resolveRepositoryCredentials(ctx, repo)
+	if err != nil {
+		// Check if this is a "waiting for secret" error
+		if strings.Contains(err.Error(), "waiting for secret") {
+			cr.L.Infof("Chart %s: %v", chart.GetName(), err)
+			// Update status to inform user and requeue with delay
+			if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
+				return cr.updateStatus(ctx, chart, nil, err)
+			}); statusErr != nil {
+				cr.L.WithError(statusErr).Error("Failed to update status for chart", chart.Name)
+			}
+			// Return special error that will cause requeue with delay
+			return &secretNotReadyError{err: err}
+		}
+		return fmt.Errorf("can't resolve repository credentials for chart %q: %w", chart.GetName(), err)
 	}
 
 	// Create ephemeral Helm commands with repository
@@ -410,6 +444,53 @@ func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*k0sv1b
 	}
 
 	return repo, nil
+}
+
+// resolveRepositoryCredentials resolves repository credentials from a Kubernetes secret if specified.
+// Returns a new Repository with credentials populated, or the original if no secret reference exists.
+func (cr *ChartReconciler) resolveRepositoryCredentials(ctx context.Context, repo *k0sv1beta1.Repository) (*k0sv1beta1.Repository, error) {
+	// No repository or no credential reference
+	if repo == nil || repo.CredentialsFrom == nil || repo.CredentialsFrom.SecretRef == nil {
+		return repo, nil
+	}
+
+	secretRef := repo.CredentialsFrom.SecretRef
+
+	// Fetch the secret
+	var secret corev1.Secret
+	secretKey := types.NamespacedName{
+		Name:      secretRef.Name,
+		Namespace: secretRef.Namespace,
+	}
+
+	if err := cr.Get(ctx, secretKey, &secret); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("waiting for secret '%s' in namespace '%s'", secretRef.Name, secretRef.Namespace)
+		}
+		return nil, fmt.Errorf("failed to get secret '%s' in namespace '%s': %w", secretRef.Name, secretRef.Namespace, err)
+	}
+
+	// Verify secret type
+	if secret.Type != corev1.SecretTypeBasicAuth {
+		return nil, fmt.Errorf("secret '%s' in namespace '%s' must be of type kubernetes.io/basic-auth, got %s",
+			secretRef.Name, secretRef.Namespace, secret.Type)
+	}
+
+	// Extract credentials, only password is required
+	username := secret.Data[corev1.BasicAuthUsernameKey]
+	password, hasPassword := secret.Data[corev1.BasicAuthPasswordKey]
+
+	if !hasPassword {
+		return nil, fmt.Errorf("secret '%s' in namespace '%s' missing required key '%s'",
+			secretRef.Name, secretRef.Namespace, corev1.BasicAuthPasswordKey)
+	}
+
+	// Create new repository with resolved credentials
+	resolvedRepo := repo.DeepCopy()
+	resolvedRepo.Username = string(username)
+	resolvedRepo.Password = string(password)
+
+	return resolvedRepo, nil
 }
 
 func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
@@ -519,6 +600,11 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 	gk := schema.GroupKind{
 		Group: helmv1beta1.GroupName,
 		Kind:  "Chart",
+	}
+
+	// Ensure core v1 types (like Secret) are registered in the scheme
+	if err := corev1.AddToScheme(k0sscheme.Scheme); err != nil {
+		return nil, fmt.Errorf("failed to add corev1 to scheme: %w", err)
 	}
 
 	mgr, err := controllerruntime.NewManager(clientConfig, crman.Options{

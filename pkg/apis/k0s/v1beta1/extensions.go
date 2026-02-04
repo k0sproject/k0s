@@ -179,6 +179,24 @@ type Repository struct {
 	Username string `json:"username,omitempty"`
 	// Password for Basic HTTP authentication.
 	Password string `json:"password,omitempty"`
+	// Reference to a secret containing repository credentials.
+	CredentialsFrom *CredentialsSource `json:"credentialsFrom,omitempty"`
+}
+
+// CredentialsSource defines a reference to credentials stored in a Kubernetes secret.
+type CredentialsSource struct {
+	// Reference to a secret containing repository credentials.
+	SecretRef *SecretReference `json:"secretRef,omitempty"`
+}
+
+// SecretReference identifies a secret by name and namespace.
+type SecretReference struct {
+	// Name of the secret.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+	// Namespace of the secret.
+	// +kubebuilder:validation:MinLength=1
+	Namespace string `json:"namespace"`
 }
 
 func (r *Repository) IsInsecure() bool {
@@ -195,6 +213,15 @@ func (r *Repository) Validate() error {
 	if r.URL == "" {
 		return errors.New("repository must have URL field not empty")
 	}
+
+	// Check for conflicting credential sources
+	hasInlineCredentials := r.Username != "" || r.Password != ""
+	hasCredentialsFrom := r.CredentialsFrom != nil && r.CredentialsFrom.SecretRef != nil
+
+	if hasInlineCredentials && hasCredentialsFrom {
+		return errors.New("repository cannot specify both inline credentials (username/password) and credentialsFrom")
+	}
+
 	return nil
 }
 
