@@ -438,7 +438,7 @@ func TestSignalControllerSameVersionForceUpdate(t *testing.T) {
 			assert.NotNil(t, signalData.Status)
 
 			if signalData.Status != nil {
-				assert.Equal(t, Downloading, signalData.Status.Status)
+				assert.Equal(t, apsigcomm.Downloading, signalData.Status.Status)
 			}
 		})
 	}
@@ -543,7 +543,7 @@ func TestSignalControllerNewVersion(t *testing.T) {
 			assert.NotNil(t, signalData.Status)
 
 			if signalData.Status != nil {
-				assert.Equal(t, Downloading, signalData.Status.Status)
+				assert.Equal(t, apsigcomm.Downloading, signalData.Status.Status)
 			}
 		})
 	}
