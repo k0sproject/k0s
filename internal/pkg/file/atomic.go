@@ -24,13 +24,16 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+
+	"github.com/opencontainers/selinux/go-selinux"
 )
 
 // The internal options for atomic file writes.
 type atomicOpts struct {
-	target      string
-	permissions fs.FileMode
-	uid, gid    int
+	target       string
+	permissions  fs.FileMode
+	uid, gid     int
+	seLinuxLabel string
 }
 
 func (o *atomicOpts) wantsChmod() bool {
@@ -69,6 +72,13 @@ func (o *AtomicOpener) WithOwner(uid int) *AtomicOpener {
 // Will have no effect on Windows.
 func (o *AtomicOpener) WithGroup(gid int) *AtomicOpener {
 	o.gid = max(-1, gid)
+	return o
+}
+
+// The desired SELinux label for the target file.
+// Will only be applied if SELinux is enabled.
+func (o *AtomicOpener) WithSELinuxLabel(label string) *AtomicOpener {
+	o.seLinuxLabel = label
 	return o
 }
 
@@ -256,6 +266,15 @@ func (f *Atomic) finish(target string) (err error) {
 		err = os.Chown(f.fd.Name(), f.uid, f.gid)
 		// Ignore errors indicating that os.Chown() is unsupported.
 		if err != nil && !errors.Is(err, errors.ErrUnsupported) {
+			return err
+		}
+	}
+
+	// Apply SELinux label if specified and SELinux is enabled.
+	// This must be done before the rename to ensure the target file has the
+	// correct label when it appears atomically.
+	if f.seLinuxLabel != "" && selinux.GetEnabled() {
+		if err := selinux.SetFileLabel(f.fd.Name(), f.seLinuxLabel); err != nil {
 			return err
 		}
 	}
