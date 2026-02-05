@@ -52,11 +52,15 @@ sudo restorecon -R -v ${DATA_DIR}/bin
 sudo semanage fcontext -a -t container_var_lib_t "${DATA_DIR}/containerd(/.*)?"
 sudo semanage fcontext -a -t container_ro_file_t "${DATA_DIR}/containerd/io.containerd.snapshotter.*/snapshots(/.*)?"
 sudo restorecon -R -v ${DATA_DIR}/containerd
+sudo semanage fcontext -a -t container_file_t "/etc/cni/.*"
+sudo restorecon -R -v /etc/cni
+sudo semanage fcontext -a -t container_file_t "/opt/cni/.*"
+sudo restorecon -R -v /opt/cni
 ```
 
 ### Enable SELinux in containerd of k0s
 
-Add below lines to `/etc/k0s/containerd.toml` of the worker nodes. You need to restart k0s service on the node to make the change take effect.
+Add below lines to `/etc/k0s/containerd.d/selinux.toml` of the worker nodes. k0s will automatically restart containerd with the new configuration if needed.
 
 ```toml
 [plugins."io.containerd.grpc.v1.cri"]
