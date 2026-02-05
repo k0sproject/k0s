@@ -8,7 +8,6 @@
 /ipv6-test-image-bundle-linux-arm64.tar
 /ipv6-test-image-bundle-linux-arm.tar
 /ipv6-test-image-bundle-linux-riscv64.tar
-/bindata_*
 /build/cache/*
 /embedded-binaries-linux.zip
 /embedded-binaries-windows.zip
@@ -16,7 +15,6 @@
 /k0s.bare
 /k0s.exe
 /k0s.bare.exe
-/pkg/assets/zz_generated_offsets*.go
 /spdx.json
 .*.stamp
 *.tmp
