@@ -57,11 +57,15 @@ sudo restorecon -R -v ${DATA_DIR}/bin
 sudo semanage fcontext -a -t container_var_lib_t "${DATA_DIR}/containerd(/.*)?"
 sudo semanage fcontext -a -t container_ro_file_t "${DATA_DIR}/containerd/io.containerd.snapshotter.*/snapshots(/.*)?"
 sudo restorecon -R -v ${DATA_DIR}/containerd
+sudo semanage fcontext -a -t container_file_t "/etc/cni/.*"
+sudo restorecon -R -v /etc/cni
+sudo semanage fcontext -a -t container_file_t "/opt/cni/.*"
+sudo restorecon -R -v /opt/cni
 ```
 
 ### Enable SELinux in containerd of k0s
 
-Add below lines to `/etc/k0s/containerd.toml` of the worker nodes. You need to restart k0s service on the node to make the change take effect.
+Add below lines to `/etc/k0s/containerd.d/selinux.toml` of the worker nodes. k0s will automatically restart containerd with the new configuration if needed.
 
 ```toml
 [plugins."io.containerd.grpc.v1.cri"]
@@ -92,4 +96,22 @@ After the pod starts, ssh to the worker node on which the pod is running and che
 ```shell
 $ ps -efZ | grep -F 'sleep infinity'
 system_u:system_r:container_t:s0:c123,c456 root 3346 3288  0 16:39 ?       00:00:00 sleep infinity
+```
+
+## Node-Local Load Balancing (NLLB) SELinux Support
+
+When using k0s's Node-Local Load Balancing (NLLB) feature with SELinux enabled, k0s automatically sets the correct SELinux labels on NLLB configuration files. The Envoy proxy configuration files in `/run/k0s/nllb/envoy/` are labeled with `container_file_t` context, allowing the Envoy container to read them.
+
+No manual configuration is required for NLLB to work with SELinux. The SELinux labeling is handled automatically when:
+
+- The NLLB feature is enabled in the worker configuration
+- SELinux is enabled on the system
+- Containerd is configured with SELinux support (`enable_selinux = true`)
+
+You can verify the correct labels are set:
+
+```shell
+$ ls -lZ /run/k0s/nllb/envoy/
+-r--r--r--. 1 root root system_u:object_r:container_file_t:s0 1122 Jan 19 22:26 cds.yaml
+-r--r--r--. 1 root root system_u:object_r:container_file_t:s0  850 Jan 19 22:26 envoy.yaml
 ```
