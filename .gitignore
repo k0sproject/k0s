@@ -11,9 +11,9 @@
 /bindata_*
 /build/cache/*
 /k0s
-/k0s.code
+/k0s.bare
 /k0s.exe
-/k0s.exe.code
+/k0s.bare.exe
 /pkg/assets/zz_generated_offsets*.go
 /spdx.json
 .*.stamp
