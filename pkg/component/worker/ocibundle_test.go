@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/v2/core/images"
 	"github.com/stretchr/testify/require"
 )
 
