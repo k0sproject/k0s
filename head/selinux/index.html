@@ -1721,6 +1721,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#node-local-load-balancing-nllb-selinux-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node-Local Load Balancing (NLLB) SELinux Support
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3024,6 +3035,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#node-local-load-balancing-nllb-selinux-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node-Local Load Balancing (NLLB) SELinux Support
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3081,9 +3103,13 @@ sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w">
 sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>container_var_lib_t<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/containerd(/.*)?&quot;</span>
 sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>container_ro_file_t<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/containerd/io.containerd.snapshotter.*/snapshots(/.*)?&quot;</span>
 sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w"> </span>-v<span class="w"> </span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span>/containerd
+sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>container_file_t<span class="w"> </span><span class="s2">&quot;/etc/cni/.*&quot;</span>
+sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w"> </span>-v<span class="w"> </span>/etc/cni
+sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>container_file_t<span class="w"> </span><span class="s2">&quot;/opt/cni/.*&quot;</span>
+sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w"> </span>-v<span class="w"> </span>/opt/cni
 </code></pre></div>
 <h3 id="enable-selinux-in-containerd-of-k0s">Enable SELinux in containerd of k0s<a class="headerlink" href="#enable-selinux-in-containerd-of-k0s" title="Permanent link">#</a></h3>
-<p>Add below lines to <code>/etc/k0s/containerd.toml</code> of the worker nodes. You need to restart k0s service on the node to make the change take effect.</p>
+<p>Add below lines to <code>/etc/k0s/containerd.d/selinux.toml</code> of the worker nodes. k0s will automatically restart containerd with the new configuration if needed.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">]</span>
 <span class="w">  </span><span class="n">enable_selinux</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </code></pre></div>
@@ -3105,6 +3131,19 @@ sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w">
 <p>After the pod starts, ssh to the worker node on which the pod is running and check the pod process. It should display the label <code>s0:c123,c456</code> that you specified in YAML file:</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span>ps<span class="w"> </span>-efZ<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s1">&#39;sleep infinity&#39;</span>
 system_u:system_r:container_t:s0:c123,c456<span class="w"> </span>root<span class="w"> </span><span class="m">3346</span><span class="w"> </span><span class="m">3288</span><span class="w">  </span><span class="m">0</span><span class="w"> </span><span class="m">16</span>:39<span class="w"> </span>?<span class="w">       </span><span class="m">00</span>:00:00<span class="w"> </span>sleep<span class="w"> </span>infinity
+</code></pre></div>
+<h2 id="node-local-load-balancing-nllb-selinux-support">Node-Local Load Balancing (NLLB) SELinux Support<a class="headerlink" href="#node-local-load-balancing-nllb-selinux-support" title="Permanent link">#</a></h2>
+<p>When using k0s's Node-Local Load Balancing (NLLB) feature with SELinux enabled, k0s automatically sets the correct SELinux labels on NLLB configuration files. The Envoy proxy configuration files in <code>/run/k0s/nllb/envoy/</code> are labeled with <code>container_file_t</code> context, allowing the Envoy container to read them.</p>
+<p>No manual configuration is required for NLLB to work with SELinux. The SELinux labeling is handled automatically when:</p>
+<ul>
+<li>The NLLB feature is enabled in the worker configuration</li>
+<li>SELinux is enabled on the system</li>
+<li>Containerd is configured with SELinux support (<code>enable_selinux = true</code>)</li>
+</ul>
+<p>You can verify the correct labels are set:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>ls<span class="w"> </span>-lZ<span class="w"> </span>/run/k0s/nllb/envoy/
+-r--r--r--.<span class="w"> </span><span class="m">1</span><span class="w"> </span>root<span class="w"> </span>root<span class="w"> </span>system_u:object_r:container_file_t:s0<span class="w"> </span><span class="m">1122</span><span class="w"> </span>Jan<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">22</span>:26<span class="w"> </span>cds.yaml
+-r--r--r--.<span class="w"> </span><span class="m">1</span><span class="w"> </span>root<span class="w"> </span>root<span class="w"> </span>system_u:object_r:container_file_t:s0<span class="w">  </span><span class="m">850</span><span class="w"> </span>Jan<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">22</span>:26<span class="w"> </span>envoy.yaml
 </code></pre></div>
 
 
