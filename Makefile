@@ -265,7 +265,7 @@ airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
 
 ipv6-test-images.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
 	{ \
-	  echo "docker.io/library/nginx:1.29.4-alpine"; \
+	  echo "docker.io/library/nginx:1.29.5-alpine"; \
 	  echo "docker.io/curlimages/curl:8.18.0"; \
 	  echo "docker.io/library/alpine:$(alpine_version)"; \
 	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
