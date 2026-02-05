@@ -193,28 +193,44 @@ pkg/client/clientset/.client-gen.stamp: $(GO_ENV_REQUISITES) hack/tools/boilerpl
 	  && mv -f -- "$$gendir/out/clientset" pkg/client/.
 	touch -- '$@'
 
+# gen-bindata produces the compressed bindata file and the corresponding Go file
+# containing the offsets. Ideally, these would be declared as grouped targets,
+# but that feature is too recent for the targeted GNU Make 3.81 compatibility.
+# As a workaround, make the offsets depend on the bindata and include the
+# gen-bindata invocation in the bindata.
+bindata_linux: .bins.linux.stamp
+bindata_windows: .bins.windows.stamp
+pkg/assets/zz_generated_offsets_linux.go: bindata_linux
+pkg/assets/zz_generated_offsets_windows.go: bindata_windows
+bindata_linux bindata_windows: $(GO_ENV_REQUISITES) go.sum hack/gen-bindata/* hack/gen-bindata/cmd/*
+	GOOS=${GOHOSTOS} $(GO) run -tags=hack hack/gen-bindata/cmd/main.go -o bindata_$(@:bindata_%=%) -pkg assets \
+	  -gofile pkg/assets/zz_generated_offsets_$(@:bindata_%=%).go \
+	  -prefix embedded-bins/staging/$(@:bindata_%=%)/ embedded-bins/staging/$(@:bindata_%=%)/bin
+
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 BUILD_GO_TAGS += noembedbins
 else
-codegen_targets += pkg/assets/zz_generated_offsets_$(TARGET_OS).go
-zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
-pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
-pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: $(GO_ENV_REQUISITES) go.sum
-	GOOS=${GOHOSTOS} $(GO) run -tags=hack hack/gen-bindata/cmd/main.go -o bindata_$(zz_os) -pkg assets \
-	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
-	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
+k0s.bare: pkg/assets/zz_generated_offsets_linux.go
+k0s.bare.exe: pkg/assets/zz_generated_offsets_windows.go
+k0s: bindata_linux
+k0s.exe: bindata_windows
 endif
 
-k0s: TARGET_OS = linux
-k0s: BUILD_GO_CGO_ENABLED = 1
+k0s k0s.bare: TARGET_OS = linux
+k0s.bare: BUILD_GO_CGO_ENABLED = 1
 
-k0s.exe: TARGET_OS = windows
-k0s.exe: BUILD_GO_CGO_ENABLED = 0
+k0s.exe k0s.bare.exe: TARGET_OS = windows
+k0s.bare.exe: BUILD_GO_CGO_ENABLED = 0
 
-k0s.exe k0s: $(GO_ENV_REQUISITES) go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/manifests/calico static/manifests/windows -type f)
-	rm -f -- '$@'
+.INTERMEDIATE: k0s.bare k0s.bare.exe
+k0s.bare.exe k0s.bare: $(GO_ENV_REQUISITES) go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/manifests/calico static/manifests/windows -type f)
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
+
+k0s: k0s.bare
+k0s.exe: k0s.bare.exe
+
+k0s.exe k0s:
+	mv $(@:k0s%=k0s.bare%) $@
 ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
 	cat -- bindata_$(TARGET_OS) >>$@
 endif
@@ -323,7 +339,7 @@ clean-airgap-image-bundles:
 
 .PHONY: clean
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
-	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata*
+	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe k0s.bare k0s.bare.exe .bins.*stamp bindata*
 	-rm -rf $(K0S_GO_BUILD_CACHE)
 	-find pkg/apis -type f -name .controller-gen.stamp -delete
 	-rm pkg/client/clientset/.client-gen.stamp
