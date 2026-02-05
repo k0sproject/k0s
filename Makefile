@@ -194,6 +194,11 @@ pkg/client/clientset/.client-gen.stamp: $(GO_ENV_REQUISITES) hack/tools/boilerpl
 	  && mv -f -- "$$gendir/out/clientset" pkg/client/.
 	touch -- '$@'
 
+embedded-binaries-linux.zip: .bins.linux.stamp
+embedded-binaries-windows.zip: .bins.windows.stamp
+embedded-binaries-linux.zip embedded-binaries-windows.zip: $(GO_ENV_REQUISITES) go.sum hack/zip-files/* embedded-bins/Makefile.variables
+	CGO_ENABLED=0 $(GO) run -tags=hack hack/zip-files/main.go embedded-bins/staging/$(@:embedded-binaries-%.zip=%)/bin/* >$@
+
 # gen-bindata produces the compressed bindata file and the corresponding Go file
 # containing the offsets. Ideally, these would be declared as grouped targets,
 # but that feature is too recent for the targeted GNU Make 3.81 compatibility.
@@ -338,6 +343,7 @@ clean-airgap-image-bundles:
 .PHONY: clean
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe k0s.bare k0s.bare.exe .bins.*stamp bindata*
+	-rm -f embedded-binaries-linux.zip embedded-binaries-windows.zip
 	-rm -rf $(K0S_GO_BUILD_CACHE)
 	-find pkg/apis -type f -name .controller-gen.stamp -delete
 	-rm pkg/client/clientset/.client-gen.stamp
