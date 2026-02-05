@@ -16,7 +16,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-//go:generate make codegen
+//go:generate make codegen bindata
 
 var loggingBackend, shutdownLogging = internallog.InitLogging()
 
