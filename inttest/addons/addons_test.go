@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -169,6 +170,42 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.waitForTestRelease(fileAddonName, "0.6.0", metav1.NamespaceSystem, 1)
 	as.waitForTestRelease(selfSignedOCIAddonName, "0.6.0", metav1.NamespaceDefault, 1)
 
+	// Wait to see the auth based chart to NOT be ready yet as we don't have the secret
+	as.T().Log("Waiting to see secret based repo to initially fail the chart reconcile")
+	as.NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
+		chart, err := as.getChart("echo-authenticated", metav1.NamespaceSystem)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				as.T().Log("Chart resource not yet created")
+				return false, nil
+			}
+			if ctxErr := context.Cause(ctx); ctxErr != nil {
+				return false, errors.Join(err, ctxErr)
+			}
+			as.T().Log("Error while getting chart:", err)
+			return false, nil
+		}
+		if strings.Contains(chart.Status.Error, "waiting for secret") {
+			return true, nil
+		}
+		as.T().Logf("Chart is not yet ready with expected error, current error: %q", chart.Status.Error)
+
+		return false, nil
+	}))
+	// Create the secret with credentials for the authenticated chart repo
+	_, err = kc.CoreV1().Secrets(metav1.NamespaceDefault).Create(ctx, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "helm-repo-credentials",
+		},
+		StringData: map[string]string{
+			"username": "ealenn",
+			"password": "chart-testing",
+		},
+		Type: corev1.SecretTypeBasicAuth,
+	}, metav1.CreateOptions{})
+	as.Require().NoError(err)
+	// Now wait to see the chart become ready
+	as.waitForTestRelease("echo-authenticated", "0.4.0", metav1.NamespaceDefault, 1)
 	as.AssertSomeKubeSystemPods(kc)
 
 	as.Run("Rename chart in Helm extension", func() { as.renameChart(ctx) })
@@ -379,6 +416,24 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 	}))
 }
 
+func (as *AddonsSuite) getChart(name, namespace string) (*helmv1beta1.Chart, error) {
+	ctx := as.Context()
+	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	if err != nil {
+		return nil, err
+	}
+	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
+	if err != nil {
+		return nil, err
+	}
+	var chart helmv1beta1.Chart
+	err = chartClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: "k0s-addon-chart-" + name}, &chart)
+	if err != nil {
+		return nil, err
+	}
+	return &chart, nil
+}
+
 func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespace string, rev int64) *helmv1beta1.Chart {
 	ctx := as.Context()
 	as.T().Logf("waiting to see %s release ready in kube API, generation %d", addonName, rev)
@@ -522,10 +577,21 @@ spec:
           repositories:
           - name: ealenn
             url: https://ealenn.github.io/charts
+          - name: ealenn-authenticated
+            url: https://ealenn.github.io/charts
+            credentialsFrom:
+              secretRef:
+                name: helm-repo-credentials
+                namespace: default
           - name: self-signed-oci
             url: oci://{{ .LocalRegistryHost }}:{{ .LocalRegistryPort }}
             caFile: {{ .LocalRegistryCAPath }}
           charts:
+          - name: echo-authenticated
+            chartname: ealenn-authenticated/echo-server
+            version: "0.3.1"
+            values: ""
+            namespace: default
           - name: {{ .BasicAddonName }}
             chartname: ealenn/echo-server
             version: "0.3.1"
