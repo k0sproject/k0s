@@ -95,14 +95,14 @@ func Poll(ctx context.Context, condition wait.ConditionWithContextFunc) error {
 
 // WaitForKubeRouterReady waits to see all kube-router pods healthy as long as
 // the context isn't canceled.
-func WaitForKubeRouterReady(ctx context.Context, kc *kubernetes.Clientset) error {
+func WaitForKubeRouterReady(ctx context.Context, kc kubernetes.Interface) error {
 	return WaitForDaemonSet(ctx, kc, "kube-router", "kube-system")
 }
 
 // WaitForCoreDNSReady waits to see all coredns pods healthy as long as the context isn't canceled.
 // It also waits to see all the related svc endpoints to be ready to make sure coreDNS is actually
 // ready to serve requests.
-func WaitForCoreDNSReady(ctx context.Context, kc *kubernetes.Clientset) error {
+func WaitForCoreDNSReady(ctx context.Context, kc kubernetes.Interface) error {
 	err := WaitForDeployment(ctx, kc, "coredns", "kube-system")
 	if err != nil {
 		return fmt.Errorf("wait for deployment: %w", err)
@@ -184,7 +184,7 @@ func WaitForNodeReadyStatus(ctx context.Context, clients kubernetes.Interface, n
 
 // WaitForDaemonSet waits for the DaemonlSet with the given name to have
 // as many ready replicas as defined in the spec.
-func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string, namespace string) error {
+func WaitForDaemonSet(ctx context.Context, kc kubernetes.Interface, name string, namespace string) error {
 	return watch.DaemonSets(kc.AppsV1().DaemonSets(namespace)).
 		WithObjectName(name).
 		WithErrorCallback(RetryWatchErrors(logfFrom(ctx))).
@@ -195,7 +195,7 @@ func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string
 
 // WaitForDeployment waits for the Deployment with the given name to become
 // available as long as the given context isn't canceled.
-func WaitForDeployment(ctx context.Context, kc *kubernetes.Clientset, name, namespace string) error {
+func WaitForDeployment(ctx context.Context, kc kubernetes.Interface, name, namespace string) error {
 	return watch.Deployments(kc.AppsV1().Deployments(namespace)).
 		WithObjectName(name).
 		WithErrorCallback(RetryWatchErrors(logfFrom(ctx))).
@@ -216,7 +216,7 @@ func WaitForDeployment(ctx context.Context, kc *kubernetes.Clientset, name, name
 
 // WaitForStatefulSet waits for the StatefulSet with the given name to have
 // as many ready replicas as defined in the spec.
-func WaitForStatefulSet(ctx context.Context, kc *kubernetes.Clientset, name, namespace string) error {
+func WaitForStatefulSet(ctx context.Context, kc kubernetes.Interface, name, namespace string) error {
 	return watch.StatefulSets(kc.AppsV1().StatefulSets(namespace)).
 		WithObjectName(name).
 		WithErrorCallback(RetryWatchErrors(logfFrom(ctx))).
@@ -225,11 +225,11 @@ func WaitForStatefulSet(ctx context.Context, kc *kubernetes.Clientset, name, nam
 		})
 }
 
-func WaitForDefaultStorageClass(ctx context.Context, kc *kubernetes.Clientset) error {
+func WaitForDefaultStorageClass(ctx context.Context, kc kubernetes.Interface) error {
 	return Poll(ctx, waitForDefaultStorageClass(kc))
 }
 
-func waitForDefaultStorageClass(kc *kubernetes.Clientset) wait.ConditionWithContextFunc {
+func waitForDefaultStorageClass(kc kubernetes.Interface) wait.ConditionWithContextFunc {
 	return func(ctx context.Context) (done bool, err error) {
 		sc, err := kc.StorageV1().StorageClasses().Get(ctx, "openebs-hostpath", metav1.GetOptions{})
 		if err != nil {
@@ -242,7 +242,7 @@ func waitForDefaultStorageClass(kc *kubernetes.Clientset) wait.ConditionWithCont
 
 // WaitForPod waits for the given pod to become ready as long as the given
 // context isn't canceled.
-func WaitForPod(ctx context.Context, kc *kubernetes.Clientset, name, namespace string) error {
+func WaitForPod(ctx context.Context, kc kubernetes.Interface, name, namespace string) error {
 	return watch.Pods(kc.CoreV1().Pods(namespace)).
 		WithObjectName(name).
 		WithErrorCallback(RetryWatchErrors(logfFrom(ctx))).
@@ -264,7 +264,7 @@ func WaitForPod(ctx context.Context, kc *kubernetes.Clientset, name, namespace s
 // WaitForPodLogs waits until it can stream the logs of the first running pod
 // that comes along in the given namespace as long as the given context isn't
 // canceled.
-func WaitForPodLogs(ctx context.Context, kc *kubernetes.Clientset, namespace string) error {
+func WaitForPodLogs(ctx context.Context, kc kubernetes.Interface, namespace string) error {
 	return Poll(ctx, func(ctx context.Context) (done bool, err error) {
 		pods, err := kc.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 			Limit:         100,
@@ -288,7 +288,7 @@ func WaitForPodLogs(ctx context.Context, kc *kubernetes.Clientset, namespace str
 	})
 }
 
-func WaitForLease(ctx context.Context, kc *kubernetes.Clientset, name string, namespace string) (string, error) {
+func WaitForLease(ctx context.Context, kc kubernetes.Interface, name string, namespace string) (string, error) {
 	var holderIdentity string
 	watchLeases := watch.FromClient[*coordinationv1.LeaseList, coordinationv1.Lease]
 	if err := watchLeases(kc.CoordinationV1().Leases(namespace)).
@@ -336,7 +336,7 @@ func RetryWatchErrors(logf LogfFn) watch.ErrorCallback {
 
 // VerifyKubeletMetrics checks whether we see container and image labels in kubelet metrics.
 // It does it via polling as it takes some time for kubelet to start reporting metrics.
-func VerifyKubeletMetrics(ctx context.Context, kc *kubernetes.Clientset, node string) error {
+func VerifyKubeletMetrics(ctx context.Context, kc kubernetes.Interface, node string) error {
 	image := constant.KubeRouterCNIImage
 	if ver, hash, found := strings.Cut(constant.KubeRouterCNIImageVersion, "@"); found {
 		image = fmt.Sprintf("%s@%s", image, hash)

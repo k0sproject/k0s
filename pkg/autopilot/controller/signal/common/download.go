@@ -70,8 +70,14 @@ func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
 	}
 
-	signalNodeCopy := r.delegate.DeepCopy(signalNode)
 	logger := r.logger.WithField("signalnode", signalNode.GetName())
+
+	if signalData.Status != nil && signalData.Status.Status != Downloading {
+		logger.Debug("Ignoring signal status ", signalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
+	signalNodeCopy := r.delegate.DeepCopy(signalNode)
 
 	// Figure out what needs to be downloaded + where to go when completed.
 	manifest, err := r.manifestBuilder.Build(signalNodeCopy, signalData)

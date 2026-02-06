@@ -111,6 +111,11 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
 	}
 
+	if signalData.Status != nil && signalData.Status.Status != ApplyingUpdate {
+		logger.Debug("Ignoring signal status ", signalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
 	updateFilenamePath := path.Join(r.k0sBinaryDir, apconst.K0sTempFilename)
 
 	// Ensure that the expected file exists
