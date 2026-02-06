@@ -14,8 +14,8 @@ import (
 	"github.com/k0sproject/k0s/internal/testutil"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller"
-	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,12 +29,12 @@ import (
 func TestClusterConfigInitializer_Create(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		clients := testutil.NewFakeClientFactory()
-		leaderElector := leaderelector.Dummy{Leader: true}
+		leaderStatus := func() leaderelection.Status { return leaderelection.StatusLeading }
 		initialConfig := k0sv1beta1.DefaultClusterConfig()
 		initialConfig.ResourceVersion = "42"
 
 		underTest := controller.NewClusterConfigInitializer(
-			clients, &leaderElector, initialConfig.DeepCopy(),
+			clients, leaderStatus, initialConfig.DeepCopy(),
 		)
 
 		require.NoError(t, underTest.Init(t.Context()))
@@ -63,11 +63,11 @@ func TestClusterConfigInitializer_Create(t *testing.T) {
 func TestClusterConfigInitializer_NoConfig(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		clients := testutil.NewFakeClientFactory()
-		leaderElector := leaderelector.Dummy{Leader: false}
+		leaderStatus := func() leaderelection.Status { return leaderelection.StatusPending }
 		initialConfig := k0sv1beta1.DefaultClusterConfig()
 
 		underTest := controller.NewClusterConfigInitializer(
-			clients, &leaderElector, initialConfig.DeepCopy(),
+			clients, leaderStatus, initialConfig.DeepCopy(),
 		)
 
 		ctx, cancel := context.WithCancelCause(t.Context())
@@ -94,16 +94,15 @@ func TestClusterConfigInitializer_NoConfig(t *testing.T) {
 }
 
 func TestClusterConfigInitializer_Exists(t *testing.T) {
-	test := func(t *testing.T, leader bool) *testutil.FakeClientFactory {
+	test := func(t *testing.T, leaderStatus leaderelection.Status) *testutil.FakeClientFactory {
 		existingConfig := k0sv1beta1.DefaultClusterConfig()
 		existingConfig.ResourceVersion = "42"
 		clients := testutil.NewFakeClientFactory(existingConfig)
-		leaderElector := leaderelector.Dummy{Leader: leader}
 		initialConfig := existingConfig.DeepCopy()
 		initialConfig.ResourceVersion = "1337"
 
 		underTest := controller.NewClusterConfigInitializer(
-			clients, &leaderElector, initialConfig,
+			clients, func() leaderelection.Status { return leaderStatus }, initialConfig,
 		)
 
 		require.NoError(t, underTest.Init(t.Context()))
