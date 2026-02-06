@@ -74,7 +74,7 @@ const (
 	PushGatewayImage                      = "quay.io/k0sproject/pushgateway-ttl"
 	PushGatewayImageVersion               = "1.4.0-k0s.0"
 	MetricsImage                          = "quay.io/k0sproject/metrics-server"
-	MetricsImageVersion                   = "v0.7.2-0"
+	MetricsImageVersion                   = "v0.8.1-0"
 	KubePauseContainerImage               = "quay.io/k0sproject/pause"
 	KubePauseContainerImageVersion        = "3.10.1"
 	KubePauseWindowsContainerImage        = "registry.k8s.io/pause"
