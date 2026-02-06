@@ -38,11 +38,11 @@ kubernetes_build_go_flags = "-v"
 kubernetes_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=k3s-io/kine
-kine_version = 0.14.10
+kine_version = 0.14.11
 kine_buildimage = $(golang_buildimage)
 kine_build_go_tags = nats
 #kine_build_go_cgo_enabled =
-# Flags taken from https://github.com/k3s-io/kine/blob/v0.14.10/scripts/build#L25
+# Flags taken from https://github.com/k3s-io/kine/blob/v0.14.11/scripts/build#L25
 kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1
 
 #kine_build_go_flags =
