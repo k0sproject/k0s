@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -168,6 +169,23 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.waitForTestRelease(ociAddonName, "0.6.0", metav1.NamespaceDefault, 1)
 	as.waitForTestRelease(fileAddonName, "0.6.0", metav1.NamespaceSystem, 1)
 	as.waitForTestRelease(selfSignedOCIAddonName, "0.6.0", metav1.NamespaceDefault, 1)
+
+	// TODO Check that the authenticated chart is in pending state before adding the secret
+
+	// Add secret for authed-echo-server chart
+	as.T().Log("Adding secret for authorized repo and waiting for it's chart to re-reconcile")
+	_, err = kc.CoreV1().Secrets(metav1.NamespaceDefault).Create(ctx, &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "basic-auth-secret",
+		},
+		Type: v1.SecretTypeBasicAuth,
+		StringData: map[string]string{
+			v1.BasicAuthUsernameKey: "foo",
+			v1.BasicAuthPasswordKey: "bar",
+		},
+	}, metav1.CreateOptions{})
+	as.NoError(err)
+	as.waitForTestRelease("authed-echo-server", "0.4.0", metav1.NamespaceDefault, 1)
 
 	as.AssertSomeKubeSystemPods(kc)
 
@@ -522,6 +540,14 @@ spec:
           repositories:
           - name: ealenn
             url: https://ealenn.github.io/charts
+          - name: auth-test
+            url: https://ealenn.github.io/charts
+            credentialsFrom:
+              secretRef:
+                name: basic-auth-secret
+                namespace: default
+          - name: oci
+            url: oci://ghcr.io/makhov/k0s-charts
           - name: self-signed-oci
             url: oci://{{ .LocalRegistryHost }}:{{ .LocalRegistryPort }}
             caFile: {{ .LocalRegistryCAPath }}
@@ -547,6 +573,11 @@ spec:
             values: ""
             namespace: kube-system
             forceUpgrade: false
+          - name: authed-echo-server
+            chartname: auth-test/echo-server
+            version: "0.3.1"
+            values: ""
+            namespace: default
 `
 
 var k0sConfigWithAddonTemplate = template.Must(template.New("k0sConfigWithAddon").Parse(k0sConfigWithAddonRawTemplate))
