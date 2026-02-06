@@ -75,7 +75,7 @@ const (
 	MetricsImageVersion                   = "v0.7.2-0"
 	KubePauseContainerImage               = "quay.io/k0sproject/pause"
 	KubePauseContainerImageVersion        = "3.10.1"
-	KubePauseWindowsContainerImage        = "k8s.gcr.io/pause"
+	KubePauseWindowsContainerImage        = "registry.k8s.io/pause"
 	KubePauseWindowsContainerImageVersion = "3.10.1"
 	KubeProxyImage                        = "quay.io/k0sproject/kube-proxy"
 	KubeProxyImageVersion                 = "v1.34.3"
