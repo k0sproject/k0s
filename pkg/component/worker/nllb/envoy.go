@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -90,7 +89,7 @@ const (
 )
 
 func (e *envoyProxy) init(ctx context.Context) error {
-	if err := dir.Init(e.dir, 0755); err != nil {
+	if err := dir.InitWithOptions(e.dir).WithPermissions(0755).WithSELinuxLabel(containerFileLabel).Apply(); err != nil {
 		return err
 	}
 
@@ -220,13 +219,17 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 		envoyBootstrapFile: envoyBootstrapConfig,
 		envoyCDSFile:       envoyClustersConfig,
 	} {
-		err := file.WriteAtomically(filepath.Join(params.configDir, fileName), 0444, func(file io.Writer) error {
-			bufferedWriter := bufio.NewWriter(file)
-			if err := template.Execute(bufferedWriter, data); err != nil {
-				return fmt.Errorf("failed to render template: %w", err)
-			}
-			return bufferedWriter.Flush()
-		})
+		filePath := filepath.Join(params.configDir, fileName)
+		err := file.AtomicWithTarget(filePath).
+			WithPermissions(0444).
+			WithSELinuxLabel(containerFileLabel).
+			Do(func(w file.AtomicWriter) error {
+				bufferedWriter := bufio.NewWriter(w)
+				if err := template.Execute(bufferedWriter, data); err != nil {
+					return fmt.Errorf("failed to render template: %w", err)
+				}
+				return bufferedWriter.Flush()
+			})
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to write %s: %w", fileName, err))
 		}
