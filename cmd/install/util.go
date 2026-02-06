@@ -43,7 +43,7 @@ func cmdFlagsToArgs(cmd *cobra.Command) ([]string, error) {
 			switch f.Name {
 			case "env", "force", "start":
 				return
-			case "data-dir", "kubelet-root-dir", "token-file", "config":
+			case "data-dir", "kubelet-root-dir", "containerd-root-dir", "token-file", "config":
 				if absVal, err := filepath.Abs(val); err != nil {
 					err = fmt.Errorf("failed to convert --%s=%s to an absolute path: %w", f.Name, val, err)
 					errs = append(errs, err)
