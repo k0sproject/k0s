@@ -192,16 +192,24 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.Hel
 }
 
 func (ec *ExtensionsController) writeChartManifestFile(chart k0sv1beta1.Chart, fileName string) (string, error) {
+	// Find matching repository for this chart
+	var repository *k0sv1beta1.Repository
+	if repoID := extractRepositoryIdentifier(chart.ChartName); repoID != "" {
+		repository = ec.repositoryCache.get(repoID)
+	}
+
 	tw := templatewriter.TemplateWriter{
 		Path:     filepath.Join(ec.manifestsDir, fileName),
 		Name:     "addon_crd_manifest",
 		Template: chartCrdTemplate,
 		Data: struct {
 			k0sv1beta1.Chart
-			Finalizer string
+			Finalizer  string
+			Repository *k0sv1beta1.Repository
 		}{
-			Chart:     chart,
-			Finalizer: finalizerName,
+			Chart:      chart,
+			Finalizer:  finalizerName,
+			Repository: repository,
 		},
 	}
 	if err := tw.Write(); err != nil {
@@ -331,10 +339,23 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		}
 	}()
 
-	// Extract repository from chart name and look it up
-	repo, err := cr.extractAndLookupRepository(chart.Spec.ChartName)
-	if err != nil {
-		return fmt.Errorf("can't lookup repository for chart %q: %w", chart.Spec.ChartName, err)
+	// Get repository configuration - prefer embedded Repository over cache lookup
+	var repo *k0sv1beta1.Repository
+	chartName := chart.Spec.ChartName
+
+	if chart.Spec.Repository != nil {
+		// Use embedded repository configuration
+		// Extract repository identifier to use when initializing the repository in Helm
+		repoName := extractRepositoryIdentifier(chartName)
+		r := chart.Spec.Repository.ToK0sRepository(repoName)
+		repo = &r
+	} else {
+		// Fall back to extracting repository from chart name and looking it up in cache
+		var lookupErr error
+		repo, lookupErr = cr.extractAndLookupRepository(chartName)
+		if lookupErr != nil {
+			return fmt.Errorf("can't lookup repository for chart %q: %w", chartName, lookupErr)
+		}
 	}
 
 	// Create ephemeral Helm commands with repository
@@ -346,9 +367,9 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
-		cr.L.Tracef("Start update or install %s", chart.Spec.ChartName)
+		cr.L.Tracef("Start update or install %s", chartName)
 		chartRelease, err = helmCmd.InstallChart(ctx,
-			chart.Spec.ChartName,
+			chartName,
 			chart.Spec.Version,
 			chart.Spec.ReleaseName,
 			chart.Spec.Namespace,
@@ -364,7 +385,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		}
 		// update
 		chartRelease, err = helmCmd.UpgradeChart(ctx,
-			chart.Spec.ChartName,
+			chartName,
 			chart.Spec.Version,
 			chart.Status.ReleaseName,
 			chart.Status.Namespace,
@@ -388,40 +409,53 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 // and looks it up in the repository cache. Returns a pointer to the repository config or nil
 // if no repository configuration is needed (e.g., local path charts, OCI charts without auth).
 func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*k0sv1beta1.Repository, error) {
-	// Check if it's a local path (absolute or relative)
-	if filepath.IsAbs(chartName) || strings.HasPrefix(chartName, ".") {
-		// Local chart, no repository needed
-		return nil, nil
-	}
+	repoID := extractRepositoryIdentifier(chartName)
 
-	// Check if it's an OCI chart
-	if registry.IsOCI(chartName) {
-		// Extract hostname from OCI URL
-		chartURL, err := url.Parse(chartName)
-		if err != nil {
-			return nil, fmt.Errorf("invalid OCI chart URL %q: %w", chartName, err)
+	if repoID == "" {
+		// Local path or invalid format
+		if filepath.IsAbs(chartName) || strings.HasPrefix(chartName, ".") {
+			return nil, nil // Local chart, no repo needed
 		}
-		repoHostname := chartURL.Host
-		// Look up repository by hostname (OCI repos are keyed by hostname)
-		return cr.repositoryCache.get(repoHostname), nil
-
-	}
-
-	// Traditional format: "reponame/chartname"
-	repoName, chart, found := strings.Cut(chartName, "/")
-	if !found {
+		// Traditional chart without slash - error
 		return nil, fmt.Errorf("invalid chart name %q: expected format 'repository/chart' for non-OCI charts", chartName)
 	}
-	if chart == "" {
-		return nil, fmt.Errorf("invalid chart name %q: chart name is empty", chartName)
+
+	// For OCI, missing repo is okay (anonymous access)
+	if registry.IsOCI(chartName) {
+		return cr.repositoryCache.get(repoID), nil
 	}
 
-	repo := cr.repositoryCache.get(repoName)
+	// For traditional, missing repo is an error
+	repo := cr.repositoryCache.get(repoID)
 	if repo == nil {
-		return nil, fmt.Errorf("repository '%s' not found in cluster configuration", repoName)
+		return nil, fmt.Errorf("repository '%s' not found in cluster configuration", repoID)
+	}
+	return repo, nil
+}
+
+// extractRepositoryIdentifier extracts the repository identifier from a chart name.
+// For OCI charts, returns the hostname. For traditional charts, returns the repo name.
+// Returns empty string for local paths or if no identifier can be extracted.
+func extractRepositoryIdentifier(chartName string) string {
+	// Local paths don't have repository identifiers
+	if filepath.IsAbs(chartName) || strings.HasPrefix(chartName, ".") {
+		return ""
 	}
 
-	return repo, nil
+	// OCI charts: extract hostname from URL
+	if registry.IsOCI(chartName) {
+		if chartURL, err := url.Parse(chartName); err == nil {
+			return chartURL.Host
+		}
+		return ""
+	}
+
+	// Traditional charts: extract repo name before first slash
+	if repoName, _, found := strings.Cut(chartName, "/"); found {
+		return repoName
+	}
+
+	return ""
 }
 
 func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
@@ -481,6 +515,30 @@ spec:
   namespace: {{ .TargetNS }}
 {{- if ne .ForceUpgrade nil }}
   forceUpgrade: {{ .ForceUpgrade }}
+{{- end }}
+{{- if .Repository }}
+  repository:
+{{- if .Repository.URL }}
+    url: {{ .Repository.URL }}
+{{- end }}
+{{- if .Repository.Username }}
+    username: {{ .Repository.Username }}
+{{- end }}
+{{- if .Repository.Password }}
+    password: {{ .Repository.Password }}
+{{- end }}
+{{- if .Repository.CAFile }}
+    caFile: {{ .Repository.CAFile }}
+{{- end }}
+{{- if .Repository.CertFile }}
+    certFile: {{ .Repository.CertFile }}
+{{- end }}
+{{- if .Repository.KeyFile }}
+    keyFile: {{ .Repository.KeyFile }}
+{{- end }}
+{{- if ne .Repository.Insecure nil }}
+    insecure: {{ .Repository.Insecure }}
+{{- end }}
 {{- end }}
 `
 

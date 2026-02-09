@@ -51,6 +51,38 @@ spec:
                 type: integer
               releaseName:
                 type: string
+              repository:
+                description: |-
+                  Repository configuration for the chart. When specified, the chart will use this
+                  repository configuration instead of looking up a repository from the cluster-level
+                  repository cache. This enables self-contained Chart resources.
+                properties:
+                  caFile:
+                    description: CA bundle file to use when verifying HTTPS-enabled
+                      servers.
+                    type: string
+                  certFile:
+                    description: The TLS certificate file to use for HTTPS client
+                      authentication.
+                    type: string
+                  insecure:
+                    description: Whether to skip TLS certificate checks when connecting
+                      to the repository.
+                    type: boolean
+                  keyFile:
+                    description: The TLS key file to use for HTTPS client authentication.
+                    type: string
+                  password:
+                    description: Password for Basic HTTP authentication.
+                    type: string
+                  url:
+                    description: The repository URL.
+                    minLength: 1
+                    type: string
+                  username:
+                    description: Username for Basic HTTP authentication.
+                    type: string
+                type: object
               timeout:
                 type: string
               values:

@@ -197,6 +197,8 @@ spec:
     values
   version: 0.0.1
   namespace: default
+  repository:
+    url: https://charts.k0sproject.io/release
 `,
 		},
 		{
@@ -232,13 +234,25 @@ spec:
   version: 0.0.1
   namespace: default
   forceUpgrade: false
+  repository:
+    url: https://charts.k0sproject.io/release
 `,
 		},
 	}
 	for _, tt := range tests {
+		// With cache, make these behave as in the old style where config has the repo details,
+		// ensuring backwards compatibility with the old style
+		repoCache := repositoryCache{cache: make(map[string]k0sv1beta1.Repository)}
+		repoCache.update([]k0sv1beta1.Repository{
+			{
+				Name: "k0s",
+				URL:  "https://charts.k0sproject.io/release",
+			},
+		})
 		t.Run(tt.name, func(t *testing.T) {
 			ec := &ExtensionsController{
-				manifestsDir: t.TempDir(),
+				manifestsDir:    t.TempDir(),
+				repositoryCache: &repoCache,
 			}
 			path, err := ec.writeChartManifestFile(tt.args.chart, tt.args.fileName)
 			require.NoError(t, err)
