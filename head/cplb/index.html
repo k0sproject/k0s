@@ -1715,6 +1715,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#keepalived-template-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keepalived template variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3297,6 +3319,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#keepalived-template-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keepalived template variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3784,18 +3828,156 @@ if the Keepalived VRRP instance's current state is <code>master</code> or to <co
 there is exactly one VRRP instance.</li>
 </ul>
 <p>Additionally, you can check the actual IPVS configuration using <code>ipvsadm</code>:</p>
-<p><code>console
-controller0:/# ipvsadm --save -n
-IP Virtual Server version 1.2.1 (size=4096)
-Prot LocalAddress:Port Scheduler Flags
-  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn
-TCP  192.168.122.200:6443 rr persistent 360
-  -&gt; 192.168.122.185:6443              Route   1      0          0
-  -&gt; 192.168.122.87:6443               Route   1      0          0
-  -&gt; 192.168.122.122:6443              Route   1      0          0</code></p>
-<p>In this example <code>192.168.122.200</code> is the virtual IP, and <code>192.168.122.185</code>, <code>192.168.122.87</code>
-  and <code>192.168.122.122</code> are the control plane nodes.</p>
-<p>If there is only one VRRP instance, only the current master should be load balancing.</p>
+<div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>ipvsadm<span class="w"> </span>--save<span class="w"> </span>-n
+<span class="go">IP Virtual Server version 1.2.1 (size=4096)</span>
+<span class="go">Prot LocalAddress:Port Scheduler Flags</span>
+<span class="go">  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn</span>
+<span class="go">TCP  192.168.122.200:6443 rr persistent 360</span>
+<span class="go">  -&gt; 192.168.122.185:6443              Route   1      0          0</span>
+<span class="go">  -&gt; 192.168.122.87:6443               Route   1      0          0</span>
+<span class="go">  -&gt; 192.168.122.122:6443              Route   1      0          0</span>
+<span class="go">  ```</span>
+
+<span class="go">  In this example `192.168.122.200` is the virtual IP, and `192.168.122.185`, `192.168.122.87`</span>
+<span class="go">  and `192.168.122.122` are the control plane nodes.</span>
+
+<span class="go">If there is only one VRRP instance, only the current master should be load balancing.</span>
+
+<span class="gp">#</span><span class="c1"># Custom Keepalived Templates</span>
+
+<span class="go">**Warning:** Any customization to Keepalived templates is outside the scope of k0s support.</span>
+<span class="go">Template variables are not considered a stable API and templates can break during upgrades. Use at your own risk.</span>
+
+<span class="go">K0s allows you to customize the Keepalived configuration by providing custom Go templates for advanced users</span>
+<span class="go">who need an extra layer of customization. A minimal example would be:</span>
+
+<span class="go">```yaml</span>
+<span class="go">spec:</span>
+<span class="go">  network:</span>
+<span class="go">    controlPlaneLoadBalancing:</span>
+<span class="go">      enabled: true</span>
+<span class="go">      type: Keepalived</span>
+<span class="go">      keepalived:</span>
+<span class="go">        vrrpInstances:</span>
+<span class="go">        - virtualIPs: [&quot;&lt;VIP address&gt;/&lt;netmask&gt;&quot;]</span>
+<span class="go">          authPass: &quot;&lt;my password&gt;&quot;</span>
+<span class="go">        configTemplateVRRP: /path/to/custom-vrrp-template.conf</span>
+<span class="go">        configTemplateVS: /path/to/custom-virtualservers-template.conf</span>
+</code></pre></div>
+<p>It is recommended to create custom templates based on the default templates, these can be accessed using the following commands:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># View the default VRRP template</span>
+k0s<span class="w"> </span>keepalived-config<span class="w"> </span>vrrp
+
+<span class="c1"># View the default Virtual Servers template</span>
+k0s<span class="w"> </span>keepalived-config<span class="w"> </span>virtualservers
+</code></pre></div>
+<p>The templates are only read during the k0s bootstrap. If a template is changed it's required to restart k0s.</p>
+<h3 id="keepalived-template-variables">Keepalived template variables<a class="headerlink" href="#keepalived-template-variables" title="Permanent link">#</a></h3>
+<h4 id="vrrp-variables-configtemplatevrrp">VRRP Variables (configTemplateVRRP)<a class="headerlink" href="#vrrp-variables-configtemplatevrrp" title="Permanent link">#</a></h4>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.IPVSLoadBalancer</code></td>
+<td>Determines whether IPVS load balancer is enabled or not.</td>
+</tr>
+<tr>
+<td><code>.K0sBin</code></td>
+<td>K0s binary path.</td>
+</tr>
+<tr>
+<td><code>.RunDir</code></td>
+<td>K0s run directory.</td>
+</tr>
+<tr>
+<td><code>.VRRPInstances</code></td>
+<td>Struct holding all the VRRP instances.</td>
+</tr>
+<tr>
+<td><code>.VRRPInstances[].AdvertIntervalSeconds</code></td>
+<td>Advert interval of the VRRP instance.</td>
+</tr>
+<tr>
+<td><code>.VRRPInstances[].AuthPass</code></td>
+<td>Password for accessing VRRPD.</td>
+</tr>
+<tr>
+<td><code>.VRRPInstances[].Interface</code></td>
+<td>Network interface used by the virtual router.</td>
+</tr>
+<tr>
+<td><code>.VRRPInstances[].UnicastPeers</code></td>
+<td>List of unicast peer IP addresses.</td>
+</tr>
+<tr>
+<td><code>.VRRPInstances[].UnicastSourceIP</code></td>
+<td>Source IP address for unicast communication.</td>
+</tr>
+<tr>
+<td><code>.VRRPInstances[].VirtualIPs</code></td>
+<td>List of virtual IP addresses with CIDR notation.</td>
+</tr>
+<tr>
+<td><code>.VRRPInstances[].VirtualRouterID</code></td>
+<td>VRRP router ID.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="virtual-servers-variables-configtemplatevs">Virtual Servers Variables (configTemplateVS)<a class="headerlink" href="#virtual-servers-variables-configtemplatevs" title="Permanent link">#</a></h4>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.APIServerPort</code></td>
+<td>Kubernetes API server port.</td>
+</tr>
+<tr>
+<td><code>.RealServers</code></td>
+<td>List of real server IP addresses (control plane nodes).</td>
+</tr>
+<tr>
+<td><code>.VirtualServers</code></td>
+<td>Array of virtual server configurations.</td>
+</tr>
+<tr>
+<td><code>.VirtualServers[].DelayLoop</code></td>
+<td>Delay timer for check polling.</td>
+</tr>
+<tr>
+<td><code>.VirtualServers[].IPAddress</code></td>
+<td>Virtual IP address used by the virtual server.</td>
+</tr>
+<tr>
+<td><code>.VirtualServers[].LBAlgo</code></td>
+<td>Load balancing algorithm.</td>
+</tr>
+<tr>
+<td><code>.VirtualServers[].LBKind</code></td>
+<td>Load balancing forwarding method.</td>
+</tr>
+<tr>
+<td><code>.VirtualServers[].PersistenceTimeoutSeconds</code></td>
+<td>Timeout value for persistent connections in seconds.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="important-considerations">Important Considerations<a class="headerlink" href="#important-considerations" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>No Support</strong>: Custom template configurations are not officially supported. If you encounter issues with custom templates, you may be asked to reproduce the issue with default templates.</li>
+<li><strong>Updates</strong>: When upgrading k0s, review the default templates for any changes that may need to be incorporated into your custom templates.</li>
+<li><strong>Testing</strong>: Always test custom templates thoroughly in a non-production environment before deploying to production.</li>
+<li><strong>Syntax Validation</strong>: k0s performs minimal validation of custom templates. Invalid Keepalived configuration will cause the CPLB feature to fail.</li>
+</ul>
 
 
 
