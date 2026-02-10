@@ -630,6 +630,37 @@ k0s keepalived-config virtualservers
 
 The templates are only read during the k0s bootstrap. If a template is changed it's required to restart k0s.
 
+### Keepalived template variables
+
+#### VRRP Variables (configTemplateVRRP)
+
+| Variable                                 | Description                                              |
+|------------------------------------------|----------------------------------------------------------|
+| `.IPVSLoadBalancer`                      | Determines whether IPVS load balancer is enabled or not. |
+| `.K0sBin`                                | K0s binary path.                                         |
+| `.RunDir`                                | K0s run directory.                                       |
+| `.VRRPInstances`                         | Struct holding all the VRRP instances.                   |
+| `.VRRPInstances[].AdvertIntervalSeconds` | Advert interval of the VRRP instance.                    |
+| `.VRRPInstances[].AuthPass`              | Password for accessing VRRPD.                            |
+| `.VRRPInstances[].Interface`             | Network interface used by the virtual router.            |
+| `.VRRPInstances[].UnicastPeers`          | List of unicast peer IP addresses.                       |
+| `.VRRPInstances[].UnicastSourceIP`       | Source IP address for unicast communication.             |
+| `.VRRPInstances[].VirtualIPs`            | List of virtual IP addresses with CIDR notation.         |
+| `.VRRPInstances[].VirtualRouterID`       | VRRP router ID.                                          |
+
+#### Virtual Servers Variables (configTemplateVS)
+
+| Variable                                      | Description                                             |
+|-----------------------------------------------|---------------------------------------------------------|
+| `.APIServerPort`                              | Kubernetes API server port.                             |
+| `.RealServers`                                | List of real server IP addresses (control plane nodes). |
+| `.VirtualServers`                             | Array of virtual server configurations.                 |
+| `.VirtualServers[].DelayLoop`                 | Delay timer for check polling.                          |
+| `.VirtualServers[].IPAddress`                 | Virtual IP address used by the virtual server.          |
+| `.VirtualServers[].LBAlgo`                    | Load balancing algorithm.                               |
+| `.VirtualServers[].LBKind`                    | Load balancing forwarding method.                       |
+| `.VirtualServers[].PersistenceTimeoutSeconds` | Timeout value for persistent connections in seconds.    |
+
 ### Important Considerations
 
 * **No Support**: Custom template configurations are not officially supported. If you encounter issues with custom templates, you may be asked to reproduce the issue with default templates.
