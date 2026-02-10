@@ -97,6 +97,10 @@ spec:
         enabled: false
   repository:
     url: https://prometheus-community.github.io/helm-charts
+    # Or use secret-based authentication:
+    # configFrom:
+    #   secretRef:
+    #     name: helm-creds
 status:
   releaseName: prometheus
   version: "14.6.1"

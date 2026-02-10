@@ -7,12 +7,29 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
+	"github.com/k0sproject/k0s/pkg/helm"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
-
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
+
+// SecretReference identifies a secret in a specific namespace.
+type SecretReference struct {
+	// Name of the secret.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+	// Namespace of the secret. If empty, defaults to the Chart resource's namespace.
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// ConfigSource describes the source of repository configuration values.
+type ConfigSource struct {
+	// SecretRef references a Kubernetes Secret containing repository configuration.
+	// Secret keys should match standard Kubernetes TLS secret keys (ca.crt, tls.crt, tls.key)
+	// plus repository-specific keys (url, username, password, insecure).
+	// Secret values override inline RepositorySpec fields.
+	SecretRef *SecretReference `json:"secretRef,omitempty"`
+}
 
 // RepositorySpec describes a Helm repository configuration for a Chart.
 // Fields map to the CLI flags for the "helm repo add" command.
@@ -32,13 +49,16 @@ type RepositorySpec struct {
 	KeyFile string `json:"keyFile,omitempty"`
 	// Whether to skip TLS certificate checks when connecting to the repository.
 	Insecure *bool `json:"insecure,omitempty"`
+	// ConfigFrom specifies the source of repository configuration values.
+	// Secret values override inline fields when present.
+	ConfigFrom *ConfigSource `json:"configFrom,omitempty"`
 }
 
-// ToK0sRepository converts RepositorySpec to k0s Repository type for Helm operations.
+// ToHelm converts RepositorySpec to helm.Repository for Helm operations.
 // Note: The Name field is not included in RepositorySpec as it's not needed for
 // embedded repository configurations.
-func (r *RepositorySpec) ToK0sRepository(name string) k0sv1beta1.Repository {
-	repo := k0sv1beta1.Repository{
+func (r *RepositorySpec) ToHelm(name string) helm.Repository {
+	return helm.Repository{
 		Name:     name,
 		URL:      r.URL,
 		Username: r.Username,
@@ -48,7 +68,6 @@ func (r *RepositorySpec) ToK0sRepository(name string) k0sv1beta1.Repository {
 		KeyFile:  r.KeyFile,
 		Insecure: r.Insecure,
 	}
-	return repo
 }
 
 // ChartSpec defines the desired state of Chart

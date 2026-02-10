@@ -65,6 +65,30 @@ spec:
                     description: The TLS certificate file to use for HTTPS client
                       authentication.
                     type: string
+                  configFrom:
+                    description: |-
+                      ConfigFrom specifies the source of repository configuration values.
+                      Secret values override inline fields when present.
+                    properties:
+                      secretRef:
+                        description: |-
+                          SecretRef references a Kubernetes Secret containing repository configuration.
+                          Secret keys should match standard Kubernetes TLS secret keys (ca.crt, tls.crt, tls.key)
+                          plus repository-specific keys (url, username, password, insecure).
+                          Secret values override inline RepositorySpec fields.
+                        properties:
+                          name:
+                            description: Name of the secret.
+                            minLength: 1
+                            type: string
+                          namespace:
+                            description: Namespace of the secret. If empty, defaults
+                              to the Chart resource's namespace.
+                            type: string
+                        required:
+                        - name
+                        type: object
+                    type: object
                   insecure:
                     description: Whether to skip TLS certificate checks when connecting
                       to the repository.

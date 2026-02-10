@@ -29,6 +29,7 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -271,7 +272,7 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	}
 	cr.L.Debugf("Install or update reconciliation request: %s", req)
 	if err := cr.updateOrInstallChart(ctx, chartInstance); err != nil {
-		return reconcile.Result{Requeue: true}, fmt.Errorf("can't update or install chart: %w", err)
+		return reconcile.Result{}, fmt.Errorf("can't update or install chart: %w", err)
 	}
 
 	cr.L.Debugf("Installed or updated reconciliation request: %s", req)
@@ -316,10 +317,88 @@ func removeFinalizer(ctx context.Context, c client.Client, chart *helmv1beta1.Ch
 
 const defaultTimeout = 10 * time.Minute
 
-func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) error {
-	var err error
+// loadAndMergeRepositoryConfig loads repository configuration from a secret and merges it
+// with inline configuration. Secret values take precedence over inline values.
+//
+// Supported secret keys:
+//   - url: Repository URL
+//   - username, password: Basic auth credentials
+//   - ca.crt: CA certificate for HTTPS verification
+//   - tls.crt, tls.key: Client certificate/key for mTLS
+//   - insecure: "true" to skip TLS verification
+//
+// Returns the merged repository configuration with in-memory certificate data.
+func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, chart helmv1beta1.Chart) (*helm.Repository, error) {
+	repoSpec := chart.Spec.Repository
+	if repoSpec == nil {
+		return nil, errors.New("chart has no repository configuration")
+	}
+
+	// If no secret reference, just convert inline config
+	if repoSpec.ConfigFrom == nil || repoSpec.ConfigFrom.SecretRef == nil {
+		repo := repoSpec.ToHelm(extractRepositoryIdentifier(chart.Spec.ChartName))
+		return &repo, nil
+	}
+
+	secretRef := repoSpec.ConfigFrom.SecretRef
+	secretNamespace := secretRef.Namespace
+	if secretNamespace == "" {
+		secretNamespace = chart.Namespace
+	}
+
+	// Fetch the secret
+	var secret corev1.Secret
+	secretKey := types.NamespacedName{
+		Name:      secretRef.Name,
+		Namespace: secretNamespace,
+	}
+	if err := cr.Get(ctx, secretKey, &secret); err != nil {
+		return nil, fmt.Errorf("failed to get repository config secret %s: %w", secretKey, err)
+	}
+
+	// Start with inline configuration
+	repo := repoSpec.ToHelm(extractRepositoryIdentifier(chart.Spec.ChartName))
+
+	// Override with values from secret (secret takes precedence)
+	if val, ok := secret.Data["url"]; ok && len(val) > 0 {
+		repo.URL = string(val)
+	}
+	if val, ok := secret.Data["username"]; ok && len(val) > 0 {
+		repo.Username = string(val)
+	}
+	if val, ok := secret.Data["password"]; ok && len(val) > 0 {
+		repo.Password = string(val)
+	}
+
+	// Handle certificate data - use in-memory data (no temp files needed here!)
+	// Use standard Kubernetes TLS secret keys (ca.crt, tls.crt, tls.key)
+	if caData, ok := secret.Data["ca.crt"]; ok && len(caData) > 0 {
+		repo.CAData = caData
+		repo.CAFile = "" // Clear file path if data is provided
+	}
+
+	if certData, ok := secret.Data["tls.crt"]; ok && len(certData) > 0 {
+		repo.CertData = certData
+		repo.CertFile = "" // Clear file path if data is provided
+	}
+
+	if keyData, ok := secret.Data["tls.key"]; ok && len(keyData) > 0 {
+		repo.KeyData = keyData
+		repo.KeyFile = "" // Clear file path if data is provided
+	}
+
+	if val, ok := secret.Data["insecure"]; ok && len(val) > 0 {
+		insecure := string(val) == "true"
+		repo.Insecure = &insecure
+	}
+
+	return &repo, nil
+}
+
+func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) (err error) {
 	var chartRelease *release.Release
-	timeout, err := time.ParseDuration(chart.Spec.Timeout)
+	var timeout time.Duration
+	timeout, err = time.ParseDuration(chart.Spec.Timeout)
 	if err != nil {
 		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
 		timeout = defaultTimeout
@@ -332,36 +411,45 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		if err == nil {
 			return
 		}
-		if err := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
+		if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
 			return cr.updateStatus(ctx, chart, chartRelease, err)
-		}); err != nil {
-			cr.L.WithError(err).Error("Failed to update status for chart release, give up", chart.Name)
+		}); statusErr != nil {
+			cr.L.WithError(statusErr).Error("Failed to update status for chart release, give up", chart.Name)
 		}
 	}()
 
 	// Get repository configuration - prefer embedded Repository over cache lookup
-	var repo *k0sv1beta1.Repository
+	var repo *helm.Repository
 	chartName := chart.Spec.ChartName
 
 	if chart.Spec.Repository != nil {
-		// Use embedded repository configuration
-		// Extract repository identifier to use when initializing the repository in Helm
-		repoName := extractRepositoryIdentifier(chartName)
-		r := chart.Spec.Repository.ToK0sRepository(repoName)
-		repo = &r
+		// Load and merge repository configuration from secret (if configured) and inline fields
+		repo, err = cr.loadAndMergeRepositoryConfig(ctx, chart)
+		if err != nil {
+			err = fmt.Errorf("can't load repository config for chart %q: %w", chartName, err)
+			return
+		}
+
+		// For OCI charts, if URL is not set, extract registry URL from chartName
+		if strings.HasPrefix(chartName, "oci://") && repo.URL == "" {
+			repo.URL = extractOCIRegistryURL(chartName)
+		}
 	} else {
 		// Fall back to extracting repository from chart name and looking it up in cache
-		var lookupErr error
-		repo, lookupErr = cr.extractAndLookupRepository(chartName)
-		if lookupErr != nil {
-			return fmt.Errorf("can't lookup repository for chart %q: %w", chartName, lookupErr)
+		repo, err = cr.extractAndLookupRepository(chartName)
+		if err != nil {
+			err = fmt.Errorf("can't lookup repository for chart %q: %w", chartName, err)
+			return
 		}
 	}
 
-	// Create ephemeral Helm commands with repository
-	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, repo)
+	// Create ephemeral Helm commands with repository (helm manages tmpDir internally)
+	var helmCmd *helm.Commands
+	var cleanup func()
+	helmCmd, cleanup, err = helm.NewCommands(cr.kubeConfig, repo)
 	if err != nil {
-		return fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
+		err = fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
+		return
 	}
 	defer cleanup()
 
@@ -377,7 +465,8 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			timeout,
 		)
 		if err != nil {
-			return fmt.Errorf("can't reconcile installation for %q: %w", chart.GetName(), err)
+			err = fmt.Errorf("can't reconcile installation for %q: %w", chart.GetName(), err)
+			return
 		}
 	} else {
 		if !cr.chartNeedsUpgrade(chart) {
@@ -394,13 +483,14 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			chart.Spec.ShouldForceUpgrade(),
 		)
 		if err != nil {
-			return fmt.Errorf("can't reconcile upgrade for %q: %w", chart.GetName(), err)
+			err = fmt.Errorf("can't reconcile upgrade for %q: %w", chart.GetName(), err)
+			return
 		}
 	}
-	if err := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
+	if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
 		return cr.updateStatus(ctx, chart, chartRelease, nil)
-	}); err != nil {
-		cr.L.WithError(err).Error("Failed to update status for chart release, give up", chart.Name)
+	}); statusErr != nil {
+		cr.L.WithError(statusErr).Error("Failed to update status for chart release, give up", chart.Name)
 	}
 	return nil
 }
@@ -408,7 +498,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 // extractAndLookupRepository extracts the repository name or OCI hostname from chartName
 // and looks it up in the repository cache. Returns a pointer to the repository config or nil
 // if no repository configuration is needed (e.g., local path charts, OCI charts without auth).
-func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*k0sv1beta1.Repository, error) {
+func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*helm.Repository, error) {
 	repoID := extractRepositoryIdentifier(chartName)
 
 	if repoID == "" {
@@ -422,19 +512,33 @@ func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*k0sv1b
 
 	// For OCI, missing repo is okay (anonymous access)
 	if registry.IsOCI(chartName) {
-		return cr.repositoryCache.get(repoID), nil
+		cachedRepo := cr.repositoryCache.get(repoID)
+		if cachedRepo == nil {
+			return nil, nil
+		}
+		helmRepo := cachedRepo.ToHelm()
+		return &helmRepo, nil
 	}
 
 	// For traditional, missing repo is an error
-	repo := cr.repositoryCache.get(repoID)
-	if repo == nil {
+	cachedRepo := cr.repositoryCache.get(repoID)
+	if cachedRepo == nil {
 		return nil, fmt.Errorf("repository '%s' not found in cluster configuration", repoID)
 	}
-	return repo, nil
+	helmRepo := cachedRepo.ToHelm()
+	return &helmRepo, nil
 }
 
 // extractRepositoryIdentifier extracts the repository identifier from a chart name.
 // For OCI charts, returns the hostname. For traditional charts, returns the repo name.
+//
+// Examples:
+//   - "oci://ghcr.io/org/chart" → "ghcr.io"
+//   - "oci://registry:8080/chart" → "registry:8080"
+//   - "myrepo/mychart" → "myrepo"
+//   - "/path/to/chart.tgz" → ""
+//   - "./chart" → ""
+//
 // Returns empty string for local paths or if no identifier can be extracted.
 func extractRepositoryIdentifier(chartName string) string {
 	// Local paths don't have repository identifiers
@@ -456,6 +560,27 @@ func extractRepositoryIdentifier(chartName string) string {
 	}
 
 	return ""
+}
+
+// extractOCIRegistryURL extracts the base registry URL from an OCI chart name.
+//
+// Examples:
+//   - "oci://ghcr.io/user/charts/mychart" → "oci://ghcr.io"
+//   - "oci://registry:8080/chart" → "oci://registry:8080"
+//   - "myrepo/chart" → "" (not OCI)
+//
+// Returns empty string for non-OCI charts.
+func extractOCIRegistryURL(chartName string) string {
+	if !strings.HasPrefix(chartName, "oci://") {
+		return ""
+	}
+
+	chartURL, err := url.Parse(chartName)
+	if err != nil || chartURL.Host == "" {
+		return ""
+	}
+
+	return "oci://" + chartURL.Host
 }
 
 func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
@@ -516,6 +641,7 @@ spec:
 {{- if ne .ForceUpgrade nil }}
   forceUpgrade: {{ .ForceUpgrade }}
 {{- end }}
+
 {{- if .Repository }}
   repository:
 {{- if .Repository.URL }}
@@ -591,8 +717,14 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 		Kind:  "Chart",
 	}
 
+	// Create a scheme with both k0s types and core Kubernetes types (needed for Secret access)
+	scheme := k0sscheme.Scheme
+	if err := corev1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("can't add corev1 to scheme: %w", err)
+	}
+
 	mgr, err := controllerruntime.NewManager(clientConfig, crman.Options{
-		Scheme: k0sscheme.Scheme,
+		Scheme: scheme,
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},

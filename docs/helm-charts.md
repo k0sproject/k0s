@@ -176,6 +176,66 @@ spec:
   # No repository field needed for local files
 ```
 
+#### Secret-Based Authentication
+
+For sensitive credentials, use Kubernetes Secrets instead of embedding them in Chart resources:
+
+```bash
+# Create a secret with repository credentials
+kubectl create secret generic helm-registry-creds \
+  --from-literal=username=myuser \
+  --from-literal=password=mypassword \
+  -n kube-system
+```
+
+```yaml
+apiVersion: helm.k0sproject.io/v1beta1
+kind: Chart
+metadata:
+  name: app-from-private-registry
+  namespace: kube-system
+spec:
+  chartName: oci://registry.example.com/charts/app
+  version: "1.0.0"
+  namespace: default
+  repository:
+    configFrom:
+      secretRef:
+        name: helm-registry-creds
+        # namespace defaults to Chart's namespace if omitted
+```
+
+**Secret Keys:**
+
+- `url` - Repository URL
+- `username` - HTTP Basic auth username  
+- `password` - HTTP Basic auth password
+- `ca.crt` - CA certificate bundle (PEM format)
+- `tls.crt` - Client TLS certificate (PEM format)
+- `tls.key` - Client TLS private key (PEM format)
+- `insecure` - Set to "true" to skip TLS verification
+
+Secret values override inline repository fields. Inline fields can provide defaults when secret keys are not present.
+
+**Inline Override:** Inline repository fields take precedence over secret values, useful for overriding specific settings:
+
+```yaml
+apiVersion: helm.k0sproject.io/v1beta1
+kind: Chart
+metadata:
+  name: app-with-defaults
+  namespace: kube-system
+spec:
+  chartName: oci://registry.example.com/charts/app
+  version: "1.0.0"
+  namespace: default
+  repository:
+    url: oci://registry-fallback.local/charts/app  # Used if secret doesn't contain 'url'
+    configFrom:
+      secretRef:
+        name: helm-registry-creds  # Secret values override inline when present
+```
+
 ### Chart Lifecycle
 
 Charts are automatically managed by k0s:

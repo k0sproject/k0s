@@ -12,8 +12,6 @@ import (
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/stretchr/testify/require"
 	"k8s.io/utils/ptr"
-
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
 const (
@@ -44,47 +42,47 @@ func TestOCIRegistryManager_AddRegistry(t *testing.T) {
 	testCases := []struct {
 		name         string
 		registryHost string
-		repoCfg      v1beta1.Repository
+		repoCfg      Repository
 		expectedErr  string
 	}{
 		{
 			name:         "Valid OCI Registry URL",
 			registryHost: testRegistryHost,
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL: testOCIRegistryURL,
 			},
 		},
 		{
 			name:         "Valid OCI Registry URL with trailing slash",
 			registryHost: testRegistryHost,
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL: testOCIRegistryURL + "/",
 			},
 		},
 		{
 			name:         "Valid OCI Registry URL with port",
 			registryHost: testRegistryHostPort,
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL: testOCIRegistryURLWithPort,
 			},
 		},
 		{
 			name: "Invalid URL scheme",
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL: "http://example.com",
 			},
 			expectedErr: "not an OCI registry",
 		},
 		{
 			name: "Invalid URL format",
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL: "oci://\\//\\//",
 			},
 			expectedErr: "can't parse repository URL",
 		},
 		{
 			name: "Valid OCI Registry with path",
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL: testOCIRegistryURLWithRepo,
 			},
 			expectedErr: "must not contain a path",
@@ -107,8 +105,8 @@ func TestOCIRegistryManager_AddRegistry(t *testing.T) {
 			c, exists := m.knownRegistries.Load(tc.registryHost)
 			require.True(t, exists, "registry has not been added to knownRegistries")
 
-			_, ok := c.(v1beta1.Repository)
-			require.True(t, ok, "expected v1beta1.Repository type, got %T", c)
+			_, ok := c.(Repository)
+			require.True(t, ok, "expected Repository type, got %T", c)
 		})
 	}
 }
@@ -116,12 +114,12 @@ func TestOCIRegistryManager_AddRegistry(t *testing.T) {
 func TestOCIRegistryManager_GetRegistryClientErrors(t *testing.T) {
 	testCases := []struct {
 		name        string
-		repoCfg     v1beta1.Repository
+		repoCfg     Repository
 		expectedErr string
 	}{
 		{
 			name: "Invalid CA file",
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL:    testOCIRegistryURL,
 				CAFile: "invalid/path/to/ca.crt",
 			},
@@ -129,7 +127,7 @@ func TestOCIRegistryManager_GetRegistryClientErrors(t *testing.T) {
 		},
 		{
 			name: "mTLS client cert and key files",
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL:      testOCIRegistryURL,
 				CertFile: "path/to/client.crt",
 				KeyFile:  "path/to/client.key",
@@ -189,8 +187,8 @@ func TestOCIRegistryManager_GetRegistryClient_URL(t *testing.T) {
 	}
 
 	m := newOCIRegistryManager()
-	require.NoError(t, m.AddRegistry(v1beta1.Repository{URL: testOCIRegistryURL}))
-	require.NoError(t, m.AddRegistry(v1beta1.Repository{URL: testOCIRegistryURLWithPort}))
+	require.NoError(t, m.AddRegistry(Repository{URL: testOCIRegistryURL}))
+	require.NoError(t, m.AddRegistry(Repository{URL: testOCIRegistryURLWithPort}))
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -212,11 +210,11 @@ func TestOCIRegistryManager_GetRegistryClient_Settings(t *testing.T) {
 
 	testCases := []struct {
 		name    string
-		repoCfg v1beta1.Repository
+		repoCfg Repository
 	}{
 		{
 			name: "Valid OCI Registry, basic auth",
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL:      testOCIRegistryURL,
 				Username: "user",
 				Password: "pass",
@@ -224,14 +222,14 @@ func TestOCIRegistryManager_GetRegistryClient_Settings(t *testing.T) {
 		},
 		{
 			name: "Valid OCI Registry, insecure",
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL:      testOCIRegistryURL,
 				Insecure: ptr.To(true),
 			},
 		},
 		{
 			name: "Valid OCI Registry with self-signed CA cert",
-			repoCfg: v1beta1.Repository{
+			repoCfg: Repository{
 				URL:    testOCIRegistryURL,
 				CAFile: path.Join(certsDir, caCertFilename),
 			},
@@ -253,7 +251,7 @@ func TestOCIRegistryManager_GetRegistryClient_Settings(t *testing.T) {
 func TestOCIRegistryManager_mTLS_CertWithoutKeyFails(t *testing.T) {
 	m := newOCIRegistryManager()
 
-	repoCfg := v1beta1.Repository{
+	repoCfg := Repository{
 		Name:     "test-repo",
 		URL:      testOCIRegistryURL,
 		CertFile: "/some/path/client.crt",
@@ -268,7 +266,7 @@ func TestOCIRegistryManager_mTLS_CertWithoutKeyFails(t *testing.T) {
 func TestOCIRegistryManager_mTLS_KeyWithoutCertFails(t *testing.T) {
 	m := newOCIRegistryManager()
 
-	repoCfg := v1beta1.Repository{
+	repoCfg := Repository{
 		Name:    "test-repo",
 		URL:     testOCIRegistryURL,
 		KeyFile: "/some/path/client.key",
@@ -283,7 +281,7 @@ func TestOCIRegistryManager_mTLS_KeyWithoutCertFails(t *testing.T) {
 func TestOCIRegistryManager_mTLS_InvalidCertKeyFails(t *testing.T) {
 	m := newOCIRegistryManager()
 
-	repoCfg := v1beta1.Repository{
+	repoCfg := Repository{
 		Name:     "test-repo",
 		URL:      testOCIRegistryURL,
 		CertFile: "/invalid/client.crt",
@@ -306,7 +304,7 @@ func TestOCIRegistryManager_mTLS_Success(t *testing.T) {
 
 	m := newOCIRegistryManager()
 
-	repoCfg := v1beta1.Repository{
+	repoCfg := Repository{
 		Name:     "test-repo",
 		URL:      testOCIRegistryURL,
 		CAFile:   clientCert,
