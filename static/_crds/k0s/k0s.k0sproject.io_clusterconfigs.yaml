@@ -598,6 +598,18 @@ spec:
                           Keepalived contains configuration options related to the "Keepalived" type
                           of load balancing.
                         properties:
+                          configTemplateVRRP:
+                            description: |-
+                              ConfigTemplateVRRP specifies the path to a custom Keepalived configuration template for VRRP.
+                              If specified, this template will be used instead of the default configuration.
+                              The template must be a valid Go template and will receive keepalivedConfig as input.
+                            type: string
+                          configTemplateVS:
+                            description: |-
+                              ConfigTemplateVS specifies the path to a custom Keepalived configuration template for Virtual Servers.
+                              If specified, this template will be used instead of the default configuration.
+                              The template must be a valid Go template and will receive keepalivedConfig as input.
+                            type: string
                           disableLoadBalancer:
                             description: DisableLoadBalancer disables the load balancer.
                             type: boolean

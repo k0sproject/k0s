@@ -595,3 +595,75 @@ TCP  192.168.122.200:6443 rr persistent 360
   and `192.168.122.122` are the control plane nodes.
 
 If there is only one VRRP instance, only the current master should be load balancing.
+
+## Custom Keepalived Templates
+
+**Warning:** Any customization to Keepalived templates is outside the scope of k0s support.
+Template variables are not considered a stable API and templates can break during upgrades. Use at your own risk.
+
+K0s allows you to customize the Keepalived configuration by providing custom Go templates for advanced users
+who need an extra layer of customization. A minimal example would be:
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"]
+          authPass: "<my password>"
+        configTemplateVRRP: /path/to/custom-vrrp-template.conf
+        configTemplateVS: /path/to/custom-virtualservers-template.conf
+```
+
+It is recommended to create custom templates based on the default templates, these can be accessed using the following commands:
+
+```shell
+# View the default VRRP template
+k0s keepalived-config vrrp
+
+# View the default Virtual Servers template
+k0s keepalived-config virtualservers
+```
+
+The templates are only read during the k0s bootstrap. If a template is changed it's required to restart k0s.
+
+### Keepalived template variables
+
+#### VRRP Variables (configTemplateVRRP)
+
+| Variable                                 | Description                                              |
+|------------------------------------------|----------------------------------------------------------|
+| `.IPVSLoadBalancer`                      | Determines whether IPVS load balancer is enabled or not. |
+| `.K0sBin`                                | K0s binary path.                                         |
+| `.RunDir`                                | K0s run directory.                                       |
+| `.VRRPInstances`                         | Struct holding all the VRRP instances.                   |
+| `.VRRPInstances[].AdvertIntervalSeconds` | Advert interval of the VRRP instance.                    |
+| `.VRRPInstances[].AuthPass`              | Password for accessing VRRPD.                            |
+| `.VRRPInstances[].Interface`             | Network interface used by the virtual router.            |
+| `.VRRPInstances[].UnicastPeers`          | List of unicast peer IP addresses.                       |
+| `.VRRPInstances[].UnicastSourceIP`       | Source IP address for unicast communication.             |
+| `.VRRPInstances[].VirtualIPs`            | List of virtual IP addresses with CIDR notation.         |
+| `.VRRPInstances[].VirtualRouterID`       | VRRP router ID.                                          |
+
+#### Virtual Servers Variables (configTemplateVS)
+
+| Variable                                      | Description                                             |
+|-----------------------------------------------|---------------------------------------------------------|
+| `.APIServerPort`                              | Kubernetes API server port.                             |
+| `.RealServers`                                | List of real server IP addresses (control plane nodes). |
+| `.VirtualServers`                             | Array of virtual server configurations.                 |
+| `.VirtualServers[].DelayLoop`                 | Delay timer for check polling.                          |
+| `.VirtualServers[].IPAddress`                 | Virtual IP address used by the virtual server.          |
+| `.VirtualServers[].LBAlgo`                    | Load balancing algorithm.                               |
+| `.VirtualServers[].LBKind`                    | Load balancing forwarding method.                       |
+| `.VirtualServers[].PersistenceTimeoutSeconds` | Timeout value for persistent connections in seconds.    |
+
+### Important Considerations
+
+* **No Support**: Custom template configurations are not officially supported. If you encounter issues with custom templates, you may be asked to reproduce the issue with default templates.
+* **Updates**: When upgrading k0s, review the default templates for any changes that may need to be incorporated into your custom templates.
+* **Testing**: Always test custom templates thoroughly in a non-production environment before deploying to production.
+* **Syntax Validation**: k0s performs minimal validation of custom templates. Invalid Keepalived configuration will cause the CPLB feature to fail.
