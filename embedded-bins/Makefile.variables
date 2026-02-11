@@ -28,7 +28,7 @@ containerd_build_go_ldflags = -w -s
 containerd_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-kubernetes_version = 1.34.3
+kubernetes_version = 1.34.4
 kubernetes_buildimage = $(golang_buildimage)
 kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_enabled =
