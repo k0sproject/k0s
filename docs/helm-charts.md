@@ -215,9 +215,9 @@ spec:
 - `tls.key` - Client TLS private key (PEM format)
 - `insecure` - Set to "true" to skip TLS verification
 
-Secret values override inline repository fields. Inline fields can provide defaults when secret keys are not present.
+**Precedence:** Secret values override inline repository fields when present. Inline fields provide defaults when corresponding secret keys are missing or empty.
 
-**Inline Override:** Inline repository fields take precedence over secret values, useful for overriding specific settings:
+**Example with defaults:**
 
 ```yaml
 apiVersion: helm.k0sproject.io/v1beta1
@@ -230,10 +230,11 @@ spec:
   version: "1.0.0"
   namespace: default
   repository:
-    url: oci://registry-fallback.local/charts/app  # Used if secret doesn't contain 'url'
+    url: oci://registry-fallback.local/charts/app  # Used only if secret doesn't provide 'url'
+    username: default-user                         # Used only if secret doesn't provide 'username'
     configFrom:
       secretRef:
-        name: helm-registry-creds  # Secret values override inline when present
+        name: helm-registry-creds  # Secret values always override inline fields
 ```
 
 ### Chart Lifecycle
