@@ -63,7 +63,10 @@ func NewWorkerCmd() *cobra.Command {
 
 	or CLI flag:
 	$ k0s worker --token-file [path_to_file]
-	Note: Token can be passed either as a CLI argument or as a flag`,
+
+	or environment variable:
+	$ K0S_TOKEN=[token] k0s worker
+	Note: Token can be passed either as a CLI argument, a flag, or an environment variable`,
 		Args:             cobra.MaximumNArgs(1),
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -80,6 +83,9 @@ func NewWorkerCmd() *cobra.Command {
 			c := (*Command)(opts)
 			if len(args) > 0 {
 				c.TokenArg = args[0]
+			}
+			if err := internal.CheckSingleTokenSource(c.TokenArg, c.TokenFile); err != nil {
+				return err
 			}
 
 			getBootstrapKubeconfig, err := kubeconfigGetterFromJoinToken(c.TokenFile, c.TokenArg)
@@ -153,27 +159,22 @@ func GetNodeName(opts *config.WorkerOptions) (apitypes.NodeName, stringmap.Strin
 }
 
 func kubeconfigGetterFromJoinToken(tokenFile, tokenArg string) (clientcmd.KubeconfigGetter, error) {
-	if tokenArg != "" {
-		if tokenFile != "" {
-			return nil, errors.New("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
-		}
-
-		kubeconfig, err := loadKubeconfigFromJoinToken(tokenArg)
-		if err != nil {
-			return nil, err
-		}
-
-		return func() (*clientcmdapi.Config, error) {
-			return kubeconfig, nil
-		}, nil
+	tokenData, err := internal.GetTokenData(tokenArg, tokenFile)
+	if err != nil {
+		return nil, err
 	}
 
-	if tokenFile == "" {
+	if tokenData == "" {
 		return nil, nil
 	}
 
+	kubeconfig, err := loadKubeconfigFromJoinToken(tokenData)
+	if err != nil {
+		return nil, err
+	}
+
 	return func() (*clientcmdapi.Config, error) {
-		return loadKubeconfigFromTokenFile(tokenFile)
+		return kubeconfig, nil
 	}, nil
 }
 
@@ -193,26 +194,6 @@ func loadKubeconfigFromJoinToken(tokenData string) (*clientcmdapi.Config, error)
 	}
 
 	return kubeconfig, nil
-}
-
-func loadKubeconfigFromTokenFile(path string) (*clientcmdapi.Config, error) {
-	var problem string
-	tokenBytes, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		problem = "not found"
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to read token file: %w", err)
-	} else if len(tokenBytes) == 0 {
-		problem = "is empty"
-	}
-	if problem != "" {
-		return nil, fmt.Errorf("token file %q %s"+
-			`: obtain a new token via "k0s token create ..." and store it in the file`+
-			` or reinstall this node via "k0s install --force ..." or "k0sctl apply --force ..."`,
-			path, problem)
-	}
-
-	return loadKubeconfigFromJoinToken(string(tokenBytes))
 }
 
 // Start starts the worker components based on the given [config.CLIOptions].
