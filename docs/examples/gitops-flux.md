@@ -106,16 +106,16 @@ Create the following YAML file (simple-web-server-with-nodeport.yaml) into the s
     selector:
       matchLabels:
         app: web
-      template:
-        metadata:
-          labels:
-            app: web
-        spec:
-          containers:
-          - name: httpd
-            image: httpd:2.4.53-alpine
-            ports:
-            - containerPort: 80
+    template:
+      metadata:
+        labels:
+          app: web
+      spec:
+        containers:
+        - name: httpd
+          image: httpd:2.4.53-alpine
+          ports:
+          - containerPort: 80
   ---
   apiVersion: v1
   kind: Service
