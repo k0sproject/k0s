@@ -19,17 +19,38 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// StageOpt configures how an executable is staged.
+// It receives an AtomicOpener and returns a modified version with additional options.
+// This is wrapping the AtomicOpener so we can use variadic options when staging an executable,
+// without having to expose the AtomicOpener itself in the assets package.
+//
+// Example usage with SELinux labels:
+//
+//	path, err := StageExecutable(dir, "containerd",
+//		WithSELinuxLabel("system_u:object_r:container_runtime_exec_t:s0"))
+type StageOpt = func(*file.AtomicOpener) *file.AtomicOpener
+
+// WithSELinuxLabel returns a StageOpt that applies the given SELinux label
+// to the staged executable. The label should be a complete SELinux context
+// in the format user:role:type:level (e.g., "system_u:object_r:container_runtime_exec_t:s0").
+// The label will only be applied if SELinux is enabled on the system.
+func WithSELinuxLabel(label string) StageOpt {
+	return func(o *file.AtomicOpener) *file.AtomicOpener {
+		return o.WithSELinuxLabel(label)
+	}
+}
+
 // Stages the embedded executable with the given name into dir. If the
 // executable is not embedded in the k0s executable, this function first checks
 // if an executable exists at the desired path. If not, it falls back to a PATH
 // lookup. Returns the path to the executable, even if an error occurs.
-func StageExecutable(dir, name string) (string, error) {
+func StageExecutable(dir, name string, opts ...StageOpt) (string, error) {
 	// Always returning the path, even under error conditions, is kind of a hack
 	// to work around the "running executable" problem on Windows.
 
 	executableName := name + constant.ExecutableSuffix
 	path := filepath.Join(dir, executableName)
-	err := stage(executableName, path, 0750)
+	err := stage(executableName, path, 0750, opts...)
 	if err == nil {
 		return path, nil
 	}
@@ -63,7 +84,7 @@ func StageExecutable(dir, name string) (string, error) {
 	return path, fmt.Errorf("%w, %w, %w", err, statErr, lookErr)
 }
 
-func stage(name, path string, perm os.FileMode) error {
+func stage(name, path string, perm os.FileMode, opts ...StageOpt) error {
 	log := logrus.WithField("path", path)
 	log.Infof("Staging")
 
@@ -115,16 +136,22 @@ func stage(name, path string, perm os.FileMode) error {
 
 	log.Debug("Writing static file")
 
-	return file.AtomicWithTarget(path).
+	opener := file.AtomicWithTarget(path).
 		WithPermissions(perm).
 		// In order to properly determine if an update of an embedded binary
 		// file is needed, the staged embedded binary needs to have the same
 		// modification time as the `k0s` executable.
-		WithModificationTime(exinfo.ModTime()).
-		Do(func(dst file.AtomicWriter) error {
-			_, err := io.Copy(dst, gz)
-			return err
-		})
+		WithModificationTime(exinfo.ModTime())
+
+	// Apply any additional options
+	for _, opt := range opts {
+		opener = opt(opener)
+	}
+
+	return opener.Do(func(dst file.AtomicWriter) error {
+		_, err := io.Copy(dst, gz)
+		return err
+	})
 }
 
 type notEmbeddedError string
