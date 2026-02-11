@@ -7,10 +7,68 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
+	"github.com/k0sproject/k0s/pkg/helm"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
+
+// SecretReference identifies a secret in a specific namespace.
+type SecretReference struct {
+	// Name of the secret.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+	// Namespace of the secret. If empty, defaults to the Chart resource's namespace.
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// ConfigSource describes the source of repository configuration values.
+type ConfigSource struct {
+	// SecretRef references a Kubernetes Secret containing repository configuration.
+	// Secret keys should match standard Kubernetes TLS secret keys (ca.crt, tls.crt, tls.key)
+	// plus repository-specific keys (url, username, password, insecure).
+	// Secret values override inline RepositorySpec fields.
+	SecretRef *SecretReference `json:"secretRef,omitempty"`
+}
+
+// RepositorySpec describes a Helm repository configuration for a Chart.
+// Fields map to the CLI flags for the "helm repo add" command.
+type RepositorySpec struct {
+	// The repository URL.
+	// +kubebuilder:validation:MinLength=1
+	URL string `json:"url,omitempty"`
+	// Username for Basic HTTP authentication.
+	Username string `json:"username,omitempty"`
+	// Password for Basic HTTP authentication.
+	Password string `json:"password,omitempty"`
+	// CA bundle file to use when verifying HTTPS-enabled servers.
+	CAFile string `json:"caFile,omitempty"`
+	// The TLS certificate file to use for HTTPS client authentication.
+	CertFile string `json:"certFile,omitempty"`
+	// The TLS key file to use for HTTPS client authentication.
+	KeyFile string `json:"keyFile,omitempty"`
+	// Whether to skip TLS certificate checks when connecting to the repository.
+	Insecure *bool `json:"insecure,omitempty"`
+	// ConfigFrom specifies the source of repository configuration values.
+	// Secret values override inline fields when present.
+	ConfigFrom *ConfigSource `json:"configFrom,omitempty"`
+}
+
+// ToHelm converts RepositorySpec to helm.Repository for Helm operations.
+// Note: The Name field is not included in RepositorySpec as it's not needed for
+// embedded repository configurations.
+func (r *RepositorySpec) ToHelm(name string) helm.Repository {
+	return helm.Repository{
+		Name:     name,
+		URL:      r.URL,
+		Username: r.Username,
+		Password: r.Password,
+		CAFile:   r.CAFile,
+		CertFile: r.CertFile,
+		KeyFile:  r.KeyFile,
+		Insecure: r.Insecure,
+	}
+}
 
 // ChartSpec defines the desired state of Chart
 type ChartSpec struct {
@@ -23,6 +81,10 @@ type ChartSpec struct {
 	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the chart (default: true).
 	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
 	Order        int   `json:"order,omitempty"`
+	// Repository configuration for the chart. When specified, the chart will use this
+	// repository configuration instead of looking up a repository from the cluster-level
+	// repository cache. This enables self-contained Chart resources.
+	Repository *RepositorySpec `json:"repository,omitempty"`
 }
 
 // YamlValues returns values as map

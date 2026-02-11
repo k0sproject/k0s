@@ -68,46 +68,48 @@ By using the configuration above, the cluster would:
 - add stable and prometheus-community chart repositories
 - install the `prometheus-community/prometheus` chart of the specified version to the `default` namespace.
 
-The chart installation is implemented by using CRD `helm.k0sproject.io/Chart`. For every given helm extension the cluster creates a Chart CRD instance. The cluster has a controller which monitors for the Chart CRDs, supporting the following operations:
+The chart installation is implemented by using the `helm.k0sproject.io/Chart` custom resource. k0s automatically converts charts defined in the k0s configuration into Chart resources. You can also create Chart resources directly for more flexible management.
+
+The cluster has a controller which monitors Chart resources and supports the following operations:
 
 - install
 - upgrade
 - delete
 
-For security reasons, the cluster operates only on Chart CRDs instantiated in the `kube-system` namespace, however, the target namespace could be any.
+For security reasons, the cluster operates only on Chart resources in the `kube-system` namespace, however, the target namespace for releases can be any namespace.
 
-#### CRD definition
+#### Chart Resource Specification
 
 ```yaml
 apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:
-  creationTimestamp: "2020-11-10T14:17:53Z"
-  generation: 2
-  labels:
-    k0s.k0sproject.io/stack: helm
-  name: k0s-addon-chart-test-addon
+  name: prometheus
   namespace: kube-system
-  resourceVersion: "627"
-  selfLink: /apis/helm.k0sproject.io/v1beta1/namespaces/kube-system/charts/k0s-addon-chart-test-addon
-  uid: ebe59ed4-1ff8-4d41-8e33-005b183651ed
 spec:
   chartName: prometheus-community/prometheus
+  version: "14.6.1"
   namespace: default
+  timeout: 20m
   values: |
-    storageSpec:
-      emptyDir:
-        medium: Memory
-  version: 11.16.8
+    alertmanager:
+      persistentVolume:
+        enabled: false
+  repository:
+    url: https://prometheus-community.github.io/helm-charts
+    # Or use secret-based authentication:
+    # configFrom:
+    #   secretRef:
+    #     name: helm-creds
 status:
-  appVersion: 2.21.0
+  releaseName: prometheus
+  version: "14.6.1"
+  appVersion: "2.31.1"
+  revision: 1
   namespace: default
-  releaseName: prometheus-1605017878
-  revision: 2
-  updated: 2020-11-10 14:18:08.235656 +0000 UTC m=+41.871656901
-  version: 11.16.8
+  updated: "2024-01-15T10:30:45Z"
 ```
 
-The `Chart.spec` defines the chart information.
+The `spec.repository` field allows each Chart to include its own repository configuration, making Charts self-contained and portable. When using k0s configuration file, k0s automatically embeds the repository configuration into the generated Chart resources.
 
-The `Chart.status` keeps the information about the last operation performed by the operator.
+For more details on using Chart resources directly, see the [Helm Charts](helm-charts.md) documentation.
