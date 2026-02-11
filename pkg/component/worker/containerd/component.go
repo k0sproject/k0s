@@ -213,7 +213,7 @@ func (c *Component) setupConfig() error {
 				return err
 			}
 			if err := toml.NewEncoder(w).Encode(map[string]any{
-				"version": 2,
+				"version": 3,
 				"imports": append(config.ImportPaths, criConfigPath),
 			}); err != nil {
 				return err
