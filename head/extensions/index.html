@@ -2934,44 +2934,45 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <li>add stable and prometheus-community chart repositories</li>
 <li>install the <code>prometheus-community/prometheus</code> chart of the specified version to the <code>default</code> namespace.</li>
 </ul>
-<p>The chart installation is implemented by using CRD <code>helm.k0sproject.io/Chart</code>. For every given helm extension the cluster creates a Chart CRD instance. The cluster has a controller which monitors for the Chart CRDs, supporting the following operations:</p>
+<p>The chart installation is implemented by using the <code>helm.k0sproject.io/Chart</code> custom resource. k0s automatically converts charts defined in the k0s configuration into Chart resources. You can also create Chart resources directly for more flexible management.</p>
+<p>The cluster has a controller which monitors Chart resources and supports the following operations:</p>
 <ul>
 <li>install</li>
 <li>upgrade</li>
 <li>delete</li>
 </ul>
-<p>For security reasons, the cluster operates only on Chart CRDs instantiated in the <code>kube-system</code> namespace, however, the target namespace could be any.</p>
-<h4 id="crd-definition">CRD definition<a class="headerlink" href="#crd-definition" title="Permanent link">#</a></h4>
+<p>For security reasons, the cluster operates only on Chart resources in the <code>kube-system</code> namespace, however, the target namespace for releases can be any namespace.</p>
+<h4 id="chart-resource-specification">Chart Resource Specification<a class="headerlink" href="#chart-resource-specification" title="Permanent link">#</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">helm.k0sproject.io/v1beta1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Chart</span>
 <span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2020-11-10T14:17:53Z&quot;</span>
-<span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">k0s.k0sproject.io/stack</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">helm</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-addon-chart-test-addon</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
-<span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;627&quot;</span>
-<span class="w">  </span><span class="nt">selfLink</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/apis/helm.k0sproject.io/v1beta1/namespaces/kube-system/charts/k0s-addon-chart-test-addon</span>
-<span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ebe59ed4-1ff8-4d41-8e33-005b183651ed</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">chartName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
+<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;14.6.1&quot;</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20m</span>
 <span class="w">  </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">    </span><span class="no">storageSpec:</span>
-<span class="w">      </span><span class="no">emptyDir:</span>
-<span class="w">        </span><span class="no">medium: Memory</span>
-<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">11.16.8</span>
+<span class="w">    </span><span class="no">alertmanager:</span>
+<span class="w">      </span><span class="no">persistentVolume:</span>
+<span class="w">        </span><span class="no">enabled: false</span>
+<span class="w">  </span><span class="nt">repository</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://prometheus-community.github.io/helm-charts</span>
+<span class="w">    </span><span class="c1"># Or use secret-based authentication:</span>
+<span class="w">    </span><span class="c1"># configFrom:</span>
+<span class="w">    </span><span class="c1">#   secretRef:</span>
+<span class="w">    </span><span class="c1">#     name: helm-creds</span>
 <span class="nt">status</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">appVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.21.0</span>
+<span class="w">  </span><span class="nt">releaseName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;14.6.1&quot;</span>
+<span class="w">  </span><span class="nt">appVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.31.1&quot;</span>
+<span class="w">  </span><span class="nt">revision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="w">  </span><span class="nt">releaseName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-1605017878</span>
-<span class="w">  </span><span class="nt">revision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="w">  </span><span class="nt">updated</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2020-11-10 14:18:08.235656 +0000 UTC m=+41.871656901</span>
-<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">11.16.8</span>
+<span class="w">  </span><span class="nt">updated</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2024-01-15T10:30:45Z&quot;</span>
 </code></pre></div>
-<p>The <code>Chart.spec</code> defines the chart information.</p>
-<p>The <code>Chart.status</code> keeps the information about the last operation performed by the operator.</p>
+<p>The <code>spec.repository</code> field allows each Chart to include its own repository configuration, making Charts self-contained and portable. When using k0s configuration file, k0s automatically embeds the repository configuration into the generated Chart resources.</p>
+<p>For more details on using Chart resources directly, see the <a href="../helm-charts/">Helm Charts</a> documentation.</p>
 
 
 
