@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -158,4 +159,18 @@ type notEmbeddedError string
 
 func (e notEmbeddedError) Error() string {
 	return "not an embedded asset: " + string(e)
+}
+
+// GetEmbeddedBinaries returns a list of all embedded binary names (without the bin/ prefix and .gz suffix)
+func GetEmbeddedBinaries() []string {
+	var binaries []string
+	
+	for name := range BinData {
+		// Remove "bin/" prefix and ".gz" suffix
+		binaryName := strings.TrimPrefix(name, "bin/")
+		binaryName = strings.TrimSuffix(binaryName, ".gz")
+		binaries = append(binaries, binaryName)
+	}
+	
+	return binaries
 }
