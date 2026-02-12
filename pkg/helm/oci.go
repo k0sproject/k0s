@@ -5,6 +5,7 @@ package helm
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,8 +15,6 @@ import (
 
 	"helm.sh/helm/v3/pkg/registry"
 	"k8s.io/client-go/util/cert"
-
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
 // ociRegistryManager is a helper struct for managing OCI registry clients
@@ -28,7 +27,7 @@ func newOCIRegistryManager() *ociRegistryManager {
 }
 
 // AddRegistry adds a new registry client for the given repository configuration
-func (m *ociRegistryManager) AddRegistry(repoCfg v1beta1.Repository) error {
+func (m *ociRegistryManager) AddRegistry(repoCfg Repository) error {
 	if !registry.IsOCI(repoCfg.URL) {
 		return fmt.Errorf("%w: not an OCI registry", errors.ErrUnsupported)
 	}
@@ -61,22 +60,41 @@ func (m *ociRegistryManager) GetRegistryClient(rawRegistryURL string) (*registry
 		return nil, nil
 	}
 
-	repoCfg, ok := repoCfgValue.(v1beta1.Repository)
+	repoCfg, ok := repoCfgValue.(Repository)
 	if !ok {
-		return nil, fmt.Errorf("stored repository configuration for %s is not of type v1beta1.Repository", registryURL.Host)
+		return nil, fmt.Errorf("stored repository configuration for %s is not of type Repository", registryURL.Host)
 	}
 
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: repoCfg.Insecure != nil && *repoCfg.Insecure,
+		InsecureSkipVerify: repoCfg.IsInsecure(),
 	}
-	if repoCfg.CAFile != "" {
+
+	// Load CA certificate - prefer in-memory data over file path
+	if len(repoCfg.CAData) > 0 {
+		cPool := x509.NewCertPool()
+		if !cPool.AppendCertsFromPEM(repoCfg.CAData) {
+			return nil, fmt.Errorf("failed to parse CA certificate data for repository %s", repoCfg.Name)
+		}
+		tlsConfig.RootCAs = cPool
+	} else if repoCfg.CAFile != "" {
 		cPool, err := cert.NewPool(repoCfg.CAFile)
 		if err != nil {
 			return nil, fmt.Errorf("can't load CA file %s: %w", repoCfg.CAFile, err)
 		}
 		tlsConfig.RootCAs = cPool
 	}
-	if repoCfg.CertFile != "" || repoCfg.KeyFile != "" {
+
+	// Load client certificate - prefer in-memory data over file paths
+	if len(repoCfg.CertData) > 0 || len(repoCfg.KeyData) > 0 {
+		if len(repoCfg.CertData) == 0 || len(repoCfg.KeyData) == 0 {
+			return nil, fmt.Errorf("repository %s must set both certData and keyData for mTLS", repoCfg.Name)
+		}
+		clientCert, err := tls.X509KeyPair(repoCfg.CertData, repoCfg.KeyData)
+		if err != nil {
+			return nil, fmt.Errorf("can't load client certificate data for repository %s: %w", repoCfg.Name, err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{clientCert}
+	} else if repoCfg.CertFile != "" || repoCfg.KeyFile != "" {
 		if repoCfg.CertFile == "" || repoCfg.KeyFile == "" {
 			return nil, fmt.Errorf("repository %s must set both certFile and keyFile for mTLS", repoCfg.Name)
 		}

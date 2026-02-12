@@ -147,6 +147,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// kubelet, but for both IPv4 and IPv6 and fallback to scanning the
 		// interface used a default gateway.
 		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/pkg/kubelet/nodestatus/setters.go#L150-L178
+
 		ipv4, ipv6, err := k.lookupNodeName(ctx)
 		if err != nil {
 			logrus.Warnf("%s", err)

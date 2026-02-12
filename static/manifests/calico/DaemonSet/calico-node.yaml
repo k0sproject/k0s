@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.29.7/charts/calico/templates/calico-node.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.31.3/charts/calico/templates/calico-node.yaml
 # This manifest installs the calico-node container, as well
 # as the CNI plugins and network config on
 # each master and worker node in a Kubernetes cluster.
@@ -53,10 +53,10 @@ spec:
           command: ["/opt/cni/bin/install"]
           {{/* K0s doesn't support eBPF mode for Calico.
           envFrom:
-          - configMapRef:
-              # Allow KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT to be overridden for eBPF mode.
-              name: kubernetes-services-endpoint
-              optional: true
+            - configMapRef:
+                # Allow KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT to be overridden for eBPF mode.
+                name: kubernetes-services-endpoint
+                optional: true
           */ -}}
           env:
             # Name of the CNI config file to create.
@@ -131,10 +131,11 @@ spec:
             privileged: true
         {{- /* K0s doesn't support eBPF mode for Calico.
         # This init container mounts the necessary filesystems needed by the BPF data plane
-        # i.e. bpf at /sys/fs/bpf and cgroup2 at /run/calico/cgroup. Calico-node initialisation is executed
-        # in best effort fashion, i.e. no failure for errors, to not disrupt pod creation in iptable mode.
-        - name: "mount-bpffs"
-          image: docker.io/calico/node:v3.29.3
+        # i.e. bpf at /sys/fs/bpf and cgroup2 at /run/calico/cgroup. It also configures the initial
+        # networking to allow communication with the API Server. Calico-node initialization is executed
+        # in best effort fashion, i.e. no failure for errors, to not disrupt pod creation in iptables mode.
+        - name: "ebpf-bootstrap"
+          image: docker.io/calico/node:v3.31.3
           imagePullPolicy: IfNotPresent
           command: ["calico-node", "-init", "-best-effort"]
           volumeMounts:
@@ -164,10 +165,10 @@ spec:
           image: "{{ .CalicoNodeImage }}"
           imagePullPolicy: {{ .PullPolicy }}
           envFrom:
-          - configMapRef:
-              # Allow KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT to be overridden for eBPF mode.
-              name: kubernetes-services-endpoint
-              optional: true
+            - configMapRef:
+                # Allow KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT to be overridden for eBPF mode.
+                name: kubernetes-services-endpoint
+                optional: true
           env:
             # Use Kubernetes API as the backing datastore.
             - name: DATASTORE_TYPE
@@ -269,6 +270,15 @@ spec:
               value: "true"
             - name: FELIX_PROMETHEUSMETRICSENABLED
               value: "true"
+            # Explicitly disable BPF mode (k0s doesn't support it)
+            - name: FELIX_BPFENABLED
+              value: "false"
+            - name: FELIX_BPFCONNECTTIMELOADBALANCING
+              value: "Disabled"
+            - name: FELIX_BPFHOSTNETWORKEDNATWITHOUTCTLB
+              value: "Disabled"
+            - name: FELIX_DebugSkipCTLBCleanup
+              value: "true"
             {{/* Disable VXLAN offloading */ -}}
             - name: FELIX_FEATUREDETECTOVERRIDE
               value: ChecksumOffloadBroken=true
@@ -289,15 +299,15 @@ spec:
             preStop:
               exec:
                 command:
-                - /usr/bin/calico-node
-                - -shutdown
+                  - /usr/bin/calico-node
+                  - -shutdown
           livenessProbe:
             exec:
               command:
-              - /usr/bin/calico-node
-              - -felix-live
+                - /usr/bin/calico-node
+                - -felix-live
               {{- if eq .Mode "bird" }}
-              - -bird-live
+                - -bird-live
               {{- end }}
             periodSeconds: 10
             initialDelaySeconds: 10
@@ -306,10 +316,10 @@ spec:
           readinessProbe:
             exec:
               command:
-              - /usr/bin/calico-node
-              - -felix-ready
+                - /usr/bin/calico-node
+                - -felix-ready
               {{- if eq .Mode "bird" }}
-              - -bird-ready
+                - -bird-ready
               {{- end }}
             periodSeconds: 10
             timeoutSeconds: 10
@@ -367,7 +377,7 @@ spec:
           hostPath:
             path: /sys/fs/bpf
             type: Directory
-        # mount /proc at /nodeproc to be used by mount-bpffs initContainer to mount root cgroup2 fs.
+        # mount /proc at /nodeproc to be used by ebpf-bootstrap initContainer to mount root cgroup2 fs.
         - name: nodeproc
           hostPath:
             path: /proc

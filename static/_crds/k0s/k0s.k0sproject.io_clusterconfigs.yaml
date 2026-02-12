@@ -598,6 +598,18 @@ spec:
                           Keepalived contains configuration options related to the "Keepalived" type
                           of load balancing.
                         properties:
+                          configTemplateVRRP:
+                            description: |-
+                              ConfigTemplateVRRP specifies the path to a custom Keepalived configuration template for VRRP.
+                              If specified, this template will be used instead of the default configuration.
+                              The template must be a valid Go template and will receive keepalivedConfig as input.
+                            type: string
+                          configTemplateVS:
+                            description: |-
+                              ConfigTemplateVS specifies the path to a custom Keepalived configuration template for Virtual Servers.
+                              If specified, this template will be used instead of the default configuration.
+                              The template must be a valid Go template and will receive keepalivedConfig as input.
+                            type: string
                           disableLoadBalancer:
                             description: DisableLoadBalancer disables the load balancer.
                             type: boolean
@@ -790,7 +802,7 @@ spec:
                       iptables:
                         description: |-
                           KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.0/config/v1alpha1/types.go#L27-L48
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.1/config/v1alpha1/types.go#L27-L48
                         properties:
                           localhostNodePorts:
                             type: boolean
@@ -807,7 +819,7 @@ spec:
                       ipvs:
                         description: |-
                           KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.0/config/v1alpha1/types.go#L52-L78
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.1/config/v1alpha1/types.go#L52-L78
                         properties:
                           excludeCIDRs:
                             items:
@@ -838,7 +850,7 @@ spec:
                       nftables:
                         description: |-
                           KubeProxyNFTablesConfiguration contains nftables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.0/config/v1alpha1/types.go#L82-L97
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.1/config/v1alpha1/types.go#L82-L97
                         properties:
                           masqueradeAll:
                             type: boolean

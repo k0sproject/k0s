@@ -1,9 +1,9 @@
 # renovate: datasource=docker depName=docker.io/library/alpine versioning=docker
-alpine_patch_version = 3.23.2
+alpine_patch_version = 3.23.3
 alpine_version = $(word 1,$(subst ., ,$(alpine_patch_version))).$(word 2,$(subst ., ,$(alpine_patch_version)))
 
 # renovate: datasource=golang-version depName=go
-go_version = 1.25.6
+go_version = 1.25.7
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
 
 # renovate: datasource=github-releases depName=opencontainers/runc
@@ -28,7 +28,7 @@ containerd_build_go_ldflags = -w -s
 containerd_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-kubernetes_version = 1.35.0
+kubernetes_version = 1.35.1
 kubernetes_buildimage = $(golang_buildimage)
 kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_enabled =
@@ -38,11 +38,11 @@ kubernetes_build_go_flags = "-v"
 kubernetes_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=k3s-io/kine
-kine_version = 0.14.10
+kine_version = 0.14.11
 kine_buildimage = $(golang_buildimage)
 kine_build_go_tags = nats
 #kine_build_go_cgo_enabled =
-# Flags taken from https://github.com/k3s-io/kine/blob/v0.14.10/scripts/build#L25
+# Flags taken from https://github.com/k3s-io/kine/blob/v0.14.11/scripts/build#L25
 kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1
 
 #kine_build_go_flags =
@@ -75,6 +75,9 @@ iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 # renovate: datasource=github-tags depName=acassen/keepalived
 keepalived_version = 2.3.4
 keepalived_buildimage = docker.io/library/alpine:$(alpine_patch_version)
+keepalived_build_cflags = -static -s
+keepalived_build_ldflags = -static
+keepalived_build_configure_flags = --disable-dynamic-linking
 
 clean-iid-files = \
 	for i in $(IID_FILES); do \

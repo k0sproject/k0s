@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.29.7/charts/calico/templates/calico-kube-controllers-rbac.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.31.3/charts/calico/templates/calico-kube-controllers-rbac.yaml
 # assuming datastore == "kubernetes"
 #
 # Include a clusterrole for the kube-controllers component,
@@ -25,6 +25,24 @@ rules:
       - get
       - list
       - watch
+  # Namespaces are watched for LoadBalancer IP allocation with namespace selector support
+  - apiGroups: [""]
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  # Services are monitored for service LoadBalancer IP allocation
+  - apiGroups: [""]
+    resources:
+      - services
+      - services/status
+    verbs:
+      - get
+      - list
+      - update
+      - watch
   # IPAM resources are manipulated in response to node and block updates, as well as periodic triggers.
   - apiGroups: ["crd.projectcalico.org"]
     resources:
@@ -36,6 +54,7 @@ rules:
       - blockaffinities
       - ipamblocks
       - ipamhandles
+      - ipamconfigs
       - tiers
     verbs:
       - get
@@ -61,6 +80,7 @@ rules:
       - create
       - update
       - delete
+      - watch
   # Needs access to update clusterinformations.
   - apiGroups: ["crd.projectcalico.org"]
     resources:

@@ -9,45 +9,50 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 ## Prerequisites
 
-The cluster must be running at least one worker node and control plane on Linux. You can use Windows to run additional worker nodes.
+- The cluster must be running at least one worker node and control plane on Linux. You can use Windows to run additional worker nodes. **Supported Windows versions**: Windows Server 2019 and Windows Server 2022.
 
-## Run k0s
+## Installation
+
+### 1. Generate worker token from control plane
+
+On your Linux control plane node, generate a worker token:
+
+```shell
+k0s token create --role=worker > worker-token.txt
+```
+
+Transfer this `worker-token.txt` file to your Windows node at `C:\k0s-token.txt`.
+
+### 2. Enable Windows Containers feature
+
+Open PowerShell as Administrator on the Windows node and run:
+
+```powershell
+Install-WindowsFeature -Name Containers
+```
+
+**Note**: A system reboot is required after enabling this feature.
+
+### 3. Download and install k0s
+
+After rebooting, open PowerShell as Administrator and run:
+
+```powershell
+# Set variables
+$K0S_VERSION = "v1.34.3+k0s.0"
+$TOKEN_FILE = "C:\k0s-token.txt"
+
+# Download k0s
+$encodedVersion = $K0S_VERSION.Replace('+', '%2B')
+$url = "https://github.com/k0sproject/k0s/releases/download/$encodedVersion/k0s-$K0S_VERSION-amd64.exe"
+Invoke-WebRequest -Uri $url -OutFile "$env:LOCALAPPDATA\Microsoft\WindowsApps\k0s.exe"
+
+# Install and start k0s worker
+k0s install worker --token-file $TOKEN_FILE
+k0s start
+```
 
 **Note**: k0s supervises `kubelet.exe` and `kube-proxy.exe`.
-
-During the first run, the Calico install script is created as `C:\bootstrap.ps1`. This bootstrap script downloads the Calico binaries, builds pause container and sets up vSwitch settings.
-
-Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up.
-
-```shell
-k0s worker --cri-socket=remote:npipe:////./pipe/containerd-containerd <token>
-```
-
-You must initiate the cluster control with the correct config.
-
-## Configuration
-
-### Strict-affinity
-
-You must enable strict affinity to run the windows node.
-
-If the `spec.network.Calico.withWindowsNodes` field is set to `true` (it is set to `false` by default) the additional Calico related manifest `/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml` is created with the following values:
-
-```yaml
----
-apiVersion: crd.projectcalico.org/v1
-kind: IPAMConfig
-metadata:
-  name: default
-spec:
-  strictAffinity: true
-```
-
-Alternately, you can manually execute `calicoctl`:
-
-```shell
-calicoctl ipam configure --strictaffinity=true
-```
 
 ### Network connectivity in AWS
 

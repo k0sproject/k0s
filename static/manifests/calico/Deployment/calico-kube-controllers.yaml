@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.29.7/charts/calico/templates/calico-kube-controllers.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.31.3/charts/calico/templates/calico-kube-controllers.yaml
 # See https://github.com/projectcalico/kube-controllers
 apiVersion: apps/v1
 kind: Deployment
@@ -42,14 +42,14 @@ spec:
           env:
             # Choose which controllers to run.
             - name: ENABLED_CONTROLLERS
-              value: node
+              value: node,loadbalancer
             - name: DATASTORE_TYPE
               value: kubernetes
           livenessProbe:
             exec:
               command:
-              - /usr/bin/check-status
-              - -l
+                - /usr/bin/check-status
+                - -l
             periodSeconds: 10
             initialDelaySeconds: 10
             failureThreshold: 6
@@ -57,8 +57,8 @@ spec:
           readinessProbe:
             exec:
               command:
-              - /usr/bin/check-status
-              - -r
+                - /usr/bin/check-status
+                - -r
             periodSeconds: 10
           securityContext:
             runAsNonRoot: true

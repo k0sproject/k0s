@@ -260,11 +260,12 @@ airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar \
 airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
-	./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' <airgap-images.txt
+	set -- $$(cat airgap-images.txt) && \
+	$(GO_ENV) ./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' "$$@"
 
 ipv6-test-images.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
 	{ \
-	  echo "docker.io/library/nginx:1.29.4-alpine"; \
+	  echo "docker.io/library/nginx:1.29.5-alpine"; \
 	  echo "docker.io/curlimages/curl:8.18.0"; \
 	  echo "docker.io/library/alpine:$(alpine_version)"; \
 	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
@@ -280,7 +281,8 @@ ipv6-test-image-bundle-linux-amd64.tar \
 ipv6-test-image-bundle-linux-arm64.tar \
 ipv6-test-image-bundle-linux-arm.tar \
 ipv6-test-image-bundle-linux-riscv64.tar: k0s ipv6-test-images.txt
-	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <ipv6-test-images.txt
+	set -- $$(cat ipv6-test-images.txt) && \
+	$(GO_ENV) ./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' "$$@"
 
 .PHONY: $(smoketests)
 $(air_gapped_smoketests) $(ipv6_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
@@ -352,6 +354,6 @@ spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
 	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
 	  -w /k0s \
-	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.40.1 \
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.42.0 \
 	  --source-name k0s --source-version '$(VERSION)' \
 	  -c syft.yaml -o spdx-json@2.2 . >'$@'

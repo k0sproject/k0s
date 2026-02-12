@@ -19,8 +19,11 @@ ARG VERSION
 RUN curl --proto '=https' --tlsv1.2 -L https://www.keepalived.org/software/keepalived-$VERSION.tar.gz \
 	| tar -C / -zx
 
+ARG BUILD_CFLAGS
+ARG BUILD_LDFLAGS
+ARG BUILD_CONFIGURE_FLAGS
 RUN cd /keepalived-$VERSION \
-	&& CFLAGS='-static -s' LDFLAGS=-static ./configure  --disable-dynamic-linking \
+	&& CFLAGS="${BUILD_CFLAGS}" LDFLAGS="${BUILD_LDFLAGS}" ./configure ${BUILD_CONFIGURE_FLAGS} \
 	&& make -j$(nproc)
 
 FROM scratch

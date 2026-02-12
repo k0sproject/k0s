@@ -27,10 +27,31 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
+
+// Repository represents a Helm chart repository configuration.
+type Repository struct {
+	Name     string
+	URL      string
+	Username string
+	Password string
+	// File paths for certificates (used when certs are already on disk)
+	CAFile   string
+	CertFile string
+	KeyFile  string
+	// In-memory certificate data (used when certs come from secrets)
+	// These take precedence over file paths when both are set
+	CAData   []byte
+	CertData []byte
+	KeyData  []byte
+	Insecure *bool
+}
+
+// IsInsecure returns true if TLS verification should be skipped.
+func (r *Repository) IsInsecure() bool {
+	return r.Insecure != nil && *r.Insecure
+}
 
 // Commands run different helm command in the same way as CLI tool
 // This struct isn't thread-safe. Check on a per function basis.
@@ -58,14 +79,88 @@ var getters = getter.Providers{
 	},
 }
 
-// NewCommands builds new Commands instance with default values
-func NewCommands(k0sVars *config.CfgVars) *Commands {
-	return &Commands{
-		repoFile:        k0sVars.HelmRepositoryConfig,
-		registryManager: newOCIRegistryManager(),
-		helmCacheDir:    k0sVars.HelmRepositoryCache,
-		kubeConfig:      k0sVars.AdminKubeConfigPath,
+// NewCommands builds new Commands instance with ephemeral temporary directories.
+// If repo is provided, it will be initialized in the temporary environment.
+// If tmpDir is empty, a new temporary directory will be created.
+// Returns the Commands instance and a cleanup function that must be called to remove temporary files.
+func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error) {
+	// Create temporary directory for ephemeral Helm environment
+	var err error
+	tmpDir, err := os.MkdirTemp("", "k0s-helm-*")
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create temporary Helm directory: %w", err)
 	}
+
+	cleanup := func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			logrus.WithError(err).WithField("path", tmpDir).Warn("Failed to clean up temporary Helm directory")
+		}
+	}
+
+	repoFile := filepath.Join(tmpDir, "repositories.yaml")
+	helmCacheDir := filepath.Join(tmpDir, "cache")
+
+	commands := &Commands{
+		repoFile:        repoFile,
+		registryManager: newOCIRegistryManager(),
+		helmCacheDir:    helmCacheDir,
+		kubeConfig:      kubeConfig,
+	}
+
+	// Initialize repository if provided
+	if repo != nil {
+		// Write in-memory cert data to temp files if needed for traditional repos
+		if err := commands.prepareCertFiles(repo, tmpDir); err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("failed to prepare certificate files: %w", err)
+		}
+
+		if err := commands.initRepository(*repo); err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("failed to initialize repository: %w", err)
+		}
+	}
+
+	return commands, cleanup, nil
+}
+
+// prepareCertFiles writes in-memory certificate data to temp files when needed.
+// For OCI registries, we can use in-memory certs directly, so this is only needed
+// for traditional repos that require file paths.
+func (hc *Commands) prepareCertFiles(repo *Repository, tmpDir string) error {
+	// Skip if using OCI (we can handle certs in-memory for OCI)
+	if registry.IsOCI(repo.URL) {
+		return nil
+	}
+
+	// Write CA data to file if present
+	if len(repo.CAData) > 0 && repo.CAFile == "" {
+		caPath := filepath.Join(tmpDir, "ca.crt")
+		if err := os.WriteFile(caPath, repo.CAData, 0600); err != nil {
+			return fmt.Errorf("failed to write CA data to temp file: %w", err)
+		}
+		repo.CAFile = caPath
+	}
+
+	// Write cert data to file if present
+	if len(repo.CertData) > 0 && repo.CertFile == "" {
+		certPath := filepath.Join(tmpDir, "tls.crt")
+		if err := os.WriteFile(certPath, repo.CertData, 0600); err != nil {
+			return fmt.Errorf("failed to write cert temp file: %w", err)
+		}
+		repo.CertFile = certPath
+	}
+
+	// Write key data to file if present
+	if len(repo.KeyData) > 0 && repo.KeyFile == "" {
+		keyPath := filepath.Join(tmpDir, "tls.key")
+		if err := os.WriteFile(keyPath, repo.KeyData, 0600); err != nil {
+			return fmt.Errorf("failed to write key data to temp file: %w", err)
+		}
+		repo.KeyFile = keyPath
+	}
+
+	return nil
 }
 
 func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error) {
@@ -95,7 +190,8 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 	return actionConfig, nil
 }
 
-func (hc *Commands) AddRepository(repoCfg v1beta1.Repository) error {
+// initRepository initializes a single repository in the ephemeral Helm environment
+func (hc *Commands) initRepository(repoCfg Repository) error {
 	if err := hc.registryManager.AddRegistry(repoCfg); !errors.Is(err, errors.ErrUnsupported) {
 		return err
 	}

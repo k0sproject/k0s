@@ -273,7 +273,7 @@ func findSuccessors(platformMatcher platforms.MatchComparer) func(context.Contex
 
 		// Include descriptors that are referencing a previously selected digest.
 		// Mostly to include Attestation Manifests.
-		// https://github.com/moby/buildkit/blob/v0.27.0/docs/attestations/attestation-storage.md#attestation-manifest-descriptor
+		// https://github.com/moby/buildkit/blob/v0.27.1/docs/attestations/attestation-storage.md#attestation-manifest-descriptor
 		for _, desc := range discardedDescs {
 			refDigestAnnotation, ok := desc.Annotations["vnd.docker.reference.digest"]
 			if !ok {

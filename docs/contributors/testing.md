@@ -5,8 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Testing Your Code
 
-k0s uses github actions to run automated tests on any PR, before merging.
-However, a PR will not be reviewed before all tests are green, so to save time and prevent your PR from going stale, it is best to test it before submitting the PR.
+k0s uses GitHub Actions to run automated tests on any pull request before
+merging it. However, your PR will not be reviewed until all tests are green. To
+save time and prevent your PR from going stale, it is best to run the tests
+before submitting the PR.
 
 ## Run Local Verifications
 
@@ -56,6 +58,81 @@ Please run the following style and formatting commands and fix/check-in any chan
    If you find that all tests passed, you may open a pull request upstream.
 
 [testing-docs-locally]: docs.md#testing-docs-locally
+
+## Integration tests (a.k.a. inttests or smoketests)
+
+The integration tests are located in the inttest directory and are run in CI as
+"smoketests". These tests use Docker and [bootloose-based][bootloose] nodes to
+launch k0s clusters locally.
+
+[bootloose]: https://github.com/k0sproject/bootloose
+
+### Requirements
+
+* Docker (Linux) with the ability to run privileged containers.
+* Sufficient disk space for the bootloose images and test artifacts.
+
+### Running locally
+
+You can run a single integration test by calling `make` from the repository
+root:
+
+```shell
+make check-<name>
+```
+
+Examples:
+
+```shell
+make check-basic
+make check-ap-airgap
+```
+
+Some tests, such as those related to airgap and IPv6, require image bundles. The
+Makefile automatically builds and integrates those when you run `make
+check-...`. The underlying environment variables are:
+
+* `K0S_IMAGES_BUNDLE` (airgap bundle)
+* `K0S_EXTRA_IMAGES_BUNDLE` (IPv6 bundle)
+
+### Debugging local failures
+
+When a test fails, the suite writes logs and a [support bundle] to the temporary
+directory (as determined by [os.TempDir]), e.g.:
+
+* `/tmp/controller*.out.log`, `/tmp/controller*.err.log`
+* `/tmp/worker*.out.log`, `/tmp/worker*.err.log`
+* `/tmp/support-bundle.tar.gz`
+
+Start by inspecting the logs. You can also use [sbctl] with the support bundle
+to inspect the state of the test cluster at the end of the test execution.
+
+[support bundle]: https://github.com/replicatedhq/troubleshoot?tab=readme-ov-file#support-bundle
+[os.TempDir]: https://pkg.go.dev/os#TempDir
+[sbctl]: https://github.com/replicatedhq/sbctl?tab=readme-ov-file#command-line-tool-for-examining-k8s-resources-in-troubleshoots-support-bundles
+
+### Debugging CI failures
+
+When a CI run fails, the aforementioned files are uploaded and attached as job
+artifacts. In the GitHub Actions UI, open the failed job, download and extract
+the artifact for that test (named `<smoketest-name>-<arch>-files` or similar)
+and extract it. You can then use the extracted files in the same way described
+in the previous section.
+
+### Running CI on your fork
+
+The k0s GitHub Action workflows use GitHub's hosted runners whenever possible.
+This allows you to run the same CI workflows on your fork by pushing to the main
+branch or opening a pull request on your fork. Ensure that GitHub Actions are
+enabled for the forked repository. Note that forked repositories do not have
+access to k0s's ARMv7 runners; therefore, all ARMv7-related workflow runs will
+be skipped.
+
+Running the CI on your fork may provide faster feedback than running it on a
+pull request against the k0s repository because running the GitHub workflows for
+pull requests requires approval from a k0s maintainer. Additionally, it allows
+you to tinker with the tests and workflows however you like to debug things.
+This could be useful if you cannot run the smoketests locally.
 
 ## Opening A Pull Request
 

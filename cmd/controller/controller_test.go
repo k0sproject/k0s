@@ -44,7 +44,10 @@ Examples:
 
 	or CLI flag:
 	$ k0s controller --token-file [path_to_file]
-	Note: Token can be passed either as a CLI argument or as a flag
+
+	or environment variable:
+	$ K0S_TOKEN=[token] k0s controller
+	Note: Token can be passed either as a CLI argument, a flag, or an environment variable
 
 Flags:
   -c, --config string                                  config file, use '-' to read the config from stdin (default `+defaultConfigPath+`)

@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.29.7/charts/calico/templates/calico-config.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.31.3/charts/calico/templates/calico-config.yaml
 # This ConfigMap is used to configure a self-hosted Calico installation.
 {{/* Prefer to inject those variables directly, so changing them will trigger rolling updates.
 kind: ConfigMap

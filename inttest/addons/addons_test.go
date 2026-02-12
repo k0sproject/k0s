@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -172,6 +173,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.AssertSomeKubeSystemPods(kc)
 
 	as.Run("Rename chart in Helm extension", func() { as.renameChart(ctx) })
+	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(ctx, kc) })
 
 	values := map[string]any{
 		"replicaCount": 2,
@@ -238,6 +240,140 @@ func (as *AddonsSuite) renameChart(ctx context.Context) {
 	}), "While waiting for Chart resource to be swapped")
 
 	as.waitForTestRelease("tgz-renamed-addon", "0.6.0", metav1.NamespaceSystem, 1)
+}
+
+func (as *AddonsSuite) testSecretBasedAuth(ctx context.Context, kc *k8s.Clientset) {
+	secretAddonName := "secret-oci-addon"
+	secretName := "test-oci-secret"
+	chartName := "k0s-addon-chart-" + secretAddonName
+
+	// Get kubeconfig and create clients
+	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
+	as.Require().NoError(err)
+
+	// Create a Chart CR that references a secret that doesn't exist yet
+	chart := &helmv1beta1.Chart{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      chartName,
+			Namespace: metav1.NamespaceSystem,
+			Finalizers: []string{
+				"helm.k0sproject.io/uninstall-helm-release",
+			},
+		},
+		Spec: helmv1beta1.ChartSpec{
+			ChartName:   "oci://ghcr.io/makhov/k0s-charts/echo-server",
+			ReleaseName: secretAddonName,
+			Version:     "0.5.0",
+			Namespace:   metav1.NamespaceDefault,
+			Timeout:     "5m0s",
+			Repository: &helmv1beta1.RepositorySpec{
+				ConfigFrom: &helmv1beta1.ConfigSource{
+					SecretRef: &helmv1beta1.SecretReference{
+						Name: secretName,
+					},
+				},
+			},
+		},
+	}
+
+	as.T().Logf("Creating Chart %s/%s that references secret %s", chart.Namespace, chart.Name, secretName)
+	as.Require().NoError(chartClient.Create(ctx, chart))
+
+	// Wait for the chart to show an error about missing secret
+	as.T().Logf("Waiting for chart to show error about missing secret")
+	as.waitForChartError(secretAddonName, "not found")
+
+	// Create the secret
+	as.T().Logf("Creating secret %s/%s", metav1.NamespaceSystem, secretName)
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: metav1.NamespaceSystem,
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			// Empty secret is fine for public OCI registry
+		},
+	}
+	_, err = kc.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, secret, metav1.CreateOptions{})
+	as.Require().NoError(err)
+
+	// Wait for the chart to reconcile successfully
+	// The controller should automatically retry after the secret is created
+	as.T().Logf("Waiting for chart to reconcile successfully after secret creation")
+	reconciledChart := as.waitForTestRelease(secretAddonName, "0.6.0", metav1.NamespaceDefault, 1)
+
+	// Verify the error is cleared
+	as.Require().Empty(reconciledChart.Status.Error, "Chart should not have error after successful reconciliation")
+
+	// Cleanup
+	as.T().Logf("Cleaning up secret-based auth test - deleting Chart")
+	as.Require().NoError(chartClient.Delete(ctx, chart))
+
+	// Wait for chart to be deleted
+	as.T().Logf("Expecting chart %s/%s to be deleted", chart.Namespace, chart.Name)
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+		var found helmv1beta1.Chart
+		err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
+		if apierrors.IsNotFound(err) {
+			as.T().Log("Chart has been deleted")
+			return true, nil
+		}
+		if err != nil {
+			as.T().Log("Error while getting chart: ", err)
+		}
+		return false, nil
+	}))
+}
+
+func (as *AddonsSuite) waitForChartError(addonName, expectedError string) {
+	ctx := as.Context()
+	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+
+	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
+	as.Require().NoError(err)
+	var chart helmv1beta1.Chart
+	var lastResourceVersion string
+	pollCount := 0
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
+		pollCount++
+		err = chartClient.Get(pollCtx, client.ObjectKey{
+			Namespace: metav1.NamespaceSystem,
+			Name:      "k0s-addon-chart-" + addonName,
+		}, &chart)
+		if err != nil {
+			if ctxErr := context.Cause(ctx); ctxErr != nil {
+				return false, errors.Join(err, ctxErr)
+			}
+			as.T().Log("Error while querying for chart:", err)
+			return false, nil
+		}
+		if lastResourceVersion != "" && lastResourceVersion == chart.ResourceVersion {
+			if pollCount%5 == 0 {
+				as.T().Logf("Still waiting for chart error (poll %d, version %q unchanged)", pollCount, lastResourceVersion)
+			}
+			return false, nil // That version has already been inspected.
+		}
+
+		lastResourceVersion = chart.ResourceVersion
+
+		if chart.Status.Error == "" {
+			as.T().Logf("Chart doesn't have error yet (poll %d, version %q)", pollCount, lastResourceVersion)
+			return false, nil
+		}
+
+		if !strings.Contains(chart.Status.Error, expectedError) {
+			as.T().Logf("Chart error doesn't match expected (version %q): got %q, want substring %q",
+				lastResourceVersion, chart.Status.Error, expectedError)
+			return false, nil
+		}
+
+		as.T().Logf("Found chart with expected error (version %q): %s", lastResourceVersion, chart.Status.Error)
+		return true, nil
+	}))
 }
 
 func (as *AddonsSuite) deleteRelease(chart *helmv1beta1.Chart) {
