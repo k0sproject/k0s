@@ -1,3 +1,5 @@
+//go:build linux
+
 // SPDX-FileCopyrightText: 2021 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
@@ -11,13 +13,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
-
-type cni struct{}
-
-// Name returns the name of the step
-func (c *cni) Name() string {
-	return "CNI leftovers cleanup step"
-}
 
 // Run removes found CNI leftovers
 func (c *cni) Run() error {
