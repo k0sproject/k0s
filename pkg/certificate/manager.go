@@ -94,7 +94,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Du
 	certFile := filepath.Join(m.K0sVars.CertRootDir, certReq.Name+".crt")
 
 	// if regenerateCert returns true, it means we need to create the certs
-	if m.regenerateCert(keyFile, certFile) {
+	regenerateCert, err := m.regenerateCert(keyFile, certFile)
+	if err != nil {
+		return Certificate{}, err
+	}
+	if regenerateCert {
 		logrus.Debugf("creating certificate %s", certFile)
 		req := csr.CertificateRequest{
 			KeyRequest: csr.NewKeyRequest(),
@@ -190,40 +194,51 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Du
 
 // if regenerateCert does not need to do any changes, it will return false
 // if a change in SAN hosts is detected, if will return true, to re-generate certs
-func (m *Manager) regenerateCert(keyFile string, certFile string) bool {
+func (m *Manager) regenerateCert(keyFile string, certFile string) (bool, error) {
 	var cert *certinfo.Certificate
 	var err error
 
 	// if certificate & key don't exist, return true, in order to generate certificates
 	if !file.Exists(keyFile) && !file.Exists(certFile) {
-		return true
+		return true, nil
 	}
 
 	if cert, err = certinfo.ParseCertificateFile(certFile); err != nil {
 		logrus.Warnf("unable to parse certificate file at %s: %v", certFile, err)
-		return true
+		return true, nil
 	}
 
-	if isManagedByK0s(cert) {
-		return true
+	if managed, err := m.isManagedByK0s(cert); err != nil || managed {
+		return managed, err
 	}
 
 	logrus.Debugf("cert regeneration not needed for %s, not managed by k0s: %s", certFile, cert.Issuer.CommonName)
-	return false
+	return false, nil
 }
 
 // checks if the cert issuer (CA) is a k0s setup one
-func isManagedByK0s(cert *certinfo.Certificate) bool {
-	switch cert.Issuer.CommonName {
-	case "kubernetes-ca":
-		return true
-	case "kubernetes-front-proxy-ca":
-		return true
-	case "etcd-ca":
-		return true
+func (m *Manager) isManagedByK0s(cert *certinfo.Certificate) (bool, error) {
+	ca, err := certinfo.ParseCertificateFile(filepath.Join(m.K0sVars.CertRootDir, "ca.crt"))
+	if err != nil {
+		return false, fmt.Errorf("unable to parse ca certificate: %w", err)
 	}
 
-	return false
+	switch cert.Issuer.CommonName {
+	case "kubernetes-ca":
+		return true, nil
+	case "kubernetes-front-proxy-ca":
+		return true, nil
+	case "etcd-ca":
+		return true, nil
+	case ca.Subject.CommonName:
+		if file.Exists(filepath.Join(m.K0sVars.CertRootDir, "ca.key")) {
+			return true, nil
+		}
+		logrus.Warnf("certificate issued by %q, but no ca.key found, not renewing the certificate %q", ca.Subject.CommonName, cert.Subject.CommonName)
+		return false, nil
+	}
+
+	return false, nil
 }
 
 func (m *Manager) CreateKeyPair(name string, k0sVars *config.CfgVars, ownerID int) error {
