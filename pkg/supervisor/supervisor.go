@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -53,47 +54,93 @@ const k0sManaged = "_K0S_MANAGED=yes"
 
 // processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
-func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
-	waitresult := make(chan error)
+func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
+	waitresult := make(chan error, 1)
 	go func() {
-		waitresult <- s.cmd.Wait()
+		waitresult <- cmd.Wait()
 	}()
 
 	defer os.Remove(s.PidFile)
 
 	select {
 	case <-ctx.Done():
-		for {
-			s.log.Debugf("Requesting graceful termination (%v)", context.Cause(ctx))
-			if err := requestGracefulTermination(s.cmd.Process); err != nil {
-				if errors.Is(err, os.ErrProcessDone) {
-					s.log.Info("Failed to request graceful termination: process has already terminated")
-				} else {
-					s.log.WithError(err).Error("Failed to request graceful termination")
-				}
-			} else {
-				s.log.Info("Requested graceful termination")
-			}
-			select {
-			case <-time.After(s.TimeoutStop):
-				continue
-			case err := <-waitresult:
-				if err != nil {
-					s.log.WithError(err).Error("Failed to wait for process")
-				} else {
-					s.log.Info("Process exited: ", s.cmd.ProcessState)
-				}
-				return true
-			}
-		}
-	case err := <-waitresult:
-		if err != nil {
-			s.log.WithError(err).Warn("Failed to wait for process")
+		s.log.Debugf("Attempting to terminate supervised process (%v)", context.Cause(ctx))
+		if err := s.terminateSupervisedProcess(cmd, waitresult); err != nil {
+			s.log.WithError(err).Error("Error while terminating process")
 		} else {
-			s.log.Warn("Process exited: ", s.cmd.ProcessState)
+			s.log.Info("Process terminated successfully")
 		}
+		return true
+
+	case err := <-waitresult:
+		var exitErr *exec.ExitError
+		state := cmd.ProcessState
+		switch {
+		case errors.As(err, &exitErr):
+			state = exitErr.ProcessState
+			fallthrough
+		case err == nil:
+			s.log.Error("Process terminated unexpectedly: ", state)
+		default:
+			s.log.WithError(err).Error("Failed to wait for process: ", state)
+		}
+		return false
 	}
-	return false
+}
+
+func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error) error {
+	err := requestGracefulTermination(cmd.Process)
+	switch {
+	case err == nil:
+		// Termination request sent, wait for process to finish.
+		s.log.Debug("Awaiting graceful process termination for ", s.TimeoutStop)
+
+		select {
+		case err := <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				return nil
+			case errors.As(err, &exitErr):
+				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.Signal() == syscall.SIGTERM {
+					return errors.New("process terminated without handling SIGTERM")
+				}
+				return exitErr
+			default:
+				return fmt.Errorf("failed to wait for process: %w", err)
+			}
+
+		case <-time.After(s.TimeoutStop):
+			err = fmt.Errorf("timed out after %s while waiting for process to terminate", s.TimeoutStop)
+		}
+
+		return err
+
+	case errors.Is(err, os.ErrProcessDone):
+		// The process has finished even before the termination could be requested.
+		select {
+		case err = <-waitresult:
+			var exitErr *exec.ExitError
+			state := cmd.ProcessState
+			switch {
+			case errors.As(err, &exitErr):
+				state = exitErr.ProcessState
+				fallthrough
+			case err == nil:
+				err = errors.New(state.String())
+			default:
+				return fmt.Errorf("failed to wait for process: %s (%w)", state, err)
+			}
+		default:
+			err = errors.New("process state unavailable")
+		}
+
+		return fmt.Errorf("process terminated before graceful termination could be requested: %w", err)
+
+	default:
+		// Something else went wrong
+		return fmt.Errorf("failed to request graceful termination: %w", err)
+	}
 }
 
 // Supervise Starts supervising the given process
@@ -176,7 +223,7 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 					s.log.Infof("Restarted (%d)", restarts)
 				}
 				restarts++
-				if s.processWaitQuit(ctx) {
+				if s.processWaitQuit(ctx, s.cmd) {
 					return
 				}
 			}
