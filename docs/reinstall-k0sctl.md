@@ -7,7 +7,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 `k0sctl` currently does not support changing all the configuration of containerd (`state`, `root`) on the fly.
 
-For example, in order to move containerd's `root` directory to a new partition/drive, you have to provide `--data-dir /new/drive` in your k0sctl `installFlags` for each (worker) node. `--data-dir` is an option of `k0s` and then added to the service unit.
+For example, in order to move containerd's `root` directory to a new partition/drive, you can provide `--containerd-root-dir /new/drive` in your k0sctl `installFlags` for each (worker) node.
 
 The following is an example of that:
 
@@ -17,7 +17,7 @@ The following is an example of that:
     installFlags:
       - --profile flatcar
       - --enable-cloud-provider
-      - --data-dir /new/drive
+      - --containerd-root-dir /new/drive
       - --kubelet-extra-args="--cloud-provider=external"
 ```
 

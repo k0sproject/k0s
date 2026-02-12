@@ -49,10 +49,11 @@ func TestWithCommand(t *testing.T) {
 	// Create a fake flag set with some values
 	fakeFlags := &FakeFlagSet{
 		values: map[string]any{
-			"data-dir":         "/path/to/data",
-			"kubelet-root-dir": "/path/to/kubelet",
-			"config":           "/path/to/config",
-			"status-socket":    "/path/to/socket",
+			"data-dir":            "/path/to/data",
+			"kubelet-root-dir":    "/path/to/kubelet",
+			"containerd-root-dir": "/path/to/containerd",
+			"config":              "/path/to/config",
+			"status-socket":       "/path/to/socket",
 		},
 	}
 
@@ -69,10 +70,13 @@ func TestWithCommand(t *testing.T) {
 
 	dir, err := filepath.Abs("/path/to/kubelet")
 	require.NoError(t, err)
+	cDir, err := filepath.Abs("/path/to/containerd")
+	require.NoError(t, err)
 
 	assert.Same(t, in, c.stdin)
 	assert.Equal(t, "/path/to/data", c.DataDir)
 	assert.Equal(t, dir, c.KubeletRootDir)
+	assert.Equal(t, cDir, c.ContainerdRootDir)
 	assert.Equal(t, "/path/to/config", c.StartupConfigPath)
 	assert.Equal(t, "/path/to/socket", c.StatusSocketPath)
 }
@@ -175,6 +179,41 @@ func TestNewCfgVars_KubeletRootDir(t *testing.T) {
 			expected, err := filepath.Abs(tt.expected.KubeletRootDir)
 			require.NoError(t, err)
 			assert.Equal(t, expected, c.KubeletRootDir)
+		})
+	}
+}
+
+func TestNewCfgVars_ContainerdRootDir(t *testing.T) {
+	tests := []struct {
+		name     string
+		fakeCmd  command
+		dirs     []string
+		expected *CfgVars
+	}{
+		{
+			name:     "default containerd root dir",
+			fakeCmd:  &FakeCommand{flagSet: &FakeFlagSet{}},
+			expected: &CfgVars{ContainerdRootDir: filepath.Join(constant.DataDirDefault, "containerd")},
+		},
+		{
+			name:     "default containerd root dir when datadir set",
+			fakeCmd:  &FakeCommand{flagSet: &FakeFlagSet{values: map[string]any{"data-dir": "/path/to/data"}}},
+			expected: &CfgVars{ContainerdRootDir: "/path/to/data/containerd"},
+		},
+		{
+			name:     "custom containerd root dir",
+			fakeCmd:  &FakeCommand{flagSet: &FakeFlagSet{values: map[string]any{"containerd-root-dir": "/path/to/containerd"}}},
+			expected: &CfgVars{ContainerdRootDir: "/path/to/containerd"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := NewCfgVars(tt.fakeCmd, tt.dirs...)
+			require.NoError(t, err)
+			expected, err := filepath.Abs(tt.expected.ContainerdRootDir)
+			require.NoError(t, err)
+			assert.Equal(t, expected, c.ContainerdRootDir)
 		})
 	}
 }
