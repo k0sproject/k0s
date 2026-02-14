@@ -136,6 +136,8 @@ spec:
     kine:
       extraArgs:
         datastore-max-open-connections: "10"
+      rawArgs:
+        - --debug
 `)
 	c, err := ConfigFromBytes(yaml)
 	assert.NoError(t, err)
@@ -149,6 +151,7 @@ spec:
 
 	assert.Equal(t, fmt.Sprintf("sqlite://%s?mode=rwc&_journal=WAL", expectedPath), c.Spec.Storage.Kine.DataSource)
 	assert.Equal(t, map[string]string{"datastore-max-open-connections": "10"}, c.Spec.Storage.Kine.ExtraArgs)
+	assert.Equal(t, []string{"--debug"}, c.Spec.Storage.Kine.RawArgs)
 }
 
 type storageSuite struct {
