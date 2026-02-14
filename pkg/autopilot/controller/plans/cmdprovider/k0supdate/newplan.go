@@ -1,16 +1,5 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0supdate
 
@@ -24,7 +13,6 @@ import (
 	appku "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/utils"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
-	v1 "k8s.io/api/core/v1"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -47,9 +35,15 @@ func (kp *k0supdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, sta
 
 	var allControllersAccountedFor bool
 	status.K0sUpdate.Controllers, allControllersAccountedFor = populateControllerStatus(ctx, kp.client, *cmd.K0sUpdate, kp.controllerDelegateMap)
+	if !allControllersAccountedFor {
+		kp.logger.Warnf("Not all controllers accounted for: %v", status.K0sUpdate.Controllers)
+	}
 
 	var allWorkersAccountedFor bool
 	status.K0sUpdate.Workers, allWorkersAccountedFor = populateWorkerStatus(ctx, kp.client, *cmd.K0sUpdate, kp.controllerDelegateMap)
+	if !allWorkersAccountedFor {
+		kp.logger.Warnf("Not all workers accounted for: %v", status.K0sUpdate.Workers)
+	}
 
 	if !allControllersAccountedFor || !allWorkersAccountedFor {
 		return appc.PlanIncompleteTargets, false, nil
@@ -74,15 +68,34 @@ func (kp *k0supdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, sta
 // with `apv1beta2.ControlNode` signal node objects.
 func populateControllerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandK0sUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
 	return appkd.DiscoverNodes(ctx, client, &update.Targets.Controllers, dm["controller"],
-		func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-			return appku.ObjectExistsWithPlatform(ctx, client, name, &apv1beta2.ControlNode{}, update.Platforms)
+		func(name string) (appkd.SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
+			if exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, &apv1beta2.ControlNode{}, update.Platforms); exists {
+				return appkd.SignalObjectFilterResultFound, state
+			} else {
+				return appkd.SignalObjectFilterResultMissing, state
+			}
 		})
 }
 
 // populateWorkerStatus is a specialization of `DiscoverNodes` for working
 // with `v1.Node` signal node objects.
 func populateWorkerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandK0sUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
-	return appkd.DiscoverNodes(ctx, client, &update.Targets.Workers, dm["worker"], func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-		return appku.ObjectExistsWithPlatform(ctx, client, name, &v1.Node{}, update.Platforms)
+	worker := dm["worker"]
+	return appkd.DiscoverNodes(ctx, client, &update.Targets.Workers, worker, func(name string) (appkd.SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
+		exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, worker.CreateObject(), update.Platforms)
+		if !exists {
+			return appkd.SignalObjectFilterResultMissing, state
+		}
+
+		// Ensure this is a pure worker, i.e. there's no corresponding
+		// controller object. Signals for controllers with embedded workers are
+		// purely handled via their controller objects.
+		controller := dm["controller"]
+		exists, _ = appku.ObjectExistsWithPlatform(ctx, client, name, controller.CreateObject(), update.Platforms)
+		if exists {
+			return appkd.SignalObjectFilterResultIgnore, state
+		}
+
+		return appkd.SignalObjectFilterResultFound, state
 	})
 }

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Environment variables
 
 `k0s install` does not support environment variables.
@@ -6,11 +11,15 @@ Setting environment variables for components used by k0s depends on the used ini
 
 Component specific environment variables can be set in `k0scontroller` or `k0sworker` service. For example: for `CONTAINERD_HTTPS_PROXY`, the prefix `CONTAINERD_` will be stripped and converted to `HTTPS_PROXY` in the `containerd` process.
 
-For those components having env prefix convention such as `ETCD_xxx`, they are handled specially, i.e. the prefix will not be stripped. For example, `ETCD_MAX_WALS` will still be `ETCD_MAX_WALS` in etcd process.
+For those components having environment prefix convention such as `ETCD_xxx`,
+they are handled specially, i.e. the prefix will not be stripped. For example,
+`ETCD_MAX_WALS` will still be `ETCD_MAX_WALS` in etcd process.
 
-The proxy envs `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` are always overridden by component specific environment variables, so `ETCD_HTTPS_PROXY` will still be converted to `HTTPS_PROXY` in etcd process.
+The proxy environment variables `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` are
+always overridden by component specific environment variables, so
+`ETCD_HTTPS_PROXY` will still be converted to `HTTPS_PROXY` in etcd process.
 
-## SystemD
+## systemd
 
 Create a drop-in directory and add config file with a desired environment variable:
 
@@ -24,7 +33,8 @@ EOT
 
 ## OpenRC
 
-Export desired environment variable overriding service configuration in /etc/conf.d directory:
+Export the desired environment variable overriding service configuration in the
+`/etc/conf.d` directory:
 
 ```shell
 echo 'export HTTP_PROXY="192.168.33.10:3128"' > /etc/conf.d/k0scontroller

@@ -15,6 +15,7 @@ linters:
     - gocritic          # another style/metalinter (dynamic rules supported)
     - goheader          # Checks is file headers matches a given pattern
     - intrange          # Checking for loops that could use an integer range
+    - iotamixing        # Checks if iotas are being used in const blocks with other non-iota declarations
     - misspell          # Finds commonly misspelled English words
     - nilnesserr        # Reports constructs that check for err != nil but return a different nil value error
     - nolintlint        # Find ill-formed or insufficiently explained nolint directives
@@ -79,7 +80,9 @@ linters:
       values:
         regexp:
           year: 202[0-9]
-      template-path: .go-header.txt
+      template: |-
+        SPDX-FileCopyrightText: {{year}} k0s authors
+        SPDX-License-Identifier: Apache-2.0
     misspell:
       locale: US
     revive:
@@ -101,14 +104,8 @@ linters:
       - std-error-handling
     rules:
       - linters:
-          - goheader
-        source: ^//go:build
-      - linters:
           - staticcheck
         text: '^SA1019:'
-      - linters:
-          - goheader
-        path: pkg/component/controller/cplb/tcpproxy/.*
     paths:
       - zz_*
       - build

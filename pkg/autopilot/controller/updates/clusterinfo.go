@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package updates
 
@@ -26,9 +13,9 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -36,7 +23,7 @@ import (
 type ClusterInfo struct {
 	K0sVersion             string
 	StorageType            v1beta1.StorageType
-	ClusterID              string
+	ClusterID              types.UID
 	ControlPlaneNodesCount uint
 	WorkerData             WorkerData
 	CNIProvider            string
@@ -49,6 +36,12 @@ type WorkerData struct {
 	Runtimes map[string]int
 }
 
+type ClusterInfoCollector struct {
+	client          kubernetes.Interface
+	storageType     v1beta1.StorageType
+	networkProvider string
+}
+
 func (ci *ClusterInfo) AsMap() map[string]string {
 	// Marshal and encode the worker data as a string
 	wd, err := json.Marshal(ci.WorkerData)
@@ -58,7 +51,7 @@ func (ci *ClusterInfo) AsMap() map[string]string {
 	workerData := base64.StdEncoding.EncodeToString(wd)
 	return map[string]string{
 		"K0S_StorageType":            string(ci.StorageType),
-		"K0S_ClusterID":              ci.ClusterID,
+		"K0S_ClusterID":              "kube-system:" + string(ci.ClusterID),
 		"K0S_ControlPlaneNodesCount": strconv.FormatUint(uint64(ci.ControlPlaneNodesCount), 10),
 		"K0S_WorkerData":             workerData,
 		"K0S_Version":                ci.K0sVersion,
@@ -68,30 +61,35 @@ func (ci *ClusterInfo) AsMap() map[string]string {
 
 }
 
-// CollectData collects the cluster information
-func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, error) {
-	ci := &ClusterInfo{}
-	ci.K0sVersion = build.Version
-	ci.Arch = runtime.GOARCH
+func NewClusterInfoCollector(nodeConfig *v1beta1.ClusterConfig, client kubernetes.Interface) *ClusterInfoCollector {
+	return &ClusterInfoCollector{
+		client:          client,
+		storageType:     nodeConfig.Spec.Storage.Type,
+		networkProvider: nodeConfig.Spec.Network.Provider,
+	}
+}
 
-	nodeConfig := k0scontext.FromContext[v1beta1.ClusterConfig](ctx, k0scontext.ContextNodeConfigKey)
-	if nodeConfig != nil {
-		ci.CNIProvider = nodeConfig.Spec.Network.Provider
-		ci.StorageType = nodeConfig.Spec.Storage.Type
+// CollectData collects the cluster information
+func (c *ClusterInfoCollector) CollectData(ctx context.Context) (*ClusterInfo, error) {
+	ci := &ClusterInfo{
+		K0sVersion:  build.Version,
+		Arch:        runtime.GOARCH,
+		CNIProvider: c.networkProvider,
+		StorageType: c.storageType,
 	}
 
 	// Collect cluster ID
-	ns, err := kc.CoreV1().Namespaces().Get(ctx,
-		"kube-system",
+	ns, err := c.client.CoreV1().Namespaces().Get(ctx,
+		metav1.NamespaceSystem,
 		metav1.GetOptions{})
 	if err != nil {
 		return ci, fmt.Errorf("can't find kube-system namespace: %w", err)
 	}
 
-	ci.ClusterID = fmt.Sprintf("kube-system:%s", ns.UID)
+	ci.ClusterID = ns.UID
 
 	// Collect worker node infos
-	wns, err := kc.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	wns, err := c.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return ci, err
 	}
@@ -122,7 +120,7 @@ func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, er
 	}
 
 	// Collect control plane node count
-	ci.ControlPlaneNodesCount, err = kubeutil.CountActiveControllerLeases(ctx, kc)
+	ci.ControlPlaneNodesCount, err = kubeutil.CountActiveControllerLeases(ctx, c.client)
 	if err != nil {
 		return ci, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}

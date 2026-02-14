@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Usage:
 #   TARGET_ARCH=arm64 run-autopilot-matrix-tests.sh check-ap-ha3x3,check-ap-single v1.24.2+k0s.0,v1.24.3+k0s.0
@@ -22,7 +22,7 @@ while IFS=',' read -ra VERSION; do
 
     while IFS=',' read -ra TESTARR; do
       for test in "${TESTARR[@]}"; do
-        make -C inttest ${test} K0S_UPDATE_FROM_BIN=../k0s-${ver}
+        make -C inttest ${test} K0S_UPDATE_FROM_PATH="$(realpath "../k0s-${ver}")"
       done
     done <<< "$TESTS"
   done

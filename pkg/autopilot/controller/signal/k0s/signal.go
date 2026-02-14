@@ -1,16 +1,7 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0s
 
@@ -36,7 +27,6 @@ import (
 
 const (
 	SignalResponseProcessingTimeout = 1 * time.Minute
-	DefaultK0sStatusSocketPath      = "/run/k0s/status.sock"
 )
 
 type k0sVersionHandlerFunc func() (string, error)
@@ -112,6 +102,11 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 		return cr.Result{}, nil
 	}
 
+	if sctx.SignalData != nil && sctx.SignalData.Status != nil {
+		sctx.Log.Debug("Ignoring signal with status ", sctx.SignalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
 	sctx.Log.Infof("Found available signaling update request")
 
 	// Confirm that the installed version of k0s requires an update
@@ -124,7 +119,7 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 	sctx.Log.Infof("Current version of k0s = '%s', requested version = '%s'", k0sVersion, sctx.SignalData.Command.K0sUpdate.Version)
 
 	// Move to 'Completed' if we match versions on a non-forced update. Otherwise, proceed to 'Downloading'
-	var status = Downloading
+	var status = apsigcomm.Downloading
 	if k0sVersion == sctx.SignalData.Command.K0sUpdate.Version && !sctx.SignalData.Command.K0sUpdate.ForceUpdate {
 		status = apsigcomm.Completed
 	}

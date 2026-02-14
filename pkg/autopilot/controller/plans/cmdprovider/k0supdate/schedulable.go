@@ -1,16 +1,5 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0supdate
 
@@ -23,6 +12,8 @@ import (
 	appku "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/utils"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/sirupsen/logrus"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -51,28 +42,28 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 	signalNodeDelegate, ok := kp.controllerDelegateMap[nextLabel]
 	if !ok {
 		logger.Warnf("Missing signal delegate for '%s'", nextLabel)
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	nodeKey := signalNodeDelegate.CreateNamespacedName(nextForSignal.Name)
 	signalNode := signalNodeDelegate.CreateObject()
 	if err := kp.client.Get(ctx, nodeKey, signalNode); err != nil {
 		logger.Warnf("Unable to find signal node '%s' for signal: %v", nodeKey, err)
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	// If the found signal node is not ready to accept an update, either complete this reconciliation
 	// in order to move onto the next signal node candidate, or requeue if this is the last remaining
 	// candidate.
 
-	updateReadyStatus := signalNodeDelegate.K0sUpdateReady(*status.K0sUpdate, signalNode)
+	updateReadyStatus := signalNodeDelegate.K0sUpdateReady(ctx, *status.K0sUpdate, signalNode)
 	if updateReadyStatus != apdel.CanUpdate {
-		if updateReadyStatus == apdel.Inconsistent {
-			// If we're inconsistent, there is nothing else we can do -- operator intervention
+		if updateReadyStatus == apdel.Incomplete {
+			// If we're incomplete, there is nothing else we can do -- operator intervention
 			// is now required.
 
-			logger.Warn("Inconsistent targets detected, unable to process.")
-			return appc.PlanInconsistentTargets, false, nil
+			logger.Warn("Incomplete targets detected, unable to process.")
+			return appc.PlanIncompleteTargets, false, nil
 		}
 
 		// Request a requeue with the current status
@@ -101,6 +92,10 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 	// .. and update the node
 
 	if err := kp.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
+		if apierrors.IsConflict(err) {
+			logger.WithError(err).Warn("Conflict updating signal node to ", nextForSignal.Name, ", retrying")
+			return status.State, true, nil
+		}
 		logger.Warnf("Unable to update signalnode with signaling: %v", err)
 		return status.State, false, fmt.Errorf("unable to update signalnode with signaling: %w", err)
 	}

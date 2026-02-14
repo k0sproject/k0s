@@ -1,31 +1,17 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package psp
 
 import (
 	"testing"
 
-	"github.com/k0sproject/k0s/inttest/common"
-
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/ptr"
 
+	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -55,8 +41,8 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	s.NoError(err)
 
 	nonPrivelegedPodReq := &corev1.Pod{
-		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: v1.ObjectMeta{Name: "test-pod-non-privileged"},
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test-pod-non-privileged"},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{Name: "pause", Image: "quay.io/k0sproject/pause"}},
 		},
@@ -65,12 +51,12 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	ukc, err := s.UserKubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	_, err = ukc.CoreV1().Pods("default").Create(s.Context(), nonPrivelegedPodReq, v1.CreateOptions{})
+	_, err = ukc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), nonPrivelegedPodReq, metav1.CreateOptions{})
 	s.NoError(err)
 
 	privelegedPodReq := &corev1.Pod{
-		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: v1.ObjectMeta{Name: "test-pod-privileged"},
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test-pod-privileged"},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
@@ -84,7 +70,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 		},
 	}
 
-	_, err = ukc.CoreV1().Pods("default").Create(s.Context(), privelegedPodReq, v1.CreateOptions{})
+	_, err = ukc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), privelegedPodReq, metav1.CreateOptions{})
 	s.NoError(err)
 }
 

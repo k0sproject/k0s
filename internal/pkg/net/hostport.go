@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package net
 
@@ -21,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"strconv"
 
 	"github.com/asaskevich/govalidator"
@@ -36,10 +24,9 @@ func (h *HostPort) Host() string { return h.host }
 func (h *HostPort) Port() uint16 { return h.port }
 
 func NewHostPort(host string, port uint16) (*HostPort, error) {
-	if !govalidator.IsIP(host) && !govalidator.IsDNSName(host) {
-		return nil, errors.New("host is neither an IP address nor a DNS name")
+	if err := validateHost(host); err != nil {
+		return nil, err
 	}
-
 	if port == 0 {
 		return nil, errors.New("port is zero")
 	}
@@ -52,19 +39,35 @@ func ParseHostPort(hostPort string) (*HostPort, error) {
 }
 
 func ParseHostPortWithDefault(hostPort string, defaultPort uint16) (*HostPort, error) {
+	if _, err := netip.ParseAddr(hostPort); err == nil {
+		if defaultPort == 0 {
+			return nil, errors.New("missing port in address")
+		}
+		return &HostPort{hostPort, defaultPort}, nil
+	}
+
 	var port uint16
 	host, portStr, err := net.SplitHostPort(hostPort)
 	if err != nil {
 		addrErr := &net.AddrError{}
-		if errors.As(err, &addrErr) {
-			if defaultPort != 0 && addrErr.Err == "missing port in address" {
+		if !errors.As(err, &addrErr) {
+			return nil, err
+		}
+
+		if addrErr.Err == "missing port in address" {
+			if defaultPort != 0 {
 				host = addrErr.Addr
 				port = defaultPort
 			} else {
+				if _, ok := unwrapIPv6Literal(addrErr.Addr); !ok {
+					if err := validateHost(addrErr.Addr); err != nil {
+						return nil, err
+					}
+				}
 				return nil, errors.New(addrErr.Err)
 			}
 		} else {
-			return nil, err
+			return nil, errors.New(addrErr.Err)
 		}
 	} else {
 		parsed, err := strconv.ParseUint(portStr, 10, 16)
@@ -81,6 +84,10 @@ func ParseHostPortWithDefault(hostPort string, defaultPort uint16) (*HostPort, e
 			return nil, err
 		}
 		port = uint16(parsed)
+	}
+
+	if literal, ok := unwrapIPv6Literal(host); ok {
+		return &HostPort{literal, port}, nil
 	}
 
 	return NewHostPort(host, port)
@@ -108,4 +115,26 @@ func (h *HostPort) UnmarshalText(text []byte) error {
 	}
 	*h = *parsed
 	return err
+}
+
+func unwrapIPv6Literal(host string) (string, bool) {
+	if len := len(host); len > 2 && host[0] == '[' && host[len-1] == ']' {
+		host := host[1 : len-1]
+		if addr, err := netip.ParseAddr(host); err == nil && addr.Is6() {
+			return host, true
+		}
+	}
+
+	return host, false
+}
+
+func validateHost(host string) error {
+	if govalidator.IsDNSName(host) {
+		return nil
+	}
+	if _, err := netip.ParseAddr(host); err == nil {
+		return nil
+	}
+
+	return errors.New("host is neither an IP address nor a DNS name")
 }

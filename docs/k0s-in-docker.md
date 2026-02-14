@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Run k0s in Docker
 
 You can create a k0s cluster on top of Docker.
@@ -13,13 +18,12 @@ registry. For simplicity, the examples given here use Docker Hub (GitHub
 requires separate authentication, which is not covered here). The image names
 are as follows:
 
-- `docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`
-- `ghcr.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`
+- `docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}`
+- `ghcr.io/k0sproject/k0s:{{{ k0s_docker_version }}}`
 
 **Note:** Due to Docker's tag validation scheme, `-` is used as the k0s version
-separator instead of the usual `+`. For example, k0s version
-`v{{{extra.k8s_version}}}+k0s.0` is tagged as
-`docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0`.
+separator instead of the usual `+`. For example, k0s version `{{{ k0s_version
+}}}` is tagged as `docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}`.
 
 ## Start k0s
 
@@ -35,14 +39,14 @@ docker run -d --name k0s-controller --hostname k0s-controller \
   --tmpfs /run `# this is where k0s stores runtime data` \
   --privileged `# this is the easiest way to enable container-in-container workloads` \
   -p 6443:6443 `# publish the Kubernetes API server port` \
-  docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0
+  docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}
 ```
 
 Explanation of command line arguments:
 
 - `-d` runs the container in detached mode, i.e. in the background.
 - `--name k0s-controller` names the container "k0s-controller".
-- `--hostname k0s-controller` sets the hostname of the container to
+- `--hostname k0s-controller` sets the host name of the container to
   "k0s-controller".
 - `-v /var/lib/k0s -v /var/log/pods` creates two Docker volumes and mounts them
   to `/var/lib/k0s` and `/var/log/pods` respectively inside the container,
@@ -54,7 +58,7 @@ Explanation of command line arguments:
   privileges.
 - `-p 6443:6443` exposes the container's Kubernetes API server port 6443 to the
   host, allowing you to interact with the cluster externally.
-- `docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0` is the name of the
+- `docker.io/k0sproject/k0s:{{{ k0s_docker_version }}}` is the name of the
   k0s image to run.
 
 By default, the k0s image starts a k0s controller with worker components enabled
@@ -74,7 +78,7 @@ docker run -d --name k0s-controller --hostname k0s-controller \
   --tmpfs /run `# this is where k0s stores runtime data` \
   --tmpfs /tmp `# allow writing temporary files` \
   -p 6443:6443 `# publish the Kubernetes API server port` \
-  docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+  docker.io/k0sproject/k0s:{{{ k0s_docker_version }}} \
   k0s controller
 ```
 
@@ -100,7 +104,7 @@ application containers to separate workers.
      -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
      --tmpfs /run `# this is where k0s stores runtime data` \
      --privileged `# this is the easiest way to enable container-in-container workloads` \
-     docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+     docker.io/k0sproject/k0s:{{{ k0s_docker_version }}} \
      k0s worker $token
    ```
 
@@ -130,7 +134,7 @@ application containers to separate workers.
      --cap-add sys_ptrace \
      --cap-add sys_resource \
      --cap-add syslog \
-     docker.io/k0sproject/k0s:v{{{extra.k8s_version}}}-k0s.0 \
+     docker.io/k0sproject/k0s:{{{ k0s_docker_version }}} \
      k0s worker "$token"
    ```
 
@@ -242,7 +246,7 @@ As an alternative you can run k0s using Docker Compose:
 {% include "compose.yaml" %}
 ```
 
-Below is a more complex example, using traefik as a load balancer, along with
+Below is a more complex example, using Traefik as a load balancer, along with
 three controller and three worker nodes:
 
 <!-- Kept in its own file to ease local testing. -->
@@ -273,9 +277,9 @@ After a short while:
 ```console
 $ docker exec k0s-controller-1 k0s kc get node,po -A
 NAME                STATUS   ROLES    AGE     VERSION
-node/k0s-worker-1   Ready    <none>   1m36s   v{{{extra.k8s_version}}}+k0s
-node/k0s-worker-2   Ready    <none>   1m36s   v{{{extra.k8s_version}}}+k0s
-node/k0s-worker-3   Ready    <none>   1m36s   v{{{extra.k8s_version}}}+k0s
+node/k0s-worker-1   Ready    <none>   1m36s   {{{ k8s_version }}}+k0s
+node/k0s-worker-2   Ready    <none>   1m36s   {{{ k8s_version }}}+k0s
+node/k0s-worker-3   Ready    <none>   1m36s   {{{ k8s_version }}}+k0s
 
 NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE
 kube-system   pod/coredns-7d4f7fbd5c-54lxp          1/1     Running   0          1m27s
@@ -296,12 +300,12 @@ kube-system   pod/metrics-server-7778865875-fzhx6   1/1     Running   0         
 
 ### No custom Docker networks
 
-Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with `--net my-net`). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.
+Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with `--net my-net`). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workarounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.
 
 ## Next Steps
 
 - [Install using k0sctl](k0sctl-install.md): Deploy multi-node clusters using just one command
-- [Control plane configuration options](configuration.md): Networking and datastore configuration
+- [Control plane configuration options](configuration.md): Networking and data store configuration
 - [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md): Load balancer or storage configuration
 - [Installing the Traefik Ingress Controller](examples/traefik-ingress.md): Ingress deployment information

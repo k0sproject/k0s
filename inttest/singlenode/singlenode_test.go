@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package singlenode
 
@@ -28,23 +15,15 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const k0sPartialConfig = `
-spec:
-  api:
-    sans:
-    - 1.2.3.4
-`
 
 type SingleNodeSuite struct {
 	common.BootlooseSuite
 }
 
 func (s *SingleNodeSuite) TestK0sGetsUp() {
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sPartialConfig)
-	s.NoError(s.InitController(0, "--single", "--config=/tmp/k0s.yaml"))
+	s.NoError(s.InitController(0, "--single"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -80,13 +59,13 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 		})
 
 		s.Run("leader election disabled for scheduler", func() {
-			_, err := kc.CoordinationV1().Leases("kube-system").Get(s.Context(), "kube-scheduler", v1.GetOptions{})
+			_, err := kc.CoordinationV1().Leases(metav1.NamespaceSystem).Get(s.Context(), "kube-scheduler", metav1.GetOptions{})
 			s.Error(err)
 			s.True(apierrors.IsNotFound(err))
 		})
 
 		s.Run("leader election disabled for controller manager", func() {
-			_, err := kc.CoordinationV1().Leases("kube-system").Get(s.Context(), "kube-controller-manager", v1.GetOptions{})
+			_, err := kc.CoordinationV1().Leases(metav1.NamespaceSystem).Get(s.Context(), "kube-controller-manager", metav1.GetOptions{})
 			s.Error(err)
 			s.True(apierrors.IsNotFound(err))
 		})

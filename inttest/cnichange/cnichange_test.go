@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package cnichange
 
@@ -20,14 +7,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
-	"github.com/k0sproject/k0s/inttest/common"
-
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type CNIChangeSuite struct {
@@ -44,7 +32,7 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 	s.Require().NoError(err)
 
 	// Wait till we see kube-router DS created
-	err = watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
+	err = watch.DaemonSets(kc.AppsV1().DaemonSets(metav1.NamespaceSystem)).
 		WithObjectName("kube-router").
 		Until(s.Context(), func(ds *appsv1.DaemonSet) (bool, error) {
 			return true, nil
@@ -63,8 +51,8 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 	s.Require().NoError(err)
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
 
-	// check that we see the expeted warning event
-	err = watch.Events(kc.CoreV1().Events("kube-system")).
+	// check that we see the expected warning event
+	err = watch.Events(kc.CoreV1().Events(metav1.NamespaceSystem)).
 		WithFieldSelector(fields.ParseSelectorOrDie("involvedObject.name=k0s")).
 		Until(s.Context(), func(e *corev1.Event) (bool, error) {
 			return e.Type == "Warning" && strings.Contains(e.Message, "cannot change CNI provider from kuberouter to calico"), nil

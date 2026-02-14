@@ -1,18 +1,5 @@
-/*
-Copyright 2025 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2025 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package internal
 
@@ -24,6 +11,7 @@ import (
 	"strconv"
 
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/pkg/k0scontext"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -74,7 +62,12 @@ func (f *DebugFlags) AddToKubectlFlagSet(flags *pflag.FlagSet) {
 
 func (f *DebugFlags) Run(cmd *cobra.Command, _ []string) {
 	if f.logsToStdout {
-		logrus.SetOutput(cmd.OutOrStdout())
+		// Only switch the logrus backend if there's no specific backend
+		// installed already. Setting the logrus output would effectively remove
+		// that backend again.
+		if !k0scontext.HasValue[internallog.Backend](cmd.Context()) {
+			logrus.SetOutput(cmd.OutOrStdout())
+		}
 	}
 
 	switch {

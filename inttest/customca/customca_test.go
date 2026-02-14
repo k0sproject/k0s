@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package customca
 
@@ -70,6 +57,19 @@ func (s *CustomCASuite) TestK0sGetsUp() {
 	newCert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/ca.crt")
 	s.Require().NoError(err)
 	s.Equal(cert, newCert)
+
+	// Validate that k0s renews certificates with custom CA
+	k0sAPICert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/k0s-api.crt")
+	s.Require().NoError(err, "Failed to obtain k0s-api certificate")
+	s.Require().NoError(s.StopController(s.ControllerNode(0)))
+	s.Require().NoError(s.StartController(s.ControllerNode(0)))
+
+	_, err = s.KubeClient(s.ControllerNode(0)) // Wait for the API to be ready after restart
+	s.Require().NoError(err, "Failed to obtain Kubernetes client after controller restart")
+	newK0sAPICert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/k0s-api.crt")
+	s.Require().NoError(err, "Failed to obtain new k0s certificate")
+	s.Require().NotEqual(k0sAPICert, newK0sAPICert, "k0s-api certificate was not renewed")
+
 }
 
 func TestCustomCASuite(t *testing.T) {

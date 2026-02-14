@@ -1,22 +1,10 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package supervisor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -24,14 +12,15 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/testutil/pingpong"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -82,13 +71,14 @@ func TestSupervisorStart(t *testing.T) {
 
 	for _, s := range testSupervisors {
 		t.Run(s.proc.Name, func(t *testing.T) {
-			err := s.proc.Supervise()
+			err := s.proc.Supervise(t.Context())
 			if s.expectedErrMsg != "" {
 				assert.ErrorContains(t, err, s.expectedErrMsg)
+				assert.ErrorContains(t, s.proc.Stop(), "not started")
 			} else {
 				assert.NoError(t, err, "Failed to start")
+				assert.NoError(t, s.proc.Stop())
 			}
-			s.proc.Stop()
 		})
 	}
 }
@@ -115,17 +105,38 @@ func TestGetEnv(t *testing.T) {
 	t.Setenv("k1", "v1")
 	t.Setenv("FOO_PATH", "/usr/local/bin")
 
-	env := getEnv("/var/lib/k0s", "foo", false)
-	sort.Strings(env)
-	expected := fmt.Sprintf("[HTTPS_PROXY=a.b.c:1080 PATH=/var/lib/k0s/bin%c/usr/local/bin _K0S_MANAGED=yes k1=v1 k2=foo_v2 k3=foo_v3 k4=v4]", os.PathListSeparator)
-	actual := fmt.Sprintf("%s", env)
-	assert.Equal(t, expected, actual)
+	expected := []string{
+		"HTTPS_PROXY=a.b.c:1080",
+		"PATH=" + dir.PathListJoin(
+			filepath.FromSlash("/var/lib/k0s/bin"),
+			"/usr/local/bin",
+		),
+		"_K0S_MANAGED=yes",
+		"k1=v1",
+		"k2=foo_v2",
+		"k3=foo_v3",
+		"k4=v4",
+	}
+	actual := getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", false)
+	assert.ElementsMatch(t, expected, actual)
 
-	env = getEnv("/var/lib/k0s", "foo", true)
-	sort.Strings(env)
-	expected = fmt.Sprintf("[FOO_PATH=/usr/local/bin FOO_k2=foo_v2 FOO_k3=foo_v3 HTTPS_PROXY=a.b.c:1080 PATH=/var/lib/k0s/bin%c/bin _K0S_MANAGED=yes k1=v1 k2=v2 k3=v3 k4=v4]", os.PathListSeparator)
-	actual = fmt.Sprintf("%s", env)
-	assert.Equal(t, expected, actual)
+	expected = []string{
+		"FOO_PATH=/usr/local/bin",
+		"FOO_k2=foo_v2",
+		"FOO_k3=foo_v3",
+		"HTTPS_PROXY=a.b.c:1080",
+		"PATH=" + dir.PathListJoin(
+			filepath.FromSlash("/var/lib/k0s/bin"),
+			"/bin",
+		),
+		"_K0S_MANAGED=yes",
+		"k1=v1",
+		"k2=v2",
+		"k3=v3",
+		"k4=v4",
+	}
+	actual = getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", true)
+	assert.ElementsMatch(t, expected, actual)
 }
 
 func TestRespawn(t *testing.T) {
@@ -136,10 +147,11 @@ func TestRespawn(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Millisecond,
 	}
-	require.NoError(t, s.Supervise())
-	t.Cleanup(s.Stop)
+	require.NoError(t, s.Supervise(t.Context()))
+	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
 
 	// wait til process starts up
 	require.NoError(t, pingPong.AwaitPing())
@@ -169,10 +181,11 @@ func TestStopWhileRespawn(t *testing.T) {
 		BinPath:        fail.binPath,
 		Args:           fail.binArgs,
 		RunDir:         t.TempDir(),
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Hour,
 	}
 
-	if assert.NoError(t, s.Supervise(), "Failed to start") {
+	if assert.NoError(t, s.Supervise(t.Context()), "Failed to start") {
 		// wait til the process exits
 		for process := s.GetProcess(); ; {
 			// Send "the null signal" to probe if the PID still exists
@@ -200,7 +213,7 @@ func TestStopWhileRespawn(t *testing.T) {
 	}
 
 	// stop while waiting for respawn
-	s.Stop()
+	assert.NoError(t, s.Stop())
 }
 
 func TestMultiThread(t *testing.T) {
@@ -217,15 +230,15 @@ func TestMultiThread(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	assert.NoError(t, s.Supervise(), "Failed to start")
-	t.Cleanup(s.Stop)
+	assert.NoError(t, s.Supervise(t.Context()), "Failed to start")
+	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
 
 	for range 255 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			s.Stop()
-			_ = s.Supervise()
+			_ = s.Stop()
+			_ = s.Supervise(t.Context())
 		}()
 	}
 	wg.Wait()
@@ -233,10 +246,8 @@ func TestMultiThread(t *testing.T) {
 
 func TestCleanupPIDFile_Gracefully(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
-		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
-		t.Skip("FIXME: times out on macOS, needs debugging")
+		t.Skip("PID file cleanup not implemented on macOS")
 	}
 
 	// Start some k0s-managed process.
@@ -252,38 +263,45 @@ func TestCleanupPIDFile_Gracefully(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
-		TimeoutStop:    1 * time.Second,
+		TimeoutStop:    1 * time.Minute,
 		TimeoutRespawn: 1 * time.Hour,
 	}
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
 	// Start to supervise the new process.
-	require.NoError(t, s.Supervise())
-	t.Cleanup(s.Stop)
+	require.NoError(t, s.Supervise(t.Context()))
+	t.Cleanup(func() {
+		// Stop is called and checked in the regular test flow. This is just to
+		// ensure it will be called in any case, so don't check the error here.
+		_ = s.Stop()
+	})
 
 	// Expect the previous process to be gracefully terminated.
 	assert.NoError(t, prevCmd.Wait())
 
+	// Expect the new process to be started.
+	assert.NoError(t, pingPong.AwaitPing())
+
 	// Stop the supervisor and check if the PID file is gone.
-	s.Stop()
+	assert.NoError(t, s.Stop())
 	assert.NoFileExists(t, pidFilePath)
 }
 
-func TestCleanupPIDFile_Forcefully(t *testing.T) {
+func TestCleanupPIDFile_LingeringProcess(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
-		t.Skip("PID file cleanup not yet implemented on Windows")
 	case "darwin":
-		t.Skip("FIXME: times out on macOS, needs debugging")
+		t.Skip("PID file cleanup not implemented on macOS")
 	}
 
 	// Start some k0s-managed process that won't terminate gracefully.
 	prevCmd, prevPingPong := pingpong.Start(t, pingpong.StartOptions{
-		Env:                           []string{k0sManaged},
-		IgnoreGracefulShutdownRequest: true,
+		Options: pingpong.Options{
+			IgnoreGracefulTerminationRequests: true,
+		},
+		Env: []string{k0sManaged},
 	})
 	require.NoError(t, prevPingPong.AwaitPing())
 
@@ -294,25 +312,79 @@ func TestCleanupPIDFile_Forcefully(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
-		TimeoutStop:    1 * time.Second,
-		TimeoutRespawn: 1 * time.Second,
+		TimeoutStop:    10 * time.Millisecond,
+		TimeoutRespawn: 1 * time.Hour,
 	}
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
-	// Start to supervise the new process.
-	require.NoError(t, s.Supervise())
-	t.Cleanup(s.Stop)
+	// Start to supervise the new process and expect it to fail because the
+	// previous process won't terminate.
+	err := s.Supervise(t.Context())
+	if !assert.Error(t, err) {
+		assert.NoError(t, s.Stop())
+	} else {
+		assert.ErrorContains(t, err, "while waiting for termination of PID")
+		assert.ErrorContains(t, err, pidFilePath)
+		assert.ErrorContains(t, err, "process did not terminate in time")
+	}
 
-	// Expect the previous process to be forcefully terminated.
-	assert.ErrorContains(t, prevCmd.Wait(), "signal: killed")
+	// Expect the previous process to still be alive.
+	require.NoError(t, prevPingPong.SendPong())
 
-	// Stop the supervisor and check if the PID file is gone.
-	assert.NoError(t, pingPong.AwaitPing())
-	s.Stop()
-	assert.NoFileExists(t, pidFilePath)
+	// PID file should still point to the previous PID.
+	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err) {
+		assert.Equal(t, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), pid)
+	}
+}
+
+func TestCleanupPIDFile_Cancel(t *testing.T) {
+	switch runtime.GOOS {
+	case "windows":
+		t.Skip("PID file cleanup not yet implemented on Windows")
+	case "darwin":
+		t.Skip("PID file cleanup not implemented on macOS")
+	}
+
+	cmd, pingPong := pingpong.Start(t, pingpong.StartOptions{
+		Options: pingpong.Options{IgnoreGracefulTerminationRequests: true},
+		Env:     []string{k0sManaged},
+	})
+
+	s := Supervisor{
+		Name:           t.Name(),
+		BinPath:        pingPong.BinPath(),
+		RunDir:         t.TempDir(),
+		Args:           pingPong.BinArgs(),
+		TimeoutStop:    1 * time.Minute,
+		TimeoutRespawn: 1 * time.Hour,
+	}
+
+	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", cmd.Process.Pid), 0644))
+
+	require.NoError(t, pingPong.AwaitPing())
+
+	t.Run("context_timeout", func(t *testing.T) {
+		ctx, cancel := context.WithCancelCause(t.Context())
+		cancel(assert.AnError)
+		err := s.Supervise(ctx)
+		assert.ErrorContains(t, err, "while waiting for termination of PID")
+		assert.ErrorIs(t, err, assert.AnError)
+	})
+
+	t.Run("stop_timeout", func(t *testing.T) {
+		s.TimeoutStop = 1 * time.Nanosecond
+		err := s.Supervise(t.Context())
+		assert.ErrorContains(t, err, "while waiting for termination of PID")
+		assert.ErrorContains(t, err, "process did not terminate in time")
+	})
+
+	if pid, readErr := os.ReadFile(pidFilePath); assert.NoError(t, readErr) {
+		assert.Equal(t, fmt.Appendf(nil, "%d\n", cmd.Process.Pid), pid)
+	}
 }
 
 func TestCleanupPIDFile_WrongProcess(t *testing.T) {
@@ -327,21 +399,21 @@ func TestCleanupPIDFile_WrongProcess(t *testing.T) {
 		BinPath:        pingPong.BinPath(),
 		RunDir:         t.TempDir(),
 		Args:           pingPong.BinArgs(),
-		TimeoutStop:    1 * time.Second,
-		TimeoutRespawn: 1 * time.Second,
+		TimeoutStop:    1 * time.Minute,
+		TimeoutRespawn: 1 * time.Hour,
 	}
 
 	// Create a PID file that's pointing to the running process.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", prevCmd.Process.Pid)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", prevCmd.Process.Pid), 0644))
 
 	// Start to supervise the new process.
-	require.NoError(t, s.Supervise())
-	t.Cleanup(s.Stop)
+	require.NoError(t, s.Supervise(t.Context()))
+	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
 
 	// Expect the PID file to be replaced with the new PID.
 	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err, "Failed to read PID file") {
-		assert.Equal(t, []byte(fmt.Sprintf("%d\n", s.cmd.Process.Pid)), pid)
+		assert.Equal(t, fmt.Appendf(nil, "%d\n", s.cmd.Process.Pid), pid)
 	}
 
 	// Expect the previous process to be still alive and react to the pong signal.
@@ -363,23 +435,19 @@ func TestCleanupPIDFile_NonexistingProcess(t *testing.T) {
 	// Create a PID file that's pointing to some non-existing process. Note that
 	// this is probably not 100% safe, but we'll assume MaxInt32 will be unused.
 	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
-	require.NoError(t, os.WriteFile(pidFilePath, []byte(fmt.Sprintf("%d\n", math.MaxInt32)), 0644))
+	require.NoError(t, os.WriteFile(pidFilePath, fmt.Appendf(nil, "%d\n", math.MaxInt32), 0644))
 
 	// Start to supervise the new process.
-	require.NoError(t, s.Supervise())
-	t.Cleanup(s.Stop)
+	require.NoError(t, s.Supervise(t.Context()))
+	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
 
 	// Expect the PID file to be replaced with the new PID.
 	if pid, err := os.ReadFile(pidFilePath); assert.NoError(t, err, "Failed to read PID file") {
-		assert.Equal(t, []byte(fmt.Sprintf("%d\n", s.cmd.Process.Pid)), pid)
+		assert.Equal(t, fmt.Appendf(nil, "%d\n", s.cmd.Process.Pid), pid)
 	}
 }
 
 func TestCleanupPIDFile_BogusPIDFile(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("PID file cleanup not yet implemented on Windows")
-	}
-
 	// Prepare some supervised process that should never be started.
 	s := Supervisor{
 		Name:    t.Name(),
@@ -392,7 +460,7 @@ func TestCleanupPIDFile_BogusPIDFile(t *testing.T) {
 	require.NoError(t, os.WriteFile(pidFilePath, []byte("rubbish"), 0644))
 
 	// Expect the supervisor to bail out.
-	assert.ErrorContains(t, s.Supervise(), `"rubbish": invalid`)
+	assert.ErrorContains(t, s.Supervise(t.Context()), `"rubbish": invalid`)
 }
 
 type cmd struct {
@@ -411,4 +479,10 @@ func selectCmd(t *testing.T, cmds ...cmd) (_ cmd) {
 
 	require.Failf(t, "none of those executables in PATH, dunno how to create test process: %s", strings.Join(tested, ", "))
 	return // diverges above
+}
+
+func TestMain(m *testing.M) {
+	pingpong.Hook()
+	TerminationHelperHook()
+	os.Exit(m.Run())
 }

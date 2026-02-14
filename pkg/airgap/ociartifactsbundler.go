@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package airgap
 
@@ -27,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"math"
 	"net/http"
 	"os"
 	"path"
@@ -69,6 +57,10 @@ type OCIArtifactsBundler struct {
 	RegistriesConfigPaths []string // uses the standard Docker config if empty
 	PlatformMatcher       platforms.MatchComparer
 	RewriteTarget         RewriteRefFunc
+
+	// Limits the maximum number of concurrent artifact copy tasks.
+	// Uses the ORAS default if zero.
+	Concurrency uint
 }
 
 func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, out io.Writer) error {
@@ -89,7 +81,7 @@ func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, o
 
 	copyOpts := oras.CopyOptions{
 		CopyGraphOptions: oras.CopyGraphOptions{
-			Concurrency:    1, // reproducible output
+			Concurrency:    int(min(math.MaxInt, b.Concurrency)),
 			FindSuccessors: findSuccessors(b.PlatformMatcher),
 			PreCopy: func(ctx context.Context, desc imagespecv1.Descriptor) error {
 				if desc.MediaType == images.MediaTypeDockerSchema1Manifest {
@@ -281,7 +273,7 @@ func findSuccessors(platformMatcher platforms.MatchComparer) func(context.Contex
 
 		// Include descriptors that are referencing a previously selected digest.
 		// Mostly to include Attestation Manifests.
-		// https://github.com/moby/buildkit/blob/v0.21.1/docs/attestations/attestation-storage.md#attestation-manifest-descriptor
+		// https://github.com/moby/buildkit/blob/v0.27.1/docs/attestations/attestation-storage.md#attestation-manifest-descriptor
 		for _, desc := range discardedDescs {
 			refDigestAnnotation, ok := desc.Annotations["vnd.docker.reference.digest"]
 			if !ok {

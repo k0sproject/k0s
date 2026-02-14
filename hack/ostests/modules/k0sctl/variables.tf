@@ -41,6 +41,13 @@ variable "k0sctl_executable_path" {
   }
 }
 
+variable "k0sctl_timeout" {
+  type        = string
+  nullable    = false
+  description = "Overall timeout for k0sctl apply."
+  default     = ""
+}
+
 variable "k0s_version" {
   type        = string
   nullable    = false

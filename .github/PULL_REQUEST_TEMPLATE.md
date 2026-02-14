@@ -22,9 +22,9 @@ Fixes # (issue)
 
 ## Checklist
 
-- [ ] My code follows the style [guidelines](https://github.com/k0sproject/k0s/blob/main/docs/contributors/overview.md) of this project
-- [ ] My commit messages are [signed-off](https://github.com/k0sproject/k0s/blob/main/docs/contributors/github_workflow.md)
-- [ ] I have performed a self-review of my own code
+- [ ] My code follows the style [guidelines](https://docs.k0sproject.io/head/contributors/) of this project
+- [ ] My commit messages are [signed-off](https://docs.k0sproject.io/head/contributors/github_workflow/)
+- [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings

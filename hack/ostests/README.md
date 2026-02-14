@@ -44,11 +44,12 @@ export AWS_SESSION_TOKEN=...
 export AWS_REGION=...
 ```
 
-Select the desired cluster configuration for OpenTofu. Again, just an example,
-other ways described [here][tf-config].
+Select the desired cluster configuration for OpenTofu. This is just one example;
+other methods of passing configuration options are covered in the [official
+OpenTofu documentation][tf-config].
 
 ```shell
-export TF_VAR_os=alpine_3_21
+export TF_VAR_os=alpine_3_23
 export TF_VAR_arch=x86_64
 export TF_VAR_k0s_version=stable
 export TF_VAR_k0s_network_provider=calico
@@ -69,28 +70,29 @@ tofu apply
 ### `os`: Operating system stack
 
 * `al2023`: Amazon Linux 2023
-* `alpine_3_18`: Alpine Linux 3.18
-* `alpine_3_21`: Alpine Linux 3.21
+* `alpine_3_20`: Alpine Linux 3.20
+* `alpine_3_23`: Alpine Linux 3.23
 * `centos_9`: CentOS Stream 9
 * `centos_10`: CentOS Stream 10 (Coughlan)
-* `debian_10`: Debian GNU/Linux 10 (buster)
-* `debian_11`: Debian GNU/Linux 11 (bullseye)
-* `debian_12`: Debian GNU/Linux 12 (bookworm)
-* `fcos_41`: Fedora CoreOS 41
+* `debian_11`: Debian GNU/Linux 11 (bullseye) ([supported until 2026-08-31][debian-lts])
+* `debian_12`: Debian GNU/Linux 12 (bookworm) ([supported until 2028-06-30][debian-lts])
+* `fcos_stable`: [Fedora CoreOS stable stream](https://docs.fedoraproject.org/en-US/fedora-coreos/getting-started/#_streams)
 * `fedora_41`: Fedora Linux 41 (Cloud Edition)
 * `flatcar`: Flatcar Container Linux by Kinvolk
 * `oracle_8_9`: Oracle Linux Server 8.9
 * `oracle_9_3`: Oracle Linux Server 9.3
 * `rhel_7`: Red Hat Enterprise Linux Server 7.9 (Maipo)
 * `rhel_8`: Red Hat Enterprise Linux 8.10 (Ootpa)
-* `rhel_9`: Red Hat Enterprise Linux 9.5 (Plow)
+* `rhel_9`: Red Hat Enterprise Linux 9.7 (Plow)
 * `rocky_8`: Rocky Linux 8.10 (Green Obsidian)
 * `rocky_9`: Rocky Linux 9.5 (Blue Onyx)
 * `sles_15`: SUSE Linux Enterprise Server 15 SP6
 * `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2404`: Ubuntu 24.04
-* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.21)
+* `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.23)
+
+[debian-lts]: https://wiki.debian.org/LTS
 
 ### `arch`: Node architecture
 
@@ -109,7 +111,7 @@ Assuming the AWS credentials are available, it can be used like this:
 
 ```sh
 tofu init
-export TF_VAR_os=alpine_3_21
+export TF_VAR_os=alpine_3_23
 export TF_VAR_k0sctl_skip=true
 tofu apply
 tofu output -json | jq -r '
@@ -155,6 +157,16 @@ See Kubernetes's [IPVS README] for details.
   forget to clean up: `tofu destroy -var=os=<the-os-id>`.
 * Update the [nightly trigger] and [matrix workflow] with the new OS ID.
 
+### Updating the existing OS versions
+
+New OS version usually mean just updating the OS AMI filtering criteria.
+To test the AMI filtering locally, you can do the following:
+
+```sh
+tofu apply -refresh-only -target=module.os.data.aws_ami.<the-os-id>
+tofu state show "module.os.data.aws_ami.<the-os-id>[0]"
+```
+
 ## GitHub Actions workflows
 
 There's a reusable GitHub Actions workflow available in [ostests-e2e.yaml]. It
@@ -171,7 +183,7 @@ workflow] that exposes more knobs and can be triggered manually, e.g. via [gh]:
 
 ```console
 $ gh workflow run ostests-matrix.yaml --ref some/experimental/branch \
-  -f oses='["alpine_3_21"]' \
+  -f oses='["alpine_3_23"]' \
   -f network-providers='["calico"]'
 ✓ Created workflow_dispatch event for ostests-matrix.yaml at some/experimental/branch
 

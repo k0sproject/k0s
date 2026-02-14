@@ -1,6 +1,11 @@
-# Airgapped Installation
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
 
-You can install k0s in environments without Internet access. Airgapped
+# Air gapped Installation
+
+You can install k0s in environments without Internet access. Air gapped
 installations require an image bundle that contains all the container images
 that would normally be pulled over the network. K0s uses so-called OCI archives
 for this: Tarball representations of an [OCI Image Layout]. They allow for
@@ -24,11 +29,11 @@ means that your bundle can contain multi-arch images, and the import will be
 done using platform compatibility.
 
 [OCI Image Layout]: https://github.com/opencontainers/image-spec/blob/v1.0/image-layout.md
-[GitHub releases page]: https://github.com/k0sproject/k0s/releases/v{{{ extra.k8s_version }}}+k0s.0
+[GitHub releases page]: https://github.com/k0sproject/k0s/releases/{{{ k0s_version }}}
 
 ## Creating image bundles
 
-### Using k0s builtin tooling
+### Using k0s built-in tooling
 
 k0s ships with the [`k0s airgap`](cli/k0s_airgap.md) sub-command, which is
 dedicated for tooling for airgapped environments. It allows for listing the
@@ -119,7 +124,7 @@ metadata:
   name: k0s
 spec:
   k0s:
-    version: {{{ extra.k8s_version }}}+k0s.0
+    version: {{{ k0s_version }}}
   hosts:
     - role: controller
       ssh:

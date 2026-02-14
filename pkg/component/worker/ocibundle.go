@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package worker
 
@@ -36,6 +23,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	workercontainerd "github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/debounce"
@@ -65,7 +53,7 @@ var _ manager.Component = (*OCIBundleReconciler)(nil)
 func NewOCIBundleReconciler(vars *config.CfgVars) *OCIBundleReconciler {
 	return &OCIBundleReconciler{
 		ociBundleDir:      vars.OCIBundleDir,
-		containerdAddress: GetContainerdAddress(vars.RunDir),
+		containerdAddress: workercontainerd.Address(vars.RunDir),
 		log:               logrus.WithField("component", "OCIBundleReconciler"),
 		EventEmitter:      prober.NewEventEmitter(),
 		alreadyImported:   map[string]time.Time{},
@@ -295,7 +283,7 @@ func (a *OCIBundleReconciler) unpackBundle(ctx context.Context, client *containe
 	defer r.Close()
 	// WithSkipMissing allows us to skip missing blobs
 	// Without this the importing would fail if the bundle does not images for compatible architectures
-	// because the image manifest still refers to those. E.g. on arm64 containerd would stil try to unpack arm/v8&arm/v7
+	// because the image manifest still refers to those. E.g. on arm64 containerd would still try to unpack arm/v8&arm/v7
 	// images but would fail as those are not present on k0s airgap bundles.
 	images, err := client.Import(ctx, r, containerd.WithSkipMissing())
 	if err != nil {

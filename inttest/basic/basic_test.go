@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package basic
 
@@ -102,13 +89,13 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.verifyKubeletAddressFlag(ctx, s.WorkerNode(1)))
 	for _, lease := range []string{"kube-scheduler", "kube-controller-manager"} {
 		s.T().Logf("Waiting for %s lease", lease)
-		_, err := common.WaitForLease(ctx, kc, lease, "kube-system")
+		_, err := common.WaitForLease(ctx, kc, lease, metav1.NamespaceSystem)
 		s.Require().NoError(err, lease)
 	}
 
 	// We need to first wait till we see pod logs, that's a signal that konnectivity tunnels are up and thus we can then connect to kubelet
 	// via the API.
-	s.Require().NoError(common.WaitForPodLogs(ctx, kc, "kube-system"))
+	s.Require().NoError(common.WaitForPodLogs(ctx, kc, metav1.NamespaceSystem))
 	for i := range s.WorkerCount {
 		node := s.WorkerNode(i)
 		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)
@@ -116,12 +103,12 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	}
 
 	s.T().Log("checking kube-router gobgp functionality")
-	kubeRouterPods, err := kc.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{LabelSelector: "k8s-app=kube-router"})
+	kubeRouterPods, err := kc.CoreV1().Pods(metav1.NamespaceSystem).List(ctx, metav1.ListOptions{LabelSelector: "k8s-app=kube-router"})
 	s.Require().NoError(err)
 	// Just take the first running pod for execing the gobgp command
 	for _, pod := range kubeRouterPods.Items {
 		if pod.Status.Phase == corev1.PodRunning {
-			out, err := common.PodExecCmdOutput(kc, restConfig, pod.Name, "kube-system", "gobgp global")
+			out, err := common.PodExecCmdOutput(kc, restConfig, pod.Name, metav1.NamespaceSystem, "gobgp global")
 			s.Require().NoError(err)
 			// Check that the output contains the default AS number, that's a sign that gobgp is working
 			s.Regexp(`AS:\s+64512`, out)
@@ -141,13 +128,24 @@ func (s *BasicSuite) checkCertPerms(ctx context.Context, node string) error {
 	}
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(ctx, `find /var/lib/k0s/custom-data-dir/pki/  \( -name '*.key' -o -name '*.conf' \) -a \! -perm 0640`)
+	// Check that all .key files have 640 permissions
+	keyOutput, err := ssh.ExecWithOutput(ctx, `find /var/lib/k0s/custom-data-dir/pki/ -name '*.key' -a \! -perm 0640`)
 	if err != nil {
 		return err
 	}
 
-	if output != "" {
-		return fmt.Errorf("some private files having non 640 permissions: %s", output)
+	if keyOutput != "" {
+		return fmt.Errorf("some private key files having non 640 permissions: %s", keyOutput)
+	}
+
+	// Check that .conf files have either 640 or 600 permissions (admin.conf, scheduler.conf, and ccm.conf use 600, others use 640)
+	confOutput, err := ssh.ExecWithOutput(ctx, `find /var/lib/k0s/custom-data-dir/pki/ -name '*.conf' -a \! -perm 0640 -a \! -perm 0600`)
+	if err != nil {
+		return err
+	}
+
+	if confOutput != "" {
+		return fmt.Errorf("some private conf files having non 640/600 permissions: %s", confOutput)
 	}
 
 	return nil
@@ -251,7 +249,7 @@ func (s *BasicSuite) probeCoreDNSAntiAffinity(ctx context.Context, kc *kubernete
 	// Wait until both CoreDNS Pods got assigned to a node
 	pods := map[string]string{}
 
-	return watch.Pods(kc.CoreV1().Pods("kube-system")).
+	return watch.Pods(kc.CoreV1().Pods(metav1.NamespaceSystem)).
 		WithLabels(labels.Set{"k8s-app": "kube-dns"}).
 		WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
 		Until(ctx, func(pod *corev1.Pod) (bool, error) {

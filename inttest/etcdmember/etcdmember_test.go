@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package hacontrolplane
 
@@ -24,13 +11,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/stretchr/testify/suite"
-	"golang.org/x/sync/errgroup"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 const basePath = "apis/etcd.k0sproject.io/v1beta1/etcdmembers/%s"
@@ -152,13 +143,17 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	// Final sanity -- ensure all nodes see each other according to etcd
 	members = s.getMembers(ctx, 0)
 	s.Require().Len(members, s.ControllerCount)
-	s.Require().Contains(members, "controller2")
-
-	// Check the CR is present again
-	em = s.getMember(ctx, "controller2")
-	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
-	s.Require().False(em.Spec.Leave)
-	s.Require().Equal(etcdv1beta1.ConditionTrue, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
+	s.Require().Contains(members, s.ControllerNode(2))
+	s.Require().EventuallyWithT(func(tt *assert.CollectT) {
+		s.Require().NoError(context.Cause(ctx), "Context done")
+		// Check the CR is present again
+		em = s.getMember(ctx, s.ControllerNode(2))
+		assert.Equal(tt, em.Status.PeerAddress, s.GetControllerIPAddress(2))
+		assert.False(tt, em.Spec.Leave, "Node is still flagged to be leaving")
+		if cond := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined); assert.NotNilf(tt, cond, "condition not found: %s", etcdv1beta1.ConditionTypeJoined) {
+			assert.Equal(tt, etcdv1beta1.ConditionTrue, cond.Status, "node not joined yet")
+		}
+	}, 30*time.Second, 1*time.Second)
 
 	// Check that after restarting the controller, the member is still present
 	s.Require().NoError(s.RestartController(s.ControllerNode(2)))
@@ -179,7 +174,7 @@ func (s *EtcdMemberSuite) getLeader(ctx context.Context) string {
 	// First we need to get all leases in "kube-node-lease" NS
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
-	leases, err := kc.CoordinationV1().Leases("kube-node-lease").List(ctx, metav1.ListOptions{})
+	leases, err := kc.CoordinationV1().Leases(corev1.NamespaceNodeLease).List(ctx, metav1.ListOptions{})
 	s.Require().NoError(err)
 	leaseIDs := make(map[string]string)
 	for _, l := range leases.Items {
@@ -190,7 +185,7 @@ func (s *EtcdMemberSuite) getLeader(ctx context.Context) string {
 		}
 	}
 	// Next we need to match the "k0s-endpoint-reconciler" lease holder identity to a node name
-	leaderLease, err := kc.CoordinationV1().Leases("kube-node-lease").Get(ctx, "k0s-endpoint-reconciler", metav1.GetOptions{})
+	leaderLease, err := kc.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, "k0s-endpoint-reconciler", metav1.GetOptions{})
 	s.Require().NoError(err)
 	return leaseIDs[*leaderLease.Spec.HolderIdentity]
 

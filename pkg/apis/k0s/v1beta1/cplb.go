@@ -1,24 +1,12 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"time"
 
@@ -70,14 +58,23 @@ type KeepalivedSpec struct {
 	// UserspaceProxyPort is the port where the userspace proxy will bind
 	// to. This port is only used internally, but listens on every interface.
 	// Defaults to 6444
+	//
 	// +kubebuilder:default=6444
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	// +optional
 	UserSpaceProxyPort int `json:"userSpaceProxyBindPort,omitempty"`
 	// DisableLoadBalancer disables the load balancer.
-	// +optional
 	DisableLoadBalancer bool `json:"disableLoadBalancer,omitempty"`
+	// ConfigTemplateVRRP specifies the path to a custom Keepalived configuration template for VRRP.
+	// If specified, this template will be used instead of the default configuration.
+	// The template must be a valid Go template and will receive keepalivedConfig as input.
+	// +optional
+	ConfigTemplateVRRP string `json:"configTemplateVRRP,omitempty"`
+	// ConfigTemplateVS specifies the path to a custom Keepalived configuration template for Virtual Servers.
+	// If specified, this template will be used instead of the default configuration.
+	// The template must be a valid Go template and will receive keepalivedConfig as input.
+	// +optional
+	ConfigTemplateVS string `json:"configTemplateVS,omitempty"`
 }
 
 // VRRPInstances is a list of VRRPInstance
@@ -92,8 +89,10 @@ type VRRPInstance struct {
 	// +listType=set
 	VirtualIPs []string `json:"virtualIPs"`
 
-	// Interface specifies the NIC used by the virtual router. If not specified,
-	// k0s will use the interface that owns the default route.
+	// Interface specifies the NIC used by the virtual router.
+	// If not specified, k0s will use the interface that owns the default route.
+	// If a MAC address is specified instead of an interface name, k0s will
+	// try to resolve the interface name based on the MAC address.
 	Interface string `json:"interface,omitempty"`
 
 	// VirtualRouterID is the VRRP router ID. If not specified, k0s will
@@ -126,6 +125,14 @@ type VRRPInstance struct {
 	// UnicastSourceIP is the source address for unicast peers.
 	// If not specified, k0s will use the first address of the interface.
 	UnicastSourceIP string `json:"unicastSourceIP,omitempty"`
+
+	// AddressLabel is label for the VRRP instance for IPv6 VIPs.
+	// This value is ignored for IPv4 VIPs. This is used to set the routing preference
+	// as per RFC 6724.
+	// The value must be in the range from 1 to 2^32-1.
+	// If not specificied or set to 0, defaults to 10000.
+	// +kubebuilder:default=10000
+	AddressLabel uint32 `json:"addressLabel,omitempty"`
 }
 
 // validateVRRPInstances validates existing configuration and sets the default
@@ -142,6 +149,8 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 				errs = append(errs, fmt.Errorf("failed to get default NIC: %w", err))
 			}
 			k.VRRPInstances[i].Interface = nic
+		} else if _, err := net.ParseMAC(k.VRRPInstances[i].Interface); err == nil {
+			macToInterfaceName(&k.VRRPInstances[i].Interface, &errs)
 		}
 
 		if k.VRRPInstances[i].VirtualRouterID == 0 {
@@ -152,6 +161,13 @@ func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, e
 			k.VRRPInstances[i].VirtualRouterID = defaultVirtualRouterID + int32(i)
 		} else if k.VRRPInstances[i].VirtualRouterID < 0 || k.VRRPInstances[i].VirtualRouterID > 255 {
 			errs = append(errs, errors.New("VirtualRouterID must be in the range of 1-255"))
+		}
+
+		if k.VRRPInstances[i].AddressLabel == 0 {
+			k.VRRPInstances[i].AddressLabel = 10000
+		}
+		if k.VRRPInstances[i].AddressLabel == math.MaxUint32 {
+			errs = append(errs, errors.New("AddressLabel 0xffffffff is reserved"))
 		}
 
 		if k.VRRPInstances[i].AdvertIntervalSeconds == 0 {
@@ -204,8 +220,10 @@ type VirtualServer struct {
 	// DelayLoop is the delay timer for check polling. DelayLoop accepts
 	// microsecond precision. Further precision will be truncated without
 	// warnings. Defaults to 1m.
+	//
 	// +kubebuilder:default="1m"
-	DelayLoop metav1.Duration `json:"delayLoop,omitempty"`
+	// +optional
+	DelayLoop metav1.Duration `json:"delayLoop"`
 	// LBAlgo is the load balancing algorithm. If not specified, defaults to rr.
 	// Valid values are rr, wrr, lc, wlc, lblc, dh, sh, sed, nq. For further
 	// details refer to keepalived documentation.

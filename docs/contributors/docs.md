@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Contributing to the k0s documentation
 
 We use [mkdocs](https://www.mkdocs.org) and [mike](https://github.com/jimporter/mike) for publishing docs to [docs.k0sproject.io](https://docs.k0sproject.io).
@@ -22,7 +27,7 @@ Install mike: https://github.com/jimporter/mike#installation
   # more navigation links ...
 ```
 
-- Once your changes are pushed to `main`, the "Publish Docs" jos will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22
+- Once your changes are pushed to `main`, the "Publish Docs" job will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22
 - You should see the deployment outcome in the `gh-pages` deployment page: https://github.com/k0sproject/k0s/deployments/activity_log?environment=github-pages
 
 ## Testing docs locally

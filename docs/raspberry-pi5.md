@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2025 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Create a Raspberry Pi 5 cluster
 
 ## Prerequisites
@@ -41,9 +46,9 @@ Follow the official Raspberry Pi instructions on [booting Pi OS from the USB dri
 
 [ssh-copy-id]: https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/
 
-### Enable Memory Cgroups
+### Enable the memory cgroup controller
 
-By default, Raspberry Pi OS does not enable memory cgroups. Since k0s requires them to pass its pre-flight checks, enable them:
+Raspberry Pi OS does not enable the memory cgroup controller by default. However, it is required to run containerized workloads, so enable it:
 
 1. Edit /boot/cmdline.txt:
 
@@ -71,7 +76,7 @@ Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest). For
 example:
 
   ```shell
-  wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v{{{ extra.k8s_version }}}+k0s.0/k0s-v{{{ extra.k8s_version }}}+k0s.0-arm64 # replace version number!
+  wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/{{{ k0s_version }}}/k0s-{{{ k0s_version }}}-arm64 # replace version number!
   sudo install /tmp/k0s /usr/local/bin/k0s
   ```
 
@@ -88,7 +93,7 @@ At this point you can run `k0s`:
 
   ```console
   $ sudo k0s version
-  v{{{ extra.k8s_version }}}+k0s.0
+  {{{ k0s_version }}}
   ```
 
 To check if k0s's [system requirements](system-requirements.md) and [external
@@ -246,11 +251,9 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
       ⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
       k0sctl v0.21.0 Copyright 2023, k0sctl authors.
-      By continuing to use k0sctl you agree to these terms:
-      https://k0sproject.io/licenses/eula
       INFO ==> Running phase: Set k0s version
       INFO Looking up latest stable k0s version
-      INFO Using k0s version v{{{ extra.k8s_version }}}+k0s.0
+      INFO Using k0s version {{{ k0s_version }}}
       INFO ==> Running phase: Connect to hosts
       INFO [ssh] 192.168.31.93:22: connected
       INFO ==> Running phase: Detect host operating systems
@@ -263,7 +266,7 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       INFO ==> Running phase: Validate hosts
       INFO ==> Running phase: Validate facts
       INFO ==> Running phase: Download k0s on hosts
-      INFO [ssh] 192.168.31.93:22: downloading k0s v{{{ extra.k8s_version }}}+k0s.0
+      INFO [ssh] 192.168.31.93:22: downloading k0s {{{ k0s_version }}}
       INFO ==> Running phase: Install k0s binaries on hosts
       INFO [ssh] 192.168.31.93:22: validating configuration
       INFO ==> Running phase: Configure k0s
@@ -275,7 +278,7 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       INFO ==> Running phase: Release exclusive host lock
       INFO ==> Running phase: Disconnect from hosts
       INFO ==> Finished in 4m14s
-      INFO k0s cluster version v{{{ extra.k8s_version }}}+k0s.0 is now installed
+      INFO k0s cluster version {{{ k0s_version }}} is now installed
       INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
       INFO      k0sctl kubeconfig --config cluster.yaml
       ```
@@ -292,7 +295,7 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       $ export KUBECONFIG=pi_cluster.kubeconfig
       $ kubectl get nodes
       NAME   STATUS   ROLES           AGE     VERSION
-      pi     Ready    control-plane   2m54s   v{{{ extra.k8s_version }}}+k0s
+      pi     Ready    control-plane   2m54s   {{{ k8s_version }}}+k0s
       ```
 
 ## Tear down k0s on Pi 5

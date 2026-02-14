@@ -1,16 +1,5 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package discovery
 
@@ -27,12 +16,23 @@ import (
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type SignalObjectExistsFunc func(name string) (bool, *apv1beta2.PlanCommandTargetStateType)
+type SignalObjectFilterResult uint8
+
+const (
+	// The signal object has not been found.
+	SignalObjectFilterResultMissing = iota
+	// The signal object has been found.
+	SignalObjectFilterResultFound
+	// The signal object has been found, however, it should be ignored.
+	SignalObjectFilterResultIgnore
+)
+
+type SignalObjectFilterFunc func(name string) (SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType)
 
 // DiscoverNodes will find all of the `PlanCommandTarget` instances for the provided `PlanCommandTarget`,
 // using the appropriate discovery method. If any nodes defined in the target don't exist,
 // then `false` will be returned with the slice of `PlanCommandTarget` instances.
-func DiscoverNodes(ctx context.Context, client crcli.Client, target *apv1beta2.PlanCommandTarget, delegate apdel.ControllerDelegate, exists SignalObjectExistsFunc) ([]apv1beta2.PlanCommandTargetStatus, bool) {
+func DiscoverNodes(ctx context.Context, client crcli.Client, target *apv1beta2.PlanCommandTarget, delegate apdel.ControllerDelegate, exists SignalObjectFilterFunc) ([]apv1beta2.PlanCommandTargetStatus, bool) {
 	discover := createDiscoverNodes(ctx, client, delegate, target)
 	if discover == nil {
 		// If we can't discover, assume that we're done with no results.
@@ -108,18 +108,29 @@ func discoverNodesSelector(ctx context.Context, client crcli.Client, delegate ap
 // ensureNodesExist ensures that all nodes in the provided slice of `PlanCommandTarget` have
 // associated objects as identified by the provided exists function. If all nodes have been
 // determined to exist, `true` is included in the return.
-func ensureNodesExist(nodes []apv1beta2.PlanCommandTargetStatus, exists SignalObjectExistsFunc) ([]apv1beta2.PlanCommandTargetStatus, bool) {
-	var allAccountedFor = true
+func ensureNodesExist(nodes []apv1beta2.PlanCommandTargetStatus, filter SignalObjectFilterFunc) (filtered []apv1beta2.PlanCommandTargetStatus, allAccountedFor bool) {
+	allAccountedFor = true
 
-	for idx, node := range nodes {
-		if found, status := exists(node.Name); !found {
+	for i := range nodes {
+		result, status := filter(nodes[i].Name)
+		switch result {
+		case SignalObjectFilterResultMissing:
+			allAccountedFor = false
 			if status != nil {
-				nodes[idx].State = *status
+				node := nodes[i]
+				node.State = *status
+				filtered = append(filtered, node)
+			} else {
+				filtered = append(filtered, nodes[i])
 			}
 
-			allAccountedFor = false
+		case SignalObjectFilterResultFound:
+			filtered = append(filtered, nodes[i])
+
+		case SignalObjectFilterResultIgnore:
+			continue
 		}
 	}
 
-	return nodes, allAccountedFor
+	return filtered, allAccountedFor
 }

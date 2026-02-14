@@ -36,4 +36,4 @@ We're following [semantic versioning](https://semver.org/) for version numbering
 
 We usually bake couple beta or RC releases before pushing out the final release. This allows us to run final verifications on the system with a package that's build exactly the same as a real release.
 
-One of the steps involved in final testing stages for a release is to run [Kubernetes conformance](https://github.com/cncf/k8s-conformance) tests for a RC build. For more info how to run conformance testing for k0s read [this](docs/conformance-testing.md).
+One of the steps involved in final testing stages for a release is to run [Kubernetes conformance](https://github.com/cncf/k8s-conformance) tests for a RC build.

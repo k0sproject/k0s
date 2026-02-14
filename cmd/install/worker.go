@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package install
 
@@ -40,14 +27,25 @@ All default values of worker command will be passed to the service stub unless o
 				return errors.New("this command must be run as root")
 			}
 
+			envVars, err := resolveEnvVars(installFlags.envVars)
+			if err != nil {
+				return err
+			}
+
 			flagsAndVals, err := cmdFlagsToArgs(cmd)
 			if err != nil {
 				return err
 			}
 
 			args := append([]string{"worker"}, flagsAndVals...)
-			if err := install.InstallService(args, installFlags.envVars, installFlags.force); err != nil {
+			if err := install.InstallService(args, envVars, installFlags.force); err != nil {
 				return fmt.Errorf("failed to install worker service: %w", err)
+			}
+
+			if installFlags.start {
+				if err := install.StartInstalledService(installFlags.force); err != nil {
+					return fmt.Errorf("failed to start worker service: %w", err)
+				}
 			}
 
 			return nil

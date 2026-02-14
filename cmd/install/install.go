@@ -1,24 +1,12 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package install
 
 import (
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -26,6 +14,7 @@ import (
 type installFlags struct {
 	force   bool
 	envVars []string
+	start   bool
 }
 
 func NewInstallCmd() *cobra.Command {
@@ -49,8 +38,9 @@ func NewInstallCmd() *cobra.Command {
 		f.Deprecated = "it has no effect and will be removed in a future release"
 		pflags.AddFlag(f)
 	})
-	pflags.BoolVar(&installFlags.force, "force", false, "force init script creation")
-	pflags.StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
+	pflags.BoolVar(&installFlags.force, "force", false, "Force init script creation")
+	pflags.StringArrayVarP(&installFlags.envVars, "env", "e", nil, "Set environment variables (<name>=<value> or just <name>)")
+	pflags.BoolVar(&installFlags.start, "start", false, "Start the service immediately after installation")
 
 	cmd.AddCommand(installWorkerCmd(&installFlags))
 	addPlatformSpecificCommands(cmd, &installFlags)

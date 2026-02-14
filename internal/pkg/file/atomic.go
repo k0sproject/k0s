@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package file
 
@@ -24,13 +11,18 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+	"time"
+
+	"github.com/opencontainers/selinux/go-selinux"
 )
 
 // The internal options for atomic file writes.
 type atomicOpts struct {
-	target      string
-	permissions fs.FileMode
-	uid, gid    int
+	target       string
+	permissions  fs.FileMode
+	uid, gid     int
+	mtime        time.Time
+	seLinuxLabel string
 }
 
 func (o *atomicOpts) wantsChmod() bool {
@@ -56,6 +48,12 @@ func (o *AtomicOpener) WithPermissions(perm os.FileMode) *AtomicOpener {
 	return o
 }
 
+// The desired modification time for the target file.
+func (o *AtomicOpener) WithModificationTime(mtime time.Time) *AtomicOpener {
+	o.mtime = mtime
+	return o
+}
+
 // The desired owner UID for the target file.
 // Will be owned by the current user if not called.
 // Will have no effect on Windows.
@@ -69,6 +67,13 @@ func (o *AtomicOpener) WithOwner(uid int) *AtomicOpener {
 // Will have no effect on Windows.
 func (o *AtomicOpener) WithGroup(gid int) *AtomicOpener {
 	o.gid = max(-1, gid)
+	return o
+}
+
+// The desired SELinux label for the target file.
+// Will only be applied if SELinux is enabled.
+func (o *AtomicOpener) WithSELinuxLabel(label string) *AtomicOpener {
+	o.seLinuxLabel = label
 	return o
 }
 
@@ -227,7 +232,7 @@ func (f *Atomic) finish(target string) (err error) {
 		err = errors.Join(err, closeErr, removeErr)
 	}()
 
-	// https://github.com/google/renameio/blob/v2.0.0/tempfile.go#L150-L157
+	// https://github.com/google/renameio/blob/v2.0.1/tempfile.go#L150-L157
 	if err = f.fd.Sync(); err != nil {
 		return err
 	}
@@ -239,6 +244,12 @@ func (f *Atomic) finish(target string) (err error) {
 
 	if f.wantsChmod() {
 		if err := os.Chmod(f.fd.Name(), f.permissions.Perm()); err != nil {
+			return err
+		}
+	}
+
+	if f.mtime != (time.Time{}) {
+		if err := os.Chtimes(f.fd.Name(), f.mtime, f.mtime); err != nil {
 			return err
 		}
 	}
@@ -256,6 +267,15 @@ func (f *Atomic) finish(target string) (err error) {
 		err = os.Chown(f.fd.Name(), f.uid, f.gid)
 		// Ignore errors indicating that os.Chown() is unsupported.
 		if err != nil && !errors.Is(err, errors.ErrUnsupported) {
+			return err
+		}
+	}
+
+	// Apply SELinux label if specified and SELinux is enabled.
+	// This must be done before the rename to ensure the target file has the
+	// correct label when it appears atomically.
+	if f.seLinuxLabel != "" && selinux.GetEnabled() {
+		if err := selinux.SetFileLabel(f.fd.Name(), f.seLinuxLabel); err != nil {
 			return err
 		}
 	}

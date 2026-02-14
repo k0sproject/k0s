@@ -1,30 +1,21 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package config
 
 import (
 	"fmt"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/featuregate"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
+
+	cliflag "k8s.io/component-base/cli/flag"
 
 	"github.com/spf13/pflag"
 )
@@ -65,6 +56,7 @@ type ControllerOptions struct {
 	EnableDynamicConfig             bool
 	EnableMetricsScraper            bool
 	KubeControllerManagerExtraArgs  string
+	FeatureGates                    featuregate.FeatureGates
 
 	enableWorker, singleNode bool
 }
@@ -75,7 +67,7 @@ type WorkerOptions struct {
 	LogLevels        LogLevels
 	CriSocket        string
 	KubeletExtraArgs string
-	Labels           []string
+	Labels           map[string]string
 	Taints           []string
 	TokenFile        string
 	TokenArg         string
@@ -243,12 +235,24 @@ func GetWorkerFlags() *pflag.FlagSet {
 		f.Deprecated = "it has no effect and will be removed in a future release"
 	})
 
+	if workerOpts.Labels == nil {
+		// cliflag.ConfigurationMap expects the map to be non-nil.
+		workerOpts.Labels = make(map[string]string)
+	}
+
+	var defaultWorkerProfile string
+	if runtime.GOOS == "windows" {
+		defaultWorkerProfile = "default-windows"
+	} else {
+		defaultWorkerProfile = "default"
+	}
+
 	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
-	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
+	flagset.StringVar(&workerOpts.WorkerProfile, "profile", defaultWorkerProfile, "worker profile to use on the node")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.VarP((*logLevelsFlag)(&workerOpts.LogLevels), "logging", "l", "Logging Levels for the different components")
-	flagset.StringSliceVarP(&workerOpts.Labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
+	flagset.Var((*cliflag.ConfigurationMap)(&workerOpts.Labels), "labels", "Node labels, list of key=value pairs")
 	flagset.StringSliceVarP(&workerOpts.Taints, "taints", "", []string{}, "Node taints, list of key=value:effect strings")
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 	flagset.StringVar(&workerOpts.IPTablesMode, "iptables-mode", "", "iptables mode (valid values: nft, legacy, auto). default: auto")
@@ -273,6 +277,7 @@ var availableComponents = []string{
 	constant.NetworkProviderComponentName,
 	constant.NodeRoleComponentName,
 	constant.SystemRBACComponentName,
+	constant.UpdateProberComponentName,
 	constant.WindowsNodeComponentName,
 	constant.WorkerConfigComponentName,
 }
@@ -291,6 +296,7 @@ func GetControllerFlags(controllerOpts *ControllerOptions) *pflag.FlagSet {
 	flagset.BoolVar(&controllerOpts.EnableMetricsScraper, "enable-metrics-scraper", false, "enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)")
 	flagset.StringVar(&controllerOpts.KubeControllerManagerExtraArgs, "kube-controller-manager-extra-args", "", "extra args for kube-controller-manager")
 	flagset.BoolVar(&controllerOpts.InitOnly, "init-only", false, "only initialize controller and exit")
+	flagset.Var(&controllerOpts.FeatureGates, "feature-gates", "feature gates to enable (comma separated list of key=value pairs)")
 	return flagset
 }
 

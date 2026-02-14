@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package watch
 
@@ -304,7 +291,7 @@ func (w *Watcher[T]) watch(ctx context.Context, resourceVersion string, conditio
 	for startWatch != nil {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, context.Cause(ctx)
 
 		case <-watchTimeout.C:
 			return nil, apierrors.NewTimeoutError("server unexpectedly didn't close the watch", 1)
@@ -422,7 +409,7 @@ func retry(ctx context.Context, errorCallback ErrorCallback, runWatch func(conte
 			select {
 			case <-ctx.Done():
 				timer.Stop()
-				return ctx.Err()
+				return context.Cause(ctx)
 			case <-timer.C:
 				continue
 			}

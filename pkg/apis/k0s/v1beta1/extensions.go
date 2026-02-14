@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -21,6 +8,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/helm"
 	"helm.sh/helm/v3/pkg/chartutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,7 +19,6 @@ var _ Validateable = (*ClusterExtensions)(nil)
 type ClusterExtensions struct {
 	// Deprecated: storage is deprecated and will be ignored starting from k0s
 	// 1.31 and onwards: https://docs.k0sproject.io/stable/examples/openebs
-	// +optional
 	Storage *StorageExtension `json:"storage,omitempty"`
 
 	Helm *HelmExtensions `json:"helm,omitempty"`
@@ -115,10 +102,11 @@ type Chart struct {
 	TargetNS string `json:"namespace"`
 	// Timeout specifies the timeout for how long to wait for the chart installation to finish.
 	// A duration string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+	//
 	// +kubebuilder:validation:XIntOrString
-	Timeout BackwardCompatibleDuration `json:"timeout,omitempty"`
-	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the chart (default: true).
 	// +optional
+	Timeout BackwardCompatibleDuration `json:"timeout"`
+	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the chart (default: true).
 	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
 	Order        int   `json:"order,omitempty"`
 }
@@ -198,6 +186,20 @@ func (r *Repository) IsInsecure() bool {
 	// This defaults to true when not explicitly set to false.
 	// Better have this the other way round in the next API version.
 	return r == nil || r.Insecure == nil || *r.Insecure
+}
+
+// ToHelm converts k0s Repository to helm.Repository
+func (r *Repository) ToHelm() helm.Repository {
+	return helm.Repository{
+		Name:     r.Name,
+		URL:      r.URL,
+		Username: r.Username,
+		Password: r.Password,
+		CAFile:   r.CAFile,
+		CertFile: r.CertFile,
+		KeyFile:  r.KeyFile,
+		Insecure: r.Insecure,
+	}
 }
 
 // Validate performs validation

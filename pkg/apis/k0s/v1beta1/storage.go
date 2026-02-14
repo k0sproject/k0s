@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -22,7 +9,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -143,6 +129,10 @@ type EtcdConfig struct {
 	// Map of key-values (strings) for any extra arguments you want to pass down to the etcd process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 
+	// Slice of strings with raw arguments to pass to the etcd process
+	// These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+	RawArgs []string `json:"rawArgs,omitempty"`
+
 	// Custom config for CA certificates.
 	CA *CA `json:"ca,omitempty"`
 }
@@ -183,13 +173,13 @@ func DefaultEtcdConfig() *EtcdConfig {
 
 const etcdNameExtraArg = "name"
 
-// GetNodeName returns the node name for the etcd peer
-func (e *EtcdConfig) GetNodeName() (string, error) {
+// Returns the human-readable member name for the etcd peer, if any.
+func (e *EtcdConfig) GetMemberName() string {
 	if e.ExtraArgs != nil && e.ExtraArgs[etcdNameExtraArg] != "" {
-		return e.ExtraArgs[etcdNameExtraArg], nil
+		return e.ExtraArgs[etcdNameExtraArg]
 	}
 
-	return os.Hostname()
+	return ""
 }
 
 // GetPeerURL returns the URL of PeerAddress

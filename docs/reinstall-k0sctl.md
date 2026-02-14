@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Reinstall a node
 
 `k0sctl` currently does not support changing all the configuration of containerd (`state`, `root`) on the fly.

@@ -1,16 +1,5 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package airgapupdate
 
@@ -22,6 +11,8 @@ import (
 	appku "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/utils"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/sirupsen/logrus"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,14 +39,14 @@ func (aup *airgapupdate) Schedulable(ctx context.Context, planID string, cmd apv
 	signalNodeDelegate, ok := aup.controllerDelegateMap["worker"]
 	if !ok {
 		logger.Warnf("Missing signal delegate for '%s'", "worker")
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	nodeKey := signalNodeDelegate.CreateNamespacedName(nextForSignal.Name)
 	signalNode := signalNodeDelegate.CreateObject()
 	if err := aup.client.Get(ctx, nodeKey, signalNode); err != nil {
 		logger.Warnf("Unable to find signal node '%s' for signal: %v", nodeKey, err)
-		return appc.PlanMissingSignalNode, false, nil
+		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	logger.Infof("Sending signaling to node='%s'", nextForSignal.Name)
@@ -75,6 +66,10 @@ func (aup *airgapupdate) Schedulable(ctx context.Context, planID string, cmd apv
 	// .. and update the node
 
 	if err := aup.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
+		if apierrors.IsConflict(err) {
+			logger.WithError(err).Warn("Conflict updating signal node to ", nextForSignal.Name, ", retrying")
+			return status.State, true, nil
+		}
 		logger.Warnf("Unable to update signalnode with signaling: %v", err)
 		return status.State, false, fmt.Errorf("unable to update signalnode with signaling: %w", err)
 	}

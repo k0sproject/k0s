@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -52,9 +39,10 @@ type APIServer struct {
 	Storage                   manager.Component
 	EnableKonnectivity        bool
 	DisableEndpointReconciler bool
-	gid                       int
-	supervisor                supervisor.Supervisor
-	uid                       int
+
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 }
 
 var _ manager.Component = (*APIServer)(nil)
@@ -96,11 +84,12 @@ func (a *APIServer) Init(_ context.Context) error {
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes API server as root")
 	}
-	return assets.Stage(a.K0sVars.BinDir, kubeAPIComponentName)
+	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeAPIComponentName)
+	return err
 }
 
 // Run runs kube api
-func (a *APIServer) Start(_ context.Context) error {
+func (a *APIServer) Start(ctx context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 	args := stringmap.StringMap{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
@@ -116,7 +105,7 @@ func (a *APIServer) Start(_ context.Context) error {
 		"requestheader-allowed-names":      "front-proxy-client",
 		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"service-account-key-file":         path.Join(a.K0sVars.CertRootDir, "sa.pub"),
-		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.API.APIAddress()),
+		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.PrimaryAddressFamily()),
 		"tls-min-version":                  "VersionTLS12",
 		"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
 		"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),
@@ -170,15 +159,15 @@ func (a *APIServer) Start(_ context.Context) error {
 	for name, value := range args {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
+	apiServerArgs = append(apiServerArgs, a.ClusterConfig.Spec.API.RawArgs...)
 
-	a.supervisor = supervisor.Supervisor{
+	a.supervisor = &supervisor.Supervisor{
 		Name:    kubeAPIComponentName,
-		BinPath: assets.BinPath(kubeAPIComponentName, a.K0sVars.BinDir),
+		BinPath: a.executablePath,
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    apiServerArgs,
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 
 	etcdArgs, err := getEtcdArgs(a.ClusterConfig.Spec.Storage, a.K0sVars)
@@ -187,7 +176,7 @@ func (a *APIServer) Start(_ context.Context) error {
 	}
 	a.supervisor.Args = append(a.supervisor.Args, etcdArgs...)
 
-	return a.supervisor.Supervise()
+	return a.supervisor.Supervise(ctx)
 }
 
 func (a *APIServer) writeKonnectivityConfig() error {
@@ -209,13 +198,15 @@ func (a *APIServer) writeKonnectivityConfig() error {
 
 // Stop stops APIServer
 func (a *APIServer) Stop() error {
-	a.supervisor.Stop()
+	if a.supervisor != nil {
+		return a.supervisor.Stop()
+	}
 	return nil
 }
 
 // Health-check interface
 func (a *APIServer) Ready() error {
-	// Load client cert so the api can authenitcate the request.
+	// Load client cert so the api can authenticate the request.
 	certFile := path.Join(a.K0sVars.CertRootDir, "admin.crt")
 	keyFile := path.Join(a.K0sVars.CertRootDir, "admin.key")
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)

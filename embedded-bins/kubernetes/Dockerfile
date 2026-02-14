@@ -22,7 +22,6 @@ ARG TARGET_OS \
   BUILD_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
   BUILD_GO_LDFLAGS \
-  BUILD_GO_LDFLAGS_EXTRA \
   KUBERNETES_BINS
 
 COPY riscv64.patch .
@@ -52,7 +51,7 @@ RUN \
   export KUBE_GIT_TREE_STATE=clean; \
   export KUBE_GIT_VERSION="v$VERSION+k0s"; \
   for cmd in $commands; do \
-    make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" WHAT=cmd/$cmd; \
+    make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS}" WHAT=cmd/$cmd; \
     mv /go/src/github.com/kubernetes/kubernetes/_output/local/bin/*/*/$cmd$binarySuffix /out/; \
   done
 

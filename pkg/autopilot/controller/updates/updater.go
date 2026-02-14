@@ -1,18 +1,7 @@
 //go:build unix
 
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package updates
 
@@ -31,7 +20,6 @@ import (
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
-	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -66,7 +54,7 @@ var patchOpts = []crcli.PatchOption{
 	crcli.ForceOwnership,
 }
 
-func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID string, updateServerToken string) (updater, error) {
+func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID string, collector *ClusterInfoCollector, updateServerToken string) (updater, error) {
 	updateClient, err := uc.NewClient(updateConfig.Spec.UpdateServer, updateServerToken)
 	if err != nil {
 		return nil, err
@@ -76,7 +64,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 	case apv1beta2.UpdateStrategyTypeCron:
 		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient)
 	case apv1beta2.UpdateStrategyTypePeriodic:
-		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, clusterID, build.Version), nil
+		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, collector, build.Version), nil
 	default:
 		return nil, fmt.Errorf("unknown update strategy type: %s", updateConfig.Spec.UpgradeStrategy.Type)
 	}
@@ -88,7 +76,7 @@ func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConf
 		schedule = defaultCronSchedule
 	}
 
-	status, err := status.GetStatusInfo(k0s.DefaultK0sStatusSocketPath)
+	status, err := status.GetStatusInfo(status.DefaultSocketPath)
 	if err != nil {
 		return nil, err
 	}

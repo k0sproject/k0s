@@ -1,74 +1,138 @@
 name: Go lint
+
 on:
   push:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "**.md"
+      - .github/**
+      - "!.github/workflows/lint.yaml"
+      - docs/**
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - mkdocs.yml
+      - renovate.json
   pull_request:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "**.md"
+      - .github/**
+      - "!.github/workflows/lint.yaml"
+      - docs/**
       - LICENSE
-      - README.md
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
-      - '*.md'
+      - mkdocs.yml
+      - renovate.json
 
 env:
   MAKEFLAGS: -j
+  EMBEDDED_BINS_BUILDMODE: none
+
+permissions:
+  contents: read
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-24.04
+  lint-go:
+    strategy:
+      fail-fast: false
+      matrix:
+        target-os: [linux, windows, darwin]
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      DOCKER: "${{ matrix.target-os == 'linux' && 'docker' || ''}}"
+      LOCALAPPDATA: ${{ github.workspace }}\build\cache
+
+    name: Lint Go
+    runs-on: >-
+      ${{
+           matrix.target-os == 'windows' && 'windows-2025'
+        || matrix.target-os == 'darwin'  && 'macos-15'
+        || 'ubuntu-24.04'
+      }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Go caches
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        if: matrix.target-os != 'linux'
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: Cache golangci-lint cache
+        id: cache-golangci
         uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-lint-go-caches-${{ hashFiles('go.sum') }}
+          key: "lint-${{ matrix.target-os }}-amd64-golangci-${{ env.GOLANGCI_LINT_VERSION }}-go-${{ env.GO_VERSION }}-${{ github.sha }}"
+          restore-keys: |
+            lint-${{ matrix.target-os }}-amd64-golangci-${{ env.GOLANGCI_LINT_VERSION }}-go-${{ env.GO_VERSION }}-
           path: |
-            build/cache
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/golangci-lint
+            build/cache/go/build
+            build/cache/golangci-lint
+
+      - name: Run linter
+        env:
+          CACHE_HIT_GOLANGCI: "${{ steps.cache-golangci.outputs.cache-hit }}"
+        run: |
+          if [ -n "$CACHE_HIT_GOLANGCI" ]; then
+            echo Preparing golangci-lint cache
+            touch -t "$(TZ=UTC+24 date +%Y%m%d%H%M.%S)" build/cache/_cache_sentinel
+            find build/cache/go/build build/cache/golangci-lint -type f \( -name '*-a' -o -name '*-d' \) -exec touch -r build/cache/_cache_sentinel {} +
+          fi
+
+          make lint-go $MAKE_EXTRA_ARGS
+
+          if [ -n "$CACHE_HIT_GOLANGCI" ]; then
+            echo Trimming golangci-lint cache
+            find build/cache/go/build build/cache/golangci-lint -type f \( -name '*-a' -o -name '*-d' \) -not -newer build/cache/_cache_sentinel -delete
+          fi
+
+  lint-codegen:
+    name: Lint generated code
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          preserve-credentials: false
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Restore Go cache
+        uses: actions/cache/restore@v4
+        with:
+          key: "build-k0s-linux-amd64-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
+          restore-keys: |
+            build-k0s-linux-amd64-gocache-go${{ env.GO_VERSION }}-
+          path: build/cache/go/build
 
       - name: Check go.mod/go.sum to be consistent
         run: make --always-make go.sum && git diff --exit-code
 
       - name: Check generated code to be consistent
-        run: make codegen EMBEDDED_BINS_BUILDMODE=none && git diff --exit-code
+        run: make codegen && git diff --exit-code
 
-      - name: Run linter
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-        run: |
-          make lint
+      - name: Check copyright headers
+        run: make lint-copyright
 
   validate-os-tests:
     name: Validate OS tests
     runs-on: ubuntu-24.04
 
     env:
-      TOFU_VERSION: 1.9.0
+      TOFU_VERSION: 1.11.4 # renovate: datasource=github-releases depName=opentofu/opentofu
 
     defaults:
       run:

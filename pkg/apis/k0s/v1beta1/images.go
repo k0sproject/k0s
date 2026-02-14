@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
@@ -67,12 +54,13 @@ func (s *ImageSpec) URI() string {
 
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
-	Konnectivity  *ImageSpec `json:"konnectivity,omitempty"`
-	PushGateway   *ImageSpec `json:"pushgateway,omitempty"`
-	MetricsServer *ImageSpec `json:"metricsserver,omitempty"`
-	KubeProxy     *ImageSpec `json:"kubeproxy,omitempty"`
-	CoreDNS       *ImageSpec `json:"coredns,omitempty"`
-	Pause         *ImageSpec `json:"pause,omitempty"`
+	Konnectivity  *ImageSpec        `json:"konnectivity,omitempty"`
+	PushGateway   *ImageSpec        `json:"pushgateway,omitempty"`
+	MetricsServer *ImageSpec        `json:"metricsserver,omitempty"`
+	KubeProxy     *ImageSpec        `json:"kubeproxy,omitempty"`
+	CoreDNS       *ImageSpec        `json:"coredns,omitempty"`
+	Pause         *ImageSpec        `json:"pause,omitempty"`
+	Windows       *WindowsImageSpec `json:"windows,omitempty"`
 
 	Calico     *CalicoImageSpec     `json:"calico,omitempty"`
 	KubeRouter *KubeRouterImageSpec `json:"kuberouter,omitempty"`
@@ -124,6 +112,7 @@ func (ci *ClusterImages) Validate(path *field.Path) (errs field.ErrorList) {
 	errs = append(errs, ci.Pause.Validate(path.Child("pause"))...)
 	errs = append(errs, ci.Calico.Validate(path.Child("calico"))...)
 	errs = append(errs, ci.KubeRouter.Validate(path.Child("kuberouter"))...)
+	errs = append(errs, ci.Windows.Validate(path.Child("windows"))...)
 	return
 }
 
@@ -141,17 +130,36 @@ func (ci *ClusterImages) overrideImageRepositories() {
 	override(ci.Calico.CNI)
 	override(ci.Calico.Node)
 	override(ci.Calico.KubeControllers)
+	override(ci.Calico.Windows.CNI)
+	override(ci.Calico.Windows.Node)
 	override(ci.KubeRouter.CNI)
 	override(ci.KubeRouter.CNIInstaller)
 	override(ci.Pause)
 	override(ci.PushGateway)
+	override(ci.Windows.KubeProxy)
+	override(ci.Windows.Pause)
+}
+
+type WindowsImageSpec struct {
+	KubeProxy *ImageSpec `json:"kubeproxy,omitempty"`
+	Pause     *ImageSpec `json:"pause,omitempty"`
+}
+
+func (s *WindowsImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
+	if s == nil {
+		return
+	}
+	errs = append(errs, s.KubeProxy.Validate(path.Child("kubeproxy"))...)
+	errs = append(errs, s.Pause.Validate(path.Child("pause"))...)
+	return
 }
 
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
-	CNI             *ImageSpec `json:"cni,omitempty"`
-	Node            *ImageSpec `json:"node,omitempty"`
-	KubeControllers *ImageSpec `json:"kubecontrollers,omitempty"`
+	CNI             *ImageSpec              `json:"cni,omitempty"`
+	Node            *ImageSpec              `json:"node,omitempty"`
+	KubeControllers *ImageSpec              `json:"kubecontrollers,omitempty"`
+	Windows         *CalicoWindowsImageSpec `json:"windows,omitempty"`
 }
 
 func (s *CalicoImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
@@ -161,6 +169,21 @@ func (s *CalicoImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
 	errs = append(errs, s.CNI.Validate(path.Child("cni"))...)
 	errs = append(errs, s.Node.Validate(path.Child("node"))...)
 	errs = append(errs, s.KubeControllers.Validate(path.Child("kubecontrollers"))...)
+	errs = append(errs, s.Windows.Validate(path.Child("windows"))...)
+	return
+}
+
+type CalicoWindowsImageSpec struct {
+	CNI  *ImageSpec `json:"cni,omitempty"`
+	Node *ImageSpec `json:"node,omitempty"`
+}
+
+func (s *CalicoWindowsImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
+	if s == nil {
+		return
+	}
+	errs = append(errs, s.CNI.Validate(path.Child("cni"))...)
+	errs = append(errs, s.Node.Validate(path.Child("node"))...)
 	return
 }
 
@@ -205,7 +228,7 @@ func DefaultClusterImages() *ClusterImages {
 		},
 		Calico: &CalicoImageSpec{
 			CNI: &ImageSpec{
-				Image:   constant.CalicoImage,
+				Image:   constant.CalicoCNIImage,
 				Version: constant.CalicoComponentImagesVersion,
 			},
 			Node: &ImageSpec{
@@ -215,6 +238,16 @@ func DefaultClusterImages() *ClusterImages {
 			KubeControllers: &ImageSpec{
 				Image:   constant.KubeControllerImage,
 				Version: constant.CalicoComponentImagesVersion,
+			},
+			Windows: &CalicoWindowsImageSpec{
+				CNI: &ImageSpec{
+					Image:   constant.CalicoCNIWindowsImage,
+					Version: constant.CalicoCNIWindowsImageVersion,
+				},
+				Node: &ImageSpec{
+					Image:   constant.CalicoNodeWindowsImage,
+					Version: constant.CalicoNodeWindowsImageVersion,
+				},
 			},
 		},
 		KubeRouter: &KubeRouterImageSpec{
@@ -231,6 +264,16 @@ func DefaultClusterImages() *ClusterImages {
 			Image:   constant.KubePauseContainerImage,
 			Version: constant.KubePauseContainerImageVersion,
 		},
+		Windows: &WindowsImageSpec{
+			KubeProxy: &ImageSpec{
+				Image:   constant.KubeProxyWindowsImage,
+				Version: constant.KubeProxyWindowsImageVersion,
+			},
+			Pause: &ImageSpec{
+				Image:   constant.KubePauseWindowsContainerImage,
+				Version: constant.KubePauseWindowsContainerImageVersion,
+			},
+		},
 	}
 }
 
@@ -244,6 +287,17 @@ func getHostName(imageName string) string {
 }
 
 func overrideRepository(repository string, originalImage string) string {
+	if repository == "" {
+		return originalImage
+	}
+
+	// "Idempotency": if the image already starts with the repository prefix, don't override
+	// This is needed sinice in some cases we run the override multiple times, e.g. when
+	// we unmarshal the config multiple times.
+	if strings.HasPrefix(originalImage, repository) {
+		return originalImage
+	}
+
 	if host := getHostName(originalImage); host != "" {
 		return strings.Replace(originalImage, host, repository, 1)
 	}

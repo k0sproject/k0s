@@ -1,16 +1,5 @@
-// Copyright 2023 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -24,11 +13,11 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/autopilot/channels"
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,17 +27,19 @@ import (
 var _ manager.Component = (*UpdateProber)(nil)
 
 type UpdateProber struct {
-	APClientFactory apcli.FactoryInterface
+	APClientFactory kubeutil.ClientFactoryInterface
 	ClusterConfig   *v1beta1.ClusterConfig
 	log             logrus.FieldLogger
 	leaderElector   leaderelector.Interface
+	collector       *updates.ClusterInfoCollector
 }
 
-func NewUpdateProber(apClientFactory apcli.FactoryInterface, leaderElector leaderelector.Interface) *UpdateProber {
+func NewUpdateProber(apClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, collector *updates.ClusterInfoCollector) *UpdateProber {
 	return &UpdateProber{
 		APClientFactory: apClientFactory,
 		log:             logrus.WithFields(logrus.Fields{"component": "updateprober"}),
 		leaderElector:   leaderElector,
+		collector:       collector,
 	}
 }
 
@@ -134,7 +125,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 	}
 
 	// Collect cluster info
-	ci, err := updates.CollectData(ctx, kc)
+	ci, err := u.collector.CollectData(ctx)
 	if err != nil {
 		u.log.Errorf("failed to collect cluster info: %s", err.Error())
 		return
@@ -149,10 +140,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		return
 	}
 	u.log.Debugf("got latest version: %s", v.Version)
-	ksns, err := kc.CoreV1().Namespaces().Get(ctx, "kube-system", metav1.GetOptions{})
-	if err != nil {
-		u.log.WithError(err).Warn("failed to get kube-system namespace details")
-	}
+
 	// Check if current version is outdated
 	isNewer, err := v.IsNewerThan(build.Version)
 	if err != nil {
@@ -166,14 +154,14 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		e := corev1.Event{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
-				Namespace: "kube-system",
+				Namespace: metav1.NamespaceSystem,
 			},
 			InvolvedObject: corev1.ObjectReference{
+				APIVersion: corev1.SchemeGroupVersion.String(),
 				Kind:       "Namespace",
-				Name:       "kube-system",
-				Namespace:  "kube-system",
-				APIVersion: ksns.APIVersion,
-				UID:        ksns.UID,
+				Name:       metav1.NamespaceSystem,
+				Namespace:  metav1.NamespaceSystem,
+				UID:        ci.ClusterID,
 			},
 			Reason:  "NewVersionAvailable",
 			Message: "New version available: " + v.Version,
@@ -182,7 +170,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 				Component: "k0s",
 			},
 		}
-		if _, err := kc.CoreV1().Events("kube-system").Create(ctx, &e, metav1.CreateOptions{}); err != nil {
+		if _, err := kc.CoreV1().Events(metav1.NamespaceSystem).Create(ctx, &e, metav1.CreateOptions{}); err != nil {
 			u.log.Errorf("failed to create event: %s", err.Error())
 			return
 		}

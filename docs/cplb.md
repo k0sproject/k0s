@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Control plane load balancing
 
 For clusters that don't have an [externally managed load balancer](high-availability.md#load-balancer) for the k0s
@@ -83,7 +88,7 @@ spec:
           authPass: "<my password>"
 ```
 
-By default, VRRP Intances use multicast as per [RFC 3768]. It's possible to configure VRRP
+By default, VRRP Instances use multicast as per [RFC 3768]. It's possible to configure VRRP
 instances to use unicast:
 
 ```yaml
@@ -104,6 +109,40 @@ When using unicast, k0st does not attempt to detect `unicastSourceIP` and it mus
 `unicastPeers` must include the IP address of the other controllers' `unicastSourceIP`.
 
 [RFC 3768]: https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2
+
+#### IPv6 VIPs egress routing preference
+
+In IPv6 there aren't primary addresses, instead the routing preference is determined by the operating system using
+either IP labels or IP rules. K0s Virtual Addresses uses [RFC 6724] IP labels. By default, k0s sets the label to
+10000 so that it still uses the main IP address as a source of egress connections.
+
+This value may be replaced per vrrPInstance:
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"] # for instance ["2001:db8:2::1/64"]
+          authPass: "<my password>"
+          addressLabel: 30000
+```
+
+The label value can be verified using iproute2:
+
+```shell
+$ ip addrlabel | grep 2001:db8:2::1
+prefix 2001:db8:2::1/128 label 30000
+```
+
+The prefix always uses netmask 128.
+
+K0s doesn't attempt to modify labels that do not belong to the VIP.
+
+[RFC 6724]: https://datatracker.ietf.org/doc/html/rfc6724
 
 ## Load Balancing
 
@@ -212,7 +251,7 @@ spec:
     k0sBinaryPath: /opt/k0s
     uploadBinary: true
   k0s:
-    version: v{{{ extra.k8s_version }}}+k0s.0
+    version: {{{ k0s_version }}}
     config:
       spec:
         network:
@@ -238,107 +277,104 @@ $ k0sctl apply
 ⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
-k0sctl  Copyright 2023, k0sctl authors.
-Anonymized telemetry of usage will be sent to the authors.
-By continuing to use k0sctl you agree to these terms:
-https://k0sproject.io/licenses/eula
-level=info msg="==> Running phase: Connect to hosts"
-level=info msg="[ssh] worker-2.k0s.lab:22: connected"
-level=info msg="[ssh] controller-2.k0s.lab:22: connected"
-level=info msg="[ssh] worker-1.k0s.lab:22: connected"
-level=info msg="[ssh] worker-0.k0s.lab:22: connected"
-level=info msg="[ssh] controller-0.k0s.lab:22: connected"
-level=info msg="[ssh] controller-1.k0s.lab:22: connected"
-level=info msg="==> Running phase: Detect host operating systems"
-level=info msg="[ssh] worker-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] controller-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] controller-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] controller-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] worker-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="[ssh] worker-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)"
-level=info msg="==> Running phase: Acquire exclusive host lock"
-level=info msg="==> Running phase: Prepare hosts"
-level=info msg="==> Running phase: Gather host facts"
-level=info msg="[ssh] worker-2.k0s.lab:22: using worker-2.k0s.lab as hostname"
-level=info msg="[ssh] controller-0.k0s.lab:22: using controller-0.k0s.lab as hostname"
-level=info msg="[ssh] controller-2.k0s.lab:22: using controller-2.k0s.lab as hostname"
-level=info msg="[ssh] controller-1.k0s.lab:22: using controller-1.k0s.lab as hostname"
-level=info msg="[ssh] worker-1.k0s.lab:22: using worker-1.k0s.lab as hostname"
-level=info msg="[ssh] worker-0.k0s.lab:22: using worker-0.k0s.lab as hostname"
-level=info msg="[ssh] worker-2.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] controller-0.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] controller-2.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] controller-1.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] worker-1.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] worker-0.k0s.lab:22: discovered eth0 as private interface"
-level=info msg="[ssh] worker-2.k0s.lab:22: discovered 192.168.122.210 as private address"
-level=info msg="[ssh] controller-0.k0s.lab:22: discovered 192.168.122.37 as private address"
-level=info msg="[ssh] controller-2.k0s.lab:22: discovered 192.168.122.87 as private address"
-level=info msg="[ssh] controller-1.k0s.lab:22: discovered 192.168.122.185 as private address"
-level=info msg="[ssh] worker-1.k0s.lab:22: discovered 192.168.122.81 as private address"
-level=info msg="[ssh] worker-0.k0s.lab:22: discovered 192.168.122.219 as private address"
-level=info msg="==> Running phase: Validate hosts"
-level=info msg="==> Running phase: Validate facts"
-level=info msg="==> Running phase: Download k0s binaries to local host"
-level=info msg="==> Running phase: Upload k0s binaries to hosts"
-level=info msg="[ssh] controller-0.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] controller-2.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] worker-0.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] controller-1.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] worker-1.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="[ssh] worker-2.k0s.lab:22: uploading k0s binary from /opt/k0s"
-level=info msg="==> Running phase: Install k0s binaries on hosts"
-level=info msg="[ssh] controller-0.k0s.lab:22: validating configuration"
-level=info msg="[ssh] controller-1.k0s.lab:22: validating configuration"
-level=info msg="[ssh] controller-2.k0s.lab:22: validating configuration"
-level=info msg="==> Running phase: Configure k0s"
-level=info msg="[ssh] controller-0.k0s.lab:22: installing new configuration"
-level=info msg="[ssh] controller-2.k0s.lab:22: installing new configuration"
-level=info msg="[ssh] controller-1.k0s.lab:22: installing new configuration"
-level=info msg="==> Running phase: Initialize the k0s cluster"
-level=info msg="[ssh] controller-0.k0s.lab:22: installing k0s controller"
-level=info msg="[ssh] controller-0.k0s.lab:22: waiting for the k0s service to start"
-level=info msg="[ssh] controller-0.k0s.lab:22: waiting for kubernetes api to respond"
-level=info msg="==> Running phase: Install controllers"
-level=info msg="[ssh] controller-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] controller-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating token"
-level=info msg="[ssh] controller-1.k0s.lab:22: writing join token"
-level=info msg="[ssh] controller-1.k0s.lab:22: installing k0s controller"
-level=info msg="[ssh] controller-1.k0s.lab:22: starting service"
-level=info msg="[ssh] controller-1.k0s.lab:22: waiting for the k0s service to start"
-level=info msg="[ssh] controller-1.k0s.lab:22: waiting for kubernetes api to respond"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating token"
-level=info msg="[ssh] controller-2.k0s.lab:22: writing join token"
-level=info msg="[ssh] controller-2.k0s.lab:22: installing k0s controller"
-level=info msg="[ssh] controller-2.k0s.lab:22: starting service"
-level=info msg="[ssh] controller-2.k0s.lab:22: waiting for the k0s service to start"
-level=info msg="[ssh] controller-2.k0s.lab:22: waiting for kubernetes api to respond"
-level=info msg="==> Running phase: Install workers"
-level=info msg="[ssh] worker-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] worker-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] worker-0.k0s.lab:22: validating api connection to https://192.168.122.200:6443"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating a join token for worker 1"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating a join token for worker 2"
-level=info msg="[ssh] controller-0.k0s.lab:22: generating a join token for worker 3"
-level=info msg="[ssh] worker-2.k0s.lab:22: writing join token"
-level=info msg="[ssh] worker-0.k0s.lab:22: writing join token"
-level=info msg="[ssh] worker-1.k0s.lab:22: writing join token"
-level=info msg="[ssh] worker-2.k0s.lab:22: installing k0s worker"
-level=info msg="[ssh] worker-1.k0s.lab:22: installing k0s worker"
-level=info msg="[ssh] worker-0.k0s.lab:22: installing k0s worker"
-level=info msg="[ssh] worker-2.k0s.lab:22: starting service"
-level=info msg="[ssh] worker-1.k0s.lab:22: starting service"
-level=info msg="[ssh] worker-0.k0s.lab:22: starting service"
-level=info msg="[ssh] worker-2.k0s.lab:22: waiting for node to become ready"
-level=info msg="[ssh] worker-0.k0s.lab:22: waiting for node to become ready"
-level=info msg="[ssh] worker-1.k0s.lab:22: waiting for node to become ready"
-level=info msg="==> Running phase: Release exclusive host lock"
-level=info msg="==> Running phase: Disconnect from hosts"
-level=info msg="==> Finished in 2m20s"
-level=info msg="k0s cluster version v{{{ extra.k8s_version }}}+k0s.0  is now installed"
-level=info msg="Tip: To access the cluster you can now fetch the admin kubeconfig using:"
-level=info msg="     k0sctl kubeconfig"
+k0sctl v0.21.0 Copyright 2023, k0sctl authors.
+INFO ==> Running phase: Connect to hosts
+INFO [ssh] worker-2.k0s.lab:22: connected
+INFO [ssh] controller-2.k0s.lab:22: connected
+INFO [ssh] worker-1.k0s.lab:22: connected
+INFO [ssh] worker-0.k0s.lab:22: connected
+INFO [ssh] controller-0.k0s.lab:22: connected
+INFO [ssh] controller-1.k0s.lab:22: connected
+INFO ==> Running phase: Detect host operating systems
+INFO [ssh] worker-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] controller-2.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] controller-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] controller-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] worker-0.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO [ssh] worker-1.k0s.lab:22: is running Fedora Linux 38 (Cloud Edition)
+INFO ==> Running phase: Acquire exclusive host lock
+INFO ==> Running phase: Prepare hosts
+INFO ==> Running phase: Gather host facts
+INFO [ssh] worker-2.k0s.lab:22: using worker-2.k0s.lab as hostname
+INFO [ssh] controller-0.k0s.lab:22: using controller-0.k0s.lab as hostname
+INFO [ssh] controller-2.k0s.lab:22: using controller-2.k0s.lab as hostname
+INFO [ssh] controller-1.k0s.lab:22: using controller-1.k0s.lab as hostname
+INFO [ssh] worker-1.k0s.lab:22: using worker-1.k0s.lab as hostname
+INFO [ssh] worker-0.k0s.lab:22: using worker-0.k0s.lab as hostname
+INFO [ssh] worker-2.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] controller-0.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] controller-2.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] controller-1.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] worker-1.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] worker-0.k0s.lab:22: discovered eth0 as private interface
+INFO [ssh] worker-2.k0s.lab:22: discovered 192.168.122.210 as private address
+INFO [ssh] controller-0.k0s.lab:22: discovered 192.168.122.37 as private address
+INFO [ssh] controller-2.k0s.lab:22: discovered 192.168.122.87 as private address
+INFO [ssh] controller-1.k0s.lab:22: discovered 192.168.122.185 as private address
+INFO [ssh] worker-1.k0s.lab:22: discovered 192.168.122.81 as private address
+INFO [ssh] worker-0.k0s.lab:22: discovered 192.168.122.219 as private address
+INFO ==> Running phase: Validate hosts
+INFO ==> Running phase: Validate facts
+INFO ==> Running phase: Download k0s binaries to local host
+INFO ==> Running phase: Upload k0s binaries to hosts
+INFO [ssh] controller-0.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] controller-2.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] worker-0.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] controller-1.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] worker-1.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO [ssh] worker-2.k0s.lab:22: uploading k0s binary from /opt/k0s
+INFO ==> Running phase: Install k0s binaries on hosts
+INFO [ssh] controller-0.k0s.lab:22: validating configuration
+INFO [ssh] controller-1.k0s.lab:22: validating configuration
+INFO [ssh] controller-2.k0s.lab:22: validating configuration
+INFO ==> Running phase: Configure k0s
+INFO [ssh] controller-0.k0s.lab:22: installing new configuration
+INFO [ssh] controller-2.k0s.lab:22: installing new configuration
+INFO [ssh] controller-1.k0s.lab:22: installing new configuration
+INFO ==> Running phase: Initialize the k0s cluster
+INFO [ssh] controller-0.k0s.lab:22: installing k0s controller
+INFO [ssh] controller-0.k0s.lab:22: waiting for the k0s service to start
+INFO [ssh] controller-0.k0s.lab:22: waiting for kubernetes api to respond
+INFO ==> Running phase: Install controllers
+INFO [ssh] controller-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] controller-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] controller-0.k0s.lab:22: generating token
+INFO [ssh] controller-1.k0s.lab:22: writing join token
+INFO [ssh] controller-1.k0s.lab:22: installing k0s controller
+INFO [ssh] controller-1.k0s.lab:22: starting service
+INFO [ssh] controller-1.k0s.lab:22: waiting for the k0s service to start
+INFO [ssh] controller-1.k0s.lab:22: waiting for kubernetes api to respond
+INFO [ssh] controller-0.k0s.lab:22: generating token
+INFO [ssh] controller-2.k0s.lab:22: writing join token
+INFO [ssh] controller-2.k0s.lab:22: installing k0s controller
+INFO [ssh] controller-2.k0s.lab:22: starting service
+INFO [ssh] controller-2.k0s.lab:22: waiting for the k0s service to start
+INFO [ssh] controller-2.k0s.lab:22: waiting for kubernetes api to respond
+INFO ==> Running phase: Install workers
+INFO [ssh] worker-2.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] worker-1.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] worker-0.k0s.lab:22: validating api connection to https://192.168.122.200:6443
+INFO [ssh] controller-0.k0s.lab:22: generating a join token for worker 1
+INFO [ssh] controller-0.k0s.lab:22: generating a join token for worker 2
+INFO [ssh] controller-0.k0s.lab:22: generating a join token for worker 3
+INFO [ssh] worker-2.k0s.lab:22: writing join token
+INFO [ssh] worker-0.k0s.lab:22: writing join token
+INFO [ssh] worker-1.k0s.lab:22: writing join token
+INFO [ssh] worker-2.k0s.lab:22: installing k0s worker
+INFO [ssh] worker-1.k0s.lab:22: installing k0s worker
+INFO [ssh] worker-0.k0s.lab:22: installing k0s worker
+INFO [ssh] worker-2.k0s.lab:22: starting service
+INFO [ssh] worker-1.k0s.lab:22: starting service
+INFO [ssh] worker-0.k0s.lab:22: starting service
+INFO [ssh] worker-2.k0s.lab:22: waiting for node to become ready
+INFO [ssh] worker-0.k0s.lab:22: waiting for node to become ready
+INFO [ssh] worker-1.k0s.lab:22: waiting for node to become ready
+INFO ==> Running phase: Release exclusive host lock
+INFO ==> Running phase: Disconnect from hosts
+INFO ==> Finished in 2m20s
+INFO k0s cluster version {{{ k0s_version }}} is now installed
+INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
+INFO      k0sctl kubeconfig
 ```
 
 The cluster with the two nodes should be available by now. Setup the kubeconfig
@@ -354,9 +390,9 @@ All three worker nodes are ready:
 ```console
 $ kubectl get nodes
 NAME                   STATUS   ROLES           AGE     VERSION
-worker-0.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
-worker-1.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
-worker-2.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
+worker-0.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
+worker-1.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
+worker-2.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
 ```
 
 Only one controller has the VIP:
@@ -397,15 +433,16 @@ And the cluster will be working normally:
 ```console
 $ kubectl get nodes
 NAME                   STATUS   ROLES           AGE     VERSION
-worker-0.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
-worker-1.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
-worker-2.k0s.lab       Ready    <none>          8m51s   v{{{ extra.k8s_version }}}+k0s
+worker-0.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
+worker-1.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
+worker-2.k0s.lab       Ready    <none>          8m51s   {{{ k8s_version }}}+k0s
 ```
 
 ## Troubleshooting
 
-Although Virtual IPs and Load Balancing work together and are closely related, these are two independent
-processes and must be troubleshooting as two independent features.
+Although Virtual IP addresses and load balancing work together and are closely
+related, these are two independent processes and must be troubleshooting as two
+independent features.
 
 ### Troubleshooting Virtual IPs
 
@@ -431,9 +468,9 @@ controller1:/# ip a s eth0
        valid_lft forever preferred_lft forever
 ```
 
-If the virtualServers feature is used, there must be a dummy interface on the node
-called `dummyvip0` which has the VIP but with `32` netmask. This isn't the VIP and
-has to be there even if the VIP is held by another node.
+If the `virtualServers` feature is used, there must be a dummy interface on the
+node called `dummyvip0` which has the VIP, but with a `/32` bits network mask.
+This isn't the VIP and has to be there even if the VIP is held by another node.
 
 ```console
 controller0:/# ip a s dummyvip0 | grep 172.17.0.102
@@ -452,19 +489,19 @@ can be filtered with `component=keepalived`.
 controller0:/# journalctl -u k0scontroller | grep component=keepalived
 time="2024-11-19 12:56:11" level=info msg="Starting to supervise" component=keepalived
 time="2024-11-19 12:56:11" level=info msg="Started successfully, go nuts pid 409" component=keepalived
-time="2024-11-19 12:56:11" level=info msg="Tue Nov 19 12:56:11 2024: Starting Keepalived v2.2.8 (04/04,2023), git commit v2.2.7-154-g292b299e+" component=keepalived stream=stderr
+time="2024-11-19 12:56:11" level=info msg="Tue Nov 19 12:56:11 2024: Starting Keepalived v{{{ build_var('keepalived_version') }}}" component=keepalived stream=stderr
 [...]
 ```
 
-The keepalived configuration is stored in a file called keepalived.conf in the k0s run
-directory, by default `/run/k0s/keepalived.conf`, in this file there should be a
-`vrrp_instance`section for each `vrrpInstance`.
+The Keepalived configuration is stored in a file called `keepalived.conf` in the
+k0s run directory, by default `/run/k0s/keepalived.conf`, in this file there
+should be a `vrrp_instance` section for each `vrrpInstance`.
 
 Finally, k0s should have two keepalived processes running.
 
 ### Troubleshooting the Load Balancer's Endpoint List
 
-Both the userspace reverse proxy load balancer and Keepalived's virtual servers need an endpoint list to
+Both the user space reverse proxy load balancer and Keepalived's virtual servers need an endpoint list to
 do the load balancing. They share a component called `cplb-reconciler` which responsible for setting the
 load balancer's endpoint list. This component monitors constantly the endpoint `kubernetes` in the
 `default`namespace:
@@ -485,9 +522,9 @@ time="2024-11-20 20:29:55" level=info msg="Updated the list of IPs: [172.17.0.6 
 time="2024-11-20 20:29:59" level=info msg="Updated the list of IPs: [172.17.0.6 172.17.0.7 172.17.0.8]" component=cplb-reconciler
 ```
 
-### Troubleshooting the Userspace Reverse Proxy Load Balancer
+### Troubleshooting the user space reverse proxy load balancer
 
-The userspace reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:
+The user space reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:
 
 ```console
 controller0:/# netstat -tlpn | grep 6444
@@ -500,12 +537,14 @@ Then the requests to the VIP on the apiserver port are forwarded to this socket 
 -A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <apiserver port> -j REDIRECT --to-ports <userspace proxy port>
 ```
 
-A real life example of a cluster using using the VIP `17.177.0.102` looks like:
+A real life example of a cluster using the VIP `17.177.0.102` looks like:
 
 ```console
 controller0:/# /var/lib/k0s/bin/iptables-save | grep 6444
 -A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444
 ```
+
+Keep in mind that clusters using IPv6 as a primary address family, should use ip6tables or ip6tables-save.
 
 It the load balancer is not load balancing for whatever reason, you can establish connections to it directly. A good way to see if it's actually load balancing is checking the serving certificate:
 
@@ -529,13 +568,13 @@ be able to reach the port 6443 on any address and the port 6444 on any address e
 
 ### Troubleshooting Keepalived Virtual Servers
 
-You can verify the keepalived's logs and configuration file using the steps described in the section
+You can verify the Keepalived logs and configuration file using the steps described in the section
 [troubleshooting virtual IPs](#troubleshooting-virtual-ips) above.
 
 When virtual servers are enabled K0s generates two additional files:
 
 * `keepalived-virtualservers-generated.conf`: This file contains the list of control plane nodes that should be balanced to.
-* `keepalived-virtualservers-consumed.conf`: This is a symlink which points to `keepalived-virtualservers-generated.conf`
+* `keepalived-virtualservers-consumed.conf`: This is a symbolic link which points to `keepalived-virtualservers-generated.conf`
 if the Keepalived VRRP instance's current state is `master` or to `/dev/null` if it's `backup`. This file is only generated if
 there is exactly one VRRP instance.
 
@@ -556,3 +595,75 @@ TCP  192.168.122.200:6443 rr persistent 360
   and `192.168.122.122` are the control plane nodes.
 
 If there is only one VRRP instance, only the current master should be load balancing.
+
+## Custom Keepalived Templates
+
+**Warning:** Any customization to Keepalived templates is outside the scope of k0s support.
+Template variables are not considered a stable API and templates can break during upgrades. Use at your own risk.
+
+K0s allows you to customize the Keepalived configuration by providing custom Go templates for advanced users
+who need an extra layer of customization. A minimal example would be:
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"]
+          authPass: "<my password>"
+        configTemplateVRRP: /path/to/custom-vrrp-template.conf
+        configTemplateVS: /path/to/custom-virtualservers-template.conf
+```
+
+It is recommended to create custom templates based on the default templates, these can be accessed using the following commands:
+
+```shell
+# View the default VRRP template
+k0s keepalived-config vrrp
+
+# View the default Virtual Servers template
+k0s keepalived-config virtualservers
+```
+
+The templates are only read during the k0s bootstrap. If a template is changed it's required to restart k0s.
+
+### Keepalived template variables
+
+#### VRRP Variables (configTemplateVRRP)
+
+| Variable                                 | Description                                              |
+|------------------------------------------|----------------------------------------------------------|
+| `.IPVSLoadBalancer`                      | Determines whether IPVS load balancer is enabled or not. |
+| `.K0sBin`                                | K0s binary path.                                         |
+| `.RunDir`                                | K0s run directory.                                       |
+| `.VRRPInstances`                         | Struct holding all the VRRP instances.                   |
+| `.VRRPInstances[].AdvertIntervalSeconds` | Advert interval of the VRRP instance.                    |
+| `.VRRPInstances[].AuthPass`              | Password for accessing VRRPD.                            |
+| `.VRRPInstances[].Interface`             | Network interface used by the virtual router.            |
+| `.VRRPInstances[].UnicastPeers`          | List of unicast peer IP addresses.                       |
+| `.VRRPInstances[].UnicastSourceIP`       | Source IP address for unicast communication.             |
+| `.VRRPInstances[].VirtualIPs`            | List of virtual IP addresses with CIDR notation.         |
+| `.VRRPInstances[].VirtualRouterID`       | VRRP router ID.                                          |
+
+#### Virtual Servers Variables (configTemplateVS)
+
+| Variable                                      | Description                                             |
+|-----------------------------------------------|---------------------------------------------------------|
+| `.APIServerPort`                              | Kubernetes API server port.                             |
+| `.RealServers`                                | List of real server IP addresses (control plane nodes). |
+| `.VirtualServers`                             | Array of virtual server configurations.                 |
+| `.VirtualServers[].DelayLoop`                 | Delay timer for check polling.                          |
+| `.VirtualServers[].IPAddress`                 | Virtual IP address used by the virtual server.          |
+| `.VirtualServers[].LBAlgo`                    | Load balancing algorithm.                               |
+| `.VirtualServers[].LBKind`                    | Load balancing forwarding method.                       |
+| `.VirtualServers[].PersistenceTimeoutSeconds` | Timeout value for persistent connections in seconds.    |
+
+### Important Considerations
+
+* **No Support**: Custom template configurations are not officially supported. If you encounter issues with custom templates, you may be asked to reproduce the issue with default templates.
+* **Updates**: When upgrading k0s, review the default templates for any changes that may need to be incorporated into your custom templates.
+* **Testing**: Always test custom templates thoroughly in a non-production environment before deploying to production.
+* **Syntax Validation**: k0s performs minimal validation of custom templates. Invalid Keepalived configuration will cause the CPLB feature to fail.

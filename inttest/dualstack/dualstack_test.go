@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package dualstack
 
@@ -96,9 +83,11 @@ func (s *DualstackSuite) SetupSuite() {
 	s.Require().True(isDockerIPv6Enabled, "Please enable IPv6 in docker before running this test")
 	s.BootlooseSuite.SetupSuite()
 
+	target := os.Getenv("K0S_INTTEST_TARGET")
+
 	k0sConfig := k0sConfigWithCalicoDualStack
 
-	if os.Getenv("K0S_NETWORK") == "kube-router" {
+	if strings.Contains(target, "kuberouter") {
 		s.T().Log("Using kube-router network")
 		ipv6Address := s.getIPv6Address(s.ControllerNode(0))
 		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouterDualStack, ipv6Address)
@@ -106,7 +95,7 @@ func (s *DualstackSuite) SetupSuite() {
 	}
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
-	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "dynamicconfig") {
 		s.T().Log("Enabling dynamic config for controller")
 		controllerArgs = append(controllerArgs, "--enable-dynamic-config")
 	}
@@ -134,34 +123,34 @@ func (s *DualstackSuite) SetupSuite() {
 	restConfig, err := s.GetKubeConfig("controller0", "")
 	s.Require().NoError(err)
 
-	createdTargetPod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+	createdTargetPod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker0"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.23.1-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.29.5-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx-worker0", "default"), "nginx-worker0 pod did not start")
+	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx-worker0", metav1.NamespaceDefault), "nginx-worker0 pod did not start")
 
 	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(s.Context(), createdTargetPod.Name, metav1.GetOptions{})
 	s.Require().NoError(err)
 
-	sourcePod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+	sourcePod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker1"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.23.1-alpine"}},
+			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.29.5-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker1",
 			},
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.NoError(common.WaitForPod(s.Context(), kc, "nginx-worker1", "default"), "nginx-worker1 pod did not start")
+	s.NoError(common.WaitForPod(s.Context(), kc, "nginx-worker1", metav1.NamespaceDefault), "nginx-worker1 pod did not start")
 
 	// test ipv6 address
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
@@ -169,7 +158,7 @@ func (s *DualstackSuite) SetupSuite() {
 		podIP := targetPod.Status.PodIPs[1].IP
 		targetIP := net.ParseIP(podIP)
 		s.Require().NotNil(targetIP)
-		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetIP))
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- [%s]", targetIP))
 		s.T().Log(out, err)
 		if err != nil {
 			s.T().Log("error calling ipv6 address: ", err)

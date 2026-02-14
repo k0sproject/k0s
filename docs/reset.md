@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Reset (Uninstall)
 
 Resetting k0s nodes essentially reverts them to a pre-k0s state. This operation
@@ -67,10 +72,7 @@ K0sctl can be used to connect and reset all cluster nodes in a single command.
 
     ```console
     $ k0sctl reset --config k0sctl.yaml
-    k0sctl v0.17.4 Copyright 2023, k0sctl authors.
-    Anonymized telemetry of usage will be sent to the authors.
-    By continuing to use k0sctl you agree to these terms:
-    https://k0sproject.io/licenses/eula
+    k0sctl v0.21.0 Copyright 2023, k0sctl authors.
     ? Going to reset all of the hosts, which will destroy all configuration and data, Are you sure? Yes
     INFO ==> Running phase: Connect to hosts
     INFO [ssh] 13.53.43.63:22: connected
@@ -82,8 +84,8 @@ K0sctl can be used to connect and reset all cluster nodes in a single command.
     INFO ==> Running phase: Prepare hosts
     INFO ==> Running phase: Gather k0s facts
     INFO [ssh] 13.53.43.63:22: found existing configuration
-    INFO [ssh] 13.53.43.63:22: is running k0s controller version v{{{ extra.k8s_version }}}+k0s.0
-    INFO [ssh] 13.53.218.149:22: is running k0s worker version v{{{ extra.k8s_version }}}+k0s.0
+    INFO [ssh] 13.53.43.63:22: is running k0s controller version {{{ k0s_version }}}
+    INFO [ssh] 13.53.218.149:22: is running k0s worker version {{{ k0s_version }}}
     INFO [ssh] 13.53.43.63:22: checking if worker  has joined
     INFO ==> Running phase: Reset workers
     INFO [ssh] 13.53.218.149:22: reset

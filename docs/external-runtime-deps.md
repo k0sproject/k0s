@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # External runtime dependencies
 
 k0s is packaged as a single binary, which includes all the needed components.
@@ -16,20 +21,21 @@ k0s sysinfo
 ```
 
 ## Linux specific
+
 <!--
 This piece of documentation is best-effort and considered to be augmented and
 extended in the future. The kernel and cgroup requirements are basically taken
 from kubernetes/system-validators. Often there's no real hint as to why they are
 required (although most requirements seem pretty obvious). Also need to check
-for requirements of kube-router and calico.
+for requirements of Kube-router and Calico.
 -->
 
 ### Linux kernel configuration
 
-Needless to say, as k0s operates Kubernetes worker nodes, there's a certain
-number of needed Linux kernel modules and configurations that we need in the
-system. This basically stems from the need to run both containers and also be
-able to set up networking for the containers.
+Needless to say, as k0s operates Kubernetes worker nodes, a certain number of
+Linux kernel modules and configurations are required on the host. This
+essentially stems from the requirement to run containers and set up networking
+for them.
 
 The needed kernel configuration items are listed below. All of them are
 available in Kernel versions 4.3 and above. If running on older kernels, check
@@ -37,7 +43,7 @@ if the distro in use has backported some features; nevertheless, it might meet
 the requirements. k0s will check the Linux kernel release as part of its
 pre-flight checks and issue a warning if it's below 3.10.
 
-The list covers ONLY the k0s/kubernetes components’ needs on worker nodes. Your
+The list covers ONLY the k0s/Kubernetes components' needs on worker nodes. Your
 own workloads may require more.
 
 <!-- Kernel config nesting is taken from the v4.3 kernel's menuconfig structure. -->
@@ -47,14 +53,14 @@ own workloads may require more.
   - [`CONFIG_CGROUP_SCHED`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081):
     Group CPU scheduler
     - [`CONFIG_FAIR_GROUP_SCHED`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090):
-      Group scheduling for SCHED_OTHER  
+      Group scheduling for SCHED_OTHER<br>
       [kubernetes/kubeadm#2335 (comment)](https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-717996215)
       - _(optional)_ [`CONFIG_CFS_BANDWIDTH`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1095):
-        CPU bandwidth provisioning for FAIR_GROUP_SCHED  
+        CPU bandwidth provisioning for FAIR_GROUP_SCHED<br>
         Required if CPU CFS quota enforcement is enabled for containers that
         specify CPU limits (`--cpu-cfs-quota`).
   - _(optional)_ [`CONFIG_BLK_CGROUP`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1119):
-    Block IO controller  
+    Block IO controller<br>
     [kubernetes/kubernetes#92287 (comment)](https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587)
 - [`CONFIG_NAMESPACES`](https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168):
   Namespaces support
@@ -98,24 +104,26 @@ Both [cgroup v1] and [cgroup v2] are supported.
 
 Required [cgroup] controllers:
 
-- cpu
-- cpuacct
-- cpuset
-- memory
-- devices
-- freezer
-- pids
+- `cpu`
+- `cpuacct`
+- `cpuset`
+- `memory`
+- `devices`
+- `freezer`
+- `pids`
 
 Optional cgroup controllers:
 
-- hugetlb ([kubernetes/kubeadm#2335 (comment)](https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527))
-- blkio ([kubernetes/kubernetes#92287 (comment)](https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587))
-   containerd and cri-o will use blkio to track disk I/O and throttling in both
-   cgroup v1 and v2.
+- `hugetlb` ([kubernetes/kubeadm#2335 (comment)])
+- `blkio` ([kubernetes/kubernetes#92287 (comment)])<br>
+  containerd and cri-o will use blkio to track disk I/O and throttling in both
+  cgroup v1 and v2.
 
 [cgroup]: https://man7.org/linux/man-pages/man7/cgroups.7.html
 [cgroup v1]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/
 [cgroup v2]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html
+[kubernetes/kubeadm#2335 (comment)]: https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527
+[kubernetes/kubernetes#92287 (comment)]: https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587
 
 ### No integration with Name Service Switch (NSS) APIs
 
@@ -161,19 +169,19 @@ In order to use containerd in conjunction with [AppArmor], it must be enabled in
 the kernel and the `/sbin/apparmor_parser` executable must be installed on the
 host, otherwise containerd will [disable][cd-aa] AppArmor support.
 
-[cd-aa]: https://github.com/containerd/containerd/blob/v1.7.27/pkg/apparmor/apparmor_linux.go#L34-L45
+[cd-aa]: https://github.com/containerd/containerd/blob/v1.7.30/pkg/apparmor/apparmor_linux.go#L34-L45
 [AppArmor]: https://wiki.ubuntu.com/AppArmor
 
 #### iptables
 
 iptables may be executed to detect if there are any existing iptables rules and
-if those are in legacy of nft mode. If iptables is not found, k0s will assume
+if those are in legacy or nft mode. If iptables is not found, k0s will assume
 that there are no pre-existing iptables rules.
 
 #### useradd / adduser
 
 During `k0s install` the external tool `useradd` will be used on the controllers
-to create system user accounts for k0s. If this does exist it will fall-back to
+to create system user accounts for k0s. If this doesn't exist it will fall-back to
 busybox's `adduser`.
 
 #### userdel / deluser
@@ -192,6 +200,7 @@ External `id` will be executed as a fallback if local user lookup fails, in case
 NSS is used.
 
 ## Windows specific
+
 <!--
 The kubernetes/system-validators require certain Windows versions starting with
 Windows Server 2016. k0s states that it requires Windows Server 2019, though.

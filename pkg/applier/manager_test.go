@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package applier_test
 
@@ -27,12 +14,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -80,7 +69,7 @@ data: {}
 	t.Cleanup(func() { assert.NoError(t, leaderElector.Stop()) })
 
 	// Wait for the "before" stack to be applied.
-	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps("default")).
+	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps(metav1.NamespaceDefault)).
 		Until(t.Context(), func(item *corev1.ConfigMap) (bool, error) {
 			return item.Name == "before", nil
 		}),
@@ -101,7 +90,7 @@ data: {}
 	), constant.CertMode))
 
 	// Wait for the "after" stack to be applied.
-	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps("default")).
+	require.NoError(t, watch.ConfigMaps(clients.Client.CoreV1().ConfigMaps(metav1.NamespaceDefault)).
 		Until(t.Context(), func(item *corev1.ConfigMap) (bool, error) {
 			return item.Name == "after", nil
 		}),
@@ -153,7 +142,7 @@ data: {}
 	}
 	assert.Equal(t, strings.Join(expectedContent, "\n"), string(content))
 
-	configMaps, err := clients.Client.CoreV1().ConfigMaps("default").List(t.Context(), metav1.ListOptions{})
+	configMaps, err := clients.Client.CoreV1().ConfigMaps(metav1.NamespaceDefault).List(t.Context(), metav1.ListOptions{})
 	if assert.NoError(t, err) {
 		assert.Empty(t, configMaps.Items)
 	}
@@ -196,14 +185,14 @@ func TestManager(t *testing.T) {
 	cmgv, _ := schema.ParseResourceArg("configmaps.v1.")
 	podgv, _ := schema.ParseResourceArg("pods.v1.")
 
-	waitForResource(t, fakes, *cmgv, "kube-system", "applier-test")
-	waitForResource(t, fakes, *podgv, "kube-system", "applier-test")
+	waitForResource(t, fakes, *cmgv, metav1.NamespaceSystem, "applier-test")
+	waitForResource(t, fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 
-	r, err := getResource(fakes, *cmgv, "kube-system", "applier-test")
+	r, err := getResource(fakes, *cmgv, metav1.NamespaceSystem, "applier-test")
 	if assert.NoError(t, err) {
 		assert.Equal(t, "applier", r.GetLabels()["component"])
 	}
-	r, err = getResource(fakes, *podgv, "kube-system", "applier-test")
+	r, err = getResource(fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 	if assert.NoError(t, err) {
 		assert.Equal(t, "Pod", r.GetKind())
 		assert.Equal(t, "applier", r.GetLabels()["component"])
@@ -215,7 +204,7 @@ func TestManager(t *testing.T) {
 
 	t.Log("waiting for pod to be updated")
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		r, err := getResource(fakes, *podgv, "kube-system", "applier-test")
+		r, err := getResource(fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 		if assert.NoError(t, err) {
 			assert.Equal(t, "test", r.GetLabels()["custom1"])
 		}
@@ -231,9 +220,9 @@ func TestManager(t *testing.T) {
 
 	deployGV, _ := schema.ParseResourceArg("deployments.v1.apps")
 
-	waitForResource(t, fakes, *deployGV, "kube-system", "nginx")
+	waitForResource(t, fakes, *deployGV, metav1.NamespaceSystem, "app")
 
-	r, err = getResource(fakes, *deployGV, "kube-system", "nginx")
+	r, err = getResource(fakes, *deployGV, metav1.NamespaceSystem, "app")
 	if assert.NoError(t, err) {
 		assert.Equal(t, "Deployment", r.GetKind())
 		assert.Equal(t, "applier", r.GetLabels()["component"])
@@ -245,7 +234,7 @@ func TestManager(t *testing.T) {
 
 	t.Log("waiting for pod to be updated")
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		r, err := getResource(fakes, *podgv, "kube-system", "applier-test")
+		r, err := getResource(fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 		if assert.NoError(t, err) {
 			assert.Equal(t, "test", r.GetLabels()["custom2"])
 		}
@@ -258,7 +247,7 @@ func TestManager(t *testing.T) {
 
 	t.Log("waiting for pod to be deleted")
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		_, err := getResource(fakes, *podgv, "kube-system", "applier-test")
+		_, err := getResource(fakes, *podgv, metav1.NamespaceSystem, "applier-test")
 		assert.Truef(t, errors.IsNotFound(err), "Expected a 'not found' error: %v", err)
 	}, 5*time.Second, 100*time.Millisecond)
 }
@@ -267,10 +256,10 @@ func writeLabel(t *testing.T, file string, key string, value string) {
 	t.Helper()
 	contents, err := os.ReadFile(file)
 	require.NoError(t, err)
-	unst := map[interface{}]interface{}{}
+	unst := map[any]any{}
 	err = yaml.Unmarshal(contents, &unst)
 	require.NoError(t, err)
-	unst["metadata"].(map[interface{}]interface{})["labels"].(map[interface{}]interface{})[key] = value
+	unst["metadata"].(map[any]any)["labels"].(map[any]any)[key] = value
 	data, err := yaml.Marshal(unst)
 	require.NoError(t, err)
 	err = os.WriteFile(file, data, 0400)
@@ -310,7 +299,7 @@ func writeStack(t *testing.T, dst string, src string) {
 
 type mockLeaderElector struct {
 	mu       sync.Mutex
-	leader   bool
+	leader   value.Latest[bool]
 	acquired []func()
 	lost     []func()
 }
@@ -318,8 +307,9 @@ type mockLeaderElector struct {
 func (e *mockLeaderElector) activate() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if !e.leader {
-		e.leader = true
+
+	if leader, _ := e.leader.Peek(); !leader {
+		e.leader.Set(true)
 		for _, fn := range e.acquired {
 			fn()
 		}
@@ -329,8 +319,8 @@ func (e *mockLeaderElector) activate() {
 func (e *mockLeaderElector) deactivate() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if e.leader {
-		e.leader = false
+	if leader, _ := e.leader.Peek(); leader {
+		e.leader.Set(false)
 		for _, fn := range e.lost {
 			fn()
 		}
@@ -340,14 +330,23 @@ func (e *mockLeaderElector) deactivate() {
 func (e *mockLeaderElector) IsLeader() bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	return e.leader
+	leader, _ := e.leader.Peek()
+	return leader
+}
+
+func (e *mockLeaderElector) CurrentStatus() (status leaderelection.Status, expired <-chan struct{}) {
+	leader, expired := e.leader.Peek()
+	if leader {
+		return leaderelection.StatusLeading, expired
+	}
+	return leaderelection.StatusPending, expired
 }
 
 func (e *mockLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.acquired = append(e.acquired, fn)
-	if e.leader {
+	if leader, _ := e.leader.Peek(); leader {
 		fn()
 	}
 }
@@ -356,7 +355,7 @@ func (e *mockLeaderElector) AddLostLeaseCallback(fn func()) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.lost = append(e.lost, fn)
-	if e.leader {
+	if leader, _ := e.leader.Peek(); !leader {
 		fn()
 	}
 }

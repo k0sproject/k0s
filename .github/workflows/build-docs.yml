@@ -1,15 +1,29 @@
 name: Build docs
 
 on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - "**.md"
+      - docs/**
+      - embedded-bins/Makefile.variables
+      - pkg/constant/constant.go
+      - mkdocs.yml
+      - vars.sh
+
   pull_request:
     branches:
       - main
       - release-*
     paths:
-      - mkdocs.yml
-      - embedded-bins/Makefile.variables
-      - CODE_OF_CONDUCT.md
+      - "**.md"
       - docs/**
+      - embedded-bins/Makefile.variables
+      - pkg/constant/constant.go
+      - mkdocs.yml
+      - vars.sh
 
 env:
   MAKEFLAGS: -j
@@ -26,7 +40,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -46,7 +60,7 @@ jobs:
         run: make -C docs docs
 
       - name: Upload site/
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: site
           path: site/

@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package customports
 
@@ -23,11 +10,14 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8s "k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
-	k8s "k8s.io/client-go/kubernetes"
 )
 
 type customPortsSuite struct {
@@ -46,8 +36,6 @@ spec:
     externalAddress: {{ .Address }}
     port: {{ .KubePort }}
     k0sApiPort: {{ .K0sPort }}
-    sans:
-      - {{ .Address }}
   konnectivity:
     agentPort: {{ .KonnectivityAgentPort }}
     adminPort: {{ .KonnectivityAdminPort }}
@@ -103,7 +91,7 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.PutFile("controller2", "/tmp/k0s.yaml", config)
 
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
-	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "dynamicconfig") {
 		s.T().Log("Enabling dynamic config for controllers")
 		controllerArgs = append(controllerArgs, "--enable-dynamic-config")
 	}
@@ -133,10 +121,10 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.T().Log("waiting to see CNI pods ready")
 	s.Require().NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 	s.T().Log("waiting to see konnectivity-agent pods ready")
-	s.Require().NoError(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent", "kube-system"), "konnectivity-agent did not start")
+	s.Require().NoError(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent", metav1.NamespaceSystem), "konnectivity-agent did not start")
 
 	s.T().Log("waiting to get logs from pods")
-	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
+	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceSystem))
 
 	// https://github.com/k0sproject/k0s/issues/1202
 	s.Run("kubeconfigIncludesExternalAddress", func() {

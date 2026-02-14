@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package bind_address
 
@@ -34,8 +21,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/yaml"
 )
-
-const kubeSystem = "kube-system"
 
 type suite struct {
 	common.BootlooseSuite
@@ -134,7 +119,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 	for _, lease := range []string{"kube-scheduler", "kube-controller-manager"} {
 		eg.Go(func() error {
-			id, err := common.WaitForLease(ctx, clients, lease, kubeSystem)
+			id, err := common.WaitForLease(ctx, clients, lease, metav1.NamespaceSystem)
 			if err != nil {
 				return fmt.Errorf("%s has no leader: %w", lease, err)
 			}
@@ -145,7 +130,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 	for _, daemonSet := range []string{"kube-proxy", "konnectivity-agent"} {
 		eg.Go(func() error {
-			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, "kube-system"); err != nil {
+			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, metav1.NamespaceSystem); err != nil {
 				return fmt.Errorf("%s is not ready: %w", daemonSet, err)
 			}
 			s.T().Log(daemonSet, "is ready")
@@ -155,7 +140,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 	for _, deployment := range []string{"coredns", "metrics-server"} {
 		eg.Go(func() error {
-			if err := common.WaitForDeployment(ctx, clients, deployment, "kube-system"); err != nil {
+			if err := common.WaitForDeployment(ctx, clients, deployment, metav1.NamespaceSystem); err != nil {
 				return fmt.Errorf("%s did not become ready: %w", deployment, err)
 			}
 			s.T().Log(deployment, "is ready")

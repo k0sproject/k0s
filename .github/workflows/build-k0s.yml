@@ -21,7 +21,7 @@ jobs:
     runs-on: >-
       ${{
            inputs.target-arch == 'arm'   && fromJSON('["self-hosted", "linux", "arm"]')
-        || inputs.target-arch == 'arm64' && fromJSON('["self-hosted", "linux", "arm64"]')
+        || inputs.target-arch == 'arm64' && 'ubuntu-24.04-arm'
         || 'ubuntu-24.04'
       }}
 
@@ -31,11 +31,11 @@ jobs:
 
     steps:
       - name: Set up Docker Context for Buildx
-        if: inputs.target-arch != 'amd64'
+        if: inputs.target-arch == 'arm'
         run: docker context create builders
 
       - name: Set up Docker Buildx
-        if: inputs.target-arch != 'amd64'
+        if: inputs.target-arch == 'arm'
         uses: docker/setup-buildx-action@v3
         with:
           endpoint: builders
@@ -45,6 +45,10 @@ jobs:
         with:
           fetch-depth: 0 # for `git describe`
           persist-credentials: false
+
+      - name: "Build :: Reclaim runner disk space"
+        if: inputs.target-arch != 'arm'
+        run: .github/workflows/reclaim-runner-disk-space.bash
 
       - name: "Build :: Prepare"
         id: build-prepare
@@ -58,45 +62,55 @@ jobs:
           echo executable-suffix="$executableSuffix" >>"$GITHUB_OUTPUT"
 
       - name: "Cache :: embedded binaries"
+        id: cache-embedded-bins
         uses: actions/cache@v4
         with:
-          key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}
-          path: |
-            .bins.${{ inputs.target-os }}.stamp
-            bindata_${{ inputs.target-os }}
-            embedded-bins/staging/${{ inputs.target-os }}/bin/
-            embedded-bins/Makefile.variables
-            pkg/assets/zz_generated_offsets_${{ inputs.target-os }}.go
+          key: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}"
+          path: embedded-bins/staging/${{ inputs.target-os }}/bin/
 
-      - name: "Cache :: GOCACHE"
+      - name: "Cache :: Go cache"
+        id: cache-gocache
         uses: actions/cache@v4
         with:
-          key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-${{ github.ref_name }}-
-          path: |
-            build/cache/go/build
+          key: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
+          restore-keys: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-go${{ env.GO_VERSION }}-"
+          path: build/cache/go/build
 
-      - name: "Cache :: GOMODCACHE"
-        uses: actions/cache@v4
-        with:
-          key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
-          path: build/cache/go/mod
-          enableCrossOsArchive: true
+      - name: "Cache :: Go cache :: Prepare"
+        if: steps.cache-gocache.outputs.cache-hit
+        run: |
+          touch -t "$(TZ=UTC+24 date +%Y%m%d%H%M.%S)" build/cache/_cache_sentinel
+          find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -exec touch -r build/cache/_cache_sentinel {} +
 
       - name: "Build :: k0s"
+        env:
+          EMBEDDED_BINS_CACHED: "${{ steps.cache-embedded-bins.outputs.cache-hit }}"
         run: |
+          make .k0sbuild.docker-image.k0s
+          touch go.sum
+          if [ "$EMBEDDED_BINS_CACHED" == true ]; then
+            make --touch ".bins.$TARGET_OS.stamp"
+          fi
           make bindata
           make --touch codegen
           make build
           echo "k0s${{ steps.build-prepare.outputs.executable-suffix }} binary size: **$(du -sh k0s${{ steps.build-prepare.outputs.executable-suffix }} | cut -f1)**" >>$GITHUB_STEP_SUMMARY
 
       - name: "Upload :: k0s"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: |
             k0s${{ steps.build-prepare.outputs.executable-suffix }}
+
+      - name: "Build :: SBOM"
+        run: make spdx.json
+
+      - name: "Upload :: SBOM"
+        uses: actions/upload-artifact@v5
+        with:
+          name: sbom-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: spdx.json
 
       - name: "Build :: Airgap image list"
         if: inputs.target-os != 'windows'
@@ -104,7 +118,23 @@ jobs:
 
       - name: "Upload :: Airgap image list"
         if: inputs.target-os != 'windows'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: airgap-images.txt
+
+      - name: "Build :: IPv6 test image list"
+        if: inputs.target-os != 'windows'
+        run: make ipv6-test-images.txt && cat ipv6-test-images.txt
+
+      - name: "Upload :: IPv6 test image list"
+        if: inputs.target-os != 'windows'
+        uses: actions/upload-artifact@v5
+        with:
+          name: ipv6-test-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: ipv6-test-images.txt
+
+      - name: "Cache :: Go cache :: Trim"
+        if: steps.cache-gocache.outputs.cache-hit
+        run: |
+          find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -not -newer build/cache/_cache_sentinel -delete

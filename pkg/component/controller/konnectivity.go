@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -26,8 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
@@ -37,24 +22,29 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/supervisor"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Konnectivity implements the component interface for konnectivity server
 type Konnectivity struct {
+	Spec        *v1beta1.KonnectivitySpec // FIXME: This should be reconciled via dynamic config
 	K0sVars     *config.CfgVars
 	LogLevel    string
 	ServerCount func() (uint, <-chan struct{})
 
-	supervisor *supervisor.Supervisor
-	uid        int
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 
-	stopFunc      context.CancelFunc
-	clusterConfig *v1beta1.ClusterConfig
-	log           *logrus.Entry
+	log *logrus.Entry
 
 	*prober.EventEmitter
+
+	stop func()
 }
 
 var _ manager.Component = (*Konnectivity)(nil)
@@ -84,14 +74,12 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 	}
 
 	k.log = logrus.WithFields(logrus.Fields{"component": "konnectivity"})
-	if err := assets.Stage(k.K0sVars.BinDir, "konnectivity-server"); err != nil {
+	if k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "konnectivity-server"); err != nil {
 		k.EmitWithPayload("failed to stage konnectivity-server", err)
-		return fmt.Errorf("failed to stage konnectivity-server binary %w", err)
+		return fmt.Errorf("failed to stage konnectivity-server binary: %w", err)
 
 	}
 	defer k.Emit("successfully initialized konnectivity component")
-
-	k.clusterConfig = k0scontext.GetNodeConfig(ctx)
 
 	return nil
 }
@@ -100,12 +88,16 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 func (k *Konnectivity) Start(ctx context.Context) error {
 	serverCount, serverCountChanged := k.ServerCount()
 
-	if err := k.runServer(serverCount); err != nil {
+	if err := k.runServer(ctx, serverCount); err != nil {
 		k.EmitWithPayload("failed to start konnectivity server", err)
 		return fmt.Errorf("failed to start konnectivity server: %w", err)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
 	go func() {
+		defer close(done)
 		var retry <-chan time.Time
 		for {
 			select {
@@ -129,7 +121,7 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 
 			retry = nil
 
-			if err := k.runServer(serverCount); err != nil {
+			if err := k.runServer(ctx, serverCount); err != nil {
 				k.EmitWithPayload("failed to start konnectivity server", err)
 				k.log.WithError(err).Errorf("Failed to start konnectivity server")
 				retry = time.After(10 * time.Second)
@@ -137,6 +129,8 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 			}
 		}
 	}()
+
+	k.stop = func() { cancel(); <-done }
 
 	return nil
 }
@@ -149,11 +143,11 @@ func (k *Konnectivity) serverArgs(count uint) []string {
 		"--kubeconfig":               k.K0sVars.KonnectivityKubeConfigPath,
 		"--mode":                     "grpc",
 		"--server-port":              "0",
-		"--agent-port":               strconv.FormatInt(int64(k.clusterConfig.Spec.Konnectivity.AgentPort), 10),
-		"--admin-port":               strconv.FormatInt(int64(k.clusterConfig.Spec.Konnectivity.AdminPort), 10),
+		"--agent-port":               strconv.FormatInt(int64(k.Spec.AgentPort), 10),
+		"--admin-port":               strconv.FormatInt(int64(k.Spec.AdminPort), 10),
 		"--health-bind-address":      "localhost",
 		"--health-port":              "8092",
-		"--agent-namespace":          "kube-system",
+		"--agent-namespace":          metav1.NamespaceSystem,
 		"--agent-service-account":    "konnectivity-agent",
 		"--authentication-audience":  "system:konnectivity-server",
 		"--logtostderr":              "true",
@@ -168,28 +162,30 @@ func (k *Konnectivity) serverArgs(count uint) []string {
 	}.ToArgs()
 }
 
-func (k *Konnectivity) runServer(count uint) error {
+func (k *Konnectivity) runServer(ctx context.Context, count uint) error {
 	// Stop supervisor
 	if k.supervisor != nil {
 		k.EmitWithPayload("restarting konnectivity server due to server count change",
-			map[string]interface{}{"serverCount": count})
-		k.supervisor.Stop()
+			map[string]any{"serverCount": count})
+		if err := k.supervisor.Stop(); err != nil {
+			k.log.WithError(err).Error("Failed to stop executable")
+		}
 	}
 
 	k.supervisor = &supervisor.Supervisor{
 		Name:    "konnectivity",
-		BinPath: assets.BinPath("konnectivity-server", k.K0sVars.BinDir),
+		BinPath: k.executablePath,
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
 		Args:    k.serverArgs(count),
 		UID:     k.uid,
 	}
-	err := k.supervisor.Supervise()
+	err := k.supervisor.Supervise(ctx)
 	if err != nil {
 		k.supervisor = nil // not to make the next loop to try to stop it first
 		return err
 	}
-	k.EmitWithPayload("started konnectivity server", map[string]interface{}{"serverCount": count})
+	k.EmitWithPayload("started konnectivity server", map[string]any{"serverCount": count})
 
 	return nil
 }
@@ -212,16 +208,15 @@ func (k *Konnectivity) Healthy() error {
 
 // Stop stops
 func (k *Konnectivity) Stop() error {
-	if k.stopFunc != nil {
-		logrus.Debug("closing konnectivity component context")
-		k.stopFunc()
+	if k.stop != nil {
+		logrus.Debug("stopping konnectivity component")
+		k.stop()
 	}
 	if k.supervisor == nil {
 		return nil
 	}
 	logrus.Debug("about to stop konnectivity supervisor")
-	k.supervisor.Stop()
-	return nil
+	return k.supervisor.Stop()
 }
 
 func (k *Konnectivity) health(ctx context.Context, path string) error {

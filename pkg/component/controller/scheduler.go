@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -35,13 +22,14 @@ import (
 
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
-	gid                   int
 	K0sVars               *config.CfgVars
 	LogLevel              string
 	DisableLeaderElection bool
-	supervisor            *supervisor.Supervisor
-	uid                   int
-	previousConfig        stringmap.StringMap
+
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
+	previousConfig stringmap.StringMap
 }
 
 var _ manager.Component = (*Scheduler)(nil)
@@ -58,7 +46,8 @@ func (a *Scheduler) Init(_ context.Context) error {
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running kube-scheduler as root")
 	}
-	return assets.Stage(a.K0sVars.BinDir, kubeSchedulerComponentName)
+	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeSchedulerComponentName)
+	return err
 }
 
 // Run runs kube scheduler
@@ -69,13 +58,13 @@ func (a *Scheduler) Start(_ context.Context) error {
 // Stop stops Scheduler
 func (a *Scheduler) Stop() error {
 	if a.supervisor != nil {
-		a.supervisor.Stop()
+		return a.supervisor.Stop()
 	}
 	return nil
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
+func (a *Scheduler) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: Scheduler")
 
 	logrus.Info("Starting kube-scheduler")
@@ -108,19 +97,20 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 	// Stop in case there's process running already and we need to change the config
 	if a.supervisor != nil {
 		logrus.WithField("component", kubeSchedulerComponentName).Info("reconcile has nothing to do")
-		a.supervisor.Stop()
+		if err := a.supervisor.Stop(); err != nil {
+			logrus.WithField("component", kubeSchedulerComponentName).WithError(err).Error("Failed to stop executable")
+		}
 		a.supervisor = nil
 	}
 
 	a.supervisor = &supervisor.Supervisor{
 		Name:    kubeSchedulerComponentName,
-		BinPath: assets.BinPath(kubeSchedulerComponentName, a.K0sVars.BinDir),
+		BinPath: a.executablePath,
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
-		Args:    args.ToDashedArgs(),
+		Args:    append(args.ToDashedArgs(), clusterConfig.Spec.Scheduler.RawArgs...),
 		UID:     a.uid,
-		GID:     a.gid,
 	}
 	a.previousConfig = args
-	return a.supervisor.Supervise()
+	return a.supervisor.Supervise(ctx)
 }

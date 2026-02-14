@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package sysinfo
 
@@ -67,7 +54,7 @@ func NewSysinfoCmd() *cobra.Command {
 				return nil
 
 			case "json":
-				return collectAndPrint(probes, out, func(v interface{}) ([]byte, error) {
+				return collectAndPrint(probes, out, func(v any) ([]byte, error) {
 					return json.MarshalIndent(v, "", "  ")
 				})
 
@@ -164,7 +151,7 @@ func collectAndPrint(probe probes.Probe, out io.Writer, marshal func(any) ([]byt
 	return nil
 }
 
-func (r *cliReporter) printf(format interface{}, args ...interface{}) error {
+func (r *cliReporter) printf(format any, args ...any) error {
 	_, err := io.WriteString(r.w, aurora.Sprintf(format, args...))
 	return err
 }

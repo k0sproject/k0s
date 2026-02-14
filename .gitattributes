@@ -1,2 +1,8 @@
 go.mod text eol=lf
 go.sum text eol=lf
+
+# The Go tooling doesn't want to support platform-specific line endings.
+*.go text eol=lf
+
+# Not all POSIX shells on Windows can deal with CRLFs
+*.sh text eol=lf

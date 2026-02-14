@@ -1,12 +1,17 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Autopilot
 
 A tool for updating your `k0s` controller and worker nodes using specialized plans.
-There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel `edge_release`  available. The channel exposes the latest  released version.
+There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel `edge_release` available. The channel exposes the latest released version.
 
 ## How it works
 
 * You create a `Plan` YAML
-  * Defining the update payload (new version of `k0s`, URLs for platforms, etc)
+  * Defining the update payload (new version of `k0s`, URLs for platforms, etc.)
   * Add definitions for all the nodes that should receive the update.
     * Either statically, or dynamically using label/field selectors
 * Apply the `Plan`
@@ -54,7 +59,7 @@ resume the **autopilot** operations.
 should **not** be of a newer version than the API server.
 
 * How **autopilot** handles this is that when a `Plan` is applied that has both controller
-and worker nodes, **all** of the controller nodes will be updated first. It is only when
+and worker nodes, **all** the controller nodes will be updated first. It is only when
 **all** controllers have updated **successfully** that worker nodes will receive their
 update instructions.
 
@@ -70,10 +75,10 @@ additional changes to the plan (other than status) will be recognized.
 ### Controller Quorum Safety
 
 * Prior to scheduling a controller update, **autopilot** queries the API server of **all**
-  controllers to ensure that they report a successful `/ready`
+  controllers to ensure that they report a successful `/ready`.
 * Only once all controllers are `/ready` will the current controller get sent update signaling.
-* In the event that **any** controller reports a non-ready, the `Plan` transitions into an
-  `InconsistentTargets` state, and the `Plan` execution ends.
+* If a previously discovered controller target can no longer be resolved, the `Plan` transitions
+  into an `IncompleteTargets` state and execution ends. Transient readiness failures requeue.
 
 ### Controllers Update Sequentially
 
@@ -103,10 +108,10 @@ spec:
 
   commands:
     - k0supdate:
-        version: v{{{ extra.k8s_version }}}+k0s.0
+        version: {{{ k0s_version }}}
         platforms:
           linux-amd64:
-            url: https://github.com/k0sproject/k0s/releases/download/v{{{ extra.k8s_version }}}+k0s.0/k0s-v{{{ extra.k8s_version }}}+k0s.0-amd64
+            url: https://github.com/k0sproject/k0s/releases/download/{{{ k0s_version }}}/k0s-{{{ k0s_version }}}-amd64
             sha256: '0000000000000000000000000000000000000000000000000000000000000000'
         targets:
           controllers:
@@ -149,7 +154,7 @@ does nothing with this information.
 
 #### `spec.commands[] (required)`
 
-* The `commands` contains all of the commands that should be performed as a part of the plan.
+* The `commands` contains the commands that should be performed as a part of the plan.
 
 ### **`k0supdate`** Command
 
@@ -160,9 +165,9 @@ version before and after update to ensure success.
 
 #### `spec.commands[].k0supdate.platforms.*.url <string> (required)`
 
-* An URL providing where the updated binary should be downloaded from, for this specific platform.
+* A URL providing where the updated binary should be downloaded from, for this specific platform.
   * The naming of platforms is a combination of `$GOOS` and `$GOARCH`, separated by a hyphen (`-`)
-    * eg: `linux-amd64`, `linux-arm64`, `linux-arm`
+    * e.g.: `linux-amd64`, `linux-arm64`, `linux-arm`
   * **Note:** The main supported platform is `linux`. **Autopilot** may work on other platforms, however
 this has not been tested.
 
@@ -324,7 +329,7 @@ update operation. There are a number of statuses available:
 | Status | Description | Ends Plan? |
 | ------ | ----------- | ---------- |
 | `IncompleteTargets` | There are nodes in the resolved `Plan` that do not have associated `Node` (worker) or `ControlNode` (controller) objects. | Yes |
-| `InconsistentTargets` | A controller has reported itself as not-ready during the selection of the next controller to update. | Yes |
+| ~~`InconsistentTargets`~~ | Legacy state used by older k0s releases to indicate controller readiness failures; no longer in use. | Yes |
 | `Schedulable` | Indicates that the `Plan` can be re-evaluated to determine which next node to update. | No |
 | `SchedulableWait` | Scheduling operations are in progress, and no further update scheduling should occur. | No |
 | `Completed` | The `Plan` has run successfully to completion. | Yes |
@@ -338,8 +343,8 @@ Similar to the **Plan Status**, the individual nodes can have their own statuses
 | ------ | ----------- |
 | `SignalPending` | The node is available and awaiting an update signal |
 | `SignalSent` | Update signaling has been successfully applied to this node. |
-| `MissingPlatform` | This node is a platform that an update has not been provided for. |
-| `MissingSignalNode` | This node does have an associated `Node` (worker) or `ControlNode` (controller) object. |
+| `SignalMissingPlatform` | This node is a platform that an update has not been provided for. |
+| `SignalMissingNode` | This node does have an associated `Node` (worker) or `ControlNode` (controller) object. |
 
 ## UpdateConfig
 

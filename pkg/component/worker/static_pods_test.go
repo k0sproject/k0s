@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package worker
 
@@ -53,21 +40,21 @@ spec:
 `
 
 func TestStaticPods_Provisioning(t *testing.T) {
-
 	underTest := NewStaticPods()
+	underTest.(*staticPods).log, _ = newTestLogger(t)
 
 	t.Run("content_is_initlially_empty", func(t *testing.T) {
 		assert.Equal(t, newList(t), getContent(t, underTest))
 	})
 
-	podUnderTest, err := underTest.ClaimStaticPod("default", "dummy-test")
+	podUnderTest, err := underTest.ClaimStaticPod(metav1.NamespaceDefault, "dummy-test")
 	require.NoError(t, err)
 
 	t.Run("rejects_claims", func(t *testing.T) {
 		for _, test := range []struct{ test, ns, name, err string }{
 			{
 				"pods_without_a_name",
-				"default", "",
+				metav1.NamespaceDefault, "",
 				`invalid name: "": `,
 			},
 			{
@@ -86,14 +73,14 @@ func TestStaticPods_Provisioning(t *testing.T) {
 	})
 
 	t.Run("rejects", func(t *testing.T) {
-		_, err = underTest.ClaimStaticPod("default", "dummy-test")
+		_, err = underTest.ClaimStaticPod(metav1.NamespaceDefault, "dummy-test")
 		if assert.Error(t, err) {
 			assert.Equal(t, "default/dummy-test is already claimed", err.Error())
 		}
 
 		for _, test := range []struct {
 			name string
-			pod  interface{}
+			pod  any
 			err  string
 		}{
 			{
@@ -132,7 +119,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 
 		for _, test := range []struct {
 			name string
-			pod  interface{}
+			pod  any
 		}{
 			{"bytes", []byte(dummyPod)},
 			{"strings", dummyPod},
@@ -145,7 +132,7 @@ func TestStaticPods_Provisioning(t *testing.T) {
 	})
 
 	t.Run("sets_pod_manifests", func(t *testing.T) {
-		replaced := `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"dummy-test","namespace":"default"}}`
+		replaced := `{"apiVersion":"v1","kind":"Pod","metadata":{"name":"dummy-test","namespace":"` + metav1.NamespaceDefault + `"}}`
 		expected := newList(t, []byte(replaced))
 
 		assert.NoError(t, podUnderTest.SetManifest(dummyPod))
@@ -174,12 +161,11 @@ func TestStaticPods_Provisioning(t *testing.T) {
 }
 
 func TestStaticPods_Lifecycle(t *testing.T) {
-	log, logs := test.NewNullLogger()
-	log.SetLevel(logrus.DebugLevel)
+	log, logs := newTestLogger(t)
 
 	underTest := NewStaticPods().(*staticPods)
 	underTest.log = log
-	podUnderTest, err := underTest.ClaimStaticPod("default", "dummy-test")
+	podUnderTest, err := underTest.ClaimStaticPod(metav1.NamespaceDefault, "dummy-test")
 	require.NoError(t, err)
 	assert.NoError(t, podUnderTest.SetManifest(dummyPod))
 
@@ -360,22 +346,43 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 }
 
-func getContent(t *testing.T, underTest StaticPods) (content map[string]interface{}) {
+func getContent(t *testing.T, underTest StaticPods) (content map[string]any) {
 	require.NoError(t, yaml.Unmarshal(underTest.(*staticPods).content(), &content))
 	return
 }
 
-func newList(t *testing.T, items ...[]byte) map[string]interface{} {
-	parsedItems := []interface{}{}
+func newList(t *testing.T, items ...[]byte) map[string]any {
+	parsedItems := []any{}
 	for _, item := range items {
-		var parsedItem map[string]interface{}
+		var parsedItem map[string]any
 		require.NoError(t, yaml.Unmarshal(item, &parsedItem))
 		parsedItems = append(parsedItems, parsedItem)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"apiVersion": "v1",
 		"kind":       "PodList",
 		"items":      parsedItems,
 	}
+}
+
+func newTestLogger(t *testing.T) (*logrus.Logger, *test.Hook) {
+	t.Helper()
+	log, logs := test.NewNullLogger()
+	log.SetLevel(logrus.DebugLevel)
+	t.Cleanup(func() {
+		t.Helper()
+		if !t.Failed() {
+			return
+		}
+		entries := logs.AllEntries()
+		for _, entry := range entries {
+			t.Log("Captured log:", entry.Level, entry.Message, entry.Data)
+		}
+		if len(entries) == 0 {
+			t.Log("No log entries captured")
+		}
+	})
+
+	return log, logs
 }

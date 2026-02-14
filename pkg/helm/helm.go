@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package helm
 
@@ -32,6 +19,7 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -39,20 +27,43 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
+
+// Repository represents a Helm chart repository configuration.
+type Repository struct {
+	Name     string
+	URL      string
+	Username string
+	Password string
+	// File paths for certificates (used when certs are already on disk)
+	CAFile   string
+	CertFile string
+	KeyFile  string
+	// In-memory certificate data (used when certs come from secrets)
+	// These take precedence over file paths when both are set
+	CAData   []byte
+	CertData []byte
+	KeyData  []byte
+	Insecure *bool
+}
+
+// IsInsecure returns true if TLS verification should be skipped.
+func (r *Repository) IsInsecure() bool {
+	return r.Insecure != nil && *r.Insecure
+}
 
 // Commands run different helm command in the same way as CLI tool
 // This struct isn't thread-safe. Check on a per function basis.
 type Commands struct {
+	registryManager *ociRegistryManager
+
 	repoFile     string
 	helmCacheDir string
 	kubeConfig   string
 }
 
-func logFn(format string, args ...interface{}) {
+func logFn(format string, args ...any) {
 	log := logrus.WithField("component", "helm")
 	log.Debugf(format, args...)
 }
@@ -68,13 +79,88 @@ var getters = getter.Providers{
 	},
 }
 
-// NewCommands builds new Commands instance with default values
-func NewCommands(k0sVars *config.CfgVars) *Commands {
-	return &Commands{
-		repoFile:     k0sVars.HelmRepositoryConfig,
-		helmCacheDir: k0sVars.HelmRepositoryCache,
-		kubeConfig:   k0sVars.AdminKubeConfigPath,
+// NewCommands builds new Commands instance with ephemeral temporary directories.
+// If repo is provided, it will be initialized in the temporary environment.
+// If tmpDir is empty, a new temporary directory will be created.
+// Returns the Commands instance and a cleanup function that must be called to remove temporary files.
+func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error) {
+	// Create temporary directory for ephemeral Helm environment
+	var err error
+	tmpDir, err := os.MkdirTemp("", "k0s-helm-*")
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create temporary Helm directory: %w", err)
 	}
+
+	cleanup := func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			logrus.WithError(err).WithField("path", tmpDir).Warn("Failed to clean up temporary Helm directory")
+		}
+	}
+
+	repoFile := filepath.Join(tmpDir, "repositories.yaml")
+	helmCacheDir := filepath.Join(tmpDir, "cache")
+
+	commands := &Commands{
+		repoFile:        repoFile,
+		registryManager: newOCIRegistryManager(),
+		helmCacheDir:    helmCacheDir,
+		kubeConfig:      kubeConfig,
+	}
+
+	// Initialize repository if provided
+	if repo != nil {
+		// Write in-memory cert data to temp files if needed for traditional repos
+		if err := commands.prepareCertFiles(repo, tmpDir); err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("failed to prepare certificate files: %w", err)
+		}
+
+		if err := commands.initRepository(*repo); err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("failed to initialize repository: %w", err)
+		}
+	}
+
+	return commands, cleanup, nil
+}
+
+// prepareCertFiles writes in-memory certificate data to temp files when needed.
+// For OCI registries, we can use in-memory certs directly, so this is only needed
+// for traditional repos that require file paths.
+func (hc *Commands) prepareCertFiles(repo *Repository, tmpDir string) error {
+	// Skip if using OCI (we can handle certs in-memory for OCI)
+	if registry.IsOCI(repo.URL) {
+		return nil
+	}
+
+	// Write CA data to file if present
+	if len(repo.CAData) > 0 && repo.CAFile == "" {
+		caPath := filepath.Join(tmpDir, "ca.crt")
+		if err := os.WriteFile(caPath, repo.CAData, 0600); err != nil {
+			return fmt.Errorf("failed to write CA data to temp file: %w", err)
+		}
+		repo.CAFile = caPath
+	}
+
+	// Write cert data to file if present
+	if len(repo.CertData) > 0 && repo.CertFile == "" {
+		certPath := filepath.Join(tmpDir, "tls.crt")
+		if err := os.WriteFile(certPath, repo.CertData, 0600); err != nil {
+			return fmt.Errorf("failed to write cert temp file: %w", err)
+		}
+		repo.CertFile = certPath
+	}
+
+	// Write key data to file if present
+	if len(repo.KeyData) > 0 && repo.KeyFile == "" {
+		keyPath := filepath.Join(tmpDir, "tls.key")
+		if err := os.WriteFile(keyPath, repo.KeyData, 0600); err != nil {
+			return fmt.Errorf("failed to write key data to temp file: %w", err)
+		}
+		repo.KeyFile = keyPath
+	}
+
+	return nil
 }
 
 func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error) {
@@ -104,7 +190,12 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 	return actionConfig, nil
 }
 
-func (hc *Commands) AddRepository(repoCfg v1beta1.Repository) error {
+// initRepository initializes a single repository in the ephemeral Helm environment
+func (hc *Commands) initRepository(repoCfg Repository) error {
+	if err := hc.registryManager.AddRegistry(repoCfg); !errors.Is(err, errors.ErrUnsupported) {
+		return err
+	}
+
 	err := dir.Init(filepath.Dir(hc.repoFile), constant.DataDirMode)
 	if err != nil && !os.IsExist(err) {
 		return fmt.Errorf("can't add repository to %s: %w", hc.repoFile, err)
@@ -148,7 +239,7 @@ func (hc *Commands) AddRepository(repoCfg v1beta1.Repository) error {
 	return nil
 }
 
-func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string) error {
+func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string, registryClient *registry.Client) error {
 	if chart.Metadata.Dependencies == nil {
 		return nil
 	}
@@ -161,6 +252,7 @@ func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string) e
 			RepositoryConfig: hc.repoFile,
 			RepositoryCache:  hc.helmCacheDir,
 			Debug:            false,
+			RegistryClient:   registryClient,
 		}
 		if err := man.Update(); err != nil {
 			return err
@@ -169,7 +261,7 @@ func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string) e
 	return nil
 }
 
-func (hc *Commands) locateChart(name string, version string) (string, error) {
+func (hc *Commands) locateChart(name string, version string, registryClient *registry.Client) (string, error) {
 	name = strings.TrimSpace(name)
 
 	if _, err := os.Stat(name); err == nil {
@@ -186,9 +278,10 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 	dl := downloader.ChartDownloader{
 		Out:              os.Stdout,
 		Getters:          getters,
-		Options:          []getter.Option{},
+		Options:          []getter.Option{getter.WithRegistryClient(registryClient)},
 		RepositoryConfig: hc.repoFile,
 		RepositoryCache:  hc.helmCacheDir,
+		RegistryClient:   registryClient,
 	}
 
 	if err := dir.Init(hc.helmCacheDir, constant.DataDirMode); err != nil {
@@ -215,17 +308,23 @@ func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 
 // InstallChart installs a helm chart
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
+func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
+
+	cfg.RegistryClient, err = hc.registryManager.GetRegistryClient(chartName)
+	if err != nil {
+		return nil, fmt.Errorf("can't get registry client for chart `%s`: %w", chartName, err)
+	}
+
 	install := action.NewInstall(cfg)
 	install.CreateNamespace = true
 	install.WaitForJobs = true
 	install.Wait = true
 	install.Timeout = timeout
-	chartDir, err := hc.locateChart(chartName, version)
+	chartDir, err := hc.locateChart(chartName, version, cfg.RegistryClient)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +346,7 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 		return nil, fmt.Errorf("loadedChart with type `%s` is not installable", loadedChart.Metadata.Type)
 	}
 
-	if err := hc.downloadDependencies(loadedChart, chartDir); err != nil {
+	if err := hc.downloadDependencies(loadedChart, chartDir, cfg.RegistryClient); err != nil {
 		return nil, err
 	}
 
@@ -264,11 +363,17 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 
 // UpgradeChart upgrades a helm chart.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration, force bool) (*release.Release, error) {
+func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, force bool) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
+
+	cfg.RegistryClient, err = hc.registryManager.GetRegistryClient(chartName)
+	if err != nil {
+		return nil, fmt.Errorf("can't get registry client for chart `%s`: %w", chartName, err)
+	}
+
 	upgrade := action.NewUpgrade(cfg)
 	upgrade.Namespace = namespace
 	upgrade.Wait = true
@@ -277,7 +382,7 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	upgrade.Force = force
 	upgrade.Atomic = true
 	upgrade.Timeout = timeout
-	chartDir, err := hc.locateChart(chartName, version)
+	chartDir, err := hc.locateChart(chartName, version, cfg.RegistryClient)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +394,7 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 		return nil, fmt.Errorf("loadedChart with type `%s` is not installable", loadedChart.Metadata.Type)
 	}
 
-	if err := hc.downloadDependencies(loadedChart, chartDir); err != nil {
+	if err := hc.downloadDependencies(loadedChart, chartDir, cfg.RegistryClient); err != nil {
 		return nil, err
 	}
 

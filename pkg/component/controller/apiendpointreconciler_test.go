@@ -1,42 +1,34 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/internal/testutil"
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/stretchr/testify/assert"
 )
 
-var expectedAddresses = []string{
-	"2001:db8::1",
-	"2001:db8::2",
+var expectedIPv4Addresses = []string{
 	"240.0.0.2",
 	"240.0.0.3",
+}
+
+var expectedIPv6Addresses = []string{
+	"2001:db8::1",
+	"2001:db8::2",
 }
 
 func TestBasicReconcilerWithNoLeader(t *testing.T) {
@@ -44,7 +36,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: false}, fakeFactory, fakeResolver{})
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: false}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	ctx := t.Context()
 	assert.NoError(t, r.Init(ctx))
@@ -52,35 +44,51 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 	assert.NoError(t, r.reconcileEndpoints(ctx))
 	client, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
-	_, err = client.CoreV1().Endpoints("default").Get(ctx, "kubernetes", v1.GetOptions{})
+	_, err = client.CoreV1().Endpoints(metav1.NamespaceDefault).Get(ctx, "kubernetes", metav1.GetOptions{})
 	// The reconciler should not make any modification as we're not the leader so the endpoint should not get created
 	assert.Error(t, err)
-	assert.True(t, errors.IsNotFound(err))
+	assert.True(t, k8serrors.IsNotFound(err))
 	// verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 }
 
 func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
-	fakeFactory := testutil.NewFakeClientFactory()
-	config := getFakeConfig()
+	tests := []struct {
+		afnet             v1beta1.PrimaryAddressFamilyType
+		expectedAddresses []string
+	}{
+		{
+			afnet:             v1beta1.PrimaryFamilyIPv4,
+			expectedAddresses: expectedIPv4Addresses,
+		},
+		{
+			afnet:             v1beta1.PrimaryFamilyIPv6,
+			expectedAddresses: expectedIPv6Addresses,
+		},
+	}
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
+	for _, test := range tests {
+		fakeFactory := testutil.NewFakeClientFactory()
+		config := getFakeConfig()
 
-	ctx := t.Context()
-	assert.NoError(t, r.Init(ctx))
+		r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, test.afnet)
 
-	assert.NoError(t, r.reconcileEndpoints(ctx))
-	verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
+		ctx := t.Context()
+		assert.NoError(t, r.Init(ctx))
+
+		assert.NoError(t, r.reconcileEndpoints(ctx))
+		verifyEndpointAddresses(t, test.expectedAddresses, fakeFactory.Client)
+	}
 }
 
 func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 
 	existingEp := corev1.Endpoints{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 		},
 		Subsets: []corev1.EndpointSubset{},
@@ -88,26 +96,26 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	fakeClient, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
 	ctx := t.Context()
-	_, err = fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
+	_, err = fakeClient.CoreV1().Endpoints(metav1.NamespaceDefault).Create(ctx, &existingEp, metav1.CreateOptions{})
 	assert.NoError(t, err)
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
+	verifyEndpointAddresses(t, expectedIPv4Addresses, fakeFactory.Client)
 }
 
 func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 	existingEp := corev1.Endpoints{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 			Annotations: map[string]string{
 				"foo": "bar",
@@ -115,7 +123,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 		},
 		Subsets: []corev1.EndpointSubset{
 			{
-				Addresses: stringsToEndpointAddresses(expectedAddresses),
+				Addresses: stringsToEndpointAddresses(expectedIPv4Addresses),
 			},
 		},
 	}
@@ -123,28 +131,28 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	fakeClient, _ := fakeFactory.GetClient()
 
 	ctx := t.Context()
-	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
+	_, err := fakeClient.CoreV1().Endpoints(metav1.NamespaceDefault).Create(ctx, &existingEp, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
+	e := verifyEndpointAddresses(t, expectedIPv4Addresses, fakeFactory.Client)
 	assert.Equal(t, "bar", e.Annotations["foo"])
 }
 
 func TestReconcilerWithNeedForUpdate(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 	existingEp := corev1.Endpoints{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 			Annotations: map[string]string{
 				"foo": "bar",
@@ -160,21 +168,21 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 	fakeClient, _ := fakeFactory.GetClient()
 
 	ctx := t.Context()
-	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
+	_, err := fakeClient.CoreV1().Endpoints(metav1.NamespaceDefault).Create(ctx, &existingEp, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
 	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{}, v1beta1.PrimaryFamilyIPv4)
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
-	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory.Client)
+	e := verifyEndpointAddresses(t, expectedIPv4Addresses, fakeFactory.Client)
 	assert.Equal(t, "bar", e.Annotations["foo"])
 }
 
 func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, clients kubernetes.Interface) *corev1.Endpoints {
-	ep, err := clients.CoreV1().Endpoints("default").Get(t.Context(), "kubernetes", v1.GetOptions{})
+	ep, err := clients.CoreV1().Endpoints(metav1.NamespaceDefault).Get(t.Context(), "kubernetes", metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAddresses, endpointAddressesToStrings(ep.Subsets[0].Addresses))
 
@@ -183,13 +191,21 @@ func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, clients k
 
 type fakeResolver struct{}
 
-func (fr fakeResolver) LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error) {
-	return []net.IPAddr{
-		{IP: net.ParseIP("2001:db8::1")},
-		{IP: net.ParseIP("2001:db8::2")},
-		{IP: net.ParseIP("240.0.0.2")},
-		{IP: net.ParseIP("240.0.0.3")},
-	}, nil
+func (fr fakeResolver) LookupIP(ctx context.Context, afnet string, host string) ([]net.IP, error) {
+	switch afnet {
+	case "ip4":
+		return []net.IP{
+			net.ParseIP("240.0.0.2"),
+			net.ParseIP("240.0.0.3"),
+		}, nil
+	case "ip6":
+		return []net.IP{
+			net.ParseIP("2001:db8::1"),
+			net.ParseIP("2001:db8::2"),
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown address family %q", afnet)
+	}
 }
 
 func getFakeConfig() *v1beta1.ClusterConfig {

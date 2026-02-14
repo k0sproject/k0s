@@ -11,6 +11,7 @@ on:
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping test clusters.
+        default: 0.28.0 # renovate: datasource=github-releases depName=k0sproject/k0sctl
       e2e-concurrency-level:
         type: number
         description: The number of tests that may be run concurrently.
@@ -26,10 +27,10 @@ on:
         default: >-
           [
             "al2023",
-            "alpine_3_18", "alpine_3_21",
+            "alpine_3_20", "alpine_3_23",
             "centos_9", "centos_10",
-            "debian_10", "debian_11", "debian_12",
-            "fcos_41",
+            "debian_11", "debian_12",
+            "fcos_stable",
             "fedora_41",
             "flatcar",
             "oracle_8_9", "oracle_9_3",

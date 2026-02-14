@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -45,6 +32,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 )
 
+const etcdGID = 0
+
 // Etcd implement the component interface to run etcd
 type Etcd struct {
 	CertManager certificate.Manager
@@ -53,9 +42,9 @@ type Etcd struct {
 	K0sVars     *config.CfgVars
 	LogLevel    string
 
-	supervisor supervisor.Supervisor
-	uid        int
-	gid        int
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 }
 
 var _ manager.Component = (*Etcd)(nil)
@@ -87,12 +76,13 @@ func (e *Etcd) Init(_ context.Context) error {
 	}
 
 	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
-		err = chown(f, e.uid, e.gid)
+		err = recursiveChown(f, e.uid, etcdGID)
 		if err != nil && os.Geteuid() == 0 {
 			return err
 		}
 	}
-	return assets.Stage(e.K0sVars.BinDir, "etcd")
+	e.executablePath, err = assets.StageExecutable(e.K0sVars.BinDir, "etcd")
+	return err
 }
 
 func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdRequest, etcdCaCert, etcdCaCertKey string) ([]string, error) {
@@ -140,7 +130,7 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 			return nil, err
 		}
 		for _, f := range []string{filepath.Dir(etcdCaCertKey), etcdCaCertKey, etcdCaCert} {
-			if err := os.Chown(f, e.uid, e.gid); err != nil && os.Geteuid() == 0 {
+			if err := os.Chown(f, e.uid, etcdGID); err != nil && os.Geteuid() == 0 {
 				return nil, err
 			}
 		}
@@ -240,27 +230,25 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 	logrus.Debugf("starting etcd with args: %v", args)
 
-	e.supervisor = supervisor.Supervisor{
+	e.supervisor = &supervisor.Supervisor{
 		Name:          "etcd",
-		BinPath:       assets.BinPath("etcd", e.K0sVars.BinDir),
+		BinPath:       e.executablePath,
 		RunDir:        e.K0sVars.RunDir,
 		DataDir:       e.K0sVars.DataDir,
-		Args:          args.ToArgs(),
+		Args:          append(args.ToArgs(), e.Config.RawArgs...),
 		UID:           e.uid,
-		GID:           e.gid,
+		GID:           etcdGID,
 		KeepEnvPrefix: true,
 	}
 
-	return e.supervisor.Supervise()
+	return e.supervisor.Supervise(ctx)
 }
 
 // Stop stops etcd
 func (e *Etcd) Stop() error {
-	if e.Config.IsExternalClusterUsed() {
-		return nil
+	if e.supervisor != nil {
+		return e.supervisor.Stop()
 	}
-
-	e.supervisor.Stop()
 	return nil
 }
 
@@ -349,17 +337,16 @@ func (e *Etcd) Ready() error {
 }
 
 func detectUnsupportedEtcdArch() error {
-	// https://github.com/etcd-io/etcd/blob/v3.5.19/server/etcdmain/etcd.go#L472-L477
-	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
-		if os.Getenv("ETCD_UNSUPPORTED_ARCH") != runtime.GOARCH {
-			return fmt.Errorf("running etcd on %s requires ETCD_UNSUPPORTED_ARCH=%s", runtime.GOARCH, runtime.GOARCH)
-		}
+	// https://github.com/etcd-io/etcd/blob/v3.6.7/server/etcdmain/etcd.go#L258-L279
+	switch runtime.GOARCH {
+	case "amd64", "arm64", "ppc64le", "s390x", os.Getenv("ETCD_UNSUPPORTED_ARCH"):
+		return nil
 	}
-	return nil
+
+	return fmt.Errorf("running etcd on %s requires ETCD_UNSUPPORTED_ARCH=%s", runtime.GOARCH, runtime.GOARCH)
 }
 
-// for the patch release purpose the solution is in-place to be as least intrusive as possible
-func chown(name string, uid int, gid int) error {
+func recursiveChown(name string, uid, gid int) error {
 	if uid == 0 {
 		return nil
 	}

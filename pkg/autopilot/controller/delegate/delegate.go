@@ -1,20 +1,11 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package delegate
 
 import (
+	"context"
+
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -24,9 +15,9 @@ import (
 type K0sUpdateReadyStatus string
 
 const (
-	CanUpdate    K0sUpdateReadyStatus = "CanUpdate"
-	NotReady     K0sUpdateReadyStatus = "NotReady"
-	Inconsistent K0sUpdateReadyStatus = "Inconsistent"
+	CanUpdate  K0sUpdateReadyStatus = "CanUpdate"
+	NotReady   K0sUpdateReadyStatus = "NotReady"
+	Incomplete K0sUpdateReadyStatus = "Incomplete"
 )
 
 type ControllerDelegateMap map[string]ControllerDelegate
@@ -42,7 +33,7 @@ type ControllerDelegate interface {
 	DeepCopy(crcli.Object) crcli.Object
 
 	// K0sUpdate features
-	K0sUpdateReady(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus
+	K0sUpdateReady(ctx context.Context, status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus
 }
 
 type createObjectFunc func() crcli.Object
@@ -50,7 +41,7 @@ type createObjectListFunc func() crcli.ObjectList
 type objectListToPlanCommandTargetStatusFunc func(list crcli.ObjectList, status apv1beta2.PlanCommandTargetStateType) []apv1beta2.PlanCommandTargetStatus
 type createNamespacedNameFunc func(name string) types.NamespacedName
 type deepCopyFunc func(obj crcli.Object) crcli.Object
-type k0sUpdateReadyFunc func(apv1beta2.PlanCommandK0sUpdateStatus, crcli.Object) K0sUpdateReadyStatus
+type k0sUpdateReadyFunc func(context.Context, apv1beta2.PlanCommandK0sUpdateStatus, crcli.Object) K0sUpdateReadyStatus
 
 type controllerDelegate struct {
 	name                                string
@@ -78,8 +69,8 @@ func (d controllerDelegate) CreateObjectList() crcli.ObjectList {
 }
 
 // K0sUpdateReady determines if the delegate object can accept an update.
-func (d controllerDelegate) K0sUpdateReady(status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus {
-	return d.k0sUpdateReady(status, obj)
+func (d controllerDelegate) K0sUpdateReady(ctx context.Context, status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus {
+	return d.k0sUpdateReady(ctx, status, obj)
 }
 
 // ObjectListToPlanCommandTargetStatus converts an ObjectList to a slice of PlanCommandTargetStatus

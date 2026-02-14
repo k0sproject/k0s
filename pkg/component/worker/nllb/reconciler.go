@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package nllb
 
@@ -48,6 +35,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
+
+// containerFileLabel is the SELinux label applied to files that need to be
+// readable by containers. Containers typically run with the container_t type,
+// which can read files labeled with container_file_t.
+// This is needed in NLLB since we create files/dirs on the host and
+// bind-mount them into the Envoy container, and thus they need to be readable by the container runtime.
+// These come from https://github.com/containers/container-selinux
+// which we instruct people to install in the k0s installation docs if they use SELinux.
+const containerFileLabel string = "system_u:object_r:container_file_t:s0"
 
 // Reconciler reconciles a static Pod on a worker node that implements
 // node-local load balancing.
@@ -157,9 +153,12 @@ func (r *Reconciler) Init(ctx context.Context) error {
 	if r.state != reconcilerCreated {
 		return fmt.Errorf("cannot initialize, not created: %s", r.state)
 	}
-	if err := dir.Init(r.runtimeDir, 0700); err != nil {
+	if err := dir.InitWithOptions(r.runtimeDir).
+		WithPermissions(0700).
+		WithSELinuxLabel(containerFileLabel).Apply(); err != nil {
 		return err
 	}
+
 	if err := r.loadBalancer.init(ctx); err != nil {
 		return err
 	}

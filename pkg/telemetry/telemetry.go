@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package telemetry
 
@@ -29,7 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/segmentio/analytics-go"
+	"github.com/segmentio/analytics-go/v3"
 )
 
 type telemetryData struct {
@@ -43,7 +30,7 @@ type telemetryData struct {
 }
 
 // Cannot use properly typed structs as they fail to be parsed properly on segment side :(
-type workerData map[string]interface{}
+type workerData map[string]any
 
 type workerSums struct {
 	cpuTotal int64
@@ -90,7 +77,7 @@ func (c *Component) collectTelemetry(ctx context.Context, clients kubernetes.Int
 
 func getClusterID(ctx context.Context, clients kubernetes.Interface) (string, error) {
 	ns, err := clients.CoreV1().Namespaces().Get(ctx,
-		"kube-system",
+		metav1.NamespaceSystem,
 		metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("can't find kube-system namespace: %w", err)
@@ -132,7 +119,7 @@ func (c *Component) sendTelemetry(ctx context.Context, analyticsClient analytics
 	}
 
 	hostData := analytics.Context{
-		Extra: map[string]interface{}{"direct": true},
+		Extra: map[string]any{"direct": true},
 	}
 
 	hostData.App.Version = build.Version
@@ -155,7 +142,7 @@ func (c *Component) sendTelemetry(ctx context.Context, analyticsClient analytics
 }
 
 func addCustomData(ctx context.Context, analyticCtx *analytics.Context, clients kubernetes.Interface) {
-	cm, err := clients.CoreV1().ConfigMaps("kube-system").Get(ctx, "k0s-telemetry", metav1.GetOptions{})
+	cm, err := clients.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, "k0s-telemetry", metav1.GetOptions{})
 	if err != nil {
 		return
 	}

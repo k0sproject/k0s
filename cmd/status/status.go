@@ -1,20 +1,5 @@
-//go:build unix
-
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package status
 
@@ -22,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"runtime"
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -64,7 +50,14 @@ func NewStatusCmd() *cobra.Command {
 
 	pflags := cmd.PersistentFlags()
 	debugFlags.AddToFlagSet(pflags)
-	pflags.String("status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
+	var socketDefault string
+	if runtime.GOOS == "windows" {
+		socketDefault = status.DefaultSocketPath
+	} else {
+		socketDefault = "<rundir>/status.sock"
+	}
+
+	pflags.String("status-socket", "", "Full path to the k0s status socket (default: "+socketDefault+")")
 
 	cmd.AddCommand(NewStatusSubCmdComponents())
 

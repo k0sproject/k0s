@@ -1,18 +1,7 @@
 //go:build unix
 
-// Copyright 2023 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package updates
 
@@ -25,13 +14,15 @@ import (
 	uc "github.com/k0sproject/k0s/pkg/autopilot/channels"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcore "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
-	"github.com/sirupsen/logrus"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/k0sproject/version"
+	"github.com/sirupsen/logrus"
+	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type periodicUpdater struct {
@@ -40,22 +31,22 @@ type periodicUpdater struct {
 	updateConfig    apv1beta2.UpdateConfig
 	k8sClient       crcli.Client
 	apClientFactory apcli.FactoryInterface
+	collector       *ClusterInfoCollector
 
-	clusterID         string
 	currentK0sVersion string
 
 	ticker *time.Ticker
 }
 
-func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID, currentK0sVersion string) *periodicUpdater {
+func newPeriodicUpdater(ctx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, collector *ClusterInfoCollector, currentK0sVersion string) *periodicUpdater {
 	return &periodicUpdater{
 		ctx:               ctx,
 		log:               logrus.WithField("component", "periodic-updater"),
 		updateConfig:      updateConfig,
 		k8sClient:         k8sClient,
-		clusterID:         clusterID,
 		currentK0sVersion: currentK0sVersion,
 		apClientFactory:   apClientFactory,
+		collector:         collector,
 	}
 }
 
@@ -110,7 +101,7 @@ func (u *periodicUpdater) checkForUpdate() {
 	// Check if there's a token configured
 	var token string
 	tokenSecret := &corev1.Secret{}
-	if err := u.k8sClient.Get(ctx, crcli.ObjectKey{Name: "update-server-token", Namespace: "kube-system"}, tokenSecret); err != nil {
+	if err := u.k8sClient.Get(ctx, crcli.ObjectKey{Name: "update-server-token", Namespace: metav1.NamespaceSystem}, tokenSecret); err != nil {
 		u.log.Infof("unable to get update server token: %v", err)
 	} else {
 		token = string(tokenSecret.Data["token"])
@@ -123,13 +114,8 @@ func (u *periodicUpdater) checkForUpdate() {
 		return
 	}
 
-	k8sClient, err := u.apClientFactory.GetClient()
-	if err != nil {
-		u.log.Errorf("failed to create k8s client: %v", err)
-		return
-	}
 	// Collect cluster info
-	ci, err := CollectData(ctx, k8sClient)
+	ci, err := u.collector.CollectData(ctx)
 	if err != nil {
 		u.log.Errorf("failed to collect cluster info: %s", err.Error())
 		return

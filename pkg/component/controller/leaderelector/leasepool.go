@@ -1,29 +1,22 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package leaderelector
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"sync/atomic"
+	"sync"
+	"time"
 
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
+
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,14 +24,21 @@ type LeasePool struct {
 	log *logrus.Entry
 
 	invocationID      string
-	stopCh            chan struct{}
-	leaderStatus      atomic.Bool
+	status            value.Latest[leaderelection.Status]
 	kubeClientFactory kubeutil.ClientFactoryInterface
-	leaseCancel       context.CancelFunc
+	name              string
+	client            leaseClient
+	resume            value.Latest[time.Time]
+
+	mu   sync.Mutex
+	stop func()
 
 	acquiredLeaseCallbacks []func()
 	lostLeaseCallbacks     []func()
-	name                   string
+}
+
+type leaseClient interface {
+	Run(ctx context.Context, changed func(leaderelection.Status))
 }
 
 var (
@@ -50,50 +50,133 @@ var (
 func NewLeasePool(invocationID string, kubeClientFactory kubeutil.ClientFactoryInterface, name string) *LeasePool {
 	return &LeasePool{
 		invocationID:      invocationID,
-		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
 		log:               logrus.WithFields(logrus.Fields{"component": "poolleaderelector"}),
 		name:              name,
 	}
 }
 
-func (l *LeasePool) Init(_ context.Context) error {
+func (l *LeasePool) Init(context.Context) error {
 	return nil
 }
 
 func (l *LeasePool) Start(context.Context) error {
-	client, err := l.kubeClientFactory.GetClient()
-	if err != nil {
-		return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.stop != nil {
+		return nil
 	}
-	leasePool, err := leaderelection.NewLeasePool(client, l.name, l.invocationID,
-		leaderelection.WithLogger(l.log))
-	if err != nil {
-		return err
+
+	if l.client == nil {
+		kubeClient, err := l.kubeClientFactory.GetClient()
+		if err != nil {
+			return fmt.Errorf("can't create kubernetes rest client for lease pool: %w", err)
+		}
+
+		l.client, err = leaderelection.NewClient(&leaderelection.LeaseConfig{
+			Namespace: corev1.NamespaceNodeLease,
+			Name:      l.name,
+			Identity:  l.invocationID,
+			Client:    kubeClient.CoordinationV1(),
+		})
+		if err != nil {
+			return err
+		}
 	}
+
 	ctx, cancel := context.WithCancel(context.Background())
-	events, err := leasePool.Watch(ctx)
-	if err != nil {
-		cancel()
-		return err
-	}
-	l.leaseCancel = cancel
+	done := make(chan struct{})
 
 	go func() {
+		defer close(done)
 		for {
 			select {
-			case <-events.AcquiredLease:
-				l.log.Info("acquired leader lease")
-				l.leaderStatus.Store(true)
-				runCallbacks(l.acquiredLeaseCallbacks)
-			case <-events.LostLease:
-				l.log.Info("lost leader lease")
-				l.leaderStatus.Store(false)
-				runCallbacks(l.lostLeaseCallbacks)
+			case <-ctx.Done():
+				return
+			default:
+				l.runClient(ctx.Done())
 			}
 		}
 	}()
+
+	l.stop = func() {
+		cancel()
+		<-done
+	}
+
 	return nil
+}
+
+func (l *LeasePool) runClient(stop <-chan struct{}) {
+	resumeUpdated := l.waitForResume(stop)
+	if resumeUpdated == nil {
+		return
+	}
+
+	var reason error
+	{
+		var wg sync.WaitGroup
+
+		ctx, cancel := context.WithCancelCause(context.Background())
+
+		wg.Add(2)
+		go func() { defer wg.Done(); l.client.Run(ctx, l.status.Set) }()
+		go func() { defer wg.Done(); l.invokeCallbacks(ctx) }()
+		defer func() { cancel(reason); wg.Wait() }()
+	}
+
+	select {
+	case <-stop:
+		reason = errors.New("lease pool is stopping")
+	case <-resumeUpdated:
+		reason = errors.New("lease pool is yielding")
+	}
+}
+
+func (l *LeasePool) waitForResume(stop <-chan struct{}) <-chan struct{} {
+	resume, resumeUpdated := l.resume.Peek()
+
+	d := time.Until(resume)
+	if d <= 0 {
+		return resumeUpdated
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	l.log.Info("Yielding until ", resume)
+
+	for {
+		select {
+		case <-stop:
+			return nil
+		case <-resumeUpdated:
+			resume, resumeUpdated = l.resume.Peek()
+			timer.Reset(time.Until(resume))
+			l.log.Info("Yielding until ", resume)
+		case <-timer.C:
+			l.log.Info("Resuming operations")
+			return resumeUpdated
+		}
+	}
+}
+
+func (l *LeasePool) YieldLease() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.stop != nil {
+		l.resume.Set(time.Now().Add(30 * time.Second))
+	}
+}
+
+func (l *LeasePool) invokeCallbacks(ctx context.Context) {
+	leaderelection.RunLeaderTasks(ctx, l.status.Peek, func(leaderCtx context.Context) {
+		l.log.Info("acquired leader lease")
+		runCallbacks(l.acquiredLeaseCallbacks)
+		<-leaderCtx.Done()
+		l.log.Infof("lost leader lease (%v)", context.Cause(ctx))
+		runCallbacks(l.lostLeaseCallbacks)
+	})
 }
 
 func runCallbacks(callbacks []func()) {
@@ -104,21 +187,34 @@ func runCallbacks(callbacks []func()) {
 	}
 }
 
+// Deprecated: Use [LeasePool.CurrentStatus] instead.
 func (l *LeasePool) AddAcquiredLeaseCallback(fn func()) {
 	l.acquiredLeaseCallbacks = append(l.acquiredLeaseCallbacks, fn)
 }
 
+// Deprecated: Use [LeasePool.CurrentStatus] instead.
 func (l *LeasePool) AddLostLeaseCallback(fn func()) {
 	l.lostLeaseCallbacks = append(l.lostLeaseCallbacks, fn)
 }
 
 func (l *LeasePool) Stop() error {
-	if l.leaseCancel != nil {
-		l.leaseCancel()
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.stop != nil {
+		l.stop()
+		l.stop = nil
+		l.resume.Set(time.Time{})
 	}
 	return nil
 }
 
+// CurrentStatus is this lease pool's [leaderelection.StatusFunc].
+func (l *LeasePool) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
+	return l.status.Peek()
+}
+
+// Deprecated: Use [LeasePool.CurrentStatus] instead.
 func (l *LeasePool) IsLeader() bool {
-	return l.leaderStatus.Load()
+	status, _ := l.CurrentStatus()
+	return status == leaderelection.StatusLeading
 }

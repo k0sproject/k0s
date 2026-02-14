@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -29,8 +16,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/metadata"
 	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -163,13 +152,18 @@ spec:
                 operator: In
                 values: ['kube-dns']
       {{- end }}
+      topologySpreadConstraints:
+      - topologyKey: topology.kubernetes.io/zone
+        maxSkew: 1
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            k8s-app: kube-dns
       containers:
       - name: coredns
         image: {{ .Image }}
         imagePullPolicy: {{ .PullPolicy }}
         resources:
-          limits:
-            memory: 170Mi
           requests:
             cpu: 100m
             memory: 70Mi
@@ -195,6 +189,7 @@ spec:
             - NET_BIND_SERVICE
             drop:
             - all
+          runAsNonRoot: true
           readOnlyRootFilesystem: true
         livenessProbe:
           httpGet:
@@ -278,7 +273,7 @@ var _ manager.Reconciler = (*CoreDNS)(nil)
 type CoreDNS struct {
 	dnsAddress             string
 	clusterDomain          string
-	client                 kubernetes.Interface
+	client                 metadata.Interface
 	log                    *logrus.Entry
 	manifestDir            string
 	previousConfig         coreDNSConfig
@@ -304,7 +299,12 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 		return nil, err
 	}
 
-	client, err := clientFactory.GetClient()
+	restConfig, err := clientFactory.GetRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := metadata.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +352,9 @@ func (c *CoreDNS) Start(ctx context.Context) error {
 }
 
 func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) (coreDNSConfig, error) {
-	nodes, err := c.client.CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	nodes, err := c.client.Resource(corev1.SchemeGroupVersion.WithResource("nodes")).List(ctx, metav1.ListOptions{
+		LabelSelector: fields.OneTermEqualSelector(corev1.LabelOSStable, string(corev1.Linux)).String(),
+	})
 	if err != nil {
 		return coreDNSConfig{}, err
 	}
@@ -425,7 +427,7 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		return fmt.Errorf("error calculating coredns configs: %w, will retry", err)
 	}
 	if reflect.DeepEqual(c.previousConfig, cfg) {
-		c.log.Infof("current cfg matches existing, not gonna do anything")
+		c.log.Debug("Configuration is up to date, not gonna do anything")
 		return nil
 	}
 	tw := templatewriter.TemplateWriter{

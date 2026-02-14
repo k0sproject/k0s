@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # k0s - The Zero Friction Kubernetes
 
 <!-- When changing this file, consider to change ../README.md, too! -->

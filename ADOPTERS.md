@@ -36,7 +36,7 @@ When adding new adopters, please adhere roughly to the following format:
 * [@k0sproject](https://github.com/k0sproject)<br>
   Project: k0s build and CI infrastructure<br>
   k0s maintainers use k0s to host build and CI infrastructure, mainly dynamic
-  Github Runners.
+  GitHub Runners.
 
 * [KubeArmor](https://docs.kubearmor.io/kubearmor/quick-links/support_matrix)<br>
   Project: Supported in their security product

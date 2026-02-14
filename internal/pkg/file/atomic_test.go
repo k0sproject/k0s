@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package file
 
@@ -27,10 +14,24 @@ import (
 	"strconv"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAtomic_ModificationTime(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "file")
+	leetTime := time.Unix(1337, 0)
+
+	err := AtomicWithTarget(file).WithModificationTime(leetTime).WriteString("leet")
+	require.NoError(t, err)
+
+	stat, err := os.Stat(file)
+	require.NoError(t, err)
+	assert.Equal(t, leetTime, stat.ModTime())
+}
 
 func TestWriteAtomically(t *testing.T) {
 
@@ -214,7 +215,7 @@ func TestWriteAtomically(t *testing.T) {
 			)
 			assert.Equal(t, file, linkErr.New)
 			if runtime.GOOS == "windows" {
-				// https://github.com/golang/go/blob/go1.20/src/syscall/types_windows.go#L11
+				// https://github.com/golang/go/blob/go1.25.7/src/syscall/types_windows.go#L13
 				//revive:disable-next-line:var-naming
 				const ERROR_ACCESS_DENIED syscall.Errno = 5
 				var errno syscall.Errno

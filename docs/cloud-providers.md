@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2020 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Cloud providers
 
 K0s supports all [Kubernetes cloud controllers]. However, those must be installed as separate cluster add-ons since k0s builds Kubernetes components in *providerless* mode.

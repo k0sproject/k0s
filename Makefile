@@ -18,16 +18,27 @@ else
 endif
 endif
 
+ifeq ($(OS),Windows_NT)
+CYGPATH := $(shell cygpath --version >/dev/null 2>&1 && echo cygpath)
+cygpath = $(if $(CYGPATH),$(shell '$(CYGPATH)' -- '$(1)'),$(1))
+PATHSEP := $(if $(CYGPATH),:,;)
+else
+cygpath = $(1)
+PATHSEP := :
+endif
+
+FIND ?= find
+DOCKER ?= docker
+
 K0S_GO_BUILD_CACHE ?= build/cache
 
-GO_SRCS := $(shell find . -type f -name '*.go' -not -path './$(K0S_GO_BUILD_CACHE)/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
+GO_SRCS := $(shell $(FIND) . -type f -name "*.go" -not -path "./$(K0S_GO_BUILD_CACHE)/*" -not -path "./inttest/*" -not -name "*_test.go" -not -name "zz_generated*")
 GO_CHECK_UNIT_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
-DOCKER ?= docker
 # Disable Docker build integration if DOCKER is set to the empty string.
 ifeq ($(DOCKER),)
   GO_ENV_REQUISITES ?=
-  GO_ENV ?= PATH=$(abspath $(K0S_GO_BUILD_CACHE))/go/bin:"$$PATH" \
+  GO_ENV ?= PATH='$(call cygpath,$(abspath $(K0S_GO_BUILD_CACHE))/go/bin)$(PATHSEP)'"$$PATH" \
     GOBIN="$(abspath $(K0S_GO_BUILD_CACHE))/go/bin" \
     GOCACHE="$(abspath $(K0S_GO_BUILD_CACHE))/go/build" \
     GOMODCACHE="$(abspath $(K0S_GO_BUILD_CACHE))/go/mod"
@@ -42,8 +53,9 @@ else
     -e CGO_ENABLED \
     -e CGO_CFLAGS \
     -e GOARCH \
+    -e XDG_CACHE_HOME=/run/k0s-build \
     --user $(BUILD_UID):$(BUILD_GID) \
-    -- '$(shell cat .k0sbuild.docker-image.k0s)'
+    $(DOCKER_RUN_OPTS) -- '$(shell cat .k0sbuild.docker-image.k0s)'
   GO ?= $(GO_ENV) go
 endif
 
@@ -121,6 +133,7 @@ $(K0S_GO_BUILD_CACHE):
 
 .k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | $(K0S_GO_BUILD_CACHE)
 	$(DOCKER) build --progress=plain --iidfile '$@' \
+	  --build-arg BUILDKIT_DOCKERFILE_CHECK=skip=InvalidDefaultArgInFrom \
 	  --build-arg BUILDIMAGE=$(GOLANG_IMAGE) \
 	  -t k0sbuild.docker-image.k0s - <build/Dockerfile
 
@@ -132,7 +145,7 @@ api_group_versions := $(foreach path,$(wildcard pkg/apis/*/v*/doc.go),$(path:pkg
 
 # Declare the requisites for the generators operating on API group versions.
 api_group_version_targets := .controller-gen.stamp zz_generated.register.go
-$(foreach gv,$(api_group_versions),$(eval $(foreach t,$(api_group_version_targets),pkg/apis/$(gv)/$(t)): $$(shell find pkg/apis/$(gv)/ -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')))
+$(foreach gv,$(api_group_versions),$(eval $(foreach t,$(api_group_version_targets),pkg/apis/$(gv)/$(t)): $$(shell $(FIND) pkg/apis/$(gv)/ -maxdepth 1 -type f -name "*.go" -not -name "*_test.go" -not -name "zz_generated*")))
 
 # Run controller-gen for each API group version.
 controller_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/.controller-gen.stamp)
@@ -141,7 +154,7 @@ $(controller_gen_targets): $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt ha
 	rm -rf 'static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))'
 	gendir="$$(mktemp -d .controller-gen.tmp.XXXXXX)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
-	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version) \
+	  && CGO_ENABLED=0 $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-tools_version) \
 	    paths="./$(dir $@)..." \
 	    object:headerFile=hack/tools/boilerplate.go.txt output:object:dir="$$gendir" \
 	    crd output:crd:dir='static/_crds/$(dir $(@:pkg/apis/%/.controller-gen.stamp=%))' \
@@ -165,7 +178,7 @@ $(register_gen_targets): $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt embe
 # Generate the k0s client-go clientset based on all custom API group versions.
 clientset_input_dirs := $(foreach gv,$(api_group_versions),pkg/apis/$(gv))
 codegen_targets += pkg/client/clientset/.client-gen.stamp
-pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name '*.go' -not -name '*_test.go' -not -name 'zz_generated*')
+pkg/client/clientset/.client-gen.stamp: $(shell $(FIND) $(clientset_input_dirs) -type f -name "*.go" -not -name "*_test.go" -not -name "zz_generated*")
 pkg/client/clientset/.client-gen.stamp: $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	gendir="$$(mktemp -d .client-gen.tmp.XXXXXX)" \
 	  && trap "rm -rf -- $$gendir" INT EXIT \
@@ -194,7 +207,7 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 endif
 
 k0s: TARGET_OS = linux
-k0s: BUILD_GO_CGO_ENABLED = 1
+k0s: BUILD_GO_CGO_ENABLED = 0
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
@@ -230,8 +243,8 @@ lint-copyright:
 .PHONY: lint-go
 lint-go: GOLANGCI_LINT_FLAGS ?=
 lint-go: $(GO_ENV_REQUISITES) go.sum bindata
-	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v$(golangci-lint_version)
-	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO_ENV) golangci-lint run --verbose --build-tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
+	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/v$(word 1,$(subst ., ,$(golangci-lint_version)))/cmd/golangci-lint@v$(golangci-lint_version)
+	GOLANGCI_LINT_CACHE='$(abspath $(K0S_GO_BUILD_CACHE))/golangci-lint' GO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO_ENV) golangci-lint run --verbose --build-tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
 
 .PHONY: lint
 lint: lint-copyright lint-go
@@ -247,12 +260,38 @@ airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar \
 airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
-	./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' <airgap-images.txt
+	set -- $$(cat airgap-images.txt) && \
+	$(GO_ENV) ./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' "$$@"
+
+ipv6-test-images.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
+	{ \
+	  echo "docker.io/library/nginx:1.29.5-alpine"; \
+	  echo "docker.io/curlimages/curl:8.18.0"; \
+	  echo "docker.io/library/alpine:$(alpine_version)"; \
+	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
+	  echo "registry.k8s.io/conformance:v$(kubernetes_version)"; \
+	  $(GO) run -tags=hack ./hack/gen-test-images-list; \
+	} >'$@'
+
+ipv6-test-image-bundle-linux-amd64.tar:   TARGET_PLATFORM := linux/amd64
+ipv6-test-image-bundle-linux-arm64.tar:   TARGET_PLATFORM := linux/arm64
+ipv6-test-image-bundle-linux-arm.tar:     TARGET_PLATFORM := linux/arm/v7
+ipv6-test-image-bundle-linux-riscv64.tar: TARGET_PLATFORM := linux/riscv64
+ipv6-test-image-bundle-linux-amd64.tar \
+ipv6-test-image-bundle-linux-arm64.tar \
+ipv6-test-image-bundle-linux-arm.tar \
+ipv6-test-image-bundle-linux-riscv64.tar: k0s ipv6-test-images.txt
+	set -- $$(cat ipv6-test-images.txt) && \
+	$(GO_ENV) ./k0s airgap bundle-artifacts -v --platform='$(TARGET_PLATFORM)' -o '$@' "$$@"
 
 .PHONY: $(smoketests)
-check-airgap check-ap-airgap: airgap-image-bundle-linux-$(HOST_ARCH).tar
+$(air_gapped_smoketests) $(ipv6_smoketests): airgap-image-bundle-linux-$(HOST_ARCH).tar
+$(ipv6_smoketests): ipv6-test-image-bundle-linux-$(HOST_ARCH).tar
 $(smoketests): k0s
-	$(MAKE) -C inttest K0S_IMAGES_BUNDLE='$(CURDIR)/airgap-image-bundle-linux-$(HOST_ARCH).tar' $@
+	$(MAKE) -C inttest \
+		K0S_IMAGES_BUNDLE='$(CURDIR)/airgap-image-bundle-linux-$(HOST_ARCH).tar' \
+		K0S_EXTRA_IMAGES_BUNDLE='$(CURDIR)/ipv6-test-image-bundle-linux-$(HOST_ARCH).tar' \
+		$@
 
 .PHONY: smoketests
 smoketests: $(smoketests)
@@ -289,6 +328,7 @@ clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-find pkg/apis -type f -name .controller-gen.stamp -delete
 	-rm pkg/client/clientset/.client-gen.stamp
 	-rm -f hack/.copyright.stamp
+	-rm -f spdx.json
 	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C inttest clean
@@ -302,40 +342,18 @@ docs-serve-dev: DOCS_DEV_PORT ?= 8000
 docs-serve-dev:
 	$(MAKE) -C docs .docker-image.serve-dev.stamp
 	$(DOCKER) run --rm \
-	  -e KUBERNETES_VERSION='$(kubernetes_version)' \
+	  -e PYTHONPATH=/k0s/docs/mkdocs_modules \
+	  -e K0S_VERSION=$(VERSION) \
 	  -v "$(CURDIR):/k0s:ro" \
 	  -p '$(DOCS_DEV_PORT):8000' \
-	  k0sdocs.docker-image.serve-dev
+	  $(DOCKER_RUN_OPTS) k0sdocs.docker-image.serve-dev
 
-sbom/spdx.json: go.mod
-	mkdir -p -- '$(dir $@)'
+spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	$(DOCKER) run --rm \
-	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
-	  -v "$(CURDIR)/embedded-bins/staging/linux/bin:/k0s/bin" \
-	  -v "$(CURDIR)/syft.yaml:/tmp/syft.yaml" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  --user $(BUILD_UID):$(BUILD_GID) \
-	  anchore/syft:v0.90.0 \
-	  /k0s -o spdx-json@2.2=/out/spdx.json -c /tmp/syft.yaml
-
-.PHONY: sign-sbom
-sign-sbom: sbom/spdx.json
-	$(DOCKER) run --rm \
-	  -v "$(CURDIR):/k0s" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  ghcr.io/sigstore/cosign/cosign:v2.4.2 \
-	  sign-blob \
-	  --key /k0s/cosign.key \
-	  --tlog-upload=false \
-	  /k0s/sbom/spdx.json --output-file /out/spdx.json.sig
-
-.PHONY: sign-pub-key
-sign-pub-key:
-	$(DOCKER) run --rm \
-	  -v "$(CURDIR):/k0s" \
-	  -v "$(CURDIR)/sbom:/out" \
-	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
-	  ghcr.io/sigstore/cosign/cosign:v2.4.2 \
-	  public-key \
-	  --key /k0s/cosign.key --output-file /out/cosign.pub
+	  -v '$(CURDIR)/syft.yaml':/k0s/syft.yaml:ro \
+	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
+	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
+	  -w /k0s \
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.42.0 \
+	  --source-name k0s --source-version '$(VERSION)' \
+	  -c syft.yaml -o spdx-json@2.2 . >'$@'

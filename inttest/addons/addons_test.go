@@ -1,31 +1,29 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package addons
 
 import (
 	"bytes"
 	"context"
+	"crypto"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"os"
+	"path"
 	"slices"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
+	"github.com/cloudflare/cfssl/config"
+	"github.com/cloudflare/cfssl/csr"
+	"github.com/cloudflare/cfssl/helpers"
+	"github.com/cloudflare/cfssl/initca"
+	"github.com/cloudflare/cfssl/signer"
+	"github.com/cloudflare/cfssl/signer/local"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
@@ -33,6 +31,10 @@ import (
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -47,8 +49,94 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const (
+	registryCACertContainerPath = "/tmp/registry-ca.crt"
+	echoServerTgzPath           = "./testdata/chart/echo-server-0.5.0.tgz"
+)
+
 type AddonsSuite struct {
 	common.BootlooseSuite
+
+	registryCABytes []byte
+}
+
+func initCA(t *testing.T) (cert *x509.Certificate, key crypto.Signer) {
+	certData, _, keyData, err := initca.New(&csr.CertificateRequest{
+		KeyRequest: csr.NewKeyRequest(),
+		CN:         "Test Registry CA",
+	})
+	require.NoError(t, err)
+
+	cert, err = helpers.ParseCertificatePEM(certData)
+	require.NoError(t, err)
+
+	key, err = helpers.ParsePrivateKeyPEM(keyData)
+	require.NoError(t, err)
+
+	return
+}
+
+func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir string) []byte {
+	caCert, caKey := initCA(t)
+
+	s, err := local.NewSigner(caKey, caCert, signer.DefaultSigAlgo(caKey), &config.Signing{
+		Default: &config.SigningProfile{
+			Usage: []string{
+				"digital signature",
+				"key encipherment",
+				"server auth",
+			},
+			Expiry:       helpers.OneDay,
+			ExpiryString: helpers.OneDay.String(),
+		},
+	})
+	require.NoError(t, err)
+
+	serverCertCSR, serverKey, err := csr.ParseRequest(&csr.CertificateRequest{
+		KeyRequest: csr.NewKeyRequest(),
+		CN:         "Test Registry",
+		Hosts:      []string{"host.docker.internal"},
+	})
+	require.NoError(t, err)
+
+	serverCert, err := s.Sign(signer.SignRequest{Request: string(serverCertCSR)})
+	require.NoError(t, err)
+
+	require.NoError(t, os.WriteFile(path.Join(certsDir, "tls.crt"), serverCert, 0644))
+	require.NoError(t, os.WriteFile(path.Join(certsDir, "tls.key"), serverKey, 0600))
+
+	return serverCert
+}
+
+// pushChartToLocalRegistry pushes a pre-downloaded echo-server chart to the local registry
+func (as *AddonsSuite) pushChartToLocalRegistry() {
+	helmEnv := cli.New()
+
+	cfg := &action.Configuration{}
+	err := cfg.Init(helmEnv.RESTClientGetter(), "", "memory", as.T().Logf)
+	as.Require().NoError(err)
+
+	pushAction := action.NewPushWithOpts(
+		action.WithPushConfig(cfg),
+		action.WithPushOptWriter(os.Stdout),
+		action.WithInsecureSkipTLSVerify(true),
+	)
+	pushAction.Settings = helmEnv
+
+	_, err = pushAction.Run(echoServerTgzPath, fmt.Sprintf("oci://localhost:%d/charts", as.GetRegistryHostPort()))
+	as.Require().NoError(err)
+}
+
+// uploadRegistryCAToControllers uploads the CA certificate of the local registry to all controller nodes
+func (as *AddonsSuite) uploadRegistryCAToControllers() {
+	for i := range as.ControllerCount {
+		as.PutFile(as.ControllerNode(i), registryCACertContainerPath, string(as.registryCABytes))
+	}
+}
+
+func (as *AddonsSuite) SetupTest() {
+	as.pushChartToLocalRegistry()
+	as.uploadRegistryCAToControllers()
 }
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
@@ -58,7 +146,18 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
 	ociAddonName := "oci-addon"
 	fileAddonName := "tgz-addon"
-	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
+	selfSignedOCIAddonName := "self-signed-oci-addon"
+
+	p := k0sConfigParams{
+		BasicAddonName:      addonName,
+		LocalRegistryCAPath: registryCACertContainerPath,
+		LocalRegistryHost:   "host.docker.internal",
+		LocalRegistryPort:   as.GetRegistryHostPort(),
+	}
+
+	buf := new(bytes.Buffer)
+	as.Require().NoError(k0sConfigWithAddonTemplate.Execute(buf, p))
+	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", buf.String())
 	as.pullHelmChart(as.ControllerNode(0))
 	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml", "--enable-dynamic-config"))
 	as.NoError(as.RunWorkers())
@@ -66,22 +165,24 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.Require().NoError(err)
 	err = as.WaitForNodeReady(as.WorkerNode(0), kc)
 	as.NoError(err)
-	as.waitForTestRelease(addonName, "0.4.0", "default", 1)
-	as.waitForTestRelease(ociAddonName, "0.6.0", "default", 1)
-	as.waitForTestRelease(fileAddonName, "0.6.0", "kube-system", 1)
+	as.waitForTestRelease(addonName, "0.4.0", metav1.NamespaceDefault, 1)
+	as.waitForTestRelease(ociAddonName, "0.6.0", metav1.NamespaceDefault, 1)
+	as.waitForTestRelease(fileAddonName, "0.6.0", metav1.NamespaceSystem, 1)
+	as.waitForTestRelease(selfSignedOCIAddonName, "0.6.0", metav1.NamespaceDefault, 1)
 
 	as.AssertSomeKubeSystemPods(kc)
 
 	as.Run("Rename chart in Helm extension", func() { as.renameChart(ctx) })
+	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(ctx, kc) })
 
-	values := map[string]interface{}{
+	values := map[string]any{
 		"replicaCount": 2,
-		"image": map[string]interface{}{
+		"image": map[string]any{
 			"pullPolicy": "Always",
 		},
 	}
 	as.doTestAddonUpdate(addonName, values)
-	chart := as.waitForTestRelease(addonName, "0.6.0", "default", 2)
+	chart := as.waitForTestRelease(addonName, "0.6.0", metav1.NamespaceDefault, 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.deleteRelease(chart)
 	as.deleteUninstalledChart(ctx)
@@ -138,7 +239,141 @@ func (as *AddonsSuite) renameChart(ctx context.Context) {
 		return !hasChart("k0s-addon-chart-tgz-addon") && hasChart("k0s-addon-chart-tgz-renamed-addon"), nil
 	}), "While waiting for Chart resource to be swapped")
 
-	as.waitForTestRelease("tgz-renamed-addon", "0.6.0", "kube-system", 1)
+	as.waitForTestRelease("tgz-renamed-addon", "0.6.0", metav1.NamespaceSystem, 1)
+}
+
+func (as *AddonsSuite) testSecretBasedAuth(ctx context.Context, kc *k8s.Clientset) {
+	secretAddonName := "secret-oci-addon"
+	secretName := "test-oci-secret"
+	chartName := "k0s-addon-chart-" + secretAddonName
+
+	// Get kubeconfig and create clients
+	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
+	as.Require().NoError(err)
+
+	// Create a Chart CR that references a secret that doesn't exist yet
+	chart := &helmv1beta1.Chart{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      chartName,
+			Namespace: metav1.NamespaceSystem,
+			Finalizers: []string{
+				"helm.k0sproject.io/uninstall-helm-release",
+			},
+		},
+		Spec: helmv1beta1.ChartSpec{
+			ChartName:   "oci://ghcr.io/makhov/k0s-charts/echo-server",
+			ReleaseName: secretAddonName,
+			Version:     "0.5.0",
+			Namespace:   metav1.NamespaceDefault,
+			Timeout:     "5m0s",
+			Repository: &helmv1beta1.RepositorySpec{
+				ConfigFrom: &helmv1beta1.ConfigSource{
+					SecretRef: &helmv1beta1.SecretReference{
+						Name: secretName,
+					},
+				},
+			},
+		},
+	}
+
+	as.T().Logf("Creating Chart %s/%s that references secret %s", chart.Namespace, chart.Name, secretName)
+	as.Require().NoError(chartClient.Create(ctx, chart))
+
+	// Wait for the chart to show an error about missing secret
+	as.T().Logf("Waiting for chart to show error about missing secret")
+	as.waitForChartError(secretAddonName, "not found")
+
+	// Create the secret
+	as.T().Logf("Creating secret %s/%s", metav1.NamespaceSystem, secretName)
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: metav1.NamespaceSystem,
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			// Empty secret is fine for public OCI registry
+		},
+	}
+	_, err = kc.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, secret, metav1.CreateOptions{})
+	as.Require().NoError(err)
+
+	// Wait for the chart to reconcile successfully
+	// The controller should automatically retry after the secret is created
+	as.T().Logf("Waiting for chart to reconcile successfully after secret creation")
+	reconciledChart := as.waitForTestRelease(secretAddonName, "0.6.0", metav1.NamespaceDefault, 1)
+
+	// Verify the error is cleared
+	as.Require().Empty(reconciledChart.Status.Error, "Chart should not have error after successful reconciliation")
+
+	// Cleanup
+	as.T().Logf("Cleaning up secret-based auth test - deleting Chart")
+	as.Require().NoError(chartClient.Delete(ctx, chart))
+
+	// Wait for chart to be deleted
+	as.T().Logf("Expecting chart %s/%s to be deleted", chart.Namespace, chart.Name)
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+		var found helmv1beta1.Chart
+		err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
+		if apierrors.IsNotFound(err) {
+			as.T().Log("Chart has been deleted")
+			return true, nil
+		}
+		if err != nil {
+			as.T().Log("Error while getting chart: ", err)
+		}
+		return false, nil
+	}))
+}
+
+func (as *AddonsSuite) waitForChartError(addonName, expectedError string) {
+	ctx := as.Context()
+	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+
+	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
+	as.Require().NoError(err)
+	var chart helmv1beta1.Chart
+	var lastResourceVersion string
+	pollCount := 0
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
+		pollCount++
+		err = chartClient.Get(pollCtx, client.ObjectKey{
+			Namespace: metav1.NamespaceSystem,
+			Name:      "k0s-addon-chart-" + addonName,
+		}, &chart)
+		if err != nil {
+			if ctxErr := context.Cause(ctx); ctxErr != nil {
+				return false, errors.Join(err, ctxErr)
+			}
+			as.T().Log("Error while querying for chart:", err)
+			return false, nil
+		}
+		if lastResourceVersion != "" && lastResourceVersion == chart.ResourceVersion {
+			if pollCount%5 == 0 {
+				as.T().Logf("Still waiting for chart error (poll %d, version %q unchanged)", pollCount, lastResourceVersion)
+			}
+			return false, nil // That version has already been inspected.
+		}
+
+		lastResourceVersion = chart.ResourceVersion
+
+		if chart.Status.Error == "" {
+			as.T().Logf("Chart doesn't have error yet (poll %d, version %q)", pollCount, lastResourceVersion)
+			return false, nil
+		}
+
+		if !strings.Contains(chart.Status.Error, expectedError) {
+			as.T().Logf("Chart error doesn't match expected (version %q): got %q, want substring %q",
+				lastResourceVersion, chart.Status.Error, expectedError)
+			return false, nil
+		}
+
+		as.T().Logf("Found chart with expected error (version %q): %s", lastResourceVersion, chart.Status.Error)
+		return true, nil
+	}))
 }
 
 func (as *AddonsSuite) deleteRelease(chart *helmv1beta1.Chart) {
@@ -203,7 +438,7 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 	spec := helmv1beta1.ChartSpec{
 		ChartName:   "whatever",
 		ReleaseName: "nonexistent",
-		Namespace:   "default",
+		Namespace:   metav1.NamespaceDefault,
 		Version:     "1",
 	}
 	status := helmv1beta1.ChartStatus{
@@ -217,7 +452,7 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 	chart := &helmv1beta1.Chart{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bogus",
-			Namespace:  "kube-system",
+			Namespace:  metav1.NamespaceSystem,
 			Finalizers: []string{"helm.k0sproject.io/uninstall-helm-release"},
 		},
 	}
@@ -293,7 +528,7 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 	var lastResourceVersion string
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		err = chartClient.Get(pollCtx, client.ObjectKey{
-			Namespace: "kube-system",
+			Namespace: metav1.NamespaceSystem,
 			Name:      "k0s-addon-chart-" + addonName,
 		}, &chart)
 		if err != nil {
@@ -348,7 +583,7 @@ func (as *AddonsSuite) checkCustomValues(releaseName string) error {
 	}
 	return wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		serverDeployment := releaseName + "-echo-server"
-		d, err := kc.AppsV1().Deployments("default").Get(pollCtx, serverDeployment, metav1.GetOptions{})
+		d, err := kc.AppsV1().Deployments(metav1.NamespaceDefault).Get(pollCtx, serverDeployment, metav1.GetOptions{})
 		if err != nil {
 			if ctxErr := context.Cause(ctx); ctxErr != nil {
 				return false, errors.Join(err, ctxErr)
@@ -362,7 +597,7 @@ func (as *AddonsSuite) checkCustomValues(releaseName string) error {
 	})
 }
 
-func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]interface{}) {
+func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]any) {
 	path := fmt.Sprintf("/var/lib/k0s/manifests/helm/0_helm_extension_%s.yaml", addonName)
 	valuesBytes, err := yaml.Marshal(values)
 	as.Require().NoError(err)
@@ -381,7 +616,7 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]int
 			ChartName:    "ealenn/echo-server",
 			Values:       string(valuesBytes),
 			Version:      "0.5.0",
-			TargetNS:     "default",
+			TargetNS:     metav1.NamespaceDefault,
 			ForceUpgrade: ptr.To(false),
 		},
 	}
@@ -392,33 +627,53 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]int
 }
 
 func TestAddonsSuite(t *testing.T) {
+	registryTLSDir := path.Join(t.TempDir(), "registry-tls")
+	require.NoError(t, os.MkdirAll(registryTLSDir, 0755))
 
 	s := AddonsSuite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
+			WithRegistry:    true,
+			RegistryTLSPath: registryTLSDir,
 		},
+		registryCABytes: issueServerCertsWithSelfSignedCA(t, registryTLSDir),
 	}
 
 	suite.Run(t, &s)
-
 }
 
-const k0sConfigWithAddon = `
+type k0sConfigParams struct {
+	BasicAddonName string
+
+	LocalRegistryCAPath string
+	LocalRegistryHost   string
+	LocalRegistryPort   int
+}
+
+const k0sConfigWithAddonRawTemplate = `
 spec:
     extensions:
         helm:
           repositories:
           - name: ealenn
             url: https://ealenn.github.io/charts
+          - name: self-signed-oci
+            url: oci://{{ .LocalRegistryHost }}:{{ .LocalRegistryPort }}
+            caFile: {{ .LocalRegistryCAPath }}
           charts:
-          - name: %s
+          - name: {{ .BasicAddonName }}
             chartname: ealenn/echo-server
             version: "0.3.1"
             values: ""
             namespace: default
           - name: oci-addon
             chartname: oci://ghcr.io/makhov/k0s-charts/echo-server
+            version: "0.5.0"
+            values: ""
+            namespace: default
+          - name: self-signed-oci-addon
+            chartname: oci://{{ .LocalRegistryHost }}:{{ .LocalRegistryPort }}/charts/echo-server
             version: "0.5.0"
             values: ""
             namespace: default
@@ -430,6 +685,8 @@ spec:
             forceUpgrade: false
 `
 
+var k0sConfigWithAddonTemplate = template.Must(template.New("k0sConfigWithAddon").Parse(k0sConfigWithAddonRawTemplate))
+
 // TODO: this actually duplicates logic from the controller code
 // better to somehow handle it by programmatic api
 const chartCrdTemplate = `
@@ -437,7 +694,7 @@ apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:
   name: k0s-addon-chart-{{ .Name }}
-  namespace: "kube-system"
+  namespace: ` + metav1.NamespaceSystem + `
   finalizers:
     - helm.k0sproject.io/uninstall-helm-release 
 spec:

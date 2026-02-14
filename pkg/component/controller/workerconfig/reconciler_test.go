@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package workerconfig
 
@@ -32,6 +19,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kube "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,6 +39,8 @@ import (
 
 type kubeletConfig = kubeletv1beta1.KubeletConfiguration
 
+type mockApplierCall = func(resources) error
+
 // TODO: simplify it somehow, it is hard to read and to modify, both tests and implementation
 func TestReconciler_Lifecycle(t *testing.T) {
 	createdReconciler := func(t *testing.T, clients kube.ClientFactoryInterface) *Reconciler {
@@ -69,6 +59,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 			clients,
 			&leaderelector.Dummy{Leader: true},
 			true,
+			false,
 		)
 		require.NoError(t, err)
 		underTest.log = newTestLogger(t)
@@ -324,6 +315,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		clients,
 		&leaderelector.Dummy{Leader: true},
 		true,
+		false,
 	)
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
@@ -363,6 +355,16 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 			},
 			Images: &v1beta1.ClusterImages{
 				DefaultPullPolicy: string(corev1.PullNever),
+				Pause: &v1beta1.ImageSpec{
+					Image:   "pause",
+					Version: "pause-version",
+				},
+				Windows: &v1beta1.WindowsImageSpec{
+					Pause: &v1beta1.ImageSpec{
+						Image:   "win-pause",
+						Version: "win-pause-version",
+					},
+				},
 			},
 			WorkerProfiles: v1beta1.WorkerProfiles{{
 				Name:   "profile_XXX",
@@ -378,28 +380,28 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 	}))
 
 	expectedConfigMaps := map[string]func(expected *kubeletConfig){
-		"worker-config-default-1.33": func(expected *kubeletConfig) {
+		"worker-config-default-1.35": func(expected *kubeletConfig) {
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-default-windows-1.33": func(expected *kubeletConfig) {
+		"worker-config-default-windows-1.35": func(expected *kubeletConfig) {
 			expected.CgroupsPerQOS = ptr.To(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 			expected.KubeletCgroups = ""
 			expected.KubeReservedCgroup = ""
 		},
 
-		"worker-config-profile_XXX-1.33": func(expected *kubeletConfig) {
+		"worker-config-profile_XXX-1.35": func(expected *kubeletConfig) {
 			expected.Authentication.Anonymous.Enabled = ptr.To(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_YYY-1.33": func(expected *kubeletConfig) {
+		"worker-config-profile_YYY-1.35": func(expected *kubeletConfig) {
 			expected.Authentication.Webhook.CacheTTL = metav1.Duration{Duration: 15 * time.Second}
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_ZZZ-1.33": func(expected *kubeletConfig) {
+		"worker-config-profile_ZZZ-1.35": func(expected *kubeletConfig) {
 			expected.CgroupsPerQOS = ptr.To(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 			expected.KubeletCgroups = ""
@@ -412,7 +414,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 
 	for name, configModFn := range expectedConfigMaps {
 		t.Run(name, func(t *testing.T) {
-			kubelet := requireKubelet(t, appliedResources, name)
+			kubelet := requireWorkerProfile(t, appliedResources, name)
 			expected := makeKubeletConfig(t, configModFn)
 			assert.JSONEq(t, expected, kubelet)
 		})
@@ -497,6 +499,7 @@ func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 		clients,
 		&leaderelector.Dummy{Leader: true},
 		true,
+		false,
 	)
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
@@ -647,6 +650,7 @@ func TestReconciler_LeaderElection(t *testing.T) {
 		clients,
 		&le,
 		true,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -728,12 +732,22 @@ func newTestLogger(t *testing.T) logrus.FieldLogger {
 	return log.WithField("test", t.Name())
 }
 
-func requireKubelet(t *testing.T, resources []*unstructured.Unstructured, name string) string {
+func requireWorkerProfile(t *testing.T, resources []*unstructured.Unstructured, name string) string {
 	configMap := findResource(t, "No ConfigMap found with name "+name,
 		resources, func(resource *unstructured.Unstructured) bool {
 			return resource.GetKind() == "ConfigMap" && resource.GetName() == name
 		},
 	)
+
+	pauseImage, ok, err := unstructured.NestedString(configMap.Object, "data", "pauseImage")
+	require.NoError(t, err)
+	require.True(t, ok, "No data.pauseImage field")
+	if strings.Contains(name, "windows") {
+		require.JSONEq(t, `{"image":"win-pause","version":"win-pause-version"}`, pauseImage)
+	} else {
+		require.JSONEq(t, `{"image":"pause","version":"pause-version"}`, pauseImage)
+	}
+
 	kubeletConfigYAML, ok, err := unstructured.NestedString(configMap.Object, "data", "kubeletConfiguration")
 	require.NoError(t, err)
 	require.True(t, ok, "No data.kubeletConfiguration field")
@@ -791,8 +805,6 @@ func makeKubeletConfig(t *testing.T, mods ...func(*kubeletConfig)) string {
 type mockApplier struct {
 	ptr atomic.Pointer[[]mockApplierCall]
 }
-
-type mockApplierCall = func(resources) error
 
 func (m *mockApplier) expectApply(t *testing.T, retval error) func() resources {
 	ch := make(chan resources, 1)
@@ -883,7 +895,7 @@ func createKubernetesEndpoints(t *testing.T, clients kubernetes.Interface) {
 		}},
 	}
 
-	_, err := clients.CoreV1().Endpoints("default").Create(t.Context(), &ep, metav1.CreateOptions{})
+	_, err := clients.CoreV1().Endpoints(metav1.NamespaceDefault).Create(t.Context(), &ep, metav1.CreateOptions{})
 	require.NoError(t, err)
 }
 
@@ -926,5 +938,9 @@ func (e *mockLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 }
 
 func (e *mockLeaderElector) AddLostLeaseCallback(func()) {
+	panic("not expected to be called in tests")
+}
+
+func (e *mockLeaderElector) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
 	panic("not expected to be called in tests")
 }

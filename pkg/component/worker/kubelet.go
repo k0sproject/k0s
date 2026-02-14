@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package worker
 
@@ -40,7 +27,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
+	cliflag "k8s.io/component-base/cli/flag"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
+	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
@@ -57,33 +46,25 @@ type Kubelet struct {
 	StaticPods          StaticPods
 	LogLevel            string
 	ClusterDNS          string
-	Labels              []string
+	Labels              map[string]string
 	Taints              []string
 	ExtraArgs           stringmap.StringMap
 	DualStackEnabled    bool
 
-	configPath string
-	supervisor supervisor.Supervisor
+	configPath     string
+	supervisor     *supervisor.Supervisor
+	executablePath string
 }
 
 var _ manager.Component = (*Kubelet)(nil)
 
 // Init extracts the needed binaries
-func (k *Kubelet) Init(_ context.Context) error {
-
-	if runtime.GOOS == "windows" {
-		err := assets.Stage(k.K0sVars.BinDir, "kubelet.exe")
+func (k *Kubelet) Init(_ context.Context) (err error) {
+	if k.executablePath, err = assets.StageExecutable(k.K0sVars.BinDir, "kubelet"); err != nil {
 		return err
 	}
 
-	if runtime.GOOS == "linux" {
-		if err := assets.Stage(k.K0sVars.BinDir, "kubelet"); err != nil {
-			return err
-		}
-	}
-
-	err := dir.Init(k.K0sVars.KubeletRootDir, constant.DataDirMode)
-	if err != nil {
+	if err = dir.Init(k.K0sVars.KubeletRootDir, constant.DataDirMode); err != nil {
 		return fmt.Errorf("failed to create %s: %w", k.K0sVars.KubeletRootDir, err)
 	}
 
@@ -96,8 +77,8 @@ func (k *Kubelet) Init(_ context.Context) error {
 	return nil
 }
 
-func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.IP, ipv6 net.IP, _ error) {
-	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(nodeName))
+func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ error) {
+	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(k.NodeName))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,46 +99,45 @@ func lookupNodeName(ctx context.Context, nodeName apitypes.NodeName) (ipv4 net.I
 
 // Run runs kubelet
 func (k *Kubelet) Start(ctx context.Context) error {
-	cmd := "kubelet"
-
-	if runtime.GOOS == "windows" {
-		cmd = "kubelet.exe"
-	}
-
 	logrus.Info("Starting kubelet")
 	args := stringmap.StringMap{
-		"--root-dir":        k.K0sVars.KubeletRootDir,
-		"--config":          k.configPath,
-		"--kubeconfig":      k.Kubeconfig,
-		"--v":               k.LogLevel,
-		"--runtime-cgroups": "/system.slice/containerd.service",
-		"--cert-dir":        filepath.Join(k.K0sVars.KubeletRootDir, "pki"),
+		"--root-dir":   k.K0sVars.KubeletRootDir,
+		"--config":     k.configPath,
+		"--kubeconfig": k.Kubeconfig,
+		"--v":          k.LogLevel,
+		"--cert-dir":   filepath.Join(k.K0sVars.KubeletRootDir, "pki"),
 	}
 
 	if len(k.Labels) > 0 {
-		args["--node-labels"] = strings.Join(k.Labels, ",")
+		args["--node-labels"] = ((*cliflag.ConfigurationMap)(&k.Labels)).String()
 	}
 
 	if k.DualStackEnabled && k.ExtraArgs["--node-ip"] == "" {
 		// Kubelet uses a DNS lookup of the node name to figure out the node IP,
 		// but will only pick one for a single family. Do something similar as
 		// kubelet, but for both IPv4 and IPv6.
-		// https://github.com/kubernetes/kubernetes/blob/v1.33.1/pkg/kubelet/nodestatus/setters.go#L207-L235
-		ipv4, ipv6, err := lookupNodeName(ctx, k.NodeName)
-		if err != nil {
-			logrus.WithError(err).Errorf("failed to lookup %q", k.NodeName)
-		} else if ipv4 != nil && ipv6 != nil {
-			// The kubelet will perform some extra validations on the discovered IP
-			// addresses in the private function k8s.io/kubernetes/pkg/kubelet.validateNodeIP
-			// which won't be replicated here.
-			args["--node-ip"] = ipv4.String() + "," + ipv6.String()
+		// https://github.com/kubernetes/kubernetes/blob/v1.35.1/pkg/kubelet/nodestatus/setters.go#L151-L179
+		ipv4, ipv6, err := k.lookupNodeName(ctx)
+		if err == nil && (ipv4 == nil || ipv6 == nil) {
+			err = fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
 		}
+		if err != nil {
+			return fmt.Errorf("failed to detect node IPs for %q: %w", k.NodeName, err)
+		}
+
+		// The kubelet will perform some extra validations on the discovered IP
+		// addresses in the private function k8s.io/kubernetes/pkg/kubelet.validateNodeIP
+		// which won't be replicated here.
+		args["--node-ip"] = ipv4.String() + "," + ipv6.String()
 	}
 
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "linux":
+		args["--runtime-cgroups"] = "/system.slice/containerd.service"
+
+	case "windows":
 		args["--enforce-node-allocatable"] = ""
 		args["--hairpin-mode"] = "promiscuous-bridge"
-		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
 	}
 
 	if k.CRISocket == "" && runtime.GOOS != "windows" {
@@ -179,9 +159,9 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	args["--hostname-override"] = string(k.NodeName)
 
 	logrus.Debugf("starting kubelet with args: %v", args)
-	k.supervisor = supervisor.Supervisor{
-		Name:    cmd,
-		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
+	k.supervisor = &supervisor.Supervisor{
+		Name:    "kubelet",
+		BinPath: k.executablePath,
 		RunDir:  k.K0sVars.RunDir,
 		DataDir: k.K0sVars.DataDir,
 		Args:    args.ToArgs(),
@@ -191,12 +171,14 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		return err
 	}
 
-	return k.supervisor.Supervise()
+	return k.supervisor.Supervise(ctx)
 }
 
 // Stop stops kubelet
 func (k *Kubelet) Stop() error {
-	k.supervisor.Stop()
+	if k.supervisor != nil {
+		return k.supervisor.Stop()
+	}
 	return nil
 }
 
@@ -245,7 +227,7 @@ func (k *Kubelet) writeKubeletConfig() error {
 		return fmt.Errorf("can't marshal kubelet config: %w", err)
 	}
 
-	err = file.WriteContentAtomically(k.configPath, configBytes, 0644)
+	err = file.WriteContentAtomically(k.configPath, configBytes, constant.OwnerOnlyMode)
 	if err != nil {
 		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}
@@ -332,7 +314,8 @@ func determineKubeletResolvConfPath() *string {
 
 	switch runtime.GOOS {
 	case "windows":
-		return nil
+		// https://github.com/kubernetes/kubernetes/issues/116782#issuecomment-1477536396
+		return ptr.To("")
 
 	case "linux":
 		// https://www.freedesktop.org/software/systemd/man/systemd-resolved.service.html#/etc/resolv.conf

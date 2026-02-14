@@ -1,16 +1,5 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package discovery
 
@@ -35,17 +24,17 @@ import (
 // TestDiscover covers the scenarios of turning target objects into matching status objects,
 // with proper status.
 func TestDiscover(t *testing.T) {
-	alwaysExists := func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-		return true, nil
+	alwaysFound := func(name string) (SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
+		return SignalObjectFilterResultFound, nil
 	}
 
-	alwaysExistsExceptFor := func(exception string) SignalObjectExistsFunc {
-		return func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
+	alwaysExistsExceptFor := func(exception string) SignalObjectFilterFunc {
+		return func(name string) (SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
 			if name == exception {
-				return false, &appc.SignalMissingNode
+				return SignalObjectFilterResultMissing, &appc.SignalMissingNode
 			}
 
-			return true, nil
+			return SignalObjectFilterResultFound, nil
 		}
 	}
 
@@ -54,7 +43,7 @@ func TestDiscover(t *testing.T) {
 		target                  apv1beta2.PlanCommandTarget
 		delegate                apdel.ControllerDelegate
 		objects                 []crcli.Object
-		exists                  SignalObjectExistsFunc
+		filter                  SignalObjectFilterFunc
 		expectedStatusNodes     []apv1beta2.PlanCommandTargetStatus
 		expectedAllAccountedFor bool
 	}{
@@ -69,7 +58,7 @@ func TestDiscover(t *testing.T) {
 			},
 			apdel.ControlNodeControllerDelegate(),
 			[]crcli.Object{},
-			alwaysExists,
+			alwaysFound,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
@@ -115,8 +104,8 @@ func TestDiscover(t *testing.T) {
 					},
 				},
 			},
-			alwaysExists,
-			[]apv1beta2.PlanCommandTargetStatus{},
+			alwaysFound,
+			nil,
 			true,
 		},
 		{
@@ -152,7 +141,7 @@ func TestDiscover(t *testing.T) {
 					},
 				},
 			},
-			alwaysExists,
+			alwaysFound,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
 			},
@@ -189,7 +178,7 @@ func TestDiscover(t *testing.T) {
 					},
 				},
 			},
-			alwaysExists,
+			alwaysFound,
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("controller1", appc.SignalPending),
@@ -211,8 +200,8 @@ func TestDiscover(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
 
-			statusNodes, allAccountedFor := DiscoverNodes(t.Context(), client, &test.target, test.delegate, test.exists)
-			assert.True(t, cmp.Equal(test.expectedStatusNodes, statusNodes, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
+			statusNodes, allAccountedFor := DiscoverNodes(t.Context(), client, &test.target, test.delegate, test.filter)
+			assert.Empty(t, cmp.Diff(test.expectedStatusNodes, statusNodes, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
 			assert.Equal(t, test.expectedAllAccountedFor, allAccountedFor)
 		})
 	}

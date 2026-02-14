@@ -1,33 +1,31 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package config
 
 import (
+	"github.com/k0sproject/k0s/pkg/featuregate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 func NewConfigCmd() *cobra.Command {
+	var featureGates featuregate.FeatureGates
+
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Configuration related sub-commands",
 		Args:  cobra.NoArgs,
 		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if !cmd.Flags().Changed("feature-gates") {
+				return featureGates.Set("")
+			}
+			return nil
+		},
 	}
+
+	cmd.PersistentFlags().Var(&featureGates, "feature-gates", "feature gates to enable (comma separated list of key=value pairs)")
 
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewEditCmd())

@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -32,7 +19,7 @@ import (
 type K0SControlAPI struct {
 	RuntimeConfig *config.RuntimeConfig
 
-	supervisor supervisor.Supervisor
+	supervisor *supervisor.Supervisor
 }
 
 var _ manager.Component = (*K0SControlAPI)(nil)
@@ -44,7 +31,7 @@ func (m *K0SControlAPI) Init(_ context.Context) error {
 }
 
 // Run runs k0s control api as separate process
-func (m *K0SControlAPI) Start(_ context.Context) error {
+func (m *K0SControlAPI) Start(ctx context.Context) error {
 	// TODO: Make the api process to use some other user
 
 	selfExe, err := os.Executable()
@@ -57,7 +44,7 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 		return err
 	}
 
-	m.supervisor = supervisor.Supervisor{
+	m.supervisor = &supervisor.Supervisor{
 		Name:    "k0s-control-api",
 		BinPath: selfExe,
 		RunDir:  m.RuntimeConfig.Spec.K0sVars.RunDir,
@@ -66,11 +53,13 @@ func (m *K0SControlAPI) Start(_ context.Context) error {
 		Stdin:   func() io.Reader { return bytes.NewReader(runtimeConfig) },
 	}
 
-	return m.supervisor.Supervise()
+	return m.supervisor.Supervise(ctx)
 }
 
 // Stop stops k0s api
 func (m *K0SControlAPI) Stop() error {
-	m.supervisor.Stop()
+	if m.supervisor != nil {
+		return m.supervisor.Stop()
+	}
 	return nil
 }

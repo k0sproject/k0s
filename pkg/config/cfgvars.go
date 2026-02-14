@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package config
 
@@ -24,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/spf13/pflag"
 
@@ -151,6 +139,20 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		runDir = filepath.Join(dataDir, "run")
 	}
 
+	var statusSocketPath string
+	if cobraCmd != nil {
+		if val, err := cobraCmd.Flags().GetString("status-socket"); err == nil {
+			statusSocketPath = val
+		}
+	}
+	if statusSocketPath == "" {
+		if runtime.GOOS == "windows" {
+			statusSocketPath = constant.StatusSocketPathDefault
+		} else {
+			statusSocketPath = filepath.Join(runDir, "status.sock")
+		}
+	}
+
 	certDir := filepath.Join(dataDir, "pki")
 	helmHome := filepath.Join(dataDir, "helmhome")
 
@@ -176,7 +178,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		RunDir:                     runDir,
 		KonnectivityKubeConfigPath: filepath.Join(certDir, "konnectivity.conf"),
 		RuntimeConfigPath:          filepath.Join(runDir, "k0s.yaml"),
-		StatusSocketPath:           filepath.Join(runDir, "status.sock"),
+		StatusSocketPath:           statusSocketPath,
 		StartupConfigPath:          constant.K0sConfigPathDefault,
 
 		// Helm Config

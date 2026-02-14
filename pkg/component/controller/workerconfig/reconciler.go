@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package workerconfig
 
@@ -67,6 +54,7 @@ type Reconciler struct {
 	clientFactory       kubeutil.ClientFactoryInterface
 	leaderElector       leaderelector.Interface
 	konnectivityEnabled bool
+	autopilotDisabled   bool
 
 	mu    sync.Mutex
 	state reconcilerState
@@ -95,7 +83,7 @@ var (
 )
 
 // NewReconciler creates a new reconciler for worker configurations.
-func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled bool) (*Reconciler, error) {
+func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled, autopilotDisabled bool) (*Reconciler, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "workerconfig.Reconciler"})
 
 	clusterDNSIPString, err := nodeSpec.Network.DNSAddress()
@@ -115,6 +103,7 @@ func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clien
 		clientFactory:       clientFactory,
 		leaderElector:       leaderElector,
 		konnectivityEnabled: konnectivityEnabled,
+		autopilotDisabled:   autopilotDisabled,
 
 		state: reconcilerCreated,
 	}
@@ -390,7 +379,7 @@ func (r *Reconciler) reconcileAPIServers(ctx context.Context, updates chan<- upd
 		return err
 	}
 
-	return watch.Endpoints(client.CoreV1().Endpoints("default")).
+	return watch.Endpoints(client.CoreV1().Endpoints(metav1.NamespaceDefault)).
 		WithObjectName("kubernetes").
 		Until(ctx, func(endpoints *corev1.Endpoints) (bool, error) {
 			apiServers, err := extractAPIServerAddresses(endpoints)
@@ -507,6 +496,7 @@ func (r *Reconciler) buildConfigMaps(snapshot *snapshot) ([]*corev1.ConfigMap, e
 	workerProfiles["default"] = workerProfile
 
 	workerProfile = r.buildProfile(snapshot)
+	workerProfile.PauseImage = snapshot.pauseWindowsImage.DeepCopy()
 	workerProfile.KubeletConfiguration.CgroupsPerQOS = ptr.To(false)
 	workerProfile.KubeletConfiguration.KubeReservedCgroup = ""
 	workerProfile.KubeletConfiguration.KubeletCgroups = ""
@@ -546,7 +536,7 @@ func buildRBACResources(configMaps []*corev1.ConfigMap) []resource {
 
 	meta := metav1.ObjectMeta{
 		Name:      fmt.Sprintf("system:bootstrappers:%s-%s", constant.WorkerConfigComponentName, constant.KubernetesMajorMinorVersion),
-		Namespace: "kube-system",
+		Namespace: metav1.NamespaceSystem,
 		Labels:    applier.CommonLabels(constant.WorkerConfigComponentName),
 	}
 
@@ -614,7 +604,8 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			Enabled:   r.konnectivityEnabled,
 			AgentPort: snapshot.konnectivityAgentPort,
 		},
-		DualStackEnabled: snapshot.dualStackEnabled,
+		DualStackEnabled:  snapshot.dualStackEnabled,
+		AutopilotDisabled: r.autopilotDisabled,
 	}
 
 	if workerProfile.NodeLocalLoadBalancing != nil &&
@@ -635,7 +626,7 @@ func toConfigMap(profileName string, profile *workerconfig.Profile) (*corev1.Con
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s-%s", constant.WorkerConfigComponentName, profileName, constant.KubernetesMajorMinorVersion),
-			Namespace: "kube-system",
+			Namespace: metav1.NamespaceSystem,
 			Labels: applier.
 				CommonLabels(constant.WorkerConfigComponentName).
 				With("k0s.k0sproject.io/worker-profile", profileName),

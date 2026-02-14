@@ -1,16 +1,5 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package kubeletcertrotate
 
@@ -24,7 +13,8 @@ import (
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
-	"github.com/k0sproject/k0s/pkg/component/status"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
@@ -34,10 +24,6 @@ import (
 
 type kubeletCertRotateSuite struct {
 	common.BootlooseSuite
-}
-
-type statusJSON struct {
-	WorkerToAPIConnectionStatus status.ProbeStatus
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -78,9 +64,12 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	s.Require().NoError(err)
 	output, err := workerSSH.ExecWithOutput(s.Context(), "k0s status -ojson")
 	s.Require().NoError(err)
-	status := statusJSON{}
+	var status map[string]any
 	s.Require().NoError(json.Unmarshal([]byte(output), &status))
-	s.Require().True(status.WorkerToAPIConnectionStatus.Success)
+	success, found, err := unstructured.NestedBool(status, "WorkerToAPIConnectionStatus", "Success")
+	s.Require().NoError(err)
+	s.Require().True(found)
+	s.Require().True(success)
 	s.TestApply()
 }
 

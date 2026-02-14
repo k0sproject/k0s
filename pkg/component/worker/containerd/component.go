@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package containerd
 
@@ -25,10 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
@@ -39,7 +25,6 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -55,39 +40,29 @@ const containerdTomlHeader = `# k0s_managed=true
 # If you wish to override the config, remove the first line and replace this file with your custom configuration.
 # For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
 `
-const confPathPosix = "/etc/k0s/containerd.toml"
-const confPathWindows = "C:\\Program Files\\containerd\\config.toml"
-
-const importsPathPosix = "/etc/k0s/containerd.d/"
-const importsPathWindows = "C:\\etc\\k0s\\containerd.d\\"
 
 // Component implements the component interface to manage containerd as a k0s component.
 type Component struct {
-	supervisor    supervisor.Supervisor
 	LogLevel      string
 	K0sVars       *config.CfgVars
 	Profile       *workerconfig.Profile
-	binaries      []string
 	OCIBundlePath string
-	confPath      string
-	importsPath   string
+
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	confPath       string
+	importsPath    string
+
+	stop func() error
 }
 
 func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
 	c := &Component{
-		LogLevel: logLevel,
-		K0sVars:  vars,
-		Profile:  profile,
-	}
-
-	if runtime.GOOS == "windows" {
-		c.binaries = []string{"containerd.exe", "containerd-shim-runhcs-v1.exe"}
-		c.confPath = confPathWindows
-		c.importsPath = importsPathWindows
-	} else {
-		c.binaries = []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"}
-		c.confPath = confPathPosix
-		c.importsPath = importsPathPosix
+		LogLevel:    logLevel,
+		K0sVars:     vars,
+		Profile:     profile,
+		confPath:    defaultConfPath,
+		importsPath: defaultImportsPath,
 	}
 	return c
 }
@@ -97,19 +72,14 @@ var _ manager.Component = (*Component)(nil)
 // Init extracts the needed binaries
 func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
-	for _, bin := range c.binaries {
+
+	g.Go(func() (err error) {
+		c.executablePath, err = stageExecutable(c.K0sVars.BinDir, "containerd")
+		return err
+	})
+	for _, bin := range additionalExecutableNames {
 		g.Go(func() error {
-			err := assets.Stage(c.K0sVars.BinDir, bin)
-			// Simply ignore the "running executable" problem on Windows for
-			// now. Whenever there's a permission error on Windows and the
-			// target file exists, log the error and continue.
-			if err != nil &&
-				runtime.GOOS == "windows" &&
-				errors.Is(err, os.ErrPermission) &&
-				file.Exists(filepath.Join(c.K0sVars.BinDir, bin)) {
-				logrus.WithField("component", "containerd").WithError(err).Error("Failed to replace ", bin)
-				return nil
-			}
+			_, err := stageExecutable(c.K0sVars.BinDir, bin)
 			return err
 		})
 	}
@@ -117,25 +87,11 @@ func (c *Component) Init(ctx context.Context) error {
 		return err
 	}
 
-	if err := c.windowsInit(); err != nil {
-		return fmt.Errorf("windows init failed: %w", err)
-	}
-
 	return nil
 }
 
-func (c *Component) windowsInit() error {
-	if runtime.GOOS != "windows" {
-		return nil
-	}
-	// On windows we need always run containerd.exe as a service
-	// https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/#troubleshooting-hostprocess-containers
-	command := fmt.Sprintf("if (-not (Get-Service -Name containerd -ErrorAction SilentlyContinue)) { %s\\containerd.exe --register-service}", c.K0sVars.BinDir)
-	return winExecute(command)
-}
-
 // Run runs containerd.
-func (c *Component) Start(ctx context.Context) error {
+func (c *Component) Start(ctx context.Context) (err error) {
 	log := logrus.WithField("component", "containerd")
 	log.Info("Starting containerd")
 
@@ -143,46 +99,54 @@ func (c *Component) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to setup containerd config: %w", err)
 	}
 
-	var runtimeEndpoint *url.URL
-
-	if runtime.GOOS == "windows" {
-		if err := c.windowsStart(ctx); err != nil {
-			return fmt.Errorf("failed to start windows server: %w", err)
-		}
-
-		runtimeEndpoint = &url.URL{Scheme: "npipe", Path: "//./pipe/containerd-containerd"}
-	} else {
-		socketPath := filepath.Join(c.K0sVars.RunDir, "containerd.sock")
-
-		c.supervisor = supervisor.Supervisor{
-			Name:    "containerd",
-			BinPath: assets.BinPath("containerd", c.K0sVars.BinDir),
-			RunDir:  c.K0sVars.RunDir,
-			DataDir: c.K0sVars.DataDir,
-			Args: []string{
-				"--root=" + filepath.Join(c.K0sVars.DataDir, "containerd"),
-				"--state=" + filepath.Join(c.K0sVars.RunDir, "containerd"),
-				"--address=" + socketPath,
-				"--log-level=" + c.LogLevel,
-				"--config=" + c.confPath,
-			},
-		}
-
-		if err := c.supervisor.Supervise(); err != nil {
-			return err
-		}
-
-		runtimeEndpoint = &url.URL{Scheme: "unix", Path: socketPath}
+	c.supervisor = &supervisor.Supervisor{
+		Name:    "containerd",
+		BinPath: c.executablePath,
+		RunDir:  c.K0sVars.RunDir,
+		DataDir: c.K0sVars.DataDir,
+		Args: []string{
+			"--root=" + filepath.Join(c.K0sVars.DataDir, "containerd"),
+			"--state=" + filepath.Join(c.K0sVars.RunDir, "containerd"),
+			"--address=" + Address(c.K0sVars.RunDir),
+			"--log-level=" + c.LogLevel,
+			"--config=" + c.confPath,
+		},
 	}
 
-	go c.watchDropinConfigs(ctx)
+	if err := c.supervisor.Supervise(ctx); err != nil {
+		return err
+	}
+
+	cctx, cancel := context.WithCancelCause(context.Background())
+	var wg sync.WaitGroup
+	stop := func() error {
+		cancel(errors.New("containerd component is stopping"))
+		err := c.supervisor.Stop()
+		wg.Wait()
+		return err
+	}
+
+	defer func() {
+		if err == nil {
+			c.stop = stop
+		} else {
+			err = errors.Join(err, stop())
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wait.UntilWithContext(cctx, c.watchDropinConfigs, 30*time.Second)
+		log.Info("Stopped to watch for drop-ins")
+	}()
 
 	log.Debug("Waiting for containerd")
 	var lastErr error
-	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+	err = wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Duration: 100 * time.Millisecond, Factor: 1.2, Jitter: 0.05, Steps: 30,
 	}, func(ctx context.Context) (bool, error) {
-		rt := containerruntime.NewContainerRuntime(runtimeEndpoint)
+		rt := containerruntime.NewContainerRuntime(Endpoint(c.K0sVars.RunDir))
 		if lastErr = rt.Ping(ctx); lastErr != nil {
 			log.WithError(lastErr).Debug("Failed to ping containerd")
 			return false, nil
@@ -199,20 +163,6 @@ func (c *Component) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to ping containerd: %w (%w)", err, lastErr)
 	}
 
-	return nil
-}
-
-func (c *Component) windowsStart(_ context.Context) error {
-	if err := winExecute("Start-Service containerd"); err != nil {
-		return fmt.Errorf("failed to start Windows Service %q: %w", "containerd", err)
-	}
-	return nil
-}
-
-func (c *Component) windowsStop() error {
-	if err := winExecute("Stop-Service containerd"); err != nil {
-		return fmt.Errorf("failed to stop Windows Service %q: %w", "containerd", err)
-	}
 	return nil
 }
 
@@ -302,7 +252,7 @@ func (c *Component) watchDropinConfigs(ctx context.Context) {
 				return false
 			}
 		},
-		Callback: func(fsnotify.Event) { c.restart() },
+		Callback: func(fsnotify.Event) { c.restart(ctx) },
 	}
 
 	// Consume and log any errors from watcher
@@ -324,7 +274,7 @@ func (c *Component) watchDropinConfigs(ctx context.Context) {
 	}
 }
 
-func (c *Component) restart() {
+func (c *Component) restart(ctx context.Context) {
 	log := logrus.WithFields(logrus.Fields{"component": "containerd", "phase": "restart"})
 
 	log.Info("restart requested")
@@ -332,31 +282,30 @@ func (c *Component) restart() {
 		log.WithError(err).Warn("failed to resolve config")
 		return
 	}
-	if runtime.GOOS == "windows" {
 
-		if err := c.windowsStop(); err != nil {
-			log.WithError(err).Warn("failed to stop windows service")
-			return
-		}
-		if err := c.windowsStart(context.Background()); err != nil {
-			log.WithError(err).Warn("failed to start windows service")
-			return
-		}
-	} else {
-		p := c.supervisor.GetProcess()
-		if err := p.Signal(syscall.SIGHUP); err != nil {
-			log.WithError(err).Warn("failed to send SIGHUP")
-		}
+	p := c.supervisor.GetProcess()
+	err := p.Signal(syscall.SIGHUP)
+	if err == nil {
+		return
+	}
+	if !errors.Is(err, errors.ErrUnsupported) {
+		log.WithError(err).Error("failed to send SIGHUP")
+	}
 
+	// Fall back to a full stop/start cycle
+	if err := c.supervisor.Stop(); err != nil {
+		log.WithError(err).Error("Failed to stop containerd")
+	}
+	if err := c.supervisor.Supervise(ctx); err != nil {
+		log.WithError(err).Error("Failed to restart containerd")
 	}
 }
 
 // Stop stops containerd.
 func (c *Component) Stop() error {
-	if runtime.GOOS == "windows" {
-		return c.windowsStop()
+	if stop := c.stop; stop != nil {
+		return stop()
 	}
-	c.supervisor.Stop()
 	return nil
 }
 

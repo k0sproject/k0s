@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller_test
 
@@ -21,6 +8,7 @@ import (
 	"errors"
 	"os"
 	"testing"
+	"testing/synctest"
 
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/testutil"
@@ -39,62 +27,70 @@ import (
 )
 
 func TestClusterConfigInitializer_Create(t *testing.T) {
-	clients := testutil.NewFakeClientFactory()
-	leaderElector := leaderelector.Dummy{Leader: true}
-	initialConfig := k0sv1beta1.DefaultClusterConfig()
-	initialConfig.ResourceVersion = "42"
+	synctest.Test(t, func(t *testing.T) {
+		clients := testutil.NewFakeClientFactory()
+		leaderElector := leaderelector.Dummy{Leader: true}
+		initialConfig := k0sv1beta1.DefaultClusterConfig()
+		initialConfig.ResourceVersion = "42"
 
-	underTest := controller.NewClusterConfigInitializer(
-		clients, &leaderElector, initialConfig.DeepCopy(),
-	)
+		underTest := controller.NewClusterConfigInitializer(
+			clients, &leaderElector, initialConfig.DeepCopy(),
+		)
 
-	require.NoError(t, underTest.Init(t.Context()))
-	require.NoError(t, underTest.Start(t.Context()))
-	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
+		require.NoError(t, underTest.Init(t.Context()))
+		require.NoError(t, underTest.Start(t.Context()))
+		t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
-	crds, err := clients.APIExtensionsClient.ApiextensionsV1().
-		CustomResourceDefinitions().
-		List(t.Context(), metav1.ListOptions{})
-	if assert.NoError(t, err) && assert.Len(t, crds.Items, 1) {
-		crd := crds.Items[0]
-		assert.Equal(t, "clusterconfigs.k0s.k0sproject.io", crd.Name)
-		assert.Equal(t, "api-config", crd.Labels["k0s.k0sproject.io/stack"])
-	}
-	actualConfig, err := clients.K0sClient.K0sV1beta1().
-		ClusterConfigs(constant.ClusterConfigNamespace).
-		Get(t.Context(), "k0s", metav1.GetOptions{})
-	if assert.NoError(t, err) {
-		assert.Equal(t, initialConfig, actualConfig)
-	}
+		synctest.Wait()
+
+		crds, err := clients.APIExtensionsClient.ApiextensionsV1().
+			CustomResourceDefinitions().
+			List(t.Context(), metav1.ListOptions{})
+		if assert.NoError(t, err) && assert.Len(t, crds.Items, 1) {
+			crd := crds.Items[0]
+			assert.Equal(t, "clusterconfigs.k0s.k0sproject.io", crd.Name)
+			assert.Equal(t, "api-config", crd.Labels["k0s.k0sproject.io/stack"])
+		}
+		actualConfig, err := clients.K0sClient.K0sV1beta1().
+			ClusterConfigs(constant.ClusterConfigNamespace).
+			Get(t.Context(), "k0s", metav1.GetOptions{})
+		if assert.NoError(t, err) {
+			assert.Equal(t, initialConfig, actualConfig)
+		}
+	})
 }
 
 func TestClusterConfigInitializer_NoConfig(t *testing.T) {
-	clients := testutil.NewFakeClientFactory()
-	leaderElector := leaderelector.Dummy{Leader: false}
-	initialConfig := k0sv1beta1.DefaultClusterConfig()
+	synctest.Test(t, func(t *testing.T) {
+		clients := testutil.NewFakeClientFactory()
+		leaderElector := leaderelector.Dummy{Leader: false}
+		initialConfig := k0sv1beta1.DefaultClusterConfig()
 
-	underTest := controller.NewClusterConfigInitializer(
-		clients, &leaderElector, initialConfig.DeepCopy(),
-	)
+		underTest := controller.NewClusterConfigInitializer(
+			clients, &leaderElector, initialConfig.DeepCopy(),
+		)
 
-	ctx, cancel := context.WithCancelCause(t.Context())
+		ctx, cancel := context.WithCancelCause(t.Context())
 
-	var gets uint
-	abortTest := errors.New("aborting test after some retries")
-	clients.K0sClient.PrependReactor("get", "clusterconfigs", func(action k8stesting.Action) (bool, runtime.Object, error) {
-		gets++ // Let's observe some retries, then cancel the context.
-		if gets > 1 {
-			cancel(abortTest)
-		}
-		return false, nil, nil
+		var gets uint
+		abortTest := errors.New("aborting test after some retries")
+		clients.K0sClient.PrependReactor("get", "clusterconfigs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+			gets++ // Let's observe some retries, then cancel the context.
+			if gets > 1 {
+				cancel(abortTest)
+			}
+			return false, nil, nil
+		})
+
+		require.NoError(t, underTest.Init(ctx))
+
+		err := underTest.Start(ctx)
+		synctest.Wait()
+
+		assert.ErrorContains(t, err, "failed to ensure the existence of the cluster configuration: aborting test after some retries (")
+		assert.ErrorIs(t, err, abortTest)
+		assert.True(t, apierrors.IsNotFound(err))
 	})
-
-	require.NoError(t, underTest.Init(ctx))
-
-	err := underTest.Start(ctx)
-	assert.ErrorContains(t, err, "failed to ensure the existence of the cluster configuration: aborting test after some retries (")
-	assert.ErrorIs(t, err, abortTest)
-	assert.True(t, apierrors.IsNotFound(err))
 }
 
 func TestClusterConfigInitializer_Exists(t *testing.T) {
@@ -114,6 +110,8 @@ func TestClusterConfigInitializer_Exists(t *testing.T) {
 		require.NoError(t, underTest.Start(t.Context()))
 		t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
+		synctest.Wait()
+
 		actualConfig, err := clients.K0sClient.K0sV1beta1().
 			ClusterConfigs(constant.ClusterConfigNamespace).
 			Get(t.Context(), "k0s", metav1.GetOptions{})
@@ -124,16 +122,18 @@ func TestClusterConfigInitializer_Exists(t *testing.T) {
 		return clients
 	}
 
-	t.Run("Leader", func(t *testing.T) { test(t, true) })
+	t.Run("Leader", func(t *testing.T) { synctest.Test(t, func(t *testing.T) { test(t, true) }) })
 	t.Run("Follower", func(t *testing.T) {
-		clients := test(t, false)
+		synctest.Test(t, func(t *testing.T) {
+			clients := test(t, false)
 
-		crds, err := clients.APIExtensionsClient.ApiextensionsV1().
-			CustomResourceDefinitions().
-			List(t.Context(), metav1.ListOptions{})
-		if assert.NoError(t, err) {
-			assert.Empty(t, crds.Items, "CRDs shouldn't be applied")
-		}
+			crds, err := clients.APIExtensionsClient.ApiextensionsV1().
+				CustomResourceDefinitions().
+				List(t.Context(), metav1.ListOptions{})
+			if assert.NoError(t, err) {
+				assert.Empty(t, crds.Items, "CRDs shouldn't be applied")
+			}
+		})
 	})
 }
 

@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package common
 
@@ -27,16 +14,28 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-// PodExecCmdOutput exec command on specific pod and wait the command's output.
-func PodExecCmdOutput(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command string) (string, error) {
+func PodExecPowerShell(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command string) (string, error) {
+	cmd := []string{
+		"powershell",
+		"-Command",
+		command,
+	}
+	return podExecCmdOutput(client, config, podName, namespace, cmd)
+}
+
+func PodExecShell(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command string) (string, error) {
 	cmd := []string{
 		"/bin/sh",
 		"-c",
 		command,
 	}
+	return podExecCmdOutput(client, config, podName, namespace, cmd)
+}
+
+func podExecCmdOutput(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command []string) (string, error) {
 	req := client.CoreV1().RESTClient().Post().Resource("pods").Name(podName).Namespace(namespace).SubResource("exec")
 	option := &v1.PodExecOptions{
-		Command: cmd,
+		Command: command,
 		Stdin:   false,
 		Stdout:  true,
 		Stderr:  true,
@@ -60,4 +59,15 @@ func PodExecCmdOutput(client kubernetes.Interface, config *restclient.Config, po
 	}
 
 	return stdout.String(), nil
+}
+
+// PodExecCmdOutput exec command on specific pod and wait the command's output.
+func PodExecCmdOutput(client kubernetes.Interface, config *restclient.Config, podName, namespace string, command string) (string, error) {
+	cmd := []string{
+		"/bin/sh",
+		"-c",
+		command,
+	}
+
+	return podExecCmdOutput(client, config, podName, namespace, cmd)
 }

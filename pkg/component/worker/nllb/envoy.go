@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package nllb
 
@@ -21,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -103,7 +89,7 @@ const (
 )
 
 func (e *envoyProxy) init(ctx context.Context) error {
-	if err := dir.Init(e.dir, 0755); err != nil {
+	if err := dir.InitWithOptions(e.dir).WithPermissions(0755).WithSELinuxLabel(containerFileLabel).Apply(); err != nil {
 		return err
 	}
 
@@ -115,7 +101,7 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		return errors.New("already started")
 	}
 
-	e.pod, err = e.staticPods.ClaimStaticPod("kube-system", "nllb")
+	e.pod, err = e.staticPods.ClaimStaticPod(metav1.NamespaceSystem, "nllb")
 	if err != nil {
 		e.pod = nil
 		return fmt.Errorf("failed to claim static pod for EnvoyProxy: %w", err)
@@ -233,13 +219,17 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 		envoyBootstrapFile: envoyBootstrapConfig,
 		envoyCDSFile:       envoyClustersConfig,
 	} {
-		err := file.WriteAtomically(filepath.Join(params.configDir, fileName), 0444, func(file io.Writer) error {
-			bufferedWriter := bufio.NewWriter(file)
-			if err := template.Execute(bufferedWriter, data); err != nil {
-				return fmt.Errorf("failed to render template: %w", err)
-			}
-			return bufferedWriter.Flush()
-		})
+		filePath := filepath.Join(params.configDir, fileName)
+		err := file.AtomicWithTarget(filePath).
+			WithPermissions(0444).
+			WithSELinuxLabel(containerFileLabel).
+			Do(func(w file.AtomicWriter) error {
+				bufferedWriter := bufio.NewWriter(w)
+				if err := template.Execute(bufferedWriter, data); err != nil {
+					return fmt.Errorf("failed to render template: %w", err)
+				}
+				return bufferedWriter.Flush()
+			})
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to write %s: %w", fileName, err))
 		}
@@ -269,7 +259,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nllb",
-			Namespace: "kube-system",
+			Namespace: metav1.NamespaceSystem,
 			Labels:    applier.CommonLabels("nllb"),
 		},
 		Spec: corev1.PodSpec{
@@ -316,6 +306,10 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 					},
 				}},
 			},
+			// without this, kubernetes might try to evict the mirror pod
+			Tolerations: []corev1.Toleration{{
+				Operator: corev1.TolerationOpExists,
+			}},
 		},
 	}
 }

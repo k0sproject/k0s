@@ -20,15 +20,14 @@ ARG TARGET_OS \
   BUILD_GO_TAGS \
   BUILD_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
-  BUILD_GO_LDFLAGS \
-  BUILD_GO_LDFLAGS_EXTRA
+  BUILD_GO_LDFLAGS
 
 RUN CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
     go build \
         ${BUILD_GO_FLAGS} \
 	-installsuffix=cgo \
         -tags="${BUILD_GO_TAGS}" \
-        -ldflags="${BUILD_GO_LDFLAGS} ${BUILD_GO_LDFLAGS_EXTRA} -X=go.etcd.io/etcd/api/v3/version.GitSHA=$(git rev-parse --short HEAD || echo "GitNotFound")" \
+        -ldflags="${BUILD_GO_LDFLAGS} -X=go.etcd.io/etcd/api/v3/version.GitSHA=$(git rev-parse --short HEAD || echo "GitNotFound")" \
         -o /bin/etcd
 
 FROM scratch

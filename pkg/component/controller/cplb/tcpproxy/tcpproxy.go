@@ -1,24 +1,8 @@
-// Copyright 2017 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Modifications made by Mirantis Inc., 2024.
-// Copyright 2017 Google Inc.
-//
-// Copyright 2024 Mirantis, Inc.
+// SPDX-FileCopyrightText: Copyright 2017 Google Inc.
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package tcpproxy lets users build TCP proxies
-
 package tcpproxy
 
 import (
@@ -199,7 +183,7 @@ type Conn struct {
 	// route, it will be the host header.  In the case of a fixed
 	// route, i.e. those created with AddRoute(), this will always be
 	// empty. This can be useful in the case where further routing decisions
-	// need to be made in the Target impementation.
+	// need to be made in the Target implementation.
 	HostName string
 
 	// Peeked are the bytes that have been read from Conn for the

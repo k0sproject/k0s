@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -22,20 +9,21 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/sirupsen/logrus"
 )
 
 type KonnectivityAgent struct {
-	K0sVars       *config.CfgVars
-	APIServerHost string
-	ServerCount   func() (uint, <-chan struct{})
+	ManifestsDir           string
+	KonnectivityServerHost string
+	ServerCount            func() (uint, <-chan struct{})
 
 	configChangeChan chan *v1beta1.ClusterConfig
 	log              *logrus.Entry
@@ -111,22 +99,27 @@ func (k *KonnectivityAgent) Stop() error {
 }
 
 func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.ClusterConfig, serverCount uint) error {
-	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
+	konnectivityDir := filepath.Join(k.ManifestsDir, "konnectivity")
 	err := dir.Init(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
+
 	cfg := konnectivityAgentConfig{
-		// Since the konnectivity server runs with hostNetwork=true this is the
-		// IP address of the master machine
-		ProxyServerHost: k.APIServerHost,
+		ProxyServerHost: k.KonnectivityServerHost,
 		ProxyServerPort: uint16(clusterConfig.Spec.Konnectivity.AgentPort),
 		Image:           clusterConfig.Spec.Images.Konnectivity.URI(),
 		ServerCount:     serverCount,
 		PullPolicy:      clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
-	if clusterConfig.Spec.Network != nil {
+	if externalAddress := clusterConfig.Spec.Konnectivity.ExternalAddress; externalAddress != "" {
+		serverHostPort, err := k0snet.ParseHostPortWithDefault(externalAddress, cfg.ProxyServerPort)
+		if err != nil {
+			return fmt.Errorf("failed to determine proxy server host and port (%q, %d): %w", externalAddress, cfg.ProxyServerPort, err)
+		}
+		cfg.ProxyServerHost, cfg.ProxyServerPort = serverHostPort.Host(), serverHostPort.Port()
+	} else if clusterConfig.Spec.Network != nil {
 		nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 		if nllb.IsEnabled() {
 			switch nllb.Type {
@@ -190,7 +183,6 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 type konnectivityAgentConfig struct {
 	ProxyServerHost string
 	ProxyServerPort uint16
-	AgentPort       uint16
 	Image           string
 	ServerCount     uint
 	PullPolicy      string
@@ -243,6 +235,12 @@ spec:
         prometheus.io/port: '8093'
     spec:
       securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - all
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
         supplementalGroups: [0]` /* in order to read the projected service account token */ + `
       nodeSelector:
         kubernetes.io/os: linux

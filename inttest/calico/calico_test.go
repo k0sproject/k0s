@@ -1,23 +1,12 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package calico
 
 import (
 	"context"
+	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -29,17 +18,52 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
 type CalicoSuite struct {
 	common.BootlooseSuite
+	isIPv6Only bool
 }
 
 func (s *CalicoSuite) TestK0sGetsUp() {
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
-	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+
+	{
+		clusterCfg := &v1beta1.ClusterConfig{
+			Spec: &v1beta1.ClusterSpec{
+				Network: func() *v1beta1.Network {
+					network := v1beta1.DefaultNetwork()
+					network.Provider = "calico"
+					network.Calico = &v1beta1.Calico{
+						EnvVars: map[string]string{
+							"TEST_BOOL_VAR":   "true",
+							"TEST_INT_VAR":    "42",
+							"TEST_STRING_VAR": "test",
+						},
+					}
+					return network
+				}(),
+			},
+		}
+		if s.isIPv6Only {
+			clusterCfg.Spec.Network.PodCIDR = "fd00::/108"
+			clusterCfg.Spec.Network.ServiceCIDR = "fd01::/108"
+		}
+
+		config, err := yaml.Marshal(clusterCfg)
+		s.Require().NoError(err)
+		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
+	}
+
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--feature-gates=IPv6SingleStack=true"))
+
+	if s.isIPv6Only {
+		s.T().Log("Setting up IPv6 DNS for workers")
+		common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
+	}
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
@@ -53,7 +77,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
-	calicoDaemonset, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), "calico-node", metav1.GetOptions{})
+	calicoDaemonset, err := kc.AppsV1().DaemonSets(metav1.NamespaceSystem).Get(context.TODO(), "calico-node", metav1.GetOptions{})
 	s.Require().NoError(err)
 	var calicoCustomEnvVarsFound int
 	for _, v := range calicoDaemonset.Spec.Template.Spec.Containers[0].Env {
@@ -66,26 +90,26 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see calico pods ready")
-	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node", "kube-system"), "calico did not start")
-	s.NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
+	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node", metav1.NamespaceSystem), "calico did not start")
+	s.NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceSystem))
 
-	createdTargetPod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+	createdTargetPod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.23.1-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.29.5-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx", "default"), "nginx pod did not start")
+	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx", metav1.NamespaceDefault), "nginx pod did not start")
 
 	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(s.Context(), createdTargetPod.Name, metav1.GetOptions{})
 	s.Require().NoError(err)
 
-	sourcePod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+	sourcePod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "alpine"},
 		Spec: corev1.PodSpec{
@@ -100,10 +124,11 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", "default"), "alpine pod did not start")
+	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", metav1.NamespaceDefault), "alpine pod did not start")
 
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
-		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, "/usr/bin/wget -qO- "+targetPod.Status.PodIP)
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace,
+			"/usr/bin/wget -qO- "+net.JoinHostPort(targetPod.Status.PodIP, "80"))
 		if err != nil {
 			return false, err
 		}
@@ -125,21 +150,18 @@ func getAlpineVersion(t *testing.T) string {
 
 func TestCalicoSuite(t *testing.T) {
 	s := CalicoSuite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},
 	}
+
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "ipv6") {
+		t.Log("Configuring IPv6 only networking")
+		s.isIPv6Only = true
+		s.Networks = []string{"bridge-ipv6"}
+		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle.tar"}
+		s.K0sExtraImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
+	}
 	suite.Run(t, &s)
 }
-
-const k0sConfig = `
-spec:
-  network:
-    provider: calico
-    calico:
-      envVars:
-        TEST_BOOL_VAR: "true"
-        TEST_INT_VAR: "42"
-        TEST_STRING_VAR: test
-`

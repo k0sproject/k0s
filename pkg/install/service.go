@@ -1,23 +1,12 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package install
 
 import (
 	"errors"
+	"fmt"
+	"runtime"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -87,6 +76,10 @@ func InstallService(args []string, envVars []string, force bool) error {
 		svcConfig.Option["Environment"] = envVars
 	}
 
+	if runtime.GOOS == "windows" {
+		args = append([]string{"service=" + svcConfig.Name}, args...)
+	}
+
 	svcConfig.Arguments = args
 
 	if force {
@@ -129,4 +122,23 @@ func GetServiceConfig(role string) *service.Config {
 		DisplayName: k0sDisplayName,
 		Description: k0sDescription,
 	}
+}
+
+// StartInstalledService starts (or restarts with force) the installed k0s service.
+func StartInstalledService(force bool) error {
+	svc, err := InstalledService()
+	if err != nil {
+		return err
+	}
+	status, _ := svc.Status()
+	if status == service.StatusRunning {
+		if force {
+			if err := svc.Restart(); err != nil {
+				return fmt.Errorf("failed to restart service: %w", err)
+			}
+			return nil
+		}
+		return errors.New("already running")
+	}
+	return svc.Start()
 }

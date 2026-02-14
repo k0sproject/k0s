@@ -1,16 +1,7 @@
-// Copyright 2022 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0s
 
@@ -34,8 +25,6 @@ import (
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-const Downloading = "Downloading"
-
 // downloadEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
 func downloadEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
@@ -44,7 +33,7 @@ func downloadEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred
 		apsigpred.SignalNamePredicate(hostname),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
 			signalDataUpdateCommandK0sPredicate(),
-			apsigpred.SignalDataStatusPredicate(Downloading),
+			apsigpred.SignalDataStatusPredicate(apsigcomm.Downloading),
 		),
 		apcomm.FalseFuncs{
 			CreateFunc: func(ce crev.CreateEvent) bool {

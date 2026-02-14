@@ -1,27 +1,15 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package customdomain
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type CustomDomainSuite struct {
@@ -54,10 +42,10 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
-		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc run nginx --image docker.io/nginx:1-alpine")
+		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc run nginx --image docker.io/library/nginx:1.29.5-alpine")
 		s.Require().NoError(err)
-		s.NoError(common.WaitForPod(s.Context(), kc, "nginx", "default"))
-		s.NoError(common.WaitForPodLogs(s.Context(), kc, "default"))
+		s.NoError(common.WaitForPod(s.Context(), kc, "nginx", metav1.NamespaceDefault))
+		s.NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceDefault))
 		output, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc exec nginx -- cat /etc/resolv.conf")
 		s.Require().NoError(err)
 		s.Contains(output, "search default.svc.something.local svc.something.local something.local")

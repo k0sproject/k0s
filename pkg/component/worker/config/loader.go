@@ -1,18 +1,5 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package config
 
@@ -82,7 +69,7 @@ func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func
 						return nil, err
 					}
 
-					cm, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, configMapName, metav1.GetOptions{})
+					cm, err := client.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, configMapName, metav1.GetOptions{})
 					if err != nil {
 						return nil, err
 					}
@@ -156,7 +143,7 @@ func WatchProfile(ctx context.Context, log logrus.FieldLogger, client kubernetes
 	configMapName := configMapNameForProfile(profileName)
 
 	var lastObservedVersion string
-	return watch.ConfigMaps(client.CoreV1().ConfigMaps("kube-system")).
+	return watch.ConfigMaps(client.CoreV1().ConfigMaps(metav1.NamespaceSystem)).
 		WithObjectName(configMapName).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryDelay, e := watch.IsRetryable(err); e == nil {

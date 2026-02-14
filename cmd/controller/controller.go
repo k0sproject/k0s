@@ -1,34 +1,21 @@
 //go:build unix
 
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"io/fs"
 	"net"
+	"net/netip"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"slices"
-	"syscall"
 	"time"
 
 	"github.com/k0sproject/k0s/cmd/internal"
@@ -37,10 +24,11 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
+	"github.com/k0sproject/k0s/internal/supervised"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
-	apclient "github.com/k0sproject/k0s/pkg/autopilot/client"
+	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
@@ -55,16 +43,15 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/k0sproject/k0s/pkg/token"
 
-	"k8s.io/apimachinery/pkg/fields"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
+	"k8s.io/utils/ptr"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
@@ -90,7 +77,10 @@ func NewControllerCmd() *cobra.Command {
 
 	or CLI flag:
 	$ k0s controller --token-file [path_to_file]
-	Note: Token can be passed either as a CLI argument or as a flag`,
+
+	or environment variable:
+	$ K0S_TOKEN=[token] k0s controller
+	Note: Token can be passed either as a CLI argument, a flag, or an environment variable`,
 		Args:             cobra.MaximumNArgs(1),
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -104,8 +94,8 @@ func NewControllerCmd() *cobra.Command {
 			if len(args) > 0 {
 				c.TokenArg = args[0]
 			}
-			if c.TokenArg != "" && c.TokenFile != "" {
-				return errors.New("you can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
+			if err := internal.CheckSingleTokenSource(c.TokenArg, c.TokenFile); err != nil {
+				return err
 			}
 			if err := controllerFlags.Normalize(); err != nil {
 				return err
@@ -119,9 +109,23 @@ func NewControllerCmd() *cobra.Command {
 				return err
 			}
 
-			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-			defer cancel()
-			return c.start(ctx, &controllerFlags, debugFlags.IsDebug())
+			ctx := cmd.Context()
+			if err := c.start(ctx, &controllerFlags, debugFlags.IsDebug()); err != nil {
+				return err
+			}
+
+			// Components may have stopped themselves (for example, after an
+			// etcd leave request), but the process lifetime is still governed
+			// by external signals/init systems.
+			select {
+			case <-ctx.Done():
+			default:
+				logrus.Info("Awaiting process shutdown")
+				<-ctx.Done()
+				logrus.Info("Shutting down process: ", context.Cause(ctx))
+			}
+
+			return nil
 		},
 	}
 
@@ -138,6 +142,9 @@ func NewControllerCmd() *cobra.Command {
 }
 
 func (c *command) start(ctx context.Context, flags *config.ControllerOptions, debug bool) error {
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
+
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
 	nodeConfig, err := c.K0sVars.NodeConfig()
@@ -148,9 +155,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	if errs := nodeConfig.Validate(); len(errs) > 0 {
 		return fmt.Errorf("invalid node config: %w", errors.Join(errs...))
 	}
-
-	// Add the node config to the context so it can be used by components deep in the "stack"
-	ctx = context.WithValue(ctx, k0scontext.ContextNodeConfigKey, nodeConfig)
 
 	nodeComponents := manager.New(prober.DefaultProber)
 	clusterComponents := manager.New(prober.DefaultProber)
@@ -199,20 +203,16 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	var joinClient *token.JoinClient
 
-	if (c.TokenArg != "" || c.TokenFile != "") && c.needToJoin(nodeConfig) {
-		var tokenData string
-		if c.TokenArg != "" {
-			tokenData = c.TokenArg
-		} else {
-			data, err := os.ReadFile(c.TokenFile)
-			if err != nil {
-				return fmt.Errorf("read token file %q: %w", c.TokenFile, err)
-			}
-			tokenData = string(data)
-		}
-		joinClient, err = joinController(ctx, tokenData, c.K0sVars.CertRootDir)
+	if c.needToJoin(nodeConfig) {
+		tokenData, err := internal.GetTokenData(c.TokenArg, c.TokenFile)
 		if err != nil {
-			return fmt.Errorf("failed to join controller: %w", err)
+			return err
+		}
+		if tokenData != "" {
+			joinClient, err = joinController(ctx, tokenData, c.K0sVars.CertRootDir)
+			if err != nil {
+				return fmt.Errorf("failed to join controller: %w", err)
+			}
 		}
 	}
 
@@ -288,6 +288,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	if enableKonnectivity {
 		nodeComponents.Add(ctx, &controller.Konnectivity{
+			Spec:         nodeConfig.Spec.Konnectivity,
 			K0sVars:      c.K0sVars,
 			LogLevel:     c.LogLevels.Konnectivity,
 			EventEmitter: prober.NewEventEmitter(),
@@ -341,14 +342,17 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
 			IgnoredStacks: []string{
+				controller.AutopilotStackName,
 				controller.ClusterConfigStackName,
+				controller.EtcdMemberStackName,
 				controller.SystemRBACStackName,
+				controller.WindowsStackName,
 			},
 			LeaderElector: leaderElector,
 		})
 	}
 
-	if controllerMode != config.SingleNodeMode && !slices.Contains(flags.DisableComponents, constant.ControlAPIComponentName) {
+	if !slices.Contains(flags.DisableComponents, constant.ControlAPIComponentName) && nodeConfig.Spec.Storage.IsJoinable() {
 		nodeComponents.Add(ctx, &controller.K0SControlAPI{RuntimeConfig: rtc})
 	}
 
@@ -383,19 +387,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		Socket:      c.K0sVars.StatusSocketPath,
 		CertManager: worker.NewCertificateManager(c.K0sVars.KubeletAuthConfigPath),
 	})
-
-	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
-		etcdReconciler, err := controller.NewEtcdMemberReconciler(adminClientFactory, c.K0sVars, nodeConfig.Spec.Storage.Etcd, leaderElector)
-		if err != nil {
-			return err
-		}
-		etcdCRDSaver, err := controller.NewManifestsSaver("etcd-member", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to initialize etcd-member manifests saver: %w", err)
-		}
-		clusterComponents.Add(ctx, controller.NewCRD(etcdCRDSaver, "etcd"))
-		nodeComponents.Add(ctx, etcdReconciler)
-	}
 
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
@@ -459,26 +450,12 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	))
 
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
-		helmSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to initialize helm manifests saver: %w", err)
-		}
-		clusterComponents.Add(ctx, controller.NewCRD(helmSaver, "helm"))
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, controller.HelmExtensionStackName))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
 			c.K0sVars,
 			adminClientFactory,
 			leaderElector,
 		))
-	}
-
-	if !slices.Contains(flags.DisableComponents, constant.AutopilotComponentName) {
-		logrus.Debug("starting manifest saver")
-		manifestsSaver, err := controller.NewManifestsSaver("autopilot", c.K0sVars.DataDir)
-		if err != nil {
-			logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
-			return err
-		}
-		clusterComponents.Add(ctx, controller.NewCRD(manifestsSaver, "autopilot"))
 	}
 
 	if enableK0sEndpointReconciler {
@@ -487,11 +464,29 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			leaderElector,
 			adminClientFactory,
 			net.DefaultResolver,
+			nodeConfig.PrimaryAddressFamily(),
 		))
 	}
 
+	hasWindowsNodes := func() (*bool, <-chan struct{}) { return ptr.To(false), nil }
+	if !slices.Contains(flags.DisableComponents, constant.WindowsNodeComponentName) {
+		var windowsNodeCount value.Latest[*uint]
+		windowsStack, err := controller.NewWindowsStackComponent(adminClientFactory, windowsNodeCount.Set)
+		if err != nil {
+			return fmt.Errorf("failed to create Windows stack component: %w", err)
+		}
+		clusterComponents.Add(ctx, windowsStack)
+		hasWindowsNodes = func() (*bool, <-chan struct{}) {
+			count, changed := windowsNodeCount.Peek()
+			if count != nil {
+				return ptr.To(*count > 0), changed
+			}
+			return nil, changed
+		}
+	}
+
 	if !slices.Contains(flags.DisableComponents, constant.KubeProxyComponentName) {
-		clusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, nodeConfig))
+		clusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, nodeConfig, hasWindowsNodes))
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.CoreDNSComponentname) {
@@ -504,45 +499,30 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	if !slices.Contains(flags.DisableComponents, constant.NetworkProviderComponentName) {
 		logrus.Infof("Creating network reconcilers")
-
-		calicoSaver, err := controller.NewManifestsSaver("calico", c.K0sVars.DataDir)
+		calico, err := controller.NewCalico(nodeConfig, c.K0sVars.ManifestsDir, hasWindowsNodes)
 		if err != nil {
-			return fmt.Errorf("failed to create calico manifests saver: %w", err)
+			return fmt.Errorf("failed to create Calico component: %w", err)
 		}
-		calicoInitSaver, err := controller.NewManifestsSaver("calico_init", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create calico_init manifests saver: %w", err)
-		}
-		windowsStackSaver, err := controller.NewManifestsSaver("windows", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create windows manifests saver: %w", err)
-		}
-		clusterComponents.Add(ctx, controller.NewCalico(c.K0sVars, calicoInitSaver, calicoSaver))
-		if !slices.Contains(flags.DisableComponents, constant.WindowsNodeComponentName) {
-			clusterComponents.Add(ctx, controller.NewWindowsStackComponent(c.K0sVars, adminClientFactory, windowsStackSaver))
-		}
-		kubeRouterSaver, err := controller.NewManifestsSaver("kuberouter", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create kuberouter manifests saver: %w", err)
-		}
-		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, kubeRouterSaver))
+		clusterComponents.Add(ctx, calico)
+		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars))
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.MetricsServerComponentName) {
+		if !enableKonnectivity && !flags.Mode().WorkloadsEnabled() {
+			logrus.Warn("In order to run metrics-server without konnectivity, this controller must be able to connect to the cluster network")
+		}
 		clusterComponents.Add(ctx, controller.NewMetricServer(c.K0sVars, adminClientFactory))
 	}
 
 	if flags.EnableMetricsScraper {
-		metricsSaver, err := controller.NewManifestsSaver("metrics", c.K0sVars.DataDir)
-		if err != nil {
-			return fmt.Errorf("failed to create metrics manifests saver: %w", err)
-		}
-		metrics, err := controller.NewMetrics(c.K0sVars, metricsSaver, adminClientFactory, nodeConfig.Spec.Storage.Type)
+		metrics, err := controller.NewMetrics(c.K0sVars, adminClientFactory, nodeConfig.Spec.Storage.Type)
 		if err != nil {
 			return fmt.Errorf("failed to create metrics reconciler: %w", err)
 		}
 		clusterComponents.Add(ctx, metrics)
 	}
+
+	disableAutopilot := slices.Contains(flags.DisableComponents, constant.AutopilotComponentName)
 
 	if !slices.Contains(flags.DisableComponents, constant.WorkerConfigComponentName) {
 		// Create new dedicated leasepool for worker config reconciler
@@ -550,7 +530,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		workerConfigLeasePool := leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory, leaseName)
 		clusterComponents.Add(ctx, workerConfigLeasePool)
 
-		reconciler, err := workerconfig.NewReconciler(c.K0sVars, nodeConfig.Spec, adminClientFactory, workerConfigLeasePool, enableKonnectivity)
+		reconciler, err := workerconfig.NewReconciler(c.K0sVars, nodeConfig.Spec, adminClientFactory, workerConfigLeasePool, enableKonnectivity, disableAutopilot)
 		if err != nil {
 			return err
 		}
@@ -558,7 +538,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.SystemRBACComponentName) {
-		clusterComponents.Add(ctx, &controller.SystemRBAC{Clients: adminClientFactory})
+		clusterComponents.Add(ctx, &controller.SystemRBAC{
+			Clients:          adminClientFactory,
+			ExcludeAutopilot: disableAutopilot,
+		})
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.NodeRoleComponentName) {
@@ -567,10 +550,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	if enableKonnectivity {
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
-			K0sVars:       c.K0sVars,
-			APIServerHost: nodeConfig.Spec.API.APIAddress(),
-			EventEmitter:  prober.NewEventEmitter(),
-			ServerCount:   numActiveControllers.Peek,
+			ManifestsDir:           c.K0sVars.ManifestsDir,
+			KonnectivityServerHost: cmp.Or(nodeConfig.Spec.API.ExternalHost(), nodeConfig.Spec.API.Address),
+			EventEmitter:           prober.NewEventEmitter(),
+			ServerCount:            numActiveControllers.Peek,
 		})
 	}
 
@@ -587,9 +570,28 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			LogLevel:              c.LogLevels.KubeControllerManager,
 			K0sVars:               c.K0sVars,
 			DisableLeaderElection: singleController,
-			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.API.APIAddress()),
+			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.PrimaryAddressFamily()),
 			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
+	}
+
+	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+		etcdReconciler, err := controller.NewEtcdMemberReconciler(
+			adminClientFactory,
+			c.K0sVars,
+			nodeConfig.Spec.Storage.Etcd,
+			leaderElector,
+			func() uint {
+				num, _ := numActiveControllers.Peek()
+				return num
+			},
+			cancel,
+		)
+		if err != nil {
+			return err
+		}
+		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, "etcd", controller.WithStackName("etcd-member")))
+		clusterComponents.Add(ctx, etcdReconciler)
 	}
 
 	if telemetry.IsEnabled() {
@@ -602,19 +604,39 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		logrus.Info("Telemetry is disabled")
 	}
 
-	clusterComponents.Add(ctx, &controller.Autopilot{
-		K0sVars:            c.K0sVars,
-		KubeletExtraArgs:   c.KubeletExtraArgs,
-		AdminClientFactory: adminClientFactory,
-		Workloads:          controllerMode.WorkloadsEnabled(),
-	})
+	if !disableAutopilot {
+		client, err := adminClientFactory.GetClient()
+		if err != nil {
+			return err
+		}
+		apiAddress, err := netip.ParseAddr(nodeConfig.Spec.API.Address)
+		if err != nil {
+			return fmt.Errorf("failed to parse API address: %w", err)
+		}
 
-	clusterComponents.Add(ctx, controller.NewUpdateProber(
-		&apclient.ClientFactory{
-			ClientFactoryInterface: adminClientFactory,
-		},
-		leaderElector,
-	))
+		clusterComponents.Add(ctx, &controller.Autopilot{
+			APIAddress:           apiAddress,
+			K0sVars:              c.K0sVars,
+			KubeletExtraArgs:     c.KubeletExtraArgs,
+			KubeAPIPort:          nodeConfig.Spec.API.Port,
+			AdminClientFactory:   adminClientFactory,
+			LeaderElector:        leaderElector,
+			ClusterInfoCollector: updates.NewClusterInfoCollector(nodeConfig, client),
+			Workloads:            controllerMode.WorkloadsEnabled(),
+		})
+	}
+
+	if !slices.Contains(flags.DisableComponents, constant.UpdateProberComponentName) {
+		client, err := adminClientFactory.GetClient()
+		if err != nil {
+			return err
+		}
+		clusterComponents.Add(ctx, controller.NewUpdateProber(
+			adminClientFactory,
+			leaderElector,
+			updates.NewClusterInfoCollector(nodeConfig, client),
+		))
+	}
 
 	// Add the config source as the last component, so that the reconciliation
 	// starts after all other components have been started.
@@ -641,23 +663,20 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		}
 	}()
 
+	perfTimer.Output()
+
 	if controllerMode.WorkloadsEnabled() {
-		perfTimer.Checkpoint("starting-worker")
-		if err := c.startWorker(ctx, nodeName, kubeletExtraArgs, flags); err != nil {
-			logrus.WithError(err).Error("Failed to start controller worker")
-		} else {
-			perfTimer.Checkpoint("started-worker")
-		}
+		return c.startWorker(ctx, nodeName, kubeletExtraArgs, flags)
 	}
 
-	perfTimer.Output()
+	if supervised := supervised.Get(ctx); supervised != nil {
+		supervised.MarkReady()
+	}
 
 	// Wait for k0s process termination
+	logrus.Info("Controller has started")
 	<-ctx.Done()
-	logrus.Debug("Context done in main")
-	logrus.Info("Shutting down k0s controller")
-
-	perfTimer.Output()
+	logrus.Info("Shutting down k0s: ", context.Cause(ctx))
 
 	return nil
 }
@@ -667,7 +686,7 @@ func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, k
 	// opts to start the worker. Needs to be a copy so the original token and
 	// possibly other args won't get messed up.
 	wc := workercmd.Command(*(*config.CLIOptions)(c))
-	wc.Labels = append(wc.Labels, fields.OneTermEqualSelector(constant.K0SNodeRoleLabel, "control-plane").String())
+	wc.Labels[constant.K0SNodeRoleLabel] = "control-plane"
 	if opts.Mode() == config.ControllerPlusWorkerMode && !opts.NoTaints {
 		wc.Taints = append(wc.Taints, constants.ControlPlaneTaint.ToString())
 	}

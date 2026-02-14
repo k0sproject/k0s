@@ -1,16 +1,7 @@
-// Copyright 2021 k0s authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//go:build unix
+
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package k0s
 
@@ -27,6 +18,8 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,6 +29,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 )
@@ -44,10 +39,9 @@ const Cordoning = "Cordoning"
 
 // cordoningEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
-func cordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
+func cordoningEventFilter(handler apsigpred.ErrorHandler) crpred.Predicate {
 	return crpred.And(
 		crpred.AnnotationChangedPredicate{},
-		apsigpred.SignalNamePredicate(hostname),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
 			signalDataUpdateCommandK0sPredicate(),
 			apsigpred.SignalDataStatusPredicate(Cordoning),
@@ -63,11 +57,16 @@ func cordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 	)
 }
 
-type cordoning struct {
-	log       *logrus.Entry
-	client    crcli.Client
-	delegate  apdel.ControllerDelegate
-	clientset *kubernetes.Clientset
+type cordonUncordon struct {
+	log          *logrus.Entry
+	client       crcli.Client
+	delegate     apdel.ControllerDelegate
+	clientset    kubernetes.Interface
+	currentState string
+	nodeName     types.NodeName
+	leaseStatus  leaderelection.Status
+	do           func(*drain.Helper, *corev1.Node) error
+	nextState    string
 }
 
 // registerCordoning registers the 'cordoning' controller to the
@@ -76,7 +75,7 @@ type cordoning struct {
 // This controller is only interested when autopilot signaling annotations have
 // moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
 // the node.
-func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, nodeName types.NodeName, leaseStatus leaderelection.Status) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_cordoning"
 	logger.Info("Registering reconciler: ", name)
 
@@ -91,17 +90,22 @@ func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
-			&cordoning{
-				log:       logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
-				client:    mgr.GetClient(),
-				delegate:  delegate,
-				clientset: clientset,
+			&cordonUncordon{
+				log:          logger.WithFields(logrus.Fields{"reconciler": "k0s-cordoning", "object": delegate.Name()}),
+				client:       mgr.GetClient(),
+				delegate:     delegate,
+				clientset:    clientset,
+				currentState: Cordoning,
+				nodeName:     nodeName,
+				leaseStatus:  leaseStatus,
+				do:           cordonAndDrainNode,
+				nextState:    ApplyingUpdate,
 			},
 		)
 }
 
 // Reconcile for the 'cordoning' reconciler will cordon and drain a node
-func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
+func (r *cordonUncordon) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.Name, err)
@@ -113,31 +117,91 @@ func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.Name, err)
 	}
+
+	if signalData.Status != nil && signalData.Status.Status != r.currentState {
+		logger.Debug("Ignoring signal status ", signalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
+	if reason, err := r.isIgnored(ctx, signalNode); err != nil {
+		return cr.Result{}, fmt.Errorf("failed to determine if this node should be ignored: %w", err)
+	} else if reason != "" {
+		logger.Debug("Ignoring this node: ", reason)
+		return cr.Result{}, nil
+	}
+
 	if !needsCordoning(signalNode) {
 		logger.Infof("ignoring non worker node")
 
-		return cr.Result{}, r.moveToNextState(ctx, signalNode, ApplyingUpdate)
+		return cr.Result{}, r.moveToNextState(ctx, signalNode)
 	}
 
-	logger.Infof("starting to cordon node %s", signalNode.GetName())
-	if err := r.drainNode(ctx, signalNode); err != nil {
+	logger.Info("Reconciling")
+	if err := r.run(ctx, signalNode); err != nil {
 		return cr.Result{}, err
 	}
 
-	return cr.Result{}, r.moveToNextState(ctx, signalNode, ApplyingUpdate)
+	return cr.Result{}, r.moveToNextState(ctx, signalNode)
 }
 
-func (r *cordoning) moveToNextState(ctx context.Context, signalNode crcli.Object, state string) error {
+// Determines whether the request should be ignored. This enables the migration
+// from Autopilot deployments that manage (un-)cordoning on each individual node
+// to deployments that manage (un-)cordoning via the Autopilot controller.
+//
+// TODO: Remove in v1.36+
+func (r *cordonUncordon) isIgnored(ctx context.Context, signalNode crcli.Object) (reason string, _ error) {
+	if r.leaseStatus == leaderelection.StatusLeading {
+		if types.NodeName(signalNode.GetName()) == r.nodeName {
+			// It's us and we're leading. Go for it!
+			return "", nil
+		}
+
+		if !needsCordoning(signalNode) {
+			// If it's not a worker node, there's no node lease to be checked.
+			return "", nil
+		}
+
+		// Check the node lease if it needs to be reconciled by us.
+		nodeLease, err := r.clientset.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, signalNode.GetName(), metav1.GetOptions{})
+		if err != nil {
+			return "", fmt.Errorf("failed to get node lease: %w", err)
+		}
+
+		label, ident := nodeLease.Labels[apconst.CentralCordoningLabel], nodeLease.Spec.HolderIdentity
+		if label == "" || (ident != nil && label != *ident) {
+			return "node manages cordoning on its own", nil
+		}
+
+		return "", nil
+	}
+
+	// Check if the current autopilot leader is managing the reconciliation for us.
+	apLease, err := r.clientset.CoordinationV1().Leases(apconst.AutopilotNamespace).Get(ctx, apconst.AutopilotNamespace+"-controller", metav1.GetOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to get autopilot controller lease: %w", err)
+	}
+
+	ident := apLease.Spec.HolderIdentity
+	switch {
+	case ident == nil || *ident == "" || !kubeutil.IsValidLease(*apLease):
+		return "", errors.New("autopilot controller lease is invalid")
+	case apLease.Labels[apconst.CentralCordoningLabel] == *ident:
+		return "autopilot controller takes care of reconciliation", nil
+	default:
+		return "", nil
+	}
+}
+
+func (r *cordonUncordon) moveToNextState(ctx context.Context, signalNode crcli.Object) error {
 	logger := r.log.WithField("signalnode", signalNode.GetName())
 
-	signalNodeCopy := r.delegate.DeepCopy(signalNode)
-
 	var signalData apsigv2.SignalData
-	if err := signalData.Unmarshal(signalNodeCopy.GetAnnotations()); err != nil {
+	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
 		return fmt.Errorf("unable to unmarshal signal data: %w", err)
 	}
 
-	signalData.Status = apsigv2.NewStatus(state)
+	signalData.Status = apsigv2.NewStatus(r.nextState)
+	signalNodeCopy := r.delegate.DeepCopy(signalNode)
 
 	if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
 		return fmt.Errorf("unable to marshal signal data: %w", err)
@@ -151,11 +215,7 @@ func (r *cordoning) moveToNextState(ctx context.Context, signalNode crcli.Object
 	return nil
 }
 
-// drainNode cordons a node after which drains it
-// draining ignores daemonsets
-func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) error {
-	logger := r.log.WithField("signalnode", signalNode.GetName()).WithField("phase", "drain")
-
+func (r *cordonUncordon) run(ctx context.Context, signalNode crcli.Object) error {
 	node := &corev1.Node{}
 	// if signalNode is a Node cast it to *corev1.Node
 	if signalNode.GetObjectKind().GroupVersionKind().Kind == "Node" {
@@ -182,6 +242,11 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 		}
 	}
 
+	logger := r.log.WithFields(logrus.Fields{
+		"signalnode": signalNode.GetName(),
+		"stream":     "drainer",
+	})
+
 	drainer := &drain.Helper{
 		Client: r.clientset,
 		Force:  true,
@@ -190,24 +255,23 @@ func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) erro
 		IgnoreAllDaemonSets: true,
 		Ctx:                 ctx,
 		Out:                 logger.Writer(),
-		ErrOut:              logger.Writer(),
+		ErrOut:              logger.WriterLevel(logrus.ErrorLevel),
 		// We want to proceed even when pods are using emptyDir volumes
 		DeleteEmptyDirData: true,
-		Timeout:            time.Duration(120) * time.Second,
+		Timeout:            120 * time.Second,
 		OnPodDeletedOrEvicted: func(pod *corev1.Pod, usingEviction bool) {
 			logger.Infof("evicted pod: %s/%s", pod.Namespace, pod.Name)
 		},
 	}
 
+	return r.do(drainer, node)
+}
+
+func cordonAndDrainNode(drainer *drain.Helper, node *corev1.Node) error {
 	if err := drain.RunCordonOrUncordon(drainer, node, true); err != nil {
 		return err
 	}
-
-	if err := drain.RunNodeDrain(drainer, node.Name); err != nil {
-		return err
-	}
-
-	return nil
+	return drain.RunNodeDrain(drainer, node.Name)
 }
 
 func needsCordoning(signalNode crcli.Object) bool {

@@ -1,23 +1,11 @@
-/*
-Copyright 2022 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2022 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -146,20 +134,20 @@ func TestChartManifestFileName(t *testing.T) {
 	chart := k0sv1beta1.Chart{
 		Name:      "release",
 		ChartName: "k0s/chart",
-		TargetNS:  "default",
+		TargetNS:  metav1.NamespaceDefault,
 	}
 
 	chart1 := k0sv1beta1.Chart{
 		Name:      "release",
 		ChartName: "k0s/chart",
-		TargetNS:  "default",
+		TargetNS:  metav1.NamespaceDefault,
 		Order:     1,
 	}
 
 	chart2 := k0sv1beta1.Chart{
 		Name:      "release",
 		ChartName: "k0s/chart",
-		TargetNS:  "default",
+		TargetNS:  metav1.NamespaceDefault,
 		Order:     2,
 	}
 
@@ -187,7 +175,7 @@ func TestExtensionsController_writeChartManifestFile(t *testing.T) {
 					ChartName: "k0s/chart",
 					Version:   "0.0.1",
 					Values:    "values",
-					TargetNS:  "default",
+					TargetNS:  metav1.NamespaceDefault,
 					Timeout: k0sv1beta1.BackwardCompatibleDuration(
 						metav1.Duration{Duration: 5 * time.Minute},
 					),
@@ -198,7 +186,7 @@ func TestExtensionsController_writeChartManifestFile(t *testing.T) {
 kind: Chart
 metadata:
   name: k0s-addon-chart-release
-  namespace: "kube-system"
+  namespace: ` + metav1.NamespaceSystem + `
   finalizers:
     - helm.k0sproject.io/uninstall-helm-release
 spec:
@@ -210,6 +198,8 @@ spec:
     values
   version: 0.0.1
   namespace: default
+  repository:
+    url: https://charts.k0sproject.io/release
 `,
 		},
 		{
@@ -220,7 +210,7 @@ spec:
 					ChartName:    "k0s/chart",
 					Version:      "0.0.1",
 					Values:       "values",
-					TargetNS:     "default",
+					TargetNS:     metav1.NamespaceDefault,
 					ForceUpgrade: ptr.To(false),
 					Timeout: k0sv1beta1.BackwardCompatibleDuration(
 						metav1.Duration{Duration: 5 * time.Minute},
@@ -232,7 +222,7 @@ spec:
 kind: Chart
 metadata:
   name: k0s-addon-chart-release
-  namespace: "kube-system"
+  namespace: ` + metav1.NamespaceSystem + `
   finalizers:
     - helm.k0sproject.io/uninstall-helm-release
 spec:
@@ -245,13 +235,25 @@ spec:
   version: 0.0.1
   namespace: default
   forceUpgrade: false
+  repository:
+    url: https://charts.k0sproject.io/release
 `,
 		},
 	}
 	for _, tt := range tests {
+		// With cache, make these behave as in the old style where config has the repo details,
+		// ensuring backwards compatibility with the old style
+		repoCache := repositoryCache{cache: make(map[string]k0sv1beta1.Repository)}
+		repoCache.update([]k0sv1beta1.Repository{
+			{
+				Name: "k0s",
+				URL:  "https://charts.k0sproject.io/release",
+			},
+		})
 		t.Run(tt.name, func(t *testing.T) {
 			ec := &ExtensionsController{
-				manifestsDir: t.TempDir(),
+				manifestsDir:    t.TempDir(),
+				repositoryCache: &repoCache,
 			}
 			path, err := ec.writeChartManifestFile(tt.args.chart, tt.args.fileName)
 			require.NoError(t, err)
@@ -260,4 +262,271 @@ spec:
 			assert.Equal(t, strings.TrimSpace(tt.want), strings.TrimSpace(string(contents)))
 		})
 	}
+}
+
+func TestExtractRepositoryIdentifier(t *testing.T) {
+	tests := []struct {
+		name      string
+		chartName string
+		want      string
+	}{
+		{
+			name:      "OCI chart with registry host",
+			chartName: "oci://ghcr.io/org/chart",
+			want:      "ghcr.io",
+		},
+		{
+			name:      "OCI chart with port",
+			chartName: "oci://registry.io:5000/chart",
+			want:      "registry.io:5000",
+		},
+		{
+			name:      "OCI chart with path",
+			chartName: "oci://registry.internal.com:8080/charts/app",
+			want:      "registry.internal.com:8080",
+		},
+		{
+			name:      "traditional chart",
+			chartName: "myrepo/mychart",
+			want:      "myrepo",
+		},
+		{
+			name:      "traditional chart with version",
+			chartName: "stable/nginx-ingress",
+			want:      "stable",
+		},
+		{
+			name:      "local relative path with dot",
+			chartName: "./chart.tgz",
+			want:      "",
+		},
+		{
+			name:      "local relative path with dot-dot",
+			chartName: "../chart.tgz",
+			want:      "",
+		},
+		{
+			name:      "chart name without slash",
+			chartName: "nochart",
+			want:      "",
+		},
+		{
+			name:      "empty chart name",
+			chartName: "",
+			want:      "",
+		},
+		{
+			name:      "malformed OCI URL",
+			chartName: "oci://",
+			want:      "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := extractRepositoryIdentifier(tt.chartName)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
+	// Test absolute path separately with platform-specific path
+	t.Run("local absolute path", func(t *testing.T) {
+		absPath, err := filepath.Abs("chart.tgz")
+		require.NoError(t, err)
+		got := extractRepositoryIdentifier(absPath)
+		assert.Empty(t, got)
+	})
+}
+
+func TestExtractOCIRegistryURL(t *testing.T) {
+	tests := []struct {
+		name      string
+		chartName string
+		want      string
+	}{
+		{
+			name:      "OCI URL basic",
+			chartName: "oci://ghcr.io/user/charts/app",
+			want:      "oci://ghcr.io",
+		},
+		{
+			name:      "OCI URL with port",
+			chartName: "oci://registry:8080/chart",
+			want:      "oci://registry:8080",
+		},
+		{
+			name:      "OCI URL with subdomain",
+			chartName: "oci://registry.internal.example.com/org/charts/mychart",
+			want:      "oci://registry.internal.example.com",
+		},
+		{
+			name:      "OCI URL with port and path",
+			chartName: "oci://localhost:5000/charts/test",
+			want:      "oci://localhost:5000",
+		},
+		{
+			name:      "not OCI chart",
+			chartName: "myrepo/chart",
+			want:      "",
+		},
+		{
+			name:      "empty string",
+			chartName: "",
+			want:      "",
+		},
+		{
+			name:      "malformed OCI URL - no host",
+			chartName: "oci://",
+			want:      "",
+		},
+		{
+			name:      "malformed OCI URL - invalid format",
+			chartName: "oci:///no-host",
+			want:      "",
+		},
+		{
+			name:      "http URL not OCI",
+			chartName: "https://charts.example.com/mychart",
+			want:      "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := extractOCIRegistryURL(tt.chartName)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestExtractAndLookupRepository(t *testing.T) {
+	// Setup repository cache
+	repoCache := &repositoryCache{cache: make(map[string]k0sv1beta1.Repository)}
+	repoCache.update([]k0sv1beta1.Repository{
+		{
+			Name:     "stable",
+			URL:      "https://charts.helm.sh/stable",
+			Username: "user1",
+		},
+		{
+			Name:     "bitnami",
+			URL:      "https://charts.bitnami.com/bitnami",
+			Password: "pass1",
+		},
+		{
+			Name: "ghcr.io", // OCI registry keyed by hostname
+			URL:  "oci://ghcr.io",
+		},
+		{
+			Name:     "registry.io:5000", // OCI registry with port
+			URL:      "oci://registry.io:5000",
+			Username: "robot",
+			Password: "token",
+		},
+	})
+
+	reconciler := &ChartReconciler{
+		repositoryCache: repoCache,
+	}
+
+	tests := []struct {
+		name      string
+		chartName string
+		wantRepo  *k0sv1beta1.Repository
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name:      "traditional chart with known repo",
+			chartName: "stable/nginx",
+			wantRepo: &k0sv1beta1.Repository{
+				Name:     "stable",
+				URL:      "https://charts.helm.sh/stable",
+				Username: "user1",
+			},
+			wantErr: false,
+		},
+		{
+			name:      "traditional chart with unknown repo",
+			chartName: "unknown/chart",
+			wantRepo:  nil,
+			wantErr:   true,
+			errMsg:    "repository 'unknown' not found",
+		},
+		{
+			name:      "OCI chart with known registry",
+			chartName: "oci://ghcr.io/org/chart",
+			wantRepo: &k0sv1beta1.Repository{
+				Name: "ghcr.io",
+				URL:  "oci://ghcr.io",
+			},
+			wantErr: false,
+		},
+		{
+			name:      "OCI chart with unknown registry - returns nil (anonymous access)",
+			chartName: "oci://unknown.io/chart",
+			wantRepo:  nil,
+			wantErr:   false,
+		},
+		{
+			name:      "OCI chart with port",
+			chartName: "oci://registry.io:5000/charts/app",
+			wantRepo: &k0sv1beta1.Repository{
+				Name:     "registry.io:5000",
+				URL:      "oci://registry.io:5000",
+				Username: "robot",
+				Password: "token",
+			},
+			wantErr: false,
+		},
+		{
+			name:      "local relative path with dot",
+			chartName: "./chart.tgz",
+			wantRepo:  nil,
+			wantErr:   false,
+		},
+		{
+			name:      "local relative path with dot-dot",
+			chartName: "../chart.tgz",
+			wantRepo:  nil,
+			wantErr:   false,
+		},
+		{
+			name:      "invalid chart name without slash",
+			chartName: "invalidchart",
+			wantRepo:  nil,
+			wantErr:   true,
+			errMsg:    "expected format 'repository/chart'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := reconciler.extractAndLookupRepository(tt.chartName)
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+			if tt.wantRepo == nil {
+				assert.Nil(t, got)
+			} else {
+				require.NotNil(t, got)
+				assert.Equal(t, tt.wantRepo.Name, got.Name)
+				assert.Equal(t, tt.wantRepo.URL, got.URL)
+				assert.Equal(t, tt.wantRepo.Username, got.Username)
+				assert.Equal(t, tt.wantRepo.Password, got.Password)
+			}
+		})
+	}
+
+	// Test absolute path separately with platform-specific path
+	t.Run("local absolute path", func(t *testing.T) {
+		absPath, err := filepath.Abs("chart.tgz")
+		require.NoError(t, err)
+		got, err := reconciler.extractAndLookupRepository(absPath)
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
 }

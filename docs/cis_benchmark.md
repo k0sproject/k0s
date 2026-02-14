@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 k0s authors
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 # Kube-bench Security Benchmark
 
 [Kube-bench](https://github.com/aquasecurity/kube-bench) is an open source tool which can be used to verify security best practices as defined in CIS Kubernetes Benchmark. It provides a number of tests to help harden your k0s clusters. By default, k0s will pass Kube-bench benchmarks with some exceptions, which are shown below.

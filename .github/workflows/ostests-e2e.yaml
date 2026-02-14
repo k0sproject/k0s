@@ -35,10 +35,11 @@ on:
       tofu-version:
         type: string
         description: The OpenTofu version to use when provisioning test resources.
-        default: 1.9.0
+        default: 1.11.4 # renovate: datasource=github-releases depName=opentofu/opentofu
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping the test cluster.
+        default: 0.28.0 # renovate: datasource=github-releases depName=k0sproject/k0sctl
     secrets:
       aws-access-key-id:
         description: The AWS access key ID to use when provisioning test resources.
@@ -71,6 +72,7 @@ jobs:
       TF_VAR_cache_dir: ${{ github.workspace }}/.cache/k0s-ostests
       TF_VAR_k0s_version: ${{ inputs.k0s-version }}
       TF_VAR_k0sctl_executable_path: ${{ github.workspace }}/.cache/k0sctl
+      TF_VAR_k0sctl_timeout: 30m
       TF_VAR_k0s_network_provider: ${{ inputs.network-provider }}
       TF_VAR_k0s_kube_proxy_mode: ${{ inputs.kube-proxy-mode }}
 
@@ -86,19 +88,15 @@ jobs:
 
       - name: "Workflow run :: Prepare"
         working-directory: ./
-        env:
-          K0SCTL_VERSION: ${{ inputs.k0sctl-version }}
         run: |
           kubernetesVersion="$(./vars.sh kubernetes_version)"
-          k0sctlVersion="${K0SCTL_VERSION:-$(./vars.sh FROM=hack/tool k0sctl_version)}"
 
           set -x
           echo KUBERNETES_VERSION="$kubernetesVersion" >>"$GITHUB_ENV"
-          echo K0SCTL_VERSION="$k0sctlVersion" >>"$GITHUB_ENV"
 
       - name: "Tofu :: Requisites :: Download k0s"
         if: inputs.k0s-version == ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: k0s-linux-${{ inputs.arch }}
           path: ${{ github.workspace }}/.cache
@@ -106,6 +104,7 @@ jobs:
       - name: "Tofu :: Requisites :: Prepare"
         env:
           OSTESTS_ARCH: ${{ inputs.arch }}
+          K0SCTL_VERSION: ${{ inputs.k0sctl-version }}
           K0S_VERSION: ${{ inputs.k0s-version }}
           K0S_EXECUTABLE_PATH: ${{ github.workspace }}/.cache/k0s
         run: |
@@ -113,7 +112,7 @@ jobs:
           jq --version
 
           mkdir -p "$(dirname -- "$TF_VAR_k0sctl_executable_path")"
-          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/${K0SCTL_VERSION}/k0sctl-linux-amd64"
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/v${K0SCTL_VERSION}/k0sctl-linux-amd64"
           chmod +x -- "$TF_VAR_k0sctl_executable_path"
           "$TF_VAR_k0sctl_executable_path" version
 
@@ -169,12 +168,12 @@ jobs:
           E2E_CONCURRENCY_LEVEL: ${{ inputs.e2e-concurrency-level }}
         run: |
           make bin/sonobuoy
-          bin/sonobuoy run -p e2e --wait=120 \
+          bin/sonobuoy run -p e2e --wait=150 \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_PARALLEL=true \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
             --plugin-env=e2e.E2E_SKIP='\[Serial\]' \
-            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="-v --timeout=90m --procs=$E2E_CONCURRENCY_LEVEL"
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="-v --timeout=120m --procs=$E2E_CONCURRENCY_LEVEL"
 
       - name: "e2e tests :: Retrieve parallel results"
         id: e2e-retrieve-parallel
@@ -197,10 +196,11 @@ jobs:
         timeout-minutes: 180 # three hours
         run: |
           make bin/sonobuoy
-          bin/sonobuoy run -p e2e --wait=120 \
+          bin/sonobuoy run -p e2e --wait=150 \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
-            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=90m'
+            --plugin-env=e2e.E2E_SKIP='' \
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=120m'
 
       - name: "e2e tests :: Retrieve serial results"
         id: e2e-retrieve-serial
@@ -219,7 +219,7 @@ jobs:
 
       - name: "e2e tests :: Upload results"
         if: always() && (steps.e2e-retrieve-parallel.conclusion == 'success' || steps.e2e-retrieve-serial.conclusion == 'success')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ostests-e2e-${{ inputs.os }}-${{ inputs.arch }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-sonobuoy-results
           path: |
@@ -242,7 +242,7 @@ jobs:
 
       - name: "e2e tests :: Upload k0sctl logs"
         if: always() && steps.tf-init.conclusion == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ostests-e2e-${{ inputs.os }}-${{ inputs.arch }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-k0sctl-logs
           path: ~/.cache/k0sctl/k0sctl.log

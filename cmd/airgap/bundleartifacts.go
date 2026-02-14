@@ -1,18 +1,5 @@
-/*
-Copyright 2024 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package airgap
 
@@ -21,10 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -56,13 +40,19 @@ func newAirgapBundleArtifactsCmd(log logrus.FieldLogger, rewriteBundleRef airgap
 		Long: `Bundles artifacts needed for airgapped installations into a tarball. Fetches the
 artifacts from their OCI registries and bundles them into an OCI Image Layout
 archive (written to standard output by default). Reads names from standard input
-if no names are given on the command line.`,
+if no names are given on the command line.
+
+Note that if you need the tarball to be reproducible, you must specify
+--concurrency=1. This ensures that the images are added in the specified order
+instead of in an arbitrary order based on when they finish downloading.
+`,
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
-			defer cancel()
-
 			cmd.SilenceUsage = true
+
+			if bundler.Concurrency == 0 {
+				return errors.New(`invalid argument "0" for "--concurrency": must be positive`)
+			}
 
 			bundler.PlatformMatcher = platforms.Only(platform)
 
@@ -98,7 +88,7 @@ if no names are given on the command line.`,
 			}
 
 			buffered := bufio.NewWriter(out)
-			if err := bundler.Run(ctx, refs, out); err != nil {
+			if err := bundler.Run(cmd.Context(), refs, out); err != nil {
 				return err
 			}
 			return buffered.Flush()
@@ -111,6 +101,7 @@ if no names are given on the command line.`,
 	flags.StringVarP(&outPath, "output", "o", "", "output file path (writes to standard output if omitted)")
 	flags.Var((*insecureRegistryFlag)(&bundler.InsecureRegistries), "insecure-registries", "one of no, skip-tls-verify or plain-http")
 	flags.Var((*platformFlag)(&platform), "platform", "the platform to export")
+	flags.UintVar(&bundler.Concurrency, "concurrency", 3, "number of concurrent requests to the registry")
 	flags.StringArrayVar(&bundler.RegistriesConfigPaths, "registries-config", nil, "paths to the authentication files for OCI registries (uses the standard Docker config if omitted)")
 
 	return cmd

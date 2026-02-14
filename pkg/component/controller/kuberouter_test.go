@@ -1,18 +1,5 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -20,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
@@ -48,13 +37,15 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
 	cfg.Spec.Network.KubeRouter.IPMasq = true
 
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(t.Context(), cfg))
-	require.NoError(t, kr.Stop())
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -131,13 +122,15 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(t.Context(), cfg))
-	require.NoError(t, kr.Stop())
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -167,13 +160,15 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
 	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
 	cfg.Spec.Network.KubeRouter.MTU = 1234
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(t.Context(), cfg))
-	require.NoError(t, kr.Stop())
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -206,13 +201,15 @@ func TestExtraArgs(t *testing.T) {
 		"run-firewall": "false",
 	}
 
-	saver := inMemorySaver{}
-	kr := NewKubeRouter(k0sVars, saver)
-	require.NoError(t, kr.Reconcile(t.Context(), cfg))
-	require.NoError(t, kr.Stop())
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
 
-	manifestData, foundRaw := saver["kube-router.yaml"]
-	require.True(t, foundRaw, "must have manifests for kube-router")
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
 
 	resources, err := testutil.ParseManifests(manifestData)
 	require.NoError(t, err)
@@ -222,6 +219,44 @@ func TestExtraArgs(t *testing.T) {
 
 	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-firewall=false")
 	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--foo=bar")
+}
+
+func TestRawArgs(t *testing.T) {
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
+	cfg := v1beta1.DefaultClusterConfig()
+	cfg.Spec.Network.Calico = nil
+	cfg.Spec.Network.Provider = "kuberouter"
+	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
+	cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+		"log-level": "debug",
+	}
+	cfg.Spec.Network.KubeRouter.RawArgs = []string{
+		"--log-level=debug",
+		"--log-level=debug",
+	}
+
+	ctx := t.Context()
+	kr := NewKubeRouter(k0sVars)
+	require.NoError(t, kr.Init(ctx))
+	require.NoError(t, kr.Start(ctx))
+	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+	require.NoError(t, kr.Reconcile(ctx, cfg))
+
+	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+	assert.NoError(t, err, "must have manifests for kube-router")
+
+	resources, err := testutil.ParseManifests(manifestData)
+	require.NoError(t, err)
+	ds, err := findDaemonset(resources)
+	require.NoError(t, err)
+	require.NotNil(t, ds)
+
+	// Verify that both extraArgs and rawArgs are present
+	args := ds.Spec.Template.Spec.Containers[0].Args[len(ds.Spec.Template.Spec.Containers[0].Args)-2:]
+	for _, arg := range args {
+		assert.Equal(t, "--log-level=debug", arg)
+	}
 }
 
 func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error) {

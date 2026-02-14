@@ -1,22 +1,10 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2021 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1beta1
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -24,7 +12,7 @@ import (
 	"strconv"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
+	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
 
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -40,7 +28,6 @@ type APISpec struct {
 	Address string `json:"address,omitempty"`
 
 	// Whether to only bind to the IP given by the address option.
-	// +optional
 	OnlyBindToAddress bool `json:"onlyBindToAddress,omitempty"`
 
 	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
@@ -48,6 +35,11 @@ type APISpec struct {
 
 	// Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+
+	// Slice of strings with raw arguments to pass to the kube-apiserver process
+	// These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+	// ExtraArgs are recommended over RawArgs. If possible use ExtraArgs to set arguments.
+	RawArgs []string `json:"rawArgs,omitempty"`
 
 	// Custom port for k0s-api server to listen on (default: 9443)
 	// +kubebuilder:validation:Minimum=1
@@ -73,7 +65,6 @@ type APISpec struct {
 func DefaultAPISpec() *APISpec {
 	a := new(APISpec)
 	a.setDefaults()
-	a.SANs, _ = iface.AllAddresses()
 	return a
 }
 
@@ -88,17 +79,56 @@ func (a *APISpec) LocalURL() *url.URL {
 	return &url.URL{Scheme: "https", Host: host}
 }
 
-// APIAddress ...
-func (a *APISpec) APIAddress() string {
+func (a *APISpec) APIServerHostPort() (*k0snet.HostPort, error) {
 	if a.ExternalAddress != "" {
-		return a.ExternalAddress
+		if ip := net.ParseIP(a.ExternalAddress); ip != nil {
+			return k0snet.NewHostPort(a.ExternalAddress, uint16(a.Port))
+		}
+		hostPort, err := k0snet.ParseHostPortWithDefault(a.ExternalAddress, uint16(a.Port))
+		if err != nil {
+			return nil, fmt.Errorf("external address is invalid: %w", err)
+		}
+		return hostPort, nil
 	}
-	return a.Address
+
+	return k0snet.NewHostPort(a.Address, uint16(a.Port))
+}
+
+func (a *APISpec) ExternalHost() string {
+	if a.ExternalAddress != "" {
+		host, _, _ := net.SplitHostPort(a.ExternalAddress)
+		if host != "" {
+			return host
+		}
+	}
+	return a.ExternalAddress
+}
+
+func (a *APISpec) ExternalPort() int {
+	if a.ExternalAddress != "" {
+		_, port, _ := net.SplitHostPort(a.ExternalAddress)
+		if portInt, err := strconv.Atoi(port); port != "" && err == nil {
+			return portInt
+		}
+	}
+	return a.Port
 }
 
 // APIAddressURL returns kube-apiserver external URI
 func (a *APISpec) APIAddressURL() string {
 	return a.getExternalURIForPort(a.Port)
+}
+
+// DetectPrimaryAddressFamily tries to detect the primary address of the cluster
+// based on the address family of ExternalAddress. If this isn't set it will try
+// to detect it based on the address family of Address.
+// If the address used to detect it, isn't an IP address but a hostname or if
+// both are unset, it will default to IPv4
+func (a *APISpec) DetectPrimaryAddressFamily() PrimaryAddressFamilyType {
+	if ip := net.ParseIP(cmp.Or(a.ExternalHost(), a.Address)); ip != nil && ip.To4() == nil {
+		return PrimaryFamilyIPv6
+	}
+	return PrimaryFamilyIPv4
 }
 
 // K0sControlPlaneAPIAddress returns the controller join APIs address
@@ -109,21 +139,14 @@ func (a *APISpec) K0sControlPlaneAPIAddress() string {
 func (a *APISpec) getExternalURIForPort(port int) string {
 	addr := a.Address
 	if a.ExternalAddress != "" {
+		// If ExternalAddress is a full host:port address, return it as is
+		if a.ExternalHost() != a.ExternalAddress {
+			return (&url.URL{Scheme: "https", Host: a.ExternalAddress}).String()
+		}
+
 		addr = a.ExternalAddress
 	}
 	return (&url.URL{Scheme: "https", Host: net.JoinHostPort(addr, strconv.Itoa(port))}).String()
-}
-
-// Sans return the given SANS plus all local addresses and externalAddress if given
-func (a *APISpec) Sans() []string {
-	sans, _ := iface.AllAddresses()
-	sans = append(sans, a.Address)
-	sans = append(sans, a.SANs...)
-	if a.ExternalAddress != "" {
-		sans = append(sans, a.ExternalAddress)
-	}
-
-	return stringslice.Unique(sans)
 }
 
 func isAnyAddress(address string) bool {
@@ -153,7 +176,7 @@ func (a *APISpec) Validate() []error {
 	}
 
 	if a.ExternalAddress != "" {
-		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalAddress)
+		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalHost())
 		if isAnyAddress(a.ExternalAddress) {
 			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.Address, "invalid INADDR_ANY"))
 		}

@@ -1,24 +1,13 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package constant
 
 import (
 	"crypto/tls"
 	"strings"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Network providers
@@ -40,7 +29,7 @@ const (
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
 	CertMode = 0644
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
-	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
+	// this relates to files like: kube-apiserver.yaml, certificate files, and more
 	CertSecureMode = 0640
 	// BinDirMode is the expected directory permissions for BinDir
 	BinDirMode = 0755
@@ -54,6 +43,9 @@ const (
 	KineDBDirMode = 0750
 	// keepalived is the expected directory permissions for the Keepalived directory
 	KeepalivedDirMode = 0600
+	// OwnerOnlyMode is the expected file permissions for owner-only access files.
+	// this relates to files like: admin.conf, kubelet config.yaml
+	OwnerOnlyMode = 0600
 
 	/* User accounts for services */
 
@@ -65,42 +57,48 @@ const (
 	ApiserverUser = "kube-apiserver"
 	// SchedulerUser defines the user to use for running k8s scheduler
 	SchedulerUser = "kube-scheduler"
-	// KonnectivityServerUser deinfes the user to use for konnectivity-server
+	// KonnectivityServerUser defines the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
 	// KeepalivedUser defines the user to use for running keepalived
 	KeepalivedUser = "keepalived"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
-	KubernetesMajorMinorVersion = "1.33"
+	KubernetesMajorMinorVersion = "1.35"
 	// Indicates if k0s is using a Kubernetes pre-release or a GA version.
 	KubernetesPreRelease = false
 
 	/* Image Constants */
 
-	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
-	KonnectivityImageVersion           = "v0.32.0"
-	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
-	PushGatewayImageVersion            = "1.4.0-k0s.0"
-	MetricsImage                       = "quay.io/k0sproject/metrics-server"
-	MetricsImageVersion                = "v0.7.2-0"
-	KubePauseContainerImage            = "quay.io/k0sproject/pause"
-	KubePauseContainerImageVersion     = "3.10.1"
-	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion              = "v1.33.1"
-	CoreDNSImage                       = "quay.io/k0sproject/coredns"
-	CoreDNSImageVersion                = "1.12.1"
-	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"
-	EnvoyProxyImageVersion             = "v1.32.3"
-	CalicoImage                        = "quay.io/k0sproject/calico-cni"
-	CalicoComponentImagesVersion       = "v3.29.3-1"
-	CalicoNodeImage                    = "quay.io/k0sproject/calico-node"
-	KubeControllerImage                = "quay.io/k0sproject/calico-kube-controllers"
-	KubeRouterCNIImage                 = "quay.io/k0sproject/kube-router"
-	KubeRouterCNIImageVersion          = "v2.5.0-iptables1.8.11-0"
-	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
-	KubeRouterCNIInstallerImageVersion = "1.7.1-k0s.0"
-	OpenEBSRepository                  = "https://openebs.github.io/charts"
-	OpenEBSVersion                     = "3.3.0"
+	KonnectivityImage                     = "quay.io/k0sproject/apiserver-network-proxy-agent"
+	KonnectivityImageVersion              = "v0.34.0-1"
+	PushGatewayImage                      = "quay.io/k0sproject/pushgateway-ttl"
+	PushGatewayImageVersion               = "1.4.0-k0s.0"
+	MetricsImage                          = "quay.io/k0sproject/metrics-server"
+	MetricsImageVersion                   = "v0.8.1-0"
+	KubePauseContainerImage               = "quay.io/k0sproject/pause"
+	KubePauseContainerImageVersion        = "3.10.1"
+	KubePauseWindowsContainerImage        = "registry.k8s.io/pause"
+	KubePauseWindowsContainerImageVersion = "3.10.1"
+	KubeProxyImage                        = "quay.io/k0sproject/kube-proxy"
+	KubeProxyImageVersion                 = "v1.35.1"
+	KubeProxyWindowsImage                 = "docker.io/sigwindowstools/kube-proxy"
+	KubeProxyWindowsImageVersion          = "v1.35.1-calico-hostprocess"
+	CoreDNSImage                          = "quay.io/k0sproject/coredns"
+	CoreDNSImageVersion                   = "1.14.1"
+	EnvoyProxyImage                       = "quay.io/k0sproject/envoy-distroless"
+	EnvoyProxyImageVersion                = "v1.37.0"
+	CalicoCNIImage                        = "quay.io/k0sproject/calico-cni"
+	CalicoComponentImagesVersion          = "v3.31.3-0"
+	CalicoCNIWindowsImage                 = "docker.io/calico/cni-windows"
+	CalicoCNIWindowsImageVersion          = "v3.31.3"
+	CalicoNodeImage                       = "quay.io/k0sproject/calico-node"
+	CalicoNodeWindowsImage                = "docker.io/calico/node-windows"
+	CalicoNodeWindowsImageVersion         = "v3.31.3"
+	KubeControllerImage                   = "quay.io/k0sproject/calico-kube-controllers"
+	KubeRouterCNIImage                    = "quay.io/k0sproject/kube-router"
+	KubeRouterCNIImageVersion             = "v2.6.3-iptables1.8.11-0"
+	KubeRouterCNIInstallerImage           = "quay.io/k0sproject/cni-node"
+	KubeRouterCNIInstallerImageVersion    = "1.8.0-k0s.0"
 
 	/* Controller component names */
 
@@ -122,9 +120,10 @@ const (
 	NodeRoleComponentName              = "node-role"
 	WindowsNodeComponentName           = "windows-node"
 	AutopilotComponentName             = "autopilot"
+	UpdateProberComponentName          = "update-prober"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
-	ClusterConfigNamespace  = "kube-system"
+	ClusterConfigNamespace  = metav1.NamespaceSystem
 	ClusterConfigObjectName = "k0s"
 
 	K0SNodeRoleLabel = "node.k0sproject.io/role"

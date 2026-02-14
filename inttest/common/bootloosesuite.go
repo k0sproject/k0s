@@ -1,18 +1,5 @@
-/*
-Copyright 2020 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package common
 
@@ -26,17 +13,16 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"testing"
 	"text/template"
 	"time"
@@ -46,6 +32,7 @@ import (
 	etcdmemberclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
@@ -72,12 +59,15 @@ const (
 	lbNodeNameFormat           = "lb%d"
 	etcdNodeNameFormat         = "etcd%d"
 	updateServerNodeNameFormat = "updateserver%d"
+	registryNodeNameFormat     = "registry%d"
 
 	defaultK0sBinaryFullPath = "/usr/local/bin/k0s"
 	k0sBindMountFullPath     = "/dist/k0s"
 	k0sNewBindMountFullPath  = "/dist/k0s-new"
 
 	defaultBootLooseImage = "bootloose-alpine"
+
+	registryContainerPort = 5000
 )
 
 // BootlooseSuite defines all the common stuff we need to be able to run k0s testing on bootloose.
@@ -86,23 +76,30 @@ type BootlooseSuite struct {
 
 	/* config knobs (initialized via `initializeDefaults`) */
 
-	LaunchMode                      LaunchMode
-	ControllerCount                 int
-	ControllerUmask                 int
-	ExtraVolumes                    []config.Volume
-	K0sFullPath                     string
-	AirgapImageBundleMountPoints    []string
-	K0smotronImageBundleMountPoints []string
-	K0sAPIExternalPort              int
-	KonnectivityAdminPort           int
-	KonnectivityAgentPort           int
-	KubeAPIExternalPort             int
-	WithExternalEtcd                bool
-	WithLB                          bool
-	WorkerCount                     int
-	K0smotronWorkerCount            int
-	WithUpdateServer                bool
-	BootLooseImage                  string
+	LaunchMode                     LaunchMode
+	ControllerCount                int
+	ControllerUmask                int
+	ExtraVolumes                   []config.Volume
+	K0sFullPath                    string
+	AirgapImageBundleMountPoints   []string
+	K0sExtraImageBundleMountPoints []string
+	K0sAPIExternalPort             int
+	KonnectivityAdminPort          int
+	KonnectivityAgentPort          int
+	KubeAPIExternalPort            int
+	WithExternalEtcd               bool
+	WithLB                         bool
+	WorkerCount                    int
+	K0smotronWorkerCount           int
+	WithUpdateServer               bool
+	BootLooseImage                 string
+	Networks                       []string
+
+	WithRegistry bool
+	// RegistryTLSPath is the path to the folder containing
+	// tls.crt and tls.key files used for registry TLS setup.
+	// If empty, the registry will be set up without TLS.
+	RegistryTLSPath string
 
 	ctx      context.Context
 	tearDown func()
@@ -199,7 +196,7 @@ func (s *BootlooseSuite) SetupSuite() {
 		t.Logf("Cleaning up")
 
 		// Get a fresh context for the cleanup tasks.
-		ctx, cancel := signalAwareCtx(t.Context())
+		ctx, cancel := k0scontext.ShutdownContext(t.Context())
 		defer cancel(nil)
 		s.cleanupSuite(ctx, t)
 	}()
@@ -209,23 +206,10 @@ func (s *BootlooseSuite) SetupSuite() {
 	if s.WithLB {
 		s.startHAProxy()
 	}
-}
 
-func signalAwareCtx(parent context.Context) (context.Context, context.CancelCauseFunc) {
-	ctx, cancel := context.WithCancelCause(parent)
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		defer signal.Stop(sigs)
-		select {
-		case <-ctx.Done():
-		case sig := <-sigs:
-			cancel(fmt.Errorf("signal received: %s", sig))
-		}
-	}()
-
-	return ctx, cancel
+	if s.WithRegistry {
+		s.Require().NoError(s.waitForRegistryHealthy())
+	}
 }
 
 // waitForSSH waits to get a SSH connection to all bootloose machines defined as part of the test suite.
@@ -289,12 +273,30 @@ func (s *BootlooseSuite) waitForSSH(ctx context.Context) {
 // will take the context as parameter.
 func (s *BootlooseSuite) Context() context.Context {
 	ctx, t := s.ctx, s.T()
-	require.NotNil(t, ctx, "No suite context installed")
-	if t == nil {
+	if t != nil {
+		require.NotNil(t, ctx, "No suite context installed")
+		return k0scontext.WithValue(ctx, t)
+	}
+
+	if ctx != nil {
 		return ctx
 	}
 
-	return k0scontext.WithValue(ctx, t)
+	panic("no suite context installed")
+}
+
+func (s *BootlooseSuite) TContext() context.Context {
+	ctx, cancel := context.WithCancelCause(s.Context())
+	go func() {
+		t := k0scontext.Value[*testing.T](ctx)
+		tctx := t.Context()
+		select {
+		case <-ctx.Done():
+		case <-tctx.Done():
+			cancel(fmt.Errorf("context of %s is done: %w", t.Name(), context.Cause(tctx)))
+		}
+	}()
+	return ctx
 }
 
 // ControllerNode gets the node name of given controller index
@@ -317,6 +319,13 @@ func (s *BootlooseSuite) LBNode() string {
 		s.FailNow("can't get load balancer node name because it's not enabled for this suite")
 	}
 	return fmt.Sprintf(lbNodeNameFormat, 0)
+}
+
+func (s *BootlooseSuite) RegistryNode() string {
+	if !s.WithRegistry {
+		s.FailNow("can't get registry node name because it's not enabled for this suite")
+	}
+	return fmt.Sprintf(registryNodeNameFormat, 0)
 }
 
 func (s *BootlooseSuite) ExternalEtcdNode() string {
@@ -368,7 +377,7 @@ func (s *BootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 
 		for _, m := range machines {
 			node := m.Hostname()
-			if strings.HasPrefix(node, "lb") {
+			if strings.HasPrefix(node, "lb") || strings.HasPrefix(node, "registry") {
 				continue
 			}
 
@@ -662,25 +671,6 @@ func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 	return string(bytes.TrimSpace(tokenBuf.Bytes())), nil
 }
 
-// ImportK0smotrtonImages imports
-func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
-	for i := range s.WorkerCount {
-		workerNode := s.WorkerNode(i)
-		s.T().Logf("Importing images in %s", workerNode)
-		sshWorker, err := s.SSH(s.Context(), workerNode)
-		if err != nil {
-			return err
-		}
-		defer sshWorker.Disconnect()
-
-		_, err = sshWorker.ExecWithOutput(ctx, "k0s ctr images import "+s.K0smotronImageBundleMountPoints[0])
-		if err != nil {
-			return fmt.Errorf("failed to import k0smotron images: %w", err)
-		}
-	}
-	return nil
-}
-
 // RunWorkers joins all the workers to the cluster
 func (s *BootlooseSuite) RunWorkers(args ...string) error {
 	token, err := s.GetJoinToken("worker", getDataDirOpt(args))
@@ -878,6 +868,23 @@ func (s *BootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username 
 	}
 	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
 	return cfg, nil
+}
+
+func (s *BootlooseSuite) ClientFactory(node string, k0sKubeconfigArgs ...string) *kubeutil.ClientFactory {
+	var lbAddr string
+	if s.WithLB {
+		lbAddr = s.GetLBAddress()
+	}
+	return &kubeutil.ClientFactory{
+		LoadRESTConfig: func() (*rest.Config, error) {
+			restConfig, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
+			if err != nil || lbAddr == "" {
+				return restConfig, err
+			}
+			restConfig.Host = net.JoinHostPort(lbAddr, strconv.Itoa(s.KubeAPIExternalPort))
+			return restConfig, nil
+		},
+	}
 }
 
 // KubeClient return kube client by loading the admin access config from given node
@@ -1087,15 +1094,15 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 		}
 	}
 
-	if len(s.K0smotronImageBundleMountPoints) > 0 {
-		path, ok := os.LookupEnv("K0SMOTRON_IMAGES_BUNDLE")
+	if len(s.K0sExtraImageBundleMountPoints) > 0 {
+		path, ok := os.LookupEnv("K0S_EXTRA_IMAGES_BUNDLE")
 		if !ok {
-			return errors.New("cannot bind-mount K0smotron image bundle, environment variable K0SMOTRON_IMAGES_BUNDLE not set")
+			return errors.New("cannot bind-mount k0s extra image bundle, environment variable K0S_EXTRA_IMAGES_BUNDLE not set")
 		} else if !file.Exists(path) {
-			return fmt.Errorf("cannot bind-mount airgap image bundle, no such file: %q", path)
+			return fmt.Errorf("cannot bind-mount k0s extra image bundle, no such file: %q", path)
 		}
 
-		for _, dest := range s.K0smotronImageBundleMountPoints {
+		for _, dest := range s.K0sExtraImageBundleMountPoints {
 			volumes = append(volumes, config.Volume{
 				Type:        "bind",
 				Source:      path,
@@ -1175,6 +1182,8 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					Networks:     s.Networks,
+					ExtraArgs:    []string{"--add-host=host.docker.internal:host-gateway"},
 				},
 			},
 			{
@@ -1185,6 +1194,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					Networks:     s.Networks,
 				},
 			},
 			{
@@ -1244,6 +1254,13 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 		})
 	}
 
+	if s.WithRegistry {
+		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
+			Spec:  s.generateRegistryMachineSpec(),
+			Count: 1,
+		})
+	}
+
 	bootlooseYaml, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal bootloose configuration: %w", err)
@@ -1270,6 +1287,43 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 	return nil
 }
 
+func (s *BootlooseSuite) generateRegistryMachineSpec() *config.Machine {
+	var volumes []config.Volume
+	registryProtocol := "http"
+	extraArgs := []string{
+		fmt.Sprintf("-e REGISTRY_HTTP_ADDR=0.0.0.0:%d", registryContainerPort),
+		"--health-start-period=1s",
+		"--health-retries=1",
+	}
+
+	if s.RegistryTLSPath != "" {
+		registryProtocol = "https"
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      s.RegistryTLSPath,
+			Destination: "/tls",
+		})
+		extraArgs = append(extraArgs,
+			"-e=REGISTRY_HTTP_TLS_CERTIFICATE=/tls/tls.crt",
+			"-e=REGISTRY_HTTP_TLS_KEY=/tls/tls.key",
+		)
+	}
+	extraArgs = append(extraArgs, fmt.Sprintf("--health-cmd=wget -q --no-check-certificate --spider %s://localhost:%d/v2", registryProtocol, registryContainerPort))
+
+	return &config.Machine{
+		Name:  registryNodeNameFormat,
+		Image: "registry:3.0.0",
+		Cmd:   "/etc/distribution/config.yml",
+		PortMappings: []config.PortMapping{
+			{
+				ContainerPort: uint16(registryContainerPort), // registry port
+			},
+		},
+		Volumes:   volumes,
+		ExtraArgs: extraArgs,
+	}
+}
+
 func cleanupClusterDir(t *testing.T, dir string) {
 	if err := os.RemoveAll(dir); err != nil {
 		t.Logf("failed to remove bootloose configuration directory %s: %v", dir, err)
@@ -1277,7 +1331,7 @@ func cleanupClusterDir(t *testing.T, dir string) {
 }
 
 func newSuiteContext(t *testing.T) (context.Context, context.CancelCauseFunc) {
-	signalCtx, cancel := signalAwareCtx(t.Context())
+	signalCtx, cancel := k0scontext.ShutdownContext(t.Context())
 
 	// We need to reserve some time to conduct a proper teardown of the suite before the test timeout kicks in.
 	deadline, hasDeadline := t.Deadline()
@@ -1322,6 +1376,16 @@ func (s *BootlooseSuite) GetIPAddress(nodeName string) string {
 	ipAddress, err := ssh.ExecWithOutput(s.Context(), "hostname -i")
 	s.Require().NoError(err)
 	return ipAddress
+}
+
+func (s *BootlooseSuite) GetRegistryHostPort() int {
+	machine, err := s.MachineForName(s.RegistryNode())
+	s.Require().NoError(err)
+
+	hostPort, err := machine.HostPort(registryContainerPort)
+	s.Require().NoError(err)
+
+	return hostPort
 }
 
 // RunCommandController runs a command via SSH on a specified controller node
@@ -1403,6 +1467,28 @@ func (s *BootlooseSuite) WaitForSSH(node string, timeout time.Duration, delay ti
 	return fmt.Errorf("timed out waiting for ssh connection to '%s'", node)
 }
 
+// waitForRegistryHealthy waits until registry node container is in healthy state
+func (s *BootlooseSuite) waitForRegistryHealthy() error {
+	if !s.WithRegistry {
+		return errors.New("registry is not enabled in this suite")
+	}
+
+	s.T().Logf("Waiting for registry to be healthy")
+	registryMachine, err := s.MachineForName(s.RegistryNode())
+	s.Require().NoError(err)
+
+	registryContainer := registryMachine.ContainerName()
+	return wait.PollUntilContextTimeout(s.Context(), 1*time.Second, 30*time.Second, true, func(ctx context.Context) (bool, error) {
+		status, err := exec.Command("docker", "inspect", registryContainer, "--format", "{{.State.Health.Status}}").Output()
+		if err != nil {
+			s.T().Logf("Failed to inspect registry container %s: %v", registryContainer, err)
+			return false, nil
+		}
+		s.T().Logf("Registry container %s status: %s", registryContainer, status)
+		return strings.TrimSpace(string(status)) == "healthy", nil
+	})
+}
+
 // GetUpdateServerIPAddress returns the load balancers ip address
 func (s *BootlooseSuite) GetUpdateServerIPAddress() string {
 	ssh, err := s.SSH(s.Context(), "updateserver0")
@@ -1415,7 +1501,7 @@ func (s *BootlooseSuite) GetUpdateServerIPAddress() string {
 }
 
 func (s *BootlooseSuite) AssertSomeKubeSystemPods(client *kubernetes.Clientset) bool {
-	if pods, err := client.CoreV1().Pods("kube-system").List(s.Context(), metav1.ListOptions{
+	if pods, err := client.CoreV1().Pods(metav1.NamespaceSystem).List(s.Context(), metav1.ListOptions{
 		Limit: 100,
 	}); s.NoError(err) {
 		s.T().Logf("Found %d pods in kube-system", len(pods.Items))
@@ -1448,39 +1534,52 @@ func (s *BootlooseSuite) maybeAddBinPath(volumes []config.Volume) ([]config.Volu
 		return volumes, nil
 	}
 
-	binPath := os.Getenv("K0S_PATH")
-	if binPath == "" {
-		return nil, errors.New("failed to locate k0s binary: K0S_PATH environment variable not set")
+	exePathErrMsg := "failed to locate k0s executable"
+	exePath, binPathSet := os.LookupEnv("K0S_PATH")
+	if !binPathSet {
+		exePathErrMsg += ": K0S_PATH environment variable not set"
+		// Assume that inttests are called from the inttest/<test-name> folder,
+		// hence the k0s executable is supposedly located at ../../k0s.
+		var err error
+		exePath, err = filepath.Abs(filepath.Join("..", "..", "k0s"))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", exePathErrMsg, err)
+		}
 	}
 
-	fileInfo, err := os.Stat(binPath)
+	fileInfo, err := os.Stat(exePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to locate k0s binary %s: %w", binPath, err)
+		return nil, fmt.Errorf("%s: %w", exePathErrMsg, err)
 	}
 	if fileInfo.IsDir() {
-		return nil, fmt.Errorf("failed to locate k0s binary %s: is a directory", binPath)
+		return nil, fmt.Errorf("%s: is a directory: %q", exePathErrMsg, exePath)
 	}
 
-	updateFromBinPath := os.Getenv("K0S_UPDATE_FROM_PATH")
-	if updateFromBinPath != "" {
-		volumes = append(volumes, config.Volume{
-			Type:        "bind",
-			Source:      updateFromBinPath,
-			Destination: k0sBindMountFullPath,
-			ReadOnly:    true,
-		}, config.Volume{
-			Type:        "bind",
-			Source:      binPath,
-			Destination: k0sNewBindMountFullPath,
-			ReadOnly:    true,
-		})
+	fromK0sPath, updatingFromOtherVersion := os.LookupEnv("K0S_UPDATE_FROM_PATH")
+	if updatingFromOtherVersion {
+		errMsg := "failed to locate k0s executable to update from (check the K0S_UPDATE_FROM_PATH environment variable)"
+		if fromK0sPath, err = filepath.Abs(fromK0sPath); err != nil {
+			return nil, fmt.Errorf("%s: %w", errMsg, err)
+		} else if fileInfo, err := os.Stat(fromK0sPath); err != nil {
+			return nil, fmt.Errorf("%s: %w", errMsg, err)
+		} else if fileInfo.IsDir() {
+			return nil, fmt.Errorf("%s: is a directory: %q", errMsg, fromK0sPath)
+		}
 	} else {
-		volumes = append(volumes, config.Volume{
-			Type:        "bind",
-			Source:      binPath,
-			Destination: k0sBindMountFullPath,
-			ReadOnly:    true,
-		})
+		fromK0sPath = exePath
 	}
+
+	volumes = append(volumes, config.Volume{
+		Type:        "bind",
+		Source:      fromK0sPath,
+		Destination: k0sBindMountFullPath,
+		ReadOnly:    true,
+	}, config.Volume{
+		Type:        "bind",
+		Source:      exePath,
+		Destination: k0sNewBindMountFullPath,
+		ReadOnly:    true,
+	})
+
 	return volumes, nil
 }

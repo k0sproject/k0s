@@ -1,18 +1,5 @@
-/*
-Copyright 2023 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-FileCopyrightText: 2023 k0s authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controller
 
@@ -37,11 +24,11 @@ func TestKubeProxyConfig(t *testing.T) {
 		}
 		b := bytes.NewBuffer([]byte{})
 		assert.NoError(t, tw.WriteToBuffer(b))
-		m := map[string]interface{}{}
+		m := map[string]any{}
 		assert.NoError(t, yaml.Unmarshal(b.Bytes(), &m))
-		kubeProxyConfigData := map[string]interface{}{}
-		assert.NoError(t, yaml.Unmarshal([]byte(m["data"].(map[string]interface{})["config.conf"].(string)), &kubeProxyConfigData))
-		renderedFeatureGates := kubeProxyConfigData["featureGates"].(map[string]interface{})
+		kubeProxyConfigData := map[string]any{}
+		assert.NoError(t, yaml.Unmarshal([]byte(m["data"].(map[string]any)["config.conf"].(string)), &kubeProxyConfigData))
+		renderedFeatureGates := kubeProxyConfigData["featureGates"].(map[string]any)
 		result := map[string]bool{}
 		for k, v := range renderedFeatureGates {
 			result[k] = v.(bool)

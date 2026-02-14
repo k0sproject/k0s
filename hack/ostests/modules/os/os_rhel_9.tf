@@ -4,12 +4,12 @@ data "aws_ami" "rhel_9" {
   count = var.os == "rhel_9" ? 1 : 0
 
   owners      = ["309956199498"]
-  name_regex  = "^RHEL-9\\.5\\.\\d+_HVM-\\d+-x86_64-"
+  name_regex  = "^RHEL-9\\.7\\.\\d+_HVM_GA-\\d+-x86_64-"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["RHEL-9.5.*_HVM-*-x86_64-*"]
+    values = ["RHEL-9.7.*_HVM_GA-*-x86_64-*"]
   }
 
   filter {
