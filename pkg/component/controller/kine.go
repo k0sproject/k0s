@@ -128,7 +128,7 @@ func (k *Kine) Start(ctx context.Context) error {
 		BinPath: k.executablePath,
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
-		Args:    args.ToArgs(),
+		Args:    append(args.ToArgs(), k.Config.RawArgs...),
 		UID:     k.uid,
 		GID:     kineGID,
 	}
