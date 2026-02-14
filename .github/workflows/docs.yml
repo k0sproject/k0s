@@ -1,14 +1,6 @@
 name: Lint docs
 
 on:
-  push:
-    branches:
-      - main
-      - release-*
-    paths:
-      - '**.md'
-      - .github/workflows/docs.yml
-      - .markdownlint.jsonc
   pull_request:
     branches:
       - main
