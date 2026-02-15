@@ -215,7 +215,7 @@ func TestWriteAtomically(t *testing.T) {
 			)
 			assert.Equal(t, file, linkErr.New)
 			if runtime.GOOS == "windows" {
-				// https://github.com/golang/go/blob/go1.25.7/src/syscall/types_windows.go#L13
+				// https://github.com/golang/go/blob/go1.26.0/src/syscall/types_windows.go#L13
 				//revive:disable-next-line:var-naming
 				const ERROR_ACCESS_DENIED syscall.Errno = 5
 				var errno syscall.Errno
