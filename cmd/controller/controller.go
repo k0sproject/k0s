@@ -384,8 +384,9 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			K0sVars:       c.K0sVars,
 			ClusterConfig: nodeConfig,
 		},
-		Socket:      c.K0sVars.StatusSocketPath,
-		CertManager: worker.NewCertificateManager(c.K0sVars.KubeletAuthConfigPath),
+		Socket:             c.K0sVars.StatusSocketPath,
+		CertManager:        worker.NewCertificateManager(c.K0sVars.KubeletAuthConfigPath),
+		AdminClientFactory: adminClientFactory,
 	})
 
 	perfTimer.Checkpoint("starting-certificates-init")
