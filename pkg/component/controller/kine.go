@@ -22,6 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -104,24 +105,32 @@ func (k *Kine) Init(_ context.Context) error {
 func (k *Kine) Start(ctx context.Context) error {
 	logrus.Info("Starting kine")
 
+	args := stringmap.StringMap{
+		"--endpoint": k.Config.DataSource,
+		// NB: kine doesn't parse URLs properly, so construct potentially
+		// invalid URLs that are understood by kine.
+		// https://github.com/k3s-io/kine/blob/v0.14.11/pkg/util/network.go#L5-L13
+		"--listen-address": "unix://" + k.K0sVars.KineSocketPath,
+		// Enable metrics on port 2380. The default is 8080, which clashes with kube-router.
+		"--metrics-bind-address": ":2380",
+		// https://github.com/k3s-io/kine/pull/513
+		"--compact-interval": "0",
+	}
+	for name, value := range k.Config.ExtraArgs {
+		argName := "--" + name
+		if _, ok := args[argName]; ok {
+			logrus.Warnf("overriding kine flag with user provided value: %s", argName)
+		}
+		args[argName] = value
+	}
 	k.supervisor = &supervisor.Supervisor{
 		Name:    "kine",
 		BinPath: k.executablePath,
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
-		Args: []string{
-			"--endpoint=" + k.Config.DataSource,
-			// NB: kine doesn't parse URLs properly, so construct potentially
-			// invalid URLs that are understood by kine.
-			// https://github.com/k3s-io/kine/blob/v0.14.11/pkg/util/network.go#L5-L13
-			"--listen-address=unix://" + k.K0sVars.KineSocketPath,
-			// Enable metrics on port 2380. The default is 8080, which clashes with kube-router.
-			"--metrics-bind-address=:2380",
-			// https://github.com/k3s-io/kine/pull/513
-			"--compact-interval=0",
-		},
-		UID: k.uid,
-		GID: kineGID,
+		Args:    append(args.ToArgs(), k.Config.RawArgs...),
+		UID:     k.uid,
+		GID:     kineGID,
 	}
 
 	return k.supervisor.Supervise(ctx)

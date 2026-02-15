@@ -1125,6 +1125,20 @@ spec:
                       dataSource:
                         description: kine datasource URL
                         type: string
+                      extraArgs:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Map of key-values (strings) for any extra arguments you want to pass down to the kine process.
+                          Can be also used to override the default k0s managed kine arguments.
+                        type: object
+                      rawArgs:
+                        description: |-
+                          Slice of strings with raw arguments to pass to the kine process.
+                          These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   type:
                     default: etcd
