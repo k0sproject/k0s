@@ -232,7 +232,7 @@ func (f *Atomic) finish(target string) (err error) {
 		err = errors.Join(err, closeErr, removeErr)
 	}()
 
-	// https://github.com/google/renameio/blob/v2.0.1/tempfile.go#L150-L157
+	// https://github.com/google/renameio/blob/v2.0.2/tempfile.go#L184-L191
 	if err = f.fd.Sync(); err != nil {
 		return err
 	}
