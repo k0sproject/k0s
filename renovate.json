@@ -176,7 +176,7 @@
       "postUpgradeTasks": {
         "executionMode": "branch",
         "commands": [
-          "install-tool golang $(./vars.sh go_version)",
+          "sh -c 'install-tool golang $(./vars.sh go_version)'",
           "make DOCKER='' EMBEDDED_BINS_BUILDMODE=none codegen"
         ]
       }
