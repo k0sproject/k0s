@@ -7,7 +7,7 @@
     ":automergeMinor",
     ":semanticCommitsDisabled"
   ],
-  "gitAuthor": "Renovate Bot <renovate@whitesourcesoftware.com>",
+  "gitAuthor": "k0s-bot <110385897+k0s-bot@users.noreply.github.com>",
   "labels": [
     "dependencies"
   ],
