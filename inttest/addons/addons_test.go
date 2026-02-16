@@ -52,6 +52,7 @@ import (
 const (
 	registryCACertContainerPath = "/tmp/registry-ca.crt"
 	echoServerTgzPath           = "./testdata/chart/echo-server-0.5.0.tgz"
+	slowHookChartPath           = "./testdata/slow-hook-0.1.0.tgz"
 )
 
 type AddonsSuite struct {
@@ -174,6 +175,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 
 	as.Run("Rename chart in Helm extension", func() { as.renameChart(ctx) })
 	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(ctx, kc) })
+	as.Run("Controller restart recovery", func() { as.testControllerRestartRecovery(ctx, kc) })
 
 	values := map[string]any{
 		"replicaCount": 2,
@@ -624,6 +626,89 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]any
 	as.Require().NoError(tw.WriteToBuffer(buf))
 
 	as.PutFile(as.ControllerNode(0), path, buf.String())
+}
+
+// testControllerRestartRecovery tests that charts stuck in pending-install state
+// after controller restart are automatically recovered via the cleanup mechanism.
+// This reproduces issue https://github.com/k0sproject/k0s/issues/7109
+func (as *AddonsSuite) testControllerRestartRecovery(ctx context.Context, kc *k8s.Clientset) {
+	restartAddonName := "restart-test-addon"
+	chartName := "k0s-addon-chart-" + restartAddonName
+
+	// Read the slow-hook chart and push it to the controller
+	chartBytes, err := os.ReadFile(slowHookChartPath)
+	as.Require().NoError(err)
+	as.PutFile(as.ControllerNode(0), "/tmp/slow-hook.tgz", string(chartBytes))
+
+	// Create a Chart with slow post-install hook that will be interrupted
+	chart := &helmv1beta1.Chart{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "helm.k0sproject.io/v1beta1",
+			Kind:       "Chart",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      chartName,
+			Namespace: metav1.NamespaceSystem,
+			Finalizers: []string{
+				"helm.k0sproject.io/uninstall-helm-release",
+			},
+		},
+		Spec: helmv1beta1.ChartSpec{
+			ChartName:   "/tmp/slow-hook.tgz",
+			ReleaseName: restartAddonName,
+			Version:     "0.1.0",
+			Namespace:   metav1.NamespaceDefault,
+		},
+	}
+
+	// Get k0s client
+	restConfig, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+	k0sClients, err := k0sclientset.NewForConfig(restConfig)
+	as.Require().NoError(err)
+
+	// Create the Chart
+	_, err = k0sClients.HelmV1beta1().Charts(metav1.NamespaceSystem).Create(ctx, chart, metav1.CreateOptions{})
+	as.Require().NoError(err)
+	as.T().Logf("Created Chart %s", chartName)
+
+	// Wait for Helm to create the release secret, indicating the install has started
+	// and the post-install hook (60s sleep) is executing. This ensures we restart
+	// the controller while Helm is actively managing the release.
+	as.T().Log("Waiting for Helm release secret to appear...")
+
+	as.Require().NoError(wait.PollUntilContextTimeout(ctx, 2*time.Second, 1*time.Minute, true, func(ctx context.Context) (bool, error) {
+		secretList, err := kc.CoreV1().Secrets(metav1.NamespaceDefault).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			as.T().Logf("Error listing secrets: %v", err)
+			return false, err
+		}
+
+		for _, secret := range secretList.Items {
+			if secret.Labels["name"] == restartAddonName && secret.Labels["owner"] == "helm" {
+				as.T().Logf("Found secret for release %s: %s", restartAddonName, secret.Name)
+				return true, nil
+			}
+		}
+
+		return false, nil
+	}))
+
+	as.T().Log("Helm started its job, restarting controller...")
+
+	// Restart controller to interrupt the installation
+	as.Require().NoError(as.StopController(as.ControllerNode(0)))
+	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml", "--enable-dynamic-config"))
+
+	as.T().Log("Controller restarted, waiting for automatic recovery...")
+
+	// The cleanup should kick in automatically on next reconciliation
+	// Wait for chart to reach deployed state (recovery complete) by checking the Chart CR status
+	as.T().Log("Waiting for Chart CR to show deployed status...")
+	as.waitForTestRelease(restartAddonName, "1.0", metav1.NamespaceDefault, 1)
+
+	as.T().Logf("Successfully recovered from interrupted install: %s is now deployed", restartAddonName)
+
 }
 
 func TestAddonsSuite(t *testing.T) {

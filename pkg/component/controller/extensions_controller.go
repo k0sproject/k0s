@@ -287,7 +287,8 @@ func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Char
 	}
 	defer cleanup()
 
-	if err := helmCmd.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
+	// Normal uninstall via finalizer - run hooks as expected (disableHooks=false)
+	if err := helmCmd.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace, false); err != nil {
 		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
@@ -456,6 +457,11 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
 		cr.L.Tracef("Start update or install %s", chartName)
+		// Check for and clean up any broken release from previous interrupted install
+		if err = cr.cleanupBrokenRelease(ctx, helmCmd, chart.Spec.ReleaseName, chart.Spec.Namespace); err != nil {
+			err = fmt.Errorf("failed to cleanup broken release before install: %w", err)
+			return
+		}
 		chartRelease, err = helmCmd.InstallChart(ctx,
 			chartName,
 			chart.Spec.Version,
@@ -473,6 +479,11 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			return nil
 		}
 		// update
+		// Check for and clean up any broken release from previous interrupted upgrade
+		if err = cr.cleanupBrokenRelease(ctx, helmCmd, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
+			err = fmt.Errorf("failed to cleanup broken release before upgrade: %w", err)
+			return
+		}
 		chartRelease, err = helmCmd.UpgradeChart(ctx,
 			chartName,
 			chart.Spec.Version,
@@ -588,6 +599,105 @@ func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
 		chart.Status.ReleaseName != chart.Spec.ReleaseName ||
 		chart.Status.Version != chart.Spec.Version ||
 		chart.Status.ValuesHash != chart.Spec.HashValues()
+}
+
+// cleanupBrokenRelease detects and recovers from Helm releases stuck in pending states.
+// This situation occurs when k0s controller restarts during a Helm operation:
+//
+// When k0s stops, the leader lease is lost immediately, causing leaderelection.RunLeaderTasks
+// to cancel the manager's context (see pkg/leaderelection/tasks.go:32). This bypasses
+// GracefulShutdownTimeout, interrupting in-flight Helm operations mid-execution.
+//
+// If Helm's atomic rollback/uninstall is interrupted, releases are left in unusable states:
+// - pending-install: Install was interrupted before completion
+// - pending-upgrade: Upgrade was interrupted before completion
+// - pending-rollback: Atomic rollback was interrupted
+// - uninstalling: Uninstall operation was interrupted
+//
+// Recovery strategy:
+// - pending-install: Uninstall (no previous version to preserve)
+// - pending-upgrade/pending-rollback: Rollback to last deployed revision (preserves workloads)
+// - uninstalling: Complete the uninstall
+//
+// See: https://github.com/helm/helm/issues/7476
+func (cr *ChartReconciler) cleanupBrokenRelease(ctx context.Context, helmCmd *helm.Commands, releaseName, namespace string) error {
+	status, err := helmCmd.GetReleaseStatus(releaseName, namespace)
+	if err != nil {
+		// Release not found is not an error - nothing to clean up
+		if errors.Is(err, driver.ErrReleaseNotFound) || strings.Contains(err.Error(), "not found") {
+			return nil
+		}
+		return fmt.Errorf("failed to get release status: %w", err)
+	}
+
+	// Determine recovery action based on release status
+	var action string
+	var recoveryErr error
+
+	switch status {
+	case release.StatusPendingInstall:
+		// Install was interrupted - uninstall to allow retry
+		// DisableHooks=true because if the install was interrupted during atomic rollback,
+		// hook resources may already exist from the failed install attempt
+		action = "uninstall"
+		cr.L.WithFields(logrus.Fields{
+			"release":   releaseName,
+			"namespace": namespace,
+			"status":    status,
+			"action":    action,
+		}).Warn("Detected stuck installation, uninstalling to allow retry (likely due to controller restart during atomic operation)")
+		recoveryErr = helmCmd.UninstallRelease(ctx, releaseName, namespace, true)
+
+	case release.StatusPendingUpgrade, release.StatusPendingRollback:
+		// Upgrade/rollback was interrupted - rollback to preserve workloads
+		action = "rollback"
+		cr.L.WithFields(logrus.Fields{
+			"release":   releaseName,
+			"namespace": namespace,
+			"status":    status,
+			"action":    action,
+		}).Warn("Detected stuck upgrade, rolling back to previous version (likely due to controller restart during atomic operation)")
+		recoveryErr = helmCmd.RollbackRelease(ctx, releaseName, namespace)
+
+	case release.StatusUninstalling:
+		// Uninstall was interrupted - complete it
+		// DisableHooks=true because hooks may have already been partially executed
+		// and Helm will fail if it tries to create hook resources that already exist
+		action = "complete uninstall"
+		cr.L.WithFields(logrus.Fields{
+			"release":   releaseName,
+			"namespace": namespace,
+			"status":    status,
+			"action":    action,
+		}).Warn("Detected interrupted uninstall, completing operation (skipping hooks)")
+		recoveryErr = helmCmd.UninstallRelease(ctx, releaseName, namespace, true)
+
+	default:
+		// Release is in a stable state - no cleanup needed
+		return nil
+	}
+
+	if recoveryErr != nil {
+		// Handle race condition: release may have been cleaned up by another reconciliation
+		if errors.Is(recoveryErr, driver.ErrReleaseNotFound) || strings.Contains(recoveryErr.Error(), "not found") {
+			cr.L.WithFields(logrus.Fields{
+				"release":   releaseName,
+				"namespace": namespace,
+				"action":    action,
+			}).Debug("Release already cleaned up by another reconciliation")
+			return nil
+		}
+		return fmt.Errorf("failed to %s broken release: %w", action, recoveryErr)
+	}
+
+	cr.L.WithFields(logrus.Fields{
+		"release":   releaseName,
+		"namespace": namespace,
+		"status":    status,
+		"action":    action,
+	}).Info("Successfully recovered from broken release")
+
+	return nil
 }
 
 // updateStatus updates the status of the chart with the given release information. This function
@@ -723,6 +833,7 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 		return nil, fmt.Errorf("can't add corev1 to scheme: %w", err)
 	}
 
+	shutDownDuration := 30 * time.Minute
 	mgr, err := controllerruntime.NewManager(clientConfig, crman.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
@@ -730,6 +841,14 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 		},
 		Logger:     logrusr.New(ec.L),
 		Controller: ctrlconfig.Controller{},
+		// Note: GracefulShutdownTimeout is set to 30 minutes, but in practice this timeout
+		// is largely ineffective for the extensions controller. When k0s stops, the leader
+		// lease is immediately lost, which causes leaderelection.RunLeaderTasks to cancel
+		// the manager's context immediately (see pkg/leaderelection/tasks.go:32).
+		// This means controller-runtime never gets time to complete in-flight Helm operations.
+		// The primary defense against interrupted Helm operations is the cleanupBrokenRelease
+		// mechanism in the ChartReconciler, which detects and recovers from stuck releases.
+		GracefulShutdownTimeout: &shutDownDuration,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)

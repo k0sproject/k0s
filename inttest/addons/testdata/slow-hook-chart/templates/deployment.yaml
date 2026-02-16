@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "slow-hook.fullname" . }}
+  labels:
+    app: {{ include "slow-hook.name" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "slow-hook.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "slow-hook.name" . }}
+    spec:
+      containers:
+        - name: sleeper
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["sh", "-c", "while true; do sleep 3600; done"]
