@@ -3460,7 +3460,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>etcd.extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments to pass down to etcd process. <code>extraArgs</code> are recommeneded over <code>rawrArgs</code> if the use case allows it.  Any behavior triggered by these parameters is outside k0s support.</td>
+<td>Map of key-values (strings) for any extra arguments to pass down to etcd process. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it. Any behavior triggered by these parameters is outside k0s support.</td>
 </tr>
 <tr>
 <td><code>etcd.rawArgs</code></td>
@@ -3475,12 +3475,20 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <td>The expiration duration of the server certificate (default: 8760h)</td>
 </tr>
 <tr>
+<td><code>etcd.externalCluster</code></td>
+<td>Configuration when etcd is externally managed, i.e. running on dedicated nodes. See <a href="#specstorageetcdexternalcluster"><code>spec.storage.etcd.externalCluster</code></a></td>
+</tr>
+<tr>
 <td><code>kine.dataSource</code></td>
 <td><a href="https://github.com/k3s-io/kine">kine</a> data source URL.</td>
 </tr>
 <tr>
-<td><code>etcd.externalCluster</code></td>
-<td>Configuration when etcd is externally managed, i.e. running on dedicated nodes. See <a href="#specstorageetcdexternalcluster"><code>spec.storage.etcd.externalCluster</code></a></td>
+<td><code>kine.extraArgs</code></td>
+<td>Map of key-values (strings) for any extra arguments to pass down to kine process. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it.  Any behavior triggered by these parameters is outside k0s support.</td>
+</tr>
+<tr>
+<td><code>kine.rawArgs</code></td>
+<td>Slice of strings for any raw arguments to pass down to the kine process. These are appended after <code>extraArgs</code>. Any behavior triggered by these parameters is outside k0s support. (default: empty)</td>
 </tr>
 </tbody>
 </table>
