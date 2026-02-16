@@ -226,6 +226,18 @@
       "allowedVersions": "<=1.34"
     },
     {
+      "description": "Bump etcd for release-1.33",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.33"
+      ],
+      "matchPackageNames": [
+        "go.etcd.io/etcd/**/v3",
+        "etcd-io/etcd"
+      ],
+      "allowedVersions": "<=3.5"
+    },
+    {
       "description": "Bump Envoy for release-1.33",
       "enabled": true,
       "matchBaseBranches": [
