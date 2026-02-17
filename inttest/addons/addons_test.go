@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"slices"
 	"strings"
@@ -37,6 +38,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/utils/ptr"
@@ -76,7 +78,7 @@ func initCA(t *testing.T) (cert *x509.Certificate, key crypto.Signer) {
 	return
 }
 
-func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir string) []byte {
+func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir, registryHost string) []byte {
 	caCert, caKey := initCA(t)
 
 	s, err := local.NewSigner(caKey, caCert, signer.DefaultSigAlgo(caKey), &config.Signing{
@@ -95,7 +97,7 @@ func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir string) []byte {
 	serverCertCSR, serverKey, err := csr.ParseRequest(&csr.CertificateRequest{
 		KeyRequest: csr.NewKeyRequest(),
 		CN:         "Test Registry",
-		Hosts:      []string{"host.docker.internal"},
+		Hosts:      []string{registryHost},
 	})
 	require.NoError(t, err)
 
@@ -151,8 +153,8 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	p := k0sConfigParams{
 		BasicAddonName:      addonName,
 		LocalRegistryCAPath: registryCACertContainerPath,
-		LocalRegistryHost:   "host.docker.internal",
-		LocalRegistryPort:   as.GetRegistryHostPort(),
+		LocalRegistryHost:   as.RegistryNode(),
+		LocalRegistryPort:   as.RegistryPort(),
 	}
 
 	buf := new(bytes.Buffer)
@@ -629,6 +631,12 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]any
 func TestAddonsSuite(t *testing.T) {
 	registryTLSDir := path.Join(t.TempDir(), "registry-tls")
 	require.NoError(t, os.MkdirAll(registryTLSDir, 0755))
+	networkName := "k0s-inttest-addons-" + utilrand.String(5)
+	out, err := exec.Command("docker", "network", "create", networkName).CombinedOutput()
+	require.NoErrorf(t, err, "failed to create docker network %q: %s", networkName, out)
+	t.Cleanup(func() {
+		_ = exec.Command("docker", "network", "rm", networkName).Run()
+	})
 
 	s := AddonsSuite{
 		BootlooseSuite: common.BootlooseSuite{
@@ -636,9 +644,10 @@ func TestAddonsSuite(t *testing.T) {
 			WorkerCount:     1,
 			WithRegistry:    true,
 			RegistryTLSPath: registryTLSDir,
+			Networks:        []string{networkName},
 		},
-		registryCABytes: issueServerCertsWithSelfSignedCA(t, registryTLSDir),
 	}
+	s.registryCABytes = issueServerCertsWithSelfSignedCA(t, registryTLSDir, s.RegistryNode())
 
 	suite.Run(t, &s)
 }
