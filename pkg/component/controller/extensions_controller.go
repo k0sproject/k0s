@@ -241,8 +241,6 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	if !cr.leaderElector.IsLeader() {
 		return reconcile.Result{}, nil
 	}
-	cr.L.Tracef("Got helm chart reconciliation request: %s", req)
-	defer cr.L.Tracef("Finished processing helm chart reconciliation request: %s", req)
 
 	var chartInstance helmv1beta1.Chart
 
@@ -400,11 +398,9 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	var timeout time.Duration
 	timeout, err = time.ParseDuration(chart.Spec.Timeout)
 	if err != nil {
-		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
 		timeout = defaultTimeout
 	}
 	if timeout == 0 {
-		cr.L.Tracef("Using default timeout `%s`, failed to parse `%s`", defaultTimeout, chart.Spec.Timeout)
 		timeout = defaultTimeout
 	}
 	defer func() {
@@ -455,7 +451,6 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
-		cr.L.Tracef("Start update or install %s", chartName)
 		chartRelease, err = helmCmd.InstallChart(ctx,
 			chartName,
 			chart.Spec.Version,
