@@ -182,6 +182,23 @@
       }
     },
     {
+      "description": "Disable Python managers",
+      "enabled": false,
+      "matchManagers": [
+        "pip_requirements",
+        "pip_setup",
+        "pipenv",
+        "poetry"
+      ]
+    },
+    {
+      "description": "Disable python datasource",
+      "enabled": false,
+      "matchDatasources": [
+        "python-version"
+      ]
+    },
+    {
       "description": "Only bump the main branch by default",
       "enabled": false,
       "prTitleStrict": false,
