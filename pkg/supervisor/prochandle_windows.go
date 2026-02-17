@@ -111,6 +111,11 @@ func (p *process) requestGracefulTermination() error {
 	return sendCtrlBreakOnTargetConsole(p.processID)
 }
 
+// awaitTermination implements [procHandle].
+func (p *process) awaitTermination(ctx context.Context) error {
+	return syscall.EWINDOWS
+}
+
 // Windows requires that processes be attached to the same console in order to
 // send console control events to each other. A process can only be attached to
 // one console at a time, and k0s cannot simply detach from its own console to
