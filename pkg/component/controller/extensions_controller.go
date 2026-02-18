@@ -287,8 +287,16 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 }
 
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Chart) error {
+	log := cr.L.WithFields(logrus.Fields{
+		"name":            chart.Name,
+		"namespace":       chart.Namespace,
+		"release":         chart.Spec.ReleaseName,
+		"chartVersion":    chart.Spec.Version,
+		"resourceVersion": chart.ResourceVersion,
+	})
+
 	// Create ephemeral Helm commands without repository (uninstall doesn't need it)
-	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, nil)
+	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, nil, log)
 	if err != nil {
 		return fmt.Errorf("can't create Helm commands: %w", err)
 	}
@@ -457,12 +465,9 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	}
 
 	// Create ephemeral Helm commands with repository (helm manages tmpDir internally)
-	var helmCmd *helm.Commands
-	var cleanup func()
-	helmCmd, cleanup, err = helm.NewCommands(cr.kubeConfig, repo)
+	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, repo, log)
 	if err != nil {
-		err = fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
-		return
+		return fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
 	}
 	defer cleanup()
 
