@@ -83,16 +83,7 @@ func (s SignalData) Marshal(m map[string]string) error {
 // the `Envelope` and `SignalData` unmarshaling phases.
 func (s *SignalData) Unmarshal(m map[string]string) error {
 	e := &Signal{}
-
-	Unmarshal(
-		m,
-		func() reflect.Type {
-			return reflect.TypeOf(*e)
-		},
-		func() reflect.Value {
-			return reflect.ValueOf(e).Elem()
-		},
-	)
+	Unmarshal(m, e)
 
 	if err := e.Validate(); err != nil {
 		return fmt.Errorf("signaling envelope validation failure: %w", err)
