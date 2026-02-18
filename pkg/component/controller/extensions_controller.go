@@ -336,8 +336,7 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 
 	// If no secret reference, just convert inline config
 	if repoSpec.ConfigFrom == nil || repoSpec.ConfigFrom.SecretRef == nil {
-		repo := repoSpec.ToHelm(extractRepositoryIdentifier(chart.Spec.ChartName))
-		return &repo, nil
+		return toHelmRepo(chart.Spec.ChartName, repoSpec), nil
 	}
 
 	secretRef := repoSpec.ConfigFrom.SecretRef
@@ -357,7 +356,7 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 	}
 
 	// Start with inline configuration
-	repo := repoSpec.ToHelm(extractRepositoryIdentifier(chart.Spec.ChartName))
+	repo := toHelmRepo(chart.Spec.ChartName, repoSpec)
 
 	// Override with values from secret (secret takes precedence)
 	if val, ok := secret.Data["url"]; ok && len(val) > 0 {
@@ -392,7 +391,7 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 		repo.Insecure = &insecure
 	}
 
-	return &repo, nil
+	return repo, nil
 }
 
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) (err error) {
@@ -436,10 +435,19 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		}
 	} else {
 		// Fall back to extracting repository from chart name and looking it up in cache
-		repo, err = cr.extractAndLookupRepository(chartName)
-		if err != nil {
-			err = fmt.Errorf("can't lookup repository for chart %q: %w", chartName, err)
-			return
+		if k0sRepo, err := cr.extractAndLookupRepository(chartName); err != nil {
+			return fmt.Errorf("can't lookup repository for chart %q: %w", chartName, err)
+		} else if k0sRepo != nil {
+			repo = &helm.Repository{
+				Name:     k0sRepo.Name,
+				URL:      k0sRepo.URL,
+				Username: k0sRepo.Username,
+				Password: k0sRepo.Password,
+				CAFile:   k0sRepo.CAFile,
+				CertFile: k0sRepo.CertFile,
+				KeyFile:  k0sRepo.KeyFile,
+				Insecure: k0sRepo.Insecure,
+			}
 		}
 	}
 
@@ -498,7 +506,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 // extractAndLookupRepository extracts the repository name or OCI hostname from chartName
 // and looks it up in the repository cache. Returns a pointer to the repository config or nil
 // if no repository configuration is needed (e.g., local path charts, OCI charts without auth).
-func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*helm.Repository, error) {
+func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*k0sv1beta1.Repository, error) {
 	repoID := extractRepositoryIdentifier(chartName)
 
 	if repoID == "" {
@@ -512,12 +520,7 @@ func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*helm.R
 
 	// For OCI, missing repo is okay (anonymous access)
 	if registry.IsOCI(chartName) {
-		cachedRepo := cr.repositoryCache.get(repoID)
-		if cachedRepo == nil {
-			return nil, nil
-		}
-		helmRepo := cachedRepo.ToHelm()
-		return &helmRepo, nil
+		return cr.repositoryCache.get(repoID), nil
 	}
 
 	// For traditional, missing repo is an error
@@ -525,8 +528,7 @@ func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*helm.R
 	if cachedRepo == nil {
 		return nil, fmt.Errorf("repository '%s' not found in cluster configuration", repoID)
 	}
-	helmRepo := cachedRepo.ToHelm()
-	return &helmRepo, nil
+	return cachedRepo, nil
 }
 
 // extractRepositoryIdentifier extracts the repository identifier from a chart name.
@@ -777,4 +779,17 @@ func (ec *ExtensionsController) Stop() error {
 	}
 	ec.L.Debug("Stopped extensions controller")
 	return nil
+}
+
+func toHelmRepo(chartName string, r *helmv1beta1.RepositorySpec) *helm.Repository {
+	return &helm.Repository{
+		Name:     extractRepositoryIdentifier(chartName),
+		URL:      r.URL,
+		Username: r.Username,
+		Password: r.Password,
+		CAFile:   r.CAFile,
+		CertFile: r.CertFile,
+		KeyFile:  r.KeyFile,
+		Insecure: r.Insecure,
+	}
 }
