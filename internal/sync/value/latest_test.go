@@ -21,12 +21,10 @@ func TestLatest(t *testing.T) {
 
 	var got int
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-expired
 		got, _ = underTest.Peek()
-	}()
+	})
 
 	time.Sleep(10 * time.Millisecond) // Simulate some delay
 	underTest.Set(42)

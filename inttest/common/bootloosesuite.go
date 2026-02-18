@@ -182,9 +182,7 @@ func (s *BootlooseSuite) SetupSuite() {
 	}
 
 	// perform a cleanup whenever the suite's context is canceled
-	cleanupTasks.Add(1)
-	go func() {
-		defer cleanupTasks.Done()
+	cleanupTasks.Go(func() {
 		<-ctx.Done()
 		// Record a test failure when the context has been canceled other than
 		// through the test tear down itself. This is to ensure that the test is
@@ -199,7 +197,7 @@ func (s *BootlooseSuite) SetupSuite() {
 		ctx, cancel := k0scontext.ShutdownContext(t.Context())
 		defer cancel(nil)
 		s.cleanupSuite(ctx, t)
-	}()
+	})
 
 	s.waitForSSH(ctx)
 
@@ -362,11 +360,9 @@ func (s *BootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 		tmpDir := os.TempDir()
 
 		if s.ControllerCount > 0 {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				s.collectTroubleshootSupportBundle(ctx, t, filepath.Join(tmpDir, "support-bundle.tar.gz"))
-			}()
+			})
 		}
 
 		machines, err := s.InspectMachines(nil)
@@ -381,11 +377,9 @@ func (s *BootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 				continue
 			}
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				s.dumpNodeLogs(ctx, t, node, tmpDir)
-			}()
+			})
 		}
 		wg.Wait()
 	}

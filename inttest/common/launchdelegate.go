@@ -220,17 +220,13 @@ func (*openRCLaunchDelegate) ReadK0sLogs(ctx context.Context, conn *SSHConnectio
 	var wg sync.WaitGroup
 	var outErr, errErr error
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		outErr = conn.Exec(ctx, "cat /var/log/k0s.log", SSHStreams{Out: out})
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		errErr = conn.Exec(ctx, "cat /var/log/k0s.err", SSHStreams{Out: err})
-	}()
+	})
 
 	wg.Wait()
 

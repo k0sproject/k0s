@@ -134,12 +134,10 @@ func (c *Component) Start(ctx context.Context) (err error) {
 		}
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		wait.UntilWithContext(cctx, c.watchDropinConfigs, 30*time.Second)
 		log.Info("Stopped to watch for drop-ins")
-	}()
+	})
 
 	log.Debug("Waiting for containerd")
 	var lastErr error
