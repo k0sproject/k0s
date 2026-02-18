@@ -192,6 +192,17 @@
       "respectLatest": true
     },
     {
+      "description": "Bump Alpine for release-1.34",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchDepNames": [
+        "docker.io/library/alpine"
+      ],
+      "allowedVersions": "<=3.22"
+    },
+    {
       "description": "Bump Calico for release-1.34",
       "enabled": true,
       "matchBaseBranches": [
