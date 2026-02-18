@@ -1,6 +1,6 @@
 module github.com/k0sproject/k0s
 
-go 1.24.0
+go 1.24.2
 
 // k0s
 require (
@@ -23,7 +23,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0
 	github.com/go-playground/validator/v10 v10.24.0
 	github.com/google/go-cmp v0.7.0
-	github.com/k0sproject/bootloose v0.9.0
+	github.com/k0sproject/bootloose v0.9.6
 	github.com/k0sproject/version v0.6.0
 	github.com/kardianos/service v1.2.2
 	github.com/logrusorgru/aurora/v3 v3.0.0
@@ -38,9 +38,9 @@ require (
 	github.com/robfig/cron v1.2.0
 	github.com/rqlite/rqlite v4.6.0+incompatible
 	github.com/segmentio/analytics-go/v3 v3.3.0
-	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.5
+	github.com/sirupsen/logrus v1.9.4
+	github.com/spf13/cobra v1.10.2
+	github.com/spf13/pflag v1.0.9
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli v1.22.16
 	github.com/vishvananda/netlink v1.3.1-0.20250206174618-62fb240731fa
@@ -51,12 +51,12 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.25
 	go.etcd.io/etcd/etcdutl/v3 v3.5.25
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.45.0
-	golang.org/x/mod v0.30.0
-	golang.org/x/sync v0.18.0
-	golang.org/x/sys v0.38.0
-	golang.org/x/text v0.31.0
-	golang.org/x/tools v0.39.0
+	golang.org/x/crypto v0.47.0
+	golang.org/x/mod v0.31.0
+	golang.org/x/sync v0.19.0
+	golang.org/x/sys v0.40.0
+	golang.org/x/text v0.33.0
+	golang.org/x/tools v0.40.0
 	google.golang.org/grpc v1.74.2
 	helm.sh/helm/v3 v3.17.3
 	oras.land/oras-go/v2 v2.5.0
@@ -120,14 +120,14 @@ require (
 	github.com/containernetworking/plugins v1.2.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/cli v25.0.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v27.1.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
-	github.com/docker/go-connections v0.5.0 // indirect
+	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -194,7 +194,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/moby/sys/mountinfo v0.7.2 // indirect
@@ -255,10 +254,11 @@ require (
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
-	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/term v0.37.0 // indirect
+	golang.org/x/term v0.39.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
