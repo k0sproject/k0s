@@ -234,12 +234,10 @@ func TestMultiThread(t *testing.T) {
 	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
 
 	for range 255 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			_ = s.Stop()
 			_ = s.Supervise(t.Context())
-		}()
+		})
 	}
 	wg.Wait()
 }
