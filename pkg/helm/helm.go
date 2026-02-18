@@ -411,15 +411,6 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	return chartRelease, nil
 }
 
-func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
-	cfg, err := hc.getActionCfg(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("can't create helmAction configuration: %w", err)
-	}
-	helmAction := action.NewList(cfg)
-	return helmAction.Run()
-}
-
 // UninstallRelease uninstalls a release.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
 func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string) error {
