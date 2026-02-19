@@ -96,7 +96,7 @@ const (
 	CalicoNodeWindowsImageVersion         = "v3.31.3"
 	KubeControllerImage                   = "quay.io/k0sproject/calico-kube-controllers"
 	KubeRouterCNIImage                    = "quay.io/k0sproject/kube-router"
-	KubeRouterCNIImageVersion             = "v2.6.3-iptables1.8.11-0"
+	KubeRouterCNIImageVersion             = "v2.7.1-iptables1.8.11-0"
 	KubeRouterCNIInstallerImage           = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion    = "1.8.0-k0s.0"
 
