@@ -644,7 +644,7 @@ func TestExtensionsController_UpdateStatus(t *testing.T) {
 				L:      logrus.NewEntry(logrus.New()),
 			}
 
-			err := cr.updateStatus(t.Context(), *reconciled, test.chartRelease, test.updateErr)
+			err := cr.updateStatus(t.Context(), reconciled, test.chartRelease, test.updateErr)
 			if test.wantPatchError {
 				require.Error(t, err)
 				return
