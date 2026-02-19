@@ -1,0 +1,3598 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
+      
+      
+        <meta name="author" content="Mirantis, Inc.">
+      
+      
+        <link rel="canonical" href="https://docs.k0sproject.io/v1.32.12+k0s.1/governance/cncf/gtr/">
+      
+      
+        <link rel="prev" href="../../../releases/">
+      
+      
+        <link rel="next" href="../security-self-assessment/">
+      
+      
+      <link rel="icon" href="../../../img/k0s-favicon-192.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>General Technical Review - Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-JMV1409T2T');
+  </script>
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#general-technical-review-gtr" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You are not currently viewing the documentation for the current stable release of k0s.
+  <a href="../../../..">
+    <strong>Click here to go to the documentation of the current stable release.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../../../img/k0s-favicon-192.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              General Technical Review
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../../../img/k0s-favicon-192.png" alt="logo">
+
+    </a>
+    Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Installation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../k0sctl-install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using k0sctl
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Alternative Methods
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Alternative Methods
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../k0s-multi-node/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manual (advanced)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../k0s-in-docker/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../experimental-windows/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Windows (experimental)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../raspberry-pi4/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Raspberry Pi 4
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/ansible-playbook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible Playbook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../airgap-install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Airgap Install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../custom-ca/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using custom CA certificate (advanced)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../system-requirements/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    System Requirements
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../external-runtime-deps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    External runtime dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../verifying-signs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Verifying Signed Binaries
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Maintenance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../upgrade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../backup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backup/Restore
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../remove_controller/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Remove/Replace a controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reset/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reset (Uninstall)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Usage
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration Options
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dynamic-configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dynamic Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration-validation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration Validation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../worker-node-config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Worker Node Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../networking/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Networking (CNI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../runtime/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Runtime (CRI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../storage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Storage (CSI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../system-monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    System Components Monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../manifests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manifest Deployer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../helm-charts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helm Charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cloud-providers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cloud Providers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dual-stack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    IPv4/IPv6 dual-stack networking
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../high-availability/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Plane High Availability
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../nllb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Node-local load balancing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cplb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control plane load balancing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../shell-completion/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shell Completion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-management/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User Management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../environment-variables/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration of Environment Variables
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenID Connect
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../selinux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SELinux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../podsecurity/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pod Security Standards
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reinstall-k0sctl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Re-install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Auto Updates
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Auto Updates
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../autopilot/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../autopilot-multicommand/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Multi-Command Plans
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Extensions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Extensions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/metallb-loadbalancer/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MetalLB Load Balancer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/nginx-ingress/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NGINX Ingress Controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/traefik-ingress/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Traefik Ingress Controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/rook-ceph/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ceph Storage with Rook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/gitops-flux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitOps with Flux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/openebs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenEBS storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Troubleshooting
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting/FAQ/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    FAQ
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting/logs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting/troubleshooting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common Pitfalls
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting/support-dump/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Support Insights
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting/certificate-authorities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Certificate Authorities (CAs)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Command Line
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cis_benchmark/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kube-bench Security Benchmark
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Governance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Governance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security policy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../releases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releases & support model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9_3" id="__nav_9_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    CNCF
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            CNCF
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    General Technical Review
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    General Technical Review
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scope
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scope">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#roadmap-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Roadmap process
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target-personas" class="md-nav__link">
+    <span class="md-ellipsis">
+      Target personas
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#primary-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Primary use cases
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unsupported-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unsupported use cases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unsupported use cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bundling-of-higher-level-ecosystem-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bundling of higher-level ecosystem components
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#being-a-turnkey-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Being a "Turnkey Solution"
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#intended-types-of-organizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intended types of organizations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Intended types of organizations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#small-and-medium-sized-businesses-smbs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Small and Medium-Sized Businesses (SMBs)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-computing-and-iot-organizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Computing and IoT Organizations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-development-teams-and-startups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Software Development Teams and Startups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enterprises-with-distributed-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enterprises with Distributed Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#organizations-in-regulated-industries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Organizations in Regulated Industries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#educational-and-research-institutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Educational and Research Institutions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-vendors-and-system-integrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Software Vendors and System Integrators
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#completed-end-user-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      Completed end-user research
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usability
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-principles-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design principles &amp; best practices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-and-access-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Identity and Access Management
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compliance-requirements-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance requirements implemented
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ha-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      HA Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resource-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource requirements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimum-memory-and-cpu-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minimum Memory and CPU Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controller-node-recommendations-for-larger-clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Controller Node Recommendations for Larger Clusters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#networking-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Networking Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#host-operating-system-and-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Host Operating System and Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Considerations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage-requirements_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage requirements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Storage requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#controller-node-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Controller Node Storage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker-node-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worker Node Storage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Design
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Release process
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cncf-security-self-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      CNCF Security self-assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-hygiene" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security hygiene
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security-self-assessment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TAG-Security self-assessment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../commercial-support/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Commercial support
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adopters/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adopters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributors/github_workflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitHub Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributors/testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributors/docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scope
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scope">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#roadmap-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Roadmap process
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target-personas" class="md-nav__link">
+    <span class="md-ellipsis">
+      Target personas
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#primary-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Primary use cases
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unsupported-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unsupported use cases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unsupported use cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bundling-of-higher-level-ecosystem-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bundling of higher-level ecosystem components
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#being-a-turnkey-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Being a "Turnkey Solution"
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#intended-types-of-organizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intended types of organizations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Intended types of organizations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#small-and-medium-sized-businesses-smbs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Small and Medium-Sized Businesses (SMBs)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-computing-and-iot-organizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Computing and IoT Organizations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-development-teams-and-startups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Software Development Teams and Startups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enterprises-with-distributed-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enterprises with Distributed Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#organizations-in-regulated-industries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Organizations in Regulated Industries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#educational-and-research-institutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Educational and Research Institutions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-vendors-and-system-integrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Software Vendors and System Integrators
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#completed-end-user-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      Completed end-user research
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usability
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-principles-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design principles &amp; best practices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-and-access-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Identity and Access Management
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compliance-requirements-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance requirements implemented
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ha-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      HA Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resource-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource requirements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimum-memory-and-cpu-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minimum Memory and CPU Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controller-node-recommendations-for-larger-clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Controller Node Recommendations for Larger Clusters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#networking-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Networking Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#host-operating-system-and-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Host Operating System and Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional Considerations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage-requirements_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage requirements
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Storage requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#controller-node-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Controller Node Storage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker-node-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worker Node Storage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Design
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Release process
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cncf-security-self-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      CNCF Security self-assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-hygiene" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security hygiene
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="general-technical-review-gtr">General Technical Review (GTR)<a class="headerlink" href="#general-technical-review-gtr" title="Permanent link">#</a></h1>
+<p>This document collects information for the <a href="https://github.com/cncf/toc/blob/main/toc_subprojects/project-reviews-subproject/general-technical-questions.md">CNCF General Technical Review</a>. It is built to support the <a href="https://github.com/cncf/sandbox/issues/125">k0s CNCF Sandbox application</a> but will be a living document that we update regularly.</p>
+<p>As we are currently applying for the sandbox level, the document only covers the GTR's “Day 0” phase.</p>
+<h2 id="scope">Scope<a class="headerlink" href="#scope" title="Permanent link">#</a></h2>
+<h3 id="roadmap-process">Roadmap process<a class="headerlink" href="#roadmap-process" title="Permanent link">#</a></h3>
+<p>The k0s roadmap process is a collaborative effort to align with user needs, community feedback, and emerging trends. We prioritize initiatives that simplify Kubernetes operations and extend its capabilities for far-edge, IoT, and disconnected environments.
+The roadmap is a living document, refined iteratively based on technical feasibility, testing, and industry shifts. By emphasizing usability, automation, and feedback-driven iterations, we ensure that k0s continues to lead in lightweight, scalable Kubernetes solutions.</p>
+<h3 id="target-personas">Target personas<a class="headerlink" href="#target-personas" title="Permanent link">#</a></h3>
+<h4 id="devops-engineers">DevOps Engineers<a class="headerlink" href="#devops-engineers" title="Permanent link">#</a></h4>
+<ul>
+<li>Focused on managing Kubernetes clusters efficiently.</li>
+<li>Seek simplicity in deployment, maintenance, and scaling.</li>
+<li>Prioritize automation and minimize operational overhead.</li>
+</ul>
+<h4 id="platform-engineers">Platform Engineers<a class="headerlink" href="#platform-engineers" title="Permanent link">#</a></h4>
+<ul>
+<li>Responsible for building and maintaining internal platforms on top of Kubernetes.</li>
+<li>Interested in integrating k0s into CI/CD pipelines, monitoring systems, and other tooling.</li>
+</ul>
+<h4 id="iot-and-edge-architects">IoT and Edge Architects<a class="headerlink" href="#iot-and-edge-architects" title="Permanent link">#</a></h4>
+<ul>
+<li>Working on deploying Kubernetes at the far edge.</li>
+<li>Require lightweight, resource-efficient solutions for disconnected or resource-constrained environments.</li>
+</ul>
+<h4 id="cloud-native-developers">Cloud-Native Developers<a class="headerlink" href="#cloud-native-developers" title="Permanent link">#</a></h4>
+<ul>
+<li>Building and deploying applications on Kubernetes.</li>
+<li>Need a developer-friendly experience with minimal setup and maximum portability.</li>
+</ul>
+<h4 id="system-integrators">System Integrators<a class="headerlink" href="#system-integrators" title="Permanent link">#</a></h4>
+<ul>
+<li>Designing bespoke solutions that leverage Kubernetes in varied environments, including on-premises and hybrid setups.</li>
+<li>Value flexibility and compatibility with existing tools and standards.</li>
+</ul>
+<h4 id="it-operations-teams">IT Operations Teams<a class="headerlink" href="#it-operations-teams" title="Permanent link">#</a></h4>
+<ul>
+<li>Managing infrastructure at scale across data centers, cloud, and edge locations.</li>
+<li>Seek reliability, scalability, and tools to simplify multi-cluster operations.</li>
+</ul>
+<h3 id="primary-use-cases">Primary use cases<a class="headerlink" href="#primary-use-cases" title="Permanent link">#</a></h3>
+<p><strong>k0s</strong> is a streamlined, self-contained Kubernetes distribution designed to serve as a portable and lightweight foundational core for Kubernetes environments. It simplifies deployment and management, while maintaining the flexibility to build out additional functionality.
+As such, it's tailor-made for a variety of use cases, including:</p>
+<h4 id="edge-computing-and-iot">Edge Computing and IoT<a class="headerlink" href="#edge-computing-and-iot" title="Permanent link">#</a></h4>
+<p>Deploying Kubernetes in resource-constrained, far-edge environments where lightweight and efficient solutions are critical.
+Ideal for managing IoT devices, disconnected edge nodes, and remote locations.
+k0s also support airgapped environments by beaing able to automatically load container image bundles and having zero dependencies.</p>
+<h4 id="cloud-native-application-hosting">Cloud-Native Application Hosting<a class="headerlink" href="#cloud-native-application-hosting" title="Permanent link">#</a></h4>
+<p>Enabling developers to run containerized applications with minimal operational complexity.
+Suitable for both small-scale setups and large-scale production workloads.</p>
+<h4 id="devtest-environment">Dev/Test Environment<a class="headerlink" href="#devtest-environment" title="Permanent link">#</a></h4>
+<p>Providing a quick, easy-to-set-up Kubernetes environment for development, testing, and CI/CD pipelines.
+Allows developers to spin up Kubernetes clusters locally or in isolated environments without significant overhead.</p>
+<h4 id="centralized-control-for-distributed-clusters">Centralized Control for Distributed Clusters<a class="headerlink" href="#centralized-control-for-distributed-clusters" title="Permanent link">#</a></h4>
+<p>Offering the ability to centrally manage control planes while operating clusters in remote or disconnected locations.
+Ensures operational simplicity across distributed systems.</p>
+<h4 id="heterogeneous-environments">Heterogeneous environments<a class="headerlink" href="#heterogeneous-environments" title="Permanent link">#</a></h4>
+<p>Running Kubernetes efficiently on bare-metal servers or in hybrid cloud/on-premises environments.
+Tailored for teams looking to minimize dependency on external cloud services.
+Focus on lightweight deployment without the need for heavy dependencies on external cloud services.</p>
+<h4 id="isolated-control-planes">Isolated control planes<a class="headerlink" href="#isolated-control-planes" title="Permanent link">#</a></h4>
+<p>k0s uses <a href="https://github.com/kubernetes-sigs/apiserver-network-proxy">konnectivity</a> by default and is therefore a good fit for environments where control planes and worker nodes are isolated.
+This architecture is good fit for e.g. Edge type use cases or where users want to cenrtalize their control planes in general.</p>
+<h2 id="unsupported-use-cases">Unsupported use cases<a class="headerlink" href="#unsupported-use-cases" title="Permanent link">#</a></h2>
+<p>While k0s provides a self-contained core for Kubernetes operations, it does not aim to be a feature-complete "all-in-one" solution. In particular, the following are out of scope:</p>
+<h3 id="bundling-of-higher-level-ecosystem-components">Bundling of higher-level ecosystem components<a class="headerlink" href="#bundling-of-higher-level-ecosystem-components" title="Permanent link">#</a></h3>
+<p>k0s does not include additional tools such as ingress controllers, service meshes, or advanced observability capabilities by default. Cluster administrators are expected to install and configure these components separately using the extension points provided by k0s, according to their unique requirements.</p>
+<h3 id="being-a-turnkey-solution">Being a "Turnkey Solution"<a class="headerlink" href="#being-a-turnkey-solution" title="Permanent link">#</a></h3>
+<p>k0s avoids bundling excessive features to remain lightweight and customizable. It is best suited for those who value flexibility over out-of-the-box completeness.</p>
+<h2 id="intended-types-of-organizations">Intended types of organizations<a class="headerlink" href="#intended-types-of-organizations" title="Permanent link">#</a></h2>
+<p>The intended types of organizations for using <strong>k0s</strong> are those that prioritize simplicity, flexibility, and efficiency in Kubernetes deployments. Some examples:</p>
+<h3 id="small-and-medium-sized-businesses-smbs">Small and Medium-Sized Businesses (SMBs)<a class="headerlink" href="#small-and-medium-sized-businesses-smbs" title="Permanent link">#</a></h3>
+<ul>
+<li>Looking for a straightforward, cost-effective Kubernetes solution.</li>
+<li>Often lack dedicated Kubernetes experts and benefit from k0s’s ease of deployment and management.</li>
+</ul>
+<h3 id="edge-computing-and-iot-organizations">Edge Computing and IoT Organizations<a class="headerlink" href="#edge-computing-and-iot-organizations" title="Permanent link">#</a></h3>
+<ul>
+<li>Deploying Kubernetes at the far edge to manage IoT devices, industrial equipment, or remote sites.</li>
+<li>Require lightweight, resource-efficient solutions that can operate in disconnected or low-bandwidth environments.</li>
+</ul>
+<h3 id="software-development-teams-and-startups">Software Development Teams and Startups<a class="headerlink" href="#software-development-teams-and-startups" title="Permanent link">#</a></h3>
+<ul>
+<li>Need fast, simple Kubernetes clusters for development, testing, and CI/CD pipelines.</li>
+<li>Value the minimal overhead of k0s for prototyping and scaling quickly.</li>
+</ul>
+<h3 id="enterprises-with-distributed-operations">Enterprises with Distributed Operations<a class="headerlink" href="#enterprises-with-distributed-operations" title="Permanent link">#</a></h3>
+<ul>
+<li>Manage hybrid setups with centralized control planes and distributed worker nodes across on-premises, cloud, and edge environments.</li>
+<li>Use k0s to simplify cluster management across multiple locations.</li>
+</ul>
+<h3 id="organizations-in-regulated-industries">Organizations in Regulated Industries<a class="headerlink" href="#organizations-in-regulated-industries" title="Permanent link">#</a></h3>
+<ul>
+<li>Operate Kubernetes in on-premises or air-gapped environments due to regulatory requirements.</li>
+<li>'s lean design of reducing unnecessary complexity, making it easier to audit and verify compliance with regulatory standards</li>
+</ul>
+<h3 id="educational-and-research-institutions">Educational and Research Institutions<a class="headerlink" href="#educational-and-research-institutions" title="Permanent link">#</a></h3>
+<ul>
+<li>Need Kubernetes clusters for experimentation, training, or academic research.</li>
+<li>Value k0s’s simplicity for non-commercial use cases and resource-constrained setups.</li>
+</ul>
+<h3 id="software-vendors-and-system-integrators">Software Vendors and System Integrators<a class="headerlink" href="#software-vendors-and-system-integrators" title="Permanent link">#</a></h3>
+<ul>
+<li>Deliver Kubernetes-based solutions to clients across various industries.</li>
+<li>Bundle and package k0s with their applications to create "Kubernetes appliances."</li>
+<li>Ship pre-configured, self-contained solutions for customers without requiring Kubernetes expertise.</li>
+<li>Appreciate k0s’s ease of deployment, lightweight architecture, and flexibility to adapt to different environments.</li>
+<li>Benefit from its embedded-friendly design, making it ideal for turnkey application deployments in diverse scenarios.</li>
+</ul>
+<h2 id="completed-end-user-research">Completed end-user research<a class="headerlink" href="#completed-end-user-research" title="Permanent link">#</a></h2>
+<p>No comprehensive end-user research has been conducted.</p>
+<h2 id="usability">Usability<a class="headerlink" href="#usability" title="Permanent link">#</a></h2>
+<p>k0s simplifies Kubernetes operations by delivering the entire distribution as a single, self-contained binary. This design ensures:</p>
+<ol>
+<li><strong>Streamlined Installation</strong><ul>
+<li>Deploy Kubernetes with a single command, without the need to manage multiple dependencies or configurations.</li>
+</ul>
+</li>
+<li><strong>Portability and Flexibility</strong><ul>
+<li>The binary can be easily copied and run on various systems, making it ideal for edge devices, bare-metal servers, or cloud environments.</li>
+</ul>
+</li>
+<li><strong>Simplified Upgrades</strong><ul>
+<li>Upgrading k0s is as easy as replacing the binary, reducing downtime and operational complexity. To help in orchestrating the cluster upgrade k0s comes with a component called <a href="https://docs.k0sproject.io/stable/autopilot/">autopilot</a> that automates the node ugrade orchestration, including the needed node draining and coordination.</li>
+</ul>
+</li>
+<li><strong>Reduced Operational Overhead</strong><ul>
+<li>No need for additional packaging or complex tooling — everything needed to run Kubernetes is included in one binary.</li>
+</ul>
+</li>
+<li><strong>Developer and Operator Friendly</strong><ul>
+<li>The single-binary approach removes barriers to entry, enabling faster adoption and simpler workflows for teams of any size.</li>
+</ul>
+</li>
+</ol>
+<p>As such, k0s provides a conformant Kubernetes which means any ecosystem addon works on k0s.</p>
+<h2 id="design">Design<a class="headerlink" href="#design" title="Permanent link">#</a></h2>
+<h3 id="design-principles-best-practices">Design principles &amp; best practices<a class="headerlink" href="#design-principles-best-practices" title="Permanent link">#</a></h3>
+<h4 id="design-principles">Design Principles<a class="headerlink" href="#design-principles" title="Permanent link">#</a></h4>
+<ol>
+<li><strong>Simplicity First</strong><ul>
+<li>k0s is designed to minimize complexity for both users and operators. Packaging Kubernetes as a single binary and automating common tasks eliminates unnecessary configuration overhead.</li>
+</ul>
+</li>
+<li><strong>Lightweight and Efficient</strong><ul>
+<li>Optimized for resource-constrained environments, k0s ensures minimal system resource usage, making it ideal for edge computing, IoT, and small-scale deployments.</li>
+</ul>
+</li>
+<li><strong>Decoupled and Modular Architecture</strong><ul>
+<li>k0s separates the control plane and worker components, allowing flexible deployment topologies. It supports running control planes centrally while distributing worker nodes across diverse locations.</li>
+</ul>
+</li>
+<li><strong>Zero Friction, Zero Lock-In</strong><ul>
+<li>k0s follows a vendor-neutral approach, ensuring users retain full control of their infrastructure. It avoids proprietary tooling, adhering to upstream Kubernetes standards.</li>
+</ul>
+</li>
+<li><strong>Security by Default</strong><ul>
+<li>Secure configurations are baked into k0s from the start, with features like automatic TLS management, disabling anonymous access etc..</li>
+</ul>
+</li>
+<li><strong>Ease of Maintenance and Upgrades</strong><ul>
+<li>The project prioritizes operational simplicity, with upgrades streamlined through single-binary replacements, embedded autopilot for upgrades, and minimal manual intervention.</li>
+</ul>
+</li>
+<li><strong>Adaptability</strong><ul>
+<li>Designed to run in diverse environments, from local development setups to far-edge and production-grade clusters.</li>
+</ul>
+</li>
+</ol>
+<h3 id="best-practices"><strong>Best Practices</strong><a class="headerlink" href="#best-practices" title="Permanent link">#</a></h3>
+<ol>
+<li><strong>Stay Aligned with Upstream Kubernetes</strong><ul>
+<li>k0s is and will be 100% vanilla upstream Kubernetes.</li>
+</ul>
+</li>
+<li><strong>Automate Wherever Possible</strong><ul>
+<li>Automation of cluster configuration, control plane management, and other operational tasks ensures reliability and reduces human error.</li>
+</ul>
+</li>
+<li><strong>Test for Real-World Use Cases</strong><ul>
+<li>Every feature and release is tested in scenarios reflecting actual user environments, such as edge deployments, air-gapped setups, and hybrid clusters.</li>
+</ul>
+</li>
+<li><strong>Community-Driven Development</strong><ul>
+<li>Open communication with the user community drives prioritization and improvements, ensuring the project meets real-world needs.</li>
+</ul>
+</li>
+<li><strong>Focus on Documentation</strong><ul>
+<li>Clear and comprehensive documentation ensures users of all skill levels can deploy, manage, and scale k0s effectively.</li>
+</ul>
+</li>
+</ol>
+<h2 id="identity-and-access-management">Identity and Access Management<a class="headerlink" href="#identity-and-access-management" title="Permanent link">#</a></h2>
+<p>k0s being vanilla upstream Kubernetes thus it supports all the same things as <a href="https://kubernetes.io/docs/concepts/security/">Kubernetes does</a>.
+By default, k0s only sets up certificate authentication but users can fully configure OIDC or webhook authentiction when they need.</p>
+<h2 id="compliance-requirements-implemented">Compliance requirements implemented<a class="headerlink" href="#compliance-requirements-implemented" title="Permanent link">#</a></h2>
+<h2 id="ha-requirements">HA Requirements<a class="headerlink" href="#ha-requirements" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Control Plane Redundancy</strong><ul>
+<li>To achieve HA, the control plane (API server, etcd, controller manager, and scheduler) must be deployed in a redundant configuration:<ul>
+<li><strong>Multiple Control Plane Nodes</strong>: At least three control plane nodes are recommended to ensure quorum and fault tolerance for etcd. In case kine is used with HA SQL database backend, 2 controller nodes are often sufficient.</li>
+<li><strong>Load Balancer</strong>: A load balancer is required in front of the control plane nodes to distribute API traffic evenly and provide failover.<ul>
+<li>k0s offers an embedded control plane load balancer (<a href="https://docs.k0sproject.io/stable/cplb/">CPLB</a>) for use cases where the infrastructure/network does not provide easy ways to create load balancers on its own.</li>
+<li>K0s has a node-local (<a href="https://docs.k0sproject.io/stable/nllb/">NLLB</a>) for worker nodes to automatically re-route API connections to different nodes in case of failures.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Worker Node Scalability</strong><ul>
+<li>Worker nodes operate independently of the control plane. In an HA setup:<ul>
+<li>Worker nodes can connect to multiple control plane endpoints for resilience.</li>
+<li>Horizontal scaling of worker nodes ensures workload availability and supports increased demand.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Distributed etcd</strong><ul>
+<li>etcd, the data store for Kubernetes, requires three or five instances for HA to maintain quorum.</li>
+<li>etcd instances are distributed across control plane nodes, ensuring data replication and consistency even if a node fails.</li>
+<li>k0s supports externally (from k0s point of view) managed etcd.</li>
+</ul>
+</li>
+<li><strong>Kine</strong><ul>
+<li>k0s also supports <a href="https://github.com/k3s-io/kine/">kine</a> as etcd replacement thus offering users the ability to utilize externally managed HA databases as the control plane state storage.</li>
+</ul>
+</li>
+</ol>
+<h2 id="resource-requirements">Resource requirements<a class="headerlink" href="#resource-requirements" title="Permanent link">#</a></h2>
+<p><strong>k0s</strong> is designed to be lightweight, making it suitable resource-constrained systems. Below is an overview of the resource requirements, including CPU, memory, storage, and networking considerations.</p>
+<h3 id="minimum-memory-and-cpu-requirements">Minimum Memory and CPU Requirements<a class="headerlink" href="#minimum-memory-and-cpu-requirements" title="Permanent link">#</a></h3>
+<p>The following table outlines the approximate minimum hardware requirements for different node roles:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Memory (RAM)</th>
+<th>Virtual CPU (vCPU)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controller Node</td>
+<td>1 GB</td>
+<td>1 vCPU</td>
+</tr>
+<tr>
+<td>Worker Node</td>
+<td>0.5 GB</td>
+<td>1 vCPU</td>
+</tr>
+<tr>
+<td>Controller + Worker</td>
+<td>1 GB</td>
+<td>1 vCPU</td>
+</tr>
+</tbody>
+</table>
+<p>These values are approximations; actual requirements may vary based on workload and cluster size.</p>
+<h3 id="controller-node-recommendations-for-larger-clusters">Controller Node Recommendations for Larger Clusters<a class="headerlink" href="#controller-node-recommendations-for-larger-clusters" title="Permanent link">#</a></h3>
+<p>For larger clusters, the recommended resources for controller nodes are:</p>
+<table>
+<thead>
+<tr>
+<th>Number of Worker Nodes</th>
+<th>Number of Pods</th>
+<th>Recommended RAM</th>
+<th>Recommended vCPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Up to 10</td>
+<td>Up to 1,000</td>
+<td>1–2 GB</td>
+<td>1–2 vCPU</td>
+</tr>
+<tr>
+<td>Up to 50</td>
+<td>Up to 5,000</td>
+<td>2–4 GB</td>
+<td>2–4 vCPU</td>
+</tr>
+<tr>
+<td>Up to 100</td>
+<td>Up to 10,000</td>
+<td>4–8 GB</td>
+<td>2–4 vCPU</td>
+</tr>
+<tr>
+<td>Up to 500</td>
+<td>Up to 50,000</td>
+<td>8–16 GB</td>
+<td>4–8 vCPU</td>
+</tr>
+<tr>
+<td>Up to 1,000</td>
+<td>Up to 100,000</td>
+<td>16–32 GB</td>
+<td>8–16 vCPU</td>
+</tr>
+<tr>
+<td>Up to 5,000</td>
+<td>Up to 150,000</td>
+<td>32–64 GB</td>
+<td>16–32 vCPU</td>
+</tr>
+</tbody>
+</table>
+<p>These recommendations help ensure optimal performance and stability for larger deployments.</p>
+<h3 id="storage-requirements">Storage Requirements<a class="headerlink" href="#storage-requirements" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Controller Node</strong>: Approximately 0.5 GB for k0s components; minimum 0.5 GB required.</li>
+<li><strong>Worker Node</strong>: Approximately 1.3 GB for k0s components; minimum 1.6 GB required.</li>
+<li><strong>Controller + Worker</strong>: Approximately 1.7 GB for k0s components; minimum 2.0 GB required.</li>
+</ul>
+<p>It's recommended to use SSDs for optimal storage performance, as cluster latency and throughput are sensitive to storage performance.</p>
+<h3 id="networking-requirements">Networking Requirements<a class="headerlink" href="#networking-requirements" title="Permanent link">#</a></h3>
+<p>k0s requires certain network ports to be open for proper communication between components. Detailed information on the required ports and protocols can be found in the k0s networking documentation.</p>
+<h3 id="host-operating-system-and-architecture">Host Operating System and Architecture<a class="headerlink" href="#host-operating-system-and-architecture" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Operating Systems</strong>:<ul>
+<li>Linux (kernel version 4.3 or later)<ul>
+<li>x86-64</li>
+<li>aarch64</li>
+<li>armv7l</li>
+</ul>
+</li>
+<li>Windows Server 2019 (experimental)<ul>
+<li>x86-64</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>Note:</strong> k0s is actively tested on armv7 architecture which upstream Kubernetes does not currently do.
+That already allowed us to identify and fix some architecture related issues that haven't been caught upstream, before they hit a stable Kubernetes release.</p>
+<p>These specifications ensure compatibility across a wide range of hardware platforms.</p>
+<h3 id="additional-considerations">Additional Considerations<a class="headerlink" href="#additional-considerations" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Operating System Dependencies</strong>: k0s strives to be as independent from the OS as possible.</li>
+<li>The necessary kernel configurations and any external runtime dependencies are documented in the <a href="https://docs.k0sproject.io/stable/system-requirements/">k0s system requirements</a>.</li>
+</ul>
+<h2 id="storage-requirements_1">Storage requirements<a class="headerlink" href="#storage-requirements_1" title="Permanent link">#</a></h2>
+<h3 id="controller-node-storage">Controller Node Storage<a class="headerlink" href="#controller-node-storage" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Storage for Kubernetes Control Plane</strong>:<ul>
+<li>Approximately <strong>0.5 GB</strong> is required for k0s system components on a controller-only node.</li>
+<li>Persistent storage is essential for the <strong>etcd data store</strong>, which maintains the cluster’s state.</li>
+<li>Recommended Storage:<ul>
+<li><strong>SSD</strong> for improved etcd performance.</li>
+<li>At least <strong>20 GB</strong> of free space for larger clusters with significant cluster state changes.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="worker-node-storage">Worker Node Storage<a class="headerlink" href="#worker-node-storage" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Storage for Kubernetes Workloads</strong>:<ul>
+<li>Approximately <strong>1.3 GB</strong> is required for k0s system components.</li>
+<li>Additional space is needed for container images, temporary files, and any application-specific storage.</li>
+</ul>
+</li>
+</ul>
+<h2 id="api-design">API Design<a class="headerlink" href="#api-design" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Kubernetes API Compatibility</strong><ul>
+<li>k0s runs the upstream Kubernetes API server as-is, providing users with the standard Kubernetes API experience.</li>
+<li>This ensures seamless interaction with Kubernetes-native tools (e.g., <code>kubectl</code>, Helm, and CI/CD systems) and compatibility with Kubernetes custom resources.</li>
+</ul>
+</li>
+<li><strong>Declarative API Model</strong><ul>
+<li>Like Kubernetes, k0s uses a declarative API model, enabling users to define desired states for resources (e.g., deployments, services, and custom objects).</li>
+<li>The system continuously reconciles actual states with desired states, ensuring consistent and predictable behavior.</li>
+</ul>
+</li>
+<li><strong>API Evolution and Versioning</strong><ul>
+<li>The k0s API design follows Kubernetes’ API versioning practices, supporting multiple API versions (e.g., v1beta1, v1) for gradual transitions and backward compatibility.<ul>
+<li>We currently support only v1beta1 but are planning for the next version (v2)</li>
+</ul>
+</li>
+<li>Deprecated APIs are phased out according to Kubernetes release cycles, ensuring compatibility with upstream developments.</li>
+</ul>
+</li>
+</ol>
+<h2 id="release-process">Release process<a class="headerlink" href="#release-process" title="Permanent link">#</a></h2>
+<p>k0s project follows closely the upstream Kubernetes release cycle. The only difference in the upstream Kubernetes release/maintenance schedule is that our initial release date is always a few weeks behind the upstream Kubernetes version release date as we are building our version of k0s from the officially released version of Kubernetes and need time for testing the final version before shipping.
+![][image1]
+The k0s version string consists of the Kubernetes version and the k0s version. For example:</p>
+<div class="highlight"><pre><span></span><code>v1.32.12+k0s.1
+</code></pre></div>
+<p>The Kubernetes version (v1.32.12) is the first part, and the last part (k0s.1) reflects the k0s version, which is built on top of the certain Kubernetes version.</p>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">#</a></h2>
+<p>Here’s an example of how to set a single node cluster:</p>
+<div class="highlight"><pre><span></span><code><span class="gp"># </span><span class="nb">export</span><span class="w"> </span><span class="nv">K0S_VERSION</span><span class="o">=</span>v1.32.12+k0s.1
+<span class="gp"># </span>curl<span class="w"> </span>-sSfL<span class="w"> </span>https://github.com/k0sproject/k0s/releases/download/<span class="nv">$K0S_VERSION</span>/k0s-<span class="nv">$K0S_VERSION</span>-amd64<span class="w"> </span>-o<span class="w"> </span>k0s
+<span class="gp"># </span>chmod<span class="w"> </span>u+x<span class="w"> </span>k0s
+<span class="gp"># </span>./k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./k0s<span class="w"> </span>start
+</code></pre></div>
+<p>Naturally, this will spin up k0s with the default configuration. In case the user needs to configure something, they can create a yaml document to describe the <a href="https://docs.k0sproject.io/stable/configuration/">configuration</a>:</p>
+<p>As part of the startup sequence, k0s performs a series of pre-flight checks. This ensures that the system meets the requirements,
+such as all required kernel modules are loaded, enough free disk capacity on the node, and so on.
+If the pre-flight checks fail, k0s will refuse to start unless it's explicitly told to, and the logs will clearly indicate why they failed.</p>
+<p>Additionally, users have the option to run the CNCF Certified Kubernetes Conformance test suite.
+This test suite is executed by the CI for each release (on amd64 and arm64) and its results are made available as release artifacts.</p>
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">#</a></h2>
+<h3 id="cncf-security-self-assessment">CNCF Security self-assessment<a class="headerlink" href="#cncf-security-self-assessment" title="Permanent link">#</a></h3>
+<p>See separate <a href="../security-self-assessment/">document</a>.</p>
+<h3 id="security-hygiene">Security hygiene<a class="headerlink" href="#security-hygiene" title="Permanent link">#</a></h3>
+<h4 id="code-quality-and-development-practices">Code Quality and Development Practices<a class="headerlink" href="#code-quality-and-development-practices" title="Permanent link">#</a></h4>
+<ul>
+<li><strong>Version Control and Workflow</strong>:<ul>
+<li>All development is managed through Git and a structured branching strategy.</li>
+<li>Pull Requests (PRs) are mandatory for all changes, requiring reviews and approval by maintainers before merging.</li>
+</ul>
+</li>
+<li><strong>Code Reviews</strong>:<ul>
+<li>Every PR undergoes peer review to ensure adherence to coding standards and to identify potential issues early.</li>
+</ul>
+</li>
+<li><strong>Automated Testing</strong>:<ul>
+<li><strong>Unit Tests</strong>: Validate individual components for functionality and correctness.</li>
+<li><strong>End-to-End (E2E) Tests</strong>: Assess cluster-level behaviors and workflows under real-world scenarios.</li>
+<li><strong>Conformance Tests</strong>: Ensure alignment with upstream Kubernetes standards.</li>
+</ul>
+</li>
+<li><strong>Continuous Integration/Continuous Deployment (CI/CD)</strong>:<ul>
+<li>CI pipelines run automated tests, perform builds, and validate compatibility before code is merged.<ul>
+<li>All CI is built on GitHub actions with declarative and open models</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="security-practices">Security Practices<a class="headerlink" href="#security-practices" title="Permanent link">#</a></h4>
+<ul>
+<li><strong>Dependency Management</strong>:<ul>
+<li><strong>Dependabot</strong> is used to automate security updates for vulnerable libraries.</li>
+<li><strong>System Images</strong> shipped with k0s are regurarly scanned by Trivy.</li>
+</ul>
+</li>
+<li><strong>Signed Binaries</strong>:<ul>
+<li>All k0s binaries are signed using <strong>Cosign</strong> as part of the release process to prevent tampering.</li>
+<li><a href="https://docs.k0sproject.io/stable/verifying-signs/">Documentation</a> has instructions for users on how to verify the signature</li>
+</ul>
+</li>
+<li><strong>Secure Default Configurations</strong>:<ul>
+<li>k0s ships with secure-by-default settings, such as TLS encryption for API communication and RBAC enabled by default.</li>
+</ul>
+</li>
+<li><strong>Vulnerability Response</strong>:<ul>
+<li>A defined process for responding to discovered vulnerabilities, including prompt patching and communication with users.
+  See <a href="https://github.com/k0sproject/k0s/blob/main/SECURITY.md">k0s security policy</a> for more information.</li>
+</ul>
+</li>
+</ul>
+<h4 id="community-and-governance">Community and Governance<a class="headerlink" href="#community-and-governance" title="Permanent link">#</a></h4>
+<ul>
+<li><strong>Community Involvement</strong>:<ul>
+<li>Security and health are bolstered by a transparent development process that invites contributions from the community.</li>
+<li>Security issues can be reported confidentially to maintainers via a designated vulnerability disclosure program.</li>
+</ul>
+</li>
+<li><strong>Governance Model</strong>:<ul>
+<li>Decisions about features, security, and releases are guided by a structured governance framework involving maintainers and key contributors.</li>
+</ul>
+</li>
+<li><strong>Documentation Standards</strong>:<ul>
+<li>Comprehensive and updated documentation ensures users follow best practices, reducing misconfigurations and security risks.</li>
+</ul>
+</li>
+</ul>
+<h4 id="release-management">Release Management<a class="headerlink" href="#release-management" title="Permanent link">#</a></h4>
+<ul>
+<li><strong>Semantic Versioning</strong>:<ul>
+<li>Releases follow semantic versioning to provide clarity on the nature of changes (major, minor, or patch).</li>
+</ul>
+</li>
+<li><strong>Testing Before Release</strong>:<ul>
+<li>Each release undergoes rigorous automated testing to ensure stability and security.</li>
+</ul>
+</li>
+<li><strong>Timely Security Patches</strong>:<ul>
+<li>Critical vulnerabilities are addressed through prompt patch releases , given that an upstream fix is available.</li>
+</ul>
+</li>
+<li><strong>Signed Binaries</strong>:<ul>
+<li>k0s binaries are signed with <strong>Cosign</strong>, ensuring artifact integrity and authenticity.</li>
+</ul>
+</li>
+<li><strong>Release Notes</strong>:<ul>
+<li>Detailed notes accompany each release, highlighting new features, bug fixes, and security updates.</li>
+</ul>
+</li>
+</ul>
+<h4 id="compliance-with-cncf-best-practices">Compliance with CNCF Best Practices<a class="headerlink" href="#compliance-with-cncf-best-practices" title="Permanent link">#</a></h4>
+<ul>
+<li><strong>Kubernetes Conformance</strong>:<ul>
+<li>Regular conformance testing ensures compatibility with upstream Kubernetes APIs.</li>
+</ul>
+</li>
+<li><strong>TAG Security Alignment</strong>:<ul>
+<li>Security practices align with CNCF TAG Security recommendations, providing a robust baseline for health and security.</li>
+</ul>
+</li>
+</ul>
+<h4 id="supply-chain-security">Supply Chain Security<a class="headerlink" href="#supply-chain-security" title="Permanent link">#</a></h4>
+<ul>
+<li><strong>Source Code Integrity</strong>:<ul>
+<li>Code hosted on trusted platform on Github.</li>
+<li>Git used as version control and all changes going through pull request process to ensure integrity.</li>
+</ul>
+</li>
+<li><strong>Build Pipeline Security</strong>:<ul>
+<li>All build pipelines are managed as-code (GH actions yaml) under project repository in GitHub.</li>
+<li>All changes are going through normal review process.</li>
+<li>Non-maintainer PRs require approval to run the CI workflows allowing a maintainer to verify the PR before allowing it to run.</li>
+</ul>
+</li>
+<li><strong>Dependency Transparency</strong>:<ul>
+<li>The project maintains transparency about its dependencies and their versions.</li>
+<li>Automated dependency updates are handled via <strong>Dependabot</strong>.</li>
+<li>A signed SBOM report, in spdx format, is produced for all releases.</li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2021 k0sproject a Series of LF Projects, LLC. For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank">Linux Foundation policies</a>. - All rights reserved.
+    </div>
+  
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/k0sproject/k0s" target="_blank" rel="noopener" title="k0s on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://x.com/k0sproject" target="_blank" rel="noopener" title="k0s on X" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8l164.9-188.5L26.8 48h145.6l100.5 132.9zm-24.8 373.8h39.1L151.1 88h-42z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://medium.com/k0sproject" target="_blank" rel="noopener" title="k0s on Medium" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M180.5 74.262C80.813 74.262 0 155.633 0 256s80.819 181.738 180.5 181.738S361 356.373 361 256 280.191 74.262 180.5 74.262m288.25 10.646c-49.845 0-90.245 76.619-90.245 171.095s40.406 171.1 90.251 171.1 90.251-76.619 90.251-171.1H559c0-94.503-40.4-171.095-90.248-171.095Zm139.506 17.821c-17.526 0-31.735 68.628-31.735 153.274s14.2 153.274 31.735 153.274S640 340.631 640 256c0-84.649-14.215-153.271-31.742-153.271Z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://kubernetes.slack.com/archives/C07VAPJUECS" target="_blank" rel="noopener" title="k0s on the k8s slack" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M94.12 315.1c0 25.9-21.16 47.06-47.06 47.06S0 341 0 315.1s21.16-47.06 47.06-47.06h47.06zm23.72 0c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06v117.84c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06zm47.06-188.98c-25.9 0-47.06-21.16-47.06-47.06S139 32 164.9 32s47.06 21.16 47.06 47.06v47.06zm0 23.72c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06H47.06C21.16 243.96 0 222.8 0 196.9s21.16-47.06 47.06-47.06zm188.98 47.06c0-25.9 21.16-47.06 47.06-47.06S448 171 448 196.9s-21.16 47.06-47.06 47.06h-47.06zm-23.72 0c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06V79.06c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06zM283.1 385.88c25.9 0 47.06 21.16 47.06 47.06S309 480 283.1 480s-47.06-21.16-47.06-47.06v-47.06zm0-23.72c-25.9 0-47.06-21.16-47.06-47.06s21.16-47.06 47.06-47.06h117.84c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://k0sproject.io/" target="_blank" rel="noopener" title="k0s Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6 31.5 31.5 31.5 82.5 0 114L422.3 334.8c-31.5 31.5-82.5 31.5-114 0-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5 50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5l112.2-112.3c31.5-31.5 82.5-31.5 114 0 27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+    
+  </body>
+</html>

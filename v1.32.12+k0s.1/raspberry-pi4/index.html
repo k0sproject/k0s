@@ -1,0 +1,2923 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
+      
+      
+        <meta name="author" content="Mirantis, Inc.">
+      
+      
+        <link rel="canonical" href="https://docs.k0sproject.io/v1.32.12+k0s.1/raspberry-pi4/">
+      
+      
+        <link rel="prev" href="../experimental-windows/">
+      
+      
+        <link rel="next" href="../examples/ansible-playbook/">
+      
+      
+      <link rel="icon" href="../img/k0s-favicon-192.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>Raspberry Pi 4 - Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-JMV1409T2T');
+  </script>
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#create-a-raspberry-pi-4-cluster" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You are not currently viewing the documentation for the current stable release of k0s.
+  <a href="../..">
+    <strong>Click here to go to the documentation of the current stable release.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../img/k0s-favicon-192.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Raspberry Pi 4
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../img/k0s-favicon-192.png" alt="logo">
+
+    </a>
+    Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Installation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick Start Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0sctl-install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using k0sctl
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Alternative Methods
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Alternative Methods
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0s-multi-node/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manual (advanced)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0s-in-docker/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experimental-windows/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Windows (experimental)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Raspberry Pi 4
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Raspberry Pi 4
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-the-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set up the system
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Set up the system">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare-sd-card-and-boot-up-the-raspberry-pi" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prepare SD card and boot up the Raspberry Pi
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-network-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Review network configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-provision-ssh-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Provision SSH keys
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-create-a-swap-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Create a swap file
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#download-k0s" class="md-nav__link">
+    <span class="md-ellipsis">
+      Download k0s
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-a-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploy a node
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deploy a node">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#as-single-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      As single node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#as-a-controller-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      As a controller node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#as-a-worker-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      As a worker node
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connect-to-the-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connect to the cluster
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/ansible-playbook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible Playbook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../airgap-install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Airgap Install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom-ca/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using custom CA certificate (advanced)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system-requirements/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    System Requirements
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../external-runtime-deps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    External runtime dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../verifying-signs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Verifying Signed Binaries
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Maintenance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Maintenance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backup/Restore
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../remove_controller/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Remove/Replace a controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reset/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reset (Uninstall)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Usage
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Usage
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration Options
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dynamic-configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dynamic Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration-validation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration Validation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../worker-node-config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Worker Node Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../networking/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Networking (CNI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runtime/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Runtime (CRI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Storage (CSI)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system-monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    System Components Monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manifests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manifest Deployer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../helm-charts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helm Charts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-providers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cloud Providers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dual-stack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    IPv4/IPv6 dual-stack networking
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../high-availability/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Plane High Availability
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nllb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Node-local load balancing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cplb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control plane load balancing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell-completion/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shell Completion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-management/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User Management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../environment-variables/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration of Environment Variables
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenID Connect
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../selinux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SELinux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../podsecurity/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pod Security Standards
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reinstall-k0sctl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Re-install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Auto Updates
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Auto Updates
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autopilot/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autopilot-multicommand/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Multi-Command Plans
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Extensions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Extensions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MetalLB Load Balancer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/nginx-ingress/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NGINX Ingress Controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/traefik-ingress/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Traefik Ingress Controller
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/rook-ceph/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ceph Storage with Rook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/gitops-flux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitOps with Flux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/openebs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenEBS storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Troubleshooting
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/FAQ/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    FAQ
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/logs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/troubleshooting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common Pitfalls
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/support-dump/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Support Insights
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/certificate-authorities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Certificate Authorities (CAs)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Command Line
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cis_benchmark/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kube-bench Security Benchmark
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Governance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Governance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security policy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Releases & support model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_9_3" id="__nav_9_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    CNCF
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9_3">
+            <span class="md-nav__icon md-icon"></span>
+            CNCF
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../governance/cncf/gtr/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General Technical Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../governance/cncf/security-self-assessment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TAG-Security self-assessment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commercial-support/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Commercial support
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adopters/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adopters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/github_workflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitHub Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/testing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Testing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-the-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set up the system
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Set up the system">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare-sd-card-and-boot-up-the-raspberry-pi" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prepare SD card and boot up the Raspberry Pi
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-network-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Review network configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-provision-ssh-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Provision SSH keys
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-create-a-swap-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Create a swap file
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#download-k0s" class="md-nav__link">
+    <span class="md-ellipsis">
+      Download k0s
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-a-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploy a node
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deploy a node">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#as-single-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      As single node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#as-a-controller-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      As a controller node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#as-a-worker-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      As a worker node
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connect-to-the-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connect to the cluster
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="create-a-raspberry-pi-4-cluster">Create a Raspberry Pi 4 cluster<a class="headerlink" href="#create-a-raspberry-pi-4-cluster" title="Permanent link">#</a></h1>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<p>This guide assumes that you use a <a href="https://www.raspberrypi.org/products/raspberry-pi-4-model-b/">Raspberry Pi 4 Model B</a> computer and a
+sufficiently large SD card of at least 32 GB. We will be using <a href="https://ubuntu.com/">Ubuntu Linux</a>
+for this guide, although k0s should run quite fine on other 64-bit Linux
+distributions for the Raspberry Pi as well. Please <a href="https://github.com/k0sproject/k0s/issues/new?assignees=&amp;labels=bug&amp;template=BUG_REPORT.yml">file a Bug</a> if you encounter
+any obstacles.</p>
+<h2 id="set-up-the-system">Set up the system<a class="headerlink" href="#set-up-the-system" title="Permanent link">#</a></h2>
+<h3 id="prepare-sd-card-and-boot-up-the-raspberry-pi">Prepare SD card and boot up the Raspberry Pi<a class="headerlink" href="#prepare-sd-card-and-boot-up-the-raspberry-pi" title="Permanent link">#</a></h3>
+<p>Install <a href="https://ubuntu.com/download/raspberry-pi">Ubuntu Server 22.04.1 LTS 64-bit for Raspberry Pi</a>. Ubuntu
+provides a <a href="https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi">step by step guide</a> for the installation process. They
+use <a href="https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/">Raspberry Pi Imager</a>, a specialized imaging utility that you can use to
+write the Ubuntu image, amongst others, to your SD cards. Follow that
+<a href="https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi">guide</a> to get a working installation. (You can skip part 5 of the
+guide, since we won't need a Desktop Environment to run k0s.)</p>
+<p>Alternatively, you can also opt to <a href="https://ubuntu.com/download/raspberry-pi/thank-you?version=22.04.1&amp;architecture=server-arm64+raspi">download</a> the Ubuntu server image
+for Raspberry Pi manually and write it to an SD card using a tool like <code>dd</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="go">wget https://cdimage.ubuntu.com/releases/22.04.1/release/ubuntu-22.04.1-preinstalled-server-arm64+raspi.img.xz</span>
+<span class="go">unxz ubuntu-22.04.1-preinstalled-server-arm64+raspi.img.xz</span>
+<span class="go">dd if=ubuntu-22.04.1-preinstalled-server-arm64+raspi.img of=/dev/mmcblk0 bs=4M status=progress</span>
+</code></pre></div>
+<p><strong>Note</strong>: The manual process is more prone to accidental data loss than the
+guided one via Raspberry Pi Imager. Be sure to choose the correct device names.
+The previous content of the SD card will be wiped. Moreover, the partition
+written to the SD card needs to be resized to make the full capacity of the card
+available to Ubuntu. This can be achieved, for example, in this way:</p>
+<div class="highlight"><pre><span></span><code><span class="go">growpart /dev/mmcblk0 2</span>
+<span class="go">resize2fs /dev/mmcblk0p2</span>
+</code></pre></div>
+<p>Ubuntu uses <a href="https://cloud-init.io/">cloud-init</a> to allow for automated customizations of the system
+configuration. The cloud-init configuration files are located on the boot
+partition of the SD card. You can mount that partition and modify those, e.g. to
+provision network configuration, users, authorized SSH keys, additional packages
+and also an automatic installation of k0s.</p>
+<p>After you have prepared the SD card, plug it into the Raspberry Pi and boot it
+up. Once cloud-init finished bootstrapping the system, the default login
+credentials are set to user <code>ubuntu</code> with password <code>ubuntu</code> (which you will be
+prompted to change on first login).</p>
+<h3 id="review-network-configurations">Review network configurations<a class="headerlink" href="#review-network-configurations" title="Permanent link">#</a></h3>
+<p><strong>Note</strong>: For network configuration purposes, this documentation assumes that all
+of your computers are connected on the same subnet.</p>
+<p>Review k0s's <a href="../networking/#required-ports-and-protocols">required ports and protocols</a> to ensure that your network and
+firewall configurations allow necessary traffic for the cluster.</p>
+<p>Review the <a href="https://ubuntu.com/server/docs/network-configuration">Ubuntu Server Networking Configuration</a> documentation to ensure that
+all systems have a static IP address on the network, or that the network is
+providing a static DHCP lease for the nodes. If the network should be managed
+via cloud-init, please refer to <a href="https://cloudinit.readthedocs.io/en/latest/topics/network-config-format-v2.html#examples">their documentation</a>.</p>
+<h3 id="optional-provision-ssh-keys">(Optional) Provision SSH keys<a class="headerlink" href="#optional-provision-ssh-keys" title="Permanent link">#</a></h3>
+<p>Ubuntu Server deploys and enables <a href="https://www.openssh.com/">OpenSSH</a> via
+cloud-init by default. Confirm, though, that for whichever user you will deploy
+the cluster with on the build system, their SSH Key is <a href="https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/">copied to each node's
+root user</a>. Before you start, the configuration should be such
+that the current user can run:</p>
+<div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>root@<span class="si">${</span><span class="nv">HOST</span><span class="si">}</span>
+</code></pre></div>
+<p>Where <code>${HOST}</code> is any node and the login can succeed with no further prompts.</p>
+<h3 id="optional-create-a-swap-file">(Optional) Create a swap file<a class="headerlink" href="#optional-create-a-swap-file" title="Permanent link">#</a></h3>
+<p>While having a swap file is <em>technically optional</em>, it can help to ease memory
+pressure when running memory intensive workloads or on Raspberry Pis with less
+than 8 GB of RAM.</p>
+<ol>
+<li>
+<p>To create a swap file:</p>
+<div class="highlight"><pre><span></span><code>fallocate<span class="w"> </span>-l<span class="w"> </span>2G<span class="w"> </span>/swapfile<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+chmod<span class="w"> </span><span class="m">0600</span><span class="w"> </span>/swapfile<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+mkswap<span class="w"> </span>/swapfile<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+swapon<span class="w"> </span>-a
+</code></pre></div>
+</li>
+<li>
+<p>Ensure that the usage of swap is not too aggressive by setting the <code>sudo
+   sysctl vm.swappiness=10</code> (the default is generally higher) and configuring it
+   to be persistent in <code>/etc/sysctl.d/*</code>.</p>
+</li>
+<li>
+<p>Ensure that your swap is mounted after reboots by confirming that the
+   following line exists in your <code>/etc/fstab</code> configuration:</p>
+<div class="highlight"><pre><span></span><code>/swapfile<span class="w">         </span>none<span class="w">           </span>swap<span class="w"> </span>sw<span class="w">       </span><span class="m">0</span><span class="w"> </span><span class="m">0</span>
+</code></pre></div>
+</li>
+</ol>
+<h2 id="download-k0s">Download k0s<a class="headerlink" href="#download-k0s" title="Permanent link">#</a></h2>
+<p>Download a <a href="https://github.com/k0sproject/k0s/releases/latest">k0s release</a>. For
+example:</p>
+<div class="highlight"><pre><span></span><code>wget<span class="w"> </span>-O<span class="w"> </span>/tmp/k0s<span class="w"> </span>https://github.com/k0sproject/k0s/releases/download/v1.32.12+k0s.1/k0s-v1.32.12+k0s.1-arm64<span class="w"> </span><span class="c1"># replace version number!</span>
+sudo<span class="w"> </span>install<span class="w"> </span>/tmp/k0s<span class="w"> </span>/usr/local/bin/k0s
+</code></pre></div>
+<p>― or ―</p>
+<p>Use the k0s download script (as one command) to download the latest stable k0s
+and make it executable in <code>/usr/bin/k0s</code>.</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
+</code></pre></div>
+<p>At this point you can run <code>k0s</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>k0s<span class="w"> </span>version
+<span class="go">v1.32.12+k0s.1</span>
+</code></pre></div>
+<p>To check if k0s's <a href="../system-requirements/">system requirements</a> and <a href="../external-runtime-deps/">external
+runtime dependencies</a> are fulfilled by your current
+setup, you can invoke <code>k0s sysinfo</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>k0s<span class="w"> </span>sysinfo
+<span class="go">Total memory: 3.7 GiB (pass)</span>
+<span class="go">File system of /var/lib: ext4 (pass)</span>
+<span class="go">Disk space available for /var/lib/k0s: 83.6 GiB (pass)</span>
+<span class="go">Relative disk space available for /var/lib/k0s: 20% (pass)</span>
+<span class="go">Operating system: Linux (pass)</span>
+<span class="go">  Linux kernel release: 5.15.0-1013-raspi (pass)</span>
+<span class="go">  Max. file descriptors per process: current: 1024 / max: 1048576 (warning: &lt; 65536)</span>
+<span class="go">  AppArmor: unavailable (pass)</span>
+<span class="go">  Executable in PATH: modprobe: /usr/sbin/modprobe (pass)</span>
+<span class="go">  Executable in PATH: mount: /usr/bin/mount (pass)</span>
+<span class="go">  Executable in PATH: umount: /usr/bin/umount (pass)</span>
+<span class="go">  /proc file system: mounted (0x9fa0) (pass)</span>
+<span class="go">  Control Groups: version 2 (pass)</span>
+<span class="go">    cgroup controller &quot;cpu&quot;: available (pass)</span>
+<span class="go">    cgroup controller &quot;cpuacct&quot;: available (via cpu in version 2) (pass)</span>
+<span class="go">    cgroup controller &quot;cpuset&quot;: available (pass)</span>
+<span class="go">    cgroup controller &quot;memory&quot;: available (pass)</span>
+<span class="go">    cgroup controller &quot;devices&quot;: unknown (warning: insufficient permissions, try with elevated permissions)</span>
+<span class="go">    cgroup controller &quot;freezer&quot;: available (cgroup.freeze exists) (pass)</span>
+<span class="go">    cgroup controller &quot;pids&quot;: available (pass)</span>
+<span class="go">    cgroup controller &quot;hugetlb&quot;: available (pass)</span>
+<span class="go">    cgroup controller &quot;blkio&quot;: available (via io in version 2) (pass)</span>
+<span class="go">  CONFIG_CGROUPS: Control Group support: built-in (pass)</span>
+<span class="go">    CONFIG_CGROUP_SCHED: Group CPU scheduler: built-in (pass)</span>
+<span class="go">      CONFIG_FAIR_GROUP_SCHED: Group scheduling for SCHED_OTHER: built-in (pass)</span>
+<span class="go">        CONFIG_CFS_BANDWIDTH: CPU bandwidth provisioning for FAIR_GROUP_SCHED: built-in (pass)</span>
+<span class="go">    CONFIG_BLK_CGROUP: Block IO controller: built-in (pass)</span>
+<span class="go">  CONFIG_NAMESPACES: Namespaces support: built-in (pass)</span>
+<span class="go">    CONFIG_UTS_NS: UTS namespace: built-in (pass)</span>
+<span class="go">    CONFIG_IPC_NS: IPC namespace: built-in (pass)</span>
+<span class="go">    CONFIG_PID_NS: PID namespace: built-in (pass)</span>
+<span class="go">    CONFIG_NET_NS: Network namespace: built-in (pass)</span>
+<span class="go">  CONFIG_NET: Networking support: built-in (pass)</span>
+<span class="go">    CONFIG_INET: TCP/IP networking: built-in (pass)</span>
+<span class="go">      CONFIG_IPV6: The IPv6 protocol: built-in (pass)</span>
+<span class="go">    CONFIG_NETFILTER: Network packet filtering framework (Netfilter): built-in (pass)</span>
+<span class="go">      CONFIG_NETFILTER_ADVANCED: Advanced netfilter configuration: built-in (pass)</span>
+<span class="go">      CONFIG_NF_CONNTRACK: Netfilter connection tracking support: module (pass)</span>
+<span class="go">      CONFIG_NETFILTER_XTABLES: Netfilter Xtables support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_TARGET_REDIRECT: REDIRECT target support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_COMMENT: &quot;comment&quot; match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MARK: nfmark target and match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_SET: set target and match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_TARGET_MASQUERADE: MASQUERADE target support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_NAT: &quot;SNAT and DNAT&quot; targets support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_ADDRTYPE: &quot;addrtype&quot; address type match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_CONNTRACK: &quot;conntrack&quot; connection tracking match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_MULTIPORT: &quot;multiport&quot; Multiple port match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_RECENT: &quot;recent&quot; match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_STATISTIC: &quot;statistic&quot; match support: module (pass)</span>
+<span class="go">      CONFIG_NETFILTER_NETLINK: module (pass)</span>
+<span class="go">      CONFIG_NF_NAT: module (pass)</span>
+<span class="go">      CONFIG_IP_SET: IP set support: module (pass)</span>
+<span class="go">        CONFIG_IP_SET_HASH_IP: hash:ip set support: module (pass)</span>
+<span class="go">        CONFIG_IP_SET_HASH_NET: hash:net set support: module (pass)</span>
+<span class="go">      CONFIG_IP_VS: IP virtual server support: module (pass)</span>
+<span class="go">        CONFIG_IP_VS_NFCT: Netfilter connection tracking: built-in (pass)</span>
+<span class="go">        CONFIG_IP_VS_SH: Source hashing scheduling: module (pass)</span>
+<span class="go">        CONFIG_IP_VS_RR: Round-robin scheduling: module (pass)</span>
+<span class="go">        CONFIG_IP_VS_WRR: Weighted round-robin scheduling: module (pass)</span>
+<span class="go">      CONFIG_NF_CONNTRACK_IPV4: IPv4 connection tracking support (required for NAT): unknown (warning)</span>
+<span class="go">      CONFIG_NF_REJECT_IPV4: IPv4 packet rejection: module (pass)</span>
+<span class="go">      CONFIG_NF_NAT_IPV4: IPv4 NAT: unknown (warning)</span>
+<span class="go">      CONFIG_IP_NF_IPTABLES: IP tables support: module (pass)</span>
+<span class="go">        CONFIG_IP_NF_FILTER: Packet filtering: module (pass)</span>
+<span class="go">          CONFIG_IP_NF_TARGET_REJECT: REJECT target support: module (pass)</span>
+<span class="go">        CONFIG_IP_NF_NAT: iptables NAT support: module (pass)</span>
+<span class="go">        CONFIG_IP_NF_MANGLE: Packet mangling: module (pass)</span>
+<span class="go">      CONFIG_NF_DEFRAG_IPV4: module (pass)</span>
+<span class="go">      CONFIG_NF_CONNTRACK_IPV6: IPv6 connection tracking support (required for NAT): unknown (warning)</span>
+<span class="go">      CONFIG_NF_NAT_IPV6: IPv6 NAT: unknown (warning)</span>
+<span class="go">      CONFIG_IP6_NF_IPTABLES: IP6 tables support: module (pass)</span>
+<span class="go">        CONFIG_IP6_NF_FILTER: Packet filtering: module (pass)</span>
+<span class="go">        CONFIG_IP6_NF_MANGLE: Packet mangling: module (pass)</span>
+<span class="go">        CONFIG_IP6_NF_NAT: ip6tables NAT support: module (pass)</span>
+<span class="go">      CONFIG_NF_DEFRAG_IPV6: module (pass)</span>
+<span class="go">    CONFIG_BRIDGE: 802.1d Ethernet Bridging: module (pass)</span>
+<span class="go">      CONFIG_LLC: module (pass)</span>
+<span class="go">      CONFIG_STP: module (pass)</span>
+<span class="go">  CONFIG_EXT4_FS: The Extended 4 (ext4) filesystem: built-in (pass)</span>
+<span class="go">  CONFIG_PROC_FS: /proc file system support: built-in (pass)</span>
+</code></pre></div>
+<h2 id="deploy-a-node">Deploy a node<a class="headerlink" href="#deploy-a-node" title="Permanent link">#</a></h2>
+<p>Each node can now serve as a control plane node or worker node or both.</p>
+<h3 id="as-single-node">As single node<a class="headerlink" href="#as-single-node" title="Permanent link">#</a></h3>
+<p>This is a self-contained single node setup which runs both control plane
+components and worker components. If you don't plan join any more nodes into the
+cluster, this is for you.</p>
+<p>Install the <code>k0scontroller</code> service:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single
+<span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0scontroller.service
+<span class="go">○ k0scontroller.service - k0s - Zero Friction Kubernetes</span>
+<span class="go">     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)</span>
+<span class="go">     Active: inactive (dead)</span>
+<span class="go">       Docs: https://docs.k0sproject.io</span>
+</code></pre></div>
+<p>Start it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>k0scontroller.service
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0scontroller.service
+<span class="go">● k0scontroller.service - k0s - Zero Friction Kubernetes</span>
+<span class="go">     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)</span>
+<span class="go">     Active: active (running) since Thu 2022-08-18 09:56:02 UTC; 2s ago</span>
+<span class="go">       Docs: https://docs.k0sproject.io</span>
+<span class="go">   Main PID: 2720 (k0s)</span>
+<span class="go">      Tasks: 10</span>
+<span class="go">     Memory: 24.7M</span>
+<span class="go">        CPU: 4.654s</span>
+<span class="go">     CGroup: /system.slice/k0scontroller.service</span>
+<span class="go">             └─2720 /usr/local/bin/k0s controller --single=true</span>
+
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] received CSR</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] generating key: rsa-2048</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] received CSR</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] generating key: rsa-2048</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] received CSR</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] generating key: rsa-2048</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] encoded CSR</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] signed certificate with serial number 6275509116227039894094374442676315636193163621</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] encoded CSR</span>
+<span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] signed certificate with serial number 336800507542010809697469355930007636411790073226</span>
+</code></pre></div>
+<p>When the cluster is up, try to have a look:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-owide
+<span class="go">NAME     STATUS   ROLES           AGE     VERSION        INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
+<span class="go">ubuntu   Ready    control-plane   4m41s   v1.32.12+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.30</span>
+<span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-owide<span class="w"> </span>-A
+<span class="go">NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE     IP             NODE     NOMINATED NODE   READINESS GATES</span>
+<span class="go">kube-system   kube-proxy-kkv2l                  1/1     Running   0          4m44s   10.152.56.54   ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+<span class="go">kube-system   kube-router-vf2pv                 1/1     Running   0          4m44s   10.152.56.54   ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+<span class="go">kube-system   coredns-88b745646-wd4mp           1/1     Running   0          5m10s   10.244.0.2     ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+<span class="go">kube-system   metrics-server-7d7c4887f4-ssk49   1/1     Running   0          5m6s    10.244.0.3     ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+</code></pre></div>
+<p>Overall, the single k0s node uses less than 1 GiB of RAM:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free<span class="w"> </span>-h
+<span class="go">               total        used        free      shared  buff/cache   available</span>
+<span class="go">Mem:           3.7Gi       715Mi       1.3Gi       3.0Mi       1.7Gi       2.8Gi</span>
+<span class="go">Swap:             0B          0B          0B</span>
+</code></pre></div>
+<h3 id="as-a-controller-node">As a controller node<a class="headerlink" href="#as-a-controller-node" title="Permanent link">#</a></h3>
+<p>This will install k0s as a single non-HA controller. It won't be able to run any
+workloads, so you need to connect more workers to it.</p>
+<p>Install the <code>k0scontroller</code> service. Note that we're not specifying any flags:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0scontroller.service
+<span class="go">○ k0scontroller.service - k0s - Zero Friction Kubernetes</span>
+<span class="go">     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)</span>
+<span class="go">     Active: inactive (dead)</span>
+<span class="go">       Docs: https://docs.k0sproject.io</span>
+</code></pre></div>
+<p>Start it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>k0scontroller.service
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0scontroller.service
+<span class="go">● k0scontroller.service - k0s - Zero Friction Kubernetes</span>
+<span class="go">     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)</span>
+<span class="go">     Active: active (running) since Thu 2022-08-18 10:31:07 UTC; 3s ago</span>
+<span class="go">       Docs: https://docs.k0sproject.io</span>
+<span class="go">   Main PID: 1176 (k0s)</span>
+<span class="go">      Tasks: 10</span>
+<span class="go">     Memory: 30.2M</span>
+<span class="go">        CPU: 8.936s</span>
+<span class="go">     CGroup: /system.slice/k0scontroller.service</span>
+<span class="go">             └─1176 /usr/local/bin/k0s controller</span>
+
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] signed certificate with serial number 723202396395786987172578079268287418983457689579</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] encoded CSR</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] signed certificate with serial number 36297085497443583023060005045470362249819432477</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] encoded CSR</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] encoded CSR</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] signed certificate with serial number 728910847354665355109188021924183608444435075827</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] generate received request</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] received CSR</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] generating key: rsa-2048</span>
+<span class="go">Aug 18 10:31:09 ubuntu k0s[1176]: 2022/08/18 10:31:09 [INFO] signed certificate with serial number 718948898553094584370065610752227487244528071083</span>
+</code></pre></div>
+<p>As soon as the controller is up, we can try to inspect the API as we did for the
+single node:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-owide
+<span class="go">No resources found</span>
+<span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-owide<span class="w"> </span>-A
+<span class="go">NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES</span>
+<span class="go">kube-system   coredns-88b745646-6tpwm           0/1     Pending   0          29s   &lt;none&gt;   &lt;none&gt;   &lt;none&gt;           &lt;none&gt;</span>
+<span class="go">kube-system   metrics-server-7d7c4887f4-9k5k5   0/1     Pending   0          24s   &lt;none&gt;   &lt;none&gt;   &lt;none&gt;           &lt;none&gt;</span>
+</code></pre></div>
+<p>As we see, there are no nodes and two pending pods. A control plane without
+workers. The memory consumption is below the single node controller, but not
+much:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free<span class="w"> </span>-h
+<span class="go">               total        used        free      shared  buff/cache   available</span>
+<span class="go">Mem:           3.7Gi       678Mi       2.3Gi       3.0Mi       758Mi       2.9Gi</span>
+<span class="go">Swap:             0B          0B          0B</span>
+</code></pre></div>
+<p>This controller runs a full-fledged control plane, backed by <a href="https://etcd.io">etcd</a>, as opposed
+to the lightweight <a href="https://github.com/k3s-io/kine">kine</a> based one from the single node example. For the
+latter, k0s doesn't support joining new nodes.</p>
+<p>More nodes can be added by creating join tokens. To add a worker node, create a
+token for it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--role<span class="w"> </span>worker
+<span class="go">H4sIAAAAAAAC/2yV0Y6jPBKF7/MUeYGZ30DonUTai5+Ak5DgbhuXHXwHmAnBhtAJHdKs9t1XnZmRdqW9K1cdfceyrDqzvD+L6no7X7rV/O7MSvtxG6rrbTX7Nv9dr2bz+Xx+q6736rqa18PQ31Z//eWg747vfvdfvvuL1cti4T1VZXUdzj/PZT5U3/KPob5cz8PnN50P+Wp+SNFwSJ01Ax3zcxAyEUMKKqYIA3vO0LA2TpwCC1hEQipFrxD2UogDhawQobWJY297jxHBCdbS70hIvWKTOMWGBcwhgUaMSegPhdPH+VY13GDGYNxTiwONdMSEJtTiLeVYMMALDn6dOKqXtt5r0WfQPpqK43cpWKBAecnWktxEiAvWVZEDghPCorhmXTlWp/7PTPz3jEPcVZF6p0KsFfIlNZiIiB11iFUhlJ+1jkxwn/EjU4kRnnI1zsEJkkiH4OHt2pI4a0gEINZUYEEhQinEkUb4qU0Rvn+9CQD5UKJ0dKfG1NVZ2dWCcfCkHFDKycjbYZuGIsk5DngY7Svcn3N5mdIGm1yylkU+Srcxyiy7l50ZRUTvGqtcNuK9QAvEjcihu4yJh/sipC5xy4nBssut9UrcB6nENz72JnfxKLBmxAseZftgyhHvfLIjaeK+PNYX2tmwkKQrGjPlSFAI2VRKmyZmidjnsGCefRfe6Vp4p6veBk0FCtaN/uBu7JAp9kS6nFKDCQvxVUXYsGPiFji+VU05UtFvdLt8oVK8JRE+5m6fZfbvBcGa8QhH0pzG6vxjLEOSEJvtZdRvhNSywNmCejEihiRMYp/IH34utZc6GpdwWwgbc9Hhh5Q+4ushLeXJEZ6t85YBCLxTTfwmGhyWW+HC2B+AE1DnYdK4l9pYJ/P0jhn1mrsq1MbHKYqcRO6cyuAQQG/kRlsq2aOK/HVp2FZKDVRqQg0OmNuz3MTB2jgBiXSQCGHYVmN6XnoAItDIrmnbBxDFHbdqB8ZZU5ktGMRAgQUApzuH3chQ9BCSRcrBR2riVCHxBt5ln3kYlXKxKKI6JEizV4wn3tWyMMk1N/iVtvpayvqaQ+nrKfj6gxMzOOCIBF/+cBQv4JG4AnATe0GZjUNy6gcWkkG5CJGpntKGTnzb472XfeqtekuQzqsWua+bpaw2j9d0ih02YZauh5y4/v7gqZzY2lYmVuWkahFqzF0cri1jbPu3n4d6nVp10G4fVw3OZbp8VabfaQfvtWN9zYNOdfVYmIWjz4PMzOOFmv5Nb3u39CgqXdUCth4xyxrwaQ8Oc3On9xIet3mHmewCj7kJgmP/pr3os5i0oLx+1+4yyj1mcwuTmDIko50DpndhWwNxHwcQQSuEGFljI0Z7lYJ1EhgnguJ3PukPYXr3VbJYOCdE5ECSFpBqgrDEpzFzRSfFxSUgIrJhUQZxW5jazxpCk445CfK3RMbHdcOGtL2N0O7uAuyCId8A0izZ4B2EseQb55EgwVX7+CyjmB9c1eSTVQXeLWiDj4CjUW7ZXXl9nR7pqDYKUXnZqyZ4r46x98bR/vduxtzQE0UiFZHdpEACEcFzLx/o5Z+z+bzL22o1N+g2Ky/dUD2GXznxq/6VE39C46n6anzcnqePorLV8K24XIbbcM37/6V9XK9VN3z7Q3o2zbnTq/n60v08n2b9tfpZXauurG6r+b/+PfuiPs1/Q/4P/mn8vMJwMVW3mrvL84/lj+8N8ia/uZ/Lf2izWFb57D8BAAD//zANvmsEBwAA</span>
+</code></pre></div>
+<p>Save the join token for subsequent steps.</p>
+<h3 id="as-a-worker-node">As a worker node<a class="headerlink" href="#as-a-worker-node" title="Permanent link">#</a></h3>
+<p>To join an existing k0s cluster, create the join token file for the worker
+(where <code>$TOKEN_CONTENT</code> is one of the join tokens created in the control plane
+setup):</p>
+<div class="highlight"><pre><span></span><code><span class="go">sudo sh -c &#39;mkdir -p /var/lib/k0s/ &amp;&amp; umask 077 &amp;&amp; echo &quot;$TOKEN_CONTENT&quot; &gt; /var/lib/k0s/join-token&#39;</span>
+</code></pre></div>
+<p>After that, install the <code>k0sworker</code> service:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>worker<span class="w"> </span>--token-file<span class="w"> </span>/var/lib/k0s/join-token
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0sworker.service
+<span class="go">○ k0sworker.service - k0s - Zero Friction Kubernetes</span>
+<span class="go">     Loaded: loaded (/etc/systemd/system/k0sworker.service; enabled; vendor preset: enabled)</span>
+<span class="go">     Active: inactive (dead)</span>
+<span class="go">       Docs: https://docs.k0sproject.io</span>
+</code></pre></div>
+<p>Start the service:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>k0sworker.service
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0sworker.service
+<span class="go">● k0sworker.service - k0s - Zero Friction Kubernetes</span>
+<span class="go">     Loaded: loaded (/etc/systemd/system/k0sworker.service; enabled; vendor preset: enabled)</span>
+<span class="go">     Active: active (running) since Thu 2022-08-18 13:48:58 UTC; 2s ago</span>
+<span class="go">       Docs: https://docs.k0sproject.io</span>
+<span class="go">   Main PID: 1631 (k0s)</span>
+<span class="go">      Tasks: 22</span>
+<span class="go">     Memory: 181.7M</span>
+<span class="go">        CPU: 4.010s</span>
+<span class="go">     CGroup: /system.slice/k0sworker.service</span>
+<span class="go">             ├─1631 /usr/local/bin/k0s worker --token-file=/var/lib/k0s/join-token</span>
+<span class="go">             └─1643 /var/lib/k0s/bin/containerd --root=/var/lib/k0s/containerd --state=/run/k0s/containerd --address=/run/k0s/containerd.sock --log-level=info --config=/etc/k0s/containerd.toml</span>
+
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Starting to supervise&quot; component=containerd</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Started successfully, go nuts pid 1643&quot; component=containerd</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;starting OCIBundleReconciler&quot;</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;starting Kubelet&quot;</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Starting kubelet&quot;</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;detected 127.0.0.53 nameserver, assuming systemd-resolved, so using resolv.conf: /run/systemd/resolve/resolv.conf&quot;</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Starting to supervise&quot; component=kubelet</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Started successfully, go nuts pid 1648&quot; component=kubelet</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;starting Status&quot;</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;starting Autopilot&quot;</span>
+</code></pre></div>
+<p>As this is a worker node, we cannot access the Kubernetes API via the builtin
+<code>k0s kc</code> subcommand, but we can check the k0s API instead:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>status
+<span class="go">Version: v1.32.12+k0s.1</span>
+<span class="go">Process ID: 1631</span>
+<span class="go">Role: worker</span>
+<span class="go">Workloads: true</span>
+<span class="go">SingleNode: false</span>
+</code></pre></div>
+<p>The memory requirements are also pretty low:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free<span class="w"> </span>-h
+<span class="go">               total        used        free      shared  buff/cache   available</span>
+<span class="go">Mem:           3.7Gi       336Mi       2.1Gi       3.0Mi       1.2Gi       3.2Gi</span>
+<span class="go">Swap:             0B          0B          0B</span>
+</code></pre></div>
+<h2 id="connect-to-the-cluster">Connect to the cluster<a class="headerlink" href="#connect-to-the-cluster" title="Permanent link">#</a></h2>
+<p>On a controller node, generate a new <code>raspi-cluster-master</code> user with admin
+rights and get a <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/">kubeconfig</a> for it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>create<span class="w"> </span>clusterrolebinding<span class="w"> </span>raspi-cluster-master-admin<span class="w"> </span>--clusterrole<span class="o">=</span>admin<span class="w"> </span>--user<span class="o">=</span>raspi-cluster-master
+<span class="go">clusterrolebinding.rbac.authorization.k8s.io/raspi-cluster-master-admin created</span>
+<span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kubeconfig<span class="w"> </span>create<span class="w"> </span>--groups<span class="w"> </span>system:masters<span class="w"> </span>raspi-cluster-master
+
+<span class="go">apiVersion: v1</span>
+<span class="go">clusters:</span>
+<span class="go">- cluster:</span>
+<span class="go">    server: https://10.152.56.54:6443</span>
+<span class="go">    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURBRENDQWVpZ0F3SUJBZ0lVT2RSVzdWdm83UWR5dmdFZHRUK1V3WDN2YXdvd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0dERVdNQlFHQTFVRUF4TU5hM1ZpWlhKdVpYUmxjeTFqWVRBZUZ3MHlNakE0TVRneE5EQTFNREJhRncwegpNakE0TVRVeE5EQTFNREJhTUJneEZqQVVCZ05WQkFNVERXdDFZbVZ5Ym1WMFpYTXRZMkV3Z2dFaU1BMEdDU3FHClNJYjNEUUVCQVFVQUE0SUJEd0F3Z2dFS0FvSUJBUURsdy8wRFJtcG1xRjVnVElmN1o5bElRN0RFdUp6WDJLN1MKcWNvYk5oallFanBqbnBDaXFYOSt5T1R2cGgyUlRKN2tvaGkvUGxrYm5oM2pkeVQ3NWxSMGowSkV1elRMaUdJcApoR2pqc3htek5RRWVwb210R0JwZXNGeUE3NmxTNVp6WVJtT0lFQVgwb0liWjBZazhuU3pQaXBsWDMwcTFETEhGCkVIcSsyZG9vVXRIb09EaEdmWFRJTUJsclZCV3dCV3cxbmdnN0dKb01TN2tHblpYaUw2NFBiRDg5NmtjYXo0a28KTXhhZGc1ZmZQNStBV3JIVHhKV1d2YjNCMjEyOWx3R3FiOHhMTCt1cnVISHVjNEh4em9OVUt1WUlXc2lvQWp4YgphdDh6M1QwV2RnSit2VithWWlRNFlLeEVFdFB4cEMvUHk0czU0UHF4RzVZa0hiMDczMEUxQWdNQkFBR2pRakJBCk1BNEdBMVVkRHdFQi93UUVBd0lCQmpBUEJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTd2p4STIKRUxVNCtNZUtwT0JNQUNnZDdKU1QxVEFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBQ3k3dHFFMk5WT3E0Z0I1Ngp2clVZMFU0SWp1c0dUN0UzQ2xqSUtQODk2Mm9xdlpvU0NWb2U5YS9UQTR6ZXYrSXJwaTZ1QXFxc3RmT3JFcDJ4CmVwMWdYZHQrbG5nV0xlbXdWdEVOZ0xvSnBTM09Vc3N1ai9XcmJwSVU4M04xWVJTRzdzU21KdXhpa3pnVUhiUk8KZ01SLzIxSDFESzJFdmdQY2pHWXlGbUQzSXQzSjVNcnNiUHZTRG4rUzdWWWF0eWhIMUo4dmwxVDFpbzRWWjRTNgpJRFlaV05JOU10TUpqcGxXL01pRnlwTUhFU1E3UEhHeHpGVExoWFplS0pKSlRPYXFha1AxM3J1WFByVHVDQkl4CkFCSWQraU9qdGhSU3ZxbTFocGtHcmY4Rm9PdG1PYXZmazdDdnNJTWdUV2pqd2JJZWZIRU8zUmVBMzZWZWV3bXoKOFJHVUtBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=</span>
+<span class="go">  name: k0s</span>
+<span class="go">contexts:</span>
+<span class="go">- context:</span>
+<span class="go">    cluster: k0s</span>
+<span class="go">    user: raspi-cluster-master</span>
+<span class="go">  name: k0s</span>
+<span class="go">current-context: k0s</span>
+<span class="go">kind: Config</span>
+<span class="go">preferences: {}</span>
+<span class="go">users:</span>
+<span class="go">- name: raspi-cluster-master</span>
+<span class="go">  user:</span>
+<span class="go">    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURYVENDQWtXZ0F3SUJBZ0lVV0ZZNkZ4cCtUYnhxQUxTVjM0REVMb0dEc3Q0d0RRWUpLb1pJaHZjTkFRRUwKQlFBd0dERVdNQlFHQTFVRUF4TU5hM1ZpWlhKdVpYUmxjeTFqWVRBZUZ3MHlNakE0TVRneE5ERTRNREJhRncweQpNekE0TVRneE5ERTRNREJhTURneEZ6QVZCZ05WQkFvVERuTjVjM1JsYlRwdFlYTjBaWEp6TVIwd0d3WURWUVFECkV4UnlZWE53YVMxamJIVnpkR1Z5TFcxaGMzUmxjakNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0MKQVFvQ2dnRUJBTGJNalI5eHA1dDJzank1S0dEQnQ2dWl3QU4vaEhwZkFUNXJrZTFRblc2eFlZeDYzR2JBTXYrRQpjWmEyUEdPempQeVVTZThVdWp4ZnR0L1JWSTJRVkVIRGlJZ1ZDNk1tUUFmTm1WVlpKOHBFaTM2dGJZYUVxN3dxClhxYmJBQ0F0ZGtwNTJ0Y0RLVU9sRS9SV0tUSjN4bXUvRmh0OTIrRDdtM1RrZTE0TkJ5a1hvakk1a2xVWU9ySEMKVTN3V210eXlIUFpDMFBPdWpXSE5yeS9wOXFjZzRreWNDN0NzUVZqMWoxY2JwdXRpWllvRHNHV3piS0RTbExRZApyYnUwRnRVZVpUQzVPN2NuTk5tMU1EZldubXhlekw4L2N5dkJCYnRmMjhmcERFeEhMT2dTY2ZZUlZwUllPMzdvCk5yUjljMGNaZE9oZW5YVnlQcU1WVVlSNkQxMlRrY0VDQXdFQUFhTi9NSDB3RGdZRFZSMFBBUUgvQkFRREFnV2cKTUIwR0ExVWRKUVFXTUJRR0NDc0dBUVVGQndNQkJnZ3JCZ0VGQlFjREFqQU1CZ05WSFJNQkFmOEVBakFBTUIwRwpBMVVkRGdRV0JCUitqQTlGNm1jc25ob2NtMnd0dFNYY2tCaUpoakFmQmdOVkhTTUVHREFXZ0JTd2p4STJFTFU0CitNZUtwT0JNQUNnZDdKU1QxVEFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBY2RRV3N4OUpHOUIxckxVc2Y1QzgKd1BzTkhkZURYeG1idm4zbXN3aFdVMEZHU1pjWjlkMTYzeXhEWnA4QlNzNWFjNnZqcU1lWlFyRThDUXdXYTlxVAowZVJXcTlFODYzcS9VcFVNN3lPM1BnMHd4RWtQSTVuSjRkM0o3MHA3Zk4zenpzMUJzU0h6Q2hzOWR4dE5XaVp5CnNINzdhbG9NanA0cXBEVWRyVWcyT0d4RWhRdzJIaXE3ZEprQm80a3hoWmhBc3lWTDdZRng0SDY3WkIzSjY4V3QKdTdiWnRmUVJZV3ZPUE9oS0pFdmlLVXptNDJBUlZXTDdhZHVESTBBNmpxbXhkTGNxKzlNWVlaNm1CT0NWakx1WgoybDlJSVI2NkdjOUdpdC9kSFdwbTVZbmozeW8xcUU0UVg4ZmVUQTczUlU5cmFIdkNpTGdVbFRaVUNGa3JNL0NtCndBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=</span>
+<span class="go">    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdHN5TkgzR25tM2F5UExrb1lNRzNxNkxBQTMrRWVsOEJQbXVSN1ZDZGJyRmhqSHJjClpzQXkvNFJ4bHJZOFk3T00vSlJKN3hTNlBGKzIzOUZValpCVVFjT0lpQlVMb3laQUI4MlpWVmtueWtTTGZxMXQKaG9TcnZDcGVwdHNBSUMxMlNubmExd01wUTZVVDlGWXBNbmZHYTc4V0czM2I0UHViZE9SN1hnMEhLUmVpTWptUwpWUmc2c2NKVGZCYWEzTEljOWtMUTg2Nk5ZYzJ2TCtuMnB5RGlUSndMc0t4QldQV1BWeHVtNjJKbGlnT3daYk5zCm9OS1V0QjJ0dTdRVzFSNWxNTGs3dHljMDJiVXdOOWFlYkY3TXZ6OXpLOEVGdTEvYngra01URWNzNkJKeDloRlcKbEZnN2Z1ZzJ0SDF6UnhsMDZGNmRkWEkrb3hWUmhIb1BYWk9Sd1FJREFRQUJBb0lCQUFpYytzbFFnYVZCb29SWgo5UjBhQTUyQ3ZhbHNpTUY3V0lPb2JlZlF0SnBTb1ZZTk0vVmplUU94S2VrQURUaGxiVzg1VFlLR1o0QVF3bjBwClQrS2J1bHllNmYvL2ZkemlJSUk5bmN2M3QzaEFZcEpGZWJPczdLcWhGSFNvUFFsSEd4dkhRaGgvZmFKQ1ZQNWUKVVBLZjBpbWhoMWtrUlFnRTB2NWZCYkVZekEyVGl4bThJSGtQUkdmZWN4WmF1VHpBS2VLR0hjTFpDem8xRHhlSgp3bHpEUW9YWDdHQnY5MGxqR1pndENXcFEyRUxaZ1NwdW0rZ0crekg1WFNXZXgwMzJ4d0NhbkdDdGcyRmxHd2V2Ck9PaG8zSjNrRWVJR1MzSzFJY24rcU9hMjRGZmgvcmRsWXFSdStWeEZ4ZkZqWGxaUjdjZkF4Mnc1Z3NmWm9CRXIKUE1oMTdVRUNnWUVBejZiTDc4RWsvZU1jczF6aWdaVVpZcE5qa2FuWHlsS3NUUWM1dU1pRmNORFdObFkxdlQzVQprOHE5cHVLbnBZRVlTTGVVTS9tSWk5TVp6bmZjSmJSL0hJSG9YVjFMQVJ2blQ0djN3T0JsaDc5ajdKUjBpOW1OClYrR0Q1SlNPUmZCVmYxVlJHRXN6d3ZhOVJsS2lMZ0JVM2tKeWN2Q09jYm5aeFltSXRrbDhDbXNDZ1lFQTRWeG4KZTY2QURIYmR3T0plbEFSKytkVHh5eVYyRjY1SEZDNldPQVh2RVRucGRudnRRUUprWWhNYzM1Y2gvMldmZDBWYQpZb3lGZE9kRThKZSsvcWxuS1pBc3BHRC9yZHp2VmFteHQ4WXdrQXU5Q1diZWw2VENPYkZOQ2hjK1NUbmRqN0duCmlSUHprM1JYMnBEVi9OaW5FVFA0TEJnTHJQYkxlSVAwSzZ4bjk0TUNnWUVBeXZGMmNVendUVjRRNTgrSTVDS0gKVzhzMnpkOFRzbjVZUFRRcG1zb0hlTG55RWNyeDNKRTRXSFVXSTZ0ek01TFczQUxuU21DL3JnQlVRWER0Yk1CYQpWczh6L1VPM2tVN25JOXhrK0ZHWGlUTnBnb2VZM0RGMExZYVBNL0JvbUR3S0kxZUwyVlZ1TWthWnQ4ZjlEejV0CnM0ZDNlWlJYY3hpem1KY1JVUzdDbHg4Q2dZQk45Vmc2K2RlRCtFNm4zZWNYenlKWnJHZGtmZllISlJ1amlLWWcKaFRUNVFZNVlsWEF5Yi9CbjJQTEJDaGdSc0lia2pKSkN5eGVUcERrOS9WQnQ2ZzRzMjVvRjF5UTdjZFU5VGZHVApnRFRtYjVrYU9vSy85SmZYdTFUS0s5WTVJSkpibGZvOXVqQWxqemFnL2o5NE16NC8vamxZajR6aWJaRmZoRTRnCkdZanhud0tCZ0U1cFIwMlVCa1hYL3IvdjRqck52enNDSjR5V3U2aWtpem00UmJKUXJVdEVNd1Y3a2JjNEs0VFIKM2s1blo1M1J4OGhjYTlMbXREcDJIRWo2MlBpL2pMR0JTN0NhOCtQcStxNjZwWWFZTDAwWnc4UGI3OVMrUmpzQQpONkNuQWg1dDFYeDhVMTIvWm9JcjBpOWZDaERuNlBqVEM0MVh5M1EwWWd6TW5jYXMyNVBiCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==</span>
+</code></pre></div>
+<p>Using the above kubeconfig, you can now access and use the cluster:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span><span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/kubeconfig<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes,deployments,pods<span class="w"> </span>-owide<span class="w"> </span>-A
+<span class="go">NAME          STATUS   ROLES    AGE    VERSION        INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
+<span class="go">node/ubuntu   Ready    &lt;none&gt;   5m1s   v1.32.12+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.30</span>
+
+<span class="go">NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR</span>
+<span class="go">kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          quay.io/k0sproject/coredns:1.12.4                      k8s-app=kube-dns</span>
+<span class="go">kube-system   deployment.apps/metrics-server   1/1     1            1           33m   metrics-server   registry.k8s.io/metrics-server/metrics-server:v0.7.2   k8s-app=metrics-server</span>
+
+<span class="go">NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE    IP             NODE     NOMINATED NODE   READINESS GATES</span>
+<span class="go">kube-system   pod/coredns-88b745646-pkk5w           1/1     Running   0          33m    10.244.0.5     ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+<span class="go">kube-system   pod/konnectivity-agent-h4nfj          1/1     Running   0          5m1s   10.244.0.6     ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+<span class="go">kube-system   pod/kube-proxy-qcgzs                  1/1     Running   0          5m1s   10.152.56.54   ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+<span class="go">kube-system   pod/kube-router-6lrht                 1/1     Running   0          5m1s   10.152.56.54   ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+<span class="go">kube-system   pod/metrics-server-7d7c4887f4-wwbkk   1/1     Running   0          33m    10.244.0.4     ubuntu   &lt;none&gt;           &lt;none&gt;</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2021 k0sproject a Series of LF Projects, LLC. For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank">Linux Foundation policies</a>. - All rights reserved.
+    </div>
+  
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/k0sproject/k0s" target="_blank" rel="noopener" title="k0s on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://x.com/k0sproject" target="_blank" rel="noopener" title="k0s on X" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8l164.9-188.5L26.8 48h145.6l100.5 132.9zm-24.8 373.8h39.1L151.1 88h-42z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://medium.com/k0sproject" target="_blank" rel="noopener" title="k0s on Medium" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M180.5 74.262C80.813 74.262 0 155.633 0 256s80.819 181.738 180.5 181.738S361 356.373 361 256 280.191 74.262 180.5 74.262m288.25 10.646c-49.845 0-90.245 76.619-90.245 171.095s40.406 171.1 90.251 171.1 90.251-76.619 90.251-171.1H559c0-94.503-40.4-171.095-90.248-171.095Zm139.506 17.821c-17.526 0-31.735 68.628-31.735 153.274s14.2 153.274 31.735 153.274S640 340.631 640 256c0-84.649-14.215-153.271-31.742-153.271Z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://kubernetes.slack.com/archives/C07VAPJUECS" target="_blank" rel="noopener" title="k0s on the k8s slack" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M94.12 315.1c0 25.9-21.16 47.06-47.06 47.06S0 341 0 315.1s21.16-47.06 47.06-47.06h47.06zm23.72 0c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06v117.84c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06zm47.06-188.98c-25.9 0-47.06-21.16-47.06-47.06S139 32 164.9 32s47.06 21.16 47.06 47.06v47.06zm0 23.72c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06H47.06C21.16 243.96 0 222.8 0 196.9s21.16-47.06 47.06-47.06zm188.98 47.06c0-25.9 21.16-47.06 47.06-47.06S448 171 448 196.9s-21.16 47.06-47.06 47.06h-47.06zm-23.72 0c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06V79.06c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06zM283.1 385.88c25.9 0 47.06 21.16 47.06 47.06S309 480 283.1 480s-47.06-21.16-47.06-47.06v-47.06zm0-23.72c-25.9 0-47.06-21.16-47.06-47.06s21.16-47.06 47.06-47.06h117.84c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://k0sproject.io/" target="_blank" rel="noopener" title="k0s Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6 31.5 31.5 31.5 82.5 0 114L422.3 334.8c-31.5 31.5-82.5 31.5-114 0-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5 50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5l112.2-112.3c31.5-31.5 82.5-31.5 114 0 27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+    
+  </body>
+</html>

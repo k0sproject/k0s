@@ -1,0 +1,295 @@
+# Spec to run when a kURL cluster is down and in-cluster specs can't be run
+apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: worker
+spec:
+  uri: #TODO
+  hostCollectors:
+    # System Info Collectors
+    - blockDevices: {}
+    - cpu: {}
+    - hostOS: {}
+    - hostServices: {}
+    - ipv4Interfaces: {}
+    - memory: {}
+    - time: {}
+    - ipv4Interfaces: {}
+    # Disk usage for commonly used directories in kURL installs
+    - diskUsage:
+        collectorName: root
+        path: /
+    - diskUsage:
+        collectorName: tmp
+        path: /tmp
+    - diskUsage:
+        collectorName: var-lib-k0s
+        path: /var/lib/k0s
+    # Run collectors for system information
+    - run:
+        collectorName: k8s-api-healthz-6443
+        command: "k0s"
+        args: ["kubectl", "--kubeconfig", "/var/lib/k0s/kubelet.conf", "get", "--raw", "/healthz?verbose"]
+    - run:
+        collectorName: "free"
+        command: "free"
+        args: ["-m"]
+    - run:
+        collectorName: "top"
+        command: "top"
+        args: ["-b", "-n", "1"]
+    - run:
+        collectorName: "uptime"
+        command: "uptime"
+        args: []
+    - run:
+        collectorName: "uname"
+        command: "uname"
+        args: ["-a"]
+    - run:
+        collectorName: "df"
+        command: "df"
+        args: ["-h"]
+    - run:
+        collectorName: "iostat"
+        command: "iostat"
+        args: ["-x"]
+    # SELinux status
+    - run:
+        collectorName: "sestatus"
+        command: "sestatus"
+        args: []
+    - run:
+        collectorName: "apparmor-status"
+        command: "apparmor_status"
+        args: []
+    - run:
+        collectorName: "crictl-ps"
+        command: "k0s"
+        args: ["ctr", "c", "ls"]
+    - run:
+        collectorName: "iptables"
+        command: "/var/lib/k0s/bin/iptables"
+        args: ["-L", "-v"]
+    - run:
+        collectorName: "iptables-version"
+        command: "/var/lib/k0s/bin/iptables"
+        args: ["-V"]
+    - run:
+        collectorName: "lsblk"
+        command: "lsblk"
+        args: ["--fs"]
+    - run:
+        collectorName: "netstat-ports"
+        command: "netstat"
+        args: ["-t", "-u", "-l", "-p", "-n"]
+    - run:
+        collectorName: "netstat-route-table"
+        command: "netstat"
+        args: ["-r", "-n"]
+    - run:
+        collectorName: "ip-route-table"
+        command: "ip"
+        args: ["route"]
+    - run:
+        collectorName: "sysctl"
+        command: "sysctl"
+        args: ["-a"]
+    # Systemctl service statuses for CRI, Kubelet, and Firewall
+    - run:
+        collectorName: "systemctl-k0s-status"
+        command: "systemctl"
+        args: ["status", "k0s*"]
+    # Systemd Service Configurations for CRI, Kubelet
+    - run:
+        collectorName: "systemctl-cat-journald"
+        command: "systemctl"
+        args: ["cat", "systemd-journald"]
+    - run:
+        collectorName: "systemctl-cat-k0s"
+        command: "systemctl"
+        args: ["cat", "k0s*"]
+    # Logs for CRI, Kubelet, Kernel
+    - run:
+        collectorName: "journalctl-k0s"
+        command: "journalctl"
+        args: ["-u", "k0s*", "--no-pager", "-S", "7 days ago"]
+    - run:
+        collectorName: "journalctl-dmesg"
+        command: "journalctl"
+        args: ["--dmesg", "--no-pager", "-S", "7 days ago"]
+    
+    # sysctl parameters
+    - run:
+        collectorName: "sysctl-all"
+        command: "sh"
+        args: ["-c", "sysctl --all 2>/dev/null"]
+    - run:
+        collectorName: "k0s-sysinfo"
+        command: "k0s"
+        args: ["sysinfo"]
+    # Gathering hostname info to help troubleshoot scenarios where the hostname mismatch
+    - run:
+        collectorName: "hostnames"
+        command: "sh"
+        args:
+          - -c
+          - |
+            echo "hostname = $(hostname)"
+            echo "/proc/sys/kernel/hostname = $(cat /proc/sys/kernel/hostname)"
+            echo "uname -n = $(uname -n)"
+    
+    # System Info Collectors
+    - run:
+        collectorName: "du-root"
+        command: "sh"
+        args: ["-c", "du -Shax / --exclude /proc | sort -rh | head -20"]
+    - run:
+        collectorName: "mount"
+        command: "mount"
+        args: ["-l"]
+    - run:
+        collectorName: "vmstat"
+        command: "vmstat"
+        args: ["-w"]
+    - run:
+        collectorName: "ps-high-load"
+        command: "sh"
+        args: ["-c", "ps -eo s,user,cmd | grep ^[RD] | sort | uniq -c | sort -nbr | head -20"]
+    - run:
+        collectorName: "ps-detect-antivirus-and-security-tools"
+        command: "sh"
+        args: [-c, "ps -ef | grep -E 'clamav|sophos|esets_daemon|fsav|symantec|mfend|ds_agent|kav|bdagent|s1agent|falcon|illumio' | grep -v grep"]
+    - run:
+        collectorName: "localhost-ips"
+        command: "sh"
+        args: ["-c", "host localhost"]
+  hostAnalyzers:
+    - time:
+        checkName: "ntp-status"
+        outcomes:
+          - fail:
+              when: "ntp == unsynchronized+inactive"
+              message: "System clock is not synchronized"
+          - warn:
+              when: "ntp == unsynchronized+active"
+              message: System clock not yet synchronized
+          - pass:
+              when: "ntp == synchronized+active"
+              message: "System clock is synchronized"
+          - warn:
+              when: "timezone != UTC"
+              message: "Non UTC timezone can interfere with system function"
+          - pass:
+              when: "timezone == UTC"
+              message: "Timezone is set to UTC"
+    - diskUsage:
+        checkName: "root"
+        collectorName: "root"
+        outcomes:
+          - fail:
+              when: "total < 40Gi"
+              message: The disk containing directory / has less than 40Gi of total space
+          - warn:
+              when: "used/total > 80%"
+              message: The disk containing directory / is more than 80% full
+          - warn:
+              when: "available < 10Gi"
+              message: The disk containing directory / has less than 10Gi of disk space available
+          - pass:
+              message: The disk containing directory / has sufficient space
+    - diskUsage:
+        checkName: "tmp"
+        collectorName: "tmp"
+        outcomes:
+          - warn:
+              when: "total < 8Gi"
+              message: The disk containing directory /tmp has less than 8Gi of total space
+          - warn:
+              when: "used/total > 80%"
+              message: The disk containing directory /tmp is more than 80% full
+          - warn:
+              when: "available < 2Gi"
+              message: The disk containing directory /tmp has less than 2Gi of disk space available
+          - pass:
+              message: The disk containing directory /tmp has sufficient space
+    - diskUsage:
+        checkName: "var-lib-k0s"
+        collectorName: "var-lib-k0s"
+        outcomes:
+          - warn:
+              when: "used/total > 80%"
+              message: The disk containing directory /var/lib/k0s is more than 80% full
+          - warn:
+              when: "available < 10Gi"
+              message: The disk containing directory /var/lib/k0s has less than 10Gi of disk space available
+          - pass:
+              message: The disk containing directory /var/lib/k0s has sufficient space
+    
+    - filesystemPerformance:
+        collectorName: filesystem-latency-two-minute-benchmark
+        outcomes:
+          - pass:
+              when: "p99 < 10ms"
+              message: "Write latency is ok (p99 target < 10ms)"
+          - warn:
+              message: "Write latency is high. p99 target >= 10ms)"
+        exclude: true
+  analyzers:
+    - textAnalyze:
+        checkName: Hostname Mismatch
+        fileName: host-collectors/run-host/journalctl-k0s.txt
+        regex: ".*can only access node lease with the same name as the requesting node.*"
+        outcomes:
+          - fail:
+              when: "true"
+              message: "Possible hostname change. Verify that the current hostname matches what's expected by the k8s control plane"
+          - pass:
+              when: "false"
+              message: "No signs of hostname changes found"
+    - textAnalyze:
+        checkName: Kubernetes API health check
+        fileName: host-collectors/run-host/k8s-api-healthz-6443.txt
+        regex: ".*healthz check passed*"
+        outcomes:
+          - fail:
+              when: "false"
+              message: "Kubernetes API health check did not pass. One or more components are not working."
+          - pass:
+              when: "true"
+              message: "Kubernetes API health check passed"
+    - textAnalyze:
+        checkName: Check if localhost resolves to 127.0.0.1
+        fileName: host-collectors/run-host/localhost-ips.txt
+        regex: 'localhost has address 127.0.0.1'
+        outcomes:
+          - fail:
+              when: "false"
+              message: "'localhost' does not resolve to 127.0.0.1 ip address"
+          - pass:
+              when: "true"
+              message: "'localhost' resolves to 127.0.0.1 ip address"
+    - textAnalyze:
+        checkName: Check if SELinux is enabled
+        fileName: host-collectors/run-host/sestatus.txt
+        regex: '(?m)^Current mode:\s+enforcing'
+        ignoreIfNoFiles: true
+        outcomes:
+          - fail:
+              when: "true"
+              message: "SELinux is enabled when it should be disabled for kubernetes to work properly"
+          - pass:
+              when: "false"
+              message: "SELinux is disabled as expected"
+    - textAnalyze:
+        checkName: "Detect Threat Management and Network Security Tools"
+        fileName: host-collectors/run-host/ps-detect-antivirus-and-security-tools.txt
+        regex: '\b(clamav|sophos|esets_daemon|fsav|symantec|mfend|ds_agent|kav|bdagent|s1agent|falcon|illumio)\b'
+        ignoreIfNoFiles: true
+        outcomes:
+          - fail:
+              when: "true"
+              message: "Antivirus or Network Security tools detected. These tools can interfere with kubernetes operation."
+          - pass:
+              when: "false"
+              message: "No Antivirus or Network Security tools detected."
