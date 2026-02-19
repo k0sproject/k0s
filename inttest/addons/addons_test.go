@@ -32,6 +32,7 @@ import (
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
@@ -521,59 +522,43 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 	ctx := as.Context()
 	as.T().Logf("waiting to see %s release ready in kube API, generation %d", addonName, rev)
 
-	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	kc, err := as.AutopilotClient(as.ControllerNode(0))
 	as.Require().NoError(err)
 
-	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
-	as.Require().NoError(err)
-	var chart helmv1beta1.Chart
-	var lastResourceVersion string
-	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
-		err = chartClient.Get(pollCtx, client.ObjectKey{
-			Namespace: metav1.NamespaceSystem,
-			Name:      "k0s-addon-chart-" + addonName,
-		}, &chart)
-		if err != nil {
-			if ctxErr := context.Cause(ctx); ctxErr != nil {
-				return false, errors.Join(err, ctxErr)
+	var chart *helmv1beta1.Chart
+
+	as.Require().NoError(watch.Charts(kc.HelmV1beta1().Charts(metav1.NamespaceSystem)).
+		WithObjectName("k0s-addon-chart-"+addonName).
+		Until(ctx, func(item *helmv1beta1.Chart) (done bool, err error) {
+			var errs []string
+			if item.Status.ReleaseName == "" {
+				errs = append(errs, "no release name")
 			}
-			as.T().Log("Error while querying for chart:", err)
-			return false, nil
-		}
-		if lastResourceVersion != "" && lastResourceVersion == chart.ResourceVersion {
-			return false, nil // That version has already been inspected.
-		}
+			if item.Generation != rev {
+				errs = append(errs, fmt.Sprintf("expected generation to be %d, but was %d", rev, item.Generation))
+			}
+			if item.Status.Revision != rev {
+				errs = append(errs, fmt.Sprintf("expected revision to be %d, but was %d", rev, item.Status.Revision))
+			}
+			if item.Status.Error != "" {
+				errs = append(errs, fmt.Sprintf("expected error to be empty, but was %q", item.Status.Error))
+			}
 
-		var errs []string
-		if chart.Status.ReleaseName == "" {
-			errs = append(errs, "no release name")
-		}
-		if chart.Generation != rev {
-			errs = append(errs, fmt.Sprintf("expected generation to be %d, but was %d", rev, chart.Generation))
-		}
-		if chart.Status.Revision != rev {
-			errs = append(errs, fmt.Sprintf("expected revision to be %d, but was %d", rev, chart.Status.Revision))
-		}
-		if chart.Status.Error != "" {
-			errs = append(errs, fmt.Sprintf("expected error to be empty, but was %q", chart.Status.Error))
-		}
+			if len(errs) > 0 {
+				as.T().Logf("Release %s doesn't meet criteria yet (version %q): %s", addonName, item.ResourceVersion, strings.Join(errs, "; "))
+				return false, nil
+			}
 
-		lastResourceVersion = chart.ResourceVersion
-		if len(errs) > 0 {
-			as.T().Logf("Test addon release doesn't meet criteria yet (version %q): %s", lastResourceVersion, strings.Join(errs, "; "))
-			return false, nil
-		}
+			chart = item
+			return true, nil
+		}))
 
-		as.Require().Equal(namespace, chart.Status.Namespace)
-		as.Require().Equal(appVersion, chart.Status.AppVersion)
-		as.Require().Equal(namespace, chart.Status.Namespace)
-		as.Require().NotEmpty(chart.Status.ReleaseName)
-		as.Require().Equal(rev, chart.Status.Revision)
-		as.T().Log("Found test addon release:", chart.Name)
-		as.Require().Equal(rev, chart.Generation)
-		return true, nil
-	}))
-	return &chart
+	as.Require().Equal(namespace, chart.Status.Namespace)
+	as.Require().Equal(appVersion, chart.Status.AppVersion)
+	as.Require().Equal(namespace, chart.Status.Namespace)
+	as.T().Log("Found test addon release:", chart.Name)
+
+	return chart
 }
 
 func (as *AddonsSuite) checkCustomValues(releaseName string) error {
