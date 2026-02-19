@@ -1,10 +1,10 @@
-version: "v1.34.4+k0s.0"
+version: "v1.35.1+k0s.0"
 downloadURLs:
   k0s:
-    linux-amd64: "https://github.com/k0sproject/k0s/releases/download/v1.34.4+k0s.0/k0s-v1.34.4+k0s.0-amd64"
-    linux-arm: "https://github.com/k0sproject/k0s/releases/download/v1.34.4+k0s.0/k0s-v1.34.4+k0s.0-arm"
-    linux-arm64: "https://github.com/k0sproject/k0s/releases/download/v1.34.4+k0s.0/k0s-v1.34.4+k0s.0-arm64"
+    linux-amd64: "https://github.com/k0sproject/k0s/releases/download/v1.35.1+k0s.0/k0s-v1.35.1+k0s.0-amd64"
+    linux-arm: "https://github.com/k0sproject/k0s/releases/download/v1.35.1+k0s.0/k0s-v1.35.1+k0s.0-arm"
+    linux-arm64: "https://github.com/k0sproject/k0s/releases/download/v1.35.1+k0s.0/k0s-v1.35.1+k0s.0-arm64"
   airgap:
-    linux-airgap-bundle-amd64: "https://github.com/k0sproject/k0s/releases/download/v1.34.4+k0s.0/k0s-airgap-bundle-v1.34.4+k0s.0-amd64"
-    linux-airgap-bundle-arm: "https://github.com/k0sproject/k0s/releases/download/v1.34.4+k0s.0/k0s-airgap-bundle-v1.34.4+k0s.0-arm"
-    linux-airgap-bundle-arm64: "https://github.com/k0sproject/k0s/releases/download/v1.34.4+k0s.0/k0s-airgap-bundle-v1.34.4+k0s.0-arm64"
+    linux-airgap-bundle-amd64: "https://github.com/k0sproject/k0s/releases/download/v1.35.1+k0s.0/k0s-airgap-bundle-v1.35.1+k0s.0-amd64"
+    linux-airgap-bundle-arm: "https://github.com/k0sproject/k0s/releases/download/v1.35.1+k0s.0/k0s-airgap-bundle-v1.35.1+k0s.0-arm"
+    linux-airgap-bundle-arm64: "https://github.com/k0sproject/k0s/releases/download/v1.35.1+k0s.0/k0s-airgap-bundle-v1.35.1+k0s.0-arm64"
