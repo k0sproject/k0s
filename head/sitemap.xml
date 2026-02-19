@@ -301,6 +301,18 @@
          <lastmod>2026-02-19</lastmod>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/head/cli/k0s_keepalived-config/</loc>
+         <lastmod>2026-02-19</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/cli/k0s_keepalived-config_virtualservers/</loc>
+         <lastmod>2026-02-19</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/cli/k0s_keepalived-config_vrrp/</loc>
+         <lastmod>2026-02-19</lastmod>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_kubeconfig/</loc>
          <lastmod>2026-02-19</lastmod>
     </url>

@@ -2905,6 +2905,7 @@
 <div class="highlight"><pre><span></span><code>      --as string                      Username to impersonate for the operation. User could be a regular user or a service account in a namespace.
       --as-group stringArray           Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
       --as-uid string                  UID to impersonate for the operation.
+      --as-user-extra stringArray      User extras to impersonate for the operation, this flag can be repeated to specify multiple values for the same key.
       --cache-dir string               Default cache directory (default &quot;/home/runner/.kube/cache&quot;)
       --certificate-authority string   Path to a cert file for the certificate authority
       --client-certificate string      Path to a client certificate file for TLS
@@ -2922,7 +2923,7 @@
       --match-server-version           Require server version to match client version
   -n, --namespace string               If present, the namespace scope for this CLI request
       --password string                Password for basic authentication to the API server
-      --profile string                 Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex) (default &quot;none&quot;)
+      --profile string                 Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex|trace) (default &quot;none&quot;)
       --profile-output string          Name of the file to write the profile to (default &quot;profile.pprof&quot;)
       --request-timeout string         The length of time to wait before giving up on a single server request. Non-zero values should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don&#39;t timeout requests. (default &quot;0&quot;)
   -s, --server string                  The address and port of the Kubernetes API server
