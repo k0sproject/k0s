@@ -326,6 +326,11 @@ func (s *BootlooseSuite) RegistryNode() string {
 	return fmt.Sprintf(registryNodeNameFormat, 0)
 }
 
+// Returns the registry port as seen from other bootloose nodes.
+func (s *BootlooseSuite) RegistryPort() int {
+	return registryContainerPort
+}
+
 func (s *BootlooseSuite) ExternalEtcdNode() string {
 	if !s.WithExternalEtcd {
 		s.FailNow("can't get external node name because it's not enabled for this suite")
@@ -1305,9 +1310,10 @@ func (s *BootlooseSuite) generateRegistryMachineSpec() *config.Machine {
 	extraArgs = append(extraArgs, fmt.Sprintf("--health-cmd=wget -q --no-check-certificate --spider %s://localhost:%d/v2", registryProtocol, registryContainerPort))
 
 	return &config.Machine{
-		Name:  registryNodeNameFormat,
-		Image: "registry:3.0.0",
-		Cmd:   "/etc/distribution/config.yml",
+		Name:     registryNodeNameFormat,
+		Image:    "docker.io/library/registry:3.0.0",
+		Cmd:      "/etc/distribution/config.yml",
+		Networks: s.Networks,
 		PortMappings: []config.PortMapping{
 			{
 				ContainerPort: uint16(registryContainerPort), // registry port
