@@ -4,37 +4,48 @@
 package controller
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChartNeedsUpgrade(t *testing.T) {
 	var testCases = []struct {
 		description string
-		chart       v1beta1.Chart
+		chart       helmv1beta1.Chart
 		expected    bool
 	}{
 		{
 			"no_changes",
-			v1beta1.Chart{
-				Spec: v1beta1.ChartSpec{
+			helmv1beta1.Chart{
+				Spec: helmv1beta1.ChartSpec{
 					ChartName:   "test",
 					ReleaseName: "test-release",
 					Values:      "",
 					Version:     "0.0.1",
 					Namespace:   "ns",
 				},
-				Status: v1beta1.ChartStatus{
+				Status: helmv1beta1.ChartStatus{
 					ReleaseName: "test-release",
 					Version:     "0.0.1",
 					Namespace:   "ns",
@@ -45,15 +56,15 @@ func TestChartNeedsUpgrade(t *testing.T) {
 		},
 		{
 			"changed_values",
-			v1beta1.Chart{
-				Spec: v1beta1.ChartSpec{
+			helmv1beta1.Chart{
+				Spec: helmv1beta1.ChartSpec{
 					ChartName:   "test",
 					ReleaseName: "test-release",
 					Values:      "new values",
 					Version:     "0.0.1",
 					Namespace:   "ns",
 				},
-				Status: v1beta1.ChartStatus{
+				Status: helmv1beta1.ChartStatus{
 					ReleaseName: "test-release",
 					Version:     "0.0.1",
 					Namespace:   "ns",
@@ -64,15 +75,15 @@ func TestChartNeedsUpgrade(t *testing.T) {
 		},
 		{
 			"changed_chart_version",
-			v1beta1.Chart{
-				Spec: v1beta1.ChartSpec{
+			helmv1beta1.Chart{
+				Spec: helmv1beta1.ChartSpec{
 					ChartName:   "test",
 					ReleaseName: "test-release",
 					Values:      "",
 					Version:     "0.0.2",
 					Namespace:   "ns",
 				},
-				Status: v1beta1.ChartStatus{
+				Status: helmv1beta1.ChartStatus{
 					ReleaseName: "test-release",
 					Version:     "0.0.1",
 					Namespace:   "ns",
@@ -83,15 +94,15 @@ func TestChartNeedsUpgrade(t *testing.T) {
 		},
 		{
 			"changed_release_name",
-			v1beta1.Chart{
-				Spec: v1beta1.ChartSpec{
+			helmv1beta1.Chart{
+				Spec: helmv1beta1.ChartSpec{
 					ChartName:   "test",
 					ReleaseName: "new-test-release",
 					Values:      "",
 					Version:     "0.0.1",
 					Namespace:   "ns",
 				},
-				Status: v1beta1.ChartStatus{
+				Status: helmv1beta1.ChartStatus{
 					ReleaseName: "test-release",
 					Version:     "0.0.1",
 					Namespace:   "ns",
@@ -102,15 +113,15 @@ func TestChartNeedsUpgrade(t *testing.T) {
 		},
 		{
 			"changed_namespace",
-			v1beta1.Chart{
-				Spec: v1beta1.ChartSpec{
+			helmv1beta1.Chart{
+				Spec: helmv1beta1.ChartSpec{
 					ChartName:   "test",
 					ReleaseName: "test-release",
 					Values:      "",
 					Version:     "0.0.1",
 					Namespace:   "new-ns",
 				},
-				Status: v1beta1.ChartStatus{
+				Status: helmv1beta1.ChartStatus{
 					ReleaseName: "test-release",
 					Version:     "0.0.1",
 					Namespace:   "ns",
@@ -529,4 +540,127 @@ func TestExtractAndLookupRepository(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, got)
 	})
+}
+
+func TestExtensionsController_UpdateStatus(t *testing.T) {
+	releaseResult := &release.Release{
+		Name:      "new-release",
+		Namespace: "target-ns",
+		Version:   7,
+		Chart: &helmchart.Chart{
+			Metadata: &helmchart.Metadata{
+				Version:    "1.2.3",
+				AppVersion: "2.3.4",
+			},
+		},
+	}
+
+	for _, test := range []struct {
+		name               string
+		updateErr          error
+		chartRelease       *release.Release
+		storeObject        bool
+		wantPatchError     bool
+		wantReleaseName    string
+		wantVersion        string
+		wantAppVersion     string
+		wantRevision       int64
+		wantReleaseNS      string
+		wantStatusErrorMsg string
+	}{
+		{
+			name:               "successful reconciliation clears status error and preserves existing release fields",
+			storeObject:        true,
+			wantReleaseName:    "old-release",
+			wantVersion:        "0.9.0",
+			wantAppVersion:     "0.9.1",
+			wantRevision:       3,
+			wantReleaseNS:      "old-ns",
+			wantStatusErrorMsg: "",
+		},
+		{
+			name:               "failed reconciliation stores status error and preserves existing release fields",
+			updateErr:          errors.New("boom"),
+			storeObject:        true,
+			wantReleaseName:    "old-release",
+			wantVersion:        "0.9.0",
+			wantAppVersion:     "0.9.1",
+			wantRevision:       3,
+			wantReleaseNS:      "old-ns",
+			wantStatusErrorMsg: "boom",
+		},
+		{
+			name:               "successful reconciliation maps release fields",
+			chartRelease:       releaseResult,
+			storeObject:        true,
+			wantReleaseName:    releaseResult.Name,
+			wantVersion:        releaseResult.Chart.Metadata.Version,
+			wantAppVersion:     releaseResult.Chart.AppVersion(),
+			wantRevision:       int64(releaseResult.Version),
+			wantReleaseNS:      releaseResult.Namespace,
+			wantStatusErrorMsg: "",
+		},
+		{
+			name:           "status patch error is returned",
+			storeObject:    false,
+			wantPatchError: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			stored := &helmv1beta1.Chart{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-chart",
+					Namespace: metav1.NamespaceSystem,
+				},
+				Spec: helmv1beta1.ChartSpec{
+					ReleaseName: "release",
+					Values:      "foo: bar",
+				},
+				Status: helmv1beta1.ChartStatus{
+					ReleaseName: "old-release",
+					Version:     "0.9.0",
+					AppVersion:  "0.9.1",
+					Revision:    3,
+					Namespace:   "old-ns",
+					Error:       "existing error",
+					ValuesHash:  "existing-hash",
+				},
+			}
+
+			// Pass a modified spec to verify status hash is derived from the reconciliation input.
+			reconciled := stored.DeepCopy()
+			reconciled.Spec.Values = "foo: updated"
+
+			builder := fake.NewClientBuilder().
+				WithScheme(k0sscheme.Scheme).
+				WithStatusSubresource(&helmv1beta1.Chart{})
+			if test.storeObject {
+				builder = builder.WithObjects(stored)
+			}
+			c := builder.Build()
+
+			cr := &ChartReconciler{
+				Client: c,
+				L:      logrus.NewEntry(logrus.New()),
+			}
+
+			err := cr.updateStatus(t.Context(), reconciled, test.chartRelease, test.updateErr)
+			if test.wantPatchError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			var got helmv1beta1.Chart
+			require.NoError(t, c.Get(t.Context(), client.ObjectKeyFromObject(stored), &got))
+			assert.Equal(t, reconciled.Spec.HashValues(), got.Status.ValuesHash)
+			assert.Equal(t, test.wantReleaseName, got.Status.ReleaseName)
+			assert.Equal(t, test.wantVersion, got.Status.Version)
+			assert.Equal(t, test.wantAppVersion, got.Status.AppVersion)
+			assert.Equal(t, test.wantRevision, got.Status.Revision)
+			assert.Equal(t, test.wantReleaseNS, got.Status.Namespace)
+			assert.Equal(t, test.wantStatusErrorMsg, got.Status.Error)
+			assert.NotEmpty(t, got.Status.Updated)
+		})
+	}
 }

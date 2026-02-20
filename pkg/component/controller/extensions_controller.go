@@ -35,7 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
-	apiretry "k8s.io/client-go/util/retry"
 
 	"github.com/avast/retry-go"
 	"github.com/bombsimon/logrusr/v4"
@@ -411,10 +410,8 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		if err == nil {
 			return
 		}
-		if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
-			return cr.updateStatus(ctx, chart, chartRelease, err)
-		}); statusErr != nil {
-			cr.L.WithError(statusErr).Error("Failed to update status for chart release, give up", chart.Name)
+		if err := cr.updateStatus(ctx, &chart, chartRelease, err); err != nil {
+			cr.L.WithError(err).Error("Failed to update status for chart ", chart.Name)
 		}
 	}()
 
@@ -487,10 +484,8 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			return
 		}
 	}
-	if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
-		return cr.updateStatus(ctx, chart, chartRelease, nil)
-	}); statusErr != nil {
-		cr.L.WithError(statusErr).Error("Failed to update status for chart release, give up", chart.Name)
+	if err := cr.updateStatus(ctx, &chart, chartRelease, nil); err != nil {
+		cr.L.WithError(err).Error("Failed to update status for chart ", chart.Name)
 	}
 	return nil
 }
@@ -590,18 +585,10 @@ func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
 		chart.Status.ValuesHash != chart.Spec.HashValues()
 }
 
-// updateStatus updates the status of the chart with the given release information. This function
-// starts by fetching an updated version of the chart from the api as the install may take a while
-// to complete and the chart may have been updated in the meantime. If returns the error returned
-// by the Update operation. Moreover, if the chart has indeed changed in the meantime we already
-// have an event for it so we will see it again soon.
-func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.Chart, chartRelease *release.Release, err error) error {
-	nsn := types.NamespacedName{Namespace: chart.Namespace, Name: chart.Name}
-	var updchart helmv1beta1.Chart
-	if err := cr.Get(ctx, nsn, &updchart); err != nil {
-		return fmt.Errorf("can't get updated version of chart %s: %w", chart.Name, err)
-	}
-	chart.Spec.YamlValues() // XXX what is this function for ?
+// updateStatus patches status fields for the current reconciliation outcome.
+func (cr *ChartReconciler) updateStatus(ctx context.Context, chart *helmv1beta1.Chart, chartRelease *release.Release, err error) error {
+	updchart := chart.DeepCopy()
+
 	if chartRelease != nil {
 		updchart.Status.ReleaseName = chartRelease.Name
 		updchart.Status.Version = chartRelease.Chart.Metadata.Version
@@ -615,11 +602,7 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 		updchart.Status.Error = err.Error()
 	}
 	updchart.Status.ValuesHash = chart.Spec.HashValues()
-	if updErr := cr.Client.Status().Update(ctx, &updchart); updErr != nil {
-		cr.L.WithError(updErr).Error("Failed to update status for chart release", chart.Name)
-		return updErr
-	}
-	return nil
+	return cr.Status().Patch(ctx, updchart, client.MergeFrom(chart))
 }
 
 const chartCrdTemplate = `
