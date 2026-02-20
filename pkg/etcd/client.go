@@ -115,6 +115,26 @@ func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (ui
 	return 0, fmt.Errorf("peer not found: %s", peerAddress)
 }
 
+// GetPeerIDByName looks up peer id by peer name
+func (c *Client) GetPeerIDByName(ctx context.Context, peerName string) (uint64, error) {
+	resp, err := c.client.MemberList(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("etcd member list failed: %w", err)
+	}
+	for _, m := range resp.Members {
+		if m.Name == peerName {
+			return m.ID, nil
+		}
+	}
+	return 0, fmt.Errorf("peer not found: %s", peerName)
+}
+
+// UpdateMember updates member by peer ID
+func (c *Client) UpdateMember(ctx context.Context, peerID uint64, peerAddr []string) error {
+	_, err := c.client.MemberUpdate(ctx, peerID, peerAddr)
+	return err
+}
+
 // DeleteMember deletes member by peer name
 func (c *Client) DeleteMember(ctx context.Context, peerID uint64) error {
 	_, err := c.client.MemberRemove(ctx, peerID)
