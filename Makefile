@@ -68,6 +68,7 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
 BUILD_GID ?= $(shell id -g)
+BUILD_GO_CGO_ENABLED = 0
 BUILD_GO_TAGS ?= osusergo
 BUILD_GO_FLAGS = -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) -buildvcs=false
 BUILD_CGO_CFLAGS :=
@@ -193,30 +194,30 @@ pkg/client/clientset/.client-gen.stamp: $(GO_ENV_REQUISITES) hack/tools/boilerpl
 	  && mv -f -- "$$gendir/out/clientset" pkg/client/.
 	touch -- '$@'
 
-ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
-BUILD_GO_TAGS += noembedbins
-else
-codegen_targets += pkg/assets/zz_generated_offsets_$(TARGET_OS).go
-zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
-pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
-pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: $(GO_ENV_REQUISITES) go.sum
-	GOOS=${GOHOSTOS} $(GO) run -tags=hack hack/gen-bindata/cmd/main.go -o bindata_$(zz_os) -pkg assets \
-	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
-	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
+embedded-binaries-linux.zip: .bins.linux.stamp
+embedded-binaries-windows.zip: .bins.windows.stamp
+embedded-binaries-linux.zip embedded-binaries-windows.zip: $(GO_ENV_REQUISITES) go.sum hack/zip-files/* embedded-bins/Makefile.variables
+	CGO_ENABLED=0 $(GO) run -tags=hack hack/zip-files/main.go embedded-bins/staging/$(@:embedded-binaries-%.zip=%)/bin/* >$@
+
+ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
+k0s: embedded-binaries-linux.zip
+k0s.exe: embedded-binaries-windows.zip
 endif
 
-k0s: TARGET_OS = linux
-k0s: BUILD_GO_CGO_ENABLED = 0
+k0s k0s.bare: TARGET_OS = linux
+k0s.exe k0s.bare.exe: TARGET_OS = windows
 
-k0s.exe: TARGET_OS = windows
-k0s.exe: BUILD_GO_CGO_ENABLED = 0
-
-k0s.exe k0s: $(GO_ENV_REQUISITES) go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/manifests/calico static/manifests/windows -type f)
-	rm -f -- '$@'
+.INTERMEDIATE: k0s.bare k0s.bare.exe
+k0s.bare.exe k0s.bare: $(GO_ENV_REQUISITES) go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/manifests/calico static/manifests/windows -type f)
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
+
+k0s: k0s.bare
+k0s.exe: k0s.bare.exe
+
+k0s.exe k0s:
+	mv $(@:k0s%=k0s.bare%) $@
 ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
-	cat -- bindata_$(TARGET_OS) >>$@
+	cat embedded-binaries-$(TARGET_OS).zip >>$@
 endif
 	@printf '\n%s size: %s\n\n' '$@' "$$(du -sh -- $@ | cut -f1)"
 
@@ -229,20 +230,13 @@ endif
 .PHONY: codegen
 codegen: $(codegen_targets)
 
-# bindata contains the parts of codegen which aren't version controlled.
-.PHONY: bindata
-bindata:
-ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
-endif
-
 .PHONY: lint-copyright
 lint-copyright:
 	hack/copyright.sh
 
 .PHONY: lint-go
 lint-go: GOLANGCI_LINT_FLAGS ?=
-lint-go: $(GO_ENV_REQUISITES) go.sum bindata
+lint-go: $(GO_ENV_REQUISITES) go.sum
 	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/v$(word 1,$(subst ., ,$(golangci-lint_version)))/cmd/golangci-lint@v$(golangci-lint_version)
 	GOLANGCI_LINT_CACHE='$(abspath $(K0S_GO_BUILD_CACHE))/golangci-lint' GO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO_ENV) golangci-lint run --verbose --build-tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
 
@@ -303,7 +297,7 @@ else
 check-unit: GO_TEST_RACE ?= -race
 endif
 check-unit: BUILD_GO_TAGS += hack
-check-unit: $(GO_ENV_REQUISITES) go.sum bindata
+check-unit: $(GO_ENV_REQUISITES) go.sum
 	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO) test -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GO_CHECK_UNIT_DIRS)`
 
 .PHONY: clean-gocache
@@ -323,7 +317,8 @@ clean-airgap-image-bundles:
 
 .PHONY: clean
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
-	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata*
+	-rm -f k0s k0s.exe k0s.bare k0s.bare.exe .bins.*stamp
+	-rm -f embedded-binaries-linux.zip embedded-binaries-windows.zip
 	-rm -rf $(K0S_GO_BUILD_CACHE)
 	-find pkg/apis -type f -name .controller-gen.stamp -delete
 	-rm pkg/client/clientset/.client-gen.stamp
