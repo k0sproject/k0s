@@ -307,6 +307,24 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		DisableEndpointReconciler: enableK0sEndpointReconciler,
 	})
 
+	if !slices.Contains(flags.DisableComponents, constant.KubeSchedulerComponentName) {
+		nodeComponents.Add(ctx, &controller.Scheduler{
+			LogLevel:              c.LogLevels.KubeScheduler,
+			K0sVars:               c.K0sVars,
+			DisableLeaderElection: singleController,
+		})
+	}
+
+	if !slices.Contains(flags.DisableComponents, constant.KubeControllerManagerComponentName) {
+		nodeComponents.Add(ctx, &controller.Manager{
+			LogLevel:              c.LogLevels.KubeControllerManager,
+			K0sVars:               c.K0sVars,
+			DisableLeaderElection: singleController,
+			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.PrimaryAddressFamily()),
+			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
+		})
+	}
+
 	nodeName, kubeletExtraArgs, err := workercmd.GetNodeName(&c.WorkerOptions)
 	if err != nil {
 		return fmt.Errorf("failed to determine node name: %w", err)
@@ -554,24 +572,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			KonnectivityServerHost: cmp.Or(nodeConfig.Spec.API.ExternalHost(), nodeConfig.Spec.API.Address),
 			EventEmitter:           prober.NewEventEmitter(),
 			ServerCount:            numActiveControllers.Peek,
-		})
-	}
-
-	if !slices.Contains(flags.DisableComponents, constant.KubeSchedulerComponentName) {
-		clusterComponents.Add(ctx, &controller.Scheduler{
-			LogLevel:              c.LogLevels.KubeScheduler,
-			K0sVars:               c.K0sVars,
-			DisableLeaderElection: singleController,
-		})
-	}
-
-	if !slices.Contains(flags.DisableComponents, constant.KubeControllerManagerComponentName) {
-		clusterComponents.Add(ctx, &controller.Manager{
-			LogLevel:              c.LogLevels.KubeControllerManager,
-			K0sVars:               c.K0sVars,
-			DisableLeaderElection: singleController,
-			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.PrimaryAddressFamily()),
-			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
 	}
 
