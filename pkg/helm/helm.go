@@ -358,6 +358,7 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 	if err != nil {
 		return nil, fmt.Errorf("can't install loadedChart `%s`: %w", loadedChart.Name(), err)
 	}
+
 	return chartRelease, nil
 }
 
@@ -417,17 +418,39 @@ func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
 		return nil, fmt.Errorf("can't create helmAction configuration: %w", err)
 	}
 	helmAction := action.NewList(cfg)
+	helmAction.StateMask = action.ListAll // Include all release states: deployed, failed, pending-install, pending-upgrade, pending-rollback, uninstalling, superseded
 	return helmAction.Run()
 }
 
+// GetReleaseStatus returns the status of a specific Helm release by searching
+// through all releases in the namespace. We use ListReleases instead of Helm's
+// native status check to ensure we can find releases in any state (not just deployed).
+// This is primarily used by the cleanup logic to detect stuck releases.
+func (hc *Commands) GetReleaseStatus(releaseName string, namespace string) (release.Status, error) {
+	releases, err := hc.ListReleases(namespace)
+	if err != nil {
+		return "", fmt.Errorf("can't list releases: %w", err)
+	}
+	for _, rel := range releases {
+		if rel.Name == releaseName {
+			return rel.Info.Status, nil
+		}
+	}
+	return "", fmt.Errorf("release %q not found in namespace %q", releaseName, namespace)
+}
+
 // UninstallRelease uninstalls a release.
-// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string) error {
+// The disableHooks parameter should be true when completing interrupted operations
+// where hook resources may already exist, preventing "already exists" errors.
+// InstallChart, UpgradeChart and UninstallRelease are *NOT* thread-safe
+func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string, disableHooks bool) error {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
 		return fmt.Errorf("can't create helmAction configuration: %w", err)
 	}
 	helmAction := action.NewUninstall(cfg)
+	helmAction.DisableHooks = disableHooks
+	helmAction.KeepHistory = false // Always purge release history completely to allow fresh installs
 	deadline, ok := ctx.Deadline()
 	if ok {
 		helmAction.Timeout = time.Until(deadline)
@@ -435,6 +458,30 @@ func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, na
 
 	if _, err := helmAction.Run(releaseName); err != nil {
 		return fmt.Errorf("can't uninstall release `%s`: %w", releaseName, err)
+	}
+	return nil
+}
+
+// RollbackRelease rolls back a release to the previous deployed revision.
+// This is used to recover from interrupted upgrades where the release is stuck in
+// pending-upgrade or pending-rollback state. By rolling back, we preserve the
+// previously deployed workloads instead of uninstalling everything.
+// InstallChart, UpgradeChart, UninstallRelease and RollbackRelease are *NOT* thread-safe
+func (hc *Commands) RollbackRelease(ctx context.Context, releaseName string, namespace string) error {
+	cfg, err := hc.getActionCfg(namespace)
+	if err != nil {
+		return fmt.Errorf("can't create helmAction configuration: %w", err)
+	}
+	helmAction := action.NewRollback(cfg)
+	deadline, ok := ctx.Deadline()
+	if ok {
+		helmAction.Timeout = time.Until(deadline)
+	}
+	// Version 0 is Helm's convention for "rollback to the previous deployed revision"
+	helmAction.Version = 0
+
+	if err := helmAction.Run(releaseName); err != nil {
+		return fmt.Errorf("can't rollback release `%s`: %w", releaseName, err)
 	}
 	return nil
 }

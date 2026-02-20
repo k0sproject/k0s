@@ -1,0 +1,6 @@
+apiVersion: v2
+name: slow-hook
+description: A test Helm chart with a slow post-install hook to test controller restart recovery
+type: application
+version: 0.1.0
+appVersion: "1.0"
