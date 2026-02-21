@@ -50,7 +50,7 @@ updates:
       - dependency-name: go.etcd.io/etcd/v3
 
       # runc/containerd
-      - dependency-name: github.com/containerd/containerd
+      - dependency-name: github.com/containerd/containerd/v2
       - dependency-name: github.com/opencontainers/runc
 
       # sonobuoy

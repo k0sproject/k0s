@@ -27,6 +27,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/containerd/platforms"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
 	etcdmemberclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
@@ -150,6 +151,21 @@ func (s *BootlooseSuite) initializeDefaults() {
 	}
 }
 
+// This is what containerd/platform report for our armv7 CI runners as they run
+// linux32 personality on arm64 HW
+const armv8Platform = "linux/arm/v8"
+
+func isArmV8l() bool {
+	p := platforms.Format(platforms.DefaultSpec())
+	return p == armv8Platform
+}
+
+const pullConfig = `
+[plugins]
+  [plugins.'io.containerd.cri.v1.images']
+    use_local_image_pull = true
+`
+
 // SetupSuite does all the setup work, namely boots up bootloose cluster.
 func (s *BootlooseSuite) SetupSuite() {
 	t := s.T()
@@ -208,6 +224,24 @@ func (s *BootlooseSuite) SetupSuite() {
 	if s.WithRegistry {
 		s.Require().NoError(s.waitForRegistryHealthy())
 	}
+
+	// We need to setup custom CRI config for local CRI pulls on armv8
+	// See https://github.com/containerd/containerd/issues/12838
+	if isArmV8l() {
+		s.T().Log("Setting up custom containerd pull config for armv8l")
+		for i := range s.WorkerCount {
+			wrkr := s.WorkerNode(i)
+			s.MakeDir(wrkr, "/etc/k0s/containerd.d")
+			s.PutFile(wrkr, "/etc/k0s/containerd.d/pull.toml", pullConfig)
+		}
+
+		for i := range s.ControllerCount {
+			wrkr := s.ControllerNode(i)
+			s.MakeDir(wrkr, "/etc/k0s/containerd.d")
+			s.PutFile(wrkr, "/etc/k0s/containerd.d/pull.toml", pullConfig)
+		}
+	}
+
 }
 
 // waitForSSH waits to get a SSH connection to all bootloose machines defined as part of the test suite.
