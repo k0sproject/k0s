@@ -6,6 +6,7 @@ package log
 import (
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -64,7 +65,7 @@ func TestWriter(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			log, logs := logtest.NewNullLogger()
-			underTest := NewWriter(log, test.chunkSize)
+			underTest := NewWriter(logrus.NewEntry(log), logrus.InfoLevel, test.chunkSize)
 
 			for _, line := range test.in {
 				underTest.writeBytes([]byte(line))
