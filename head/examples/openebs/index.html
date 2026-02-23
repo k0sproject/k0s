@@ -2038,6 +2038,89 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kubelet-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubelet path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-engines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage engines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-storage-only-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local storage only variant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-replicated-storage-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local + replicated storage variant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-default-storage-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set default storage class
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2909,6 +2992,89 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kubelet-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubelet path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-engines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage engines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-storage-only-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local storage only variant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-replicated-storage-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local + replicated storage variant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-default-storage-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set default storage class
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2961,32 +3127,124 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <h1 id="openebs">OpenEBS<a class="headerlink" href="#openebs" title="Permanent link">#</a></h1>
 <p>This tutorial covers the installation of OpenEBS as a Helm extension. OpenEBS
 can be installed as a helm chart by adding it as an extension to your
-configuration:</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">helm</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">repositories</span><span class="p">:</span>
+configuration.</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
+<p>Most options can be directly set via the <code>values</code> section of the chart config.</p>
+<p><a href="https://artifacthub.io/packages/helm/openebs/openebs">Chart in Artifacthub</a></p>
+<h3 id="kubelet-path">Kubelet path<a class="headerlink" href="#kubelet-path" title="Permanent link">#</a></h3>
+<p>Be sure to set the correct kubelet path as the default one from the chart is <code>/var/lib/kubelet</code>, but k0s uses <code>/var/lib/k0s/kubelet</code>.</p>
+<p>You can skip this if you set a <a href="https://docs.k0sproject.io/stable/configuration/?h=data+dir#kubelet-root-directory">custom directory</a> via <code>--kubelet-root-dir</code>.</p>
+<p>More infos in the <a href="https://openebs.io/docs/quickstart-guide/installation">OpenEBS Quickstart Guide</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">lvm-localpv</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lvmNode</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">kubeletDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s/kubelet</span>
+<span class="nt">zfs-localpv</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">zfsNode</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">kubeletDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s/kubelet</span>
+<span class="nt">mayastor</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">csi</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">node</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">kubeletDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s/kubelet</span>
+</code></pre></div>
+<h3 id="storage-engines">Storage engines<a class="headerlink" href="#storage-engines" title="Permanent link">#</a></h3>
+<p>Each storage engine can be individually enabled or disabled.</p>
+<p>The default of the chart is to enable all engines except "rawfile".
+If you want to disable replicated storage via mayastor, check the example below.</p>
+<p>You can always check the default values here: https://github.com/openebs/openebs/blob/helm-testing/release/4.4/charts/values.yaml</p>
+<div class="highlight"><pre><span></span><code><span class="nt">engines</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">local</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">lvm</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">rawfile</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">zfs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">rawfile</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">replicated</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mayastor</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="monitoring">Monitoring<a class="headerlink" href="#monitoring" title="Permanent link">#</a></h3>
+<p>Per default the chart also installs Loki, Minio and Alloy for logging purposes.
+If you do not need these you can disable them.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">alloy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">loki</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">minio</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<h3 id="local-storage-only-variant">Local storage only variant<a class="headerlink" href="#local-storage-only-variant" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">helm</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">repositories</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs-internal</span>
 <span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://openebs.github.io/openebs</span>
-<span class="w">      </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">charts</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs</span>
 <span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs-internal/openebs</span>
-<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.9.0&quot;</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4.4.0&quot;</span>
 <span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs</span>
 <span class="w">        </span><span class="nt">order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">          </span><span class="no">localprovisioner:</span>
+<span class="w">          </span><span class="no">engines:</span>
+<span class="w">            </span><span class="no">replicated:</span>
+<span class="w">              </span><span class="no">mayastor:</span>
+<span class="w">                </span><span class="no">enabled: false</span>
+<span class="w">          </span><span class="no">lvm-localpv:</span>
+<span class="w">            </span><span class="no">lvmNode:</span>
+<span class="w">              </span><span class="no">kubeletDir: /var/lib/k0s/kubelet</span>
+<span class="w">          </span><span class="no">zfs-localpv:</span>
+<span class="w">            </span><span class="no">zfsNode:</span>
+<span class="w">              </span><span class="no">kubeletDir: /var/lib/k0s/kubelet</span>
+<span class="w">          </span><span class="no">localpv-provisioner:</span>
 <span class="w">            </span><span class="no">hostpathClass:</span>
-<span class="w">              </span><span class="no">enabled: true</span>
 <span class="w">              </span><span class="no">isDefaultClass: false</span>
 </code></pre></div>
-<p>If you want OpenEBS to be your default storage class, set <code>isDefaultClass</code> to <code>true</code>.</p>
+<h3 id="local-replicated-storage-variant">Local + replicated storage variant<a class="headerlink" href="#local-replicated-storage-variant" title="Permanent link">#</a></h3>
+<p>Be sure to read the <a href="https://openebs.io/docs/quickstart-guide/prerequisites">prerequisites</a> of OpenEBS for distributed storage, as some host dependencies are needed.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">helm</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">repositories</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs-internal</span>
+<span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://openebs.github.io/openebs</span>
+<span class="w">    </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs</span>
+<span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs-internal/openebs</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4.4.0&quot;</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs</span>
+<span class="w">        </span><span class="nt">order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">lvm-localpv:</span>
+<span class="w">            </span><span class="no">lvmNode:</span>
+<span class="w">              </span><span class="no">kubeletDir: /var/lib/k0s/kubelet</span>
+<span class="w">          </span><span class="no">zfs-localpv:</span>
+<span class="w">            </span><span class="no">zfsNode:</span>
+<span class="w">              </span><span class="no">kubeletDir: /var/lib/k0s/kubelet</span>
+<span class="w">          </span><span class="no">mayastor:</span>
+<span class="w">            </span><span class="no">csi:</span>
+<span class="w">              </span><span class="no">node:</span>
+<span class="w">                </span><span class="no">kubeletDir: /var/lib/k0s/kubelet</span>
+<span class="w">          </span><span class="no"># uncomment this to only use 1 cpu per io-engine (for smaller workloads)</span>
+<span class="w">          </span><span class="no"># io_engine:</span>
+<span class="w">          </span><span class="no">#   cpuCount: &quot;1&quot;  </span>
+<span class="w">          </span><span class="no">localpv-provisioner:</span>
+<span class="w">            </span><span class="no">hostpathClass:</span>
+<span class="w">              </span><span class="no">isDefaultClass: false</span>
+</code></pre></div>
+<h3 id="set-default-storage-class">Set default storage class<a class="headerlink" href="#set-default-storage-class" title="Permanent link">#</a></h3>
+<p>If you want OpenEBS "hostpath" to be your default storage class, set <code>isDefaultClass</code> to <code>true</code>.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">#</a></h2>
-<p>Once installed, the cluster will have two storage classes available for you to use:</p>
+<p>Once installed, the cluster will have multiple storage classes available for you to use (depending on the enabled engines).</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>storageclass
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>NAME<span class="w">               </span>PROVISIONER<span class="w">        </span>RECLAIMPOLICY<span class="w">   </span>VOLUMEBINDINGMODE<span class="w">      </span>ALLOWVOLUMEEXPANSION<span class="w">   </span>AGE
-openebs-device<span class="w">     </span>openebs.io/local<span class="w">   </span>Delete<span class="w">          </span>WaitForFirstConsumer<span class="w">   </span><span class="nb">false</span><span class="w">                  </span>24s
-openebs-hostpath<span class="w">   </span>openebs.io/local<span class="w">   </span>Delete<span class="w">          </span>WaitForFirstConsumer<span class="w">   </span><span class="nb">false</span><span class="w">                  </span>24s
+<div class="highlight"><pre><span></span><code>NAME<span class="w">                         </span>PROVISIONER<span class="w">                    </span>RECLAIMPOLICY<span class="w">   </span>VOLUMEBINDINGMODE<span class="w">      </span>ALLOWVOLUMEEXPANSION<span class="w">   </span>AGE
+mayastor-etcd-localpv<span class="w">        </span>openebs.io/local<span class="w">                    </span>Delete<span class="w">          </span>WaitForFirstConsumer<span class="w">   </span><span class="nb">false</span><span class="w">                  </span>76m
+openebs-hostpath<span class="w"> </span><span class="o">(</span>default<span class="o">)</span><span class="w">   </span>openebs.io/local<span class="w">                    </span>Delete<span class="w">          </span>WaitForFirstConsumer<span class="w">   </span><span class="nb">false</span><span class="w">                  </span>76m
+
+<span class="c1"># and depending on the enabled storage providers e.g.:</span>
+openebs-single-replica<span class="w">       </span>io.openebs.csi-mayastor<span class="w">             </span>Delete<span class="w">          </span>Immediate<span class="w">              </span><span class="nb">true</span><span class="w">                   </span>76m
 </code></pre></div>
 <p>The <code>openebs-hostpath</code> is the storage class that maps to <code>/var/openebs/local</code>.</p>
 <p>The <code>openebs-device</code> is not configured and could be configured by <a href="../../manifests/">manifest deployer</a> accordingly to the <a href="https://docs.openebs.io/">OpenEBS documentation</a></p>
@@ -3024,15 +3282,15 @@ openebs-hostpath<span class="w">   </span>openebs.io/local<span class="w">   </s
 <span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
 <span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
-<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
-<span class="w">        </span><span class="nt">volumeMounts</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
-<span class="w">          </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/nginx</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">          </span><span class="nt">volumeMounts</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
+<span class="w">              </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/nginx</span>
 <span class="w">      </span><span class="nt">volumes</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
-<span class="w">        </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx-pvc</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
+<span class="w">          </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx-pvc</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>nginx.yaml
 </code></pre></div>
