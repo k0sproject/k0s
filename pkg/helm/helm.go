@@ -7,27 +7,35 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/pkg/constant"
+
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/utils/ptr"
-	"sigs.k8s.io/yaml"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 // Repository represents a Helm chart repository configuration.
@@ -53,19 +61,20 @@ func (r *Repository) IsInsecure() bool {
 	return r.Insecure != nil && *r.Insecure
 }
 
+type ClientGetter interface {
+	GetRESTConfig() (*rest.Config, error)
+	GetClient() (kubernetes.Interface, error)
+	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
+}
+
 // Commands run different helm command in the same way as CLI tool
 // This struct isn't thread-safe. Check on a per function basis.
 type Commands struct {
+	clients         ClientGetter
 	registryManager *ociRegistryManager
 
 	repoFile     string
 	helmCacheDir string
-	kubeConfig   string
-}
-
-func logFn(format string, args ...any) {
-	log := logrus.WithField("component", "helm")
-	log.Debugf(format, args...)
 }
 
 var getters = getter.Providers{
@@ -83,7 +92,7 @@ var getters = getter.Providers{
 // If repo is provided, it will be initialized in the temporary environment.
 // If tmpDir is empty, a new temporary directory will be created.
 // Returns the Commands instance and a cleanup function that must be called to remove temporary files.
-func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error) {
+func NewCommands(clients ClientGetter, repo *Repository) (*Commands, func(), error) {
 	// Create temporary directory for ephemeral Helm environment
 	var err error
 	tmpDir, err := os.MkdirTemp("", "k0s-helm-*")
@@ -101,10 +110,10 @@ func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error)
 	helmCacheDir := filepath.Join(tmpDir, "cache")
 
 	commands := &Commands{
+		clients:         clients,
 		repoFile:        repoFile,
 		registryManager: newOCIRegistryManager(),
 		helmCacheDir:    helmCacheDir,
-		kubeConfig:      kubeConfig,
 	}
 
 	// Initialize repository if provided
@@ -164,30 +173,47 @@ func (hc *Commands) prepareCertFiles(repo *Repository, tmpDir string) error {
 }
 
 func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error) {
-	// Construct new helm env so we get the retrying roundtripper etc. setup
-	// See https://github.com/helm/helm/pull/11426/commits/b5378b3a5dd435e5c364ac0cfa717112ad686bd0
-	helmEnv := cli.New()
-	helmFlags, ok := helmEnv.RESTClientGetter().(*genericclioptions.ConfigFlags)
-	if !ok {
-		return nil, errors.New("failed to construct Helm REST client")
-	}
+	log := logrus.WithField("component", "helm")
 
-	insecure := false
-	var impersonateGroup []string
-	cfg := &genericclioptions.ConfigFlags{
-		Insecure:         &insecure,
-		Timeout:          ptr.To("0"),
-		KubeConfig:       ptr.To(hc.kubeConfig),
-		CacheDir:         ptr.To(hc.helmCacheDir),
-		Namespace:        ptr.To(namespace),
-		ImpersonateGroup: &impersonateGroup,
-		WrapConfigFn:     helmFlags.WrapConfigFn, // This contains the retrying round tripper
-	}
-	actionConfig := &action.Configuration{}
-	if err := actionConfig.Init(cfg, namespace, "secret", logFn); err != nil {
+	config, err := hc.clients.GetRESTConfig()
+	if err != nil {
 		return nil, err
 	}
-	return actionConfig, nil
+
+	// Add Helm's retrying round-tripper for transient etcd errors.
+	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		return &kube.RetryingRoundTripper{Wrapped: rt}
+	})
+
+	getter := &restClientGetter{
+		namespace: namespace,
+		config:    config,
+	}
+
+	clients, err := hc.clients.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	driver := driver.NewSecrets(clients.CoreV1().Secrets(namespace))
+	driver.Log = log.WithField("helm", "driver").Debugf
+
+	return &action.Configuration{
+		RESTClientGetter: getter,
+		Releases:         storage.Init(driver),
+		KubeClient:       kube.New(getter),
+		Log:              log.WithField("helm", "action").Debugf,
+		HookOutputFunc: func(namespace, pod, container string) io.Writer {
+			return internallog.NewWriter(
+				log.WithFields(logrus.Fields{
+					"helm":      "hook",
+					"namespace": namespace,
+					"pod":       pod,
+					"container": container,
+				}), logrus.DebugLevel, 16*1024,
+			)
+		},
+	}, nil
 }
 
 // initRepository initializes a single repository in the ephemeral Helm environment
