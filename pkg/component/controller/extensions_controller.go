@@ -24,9 +24,8 @@ import (
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/helm"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
@@ -34,7 +33,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/clientcmd"
 	apiretry "k8s.io/client-go/util/retry"
 
 	"github.com/avast/retry-go"
@@ -108,7 +106,7 @@ func (rc *repositoryCache) update(repositories []k0sv1beta1.Repository) {
 // Helm watch for Chart crd
 type ExtensionsController struct {
 	L               *logrus.Entry
-	kubeConfig      string
+	clients         kubernetes.ClientFactoryInterface
 	leaderElector   leaderelector.Interface
 	manifestsDir    string
 	stop            context.CancelFunc
@@ -119,12 +117,12 @@ var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
+func NewExtensionsController(manifestsDir string, kubeClientFactory kubernetes.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
 		L:               logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
-		kubeConfig:      k0sVars.AdminKubeConfigPath,
+		clients:         kubeClientFactory,
 		leaderElector:   leaderElector,
-		manifestsDir:    filepath.Join(k0sVars.ManifestsDir, "helm"),
+		manifestsDir:    filepath.Join(manifestsDir, "helm"),
 		repositoryCache: &repositoryCache{},
 	}
 }
@@ -231,7 +229,7 @@ func isChartManifestFileName(fileName string) bool {
 
 type ChartReconciler struct {
 	client.Client
-	kubeConfig      string
+	clients         kubernetes.ClientFactoryInterface
 	repositoryCache *repositoryCache
 	leaderElector   leaderelector.Interface
 	L               *logrus.Entry
@@ -281,7 +279,7 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Chart) error {
 	// Create ephemeral Helm commands without repository (uninstall doesn't need it)
-	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, nil)
+	helmCmd, cleanup, err := helm.NewCommands(cr.clients, nil)
 	if err != nil {
 		return fmt.Errorf("can't create Helm commands: %w", err)
 	}
@@ -454,7 +452,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	// Create ephemeral Helm commands with repository (helm manages tmpDir internally)
 	var helmCmd *helm.Commands
 	var cleanup func()
-	helmCmd, cleanup, err = helm.NewCommands(cr.kubeConfig, repo)
+	helmCmd, cleanup, err = helm.NewCommands(cr.clients, repo)
 	if err != nil {
 		err = fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
 		return
@@ -710,7 +708,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 }
 
 func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.Manager, error) {
-	clientConfig, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
+	clientConfig, err := ec.clients.GetRESTConfig()
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
@@ -762,7 +760,7 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 		).
 		Complete(&ChartReconciler{
 			Client:          mgr.GetClient(),
-			kubeConfig:      ec.kubeConfig,
+			clients:         ec.clients,
 			repositoryCache: ec.repositoryCache,
 			leaderElector:   ec.leaderElector, // TODO: drop in favor of controller-runtime lease manager?
 			L:               ec.L.WithField("extensions_type", "helm"),

@@ -187,7 +187,13 @@ func (c *ClientFactory) GetEtcdMemberClient() (etcdMemberClient.EtcdMemberInterf
 func (c *ClientFactory) GetRESTConfig() (*rest.Config, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	return c.getRESTConfig()
+
+	config, err := c.getRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return rest.CopyConfig(config), nil
 }
 
 func (c *ClientFactory) getRESTConfig() (*rest.Config, error) {
