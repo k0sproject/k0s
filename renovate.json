@@ -105,7 +105,6 @@
         "cilium/ebpf",
         "euank/go-kmsg-parser",
         "kubernetes/system-validators",
-        "projectcalico/calico",
         "torvalds/linux"
       ]
     },
@@ -114,7 +113,8 @@
       "enabled": true,
       "matchPackageNames": [
         "docker.io/calico/*",
-        "quay.io/k0sproject/calico-*"
+        "quay.io/k0sproject/calico-*",
+        "projectcalico/calico"
       ],
       "groupName": "Calico",
       "groupSlug": "calico"
