@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.31.3/charts/calico/templates/calico-kube-controllers.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.31.4/charts/calico/templates/calico-kube-controllers.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
