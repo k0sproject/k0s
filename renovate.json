@@ -237,6 +237,18 @@
       "allowedVersions": "<=1.37"
     },
     {
+      "description": "Bump etcd for release-1.35",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.35"
+      ],
+      "matchPackageNames": [
+        "go.etcd.io/etcd/**/v3",
+        "etcd-io/etcd"
+      ],
+      "allowedVersions": "<=3.6"
+    },
+    {
       "description": "Bump Alpine for release-1.34",
       "enabled": true,
       "matchBaseBranches": [
@@ -280,6 +292,18 @@
         "quay.io/k0sproject/envoy-distroless"
       ],
       "allowedVersions": "<=1.34"
+    },
+    {
+      "description": "Bump etcd for release-1.34",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchPackageNames": [
+        "go.etcd.io/etcd/**/v3",
+        "etcd-io/etcd"
+      ],
+      "allowedVersions": "<=3.6"
     },
     {
       "description": "Bump etcd for release-1.33",
