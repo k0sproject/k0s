@@ -4114,13 +4114,13 @@ by k0s.</p>
 <span class="w">  </span><span class="nt">calico</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">kubecontrollers</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">repo.acme.corp/k0sproject/calico-kube-controllers</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v3.31.3-0</span>
+<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v3.31.4-0</span>
 <span class="w">  </span><span class="nt">metricsserver</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">repo.acme.corp/k0sproject/metrics-server</span>
 <span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v0.8.1-0</span>
 </code></pre></div>
 <p>In the runtime the image names are calculated as
-<code>airgap-repo.local/k0sproject/calico-kube-controllers:v3.31.3-0</code> and
+<code>airgap-repo.local/k0sproject/calico-kube-controllers:v3.31.4-0</code> and
 <code>airgap-repo.local/k0sproject/metrics-server:v0.8.1-0</code>. This only
 affects the image pull location, and thus omitting an image specification here
 will not disable component deployment.</p>
