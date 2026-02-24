@@ -13,7 +13,7 @@
   ],
   "baseBranchPatterns": [
     "main",
-    "/^release-1\\.3[1-4]$/"
+    "/^release-1\\.3[3-4]$/"
   ],
   "prTitleStrict": true,
   "commitMessageAction": "Bump",
@@ -258,28 +258,6 @@
         "quay.io/k0sproject/envoy-distroless"
       ],
       "allowedVersions": "<=1.32"
-    },
-    {
-      "description": "Bump Go for release-1.32",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.32"
-      ],
-      "matchDepNames": [
-        "go"
-      ],
-      "allowedVersions": "<=1.23"
-    },
-    {
-      "description": "Bump Envoy for release-1.32",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.32"
-      ],
-      "matchDepNames": [
-        "quay.io/k0sproject/envoy-distroless"
-      ],
-      "allowedVersions": "<=1.31"
     }
   ],
   "customManagers": [
