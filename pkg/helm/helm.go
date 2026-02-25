@@ -172,13 +172,17 @@ func (hc *Commands) prepareCertFiles(repo *Repository, tmpDir string) error {
 	return nil
 }
 
-func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error) {
+func (hc *Commands) getActionCfg(ctx context.Context, namespace string) (*action.Configuration, error) {
 	log := logrus.WithField("component", "helm")
 
 	config, err := hc.clients.GetRESTConfig()
 	if err != nil {
 		return nil, err
 	}
+
+	// Add transport control to the config.
+	transportControl := transportControl{ctx.Done(), errHelmOperationInterrupted}
+	config.WrapTransport = transportControl.wrap(config.WrapTransport)
 
 	// Add Helm's retrying round-tripper for transient etcd errors.
 	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
@@ -201,7 +205,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 	return &action.Configuration{
 		RESTClientGetter: getter,
 		Releases:         storage.Init(driver),
-		KubeClient:       kube.New(getter),
+		KubeClient:       newKubeClient(ctx, getter, log.WithField("helm", "client")),
 		Log:              log.WithField("helm", "action").Debugf,
 		HookOutputFunc: func(namespace, pod, container string) io.Writer {
 			return internallog.NewWriter(
@@ -332,10 +336,26 @@ func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 	return true
 }
 
+// Used as the cancellation cause for the internal action context on method
+// exit.
+//
+// Helm's RunWithContext methods can return on caller cancellation while work
+// may continue in the background. The deferred cancellation of the action
+// context ensures those background API calls are effectively interrupted and
+// all watchers/streams are torn down after the methods return.
+var errHelmOperationInterrupted = errors.New("helm operation interrupted")
+
 // InstallChart installs a helm chart
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
 func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration) (*release.Release, error) {
-	cfg, err := hc.getActionCfg(namespace)
+	// Keep the action's context detached from the caller's cancellation so that
+	// we can explicitly terminate the Helm internals when this method exits.
+	// The install action still receives the caller context via the
+	// RunWithContext method.
+	actionCtx, cancelAction := context.WithCancelCause(context.WithoutCancel(ctx))
+	defer cancelAction(errHelmOperationInterrupted)
+
+	cfg, err := hc.getActionCfg(actionCtx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
@@ -390,7 +410,14 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 // UpgradeChart upgrades a helm chart.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
 func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, force bool) (*release.Release, error) {
-	cfg, err := hc.getActionCfg(namespace)
+	// Keep the action's context detached from the caller's cancellation so that
+	// we can explicitly terminate the Helm internals when this method exits.
+	// The upgrade action still receives the caller context via the
+	// RunWithContext method.
+	actionCtx, cancelAction := context.WithCancelCause(context.WithoutCancel(ctx))
+	defer cancelAction(errHelmOperationInterrupted)
+
+	cfg, err := hc.getActionCfg(actionCtx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
@@ -440,7 +467,14 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 // UninstallRelease uninstalls a release.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
 func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string) error {
-	cfg, err := hc.getActionCfg(namespace)
+	// The Helm uninstall action doesn't offer RunWithContext. Instead, use ctx
+	// for action configuration and transport control directly. Let transport
+	// interruption handle cancellation while the uninstall action is in
+	// progress.
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(errHelmOperationInterrupted)
+
+	cfg, err := hc.getActionCfg(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("can't create helmAction configuration: %w", err)
 	}
