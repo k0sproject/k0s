@@ -18,6 +18,7 @@ import (
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -345,9 +346,26 @@ func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 // all watchers/streams are torn down after the methods return.
 var errHelmOperationInterrupted = errors.New("helm operation interrupted")
 
+// Retrieves the latest release from Helm storage.
+func (hc *Commands) GetRelease(ctx context.Context, releaseName, namespace string) (*release.Release, error) {
+	// The Helm get action doesn't offer RunWithContext. Instead, use ctx for
+	// action configuration and transport control directly. Let transport
+	// interruption handle cancellation while the get action is in progress.
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(errHelmOperationInterrupted)
+
+	cfg, err := hc.getActionCfg(ctx, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("can't create helm action configuration: %w", err)
+	}
+
+	get := action.NewGet(cfg)
+	return get.Run(releaseName)
+}
+
 // InstallChart installs a helm chart
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration) (*release.Release, error) {
+func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, replace bool) (*release.Release, error) {
 	// Keep the action's context detached from the caller's cancellation so that
 	// we can explicitly terminate the Helm internals when this method exits.
 	// The install action still receives the caller context via the
@@ -375,10 +393,10 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 		return nil, err
 	}
 	install.Namespace = namespace
-	install.Atomic = true
 	install.ReleaseName = releaseName
 	name, _, err := install.NameAndChart([]string{chartName})
 	install.ReleaseName = name
+	install.Replace = replace
 
 	if err != nil {
 		return nil, err
@@ -400,11 +418,8 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 	if err != nil {
 		return nil, fmt.Errorf("can't reload loadedChart `%s`: %w", chartDir, err)
 	}
-	chartRelease, err := install.RunWithContext(ctx, loadedChart, values)
-	if err != nil {
-		return nil, fmt.Errorf("can't install loadedChart `%s`: %w", loadedChart.Name(), err)
-	}
-	return chartRelease, nil
+
+	return install.RunWithContext(ctx, loadedChart, values)
 }
 
 // UpgradeChart upgrades a helm chart.
@@ -466,7 +481,7 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 
 // UninstallRelease uninstalls a release.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string) error {
+func (hc *Commands) UninstallRelease(ctx context.Context, releaseName, namespace string) error {
 	// The Helm uninstall action doesn't offer RunWithContext. Instead, use ctx
 	// for action configuration and transport control directly. Let transport
 	// interruption handle cancellation while the uninstall action is in
@@ -484,8 +499,9 @@ func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, na
 		helmAction.Timeout = time.Until(deadline)
 	}
 
-	if _, err := helmAction.Run(releaseName); err != nil {
-		return fmt.Errorf("can't uninstall release `%s`: %w", releaseName, err)
-	}
-	return nil
+	helmAction.Wait = true
+	helmAction.DeletionPropagation = string(metav1.DeletePropagationForeground)
+
+	_, err = helmAction.Run(releaseName)
+	return err
 }
