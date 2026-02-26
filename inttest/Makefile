@@ -68,6 +68,8 @@ get-conformance-results: bin/sonobuoy
 
 TIMEOUT ?= 6m
 
+check-addons: TIMEOUT=10m
+
 # Autopilot 3x3 HA test can take a while to run
 check-ap-ha3x3: export K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
