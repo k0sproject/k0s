@@ -39,7 +39,7 @@ After rebooting, open PowerShell as Administrator and run:
 
 ```powershell
 # Set variables
-$K0S_VERSION = "v1.34.4+k0s.0"
+$K0S_VERSION = "v1.34.5+k0s.0"
 $TOKEN_FILE = "C:\k0s-token.txt"
 
 # Download k0s
