@@ -90,7 +90,7 @@ jobs:
 
       - name: Collect k0s logs, support bundle and conformance test results
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.name }}${{ inputs.k0s-reference-version && format('-{0}', inputs.k0s-reference-version) || '' }}-${{ inputs.arch }}-files
           path: |

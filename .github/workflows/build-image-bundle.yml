@@ -78,7 +78,7 @@ jobs:
           make "$IMAGE_BUNDLE_NAME-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
 
       - name: "Upload :: Image bundle"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
