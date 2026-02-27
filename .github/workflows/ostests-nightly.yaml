@@ -19,7 +19,6 @@ env:
       ["fcos_stable"],
       ["fedora_41"],
       ["flatcar"],
-      ["oracle_8_9", "oracle_9_3"],
       ["rhel_7", "rhel_8", "rhel_9"],
       ["rocky_8", "rocky_9"],
       ["sles_15"],
