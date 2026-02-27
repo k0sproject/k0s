@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/containerd/containerd"
 	introspectionAPI "github.com/containerd/containerd/api/services/introspection/v1"
-	ptypes "github.com/containerd/containerd/protobuf/types"
+	containerdclient "github.com/containerd/containerd/v2/client"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -186,16 +185,16 @@ func (d *DeprecationMonitor) reconcile(ctx context.Context) error {
 
 // getDeprecationWarnings queries containerd's introspection API for deprecation warnings
 func (d *DeprecationMonitor) getDeprecationWarnings(ctx context.Context) ([]*introspectionAPI.DeprecationWarning, error) {
-	client, err := containerd.New(d.containerdSocketPath)
+	ctrdClient, err := containerdclient.New(d.containerdSocketPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to containerd: %w", err)
 	}
-	defer client.Close()
+	defer ctrdClient.Close()
 
-	introspectionClient := client.IntrospectionService()
+	introspectionClient := ctrdClient.IntrospectionService()
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	resp, err := introspectionClient.Server(ctx, &ptypes.Empty{})
+	resp, err := introspectionClient.Server(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query server info: %w", err)
 	}

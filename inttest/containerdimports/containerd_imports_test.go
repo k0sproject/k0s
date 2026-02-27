@@ -119,10 +119,10 @@ func TestContainerdImportsSuite(t *testing.T) {
 }
 
 const fooRuntimeConfig = `
-version = 2
+version = 3
 
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.foo]
+[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.foo]
       runtime_type = "io.containerd.runc.v2"
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.foo.options]
+      [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.foo.options]
         BinaryName = "/var/lib/k0s/bin/runfoo"
 `

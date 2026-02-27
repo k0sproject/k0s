@@ -13,7 +13,7 @@ DOCKER ?= docker
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct || date -u +%s)
 
 bindir = staging/${TARGET_OS}/bin
-posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server xtables-legacy-multi xtables-nft-multi keepalived
+posix_bins = runc kubelet containerd containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server xtables-legacy-multi xtables-nft-multi keepalived
 windows_bins = kubelet.exe containerd.exe containerd-shim-runhcs-v1.exe
 
 ifeq ($(TARGET_OS),windows)
@@ -22,7 +22,7 @@ bins = ${windows_bins}
 containerd_bins = containerd containerd-shim-runhcs-v1
 kubernetes_bins = kubelet kube-proxy
 else
-containerd_bins = containerd containerd-shim containerd-shim-runc-v2
+containerd_bins = containerd containerd-shim-runc-v2
 kubernetes_bins = kubelet kube-apiserver kube-scheduler kube-controller-manager
 bins = ${posix_bins}
 endif
@@ -54,7 +54,7 @@ containers: $(images:%=.container.%)
 docker-images: $(images:%=.docker-image.%.stamp)
 
 $(bindir)/runc: .container.runc
-$(bindir)/containerd $(bindir)/containerd-shim $(bindir)/containerd-shim-runc-v2: .container.containerd
+$(bindir)/containerd $(bindir)/containerd-shim-runc-v2: .container.containerd
 $(bindir)/etcd: .container.etcd
 $(bindir)/kine: .container.kine
 $(bindir)/konnectivity-server: .container.konnectivity

@@ -48,7 +48,7 @@ containerd config default > /etc/k0s/containerd.toml
 Next, add the following default values to the configuration file:
 
 ```toml
-version = 2
+version = 3
 root = "/var/lib/k0s/containerd"
 state = "/run/k0s/containerd"
 ...
@@ -99,9 +99,9 @@ configuration:
 `/etc/k0s/containerd.d/cri-registry.toml`:
 
 ```toml
-version = 2
+version = 3
 
-[plugins."io.containerd.grpc.v1.cri".registry]
+[plugins."io.containerd.cri.v1.images".registry]
 config_path = "/etc/k0s/containerd.d/certs.d"
 ```
 
@@ -157,9 +157,9 @@ For more details on how to configure registry hosts, please refer to the
 
     ```shell
     cat <<EOF | sudo tee /etc/k0s/containerd.d/gvisor.toml
-    version = 2
+    version = 3
 
-    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
+    [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runsc]
       runtime_type = "io.containerd.runsc.v1"
     EOF
     ```

@@ -68,7 +68,7 @@ sudo restorecon -R -v /opt/cni
 Add below lines to `/etc/k0s/containerd.d/selinux.toml` of the worker nodes. k0s will automatically restart containerd with the new configuration if needed.
 
 ```toml
-[plugins."io.containerd.grpc.v1.cri"]
+[plugins.'io.containerd.cri.v1.runtime']
   enable_selinux = true
 ```
 

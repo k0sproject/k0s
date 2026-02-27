@@ -100,10 +100,10 @@ LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(word 1,$(subst ., ,$(kub
 LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(word 2,$(subst ., ,$(kubernetes_version)))
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit=not_available
-LD_FLAGS += -X github.com/containerd/containerd/version.Version=$(containerd_version)
+LD_FLAGS += -X github.com/containerd/containerd/v2/version.Version=$(containerd_version)
 ifeq ($(EMBEDDED_BINS_BUILDMODE), docker)
 ifeq ($(TARGET_OS),linux)
-LD_FLAGS += -X github.com/containerd/containerd/version.Revision=$(shell ./embedded-bins/staging/linux/bin/containerd --version | awk '{print $$4}')
+LD_FLAGS += -X github.com/containerd/containerd/v2/version.Revision=$(shell ./embedded-bins/staging/linux/bin/containerd --version | awk '{print $$4}')
 endif
 endif
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
