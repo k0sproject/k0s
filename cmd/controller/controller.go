@@ -449,6 +449,24 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		configSource,
 	))
 
+	if !slices.Contains(flags.DisableComponents, constant.KubeSchedulerComponentName) {
+		clusterComponents.Add(ctx, &controller.Scheduler{
+			LogLevel:              c.LogLevels.KubeScheduler,
+			K0sVars:               c.K0sVars,
+			DisableLeaderElection: singleController,
+		})
+	}
+
+	if !slices.Contains(flags.DisableComponents, constant.KubeControllerManagerComponentName) {
+		clusterComponents.Add(ctx, &controller.Manager{
+			LogLevel:              c.LogLevels.KubeControllerManager,
+			K0sVars:               c.K0sVars,
+			DisableLeaderElection: singleController,
+			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.PrimaryAddressFamily()),
+			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
+		})
+	}
+
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
 		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, controller.HelmExtensionStackName))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
@@ -554,24 +572,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			KonnectivityServerHost: cmp.Or(nodeConfig.Spec.API.ExternalHost(), nodeConfig.Spec.API.Address),
 			EventEmitter:           prober.NewEventEmitter(),
 			ServerCount:            numActiveControllers.Peek,
-		})
-	}
-
-	if !slices.Contains(flags.DisableComponents, constant.KubeSchedulerComponentName) {
-		clusterComponents.Add(ctx, &controller.Scheduler{
-			LogLevel:              c.LogLevels.KubeScheduler,
-			K0sVars:               c.K0sVars,
-			DisableLeaderElection: singleController,
-		})
-	}
-
-	if !slices.Contains(flags.DisableComponents, constant.KubeControllerManagerComponentName) {
-		clusterComponents.Add(ctx, &controller.Manager{
-			LogLevel:              c.LogLevels.KubeControllerManager,
-			K0sVars:               c.K0sVars,
-			DisableLeaderElection: singleController,
-			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.PrimaryAddressFamily()),
-			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
 	}
 
