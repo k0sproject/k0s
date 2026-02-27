@@ -3150,13 +3150,13 @@ with etcd itself is not fully supported on ARM either.</p>
 <li>modify the line in <code>/etc/k0s/containerd.toml</code>:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="p">...</span>
-<span class="w">    </span><span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">.containerd]</span>
+<span class="w">    </span><span class="k">[plugins.</span><span class="s1">&#39;io.containerd.cri.v1.images&#39;</span><span class="k">]</span>
 <span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;overlayfs&quot;</span>
 <span class="p">...</span>
 </code></pre></div>
 <p>to</p>
 <div class="highlight"><pre><span></span><code><span class="p">...</span>
-<span class="w">    </span><span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">.containerd]</span>
+<span class="w">    </span><span class="k">[plugins.</span><span class="s1">&#39;io.containerd.cri.v1.images&#39;</span><span class="k">]</span>
 <span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;zfs&quot;</span>
 <span class="p">...</span>
 </code></pre></div>

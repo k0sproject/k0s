@@ -3092,7 +3092,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <span class="w">    </span>--config<span class="o">=</span>/etc/k0s/containerd.toml
 </code></pre></div>
 <p>Next, add the following default values to the configuration file:</p>
-<div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
 <span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/var/lib/k0s/containerd&quot;</span>
 <span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/run/k0s/containerd&quot;</span>
 <span class="p">...</span>
@@ -3125,9 +3125,9 @@ configurations for common configuration tasks.</p>
 <code>docker-mirror.internal.acme.corp</code>. Then you could use the following drop-in
 configuration:</p>
 <p><code>/etc/k0s/containerd.d/cri-registry.toml</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
 
-<span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">.registry]</span>
+<span class="k">[plugins.</span><span class="s2">&quot;io.containerd.cri.v1.images&quot;</span><span class="k">.registry]</span>
 <span class="n">config_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/etc/k0s/containerd.d/certs.d&quot;</span>
 </code></pre></div>
 <p>Create the file <code>/etc/k0s/containerd.d/certs.d/docker.io/hosts.toml</code> with the following content:</p>
@@ -3172,9 +3172,9 @@ configuration:</p>
 <li>
 <p>Prepare the config for <code>k0s</code> managed containerd, to utilize gVisor as additional runtime:</p>
 <div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.d/gvisor.toml</span>
-<span class="s">version = 2</span>
+<span class="s">version = 3</span>
 
-<span class="s">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.runsc]</span>
+<span class="s">[plugins.&quot;io.containerd.cri.v1.runtime&quot;.containerd.runtimes.runsc]</span>
 <span class="s">  runtime_type = &quot;io.containerd.runsc.v1&quot;</span>
 <span class="s">EOF</span>
 </code></pre></div>
