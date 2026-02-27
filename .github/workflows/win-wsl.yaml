@@ -130,7 +130,7 @@ jobs:
           "WSL_IP=$wslIP" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Download compiled binaries
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           pattern: k0s-{linux,windows}-amd64
           merge-multiple: true
