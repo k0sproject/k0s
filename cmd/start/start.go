@@ -26,7 +26,7 @@ func NewStartCmd() *cobra.Command {
 			if runtime.GOOS != "windows" && os.Geteuid() != 0 {
 				return errors.New("this command must be run as root")
 			}
-			return install.StartInstalledService(false)
+			return install.StartInstalledService(cmd.Context(), false)
 		},
 	}
 
