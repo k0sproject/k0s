@@ -417,19 +417,23 @@ func writePatchedKubeconfig(path string, kubeconfig *clientcmdapi.Config, server
 	return file.WriteContentAtomically(path, bytes, constant.CertSecureMode)
 }
 
-func getLoopbackIP(ctx context.Context) (net.IP, error) {
+func getLoopbackIPs(ctx context.Context) (ips []net.IP, _ error) {
 	localIPs, err := net.DefaultResolver.LookupIPAddr(ctx, "localhost")
 	if err != nil {
 		err = fmt.Errorf("failed to resolve localhost: %w", err)
 	} else {
 		for _, addr := range localIPs {
 			if addr.IP.IsLoopback() {
-				return addr.IP, nil
+				ips = append(ips, addr.IP)
 			}
+		}
+
+		if len(ips) != 0 {
+			return ips, nil
 		}
 
 		err = fmt.Errorf("no loopback IPs found for localhost: %v", localIPs)
 	}
 
-	return net.IP{127, 0, 0, 1}, err
+	return []net.IP{{127, 0, 0, 1}}, err
 }
