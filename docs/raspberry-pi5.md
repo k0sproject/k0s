@@ -226,7 +226,7 @@ For this example, we'll create a cluster.yaml that describes your known Pi 5 dev
       eval "$(ssh-agent -s)"
       ```
 
-  2. ​​Add your private key (you’ll be prompted for the passphrase)
+  2. Add your private key (you’ll be prompted for the passphrase)
 
       ```bash
       ssh-add ~/.ssh/id_rsa
