@@ -1,0 +1,25 @@
+name: Lint invisible Unicode format characters
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+    branches:
+      - main
+      - release-*
+
+permissions:
+  contents: read
+
+jobs:
+  lint-invisible-unicode:
+    name: Check invisible Unicode
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check for invisible Unicode format characters
+        run: make lint-invisible-unicode
