@@ -50,6 +50,7 @@ Examples:
 	Note: Token can be passed either as a CLI argument, a flag, or an environment variable
 
 Flags:
+      --api-server-stop-timeout duration               time to wait for the API server to stop
   -c, --config string                                  config file, use '-' to read the config from stdin (default `+defaultConfigPath+`)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --data-dir string                                Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default `+defaultDataDir+`)
@@ -81,4 +82,22 @@ Flags:
       --token-file string                              Path to the file containing join-token.
   -v, --verbose                                        Verbose logging (default true)
 `, out.String())
+}
+
+func TestControllerCmd_Flags(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Running controllers is only supported on Linux")
+	}
+
+	t.Run("api-server-stop-timeout", func(t *testing.T) {
+		expected := `invalid argument "0s" for "--api-server-stop-timeout" flag: must be positive`
+		var stdout, stderr strings.Builder
+		underTest := cmd.NewRootCmd()
+		underTest.SetArgs([]string{"controller", "--api-server-stop-timeout", "0s"})
+		underTest.SetOut(&stdout)
+		underTest.SetErr(&stderr)
+		assert.ErrorContains(t, underTest.Execute(), expected)
+		assert.Empty(t, stdout.String())
+		assert.Equal(t, "Error: "+expected+"\n", stderr.String())
+	})
 }
