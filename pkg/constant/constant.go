@@ -80,7 +80,7 @@ const (
 	KubePauseWindowsContainerImage        = "registry.k8s.io/pause"
 	KubePauseWindowsContainerImageVersion = "3.10.1"
 	KubeProxyImage                        = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion                 = "v1.35.1"
+	KubeProxyImageVersion                 = "v1.35.2"
 	KubeProxyWindowsImage                 = "docker.io/sigwindowstools/kube-proxy"
 	KubeProxyWindowsImageVersion          = "v1.35.1-calico-hostprocess"
 	CoreDNSImage                          = "quay.io/k0sproject/coredns"
