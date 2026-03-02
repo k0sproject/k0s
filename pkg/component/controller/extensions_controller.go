@@ -241,8 +241,6 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	if !cr.leaderElector.IsLeader() {
 		return reconcile.Result{}, nil
 	}
-	cr.L.Tracef("Got helm chart reconciliation request: %s", req)
-	defer cr.L.Tracef("Finished processing helm chart reconciliation request: %s", req)
 
 	var chartInstance helmv1beta1.Chart
 
@@ -253,15 +251,23 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 		return reconcile.Result{}, err
 	}
 
+	log := cr.L.WithFields(logrus.Fields{
+		"name":            req.Name,
+		"namespace":       req.Namespace,
+		"release":         chartInstance.Spec.ReleaseName,
+		"chartVersion":    chartInstance.Spec.Version,
+		"resourceVersion": chartInstance.ResourceVersion,
+	})
+
 	if !chartInstance.DeletionTimestamp.IsZero() {
-		cr.L.Debugf("Uninstall reconciliation request: %s", req)
+		log.Info("Uninstalling")
 		// uninstall chart
 		if err := cr.uninstall(ctx, chartInstance); err != nil {
 			if !errors.Is(err, driver.ErrReleaseNotFound) {
 				return reconcile.Result{}, fmt.Errorf("can't uninstall chart: %w", err)
 			}
 
-			cr.L.Debugf("No Helm release found for chart %s, assuming it has already been uninstalled", req)
+			log.Info("No Helm release found, assuming it has already been uninstalled")
 		}
 
 		if err := removeFinalizer(ctx, cr.Client, &chartInstance); err != nil {
@@ -270,18 +276,27 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 
 		return reconcile.Result{}, nil
 	}
-	cr.L.Debugf("Install or update reconciliation request: %s", req)
+
+	log.Debug("Install or update reconciliation request")
 	if err := cr.updateOrInstallChart(ctx, chartInstance); err != nil {
 		return reconcile.Result{}, fmt.Errorf("can't update or install chart: %w", err)
 	}
 
-	cr.L.Debugf("Installed or updated reconciliation request: %s", req)
+	log.Debug("Installed or updated reconciliation request")
 	return reconcile.Result{}, nil
 }
 
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Chart) error {
+	log := cr.L.WithFields(logrus.Fields{
+		"name":            chart.Name,
+		"namespace":       chart.Namespace,
+		"release":         chart.Spec.ReleaseName,
+		"chartVersion":    chart.Spec.Version,
+		"resourceVersion": chart.ResourceVersion,
+	})
+
 	// Create ephemeral Helm commands without repository (uninstall doesn't need it)
-	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, nil)
+	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, nil, log)
 	if err != nil {
 		return fmt.Errorf("can't create Helm commands: %w", err)
 	}
@@ -396,15 +411,21 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 }
 
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) (err error) {
+	log := cr.L.WithFields(logrus.Fields{
+		"name":            chart.Name,
+		"namespace":       chart.Namespace,
+		"release":         chart.Spec.ReleaseName,
+		"chartVersion":    chart.Spec.Version,
+		"resourceVersion": chart.ResourceVersion,
+	})
+
 	var chartRelease *release.Release
 	var timeout time.Duration
 	timeout, err = time.ParseDuration(chart.Spec.Timeout)
 	if err != nil {
-		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
 		timeout = defaultTimeout
 	}
 	if timeout == 0 {
-		cr.L.Tracef("Using default timeout `%s`, failed to parse `%s`", defaultTimeout, chart.Spec.Timeout)
 		timeout = defaultTimeout
 	}
 	defer func() {
@@ -414,7 +435,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
 			return cr.updateStatus(ctx, chart, chartRelease, err)
 		}); statusErr != nil {
-			cr.L.WithError(statusErr).Error("Failed to update status for chart release, give up", chart.Name)
+			log.WithError(statusErr).Error("Failed to update status, giving up")
 		}
 	}()
 
@@ -444,18 +465,15 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	}
 
 	// Create ephemeral Helm commands with repository (helm manages tmpDir internally)
-	var helmCmd *helm.Commands
-	var cleanup func()
-	helmCmd, cleanup, err = helm.NewCommands(cr.kubeConfig, repo)
+	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, repo, log)
 	if err != nil {
-		err = fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
-		return
+		return fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
 	}
 	defer cleanup()
 
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
-		cr.L.Tracef("Start update or install %s", chartName)
+		log.Info("Installing")
 		chartRelease, err = helmCmd.InstallChart(ctx,
 			chartName,
 			chart.Spec.Version,
@@ -473,6 +491,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			return nil
 		}
 		// update
+		log.Info("Upgrading")
 		chartRelease, err = helmCmd.UpgradeChart(ctx,
 			chartName,
 			chart.Spec.Version,
@@ -490,7 +509,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
 		return cr.updateStatus(ctx, chart, chartRelease, nil)
 	}); statusErr != nil {
-		cr.L.WithError(statusErr).Error("Failed to update status for chart release, give up", chart.Name)
+		log.WithError(statusErr).Error("Failed to update status, giving up")
 	}
 	return nil
 }
@@ -615,11 +634,7 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 		updchart.Status.Error = err.Error()
 	}
 	updchart.Status.ValuesHash = chart.Spec.HashValues()
-	if updErr := cr.Client.Status().Update(ctx, &updchart); updErr != nil {
-		cr.L.WithError(updErr).Error("Failed to update status for chart release", chart.Name)
-		return updErr
-	}
-	return nil
+	return cr.Client.Status().Update(ctx, &updchart)
 }
 
 const chartCrdTemplate = `
