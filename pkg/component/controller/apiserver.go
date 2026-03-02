@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -39,6 +40,7 @@ type APIServer struct {
 	Storage                   manager.Component
 	EnableKonnectivity        bool
 	DisableEndpointReconciler bool
+	StopTimeout               time.Duration
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
@@ -155,6 +157,45 @@ func (a *APIServer) Start(ctx context.Context) error {
 		args["endpoint-reconciler-type"] = "none"
 	}
 
+	stopTimeout := a.StopTimeout
+
+	// If the timeout hasn't been specified, do a
+	// best guess based on the API server flags.
+	if stopTimeout <= 0 {
+		requestTimeout := 1 * time.Minute
+		if value, ok := args["request-timeout"]; ok {
+			if parsed, err := time.ParseDuration(value); err == nil {
+				requestTimeout = parsed
+			}
+		}
+
+		watchTerminationGrace := 0 * time.Second
+		if value, ok := args["shutdown-watch-termination-grace-period"]; ok {
+			if parsed, err := time.ParseDuration(value); err == nil {
+				watchTerminationGrace = parsed
+			}
+		}
+
+		stopTimeout = max(requestTimeout, watchTerminationGrace) + (2 * time.Second)
+
+		// Clamp the timeout between 5 and 20 seconds. We can't wait for too long
+		// currently because the init system will likely kill the process otherwise.
+		stopTimeout = max(5*time.Second, min(stopTimeout, 20*time.Second))
+	}
+
+	// Enable the API server's watch-drain facility on shutdown, if that flag
+	// hasn't been specified by the user. Without this flag, the API server will
+	// almost always encounter the request timeout if anything is connected to
+	// it via client-go watches. These have a timeout of between five and ten
+	// minutes. Note that other types of long-running requests, such as log
+	// streams, can still prevent a timely shutdown. However, there's not much
+	// that can be done about them apart from setting a short request timeout.
+	if _, ok := args["shutdown-watch-termination-grace-period"]; !ok {
+		if gracePeriod := stopTimeout - 2*time.Second; gracePeriod > 0 {
+			args["shutdown-watch-termination-grace-period"] = gracePeriod.String()
+		}
+	}
+
 	var apiServerArgs []string
 	for name, value := range args {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
@@ -162,12 +203,13 @@ func (a *APIServer) Start(ctx context.Context) error {
 	apiServerArgs = append(apiServerArgs, a.ClusterConfig.Spec.API.RawArgs...)
 
 	a.supervisor = &supervisor.Supervisor{
-		Name:    kubeAPIComponentName,
-		BinPath: a.executablePath,
-		RunDir:  a.K0sVars.RunDir,
-		DataDir: a.K0sVars.DataDir,
-		Args:    apiServerArgs,
-		UID:     a.uid,
+		Name:        kubeAPIComponentName,
+		BinPath:     a.executablePath,
+		RunDir:      a.K0sVars.RunDir,
+		DataDir:     a.K0sVars.DataDir,
+		Args:        apiServerArgs,
+		UID:         a.uid,
+		TimeoutStop: stopTimeout,
 	}
 
 	etcdArgs, err := getEtcdArgs(a.ClusterConfig.Spec.Storage, a.K0sVars)
