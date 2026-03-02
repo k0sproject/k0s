@@ -520,6 +520,11 @@ spec:
                     description: external address to advertise for the konnectivity
                       agent to connect to
                     type: string
+                  hostNetwork:
+                    default: false
+                    description: HostNetwork controls whether the konnectivity agent
+                      should use host networking
+                    type: boolean
                 type: object
               network:
                 description: Network defines the network related config options
