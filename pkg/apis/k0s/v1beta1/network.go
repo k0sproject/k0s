@@ -115,7 +115,7 @@ func (n *Network) Validate() []error {
 		}
 
 		// Validate IPv6 ServiceCIDR prefix length per Kubernetes requirements (<= /108).
-		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/cmd/kube-apiserver/app/options/validation.go#L52-L58
+		// https://github.com/kubernetes/kubernetes/blob/v1.36.0-alpha.2/cmd/kube-apiserver/app/options/validation.go#L52-L58
 		if serviceNetIP.To4() == nil {
 			ones, bits := serviceNet.Mask.Size()
 			if bits == 128 && ones > 108 {
@@ -152,7 +152,7 @@ func (n *Network) Validate() []error {
 		} else {
 			ones, bits := ipv6SvcNet.Mask.Size()
 
-			// https://github.com/kubernetes/kubernetes/blob/v1.34.3/cmd/kube-apiserver/app/options/validation.go#L39
+			// https://github.com/kubernetes/kubernetes/blob/v1.36.0-alpha.2/cmd/kube-apiserver/app/options/validation.go#L39
 			maxCIDRBits := 20
 			if bits-ones > maxCIDRBits {
 				errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "IPv6 service CIDR prefix must be <= 108"))
