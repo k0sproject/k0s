@@ -219,7 +219,7 @@ jobs:
 
       - name: "e2e tests :: Upload results"
         if: always() && (steps.e2e-retrieve-parallel.conclusion == 'success' || steps.e2e-retrieve-serial.conclusion == 'success')
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ostests-e2e-${{ inputs.os }}-${{ inputs.arch }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-sonobuoy-results
           path: |
@@ -242,7 +242,7 @@ jobs:
 
       - name: "e2e tests :: Upload k0sctl logs"
         if: always() && steps.tf-init.conclusion == 'success'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ostests-e2e-${{ inputs.os }}-${{ inputs.arch }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-k0sctl-logs
           path: ~/.cache/k0sctl/k0sctl.log
