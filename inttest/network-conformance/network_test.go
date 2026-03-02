@@ -134,6 +134,11 @@ func (s *networkSuite) TestK0sGetsUp() {
 	s.Require().Equal("complete", status.Status)
 	s.Require().Len(status.Plugins, 1)
 	s.Require().Equal("passed", status.Plugins[0].ResultStatus)
+
+	// After the tests finished, verify that there are no restarted pods
+	for _, err := range common.VerifyNoRestartedPods(s.Context(), kc) {
+		s.NoError(err)
+	}
 }
 
 func retrieveResults(r io.Reader, ec <-chan error) error {

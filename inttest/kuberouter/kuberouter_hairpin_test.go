@@ -113,6 +113,11 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 			})
 		}
 	})
+	s.Run("verify there aren't pods restarted once the test finishes", func() {
+		for _, err := range common.VerifyNoRestartedPods(s.Context(), kc) {
+			s.NoError(err)
+		}
+	})
 }
 
 func TestKubeRouterHairpinSuite(t *testing.T) {

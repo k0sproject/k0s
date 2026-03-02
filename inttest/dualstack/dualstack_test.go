@@ -186,6 +186,15 @@ func (s *DualstackSuite) SetupSuite() {
 	})
 	s.Require().NoError(err)
 	s.client = client
+
+	s.T().Log("Verifying that pods didn't restart")
+	// CoreDNS may not be ready when we finish the test, which can break VerifyNoRestartedPods,
+	// so we need to wait for it first.
+	s.NoError(common.WaitForCoreDNSReady(s.Context(), client))
+	// Verify that there aren't containers restarted on kube-system
+	for _, err := range common.VerifyNoRestartedPods(s.Context(), client) {
+		s.NoError(err)
+	}
 }
 
 func (s *DualstackSuite) getIPv6Address(nodeName string) string {
