@@ -27,3 +27,7 @@ jobs:
         with:
           config: .markdownlint.jsonc
           globs: '**/*.md'
+      # https://github.com/renovatebot/renovate/blob/43.46.6/lib/util/regex.ts#L95-L96I
+      - name: Check for hidden Unicode characters
+        run: |
+          grep -rPn '[\x{00A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{200B}\x{200C}\x{FEFF}\x{200E}\x{200F}\x{202A}-\x{202E}\x{00AD}]' docs/ --exclude='*.png' --exclude='*.gif' && exit 1 || true
