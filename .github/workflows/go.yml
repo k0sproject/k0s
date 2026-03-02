@@ -344,7 +344,6 @@ jobs:
           if [ "$EMBEDDED_BINS_CACHED" == true ]; then
             make --touch .bins.linux.stamp
           fi
-          make bindata
           make --touch codegen
           make build
           echo "k0s binary size: **$(du -sh k0s | cut -f1)**" >>$GITHUB_STEP_SUMMARY
