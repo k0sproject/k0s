@@ -182,6 +182,16 @@ func (n *Network) Validate() []error {
 		errors = append(errors, err)
 	}
 
+	// Validate that both kube-proxy and kube-router service proxy are not enabled simultaneously
+	if n.KubeRouter != nil && n.KubeRouter.ExtraArgs != nil {
+		if n.KubeRouter.ExtraArgs["run-service-proxy"] == "true" && (n.KubeProxy == nil || !n.KubeProxy.Disabled) {
+			errors = append(errors, field.Forbidden(
+				field.NewPath("kuberouter", "extraArgs", "run-service-proxy"),
+				"cannot enable kube-router service proxy when kube-proxy is enabled",
+			))
+		}
+	}
+
 	return errors
 }
 

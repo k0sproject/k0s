@@ -470,6 +470,45 @@ func (s *NetworkSuite) TestValidation() {
 			s.ErrorContains(errors[1], "if DualStack is enabled, serviceCIDR must be IPv4")
 		}
 	})
+
+	s.Run("invalid_both_kubeproxy_and_kuberouter_service_proxy_enabled", func() {
+		n := DefaultNetwork()
+		n.Provider = "kuberouter"
+		n.KubeRouter = DefaultKubeRouter()
+		n.KubeRouter.ExtraArgs = map[string]string{
+			"run-service-proxy": "true",
+		}
+		n.KubeProxy.Disabled = false
+
+		errors := n.Validate()
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], "cannot enable kube-router service proxy when kube-proxy is enabled")
+		}
+	})
+
+	s.Run("valid_kuberouter_service_proxy_with_kubeproxy_disabled", func() {
+		n := DefaultNetwork()
+		n.Provider = "kuberouter"
+		n.KubeRouter = DefaultKubeRouter()
+		n.KubeRouter.ExtraArgs = map[string]string{
+			"run-service-proxy": "true",
+		}
+		n.KubeProxy.Disabled = true
+
+		errors := n.Validate()
+		s.Nil(errors)
+	})
+
+	s.Run("valid_kubeproxy_enabled_without_kuberouter_service_proxy", func() {
+		n := DefaultNetwork()
+		n.Provider = "kuberouter"
+		n.KubeRouter = DefaultKubeRouter()
+		// No run-service-proxy set
+		n.KubeProxy.Disabled = false
+
+		errors := n.Validate()
+		s.Nil(errors)
+	})
 }
 
 func TestNetworkSuite(t *testing.T) {
