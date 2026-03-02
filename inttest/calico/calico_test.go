@@ -136,6 +136,11 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		return strings.Contains(out, "Welcome to nginx"), nil
 	})
 	s.Require().NoError(err)
+
+	// After the tests finished, verify that there are no restarted pods
+	for _, err := range common.VerifyNoRestartedPods(s.Context(), kc) {
+		s.NoError(err)
+	}
 }
 
 func getAlpineVersion(t *testing.T) string {
