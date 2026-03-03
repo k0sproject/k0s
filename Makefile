@@ -240,6 +240,66 @@ endif
 lint-copyright:
 	hack/copyright.sh
 
+.PHONY: lint-invisible-unicode
+lint-invisible-unicode:
+	@set -eu; \
+	echo Checking tracked files for invisible Unicode format characters ...; \
+	{ \
+	  git grep -I --line-number --perl-regexp \
+	    -e '\x{00A0}' `# U+00A0 NO-BREAK SPACE` \
+	    -e '\x{00AD}' `# U+00AD SOFT HYPHEN` \
+	    -e '\x{1680}' `# U+1680 OGHAM SPACE MARK` \
+	    -e '\x{2000}' `# U+2000 EN QUAD` \
+	    -e '\x{2001}' `# U+2001 EM QUAD` \
+	    -e '\x{2002}' `# U+2002 EN SPACE` \
+	    -e '\x{2003}' `# U+2003 EM SPACE` \
+	    -e '\x{2004}' `# U+2004 THREE-PER-EM SPACE` \
+	    -e '\x{2005}' `# U+2005 FOUR-PER-EM SPACE` \
+	    -e '\x{2006}' `# U+2006 SIX-PER-EM SPACE` \
+	    -e '\x{2007}' `# U+2007 FIGURE SPACE` \
+	    -e '\x{2008}' `# U+2008 PUNCTUATION SPACE` \
+	    -e '\x{2009}' `# U+2009 THIN SPACE` \
+	    -e '\x{200A}' `# U+200A HAIR SPACE` \
+	    -e '\x{200B}' `# U+200B ZERO WIDTH SPACE` \
+	    -e '\x{200C}' `# U+200C ZERO WIDTH NON-JOINER` \
+	    -e '\x{200D}' `# U+200D ZERO WIDTH JOINER` \
+	    -e '\x{200E}' `# U+200E LEFT-TO-RIGHT MARK` \
+	    -e '\x{200F}' `# U+200F RIGHT-TO-LEFT MARK` \
+	    -e '\x{2028}' `# U+2028 LINE SEPARATOR` \
+	    -e '\x{2029}' `# U+2029 PARAGRAPH SEPARATOR` \
+	    -e '\x{202A}' `# U+202A LEFT-TO-RIGHT EMBEDDING` \
+	    -e '\x{202B}' `# U+202B RIGHT-TO-LEFT EMBEDDING` \
+	    -e '\x{202C}' `# U+202C POP DIRECTIONAL FORMATTING` \
+	    -e '\x{202D}' `# U+202D LEFT-TO-RIGHT OVERRIDE` \
+	    -e '\x{202E}' `# U+202E RIGHT-TO-LEFT OVERRIDE` \
+	    -e '\x{202F}' `# U+202F NARROW NO-BREAK SPACE` \
+	    -e '\x{205F}' `# U+205F MEDIUM MATHEMATICAL SPACE` \
+	    -e '\x{2060}' `# U+2060 WORD JOINER` \
+	    -e '\x{2066}' `# U+2066 LEFT-TO-RIGHT ISOLATE` \
+	    -e '\x{2067}' `# U+2067 RIGHT-TO-LEFT ISOLATE` \
+	    -e '\x{2068}' `# U+2068 FIRST STRONG ISOLATE` \
+	    -e '\x{2069}' `# U+2069 POP DIRECTIONAL ISOLATE` \
+	    -e '\x{3000}' `# U+3000 IDEOGRAPHIC SPACE` \
+	    -e '\x{FEFF}' `# U+FEFF ZERO WIDTH NO-BREAK SPACE / BOM` \
+	  || { [ $$? -eq 1 ] || echo ~; }; \
+	} | { \
+	  numMatches=0; \
+	  while IFS= read -r match; do \
+	    [ "$$match" != ~ ] || exit 1; \
+	    [ -z "$$match" ] && continue; \
+	    numMatches=$$((numMatches + 1)); \
+	    file="$${match%%:*}"; \
+	    rest="$${match#*:}"; \
+	    line="$${rest%%:*}"; \
+	    echo "::error file=$$file,line=$$line,title=Invisible Unicode format character::Found a disallowed invisible Unicode character. Remove it."; \
+	  done; \
+	  if [ "$$numMatches" -eq 0 ]; then \
+	    echo No invisible Unicode format characters found.; \
+	  else \
+	    exit 1; \
+	  fi \
+	}
+
 .PHONY: lint-go
 lint-go: GOLANGCI_LINT_FLAGS ?=
 lint-go: $(GO_ENV_REQUISITES) go.sum bindata
