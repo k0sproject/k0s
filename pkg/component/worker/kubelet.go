@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -26,6 +27,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	apinet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/validation"
 	cliflag "k8s.io/component-base/cli/flag"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
@@ -80,10 +82,32 @@ func (k *Kubelet) Init(_ context.Context) (err error) {
 func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ error) {
 	ipaddrs, err := net.DefaultResolver.LookupIPAddr(ctx, string(k.NodeName))
 	if err != nil {
+		logrus.WithError(err).Errorf("failed to lookup ip addresses")
 		return nil, nil, err
 	}
 
+	interfaceAddrs, err := net.InterfaceAddrs()
+	if err != nil {
+		logrus.WithError(err).Errorf("failed to retrieve local network interface addresses")
+	}
+
+	interfaceIPs := make([]net.IP, len(interfaceAddrs))
+	for i, addr := range interfaceAddrs {
+		var ip net.IP
+		switch v := addr.(type) {
+		case *net.IPNet:
+			ip = v.IP
+		case *net.IPAddr:
+			ip = v.IP
+		}
+
+		interfaceIPs[i] = ip
+	}
+
 	for _, addr := range ipaddrs {
+		if ip := addr.IP; !ip.IsGlobalUnicast() || !slices.ContainsFunc(interfaceIPs, ip.Equal) {
+			continue
+		}
 		if ipv4 == nil && addr.IP.To4() != nil {
 			ipv4 = addr.IP
 		} else if ipv6 == nil && addr.IP.To16() != nil && addr.IP.To4() == nil {
@@ -94,6 +118,11 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 			break
 		}
 	}
+
+	if ipv4 == nil || ipv6 == nil {
+		return ipv4, ipv6, fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
+	}
+
 	return ipv4, ipv6, nil
 }
 
@@ -115,14 +144,29 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	if k.DualStackEnabled && k.ExtraArgs["--node-ip"] == "" {
 		// Kubelet uses a DNS lookup of the node name to figure out the node IP,
 		// but will only pick one for a single family. Do something similar as
-		// kubelet, but for both IPv4 and IPv6.
-		// https://github.com/kubernetes/kubernetes/blob/v1.35.1/pkg/kubelet/nodestatus/setters.go#L151-L179
+		// kubelet, but for both IPv4 and IPv6 and fallback to scanning the
+		// interface used a default gateway.
+		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/pkg/kubelet/nodestatus/setters.go#L150-L178
+
 		ipv4, ipv6, err := k.lookupNodeName(ctx)
-		if err == nil && (ipv4 == nil || ipv6 == nil) {
-			err = fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
-		}
 		if err != nil {
-			return fmt.Errorf("failed to detect node IPs for %q: %w", k.NodeName, err)
+			logrus.Warnf("%s", err)
+		}
+
+		if ipv4 == nil {
+			ipv4, err = apinet.ResolveBindAddress(net.IPv4zero)
+			if err != nil {
+				logrus.Errorf("failed to determine preferred IPv4 address: %w", err)
+				return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
+			}
+		}
+
+		if ipv6 == nil {
+			ipv6, err = apinet.ResolveBindAddress(net.IPv6unspecified)
+			if err != nil || ipv6.To4() != nil {
+				logrus.Errorf("failed to determine preferred IPv6 address: %w", err)
+				return fmt.Errorf("failed to detect node IPs for %q", k.NodeName)
+			}
 		}
 
 		// The kubelet will perform some extra validations on the discovered IP
