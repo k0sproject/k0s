@@ -6,6 +6,7 @@ package applier
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
@@ -20,7 +21,25 @@ import (
 const manifestFilePattern = "*.yaml"
 
 func FindManifestFilesInDir(dir string) ([]string, error) {
-	return filepath.Glob(filepath.Join(dir, manifestFilePattern))
+	// Don't use filepath.Glob directly, as that will swallow I/O errors.
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	matches := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if match, err := filepath.Match(manifestFilePattern, entry.Name()); err != nil {
+			return nil, err
+		} else if !match {
+			continue
+		}
+
+		matches = append(matches, filepath.Join(dir, entry.Name()))
+	}
+
+	return matches, nil
 }
 
 // Applier manages all the "static" manifests and applies them on the k8s API
