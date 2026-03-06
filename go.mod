@@ -60,7 +60,7 @@ require (
 	golang.org/x/text v0.34.0
 	golang.org/x/time v0.12.0
 	golang.org/x/tools v0.42.0
-	google.golang.org/grpc v1.79.1
+	google.golang.org/grpc v1.79.2
 	helm.sh/helm/v3 v3.18.6
 	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.20.4
