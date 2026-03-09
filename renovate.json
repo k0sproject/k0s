@@ -192,17 +192,6 @@
       "respectLatest": true
     },
     {
-      "description": "Bump Alpine for release-1.35",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.35"
-      ],
-      "matchDepNames": [
-        "docker.io/library/alpine"
-      ],
-      "allowedVersions": "<=3.23"
-    },
-    {
       "description": "Bump Calico for release-1.35",
       "enabled": true,
       "matchBaseBranches": [
@@ -224,17 +213,6 @@
         "go"
       ],
       "allowedVersions": "<=1.25"
-    },
-    {
-      "description": "Bump Envoy for release-1.35",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.35"
-      ],
-      "matchDepNames": [
-        "quay.io/k0sproject/envoy-distroless"
-      ],
-      "allowedVersions": "<=1.37"
     },
     {
       "description": "Bump Alpine for release-1.34",
