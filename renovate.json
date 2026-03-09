@@ -195,7 +195,7 @@
       "description": "Bump Calico for release-1.35",
       "enabled": true,
       "matchBaseBranches": [
-        "release-1.34"
+        "release-1.35"
       ],
       "matchDepNames": [
         "docker.io/calico/*",
@@ -207,7 +207,7 @@
       "description": "Bump Go for release-1.35",
       "enabled": true,
       "matchBaseBranches": [
-        "release-1.34"
+        "release-1.35"
       ],
       "matchDepNames": [
         "go"
