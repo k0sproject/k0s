@@ -4,9 +4,9 @@ ARG GOLANG_IMAGE
 FROM docker.io/library/alpine:$ALPINE_VERSION
 
 ARG TARGETARCH
-ARG CRI_DOCKERD_VERSION=0.3.16
+ARG CRI_DOCKERD_VERSION=0.3.16 # renovate: datasource=github-releases depName=Mirantis/cri-dockerd
 ARG ETCD_VERSION
-ARG TROUBLESHOOT_VERSION=v0.115.1
+ARG TROUBLESHOOT_VERSION=0.115.1 # renovate: datasource=github-releases depName=replicatedhq/troubleshoot
 ARG HELM_VERSION
 
 # Apply our changes to the image
@@ -38,7 +38,7 @@ RUN sed -i -e 's/^\(tty[0-9]\)/# \1/' /etc/inittab
 RUN sed -i -e 's/^root:!:/root::/' /etc/shadow
 
 # Install troublbeshoot support bundle
-RUN curl --proto '=https' --tlsv1.2 -L https://github.com/replicatedhq/troubleshoot/releases/download/$TROUBLESHOOT_VERSION/support-bundle_linux_$TARGETARCH.tar.gz \
+RUN curl --proto '=https' --tlsv1.2 -L https://github.com/replicatedhq/troubleshoot/releases/download/v$TROUBLESHOOT_VERSION/support-bundle_linux_$TARGETARCH.tar.gz \
   | tar xzO support-bundle >/usr/local/bin/kubectl-supportbundle \
   && chmod +x /usr/local/bin/kubectl-supportbundle
 
