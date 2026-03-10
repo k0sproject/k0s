@@ -28,10 +28,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
 
 const (
+	controllerLeaseLabelName = "k0s.k0sproject.io/controller-lease"
 	shutdownOnLeaveLabelName = "k0s.k0sproject.io/shutdown-on-leave"
 	shutdownLabelName        = "k0s.k0sproject.io/shutdown"
 )
@@ -40,10 +42,11 @@ const EtcdMemberStackName = "etcd-member"
 
 var _ manager.Component = (*EtcdMemberReconciler)(nil)
 
-func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface, controllerCount func() uint, shutdown context.CancelCauseFunc) (*EtcdMemberReconciler, error) {
+func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, nodeName apitypes.NodeName, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface, controllerCount func() uint, shutdown context.CancelCauseFunc) (*EtcdMemberReconciler, error) {
 
 	return &EtcdMemberReconciler{
 		clientFactory:   kubeClientFactory,
+		nodeName:        nodeName,
 		k0sVars:         k0sVars,
 		etcdConfig:      etcdConfig,
 		leaderElector:   leaderElector,
@@ -58,6 +61,7 @@ type EtcdMemberReconciler struct {
 	etcdConfig      *v1beta1.EtcdConfig
 	leaderElector   leaderelector.Interface
 	controllerCount func() uint
+	nodeName        apitypes.NodeName
 	shutdown        context.CancelCauseFunc
 	stop            func()
 }
@@ -377,6 +381,8 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 
 	log.WithField("name", name).WithField("memberID", memberID).Info("creating EtcdMember object")
 
+	controllerLeaseName := fmt.Sprintf("k0s-ctrl-%s", e.nodeName)
+
 	// Check if the object already exists
 	em, err = client.Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -386,6 +392,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 					Labels: map[string]string{
+						controllerLeaseLabelName: controllerLeaseName,
 						shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
 					},
 				},
@@ -413,7 +420,10 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 		}
 	}
 
-	em.Labels = labels.Merge(em.Labels, labels.Set{shutdownOnLeaveLabelName: e.k0sVars.InvocationID})
+	em.Labels = labels.Merge(em.Labels, labels.Set{
+		controllerLeaseLabelName: controllerLeaseName,
+		shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
+	})
 	delete(em.Labels, shutdownLabelName) // Clear any lingering shutdown request on re-join.
 	em.Spec.Leave = false
 
@@ -549,7 +559,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			return false
 		}
 
-		if memberLease, err := clients.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, "k0s-ctrl-"+member.Name, metav1.GetOptions{}); err != nil {
+		memberLeaseName := member.Labels[controllerLeaseLabelName]
+		if memberLeaseName == "" {
+			memberLeaseName = "k0s-ctrl-" + member.Name
+		}
+		if memberLease, err := clients.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, memberLeaseName, metav1.GetOptions{}); err != nil {
 			log.WithError(err).Error("Failed to get etcd member lease")
 			msg := "Failed to get k0s controller lease: " + err.Error()
 			if apierrors.IsNotFound(err) {
