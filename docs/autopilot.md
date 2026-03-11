@@ -387,7 +387,7 @@ Fields:
 
 ```yaml
 apiVersion: autopilot.k0sproject.io/v1beta2
-kind: UpdaterConfig
+kind: UpdateConfig
 metadata:
   name: example
 spec:
