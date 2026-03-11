@@ -24,9 +24,8 @@ import (
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/helm"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
@@ -34,7 +33,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/clientcmd"
 	apiretry "k8s.io/client-go/util/retry"
 
 	"github.com/avast/retry-go"
@@ -108,7 +106,7 @@ func (rc *repositoryCache) update(repositories []k0sv1beta1.Repository) {
 // Helm watch for Chart crd
 type ExtensionsController struct {
 	L               *logrus.Entry
-	kubeConfig      string
+	clients         kubernetes.ClientFactoryInterface
 	leaderElector   leaderelector.Interface
 	manifestsDir    string
 	stop            context.CancelFunc
@@ -119,12 +117,12 @@ var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
+func NewExtensionsController(manifestsDir string, kubeClientFactory kubernetes.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
 		L:               logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
-		kubeConfig:      k0sVars.AdminKubeConfigPath,
+		clients:         kubeClientFactory,
 		leaderElector:   leaderElector,
-		manifestsDir:    filepath.Join(k0sVars.ManifestsDir, "helm"),
+		manifestsDir:    filepath.Join(manifestsDir, "helm"),
 		repositoryCache: &repositoryCache{},
 	}
 }
@@ -231,7 +229,7 @@ func isChartManifestFileName(fileName string) bool {
 
 type ChartReconciler struct {
 	client.Client
-	kubeConfig      string
+	clients         kubernetes.ClientFactoryInterface
 	repositoryCache *repositoryCache
 	leaderElector   leaderelector.Interface
 	L               *logrus.Entry
@@ -281,7 +279,7 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Chart) error {
 	// Create ephemeral Helm commands without repository (uninstall doesn't need it)
-	helmCmd, cleanup, err := helm.NewCommands(cr.kubeConfig, nil)
+	helmCmd, cleanup, err := helm.NewCommands(cr.clients, nil)
 	if err != nil {
 		return fmt.Errorf("can't create Helm commands: %w", err)
 	}
@@ -336,8 +334,7 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 
 	// If no secret reference, just convert inline config
 	if repoSpec.ConfigFrom == nil || repoSpec.ConfigFrom.SecretRef == nil {
-		repo := repoSpec.ToHelm(extractRepositoryIdentifier(chart.Spec.ChartName))
-		return &repo, nil
+		return toHelmRepo(chart.Spec.ChartName, repoSpec), nil
 	}
 
 	secretRef := repoSpec.ConfigFrom.SecretRef
@@ -357,7 +354,7 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 	}
 
 	// Start with inline configuration
-	repo := repoSpec.ToHelm(extractRepositoryIdentifier(chart.Spec.ChartName))
+	repo := toHelmRepo(chart.Spec.ChartName, repoSpec)
 
 	// Override with values from secret (secret takes precedence)
 	if val, ok := secret.Data["url"]; ok && len(val) > 0 {
@@ -392,10 +389,11 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 		repo.Insecure = &insecure
 	}
 
-	return &repo, nil
+	return repo, nil
 }
 
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) (err error) {
+	var isInstalling bool
 	var chartRelease *release.Release
 	var timeout time.Duration
 	timeout, err = time.ParseDuration(chart.Spec.Timeout)
@@ -412,7 +410,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			return
 		}
 		if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
-			return cr.updateStatus(ctx, chart, chartRelease, err)
+			return cr.updateStatus(ctx, chart, chartRelease, !isInstalling, err)
 		}); statusErr != nil {
 			cr.L.WithError(statusErr).Error("Failed to update status for chart release, give up", chart.Name)
 		}
@@ -436,17 +434,26 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		}
 	} else {
 		// Fall back to extracting repository from chart name and looking it up in cache
-		repo, err = cr.extractAndLookupRepository(chartName)
-		if err != nil {
-			err = fmt.Errorf("can't lookup repository for chart %q: %w", chartName, err)
-			return
+		if k0sRepo, err := cr.extractAndLookupRepository(chartName); err != nil {
+			return fmt.Errorf("can't lookup repository for chart %q: %w", chartName, err)
+		} else if k0sRepo != nil {
+			repo = &helm.Repository{
+				Name:     k0sRepo.Name,
+				URL:      k0sRepo.URL,
+				Username: k0sRepo.Username,
+				Password: k0sRepo.Password,
+				CAFile:   k0sRepo.CAFile,
+				CertFile: k0sRepo.CertFile,
+				KeyFile:  k0sRepo.KeyFile,
+				Insecure: k0sRepo.Insecure,
+			}
 		}
 	}
 
 	// Create ephemeral Helm commands with repository (helm manages tmpDir internally)
 	var helmCmd *helm.Commands
 	var cleanup func()
-	helmCmd, cleanup, err = helm.NewCommands(cr.kubeConfig, repo)
+	helmCmd, cleanup, err = helm.NewCommands(cr.clients, repo)
 	if err != nil {
 		err = fmt.Errorf("can't create Helm commands for chart %q: %w", chart.GetName(), err)
 		return
@@ -454,19 +461,59 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	defer cleanup()
 
 	if chart.Status.ReleaseName == "" {
-		// new chartRelease
-		cr.L.Tracef("Start update or install %s", chartName)
-		chartRelease, err = helmCmd.InstallChart(ctx,
-			chartName,
-			chart.Spec.Version,
-			chart.Spec.ReleaseName,
-			chart.Spec.Namespace,
-			chart.Spec.YamlValues(),
-			timeout,
-		)
-		if err != nil {
-			err = fmt.Errorf("can't reconcile installation for %q: %w", chart.GetName(), err)
-			return
+		isInstalling = true
+		status := release.StatusUnknown
+		if chartRelease, err = helmCmd.GetRelease(ctx, chart.Spec.ReleaseName, chart.Spec.Namespace); err == nil && chartRelease.Info != nil {
+			status = chartRelease.Info.Status
+		}
+
+		switch {
+		case status == release.StatusPendingInstall, status == release.StatusFailed, status == release.StatusUninstalling:
+			if err := helmCmd.UninstallRelease(ctx, chart.Spec.ReleaseName, chart.Spec.Namespace); err != nil {
+				return fmt.Errorf("failed to uninstall %q in %q before reinstall: %w", chart.Spec.ReleaseName, chart.Spec.Namespace, err)
+			}
+			cr.L.Info("Uninstalled release ", chart.Spec.ReleaseName, " before reinstall due to status ", status)
+			fallthrough // proceed with installation
+
+		case status == release.StatusUninstalled, err != nil:
+			if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
+				return fmt.Errorf("failed to get release: %w", err)
+			}
+
+			// new chartRelease
+			cr.L.Tracef("Start update or install %s", chartName)
+			chartRelease, err = helmCmd.InstallChart(ctx,
+				chartName,
+				chart.Spec.Version,
+				chart.Spec.ReleaseName,
+				chart.Spec.Namespace,
+				chart.Spec.YamlValues(),
+				timeout,
+				status == release.StatusUninstalled,
+			)
+			if err != nil {
+				if !errors.Is(err, driver.ErrReleaseExists) /* don't uninstall if existing */ {
+					select {
+					case <-ctx.Done():
+						err = fmt.Errorf("%w (%w)", err, context.Cause(ctx))
+					default:
+						if uninstallErr := helmCmd.UninstallRelease(ctx, chart.Spec.ReleaseName, chart.Spec.Namespace); uninstallErr != nil {
+							err = fmt.Errorf("an error occurred while uninstalling: %w; original install error: %w", uninstallErr, err)
+						}
+					}
+				}
+
+				err = fmt.Errorf("can't reconcile installation for %q: %w", chart.GetName(), err)
+				return
+			}
+
+		default:
+			// Note: The deferred status update may persist an updated chart
+			// status based on chartRelease and the returned error. During the
+			// next reconciliation, execution may be routed to the upgrade
+			// branch instead of the install branch.
+			isInstalling = false
+			return fmt.Errorf("unsupported status %s in release version %d", status, chartRelease.Version)
 		}
 	} else {
 		if !cr.chartNeedsUpgrade(chart) {
@@ -488,7 +535,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		}
 	}
 	if statusErr := apiretry.RetryOnConflict(apiretry.DefaultRetry, func() error {
-		return cr.updateStatus(ctx, chart, chartRelease, nil)
+		return cr.updateStatus(ctx, chart, chartRelease, true, nil)
 	}); statusErr != nil {
 		cr.L.WithError(statusErr).Error("Failed to update status for chart release, give up", chart.Name)
 	}
@@ -498,7 +545,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 // extractAndLookupRepository extracts the repository name or OCI hostname from chartName
 // and looks it up in the repository cache. Returns a pointer to the repository config or nil
 // if no repository configuration is needed (e.g., local path charts, OCI charts without auth).
-func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*helm.Repository, error) {
+func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*k0sv1beta1.Repository, error) {
 	repoID := extractRepositoryIdentifier(chartName)
 
 	if repoID == "" {
@@ -512,12 +559,7 @@ func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*helm.R
 
 	// For OCI, missing repo is okay (anonymous access)
 	if registry.IsOCI(chartName) {
-		cachedRepo := cr.repositoryCache.get(repoID)
-		if cachedRepo == nil {
-			return nil, nil
-		}
-		helmRepo := cachedRepo.ToHelm()
-		return &helmRepo, nil
+		return cr.repositoryCache.get(repoID), nil
 	}
 
 	// For traditional, missing repo is an error
@@ -525,8 +567,7 @@ func (cr *ChartReconciler) extractAndLookupRepository(chartName string) (*helm.R
 	if cachedRepo == nil {
 		return nil, fmt.Errorf("repository '%s' not found in cluster configuration", repoID)
 	}
-	helmRepo := cachedRepo.ToHelm()
-	return &helmRepo, nil
+	return cachedRepo, nil
 }
 
 // extractRepositoryIdentifier extracts the repository identifier from a chart name.
@@ -587,6 +628,7 @@ func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
 	return chart.Status.Namespace != chart.Spec.Namespace ||
 		chart.Status.ReleaseName != chart.Spec.ReleaseName ||
 		chart.Status.Version != chart.Spec.Version ||
+		chart.Status.Error != "" ||
 		chart.Status.ValuesHash != chart.Spec.HashValues()
 }
 
@@ -595,7 +637,7 @@ func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
 // to complete and the chart may have been updated in the meantime. If returns the error returned
 // by the Update operation. Moreover, if the chart has indeed changed in the meantime we already
 // have an event for it so we will see it again soon.
-func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.Chart, chartRelease *release.Release, err error) error {
+func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.Chart, chartRelease *release.Release, installed bool, err error) error {
 	nsn := types.NamespacedName{Namespace: chart.Namespace, Name: chart.Name}
 	var updchart helmv1beta1.Chart
 	if err := cr.Get(ctx, nsn, &updchart); err != nil {
@@ -603,7 +645,9 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 	}
 	chart.Spec.YamlValues() // XXX what is this function for ?
 	if chartRelease != nil {
-		updchart.Status.ReleaseName = chartRelease.Name
+		if installed {
+			updchart.Status.ReleaseName = chartRelease.Name
+		}
 		updchart.Status.Version = chartRelease.Chart.Metadata.Version
 		updchart.Status.AppVersion = chartRelease.Chart.AppVersion()
 		updchart.Status.Revision = int64(chartRelease.Version)
@@ -708,7 +752,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 }
 
 func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.Manager, error) {
-	clientConfig, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
+	clientConfig, err := ec.clients.GetRESTConfig()
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
@@ -760,7 +804,7 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 		).
 		Complete(&ChartReconciler{
 			Client:          mgr.GetClient(),
-			kubeConfig:      ec.kubeConfig,
+			clients:         ec.clients,
 			repositoryCache: ec.repositoryCache,
 			leaderElector:   ec.leaderElector, // TODO: drop in favor of controller-runtime lease manager?
 			L:               ec.L.WithField("extensions_type", "helm"),
@@ -777,4 +821,17 @@ func (ec *ExtensionsController) Stop() error {
 	}
 	ec.L.Debug("Stopped extensions controller")
 	return nil
+}
+
+func toHelmRepo(chartName string, r *helmv1beta1.RepositorySpec) *helm.Repository {
+	return &helm.Repository{
+		Name:     extractRepositoryIdentifier(chartName),
+		URL:      r.URL,
+		Username: r.Username,
+		Password: r.Password,
+		CAFile:   r.CAFile,
+		CertFile: r.CertFile,
+		KeyFile:  r.KeyFile,
+		Insecure: r.Insecure,
+	}
 }

@@ -199,8 +199,8 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 				s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
 
 				const maxLogChunkLen = 16 * 1024
-				s.cmd.Stdout = log.NewWriter(s.log.WithField("stream", "stdout"), maxLogChunkLen)
-				s.cmd.Stderr = log.NewWriter(s.log.WithField("stream", "stderr"), maxLogChunkLen)
+				s.cmd.Stdout = log.NewWriter(s.log.WithField("stream", "stdout"), logrus.InfoLevel, maxLogChunkLen)
+				s.cmd.Stderr = log.NewWriter(s.log.WithField("stream", "stderr"), logrus.InfoLevel, maxLogChunkLen)
 
 				err = s.cmd.Start()
 			}

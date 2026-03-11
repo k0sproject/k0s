@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
-	"github.com/k0sproject/k0s/pkg/helm"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -52,22 +51,6 @@ type RepositorySpec struct {
 	// ConfigFrom specifies the source of repository configuration values.
 	// Secret values override inline fields when present.
 	ConfigFrom *ConfigSource `json:"configFrom,omitempty"`
-}
-
-// ToHelm converts RepositorySpec to helm.Repository for Helm operations.
-// Note: The Name field is not included in RepositorySpec as it's not needed for
-// embedded repository configurations.
-func (r *RepositorySpec) ToHelm(name string) helm.Repository {
-	return helm.Repository{
-		Name:     name,
-		URL:      r.URL,
-		Username: r.Username,
-		Password: r.Password,
-		CAFile:   r.CAFile,
-		CertFile: r.CertFile,
-		KeyFile:  r.KeyFile,
-		Insecure: r.Insecure,
-	}
 }
 
 // ChartSpec defines the desired state of Chart

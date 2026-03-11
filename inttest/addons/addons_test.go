@@ -4,17 +4,22 @@
 package addons
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto"
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"text/template"
 	"time"
@@ -32,12 +37,15 @@ import (
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
@@ -142,7 +150,6 @@ func (as *AddonsSuite) SetupTest() {
 }
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
-	ctx := as.Context()
 	crlog.SetLogger(testr.New(as.T()))
 
 	addonName := "test-addon"
@@ -174,8 +181,9 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 
 	as.AssertSomeKubeSystemPods(kc)
 
-	as.Run("Rename chart in Helm extension", func() { as.renameChart(ctx) })
-	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(ctx, kc) })
+	as.Run("Rename chart in Helm extension", func() { as.renameChart() })
+	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(kc) })
+	as.Run("Controller restart recovery", func() { as.testControllerRestartRecovery(kc) })
 
 	values := map[string]any{
 		"replicaCount": 2,
@@ -187,7 +195,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	chart := as.waitForTestRelease(addonName, "0.6.0", metav1.NamespaceDefault, 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.deleteRelease(chart)
-	as.deleteUninstalledChart(ctx)
+	as.deleteUninstalledChart(as.TContext())
 }
 
 func (as *AddonsSuite) pullHelmChart(node string) {
@@ -204,7 +212,9 @@ func (as *AddonsSuite) pullHelmChart(node string) {
 	as.Require().NoError(err)
 }
 
-func (as *AddonsSuite) renameChart(ctx context.Context) {
+func (as *AddonsSuite) renameChart() {
+	ctx := as.TContext()
+
 	restConfig, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
 	k0sClients, err := k0sclientset.NewForConfig(restConfig)
@@ -244,7 +254,9 @@ func (as *AddonsSuite) renameChart(ctx context.Context) {
 	as.waitForTestRelease("tgz-renamed-addon", "0.6.0", metav1.NamespaceSystem, 1)
 }
 
-func (as *AddonsSuite) testSecretBasedAuth(ctx context.Context, kc *k8s.Clientset) {
+func (as *AddonsSuite) testSecretBasedAuth(kc *k8s.Clientset) {
+	ctx := as.TContext()
+
 	secretAddonName := "secret-oci-addon"
 	secretName := "test-oci-secret"
 	chartName := "k0s-addon-chart-" + secretAddonName
@@ -521,59 +533,43 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 	ctx := as.Context()
 	as.T().Logf("waiting to see %s release ready in kube API, generation %d", addonName, rev)
 
-	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	kc, err := as.AutopilotClient(as.ControllerNode(0))
 	as.Require().NoError(err)
 
-	chartClient, err := client.New(cfg, client.Options{Scheme: k0sscheme.Scheme})
-	as.Require().NoError(err)
-	var chart helmv1beta1.Chart
-	var lastResourceVersion string
-	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
-		err = chartClient.Get(pollCtx, client.ObjectKey{
-			Namespace: metav1.NamespaceSystem,
-			Name:      "k0s-addon-chart-" + addonName,
-		}, &chart)
-		if err != nil {
-			if ctxErr := context.Cause(ctx); ctxErr != nil {
-				return false, errors.Join(err, ctxErr)
+	var chart *helmv1beta1.Chart
+
+	as.Require().NoError(watch.Charts(kc.HelmV1beta1().Charts(metav1.NamespaceSystem)).
+		WithObjectName("k0s-addon-chart-"+addonName).
+		Until(ctx, func(item *helmv1beta1.Chart) (done bool, err error) {
+			var errs []string
+			if item.Status.ReleaseName == "" {
+				errs = append(errs, "no release name")
 			}
-			as.T().Log("Error while querying for chart:", err)
-			return false, nil
-		}
-		if lastResourceVersion != "" && lastResourceVersion == chart.ResourceVersion {
-			return false, nil // That version has already been inspected.
-		}
+			if item.Generation != rev {
+				errs = append(errs, fmt.Sprintf("expected generation to be %d, but was %d", rev, item.Generation))
+			}
+			if item.Status.Revision != rev {
+				errs = append(errs, fmt.Sprintf("expected revision to be %d, but was %d", rev, item.Status.Revision))
+			}
+			if item.Status.Error != "" {
+				errs = append(errs, fmt.Sprintf("expected error to be empty, but was %q", item.Status.Error))
+			}
 
-		var errs []string
-		if chart.Status.ReleaseName == "" {
-			errs = append(errs, "no release name")
-		}
-		if chart.Generation != rev {
-			errs = append(errs, fmt.Sprintf("expected generation to be %d, but was %d", rev, chart.Generation))
-		}
-		if chart.Status.Revision != rev {
-			errs = append(errs, fmt.Sprintf("expected revision to be %d, but was %d", rev, chart.Status.Revision))
-		}
-		if chart.Status.Error != "" {
-			errs = append(errs, fmt.Sprintf("expected error to be empty, but was %q", chart.Status.Error))
-		}
+			if len(errs) > 0 {
+				as.T().Logf("Release %s doesn't meet criteria yet (version %q): %s", addonName, item.ResourceVersion, strings.Join(errs, "; "))
+				return false, nil
+			}
 
-		lastResourceVersion = chart.ResourceVersion
-		if len(errs) > 0 {
-			as.T().Logf("Test addon release doesn't meet criteria yet (version %q): %s", lastResourceVersion, strings.Join(errs, "; "))
-			return false, nil
-		}
+			chart = item
+			return true, nil
+		}))
 
-		as.Require().Equal(namespace, chart.Status.Namespace)
-		as.Require().Equal(appVersion, chart.Status.AppVersion)
-		as.Require().Equal(namespace, chart.Status.Namespace)
-		as.Require().NotEmpty(chart.Status.ReleaseName)
-		as.Require().Equal(rev, chart.Status.Revision)
-		as.T().Log("Found test addon release:", chart.Name)
-		as.Require().Equal(rev, chart.Generation)
-		return true, nil
-	}))
-	return &chart
+	as.Require().Equal(namespace, chart.Status.Namespace)
+	as.Require().Equal(appVersion, chart.Status.AppVersion)
+	as.Require().Equal(namespace, chart.Status.Namespace)
+	as.T().Log("Found test addon release:", chart.Name)
+
+	return chart
 }
 
 func (as *AddonsSuite) checkCustomValues(releaseName string) error {
@@ -628,6 +624,150 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]any
 	as.PutFile(as.ControllerNode(0), path, buf.String())
 }
 
+// testControllerRestartRecovery tests that charts stuck in pending-install state
+// after controller restart are automatically recovered via the cleanup mechanism.
+// This reproduces issue https://github.com/k0sproject/k0s/issues/7109
+func (as *AddonsSuite) testControllerRestartRecovery(kc *k8s.Clientset) {
+	ctx := as.TContext()
+
+	restartAddonName := "restart-test-addon"
+	chartName := "k0s-addon-chart-" + restartAddonName
+
+	// Create a Chart with slow post-install hook that will be interrupted
+	chart := &helmv1beta1.Chart{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "helm.k0sproject.io/v1beta1",
+			Kind:       "Chart",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      chartName,
+			Namespace: metav1.NamespaceSystem,
+			Finalizers: []string{
+				"helm.k0sproject.io/uninstall-helm-release",
+			},
+		},
+		Spec: helmv1beta1.ChartSpec{
+			ChartName:   as.uploadChart("slow-hook-chart"),
+			ReleaseName: restartAddonName,
+			Version:     "0.1.0",
+			Namespace:   metav1.NamespaceDefault,
+		},
+	}
+
+	// Get k0s client
+	restConfig, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+	k0sClients, err := k0sclientset.NewForConfig(restConfig)
+	as.Require().NoError(err)
+
+	// Create the Chart
+	_, err = k0sClients.HelmV1beta1().Charts(metav1.NamespaceSystem).Create(ctx, chart, metav1.CreateOptions{})
+	as.Require().NoError(err)
+	as.T().Logf("Created Chart %s", chartName)
+
+	// Wait for Helm to create the suspended hook Job, then restart the
+	// controller while install is pending in a deterministic state.
+	hookJobName := restartAddonName + "-postinstall"
+	jobs := kc.BatchV1().Jobs(metav1.NamespaceDefault)
+	jobWatch := watch.FromClient[*batchv1.JobList, batchv1.Job](jobs).
+		WithObjectName(hookJobName).
+		WithErrorCallback(common.RetryWatchErrors(as.T().Logf))
+
+	as.T().Logf("Waiting for hook Job %s to appear...", hookJobName)
+	as.Require().NoError(jobWatch.Until(ctx, func(*batchv1.Job) (bool, error) { return true, nil }))
+	as.T().Log("Hook Job appeared, restarting controller...")
+
+	// Restart controller to interrupt the installation
+	as.Require().NoError(as.StopController(as.ControllerNode(0)))
+	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml", "--enable-dynamic-config"))
+
+	as.T().Logf("Controller restarted, auto-unsuspending hook Job %s...", hookJobName)
+	var wg sync.WaitGroup
+	as.T().Cleanup(wg.Wait)
+	wg.Go(func() {
+		err := jobWatch.Until(ctx, func(job *batchv1.Job) (bool, error) {
+			if job.Spec.Suspend == nil || !*job.Spec.Suspend {
+				return false, nil
+			}
+
+			_, err = jobs.Patch(ctx, hookJobName, types.MergePatchType, []byte(`{"spec":{"suspend":false}}`), metav1.PatchOptions{})
+			if apierrors.IsNotFound(err) {
+				// The hook job may get recreated during recovery.
+				return false, nil
+			}
+
+			as.T().Logf("Unsuspended hook Job (uid=%s)", job.UID)
+			return false, err
+		})
+		if as.Error(err) {
+			as.ErrorIs(err, ctx.Err())
+		}
+	})
+
+	// The cleanup should kick in automatically on next reconciliation
+	// Wait for chart to reach deployed state (recovery complete) by checking the Chart CR status
+	as.T().Log("Waiting for Chart CR to show deployed status...")
+	as.waitForTestRelease(restartAddonName, "1.0", metav1.NamespaceDefault, 1)
+
+	as.T().Logf("Successfully recovered from interrupted install: %s is now deployed", restartAddonName)
+}
+
+func (as *AddonsSuite) uploadChart(chartName string) string {
+	var chartArchive bytes.Buffer
+	gz := gzip.NewWriter(&chartArchive)
+	as.Require().NoError(tarFS(os.DirFS("testdata"), chartName, gz), gz)
+	as.Require().NoError(gz.Close())
+
+	remotePath := path.Join("/tmp", chartName+".tar.gz")
+	for i := range as.ControllerCount {
+		as.WriteFileContent(as.ControllerNode(i), remotePath, chartArchive.Bytes())
+	}
+
+	return remotePath
+}
+
+func tarFS(src fs.FS, path string, out io.Writer) (err error) {
+	tw := tar.NewWriter(out)
+	defer func() {
+		if err == nil {
+			err = tw.Close()
+		}
+	}()
+
+	return fs.WalkDir(src, path, func(name string, entry fs.DirEntry, err error) error {
+		switch {
+		case err != nil || name == ".":
+			return err
+
+		case entry.IsDir():
+			return tw.WriteHeader(&tar.Header{
+				Name:     strings.TrimSuffix(name, "/") + "/",
+				Typeflag: tar.TypeDir,
+				Mode:     0o755,
+			})
+
+		case entry.Type().IsRegular():
+			content, err := fs.ReadFile(src, name)
+			if err != nil {
+				return err
+			}
+			if err := tw.WriteHeader(&tar.Header{
+				Name:     name,
+				Typeflag: tar.TypeReg,
+				Mode:     0o644,
+				Size:     int64(len(content)),
+			}); err != nil {
+				return err
+			}
+			_, err = tw.Write(content)
+			return err
+
+		default:
+			return nil
+		}
+	})
+}
+
 func TestAddonsSuite(t *testing.T) {
 	registryTLSDir := path.Join(t.TempDir(), "registry-tls")
 	require.NoError(t, os.MkdirAll(registryTLSDir, 0755))
@@ -662,6 +802,9 @@ type k0sConfigParams struct {
 
 const k0sConfigWithAddonRawTemplate = `
 spec:
+    api:
+      extraArgs:
+        shutdown-watch-termination-grace-period: 3s
     extensions:
         helm:
           repositories:
