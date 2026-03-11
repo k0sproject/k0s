@@ -56,16 +56,12 @@ func (r *Repository) IsInsecure() bool {
 // Commands run different helm command in the same way as CLI tool
 // This struct isn't thread-safe. Check on a per function basis.
 type Commands struct {
+	log             logrus.FieldLogger
 	registryManager *ociRegistryManager
 
 	repoFile     string
 	helmCacheDir string
 	kubeConfig   string
-}
-
-func logFn(format string, args ...any) {
-	log := logrus.WithField("component", "helm")
-	log.Debugf(format, args...)
 }
 
 var getters = getter.Providers{
@@ -83,7 +79,11 @@ var getters = getter.Providers{
 // If repo is provided, it will be initialized in the temporary environment.
 // If tmpDir is empty, a new temporary directory will be created.
 // Returns the Commands instance and a cleanup function that must be called to remove temporary files.
-func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error) {
+func NewCommands(kubeConfig string, repo *Repository, log logrus.FieldLogger) (*Commands, func(), error) {
+	if log == nil {
+		log = logrus.WithField("component", "helm")
+	}
+
 	// Create temporary directory for ephemeral Helm environment
 	var err error
 	tmpDir, err := os.MkdirTemp("", "k0s-helm-*")
@@ -93,7 +93,7 @@ func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error)
 
 	cleanup := func() {
 		if err := os.RemoveAll(tmpDir); err != nil {
-			logrus.WithError(err).WithField("path", tmpDir).Warn("Failed to clean up temporary Helm directory")
+			log.WithError(err).Warn("Failed to clean up temporary Helm directory")
 		}
 	}
 
@@ -101,8 +101,9 @@ func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error)
 	helmCacheDir := filepath.Join(tmpDir, "cache")
 
 	commands := &Commands{
-		repoFile:        repoFile,
+		log:             log,
 		registryManager: newOCIRegistryManager(),
+		repoFile:        repoFile,
 		helmCacheDir:    helmCacheDir,
 		kubeConfig:      kubeConfig,
 	}
@@ -184,7 +185,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 		WrapConfigFn:     helmFlags.WrapConfigFn, // This contains the retrying round tripper
 	}
 	actionConfig := &action.Configuration{}
-	if err := actionConfig.Init(cfg, namespace, "secret", logFn); err != nil {
+	if err := actionConfig.Init(cfg, namespace, "secret", hc.log.Debugf); err != nil {
 		return nil, err
 	}
 	return actionConfig, nil
