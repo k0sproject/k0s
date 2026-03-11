@@ -154,7 +154,7 @@ func pipeToLogger(wg *sync.WaitGroup, stream string) *os.File {
 		panic(err)
 	}
 
-	dst := NewWriter(logrus.WithFields(logrus.Fields{"component": "k0s", "stream": stream}), 16*1024)
+	dst := NewWriter(logrus.WithFields(logrus.Fields{"component": "k0s", "stream": stream}), logrus.InfoLevel, 16*1024)
 
 	wg.Add(1)
 	go func() {
