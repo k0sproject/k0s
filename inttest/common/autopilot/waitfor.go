@@ -5,15 +5,18 @@ package autopilot
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	"github.com/k0sproject/k0s/inttest/common"
 
+	corev1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
@@ -41,6 +44,48 @@ func WaitForPlanState(ctx context.Context, client apclient.Interface, name strin
 			}
 		})
 	return
+}
+
+// WaitForControlNodeReady watches the named ControlNode until it exists and has
+// its platform labels (kubernetes.io/os and kubernetes.io/arch) set, indicating
+// the autopilot controller has fully registered it.
+func WaitForControlNodeReady(ctx context.Context, client apclient.Interface, name string) (*apv1beta2.ControlNode, error) {
+	var cn *apv1beta2.ControlNode
+	err := watch.ControlNodes(client.AutopilotV1beta2().ControlNodes()).
+		WithObjectName(name).
+		WithErrorCallback(common.RetryWatchErrors(logrus.Infof)).
+		Until(ctx, func(candidate *apv1beta2.ControlNode) (bool, error) {
+			labels := candidate.GetLabels()
+			if labels[corev1.LabelOSStable] != "" && labels[corev1.LabelArchStable] != "" {
+				cn = candidate
+				return true, nil
+			}
+			return false, nil
+		})
+	return cn, err
+}
+
+// WaitForControlNodeSignalError watches the named ControlNode until the
+// k0sproject.io/autopilot-last-error annotation is present and returns the
+// parsed error, or the context times out.
+func WaitForControlNodeSignalError(ctx context.Context, client apclient.Interface, name string) (*apdel.SignalError, error) {
+	var signalError *apdel.SignalError
+	err := watch.ControlNodes(client.AutopilotV1beta2().ControlNodes()).
+		WithObjectName(name).
+		WithErrorCallback(common.RetryWatchErrors(logrus.Infof)).
+		Until(ctx, func(cn *apv1beta2.ControlNode) (bool, error) {
+			raw, ok := cn.GetAnnotations()[apdel.SignalErrorAnnotation]
+			if !ok {
+				return false, nil
+			}
+			var e apdel.SignalError
+			if err := json.Unmarshal([]byte(raw), &e); err != nil {
+				return false, nil
+			}
+			signalError = &e
+			return true, nil
+		})
+	return signalError, err
 }
 
 // WaitForCRDByName waits until the CRD with the given name is established.
