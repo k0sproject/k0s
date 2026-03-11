@@ -100,7 +100,18 @@ and, if enabled as a module, to load the `configs` module: `modprobe configs`.
 
 ### Control Groups (cgroups)
 
-Both [cgroup v1] and [cgroup v2] are supported.
+Both [cgroup v1] and [cgroup v2] are supported. Starting with Kubernetes 1.31 already, [cgroup v1] is in [maintenance mode] and starting in Kubernetes 1.35
+by default kubelet will fail to start if [cgroup v1] is detected on the system. If you want to run Kubernetes with [cgroup v1], you need to explicitly enable
+it by setting `failCgroupV1: false` in kubelet configuration, via k0s [worker profile](worker-node-config.md#kubelet-configuration):
+
+```yaml
+...
+spec:
+  workerProfiles:
+    - name: default # Applies to the default profile which all workers pick up if no profile is specified in the worker startup
+      values:
+        failCgroupV1: false
+```
 
 Required [cgroup] controllers:
 
@@ -124,6 +135,7 @@ Optional cgroup controllers:
 [cgroup v2]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html
 [kubernetes/kubeadm#2335 (comment)]: https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527
 [kubernetes/kubernetes#92287 (comment)]: https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587
+[maintenance mode]: https://kubernetes.io/blog/2024/08/14/kubernetes-1-31-moving-cgroup-v1-support-maintenance-mode/
 
 ### No integration with Name Service Switch (NSS) APIs
 
