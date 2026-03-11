@@ -578,6 +578,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
 		etcdReconciler, err := controller.NewEtcdMemberReconciler(
 			adminClientFactory,
+			nodeName,
 			c.K0sVars,
 			nodeConfig.Spec.Storage.Etcd,
 			leaderElector,
