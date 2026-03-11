@@ -36,7 +36,7 @@ jobs:
 
       - name: Set up Docker Buildx
         if: inputs.target-arch == 'arm'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           endpoint: builders
 
