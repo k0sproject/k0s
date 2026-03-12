@@ -50,6 +50,15 @@ func (*Gone) WatchEvent() {}
 // Decides whether an [Event] is relevant to a consumer or not.
 type Predicate func(Event) bool
 
+// Returns a predicate that rejects [*Established] events and accepts all other
+// events.
+//
+// This is useful when a caller only wants to react to actual file system events
+// and is not interested in the time at which the watch becomes effective.
+func RejectEstablished() Predicate {
+	return func(e Event) bool { _, ok := e.(*Established); return !ok }
+}
+
 // Returns a predicate that rejects [*Touched] and [*Gone] events for names for
 // which deny returns true.
 //
