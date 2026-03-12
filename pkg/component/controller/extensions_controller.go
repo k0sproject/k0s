@@ -15,7 +15,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/bombsimon/logrusr/v4"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
@@ -28,9 +27,11 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
@@ -414,10 +415,6 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
-	gk := schema.GroupKind{
-		Group: helmv1beta1.GroupName,
-		Kind:  "Chart",
-	}
 
 	mgr, err := controllerruntime.NewManager(clientConfig, crman.Options{
 		Scheme: k0sscheme.Scheme,
@@ -430,16 +427,27 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
-	if err := retry.Do(func() error {
-		_, err := mgr.GetRESTMapper().RESTMapping(gk)
-		if err != nil {
-			ec.L.Warn("Extensions CRD is not yet ready, waiting before starting ExtensionsController")
-			return err
+
+	for chart, sometimes := (schema.GroupKind{Group: helmv1beta1.GroupName, Kind: "Chart"}), (&rate.Sometimes{Every: 5}); ; {
+		_, err := mgr.GetRESTMapper().RESTMapping(chart)
+		if err == nil {
+			ec.L.Info(chart, " CRD is ready, going nuts")
+			break
 		}
-		ec.L.Info("Extensions CRD is ready, going nuts")
-		return nil
-	}, retry.Context(ctx)); err != nil {
-		return nil, fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registered, check CRD registration reconciler: %w", err)
+
+		sometimes.Do(func() {
+			if meta.IsNoMatchError(err) {
+				ec.L.Warn(chart, " CRD is not yet ready, waiting before starting ExtensionsController")
+			} else {
+				ec.L.WithError(err).Error("Failed to check for ", chart, " CRD readiness")
+			}
+		})
+
+		select {
+		case <-time.After(2 * time.Second):
+		case <-ctx.Done():
+			return nil, fmt.Errorf("while waiting for %s CRD: %w (last error: %w)", chart, context.Cause(ctx), err)
+		}
 	}
 
 	if err := builder.
