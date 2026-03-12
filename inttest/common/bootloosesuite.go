@@ -18,7 +18,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -424,7 +423,7 @@ func (s *BootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 	}
 
 	if keepEnvironment(t) {
-		t.Logf("bootloose cluster left intact for debugging; needs to be manually cleaned up with: bootloose delete --config %s", path.Join(s.clusterDir, "bootloose.yaml"))
+		t.Logf("bootloose cluster left intact for debugging; needs to be manually cleaned up with: bootloose delete --config %s", filepath.Join(s.clusterDir, "bootloose.yaml"))
 		return
 	}
 
@@ -1204,7 +1203,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 	cfg := config.Config{
 		Cluster: config.Cluster{
 			Name:       s.T().Name(),
-			PrivateKey: path.Join(dir, "id_rsa"),
+			PrivateKey: filepath.Join(dir, "id_rsa"),
 		},
 		Machines: []config.MachineReplicas{
 			{
@@ -1299,7 +1298,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 		return fmt.Errorf("failed to marshal bootloose configuration: %w", err)
 	}
 
-	if err = os.WriteFile(path.Join(dir, "bootloose.yaml"), bootlooseYaml, 0700); err != nil {
+	if err = os.WriteFile(filepath.Join(dir, "bootloose.yaml"), bootlooseYaml, 0700); err != nil {
 		return fmt.Errorf("failed to write bootloose configuration to file: %w", err)
 	}
 
