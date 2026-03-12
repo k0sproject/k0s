@@ -5,7 +5,7 @@ package helm
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/cloudflare/cfssl/csr"
@@ -36,8 +36,8 @@ func initCA(t *testing.T, certsDir string) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, os.WriteFile(path.Join(certsDir, caCertFilename), certData, 0644))
-	require.NoError(t, os.WriteFile(path.Join(certsDir, caKeyFilename), keyData, 0600))
+	require.NoError(t, os.WriteFile(filepath.Join(certsDir, caCertFilename), certData, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(certsDir, caKeyFilename), keyData, 0600))
 }
 
 func TestOCIRegistryManager_AddRegistry(t *testing.T) {
@@ -234,7 +234,7 @@ func TestOCIRegistryManager_GetRegistryClient_Settings(t *testing.T) {
 			name: "Valid OCI Registry with self-signed CA cert",
 			repoCfg: v1beta1.Repository{
 				URL:    testOCIRegistryURL,
-				CAFile: path.Join(certsDir, caCertFilename),
+				CAFile: filepath.Join(certsDir, caCertFilename),
 			},
 		},
 	}
