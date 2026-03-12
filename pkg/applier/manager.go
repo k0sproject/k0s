@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 	"slices"
 	"time"
@@ -136,7 +135,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 	stacks := make(map[string]stack, len(dirs))
 
 	for _, dir := range dirs {
-		m.createStack(ctx, stacks, path.Join(m.bundleDir, dir))
+		m.createStack(ctx, stacks, filepath.Join(m.bundleDir, dir))
 	}
 
 	for {

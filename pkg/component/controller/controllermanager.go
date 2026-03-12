@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -77,7 +76,7 @@ func (a *Manager) Init(_ context.Context) error {
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
-	if err := os.Chown(path.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
+	if err := os.Chown(filepath.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
 		logrus.Warn("failed to change permissions for the ca.key: ", err)
 	}
 	return assets.Stage(a.K0sVars.BinDir, kubeControllerManagerComponent)
@@ -95,12 +94,12 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		"authentication-kubeconfig":        ccmAuthConf,
 		"authorization-kubeconfig":         ccmAuthConf,
 		"kubeconfig":                       ccmAuthConf,
-		"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
-		"cluster-signing-cert-file":        path.Join(a.K0sVars.CertRootDir, "ca.crt"),
-		"cluster-signing-key-file":         path.Join(a.K0sVars.CertRootDir, "ca.key"),
-		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
-		"root-ca-file":                     path.Join(a.K0sVars.CertRootDir, "ca.crt"),
-		"service-account-private-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
+		"client-ca-file":                   filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"cluster-signing-cert-file":        filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"cluster-signing-key-file":         filepath.Join(a.K0sVars.CertRootDir, "ca.key"),
+		"requestheader-client-ca-file":     filepath.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
+		"root-ca-file":                     filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"service-account-private-key-file": filepath.Join(a.K0sVars.CertRootDir, "sa.key"),
 		"cluster-cidr":                     clusterConfig.Spec.Network.BuildPodCIDR(),
 		"service-cluster-ip-range":         a.ServiceClusterIPRange,
 		"profiling":                        "false",

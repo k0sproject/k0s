@@ -21,7 +21,7 @@ package linux
 import (
 	"errors"
 	"fmt"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
@@ -91,7 +91,7 @@ func TestCgroupsProbes_Probe(t *testing.T) {
 }
 
 func TestCgroupsProbes_Probe_NonExistent(t *testing.T) {
-	nonExistent := path.Join(t.TempDir(), "non-existent")
+	nonExistent := filepath.Join(t.TempDir(), "non-existent")
 	path := probes.ProbePath{t.Name()}
 	reporter := new(test_sysinfo.MockReporter)
 	reporter.On("Reject", mock.Anything, mock.Anything, "").Return(nil)
