@@ -47,6 +47,26 @@ type Gone struct {
 
 func (*Gone) WatchEvent() {}
 
+// Decides whether an [Event] is relevant to a consumer or not.
+type Predicate func(Event) bool
+
+// Returns a predicate that rejects [*Touched] and [*Gone] events for names for
+// which deny returns true.
+//
+// All other events are always accepted.
+func RejectNames(deny func(string) bool) Predicate {
+	return func(e Event) bool {
+		switch e := e.(type) {
+		case *Touched:
+			return !deny(e.Name)
+		case *Gone:
+			return !deny(e.Name)
+		default:
+			return true
+		}
+	}
+}
+
 // Consumes [Event] values.
 type Handler interface {
 	Handle(e Event)

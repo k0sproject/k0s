@@ -184,3 +184,85 @@ func TestDir(t *testing.T) {
 		}
 	})
 }
+
+func TestOnDirChange(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	type change struct {
+		seq  uint
+		when time.Time
+	}
+
+	var lastChange value.Latest[change]
+
+	dir := t.TempDir()
+
+	done := make(chan error, 1)
+	delay := 350 * time.Millisecond
+	start := time.Now()
+	go func() {
+		var numChanges uint
+		done <- (&OnDirChange{
+			Delay:   delay,
+			Accepts: RejectNames(func(name string) bool { return name == "bar" }),
+		}).Run(ctx, dir, func(ctx context.Context) error {
+			now := time.Now()
+			numChanges++
+			lastChange.Set(change{numChanges, now})
+			return nil
+		})
+	}()
+
+	_, changed := lastChange.Peek()
+	select {
+	case <-changed:
+		lastChange, _ := lastChange.Peek()
+		assert.EqualValues(t, 1, lastChange.seq)
+		observedDelay := lastChange.when.Sub(start)
+		assert.GreaterOrEqual(t, observedDelay, delay)
+	case err := <-done:
+		require.Failf(t, "Returned unexpectedly", "%v", err)
+	case <-time.After(3 * delay):
+		require.Fail(t, "Didn't invoke changed callback in time")
+	}
+
+	var lastWrite time.Time
+	for start := time.Now(); time.Since(start) <= delay; time.Sleep(delay / 5) {
+		lastWrite = time.Now()
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "foo"), nil, 0644))
+		lastChange, _ := lastChange.Peek()
+		require.EqualValues(t, 1, lastChange.seq)
+	}
+
+	_, changed = lastChange.Peek()
+	select {
+	case <-changed:
+		assert.GreaterOrEqual(t, time.Since(lastWrite), delay)
+	case err := <-done:
+		require.Failf(t, "Returned unexpectedly", "%v", err)
+	case <-time.After(3 * delay):
+		require.Fail(t, "Didn't invoke changed callback in time")
+	}
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "bar"), nil, 0644))
+	time.Sleep(delay + delay/2)
+
+	if lastChange, _ := lastChange.Peek(); true {
+		assert.EqualValues(t, 2, lastChange.seq)
+	}
+
+	cancel()
+
+	select {
+	case err := <-done:
+		assert.NoError(t, err)
+	case <-time.After(3 * delay):
+		require.Fail(t, "Didn't return in time")
+	}
+
+	if lastChange, _ := lastChange.Peek(); true {
+		assert.EqualValues(t, 2, lastChange.seq)
+		assert.GreaterOrEqual(t, lastChange.when.Sub(lastWrite), delay)
+	}
+}
