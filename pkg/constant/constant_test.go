@@ -69,16 +69,27 @@ func TestKubernetesModuleVersions(t *testing.T) {
 			}
 		},
 		func(t *testing.T, pkgPath string, module *packages.Module) bool {
-			modVer := module.Version
+			expected := "v" + kubernetesVersion
 			if module.Path != "k8s.io/kubernetes" {
 				// All modules besides Kubernetes itself use v0 instead of v1.
-				modVer = strings.Replace(modVer, "v0.", "v1.", 1)
+				if suffix, found := strings.CutPrefix(expected, "v1."); found {
+					expected = "v0." + suffix
+				}
 			}
 
-			return !assert.Equal(t, "v"+kubernetesVersion, modVer,
+			ok := assert.Equal(t, expected, module.Version,
 				"Module version for package %s doesn't match: %+#v",
-				pkgPath, module,
-			)
+				pkgPath, module)
+			if module.Replace == nil {
+				return ok
+			}
+
+			ok = assert.Nil(t, module.Replace.Replace) && ok
+			ok = assert.Equal(t, module.Path, module.Replace.Path) && ok
+			ok = assert.Equal(t, expected, module.Replace.Version,
+				"Replacing module version for package %s doesn't match: %+#v",
+				pkgPath, module.Replace) && ok
+			return ok
 		},
 	)
 }
@@ -94,9 +105,11 @@ func TestEtcdModuleVersions(t *testing.T) {
 				strings.HasSuffix(modulePath, "/v"+etcdVersionParts[0])
 		},
 		func(t *testing.T, pkgPath string, module *packages.Module) bool {
-			return !assert.Equal(t, "v"+etcdVersion, module.Version,
+			ok := assert.Equal(t, "v"+etcdVersion, module.Version,
 				"Module version for package %s doesn't match: %+#v",
 			)
+			ok = assert.Nil(t, module.Replace) && ok
+			return ok
 		},
 	)
 }
@@ -109,10 +122,11 @@ func TestContainerdModuleVersions(t *testing.T) {
 			return modulePath == "github.com/containerd/containerd"
 		},
 		func(t *testing.T, pkgPath string, module *packages.Module) bool {
-			return !assert.Equal(t, "v"+containerdVersion, module.Version,
+			ok := assert.Equal(t, "v"+containerdVersion, module.Version,
 				"Module version for package %s doesn't match: %+#v",
-				pkgPath, module,
 			)
+			ok = assert.Nil(t, module.Replace) && ok
+			return ok
 		},
 	)
 }
@@ -125,10 +139,11 @@ func TestKonnectivityModuleVersions(t *testing.T) {
 			return strings.HasPrefix(modulePath, "sigs.k8s.io/apiserver-network-proxy/")
 		},
 		func(t *testing.T, pkgPath string, module *packages.Module) bool {
-			return !assert.Equal(t, "v"+konnectivityVersion, module.Version,
+			ok := assert.Equal(t, "v"+konnectivityVersion, module.Version,
 				"Module version for package %s doesn't match: %+#v",
-				pkgPath, module,
 			)
+			ok = assert.Nil(t, module.Replace) && ok
+			return ok
 		},
 	)
 }
@@ -161,15 +176,10 @@ func checkPackageModules(t *testing.T, filter func(modulePath string) bool, chec
 
 	packages.Visit(pkgs, func(p *packages.Package) bool {
 		if p.Module != nil && filter(p.Module.Path) {
-			actual := p.Module
-			for actual.Replace != nil {
-				actual = actual.Replace
-			}
-
-			if !failedModules[actual.Path] {
+			if !failedModules[p.Module.Path] {
 				numMatched++
-				if !check(t, p.PkgPath, actual) {
-					failedModules[actual.Path] = true
+				if !check(t, p.PkgPath, p.Module) {
+					failedModules[p.Module.Path] = true
 				}
 			}
 		}
