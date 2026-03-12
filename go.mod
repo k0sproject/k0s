@@ -61,7 +61,7 @@ require (
 	golang.org/x/time v0.15.0
 	golang.org/x/tools v0.42.0
 	google.golang.org/grpc v1.79.2
-	helm.sh/helm/v3 v3.20.0
+	helm.sh/helm/v3 v3.20.1
 	modernc.org/sqlite v1.46.1
 	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.23.3
