@@ -204,8 +204,9 @@ func TestOnDirChange(t *testing.T) {
 	go func() {
 		var numChanges uint
 		done <- (&OnDirChange{
-			Delay:   delay,
-			Accepts: RejectNames(func(name string) bool { return name == "bar" }),
+			InitialDelay: delay / 2,
+			Delay:        delay,
+			Accepts:      RejectNames(func(name string) bool { return name == "bar" }),
 		}).Run(ctx, dir, func(ctx context.Context) error {
 			now := time.Now()
 			numChanges++
@@ -219,8 +220,9 @@ func TestOnDirChange(t *testing.T) {
 	case <-changed:
 		lastChange, _ := lastChange.Peek()
 		assert.EqualValues(t, 1, lastChange.seq)
-		observedDelay := lastChange.when.Sub(start)
-		assert.GreaterOrEqual(t, observedDelay, delay)
+		observedInitialDelay := lastChange.when.Sub(start)
+		assert.GreaterOrEqual(t, observedInitialDelay, delay/2)
+		assert.Less(t, observedInitialDelay, delay)
 	case err := <-done:
 		require.Failf(t, "Returned unexpectedly", "%v", err)
 	case <-time.After(3 * delay):

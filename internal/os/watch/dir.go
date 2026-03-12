@@ -32,8 +32,13 @@ func Dir(ctx context.Context, path string, handler Handler) error {
 //
 // The zero value is valid, but usually callers will set at least Delay.
 type OnDirChange struct {
-	// The quiet period required after the last accepted event before firing a change.
+	// The quiet period required after the last accepted event before firing a
+	// subsequent change.
 	Delay time.Duration
+
+	// Like Delay, but used for the first change. If zero, the first accepted
+	// event uses Delay as well.
+	InitialDelay time.Duration
 
 	// Decides which events participate in the debounce logic and reset the
 	// quiet period. If not set, all events are accepted.
@@ -76,7 +81,7 @@ func (opts OnDirChange) Run(ctx context.Context, path string, onChange func(cont
 	}()
 
 waitForChange:
-	for {
+	for initial := true; ; {
 		select {
 		case _, ok := <-changed:
 			if !ok {
@@ -84,7 +89,11 @@ waitForChange:
 			}
 
 			for {
-				timer.Reset(opts.Delay - time.Since(*lastActivity.Load()))
+				delay := opts.Delay
+				if initial && opts.InitialDelay != 0 {
+					delay = opts.InitialDelay
+				}
+				timer.Reset(delay - time.Since(*lastActivity.Load()))
 
 				select {
 				case <-timer.C:
@@ -97,6 +106,7 @@ waitForChange:
 						if err := onChange(ctx); err != nil {
 							return err
 						}
+						initial = false
 						continue waitForChange
 					}
 
