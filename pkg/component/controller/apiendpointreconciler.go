@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,7 +36,7 @@ type APIEndpointReconciler struct {
 
 	externalAddress   string
 	apiServerPort     int
-	leaderElector     leaderelector.Interface
+	leaderStatus      func() leaderelection.Status
 	kubeClientFactory kubeutil.ClientFactoryInterface
 	resolver          resolver
 	afnet             string
@@ -45,7 +45,7 @@ type APIEndpointReconciler struct {
 }
 
 // NewEndpointReconciler creates new endpoint reconciler
-func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface, resolver resolver, primaryAddressFamily v1beta1.PrimaryAddressFamilyType) *APIEndpointReconciler {
+func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderStatus func() leaderelection.Status, kubeClientFactory kubeutil.ClientFactoryInterface, resolver resolver, primaryAddressFamily v1beta1.PrimaryAddressFamilyType) *APIEndpointReconciler {
 	var afnet string
 	switch primaryAddressFamily {
 	case v1beta1.PrimaryFamilyIPv4:
@@ -58,7 +58,7 @@ func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector lead
 		logger:            logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
 		externalAddress:   nodeConfig.Spec.API.ExternalHost(),
 		apiServerPort:     nodeConfig.Spec.API.ExternalPort(),
-		leaderElector:     leaderElector,
+		leaderStatus:      leaderStatus,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
 		resolver:          resolver,
@@ -101,7 +101,7 @@ func (a *APIEndpointReconciler) Stop() error {
 }
 
 func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
-	if !a.leaderElector.IsLeader() {
+	if a.leaderStatus() != leaderelection.StatusLeading {
 		a.logger.Debug("Not the leader, not reconciling API endpoints")
 		return nil
 	}
