@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -155,7 +154,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 	if err != nil {
 		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %w", err)
 	}
-	bm.discoverSteps(bm.tmpDir+"/k0s.yaml", cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
+	bm.discoverSteps(filepath.Join(bm.tmpDir, "k0s.yaml"), cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
 	logrus.Info("Starting restore")
 
 	for _, step := range bm.steps {
@@ -168,7 +167,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 }
 
 func (bm Manager) getConfigForRestore() (*v1beta1.ClusterConfig, error) {
-	configFromBackup := path.Join(bm.tmpDir, "k0s.yaml")
+	configFromBackup := filepath.Join(bm.tmpDir, "k0s.yaml")
 	logrus.Debugf("Using k0s.yaml from: %s", configFromBackup)
 
 	bytes, err := os.ReadFile(configFromBackup)

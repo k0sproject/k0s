@@ -5,7 +5,7 @@ package helm
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/cloudflare/cfssl/csr"
@@ -34,8 +34,8 @@ func initCA(t *testing.T, certsDir string) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, os.WriteFile(path.Join(certsDir, caCertFilename), certData, 0644))
-	require.NoError(t, os.WriteFile(path.Join(certsDir, caKeyFilename), keyData, 0600))
+	require.NoError(t, os.WriteFile(filepath.Join(certsDir, caCertFilename), certData, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(certsDir, caKeyFilename), keyData, 0600))
 }
 
 func TestOCIRegistryManager_AddRegistry(t *testing.T) {
@@ -231,7 +231,7 @@ func TestOCIRegistryManager_GetRegistryClient_Settings(t *testing.T) {
 			name: "Valid OCI Registry with self-signed CA cert",
 			repoCfg: Repository{
 				URL:    testOCIRegistryURL,
-				CAFile: path.Join(certsDir, caCertFilename),
+				CAFile: filepath.Join(certsDir, caCertFilename),
 			},
 		},
 	}
@@ -299,8 +299,8 @@ func TestOCIRegistryManager_mTLS_Success(t *testing.T) {
 	initCA(t, certsDir)
 
 	// reuse CA cert as dummy client cert
-	clientCert := path.Join(certsDir, caCertFilename)
-	clientKey := path.Join(certsDir, caKeyFilename)
+	clientCert := filepath.Join(certsDir, caCertFilename)
+	clientKey := filepath.Join(certsDir, caKeyFilename)
 
 	m := newOCIRegistryManager()
 
