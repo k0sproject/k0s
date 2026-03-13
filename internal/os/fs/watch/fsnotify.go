@@ -15,14 +15,18 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+type fsnotifyWatcher fsnotify.Watcher
+
+func (w *fsnotifyWatcher) Close() error { return (*fsnotify.Watcher)(w).Close() }
+
 func (d *dirWatch) runFSNotify(ctx context.Context) (err error) {
-	watcher, err := fsnotify.NewWatcher()
+	watcher, err := newFSNotifyWatcher()
 	if err != nil {
 		return fmt.Errorf("failed to create watcher: %w", err)
 	}
 	defer func() { err = errors.Join(err, watcher.Close()) }()
 
-	if err := watcher.Add(d.path); err != nil {
+	if err := watcher.add(d.path); err != nil {
 		return fmt.Errorf("failed to watch: %w", err)
 	}
 

@@ -18,6 +18,7 @@ import (
 	fswatch "github.com/k0sproject/k0s/internal/os/fs/watch"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/sync/activity"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
@@ -202,6 +203,7 @@ func (c *Component) setupConfig() error {
 
 func (c *Component) watchDropinConfigs(ctx context.Context) {
 	log := logrus.WithField("component", "containerd")
+	ctx = internallog.AttachToContext(ctx, log)
 
 	var wg sync.WaitGroup
 	defer wg.Wait()

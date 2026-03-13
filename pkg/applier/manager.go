@@ -15,6 +15,7 @@ import (
 	fswatch "github.com/k0sproject/k0s/internal/os/fs/watch"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -101,7 +102,8 @@ func (m *Manager) runWatchers(ctx context.Context) {
 		}
 	}()
 
-	err := fswatch.Dir(ctx, m.bundleDir, fswatch.HandlerFunc(func(e fswatch.Event) {
+	watchCtx := internallog.AttachToContext(ctx, m.log)
+	err := fswatch.Dir(watchCtx, m.bundleDir, fswatch.HandlerFunc(func(e fswatch.Event) {
 		switch e := e.(type) {
 		case *fswatch.Established:
 			// Add all directories after activating the watch. Doing so before

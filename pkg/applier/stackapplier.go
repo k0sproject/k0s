@@ -13,6 +13,7 @@ import (
 	"github.com/k0sproject/k0s/internal/sync/activity"
 
 	"github.com/avast/retry-go"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -62,6 +63,7 @@ func (s *StackApplier) Run(ctx context.Context) error {
 		})
 	})
 
+	ctx = internallog.AttachToContext(ctx, s.log)
 	return fswatch.Dir(ctx, s.path, fswatch.HandlerFunc(func(e fswatch.Event) {
 		// Ignore changes to paths that aren't manifest files.
 		if e, ok := e.(*fswatch.Changed); ok {
