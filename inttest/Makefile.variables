@@ -68,6 +68,8 @@ smoketests := \
 	check-network-conformance-calico-ipv6-nft \
 	check-network-conformance-calico-nft \
 	check-network-conformance-kuberouter \
+	check-network-conformance-kuberouter-ipv6 \
+	check-network-conformance-kuberouter-ipv6-nft \
 	check-network-conformance-kuberouter-nft \
 	check-nllb \
 	check-nllb-ipv6 \
@@ -91,4 +93,6 @@ ipv6_smoketests := \
 	check-kuberouter-ipv6 \
 	check-network-conformance-calico-ipv6 \
 	check-network-conformance-calico-ipv6-nft \
+	check-network-conformance-kuberouter-ipv6 \
+	check-network-conformance-kuberouter-ipv6-nft \
 	check-nllb-ipv6
