@@ -43,6 +43,7 @@ With the controller subcommand you can setup a single node cluster by running:
 	
 
 Flags:
+      --api-server-stop-timeout duration               time to wait for the API server to stop
   -c, --config string                                  config file, use '-' to read the config from stdin (default `+defaultConfigPath+`)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --data-dir string                                Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default `+defaultDataDir+`)
