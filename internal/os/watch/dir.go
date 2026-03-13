@@ -22,8 +22,11 @@ var ErrWatchedDirectoryGone = errors.New("watched directory is gone")
 //   - [*Gone] is emitted for entries that disappear.
 //
 // The function runs until ctx is done or watching fails.
+//
+// On Linux, watch initialization failures caused by inotify may fall back to
+// directory polling.
 func Dir(ctx context.Context, path string, handler Handler) error {
-	return (&dirWatch{path, handler}).runFSNotify(ctx)
+	return watchDir(ctx, &dirWatch{path, handler})
 }
 
 // Debounces accepted watch events into "changes". A change is reported by

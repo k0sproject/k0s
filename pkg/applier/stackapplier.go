@@ -10,6 +10,7 @@ import (
 	"time"
 
 	oswatch "github.com/k0sproject/k0s/internal/os/watch"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/avast/retry-go"
@@ -49,6 +50,7 @@ func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInte
 
 // Run watches the stack for updates and executes the initial apply.
 func (s *StackApplier) Run(ctx context.Context) error {
+	ctx = internallog.AttachToContext(ctx, s.log)
 	return oswatch.OnDirChange{
 		Delay: 1 * time.Second,
 		Accepts: oswatch.RejectNames(func(name string) bool {

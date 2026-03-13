@@ -25,6 +25,7 @@ import (
 	oswatch "github.com/k0sproject/k0s/internal/os/watch"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -226,6 +227,7 @@ func (c *Component) setupConfig() error {
 
 func (c *Component) watchDropinConfigs(ctx context.Context) {
 	log := logrus.WithField("component", "containerd")
+	ctx = internallog.AttachToContext(ctx, log)
 
 	if err := (oswatch.OnDirChange{
 		Delay:   3 * time.Second,
