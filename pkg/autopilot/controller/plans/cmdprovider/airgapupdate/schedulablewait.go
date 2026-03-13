@@ -5,6 +5,7 @@ package airgapupdate
 
 import (
 	"context"
+	"strings"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -30,6 +31,7 @@ func (aup *airgapupdate) SchedulableWait(ctx context.Context, planID string, cmd
 
 	if appku.IsNotRecoverable(status.AirgapUpdate.Workers) {
 		logger.Info("Plan is non-recoverable due to apply failure")
+		status.Description = buildFailureSummary(status.AirgapUpdate.Workers)
 		return appc.PlanApplyFailed, false, nil
 	}
 
@@ -76,6 +78,7 @@ func (aup *airgapupdate) reconcileSignalNodeStatusTarget(ctx context.Context, pl
 
 						if signalData.Status.Status == apsigcomm.Failed || signalData.Status.Status == apsigcomm.FailedDownload {
 							signalNodes[i].State = appc.SignalApplyFailed
+							signalNodes[i].Description = delegate.ReadSignalError(signalNode)
 						}
 
 						if signalData.Status.Status == apsigcomm.Completed {
@@ -128,4 +131,18 @@ func countPlanCommandTargetStatus(nodes []apv1beta2.PlanCommandTargetStatus) (pe
 	}
 
 	return
+}
+
+// buildFailureSummary collects per-node descriptions from failed nodes into a single summary string,
+// e.g. "worker0: FailedDownload: checksum mismatch; worker1: FailedDownload: checksum mismatch".
+func buildFailureSummary(groups ...[]apv1beta2.PlanCommandTargetStatus) string {
+	var parts []string
+	for _, group := range groups {
+		for _, node := range group {
+			if node.State == appc.SignalApplyFailed && node.Description != "" {
+				parts = append(parts, node.Name+": "+node.Description)
+			}
+		}
+	}
+	return strings.Join(parts, "; ")
 }
