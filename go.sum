@@ -548,8 +548,8 @@ github.com/vishvananda/netlink v1.3.1 h1:3AEMt62VKqz90r0tmNhog0r/PpWKmrEShJU0wJW
 github.com/vishvananda/netlink v1.3.1/go.mod h1:ARtKouGSTGchR8aMwmkzC0qiNPrrWO5JS/XMVl45+b4=
 github.com/vishvananda/netns v0.0.5 h1:DfiHV+j8bA32MFM7bfEunvT8IAqQ/NzSJHtcmW5zdEY=
 github.com/vishvananda/netns v0.0.5/go.mod h1:SpkAiCQRtJ6TvvxPnOSyH3BMl6unz3xZlaprSwhNNJM=
-github.com/vmware-tanzu/sonobuoy v0.57.3 h1:9M2SkUDP6JXE1lBYCrqnBOTl35A89Sh/LvON+Hmwwrg=
-github.com/vmware-tanzu/sonobuoy v0.57.3/go.mod h1:O97H72QEWgbMDmItVB4+rg5ZNxxKN+FvBe5tB2QhmuA=
+github.com/vmware-tanzu/sonobuoy v0.57.4 h1:a0kUzG0UWQo7if/QriWxl9PJ5rsjQwTCqbwA9+SqwCA=
+github.com/vmware-tanzu/sonobuoy v0.57.4/go.mod h1:dNRqFe/lScz55dxwy5Bp5K/D3PZInNH0Hzs5MoqChkc=
 github.com/weppos/publicsuffix-go v0.13.1-0.20210123135404-5fd73613514e/go.mod h1:HYux0V0Zi04bHNwOHy4cXJVz/TQjYonnF6aoYhj+3QE=
 github.com/weppos/publicsuffix-go v0.15.1-0.20210511084619-b1f36a2d6c0b h1:FsyNrX12e5BkplJq7wKOLk0+C6LZ+KGXvuEcKUYm5ss=
 github.com/weppos/publicsuffix-go v0.15.1-0.20210511084619-b1f36a2d6c0b/go.mod h1:HYux0V0Zi04bHNwOHy4cXJVz/TQjYonnF6aoYhj+3QE=
