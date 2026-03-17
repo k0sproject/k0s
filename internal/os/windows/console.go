@@ -19,7 +19,7 @@ var (
 
 // Use the console of the parent of the current process.
 //
-// https://learn.microsoft.com/en-us/windows/console/generateconsolectrlevent#parameters
+// https://learn.microsoft.com/en-us/windows/console/attachconsole#parameters
 const ATTACH_PARENT_PROCESS = ^uint32(0) // -1
 
 // Detaches the calling process from its console.
