@@ -1,6 +1,6 @@
-//go:build unix && !linux
+//go:build linux
 
-// SPDX-FileCopyrightText: 2020 k0s authors
+// SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
 package supervisor
@@ -8,11 +8,12 @@ package supervisor
 import (
 	"os"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 // DetachAttr creates the proper syscall attributes to run the managed processes.
-// On non-Linux Unix systems, RequiredPrivileges are not translated as ambient
-// capabilities are not supported.
+// The RequiredPrivileges are translated into Linux-specific ambient capabilities.
 func DetachAttr(uid, gid int, privs RequiredPrivileges) *syscall.SysProcAttr {
 	var creds *syscall.Credential
 
@@ -23,9 +24,15 @@ func DetachAttr(uid, gid int, privs RequiredPrivileges) *syscall.SysProcAttr {
 		}
 	}
 
+	var ambientCaps []uintptr
+	if privs.BindsPrivilegedPorts {
+		ambientCaps = []uintptr{unix.CAP_NET_BIND_SERVICE}
+	}
+
 	return &syscall.SysProcAttr{
-		Setpgid:    true,
-		Pgid:       0,
-		Credential: creds,
+		Setpgid:     true,
+		Pgid:        0,
+		Credential:  creds,
+		AmbientCaps: ambientCaps,
 	}
 }
