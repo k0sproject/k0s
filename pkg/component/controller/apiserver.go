@@ -90,9 +90,9 @@ func (a *APIServer) Init(_ context.Context) error {
 	return err
 }
 
-// Run runs kube api
-func (a *APIServer) Start(ctx context.Context) error {
-	logrus.Info("Starting kube-apiserver")
+// buildSupervisor constructs and configures the supervisor for the kube-apiserver
+// without starting it. This allows for testing the configuration logic independently.
+func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
 	args := stringmap.StringMap{
 		"advertise-address":                a.NodeConfig.Spec.API.Address,
 		"secure-port":                      strconv.Itoa(a.NodeConfig.Spec.API.Port),
@@ -129,7 +129,7 @@ func (a *APIServer) Start(ctx context.Context) error {
 	if a.EnableKonnectivity {
 		err := a.writeKonnectivityConfig()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		args["egress-selector-config-file"] = filepath.Join(a.K0sVars.DataDir, "konnectivity.conf")
 		apiAudiences = append(apiAudiences, "system:konnectivity-server")
@@ -221,7 +221,7 @@ func (a *APIServer) Start(ctx context.Context) error {
 	}
 	apiServerArgs = append(apiServerArgs, a.NodeConfig.Spec.API.RawArgs...)
 
-	a.supervisor = &supervisor.Supervisor{
+	sup := &supervisor.Supervisor{
 		Name:        kubeAPIComponentName,
 		BinPath:     a.executablePath,
 		RunDir:      a.K0sVars.RunDir,
@@ -231,11 +231,30 @@ func (a *APIServer) Start(ctx context.Context) error {
 		TimeoutStop: stopTimeout,
 	}
 
+	// If the API port is less than 1024, the process needs to bind to a privileged port
+	if a.NodeConfig.Spec.API.Port < 1024 {
+		sup.RequiredPrivileges.BindsPrivilegedPorts = true
+		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
+	}
+
 	etcdArgs, err := getEtcdArgs(a.NodeConfig.Spec.Storage, a.K0sVars)
+	if err != nil {
+		return nil, err
+	}
+	sup.Args = append(sup.Args, etcdArgs...)
+
+	return sup, nil
+}
+
+// Run runs kube api
+func (a *APIServer) Start(ctx context.Context) error {
+	logrus.Info("Starting kube-apiserver")
+
+	var err error
+	a.supervisor, err = a.buildSupervisor()
 	if err != nil {
 		return err
 	}
-	a.supervisor.Args = append(a.supervisor.Args, etcdArgs...)
 
 	return a.supervisor.Supervise(ctx)
 }
