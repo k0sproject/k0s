@@ -116,13 +116,11 @@ func TestEtcdModuleVersions(t *testing.T) {
 
 func TestContainerdModuleVersions(t *testing.T) {
 	containerdVersion := getVersion(t, "containerd")
+	containerdPkgPath := regexp.MustCompile("^github.com/containerd/containerd(/v[0-9]+)?$")
 
-	assertPackageModules(t,
-		func(modulePath string) bool {
-			return modulePath == "github.com/containerd/containerd/v2"
-		},
+	assertPackageModules(t, containerdPkgPath.MatchString,
 		func(t *testing.T, pkgPath string, module *packages.Module) bool {
-			ok := assert.Equal(t, "v"+containerdVersion, module.Version,
+			ok := module.Indirect || assert.Equal(t, "v"+containerdVersion, module.Version,
 				"Module version for package %s doesn't match: %+#v",
 			)
 			ok = assert.Nil(t, module.Replace) && ok
