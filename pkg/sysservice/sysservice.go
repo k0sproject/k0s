@@ -69,12 +69,10 @@ func New(spec Spec, opts ...Option) (Service, error) {
 	switch kind {
 	case "openrc":
 		return newOpenRC(spec, cfg), nil
+	case "systemd":
+		return newSystemd(spec, cfg), nil
 	case "windows":
 		return newWindows(spec, cfg), nil
-		/*
-			case "systemd":
-				return newSystemd(spec, cfg), nil
-		*/
 	default:
 		return nil, errors.New("unsupported kind: " + kind)
 	}
