@@ -33,6 +33,17 @@ bootloose_alpine_build_cmdline := \
 	$(DOCKER) build --progress=plain --build-arg TARGETARCH=$(ARCH) $(bootloose_alpine_build_cmdline)
 	touch $@
 
+bootloose_systemd_build_cmdline := \
+	--build-arg ETCD_VERSION=$(etcd_version) \
+	--build-arg HELM_VERSION=$(helm_version) \
+	-t bootloose-systemd \
+	-f bootloose-systemd/Dockerfile \
+	bootloose-systemd
+
+.bootloose-systemd.stamp: $(shell find bootloose-systemd -type f)
+	$(DOCKER) build --progress=plain --build-arg TARGETARCH=$(ARCH) $(bootloose_systemd_build_cmdline)
+	touch $@
+
 # This is a special target to test the bootloose alpine image locally for all supported platforms.
 .PHONY: check-bootloose-alpine-buildx
 check-bootloose-alpine-buildx:
