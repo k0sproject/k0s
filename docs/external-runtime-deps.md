@@ -181,7 +181,7 @@ In order to use containerd in conjunction with [AppArmor], it must be enabled in
 the kernel and the `/sbin/apparmor_parser` executable must be installed on the
 host, otherwise containerd will [disable][cd-aa] AppArmor support.
 
-[cd-aa]: https://github.com/containerd/containerd/blob/v2.2.1/pkg/apparmor/apparmor_linux.go#L34-L45
+[cd-aa]: https://github.com/containerd/containerd/blob/v2.2.2/pkg/apparmor/apparmor_linux.go#L34-L45
 [AppArmor]: https://wiki.ubuntu.com/AppArmor
 
 #### iptables
