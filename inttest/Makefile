@@ -123,6 +123,8 @@ $(smoketests): export K0S_EXTRA_IMAGES_BUNDLE ?= $(realpath ../ipv6-test-image-b
 $(smoketests): K0S_INTTEST_PACKAGE ?= $(shell $(determine_inttest_package))
 $(smoketests): .bootloose-alpine.stamp
 	K0S_INTTEST_TARGET=$(subst check-,,$@) go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(K0S_INTTEST_PACKAGE)
+
+check-cli: .bootloose-systemd.stamp
 .PHONY: clean
 
 clean:
