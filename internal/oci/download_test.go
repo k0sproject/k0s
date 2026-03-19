@@ -6,13 +6,14 @@ package oci_test
 import (
 	"bytes"
 	"cmp"
-	"embed"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -23,18 +24,15 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-//go:embed testdata/*
-var testData embed.FS
-
 // we define our tests as yaml files inside the testdata directory. this
 // function parses them and returns a map of the tests.
 func parseTestsYAML[T any](t *testing.T) map[string]T {
-	entries, err := testData.ReadDir("testdata")
+	entries, err := os.ReadDir("testdata")
 	require.NoError(t, err)
 	tests := make(map[string]T, 0)
 	for _, entry := range entries {
-		fpath := path.Join("testdata", entry.Name())
-		data, err := testData.ReadFile(fpath)
+		fpath := filepath.Join("testdata", entry.Name())
+		data, err := os.ReadFile(fpath)
 		require.NoError(t, err)
 
 		var onetest T

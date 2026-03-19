@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -101,8 +101,8 @@ func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir string) []byte {
 	serverCert, err := s.Sign(signer.SignRequest{Request: string(serverCertCSR)})
 	require.NoError(t, err)
 
-	require.NoError(t, os.WriteFile(path.Join(certsDir, "tls.crt"), serverCert, 0644))
-	require.NoError(t, os.WriteFile(path.Join(certsDir, "tls.key"), serverKey, 0600))
+	require.NoError(t, os.WriteFile(filepath.Join(certsDir, "tls.crt"), serverCert, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(certsDir, "tls.key"), serverKey, 0600))
 
 	return serverCert
 }
@@ -491,7 +491,7 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]any
 }
 
 func TestAddonsSuite(t *testing.T) {
-	registryTLSDir := path.Join(t.TempDir(), "registry-tls")
+	registryTLSDir := filepath.Join(t.TempDir(), "registry-tls")
 	require.NoError(t, os.MkdirAll(registryTLSDir, 0755))
 
 	s := AddonsSuite{
