@@ -132,9 +132,9 @@
     {
       "description": "Group all containerd bumps",
       "enabled": true,
-      "matchDepNames": [
+      "matchPackageNames": [
         "containerd/containerd",
-        "github.com/containerd/containerd"
+        "/^github.com\\/containerd\\/containerd(\\/v[0-9]+)?$/"
       ],
       "groupName": "containerd",
       "groupSlug": "containerd"
@@ -284,6 +284,17 @@
       "matchUpdateTypes": [
         "digest"
       ]
+    },
+    {
+      "description": "Bump runc for release-1.34",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchDepNames": [
+        "opencontainers/runc"
+      ],
+      "allowedVersions": "<=1.3"
     },
     {
       "description": "Bump etcd for release-1.33",
