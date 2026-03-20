@@ -41,6 +41,12 @@ When adding new adopters, please adhere roughly to the following format:
 * [KubeArmor](https://docs.kubearmor.io/kubearmor/quick-links/support_matrix)<br>
   Project: Supported in their security product
 
+* [logsight](https://logsight.ai)
+  Product: [exalsius](https://exalsius.ai)
+  Use Case: Multi-site AI workload orchestration
+  Implementation: Leveraging k0s to deploy and manage geo-distributed, GPU-optimized Kubernetes clusters.
+  Impact: Enabling sovereign AI infrastructure for the German Federal Agency for Leap Innovation (SPRIND) and energy-aware LLM scheduling across heterogeneous nodes.
+
 * [Mirantis](https://www.mirantis.com/software/k0s/)<br>
   Project: k0s support<br>
   Mirantis provides support for various customers utilizing k0s in their
