@@ -26,7 +26,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -106,26 +105,26 @@ func (a *APIServer) Start(_ context.Context) error {
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
 		"secure-port":                      strconv.Itoa(a.ClusterConfig.Spec.API.Port),
 		"authorization-mode":               "Node,RBAC",
-		"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"client-ca-file":                   filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"enable-bootstrap-token-auth":      "true",
-		"kubelet-client-certificate":       path.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.crt"),
-		"kubelet-client-key":               path.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.key"),
+		"kubelet-client-certificate":       filepath.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.crt"),
+		"kubelet-client-key":               filepath.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.key"),
 		"kubelet-preferred-address-types":  "InternalIP,ExternalIP,Hostname",
-		"proxy-client-cert-file":           path.Join(a.K0sVars.CertRootDir, "front-proxy-client.crt"),
-		"proxy-client-key-file":            path.Join(a.K0sVars.CertRootDir, "front-proxy-client.key"),
+		"proxy-client-cert-file":           filepath.Join(a.K0sVars.CertRootDir, "front-proxy-client.crt"),
+		"proxy-client-key-file":            filepath.Join(a.K0sVars.CertRootDir, "front-proxy-client.key"),
 		"requestheader-allowed-names":      "front-proxy-client",
-		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
-		"service-account-key-file":         path.Join(a.K0sVars.CertRootDir, "sa.pub"),
+		"requestheader-client-ca-file":     filepath.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
+		"service-account-key-file":         filepath.Join(a.K0sVars.CertRootDir, "sa.pub"),
 		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.API.APIAddress()),
 		"tls-min-version":                  "VersionTLS12",
-		"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
-		"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),
-		"service-account-signing-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
+		"tls-cert-file":                    filepath.Join(a.K0sVars.CertRootDir, "server.crt"),
+		"tls-private-key-file":             filepath.Join(a.K0sVars.CertRootDir, "server.key"),
+		"service-account-signing-key-file": filepath.Join(a.K0sVars.CertRootDir, "sa.key"),
 		"service-account-issuer":           "https://kubernetes.default.svc",
 		"service-account-jwks-uri":         "https://kubernetes.default.svc/openid/v1/jwks",
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
-		"kubelet-certificate-authority":    path.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"kubelet-certificate-authority":    filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"enable-admission-plugins":         "NodeRestriction",
 	}
 
@@ -140,7 +139,7 @@ func (a *APIServer) Start(_ context.Context) error {
 		if err != nil {
 			return err
 		}
-		args["egress-selector-config-file"] = path.Join(a.K0sVars.DataDir, "konnectivity.conf")
+		args["egress-selector-config-file"] = filepath.Join(a.K0sVars.DataDir, "konnectivity.conf")
 		apiAudiences = append(apiAudiences, "system:konnectivity-server")
 	}
 
@@ -195,9 +194,9 @@ func (a *APIServer) writeKonnectivityConfig() error {
 		Name:     "konnectivity",
 		Template: egressSelectorConfigTemplate,
 		Data: egressSelectorConfig{
-			UDSName: path.Join(a.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
+			UDSName: filepath.Join(a.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
 		},
-		Path: path.Join(a.K0sVars.DataDir, "konnectivity.conf"),
+		Path: filepath.Join(a.K0sVars.DataDir, "konnectivity.conf"),
 	}
 	err := tw.Write()
 	if err != nil {
@@ -216,14 +215,14 @@ func (a *APIServer) Stop() error {
 // Health-check interface
 func (a *APIServer) Ready() error {
 	// Load client cert so the api can authenitcate the request.
-	certFile := path.Join(a.K0sVars.CertRootDir, "admin.crt")
-	keyFile := path.Join(a.K0sVars.CertRootDir, "admin.key")
+	certFile := filepath.Join(a.K0sVars.CertRootDir, "admin.crt")
+	keyFile := filepath.Join(a.K0sVars.CertRootDir, "admin.key")
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return err
 	}
 	// Load CA cert
-	caCert, err := os.ReadFile(path.Join(a.K0sVars.CertRootDir, "ca.crt"))
+	caCert, err := os.ReadFile(filepath.Join(a.K0sVars.CertRootDir, "ca.crt"))
 	if err != nil {
 		return err
 	}

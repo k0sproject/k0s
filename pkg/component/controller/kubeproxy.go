@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 
@@ -56,7 +55,7 @@ func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) *K
 
 		nodeConf:    nodeConfig,
 		K0sVars:     k0sVars,
-		manifestDir: path.Join(k0sVars.ManifestsDir, "kubeproxy"),
+		manifestDir: filepath.Join(k0sVars.ManifestsDir, "kubeproxy"),
 	}
 }
 

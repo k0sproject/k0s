@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"k8s.io/client-go/rest"
@@ -185,8 +185,8 @@ type job struct {
 }
 
 func (m *Metrics) newEtcdJob() (*job, error) {
-	certFile := path.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.crt")
-	keyFile := path.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.key")
+	certFile := filepath.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.crt")
+	keyFile := filepath.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.key")
 
 	httpClient, err := getClient(certFile, keyFile)
 	if err != nil {
@@ -220,8 +220,8 @@ func (m *Metrics) newKineJob() (*job, error) {
 }
 
 func (m *Metrics) newJob(name, scrapeURL string) (*job, error) {
-	certFile := path.Join(m.K0sVars.CertRootDir, "admin.crt")
-	keyFile := path.Join(m.K0sVars.CertRootDir, "admin.key")
+	certFile := filepath.Join(m.K0sVars.CertRootDir, "admin.crt")
+	keyFile := filepath.Join(m.K0sVars.CertRootDir, "admin.key")
 
 	httpClient, err := getClient(certFile, keyFile)
 	if err != nil {

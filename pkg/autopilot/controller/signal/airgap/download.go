@@ -16,7 +16,7 @@ package airgap
 
 import (
 	"crypto/sha256"
-	"path"
+	"path/filepath"
 	"strings"
 
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -64,7 +64,7 @@ func (b downloadManfiestBuilderAirgap) Build(signalNode crcli.Object, signalData
 			URL:          signalData.Command.AirgapUpdate.URL,
 			ExpectedHash: signalData.Command.AirgapUpdate.Sha256,
 			Hasher:       sha256.New(),
-			DownloadDir:  path.Join(b.k0sDataDir, "images"),
+			DownloadDir:  filepath.Join(b.k0sDataDir, "images"),
 		},
 		SuccessState: apsigcomm.Completed,
 	}

@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -284,7 +283,7 @@ func (m *MetricServer) Init(_ context.Context) error {
 func (m *MetricServer) Start(ctx context.Context) error {
 	ctx, m.tickerDone = context.WithCancel(ctx)
 
-	msDir := path.Join(m.K0sVars.ManifestsDir, "metricserver")
+	msDir := filepath.Join(m.K0sVars.ManifestsDir, "metricserver")
 	err := dir.Init(msDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
