@@ -190,133 +190,133 @@ With an available and addressable load balancer present on your cluster, now you
 
 1. Create the Traefik Dashboard [IngressRoute](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/) in a YAML file:
 
-```yaml
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+   ```yaml
+   apiVersion: traefik.io/v1alpha1
+   kind: IngressRoute
 
-metadata:
-  name: traefik-dashboard
-  namespace: traefik-system
+   metadata:
+     name: traefik-dashboard
+     namespace: traefik-system
 
-spec:
-  entryPoints:
-    - web
-    - websecure
-  routes:
-    - match: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
-      kind: Rule
-      services:
-        - name: api@internal
-          kind: TraefikService
-```
+   spec:
+     entryPoints:
+       - web
+       - websecure
+     routes:
+       - match: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
+         kind: Rule
+         services:
+           - name: api@internal
+             kind: TraefikService
+   ```
 
 2. Deploy the resource:
 
-```shell
-kubectl apply -f traefik-dashboard.yaml
-```
+   ```shell
+   kubectl apply -f traefik-dashboard.yaml
+   ```
 
-_Output_:
+   _Output_:
 
-```shell
-ingressroute.traefik.io/v1alpha1/traefik-dashboard created
-```
+   ```shell
+   ingressroute.traefik.io/v1alpha1/traefik-dashboard created
+   ```
 
-At this point you should be able to access the dashboard using the `EXTERNAL-IP` that you noted above by visiting `http://192.168.0.5/dashboard/` in your browser:
+   At this point you should be able to access the dashboard using the `EXTERNAL-IP` that you noted above by visiting `http://192.168.0.5/dashboard/` in your browser:
 
-![Traefik Dashboard](../img/traefik-dashboard.png)
+   ![Traefik Dashboard](../img/traefik-dashboard.png)
 
 3. Create a simple `whoami` Deployment, Service, and [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) manifest:
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: whoami-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: whoami
-  template:
-    metadata:
-      labels:
-        app: whoami
-    spec:
-      containers:
-        - name: whoami-container
-          image: containous/whoami
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: whoami-service
-spec:
-  ports:
-    - name: http
-      targetPort: 80
-      port: 80
-  selector:
-    app: whoami
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: whoami-ingress
-spec:
-  rules:
-    - http:
-        paths:
-          - path: /whoami
-            pathType: Exact
-            backend:
-              service:
-                name: whoami-service
-                port:
-                  number: 80
-```
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: whoami-deployment
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: whoami
+     template:
+       metadata:
+         labels:
+           app: whoami
+       spec:
+         containers:
+           - name: whoami-container
+             image: containous/whoami
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: whoami-service
+   spec:
+     ports:
+       - name: http
+         targetPort: 80
+         port: 80
+     selector:
+       app: whoami
+   ---
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+     name: whoami-ingress
+   spec:
+     rules:
+       - http:
+           paths:
+             - path: /whoami
+               pathType: Exact
+               backend:
+                 service:
+                   name: whoami-service
+                   port:
+                     number: 80
+   ```
 
 4. Apply the manifests:
 
-```shell
-kubectl apply -f whoami.yaml
-```
+   ```shell
+   kubectl apply -f whoami.yaml
+   ```
 
-_Output_:
+   _Output_:
 
-```shell
-deployment.apps/whoami-deployment created
-service/whoami-service created
-ingress.networking.k8s.io/whoami-ingress created
-```
+   ```shell
+   deployment.apps/whoami-deployment created
+   service/whoami-service created
+   ingress.networking.k8s.io/whoami-ingress created
+   ```
 
 5. Test the ingress and service:
 
-```shell
-curl http://192.168.0.5/whoami
-```
+   ```shell
+   curl http://192.168.0.5/whoami
+   ```
 
-_Output_:
+   _Output_:
 
-```shell
-Hostname: whoami-deployment-85bfbd48f-7l77c
-IP: 127.0.0.1
-IP: ::1
-IP: 10.244.214.198
-IP: fe80::b049:f8ff:fe77:3e64
-RemoteAddr: 10.244.214.196:34858
-GET /whoami HTTP/1.1
-Host: 192.168.0.5
-User-Agent: curl/7.68.0
-Accept: */*
-Accept-Encoding: gzip
-X-Forwarded-For: 192.168.0.82
-X-Forwarded-Host: 192.168.0.5
-X-Forwarded-Port: 80
-X-Forwarded-Proto: http
-X-Forwarded-Server: traefik-1607085579-77bbc57699-b2f2t
-X-Real-Ip: 192.168.0.82
-```
+   ```shell
+   Hostname: whoami-deployment-85bfbd48f-7l77c
+   IP: 127.0.0.1
+   IP: ::1
+   IP: 10.244.214.198
+   IP: fe80::b049:f8ff:fe77:3e64
+   RemoteAddr: 10.244.214.196:34858
+   GET /whoami HTTP/1.1
+   Host: 192.168.0.5
+   User-Agent: curl/7.68.0
+   Accept: */*
+   Accept-Encoding: gzip
+   X-Forwarded-For: 192.168.0.82
+   X-Forwarded-Host: 192.168.0.5
+   X-Forwarded-Port: 80
+   X-Forwarded-Proto: http
+   X-Forwarded-Server: traefik-1607085579-77bbc57699-b2f2t
+   X-Real-Ip: 192.168.0.82
+   ```
 
 ## Further details
 
