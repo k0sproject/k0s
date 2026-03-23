@@ -140,6 +140,8 @@ func (s *BootlooseSuite) initializeDefaults() {
 		s.launchDelegate = &standaloneLaunchDelegate{s.K0sFullPath, s.ControllerUmask}
 	case LaunchModeOpenRC:
 		s.launchDelegate = &openRCLaunchDelegate{s.K0sFullPath}
+	case LaunchModeSystemd:
+		s.launchDelegate = &systemdLaunchDelegate{s.K0sFullPath}
 	default:
 		s.Require().Fail("Unknown launch mode", s.LaunchMode)
 	}

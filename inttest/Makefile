@@ -33,6 +33,17 @@ bootloose_alpine_build_cmdline := \
 	$(DOCKER) build --progress=plain --build-arg TARGETARCH=$(ARCH) $(bootloose_alpine_build_cmdline)
 	touch $@
 
+bootloose_systemd_build_cmdline := \
+	--build-arg ETCD_VERSION=$(etcd_version) \
+	--build-arg HELM_VERSION=$(helm_version) \
+	-t bootloose-systemd \
+	-f bootloose-systemd/Dockerfile \
+	bootloose-systemd
+
+.bootloose-systemd.stamp: $(shell find bootloose-systemd -type f)
+	$(DOCKER) build --progress=plain --build-arg TARGETARCH=$(ARCH) $(bootloose_systemd_build_cmdline)
+	touch $@
+
 # This is a special target to test the bootloose alpine image locally for all supported platforms.
 .PHONY: check-bootloose-alpine-buildx
 check-bootloose-alpine-buildx:
@@ -112,6 +123,8 @@ $(smoketests): export K0S_EXTRA_IMAGES_BUNDLE ?= $(realpath ../ipv6-test-image-b
 $(smoketests): K0S_INTTEST_PACKAGE ?= $(shell $(determine_inttest_package))
 $(smoketests): .bootloose-alpine.stamp
 	K0S_INTTEST_TARGET=$(subst check-,,$@) go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(K0S_INTTEST_PACKAGE)
+
+check-cli: .bootloose-systemd.stamp
 .PHONY: clean
 
 clean:

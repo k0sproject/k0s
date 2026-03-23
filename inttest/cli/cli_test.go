@@ -19,6 +19,10 @@ type CliSuite struct {
 	common.BootlooseSuite
 }
 
+type CliSystemdSuite struct {
+	common.BootlooseSuite
+}
+
 func (s *CliSuite) TestK0sCliCommandNegative() {
 	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -41,7 +45,7 @@ func (s *CliSuite) TestK0sCliCommandNegative() {
 	s.Require().Error(err)
 }
 
-func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
+func runK0sInstallStartStopSmokeTest(s *common.BootlooseSuite) {
 	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err, "failed to SSH into controller")
 	defer ssh.Disconnect()
@@ -110,9 +114,17 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput(s.Context(), "while pidof k0s containerd kubelet; do sleep 0.1s; done")
 	s.Require().NoError(err)
+}
+
+func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
+	runK0sInstallStartStopSmokeTest(&s.BootlooseSuite)
 
 	s.Run("k0sReset", func() {
 		assert := s.Assertions
+		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
+		s.Require().NoError(err, "failed to SSH into controller")
+		defer ssh.Disconnect()
+
 		resetOutput, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s reset --debug")
 		s.T().Logf("Reset executed with output:\n%s", resetOutput)
 
@@ -128,6 +140,10 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	})
 }
 
+func (s *CliSystemdSuite) TestK0sCliInstallStartStopSmoke() {
+	runK0sInstallStartStopSmokeTest(&s.BootlooseSuite)
+}
+
 func TestCliCommandSuite(t *testing.T) {
 	s := CliSuite{
 		common.BootlooseSuite{
@@ -136,6 +152,17 @@ func TestCliCommandSuite(t *testing.T) {
 			// OpenRC here anyways, so that the log collection will pick up the
 			// right paths.
 			LaunchMode: common.LaunchModeOpenRC,
+		},
+	}
+	suite.Run(t, &s)
+}
+
+func TestCliSystemdCommandSuite(t *testing.T) {
+	s := CliSystemdSuite{
+		common.BootlooseSuite{
+			ControllerCount: 1,
+			LaunchMode:      common.LaunchModeSystemd,
+			BootLooseImage:  "bootloose-systemd",
 		},
 	}
 	suite.Run(t, &s)
