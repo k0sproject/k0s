@@ -7,44 +7,135 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 You can configure k0s with the [Traefik Ingress Controller], a [MetalLB service load balancer], and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration.
 
-[Traefik Ingress Controller]: https://doc.traefik.io/traefik/providers/kubernetes-ingress/
+[Traefik Ingress Controller]: https://doc.traefik.io/traefik/getting-started/quick-start-with-kubernetes/
 [MetalLB service load balancer]: https://metallb.io/
 
-## 1. Configure k0s.yaml
+## Install Traefik and MetalLB
 
 Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their [Helm charts](../helm-charts.md) as extensions in the k0s configuration file (`k0s.yaml`).
 
 **Note:**
-
 A good practice is to have a small range of IP addresses that are addressable on your network, preferably outside the assignment pool your DHCP server allocates (though any valid IP range should work locally on your machine). Providing an addressable range allows you to access your load balancer and Ingress services from anywhere on your local network.
 
 ```yaml
 extensions:
   helm:
     repositories:
-    - name: traefik
-      url: https://traefik.github.io/charts
-    - name: bitnami
-      url: https://charts.bitnami.com/bitnami
+      - name: traefik
+        url: https://traefik.github.io/charts
+
+      - name: metallb
+        url: https://metallb.github.io/metallb
+
     charts:
-    - name: traefik
-      chartname: traefik/traefik
-      version: "20.5.3"
-      namespace: default
-    - name: metallb
-      chartname: bitnami/metallb
-      version: "2.5.4"
-      namespace: default
-      values: |
-        configInline:
-          address-pools:
-          - name: generic-cluster-pool
-            protocol: layer2
-            addresses:
-            - 192.168.0.5-192.168.0.10
+      - name: traefik
+        chartname: traefik/traefik
+        version: "39.0.1"
+        namespace: traefik-system
+
+      - name: metallb
+        chart: metallb/metallb
+        version: "0.15.3"
+        namespace: metallb-system
 ```
 
-## 2. Retrieve the Load Balancer IP
+## Configure traefik
+
+If you want to configure Traefik via the Helm Chart, you can do this by providing values in the `extensions.helm.charts` section. For more infos check out the [Helm Chart docs](../helm-charts.md).
+
+### Enable automatic http to https redirect
+
+To automatically redirect http requests to https, set the following config via the `values` section:
+
+```yaml
+extensions:
+  helm:
+    repositories: ...
+
+    charts:
+      - name: traefik
+        chartname: traefik/traefik
+        version: "39.0.1"
+        namespace: traefik-system
+        values: |
+          ports:
+            web:
+              http:
+                redirections:
+                  entryPoint:
+                    to: websecure
+                    scheme: https
+                    permanent: true
+
+      - name: metallb
+        ...
+```
+
+### Add new entrypoints
+
+Traefik can be configured to add new entrypoints which serve to accept traffic via a specified port. This can either be via the [http(s) load-balancer](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/), or the [tcp/udp load-balancer](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/tcp/ingressroutetcp/).
+For detailled infos check out the [official docs](https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/).
+
+To add a new entrypoint which can be used by `IngressRoute` or `IngressRouteTCP/IngressRouteUDP` CRD, set the following config via the `values` section:
+
+```yaml
+extensions:
+  helm:
+    repositories: ...
+
+    charts:
+      - name: traefik
+        chartname: traefik/traefik
+        version: "39.0.1"
+        namespace: traefik-system
+        values: |
+          ports:
+            ssh: # name of the entrypoint
+              port: 2222 # port inside the container
+              expose:
+                default: true
+              exposedPort: 22 # port of the load-balancer which is accessed externally
+              protocol: TCP # protocol
+
+      - name: metallb
+        ...
+```
+
+## Create ConfigMap for MetalLB
+
+Next you need to create ConfigMap, which includes an IP address range for the load balancer. The pool of IPs must be dedicated to MetalLB's use. You can't reuse for example the Kubernetes node IPs or IPs controlled by other services.
+
+> For detailed infos about the installation and configuration of MetalLB see the [Extension docs](metallb-loadbalancer.md)
+
+Create a YAML file accordingly, and deploy it: `kubectl apply -f metallb-l2-pool.yaml`
+
+```YAML
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+
+metadata:
+  name: first-pool
+  namespace: metallb-system
+
+spec:
+  addresses:
+  - <ip-address-range-start>-<ip-address-range-stop>
+  - <ip-address>/<cidr>
+  # example for a range
+  - 192.168.0.1-192.168.0.5
+  # example for a single address with cidr
+  - 192.168.0.5/32
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+
+metadata:
+  name: example
+  namespace: metallb-system
+```
+
+## Retrieve the Load Balancer IP
 
 After you start your cluster, run `kubectl get all` to confirm the deployment of Traefik and MetalLB. The command should return a response with the `metallb` and `traefik` resources, along with a service load balancer that has an assigned `EXTERNAL-IP`.
 
@@ -52,7 +143,7 @@ After you start your cluster, run `kubectl get all` to confirm the deployment of
 kubectl get all
 ```
 
-*Output*:
+_Output_:
 
 ```shell
 NAME                                                 READY   STATUS    RESTARTS   AGE
@@ -76,7 +167,7 @@ replicaset.apps/metallb-1607085578-controller-864c9757f6   1         1         1
 replicaset.apps/traefik-1607085579-77bbc57699              1         1         1       81s
 ```
 
-Take note of the `EXTERNAL-IP` given to the `service/traefik-n` load balancer. In this example, `192.168.0.5` has been assigned and can be used to access services via the Ingress proxy:
+Take note of the `EXTERNAL-IP` given to the `service/traefik-xxx` load balancer. In this example, `192.168.0.5` has been assigned and can be used to access services via the Ingress proxy:
 
 ```shell
 NAME                         TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
@@ -93,135 +184,139 @@ curl http://192.168.0.5
 404 page not found
 ```
 
-## 3. Deploy and access the Traefik Dashboard
+## Deploy and access the Traefik Dashboard
 
 With an available and addressable load balancer present on your cluster, now you can quickly deploy the Traefik dashboard and access it from anywhere on your LAN (assuming that MetalLB is configured with an addressable range).
 
-1. Create the Traefik Dashboard [IngressRoute](https://doc.traefik.io/traefik/providers/kubernetes-crd/) in a YAML file:
+1. Create the Traefik Dashboard [IngressRoute](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/) in a YAML file:
 
-    ```yaml
-    apiVersion: traefik.containo.us/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: dashboard
-    spec:
-      entryPoints:
-        - web
-      routes:
-        - match: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
-          kind: Rule
-          services:
-            - name: api@internal
-              kind: TraefikService
-    ```
+   ```yaml
+   apiVersion: traefik.io/v1alpha1
+   kind: IngressRoute
+
+   metadata:
+     name: traefik-dashboard
+     namespace: traefik-system
+
+   spec:
+     entryPoints:
+       - web
+       - websecure
+     routes:
+       - match: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
+         kind: Rule
+         services:
+           - name: api@internal
+             kind: TraefikService
+   ```
 
 2. Deploy the resource:
 
-    ```shell
-    kubectl apply -f traefik-dashboard.yaml
-    ```
+   ```shell
+   kubectl apply -f traefik-dashboard.yaml
+   ```
 
-    *Output*:
+   _Output_:
 
-    ```shell
-    ingressroute.traefik.containo.us/dashboard created
-    ```
+   ```shell
+   ingressroute.traefik.io/v1alpha1/traefik-dashboard created
+   ```
 
-    At this point you should be able to access the dashboard using the `EXTERNAL-IP` that you noted above by visiting `http://192.168.0.5/dashboard/` in your browser:
+   At this point you should be able to access the dashboard using the `EXTERNAL-IP` that you noted above by visiting `http://192.168.0.5/dashboard/` in your browser:
 
-    ![Traefik Dashboard](../img/traefik-dashboard.png)
+   ![Traefik Dashboard](../img/traefik-dashboard.png)
 
 3. Create a simple `whoami` Deployment, Service, and [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) manifest:
 
-    ```yaml
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: whoami-deployment
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: whoami
-      template:
-        metadata:
-          labels:
-            app: whoami
-        spec:
-          containers:
-          - name: whoami-container
-            image: containous/whoami
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: whoami-service
-    spec:
-      ports:
-      - name: http
-        targetPort: 80
-        port: 80
-      selector:
-        app: whoami
-    ---
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: whoami-ingress
-    spec:
-      rules:
-      - http:
-          paths:
-          - path: /whoami
-            pathType: Exact
-            backend:
-              service:
-                name: whoami-service
-                port:
-                  number: 80
-    ```
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: whoami-deployment
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: whoami
+     template:
+       metadata:
+         labels:
+           app: whoami
+       spec:
+         containers:
+           - name: whoami-container
+             image: containous/whoami
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: whoami-service
+   spec:
+     ports:
+       - name: http
+         targetPort: 80
+         port: 80
+     selector:
+       app: whoami
+   ---
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+     name: whoami-ingress
+   spec:
+     rules:
+       - http:
+           paths:
+             - path: /whoami
+               pathType: Exact
+               backend:
+                 service:
+                   name: whoami-service
+                   port:
+                     number: 80
+   ```
 
 4. Apply the manifests:
 
-    ```shell
-    kubectl apply -f whoami.yaml
-    ```
+   ```shell
+   kubectl apply -f whoami.yaml
+   ```
 
-    *Output*:
+   _Output_:
 
-    ```shell
-    deployment.apps/whoami-deployment created
-    service/whoami-service created
-    ingress.networking.k8s.io/whoami-ingress created
-    ```
+   ```shell
+   deployment.apps/whoami-deployment created
+   service/whoami-service created
+   ingress.networking.k8s.io/whoami-ingress created
+   ```
 
 5. Test the ingress and service:
 
-    ```shell
-    curl http://192.168.0.5/whoami
-    ```
+   ```shell
+   curl http://192.168.0.5/whoami
+   ```
 
-    *Output*:
+   _Output_:
 
-    ```shell
-    Hostname: whoami-deployment-85bfbd48f-7l77c
-    IP: 127.0.0.1
-    IP: ::1
-    IP: 10.244.214.198
-    IP: fe80::b049:f8ff:fe77:3e64
-    RemoteAddr: 10.244.214.196:34858
-    GET /whoami HTTP/1.1
-    Host: 192.168.0.5
-    User-Agent: curl/7.68.0
-    Accept: */*
-    Accept-Encoding: gzip
-    X-Forwarded-For: 192.168.0.82
-    X-Forwarded-Host: 192.168.0.5
-    X-Forwarded-Port: 80
-    X-Forwarded-Proto: http
-    X-Forwarded-Server: traefik-1607085579-77bbc57699-b2f2t
-    X-Real-Ip: 192.168.0.82
-    ```
+   ```shell
+   Hostname: whoami-deployment-85bfbd48f-7l77c
+   IP: 127.0.0.1
+   IP: ::1
+   IP: 10.244.214.198
+   IP: fe80::b049:f8ff:fe77:3e64
+   RemoteAddr: 10.244.214.196:34858
+   GET /whoami HTTP/1.1
+   Host: 192.168.0.5
+   User-Agent: curl/7.68.0
+   Accept: */*
+   Accept-Encoding: gzip
+   X-Forwarded-For: 192.168.0.82
+   X-Forwarded-Host: 192.168.0.5
+   X-Forwarded-Port: 80
+   X-Forwarded-Proto: http
+   X-Forwarded-Server: traefik-1607085579-77bbc57699-b2f2t
+   X-Real-Ip: 192.168.0.82
+   ```
 
 ## Further details
 
