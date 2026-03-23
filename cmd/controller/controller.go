@@ -302,6 +302,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		LogLevel:           c.LogLevels.KubeAPIServer,
 		Storage:            storageBackend,
 		EnableKonnectivity: enableKonnectivity,
+		StopTimeout:        flags.APIServerStopTimeout,
 
 		// If k0s reconciles the kubernetes endpoint, the API server shouldn't do it.
 		DisableEndpointReconciler: enableK0sEndpointReconciler,
