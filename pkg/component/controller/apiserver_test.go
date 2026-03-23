@@ -109,3 +109,66 @@ func (a *apiServerSuite) TestGetEtcdArgs() {
 		require.Contains(result[1], "--etcd-prefix=k0s-tenant-1")
 	})
 }
+
+func (a *apiServerSuite) TestCapNetBindServiceForLowPorts() {
+	k0sVars := &config.CfgVars{
+		BinDir:      "/var/lib/k0s/bin",
+		CertRootDir: "/var/lib/k0s/pki",
+		DataDir:     "/var/lib/k0s",
+		RunDir:      "/run/k0s",
+	}
+
+	a.Run("port 443 requires CAP_NET_BIND_SERVICE", func() {
+		clusterConfig := v1beta1.DefaultClusterConfig()
+		clusterConfig.Spec.API.Port = 443
+
+		apiServer := &APIServer{
+			ClusterConfig:  clusterConfig,
+			K0sVars:        k0sVars,
+			LogLevel:       "1",
+			executablePath: "/fake/path/kube-apiserver",
+		}
+
+		supervisor, err := apiServer.buildSupervisor()
+		require := a.Require()
+		require.NoError(err)
+		require.True(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
+			"Port 443 should require CAP_NET_BIND_SERVICE capability")
+	})
+
+	a.Run("port 6443 does not require CAP_NET_BIND_SERVICE", func() {
+		clusterConfig := v1beta1.DefaultClusterConfig()
+		clusterConfig.Spec.API.Port = 6443
+
+		apiServer := &APIServer{
+			ClusterConfig:  clusterConfig,
+			K0sVars:        k0sVars,
+			LogLevel:       "1",
+			executablePath: "/fake/path/kube-apiserver",
+		}
+
+		supervisor, err := apiServer.buildSupervisor()
+		require := a.Require()
+		require.NoError(err)
+		require.False(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
+			"Port 6443 should not require CAP_NET_BIND_SERVICE capability")
+	})
+
+	a.Run("port 80 requires CAP_NET_BIND_SERVICE", func() {
+		clusterConfig := v1beta1.DefaultClusterConfig()
+		clusterConfig.Spec.API.Port = 80
+
+		apiServer := &APIServer{
+			ClusterConfig:  clusterConfig,
+			K0sVars:        k0sVars,
+			LogLevel:       "1",
+			executablePath: "/fake/path/kube-apiserver",
+		}
+
+		supervisor, err := apiServer.buildSupervisor()
+		require := a.Require()
+		require.NoError(err)
+		require.True(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
+			"Port 80 should require CAP_NET_BIND_SERVICE capability")
+	})
+}
