@@ -79,10 +79,15 @@ func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, o
 		return err
 	}
 
+	platformMatcher := b.PlatformMatcher
+	if platformMatcher == nil {
+		platformMatcher = platforms.Default()
+	}
+
 	copyOpts := oras.CopyOptions{
 		CopyGraphOptions: oras.CopyGraphOptions{
 			Concurrency:    int(min(math.MaxInt, b.Concurrency)),
-			FindSuccessors: findSuccessors(b.PlatformMatcher),
+			FindSuccessors: findSuccessors(platformMatcher),
 			PreCopy: func(ctx context.Context, desc imagespecv1.Descriptor) error {
 				if desc.MediaType == images.MediaTypeDockerSchema1Manifest {
 					// ORAS won't handle this on its own.
@@ -97,6 +102,25 @@ func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, o
 				log.Info("Fetching ", humanize.IBytes(uint64(desc.Size)))
 				return nil
 			},
+		},
+		MapRoot: func(ctx context.Context, src content.ReadOnlyStorage, root imagespecv1.Descriptor) (imagespecv1.Descriptor, error) {
+			if isImage(root) {
+				var manifest imagespecv1.Manifest
+				if err := unmarshalContent(ctx, src, root, &manifest); err != nil {
+					return root, err
+				}
+
+				var platform imagespecv1.Platform
+				if err := unmarshalContent(ctx, src, manifest.Config, &platform); err != nil {
+					return root, err
+				}
+
+				if !platformMatcher.Match(platform) {
+					return root, errors.New("platform doesn't match: " + platforms.Format(platform))
+				}
+			}
+
+			return root, nil
 		},
 	}
 
@@ -164,8 +188,12 @@ func copyArtifact(ctx context.Context, ref reference.Named, source oras.ReadOnly
 			srcRef = expectedDigest.String()
 		} else {
 			// Pull via tag, but ensure that it matches the digest!
-			copyOpts.MapRoot = func(_ context.Context, _ content.ReadOnlyStorage, root imagespecv1.Descriptor) (d imagespecv1.Descriptor, _ error) {
+			mapRoot := copyOpts.MapRoot
+			copyOpts.MapRoot = func(ctx context.Context, src content.ReadOnlyStorage, root imagespecv1.Descriptor) (d imagespecv1.Descriptor, _ error) {
 				if root.Digest == expectedDigest {
+					if mapRoot != nil {
+						return mapRoot(ctx, src, root)
+					}
 					return root, nil
 				}
 				return d, fmt.Errorf("%w for %s: %s", content.ErrMismatchedDigest, ref, root.Digest)
@@ -245,9 +273,6 @@ func newOCICredentials(configPaths []string) (_ auth.CredentialFunc, err error) 
 // [oras.CopyOptions.WithTargetPlatform] will throw away multi-arch image
 // indexes and thus change artifact digests.
 func findSuccessors(platformMatcher platforms.MatchComparer) func(context.Context, content.Fetcher, imagespecv1.Descriptor) ([]imagespecv1.Descriptor, error) {
-	if platformMatcher == nil {
-		platformMatcher = platforms.Default()
-	}
 	return func(ctx context.Context, fetcher content.Fetcher, desc imagespecv1.Descriptor) ([]imagespecv1.Descriptor, error) {
 		descs, err := content.Successors(ctx, fetcher, desc)
 		if err != nil {
@@ -359,6 +384,24 @@ func targetRefNamesFor(ref reference.Named) (targetRefs []string, _ error) {
 
 	// Dedup the refs
 	return stringslice.Unique(targetRefs), nil
+}
+
+func unmarshalContent(ctx context.Context, fetcher content.Fetcher, desc imagespecv1.Descriptor, v any) error {
+	var (
+		data []byte
+		err  error
+	)
+
+	if desc.Data != nil {
+		data, err = content.ReadAll(bytes.NewReader(desc.Data), desc)
+	} else {
+		data, err = content.FetchAll(ctx, fetcher, desc)
+	}
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(data, v)
 }
 
 func writeTarDir(w *tar.Writer, name string) error {
