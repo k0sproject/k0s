@@ -19,17 +19,17 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
+	oswatch "github.com/k0sproject/k0s/internal/os/watch"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
 	containerruntime "github.com/k0sproject/k0s/pkg/container/runtime"
-	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -119,18 +119,19 @@ func (c *Component) Start(ctx context.Context) (err error) {
 
 	cctx, cancel := context.WithCancelCause(context.Background())
 	var wg sync.WaitGroup
-	stop := func() error {
-		cancel(errors.New("containerd component is stopping"))
-		err := c.supervisor.Stop()
-		wg.Wait()
-		return err
-	}
 
 	defer func() {
 		if err == nil {
-			c.stop = stop
+			c.stop = func() error {
+				cancel(errors.New("containerd component is stopping"))
+				err := c.supervisor.Stop()
+				wg.Wait()
+				return err
+			}
 		} else {
-			err = errors.Join(err, stop())
+			cancel(err)
+			err = errors.Join(err, c.supervisor.Stop())
+			wg.Wait()
 		}
 	}()
 
@@ -226,49 +227,16 @@ func (c *Component) setupConfig() error {
 
 func (c *Component) watchDropinConfigs(ctx context.Context) {
 	log := logrus.WithField("component", "containerd")
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.WithError(err).Error("failed to create watcher for drop-ins")
-		return
-	}
-	defer watcher.Close()
+	ctx = internallog.AttachToContext(ctx, log)
 
-	err = watcher.Add(c.importsPath)
-	if err != nil {
-		log.WithError(err).Error("failed to watch for drop-ins")
-		return
-	}
-
-	debouncer := debounce.Debouncer[fsnotify.Event]{
-		Input:   watcher.Events,
-		Timeout: 3 * time.Second,
-		Filter: func(item fsnotify.Event) bool {
-			switch item.Op {
-			case fsnotify.Create, fsnotify.Remove, fsnotify.Write, fsnotify.Rename:
-				return true
-			default:
-				return false
-			}
-		},
-		Callback: func(fsnotify.Event) { c.restart(ctx) },
-	}
-
-	// Consume and log any errors from watcher
-	go func() {
-		for {
-			err, ok := <-watcher.Errors
-			if !ok {
-				return
-			}
-			log.WithError(err).Error("error while watching drop-ins")
-		}
-	}()
-
-	log.Infof("started to watch events on %s", c.importsPath)
-
-	err = debouncer.Run(ctx)
-	if err != nil {
-		log.WithError(err).Warn("dropin watch bouncer exited with error")
+	if err := (oswatch.OnDirChange{
+		Delay:   3 * time.Second,
+		Accepts: oswatch.RejectEstablished(),
+	}.Run(ctx, c.importsPath, func(ctx context.Context) error {
+		c.restart(ctx)
+		return nil
+	})); err != nil {
+		log.WithError(err).Error("Failed to watch for drop-ins")
 	}
 }
 

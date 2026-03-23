@@ -1,0 +1,298 @@
+// SPDX-FileCopyrightText: 2026 k0s authors
+// SPDX-License-Identifier: Apache-2.0
+
+package watch
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"slices"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/k0sproject/k0s/internal/sync/value"
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestDir(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		run  func(ctx context.Context, path string, handler Handler) error
+	}{
+		{"Dir", Dir},
+		{"runFSNotify", func(ctx context.Context, path string, handler Handler) error {
+			d := dirWatch{path, handler}
+			err, fallback := d.runFSNotify(ctx)
+			assert.False(t, fallback, "Fallback was signaled (OS limits?)")
+			if err == nil {
+				return nil
+			}
+			return fmt.Errorf("%w (fallback is %t)", err, fallback)
+		}},
+		{"runPolling", func(ctx context.Context, path string, handler Handler) error {
+			d := dirWatch{path, handler}
+			log, _ := test.NewNullLogger()
+			return d.runPolling(log, ctx.Done(), func() time.Duration { return 10 * time.Millisecond })
+		}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Run("non-existent", func(t *testing.T) {
+				nonExistent := filepath.Join(t.TempDir(), "non-existent")
+				err := tt.run(t.Context(), nonExistent, HandlerFunc(func(e Event) {
+					assert.Fail(t, "Unexpected event", "%v", e)
+				}))
+				var pathErr *os.PathError
+				if assert.ErrorAs(t, err, &pathErr) {
+					assert.Equal(t, nonExistent, pathErr.Path)
+					assert.ErrorIs(t, pathErr.Err, os.ErrNotExist)
+				}
+			})
+
+			t.Run("populated", func(t *testing.T) {
+				dir := t.TempDir()
+
+				lorem := filepath.Join(dir, "lorem")
+				ipsum := filepath.Join(dir, "ipsum")
+				dolor := filepath.Join(dir, "dolor")
+				sit := filepath.Join(dir, "sit")
+				amet := filepath.Join(dir, "amet")
+
+				require.NoError(t, os.WriteFile(ipsum, nil, 0644))
+				require.NoError(t, os.WriteFile(dolor, nil, 0644))
+				require.NoError(t, os.WriteFile(sit, nil, 0644))
+
+				ctx, cancel := context.WithCancelCause(t.Context())
+				defer cancel(nil)
+
+				var events value.Latest[[]Event]
+				handler := HandlerFunc(func(e Event) {
+					if touched, ok := e.(*Touched); ok {
+						// Remove the info part so we can use equality checks.
+						e = &Touched{Name: touched.Name}
+					}
+					prev, _ := events.Peek()
+					events.Set(slices.Concat(prev, []Event{e}))
+				})
+
+				expected := []Event{
+					&Established{Path: dir},
+				}
+
+				done := make(chan error, 1)
+				_, changed := events.Peek()
+				go func() { done <- tt.run(ctx, dir, handler) }()
+
+				select {
+				case <-changed:
+					events, _ := events.Peek()
+					assert.Equal(t, expected, events)
+				case err := <-done:
+					require.Failf(t, "Returned unexpectedly", "%v", err)
+				case <-time.After(2 * time.Second):
+					require.Fail(t, "Didn't establish watch in time")
+				}
+
+				_, changed = events.Peek()
+				require.NoError(t, os.WriteFile(amet, nil, 0444))
+				t.Cleanup(func() { _ = os.Chmod(amet, 0644) })
+				expected = append(expected, &Touched{Name: "amet"})
+
+				select {
+				case <-changed:
+					events, _ := events.Peek()
+					require.Equal(t, expected, events, "Mismatch after creation")
+				case err := <-done:
+					require.Failf(t, "Returned unexpectedly", "%v", err)
+				case <-time.After(2 * time.Second):
+					require.Fail(t, "Didn't emit touched event in time after creation")
+				}
+
+				require.NoError(t, os.Chmod(amet, 0644))
+
+				// https://github.com/fsnotify/fsnotify/issues/487
+				if runtime.GOOS != "windows" {
+					_, changed = events.Peek()
+					expected = append(expected, &Touched{Name: "amet"})
+
+					select {
+					case <-changed:
+						events, _ := events.Peek()
+						require.Equal(t, expected, events, "Mismatch after chmod")
+					case err := <-done:
+						require.Failf(t, "Returned unexpectedly", "%v", err)
+					case <-time.After(2 * time.Second):
+						require.Fail(t, "Didn't emit touched event in time after chmod")
+					}
+				}
+
+				_, changed = events.Peek()
+				require.NoError(t, os.WriteFile(lorem, nil, 0644))
+				require.NoError(t, os.Remove(dolor))
+				require.NoError(t, os.Remove(amet))
+
+			deletion:
+				for {
+					select {
+					case <-changed:
+						newExpected := []Event{
+							&Touched{Name: "lorem"},
+							&Gone{Name: "dolor"},
+							&Gone{Name: "amet"},
+						}
+						var actual []Event
+						actual, changed = events.Peek()
+						if len(actual) < len(expected)+len(newExpected) {
+							t.Logf("actual: %#v", actual)
+							continue
+						}
+						require.ElementsMatch(t, newExpected, actual[len(expected):], "Mismatch after deletion")
+						expected = actual
+						break deletion
+					case err := <-done:
+						require.Failf(t, "Returned unexpectedly", "%v", err)
+					case <-time.After(2 * time.Second):
+						actual, _ := events.Peek()
+						require.Failf(t, "Didn't emit gone event in time after deletion", "%#v", actual)
+					}
+				}
+
+				cancel(assert.AnError)
+				require.Equalf(t, assert.AnError, context.Cause(ctx), "Context has been canceled prematurely")
+
+				select {
+				case err := <-done:
+					assert.NoError(t, err)
+					events, _ := events.Peek()
+					assert.Equal(t, expected, events)
+				case <-time.After(2 * time.Second):
+					assert.Fail(t, "Didn't return in time")
+				}
+			})
+
+			t.Run("removed", func(t *testing.T) {
+				ctx, cancel := context.WithCancelCause(t.Context())
+				defer cancel(nil)
+
+				dir := t.TempDir()
+
+				var established atomic.Bool
+				done := make(chan error, 1)
+				go func() {
+					done <- tt.run(ctx, dir, HandlerFunc(func(e Event) {
+						switch e := e.(type) {
+						case *Established:
+							if assert.False(t, established.Swap(true)) {
+								if err := os.Remove(dir); !assert.NoError(t, err) {
+									cancel(err)
+								}
+							} else {
+								cancel(errors.New("established more than once"))
+							}
+						default:
+							cancel(fmt.Errorf("unexpected event: %v", e))
+						}
+					}))
+				}()
+
+				select {
+				case err := <-done:
+					assert.True(t, established.Load())
+					assert.ErrorIs(t, err, ErrWatchedDirectoryGone)
+				case <-time.After(2 * time.Second):
+					require.Fail(t, "Didn't establish watch in time")
+				}
+			})
+		})
+	}
+}
+
+func TestOnDirChange(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	type change struct {
+		seq  uint
+		when time.Time
+	}
+
+	var lastChange value.Latest[change]
+
+	dir := t.TempDir()
+
+	done := make(chan error, 1)
+	delay := 350 * time.Millisecond
+	start := time.Now()
+	go func() {
+		var numChanges uint
+		done <- (&OnDirChange{
+			InitialDelay: delay / 2,
+			Delay:        delay,
+			Accepts:      RejectNames(func(name string) bool { return name == "bar" }),
+		}).Run(ctx, dir, func(ctx context.Context) error {
+			now := time.Now()
+			numChanges++
+			lastChange.Set(change{numChanges, now})
+			return nil
+		})
+	}()
+
+	_, changed := lastChange.Peek()
+	select {
+	case <-changed:
+		lastChange, _ := lastChange.Peek()
+		assert.EqualValues(t, 1, lastChange.seq)
+		observedInitialDelay := lastChange.when.Sub(start)
+		assert.GreaterOrEqual(t, observedInitialDelay, delay/2)
+		assert.Less(t, observedInitialDelay, delay)
+	case err := <-done:
+		require.Failf(t, "Returned unexpectedly", "%v", err)
+	case <-time.After(3 * delay):
+		require.Fail(t, "Didn't invoke changed callback in time")
+	}
+
+	var lastWrite time.Time
+	for start := time.Now(); time.Since(start) <= delay; time.Sleep(delay / 5) {
+		lastWrite = time.Now()
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "foo"), nil, 0644))
+		lastChange, _ := lastChange.Peek()
+		require.EqualValues(t, 1, lastChange.seq)
+	}
+
+	_, changed = lastChange.Peek()
+	select {
+	case <-changed:
+		assert.GreaterOrEqual(t, time.Since(lastWrite), delay)
+	case err := <-done:
+		require.Failf(t, "Returned unexpectedly", "%v", err)
+	case <-time.After(3 * delay):
+		require.Fail(t, "Didn't invoke changed callback in time")
+	}
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "bar"), nil, 0644))
+	time.Sleep(delay + delay/2)
+
+	if lastChange, _ := lastChange.Peek(); true {
+		assert.EqualValues(t, 2, lastChange.seq)
+	}
+
+	cancel()
+
+	select {
+	case err := <-done:
+		assert.NoError(t, err)
+	case <-time.After(3 * delay):
+		require.Fail(t, "Didn't return in time")
+	}
+
+	if lastChange, _ := lastChange.Peek(); true {
+		assert.EqualValues(t, 2, lastChange.seq)
+		assert.GreaterOrEqual(t, lastChange.when.Sub(lastWrite), delay)
+	}
+}

@@ -7,12 +7,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"time"
 
+	oswatch "github.com/k0sproject/k0s/internal/os/watch"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -22,7 +25,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 )
 
@@ -88,67 +90,62 @@ func (m *Manager) Stop() error {
 }
 
 func (m *Manager) runWatchers(ctx context.Context) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		m.log.WithError(err).Error("Failed to create watcher")
-		return
-	}
+	stacks := make(map[string]stack)
+	stackCtx, cancel := context.WithCancelCause(ctx)
+
 	defer func() {
-		if err := watcher.Close(); err != nil {
-			m.log.WithError(err).Error("Failed to close watcher")
+		cancel(context.Cause(ctx))
+		for _, stack := range stacks {
+			<-stack.stopped
 		}
 	}()
 
-	err = watcher.Add(m.bundleDir)
-	if err != nil {
-		m.log.WithError(err).Error("Failed to watch bundle directory")
-		return
-	}
+	watchCtx := internallog.AttachToContext(stackCtx, m.log)
+	err := oswatch.Dir(watchCtx, m.bundleDir, oswatch.HandlerFunc(func(e oswatch.Event) {
+		switch e := e.(type) {
+		case *oswatch.Established:
+			// Add all directories after activating the watch. Doing so before
+			// starting the watch introduces a race condition if directories are
+			// created after the initial listing but before the watch starts.
 
-	m.log.Info("Starting watch loop")
+			entries, err := os.ReadDir(e.Path)
+			if err != nil {
+				cancel(err)
+				return
+			}
 
-	// Add all directories after the bundle dir has been added to the watcher.
-	// Doing it the other way round introduces a race condition when directories
-	// get created after the initial listing but before the watch starts.
-
-	dirs, err := dir.GetAll(m.bundleDir)
-	if err != nil {
-		m.log.WithError(err).Error("Failed to read bundle directory")
-		return
-	}
-
-	ctx, cancel := context.WithCancelCause(ctx)
-	defer cancel(nil) // satisfy linter, not required for correctness
-	stacks := make(map[string]stack, len(dirs))
-
-	for _, dir := range dirs {
-		m.createStack(ctx, stacks, filepath.Join(m.bundleDir, dir))
-	}
-
-	for {
-		select {
-		case err := <-watcher.Errors:
-			m.log.WithError(err).Error("Watch error")
-			cancel(err)
-
-		case event := <-watcher.Events:
-			switch event.Op {
-			case fsnotify.Create:
-				if dir.IsDirectory(event.Name) {
-					m.createStack(ctx, stacks, event.Name)
+			for _, entry := range entries {
+				if entry.IsDir() {
+					m.createStack(stackCtx, stacks, entry.Name())
 				}
-			case fsnotify.Remove:
-				m.removeStack(ctx, stacks, event.Name)
 			}
 
-		case <-ctx.Done():
-			m.log.Infof("Watch loop done (%v)", context.Cause(ctx))
-			for _, stack := range stacks {
-				<-stack.stopped
+		case *oswatch.Touched:
+			if info, err := e.Info(); err == nil {
+				if info.IsDir() {
+					m.createStack(stackCtx, stacks, e.Name)
+				}
+			} else if errors.Is(err, os.ErrNotExist) {
+				m.removeStack(stackCtx, stacks, e.Name)
+			} else {
+				cancel(err)
 			}
 
-			return
+		case *oswatch.Gone:
+			m.removeStack(stackCtx, stacks, e.Name)
 		}
+	}))
+
+	if err != nil {
+		cancel(err)
+	} else if ctx.Err() == nil {
+		err = context.Cause(stackCtx)
+	}
+
+	if err != nil {
+		m.log.WithError(err).Error("Failed to watch manifests directory")
+	} else {
+		m.log.Infof("Watch loop done (%v)", context.Cause(ctx))
 	}
 }
 
@@ -160,10 +157,9 @@ func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name
 
 	log := m.log.WithField("stack", name)
 
-	stackName := filepath.Base(name)
-	if slices.Contains(m.IgnoredStacks, stackName) {
-		if err := file.AtomicWithTarget(filepath.Join(name, "ignored.txt")).WriteString(
-			"The " + stackName + " stack is handled internally.\n" +
+	if slices.Contains(m.IgnoredStacks, name) {
+		if err := file.AtomicWithTarget(filepath.Join(m.bundleDir, name, "ignored.txt")).WriteString(
+			"The " + name + " stack is handled internally.\n" +
 				"This directory is ignored and can be safely removed.\n",
 		); err != nil {
 			log.WithError(err).Warn("Failed to write ignore notice")
@@ -174,7 +170,7 @@ func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name
 	ctx, cancel := context.WithCancelCause(ctx)
 	stopped := make(chan struct{})
 
-	stack := stack{cancel, stopped, NewStackApplier(name, m.KubeClientFactory)}
+	stack := stack{cancel, stopped, NewStackApplier(filepath.Join(m.bundleDir, name), m.KubeClientFactory)}
 	stacks[name] = stack
 
 	go func() {

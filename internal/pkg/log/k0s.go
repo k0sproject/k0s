@@ -4,6 +4,10 @@
 package log
 
 import (
+	"context"
+
+	"github.com/k0sproject/k0s/pkg/k0scontext"
+
 	"github.com/bombsimon/logrusr/v4"
 	cfssllog "github.com/cloudflare/cfssl/log"
 	"github.com/sirupsen/logrus"
@@ -30,6 +34,13 @@ func InitLogging() (Backend, ShutdownLoggingFunc) {
 	SetWarnLevel()
 
 	return backend, shutdown
+}
+
+func AttachToContext(ctx context.Context, logger logrus.FieldLogger) context.Context {
+	if logger == nil {
+		return ctx
+	}
+	return k0scontext.WithValue(ctx, logger)
 }
 
 func SetDebugLevel() {
