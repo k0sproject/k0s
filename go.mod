@@ -16,7 +16,7 @@ require (
 	github.com/containerd/cgroups/v3 v3.1.3
 	github.com/containerd/containerd/api v1.10.0
 	github.com/containerd/containerd/v2 v2.2.2
-	github.com/containerd/platforms v1.0.0-rc.2
+	github.com/containerd/platforms v1.0.0-rc.3
 	github.com/distribution/reference v0.6.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/evanphx/json-patch v5.9.11+incompatible
