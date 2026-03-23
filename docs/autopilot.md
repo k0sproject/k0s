@@ -333,6 +333,7 @@ update operation. There are a number of statuses available:
 | `Schedulable` | Indicates that the `Plan` can be re-evaluated to determine which next node to update. | No |
 | `SchedulableWait` | Scheduling operations are in progress, and no further update scheduling should occur. | No |
 | `Completed` | The `Plan` has run successfully to completion. | Yes |
+| `PlanApplyFailed` | One or more nodes encountered an unrecoverable error (e.g. download checksum mismatch). The `description` field on the command entry contains a summary of which nodes failed and why. | Yes |
 | `Restricted` | The `Plan` included node types (controller or worker) that violates the `--exclude-from-plans` restrictions. | Yes |
 
 ### Node Status
@@ -341,10 +342,51 @@ Similar to the **Plan Status**, the individual nodes can have their own statuses
 
 | Status | Description |
 | ------ | ----------- |
-| `SignalPending` | The node is available and awaiting an update signal |
+| `SignalPending` | The node is available and awaiting an update signal. |
 | `SignalSent` | Update signaling has been successfully applied to this node. |
+| `SignalCompleted` | The node has successfully applied the update. |
+| `SignalApplyFailed` | The node encountered an unrecoverable error. The `description` field contains the failure reason. |
 | `SignalMissingPlatform` | This node is a platform that an update has not been provided for. |
-| `SignalMissingNode` | This node does have an associated `Node` (worker) or `ControlNode` (controller) object. |
+| `SignalMissingNode` | This node does not have an associated `Node` (worker) or `ControlNode` (controller) object. |
+
+### Failure Diagnostics
+
+When a node reaches `SignalApplyFailed`, **autopilot** surfaces the failure details in two places:
+
+**Plan status** — the per-node `description` field and a rolled-up command-level `description`:
+
+```yaml
+status:
+  state: PlanApplyFailed
+  commands:
+    - state: PlanApplyFailed
+      description: "controller0: FailedDownload: sha256 mismatch (want 0000…0000, got a3f2…c1b9)"
+      k0supdate:
+        controllers:
+          - name: controller0
+            state: SignalApplyFailed
+            description: "FailedDownload: sha256 mismatch (want 0000…0000, got a3f2…c1b9)"
+            lastUpdatedTimestamp: "2026-03-12T12:34:56Z"
+```
+
+**Node annotation** — the `k0sproject.io/autopilot-last-error` annotation is written to both
+`ControlNode` (controller) and `Node` (worker) objects. It persists after the `Plan` is deleted
+and is cleared automatically when a new signal is dispatched to the node:
+
+```yaml
+metadata:
+  annotations:
+    k0sproject.io/autopilot-last-error: '{"planID":"id1234","reason":"FailedDownload","message":"sha256 mismatch (want 0000…0000, got a3f2…c1b9)","timestamp":"2026-03-12T12:34:56Z"}'
+```
+
+Fields in the annotation:
+
+| Field | Description |
+| ----- | ----------- |
+| `planID` | The `spec.id` of the `Plan` that triggered the failure. |
+| `reason` | The signal status code (e.g. `FailedDownload`). |
+| `message` | The raw error message (truncated at 1024 bytes). |
+| `timestamp` | RFC 3339 timestamp of when the failure occurred. |
 
 ## UpdateConfig
 

@@ -6,6 +6,7 @@ package k0supdate
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -33,6 +34,7 @@ func (kp *k0supdate) SchedulableWait(ctx context.Context, planID string, cmd apv
 
 	if appku.IsNotRecoverable(status.K0sUpdate.Controllers, status.K0sUpdate.Workers) {
 		logger.Info("Plan is non-recoverable due to apply failure")
+		status.Description = buildFailureSummary(status.K0sUpdate.Controllers, status.K0sUpdate.Workers)
 		return appc.PlanApplyFailed, false, nil
 	}
 
@@ -118,6 +120,7 @@ func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, planID
 
 						if signalData.Status.Status == apsigcomm.Failed || signalData.Status.Status == apsigcomm.FailedDownload {
 							signalNodes[i].State = appc.SignalApplyFailed
+							signalNodes[i].Description = delegate.ReadSignalError(signalNode)
 						}
 
 						if signalData.Status.Status == apsigcomm.Completed {
@@ -179,4 +182,18 @@ func countPlanCommandTargetStatus(nodes []apv1beta2.PlanCommandTargetStatus) (pe
 	}
 
 	return
+}
+
+// buildFailureSummary collects per-node descriptions from failed nodes into a single summary string,
+// e.g. "controller0: FailedDownload: checksum mismatch; worker0: FailedDownload: checksum mismatch".
+func buildFailureSummary(groups ...[]apv1beta2.PlanCommandTargetStatus) string {
+	var parts []string
+	for _, group := range groups {
+		for _, node := range group {
+			if node.State == appc.SignalApplyFailed && node.Description != "" {
+				parts = append(parts, node.Name+": "+node.Description)
+			}
+		}
+	}
+	return strings.Join(parts, "; ")
 }
