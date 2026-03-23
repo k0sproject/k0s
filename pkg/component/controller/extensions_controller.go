@@ -4,41 +4,43 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"net/url"
-	"os"
 	"path/filepath"
-	"regexp"
+	"reflect"
 	"slices"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/sync/value"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/applier"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/helm"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
+	"github.com/k0sproject/k0s/static"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	apiretry "k8s.io/client-go/util/retry"
 
+	"github.com/Masterminds/sprig"
 	"github.com/bombsimon/logrusr/v4"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/time/rate"
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -51,6 +53,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/yaml"
 )
 
 const HelmExtensionStackName = "helm"
@@ -104,26 +107,26 @@ func (rc *repositoryCache) update(repositories []k0sv1beta1.Repository) {
 
 }
 
-// Helm watch for Chart crd
+// ExtensionsController reconciles Helm extension repositories and charts, and
+// keeps the Helm stack up to date as long as leadership is held.
 type ExtensionsController struct {
 	L               *logrus.Entry
 	clients         kubernetes.ClientFactoryInterface
 	leaderElector   leaderelector.Interface
-	manifestsDir    string
-	stop            context.CancelFunc
+	stop            func()
 	repositoryCache *repositoryCache
+	helmConfig      value.Latest[*k0sv1beta1.HelmExtensions]
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(manifestsDir string, kubeClientFactory kubernetes.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
+func NewExtensionsController(kubeClientFactory kubernetes.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
 		L:               logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
 		clients:         kubeClientFactory,
 		leaderElector:   leaderElector,
-		manifestsDir:    filepath.Join(manifestsDir, "helm"),
 		repositoryCache: &repositoryCache{},
 	}
 }
@@ -134,98 +137,124 @@ const (
 
 // Run runs the extensions controller
 func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0sv1beta1.ClusterConfig) error {
-	ec.L.Info("Extensions reconciliation started")
-	defer ec.L.Info("Extensions reconciliation finished")
-	return ec.reconcileHelmExtensions(clusterConfig.Spec.Extensions.Helm)
+	helmConfig := clusterConfig.Spec.Extensions.Helm.DeepCopy()
+	if helmConfig == nil {
+		helmConfig = new(k0sv1beta1.HelmExtensions)
+	}
+	ec.helmConfig.Set(helmConfig)
+	return nil
 }
 
-// reconcileHelmExtensions creates instance of Chart CR for each chart of the config file
-// it also reconciles repositories settings
-// the actual helm install/update/delete management is done by ChartReconciler structure
-func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sv1beta1.HelmExtensions) error {
-	if helmSpec == nil {
-		return nil
-	}
+func (ec *ExtensionsController) reconcileConfig(ctx context.Context, stackReconciledOnceCh chan<- struct{}) {
+	var (
+		stackReconciledOnce bool
+		currentRepositories k0sv1beta1.RepositoriesSettings
+		currentCharts       k0sv1beta1.ChartsSettings
+	)
 
-	// Update repository cache
-	ec.repositoryCache.update(helmSpec.Repositories)
+	for {
+		config, configChanged := ec.helmConfig.Peek()
+		leaderStatus, statusChanged := ec.leaderElector.CurrentStatus()
 
-	var errs []error
-	var fileNamesToKeep []string
-	for _, chart := range helmSpec.Charts {
-		fileName := chartManifestFileName(&chart)
-		fileNamesToKeep = append(fileNamesToKeep, fileName)
-
-		path, err := ec.writeChartManifestFile(chart, fileName)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("can't write file for Helm chart manifest %q: %w", chart.ChartName, err))
-			continue
-		}
-
-		ec.L.Infof("Wrote Helm chart manifest file %q", path)
-	}
-
-	if err := filepath.WalkDir(ec.manifestsDir, func(path string, entry fs.DirEntry, err error) error {
-		switch {
-		case !entry.Type().IsRegular():
-			ec.L.Debugf("Keeping %v as it is not a regular file", entry)
-		case slices.Contains(fileNamesToKeep, entry.Name()):
-			ec.L.Debugf("Keeping %v as it belongs to a known Helm extension", entry)
-		case !isChartManifestFileName(entry.Name()):
-			ec.L.Debugf("Keeping %v as it is not a Helm chart manifest file", entry)
-		default:
-			if err := os.Remove(path); err != nil {
-				if !errors.Is(err, os.ErrNotExist) {
-					errs = append(errs, fmt.Errorf("failed to remove Helm chart manifest file, the Chart resource will remain in the cluster: %w", err))
-				}
+		var retry <-chan time.Time
+		if config != nil && leaderStatus == leaderelection.StatusLeading {
+			if stackReconciledOnce && reflect.DeepEqual(currentRepositories, config.Repositories) && reflect.DeepEqual(currentCharts, config.Charts) {
+				ec.L.Debug("Helm configuration unchanged")
 			} else {
-				ec.L.Infof("Removed Helm chart manifest file %q", path)
+				ec.L.Debug("Reconciling ", HelmExtensionStackName, " stack")
+
+				// Update repository cache
+				ec.repositoryCache.update(config.Repositories)
+
+				ctx, cancel := context.WithCancelCause(ctx)
+				go func() {
+					select {
+					case <-statusChanged:
+						cancel(leaderelection.ErrLostLead)
+					case <-ctx.Done():
+					}
+				}()
+
+				if ec.reconcileStack(ctx, config.Charts) {
+					stackReconciledOnce = true
+					currentRepositories, currentCharts = config.Repositories, config.Charts
+					ec.L.Info("Reconciled ", HelmExtensionStackName, " stack")
+					if stackReconciledOnceCh != nil {
+						close(stackReconciledOnceCh)
+						stackReconciledOnceCh = nil
+					}
+				} else {
+					if stackReconciledOnce {
+						retry = time.After(wait.Jitter(1*time.Minute, 0.3))
+					} else {
+						retry = time.After(wait.Jitter(7*time.Second, 1))
+					}
+				}
 			}
 		}
 
-		return nil
-	}); err != nil {
-		errs = append(errs, fmt.Errorf("failed to walk Helm chart manifest directory: %w", err))
-	}
+		select {
+		case <-configChanged:
+			ec.L.Debug("Processing configuration change")
 
-	return errors.Join(errs...)
+		case <-statusChanged:
+			stackReconciledOnce = false
+			ec.L.Debug("Processing leader change")
+
+		case <-retry:
+			retry = nil
+			ec.L.Info("Retrying configuration reconciliation")
+
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
-func (ec *ExtensionsController) writeChartManifestFile(chart k0sv1beta1.Chart, fileName string) (string, error) {
-	// Find matching repository for this chart
-	var repository *k0sv1beta1.Repository
-	if repoID := extractRepositoryIdentifier(chart.ChartName); repoID != "" {
-		repository = ec.repositoryCache.get(repoID)
+func (ec *ExtensionsController) reconcileStack(ctx context.Context, charts k0sv1beta1.ChartsSettings) bool {
+	var fail bool
+
+	resources, err := applier.ReadUnstructuredDir(static.CRDs, HelmExtensionStackName)
+	if err != nil {
+		ec.L.WithError(err).Error("Failed to fetch Helm CRDs")
+		return false
 	}
 
-	tw := templatewriter.TemplateWriter{
-		Path:     filepath.Join(ec.manifestsDir, fileName),
-		Name:     "addon_crd_manifest",
-		Template: chartCrdTemplate,
-		Data: struct {
-			k0sv1beta1.Chart
-			Finalizer  string
+	chartTemplate := template.Must(template.New("addon_crd_manifest").Funcs(sprig.TxtFuncMap()).Parse(chartCrdTemplate))
+	for _, chart := range charts {
+		data := struct {
+			*k0sv1beta1.Chart
 			Repository *k0sv1beta1.Repository
 		}{
-			Chart:      chart,
-			Finalizer:  finalizerName,
-			Repository: repository,
-		},
-	}
-	if err := tw.Write(); err != nil {
-		return "", err
-	}
-	return tw.Path, nil
-}
+			Chart: &chart,
+		}
 
-// Determines the file name to use when storing a chart as a manifest on disk.
-func chartManifestFileName(c *k0sv1beta1.Chart) string {
-	return fmt.Sprintf("%d_helm_extension_%s.yaml", c.Order, c.Name)
-}
+		// Find matching repository for this chart
+		if repoID := extractRepositoryIdentifier(chart.ChartName); repoID != "" {
+			data.Repository = ec.repositoryCache.get(repoID)
+		}
 
-// Determines if the given file name is in the format for chart manifest file names.
-func isChartManifestFileName(fileName string) bool {
-	return regexp.MustCompile(`^-?[0-9]+_helm_extension_.+\.yaml$`).MatchString(fileName)
+		var rendered bytes.Buffer
+		if err := chartTemplate.Execute(&rendered, &data); err != nil {
+			ec.L.WithError(err).Error("Failed to render Helm chart manifest ", chart.Name)
+			return false
+		}
+
+		var object unstructured.Unstructured
+		if err := yaml.Unmarshal(rendered.Bytes(), &object.Object); err != nil {
+			ec.L.WithError(err).Error("Failed to render Helm chart manifest ", chart.Name)
+			return false
+		}
+
+		resources = append(resources, &object)
+	}
+
+	if err := applier.ApplyStack(ctx, ec.clients, resources, HelmExtensionStackName); err != nil {
+		fail = true
+		ec.L.WithError(err).Error("Failed to apply ", HelmExtensionStackName, " stack")
+	}
+
+	return !fail
 }
 
 type ChartReconciler struct {
@@ -668,13 +697,14 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 }
 
 const chartCrdTemplate = `
+---
 apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:
   name: k0s-addon-chart-{{ .Name }}
   namespace: ` + metav1.NamespaceSystem + `
   finalizers:
-    - {{ .Finalizer }}
+    - ` + finalizerName + `
 spec:
   chartName: {{ .ChartName }}
   releaseName: {{ .Name }}
@@ -721,38 +751,46 @@ func (ec *ExtensionsController) Init(_ context.Context) error {
 }
 
 // Start
-func (ec *ExtensionsController) Start(ctx context.Context) error {
+func (ec *ExtensionsController) Start(context.Context) error {
 	ec.L.Debug("Starting")
 
-	mgr, err := ec.instantiateManager(ctx)
+	mgr, err := ec.instantiateManager()
 	if err != nil {
 		return fmt.Errorf("can't instantiate controller-runtime manager: %w", err)
 	}
 
+	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan struct{})
+	stackReconciledOnce := make(chan struct{})
 
-	go func() {
-		defer close(done)
+	wg.Go(func() { ec.reconcileConfig(ctx, stackReconciledOnce) })
+	wg.Go(func() {
 		leaderelection.RunLeaderTasks(ctx, ec.leaderElector.CurrentStatus, func(ctx context.Context) {
+			select {
+			case <-stackReconciledOnce:
+			case <-ctx.Done():
+				return
+			}
+
 			ec.L.Info("Running controller-runtime manager")
 			if err := mgr.Start(ctx); err != nil {
 				ec.L.WithError(err).Error("Failed to run controller-runtime manager")
+			} else {
+				ec.L.Info("Controller-runtime manager exited")
 			}
-			ec.L.Info("Controller-runtime manager exited")
 		})
 
-	}()
+	})
 
 	ec.stop = func() {
 		cancel()
-		<-done
+		wg.Wait()
 	}
 
 	return nil
 }
 
-func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.Manager, error) {
+func (ec *ExtensionsController) instantiateManager() (crman.Manager, error) {
 	clientConfig, err := ec.clients.GetRESTConfig()
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
@@ -774,28 +812,6 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 	})
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
-	}
-
-	for chart, sometimes := (schema.GroupKind{Group: helmv1beta1.GroupName, Kind: "Chart"}), (&rate.Sometimes{Every: 5}); ; {
-		_, err := mgr.GetRESTMapper().RESTMapping(chart)
-		if err == nil {
-			ec.L.Info(chart, " CRD is ready, going nuts")
-			break
-		}
-
-		sometimes.Do(func() {
-			if meta.IsNoMatchError(err) {
-				ec.L.Warn(chart, " CRD is not yet ready, waiting before starting ExtensionsController")
-			} else {
-				ec.L.WithError(err).Error("Failed to check for ", chart, " CRD readiness")
-			}
-		})
-
-		select {
-		case <-time.After(2 * time.Second):
-		case <-ctx.Done():
-			return nil, fmt.Errorf("while waiting for %s CRD: %w (last error: %w)", chart, context.Cause(ctx), err)
-		}
 	}
 
 	if err := builder.
