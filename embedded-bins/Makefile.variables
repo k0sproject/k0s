@@ -43,7 +43,7 @@ kine_buildimage = $(golang_buildimage)
 kine_build_go_tags = nats
 #kine_build_go_cgo_enabled =
 # Flags taken from https://github.com/k3s-io/kine/blob/v0.14.15/scripts/build#L25
-kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1
+kine_build_go_cgo_cflags = -DSQLITE_USE_ALLOCA=1
 
 #kine_build_go_flags =
 kine_build_go_ldflags = -w -s
