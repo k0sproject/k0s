@@ -22,7 +22,6 @@ Follow your storage driver's installation instructions. Note that by default the
 Different Kubernetes storage solutions are explained in the [official Kubernetes storage documentation](https://kubernetes.io/docs/concepts/storage/volumes/). All of them can be used with k0s. Here are some popular ones:
 
 - Rook-Ceph (Open Source)
-- MinIO (Open Source)
 - GlusterFS (Open Source)
 - Longhorn (Open Source)
 - Amazon EBS
