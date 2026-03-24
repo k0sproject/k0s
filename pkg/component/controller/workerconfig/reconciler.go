@@ -83,10 +83,10 @@ var (
 )
 
 // NewReconciler creates a new reconciler for worker configurations.
-func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled, autopilotDisabled bool) (*Reconciler, error) {
+func NewReconciler(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled, autopilotDisabled bool) (*Reconciler, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "workerconfig.Reconciler"})
 
-	clusterDNSIPString, err := nodeSpec.Network.DNSAddress()
+	clusterDNSIPString, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.PrimaryAddressFamily())
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clien
 	reconciler := &Reconciler{
 		log: log,
 
-		clusterDomain:       nodeSpec.Network.ClusterDomain,
+		clusterDomain:       nodeConfig.Spec.Network.ClusterDomain,
 		clusterDNSIP:        clusterDNSIP,
 		clientFactory:       clientFactory,
 		leaderElector:       leaderElector,

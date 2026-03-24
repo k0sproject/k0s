@@ -19,38 +19,38 @@ type NetworkSuite struct {
 func (s *NetworkSuite) TestAddresses() {
 	s.Run("DNS_default_service_cidr", func() {
 		n := DefaultNetwork()
-		dns, err := n.DNSAddress()
+		dns, err := n.DNSAddress(PrimaryFamilyIPv4)
 		s.Require().NoError(err)
 		s.Equal("10.96.0.10", dns)
 	})
 	s.Run("DNS_uses_non_default_service_cidr", func() {
 		n := DefaultNetwork()
 		n.ServiceCIDR = "10.96.0.248/29"
-		dns, err := n.DNSAddress()
+		dns, err := n.DNSAddress(PrimaryFamilyIPv4)
 		s.Require().NoError(err)
 		s.Equal("10.96.0.250", dns)
 	})
 	s.Run("DNS_service_cidr_too_narrow", func() {
 		n := Network{ServiceCIDR: "192.168.178.0/31"}
-		dns, err := n.DNSAddress()
+		dns, err := n.DNSAddress(PrimaryFamilyIPv4)
 		s.Empty(dns)
 		s.ErrorContains(err, "failed to calculate DNS address: CIDR too narrow: 192.168.178.0/31")
 	})
 	s.Run("DNS_uses_v6_service_cidr", func() {
 		n := Network{ServiceCIDR: "fd00:abcd:1234::/64"}
-		dns, err := n.DNSAddress()
+		dns, err := n.DNSAddress(PrimaryFamilyIPv6)
 		s.NoError(err)
 		s.Equal("fd00:abcd:1234::a", dns)
 	})
 	s.Run("DNS_uses_v6_small_service_cidr", func() {
 		n := Network{ServiceCIDR: "fd00::/126"}
-		dns, err := n.DNSAddress()
+		dns, err := n.DNSAddress(PrimaryFamilyIPv6)
 		s.NoError(err)
 		s.Equal("fd00::2", dns)
 	})
 	s.Run("DNS_service_v6_cidr_too_narrow", func() {
 		n := Network{ServiceCIDR: "fd00::/127"}
-		dns, err := n.DNSAddress()
+		dns, err := n.DNSAddress(PrimaryFamilyIPv6)
 		s.Empty(dns)
 		s.ErrorContains(err, "failed to calculate DNS address: CIDR too narrow: fd00::/127")
 	})
