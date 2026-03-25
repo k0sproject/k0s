@@ -220,7 +220,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	logrus.Infof("using listen port: %d", nodeConfig.Spec.API.Port)
 	logrus.Infof("using sans: %s", nodeConfig.Spec.API.SANs)
 
-	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress()
+	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.PrimaryAddressFamily())
 	if err != nil {
 		return err
 	}
@@ -452,7 +452,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
 		clusterComponents.Add(ctx, controller.NewCRD(c.K0sVars.ManifestsDir, controller.HelmExtensionStackName))
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
-			c.K0sVars,
+			c.K0sVars.ManifestsDir,
 			adminClientFactory,
 			leaderElector,
 		))
@@ -530,7 +530,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		workerConfigLeasePool := leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory, leaseName)
 		clusterComponents.Add(ctx, workerConfigLeasePool)
 
-		reconciler, err := workerconfig.NewReconciler(c.K0sVars, nodeConfig.Spec, adminClientFactory, workerConfigLeasePool, enableKonnectivity, disableAutopilot)
+		reconciler, err := workerconfig.NewReconciler(c.K0sVars, nodeConfig, adminClientFactory, workerConfigLeasePool, enableKonnectivity, disableAutopilot)
 		if err != nil {
 			return err
 		}
@@ -578,6 +578,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
 		etcdReconciler, err := controller.NewEtcdMemberReconciler(
 			adminClientFactory,
+			nodeName,
 			c.K0sVars,
 			nodeConfig.Spec.Storage.Etcd,
 			leaderElector,

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -50,7 +49,7 @@ func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, ha
 
 		nodeConf:        nodeConfig,
 		K0sVars:         k0sVars,
-		manifestDir:     path.Join(k0sVars.ManifestsDir, "kubeproxy"),
+		manifestDir:     filepath.Join(k0sVars.ManifestsDir, "kubeproxy"),
 		hasWindowsNodes: hasWindowsNodes,
 	}
 }

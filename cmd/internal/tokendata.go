@@ -61,7 +61,7 @@ func GetTokenData(tokenArg, tokenFile string) (string, error) {
 		problem = "is empty"
 	}
 	if problem != "" {
-		return "", fmt.Errorf("token file %q %s"+
+		return "", fmt.Errorf(`token file "%s" %s`+
 			`: obtain a new token via "k0s token create ..." and store it in the file`+
 			` or reinstall this node via "k0s install --force ..." or "k0sctl apply --force ..."`,
 			tokenFile, problem)

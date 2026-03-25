@@ -77,7 +77,7 @@ io.containerd.snapshotter.v1    zfs                      linux/amd64    ok
 
 ```toml
 ...
-    [plugins."io.containerd.grpc.v1.cri".containerd]
+    [plugins.'io.containerd.cri.v1.images']
       snapshotter = "overlayfs"
 ...
 ```
@@ -86,7 +86,7 @@ to
 
 ```toml
 ...
-    [plugins."io.containerd.grpc.v1.cri".containerd]
+    [plugins.'io.containerd.cri.v1.images']
       snapshotter = "zfs"
 ...
 ```

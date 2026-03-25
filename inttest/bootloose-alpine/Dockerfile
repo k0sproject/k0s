@@ -4,9 +4,9 @@ ARG GOLANG_IMAGE
 FROM docker.io/library/alpine:$ALPINE_VERSION
 
 ARG TARGETARCH
-ARG CRI_DOCKERD_VERSION=0.4.0 # renovate: datasource=github-releases depName=Mirantis/cri-dockerd
+ARG CRI_DOCKERD_VERSION=0.4.2 # renovate: datasource=github-releases depName=Mirantis/cri-dockerd
 ARG ETCD_VERSION
-ARG TROUBLESHOOT_VERSION=0.123.17 # renovate: datasource=github-releases depName=replicatedhq/troubleshoot
+ARG TROUBLESHOOT_VERSION=0.125.1 # renovate: datasource=github-releases depName=replicatedhq/troubleshoot
 ARG HELM_VERSION
 
 # Apply our changes to the image

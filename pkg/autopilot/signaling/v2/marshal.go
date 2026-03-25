@@ -34,37 +34,26 @@ func Marshal(m map[string]string, value any) {
 	}
 }
 
-type UnmarshalFieldTypeCollector func() reflect.Type
-type UnmarshalFieldValueCollector func() reflect.Value
-
 // Unmarshal uses reflection semantics to turn the marshaled map of values
 // back into a structure of unknown type. By relying on two reflection helper
 // functions, the reflect types + values can be specialized by the caller,
 // allowing this to be reused for all types.
 //
 // This all assumes that the types can be assigned via string.
-func Unmarshal(m map[string]string, uftc UnmarshalFieldTypeCollector, ufvc UnmarshalFieldValueCollector) {
+func Unmarshal[T any](m map[string]string, target *T) {
 	if m == nil {
 		return
 	}
+	unmarshalReflect(m, reflect.TypeOf(*target), reflect.ValueOf(target).Elem())
+}
 
-	fields := uftc()
-	values := ufvc()
-
+func unmarshalReflect(m map[string]string, fields reflect.Type, values reflect.Value) {
 	for i := range fields.NumField() {
 		field := fields.Field(i)
 		value := values.Field(i)
 
 		if value.Kind() == reflect.Struct {
-			Unmarshal(
-				m,
-				func() reflect.Type {
-					return field.Type
-				},
-				func() reflect.Value {
-					return value
-				},
-			)
+			unmarshalReflect(m, field.Type, value)
 		} else {
 			if fieldTagValue, ok := field.Tag.Lookup(TagAutopilot); ok {
 				if mapValue, ok := m[fieldTagValue]; ok {

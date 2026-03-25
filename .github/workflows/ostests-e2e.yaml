@@ -35,7 +35,7 @@ on:
       tofu-version:
         type: string
         description: The OpenTofu version to use when provisioning test resources.
-        default: 1.11.4 # renovate: datasource=github-releases depName=opentofu/opentofu
+        default: 1.11.5 # renovate: datasource=github-releases depName=opentofu/opentofu
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping the test cluster.
@@ -131,7 +131,7 @@ jobs:
           echo TF_VAR_k0s_version="$K0S_VERSION" >>"$GITHUB_ENV"
 
       - name: "Tofu :: Setup"
-        uses: opentofu/setup-opentofu@v1
+        uses: opentofu/setup-opentofu@v2
         with:
           tofu_version: ${{ inputs.tofu-version }}
           tofu_wrapper: false

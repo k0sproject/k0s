@@ -7,13 +7,13 @@
     ":automergeMinor",
     ":semanticCommitsDisabled"
   ],
-  "gitAuthor": "Renovate Bot <renovate@whitesourcesoftware.com>",
+  "gitAuthor": "k0s-bot <110385897+k0s-bot@users.noreply.github.com>",
   "labels": [
     "dependencies"
   ],
   "baseBranchPatterns": [
     "main",
-    "/^release-1\\.3[1-4]$/"
+    "/^release-1\\.3[3-5]$/"
   ],
   "prTitleStrict": true,
   "commitMessageAction": "Bump",
@@ -105,7 +105,6 @@
         "cilium/ebpf",
         "euank/go-kmsg-parser",
         "kubernetes/system-validators",
-        "projectcalico/calico",
         "torvalds/linux"
       ]
     },
@@ -114,7 +113,8 @@
       "enabled": true,
       "matchPackageNames": [
         "docker.io/calico/*",
-        "quay.io/k0sproject/calico-*"
+        "quay.io/k0sproject/calico-*",
+        "projectcalico/calico"
       ],
       "groupName": "Calico",
       "groupSlug": "calico"
@@ -132,9 +132,9 @@
     {
       "description": "Group all containerd bumps",
       "enabled": true,
-      "matchDepNames": [
+      "matchPackageNames": [
         "containerd/containerd",
-        "github.com/containerd/containerd"
+        "/^github.com\\/containerd\\/containerd(\\/v[0-9]+)?$/"
       ],
       "groupName": "containerd",
       "groupSlug": "containerd"
@@ -176,7 +176,7 @@
       "postUpgradeTasks": {
         "executionMode": "branch",
         "commands": [
-          "install-tool golang $(./vars.sh go_version)",
+          "sh -c 'install-tool golang $(./vars.sh go_version)'",
           "make DOCKER='' EMBEDDED_BINS_BUILDMODE=none codegen"
         ]
       }
@@ -190,6 +190,40 @@
       ],
       "ignoreUnstable": true,
       "respectLatest": true
+    },
+    {
+      "description": "Bump Calico for release-1.35",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.35"
+      ],
+      "matchDepNames": [
+        "docker.io/calico/*",
+        "quay.io/k0sproject/calico-*"
+      ],
+      "allowedVersions": "<=3.31"
+    },
+    {
+      "description": "Bump Go for release-1.35",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.35"
+      ],
+      "matchDepNames": [
+        "go"
+      ],
+      "allowedVersions": "<=1.25"
+    },
+    {
+      "description": "Bump Alpine for release-1.34",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchDepNames": [
+        "docker.io/library/alpine"
+      ],
+      "allowedVersions": "<=3.22"
     },
     {
       "description": "Bump Calico for release-1.34",
@@ -226,6 +260,55 @@
       "allowedVersions": "<=1.34"
     },
     {
+      "description": "Bump Kubernetes for release-1.34",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchPackageNames": [
+        "k8s.io/**",
+        "**/kubernetes",
+        "**/kube-proxy"
+      ],
+      "allowedVersions": "/^v?[01]\\.34\\./"
+    },
+    {
+      "description": "Disallow Kubernetes digest bumps for release-1.34",
+      "enabled": false,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchPackageNames": [
+        "k8s.io/**"
+      ],
+      "matchUpdateTypes": [
+        "digest"
+      ]
+    },
+    {
+      "description": "Bump runc for release-1.34",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchDepNames": [
+        "opencontainers/runc"
+      ],
+      "allowedVersions": "<=1.3"
+    },
+    {
+      "description": "Bump etcd for release-1.33",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.33"
+      ],
+      "matchPackageNames": [
+        "go.etcd.io/etcd/**/v3",
+        "etcd-io/etcd"
+      ],
+      "allowedVersions": "<=3.5"
+    },
+    {
       "description": "Bump Envoy for release-1.33",
       "enabled": true,
       "matchBaseBranches": [
@@ -237,26 +320,30 @@
       "allowedVersions": "<=1.32"
     },
     {
-      "description": "Bump Go for release-1.32",
+      "description": "Bump Kubernetes for release-1.33",
       "enabled": true,
       "matchBaseBranches": [
-        "release-1.32"
+        "release-1.33"
       ],
-      "matchDepNames": [
-        "go"
+      "matchPackageNames": [
+        "k8s.io/**",
+        "**/kubernetes",
+        "**/kube-proxy"
       ],
-      "allowedVersions": "<=1.23"
+      "allowedVersions": "/^v?[01]\\.33\\./"
     },
     {
-      "description": "Bump Envoy for release-1.32",
-      "enabled": true,
+      "description": "Disallow Kubernetes digest bumps for release-1.33",
+      "enabled": false,
       "matchBaseBranches": [
-        "release-1.32"
+        "release-1.33"
       ],
-      "matchDepNames": [
-        "quay.io/k0sproject/envoy-distroless"
+      "matchPackageNames": [
+        "k8s.io/**"
       ],
-      "allowedVersions": "<=1.31"
+      "matchUpdateTypes": [
+        "digest"
+      ]
     }
   ],
   "customManagers": [

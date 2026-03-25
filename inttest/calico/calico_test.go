@@ -97,7 +97,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.29.5-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.29.6-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
@@ -136,6 +136,11 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		return strings.Contains(out, "Welcome to nginx"), nil
 	})
 	s.Require().NoError(err)
+
+	// After the tests finished, verify that there are no restarted pods
+	for _, err := range common.VerifyNoRestartedPods(s.Context(), kc) {
+		s.NoError(err)
+	}
 }
 
 func getAlpineVersion(t *testing.T) string {

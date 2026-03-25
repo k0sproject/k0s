@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -27,6 +27,7 @@ type fileInfo struct {
 }
 
 func compressFiles(dirs []string, prefix string) ([]fileInfo, error) {
+	prefix = filepath.Clean(prefix)
 	var tmpFiles []fileInfo
 
 	// compress the files
@@ -46,8 +47,14 @@ func compressFiles(dirs []string, prefix string) ([]fileInfo, error) {
 			if err != nil {
 				return nil, err
 			}
-			filePath := path.Join(dir, f.Name())
-			name := strings.TrimPrefix(filePath, prefix) + ".gz"
+			filePath := filepath.Join(dir, f.Name())
+			name := filePath
+			if prefix != "" {
+				if name, err = filepath.Rel(prefix, filePath); err != nil {
+					return nil, err
+				}
+			}
+			name = filepath.ToSlash(name) + ".gz"
 			tmpFiles = append(tmpFiles, fileInfo{
 				Name:         name,
 				Path:         filePath,

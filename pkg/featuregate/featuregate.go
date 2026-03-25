@@ -90,7 +90,7 @@ func parseFeatureGateFlags(flag string) (map[string]bool, error) {
 
 	featureMap := make(map[string]bool)
 
-	for _, pair := range strings.Split(flag, ",") {
+	for pair := range strings.SplitSeq(flag, ",") {
 		key, value, found := strings.Cut(pair, "=")
 		if !found {
 			return nil, fmt.Errorf("invalid feature gate format %q, expected key=value", pair)

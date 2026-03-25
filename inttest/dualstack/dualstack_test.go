@@ -127,7 +127,7 @@ func (s *DualstackSuite) SetupSuite() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker0"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.29.5-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.29.6-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
@@ -143,7 +143,7 @@ func (s *DualstackSuite) SetupSuite() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker1"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.29.5-alpine"}},
+			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.29.6-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker1",
 			},
@@ -186,6 +186,30 @@ func (s *DualstackSuite) SetupSuite() {
 	})
 	s.Require().NoError(err)
 	s.client = client
+
+	s.T().Log("Validate the kube-dns service address")
+	s.validateKubeDNSIP(client)
+
+	s.T().Log("Verifying that pods didn't restart")
+	// CoreDNS may not be ready when we finish the test, which can break VerifyNoRestartedPods,
+	// so we need to wait for it first.
+	s.NoError(common.WaitForCoreDNSReady(s.Context(), client))
+	// Verify that there aren't containers restarted on kube-system
+	for _, err := range common.VerifyNoRestartedPods(s.Context(), client) {
+		s.NoError(err)
+	}
+}
+
+func (s *DualstackSuite) validateKubeDNSIP(client *k8s.Clientset) {
+	svc, err := client.CoreV1().Services(metav1.NamespaceSystem).Get(s.Context(), "kube-dns", metav1.GetOptions{})
+	s.NoError(err, "failed to get service kube-dns")
+	svcIP := net.ParseIP(svc.Spec.ClusterIP)
+	if s.defaultIPv6 {
+		s.Require().Nil(svcIP.To4(), "kube-dns has an unexpected IPv4 address")
+		s.Require().NotNil(svcIP.To16(), "kube-dns has an invalid IP address")
+	} else {
+		s.Require().NotNil(svcIP.To4(), "kube-dns has an unexpected non IPv4 address")
+	}
 }
 
 func (s *DualstackSuite) getIPv6Address(nodeName string) string {

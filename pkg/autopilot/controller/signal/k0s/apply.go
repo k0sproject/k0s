@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -109,7 +108,7 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 		return cr.Result{}, nil
 	}
 
-	updateFilenamePath := path.Join(r.k0sBinaryDir, apconst.K0sTempFilename)
+	updateFilenamePath := filepath.Join(r.k0sBinaryDir, apconst.K0sTempFilename)
 
 	// Ensure that the expected file exists
 	if _, err := os.Stat(updateFilenamePath); errors.Is(err, os.ErrNotExist) {

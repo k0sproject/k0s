@@ -14,7 +14,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -241,27 +240,27 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 func caHandler(certRootDir string) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		caResp := v1beta1.CaResponse{}
-		key, err := os.ReadFile(path.Join(certRootDir, "ca.key"))
+		key, err := os.ReadFile(filepath.Join(certRootDir, "ca.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Key = key
-		crt, err := os.ReadFile(path.Join(certRootDir, "ca.crt"))
+		crt, err := os.ReadFile(filepath.Join(certRootDir, "ca.crt"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Cert = crt
 
-		saKey, err := os.ReadFile(path.Join(certRootDir, "sa.key"))
+		saKey, err := os.ReadFile(filepath.Join(certRootDir, "sa.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.SAKey = saKey
 
-		saPub, err := os.ReadFile(path.Join(certRootDir, "sa.pub"))
+		saPub, err := os.ReadFile(filepath.Join(certRootDir, "sa.pub"))
 		if err != nil {
 			sendError(err, resp)
 			return

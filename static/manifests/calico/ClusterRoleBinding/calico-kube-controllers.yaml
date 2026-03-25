@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.31.3/charts/calico/templates/calico-kube-controllers-rbac.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.31.4/charts/calico/templates/calico-kube-controllers-rbac.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:

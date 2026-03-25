@@ -4,6 +4,7 @@
 package supervisor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -11,12 +12,12 @@ import (
 
 	"github.com/k0sproject/k0s/internal/os/linux"
 	"github.com/k0sproject/k0s/internal/os/linux/procfs"
-	osunix "github.com/k0sproject/k0s/internal/os/unix"
+	"github.com/k0sproject/k0s/internal/os/unix"
 )
 
 type unixProcess struct {
 	pid    int
-	pidDir *osunix.Dir
+	pidDir *unix.Dir
 }
 
 func openPID(pid int) (_ *unixProcess, err error) {
@@ -99,6 +100,28 @@ func (p *unixProcess) requestGracefulTermination() error {
 	} else {
 		return err
 	}
+}
+
+// awaitTermination implements [procHandle].
+func (p *unixProcess) awaitTermination(ctx context.Context) (err error) {
+	// The /proc/<pid> dirfds are not pollable. Use a pidfd, if available. This
+	// is the only way that doesn't involve userspace polling using timeouts and
+	// such, but requires at least Linux 5.3.
+	proc, err := linux.OpenProcess(p.pid)
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, proc.Close()) }()
+
+	// Since the process has been opened via its PID, there might have been a
+	// race. Check if the process is still alive. If it is, then it's guaranteed
+	// that the PID hasn't been recycled in the meantime and both pidFD and proc
+	// are referring to the same process.
+	if terminated, err := p.hasTerminated(); err != nil || terminated {
+		return err
+	}
+
+	return proc.Wait(ctx)
 }
 
 func (p *unixProcess) dir() *procfs.PIDDir {

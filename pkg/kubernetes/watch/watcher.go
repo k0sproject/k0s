@@ -192,12 +192,11 @@ func itemsFromList[L metav1.ListInterface, I any]() (func(L) []I, error) {
 
 	index, err := func() ([]int, error) {
 		var list L
-		var items []I
 		listType := reflect.TypeOf(list)
 		if listType.Kind() != reflect.Pointer {
 			return nil, fmt.Errorf("not a pointer type: %s", listType)
 		}
-		itemsType := reflect.TypeOf(items)
+		itemsType := reflect.TypeFor[[]I]()
 		itemsField, ok := listType.Elem().FieldByName("Items")
 		if !ok || itemsField.Type != itemsType {
 			return nil, fmt.Errorf(`expected an "Items" field of type %s in %s`, itemsType, listType)

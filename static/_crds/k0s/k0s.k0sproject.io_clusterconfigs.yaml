@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.20.0
+    controller-gen.kubebuilder.io/version: v0.20.1
   name: clusterconfigs.k0s.k0sproject.io
 spec:
   group: k0s.k0sproject.io
@@ -802,7 +802,7 @@ spec:
                       iptables:
                         description: |-
                           KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.1/config/v1alpha1/types.go#L27-L48
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.3/config/v1alpha1/types.go#L27-L48
                         properties:
                           localhostNodePorts:
                             type: boolean
@@ -819,7 +819,7 @@ spec:
                       ipvs:
                         description: |-
                           KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.1/config/v1alpha1/types.go#L52-L78
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.3/config/v1alpha1/types.go#L52-L78
                         properties:
                           excludeCIDRs:
                             items:
@@ -850,7 +850,7 @@ spec:
                       nftables:
                         description: |-
                           KubeProxyNFTablesConfiguration contains nftables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.1/config/v1alpha1/types.go#L82-L97
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.35.3/config/v1alpha1/types.go#L82-L97
                         properties:
                           masqueradeAll:
                             type: boolean
@@ -1125,6 +1125,20 @@ spec:
                       dataSource:
                         description: kine datasource URL
                         type: string
+                      extraArgs:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Map of key-values (strings) for any extra arguments you want to pass down to the kine process.
+                          Can be also used to override the default k0s managed kine arguments.
+                        type: object
+                      rawArgs:
+                        description: |-
+                          Slice of strings with raw arguments to pass to the kine process.
+                          These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+                        items:
+                          type: string
+                        type: array
                     type: object
                   type:
                     default: etcd

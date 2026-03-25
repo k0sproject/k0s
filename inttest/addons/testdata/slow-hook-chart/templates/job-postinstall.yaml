@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-postinstall"
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: {{ .Values.hook.deletePolicy | quote }}
+spec:
+  suspend: {{ .Values.hook.suspend | printf "%t" }}
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: wait
+          image: docker.io/library/busybox:1-musl
+          command:
+            - sh
+            - -c
+            - |
+              echo Starting post-install hook
+              sleep {{ .Values.hook.sleepSeconds }}
+              echo Finished post-install hook

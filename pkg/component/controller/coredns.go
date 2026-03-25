@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"path"
 	"path/filepath"
 	"reflect"
 	"time"
@@ -294,7 +293,7 @@ type coreDNSConfig struct {
 
 // NewCoreDNS creates new instance of CoreDNS component
 func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) (*CoreDNS, error) {
-	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress()
+	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.PrimaryAddressFamily())
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +313,7 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 		clusterDomain: nodeConfig.Spec.Network.ClusterDomain,
 		client:        client,
 		log:           logrus.WithField("component", "coredns"),
-		manifestDir:   path.Join(k0sVars.ManifestsDir, "coredns"),
+		manifestDir:   filepath.Join(k0sVars.ManifestsDir, "coredns"),
 	}, nil
 }
 

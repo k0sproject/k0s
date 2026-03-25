@@ -8,7 +8,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/helm"
 	"helm.sh/helm/v3/pkg/chartutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -186,20 +185,6 @@ func (r *Repository) IsInsecure() bool {
 	// This defaults to true when not explicitly set to false.
 	// Better have this the other way round in the next API version.
 	return r == nil || r.Insecure == nil || *r.Insecure
-}
-
-// ToHelm converts k0s Repository to helm.Repository
-func (r *Repository) ToHelm() helm.Repository {
-	return helm.Repository{
-		Name:     r.Name,
-		URL:      r.URL,
-		Username: r.Username,
-		Password: r.Password,
-		CAFile:   r.CAFile,
-		CertFile: r.CertFile,
-		KeyFile:  r.KeyFile,
-		Insecure: r.Insecure,
-	}
 }
 
 // Validate performs validation

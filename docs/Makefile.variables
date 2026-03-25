@@ -1,2 +1,2 @@
-# renovate: datasource=python-version depName=python versioning=python
+# renovate: datasource=github-releases depName=containerbase/python-prebuild versioning=python
 python_version = 3.14.3

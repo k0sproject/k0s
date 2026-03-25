@@ -6,13 +6,12 @@ package ctr
 import (
 	"os"
 
+	"github.com/containerd/containerd/v2/cmd/ctr/app"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
-
-	"github.com/containerd/containerd/cmd/ctr/app"
 	"github.com/spf13/cobra"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 const pathEnv = "PATH"
@@ -43,12 +42,12 @@ func NewCtrCommand() *cobra.Command {
 
 func setDefaultValues(runDir string, flags []cli.Flag) {
 	for i, flag := range flags {
-		if f, ok := flag.(cli.StringFlag); ok {
+		if f, ok := flag.(*cli.StringFlag); ok {
 			switch f.Name {
-			case "address, a":
+			case "address":
 				f.Value = containerd.Address(runDir)
 				flags[i] = f
-			case "namespace, n":
+			case "namespace":
 				f.Value = "k8s.io"
 				flags[i] = f
 			}

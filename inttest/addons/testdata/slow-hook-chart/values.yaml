@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+hook:
+  sleepSeconds: 1
+  suspend: true
+  deletePolicy: before-hook-creation,hook-succeeded

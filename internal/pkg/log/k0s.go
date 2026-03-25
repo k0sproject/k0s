@@ -11,7 +11,7 @@ import (
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type Backend interface{}
+type Backend any
 
 type ShutdownLoggingFunc func()
 

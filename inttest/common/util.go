@@ -419,3 +419,49 @@ func (s *LineWriter) Flush() {
 		s.buf = s.buf[:0]
 	}
 }
+
+// VerifyNoRestartedPods returns a slice of errors with the restarted pods in kube-system.
+// In order to verify this, the test makes sure that the node has been ready for at least 80 seconds,
+// which is enough to validate that the calico (slowest component to restart due to a liveness probe error)
+// would have restarted.
+func VerifyNoRestartedPods(ctx context.Context, client *kubernetes.Clientset) []error {
+	var errs []error
+
+	// Check that every node has been ready for at least 80 seconds before we check if
+	// there are restarts. Otherwise we won't be able to catch failed livenessProbes.
+	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return []error{err}
+	}
+	for _, node := range nodes.Items {
+		for _, condition := range node.Status.Conditions {
+			if condition.Type == corev1.NodeReady {
+				if condition.Status != corev1.ConditionTrue {
+					errs = append(errs, fmt.Errorf("node %q condition %s is %q", node.Name, corev1.NodeReady, condition.Status))
+					continue
+				}
+				// Wait 80 seconds after the node becomes ready so that we ensure that
+				// livenessProbes had enough time to fail and that the pods have restarted.
+				select {
+				case <-time.After(time.Until(condition.LastTransitionTime.Add(80 * time.Second))):
+				case <-ctx.Done():
+					errs = append(errs, ctx.Err())
+					return errs
+				}
+			}
+		}
+	}
+
+	pods, err := client.CoreV1().Pods(metav1.NamespaceSystem).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		errs = append(errs, err)
+	}
+	for _, pod := range pods.Items {
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.RestartCount != int32(0) {
+				errs = append(errs, fmt.Errorf("pod %s container %s has %d restarts. Should be 0", pod.Name, cs.Name, cs.RestartCount))
+			}
+		}
+	}
+	return errs
+}

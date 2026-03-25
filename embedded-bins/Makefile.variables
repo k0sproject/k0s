@@ -3,11 +3,11 @@ alpine_patch_version = 3.23.3
 alpine_version = $(word 1,$(subst ., ,$(alpine_patch_version))).$(word 2,$(subst ., ,$(alpine_patch_version)))
 
 # renovate: datasource=golang-version depName=go
-go_version = 1.25.7
+go_version = 1.26.1
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
 
 # renovate: datasource=github-releases depName=opencontainers/runc
-runc_version = 1.4.0
+runc_version = 1.4.1
 runc_buildimage = $(golang_buildimage)
 runc_build_go_tags = "seccomp"
 #runc_build_go_cgo_enabled =
@@ -17,7 +17,7 @@ runc_build_go_ldflags = -w -s
 runc_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=containerd/containerd
-containerd_version = 1.7.30
+containerd_version = 2.2.2
 containerd_buildimage = $(golang_buildimage)
 containerd_build_go_tags = "apparmor,selinux"
 containerd_build_shim_go_cgo_enabled = 0
@@ -28,7 +28,7 @@ containerd_build_go_ldflags = -w -s
 containerd_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-kubernetes_version = 1.35.1
+kubernetes_version = 1.35.3
 kubernetes_buildimage = $(golang_buildimage)
 kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_enabled =
@@ -38,19 +38,19 @@ kubernetes_build_go_flags = "-v"
 kubernetes_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=k3s-io/kine
-kine_version = 0.14.11
+kine_version = 0.14.15
 kine_buildimage = $(golang_buildimage)
 kine_build_go_tags = nats
 #kine_build_go_cgo_enabled =
-# Flags taken from https://github.com/k3s-io/kine/blob/v0.14.11/scripts/build#L25
-kine_build_go_cgo_cflags = -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1
+# Flags taken from https://github.com/k3s-io/kine/blob/v0.14.15/scripts/build#L25
+kine_build_go_cgo_cflags = -DSQLITE_USE_ALLOCA=1
 
 #kine_build_go_flags =
 kine_build_go_ldflags = -w -s
 kine_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=etcd-io/etcd
-etcd_version = 3.6.7
+etcd_version = 3.6.9
 etcd_buildimage = $(golang_buildimage)
 #etcd_build_go_tags =
 etcd_build_go_cgo_enabled = 0

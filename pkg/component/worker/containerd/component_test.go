@@ -61,7 +61,7 @@ func Test_isK0sManagedConfig(t *testing.T) {
 # This is a placeholder configuration for k0s managed containerD. 
 # If you wish to override the config, remove the first line and replace this file with your custom configuration.
 # For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
-version = 2
+version = 3
 imports = [
 	"/run/k0s/containerd-cri.toml",
 ]
@@ -92,6 +92,8 @@ version = 2
 	t.Run("should return false if md5 differs with pre 1.27 default config", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "containerd.toml")
+
+		// FIXME registry.mirrors DEPRECATED since containerd 1.5.x
 		cfg := `
 # This is a placeholder configuration for k0s managed containerd.
 # If you wish to customize the config replace this file with your custom configuration.

@@ -113,6 +113,11 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 			})
 		}
 	})
+	s.Run("verify there aren't pods restarted once the test finishes", func() {
+		for _, err := range common.VerifyNoRestartedPods(s.Context(), kc) {
+			s.NoError(err)
+		}
+	})
 }
 
 func TestKubeRouterHairpinSuite(t *testing.T) {
@@ -143,7 +148,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: docker.io/library/nginx:1.29.5-alpine
+    image: docker.io/library/nginx:1.29.6-alpine
     ports:
     - containerPort: 80
   - name: curl

@@ -18,7 +18,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -27,6 +26,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/containerd/platforms"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
 	etcdmemberclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
@@ -150,6 +150,21 @@ func (s *BootlooseSuite) initializeDefaults() {
 	}
 }
 
+// This is what containerd/platform report for our armv7 CI runners as they run
+// linux32 personality on arm64 HW
+const armv8Platform = "linux/arm/v8"
+
+func isArmV8l() bool {
+	p := platforms.Format(platforms.DefaultSpec())
+	return p == armv8Platform
+}
+
+const pullConfig = `
+[plugins]
+  [plugins.'io.containerd.cri.v1.images']
+    use_local_image_pull = true
+`
+
 // SetupSuite does all the setup work, namely boots up bootloose cluster.
 func (s *BootlooseSuite) SetupSuite() {
 	t := s.T()
@@ -182,9 +197,7 @@ func (s *BootlooseSuite) SetupSuite() {
 	}
 
 	// perform a cleanup whenever the suite's context is canceled
-	cleanupTasks.Add(1)
-	go func() {
-		defer cleanupTasks.Done()
+	cleanupTasks.Go(func() {
 		<-ctx.Done()
 		// Record a test failure when the context has been canceled other than
 		// through the test tear down itself. This is to ensure that the test is
@@ -199,7 +212,7 @@ func (s *BootlooseSuite) SetupSuite() {
 		ctx, cancel := k0scontext.ShutdownContext(t.Context())
 		defer cancel(nil)
 		s.cleanupSuite(ctx, t)
-	}()
+	})
 
 	s.waitForSSH(ctx)
 
@@ -210,6 +223,24 @@ func (s *BootlooseSuite) SetupSuite() {
 	if s.WithRegistry {
 		s.Require().NoError(s.waitForRegistryHealthy())
 	}
+
+	// We need to setup custom CRI config for local CRI pulls on armv8
+	// See https://github.com/containerd/containerd/issues/12838
+	if isArmV8l() {
+		s.T().Log("Setting up custom containerd pull config for armv8l")
+		for i := range s.WorkerCount {
+			wrkr := s.WorkerNode(i)
+			s.MakeDir(wrkr, "/etc/k0s/containerd.d")
+			s.PutFile(wrkr, "/etc/k0s/containerd.d/pull.toml", pullConfig)
+		}
+
+		for i := range s.ControllerCount {
+			wrkr := s.ControllerNode(i)
+			s.MakeDir(wrkr, "/etc/k0s/containerd.d")
+			s.PutFile(wrkr, "/etc/k0s/containerd.d/pull.toml", pullConfig)
+		}
+	}
+
 }
 
 // waitForSSH waits to get a SSH connection to all bootloose machines defined as part of the test suite.
@@ -328,6 +359,11 @@ func (s *BootlooseSuite) RegistryNode() string {
 	return fmt.Sprintf(registryNodeNameFormat, 0)
 }
 
+// Returns the registry port as seen from other bootloose nodes.
+func (s *BootlooseSuite) RegistryPort() int {
+	return registryContainerPort
+}
+
 func (s *BootlooseSuite) ExternalEtcdNode() string {
 	if !s.WithExternalEtcd {
 		s.FailNow("can't get external node name because it's not enabled for this suite")
@@ -362,11 +398,9 @@ func (s *BootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 		tmpDir := os.TempDir()
 
 		if s.ControllerCount > 0 {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				s.collectTroubleshootSupportBundle(ctx, t, filepath.Join(tmpDir, "support-bundle.tar.gz"))
-			}()
+			})
 		}
 
 		machines, err := s.InspectMachines(nil)
@@ -381,17 +415,15 @@ func (s *BootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 				continue
 			}
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				s.dumpNodeLogs(ctx, t, node, tmpDir)
-			}()
+			})
 		}
 		wg.Wait()
 	}
 
 	if keepEnvironment(t) {
-		t.Logf("bootloose cluster left intact for debugging; needs to be manually cleaned up with: bootloose delete --config %s", path.Join(s.clusterDir, "bootloose.yaml"))
+		t.Logf("bootloose cluster left intact for debugging; needs to be manually cleaned up with: bootloose delete --config %s", filepath.Join(s.clusterDir, "bootloose.yaml"))
 		return
 	}
 
@@ -1171,7 +1203,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 	cfg := config.Config{
 		Cluster: config.Cluster{
 			Name:       s.T().Name(),
-			PrivateKey: path.Join(dir, "id_rsa"),
+			PrivateKey: filepath.Join(dir, "id_rsa"),
 		},
 		Machines: []config.MachineReplicas{
 			{
@@ -1266,7 +1298,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 		return fmt.Errorf("failed to marshal bootloose configuration: %w", err)
 	}
 
-	if err = os.WriteFile(path.Join(dir, "bootloose.yaml"), bootlooseYaml, 0700); err != nil {
+	if err = os.WriteFile(filepath.Join(dir, "bootloose.yaml"), bootlooseYaml, 0700); err != nil {
 		return fmt.Errorf("failed to write bootloose configuration to file: %w", err)
 	}
 
@@ -1311,9 +1343,10 @@ func (s *BootlooseSuite) generateRegistryMachineSpec() *config.Machine {
 	extraArgs = append(extraArgs, fmt.Sprintf("--health-cmd=wget -q --no-check-certificate --spider %s://localhost:%d/v2", registryProtocol, registryContainerPort))
 
 	return &config.Machine{
-		Name:  registryNodeNameFormat,
-		Image: "registry:3.0.0",
-		Cmd:   "/etc/distribution/config.yml",
+		Name:     registryNodeNameFormat,
+		Image:    "docker.io/library/registry:3.0.0",
+		Cmd:      "/etc/distribution/config.yml",
+		Networks: s.Networks,
 		PortMappings: []config.PortMapping{
 			{
 				ContainerPort: uint16(registryContainerPort), // registry port

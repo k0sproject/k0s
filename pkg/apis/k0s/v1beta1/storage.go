@@ -49,6 +49,12 @@ const (
 type KineConfig struct {
 	// kine datasource URL
 	DataSource string `json:"dataSource,omitempty"`
+	// Map of key-values (strings) for any extra arguments you want to pass down to the kine process.
+	// Can be also used to override the default k0s managed kine arguments.
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+	// Slice of strings with raw arguments to pass to the kine process.
+	// These arguments will be appended to the `ExtraArgs` and aren't validated at all.
+	RawArgs []string `json:"rawArgs,omitempty"`
 }
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
@@ -88,9 +94,15 @@ func (s *StorageSpec) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if jc.Type == KineStorageType && jc.Kine == nil {
-		jc.Kine = DefaultKineConfig(constant.DataDirDefault)
+	if jc.Type == KineStorageType {
+		if jc.Kine == nil {
+			jc.Kine = DefaultKineConfig(constant.DataDirDefault)
+		}
+		if jc.Kine.DataSource == "" {
+			jc.Kine.DataSource = DefaultKineConfig(constant.DataDirDefault).DataSource
+		}
 	}
+
 	return nil
 }
 
@@ -199,6 +211,7 @@ func DefaultKineConfig(dataDir string) *KineConfig {
 			Path:     filepath.ToSlash(filepath.Join(dataDir, "db", "state.db")),
 			RawQuery: "mode=rwc&_journal=WAL",
 		}),
+		ExtraArgs: make(map[string]string),
 	}
 }
 

@@ -146,8 +146,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// but will only pick one for a single family. Do something similar as
 		// kubelet, but for both IPv4 and IPv6 and fallback to scanning the
 		// interface used a default gateway.
-		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/pkg/kubelet/nodestatus/setters.go#L150-L178
-
+		// https://github.com/kubernetes/kubernetes/blob/v1.35.3/pkg/kubelet/nodestatus/setters.go#L151-L179
 		ipv4, ipv6, err := k.lookupNodeName(ctx)
 		if err != nil {
 			logrus.Warnf("%s", err)

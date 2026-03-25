@@ -100,10 +100,10 @@ LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(word 1,$(subst ., ,$(kub
 LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(word 2,$(subst ., ,$(kubernetes_version)))
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit=not_available
-LD_FLAGS += -X github.com/containerd/containerd/version.Version=$(containerd_version)
+LD_FLAGS += -X github.com/containerd/containerd/v2/version.Version=$(containerd_version)
 ifeq ($(EMBEDDED_BINS_BUILDMODE), docker)
 ifeq ($(TARGET_OS),linux)
-LD_FLAGS += -X github.com/containerd/containerd/version.Revision=$(shell ./embedded-bins/staging/linux/bin/containerd --version | awk '{print $$4}')
+LD_FLAGS += -X github.com/containerd/containerd/v2/version.Revision=$(shell ./embedded-bins/staging/linux/bin/containerd --version | awk '{print $$4}')
 endif
 endif
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
@@ -207,7 +207,7 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 endif
 
 k0s: TARGET_OS = linux
-k0s: BUILD_GO_CGO_ENABLED = 1
+k0s: BUILD_GO_CGO_ENABLED = 0
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
@@ -240,6 +240,66 @@ endif
 lint-copyright:
 	hack/copyright.sh
 
+.PHONY: lint-invisible-unicode
+lint-invisible-unicode:
+	@set -eu; \
+	echo Checking tracked files for invisible Unicode format characters ...; \
+	{ \
+	  git grep -I --line-number --perl-regexp \
+	    -e '\x{00A0}' `# U+00A0 NO-BREAK SPACE` \
+	    -e '\x{00AD}' `# U+00AD SOFT HYPHEN` \
+	    -e '\x{1680}' `# U+1680 OGHAM SPACE MARK` \
+	    -e '\x{2000}' `# U+2000 EN QUAD` \
+	    -e '\x{2001}' `# U+2001 EM QUAD` \
+	    -e '\x{2002}' `# U+2002 EN SPACE` \
+	    -e '\x{2003}' `# U+2003 EM SPACE` \
+	    -e '\x{2004}' `# U+2004 THREE-PER-EM SPACE` \
+	    -e '\x{2005}' `# U+2005 FOUR-PER-EM SPACE` \
+	    -e '\x{2006}' `# U+2006 SIX-PER-EM SPACE` \
+	    -e '\x{2007}' `# U+2007 FIGURE SPACE` \
+	    -e '\x{2008}' `# U+2008 PUNCTUATION SPACE` \
+	    -e '\x{2009}' `# U+2009 THIN SPACE` \
+	    -e '\x{200A}' `# U+200A HAIR SPACE` \
+	    -e '\x{200B}' `# U+200B ZERO WIDTH SPACE` \
+	    -e '\x{200C}' `# U+200C ZERO WIDTH NON-JOINER` \
+	    -e '\x{200D}' `# U+200D ZERO WIDTH JOINER` \
+	    -e '\x{200E}' `# U+200E LEFT-TO-RIGHT MARK` \
+	    -e '\x{200F}' `# U+200F RIGHT-TO-LEFT MARK` \
+	    -e '\x{2028}' `# U+2028 LINE SEPARATOR` \
+	    -e '\x{2029}' `# U+2029 PARAGRAPH SEPARATOR` \
+	    -e '\x{202A}' `# U+202A LEFT-TO-RIGHT EMBEDDING` \
+	    -e '\x{202B}' `# U+202B RIGHT-TO-LEFT EMBEDDING` \
+	    -e '\x{202C}' `# U+202C POP DIRECTIONAL FORMATTING` \
+	    -e '\x{202D}' `# U+202D LEFT-TO-RIGHT OVERRIDE` \
+	    -e '\x{202E}' `# U+202E RIGHT-TO-LEFT OVERRIDE` \
+	    -e '\x{202F}' `# U+202F NARROW NO-BREAK SPACE` \
+	    -e '\x{205F}' `# U+205F MEDIUM MATHEMATICAL SPACE` \
+	    -e '\x{2060}' `# U+2060 WORD JOINER` \
+	    -e '\x{2066}' `# U+2066 LEFT-TO-RIGHT ISOLATE` \
+	    -e '\x{2067}' `# U+2067 RIGHT-TO-LEFT ISOLATE` \
+	    -e '\x{2068}' `# U+2068 FIRST STRONG ISOLATE` \
+	    -e '\x{2069}' `# U+2069 POP DIRECTIONAL ISOLATE` \
+	    -e '\x{3000}' `# U+3000 IDEOGRAPHIC SPACE` \
+	    -e '\x{FEFF}' `# U+FEFF ZERO WIDTH NO-BREAK SPACE / BOM` \
+	  || { [ $$? -eq 1 ] || echo ~; }; \
+	} | { \
+	  numMatches=0; \
+	  while IFS= read -r match; do \
+	    [ "$$match" != ~ ] || exit 1; \
+	    [ -z "$$match" ] && continue; \
+	    numMatches=$$((numMatches + 1)); \
+	    file="$${match%%:*}"; \
+	    rest="$${match#*:}"; \
+	    line="$${rest%%:*}"; \
+	    echo "::error file=$$file,line=$$line,title=Invisible Unicode format character::Found a disallowed invisible Unicode character. Remove it."; \
+	  done; \
+	  if [ "$$numMatches" -eq 0 ]; then \
+	    echo No invisible Unicode format characters found.; \
+	  else \
+	    exit 1; \
+	  fi \
+	}
+
 .PHONY: lint-go
 lint-go: GOLANGCI_LINT_FLAGS ?=
 lint-go: $(GO_ENV_REQUISITES) go.sum bindata
@@ -265,7 +325,7 @@ airgap-image-bundle-linux-riscv64.tar: k0s airgap-images.txt
 
 ipv6-test-images.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
 	{ \
-	  echo "docker.io/library/nginx:1.29.5-alpine"; \
+	  echo "docker.io/library/nginx:1.29.6-alpine"; \
 	  echo "docker.io/curlimages/curl:8.18.0"; \
 	  echo "docker.io/library/alpine:$(alpine_version)"; \
 	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
@@ -354,6 +414,6 @@ spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
 	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
 	  -w /k0s \
-	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.42.0 \
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.42.3 \
 	  --source-name k0s --source-version '$(VERSION)' \
 	  -c syft.yaml -o spdx-json@2.2 . >'$@'

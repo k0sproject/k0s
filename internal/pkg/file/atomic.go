@@ -11,9 +11,11 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/opencontainers/selinux/go-selinux"
+	"github.com/sirupsen/logrus"
 )
 
 // The internal options for atomic file writes.
@@ -274,9 +276,19 @@ func (f *Atomic) finish(target string) (err error) {
 	// Apply SELinux label if specified and SELinux is enabled.
 	// This must be done before the rename to ensure the target file has the
 	// correct label when it appears atomically.
+	// If the label is invalid (e.g., the SELinux type doesn't exist in the policy),
+	// we silently ignore the error to avoid breaking systems that have SELinux
+	// enabled but don't have the required policy modules installed.
 	if f.seLinuxLabel != "" && selinux.GetEnabled() {
 		if err := selinux.SetFileLabel(f.fd.Name(), f.seLinuxLabel); err != nil {
-			return err
+			// Ignore EINVAL errors which indicate the label is invalid/doesn't exist
+			// in the SELinux policy. This happens when SELinux is enabled but the
+			// required policy module (e.g., container-selinux) is not installed.
+			if errors.Is(err, syscall.EINVAL) {
+				logrus.WithError(err).WithField("file", f.fd.Name()).Warn("failed to set SELinux attrs due to missing label(s)")
+			} else {
+				return err
+			}
 		}
 	}
 

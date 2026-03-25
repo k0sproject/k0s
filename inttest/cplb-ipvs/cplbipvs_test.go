@@ -56,7 +56,7 @@ spec:
 func (s *cplbIPVSSuite) getK0sCfg(nodeIdx int, vip string) string {
 	k0sCfg := bytes.NewBuffer([]byte{})
 	srcIP, peers := s.getUnicastAddresses(nodeIdx, vip)
-	data := map[string]interface{}{
+	data := map[string]any{
 		"isIPv6Only":      s.isIPv6Only,
 		"lbAddr":          vip,
 		"lbCIDR":          common.GetCPLBVIPCIDR(vip, s.isIPv6Only),

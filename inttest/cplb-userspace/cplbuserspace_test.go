@@ -79,7 +79,7 @@ func (s *CPLBUserSpaceSuite) getK0sCfg(lb string, nic string) string {
 	}
 
 	k0sCfg := bytes.NewBuffer([]byte{})
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ExtAddr":    lb,
 		"VIP":        common.GetCPLBVIPCIDR(lb, s.isIPv6Only),
 		"IsIPv6Only": s.isIPv6Only,

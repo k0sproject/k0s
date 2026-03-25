@@ -16,16 +16,18 @@ import (
 // This is in contrast to logrus's implementation of io.Writer, which simply
 // errors out if the log line gets longer than 64k.
 type Writer struct {
-	log     logrus.FieldLogger // receives (possibly chunked) log lines
-	buf     []byte             // buffer in which to accumulate chunks; len(buf) determines the chunk length
-	len     int                // current buffer length
-	chunkNo uint               // current chunk number; 0 means "no chunk"
+	log     *logrus.Entry // receives (possibly chunked) log lines
+	level   logrus.Level  // log level used to log lines
+	buf     []byte        // buffer in which to accumulate chunks; len(buf) determines the chunk length
+	len     int           // current buffer length
+	chunkNo uint          // current chunk number; 0 means "no chunk"
 }
 
-func NewWriter(log logrus.FieldLogger, chunkLen int) *Writer {
+func NewWriter(log *logrus.Entry, level logrus.Level, chunkLen int) *Writer {
 	return &Writer{
-		log: log,
-		buf: make([]byte, chunkLen),
+		log:   log,
+		level: level,
+		buf:   make([]byte, chunkLen),
 	}
 }
 
@@ -59,10 +61,10 @@ func (w *Writer) writeBytes(in []byte) {
 			line := bytes.TrimRight(w.buf[off:off+idx], "\r")
 
 			if w.chunkNo == 0 {
-				w.log.Infof("%s", line)
+				w.log.Logf(w.level, "%s", line)
 			} else {
 				if len(line) > 0 {
-					w.log.WithField("chunk", w.chunkNo+1).Infof("%s", line)
+					w.log.WithField("chunk", w.chunkNo+1).Logf(w.level, "%s", line)
 				}
 				w.chunkNo = 0
 			}
@@ -84,7 +86,7 @@ func (w *Writer) writeBytes(in []byte) {
 			// Strip trailing carriage returns
 			line := bytes.TrimRight(w.buf[:len], "\r")
 
-			w.log.WithField("chunk", w.chunkNo+1).Infof("%s", line)
+			w.log.WithField("chunk", w.chunkNo+1).Logf(w.level, "%s", line)
 			w.chunkNo++                      // increase chunk number
 			w.len = copy(w.buf, w.buf[len:]) // discard logged bytes
 		}

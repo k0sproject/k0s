@@ -1,4 +1,4 @@
-//go:build linux
+//go:build linux || windows
 
 // SPDX-FileCopyrightText: 2021 k0s authors
 // SPDX-License-Identifier: Apache-2.0
@@ -9,15 +9,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
+	"github.com/k0sproject/k0s/pkg/component/worker"
+	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/container/runtime"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
-	"k8s.io/mount-utils"
 )
 
 type containers struct {
@@ -57,31 +58,6 @@ func (c *containers) Run() error {
 	return nil
 }
 
-func removeMount(path string) error {
-	var errs []error
-
-	mounter := mount.New("")
-	procMounts, err := mounter.List()
-	if err != nil {
-		return err
-	}
-	for _, v := range procMounts {
-		if strings.Contains(v.Path, path) {
-			logrus.Debugf("Unmounting: %s", v.Path)
-			if err = mounter.Unmount(v.Path); err != nil {
-				errs = append(errs, err)
-			}
-
-			logrus.Debugf("Removing: %s", v.Path)
-			if err := os.RemoveAll(v.Path); err != nil {
-				errs = append(errs, err)
-			}
-		}
-	}
-
-	return errors.Join(errs...)
-}
-
 func (c *containers) stopAllContainers() error {
 	var errs []error
 
@@ -100,7 +76,7 @@ func (c *containers) stopAllContainers() error {
 		return fmt.Errorf("failed at listing pods %w", err)
 	}
 	if len(pods) > 0 {
-		if err := removeMount("run/netns"); err != nil {
+		if err := cleanupContainerMounts(); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -132,4 +108,27 @@ func (c *containers) stopAllContainers() error {
 		return fmt.Errorf("errors occurred while removing pods: %w", errors.Join(errs...))
 	}
 	return nil
+}
+
+func newContainersStep(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*containers, error) {
+	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, k0sVars.RunDir)
+	if err != nil {
+		return nil, err
+	}
+
+	containers := containers{
+		containerRuntime: runtime.NewContainerRuntime(runtimeEndpoint),
+	}
+
+	if criSocketFlag == "" {
+		logLevel := "error"
+		if debug {
+			logLevel = "debug"
+		}
+		containers.managedContainerd = containerd.NewComponent(logLevel, k0sVars, &workerconfig.Profile{
+			PauseImage: defaultPauseImage(),
+		})
+	}
+
+	return &containers, nil
 }

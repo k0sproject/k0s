@@ -7,27 +7,36 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	internallog "github.com/k0sproject/k0s/internal/pkg/log"
+	"github.com/k0sproject/k0s/pkg/constant"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/utils/ptr"
-	"sigs.k8s.io/yaml"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 // Repository represents a Helm chart repository configuration.
@@ -53,19 +62,20 @@ func (r *Repository) IsInsecure() bool {
 	return r.Insecure != nil && *r.Insecure
 }
 
+type ClientGetter interface {
+	GetRESTConfig() (*rest.Config, error)
+	GetClient() (kubernetes.Interface, error)
+	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
+}
+
 // Commands run different helm command in the same way as CLI tool
 // This struct isn't thread-safe. Check on a per function basis.
 type Commands struct {
+	clients         ClientGetter
 	registryManager *ociRegistryManager
 
 	repoFile     string
 	helmCacheDir string
-	kubeConfig   string
-}
-
-func logFn(format string, args ...any) {
-	log := logrus.WithField("component", "helm")
-	log.Debugf(format, args...)
 }
 
 var getters = getter.Providers{
@@ -83,7 +93,7 @@ var getters = getter.Providers{
 // If repo is provided, it will be initialized in the temporary environment.
 // If tmpDir is empty, a new temporary directory will be created.
 // Returns the Commands instance and a cleanup function that must be called to remove temporary files.
-func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error) {
+func NewCommands(clients ClientGetter, repo *Repository) (*Commands, func(), error) {
 	// Create temporary directory for ephemeral Helm environment
 	var err error
 	tmpDir, err := os.MkdirTemp("", "k0s-helm-*")
@@ -101,10 +111,10 @@ func NewCommands(kubeConfig string, repo *Repository) (*Commands, func(), error)
 	helmCacheDir := filepath.Join(tmpDir, "cache")
 
 	commands := &Commands{
+		clients:         clients,
 		repoFile:        repoFile,
 		registryManager: newOCIRegistryManager(),
 		helmCacheDir:    helmCacheDir,
-		kubeConfig:      kubeConfig,
 	}
 
 	// Initialize repository if provided
@@ -163,31 +173,52 @@ func (hc *Commands) prepareCertFiles(repo *Repository, tmpDir string) error {
 	return nil
 }
 
-func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error) {
-	// Construct new helm env so we get the retrying roundtripper etc. setup
-	// See https://github.com/helm/helm/pull/11426/commits/b5378b3a5dd435e5c364ac0cfa717112ad686bd0
-	helmEnv := cli.New()
-	helmFlags, ok := helmEnv.RESTClientGetter().(*genericclioptions.ConfigFlags)
-	if !ok {
-		return nil, errors.New("failed to construct Helm REST client")
-	}
+func (hc *Commands) getActionCfg(ctx context.Context, namespace string) (*action.Configuration, error) {
+	log := logrus.WithField("component", "helm")
 
-	insecure := false
-	var impersonateGroup []string
-	cfg := &genericclioptions.ConfigFlags{
-		Insecure:         &insecure,
-		Timeout:          ptr.To("0"),
-		KubeConfig:       ptr.To(hc.kubeConfig),
-		CacheDir:         ptr.To(hc.helmCacheDir),
-		Namespace:        ptr.To(namespace),
-		ImpersonateGroup: &impersonateGroup,
-		WrapConfigFn:     helmFlags.WrapConfigFn, // This contains the retrying round tripper
-	}
-	actionConfig := &action.Configuration{}
-	if err := actionConfig.Init(cfg, namespace, "secret", logFn); err != nil {
+	config, err := hc.clients.GetRESTConfig()
+	if err != nil {
 		return nil, err
 	}
-	return actionConfig, nil
+
+	// Add transport control to the config.
+	transportControl := transportControl{ctx.Done(), errHelmOperationInterrupted}
+	config.WrapTransport = transportControl.wrap(config.WrapTransport)
+
+	// Add Helm's retrying round-tripper for transient etcd errors.
+	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		return &kube.RetryingRoundTripper{Wrapped: rt}
+	})
+
+	getter := &restClientGetter{
+		namespace: namespace,
+		config:    config,
+	}
+
+	clients, err := hc.clients.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	driver := driver.NewSecrets(clients.CoreV1().Secrets(namespace))
+	driver.Log = log.WithField("helm", "driver").Debugf
+
+	return &action.Configuration{
+		RESTClientGetter: getter,
+		Releases:         storage.Init(driver),
+		KubeClient:       newKubeClient(ctx, getter, log.WithField("helm", "client")),
+		Log:              log.WithField("helm", "action").Debugf,
+		HookOutputFunc: func(namespace, pod, container string) io.Writer {
+			return internallog.NewWriter(
+				log.WithFields(logrus.Fields{
+					"helm":      "hook",
+					"namespace": namespace,
+					"pod":       pod,
+					"container": container,
+				}), logrus.DebugLevel, 16*1024,
+			)
+		},
+	}, nil
 }
 
 // initRepository initializes a single repository in the ephemeral Helm environment
@@ -306,10 +337,43 @@ func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 	return true
 }
 
+// Used as the cancellation cause for the internal action context on method
+// exit.
+//
+// Helm's RunWithContext methods can return on caller cancellation while work
+// may continue in the background. The deferred cancellation of the action
+// context ensures those background API calls are effectively interrupted and
+// all watchers/streams are torn down after the methods return.
+var errHelmOperationInterrupted = errors.New("helm operation interrupted")
+
+// Retrieves the latest release from Helm storage.
+func (hc *Commands) GetRelease(ctx context.Context, releaseName, namespace string) (*release.Release, error) {
+	// The Helm get action doesn't offer RunWithContext. Instead, use ctx for
+	// action configuration and transport control directly. Let transport
+	// interruption handle cancellation while the get action is in progress.
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(errHelmOperationInterrupted)
+
+	cfg, err := hc.getActionCfg(ctx, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("can't create helm action configuration: %w", err)
+	}
+
+	get := action.NewGet(cfg)
+	return get.Run(releaseName)
+}
+
 // InstallChart installs a helm chart
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration) (*release.Release, error) {
-	cfg, err := hc.getActionCfg(namespace)
+func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, replace bool) (*release.Release, error) {
+	// Keep the action's context detached from the caller's cancellation so that
+	// we can explicitly terminate the Helm internals when this method exits.
+	// The install action still receives the caller context via the
+	// RunWithContext method.
+	actionCtx, cancelAction := context.WithCancelCause(context.WithoutCancel(ctx))
+	defer cancelAction(errHelmOperationInterrupted)
+
+	cfg, err := hc.getActionCfg(actionCtx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
@@ -329,10 +393,10 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 		return nil, err
 	}
 	install.Namespace = namespace
-	install.Atomic = true
 	install.ReleaseName = releaseName
 	name, _, err := install.NameAndChart([]string{chartName})
 	install.ReleaseName = name
+	install.Replace = replace
 
 	if err != nil {
 		return nil, err
@@ -354,17 +418,21 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 	if err != nil {
 		return nil, fmt.Errorf("can't reload loadedChart `%s`: %w", chartDir, err)
 	}
-	chartRelease, err := install.RunWithContext(ctx, loadedChart, values)
-	if err != nil {
-		return nil, fmt.Errorf("can't install loadedChart `%s`: %w", loadedChart.Name(), err)
-	}
-	return chartRelease, nil
+
+	return install.RunWithContext(ctx, loadedChart, values)
 }
 
 // UpgradeChart upgrades a helm chart.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
 func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, force bool) (*release.Release, error) {
-	cfg, err := hc.getActionCfg(namespace)
+	// Keep the action's context detached from the caller's cancellation so that
+	// we can explicitly terminate the Helm internals when this method exits.
+	// The upgrade action still receives the caller context via the
+	// RunWithContext method.
+	actionCtx, cancelAction := context.WithCancelCause(context.WithoutCancel(ctx))
+	defer cancelAction(errHelmOperationInterrupted)
+
+	cfg, err := hc.getActionCfg(actionCtx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
@@ -411,19 +479,17 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	return chartRelease, nil
 }
 
-func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
-	cfg, err := hc.getActionCfg(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("can't create helmAction configuration: %w", err)
-	}
-	helmAction := action.NewList(cfg)
-	return helmAction.Run()
-}
-
 // UninstallRelease uninstalls a release.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string) error {
-	cfg, err := hc.getActionCfg(namespace)
+func (hc *Commands) UninstallRelease(ctx context.Context, releaseName, namespace string) error {
+	// The Helm uninstall action doesn't offer RunWithContext. Instead, use ctx
+	// for action configuration and transport control directly. Let transport
+	// interruption handle cancellation while the uninstall action is in
+	// progress.
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(errHelmOperationInterrupted)
+
+	cfg, err := hc.getActionCfg(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("can't create helmAction configuration: %w", err)
 	}
@@ -433,8 +499,9 @@ func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, na
 		helmAction.Timeout = time.Until(deadline)
 	}
 
-	if _, err := helmAction.Run(releaseName); err != nil {
-		return fmt.Errorf("can't uninstall release `%s`: %w", releaseName, err)
-	}
-	return nil
+	helmAction.Wait = true
+	helmAction.DeletionPropagation = string(metav1.DeletePropagationForeground)
+
+	_, err = helmAction.Run(releaseName)
+	return err
 }

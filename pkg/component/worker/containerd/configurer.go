@@ -12,8 +12,6 @@ import (
 	"github.com/mesosphere/toml-merge/pkg/patch"
 	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
-
-	criconfig "github.com/containerd/containerd/pkg/cri/config"
 )
 
 // Resolved and merged containerd configuration data.
@@ -92,18 +90,28 @@ func (c *configurer) handleImports() (*resolvedConfig, error) {
 // containerd package to generate all the rest, so this will be in sync with
 // containerd's defaults for the CRI plugin.
 func generateDefaultCRIConfig(sandboxContainerImage string) ([]byte, error) {
-	criPluginConfig := criconfig.DefaultConfig()
-	// Set pause image
-	criPluginConfig.SandboxImage = sandboxContainerImage
+	// https://github.com/containerd/containerd/blob/main/docs/cri/config.md#full-configuration
+
+	imagesConf := map[string]any{
+		"pinned_images": map[string]any{
+			"sandbox": sandboxContainerImage,
+		},
+	}
+
+	runtimeConf := map[string]any{}
+
 	if runtime.GOOS == "windows" {
-		criPluginConfig.NetworkPluginBinDir = `c:\opt\cni\bin`
-		criPluginConfig.NetworkPluginConfDir = `c:\etc\cni\net.d`
+		runtimeConf["cni"] = map[string]any{
+			"conf_dir": `c:\etc\cni\net.d`,
+			"bin_dirs": []any{`c:\opt\cni\bin`},
+		}
 	}
 
 	return toml.Marshal(map[string]any{
-		"version": 2,
+		"version": 3,
 		"plugins": map[string]any{
-			"io.containerd.grpc.v1.cri": criPluginConfig,
+			"io.containerd.cri.v1.images":  imagesConf,
+			"io.containerd.cri.v1.runtime": runtimeConf,
 		},
 	})
 }
@@ -114,5 +122,5 @@ func hasCRIPluginConfig(data []byte) (bool, error) {
 		return false, fmt.Errorf("failed to parse TOML: %w", err)
 	}
 
-	return tree.HasPath([]string{"plugins", "io.containerd.grpc.v1.cri"}), nil
+	return tree.HasPath([]string{"plugins", "io.containerd.cri.v1.runtime"}) || tree.HasPath([]string{"plugins", "io.containerd.cri.v1.images"}), nil
 }
