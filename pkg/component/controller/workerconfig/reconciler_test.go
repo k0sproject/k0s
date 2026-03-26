@@ -49,11 +49,13 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		require.NoError(t, err)
 		underTest, err := NewReconciler(
 			k0sVars,
-			&v1beta1.ClusterSpec{
-				API: &v1beta1.APISpec{},
-				Network: &v1beta1.Network{
-					ClusterDomain: "test.local",
-					ServiceCIDR:   "99.99.99.0/24",
+			&v1beta1.ClusterConfig{
+				Spec: &v1beta1.ClusterSpec{
+					API: &v1beta1.APISpec{},
+					Network: &v1beta1.Network{
+						ClusterDomain: "test.local",
+						ServiceCIDR:   "99.99.99.0/24",
+					},
 				},
 			},
 			clients,
@@ -305,11 +307,13 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 	require.NoError(t, err)
 	underTest, err := NewReconciler(
 		k0sVars,
-		&v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{},
-			Network: &v1beta1.Network{
-				ClusterDomain: "test.local",
-				ServiceCIDR:   "99.99.99.0/24",
+		&v1beta1.ClusterConfig{
+			Spec: &v1beta1.ClusterSpec{
+				API: &v1beta1.APISpec{},
+				Network: &v1beta1.Network{
+					ClusterDomain: "test.local",
+					ServiceCIDR:   "99.99.99.0/24",
+				},
 			},
 		},
 		clients,
@@ -489,11 +493,13 @@ func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 	require.NoError(t, err)
 	underTest, err := NewReconciler(
 		k0sVars,
-		&v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{},
-			Network: &v1beta1.Network{
-				ClusterDomain: "test.local",
-				ServiceCIDR:   "99.99.99.0/24",
+		&v1beta1.ClusterConfig{
+			Spec: &v1beta1.ClusterSpec{
+				API: &v1beta1.APISpec{},
+				Network: &v1beta1.Network{
+					ClusterDomain: "test.local",
+					ServiceCIDR:   "99.99.99.0/24",
+				},
 			},
 		},
 		clients,
@@ -640,11 +646,13 @@ func TestReconciler_LeaderElection(t *testing.T) {
 	require.NoError(t, err)
 	underTest, err := NewReconciler(
 		k0sVars,
-		&v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{},
-			Network: &v1beta1.Network{
-				ClusterDomain: "test.local",
-				ServiceCIDR:   "99.99.99.0/24",
+		&v1beta1.ClusterConfig{
+			Spec: &v1beta1.ClusterSpec{
+				API: &v1beta1.APISpec{},
+				Network: &v1beta1.Network{
+					ClusterDomain: "test.local",
+					ServiceCIDR:   "99.99.99.0/24",
+				},
 			},
 		},
 		clients,

@@ -186,10 +186,15 @@ func (n *Network) Validate() []error {
 }
 
 // DNSAddress calculates the 10th address of configured service CIDR block.
-func (n *Network) DNSAddress() (string, error) {
-	_, ipnet, err := net.ParseCIDR(n.ServiceCIDR)
+func (n *Network) DNSAddress(primaryAddressFamily PrimaryAddressFamilyType) (string, error) {
+	serviceCIDR := n.ServiceCIDR
+	if n.DualStack.Enabled && primaryAddressFamily == PrimaryFamilyIPv6 {
+		serviceCIDR = n.DualStack.IPv6ServiceCIDR
+	}
+
+	_, ipnet, err := net.ParseCIDR(serviceCIDR)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse service CIDR %q: %w", n.ServiceCIDR, err)
+		return "", fmt.Errorf("failed to parse service CIDR %q: %w", serviceCIDR, err)
 	}
 
 	addr := slices.Clone(ipnet.IP)

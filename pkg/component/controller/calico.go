@@ -93,7 +93,7 @@ type calicoClusterConfig struct {
 
 // NewCalico creates new Calico reconciler component
 func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindowsNodes func() (*bool, <-chan struct{})) (*Calico, error) {
-	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress()
+	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.PrimaryAddressFamily())
 	if err != nil {
 		return nil, err
 	}

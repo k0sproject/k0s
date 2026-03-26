@@ -187,6 +187,9 @@ func (s *DualstackSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.client = client
 
+	s.T().Log("Validate the kube-dns service address")
+	s.validateKubeDNSIP(client)
+
 	s.T().Log("Verifying that pods didn't restart")
 	// CoreDNS may not be ready when we finish the test, which can break VerifyNoRestartedPods,
 	// so we need to wait for it first.
@@ -194,6 +197,18 @@ func (s *DualstackSuite) SetupSuite() {
 	// Verify that there aren't containers restarted on kube-system
 	for _, err := range common.VerifyNoRestartedPods(s.Context(), client) {
 		s.NoError(err)
+	}
+}
+
+func (s *DualstackSuite) validateKubeDNSIP(client *k8s.Clientset) {
+	svc, err := client.CoreV1().Services(metav1.NamespaceSystem).Get(s.Context(), "kube-dns", metav1.GetOptions{})
+	s.NoError(err, "failed to get service kube-dns")
+	svcIP := net.ParseIP(svc.Spec.ClusterIP)
+	if s.defaultIPv6 {
+		s.Require().Nil(svcIP.To4(), "kube-dns has an unexpected IPv4 address")
+		s.Require().NotNil(svcIP.To16(), "kube-dns has an invalid IP address")
+	} else {
+		s.Require().NotNil(svcIP.To4(), "kube-dns has an unexpected non IPv4 address")
 	}
 }
 
