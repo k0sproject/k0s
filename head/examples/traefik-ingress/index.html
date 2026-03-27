@@ -1954,10 +1954,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-configure-k0syaml" class="md-nav__link">
+  <a href="#install-traefik-and-metallb" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Configure k0s.yaml
+        Install Traefik and MetalLB
       
     </span>
   </a>
@@ -1965,10 +1965,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-retrieve-the-load-balancer-ip" class="md-nav__link">
+  <a href="#configure-traefik" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Retrieve the Load Balancer IP
+        Configure traefik
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure traefik">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-automatic-http-to-https-redirect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable automatic http to https redirect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-new-entrypoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add new entrypoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-configmap-for-metallb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create ConfigMap for MetalLB
       
     </span>
   </a>
@@ -1976,10 +2015,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-deploy-and-access-the-traefik-dashboard" class="md-nav__link">
+  <a href="#retrieve-the-load-balancer-ip" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Deploy and access the Traefik Dashboard
+        Retrieve the Load Balancer IP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-and-access-the-traefik-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy and access the Traefik Dashboard
       
     </span>
   </a>
@@ -2925,10 +2975,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-configure-k0syaml" class="md-nav__link">
+  <a href="#install-traefik-and-metallb" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Configure k0s.yaml
+        Install Traefik and MetalLB
       
     </span>
   </a>
@@ -2936,10 +2986,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-retrieve-the-load-balancer-ip" class="md-nav__link">
+  <a href="#configure-traefik" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Retrieve the Load Balancer IP
+        Configure traefik
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure traefik">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-automatic-http-to-https-redirect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable automatic http to https redirect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-new-entrypoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add new entrypoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-configmap-for-metallb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create ConfigMap for MetalLB
       
     </span>
   </a>
@@ -2947,10 +3036,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-deploy-and-access-the-traefik-dashboard" class="md-nav__link">
+  <a href="#retrieve-the-load-balancer-ip" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Deploy and access the Traefik Dashboard
+        Retrieve the Load Balancer IP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-and-access-the-traefik-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy and access the Traefik Dashboard
       
     </span>
   </a>
@@ -2991,36 +3091,113 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
 <h1 id="installing-traefik-ingress-controller">Installing Traefik Ingress Controller<a class="headerlink" href="#installing-traefik-ingress-controller" title="Permanent link">#</a></h1>
-<p>You can configure k0s with the <a href="https://doc.traefik.io/traefik/providers/kubernetes-ingress/">Traefik Ingress Controller</a>, a <a href="https://metallb.io/">MetalLB service load balancer</a>, and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration.</p>
-<h2 id="1-configure-k0syaml">1. Configure k0s.yaml<a class="headerlink" href="#1-configure-k0syaml" title="Permanent link">#</a></h2>
+<p>You can configure k0s with the <a href="https://doc.traefik.io/traefik/getting-started/quick-start-with-kubernetes/">Traefik Ingress Controller</a>, a <a href="https://metallb.io/">MetalLB service load balancer</a>, and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration.</p>
+<h2 id="install-traefik-and-metallb">Install Traefik and MetalLB<a class="headerlink" href="#install-traefik-and-metallb" title="Permanent link">#</a></h2>
 <p>Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their <a href="../../helm-charts/">Helm charts</a> as extensions in the k0s configuration file (<code>k0s.yaml</code>).</p>
-<p><strong>Note:</strong></p>
-<p>A good practice is to have a small range of IP addresses that are addressable on your network, preferably outside the assignment pool your DHCP server allocates (though any valid IP range should work locally on your machine). Providing an addressable range allows you to access your load balancer and Ingress services from anywhere on your local network.</p>
+<p><strong>Note:</strong>
+A good practice is to have a small range of IP addresses that are addressable on your network, preferably outside the assignment pool your DHCP server allocates (though any valid IP range should work locally on your machine). Providing an addressable range allows you to access your load balancer and Ingress services from anywhere on your local network.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">helm</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">repositories</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span>
-<span class="w">      </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://traefik.github.io/charts</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bitnami</span>
-<span class="w">      </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://charts.bitnami.com/bitnami</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span>
+<span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://traefik.github.io/charts</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb</span>
+<span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://metallb.github.io/metallb</span>
+
 <span class="w">    </span><span class="nt">charts</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span>
-<span class="w">      </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik/traefik</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;20.5.3&quot;</span>
-<span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb</span>
-<span class="w">      </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bitnami/metallb</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.5.4&quot;</span>
-<span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="w">      </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">        </span><span class="no">configInline:</span>
-<span class="w">          </span><span class="no">address-pools:</span>
-<span class="w">          </span><span class="no">- name: generic-cluster-pool</span>
-<span class="w">            </span><span class="no">protocol: layer2</span>
-<span class="w">            </span><span class="no">addresses:</span>
-<span class="w">            </span><span class="no">- 192.168.0.5-192.168.0.10</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span>
+<span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik/traefik</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;39.0.1&quot;</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik-system</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb</span>
+<span class="w">        </span><span class="nt">chart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb/metallb</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.15.3&quot;</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb-system</span>
 </code></pre></div>
-<h2 id="2-retrieve-the-load-balancer-ip">2. Retrieve the Load Balancer IP<a class="headerlink" href="#2-retrieve-the-load-balancer-ip" title="Permanent link">#</a></h2>
+<h2 id="configure-traefik">Configure traefik<a class="headerlink" href="#configure-traefik" title="Permanent link">#</a></h2>
+<p>If you want to configure Traefik via the Helm Chart, you can do this by providing values in the <code>extensions.helm.charts</code> section. For more infos check out the <a href="../../helm-charts/">Helm Chart docs</a>.</p>
+<h3 id="enable-automatic-http-to-https-redirect">Enable automatic http to https redirect<a class="headerlink" href="#enable-automatic-http-to-https-redirect" title="Permanent link">#</a></h3>
+<p>To automatically redirect http requests to https, set the following config via the <code>values</code> section:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">helm</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">repositories</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+
+<span class="w">    </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span>
+<span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik/traefik</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;39.0.1&quot;</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik-system</span>
+<span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">ports:</span>
+<span class="w">            </span><span class="no">web:</span>
+<span class="w">              </span><span class="no">http:</span>
+<span class="w">                </span><span class="no">redirections:</span>
+<span class="w">                  </span><span class="no">entryPoint:</span>
+<span class="w">                    </span><span class="no">to: websecure</span>
+<span class="w">                    </span><span class="no">scheme: https</span>
+<span class="w">                    </span><span class="no">permanent: true</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb</span>
+<span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div>
+<h3 id="add-new-entrypoints">Add new entrypoints<a class="headerlink" href="#add-new-entrypoints" title="Permanent link">#</a></h3>
+<p>Traefik can be configured to add new entrypoints which serve to accept traffic via a specified port. This can either be via the <a href="https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/">http(s) load-balancer</a>, or the <a href="https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/tcp/ingressroutetcp/">tcp/udp load-balancer</a>.
+For detailled infos check out the <a href="https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/">official docs</a>.</p>
+<p>To add a new entrypoint which can be used by <code>IngressRoute</code> or <code>IngressRouteTCP/IngressRouteUDP</code> CRD, set the following config via the <code>values</code> section:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">helm</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">repositories</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+
+<span class="w">    </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span>
+<span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik/traefik</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;39.0.1&quot;</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik-system</span>
+<span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">ports:</span>
+<span class="w">            </span><span class="no">ssh: # name of the entrypoint</span>
+<span class="w">              </span><span class="no">port: 2222 # port inside the container</span>
+<span class="w">              </span><span class="no">expose:</span>
+<span class="w">                </span><span class="no">default: true</span>
+<span class="w">              </span><span class="no">exposedPort: 22 # port of the load-balancer which is accessed externally</span>
+<span class="w">              </span><span class="no">protocol: TCP # protocol</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb</span>
+<span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div>
+<h2 id="create-configmap-for-metallb">Create ConfigMap for MetalLB<a class="headerlink" href="#create-configmap-for-metallb" title="Permanent link">#</a></h2>
+<p>Next you need to create ConfigMap, which includes an IP address range for the load balancer. The pool of IPs must be dedicated to MetalLB's use. You can't reuse for example the Kubernetes node IPs or IPs controlled by other services.</p>
+<blockquote>
+<p>For detailed infos about the installation and configuration of MetalLB see the <a href="../metallb-loadbalancer/">Extension docs</a></p>
+</blockquote>
+<p>Create a YAML file accordingly, and deploy it: <code>kubectl apply -f metallb-l2-pool.yaml</code></p>
+<div class="highlight"><pre><span></span><code><span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IPAddressPool</span>
+
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">first-pool</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb-system</span>
+
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">addresses</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ip-address-range-start&gt;-&lt;ip-address-range-stop&gt;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ip-address&gt;/&lt;cidr&gt;</span>
+<span class="w">  </span><span class="c1"># example for a range</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.0.1-192.168.0.5</span>
+<span class="w">  </span><span class="c1"># example for a single address with cidr</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.0.5/32</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">L2Advertisement</span>
+
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb-system</span>
+</code></pre></div>
+<h2 id="retrieve-the-load-balancer-ip">Retrieve the Load Balancer IP<a class="headerlink" href="#retrieve-the-load-balancer-ip" title="Permanent link">#</a></h2>
 <p>After you start your cluster, run <code>kubectl get all</code> to confirm the deployment of Traefik and MetalLB. The command should return a response with the <code>metallb</code> and <code>traefik</code> resources, along with a service load balancer that has an assigned <code>EXTERNAL-IP</code>.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>all
 </code></pre></div>
@@ -3045,7 +3222,7 @@ NAME<span class="w">                                                       </spa
 replicaset.apps/metallb-1607085578-controller-864c9757f6<span class="w">   </span><span class="m">1</span><span class="w">         </span><span class="m">1</span><span class="w">         </span><span class="m">1</span><span class="w">       </span>81s
 replicaset.apps/traefik-1607085579-77bbc57699<span class="w">              </span><span class="m">1</span><span class="w">         </span><span class="m">1</span><span class="w">         </span><span class="m">1</span><span class="w">       </span>81s
 </code></pre></div>
-<p>Take note of the <code>EXTERNAL-IP</code> given to the <code>service/traefik-n</code> load balancer. In this example, <code>192.168.0.5</code> has been assigned and can be used to access services via the Ingress proxy:</p>
+<p>Take note of the <code>EXTERNAL-IP</code> given to the <code>service/traefik-xxx</code> load balancer. In this example, <code>192.168.0.5</code> has been assigned and can be used to access services via the Ingress proxy:</p>
 <div class="highlight"><pre><span></span><code>NAME<span class="w">                         </span>TYPE<span class="w">           </span>CLUSTER-IP<span class="w">       </span>EXTERNAL-IP<span class="w">      </span>PORT<span class="o">(</span>S<span class="o">)</span><span class="w">                      </span>AGE
 service/traefik-1607085579<span class="w">   </span>LoadBalancer<span class="w">   </span><span class="m">10</span>.105.119.102<span class="w">   </span><span class="m">192</span>.168.0.5<span class="w">      </span><span class="m">80</span>:32153/TCP,443:30791/TCP<span class="w">   </span>84s
 </code></pre></div>
@@ -3054,18 +3231,22 @@ service/traefik-1607085579<span class="w">   </span>LoadBalancer<span class="w">
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="m">404</span><span class="w"> </span>page<span class="w"> </span>not<span class="w"> </span>found
 </code></pre></div>
-<h2 id="3-deploy-and-access-the-traefik-dashboard">3. Deploy and access the Traefik Dashboard<a class="headerlink" href="#3-deploy-and-access-the-traefik-dashboard" title="Permanent link">#</a></h2>
+<h2 id="deploy-and-access-the-traefik-dashboard">Deploy and access the Traefik Dashboard<a class="headerlink" href="#deploy-and-access-the-traefik-dashboard" title="Permanent link">#</a></h2>
 <p>With an available and addressable load balancer present on your cluster, now you can quickly deploy the Traefik dashboard and access it from anywhere on your LAN (assuming that MetalLB is configured with an addressable range).</p>
 <ol>
 <li>
-<p>Create the Traefik Dashboard <a href="https://doc.traefik.io/traefik/providers/kubernetes-crd/">IngressRoute</a> in a YAML file:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.containo.us/v1alpha1</span>
+<p>Create the Traefik Dashboard <a href="https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/">IngressRoute</a> in a YAML file:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.io/v1alpha1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IngressRoute</span>
+
 <span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dashboard</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik-dashboard</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik-system</span>
+
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">entryPoints</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">websecure</span>
 <span class="w">  </span><span class="nt">routes</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PathPrefix(`/dashboard`) || PathPrefix(`/api`)</span>
 <span class="w">      </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Rule</span>
@@ -3079,7 +3260,7 @@ service/traefik-1607085579<span class="w">   </span>LoadBalancer<span class="w">
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>traefik-dashboard.yaml
 </code></pre></div>
 <p><em>Output</em>:</p>
-<div class="highlight"><pre><span></span><code>ingressroute.traefik.containo.us/dashboard<span class="w"> </span>created
+<div class="highlight"><pre><span></span><code>ingressroute.traefik.io/v1alpha1/traefik-dashboard<span class="w"> </span>created
 </code></pre></div>
 <p>At this point you should be able to access the dashboard using the <code>EXTERNAL-IP</code> that you noted above by visiting <code>http://192.168.0.5/dashboard/</code> in your browser:</p>
 <p><img alt="Traefik Dashboard" src="../../img/traefik-dashboard.png" /></p>
@@ -3101,8 +3282,8 @@ service/traefik-1607085579<span class="w">   </span>LoadBalancer<span class="w">
 <span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami</span>
 <span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-container</span>
-<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">containous/whoami</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-container</span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">containous/whoami</span>
 <span class="nn">---</span>
 <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Service</span>
@@ -3110,9 +3291,9 @@ service/traefik-1607085579<span class="w">   </span>LoadBalancer<span class="w">
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-service</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">ports</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http</span>
-<span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
-<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http</span>
+<span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
 <span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami</span>
 <span class="nn">---</span>
@@ -3122,15 +3303,15 @@ service/traefik-1607085579<span class="w">   </span>LoadBalancer<span class="w">
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-ingress</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">http</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">paths</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/whoami</span>
-<span class="w">        </span><span class="nt">pathType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Exact</span>
-<span class="w">        </span><span class="nt">backend</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">service</span><span class="p">:</span>
-<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-service</span>
-<span class="w">            </span><span class="nt">port</span><span class="p">:</span>
-<span class="w">              </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">http</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/whoami</span>
+<span class="w">            </span><span class="nt">pathType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Exact</span>
+<span class="w">            </span><span class="nt">backend</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">service</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-service</span>
+<span class="w">                </span><span class="nt">port</span><span class="p">:</span>
+<span class="w">                  </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
 </code></pre></div>
 </li>
 <li>
