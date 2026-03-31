@@ -511,11 +511,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	}
 	defer etcdClient.Close()
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
+	etcdCtx, etcdCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer etcdCancel()
 
 	// Verify that the member is actually still present in etcd
-	members, err := etcdClient.ListMembers(ctx)
+	members, err := etcdClient.ListMembers(etcdCtx)
 	if err != nil {
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
 		member.Status.Message = err.Error()
@@ -526,9 +526,71 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		return false
 	}
 
-	// Member marked for leave but no member found in etcd, mark for leaved
-	_, ok := members[member.Name]
-	if !ok {
+	otherMembersURLs := make([]string, 0, len(members)-1)
+	for name, url := range members {
+		if name != member.Name {
+			otherMembersURLs = append(otherMembersURLs, url)
+		}
+	}
+
+	// Convert the memberID to uint64
+	memberID, err := strconv.ParseUint(member.Status.MemberID, 16, 64)
+	if err != nil {
+		log.WithError(err).Error("failed to parse memberID")
+		return false
+	}
+
+	_, inCluster := members[member.Name]
+	if inCluster {
+		// Demote the member to learner so the peer can't participate in leader election anymore, but
+		// can still see the cluster state and changes to react to them.
+		// This is needed to trigger the shutdown later.
+		log.Debug("Deleting member from cluster")
+		err = retry.Do(func() error {
+			return etcdClient.DemoteMember(etcdCtx, memberID, otherMembersURLs)
+		},
+			retry.Delay(5*time.Second),
+			retry.LastErrorOnly(true),
+			retry.Attempts(5),
+			retry.Context(etcdCtx),
+			retry.RetryIf(func(err error) bool {
+				msg := err.Error()
+				switch {
+				case strings.Contains(msg, "unhealthy cluster"):
+					return true
+				case strings.Contains(msg, "leader changed"):
+					return true
+				}
+				return false
+			}),
+		)
+
+		if err != nil {
+			log.WithError(err).Errorf("Failed to delete member from cluster")
+			member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
+			member.Status.Message = err.Error()
+			if _, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+				log.WithError(err).Error("failed to update EtcdMember status")
+			}
+			return false
+		}
+
+		// Peer removed successfully, update status
+		log.Info("Member has been deleted from cluster")
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
+		member.Status.Message = "Member removed from cluster"
+		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
+		member, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
+		if err != nil {
+			log.WithError(err).Error("failed to update EtcdMember status")
+			return false
+		}
+	} else {
+		joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
+		if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse {
+			log.Debug("member already left, no action needed")
+			return true
+		}
 		log.Debug("member marked for leave but not in actual member list, updating state to reflect that")
 		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
@@ -539,19 +601,8 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		}
 	}
 
-	joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !ok {
-		log.Debug("member already left, no action needed")
-		return true
-	}
-
-	// Convert the memberID to uint64
-	memberID, err := strconv.ParseUint(member.Status.MemberID, 16, 64)
-	if err != nil {
-		log.WithError(err).Error("failed to parse memberID")
-		return false
-	}
-
+	// Now that the member is out of the cluster, signal the node to shut down
+	// if its k0s process is still running.
 	if memberInvocationID, ok := member.Labels[shutdownOnLeaveLabelName]; ok && memberInvocationID != "" {
 		clients, err := e.clientFactory.GetClient()
 		if err != nil {
@@ -577,7 +628,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			return false
 		} else if ident := memberLease.Spec.HolderIdentity; ident != nil && *ident == memberInvocationID && kubeutil.IsValidLease(*memberLease) {
 			if member.Labels[shutdownLabelName] != memberInvocationID {
-				log.Info("Requesting member shutdown before deletion")
+				log.Info("Requesting member shutdown after etcd cluster removal")
 				member.Labels[shutdownLabelName] = memberInvocationID
 				if _, err := client.Update(ctx, member, metav1.UpdateOptions{}); err != nil {
 					log.WithError(err).Error("Failed to update member")
@@ -586,7 +637,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 				return true
 			}
 
-			msg := "Member is still active; waiting for it to shutdown"
+			msg := "Member removed from cluster; waiting for it to shutdown"
 			log.Info(msg)
 			member.Status.Message = msg
 			member.Status.ReconcileStatus = ""
@@ -595,49 +646,6 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			}
 			return false
 		}
-	}
-
-	log.Debug("Deleting member from cluster")
-	err = retry.Do(func() error {
-		return etcdClient.DeleteMember(ctx, memberID)
-	},
-		retry.Delay(5*time.Second),
-		retry.LastErrorOnly(true),
-		retry.Attempts(5),
-		retry.Context(ctx),
-		retry.RetryIf(func(err error) bool {
-			// In case etcd reports unhealthy cluster, retry
-			msg := err.Error()
-			switch {
-			case strings.Contains(msg, "unhealthy cluster"):
-				return true
-			case strings.Contains(msg, "leader changed"):
-				return true
-			}
-			return false
-		}),
-	)
-
-	if err != nil {
-		log.WithError(err).Errorf("Failed to delete member from cluster")
-		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
-		member.Status.Message = err.Error()
-		_, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
-		if err != nil {
-			log.WithError(err).Error("failed to update EtcdMember status")
-		}
-		return false
-	}
-
-	// Peer removed successfully, update status
-	log.Info("Member has been deleted from cluster")
-	member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
-	member.Status.Message = "Member removed from cluster"
-	member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
-	_, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
-	if err != nil {
-		log.WithError(err).Error("failed to update EtcdMember status")
-		return false
 	}
 
 	return true
