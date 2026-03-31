@@ -270,9 +270,10 @@ func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcd
 }
 
 // leaveIfMarked watches this node's own EtcdMember for Spec.Leave=true, then
-// removes itself from the etcd cluster and shuts down k0s. If self-removal
-// fails (with retries), it reports the failure in status and stays running so
-// the leader's dead-node fallback can remove the stale membership entry.
+// removes itself from the etcd cluster and shuts down k0s. Status updates are
+// intentionally left to the leader: after DeleteMember succeeds this node is
+// no longer part of etcd, so any k8s API write would fail. The leader will
+// detect the removal on its next reconcile and update the status accordingly.
 func (e *EtcdMemberReconciler) leaveIfMarked(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
 	name := e.etcdConfig.GetMemberName()
 	name, err := nodeutil.GetHostname(name)
@@ -342,12 +343,6 @@ func (e *EtcdMemberReconciler) leaveIfMarked(ctx context.Context, log logrus.Fie
 	}
 
 	log.Info("Successfully removed self from etcd cluster; shutting down")
-	member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
-	member.Status.Message = "Member removed from cluster"
-	member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
-	if _, statusErr := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); statusErr != nil {
-		log.WithError(statusErr).Warn("Failed to update EtcdMember status after self-removal")
-	}
 	e.shutdown(errors.New("etcd member leave requested"))
 }
 
@@ -479,6 +474,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	em.Labels = labels.Merge(em.Labels, labels.Set{
 		controllerLeaseLabelName: controllerLeaseName,
 	})
+	em.Spec.Leave = false
 
 	log.Debug("EtcdMember object already exists, updating it")
 	// Update the object if it already exists
