@@ -131,6 +131,21 @@ func (c *Client) DemoteMember(ctx context.Context, peerID uint64, peerAddresses 
 	return err
 }
 
+// GetLearnerIDByAddress looks up a learner member's ID by its peer URL.
+// Returns (id, true, nil) if found, (0, false, nil) if not present, or (0, false, err) on failure.
+func (c *Client) GetLearnerIDByAddress(ctx context.Context, peerAddress string) (uint64, bool, error) {
+	resp, err := c.client.MemberList(ctx)
+	if err != nil {
+		return 0, false, fmt.Errorf("etcd member list failed: %w", err)
+	}
+	for _, m := range resp.Members {
+		if m.IsLearner && slices.Contains(m.PeerURLs, peerAddress) {
+			return m.ID, true, nil
+		}
+	}
+	return 0, false, nil
+}
+
 // Close closes the etcd client
 func (c *Client) Close() error {
 	return c.client.Close()

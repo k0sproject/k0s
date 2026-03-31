@@ -588,7 +588,21 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	} else {
 		joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
 		if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse {
-			log.Debug("member already left, no action needed")
+			// Member was previously demoted to learner. Check whether the learner
+			// is still registered (e.g. node hasn't fully stopped yet) and remove it.
+			learnerID, found, err := etcdClient.GetLearnerIDByAddress(etcdCtx, member.Status.PeerAddress)
+			if err != nil {
+				log.WithError(err).Error("Failed to check for lingering learner")
+				return false
+			}
+			if found {
+				log.Debug("Removing lingering learner from cluster")
+				if err := etcdClient.DeleteMember(etcdCtx, learnerID); err != nil {
+					log.WithError(err).Error("Failed to remove learner from cluster")
+					return false
+				}
+				log.Info("Learner removed from cluster")
+			}
 			return true
 		}
 		log.Debug("member marked for leave but not in actual member list, updating state to reflect that")
