@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v2
+name: order-test-chart
+description: A test Helm chart with a pre-install hook that waits for a Service created by another chart
+type: application
+version: 0.1.0
+appVersion: "1.0"

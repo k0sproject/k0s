@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v2
+name: order-test-dependency
+description: A test Helm chart that provides a Service that another chart depends on
+type: application
+version: 0.1.0
+appVersion: "1.0"
