@@ -282,15 +282,9 @@ data:
         tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
   config.conf: |-
     apiVersion: kubeproxy.config.k8s.io/v1alpha1
-    bindAddress: 0.0.0.0
     clientConnection:
-      acceptContentTypes: ""
-      burst: 0
-      contentType: ""
       kubeconfig: /var/lib/kube-proxy/kubeconfig.conf
-      qps: 0
     clusterCIDR: {{ .ClusterCIDR }}
-    configSyncPeriod: 0s
     featureGates:
 {{- range $key, $value := .FeatureGates }}
       {{ $key }}: {{ $value }}
@@ -298,11 +292,6 @@ data:
     mode: "{{ .Mode }}"
     conntrack:
       maxPerCore: 0
-      min: null
-      tcpCloseWaitTimeout: null
-      tcpEstablishedTimeout: null
-    detectLocalMode: ""
-    enableProfiling: false
     healthzBindAddress: ""
     hostnameOverride: ""
     iptables: {{ .IPTables }}
@@ -311,14 +300,6 @@ data:
     kind: KubeProxyConfiguration
     metricsBindAddress: {{ .MetricsBindAddress }}
     nodePortAddresses: {{ .NodePortAddresses }}
-    oomScoreAdj: null
-    portRange: ""
-    showHiddenMetricsForVersion: ""
-    udpIdleTimeout: 0s
-    winkernel:
-      enableDSR: false
-      networkName: ""
-      sourceVip: ""
 ---
 apiVersion: apps/v1
 kind: DaemonSet
