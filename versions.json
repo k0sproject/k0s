@@ -7,6 +7,11 @@
     ]
   },
   {
+    "version": "v1.35.3+k0s.0",
+    "title": "v1.35.3+k0s.0",
+    "aliases": []
+  },
+  {
     "version": "v1.35.2+k0s.0",
     "title": "v1.35.2+k0s.0",
     "aliases": [
