@@ -15,7 +15,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -120,17 +119,19 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	if sh.client == nil {
 		kubeClient, err := sh.buildWorkerSideKubeAPIClient(ctx)
 		if err != nil {
-			status.WorkerToAPIConnectionStatus.Message = "failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: " + err.Error()
+			status.WorkerToAPIConnectionStatus = ProbeStatus{
+				Message: "failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: " + err.Error(),
+			}
 			return status
 		}
 		sh.client = kubeClient
 	}
-	_, err := sh.client.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
+	_, err := sh.client.Discovery().RESTClient().Get().AbsPath("/version").Do(ctx).Raw()
 	if err != nil {
-		status.WorkerToAPIConnectionStatus.Message = err.Error()
+		status.WorkerToAPIConnectionStatus = ProbeStatus{Message: err.Error()}
 		return status
 	}
-	status.WorkerToAPIConnectionStatus.Success = true
+	status.WorkerToAPIConnectionStatus = ProbeStatus{Success: true}
 	return status
 }
 
