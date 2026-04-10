@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package airgapcontrollerworker
+package airgap
 
 import (
 	"testing"
@@ -24,7 +24,6 @@ type airgapControllerWorkerSuite struct {
 	common.BootlooseSuite
 }
 
-// SetupTest prepares the controller+worker node and waits for it to be ready.
 func (s *airgapControllerWorkerSuite) SetupTest() {
 	ctx := s.Context()
 
