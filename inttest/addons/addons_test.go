@@ -183,6 +183,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.Run("Rename chart in Helm extension", func() { as.renameChart() })
 	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(kc) })
 	as.Run("Controller restart recovery", func() { as.testControllerRestartRecovery(kc) })
+	as.Run("Chart ordering", func() { as.testChartOrdering() })
 
 	values := map[string]any{
 		"replicaCount": 2,
@@ -709,6 +710,126 @@ func (as *AddonsSuite) testControllerRestartRecovery(kc *k8s.Clientset) {
 	as.waitForTestRelease(restartAddonName, "1.0", metav1.NamespaceDefault, 1)
 
 	as.T().Logf("Successfully recovered from interrupted install: %s is now deployed", restartAddonName)
+}
+
+// testChartOrdering verifies that helm charts with inter-chart dependencies are
+// reconciled correctly when the dependent chart (A) is submitted before the
+// chart it depends on (B). This reproduces the ordering problem identified in
+// https://github.com/k0sproject/k0s/issues/7305: with sequential (non-concurrent)
+// reconciliation, chart A's pre-install hook blocks waiting for chart B's Service,
+// while chart B never gets a chance to run. With concurrent reconciliation both
+// charts run in parallel and chart A's hook succeeds once chart B creates the Service.
+func (as *AddonsSuite) testChartOrdering() {
+	ctx := as.TContext()
+
+	chartAReleaseName := "order-test-a"
+	chartBReleaseName := "order-test-b"
+	chartAName := "k0s-addon-chart-" + chartAReleaseName
+	chartBName := "k0s-addon-chart-" + chartBReleaseName
+
+	restConfig, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+	k0sClients, err := k0sclientset.NewForConfig(restConfig)
+	as.Require().NoError(err)
+
+	chartClient, err := client.New(restConfig, client.Options{Scheme: k0sscheme.Scheme})
+	as.Require().NoError(err)
+
+	// Create Chart A first — it has a pre-install hook waiting for Chart B's Service.
+	// This is the problematic ordering from the issue: submitting the dependent chart
+	// before the chart it depends on.
+	chartA := &helmv1beta1.Chart{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      chartAName,
+			Namespace: metav1.NamespaceSystem,
+			Finalizers: []string{
+				"helm.k0sproject.io/uninstall-helm-release",
+			},
+		},
+		Spec: helmv1beta1.ChartSpec{
+			ChartName:   as.uploadChart("order-test-chart-a"),
+			ReleaseName: chartAReleaseName,
+			Version:     "0.1.0",
+			Namespace:   metav1.NamespaceDefault,
+			Timeout:     "6m0s",
+		},
+	}
+
+	as.T().Logf("Creating Chart A (%s) first — it depends on Chart B's Service", chartAName)
+	_, err = k0sClients.HelmV1beta1().Charts(metav1.NamespaceSystem).Create(ctx, chartA, metav1.CreateOptions{})
+	as.Require().NoError(err)
+
+	// Create Chart B second — it creates the Service that Chart A's hook waits for.
+	chartB := &helmv1beta1.Chart{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      chartBName,
+			Namespace: metav1.NamespaceSystem,
+			Finalizers: []string{
+				"helm.k0sproject.io/uninstall-helm-release",
+			},
+		},
+		Spec: helmv1beta1.ChartSpec{
+			ChartName:   as.uploadChart("order-test-chart-b"),
+			ReleaseName: chartBReleaseName,
+			Version:     "0.1.0",
+			Namespace:   metav1.NamespaceDefault,
+		},
+	}
+
+	as.T().Logf("Creating Chart B (%s) second — it provides the Service chart A depends on", chartBName)
+	_, err = k0sClients.HelmV1beta1().Charts(metav1.NamespaceSystem).Create(ctx, chartB, metav1.CreateOptions{})
+	as.Require().NoError(err)
+
+	// With concurrent reconciliation both charts run in parallel: Chart B creates its
+	// Service and Chart A's pre-install hook finds it via the Kubernetes API.
+	// With sequential reconciliation Chart A would block the single reconciler worker
+	// forever (since its hook loops indefinitely), preventing Chart B from ever running.
+	as.T().Log("Waiting for Chart B to be deployed (creates the Service)...")
+	as.waitForTestRelease(chartBReleaseName, "1.0", metav1.NamespaceDefault, 1)
+
+	// Use a strict watch for Chart A: fail immediately if Status.Error is set.
+	// With concurrent reconciliation, chart A must install cleanly on the first
+	// attempt — a retry would mean the hook timed out, which only happens when
+	// chart B couldn't run in parallel (i.e. sequential deadlock).
+	as.T().Log("Waiting for Chart A to be deployed without errors (pre-install hook waits for the Service)...")
+	k0sKC, err := as.AutopilotClient(as.ControllerNode(0))
+	as.Require().NoError(err)
+	as.Require().NoError(watch.Charts(k0sKC.HelmV1beta1().Charts(metav1.NamespaceSystem)).
+		WithObjectName("k0s-addon-chart-"+chartAReleaseName).
+		Until(ctx, func(item *helmv1beta1.Chart) (bool, error) {
+			if item.Status.Error != "" {
+				return false, fmt.Errorf("chart A install failed (concurrent reconciliation should prevent this): %s", item.Status.Error)
+			}
+			if item.Status.ReleaseName == "" || item.Generation != 1 || item.Status.Revision != 1 {
+				as.T().Logf("Chart A not ready yet (version %q): releaseName=%q generation=%d revision=%d",
+					item.ResourceVersion, item.Status.ReleaseName, item.Generation, item.Status.Revision)
+				return false, nil
+			}
+			return true, nil
+		}),
+	)
+
+	as.T().Log("Both charts deployed successfully — chart ordering works correctly")
+
+	// Cleanup
+	for _, chart := range []*helmv1beta1.Chart{chartA, chartB} {
+		as.T().Logf("Deleting Chart %s/%s", chart.Namespace, chart.Name)
+		as.Require().NoError(chartClient.Delete(ctx, chart))
+	}
+	for _, chart := range []*helmv1beta1.Chart{chartA, chartB} {
+		as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+			var found helmv1beta1.Chart
+			err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
+			if apierrors.IsNotFound(err) {
+				as.T().Logf("Chart %s deleted", chart.Name)
+				return true, nil
+			}
+			if err != nil {
+				as.T().Log("Error while getting chart:", err)
+			}
+			return false, nil
+		}))
+	}
 }
 
 func (as *AddonsSuite) uploadChart(chartName string) string {

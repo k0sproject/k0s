@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-preinstall"
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: {{ .Values.hook.deletePolicy | quote }}
+spec:
+  backoffLimit: 100
+  template:
+    spec:
+      serviceAccountName: order-test-hook-sa
+      restartPolicy: OnFailure
+      containers:
+        - name: wait-for-dependency
+          image: docker.io/library/busybox:1-musl
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for order-test-dependency service to appear in the Kubernetes API..."
+              APISERVER="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+              TOKEN="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+              until wget -q -O - --no-check-certificate \
+                --header "Authorization: Bearer ${TOKEN}" \
+                "${APISERVER}/api/v1/namespaces/{{ .Release.Namespace }}/services/order-test-dependency" \
+                2>/dev/null | grep -q '"clusterIP"'; do
+                echo "Service not yet available via API, retrying in 5s..."
+                sleep 5
+              done
+              echo "Service is available, proceeding with installation."

@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Release.Name }}-installed"
+  namespace: {{ .Release.Namespace }}
+data:
+  status: installed

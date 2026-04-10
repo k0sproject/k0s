@@ -769,8 +769,10 @@ func (ec *ExtensionsController) instantiateManager(ctx context.Context) (crman.M
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
-		Logger:     logrusr.New(ec.L),
-		Controller: ctrlconfig.Controller{},
+		Logger: logrusr.New(ec.L),
+		Controller: ctrlconfig.Controller{
+			MaxConcurrentReconciles: 10,
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)

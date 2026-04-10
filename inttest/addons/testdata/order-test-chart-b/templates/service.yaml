@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-test-dependency
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: ClusterIP
+  selector: {}
+  ports:
+    - port: 80
+      protocol: TCP
