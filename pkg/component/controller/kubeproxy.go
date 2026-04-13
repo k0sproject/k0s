@@ -19,7 +19,10 @@ package controller
 import (
 	"bufio"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -98,16 +101,29 @@ func (k *KubeProxy) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 		Do(func(unbuffered file.AtomicWriter) error {
 			buf := bufio.NewWriter(unbuffered)
 
+			templateData := struct {
+				*kubeProxyTemplateData
+				ConfigHash string
+			}{
+				kubeProxyTemplateData: &cfg.TemplateData,
+			}
+
 			if configMap, err := cfg.ConfigMapData.toConfigMap(); err != nil {
 				return err
-			} else if err := applier.CodecFor(kubernetesscheme.Scheme).Encode(configMap, buf); err != nil {
-				return err
+			} else {
+				hasher := sha256.New()
+				buf := io.MultiWriter(hasher, buf)
+				codec := applier.CodecFor(kubernetesscheme.Scheme)
+				if err := codec.Encode(configMap, buf); err != nil {
+					return err
+				}
+				templateData.ConfigHash = base64.RawURLEncoding.EncodeToString(hasher.Sum(nil))
 			}
 
 			if err := (&templatewriter.TemplateWriter{
 				Name:     "kube-proxy",
 				Template: proxyTemplate,
-				Data:     &cfg.TemplateData,
+				Data:     &templateData,
 			}).WriteToBuffer(buf); err != nil {
 				return err
 			}
@@ -349,6 +365,7 @@ spec:
       labels:
         k8s-app: kube-proxy
       annotations:
+        k0sproject.io/config-hash: {{ .ConfigHash }}
         prometheus.io/scrape: 'true'
         prometheus.io/port: '10249'
     spec:
