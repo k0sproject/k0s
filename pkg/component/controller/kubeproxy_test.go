@@ -17,6 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	kubeproxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
 	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/yaml"
@@ -63,10 +64,12 @@ func TestKubeProxyConfig_FeatureGates(t *testing.T) {
 	var cm corev1.ConfigMap
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(resources[configMapIdx].Object, &cm))
 
-	kubeProxyConfigData := map[string]any{}
-	require.NoError(t, yaml.Unmarshal([]byte(cm.Data["config.conf"]), &kubeProxyConfigData))
+	var kubeProxyConfigData unstructured.Unstructured
+	require.NoError(t, yaml.Unmarshal([]byte(cm.Data["config.conf"]), &kubeProxyConfigData.Object))
+	assert.Equal(t, kubeproxyv1alpha1.SchemeGroupVersion.String(), kubeProxyConfigData.GetAPIVersion())
+	assert.Equal(t, "KubeProxyConfiguration", kubeProxyConfigData.GetKind())
 
-	renderedFeatureGates, ok := kubeProxyConfigData["featureGates"].(map[string]any)
+	renderedFeatureGates, ok := kubeProxyConfigData.Object["featureGates"].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, map[string]any{
 		"Feature0": true,
