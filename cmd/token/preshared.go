@@ -12,16 +12,15 @@ import (
 	"path/filepath"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime/serializer/json"
-	"k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
-	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
-
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
+
+	"k8s.io/apimachinery/pkg/util/runtime"
+	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
+	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -82,10 +81,8 @@ func createSecret(role string, validity time.Duration, outDir string) (*bootstra
 	}
 
 	if err := file.WriteAtomically(filepath.Join(outDir, secret.Name+".yaml"), 0640, func(unbuffered io.Writer) error {
-		serializer := json.NewYAMLSerializer(json.DefaultMetaFactory, scheme.Scheme, scheme.Scheme)
-		encoder := scheme.Codecs.EncoderForVersion(serializer, corev1.SchemeGroupVersion)
 		w := bufio.NewWriter(unbuffered)
-		if err := encoder.Encode(secret, w); err != nil {
+		if err := applier.CodecFor(kubernetesscheme.Scheme).Encode(secret, w); err != nil {
 			return err
 		}
 		return w.Flush()
