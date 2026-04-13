@@ -149,7 +149,6 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 		ControlPlaneEndpoint: controlPlaneEndpoint,
 		Image:                clusterConfig.Spec.Images.KubeProxy.URI(),
 		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
-		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
 		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
 		MetricsBindAddress:   clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
 		FeatureGates:         clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
@@ -184,7 +183,6 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 }
 
 type proxyConfig struct {
-	DualStack            bool
 	ControlPlaneEndpoint string
 	ClusterCIDR          string
 	Image                string
