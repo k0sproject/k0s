@@ -3353,6 +3353,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">    </span><span class="nt">kubeProxy</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">healthzBindAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.0.0:10256</span>
 <span class="w">      </span><span class="nt">iptables</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">        </span><span class="nt">syncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
@@ -3716,6 +3717,14 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 <tr>
 <td><code>nodePortAddresses</code></td>
 <td>Kube proxy <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">nodePortAddresses</a></td>
+</tr>
+<tr>
+<td><code>healthzBindAddress</code></td>
+<td>Kube proxy <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">healthzBindAddress</a> (default: 0.0.0.0:10256)</td>
+</tr>
+<tr>
+<td><code>metricsBindAddress</code></td>
+<td>Kube proxy <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">metricsBindAddress</a> (default: 0.0.0.0:10249)</td>
 </tr>
 <tr>
 <td><code>extraArgs</code></td>
