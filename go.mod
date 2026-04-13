@@ -80,6 +80,7 @@ require (
 	k8s.io/component-helpers v0.34.7
 	k8s.io/cri-api v0.34.7
 	k8s.io/kube-aggregator v0.34.7
+	k8s.io/kube-proxy v0.34.7
 	k8s.io/kubectl v0.34.7
 	k8s.io/kubelet v0.34.7
 	k8s.io/kubernetes v1.34.7

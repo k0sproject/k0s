@@ -4,13 +4,13 @@
 package controller
 
 import (
-	"bytes"
+	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -19,10 +19,21 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/static"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	configv1alpha1 "k8s.io/component-base/config/v1alpha1"
+	kubeproxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
+	"k8s.io/utils/ptr"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -135,12 +146,7 @@ func (k *KubeProxy) Start(context.Context) error {
 
 // Reconcile detects changes in configuration and applies them to the component
 func (k *KubeProxy) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
-	cfg, err := k.getConfig(clusterConfig)
-	if err != nil {
-		return err
-	}
-
-	k.config.Set(cfg)
+	k.config.Set(k.getConfig(clusterConfig))
 	return nil
 }
 
@@ -152,37 +158,46 @@ func (k *KubeProxy) Stop() error {
 }
 
 func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error {
-	proxyWindowsTemplate, err := fs.ReadFile(static.WindowsManifests, "DaemonSet/kube-proxy-windows.yaml")
-	if err != nil {
-		return err
-	}
+	return file.AtomicWithTarget(filepath.Join(k.manifestDir, "kube-proxy.yaml")).
+		Do(func(unbuffered file.AtomicWriter) error {
+			buf := bufio.NewWriter(unbuffered)
 
-	var buf bytes.Buffer
+			if configMap, err := cfg.ConfigMapData.toConfigMap(); err != nil {
+				return err
+			} else if err := applier.CodecFor(kubernetesscheme.Scheme).Encode(configMap, buf); err != nil {
+				return err
+			}
 
-	if err := (&templatewriter.TemplateWriter{
-		Name:     "kube-proxy",
-		Template: proxyTemplate,
-		Data:     cfg,
-	}).WriteToBuffer(&buf); err != nil {
-		return err
-	}
+			if err := (&templatewriter.TemplateWriter{
+				Name:     "kube-proxy",
+				Template: proxyTemplate,
+				Data:     &cfg.TemplateData,
+			}).WriteToBuffer(buf); err != nil {
+				return err
+			}
 
-	if includeWindows {
-		if err := (&templatewriter.TemplateWriter{
-			Name:     "kube-proxy-windows",
-			Template: string(proxyWindowsTemplate),
-			Data:     cfg,
-		}).WriteToBuffer(&buf); err != nil {
-			return err
-		}
-	}
+			if includeWindows {
+				proxyWindowsTemplate, err := fs.ReadFile(static.WindowsManifests, "DaemonSet/kube-proxy-windows.yaml")
+				if err != nil {
+					return err
+				}
 
-	return file.AtomicWithTarget(filepath.Join(k.manifestDir, "kube-proxy.yaml")).Write(buf.Bytes())
+				if err := (&templatewriter.TemplateWriter{
+					Name:     "kube-proxy-windows",
+					Template: string(proxyWindowsTemplate),
+					Data:     &cfg.TemplateData,
+				}).WriteToBuffer(buf); err != nil {
+					return err
+				}
+			}
+
+			return buf.Flush()
+		})
 }
 
-func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (*proxyConfig, error) {
+func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig {
 	if clusterConfig.Spec.Network.KubeProxy.Disabled {
-		return &proxyConfig{}, nil
+		return &proxyConfig{}
 	}
 
 	controlPlaneEndpoint := k.nodeConf.Spec.API.APIAddressURL()
@@ -217,71 +232,129 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (*proxyConfi
 		"hostname-override": "$(NODE_NAME)",
 	}
 
-	for name, value := range clusterConfig.Spec.Network.KubeProxy.ExtraArgs {
+	kubeProxy := clusterConfig.Spec.Network.KubeProxy
+	for name, value := range kubeProxy.ExtraArgs {
 		if _, ok := args[name]; ok {
 			logrus.Warnf("overriding kube-proxy flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
 
-	cfg := proxyConfig{
-		Enabled:              true,
-		ClusterCIDR:          clusterConfig.Spec.Network.BuildPodCIDR(),
-		ControlPlaneEndpoint: controlPlaneEndpoint,
-		Image:                clusterConfig.Spec.Images.KubeProxy.URI(),
-		WindowsImage:         clusterConfig.Spec.Images.Windows.KubeProxy.URI(),
-		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
-		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
-		MetricsBindAddress:   clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
-		FeatureGates:         clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
-		Args:                 append(args.ToDashedArgs(), clusterConfig.Spec.Network.KubeProxy.RawArgs...),
+	return &proxyConfig{
+		Enabled: true,
+		TemplateData: kubeProxyTemplateData{
+			Image:        clusterConfig.Spec.Images.KubeProxy.URI(),
+			WindowsImage: clusterConfig.Spec.Images.Windows.KubeProxy.URI(),
+			PullPolicy:   clusterConfig.Spec.Images.DefaultPullPolicy,
+			Args:         append(args.ToDashedArgs(), clusterConfig.Spec.Network.KubeProxy.RawArgs...),
+		},
+		ConfigMapData: kubeProxyConfigData{
+			apiServerEndpoint: controlPlaneEndpoint,
+			config: kubeproxyv1alpha1.KubeProxyConfiguration{
+				ClientConnection: configv1alpha1.ClientConnectionConfiguration{
+					Kubeconfig: "/var/lib/kube-proxy/kubeconfig.conf",
+				},
+				ClusterCIDR:        clusterConfig.Spec.Network.BuildPodCIDR(),
+				FeatureGates:       clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
+				Mode:               kubeproxyv1alpha1.ProxyMode(kubeProxy.Mode),
+				MetricsBindAddress: kubeProxy.MetricsBindAddress,
+				Conntrack: kubeproxyv1alpha1.KubeProxyConntrackConfiguration{
+					MaxPerCore: ptr.To(int32(0)),
+				},
+				IPTables: kubeproxyv1alpha1.KubeProxyIPTablesConfiguration{
+					MasqueradeBit:      kubeProxy.IPTables.MasqueradeBit,
+					MasqueradeAll:      kubeProxy.IPTables.MasqueradeAll,
+					LocalhostNodePorts: kubeProxy.IPTables.LocalhostNodePorts,
+					SyncPeriod:         kubeProxy.IPTables.SyncPeriod,
+					MinSyncPeriod:      kubeProxy.IPTables.MinSyncPeriod,
+				},
+				IPVS: kubeproxyv1alpha1.KubeProxyIPVSConfiguration{
+					SyncPeriod:    kubeProxy.IPVS.SyncPeriod,
+					MinSyncPeriod: kubeProxy.IPVS.MinSyncPeriod,
+					Scheduler:     kubeProxy.IPVS.Scheduler,
+					ExcludeCIDRs:  kubeProxy.IPVS.ExcludeCIDRs,
+					StrictARP:     kubeProxy.IPVS.StrictARP,
+					TCPTimeout:    kubeProxy.IPVS.TCPTimeout,
+					TCPFinTimeout: kubeProxy.IPVS.TCPFinTimeout,
+					UDPTimeout:    kubeProxy.IPVS.UDPTimeout,
+				},
+				NFTables: kubeproxyv1alpha1.KubeProxyNFTablesConfiguration{
+					SyncPeriod:    kubeProxy.NFTables.SyncPeriod,
+					MasqueradeBit: kubeProxy.NFTables.MasqueradeBit,
+					MasqueradeAll: kubeProxy.NFTables.MasqueradeAll,
+					MinSyncPeriod: kubeProxy.NFTables.MinSyncPeriod,
+				},
+				NodePortAddresses: kubeProxy.NodePortAddresses,
+			},
+		},
 	}
-
-	nodePortAddresses, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NodePortAddresses)
-	if err != nil {
-		return nil, err
-	}
-	cfg.NodePortAddresses = string(nodePortAddresses)
-
-	iptables, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.IPTables)
-	if err != nil {
-		return nil, err
-	}
-	cfg.IPTables = string(iptables)
-
-	ipvs, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.IPVS)
-	if err != nil {
-		return nil, err
-	}
-	cfg.IPVS = string(ipvs)
-
-	nftables, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NFTables)
-	if err != nil {
-		return nil, err
-	}
-	cfg.NFTables = string(nftables)
-
-	return &cfg, nil
 }
 
 type proxyConfig struct {
-	Enabled              bool
-	ControlPlaneEndpoint string
-	ClusterCIDR          string
-	Image                string
-	WindowsImage         string
-	PullPolicy           string
-	Mode                 string
-	MetricsBindAddress   string
-	IPTables             string
-	IPVS                 string
-	NFTables             string
-	FeatureGates         map[string]bool
-	NodePortAddresses    string
-	Args                 []string
+	Enabled bool
+
+	TemplateData  kubeProxyTemplateData
+	ConfigMapData kubeProxyConfigData
+}
+
+type kubeProxyTemplateData struct {
+	Image        string
+	WindowsImage string
+	PullPolicy   string
+	Args         []string
+}
+
+type kubeProxyConfigData struct {
+	apiServerEndpoint string
+	config            kubeproxyv1alpha1.KubeProxyConfiguration
+}
+
+func (d *kubeProxyConfigData) toConfigMap() (*corev1.ConfigMap, error) {
+	codec := applier.CodecFor(applier.BuildScheme(kubeproxyv1alpha1.AddToScheme))
+
+	const (
+		clusterName = "local"
+		contextName = "default"
+		userName    = "user"
+	)
+
+	kubeconfig, err := clientcmd.Write(clientcmdapi.Config{
+		Clusters: map[string]*clientcmdapi.Cluster{clusterName: {
+			Server:               d.apiServerEndpoint,
+			CertificateAuthority: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+		}},
+		Contexts: map[string]*clientcmdapi.Context{contextName: {
+			Cluster:  clusterName,
+			AuthInfo: userName,
+		}},
+		CurrentContext: contextName,
+		AuthInfos: map[string]*clientcmdapi.AuthInfo{userName: {
+			TokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
+		}},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var config strings.Builder
+	if err := codec.Encode(&d.config, &config); err != nil {
+		return nil, err
+	}
+
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: metav1.NamespaceSystem, Name: "kube-proxy",
+			Labels: map[string]string{"k8s-app": "kube-proxy"},
+		},
+		Data: map[string]string{
+			"kubeconfig.conf": string(kubeconfig),
+			"config.conf":     config.String(),
+		},
+	}, nil
 }
 
 const proxyTemplate = `
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -334,54 +407,6 @@ roleRef:
 subjects:
 - kind: Group
   name: system:bootstrappers
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: kube-proxy
-  namespace: kube-system
-  labels:
-    k8s-app: kube-proxy
-data:
-  kubeconfig.conf: |-
-    apiVersion: v1
-    kind: Config
-    clusters:
-    - cluster:
-        certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        server: {{ .ControlPlaneEndpoint }}
-      name: default
-    contexts:
-    - context:
-        cluster: default
-        namespace: default
-        user: default
-      name: default
-    current-context: default
-    users:
-    - name: default
-      user:
-        tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-  config.conf: |-
-    apiVersion: kubeproxy.config.k8s.io/v1alpha1
-    clientConnection:
-      kubeconfig: /var/lib/kube-proxy/kubeconfig.conf
-    clusterCIDR: {{ .ClusterCIDR }}
-    featureGates:
-{{- range $key, $value := .FeatureGates }}
-      {{ $key }}: {{ $value }}
-{{- end }}
-    mode: "{{ .Mode }}"
-    conntrack:
-      maxPerCore: 0
-    healthzBindAddress: ""
-    hostnameOverride: ""
-    iptables: {{ .IPTables }}
-    ipvs: {{ .IPVS }}
-    nftables: {{ .NFTables }}
-    kind: KubeProxyConfiguration
-    metricsBindAddress: {{ .MetricsBindAddress }}
-    nodePortAddresses: {{ .NodePortAddresses }}
 ---
 apiVersion: apps/v1
 kind: DaemonSet
