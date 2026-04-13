@@ -257,7 +257,7 @@ metadata:
   name: kube-proxy
   namespace: kube-system
   labels:
-    app: kube-proxy
+    k8s-app: kube-proxy
 data:
   kubeconfig.conf: |-
     apiVersion: v1
