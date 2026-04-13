@@ -4,45 +4,72 @@
 package controller
 
 import (
-	"bytes"
-	"strings"
+	"os"
+	"path/filepath"
+	"slices"
 	"testing"
+	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	"github.com/stretchr/testify/assert"
+	"github.com/k0sproject/k0s/internal/testutil"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/config"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/yaml"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestKubeProxyConfig(t *testing.T) {
-
-	// helper to get only feature gates related part from the rendered kube-proxy manifest collection
-	getFeatureGates := func(cfg proxyConfig) map[string]bool {
-		tw := templatewriter.TemplateWriter{
-			Name:     "kube-proxy-config",
-			Template: strings.Split(proxyTemplate, "---")[4],
-			Data:     cfg,
-		}
-		b := bytes.NewBuffer([]byte{})
-		assert.NoError(t, tw.WriteToBuffer(b))
-		m := map[string]any{}
-		assert.NoError(t, yaml.Unmarshal(b.Bytes(), &m))
-		kubeProxyConfigData := map[string]any{}
-		assert.NoError(t, yaml.Unmarshal([]byte(m["data"].(map[string]any)["config.conf"].(string)), &kubeProxyConfigData))
-		renderedFeatureGates := kubeProxyConfigData["featureGates"].(map[string]any)
-		result := map[string]bool{}
-		for k, v := range renderedFeatureGates {
-			result[k] = v.(bool)
-		}
-		return result
+func TestKubeProxyConfig_FeatureGates(t *testing.T) {
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
+	cfg := v1beta1.DefaultClusterConfig()
+	cfg.Spec.FeatureGates = v1beta1.FeatureGates{
+		{Name: "Feature0", Enabled: true, Components: []string{"kube-proxy"}},
+		{Name: "Feature1", Enabled: false, Components: []string{"kube-proxy"}},
 	}
-	t.Run("feature_gates", func(t *testing.T) {
-		config := proxyConfig{
-			FeatureGates: map[string]bool{
-				"Feature0": true,
-				"Feature1": false,
-			},
-		}
-		assert.Equal(t, config.FeatureGates, getFeatureGates(config))
-	})
+	noWindowsNodes := func() (*bool, <-chan struct{}) {
+		return ptr.To(false), nil
+	}
 
+	underTest := NewKubeProxy(k0sVars, cfg, noWindowsNodes)
+	require.NoError(t, underTest.Init(t.Context()))
+	require.NoError(t, underTest.Start(t.Context()))
+	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
+	require.NoError(t, underTest.Reconcile(t.Context(), cfg))
+
+	manifestPath := filepath.Join(k0sVars.ManifestsDir, "kubeproxy", "kube-proxy.yaml")
+	var manifestData []byte
+	require.EventuallyWithT(t, func(t *assert.CollectT) {
+		manifestData, err = os.ReadFile(manifestPath)
+		assert.NoError(t, err)
+	}, 5*time.Second, 50*time.Millisecond)
+
+	resources, err := testutil.ParseManifests(manifestData)
+	require.NoError(t, err)
+
+	configMapIdx := slices.IndexFunc(resources, func(u *unstructured.Unstructured) bool {
+		return u.GetAPIVersion() == corev1.SchemeGroupVersion.String() &&
+			u.GetKind() == "ConfigMap" &&
+			u.GetNamespace() == "kube-system" &&
+			u.GetName() == "kube-proxy"
+	})
+	require.GreaterOrEqual(t, configMapIdx, 0, "kube-proxy ConfigMap not found")
+	var cm corev1.ConfigMap
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(resources[configMapIdx].Object, &cm))
+
+	kubeProxyConfigData := map[string]any{}
+	require.NoError(t, yaml.Unmarshal([]byte(cm.Data["config.conf"]), &kubeProxyConfigData))
+
+	renderedFeatureGates, ok := kubeProxyConfigData["featureGates"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, map[string]any{
+		"Feature0": true,
+		"Feature1": false,
+	}, renderedFeatureGates)
 }
