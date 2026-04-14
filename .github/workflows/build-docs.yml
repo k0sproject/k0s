@@ -34,13 +34,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout k0s
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -60,7 +60,7 @@ jobs:
         run: make -C docs docs
 
       - name: Upload site/
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: site
           path: site/
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout k0s
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Build docs dev container
         run: make -C docs .docker-image.serve-dev.stamp

@@ -26,7 +26,7 @@ jobs:
       )
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           # required to find all branches
           fetch-depth: 0
@@ -47,7 +47,7 @@ jobs:
           git config merge.mergiraf.driver '${{ github.workspace }}/.git/mergiraf/mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
 
       - name: Create backport PRs
-        uses: korthout/backport-action@v4.1.0
+        uses: korthout/backport-action@01619ebc9a6e3f6820274221b9956b3e7365000a # v4.1.0
         with:
           # Inputs documented here: https://github.com/korthout/backport-action?tab=readme-ov-file#inputs
           github_token: ${{ secrets.GH_BACKPORT_TOKEN }}

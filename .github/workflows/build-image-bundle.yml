@@ -36,17 +36,17 @@ jobs:
 
     steps:
       - name: "Build :: Checkout"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
 
       - name: "Download :: k0s"
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: k0s-linux-amd64
 
       - name: "Download :: Image list"
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: ${{ inputs.image-bundle-name }}-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
 
@@ -62,7 +62,7 @@ jobs:
 
       - name: "Cache :: Image bundle"
         id: cache-image-bundle
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           key: ${{ steps.cache-image-bundle-calc-key.outputs.cache-key }}
           path: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
@@ -78,7 +78,7 @@ jobs:
           make "$IMAGE_BUNDLE_NAME-image-bundle-$TARGET_OS-$TARGET_ARCH.tar"
 
       - name: "Upload :: Image bundle"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
