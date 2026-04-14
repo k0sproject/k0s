@@ -37,7 +37,7 @@ jobs:
         working-directory: ./inttest/sonobuoy/terraform
     steps:
       - name: Run git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
 
@@ -46,7 +46,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
@@ -54,7 +54,7 @@ jobs:
         run: terraform init
 
       - name: Download k0s executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: k0s-linux-amd64
 
@@ -117,7 +117,7 @@ jobs:
       - name: slack notify
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e # v3.19.0
         with:
           job_name: "K8s Network Conformance Testing"
           status: ${{ job.status }}
