@@ -62,7 +62,7 @@ jobs:
 
       - name: "Cache :: Image bundle"
         id: cache-image-bundle
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           key: ${{ steps.cache-image-bundle-calc-key.outputs.cache-key }}
           path: ${{ inputs.image-bundle-name }}-image-bundle-${{ inputs.target-os }}-${{ inputs.target-arch }}.tar
