@@ -60,7 +60,7 @@ jobs:
 
     steps:
       - name: "Workflow run :: Checkout"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
 
@@ -145,12 +145,12 @@ jobs:
 
     steps:
       - name: Download
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: sbom-linux-amd64
 
       - name: Submit
-        uses: advanced-security/spdx-dependency-submission-action@v0.2.0
+        uses: advanced-security/spdx-dependency-submission-action@169d22427d74f3faf93504e70b03eede8dab272a # v0.2.0
         with:
           filePath: spdx.json
 
@@ -182,7 +182,7 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
 
@@ -203,7 +203,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         if: matrix.target-os != ''
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -211,7 +211,7 @@ jobs:
 
       - name: Cache Go cache
         id: cache-gocache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           key: "unittests-k0s-${{ matrix.name }}-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: "unittests-k0s-${{ matrix.name }}-gocache-go${{ env.GO_VERSION }}-"
@@ -300,7 +300,7 @@ jobs:
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0 # for `git describe`
           persist-credentials: false
@@ -309,20 +309,20 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
       - name: Cache embedded binaries
         id: cache-embedded-bins
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           key: "build-k0s-linux-arm-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}"
           path: embedded-bins/staging/linux/bin/
 
       - name: Cache Go cache
         id: cache-gocache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           key: "build-k0s-linux-arm-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: "build-k0s-linux-arm-gocache-go${{ env.GO_VERSION }}-"
@@ -350,7 +350,7 @@ jobs:
           echo "k0s binary size: **$(du -sh k0s | cut -f1)**" >>$GITHUB_STEP_SUMMARY
 
       - name: Upload compiled executable
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: k0s-arm
           path: k0s
@@ -363,7 +363,7 @@ jobs:
 
       - name: Cache airgap image bundle
         id: cache-airgap-image-bundle
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           key: airgap-image-bundle-linux-arm-${{ hashFiles('Makefile', 'airgap-images.txt', 'cmd/airgap/*', 'pkg/airgap/*') }}
           path: |
@@ -375,7 +375,7 @@ jobs:
         run: make airgap-image-bundle-linux-arm.tar
 
       - name: Upload airgap bundle
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: airgap-image-bundle-linux-arm.tar
           path: airgap-image-bundle-linux-arm.tar
@@ -406,7 +406,7 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0 # for `git describe`
           persist-credentials: false
@@ -415,12 +415,12 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
       - name: Download compiled binary
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: k0s-arm
 
@@ -431,7 +431,7 @@ jobs:
 
       - name: Download airgap bundle
         if: contains(matrix.test, 'airgap')
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: airgap-image-bundle-linux-arm.tar
 
@@ -440,7 +440,7 @@ jobs:
 
       - name: Collect k0s logs and support bundle
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: smoketest-arm-check-basic-files
           path: |
