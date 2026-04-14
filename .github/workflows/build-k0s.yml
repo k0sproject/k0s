@@ -36,12 +36,12 @@ jobs:
 
       - name: Set up Docker Buildx
         if: inputs.target-arch != 'amd64'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
         with:
           endpoint: builders
 
       - name: "Build :: Checkout"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0 # for `git describe`
           persist-credentials: false
@@ -62,7 +62,7 @@ jobs:
           echo executable-suffix="$executableSuffix" >>"$GITHUB_OUTPUT"
 
       - name: "Cache :: embedded binaries"
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}
           path: |
@@ -73,7 +73,7 @@ jobs:
             pkg/assets/zz_generated_offsets_${{ inputs.target-os }}.go
 
       - name: "Cache :: GOCACHE"
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
@@ -82,7 +82,7 @@ jobs:
             build/cache/go/build
 
       - name: "Cache :: GOMODCACHE"
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           key: build-k0s-gomodcache-${{ hashFiles('go.sum') }}
           path: build/cache/go/mod
@@ -96,7 +96,7 @@ jobs:
           echo "k0s${{ steps.build-prepare.outputs.executable-suffix }} binary size: **$(du -sh k0s${{ steps.build-prepare.outputs.executable-suffix }} | cut -f1)**" >>$GITHUB_STEP_SUMMARY
 
       - name: "Upload :: k0s"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: |
@@ -108,7 +108,7 @@ jobs:
 
       - name: "Upload :: Airgap image list"
         if: inputs.target-os != 'windows'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: airgap-images.txt
