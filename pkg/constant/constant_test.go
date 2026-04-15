@@ -4,8 +4,12 @@
 package constant
 
 import (
+	"bufio"
 	"crypto/tls"
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -50,6 +54,85 @@ func TestTLSCipherSuites(t *testing.T) {
 		if idx < 0 {
 			assert.Failf(t, "Not in tls.CipherSuites(), potentially insecure", "(0x%04x) %s", cipherSuite, tls.CipherSuiteName(cipherSuite))
 		}
+	}
+}
+
+func TestCalicoVersionsMatch(t *testing.T) {
+	projectRoot := filepath.Join("..", "..")
+	calicoManifestRoot := filepath.Join(projectRoot, "static", "manifests", "calico")
+	calicoVersionRe := regexp.MustCompile(`calico/(?:[a-z0-9-]+:|blob/)(v?[^\s/"]+)`)
+
+	type occurrence struct{ version, source string }
+	refs := []occurrence{
+		{CalicoCNIImageVersion, "constant.CalicoCNIImageVersion"},
+		{CalicoCNIWindowsImageVersion, "constant.CalicoCNIWindowsImageVersion"},
+		{CalicoNodeImageVersion, "constant.CalicoNodeImageVersion"},
+		{CalicoNodeWindowsImageVersion, "constant.CalicoNodeWindowsImageVersion"},
+		{CalicoKubeControllersImageVersion, "constant.CalicoKubeControllersImageVersion"},
+	}
+
+	require.NoError(t, filepath.WalkDir(calicoManifestRoot, func(path string, d fs.DirEntry, walkErr error) (err error) {
+		if walkErr != nil || d.IsDir() {
+			return walkErr
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer func() { err = errors.Join(err, f.Close()) }()
+
+		scanner := bufio.NewScanner(f)
+		var line uint64
+		for scanner.Scan() {
+			line++
+			if match := calicoVersionRe.FindSubmatch(scanner.Bytes()); match != nil {
+				path, _ := filepath.Rel(projectRoot, path)
+				refs = append(refs, occurrence{
+					version: string(match[1]),
+					source:  fmt.Sprintf("%s:%d", path, line),
+				})
+			}
+		}
+		return scanner.Err()
+	}))
+
+	type sources struct {
+		version string
+		sources []string
+	}
+
+	var versions []*sources
+
+	for _, ref := range refs {
+		version, _, _ := strings.Cut(ref.version, "-")
+		if version[0] == 'v' {
+			version = version[1:]
+		}
+		if idx, found := slices.BinarySearchFunc(versions, version, func(b *sources, v string) int {
+			return strings.Compare(b.version, v)
+		}); found {
+			versions[idx].sources = append(versions[idx].sources, ref.source)
+		} else {
+			versions = slices.Insert(versions, idx, &sources{version, []string{ref.source}})
+		}
+	}
+
+	if len(versions) != 1 {
+		var msg strings.Builder
+		for _, v := range versions {
+			if msg.Len() > 0 {
+				msg.WriteByte('\n')
+			}
+
+			if len := len(v.sources); len > 1 {
+				fmt.Fprintf(&msg, "%s (%d occurrences, first: %s)", v.version, len, v.sources[0])
+			} else {
+				fmt.Fprintf(&msg, "%s (%s)", v.version, v.sources[0])
+			}
+		}
+
+		assert.Fail(t, "Multiple versions found", msg.String())
 	}
 }
 
