@@ -119,7 +119,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	}
 
 	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic
-	if isSingleStackIPv6 {
+	if clusterConfig.PrimaryAddressFamily() == v1beta1.PrimaryFamilyIPv6 {
 		args["router-id"] = "generate"
 	}
 
