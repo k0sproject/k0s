@@ -4,7 +4,10 @@
 package controller
 
 import (
+	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -464,16 +467,17 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 	if chart.Status.ReleaseName == "" {
 		isInstalling = true
 		status := release.StatusUnknown
-		if chartRelease, err = helmCmd.GetRelease(ctx, chart.Spec.ReleaseName, chart.Spec.Namespace); err == nil && chartRelease.Info != nil {
+		releaseName := effectiveChartReleaseName(&chart)
+		if chartRelease, err = helmCmd.GetRelease(ctx, releaseName, chart.Spec.Namespace); err == nil && chartRelease.Info != nil {
 			status = chartRelease.Info.Status
 		}
 
 		switch {
 		case status == release.StatusPendingInstall, status == release.StatusFailed, status == release.StatusUninstalling:
-			if err := helmCmd.UninstallRelease(ctx, chart.Spec.ReleaseName, chart.Spec.Namespace); err != nil {
-				return fmt.Errorf("failed to uninstall %q in %q before reinstall: %w", chart.Spec.ReleaseName, chart.Spec.Namespace, err)
+			if err := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace); err != nil {
+				return fmt.Errorf("failed to uninstall %q in %q before reinstall: %w", releaseName, chart.Spec.Namespace, err)
 			}
-			cr.L.Info("Uninstalled release ", chart.Spec.ReleaseName, " before reinstall due to status ", status)
+			cr.L.Info("Uninstalled release ", releaseName, " before reinstall due to status ", status)
 			fallthrough // proceed with installation
 
 		case status == release.StatusUninstalled, err != nil:
@@ -486,7 +490,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			chartRelease, err = helmCmd.InstallChart(ctx,
 				chartName,
 				chart.Spec.Version,
-				chart.Spec.ReleaseName,
+				releaseName,
 				chart.Spec.Namespace,
 				chart.Spec.YamlValues(),
 				timeout,
@@ -498,7 +502,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 					case <-ctx.Done():
 						err = fmt.Errorf("%w (%w)", err, context.Cause(ctx))
 					default:
-						if uninstallErr := helmCmd.UninstallRelease(ctx, chart.Spec.ReleaseName, chart.Spec.Namespace); uninstallErr != nil {
+						if uninstallErr := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace); uninstallErr != nil {
 							err = fmt.Errorf("an error occurred while uninstalling: %w; original install error: %w", uninstallErr, err)
 						}
 					}
@@ -627,10 +631,20 @@ func extractOCIRegistryURL(chartName string) string {
 
 func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
 	return chart.Status.Namespace != chart.Spec.Namespace ||
-		chart.Status.ReleaseName != chart.Spec.ReleaseName ||
+		chart.Status.ReleaseName != effectiveChartReleaseName(&chart) ||
 		chart.Status.Version != chart.Spec.Version ||
 		chart.Status.Error != "" ||
-		chart.Status.ValuesHash != chart.Spec.HashValues()
+		chart.Status.ValuesHash != hashChartValues(&chart)
+}
+
+func effectiveChartReleaseName(chart *helmv1beta1.Chart) string {
+	return cmp.Or(chart.Spec.ReleaseName, chart.Name)
+}
+
+func hashChartValues(chart *helmv1beta1.Chart) string {
+	h := sha256.New()
+	h.Write([]byte(effectiveChartReleaseName(chart) + chart.Spec.Values))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // updateStatus updates the status of the chart with the given release information. This function
@@ -659,7 +673,7 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 	if err != nil {
 		updchart.Status.Error = err.Error()
 	}
-	updchart.Status.ValuesHash = chart.Spec.HashValues()
+	updchart.Status.ValuesHash = hashChartValues(&chart)
 	if updErr := cr.Client.Status().Update(ctx, &updchart); updErr != nil {
 		cr.L.WithError(updErr).Error("Failed to update status for chart release", chart.Name)
 		return updErr
