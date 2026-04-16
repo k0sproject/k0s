@@ -17,9 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -48,13 +45,6 @@ func (s *ChartSpec) YamlValues() map[string]interface{} {
 	// We need to clean the map to have nested maps as map[string]interface{} types
 	// otherwise Helm will fail to merge default values and create the release object
 	return CleanUpGenericMap(res)
-}
-
-// HashValues returns hash of the values
-func (s *ChartSpec) HashValues() string {
-	h := sha256.New()
-	h.Write([]byte(s.ReleaseName + s.Values))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 // ShouldForceUpgrade returns true if the chart should be force upgraded
