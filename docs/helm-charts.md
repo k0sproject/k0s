@@ -33,6 +33,7 @@ metadata:
   namespace: kube-system
 spec:
   chartName: prometheus-community/prometheus
+  releaseName: prometheus
   version: "14.6.1"
   namespace: default
   values: |
