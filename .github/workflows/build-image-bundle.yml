@@ -14,6 +14,10 @@ on:
         type: string
         required: true
         description: The platform suffix of the image bundle to be built.
+      runs-on:
+        type: string
+        required: false
+        description: The platform to build the image bundle on.
     outputs:
       cache-key:
         description: The image bundle's cache key.
@@ -25,7 +29,7 @@ env:
 jobs:
   build:
     name: "${{ inputs.image-bundle-name }}-${{ inputs.image-bundle-platform }}"
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runs-on || 'ubuntu-24.04' }}
 
     env:
       IMAGE_BUNDLE_NAME: ${{ inputs.image-bundle-name }}
@@ -40,7 +44,7 @@ jobs:
       - name: "Download :: k0s"
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
-          name: k0s-linux-amd64
+          name: ${{ inputs.runs-on == 'ubuntu-24.04-riscv' && 'k0s-linux-riscv64' || 'k0s-linux-amd64' }}
 
       - name: "Download :: Image list"
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
