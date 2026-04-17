@@ -12,11 +12,17 @@ This tutorial explains two different approaches for k0s upgrade:
 - [Upgrade a k0s node locally](#upgrade-a-k0s-node-locally)
 - [Upgrade a k0s cluster using k0sctl](#upgrade-a-k0s-cluster-using-k0sctl)
 
+A [backup](docs/backup.md) of k0s managed parts of your cluster can be made before upgrading.
+
 ## Upgrade a k0s node locally
 
-If your k0s cluster has been deployed with k0sctl, then k0sctl provides the easiest upgrade method. In that case jump to the next chapter. However, if you have deployed k0s without k0sctl, then follow the upgrade method explained in this chapter.
+If your k0s cluster has been deployed with k0sctl, then k0sctl provides the easiest upgrade method. In that case [jump to the next chapter](#upgrade-a-k0s-cluster-using-k0sctl). However, if you have deployed k0s without k0sctl, then follow the upgrade method explained in this chapter.
+
+Upgrade each controller node in your cluster before upgrading worker nodes.
 
 Before starting the upgrade, consider moving your applications to another node if you want to avoid downtime. This can be done by [draining a worker node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/). Remember to uncordon the worker node afterwards to tell Kubernetes that it can resume scheduling new pods onto the node.
+
+### Manual node upgrade process
 
 The upgrade process is started by stopping the currently running k0s service.
 
@@ -30,11 +36,31 @@ Now you can replace the old k0s binary file. The easiest way is to use the downl
 curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
 ```
 
+It is recommended to rerun pre-flight checks, especially when upgrading between minor versions (eg from v1.34.x to v1.35.x). This will flag possible breaking changes. Refer to [external runtime dependencies](docs/external-runtime-deps.md) if there are any failures.
+
+```shell
+sudo k0s sysinfo
+```
+
 Then you can start the service (with the upgraded k0s) and your upgrade is done.
 
 ```shell
 sudo k0s start
 ```
+
+Repeat this process for each node in your cluster.
+
+### Upgrading to a specifc version
+
+If you need to upgrade to a specific version you can set a `K0S_VERSION` for the download script.
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo K0S_VERSION=v1.32.11+k0s.0 sh
+```
+
+See [release tags](https://github.com/k0sproject/k0s/tags) for a full list of valid versions.
+
+Use this process if you need to upgrade sequentially through minor versions (eg. from v1.33.x via v1.34.x to v1.35.x). Skipping minor versions when upgrading is not supported.
 
 ## Upgrade a k0s cluster using k0sctl
 
