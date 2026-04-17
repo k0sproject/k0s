@@ -29,6 +29,28 @@ spec:
 This configuration will set up all Kubernetes components and Kube-router
 accordingly for dual-stack networking.
 
+### How Auto-detection Works
+
+By default, k0s attempts to auto-detect the node's IPv4 and IPv6 addresses to facilitate dual-stack networking. This is necessary because the upstream Kubelet does not natively support node IP auto-detection when running in dual-stack mode.
+
+If you do not manually specify node IPs, k0s replicates the Kubelet's logic by:
+
+- **DNS Lookup:** Attempting to resolve the node's hostname via the system DNS resolver to find associated IPv4 and IPv6 addresses.
+- **Interface Scanning:** Looking up IPs directly via the local network interface used as a default gateway.
+
+> [!IMPORTANT]
+> For the DNS Lookup mechanism to work reliably, your system resolver must be able to return both address families for the node hostname.
+
+---
+
+> [!NOTE]
+> You can bypass the auto-detection mechanism entirely—and avoid the DNS requirement—by explicitly defining the node IPs.
+> Add the `--node-ip` flag to your [Kubelet extra arguments](https://docs.k0sproject.io/stable/worker-node-config/#kubelet-configuration):
+>
+> ```bash
+> --node-ip=<IPv4_ADDRESS>,<IPv6_ADDRESS>
+> ```
+
 ### Configuring the node CIDR mask size
 
 By default, k0s uses a `/117` node CIDR mask size for IPv6, which provides 2048
@@ -113,7 +135,7 @@ a proper dual-stack setup that matches that of k0s.
 
 For more detailed information and troubleshooting, refer to the following resources:
 
-* <https://kubernetes.io/docs/concepts/services-networking/dual-stack/>
-* <https://kubernetes.io/docs/tasks/network/validate-dual-stack/>
-* <https://www.tigera.io/blog/dual-stack-operation-with-calico-on-kubernetes/>
-* <https://docs.tigera.io/calico/3.27/networking/ipam/ipv6#enable-dual-stack>
+- <https://kubernetes.io/docs/concepts/services-networking/dual-stack/>
+- <https://kubernetes.io/docs/tasks/network/validate-dual-stack/>
+- <https://www.tigera.io/blog/dual-stack-operation-with-calico-on-kubernetes/>
+- <https://docs.tigera.io/calico/3.27/networking/ipam/ipv6#enable-dual-stack>
