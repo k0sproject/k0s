@@ -93,6 +93,22 @@ func TestCgroupsProbes_Probe_NonExistent(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("no file system mounted at %q", nonExistent), args[1].(error).Error())
 }
 
+func TestCgroupsProbes_Probe_CgroupV1(t *testing.T) {
+	path := probes.ProbePath{t.Name()}
+	reporter := new(test_sysinfo.MockReporter)
+	v1 := &cgroupV1{}
+	reporter.On("Reject", mock.Anything, v1, "cgroup v1 is not supported").Return(nil)
+
+	underTest := newCgroupsProbes(path, nil, "")
+	underTest.probeCgroupSystem = func() (cgroupSystem, error) { return v1, nil }
+	err := underTest.Probe(reporter)
+
+	assert.NoError(t, err)
+	reporter.AssertExpectations(t)
+	args := reporter.Calls[0].Arguments
+	assert.Equal(t, path, args[0].(probes.ProbeDesc).Path())
+}
+
 type mockCgroupSystem struct {
 	mock.Mock
 	cgroupSystem

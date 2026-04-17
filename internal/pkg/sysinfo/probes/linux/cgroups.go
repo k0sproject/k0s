@@ -64,6 +64,9 @@ func (c *CgroupsProbes) probe(reporter probes.Reporter) error {
 	if err != nil {
 		return reportCgroupSystemErr(reporter, desc, err)
 	}
+	if _, ok := sys.(*cgroupV1); ok {
+		return reporter.Reject(desc, sys, "cgroup v1 is not supported")
+	}
 	return reporter.Pass(desc, sys)
 }
 

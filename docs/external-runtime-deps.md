@@ -100,9 +100,11 @@ and, if enabled as a module, to load the `configs` module: `modprobe configs`.
 
 ### Control Groups (cgroups)
 
-Both [cgroup v1] and [cgroup v2] are supported. Starting with Kubernetes 1.31 already, [cgroup v1] is in [maintenance mode] and starting in Kubernetes 1.35
-by default kubelet will fail to start if [cgroup v1] is detected on the system. If you want to run Kubernetes with [cgroup v1], you need to explicitly enable
-it by setting `failCgroupV1: false` in kubelet configuration, via k0s [worker profile](worker-node-config.md#kubelet-configuration):
+[cgroup v2] is required. k0s rejects [cgroup v1] during pre-flight checks.
+
+Starting with Kubernetes 1.31 already, [cgroup v1] is in [maintenance mode] and starting in Kubernetes 1.35 by default kubelet will fail to start if
+[cgroup v1] is detected on the system. If you want to run Kubernetes with [cgroup v1], you need to bypass k0s pre-flight checks and explicitly enable it by
+setting `failCgroupV1: false` in kubelet configuration, via k0s [worker profile](worker-node-config.md#kubelet-configuration):
 
 ```yaml
 ...
