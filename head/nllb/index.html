@@ -2987,8 +2987,9 @@ directed to the controller node that has been used to join a particular worker
 into the cluster. This improves the reliability and fault tolerance of the
 cluster in case a controller node becomes unhealthy.</p>
 <p><a href="https://www.envoyproxy.io/">Envoy</a> is the only load balancer that is supported
-so far. Please note that Envoy is not available on ARMv7, so node-local load
-balancing is currently unavailable on that platform.</p>
+so far. Please note that Envoy is currently unavailable for ARMv7, RISC-V, and
+Windows, so node-local load balancing is currently unavailable on those
+platforms.</p>
 <h2 id="enabling-in-a-cluster">Enabling in a cluster<a class="headerlink" href="#enabling-in-a-cluster" title="Permanent link">#</a></h2>
 <p>In order to use node-local load balancing, the cluster needs to comply with the
 following:</p>
