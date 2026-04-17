@@ -3167,9 +3167,10 @@ A bullet-proof way to ensure the accessibility is to enable
 <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L807"><code>CONFIG_IKCONFIG_PROC</code></a>,
 and, if enabled as a module, to load the <code>configs</code> module: <code>modprobe configs</code>.</p>
 <h3 id="control-groups-cgroups">Control Groups (cgroups)<a class="headerlink" href="#control-groups-cgroups" title="Permanent link">#</a></h3>
-<p>Both <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> and <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html">cgroup v2</a> are supported. Starting with Kubernetes 1.31 already, <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> is in <a href="https://kubernetes.io/blog/2024/08/14/kubernetes-1-31-moving-cgroup-v1-support-maintenance-mode/">maintenance mode</a> and starting in Kubernetes 1.35
-by default kubelet will fail to start if <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> is detected on the system. If you want to run Kubernetes with <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a>, you need to explicitly enable
-it by setting <code>failCgroupV1: false</code> in kubelet configuration, via k0s <a href="../worker-node-config/#kubelet-configuration">worker profile</a>:</p>
+<p><a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html">cgroup v2</a> is required. k0s rejects <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> during pre-flight checks.</p>
+<p>Starting with Kubernetes 1.31 already, <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> is in <a href="https://kubernetes.io/blog/2024/08/14/kubernetes-1-31-moving-cgroup-v1-support-maintenance-mode/">maintenance mode</a> and starting in Kubernetes 1.35 by default kubelet will fail to start if
+<a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> is detected on the system. If you want to run Kubernetes with <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a>, you need to bypass k0s pre-flight checks and explicitly enable it by
+setting <code>failCgroupV1: false</code> in kubelet configuration, via k0s <a href="../worker-node-config/#kubelet-configuration">worker profile</a>:</p>
 <div class="highlight"><pre><span></span><code><span class="nn">...</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span>
