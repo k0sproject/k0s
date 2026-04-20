@@ -170,6 +170,8 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	if err != nil {
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
+
+	k.previousConfig = cfg
 	return nil
 }
 
