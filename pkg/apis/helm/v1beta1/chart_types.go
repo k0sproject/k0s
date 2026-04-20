@@ -4,9 +4,6 @@
 package v1beta1
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -71,28 +68,21 @@ type ChartSpec struct {
 }
 
 // YamlValues returns values as map
-func (cs ChartSpec) YamlValues() map[string]any {
+func (s *ChartSpec) YamlValues() map[string]any {
 	res := map[string]any{}
-	if err := yaml.Unmarshal([]byte(cs.Values), &res); err != nil {
-		logrus.WithField("values", cs.Values).Warn("broken yaml values")
+	if err := yaml.Unmarshal([]byte(s.Values), &res); err != nil {
+		logrus.WithField("values", s.Values).Warn("broken yaml values")
 	}
 	// We need to clean the map to have nested maps as map[string]interface{} types
 	// otherwise Helm will fail to merge default values and create the release object
 	return CleanUpGenericMap(res)
 }
 
-// HashValues returns hash of the values
-func (cs ChartSpec) HashValues() string {
-	h := sha256.New()
-	h.Write([]byte(cs.ReleaseName + cs.Values))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
 // ShouldForceUpgrade returns true if the chart should be force upgraded
-func (cs ChartSpec) ShouldForceUpgrade() bool {
+func (s *ChartSpec) ShouldForceUpgrade() bool {
 	// This defaults to true when not explicitly set to false.
 	// Better have this the other way round in the next API version.
-	return cs.ForceUpgrade == nil || *cs.ForceUpgrade
+	return s.ForceUpgrade == nil || *s.ForceUpgrade
 }
 
 // ChartStatus defines the observed state of Chart
