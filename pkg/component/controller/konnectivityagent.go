@@ -248,11 +248,6 @@ spec:
         prometheus.io/port: '8093'
     spec:
       securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-          - all
-        readOnlyRootFilesystem: true
         runAsNonRoot: true
         supplementalGroups: [0]` /* in order to read the projected service account token */ + `
       nodeSelector:
@@ -286,6 +281,12 @@ spec:
             - --service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token
             - --agent-identifiers=host=$(NODE_IP)
             - --agent-id=$(NODE_IP)
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - all
+            readOnlyRootFilesystem: true
           volumeMounts:
             - mountPath: /var/run/secrets/tokens
               name: konnectivity-agent-token
