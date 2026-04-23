@@ -163,7 +163,7 @@ jobs:
 
           install -m755 -D -- '$dir/k0s' /usr/local/bin/k0s
 
-          k0s install controller --debug --enable-worker --no-taints --disable-components metrics-server,konnectivity-server
+          k0s install controller --debug --enable-worker --no-taints --disable-components metrics-server
           # Do not use "k0s start" here, as its error reporting is poor.
           systemctl start k0scontroller.service
           # some trailing carriage return

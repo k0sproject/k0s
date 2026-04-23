@@ -4,17 +4,30 @@
 package windows
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"math/bits"
+	"net/http"
 	"os"
+	"strconv"
 	"testing"
+	"time"
 
-	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/k0sproject/k0s/internal/testutil"
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/require"
 )
 
 const testNamespace = "windows-test"
@@ -97,7 +110,13 @@ func TestWindows(t *testing.T) {
 		require.NoError(common.WaitForDaemonSet(t.Context(), kc, "calico-node", metav1.NamespaceSystem))
 		t.Log("Waiting for calico-node-windows DaemonSet to be ready")
 		require.NoError(common.WaitForDaemonSet(t.Context(), kc, "calico-node-windows", metav1.NamespaceSystem))
+		t.Log("Waiting for konnectivity-agent DaemonSet to be ready")
+		require.NoError(common.WaitForDaemonSet(t.Context(), kc, "konnectivity-agent", metav1.NamespaceSystem))
 		t.Log("All system DaemonSets are ready")
+	})
+
+	t.Run("Verify konnectivity is operational", func(t *testing.T) {
+		require.NoError(verifyKonnectivityPods(t.Context(), restConfig, kc, t))
 	})
 
 	t.Run("Verify pods can be scheduled on Windows node", func(t *testing.T) {
@@ -114,6 +133,117 @@ func TestWindows(t *testing.T) {
 
 	})
 
+}
+
+func verifyKonnectivityPods(ctx context.Context, config *rest.Config, kc kubernetes.Interface, t *testing.T) error {
+	podDialer, err := testutil.NewPodDialer(config)
+	if err != nil {
+		return err
+	}
+
+	client := http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			DialContext: podDialer.DialContext,
+		},
+	}
+	t.Cleanup(client.CloseIdleConnections)
+
+	return wait.PollUntilContextCancel(ctx, 3*time.Second, true, func(ctx context.Context) (bool, error) {
+		pods, err := kc.CoreV1().Pods(metav1.NamespaceSystem).List(ctx, metav1.ListOptions{
+			LabelSelector: fields.OneTermEqualSelector("k8s-app", "konnectivity-agent").String(),
+		})
+		if err != nil {
+			t.Logf("Failed to get konnectivity pods: %v", err)
+			return false, nil
+		}
+
+		if len := len(pods.Items); len > 2 {
+			return false, fmt.Errorf("unexpected number of konnectivity pods: %d", len)
+		}
+
+		var goodPods uint
+		for _, pod := range pods.Items {
+			openServerConnections, err := fetchOpenServerConnections(ctx, &client, &pod)
+			if err != nil {
+				t.Logf("Failed to fetch konnectivity metrics from pod %s on node %s: %v", pod.Name, pod.Spec.NodeName, err)
+				return false, nil
+			}
+
+			switch openServerConnections {
+			case 0:
+				t.Logf("Pod %s on node %s has no open konnectivity server connections", pod.Name, pod.Spec.NodeName)
+			case 1:
+				t.Logf("Pod %s on node %s has one open konnectivity server connection", pod.Name, pod.Spec.NodeName)
+				goodPods++
+			default:
+				return false, fmt.Errorf("unexpected number of open server connections for pod %s on node %s: %d", pod.Name, pod.Spec.NodeName, openServerConnections)
+			}
+		}
+
+		t.Logf("Pods with one open konnectivity server connection: %d/%d", goodPods, len(pods.Items))
+		return goodPods == 2, nil
+	})
+}
+
+func fetchOpenServerConnections(ctx context.Context, client *http.Client, pod *corev1.Pod) (_ uint, err error) {
+	var port uint16
+	for k, v := range pod.Annotations {
+		if k == "prometheus.io/port" {
+			parsed, err := strconv.ParseUint(v, 10, 16)
+			if err != nil {
+				return 0, fmt.Errorf("invalid port: %w", err)
+			}
+			if parsed == 0 {
+				return 0, errors.New("zero port")
+			}
+			port = uint16(parsed)
+		}
+	}
+
+	if port == 0 {
+		return 0, errors.New("no port")
+	}
+
+	url := fmt.Sprintf("http://%s.%s:%d/metrics", pod.Name, pod.Namespace, port)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("failed to send HTTP request: %w", err)
+	}
+
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to close HTTP response body: %w", closeErr))
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("non-OK HTTP response status: %s", resp.Status)
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		key, val, found := bytes.Cut(scanner.Bytes(), []byte{' '})
+		if !found || !bytes.Equal(key, []byte("konnectivity_network_proxy_agent_open_server_connections")) {
+			continue
+		}
+
+		val, _, _ = bytes.Cut(val, []byte{' '})
+		count, err := strconv.ParseUint(string(val), 10, bits.UintSize)
+		if err != nil {
+			return 0, fmt.Errorf("invalid metric: %s %s: %w", key, val, err)
+		}
+		return uint(count), nil
+	}
+	if err := scanner.Err(); err != nil {
+		return 0, fmt.Errorf("failed to read HTTP response body: %w", err)
+	}
+
+	return 0, errors.New("metric konnectivity_network_proxy_agent_open_server_connections not found")
 }
 
 func runLinuxDeployment(ctx context.Context, kc *kubernetes.Clientset) error {
