@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"context"
 	"crypto"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -311,7 +313,10 @@ func (as *AddonsSuite) deleteUninstalledChart(ctx context.Context) {
 		Version:     spec.Version,
 		AppVersion:  "1",
 		Revision:    1,
-		ValuesHash:  spec.HashValues(),
+		ValuesHash: func() string {
+			hash := sha256.Sum256([]byte(spec.ReleaseName))
+			return hex.EncodeToString(hash[:])
+		}(),
 	}
 	chart := &helmv1beta1.Chart{
 		ObjectMeta: metav1.ObjectMeta{

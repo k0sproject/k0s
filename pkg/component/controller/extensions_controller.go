@@ -4,7 +4,10 @@
 package controller
 
 import (
+	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -268,12 +271,13 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 		}
 	}()
 	if chart.Status.ReleaseName == "" {
+		releaseName := effectiveChartReleaseName(&chart)
 		// new chartRelease
 		cr.L.Tracef("Start update or install %s", chart.Spec.ChartName)
 		chartRelease, err = cr.helm.InstallChart(ctx,
 			chart.Spec.ChartName,
 			chart.Spec.Version,
-			chart.Spec.ReleaseName,
+			releaseName,
 			chart.Spec.Namespace,
 			chart.Spec.YamlValues(),
 			timeout,
@@ -309,9 +313,19 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 
 func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
 	return chart.Status.Namespace != chart.Spec.Namespace ||
-		chart.Status.ReleaseName != chart.Spec.ReleaseName ||
+		chart.Status.ReleaseName != effectiveChartReleaseName(&chart) ||
 		chart.Status.Version != chart.Spec.Version ||
-		chart.Status.ValuesHash != chart.Spec.HashValues()
+		chart.Status.ValuesHash != hashChartValues(&chart)
+}
+
+func effectiveChartReleaseName(chart *helmv1beta1.Chart) string {
+	return cmp.Or(chart.Spec.ReleaseName, chart.Name)
+}
+
+func hashChartValues(chart *helmv1beta1.Chart) string {
+	h := sha256.New()
+	h.Write([]byte(effectiveChartReleaseName(chart) + chart.Spec.Values))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // updateStatus updates the status of the chart with the given release information. This function
@@ -338,7 +352,7 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 	if err != nil {
 		updchart.Status.Error = err.Error()
 	}
-	updchart.Status.ValuesHash = chart.Spec.HashValues()
+	updchart.Status.ValuesHash = hashChartValues(&chart)
 	if updErr := cr.Client.Status().Update(ctx, &updchart); updErr != nil {
 		cr.L.WithError(updErr).Error("Failed to update status for chart release", chart.Name)
 		return updErr
