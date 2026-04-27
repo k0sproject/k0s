@@ -12,31 +12,31 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/external-runtime-deps/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/governance/cncf/ai-conformance/">
       
       
-        <link rel="prev" href="../system-requirements/">
+        <link rel="prev" href="../../../releases/">
       
       
-        <link rel="next" href="../verifying-signs/">
+        <link rel="next" href="../gtr/">
       
       
         
       
       
-      <link rel="icon" href="../img/k0s-favicon-192.png">
+      <link rel="icon" href="../../../img/k0s-favicon-192.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>External runtime dependencies - Documentation</title>
+        <title>Kubernetes AI conformance - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,9 +55,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
@@ -89,7 +89,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#external-runtime-dependencies" class="md-skip">
+        <a href="#kubernetes-ai-conformance" class="md-skip">
           Skip to content
         </a>
       
@@ -104,12 +104,12 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You are not currently viewing the documentation for the current stable release of k0s.
-  <a href="../..">
+  <a href="../../../..">
     <strong>Click here to go to the documentation of the current stable release.</strong>
   </a>
 
             </div>
-            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL(".."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL("../../.."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
           </aside>
         
       </div>
@@ -121,9 +121,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s-favicon-192.png" alt="logo">
+  <img src="../../../img/k0s-favicon-192.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -140,7 +140,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              External runtime dependencies
+              Kubernetes AI conformance
             
           </span>
         </div>
@@ -258,9 +258,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s-favicon-192.png" alt="logo">
+  <img src="../../../img/k0s-favicon-192.png" alt="logo">
 
     </a>
     Documentation
@@ -287,7 +287,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -311,20 +311,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -345,7 +343,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -363,7 +361,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
+      <a href="../../../install/" class="md-nav__link">
         
   
   
@@ -391,7 +389,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0sctl-install/" class="md-nav__link">
+      <a href="../../../k0sctl-install/" class="md-nav__link">
         
   
   
@@ -466,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-multi-node/" class="md-nav__link">
+      <a href="../../../k0s-multi-node/" class="md-nav__link">
         
   
   
@@ -494,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-in-docker/" class="md-nav__link">
+      <a href="../../../k0s-in-docker/" class="md-nav__link">
         
   
   
@@ -522,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../experimental-windows/" class="md-nav__link">
+      <a href="../../../experimental-windows/" class="md-nav__link">
         
   
   
@@ -550,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi4/" class="md-nav__link">
+      <a href="../../../raspberry-pi4/" class="md-nav__link">
         
   
   
@@ -578,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi5/" class="md-nav__link">
+      <a href="../../../raspberry-pi5/" class="md-nav__link">
         
   
   
@@ -606,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../../../examples/ansible-playbook/" class="md-nav__link">
         
   
   
@@ -634,7 +632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airgap-install/" class="md-nav__link">
+      <a href="../../../airgap-install/" class="md-nav__link">
         
   
   
@@ -662,7 +660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../custom-ca/" class="md-nav__link">
+      <a href="../../../custom-ca/" class="md-nav__link">
         
   
   
@@ -698,7 +696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-requirements/" class="md-nav__link">
+      <a href="../../../system-requirements/" class="md-nav__link">
         
   
   
@@ -723,37 +721,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    External runtime dependencies
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../external-runtime-deps/" class="md-nav__link">
         
   
   
@@ -769,109 +740,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#linux-specific" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Linux specific
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Linux specific">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#linux-kernel-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Linux kernel configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#control-groups-cgroups" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Control Groups (cgroups)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#no-integration-with-name-service-switch-nss-apis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        No integration with Name Service Switch (NSS) APIs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#external-hard-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        External hard dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#external-soft-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        External soft dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#windows-specific" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows specific
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -884,7 +752,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../verifying-signs/" class="md-nav__link">
+      <a href="../../../verifying-signs/" class="md-nav__link">
         
   
   
@@ -966,7 +834,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+      <a href="../../../upgrade/" class="md-nav__link">
         
   
   
@@ -994,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup/" class="md-nav__link">
+      <a href="../../../backup/" class="md-nav__link">
         
   
   
@@ -1022,7 +890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../remove_controller/" class="md-nav__link">
+      <a href="../../../remove_controller/" class="md-nav__link">
         
   
   
@@ -1050,7 +918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reset/" class="md-nav__link">
+      <a href="../../../reset/" class="md-nav__link">
         
   
   
@@ -1132,7 +1000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../../configuration/" class="md-nav__link">
         
   
   
@@ -1160,7 +1028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dynamic-configuration/" class="md-nav__link">
+      <a href="../../../dynamic-configuration/" class="md-nav__link">
         
   
   
@@ -1188,7 +1056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration-validation/" class="md-nav__link">
+      <a href="../../../configuration-validation/" class="md-nav__link">
         
   
   
@@ -1216,7 +1084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../worker-node-config/" class="md-nav__link">
+      <a href="../../../worker-node-config/" class="md-nav__link">
         
   
   
@@ -1244,7 +1112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
+      <a href="../../../networking/" class="md-nav__link">
         
   
   
@@ -1272,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../runtime/" class="md-nav__link">
+      <a href="../../../runtime/" class="md-nav__link">
         
   
   
@@ -1300,7 +1168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
+      <a href="../../../storage/" class="md-nav__link">
         
   
   
@@ -1328,7 +1196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-monitoring/" class="md-nav__link">
+      <a href="../../../system-monitoring/" class="md-nav__link">
         
   
   
@@ -1356,7 +1224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../manifests/" class="md-nav__link">
+      <a href="../../../manifests/" class="md-nav__link">
         
   
   
@@ -1384,7 +1252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../helm-charts/" class="md-nav__link">
+      <a href="../../../helm-charts/" class="md-nav__link">
         
   
   
@@ -1412,7 +1280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../feature-gates/" class="md-nav__link">
+      <a href="../../../feature-gates/" class="md-nav__link">
         
   
   
@@ -1440,7 +1308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
+      <a href="../../../cloud-providers/" class="md-nav__link">
         
   
   
@@ -1468,7 +1336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
+      <a href="../../../dual-stack/" class="md-nav__link">
         
   
   
@@ -1496,7 +1364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../single-stack-ipv6/" class="md-nav__link">
+      <a href="../../../single-stack-ipv6/" class="md-nav__link">
         
   
   
@@ -1524,7 +1392,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
+      <a href="../../../high-availability/" class="md-nav__link">
         
   
   
@@ -1552,7 +1420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../nllb/" class="md-nav__link">
+      <a href="../../../nllb/" class="md-nav__link">
         
   
   
@@ -1580,7 +1448,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cplb/" class="md-nav__link">
+      <a href="../../../cplb/" class="md-nav__link">
         
   
   
@@ -1608,7 +1476,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
+      <a href="../../../shell-completion/" class="md-nav__link">
         
   
   
@@ -1636,7 +1504,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
+      <a href="../../../user-management/" class="md-nav__link">
         
   
   
@@ -1664,7 +1532,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../environment-variables/" class="md-nav__link">
+      <a href="../../../environment-variables/" class="md-nav__link">
         
   
   
@@ -1692,7 +1560,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
         
   
   
@@ -1720,7 +1588,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../selinux/" class="md-nav__link">
+      <a href="../../../selinux/" class="md-nav__link">
         
   
   
@@ -1748,7 +1616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../podsecurity/" class="md-nav__link">
+      <a href="../../../podsecurity/" class="md-nav__link">
         
   
   
@@ -1776,7 +1644,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reinstall-k0sctl/" class="md-nav__link">
+      <a href="../../../reinstall-k0sctl/" class="md-nav__link">
         
   
   
@@ -1858,7 +1726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../autopilot/" class="md-nav__link">
+      <a href="../../../autopilot/" class="md-nav__link">
         
   
   
@@ -1886,7 +1754,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../autopilot-multicommand/" class="md-nav__link">
+      <a href="../../../autopilot-multicommand/" class="md-nav__link">
         
   
   
@@ -1968,7 +1836,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../../../examples/metallb-loadbalancer/" class="md-nav__link">
         
   
   
@@ -1996,7 +1864,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../../../examples/nginx-ingress/" class="md-nav__link">
         
   
   
@@ -2024,7 +1892,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../../../examples/traefik-ingress/" class="md-nav__link">
         
   
   
@@ -2052,7 +1920,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/rook-ceph/" class="md-nav__link">
+      <a href="../../../examples/rook-ceph/" class="md-nav__link">
         
   
   
@@ -2080,7 +1948,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/gitops-flux/" class="md-nav__link">
+      <a href="../../../examples/gitops-flux/" class="md-nav__link">
         
   
   
@@ -2108,7 +1976,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/openebs/" class="md-nav__link">
+      <a href="../../../examples/openebs/" class="md-nav__link">
         
   
   
@@ -2136,7 +2004,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/longhorn/" class="md-nav__link">
+      <a href="../../../examples/longhorn/" class="md-nav__link">
         
   
   
@@ -2218,7 +2086,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/FAQ/" class="md-nav__link">
+      <a href="../../../troubleshooting/FAQ/" class="md-nav__link">
         
   
   
@@ -2246,7 +2114,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/logs/" class="md-nav__link">
+      <a href="../../../troubleshooting/logs/" class="md-nav__link">
         
   
   
@@ -2274,7 +2142,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/troubleshooting/" class="md-nav__link">
+      <a href="../../../troubleshooting/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2302,7 +2170,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/support-dump/" class="md-nav__link">
+      <a href="../../../troubleshooting/support-dump/" class="md-nav__link">
         
   
   
@@ -2330,7 +2198,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/certificate-authorities/" class="md-nav__link">
+      <a href="../../../troubleshooting/certificate-authorities/" class="md-nav__link">
         
   
   
@@ -2412,7 +2280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../../architecture/" class="md-nav__link">
         
   
   
@@ -2440,7 +2308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/" class="md-nav__link">
+      <a href="../../../cli/" class="md-nav__link">
         
   
   
@@ -2468,7 +2336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cis_benchmark/" class="md-nav__link">
+      <a href="../../../cis_benchmark/" class="md-nav__link">
         
   
   
@@ -2500,18 +2368,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -2532,7 +2402,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2550,7 +2420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../security/" class="md-nav__link">
+      <a href="../../../security/" class="md-nav__link">
         
   
   
@@ -2578,7 +2448,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../releases/" class="md-nav__link">
+      <a href="../../../releases/" class="md-nav__link">
         
   
   
@@ -2603,18 +2473,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" checked>
         
           
           <label class="md-nav__link" for="__nav_9_3" id="__nav_9_3_label" tabindex="0">
@@ -2635,7 +2507,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2650,10 +2522,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../governance/cncf/ai-conformance/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes AI conformance
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2669,6 +2568,169 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#test-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dra-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DRA support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driver-runtime-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driver runtime management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gpu-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPU sharing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtualized-accelerator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtualized accelerator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI inference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gang-scheduling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gang scheduling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cluster-autoscaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cluster autoscaling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pod-autoscaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pod autoscaling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accelerator-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accelerator metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-service-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI service metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secure-accelerator-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secure accelerator access
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#robust-controller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Robust controller
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2681,7 +2743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../governance/cncf/gtr/" class="md-nav__link">
+      <a href="../gtr/" class="md-nav__link">
         
   
   
@@ -2709,7 +2771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../governance/cncf/security-self-assessment/" class="md-nav__link">
+      <a href="../security-self-assessment/" class="md-nav__link">
         
   
   
@@ -2752,7 +2814,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../commercial-support/" class="md-nav__link">
+      <a href="../../../commercial-support/" class="md-nav__link">
         
   
   
@@ -2779,7 +2841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adopters/" class="md-nav__link">
+      <a href="../../../adopters/" class="md-nav__link">
         
   
   
@@ -2853,7 +2915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/" class="md-nav__link">
+      <a href="../../../contributors/" class="md-nav__link">
         
   
   
@@ -2881,7 +2943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../../contributors/github_workflow/" class="md-nav__link">
         
   
   
@@ -2909,7 +2971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/testing/" class="md-nav__link">
+      <a href="../../../contributors/testing/" class="md-nav__link">
         
   
   
@@ -2937,7 +2999,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/docs/" class="md-nav__link">
+      <a href="../../../contributors/docs/" class="md-nav__link">
         
   
   
@@ -2992,82 +3054,142 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#linux-specific" class="md-nav__link">
+  <a href="#test-environment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Linux specific
+        Test environment
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Linux specific">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#linux-kernel-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Linux kernel configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#control-groups-cgroups" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Control Groups (cgroups)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#no-integration-with-name-service-switch-nss-apis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        No integration with Name Service Switch (NSS) APIs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#external-hard-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        External hard dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#external-soft-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        External soft dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#windows-specific" class="md-nav__link">
+  <a href="#dra-support" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Windows specific
+        DRA support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driver-runtime-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driver runtime management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gpu-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPU sharing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtualized-accelerator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Virtualized accelerator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI inference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gang-scheduling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gang scheduling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cluster-autoscaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cluster autoscaling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pod-autoscaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pod autoscaling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accelerator-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accelerator metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-service-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI service metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secure-accelerator-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secure accelerator access
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#robust-controller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Robust controller
       
     </span>
   </a>
@@ -3092,188 +3214,285 @@
 
 
 <!--
-SPDX-FileCopyrightText: 2022 k0s authors
+SPDX-FileCopyrightText: 2026 k0s authors
 SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
-<h1 id="external-runtime-dependencies">External runtime dependencies<a class="headerlink" href="#external-runtime-dependencies" title="Permanent link">#</a></h1>
-<p>k0s is packaged as a single binary, which includes all the needed components.
-All the binaries are statically linked which means that in typical use cases
-there's an absolute minimum of external runtime dependencies.</p>
-<p>However, depending on the node role and cluster configuration, some of the
-underlying components <em>may</em> have specific dependencies, like OS level tools,
-packages and libraries. This page aims to provide a comprehensive overview.</p>
-<p>The following command checks for known requirements on a host (currently only
-available on Linux):</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>sysinfo
-</code></pre></div>
-<h2 id="linux-specific">Linux specific<a class="headerlink" href="#linux-specific" title="Permanent link">#</a></h2>
-<!--
-This piece of documentation is best-effort and considered to be augmented and
-extended in the future. The kernel and cgroup requirements are basically taken
-from kubernetes/system-validators. Often there's no real hint as to why they are
-required (although most requirements seem pretty obvious). Also need to check
-for requirements of Kube-router and Calico.
--->
-
-<h3 id="linux-kernel-configuration">Linux kernel configuration<a class="headerlink" href="#linux-kernel-configuration" title="Permanent link">#</a></h3>
-<p>Needless to say, as k0s operates Kubernetes worker nodes, a certain number of
-Linux kernel modules and configurations are required on the host. This
-essentially stems from the requirement to run containers and set up networking
-for them.</p>
-<p>The needed kernel configuration items are listed below. All of them are
-available in Kernel versions 4.3 and above. If running on older kernels, check
-if the distro in use has backported some features; nevertheless, it might meet
-the requirements. k0s will check the Linux kernel release as part of its
-pre-flight checks and issue a warning if it's below 3.10.</p>
-<p>The list covers ONLY the k0s/Kubernetes components' needs on worker nodes. Your
-own workloads may require more.</p>
-<!-- Kernel config nesting is taken from the v4.3 kernel's menuconfig structure. -->
-
+<h1 id="kubernetes-ai-conformance">Kubernetes AI conformance<a class="headerlink" href="#kubernetes-ai-conformance" title="Permanent link">#</a></h1>
+<p>This document summarizes how k0s satisfies the Kubernetes AI Conformance requirements for Kubernetes v1.35.
+It is a reviewer-facing evidence page built from captured test runs on k0s v1.35.3+k0s.0.</p>
+<h2 id="test-environment">Test environment<a class="headerlink" href="#test-environment" title="Permanent link">#</a></h2>
+<p>The evidence below was captured on a two-node k0s cluster running on Azure:</p>
 <ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L927"><code>CONFIG_CGROUPS</code></a>:
-  Control Group support<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081"><code>CONFIG_CGROUP_SCHED</code></a>:
-  Group CPU scheduler<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090"><code>CONFIG_FAIR_GROUP_SCHED</code></a>:
-  Group scheduling for SCHED_OTHER<br>
-  <a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-717996215">kubernetes/kubeadm#2335 (comment)</a><ul>
-<li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1095"><code>CONFIG_CFS_BANDWIDTH</code></a>:
-  CPU bandwidth provisioning for FAIR_GROUP_SCHED<br>
-  Required if CPU CFS quota enforcement is enabled for containers that
-  specify CPU limits (<code>--cpu-cfs-quota</code>).</li>
+<li>k0s v1.35.3+k0s.0</li>
+<li>Kubernetes v1.35.3</li>
+<li>One controller node and one NVIDIA T4 worker node</li>
+<li>GPU Operator v26.3.1 for NVIDIA runtime, device plugin, and DCGM Exporter</li>
 </ul>
-</li>
-</ul>
-</li>
-<li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1119"><code>CONFIG_BLK_CGROUP</code></a>:
-  Block IO controller<br>
-  <a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a></li>
-</ul>
-</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168"><code>CONFIG_NAMESPACES</code></a>:
-  Namespaces support<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1180"><code>CONFIG_UTS_NS</code></a>:
-  UTS namespace</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1187"><code>CONFIG_IPC_NS</code></a>:
-  IPC namespace</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1210"><code>CONFIG_PID_NS</code></a>:
-  PID namespace</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1218"><code>CONFIG_NET_NS</code></a>:
-  Network namespace</li>
-</ul>
-</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L5"><code>CONFIG_NET</code></a>:
-  Networking support<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L58"><code>CONFIG_INET</code></a>:
-  TCP/IP networking</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L109"><code>CONFIG_NETFILTER</code></a>:
-  Network packet filtering framework (Netfilter)<ul>
-<li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L171"><code>CONFIG_NETFILTER_ADVANCED</code></a>:
-  Advanced netfilter configuration</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L567"><code>CONFIG_NETFILTER_XTABLES</code></a>:
-  Netfilter Xtables support<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L853"><code>CONFIG_NETFILTER_XT_TARGET_REDIRECT</code></a>:
-  REDIRECT target support</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L1002"><code>CONFIG_NETFILTER_XT_MATCH_COMMENT</code></a>:
-  "comment" match support</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/ext4/Kconfig#L33"><code>CONFIG_EXT4_FS</code></a>:
-  The Extended 4 (ext4) filesystem</li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/proc/Kconfig#L1"><code>CONFIG_PROC_FS</code></a>:
-  /proc file system support</li>
-</ul>
-<p><strong>Note:</strong> As part of its pre-flight checks, k0s will try to inspect and validate
-the kernel configuration. In order for that to succeed, the configuration needs
-to be accessible at runtime. There are some typical places that k0s will check.
-A bullet-proof way to ensure the accessibility is to enable
-<a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L807"><code>CONFIG_IKCONFIG_PROC</code></a>,
-and, if enabled as a module, to load the <code>configs</code> module: <code>modprobe configs</code>.</p>
-<h3 id="control-groups-cgroups">Control Groups (cgroups)<a class="headerlink" href="#control-groups-cgroups" title="Permanent link">#</a></h3>
-<p><a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html">cgroup v2</a> is required. k0s rejects <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> during pre-flight checks.</p>
-<p>Starting with Kubernetes 1.31 already, <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> is in <a href="https://kubernetes.io/blog/2024/08/14/kubernetes-1-31-moving-cgroup-v1-support-maintenance-mode/">maintenance mode</a> and starting in Kubernetes 1.35 by default kubelet will fail to start if
-<a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> is detected on the system. If you want to run Kubernetes with <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a>, you need to bypass k0s pre-flight checks and explicitly enable it by
-setting <code>failCgroupV1: false</code> in kubelet configuration, via k0s <a href="../worker-node-config/#kubelet-configuration">worker profile</a>:</p>
-<div class="highlight"><pre><span></span><code><span class="nn">...</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"> </span><span class="c1"># Applies to the default profile which all workers pick up if no profile is specified in the worker startup</span>
-<span class="w">      </span><span class="nt">values</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">failCgroupV1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-</code></pre></div>
-<p>Required <a href="https://man7.org/linux/man-pages/man7/cgroups.7.html">cgroup</a> controllers:</p>
-<ul>
-<li><code>cpu</code></li>
-<li><code>cpuacct</code></li>
-<li><code>cpuset</code></li>
-<li><code>memory</code></li>
-<li><code>devices</code></li>
-<li><code>freezer</code></li>
-<li><code>pids</code></li>
-</ul>
-<p>Optional cgroup controllers:</p>
-<ul>
-<li><code>hugetlb</code> (<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a>)</li>
-<li><code>blkio</code> (<a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a>)<br>
-  containerd and cri-o will use blkio to track disk I/O and throttling in both
-  cgroup v1 and v2.</li>
-</ul>
-<h3 id="no-integration-with-name-service-switch-nss-apis">No integration with Name Service Switch (NSS) APIs<a class="headerlink" href="#no-integration-with-name-service-switch-nss-apis" title="Permanent link">#</a></h3>
-<p>The k0s Linux binaries are by default statically linked against <a href="https://musl.libc.org/">musl libc</a>.
-This includes the binaries distributed on the GitHub releases pages. Static
-linking ensures that k0s can run seamlessly across a wide range of Linux
-environments by not requiring a specific standard C library to be installed on
-the host system. However, this design choice means that k0s cannot use <a href="https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html">glibc's
-NSS APIs</a>, which require dynamic linking.</p>
-<p>This limitation is particularly relevant when a system uses NSS plugins, such as
-<a href="https://www.freedesktop.org/software/systemd/man/latest/nss-myhostname.html">nss-myhostname</a>, for resolving network names like <code>localhost</code>. Systems lacking
-a dedicated stub resolver capable of handling <code>localhost</code> DNS queries
-specifically will encounter issues running k0s. To mitigate this, users are
-advised to either activate a stub DNS resolver, such as <code>systemd-resolved</code>, or
-to manually add <code>localhost</code> entries to the <code>/etc/hosts</code> file as shown below:</p>
-<div class="highlight"><pre><span></span><code>127.0.0.1 localhost
-::1 localhost
-</code></pre></div>
-<h3 id="external-hard-dependencies">External hard dependencies<a class="headerlink" href="#external-hard-dependencies" title="Permanent link">#</a></h3>
-<p>There are very few external tools that are needed or used.</p>
-<h4 id="mountumount">mount/umount<a class="headerlink" href="#mountumount" title="Permanent link">#</a></h4>
-<p>When setting up pods, kubelet will call <code>mount</code> binary on the host. Similarly when destroying pods it will call <code>umount</code>. <code>mount</code> and <code>umount</code> are only needed on worker nodes where kubelet runs.</p>
-<h3 id="external-soft-dependencies">External soft dependencies<a class="headerlink" href="#external-soft-dependencies" title="Permanent link">#</a></h3>
-<p>There are a few external tools that may be needed or used under specific
-circumstances:</p>
-<h4 id="containerd-and-apparmor">containerd and AppArmor<a class="headerlink" href="#containerd-and-apparmor" title="Permanent link">#</a></h4>
-<p>In order to use containerd in conjunction with <a href="https://wiki.ubuntu.com/AppArmor">AppArmor</a>, it must be enabled in
-the kernel and the <code>/sbin/apparmor_parser</code> executable must be installed on the
-host, otherwise containerd will <a href="https://github.com/containerd/containerd/blob/v2.2.3/pkg/apparmor/apparmor_linux.go#L34-L45">disable</a> AppArmor support.</p>
-<h4 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h4>
-<p>iptables may be executed to detect if there are any existing iptables rules and
-if those are in legacy or nft mode. If iptables is not found, k0s will assume
-that there are no pre-existing iptables rules.</p>
-<h4 id="useradd-adduser">useradd / adduser<a class="headerlink" href="#useradd-adduser" title="Permanent link">#</a></h4>
-<p>During <code>k0s install</code> the external tool <code>useradd</code> will be used on the controllers
-to create system user accounts for k0s. If this doesn't exist it will fall-back to
-busybox's <code>adduser</code>.</p>
-<h4 id="userdel-deluser">userdel / deluser<a class="headerlink" href="#userdel-deluser" title="Permanent link">#</a></h4>
-<p><code>k0s reset</code> will execute either <code>userdel</code> or <code>deluser</code> to clean up system user
-accounts.</p>
-<h4 id="modprobe">modprobe<a class="headerlink" href="#modprobe" title="Permanent link">#</a></h4>
-<p>On k0s worker <code>modprobe</code> will be executed to load missing kernel modules if they
-are not detected.</p>
-<h4 id="id">id<a class="headerlink" href="#id" title="Permanent link">#</a></h4>
-<p>External <code>id</code> will be executed as a fallback if local user lookup fails, in case
-NSS is used.</p>
-<h2 id="windows-specific">Windows specific<a class="headerlink" href="#windows-specific" title="Permanent link">#</a></h2>
-<!--
-The kubernetes/system-validators require certain Windows versions starting with
-Windows Server 2016. k0s states that it requires Windows Server 2019, though.
--->
+<h2 id="dra-support">DRA support<a class="headerlink" href="#dra-support" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> Dynamic Resource Allocation APIs must be available and usable for accelerator allocation.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s v1.35.3+k0s.0 ships Kubernetes v1.35.3, where DRA is available at <code>resource.k8s.io/v1</code> and enabled by default.
+We validated the full DRA flow with the upstream <code>dra-example-driver</code>: a <code>ResourceClaimTemplate</code> was created, the scheduler allocated a simulated GPU device, and the consuming Pod received the allocated device metadata inside the container.
+This shows not only that the API surface exists, but that the allocation path is functional end to end on k0s.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>api-resources<span class="w"> </span>--api-group<span class="o">=</span>resource.k8s.io
+<span class="go">NAME                     APIVERSION           KIND</span>
+<span class="go">deviceclasses            resource.k8s.io/v1   DeviceClass</span>
+<span class="go">resourceclaims           resource.k8s.io/v1   ResourceClaim</span>
+<span class="go">resourceclaimtemplates   resource.k8s.io/v1   ResourceClaimTemplate</span>
+<span class="go">resourceslices           resource.k8s.io/v1   ResourceSlice</span>
 
-<p>TBD.</p>
+<span class="gp">$ </span>kubectl<span class="w"> </span>-n<span class="w"> </span>dra-demo<span class="w"> </span>get<span class="w"> </span>resourceclaim
+<span class="go">NAME                     STATE</span>
+<span class="go">dra-demo-pod-gpu-nd7zh   allocated,reserved</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>dra-demo<span class="w"> </span>dra-demo-pod<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>GPU_DEVICE_0
+<span class="go">GPU_DEVICE_0=&quot;gpu-0&quot;</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/">Dynamic Resource Allocation in Kubernetes</a></li>
+<li><a href="https://github.com/kubernetes-sigs/dra-example-driver">kubernetes-sigs/dra-example-driver</a></li>
+</ul>
+<h2 id="driver-runtime-management">Driver runtime management<a class="headerlink" href="#driver-runtime-management" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> The platform should support installation and management of accelerator drivers and runtime components.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s supports NVIDIA driver and runtime management through the NVIDIA GPU Operator.
+On the test cluster, the operator installed the NVIDIA driver, configured the NVIDIA runtime for containerd, and enabled GPU access for workloads that opt into the <code>nvidia</code> <code>RuntimeClass</code>.
+This is the standard upstream integration path for NVIDIA-backed Kubernetes clusters and works on k0s with containerd runtime configuration.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>-n<span class="w"> </span>gpu-operator<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>ds/nvidia-driver-daemonset<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>nvidia-smi<span class="w"> </span>--query-gpu<span class="o">=</span>driver_version<span class="w"> </span>--format<span class="o">=</span>csv,noheader
+<span class="go">580.126.20</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>logs<span class="w"> </span>cuda-smoketest
+<span class="go">NVIDIA-SMI 580.126.20             Driver Version: 580.126.20</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>runtimeclass
+<span class="go">NAME           HANDLER</span>
+<span class="go">nvidia         nvidia</span>
+<span class="go">nvidia-cdi     nvidia-cdi</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/">NVIDIA GPU Operator</a></li>
+<li><a href="https://docs.k0sproject.io/stable/runtime/#using-nvidia-container-runtime">Using <code>nvidia-container-runtime</code> with k0s</a></li>
+</ul>
+<h2 id="gpu-sharing">GPU sharing<a class="headerlink" href="#gpu-sharing" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> The platform should support mechanisms to share a single physical accelerator among multiple workloads.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s supports GPU sharing through NVIDIA device plugin time-slicing.
+On the test cluster, a single Tesla T4 was reconfigured to advertise four schedulable <code>nvidia.com/gpu</code> replicas, and four GPU-requesting Pods ran concurrently on the same physical GPU.
+T4 hardware does not support MIG, so time-slicing is the applicable sharing mechanism on this setup.
+This demonstrates a real sharing mode on hardware commonly used for inference and smaller training workloads.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>k0s-gpu-0<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.capacity.nvidia\.com/gpu}{&quot;\n&quot;}&#39;</span>
+<span class="go">4</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-l<span class="w"> </span><span class="nv">app</span><span class="o">=</span>shared-gpu<span class="w"> </span>-o<span class="w"> </span>wide
+<span class="go">NAME           READY   STATUS    NODE</span>
+<span class="go">shared-gpu-1   1/1     Running   k0s-gpu-0</span>
+<span class="go">shared-gpu-2   1/1     Running   k0s-gpu-0</span>
+<span class="go">shared-gpu-3   1/1     Running   k0s-gpu-0</span>
+<span class="go">shared-gpu-4   1/1     Running   k0s-gpu-0</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>k0s-gpu-0<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.metadata.labels.nvidia\.com/gpu\.sharing-strategy}{&quot;\n&quot;}&#39;</span>
+<span class="go">time-slicing</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/k8s-device-plugin">NVIDIA k8s-device-plugin</a></li>
+<li><a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/gpu-sharing.html">NVIDIA GPU Operator time-slicing documentation</a></li>
+</ul>
+<h2 id="virtualized-accelerator">Virtualized accelerator<a class="headerlink" href="#virtualized-accelerator" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> The platform should support virtualized accelerators where available.</p>
+<p><strong>Status on k0s:</strong> Not Implemented.</p>
+<p>k0s does not ship a packaged vGPU integration.
+Virtualized GPU support depends on NVIDIA vGPU licensing and hardware-specific enablement outside the scope of the k0s distribution.
+Users can integrate upstream NVIDIA vGPU components on suitable infrastructure, but that path was not demonstrated in this submission.</p>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://docs.nvidia.com/grid/">NVIDIA vGPU documentation</a></li>
+<li><a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/">NVIDIA GPU Operator</a></li>
+</ul>
+<h2 id="ai-inference">AI inference<a class="headerlink" href="#ai-inference" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> A working Kubernetes Gateway API implementation must support inference traffic management.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s supports Gateway API resources and standard Gateway implementations.
+We installed Gateway API v1.5.1 CRDs with Envoy Gateway v1.7.2, then configured a <code>GatewayClass</code>, <code>Gateway</code>, and <code>HTTPRoute</code> to route <code>/predict</code> traffic to a mock inference backend.
+Requests matching the configured prefix reached the backend, while non-matching requests were rejected by Envoy.
+This provides concrete evidence that k0s can host an inference ingress stack with route attachment and path-based traffic management.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>gatewayclass<span class="w"> </span>eg
+<span class="go">NAME   CONTROLLER                                      ACCEPTED</span>
+<span class="go">eg     gateway.envoyproxy.io/gatewayclass-controller   True</span>
+
+<span class="gp">$ </span>curl<span class="w"> </span>-si<span class="w"> </span>http://localhost:8888/predict
+<span class="go">HTTP/1.1 200 OK</span>
+<span class="go">x-app-name: http-echo</span>
+<span class="go">{&quot;prediction&quot;:0.87}</span>
+
+<span class="gp">$ </span>curl<span class="w"> </span>-si<span class="w"> </span>http://localhost:8888/
+<span class="go">HTTP/1.1 404 Not Found</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://gateway-api.sigs.k8s.io/">Gateway API</a></li>
+<li><a href="https://gateway.envoyproxy.io/">Envoy Gateway</a></li>
+</ul>
+<h2 id="gang-scheduling">Gang scheduling<a class="headerlink" href="#gang-scheduling" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> The platform must support all-or-nothing scheduling for distributed workloads.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s supports gang scheduling with Volcano.
+We installed Volcano v1.14.1 and demonstrated both successful atomic placement and full refusal of an oversized gang: a two-task job was bound together, while a five-task job that could not fit was kept pending without partial placement.
+That combination matters because it shows both sides of gang semantics on k0s: atomic success when capacity exists and no partial placement when it does not.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>vcjob<span class="w"> </span>gang-demo
+<span class="go">NAME        STATUS      MINAVAILABLE</span>
+<span class="go">gang-demo   Completed   2</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>vcjob<span class="w"> </span>gang-overflow
+<span class="go">NAME            STATUS    MINAVAILABLE</span>
+<span class="go">gang-overflow   Pending   5</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-l<span class="w"> </span>volcano.sh/job-name<span class="o">=</span>gang-overflow
+<span class="go">No resources found in default namespace.</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://volcano.sh/en/">Volcano</a></li>
+</ul>
+<h2 id="cluster-autoscaling">Cluster autoscaling<a class="headerlink" href="#cluster-autoscaling" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> The platform must support scaling accelerator-capable node groups through Kubernetes cluster autoscaling.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s is a Kubernetes distribution and does not bundle its own autoscaler.
+Instead, k0s works with the upstream Kubernetes Cluster Autoscaler and the infrastructure-specific provisioning layer behind the cluster, such as Azure VMSS, AWS Auto Scaling Groups, GCP Managed Instance Groups, or Cluster API.
+Accelerator-aware scale-up is driven by pending Pods that request <code>nvidia.com/gpu</code> and by the GPU resources advertised through the NVIDIA device plugin.
+This is the same model used by other conformant distributions: k0s provides the standard Kubernetes substrate, while autoscaling is supplied by the provisioning layer chosen for the cluster.</p>
+<p>Reference configuration:</p>
+<div class="highlight"><pre><span></span><code>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>autoscaler<span class="w"> </span>https://kubernetes.github.io/autoscaler
+helm<span class="w"> </span>install<span class="w"> </span>cluster-autoscaler<span class="w"> </span>autoscaler/cluster-autoscaler<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--namespace<span class="w"> </span>kube-system<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span><span class="nv">cloudProvider</span><span class="o">=</span>azure
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler">Kubernetes Cluster Autoscaler</a></li>
+<li><a href="https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler#gpu-support">Cluster Autoscaler GPU support</a></li>
+</ul>
+<h2 id="pod-autoscaling">Pod autoscaling<a class="headerlink" href="#pod-autoscaling" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> Horizontal Pod Autoscaler must function correctly for Pods that use accelerators.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s bundles <code>metrics-server</code>, so HPA works out of the box on a default cluster.
+We deployed a GPU-requesting <code>Deployment</code> and an <code>autoscaling/v2</code> HPA targeting CPU utilization.
+Under load, HPA increased the Deployment replica count from one to two; the second Pod remained pending because the scheduler correctly enforced single-GPU node capacity.
+This is the expected and correct interaction: autoscaling decisions are made from workload metrics, while accelerator capacity is still enforced independently by the scheduler.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>hpa<span class="w"> </span>gpu-burner
+<span class="go">NAME         REFERENCE               TARGETS         MINPODS   MAXPODS   REPLICAS</span>
+<span class="go">gpu-burner   Deployment/gpu-burner   cpu: 497%/50%   1         2         2</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-l<span class="w"> </span><span class="nv">app</span><span class="o">=</span>gpu-burner
+<span class="go">NAME                          READY   STATUS</span>
+<span class="go">gpu-burner-759c8596bf-7gzvr   1/1     Running</span>
+<span class="go">gpu-burner-759c8596bf-k8d4x   0/1     Pending</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/">Horizontal Pod Autoscaling</a></li>
+<li><a href="https://github.com/kubernetes-sigs/metrics-server">metrics-server</a></li>
+</ul>
+<h2 id="accelerator-metrics">Accelerator metrics<a class="headerlink" href="#accelerator-metrics" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> The platform must expose fine-grained accelerator metrics through a standard, machine-readable endpoint.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s supports accelerator metrics through NVIDIA DCGM Exporter, deployed by the GPU Operator.
+We integrated DCGM Exporter with <code>kube-prometheus-stack</code> using a <code>ServiceMonitor</code> and verified that Prometheus scraped per-GPU metrics with labels such as UUID, model, PCI bus ID, node name, and driver version.
+The important part here is not just that metrics exist, but that they are queryable through the standard Prometheus API with enough labels to identify a specific GPU on a specific node.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">&#39;http://localhost:9090/api/v1/query?query=DCGM_FI_DEV_GPU_UTIL&#39;</span>
+<span class="go">&quot;__name__&quot;:&quot;DCGM_FI_DEV_GPU_UTIL&quot;</span>
+<span class="go">&quot;UUID&quot;:&quot;GPU-df2bfa0a-183e-d378-e4ab-1042a1736a51&quot;</span>
+<span class="go">&quot;modelName&quot;:&quot;Tesla T4&quot;</span>
+<span class="go">&quot;Hostname&quot;:&quot;k0s-gpu-0&quot;</span>
+<span class="go">&quot;pci_bus_id&quot;:&quot;00000001:00:00.0&quot;</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://docs.nvidia.com/datacenter/dcgm/latest/gpu-telemetry/dcgm-exporter.html">NVIDIA DCGM Exporter</a></li>
+<li><a href="https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack">kube-prometheus-stack</a></li>
+</ul>
+<h2 id="ai-service-metrics">AI service metrics<a class="headerlink" href="#ai-service-metrics" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> The platform must discover and collect workload metrics in a standard format.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s supports workload metrics collection through Prometheus Operator compatible monitoring stacks.
+We installed <code>kube-prometheus-stack</code>, created a <code>ServiceMonitor</code> for a sample inference-shaped workload, and verified that Prometheus discovered the target and stored its metrics with workload-identifying labels.
+This demonstrates the standard collection path most AI services use in practice: workload metrics exposed on <code>/metrics</code>, discovered by <code>ServiceMonitor</code>, and stored in Prometheus.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">&#39;http://localhost:9090/api/v1/query&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--data-urlencode<span class="w"> </span><span class="s1">&#39;query=up{job=&quot;sample-inference&quot;}&#39;</span>
+<span class="go">&quot;job&quot;:&quot;sample-inference&quot;</span>
+<span class="go">&quot;namespace&quot;:&quot;default&quot;</span>
+<span class="go">&quot;service&quot;:&quot;sample-inference&quot;</span>
+<span class="go">&quot;value&quot;:[..., &quot;1&quot;]</span>
+
+<span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">&#39;http://localhost:9090/api/v1/query&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--data-urlencode<span class="w"> </span><span class="s1">&#39;query=node_cpu_seconds_total{job=&quot;sample-inference&quot;}&#39;</span>
+<span class="go">&quot;__name__&quot;:&quot;node_cpu_seconds_total&quot;</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://prometheus-operator.dev/docs/developer/getting-started/#using-servicemonitors">Prometheus Operator <code>ServiceMonitor</code></a></li>
+<li><a href="https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack">kube-prometheus-stack</a></li>
+</ul>
+<h2 id="secure-accelerator-access">Secure accelerator access<a class="headerlink" href="#secure-accelerator-access" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> Accelerator access must be isolated so that only authorized workloads can use the device.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s relies on the standard Kubernetes device plugin model for GPU isolation.
+On the test cluster, a Pod without a GPU request and without the <code>nvidia</code> <code>RuntimeClass</code> had no access to NVIDIA tooling or device nodes.
+When two Pods requested one GPU each on a single-GPU node, the scheduler admitted one and kept the second pending with <code>Insufficient nvidia.com/gpu</code>.
+Together, these checks show both isolation-by-default and capacity enforcement for accelerator access on k0s.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>logs<span class="w"> </span>no-gpu-request
+<span class="go">sh: 1: nvidia-smi: not found</span>
+<span class="go">NO_GPU_ACCESS</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>gpu-hog-1<span class="w"> </span>gpu-hog-2
+<span class="go">NAME        READY   STATUS</span>
+<span class="go">gpu-hog-1   1/1     Running</span>
+<span class="go">gpu-hog-2   0/1     Pending</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/">Kubernetes device plugins</a></li>
+<li><a href="https://github.com/NVIDIA/k8s-device-plugin">NVIDIA k8s-device-plugin</a></li>
+</ul>
+<h2 id="robust-controller">Robust controller<a class="headerlink" href="#robust-controller" title="Permanent link">#</a></h2>
+<p><strong>Requirement:</strong> The platform must be able to run at least one complex AI operator with CRDs and reliable reconciliation behavior.</p>
+<p><strong>Status on k0s:</strong> Implemented.</p>
+<p>k0s supports complex AI operators such as KubeRay.
+We installed KubeRay v1.6.1, reconciled a <code>RayCluster</code> into head and worker Pods plus supporting Services, ran a distributed Ray task successfully, and then deleted the head Pod to verify that the operator recreated it and restored the cluster to a ready state.
+This goes beyond a basic install check: it shows CRD registration, reconciliation of child resources, a successful workload, and recovery after disruption.</p>
+<p>Minimal example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>raycluster<span class="w"> </span>raycluster-demo<span class="w"> </span>-o<span class="w"> </span>wide
+<span class="go">NAME              DESIRED WORKERS   AVAILABLE WORKERS   STATUS</span>
+<span class="go">raycluster-demo   1                 1                   ready</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>events<span class="w"> </span>--field-selector<span class="w"> </span>involvedObject.kind<span class="o">=</span>RayCluster<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sort-by<span class="o">=</span>.lastTimestamp
+<span class="go">CreatedHeadPod</span>
+<span class="go">CreatedWorkerPod</span>
+<span class="go">DeletedHeadPod</span>
+<span class="go">CreatedHeadPod</span>
+
+<span class="gp">$ </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HEAD_POD</span><span class="s2">&quot;</span><span class="w"> </span>--<span class="w"> </span>python<span class="w"> </span>-
+<span class="go">Result: [0, 1, 4, 9, 16]</span>
+<span class="go">Cluster resources: {&#39;CPU&#39;: 2.0, ...}</span>
+</code></pre></div>
+<p>Further reading:</p>
+<ul>
+<li><a href="https://docs.ray.io/en/latest/cluster/kubernetes/">KubeRay</a></li>
+</ul>
 
 
 
@@ -3375,10 +3594,10 @@ Windows Server 2016. k0s states that it requires Windows Server 2019, though.
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
