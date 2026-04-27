@@ -12,13 +12,13 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/system-requirements/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/version-skew-policy/">
       
       
-        <link rel="prev" href="../custom-ca/">
+        <link rel="prev" href="../upgrade/">
       
       
-        <link rel="next" href="../external-runtime-deps/">
+        <link rel="next" href="../backup/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>System Requirements - Documentation</title>
+        <title>Version skew policy - Documentation</title>
       
     
     
@@ -89,7 +89,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#system-requirements" class="md-skip">
+        <a href="#version-skew-policy" class="md-skip">
           Skip to content
         </a>
       
@@ -140,7 +140,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              System Requirements
+              Version skew policy
             
           </span>
         </div>
@@ -311,20 +311,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -345,7 +343,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -695,37 +693,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    System Requirements
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../system-requirements/" class="md-nav__link">
         
   
   
@@ -741,114 +712,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#minimum-memory-and-cpu-requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Minimum memory and CPU requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controller-node-recommendations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Controller node recommendations
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#host-operating-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Host operating system
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#networking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Networking
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#external-runtime-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        External runtime dependencies
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controller-node-measured-memory-consumption" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Controller node measured memory consumption
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -921,18 +784,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -953,7 +818,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -996,10 +861,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../version-skew-policy/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version skew policy
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1015,6 +907,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#supported-skew" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported skew
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrades" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrades
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#downgrades" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Downgrades
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#major-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Major versions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3025,10 +2981,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#minimum-memory-and-cpu-requirements" class="md-nav__link">
+  <a href="#supported-skew" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Minimum memory and CPU requirements
+        Supported skew
       
     </span>
   </a>
@@ -3036,10 +2992,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#controller-node-recommendations" class="md-nav__link">
+  <a href="#upgrades" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Controller node recommendations
+        Upgrades
       
     </span>
   </a>
@@ -3047,10 +3003,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#storage" class="md-nav__link">
+  <a href="#downgrades" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Storage
+        Downgrades
       
     </span>
   </a>
@@ -3058,54 +3014,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#host-operating-system" class="md-nav__link">
+  <a href="#major-versions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Host operating system
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#networking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Networking
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#external-runtime-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        External runtime dependencies
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controller-node-measured-memory-consumption" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Controller node measured memory consumption
+        Major versions
       
     </span>
   </a>
@@ -3129,268 +3041,49 @@
 
 
 
-<!--
-SPDX-FileCopyrightText: 2021 k0s authors
-SPDX-License-Identifier: CC-BY-SA-4.0
--->
-
-<h1 id="system-requirements">System requirements<a class="headerlink" href="#system-requirements" title="Permanent link">#</a></h1>
-<p>This page describes the system requirements for k0s.</p>
-<h2 id="minimum-memory-and-cpu-requirements">Minimum memory and CPU requirements<a class="headerlink" href="#minimum-memory-and-cpu-requirements" title="Permanent link">#</a></h2>
-<p>The minimum requirements for k0s detailed below are approximations, and thus your results may vary.</p>
-<table>
-<thead>
-<tr>
-<th>Role</th>
-<th>Memory (RAM in GB)</th>
-<th>Virtual CPUs (vCPU)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Controller node</td>
-<td>1</td>
-<td>1</td>
-</tr>
-<tr>
-<td>Worker node</td>
-<td>0.5</td>
-<td>1</td>
-</tr>
-<tr>
-<td>Controller + worker</td>
-<td>1</td>
-<td>1</td>
-</tr>
-</tbody>
-</table>
-<h2 id="controller-node-recommendations">Controller node recommendations<a class="headerlink" href="#controller-node-recommendations" title="Permanent link">#</a></h2>
-<table>
-<thead>
-<tr>
-<th># of worker nodes</th>
-<th># of pods</th>
-<th>Recommended RAM (in GB)</th>
-<th>Recommended vCPU</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>10</td>
-<td>1000</td>
-<td>1-2</td>
-<td>1-2</td>
-</tr>
-<tr>
-<td>50</td>
-<td>5000</td>
-<td>2-4</td>
-<td>2-4</td>
-</tr>
-<tr>
-<td>100</td>
-<td>10000</td>
-<td>4-8</td>
-<td>2-4</td>
-</tr>
-<tr>
-<td>500</td>
-<td>50000</td>
-<td>8-16</td>
-<td>4-8</td>
-</tr>
-<tr>
-<td>1000</td>
-<td>100000</td>
-<td>16-32</td>
-<td>8-16</td>
-</tr>
-<tr>
-<td>5000</td>
-<td>150000</td>
-<td>32-64</td>
-<td>16-32</td>
-</tr>
-</tbody>
-</table>
-<p>k0s has the standard Kubernetes limits for the maximum number of nodes, pods, etc. For more details, see <a href="https://kubernetes.io/docs/setup/best-practices/cluster-large/">the Kubernetes considerations for large clusters</a>.</p>
-<p>k0s controller node measured memory consumption can be found below on this page.</p>
-<h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h2>
-<p>It's recommended to use an SSD for <a href="https://etcd.io/docs/current/op-guide/performance/">optimal storage performance</a> (cluster latency and throughput are sensitive to storage).</p>
-<p>For worker nodes it is required that there is at least 15% relative disk space free.</p>
-<p>The specific storage consumption for k0s is as follows:</p>
-<table>
-<thead>
-<tr>
-<th>Role</th>
-<th>Usage (k0s part)</th>
-<th>Minimum required</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Controller node</td>
-<td>~0.5 GB</td>
-<td>~0.5 GB</td>
-</tr>
-<tr>
-<td>Worker node</td>
-<td>~1.3 GB</td>
-<td>~1.6 GB</td>
-</tr>
-<tr>
-<td>Controller + worker</td>
-<td>~1.7 GB</td>
-<td>~2.0 GB</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Note</strong>: The operating system and application requirements must be considered in addition to the k0s part.</p>
-<h2 id="host-operating-system">Host operating system<a class="headerlink" href="#host-operating-system" title="Permanent link">#</a></h2>
-<p>k0s runs on Linux and Windows operating systems.</p>
-<p>The following operating systems are automatically tested as part of our CI:</p>
-<!-- NOTE: Update ostests-nightly.yaml if you change the tested OS list here. -->
-
-<table>
-<thead>
-<tr>
-<th>Operating System</th>
-<th>Version/Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Amazon Linux</td>
-<td>2023</td>
-</tr>
-<tr>
-<td>Alpine Linux</td>
-<td>3.21, 3.23</td>
-</tr>
-<tr>
-<td>CentOS Stream</td>
-<td>9, 10 (Coughlan)</td>
-</tr>
-<tr>
-<td>Debian GNU/Linux</td>
-<td>11 (bullseye) (supported until 2026-08-31), 12 (bookworm) (supported until 2028-06-30)</td>
-</tr>
-<tr>
-<td>Fedora CoreOS</td>
-<td>stable stream</td>
-</tr>
-<tr>
-<td>Fedora Linux</td>
-<td>41 (Cloud Edition)</td>
-</tr>
-<tr>
-<td>Flatcar Container Linux</td>
-<td>by Kinvolk</td>
-</tr>
-<tr>
-<td>Red Hat Enterprise Linux</td>
-<td>7.9 (Maipo), 8.10 (Ootpa), 9.7 (Plow)</td>
-</tr>
-<tr>
-<td>Rocky Linux</td>
-<td>8.10 (Green Obsidian), 9.5 (Blue Onyx)</td>
-</tr>
-<tr>
-<td>SUSE Linux Enterprise Server</td>
-<td>15 SP6</td>
-</tr>
-<tr>
-<td>Ubuntu</td>
-<td>20.04 LTS, 22.04 LTS, 24.04</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Note:</strong> For detailed Linux-specific requirements, please refer to the <a href="../external-runtime-deps/#linux-specific">Linux specific requirements</a>.</p>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
+<h1 id="version-skew-policy">Version skew policy<a class="headerlink" href="#version-skew-policy" title="Permanent link">#</a></h1>
+<p>k0s ships a curated set of Kubernetes components (kube-apiserver,
+kube-controller-manager, kube-scheduler, kubelet, kube-proxy, …) for each
+release, so the version skew between those components inside a single k0s
+release is always supported by upstream Kubernetes by construction.</p>
+<p>What you still control as an operator is the skew <strong>between releases of
+k0s</strong> that you mix in one cluster — for example, controllers running k0s
+<code>v1.31.x+k0s.0</code> while workers still run <code>v1.30.x+k0s.0</code> during a rolling
+upgrade.</p>
+<h2 id="supported-skew">Supported skew<a class="headerlink" href="#supported-skew" title="Permanent link">#</a></h2>
+<p>k0s follows the upstream Kubernetes
+<a href="https://kubernetes.io/releases/version-skew-policy/">version skew policy</a>.
+In practice, that means:</p>
 <ul>
-<li><code>x86_64</code></li>
-<li><code>aarch64</code></li>
-<li><code>armv7l</code></li>
-<li><code>riscv64</code> (No pre-compiled binaries, no CI coverage)</li>
+<li><strong>Control plane components</strong> (kube-apiserver, kube-controller-manager,
+  kube-scheduler) must all be within <strong>one minor</strong> of each other in a
+  multi-controller cluster.</li>
+<li><strong>kubelet</strong> on a worker may be <strong>up to three minors older</strong> than the
+  oldest kube-apiserver in the cluster, but <strong>must never be newer</strong>.</li>
+<li><strong>kube-proxy</strong> on a worker must match the kubelet's minor version.</li>
 </ul>
-<h2 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h2>
-<p>For information on the required ports and protocols, refer to <a href="../networking/">networking</a>.</p>
-<h2 id="external-runtime-dependencies">External runtime dependencies<a class="headerlink" href="#external-runtime-dependencies" title="Permanent link">#</a></h2>
-<p>k0s strives to be as independent from the operating system as possible. See the
-dedicated section on <a href="../external-runtime-deps/">external runtime dependencies</a>
-for details on current and past requirements.</p>
-<p>To run some automated compatiblility checks on your system, use
-<a href="../cli/k0s_sysinfo/"><code>k0s sysinfo</code></a>.</p>
-<h2 id="controller-node-measured-memory-consumption">Controller node measured memory consumption<a class="headerlink" href="#controller-node-measured-memory-consumption" title="Permanent link">#</a></h2>
-<p>The following table shows the measured memory consumption in the cluster of one controller node.</p>
-<table>
-<thead>
-<tr>
-<th># of Worker nodes</th>
-<th># of Pods (besides default)</th>
-<th>Memory consumption (in MB)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>0</td>
-<td>510</td>
-</tr>
-<tr>
-<td>1</td>
-<td>100</td>
-<td>600</td>
-</tr>
-<tr>
-<td>20</td>
-<td>0</td>
-<td>660</td>
-</tr>
-<tr>
-<td>20</td>
-<td>2000</td>
-<td>1000</td>
-</tr>
-<tr>
-<td>50</td>
-<td>0</td>
-<td>790</td>
-</tr>
-<tr>
-<td>50</td>
-<td>5000</td>
-<td>1400</td>
-</tr>
-<tr>
-<td>100</td>
-<td>0</td>
-<td>1000</td>
-</tr>
-<tr>
-<td>100</td>
-<td>10000</td>
-<td>2300</td>
-</tr>
-<tr>
-<td>200</td>
-<td>0</td>
-<td>1500</td>
-</tr>
-<tr>
-<td>200</td>
-<td>20000</td>
-<td>3300</td>
-</tr>
-</tbody>
-</table>
-<p>Measurement details:</p>
-<ul>
-<li>k0s v1.22.4+k0s.2 (default configuration with etcd)</li>
-<li>Ubuntu Server 20.04.3 LTS, OS part of the used memory was around 180 MB</li>
-<li>Hardware: AWS t3.xlarge (4 vCPUs, 16 GB RAM)</li>
-<li>Pod image: nginx:1.21.4</li>
-</ul>
+<p>Patch-version differences inside the same minor are always supported and
+are the expected state during a phased upgrade.</p>
+<h2 id="upgrades">Upgrades<a class="headerlink" href="#upgrades" title="Permanent link">#</a></h2>
+<p>When upgrading k0s in place:</p>
+<ol>
+<li>Upgrade controllers first, <strong>one minor at a time</strong> (e.g. v1.30 → v1.31,
+   not v1.30 → v1.32).</li>
+<li>Upgrade workers after the control plane is fully on the new minor.</li>
+<li>Stay on the latest patch release of the old minor before stepping up to
+   the next minor.</li>
+</ol>
+<p><a href="../autopilot/">Autopilot</a> automates this with multi-step plans; if you
+upgrade manually or via <a href="../k0sctl-install/">k0sctl</a>, make the same staging
+explicit in your plan.</p>
+<h2 id="downgrades">Downgrades<a class="headerlink" href="#downgrades" title="Permanent link">#</a></h2>
+<p>Downgrades are <strong>not</strong> supported by upstream Kubernetes and are not tested
+by k0s. If a release needs to be rolled back, restore from a
+<a href="../backup/">backup</a> taken before the upgrade rather than running an older
+k0s binary against a newer cluster state.</p>
+<h2 id="major-versions">Major versions<a class="headerlink" href="#major-versions" title="Permanent link">#</a></h2>
+<p>There is currently no Kubernetes v2 and no k0s v2, so major-version skew is
+not a configuration that exists in practice.</p>
 
 
 
