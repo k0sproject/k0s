@@ -123,7 +123,7 @@ jobs:
             /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -131,14 +131,14 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Airgap Image List
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-images-linux-amd64.txt
           asset_content_type: text/plain
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -146,21 +146,21 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Public key
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: cosign.pub
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - SBOM
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: spdx.json
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - SBOM signature
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: spdx.json.sig
@@ -173,7 +173,7 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-amd64.tar
@@ -249,7 +249,7 @@ jobs:
           cat k0s.exe.sig
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe
@@ -257,14 +257,14 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Airgap Image List
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-images-windows2022-amd64.txt
           asset_content_type: text/plain
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe.sig
@@ -272,7 +272,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-windows2022-amd64.tar
@@ -365,7 +365,7 @@ jobs:
             /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -373,7 +373,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -387,14 +387,14 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Airgap image list
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-images-linux-arm64.txt
           asset_content_type: text/plain
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-arm64.tar
@@ -479,7 +479,7 @@ jobs:
             /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@62365f23c0419a04b7161371be3fe0be0893ab10 # v1.8.2
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -487,7 +487,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@62365f23c0419a04b7161371be3fe0be0893ab10 # v1.8.2
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -501,14 +501,14 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Airgap image list
-        uses: shogo82148/actions-upload-release-asset@62365f23c0419a04b7161371be3fe0be0893ab10 # v1.8.2
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-images-linux-arm.txt
           asset_content_type: text/plain
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@62365f23c0419a04b7161371be3fe0be0893ab10 # v1.8.2
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-arm.tar
@@ -550,7 +550,7 @@ jobs:
         run: |
           cd release_assets && sha256sum -b * > ../sha256sums.txt
       - name: Upload sha256sums.txt
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: sha256sums.txt
@@ -675,7 +675,7 @@ jobs:
           pattern: ostests-e2e-*-sonobuoy-results
 
       - name: Upload conformance test result to Release Assets
-        uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
+        uses: shogo82148/actions-upload-release-asset@ee2ae851dc5d938b90075b3ef12c540abfd1ee72 # v1.10.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ostests-e2e/*-${{ matrix.arch }}-*/sonobuoy-e2e-serial.tar.gz
