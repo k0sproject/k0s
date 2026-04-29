@@ -7,14 +7,20 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
+	authv1 "k8s.io/api/authentication/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -32,6 +38,10 @@ type Status struct {
 	L                 *logrus.Entry
 	httpserver        http.Server
 	CertManager       certManager
+
+	WorkerClient       kubernetes.Interface
+	AdminClient        kubernetes.Interface
+	AdminClientFactory *kubeutil.ClientFactory
 }
 
 type certManager interface {
@@ -40,7 +50,9 @@ type certManager interface {
 
 var _ manager.Component = (*Status)(nil)
 
-const defaultMaxEvents = 5
+const (
+	defaultMaxEvents = 5
+)
 
 // Init initializes component
 func (s *Status) Init(_ context.Context) error {
@@ -93,7 +105,6 @@ func (s *Status) Stop() error {
 
 type statusHandler struct {
 	Status *Status
-	client kubernetes.Interface
 }
 
 // ServerHTTP implementation of handler interface
@@ -109,7 +120,46 @@ func (sh *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 const (
 	defaultPollDuration = 1 * time.Second
 	defaultPollTimeout  = 5 * time.Minute
+
+	cniReady             = "AllReady"
+	cniNotReady          = "NotReady"
+	cniComponentNotReady = "ComponentsNotReady"
+	cniNotFound          = "NotFound"
+	cniError             = "Error"
 )
+
+func addCNICondition(conditions *[]Condition, status corev1.ConditionStatus, reason, message string) {
+	*conditions = append(*conditions, Condition{
+		Type:    "Ready",
+		Status:  status,
+		Reason:  reason,
+		Message: message,
+	})
+}
+
+func (sh *statusHandler) checkCNIDaemonSet(ds *appsv1.DaemonSet, conditions *[]Condition) {
+	desired := ds.Status.DesiredNumberScheduled
+	ready := ds.Status.NumberReady
+
+	if desired > 0 && ready == desired {
+		addCNICondition(conditions, corev1.ConditionTrue, cniReady, fmt.Sprintf("%s DaemonSet reports %d/%d ready", ds.Name, ready, desired))
+	} else {
+		addCNICondition(conditions, corev1.ConditionFalse, cniNotReady, fmt.Sprintf("%s DaemonSet reports %d/%d ready", ds.Name, ready, desired))
+	}
+}
+
+func (sh *statusHandler) checkCalicoDeployment(deploy *appsv1.Deployment, conditions *[]Condition) {
+	for _, c := range deploy.Status.Conditions {
+		if c.Type == appsv1.DeploymentAvailable {
+			if c.Status == corev1.ConditionTrue {
+				addCNICondition(conditions, corev1.ConditionTrue, cniReady, "Calico kube-controllers deployment is available")
+			} else {
+				addCNICondition(conditions, corev1.ConditionFalse, cniComponentNotReady, "Calico kube-controllers deployment is not available")
+			}
+			return
+		}
+	}
+}
 
 func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	status := sh.Status.StatusInformation
@@ -117,20 +167,60 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 		return status
 	}
 
-	if sh.client == nil {
+	if sh.Status.WorkerClient == nil {
 		kubeClient, err := sh.buildWorkerSideKubeAPIClient(ctx)
 		if err != nil {
 			status.WorkerToAPIConnectionStatus.Message = "failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: " + err.Error()
-			return status
 		}
-		sh.client = kubeClient
+		sh.Status.WorkerClient = kubeClient
 	}
-	_, err := sh.client.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
+	_, err := sh.Status.WorkerClient.AuthenticationV1().SelfSubjectReviews().Create(ctx, &authv1.SelfSubjectReview{}, v1.CreateOptions{})
 	if err != nil {
 		status.WorkerToAPIConnectionStatus.Message = err.Error()
-		return status
 	}
 	status.WorkerToAPIConnectionStatus.Success = true
+
+	status.Conditions = []Condition{}
+
+	apiClient, err := sh.Status.AdminClientFactory.GetClient()
+	if err != nil || apiClient == nil {
+		return status
+	}
+
+	provider := ""
+	if status.ClusterConfig != nil {
+		provider = status.ClusterConfig.Spec.Network.Provider
+	}
+
+	switch provider {
+	case constant.CNIProviderKubeRouter:
+		ds, err := apiClient.AppsV1().DaemonSets(v1.NamespaceSystem).Get(ctx, "kube-router", v1.GetOptions{})
+		if err == nil {
+			sh.checkCNIDaemonSet(ds, &status.Conditions)
+		} else if apierrors.IsNotFound(err) {
+			addCNICondition(&status.Conditions, corev1.ConditionFalse, cniNotFound, "kube-router DaemonSet not found")
+		} else {
+			addCNICondition(&status.Conditions, corev1.ConditionUnknown, cniError, err.Error())
+		}
+
+	case constant.CNIProviderCalico:
+		ds, err := apiClient.AppsV1().DaemonSets(v1.NamespaceSystem).Get(ctx, "calico-node", v1.GetOptions{})
+		if err == nil {
+			sh.checkCNIDaemonSet(ds, &status.Conditions)
+			deploy, err := apiClient.AppsV1().Deployments(v1.NamespaceSystem).Get(ctx, "calico-kube-controllers", v1.GetOptions{})
+			if err == nil {
+				sh.checkCalicoDeployment(deploy, &status.Conditions)
+			}
+		} else if apierrors.IsNotFound(err) {
+			addCNICondition(&status.Conditions, corev1.ConditionFalse, cniNotFound, "calico-node DaemonSet not found")
+		} else {
+			addCNICondition(&status.Conditions, corev1.ConditionUnknown, cniError, err.Error())
+		}
+
+	default:
+		addCNICondition(&status.Conditions, corev1.ConditionUnknown, "CustomProvider", "")
+	}
+
 	return status
 }
 
