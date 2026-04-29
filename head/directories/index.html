@@ -3053,17 +3053,24 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
 <h1 id="k0s-directories">k0s directories<a class="headerlink" href="#k0s-directories" title="Permanent link">#</a></h1>
-<p>This page describes the directories k0s reads and writes on the host, what
-they are used for, and the permissions k0s expects on them.</p>
+<p>This page describes the directories k0s reads and writes on the host, what they
+are used for, and the permissions k0s expects on them.</p>
+<p><strong>Please note that the directory layouts described here are considered an
+implementation detail and may change without further notice, even between patch
+releases, unless explicitly stated otherwise, e.g., by other parts of the
+documentation referencing those paths or files within them.</strong></p>
 <p>The two parent directories are configurable via CLI flags:</p>
 <ul>
-<li><code>--data-dir</code> (default <code>/var/lib/k0s</code> on Linux, <code>C:\var\lib\k0s</code> on Windows) —
-  persistent state.</li>
-<li><code>--run-dir</code> (default <code>/run/k0s</code> on Linux) — runtime state such as PID files
-  and unix sockets.</li>
+<li><code>--data-dir</code> (default <code>/var/lib/k0s</code> on Linux, <code>C:\var\lib\k0s</code> on Windows)<br>
+  persistent state</li>
+<li><code>--run-dir</code> (default <code>/run/k0s</code> on Linux)<br>
+  runtime state such as PID files and unix sockets</li>
 </ul>
-<p>Pass these flags to every <code>k0s</code> invocation that should share the same state
-(controller, worker, status, reset, …).</p>
+<p>Additionally, on k0s nodes with workloads enabled, you can set the following directories:</p>
+<ul>
+<li><code>--kubelet-root-dir</code> (default <code>&lt;data-dir&gt;/kubelet</code>)<br>
+  Kubelet root directory</li>
+</ul>
 <h2 id="data-directory-layout">Data directory layout<a class="headerlink" href="#data-directory-layout" title="Permanent link">#</a></h2>
 <p>Inside <code>&lt;data-dir&gt;</code> (default <code>/var/lib/k0s</code>):</p>
 <table>
@@ -3097,7 +3104,7 @@ they are used for, and the permissions k0s expects on them.</p>
 </tr>
 <tr>
 <td><code>&lt;data-dir&gt;/etcd/</code></td>
-<td>etcd data store. Backed up and restored by <code>k0s backup</code> / <code>k0s restore</code>.</td>
+<td>etcd database files if k0s is configured to use the embedded etcd.</td>
 <td><code>0700</code></td>
 </tr>
 <tr>
@@ -3107,13 +3114,8 @@ they are used for, and the permissions k0s expects on them.</p>
 </tr>
 <tr>
 <td><code>&lt;data-dir&gt;/images/</code></td>
-<td>Image bundles imported by the embedded container runtime on start-up.</td>
+<td>Image bundles imported into the managed containerd instance</td>
 <td><code>0755</code></td>
-</tr>
-<tr>
-<td><code>&lt;data-dir&gt;/kubelet/</code></td>
-<td>kubelet root directory (volumes, plugins, pod state). CSI drivers must be aware of it.</td>
-<td>varies</td>
 </tr>
 <tr>
 <td><code>&lt;data-dir&gt;/kine/</code></td>
@@ -3149,7 +3151,7 @@ written with mode <code>0600</code>.</p>
 <tr>
 <td><code>&lt;run-dir&gt;/status.sock</code></td>
 <td>Unix socket exposing local status to <code>k0s status</code> and similar commands.</td>
-<td>varies</td>
+<td>(process umask)</td>
 </tr>
 </tbody>
 </table>
@@ -3161,11 +3163,12 @@ persistent state under <code>&lt;data-dir&gt;</code> survives.</p>
 <li>All paths above are derived from the same <code>--data-dir</code> / <code>--run-dir</code> flags
   passed to <code>k0s</code> and propagated to its supervised components, so changing
   the flags moves the whole tree consistently.</li>
-<li>The CSI guide in <a href="../storage/">storage.md</a> documents the kubelet root path
-  caveat, since the default differs from upstream Kubernetes
+<li>The CSI guide in the <a href="../storage/">Storage</a> section documents the kubelet root
+  path caveat, since the default differs from upstream Kubernetes
   (<code>&lt;data-dir&gt;/kubelet</code> rather than <code>/var/lib/kubelet</code>).</li>
-<li>Backup/restore covers <code>pki/</code>, <code>etcd/</code>, <code>manifests/</code>, and <code>images/</code>. See
-  <a href="../backup/">backup.md</a> for the authoritative list.</li>
+<li>Backup/restore covers <code>pki/</code>, <code>manifests/</code>, and <code>images/</code>, along with the etcd
+  or k0s database files, ik k0s is configured to use them. See
+  <a href="../backup/">Backup/Restore</a> for details.</li>
 </ul>
 
 
