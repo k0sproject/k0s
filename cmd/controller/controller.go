@@ -127,6 +127,13 @@ func NewControllerCmd() *cobra.Command {
 
 			return nil
 		},
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			var featureGates featuregate.FeatureGates
+			if !cmd.Flags().Changed("feature-gates") {
+				return featureGates.Set("")
+			}
+			return nil
+		},
 	}
 
 	debugFlags.LongRunning().AddToFlagSet(cmd.PersistentFlags())
