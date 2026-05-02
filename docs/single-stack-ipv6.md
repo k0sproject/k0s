@@ -6,8 +6,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # IPv6 single-stack networking
 
 K0s introduced experimental IPv6 single-stack networking, allowing clusters to operate
-exclusively with IPv6 addresses. IPv6 single stack is currently in alpha state and requires
-the [IPv6SingleStack feature gate](feature-gates.md) to be enabled on every controller.
+exclusively with IPv6 addresses. IPv6 single stack is currently in beta state and enabled by
+default since k0s 1.36. It can still be explicitly disabled via the
+[IPv6SingleStack feature gate](feature-gates.md).
 
 IPv6 single-stack is fully compatible with both [node-local load balancing](nllb.md) and
 [control plane load balancing](cplb.md).
@@ -23,13 +24,6 @@ spec:
   network:
     podCIDR: fd00::/108
     serviceCIDR: fd01::/108
-```
-
-Ensure that every controller in the cluster is executed with the
-[IPv6SingleStack feature gate](feature-gates.md) enabled:
-
-```shell
-k0s controller --feature-gates="IPv6SingleStack=true"
 ```
 
 This configuration will set up all Kubernetes components and Kube-router for IPv6

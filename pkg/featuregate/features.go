@@ -12,6 +12,6 @@ var defaultFeatureGates *FeatureGates
 
 func defaultFeatureMap() map[Feature]FeatureGate {
 	return map[Feature]FeatureGate{
-		IPv6SingleStack: {Stage: Alpha},
+		IPv6SingleStack: {Stage: Beta},
 	}
 }

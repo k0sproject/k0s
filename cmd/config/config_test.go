@@ -44,15 +44,13 @@ spec:
 	t.Run("WithoutFeatureGates", func(t *testing.T) {
 		t.Cleanup(func() { featuregate.FlushDefaultFeatureGates(t) })
 
-		expected := `spec: network: podCIDR: Invalid value: "fd00::/108": feature gate IPv6SingleStack must be explicitly enabled to use IPv6 single stack`
-
 		var stderr strings.Builder
 		underTest := cmd.NewRootCmd()
 		underTest.SetArgs([]string{"config", "validate", "-c", "-"})
 		underTest.SetIn(bytes.NewReader(config))
 		underTest.SetErr(&stderr)
-		assert.ErrorContains(t, underTest.Execute(), expected)
-		assert.Equal(t, "Error: "+expected+"\n", stderr.String())
+		assert.NoError(t, underTest.Execute())
+		assert.Empty(t, stderr.String())
 	})
 
 	t.Run("WithFeatureGate", func(t *testing.T) {
@@ -65,5 +63,18 @@ spec:
 		underTest.SetErr(&stderr)
 		assert.NoError(t, underTest.Execute())
 		assert.Empty(t, stderr.String())
+	})
+
+	t.Run("WithFeatureGateDisabled", func(t *testing.T) {
+		t.Cleanup(func() { featuregate.FlushDefaultFeatureGates(t) })
+
+		expected := `spec: network: podCIDR: Invalid value: "fd00::/108": feature gate IPv6SingleStack must be explicitly enabled to use IPv6 single stack`
+		var stderr strings.Builder
+		underTest := cmd.NewRootCmd()
+		underTest.SetArgs([]string{"config", "validate", "-c", "-", "--feature-gates", "IPv6SingleStack=false"})
+		underTest.SetIn(bytes.NewReader(config))
+		underTest.SetErr(&stderr)
+		assert.ErrorContains(t, underTest.Execute(), expected)
+		assert.Equal(t, "Error: "+expected+"\n", stderr.String())
 	})
 }

@@ -44,7 +44,7 @@ The following table is a summary of the feature gates that you can set. Each fea
 
 | Feature           | Default | Stage | Since | Until |
 |-------------------|---------|-------|-------|-------|
-| `IPv6SingleStack` | `false` | Alpha | 1.34  |       |
+| `IPv6SingleStack` | `true`  | Beta  | 1.36  |       |
 
 ### Feature Details
 

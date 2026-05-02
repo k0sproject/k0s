@@ -432,7 +432,7 @@ func (s *NetworkSuite) TestValidation() {
 
 	s.Run("valid_single_stack_ipv6", func() {
 		fg := featuregate.FeatureGates{}
-		s.NoError(fg.Set("IPv6SingleStack=true"), "Expected no error when enabling IPv6SingleStack feature gate")
+		s.NoError(fg.Set(""), "Expected no error when enabling IPv6SingleStack feature gate")
 		defer func() { featuregate.FlushDefaultFeatureGates(s.T()) }()
 
 		n := DefaultNetwork()
@@ -442,9 +442,9 @@ func (s *NetworkSuite) TestValidation() {
 		s.Nil(errors, "Expected no errors for valid single stack IPv6 CIDRs")
 	})
 
-	s.Run("invalid_single_stack_ipv6_missing_feature_gates", func() {
+	s.Run("invalid_single_stack_ipv6_disabled_feature_gate", func() {
 		fg := featuregate.FeatureGates{}
-		s.NoError(fg.Set(""), "Expected no error when setting empty feature gates")
+		s.NoError(fg.Set("IPv6SingleStack=false"), "Expected no error when setting empty feature gates")
 		defer func() { featuregate.FlushDefaultFeatureGates(s.T()) }()
 
 		n := DefaultNetwork()
