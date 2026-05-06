@@ -111,6 +111,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 		Image:           clusterConfig.Spec.Images.Konnectivity.URI(),
 		ServerCount:     serverCount,
 		PullPolicy:      clusterConfig.Spec.Images.DefaultPullPolicy,
+		HostNetwork:     clusterConfig.Spec.Konnectivity.HostNetwork,
 	}
 
 	if externalAddress := clusterConfig.Spec.Konnectivity.ExternalAddress; externalAddress != "" {
