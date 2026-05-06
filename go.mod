@@ -81,6 +81,7 @@ require (
 	k8s.io/component-helpers v0.35.4
 	k8s.io/cri-api v0.35.4
 	k8s.io/kube-aggregator v0.35.4
+	k8s.io/kube-proxy v0.35.4
 	k8s.io/kubectl v0.35.4
 	k8s.io/kubelet v0.35.4
 	k8s.io/kubernetes v1.35.4
