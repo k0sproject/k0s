@@ -35,10 +35,10 @@ func newAirgapListImagesCmd() *cobra.Command {
 				return err
 			}
 
-			if clusterConfig, err := opts.K0sVars.NodeConfig(); err != nil {
-				return fmt.Errorf("failed to get config: %w", err)
+			if nodeConfig, err := opts.K0sVars.NodeConfig(); err != nil {
+				return fmt.Errorf("failed to get node config: %w", err)
 			} else {
-				targetEnv.Spec = clusterConfig.Spec
+				targetEnv.Spec = nodeConfig.Spec
 			}
 
 			out := cmd.OutOrStdout()

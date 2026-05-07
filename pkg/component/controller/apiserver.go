@@ -33,7 +33,7 @@ import (
 
 // APIServer implement the component interface to run kube api
 type APIServer struct {
-	ClusterConfig             *v1beta1.ClusterConfig
+	NodeConfig                *v1beta1.ClusterConfig
 	K0sVars                   *config.CfgVars
 	LogLevel                  string
 	EnableKonnectivity        bool
@@ -92,8 +92,8 @@ func (a *APIServer) Init(_ context.Context) error {
 func (a *APIServer) Start(ctx context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 	args := stringmap.StringMap{
-		"advertise-address":                a.ClusterConfig.Spec.API.Address,
-		"secure-port":                      strconv.Itoa(a.ClusterConfig.Spec.API.Port),
+		"advertise-address":                a.NodeConfig.Spec.API.Address,
+		"secure-port":                      strconv.Itoa(a.NodeConfig.Spec.API.Port),
 		"authorization-mode":               "Node,RBAC",
 		"client-ca-file":                   filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"enable-bootstrap-token-auth":      "true",
@@ -105,7 +105,7 @@ func (a *APIServer) Start(ctx context.Context) error {
 		"requestheader-allowed-names":      "front-proxy-client",
 		"requestheader-client-ca-file":     filepath.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"service-account-key-file":         filepath.Join(a.K0sVars.CertRootDir, "sa.pub"),
-		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.PrimaryAddressFamily()),
+		"service-cluster-ip-range":         a.NodeConfig.Spec.Network.BuildServiceCIDR(a.NodeConfig.Spec.PrimaryAddressFamily()),
 		"tls-min-version":                  "VersionTLS12",
 		"tls-cert-file":                    filepath.Join(a.K0sVars.CertRootDir, "server.crt"),
 		"tls-private-key-file":             filepath.Join(a.K0sVars.CertRootDir, "server.key"),
@@ -118,8 +118,8 @@ func (a *APIServer) Start(ctx context.Context) error {
 		"enable-admission-plugins":         "NodeRestriction",
 	}
 
-	if a.ClusterConfig.Spec.API.OnlyBindToAddress {
-		args["bind-address"] = a.ClusterConfig.Spec.API.Address
+	if a.NodeConfig.Spec.API.OnlyBindToAddress {
+		args["bind-address"] = a.NodeConfig.Spec.API.Address
 	}
 
 	apiAudiences := []string{"https://kubernetes.default.svc"}
@@ -135,13 +135,13 @@ func (a *APIServer) Start(ctx context.Context) error {
 
 	args["api-audiences"] = strings.Join(apiAudiences, ",")
 
-	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
+	for name, value := range a.NodeConfig.Spec.API.ExtraArgs {
 		if _, ok := args[name]; ok {
 			logrus.Warnf("overriding apiserver flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
-	args = a.ClusterConfig.Spec.FeatureGates.BuildArgs(args, kubeAPIComponentName)
+	args = a.NodeConfig.Spec.FeatureGates.BuildArgs(args, kubeAPIComponentName)
 	for name, value := range apiDefaultArgs {
 		if args[name] == "" {
 			args[name] = value
@@ -198,7 +198,7 @@ func (a *APIServer) Start(ctx context.Context) error {
 	for name, value := range args {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
-	apiServerArgs = append(apiServerArgs, a.ClusterConfig.Spec.API.RawArgs...)
+	apiServerArgs = append(apiServerArgs, a.NodeConfig.Spec.API.RawArgs...)
 
 	a.supervisor = &supervisor.Supervisor{
 		Name:        kubeAPIComponentName,
@@ -210,7 +210,7 @@ func (a *APIServer) Start(ctx context.Context) error {
 		TimeoutStop: stopTimeout,
 	}
 
-	etcdArgs, err := getEtcdArgs(a.ClusterConfig.Spec.Storage, a.K0sVars)
+	etcdArgs, err := getEtcdArgs(a.NodeConfig.Spec.Storage, a.K0sVars)
 	if err != nil {
 		return err
 	}
@@ -269,7 +269,7 @@ func (a *APIServer) Ready() error {
 		TLSClientConfig: tlsConfig,
 	}
 	client := &http.Client{Transport: tr}
-	apiAddress := net.JoinHostPort(a.ClusterConfig.Spec.API.Address, strconv.Itoa(a.ClusterConfig.Spec.API.Port))
+	apiAddress := net.JoinHostPort(a.NodeConfig.Spec.API.Address, strconv.Itoa(a.NodeConfig.Spec.API.Port))
 	resp, err := client.Get(fmt.Sprintf("https://%s/readyz?verbose", apiAddress))
 	if err != nil {
 		return err

@@ -44,7 +44,7 @@ import (
 type KubeProxy struct {
 	log logrus.FieldLogger
 
-	nodeConf        *v1beta1.ClusterConfig
+	nodeConfig      *v1beta1.ClusterConfig
 	K0sVars         *config.CfgVars
 	manifestDir     string
 	hasWindowsNodes func() (*bool, <-chan struct{})
@@ -61,7 +61,7 @@ func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, ha
 	return &KubeProxy{
 		log: logrus.WithFields(logrus.Fields{"component": "kubeproxy"}),
 
-		nodeConf:        nodeConfig,
+		nodeConfig:      nodeConfig,
 		K0sVars:         k0sVars,
 		manifestDir:     filepath.Join(k0sVars.ManifestsDir, "kubeproxy"),
 		hasWindowsNodes: hasWindowsNodes,
@@ -216,7 +216,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 		return &proxyConfig{}
 	}
 
-	controlPlaneEndpoint := k.nodeConf.Spec.API.APIAddressURL()
+	controlPlaneEndpoint := k.nodeConfig.Spec.API.APIAddressURL()
 	nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 	if nllb.IsEnabled() {
 		// FIXME: Transitions from non-node-local load balanced to node-local

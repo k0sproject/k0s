@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
@@ -27,7 +26,6 @@ import (
 type K0sControllersLeaseCounter struct {
 	NodeName              apitypes.NodeName
 	InvocationID          string
-	ClusterConfig         *v1beta1.ClusterConfig
 	KubeClientFactory     kubeutil.ClientFactoryInterface
 	UpdateControllerCount func(uint)
 

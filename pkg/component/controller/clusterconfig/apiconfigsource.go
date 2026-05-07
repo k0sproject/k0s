@@ -74,13 +74,13 @@ func (a *apiConfigSource) Start(context.Context) error {
 	go func() {
 		defer close(done)
 		defer close(a.resultChan)
-		_ = watch.Until(ctx, func(cfg *v1beta1.ClusterConfig) (bool, error) {
+		_ = watch.Until(ctx, func(clusterConfig *v1beta1.ClusterConfig) (bool, error) {
 			// Push changes only when the config actually changes
-			if lastObservedVersion != cfg.ResourceVersion {
-				log.Debugf("Cluster configuration update to resource version %q", cfg.ResourceVersion)
-				lastObservedVersion = cfg.ResourceVersion
+			if lastObservedVersion != clusterConfig.ResourceVersion {
+				log.Debugf("Cluster configuration update to resource version %q", clusterConfig.ResourceVersion)
+				lastObservedVersion = clusterConfig.ResourceVersion
 				select {
-				case a.resultChan <- cfg:
+				case a.resultChan <- clusterConfig:
 				case <-ctx.Done():
 					return true, nil
 				}

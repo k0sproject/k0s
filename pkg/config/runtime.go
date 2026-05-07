@@ -110,7 +110,7 @@ func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*Run
 		return nil, err
 	}
 
-	cfg := &RuntimeConfig{
+	runtimeConfig := &RuntimeConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			CreationTimestamp: metav1.Now(),
 		},
@@ -125,7 +125,7 @@ func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*Run
 		},
 	}
 
-	content, err := yaml.Marshal(cfg)
+	content, err := yaml.Marshal(runtimeConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*Run
 		return nil, fmt.Errorf("failed to write runtime config: %w", err)
 	}
 
-	return cfg, nil
+	return runtimeConfig, nil
 }
 
 func (r *RuntimeConfigSpec) Cleanup() error {
