@@ -123,6 +123,26 @@ spec:
 
 ## `spec` Key Detail
 
+### `spec.installConfig`
+
+| Element | Description                                     |
+|---------|-------------------------------------------------|
+| `users` | System users used to run controller components. |
+
+#### `spec.installConfig.users`
+
+Users will be created when running `k0s install`. They will own the generated
+certificates and kubeconfigs and be used to execute the supervised processes. If
+they don't exist, k0s will fallback to the root user.
+
+| Element             | Description                                                                   |
+|---------------------|-------------------------------------------------------------------------------|
+| `etcdUser`          | Managed etcd user name. Default: `etcd`.                                      |
+| `kineUser`          | Kine user. Default: `kube-apiserver`.                                         |
+| `konnectivityUser`  | Konnectivity server user. Default: `konnectivity-server`.                     |
+| `kubeAPIserverUser` | Kubernetes API server and controller manager user. Default: `kube-apiserver`. |
+| `kubeSchedulerUser` | Kubernetes scheduler user. Default: `kube-scheduler`.                         |
+
 ### `spec.api`
 
 | Element                      | Description                                                                                                                                                                                                                                                                   |
