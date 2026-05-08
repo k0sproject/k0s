@@ -17,7 +17,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/featuregates"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -25,6 +24,7 @@ import (
 type Scheduler struct {
 	K0sVars               *config.CfgVars
 	LogLevel              string
+	UserName              string
 	DisableLeaderElection bool
 
 	supervisor     *supervisor.Supervisor
@@ -41,9 +41,9 @@ const kubeSchedulerComponentName = "kube-scheduler"
 // Init extracts the needed binaries
 func (a *Scheduler) Init(_ context.Context) error {
 	var err error
-	a.uid, err = users.LookupUID(constant.SchedulerUser)
+	a.uid, err = users.LookupUID(a.UserName)
 	if err != nil {
-		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.SchedulerUser, err)
+		err = fmt.Errorf("failed to lookup UID for %q: %w", a.UserName, err)
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running kube-scheduler as root")
 	}

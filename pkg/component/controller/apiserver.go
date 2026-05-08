@@ -83,11 +83,14 @@ type egressSelectorConfig struct {
 
 // Stages the kube-apiserver executable, resolves its launch config, writes
 // the required files and prepares the supervisor.
-func (a *APIServer) Init(_ context.Context) error {
-	var err error
-	a.uid, err = users.LookupUID(constant.ApiserverUser)
+func (a *APIServer) Init(_ context.Context) (err error) {
+	userName := constant.ApiserverUser
+	if i := a.NodeConfig.Spec.Install; i != nil && i.SystemUsers != nil && i.SystemUsers.KubeAPIServer != "" {
+		userName = i.SystemUsers.KubeAPIServer
+	}
+	a.uid, err = users.LookupUID(userName)
 	if err != nil {
-		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.ApiserverUser, err)
+		err = fmt.Errorf("failed to lookup UID for %q: %w", userName, err)
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes API server as root")
 	}
