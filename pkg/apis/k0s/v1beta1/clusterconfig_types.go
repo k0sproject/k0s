@@ -234,7 +234,7 @@ func canStrip(f reflect.StructField) bool {
 	return false
 }
 
-// InstallSpec defines the required fields for the `k0s install` command
+// Installation-time settings and related runtime defaults.
 type InstallSpec struct {
 	SystemUsers *SystemUser `json:"users,omitempty"`
 }

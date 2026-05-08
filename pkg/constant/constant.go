@@ -49,17 +49,17 @@ const (
 
 	/* User accounts for services */
 
-	// EtcdUser defines the user to use for running etcd process
+	// Default user to use for managed etcd
 	EtcdUser = "etcd"
-	// KineUser defines the user to use for running kine process
-	KineUser = "kube-apiserver" // apiserver needs to be able to read the kine unix socket
-	// ApiserverUser defines the user to use for running k8s api-server process
+	// Default user to use for kine
+	KineUser = "kube-apiserver" // api-server needs to be able to read the kine unix socket
+	// Default user to use for the Kubernetes API Server
 	ApiserverUser = "kube-apiserver"
-	// SchedulerUser defines the user to use for running k8s scheduler
+	// Default user to use for the Kubernetes scheduler
 	SchedulerUser = "kube-scheduler"
-	// KonnectivityServerUser defines the user to use for konnectivity-server
+	// Default user to use for the konnectivity server
 	KonnectivityServerUser = "konnectivity-server"
-	// KeepalivedUser defines the user to use for running keepalived
+	// User to use for keepalived
 	KeepalivedUser = "keepalived"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
