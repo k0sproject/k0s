@@ -3196,6 +3196,12 @@ k0s's default containerd configuration. This is to mitigate <a href="https://git
 decision</a> to replace rather than merge individual plugin configuration sections
 from imported configuration files. However, this behavior <a href="https://github.com/containerd/containerd/pull/7347">may</a>
 <a href="https://github.com/containerd/containerd/pull/9982">change</a> in future releases of containerd.</p>
+<p>Starting with k0s 1.36, k0s uses containerd 2 which modifies the configuration
+and all drop-in files must use the containerd v3 configuration format. Either
+omit the <code>version</code> field entirely or set it to <code>version = 3</code>. Any file that sets
+<code>version = 2</code> or that references the legacy <code>io.containerd.grpc.v1.cri</code> plugin
+path will cause k0s to exit with an error on startup.  If you have drop-in files
+from previous versions, update them before restarting k0s.</p>
 <p>Please note, that in order for drop-ins in <code>/etc/k0s/containerd.d</code> to take effect on running configuration, <code>/etc/k0s/containerd.toml</code> needs to be k0s managed.</p>
 <p>If you change the first magic line (<code># k0s_managed=true</code>) in the <code>/etc/k0s/containerd.toml</code> (by accident or on purpose), it automatically becomes "not k0s managed". To make it "k0s managed" again, remove <code>/etc/k0s/containerd.toml</code> and restart k0s service on the node, it'll be recreated by k0s.</p>
 <p>To confirm that drop-ins are being applied to the running configuration, you can
@@ -3232,7 +3238,7 @@ configuration:</p>
 <span class="n">capabilities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pull&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;resolve&quot;</span><span class="p">]</span>
 </code></pre></div>
 <p>For more details on how to configure registry hosts, please refer to the
-<a href="https://github.com/containerd/containerd/blob/release/1.7/docs/hosts.md">official containerd configuration</a>.</p>
+<a href="https://github.com/containerd/containerd/blob/release/2.2/docs/hosts.md">official containerd configuration</a>.</p>
 <h4 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h4>
 <p><a href="https://gvisor.dev/docs/">gVisor</a> is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.</p>
 <ol>
