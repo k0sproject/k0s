@@ -405,9 +405,10 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
-		ClusterSpec: nodeConfig.Spec,
-		CertManager: certificateManager,
-		K0sVars:     c.K0sVars,
+		ClusterSpec:         nodeConfig.Spec,
+		CertManager:         certificateManager,
+		K0sVars:             c.K0sVars,
+		KonnectivityEnabled: enableKonnectivity,
 	}
 	if err := certs.Init(ctx); err != nil {
 		return err

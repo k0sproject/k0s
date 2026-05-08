@@ -29,10 +29,11 @@ import (
 
 // Certificates is the Component implementation to manage all k0s certs
 type Certificates struct {
-	CACert      string
-	CertManager certificate.Manager
-	ClusterSpec *v1beta1.ClusterSpec
-	K0sVars     *config.CfgVars
+	CACert              string
+	CertManager         certificate.Manager
+	ClusterSpec         *v1beta1.ClusterSpec
+	K0sVars             *config.CfgVars
+	KonnectivityEnabled bool
 }
 
 // Init initializes the certificate component
@@ -102,30 +103,42 @@ func (c *Certificates) Init(ctx context.Context) error {
 		return c.CertManager.CreateKeyPair("sa", c.K0sVars, apiServerUID)
 	})
 
-	eg.Go(func() error {
-		// konnectivity kubeconfig
-		konnectivityReq := certificate.Request{
-			Name:   "konnectivity",
-			CN:     "kubernetes-konnectivity",
-			O:      "system:masters", // TODO: We need to figure out if konnectivity really needs superpowers
-			CACert: caCertPath,
-			CAKey:  caCertKey,
-		}
+	if c.KonnectivityEnabled {
+		eg.Go(func() error {
+			// konnectivity kubeconfig
+			konnectivityReq := certificate.Request{
+				Name:   "konnectivity",
+				CN:     "kubernetes-konnectivity",
+				O:      "system:masters", // TODO: We need to figure out if konnectivity really needs superpowers
+				CACert: caCertPath,
+				CAKey:  caCertKey,
+			}
 
-		uid, err := users.LookupUID(constant.KonnectivityServerUser)
-		if err != nil {
-			err = fmt.Errorf("failed to lookup UID for %q: %w", constant.KonnectivityServerUser, err)
-			uid = users.RootUID
-			logrus.WithError(err).Warn("Files with key material for konnectivity-server user will be owned by root")
-		}
+			uid, err := users.LookupUID(constant.KonnectivityServerUser)
+			if err != nil {
+				err = fmt.Errorf("failed to lookup UID for %q: %w", constant.KonnectivityServerUser, err)
+				uid = users.RootUID
+				logrus.WithError(err).Warn("Files with key material for konnectivity-server user will be owned by root")
+			}
 
-		konnectivityCert, err := c.CertManager.EnsureCertificate(konnectivityReq, uid, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
-		if err != nil {
-			return err
-		}
+			konnectivityCert, err := c.CertManager.EnsureCertificate(konnectivityReq, uid, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
+			if err != nil {
+				return err
+			}
 
-		return kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, kubeConfigAPIUrl, c.CACert, konnectivityCert.Cert, konnectivityCert.Key, uid, constant.CertSecureMode)
-	})
+			return kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, kubeConfigAPIUrl, c.CACert, konnectivityCert.Cert, konnectivityCert.Key, uid, constant.CertSecureMode)
+		})
+	} else {
+		eg.Go(func() error {
+			for _, ext := range []string{"conf", "crt", "key"} {
+				err := os.Remove(filepath.Join(c.K0sVars.CertRootDir, "konnectivity."+ext))
+				if err != nil && !errors.Is(err, os.ErrNotExist) {
+					logrus.WithError(err).Warn("Failed to remove an unused PKI file for konnectivity")
+				}
+			}
+			return nil
+		})
+	}
 
 	eg.Go(func() error {
 		ccmReq := certificate.Request{
