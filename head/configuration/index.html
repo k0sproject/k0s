@@ -3458,6 +3458,9 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="w">      </span><span class="nt">envoyProxy</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">apiServerBindPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7443</span>
 <span class="w">        </span><span class="nt">konnectivityServerBindPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7132</span>
+<span class="w">      </span><span class="nt">traefik</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">apiServerBindPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7443</span>
+<span class="w">        </span><span class="nt">konnectivityServerBindPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7132</span>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EnvoyProxy</span>
 <span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.244.0.0/16</span>
 <span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kuberouter</span>
@@ -3863,18 +3866,23 @@ For example, a host OS with nftables v1.1.1 requires quay.io/k0sproject/kube-pro
 </tr>
 <tr>
 <td><code>type</code></td>
-<td>The type of the node-local load balancer to deploy on worker nodes. Default: <code>EnvoyProxy</code>. (This is the only option for now.)</td>
+<td>The type of the node-local load balancer to deploy on worker nodes. Default: <code>EnvoyProxy</code>. Supported values: <code>EnvoyProxy</code>, <code>Traefik</code>.</td>
 </tr>
 <tr>
 <td><code>envoyProxy</code></td>
 <td>Configuration options related to the "EnvoyProxy" type of load balancing.</td>
+</tr>
+<tr>
+<td><code>traefik</code></td>
+<td>Configuration options related to the "Traefik" type of load balancing.</td>
 </tr>
 </tbody>
 </table>
 <h5 id="specnetworknodelocalloadbalancingenvoyproxy"><code>spec.network.nodeLocalLoadBalancing.envoyProxy</code><a class="headerlink" href="#specnetworknodelocalloadbalancingenvoyproxy" title="Permanent link">#</a></h5>
 <p>Configuration options required for using Envoy as the backing implementation for
 node-local load balancing.</p>
-<p><strong>Note:</strong> This type of load balancing is not supported on ARMv7 workers.</p>
+<p><strong>Note:</strong> This type of load balancing is not supported on ARMv7, RISC-V and
+Windows.</p>
 <table>
 <thead>
 <tr>
@@ -3898,6 +3906,35 @@ node-local load balancing.</p>
 <tr>
 <td><code>konnectivityServerBindPort</code></td>
 <td>Port number on which to bind the Envoy load balancer for the konnectivity server to on a worker's loopback interface. Default: <code>7132</code>.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="specnetworknodelocalloadbalancingtraefik"><code>spec.network.nodeLocalLoadBalancing.traefik</code><a class="headerlink" href="#specnetworknodelocalloadbalancingtraefik" title="Permanent link">#</a></h5>
+<p>Configuration options required for using Traefik as the backing implementation
+for node-local load balancing.</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image</code></td>
+<td>The OCI image that's being used for the Traefik Pod.</td>
+</tr>
+<tr>
+<td><code>imagePullPolicy</code></td>
+<td>The pull policy being used used for the Traefik Pod. Defaults to <code>spec.images.default_pull_policy</code> if omitted.</td>
+</tr>
+<tr>
+<td><code>apiServerBindPort</code></td>
+<td>Port number on which to bind the Traefik load balancer for the Kubernetes API server to on a worker's loopback interface. Default: <code>7443</code>.</td>
+</tr>
+<tr>
+<td><code>konnectivityServerBindPort</code></td>
+<td>Port number on which to bind the Traefik load balancer for the konnectivity server to on a worker's loopback interface. Default: <code>7132</code>.</td>
 </tr>
 </tbody>
 </table>
