@@ -37,7 +37,11 @@ func etcdListCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %w", err)
 			}
-			return json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]any{"members": members})
+			memberMap := make(map[string]string, len(members))
+			for _, m := range members {
+				memberMap[m.Name] = m.PeerURL
+			}
+			return json.NewEncoder(cmd.OutOrStdout()).Encode(map[string]any{"members": memberMap})
 		},
 	}
 
