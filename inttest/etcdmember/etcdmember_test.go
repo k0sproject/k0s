@@ -88,15 +88,15 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 				WithObjectName(obj).
 				WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
 				Until(ctx, func(item *etcdv1beta1.EtcdMember) (done bool, err error) {
-					c := item.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-					if c != nil {
-						// We have the condition so we can bail out
+					joined := item.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
+					if joined != nil && joined.Status == etcdv1beta1.ConditionTrue {
 						em = item
+						return true, nil
 					}
-					return c != nil, nil
+					return false, nil
 				})
 
-			// We've got the condition, verify status details
+			// We've got the conditions, verify status details
 			if err != nil {
 				return err
 			}
@@ -153,7 +153,7 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 		if cond := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined); assert.NotNilf(tt, cond, "condition not found: %s", etcdv1beta1.ConditionTypeJoined) {
 			assert.Equal(tt, etcdv1beta1.ConditionTrue, cond.Status, "node not joined yet")
 		}
-	}, 30*time.Second, 1*time.Second)
+	}, 2*time.Minute, 1*time.Second)
 
 	// Check that after restarting the controller, the member is still present
 	s.Require().NoError(s.RestartController(s.ControllerNode(2)))

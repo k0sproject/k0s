@@ -24,6 +24,14 @@ type Client struct {
 	tlsInfo transport.TLSInfo
 }
 
+// Member describes an etcd cluster member.
+type Member struct {
+	ID        uint64
+	Name      string
+	PeerURL   string
+	IsLearner bool
+}
+
 // NewClient creates new Client
 func NewClient(certDir, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
 	client := &Client{}
@@ -62,18 +70,26 @@ func NewClientWithConfig(cfg clientv3.Config) (*Client, error) {
 	return client, nil
 }
 
-// ListMembers gets a list of current etcd members
-func (c *Client) ListMembers(ctx context.Context) (map[string]string, error) {
-	memberList := make(map[string]string)
-	members, err := c.client.MemberList(ctx)
+// ListMembers gets a list of current etcd members.
+func (c *Client) ListMembers(ctx context.Context) ([]Member, error) {
+	resp, err := c.client.MemberList(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("etcd member list failed: %w", err)
 	}
-	for _, m := range members.Members {
-		memberList[m.Name] = m.PeerURLs[0]
+	members := make([]Member, 0, len(resp.Members))
+	for _, m := range resp.Members {
+		var peerURL string
+		if len(m.PeerURLs) > 0 {
+			peerURL = m.PeerURLs[0]
+		}
+		members = append(members, Member{
+			ID:        m.ID,
+			Name:      m.Name,
+			PeerURL:   peerURL,
+			IsLearner: m.IsLearner,
+		})
 	}
-
-	return memberList, nil
+	return members, nil
 }
 
 // AddMember add new member to etcd cluster
@@ -101,6 +117,31 @@ func (c *Client) AddMember(ctx context.Context, name, peerAddress string) ([]str
 	return memberList, nil
 }
 
+// AddMemberAsLearner adds a new learner member to the etcd cluster.
+// Returns an initial-cluster list (name=peerURL pairs) suitable for the
+// joining etcd's --initial-cluster flag.
+func (c *Client) AddMemberAsLearner(ctx context.Context, name, peerAddress string) ([]string, error) {
+	addResp, err := c.client.MemberAddAsLearner(ctx, []string{peerAddress})
+	if err != nil {
+		return nil, fmt.Errorf("etcd member add as learner failed: %w", err)
+	}
+
+	newID := addResp.Member.ID
+
+	var memberList []string
+	// Each member is guaranteed by etcd to have at least one peer URL at this point,
+	// so indexing m.PeerURLs[0] is safe.
+	for _, m := range addResp.Members {
+		memberName := m.Name
+		if m.ID == newID {
+			memberName = name
+		}
+		memberList = append(memberList, fmt.Sprintf("%s=%s", memberName, m.PeerURLs[0]))
+	}
+
+	return memberList, nil
+}
+
 // GetPeerIDByAddress looks up peer id by peer url
 func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (uint64, error) {
 	resp, err := c.client.MemberList(ctx)
@@ -115,9 +156,32 @@ func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (ui
 	return 0, fmt.Errorf("peer not found: %s", peerAddress)
 }
 
+// GetMemberByPeerAddress looks up a member by peer URL and returns its
+// ID along with the IsLearner flag. Returns (0, false, error) if not found.
+func (c *Client) GetMemberByPeerAddress(ctx context.Context, peerAddress string) (uint64, bool, error) {
+	resp, err := c.client.MemberList(ctx)
+	if err != nil {
+		return 0, false, fmt.Errorf("etcd member list failed: %w", err)
+	}
+	for _, m := range resp.Members {
+		if slices.Contains(m.PeerURLs, peerAddress) {
+			return m.ID, m.IsLearner, nil
+		}
+	}
+	return 0, false, fmt.Errorf("peer not found: %s", peerAddress)
+}
+
 // DeleteMember deletes member by peer name
 func (c *Client) DeleteMember(ctx context.Context, peerID uint64) error {
 	_, err := c.client.MemberRemove(ctx, peerID)
+	return err
+}
+
+// PromoteMember promotes a learner to a voting member. Returns the etcd
+// error unwrapped. Callers must handle rpctypes.ErrLearnerNotReady and
+// rpctypes.ErrMemberNotLearner explicitly.
+func (c *Client) PromoteMember(ctx context.Context, memberID uint64) error {
+	_, err := c.client.MemberPromote(ctx, memberID)
 	return err
 }
 

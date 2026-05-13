@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/client/pkg/v3/tlsutil"
 	"golang.org/x/sync/errgroup"
 
@@ -237,7 +239,18 @@ func (e *Etcd) Start(ctx context.Context) error {
 		KeepEnvPrefix: true,
 	}
 
-	return e.supervisor.Supervise(ctx)
+	if err := e.supervisor.Supervise(ctx); err != nil {
+		return err
+	}
+
+	// If this etcd was added as a learner (typical on join), promote it
+	// once raft has caught it up. For the initial member or any already-
+	// voting member, the loop short-circuits on the first lookup without
+	// calling MemberPromote. Blocking here keeps the apiserver from
+	// starting against a learner — learners reject linearizable reads, so
+	// nothing past this point would work anyway — and ensures a node that
+	// can never catch up doesn't masquerade as a working controller.
+	return e.selfPromote(ctx)
 }
 
 // Stop stops etcd
@@ -246,6 +259,61 @@ func (e *Etcd) Stop() error {
 		return e.supervisor.Stop()
 	}
 	return nil
+}
+
+// selfPromote drives this node's transition from learner to voting member.
+// It polls the local etcd until it can find itself in the member list, then
+// loops MemberPromote until raft accepts it. The call routes through the
+// local learner to the leader, so all this node needs is its own etcd
+// reachable on 127.0.0.1.
+func (e *Etcd) selfPromote(ctx context.Context) error {
+	log := logrus.WithField("component", "etcd-self-promote")
+	peerURL := e.Config.GetPeerURL()
+
+	return retry.Do(
+		func() error { return e.tryPromote(ctx, peerURL, log) },
+		retry.Attempts(10),
+		retry.Delay(5*time.Second),
+		retry.MaxDelay(30*time.Second),
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+	)
+}
+
+func (e *Etcd) tryPromote(ctx context.Context, peerURL string, log logrus.FieldLogger) error {
+	cli, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+	if err != nil {
+		log.WithError(err).Debug("etcd client unavailable, retrying")
+		return err
+	}
+	defer cli.Close()
+
+	callCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	memberID, isLearner, err := cli.GetMemberByPeerAddress(callCtx, peerURL)
+	if err != nil {
+		log.WithError(err).Debug("local member lookup failed, retrying")
+		return err
+	}
+	if !isLearner {
+		return nil
+	}
+
+	switch err := cli.PromoteMember(callCtx, memberID); {
+	case err == nil:
+		log.Info("Promoted self to voting member")
+		return nil
+	case errors.Is(err, rpctypes.ErrMemberNotLearner):
+		// Someone else (older leader, manual etcdctl) already promoted us.
+		return nil
+	case errors.Is(err, rpctypes.ErrMemberLearnerNotReady):
+		log.Debug("Not caught up yet, retrying self-promotion")
+		return err
+	default:
+		log.WithError(err).Warn("Self-promotion failed, retrying")
+		return err
+	}
 }
 
 func (e *Etcd) setupCerts(ctx context.Context) error {

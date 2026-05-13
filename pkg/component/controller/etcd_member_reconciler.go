@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -365,9 +366,17 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 	defer etcdClient.Close()
 
-	memberID, err := etcdClient.GetPeerIDByAddress(ctx, e.etcdConfig.GetPeerURL())
+	memberID, isLearner, err := etcdClient.GetMemberByPeerAddress(ctx, e.etcdConfig.GetPeerURL())
 	if err != nil {
 		return err
+	}
+
+	// Defensive: by the time this runs, etcd.Etcd.Start has already
+	// self-promoted any learner to voting member. If we somehow still see
+	// learner here, refuse to claim "Joined" so consumers of the condition
+	// don't treat an unpromoted member as a full cluster participant.
+	if isLearner {
+		return fmt.Errorf("etcd member %x is still a learner; refusing to mark as joined", memberID)
 	}
 
 	// Convert the memberID to hex string
@@ -526,9 +535,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		return false
 	}
 
+	exists := slices.ContainsFunc(members, func(m etcd.Member) bool {
+		return m.Name == member.Name
+	})
 	// Member marked for leave but no member found in etcd, mark for leaved
-	_, ok := members[member.Name]
-	if !ok {
+	if !exists {
 		log.Debug("member marked for leave but not in actual member list, updating state to reflect that")
 		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
@@ -540,7 +551,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	}
 
 	joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !ok {
+	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !exists {
 		log.Debug("member already left, no action needed")
 		return true
 	}
