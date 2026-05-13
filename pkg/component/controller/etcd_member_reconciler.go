@@ -556,6 +556,12 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	// Convert the memberID to uint64
 	memberID, err := strconv.ParseUint(member.Status.MemberID, 16, 64)
 	if err != nil {
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
+		member.Status.Message = "Failed to parse memberID: " + err.Error()
+		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+			log.WithError(err).Error("Failed to update EtcdMember status")
+		}
+
 		log.WithError(err).Error("failed to parse memberID")
 		return false
 	}
