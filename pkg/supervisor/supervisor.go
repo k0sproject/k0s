@@ -25,6 +25,14 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
+// RequiredPrivileges encodes the intent of required privileges for a supervised process
+// in a platform-agnostic way. Platform-specific implementations translate these into
+// the appropriate mechanisms (e.g., ambient capabilities on Linux).
+type RequiredPrivileges struct {
+	// BindsPrivilegedPorts indicates that the process needs to bind to ports < 1024
+	BindsPrivilegedPorts bool
+}
+
 // Supervisor is dead simple and stupid process supervisor, just tries to keep the process running in a while-true loop
 type Supervisor struct {
 	Name           string
@@ -42,6 +50,8 @@ type Supervisor struct {
 	KeepEnvPrefix bool
 	// A function to clean some leftovers before starting or restarting the supervised process
 	CleanBeforeFn func() error
+	// Required privileges for the supervised process
+	RequiredPrivileges RequiredPrivileges
 
 	cmd            *exec.Cmd
 	log            logrus.FieldLogger
@@ -196,7 +206,7 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 
 				// detach from the process group so children don't
 				// get signals sent directly to parent.
-				s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
+				s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID, s.RequiredPrivileges)
 
 				const maxLogChunkLen = 16 * 1024
 				s.cmd.Stdout = log.NewWriter(s.log.WithField("stream", "stdout"), logrus.InfoLevel, maxLogChunkLen)
