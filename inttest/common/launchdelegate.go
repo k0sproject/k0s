@@ -170,9 +170,9 @@ func (o *openRCLaunchDelegate) StartController(ctx context.Context, conn *SSHCon
 
 // StopController stops a k0s controller that was started using OpenRC.
 func (*openRCLaunchDelegate) StopController(ctx context.Context, conn *SSHConnection) error {
-	startCmd := "/etc/init.d/k0scontroller stop"
-	if err := conn.Exec(ctx, startCmd, SSHStreams{}); err != nil {
-		return fmt.Errorf("unable to execute %q: %w", startCmd, err)
+	cmd := "/etc/init.d/k0scontroller stop"
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
 	}
 	return nil
 }
@@ -210,9 +210,9 @@ func (o *openRCLaunchDelegate) StartWorker(ctx context.Context, conn *SSHConnect
 
 // StopWorker stops a k0s worker that was started using OpenRC.
 func (*openRCLaunchDelegate) StopWorker(ctx context.Context, conn *SSHConnection) error {
-	startCmd := "/etc/init.d/k0sworker stop"
-	if err := conn.Exec(ctx, startCmd, SSHStreams{}); err != nil {
-		return fmt.Errorf("unable to execute %q: %w", startCmd, err)
+	cmd := "/etc/init.d/k0sworker stop"
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
 	}
 	return nil
 }
