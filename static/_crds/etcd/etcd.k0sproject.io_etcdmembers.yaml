@@ -78,8 +78,6 @@ spec:
                       - Unknown
                       type: string
                     type:
-                      enum:
-                      - Joined
                       type: string
                   required:
                   - status
