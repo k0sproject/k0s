@@ -428,9 +428,8 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 				MemberID:    memberIDStr,
 			}
 			em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
-			_, err = client.UpdateStatus(ctx, em, metav1.UpdateOptions{})
-			if err != nil {
-				log.WithError(err).Error("failed to update member status")
+			if _, err := client.UpdateStatus(ctx, em, metav1.UpdateOptions{}); err != nil {
+				log.WithError(err).Error("Failed to update EtcdMember status")
 			}
 			return nil
 		} else {
@@ -455,7 +454,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	em.Status.MemberID = memberIDStr
 	em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
 	if _, err := client.UpdateStatus(ctx, em, metav1.UpdateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("failed to update EtcdMember status: %w", err)
 	}
 
 	return nil
@@ -488,7 +487,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			member.Status.Message = msg
 			member.Status.ReconcileStatus = ""
 			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-				log.WithError(err).Error("Failed to update member state")
+				log.WithError(err).Error("Failed to update EtcdMember status")
 			}
 			return false
 		}
@@ -499,7 +498,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			member.Status.Message = msg
 			member.Status.ReconcileStatus = ""
 			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-				log.WithError(err).Error("Failed to update member state")
+				log.WithError(err).Error("Failed to update EtcdMember status")
 			}
 			le.YieldLease()
 		} else {
@@ -508,7 +507,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			member.Status.Message = msg
 			member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
 			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-				log.WithError(err).Error("Failed to update member state")
+				log.WithError(err).Error("Failed to update EtcdMember status")
 			}
 		}
 
@@ -517,11 +516,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 
 	etcdClient, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
 	if err != nil {
-		log.WithError(err).Warn("failed to create etcd client")
+		log.WithError(err).Warn("Failed to create etcd client")
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
-		member.Status.Message = err.Error()
-		if _, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-			log.WithError(err).Error("failed to update member state")
+		member.Status.Message = "Failed to create etcd client: " + err.Error()
+		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+			log.WithError(err).Error("Failed to update EtcdMember status")
 		}
 
 		return false
@@ -534,10 +533,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	// Verify that the member is actually still present in etcd
 	members, err := etcdClient.ListMembers(ctx)
 	if err != nil {
+		log.WithError(err).Warn("Failed to list etcd members")
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
-		member.Status.Message = err.Error()
-		if _, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-			log.WithError(err).Error("failed to update member state")
+		member.Status.Message = "Failed to list etcd members: " + err.Error()
+		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+			log.WithError(err).Error("Failed to update EtcdMember status")
 		}
 
 		return false
@@ -553,7 +553,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
 		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-			log.WithError(err).Error("failed to update EtcdMember status")
+			log.WithError(err).Error("Failed to update EtcdMember status")
 			return false
 		}
 		return true
@@ -584,7 +584,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			memberLeaseName = "k0s-ctrl-" + member.Name
 		}
 		if memberLease, err := clients.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, memberLeaseName, metav1.GetOptions{}); err != nil {
-			log.WithError(err).Error("Failed to get etcd member lease")
+			log.WithError(err).Error("Failed to get k0s controller lease")
 			msg := "Failed to get k0s controller lease: " + err.Error()
 			if apierrors.IsNotFound(err) {
 				msg = "No k0s controller lease found"
@@ -592,7 +592,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			member.Status.Message = msg
 			member.Status.ReconcileStatus = ""
 			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-				log.WithError(err).Error("Failed to update member state")
+				log.WithError(err).Error("Failed to update EtcdMember status")
 			}
 			return false
 		} else if kubeutil.IsValidLease(*memberLease) {
@@ -602,7 +602,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 					log.Info("Requesting member shutdown before deletion")
 					member.Labels[shutdownLabelName] = memberInvocationID
 					if _, err := client.Update(ctx, member, metav1.UpdateOptions{}); err != nil {
-						log.WithError(err).Error("Failed to update member")
+						log.WithError(err).Error("Failed to update EtcdMember")
 						return false
 					}
 					return true
@@ -626,7 +626,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 			member.Status.Message = msg
 			member.Status.ReconcileStatus = ""
 			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-				log.WithError(err).Error("Failed to update member state")
+				log.WithError(err).Error("Failed to update EtcdMember status")
 			}
 			return false
 		}
@@ -654,12 +654,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	)
 
 	if err != nil {
-		log.WithError(err).Errorf("Failed to delete member from cluster")
+		log.WithError(err).Error("Failed to delete member from cluster")
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
-		member.Status.Message = err.Error()
-		_, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
-		if err != nil {
-			log.WithError(err).Error("failed to update EtcdMember status")
+		member.Status.Message = "Failed to delete member from cluster: " + err.Error()
+		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+			log.WithError(err).Error("Failed to update EtcdMember status")
 		}
 		return false
 	}
@@ -669,9 +668,8 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
 	member.Status.Message = "Member removed from cluster"
 	member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
-	_, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
-	if err != nil {
-		log.WithError(err).Error("failed to update EtcdMember status")
+	if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+		log.WithError(err).Error("Failed to update EtcdMember status")
 		return false
 	}
 
