@@ -523,6 +523,47 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, etcdClient *
 
 	log.Debugf("reconciling EtcdMember: %s", member.Name)
 
+	// Convert the memberID to uint64
+	memberID, err := strconv.ParseUint(member.Status.MemberID, 16, 64)
+	if err != nil {
+		log.WithError(err).Error("Failed to parse memberID")
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
+		member.Status.Message = "Failed to parse memberID: " + err.Error()
+		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+			log.WithError(err).Error("Failed to update EtcdMember status")
+		}
+
+		return false
+	}
+
+	exists := slices.ContainsFunc(clusterMembers, func(m etcd.Member) bool {
+		return m.ID == memberID
+	})
+
+	// Member not listed as etcd member.
+	if !exists {
+		for i := range member.Status.Conditions {
+			c := &member.Status.Conditions[i]
+			if c.Type == etcdv1beta1.ConditionTypeJoined {
+				if c.Status == etcdv1beta1.ConditionFalse {
+					return true
+				}
+				break
+			}
+		}
+
+		msg := "No such member ID"
+		log.Debug(msg)
+		member.Status.Message = msg
+		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
+		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+			log.WithError(err).Error("Failed to update EtcdMember status")
+			return false
+		}
+		return true
+	}
+
 	if !member.Spec.Leave {
 		log.Debug("member not marked for leave, no action needed")
 		return true
@@ -561,34 +602,6 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, etcdClient *
 		}
 
 		return false
-	}
-	// Convert the memberID to uint64
-	memberID, err := strconv.ParseUint(member.Status.MemberID, 16, 64)
-	if err != nil {
-		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
-		member.Status.Message = "Failed to parse memberID: " + err.Error()
-		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-			log.WithError(err).Error("Failed to update EtcdMember status")
-		}
-
-		log.WithError(err).Error("failed to parse memberID")
-		return false
-	}
-
-	exists := slices.ContainsFunc(clusterMembers, func(m etcd.Member) bool {
-		return m.ID == memberID
-	})
-	// Member marked for leave but no member found in etcd, mark for leaved
-	if !exists {
-		log.Debug("member marked for leave but not in actual member list, updating state to reflect that")
-		member.Status.Message = "No such member"
-		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
-		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
-		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-			log.WithError(err).Error("Failed to update EtcdMember status")
-			return false
-		}
-		return true
 	}
 
 	joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
