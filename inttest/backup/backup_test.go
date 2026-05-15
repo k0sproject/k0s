@@ -4,13 +4,20 @@
 package basic
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,10 +36,10 @@ type BackupSuite struct {
 }
 
 func (s *BackupSuite) getControllerConfig() string {
-	config := v1beta1.ClusterConfig{
-		Spec: &v1beta1.ClusterSpec{
-			Network: &v1beta1.Network{
-				NodeLocalLoadBalancing: &v1beta1.NodeLocalLoadBalancing{
+	config := k0sv1beta1.ClusterConfig{
+		Spec: &k0sv1beta1.ClusterSpec{
+			Network: &k0sv1beta1.Network{
+				NodeLocalLoadBalancing: &k0sv1beta1.NodeLocalLoadBalancing{
 					Enabled: s.ControllerCount > 1,
 				},
 			},
@@ -40,8 +47,8 @@ func (s *BackupSuite) getControllerConfig() string {
 	}
 
 	if s.useKine {
-		config.Spec.Storage = &v1beta1.StorageSpec{
-			Type: v1beta1.KineStorageType,
+		config.Spec.Storage = &k0sv1beta1.StorageSpec{
+			Type: k0sv1beta1.KineStorageType,
 		}
 	}
 
@@ -51,6 +58,8 @@ func (s *BackupSuite) getControllerConfig() string {
 }
 
 func (s *BackupSuite) TestK0sGetsUp() {
+	ctx := s.TContext()
+
 	config := s.getControllerConfig()
 	s.T().Log("Config:", config)
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", config)
@@ -95,6 +104,12 @@ func (s *BackupSuite) TestK0sGetsUp() {
 
 	s.Require().NoError(s.restoreFunc())
 	s.Require().NoError(s.InitController(0, "--enable-worker"))
+	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(0), kc))
+
+	// Check if the first controller detects the other controllers as stale
+	if !s.useKine {
+		awaitEtcdMemberReconciliation(ctx, s)
+	}
 
 	// Join the other controllers in the usual way
 	if s.ControllerCount > 1 {
@@ -106,7 +121,6 @@ func (s *BackupSuite) TestK0sGetsUp() {
 		}
 	}
 
-	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(0), kc))
 	for i := range s.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(i), kc))
 	}
@@ -116,6 +130,11 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().Equal(snapshot, snapshotAfterBackup)
 
 	s.Require().NoError(s.VerifyFileSystemRestore())
+
+	// Check that all controllers are listed as joined etcd members
+	if !s.useKine {
+		awaitEtcdMemberReconciliation(ctx, s)
+	}
 }
 
 func (s *BackupSuite) reset(name string) {
@@ -254,6 +273,74 @@ func (s *BackupSuite) restoreBackupStdin() error {
 	s.T().Logf("restored successfully with output:\n%s", out)
 
 	return nil
+}
+
+func awaitEtcdMemberReconciliation(ctx context.Context, s *BackupSuite) {
+	ssh, err := s.SSH(ctx, s.ControllerNode(0))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	emc, err := s.EtcdMemberClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+
+	for {
+		select {
+		case <-time.After(7 * time.Second):
+		case <-ctx.Done():
+			s.FailNow("Interrupted")
+		}
+
+		reconciled, err := emc.EtcdMembers().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			s.T().Log("Failed to list etcd members:", err)
+			continue
+		}
+
+		actual, err := listEtcdMembers(ctx, ssh)
+		if err != nil {
+			s.T().Logf("k0s etcd member-list failed: %v", err)
+			continue
+		}
+
+		var errs []string
+		for _, member := range reconciled.Items {
+			joined := slices.ContainsFunc(member.Status.Conditions, func(c etcdv1beta1.JoinCondition) bool {
+				return c.Status == etcdv1beta1.ConditionTrue && c.Type == etcdv1beta1.ConditionTypeJoined
+			})
+			if peerURL, ok := actual[member.Name]; ok {
+				delete(actual, member.Name)
+				if !joined {
+					errs = append(errs, "etcd member "+member.Name+" not marked as joined")
+				}
+				if peerURL, err := url.Parse(peerURL); err != nil {
+					errs = append(errs, "failed to parse peer URL of etcd member "+member.Name+" ("+err.Error()+")")
+				} else if peerURL.Hostname() != member.Status.PeerAddress {
+					errs = append(errs, fmt.Sprintf("etcd member %s peer address mismatch: %q != %q", member.Name, peerURL, member.Status.PeerAddress))
+				}
+			} else if joined {
+				errs = append(errs, "stale etcd member "+member.Name)
+			}
+		}
+		if len(errs) > 0 {
+			s.T().Log("Etcd members not fully reconciled:", strings.Join(errs, "; "))
+		} else {
+			s.T().Logf("Etcd members fully reconciled")
+			break
+		}
+	}
+}
+
+func listEtcdMembers(ctx context.Context, ssh *common.SSHConnection) (map[string]string, error) {
+	var out bytes.Buffer
+	if err := ssh.Exec(ctx, "k0s etcd member-list", common.SSHStreams{Out: &out}); err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Members map[string]string `json:"members"`
+	}
+	err := json.Unmarshal(out.Bytes(), &result)
+	return result.Members, err
 }
 
 func TestBackupSuite(t *testing.T) {
