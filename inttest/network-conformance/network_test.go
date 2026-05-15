@@ -98,20 +98,29 @@ func (s *networkSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 
 	deadline, _ := s.Context().Deadline()
+	//
+	// Skipping flaky tests:
+	// - [It] [sig-network] Services should be able to switch session affinity for service with type clusterIP [LinuxOnly] [Conformance]
+	// - [It] [sig-network] Services should have session affinity work for service with type clusterIP [LinuxOnly] [Conformance]
+	// - [It] [sig-network] Services should have session affinity timeout work for service with type clusterIP [LinuxOnly] [Conformance]
+	//
+	e2eSkip := "\\[Serial\\]|(Services\\ should.*session\\ affinity\\ .*for\\ service\\ with\\ type\\ clusterIP)"
+	if s.isIPv6Only {
+		// [sig-network] HostPort uses hostIP=::1. The portmap CNI plugin has no
+		// IPv6 equivalent of the route_localnet kernel hack, so curl from a
+		// hostNetwork pod with --interface <nodeIP> to [::1]:<port> never
+		// reaches the DNAT rule and times out. Affects bridge+portmap (kuberouter)
+		// and any CNI chaining portmap for hostPort on IPv6.
+		e2eSkip += "|(HostPort.*hostPort.*hostIP.*protocol)"
+	}
 	err = client.Run(&sc.RunConfig{
 		GenConfig: sc.GenConfig{
 			EnableRBAC:     true,
 			DynamicPlugins: []string{"e2e"},
 			PluginEnvOverrides: map[string]map[string]string{
 				"e2e": {
-					"E2E_FOCUS": "\\[sig-network\\].*\\[Conformance\\]",
-					//
-					// Skipping flaky tests:
-					// - [It] [sig-network] Services should be able to switch session affinity for service with type clusterIP [LinuxOnly] [Conformance]
-					// - [It] [sig-network] Services should have session affinity work for service with type clusterIP [LinuxOnly] [Conformance]
-					// - [It] [sig-network] Services should have session affinity timeout work for service with type clusterIP [LinuxOnly] [Conformance]
-					//
-					"E2E_SKIP":          "\\[Serial\\]|(Services\\ should.*session\\ affinity\\ .*for\\ service\\ with\\ type\\ clusterIP)",
+					"E2E_FOCUS":         "\\[sig-network\\].*\\[Conformance\\]",
+					"E2E_SKIP":          e2eSkip,
 					"E2E_PARALLEL":      "y",
 					"E2E_USE_GO_RUNNER": "true",
 				},
