@@ -19,6 +19,8 @@ smoketests := \
 	check-ap-updater \
 	check-ap-updater-periodic \
 	check-backup \
+	check-backup-stream \
+	check-backup-kine \
 	check-basic \
 	check-bind-address \
 	check-byocri \
