@@ -4,6 +4,8 @@
 package basic
 
 import (
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -263,30 +265,19 @@ func TestBackupSuite(t *testing.T) {
 	}
 	s.backupFunc = s.takeBackup
 	s.restoreFunc = s.restoreBackup
-	suite.Run(t, &s)
-}
 
-func TestBackupSuiteStream(t *testing.T) {
-	s := BackupSuite{
-		BootlooseSuite: common.BootlooseSuite{
-			ControllerCount: 1,
-			WorkerCount:     1,
-		},
+	if target := os.Getenv("K0S_INTTEST_TARGET"); strings.Contains(target, "stream") {
+		t.Log("Using stdout/stderr")
+		s.ControllerCount = 1
+		s.WorkerCount = 1
+		s.backupFunc = s.takeBackupStdout
+		s.restoreFunc = s.restoreBackupStdin
+	} else if strings.Contains(target, "kine") {
+		t.Log("Using kine")
+		s.ControllerCount = 1
+		s.WorkerCount = 2
+		s.useKine = true
 	}
-	s.backupFunc = s.takeBackupStdout
-	s.restoreFunc = s.restoreBackupStdin
-	suite.Run(t, &s)
-}
 
-func TestBackupSuiteKine(t *testing.T) {
-	s := BackupSuite{
-		BootlooseSuite: common.BootlooseSuite{
-			ControllerCount: 1,
-			WorkerCount:     2,
-		},
-		useKine: true,
-	}
-	s.backupFunc = s.takeBackup
-	s.restoreFunc = s.restoreBackup
 	suite.Run(t, &s)
 }
