@@ -86,6 +86,11 @@ type EndpointStatus struct {
 	Role MemberRole // Role of this member at the time of the query.
 }
 
+var (
+	ErrServerStopped  = rpctypes.ErrStopped
+	ErrMemberNotFound = rpctypes.ErrMemberNotFound
+)
+
 // Queries the local etcd endpoint's status.
 func (c *Client) Status(ctx context.Context) (*EndpointStatus, error) {
 	resp, err := c.client.Status(ctx, c.Config.Endpoints[0])

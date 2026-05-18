@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sync/atomic"
 	"time"
 
 	"github.com/k0sproject/k0s/cmd/internal"
@@ -246,6 +247,7 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 	logrus.Infof("DNS address: %s", dnsAddress)
 
 	var storageBackend manager.Component
+	var leaveEtcdClusterOnStop *atomic.Bool
 	storageType := nodeConfig.Spec.Storage.Type
 
 	switch storageType {
@@ -255,12 +257,17 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 			K0sVars: c.K0sVars,
 		}
 	case v1beta1.EtcdStorageType:
-		storageBackend = &controller.Etcd{
-			CertManager: certificateManager,
-			Config:      nodeConfig.Spec.Storage.Etcd,
-			JoinClient:  joinClient,
-			K0sVars:     c.K0sVars,
-			LogLevel:    c.LogLevels.Etcd,
+		config := nodeConfig.Spec.Storage.Etcd
+		if !config.IsExternalClusterUsed() {
+			leaveEtcdClusterOnStop = new(atomic.Bool)
+			storageBackend = &controller.Etcd{
+				CertManager: certificateManager,
+				Config:      config,
+				JoinClient:  joinClient,
+				K0sVars:     c.K0sVars,
+				LogLevel:    c.LogLevels.Etcd,
+				LeaveOnStop: leaveEtcdClusterOnStop.Load,
+			}
 		}
 	default:
 		return fmt.Errorf("invalid storage type: %s", nodeConfig.Spec.Storage.Type)
@@ -594,7 +601,7 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 		})
 	}
 
-	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+	if leaveEtcdClusterOnStop != nil {
 		etcdReconciler, err := controller.NewEtcdMemberReconciler(
 			adminClientFactory,
 			nodeName,
@@ -605,6 +612,7 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 				num, _ := numActiveControllers.Peek()
 				return num
 			},
+			leaveEtcdClusterOnStop.Store,
 			cancel,
 		)
 		if err != nil {

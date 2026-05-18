@@ -4,18 +4,16 @@
 package controller
 
 import (
+	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/avast/retry-go"
-	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/client/pkg/v3/tlsutil"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -30,6 +28,13 @@ import (
 	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 	"github.com/k0sproject/k0s/pkg/token"
+
+	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/avast/retry-go"
+	"github.com/sirupsen/logrus"
+	"go.etcd.io/etcd/client/pkg/v3/tlsutil"
+	"golang.org/x/sync/errgroup"
 )
 
 const etcdGID = 0
@@ -41,6 +46,7 @@ type Etcd struct {
 	JoinClient  *token.JoinClient
 	K0sVars     *config.CfgVars
 	LogLevel    string
+	LeaveOnStop func() bool
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
@@ -246,9 +252,113 @@ func (e *Etcd) Start(ctx context.Context) error {
 
 // Stop stops etcd
 func (e *Etcd) Stop() error {
-	if e.supervisor != nil {
-		return e.supervisor.Stop()
+	s := e.supervisor
+	if s == nil {
+		return nil
 	}
+
+	if !e.LeaveOnStop() {
+		return s.Stop()
+	}
+
+	var leaveErr, stopErr error
+	deferTermination := make(chan struct{})
+	ctx, cancel := context.WithCancelCause(context.TODO())
+
+	go func() {
+		defer cancel(errors.New("etcd process terminated"))
+		stopErr = s.StopWith(supervisor.StopOpts{
+			DeferGracefulTerminationUntil: deferTermination,
+		})
+	}()
+
+	go func() {
+		defer close(deferTermination)
+		leaveErr = e.leave(ctx)
+		if leaveErr == nil {
+			// If the leave request was successful, we expect that etcd will
+			// terminate itself. Wait 30 seconds before lifting the termination
+			// request inhibition.
+			select {
+			case <-time.After(30 * time.Second):
+			case <-ctx.Done():
+			}
+		}
+	}()
+
+	<-ctx.Done()
+	<-deferTermination
+
+	return errors.Join(leaveErr, stopErr)
+}
+
+func (e *Etcd) leave(ctx context.Context) error {
+	log := logrus.WithField("component", "etcd")
+	log.Info("Attempting to leave the cluster")
+
+	if err := func() error {
+		c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+		if err != nil {
+			return fmt.Errorf("failed to initialize etcd client: %w", err)
+		}
+		defer c.Close()
+
+		var memberID uint64
+		return wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+			Steps: 10, Duration: 3 * time.Second, Jitter: 1,
+		}, func(context.Context) (bool, error) {
+			// Decouple the request context from the outer context. The outer
+			// context will only interrupt retries, not the inner call itself.
+			// This is to ensure that the call is not terminated in-flight and
+			// returns an otherwise inappropriate error.
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			if memberID == 0 {
+				status, err := c.Status(ctx)
+				if err != nil {
+					log.WithError(err).Error("Failed to get etcd endpoint status")
+					return false, nil
+				}
+
+				memberID = status.ID
+				log = log.WithField("memberID", strconv.FormatUint(memberID, 16))
+			}
+
+			log.Info("Removing member")
+			if err := c.DeleteMember(ctx, memberID); err != nil {
+				if errors.Is(err, etcd.ErrMemberNotFound) {
+					log.Info("Member ID changed")
+					memberID = 0
+					return false, nil
+				}
+
+				// After removing itself from the cluster, etcd starts shutting
+				// itself down: Removal is committed through Raft, etcd applies
+				// it. During apply, etcd notices "Oh, it's me!" and begins
+				// shutting down. Meanwhile, the request handler is still
+				// finishing the RPC. If the shutdown signal reaches the request
+				// path first, it may return ErrServerStopped.
+				//
+				// Although we cannot completely rule out the possibility that
+				// external factors caused etcd to shut down, we still consider
+				// the self-removal to have succeeded.
+				if errors.Is(err, etcd.ErrServerStopped) {
+					log.Info("Server is stopping, assuming removal to have succeeded")
+					return true, nil
+				}
+
+				log.WithError(err).Error("Failed to remove member")
+				return false, nil
+			}
+
+			log.Info("Left the cluster")
+			return true, nil
+		})
+	}(); err != nil {
+		return fmt.Errorf("failed to leave the cluster: %w", cmp.Or(context.Cause(ctx), err))
+	}
+
 	return nil
 }
 
