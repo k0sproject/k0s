@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -365,13 +366,16 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 	defer etcdClient.Close()
 
-	memberID, err := etcdClient.GetPeerIDByAddress(ctx, e.etcdConfig.GetPeerURL())
+	// The local etcd has already passed its health check by the time this
+	// runs (a learner can't serve linearizable reads), so the member is
+	// guaranteed to be voting here. Stamp Joined=True unconditionally.
+	memberStatus, err := etcdClient.Status(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Convert the memberID to hex string
-	memberIDStr := strconv.FormatUint(memberID, 16)
+	memberIDStr := strconv.FormatUint(memberStatus.ID, 16)
 	memberName := e.etcdConfig.GetMemberName()
 	name, err := nodeutil.GetHostname(memberName)
 	if err != nil {
@@ -379,7 +383,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 	var em *etcdv1beta1.EtcdMember
 
-	log.WithField("name", name).WithField("memberID", memberID).Info("creating EtcdMember object")
+	log.WithField("name", name).WithField("memberID", memberIDStr).Info("creating EtcdMember object")
 
 	controllerLeaseName := fmt.Sprintf("k0s-ctrl-%s", e.nodeName)
 
@@ -527,8 +531,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	}
 
 	// Member marked for leave but no member found in etcd, mark for leaved
-	_, ok := members[member.Name]
-	if !ok {
+	exists := slices.ContainsFunc(members, func(m etcd.Member) bool {
+		return m.Name == member.Name
+	})
+	// Member marked for leave but no member found in etcd, mark for leaved
+	if !exists {
 		log.Debug("member marked for leave but not in actual member list, updating state to reflect that")
 		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
@@ -540,7 +547,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	}
 
 	joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !ok {
+	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !exists {
 		log.Debug("member already left, no action needed")
 		return true
 	}
