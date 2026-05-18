@@ -31,10 +31,9 @@ import (
 
 // Konnectivity implements the component interface for konnectivity server
 type Konnectivity struct {
-	Spec        *v1beta1.KonnectivitySpec // FIXME: This should be reconciled via dynamic config
-	K0sVars     *config.CfgVars
-	LogLevel    string
-	ServerCount func() (uint, <-chan struct{})
+	Spec     *v1beta1.KonnectivitySpec // FIXME: This should be reconciled via dynamic config
+	K0sVars  *config.CfgVars
+	LogLevel string
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
@@ -43,8 +42,6 @@ type Konnectivity struct {
 	log *logrus.Entry
 
 	*prober.EventEmitter
-
-	stop func()
 }
 
 var _ manager.Component = (*Konnectivity)(nil)
@@ -86,56 +83,15 @@ func (k *Konnectivity) Init(ctx context.Context) error {
 
 // Run ..
 func (k *Konnectivity) Start(ctx context.Context) error {
-	serverCount, serverCountChanged := k.ServerCount()
-
-	if err := k.runServer(ctx, serverCount); err != nil {
+	if err := k.runServer(ctx); err != nil {
 		k.EmitWithPayload("failed to start konnectivity server", err)
 		return fmt.Errorf("failed to start konnectivity server: %w", err)
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan struct{})
-
-	go func() {
-		defer close(done)
-		var retry <-chan time.Time
-		for {
-			select {
-			case <-serverCountChanged:
-				prevServerCount := serverCount
-				serverCount, serverCountChanged = k.ServerCount()
-				// restart only if the server count actually changed
-				if serverCount == prevServerCount {
-					continue
-				}
-
-			case <-retry:
-				k.Emit("retrying to start konnectivity server")
-				k.log.Info("Retrying to start konnectivity server")
-
-			case <-ctx.Done():
-				k.Emit("stopped konnectivity server")
-				k.log.Info("stopping konnectivity server reconfig loop")
-				return
-			}
-
-			retry = nil
-
-			if err := k.runServer(ctx, serverCount); err != nil {
-				k.EmitWithPayload("failed to start konnectivity server", err)
-				k.log.WithError(err).Errorf("Failed to start konnectivity server")
-				retry = time.After(10 * time.Second)
-				continue
-			}
-		}
-	}()
-
-	k.stop = func() { cancel(); <-done }
-
 	return nil
 }
 
-func (k *Konnectivity) serverArgs(count uint) []string {
+// See the example in [apiserver-network-proxy](https://github.com/carreter/apiserver-network-proxy/blob/714d09261101800120373cb1a3bb10278f32220d/examples/kind-multinode/templates/k8s/konnectivity-server.yaml)
+func (k *Konnectivity) serverArgs() []string {
 	return stringmap.StringMap{
 		"--uds-name":                 filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
 		"--cluster-cert":             filepath.Join(k.K0sVars.CertRootDir, "server.crt"),
@@ -155,37 +111,28 @@ func (k *Konnectivity) serverArgs(count uint) []string {
 		"--v":                        k.LogLevel,
 		"--enable-profiling":         "false",
 		"--delete-existing-uds-file": "true",
-		"--server-count":             strconv.FormatUint(uint64(count), 10),
 		"--server-id":                k.K0sVars.InvocationID,
 		"--proxy-strategies":         "destHost,defaultRoute,default",
 		"--cipher-suites":            constant.AllowedTLS12CipherSuiteNames(),
+		"--enable-lease-controller":  "true",
 	}.ToArgs()
 }
 
-func (k *Konnectivity) runServer(ctx context.Context, count uint) error {
-	// Stop supervisor
-	if k.supervisor != nil {
-		k.EmitWithPayload("restarting konnectivity server due to server count change",
-			map[string]any{"serverCount": count})
-		if err := k.supervisor.Stop(); err != nil {
-			k.log.WithError(err).Error("Failed to stop executable")
-		}
-	}
-
+func (k *Konnectivity) runServer(ctx context.Context) error {
 	k.supervisor = &supervisor.Supervisor{
 		Name:    "konnectivity",
 		BinPath: k.executablePath,
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
-		Args:    k.serverArgs(count),
+		Args:    k.serverArgs(),
 		UID:     k.uid,
 	}
 	err := k.supervisor.Supervise(ctx)
 	if err != nil {
-		k.supervisor = nil // not to make the next loop to try to stop it first
+		k.supervisor = nil
 		return err
 	}
-	k.EmitWithPayload("started konnectivity server", map[string]any{"serverCount": count})
+	k.Emit("started konnectivity server")
 
 	return nil
 }
@@ -208,10 +155,6 @@ func (k *Konnectivity) Healthy() error {
 
 // Stop stops
 func (k *Konnectivity) Stop() error {
-	if k.stop != nil {
-		logrus.Debug("stopping konnectivity component")
-		k.stop()
-	}
 	if k.supervisor == nil {
 		return nil
 	}
