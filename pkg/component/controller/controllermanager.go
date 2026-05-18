@@ -89,7 +89,7 @@ func (a *Manager) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		"requestheader-client-ca-file":     filepath.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"root-ca-file":                     filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"service-account-private-key-file": filepath.Join(a.K0sVars.CertRootDir, "sa.key"),
-		"cluster-cidr":                     clusterConfig.Spec.Network.BuildPodCIDR(),
+		"cluster-cidr":                     clusterConfig.Spec.Network.BuildPodCIDR(clusterConfig.Spec.PrimaryAddressFamily()),
 		"service-cluster-ip-range":         a.ServiceClusterIPRange,
 		"profiling":                        "false",
 		"terminated-pod-gc-threshold":      "12500",

@@ -115,7 +115,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"auto-mtu":                 strconv.FormatBool(clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
 		"metrics-port":             strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode":             strconv.FormatBool(globalHairpin),
-		"service-cluster-ip-range": clusterConfig.Spec.Network.ServiceCIDR,
+		"service-cluster-ip-range": clusterConfig.Spec.Network.BuildServiceCIDR(clusterConfig.Spec.PrimaryAddressFamily()),
 	}
 
 	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic
