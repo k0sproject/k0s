@@ -46,7 +46,7 @@ const EtcdMemberStackName = "etcd-member"
 
 var _ manager.Component = (*EtcdMemberReconciler)(nil)
 
-func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, nodeName apitypes.NodeName, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface, controllerCount func() uint, shutdown context.CancelCauseFunc) (*EtcdMemberReconciler, error) {
+func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, nodeName apitypes.NodeName, k0sVars *config.CfgVars, etcdConfig *v1beta1.EtcdConfig, leaderElector leaderelector.Interface, controllerCount func() uint, leaveOnStop func(bool), shutdown context.CancelCauseFunc) (*EtcdMemberReconciler, error) {
 
 	return &EtcdMemberReconciler{
 		clientFactory:   kubeClientFactory,
@@ -55,6 +55,7 @@ func NewEtcdMemberReconciler(kubeClientFactory kubeutil.ClientFactoryInterface, 
 		etcdConfig:      etcdConfig,
 		leaderElector:   leaderElector,
 		controllerCount: controllerCount,
+		leaveOnStop:     leaveOnStop,
 		shutdown:        shutdown,
 	}, nil
 }
@@ -66,6 +67,7 @@ type EtcdMemberReconciler struct {
 	leaderElector   leaderelector.Interface
 	controllerCount func() uint
 	nodeName        apitypes.NodeName
+	leaveOnStop     func(bool)
 	shutdown        context.CancelCauseFunc
 	stop            func()
 }
@@ -284,14 +286,24 @@ func (e *EtcdMemberReconciler) shutdownIfMarked(ctx context.Context, log logrus.
 	}
 
 	log.Info("Starting to watch etcd member object ", name, " using invocation ID ", e.k0sVars.InvocationID)
+	var leave bool
 	err = watch.EtcdMembers(client).
 		WithObjectName(name).
 		WithLabels(labels.Set{shutdownLabelName: e.k0sVars.InvocationID}).
-		Until(ctx, func(*etcdv1beta1.EtcdMember) (bool, error) { return true, nil })
+		Until(ctx, func(m *etcdv1beta1.EtcdMember) (bool, error) {
+			leave = m.Spec.Leave
+			return true, nil
+		})
 
 	if err == nil {
 		log.Info("Etcd member marked for shutdown; stopping components and waiting for external termination")
-		e.shutdown(errors.New("etcd member marked for shutdown"))
+		if leave {
+			e.leaveOnStop(true)
+			log.Info("Will leave etcd cluster before shutting down")
+			e.shutdown(errors.New("etcd member marked for leave and shutdown"))
+		} else {
+			e.shutdown(errors.New("etcd member marked for shutdown"))
+		}
 	} else if ctxErr := context.Cause(ctx); !errors.Is(err, ctxErr) {
 		log.WithError(err).Error("Error watching etcd member object")
 	}
@@ -582,18 +594,33 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 				log.WithError(err).Error("Failed to update member state")
 			}
 			return false
-		} else if ident := memberLease.Spec.HolderIdentity; ident != nil && *ident == memberInvocationID && kubeutil.IsValidLease(*memberLease) {
-			if member.Labels[shutdownLabelName] != memberInvocationID {
-				log.Info("Requesting member shutdown before deletion")
-				member.Labels[shutdownLabelName] = memberInvocationID
-				if _, err := client.Update(ctx, member, metav1.UpdateOptions{}); err != nil {
-					log.WithError(err).Error("Failed to update member")
-					return false
+		} else if kubeutil.IsValidLease(*memberLease) {
+			msg := "Member is still active; waiting for it to shutdown"
+			if ident := memberLease.Spec.HolderIdentity; ident != nil && *ident == memberInvocationID {
+				if member.Labels[shutdownLabelName] != memberInvocationID {
+					log.Info("Requesting member shutdown before deletion")
+					member.Labels[shutdownLabelName] = memberInvocationID
+					if _, err := client.Update(ctx, member, metav1.UpdateOptions{}); err != nil {
+						log.WithError(err).Error("Failed to update member")
+						return false
+					}
+					return true
 				}
-				return true
+			} else {
+				msg = "Unexpected lease holder"
 			}
 
-			msg := "Member is still active; waiting for it to shutdown"
+			log.Info(msg)
+			member.Status.Message = msg
+			member.Status.ReconcileStatus = ""
+			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+				log.WithError(err).Error("Failed to update member state")
+			}
+			return false
+		} else if memberLease.Spec.RenewTime != nil && time.Since(memberLease.Spec.RenewTime.Time) < 5*time.Minute {
+			// The lease has only just been released.
+			// Give some time for the self-leave to take place.
+			msg := "Member is offline; waiting for it to leave"
 			log.Info(msg)
 			member.Status.Message = msg
 			member.Status.ReconcileStatus = ""
