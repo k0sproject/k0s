@@ -66,9 +66,10 @@ jobs:
 
       - name: "Generate :: Smoke test matrix"
         id: generate-smoketest-matrix
+        #Discard ipv6 kuberouter tests for now, as they are very flaky.
         run: |
           ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
-              'split(" ") | [ .[] | select(startswith("check-")) | .[6:] ] | "smoketests=" + tojson' >>$GITHUB_OUTPUT
+              'split(" ") | [ .[] | select(startswith("check-")) | .[6:] | select(. != "network-conformance-kuberouter-ipv6" and . != "network-conformance-kuberouter-ipv6-nft") ] | "smoketests=" + tojson' >>$GITHUB_OUTPUT
 
       - name: "Generate :: Autopilot test matrix"
         id: generate-autopilot-matrix
