@@ -420,13 +420,13 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	// The local etcd has already passed its health check by the time this
 	// runs (a learner can't serve linearizable reads), so the member is
 	// guaranteed to be voting here. Stamp Joined=True unconditionally.
-	memberID, err := etcdClient.GetPeerIDByAddress(ctx, e.etcdConfig.GetPeerURL())
+	memberStatus, err := etcdClient.Status(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Convert the memberID to hex string
-	memberIDStr := strconv.FormatUint(memberID, 16)
+	memberIDStr := strconv.FormatUint(memberStatus.ID, 16)
 	memberName := e.etcdConfig.GetMemberName()
 	name, err := nodeutil.GetHostname(memberName)
 	if err != nil {
