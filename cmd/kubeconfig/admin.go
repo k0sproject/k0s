@@ -7,11 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/spf13/cobra"
 )
@@ -31,36 +32,43 @@ func kubeConfigAdminCmd() *cobra.Command {
 				return err
 			}
 
-			// The admin kubeconfig in k0s' data dir uses the internal cluster
-			// address. This command is intended to provide a kubeconfig that
-			// uses the external address. Load the existing admin kubeconfig and
-			// rewrite it.
-			adminConfig, err := kubernetes.KubeconfigFromFile(opts.K0sVars.AdminKubeConfigPath)()
-			if pathErr := (*fs.PathError)(nil); errors.As(err, &pathErr) &&
-				pathErr.Path == opts.K0sVars.AdminKubeConfigPath &&
-				errors.Is(pathErr.Err, fs.ErrNotExist) {
-				return fmt.Errorf("admin config %q not found, check if the control plane is initialized on this node", pathErr.Path)
-			}
-			if err != nil {
-				return fmt.Errorf("failed to load admin config: %w", err)
-			}
-
-			// Now replace the internal address with the external one. See
-			// cmd/controller/certificates.go to see how the original kubeconfig
-			// is generated.
 			nodeConfig, err := opts.K0sVars.NodeConfig()
 			if err != nil {
 				return err
 			}
-			internalURL := nodeConfig.Spec.API.LocalURL().String()
-			externalURL := nodeConfig.Spec.API.APIAddressURL()
-			for _, c := range adminConfig.Clusters {
-				if c.Server == internalURL {
-					c.Server = externalURL
-				}
+
+			const (
+				clusterName = "k0s"
+				contextName = "k0s-admin"
+				userName    = "admin"
+			)
+
+			adminConfig := clientcmdapi.Config{
+				Clusters: map[string]*clientcmdapi.Cluster{clusterName: {
+					Server:               nodeConfig.Spec.API.APIAddressURL(),
+					CertificateAuthority: filepath.Join(opts.K0sVars.CertRootDir, "ca.crt"),
+				}},
+				Contexts: map[string]*clientcmdapi.Context{contextName: {
+					Cluster:  clusterName,
+					AuthInfo: userName,
+				}},
+				CurrentContext: contextName,
+				AuthInfos: map[string]*clientcmdapi.AuthInfo{userName: {
+					ClientCertificate: filepath.Join(opts.K0sVars.CertRootDir, "admin.crt"),
+					ClientKey:         filepath.Join(opts.K0sVars.CertRootDir, "admin.key"),
+				}},
 			}
 
-			data, err := clientcmd.Write(*adminConfig)
+			if err := clientcmdapi.FlattenConfig(&adminConfig); err != nil {
+				if pathErr := (*fs.PathError)(nil); errors.As(err, &pathErr) &&
+					filepath.Dir(pathErr.Path) == opts.K0sVars.CertRootDir &&
+					errors.Is(pathErr.Err, fs.ErrNotExist) {
+					return fmt.Errorf("admin PKI file %q not found, check if the control plane is initialized on this node", pathErr.Path)
+				}
+				return fmt.Errorf("failed to create admin kubeconfig: %w", err)
+			}
+
+			data, err := clientcmd.Write(adminConfig)
 			if err != nil {
 				return fmt.Errorf("failed to serialize admin kubeconfig: %w", err)
 			}
