@@ -62,7 +62,7 @@ require (
 	helm.sh/helm/v3 v3.20.2
 	modernc.org/sqlite v1.50.1
 	oras.land/oras-go/v2 v2.6.0
-	sigs.k8s.io/controller-runtime v0.24.0
+	sigs.k8s.io/controller-runtime v0.24.1
 	sigs.k8s.io/yaml v1.6.0
 )
 
