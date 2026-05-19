@@ -19,39 +19,24 @@ limitations under the License.
 package config
 
 import (
-	"golang.org/x/sys/unix"
 	"os"
+
+	"golang.org/x/sys/unix"
 )
 
-// tryLock attempts to acquire the lock. Returns *os.File if successful, nil otherwise.
-func tryLock(path string) (*os.File, error) {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600)
-	if err != nil {
-		return nil, err
+func lockFile(f *os.File, exclusive bool) (bool, error) {
+	how := unix.LOCK_NB
+	if exclusive {
+		how |= unix.LOCK_EX
+	} else {
+		how |= unix.LOCK_SH
 	}
 
-	if err := unix.Flock(int(file.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
-		_ = file.Close()
-		if err == unix.EWOULDBLOCK {
-			return nil, ErrK0sAlreadyRunning // Lock is already held by another process
-		}
-		return nil, err
+	if err := unix.Flock(int(f.Fd()), how); err == nil {
+		return true, nil
+	} else if err == unix.EWOULDBLOCK {
+		return false, nil
+	} else {
+		return false, os.NewSyscallError("flock", err)
 	}
-	return file, nil
-}
-
-// isLocked checks if the lock is currently held by another process.
-func isLocked(path string) bool {
-	file, err := os.OpenFile(path, os.O_RDWR, 0600)
-	if err != nil {
-		return false
-	}
-	defer file.Close()
-
-	// Attempt a non-blocking shared lock to test the lock state
-	if err := unix.Flock(int(file.Fd()), unix.LOCK_SH|unix.LOCK_NB); err != nil {
-		return err == unix.EWOULDBLOCK
-	}
-
-	return false
 }

@@ -25,7 +25,6 @@ import (
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/cleanup"
-	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
@@ -68,9 +67,10 @@ func (c *command) reset(debug bool) error {
 		return errors.New("this command must be run as root")
 	}
 
-	k0sStatus, _ := status.GetStatusInfo(c.K0sVars.StatusSocketPath)
-	if k0sStatus != nil && k0sStatus.Pid != 0 {
-		return errors.New("k0s seems to be running, please stop k0s before reset")
+	if locked, err := config.RuntimeConfigLocked(c.K0sVars.RuntimeConfigPath); err != nil {
+		return err
+	} else if locked {
+		return fmt.Errorf("%w, please stop k0s before reset", config.ErrK0sStillRunning)
 	}
 
 	nodeCfg, err := c.K0sVars.NodeConfig()

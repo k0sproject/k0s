@@ -75,7 +75,12 @@ func DefaultStorageSpec() *StorageSpec {
 
 // IsJoinable returns true only if the storage config is such that another controller can join the cluster
 func (s *StorageSpec) IsJoinable() bool {
-	switch s.Type {
+	storageType := EtcdStorageType // assume the default
+	if s != nil {
+		storageType = s.Type
+	}
+
+	switch storageType {
 	case EtcdStorageType:
 		// Controllers will always be able to connect to an etcd backend, either
 		// by joining as a managed etcd node, or by simply connecting to an
