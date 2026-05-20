@@ -1,6 +1,6 @@
 babel==2.18.0
 bracex==2.6
-certifi==2026.4.22
+certifi==2026.5.20
 charset-normalizer==2.1.1
 click==8.4.0
 colorama==0.4.6
