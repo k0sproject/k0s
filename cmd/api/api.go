@@ -151,7 +151,7 @@ func buildServer(log logrus.FieldLogger, k0sVars *config.CfgVars, nodeConfig *v1
 			authMiddleware(etcdHandler(log, k0sVars.CertRootDir, k0sVars.EtcdCertDir), log, secrets, "controller-join")))
 	}
 
-	if storage == nil || storage.IsJoinable() {
+	if storage.IsJoinable() {
 		mux.Handle(prefix+"/ca", mw.AllowMethods(http.MethodGet)(
 			authMiddleware(caHandler(k0sVars.CertRootDir), log, secrets, "controller-join")))
 	}
