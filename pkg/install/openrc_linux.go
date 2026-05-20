@@ -14,6 +14,7 @@ command_args="{{range .Arguments}}'{{.}}' {{end}}"
 {{- end }}
 name=$(basename $(readlink -f $command))
 supervise_daemon_args="--stdout /var/log/${name}.log --stderr /var/log/${name}.err"
+retry="SIGTERM/90/SIGKILL/5"
 
 : "${rc_ulimit=-n 1048576 -u unlimited}"
 
