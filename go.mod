@@ -58,7 +58,7 @@ require (
 	golang.org/x/sys v0.44.0
 	golang.org/x/text v0.37.0
 	golang.org/x/time v0.12.0
-	golang.org/x/tools v0.44.0
+	golang.org/x/tools v0.45.0
 	google.golang.org/grpc v1.79.3
 	helm.sh/helm/v3 v3.19.3
 	oras.land/oras-go/v2 v2.6.0
@@ -257,7 +257,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
-	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/net v0.54.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/term v0.43.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
