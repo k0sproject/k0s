@@ -96,20 +96,13 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 					return false, nil
 				})
 
-			// We've got the condition, verify status details
+			// We've got the Joined=True condition from the watch; just
+			// cross-check the peer address.
 			if err != nil {
 				return err
 			}
 			if em.Status.PeerAddress != s.GetControllerIPAddress(i) {
 				return fmt.Errorf("expected PeerAddress %s, got %s", s.GetControllerIPAddress(i), em.Status.PeerAddress)
-			}
-
-			joined := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-			if joined == nil {
-				return fmt.Errorf("expected condition %s, got nil", etcdv1beta1.ConditionTypeJoined)
-			}
-			if joined.Status != etcdv1beta1.ConditionTrue {
-				return fmt.Errorf("expected condition %s to be %s, got %s", etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, joined.Status)
 			}
 			return nil
 		})
@@ -153,7 +146,7 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 		if cond := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined); assert.NotNilf(tt, cond, "condition not found: %s", etcdv1beta1.ConditionTypeJoined) {
 			assert.Equal(tt, etcdv1beta1.ConditionTrue, cond.Status, "node not joined yet")
 		}
-	}, 2*time.Minute, 1*time.Second)
+	}, 30*time.Second, 1*time.Second)
 
 	// Check that after restarting the controller, the member is still present
 	s.Require().NoError(s.RestartController(s.ControllerNode(2)))
