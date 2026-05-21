@@ -86,6 +86,7 @@ const (
 )
 
 type JoinCondition struct {
+	// +kubebuilder:validation:Enum=Joined
 	Type   ConditionType   `json:"type"`
 	Status ConditionStatus `json:"status"`
 	// Last time the condition transitioned from one status to another.
