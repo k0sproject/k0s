@@ -4,10 +4,11 @@
 package etcdlearner
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/stretchr/testify/suite"
@@ -37,7 +39,6 @@ func (s *EtcdLearnerSuite) TestUnreachableLearnerPreservesQuorum() {
 	ctx := s.Context()
 
 	// Boot controller0 as a single-node cluster.
-	s.Require().NoError(s.WaitForSSH(s.ControllerNode(0), 2*time.Minute, 1*time.Second))
 	s.Require().NoError(s.InitController(0, ""))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
@@ -60,53 +61,53 @@ func (s *EtcdLearnerSuite) TestUnreachableLearnerPreservesQuorum() {
 		PeerAddress: phantomPeerURL,
 	})
 
-	// Wait until the phantom shows up in the member list as a learner.
-	s.Require().Eventually(func() bool {
+	// Wait until the phantom shows up in etcd's member list as a learner.
+	// Using etcdctl rather than `k0s etcd member-list`: the phantom has
+	// not (and cannot) self-report its name, and `k0s etcd member-list`
+	// surfaces only the name→peerURL map, which drops unnamed members.
+	s.Require().NoError(common.Poll(ctx, func(ctx context.Context) (bool, error) {
 		for _, m := range s.listMembers(ctx, s.ControllerNode(0)) {
-			if matchesPhantom(m) {
-				return m.IsLearner
+			if slices.Contains(m.PeerURLs, phantomPeerURL) {
+				return m.IsLearner, nil
 			}
 		}
-		return false
-	}, time.Minute, 2*time.Second, "phantom never appeared in etcd member list as learner")
+		return false, nil
+	}), "phantom never appeared in etcd member list as learner")
 
-	// The critical assertion: quorum stays at 1 and writes succeed.
-	// Pre-fix, the join API added members as voters; an unreachable
-	// voter would have made this write block until the request timeout.
-	ctxWrite, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-	_, err = kc.CoreV1().ConfigMaps("default").Create(ctxWrite,
+	// The critical assertion: quorum stays at 1 and writes succeed. If
+	// the join API had added the new member as a voter, the cluster would
+	// have lost quorum due to that unreachable voter.
+	_, err = kc.CoreV1().ConfigMaps("default").Create(ctx,
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "post-phantom"}},
 		metav1.CreateOptions{})
-	s.Require().NoErrorf(err,
+	s.Require().NoError(err,
 		"etcd quorum was lost after adding an unreachable peer; "+
 			"the new member must enter as a non-voting learner")
 
-	// Hold for a window and confirm the leader's reconciler does not
-	// wrongly promote a peer that cannot have caught up. The reconciler
-	// re-ticks every 30s on stuck learners; observing it stay False over
-	// ~30s rules out a one-shot race.
+	// Confirm the leader's reconciler does not wrongly promote a peer
+	// that cannot have caught up. The reconciler re-ticks every 10s on
+	// stuck learners; observing it stay False over ~30s rules out a
+	// one-shot race.
 	s.T().Log("verifying phantom stays a learner over a 30s observation window")
-	hold, cancelHold := context.WithTimeout(ctx, 30*time.Second)
-	defer cancelHold()
-	for {
-		select {
-		case <-hold.Done():
-			return
-		case <-time.After(5 * time.Second):
-		}
+	holdCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	err = wait.PollUntilContextCancel(holdCtx, 5*time.Second, true, func(ctx context.Context) (bool, error) {
 		var found bool
 		for _, m := range s.listMembers(ctx, s.ControllerNode(0)) {
-			if !matchesPhantom(m) {
+			if !slices.Contains(m.PeerURLs, phantomPeerURL) {
 				continue
 			}
 			found = true
-			s.Require().Truef(m.IsLearner,
-				"phantom was promoted to voter despite being unreachable; "+
-					"reconciler must keep unreachable learners as learners")
+			if !m.IsLearner {
+				return false, errors.New("phantom was promoted to voter despite being unreachable")
+			}
 		}
-		s.Require().True(found, "phantom disappeared from etcd member list mid-test")
-	}
+		if !found {
+			return false, errors.New("phantom disappeared from etcd member list mid-test")
+		}
+		return false, nil // keep polling until the deadline elapses
+	})
+	s.Require().ErrorIs(err, context.DeadlineExceeded, "observation window must complete without seeing phantom promoted")
 }
 
 // etcdMember is a minimal subset of etcdctl's member-list -w json output.
@@ -117,19 +118,9 @@ type etcdMember struct {
 	IsLearner bool     `json:"isLearner"`
 }
 
-// matchesPhantom returns true if m is the unreachable learner we added.
-// etcd only records a member's self-reported Name after it publishes via
-// raft, so an unreachable peer keeps an empty Name forever — match by
-// peer URL instead.
-func matchesPhantom(m etcdMember) bool {
-	for _, u := range m.PeerURLs {
-		if u == phantomPeerURL {
-			return true
-		}
-	}
-	return false
-}
-
+// listMembers returns the raw etcd member list via etcdctl. We can't use
+// `k0s etcd member-list` here because it drops unnamed members (the
+// phantom learner has no name).
 func (s *EtcdLearnerSuite) listMembers(ctx context.Context, node string) []etcdMember {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
@@ -150,14 +141,13 @@ func (s *EtcdLearnerSuite) listMembers(ctx context.Context, node string) []etcdM
 	return resp.Members
 }
 
-// callJoinEtcd uses the real k0s JoinClient to POST an EtcdRequest to the
-// join API on the given node. The kubeconfig embedded in the join token
-// points to the controller's container-internal IP, which is not
-// reachable from the test host. We rewrite the server URL to the
-// host-mapped port (localhost is in the k0s-api cert's SAN list, so TLS
-// still validates) and hand the re-encoded token to JoinClientFromToken,
-// so the rest of the code path — including the EtcdRequest encoding
-// inside JoinClient.JoinEtcd — runs exactly as it does in production.
+// callJoinEtcd uses the k0s JoinClient to POST an EtcdRequest to the join
+// API on the given node. The kubeconfig embedded in the join token points
+// to the controller's container-internal IP, which is not reachable from
+// the test host. We rewrite the server URL to the host-mapped port
+// (localhost is in the k0s-api cert's SAN list, so TLS still validates)
+// and hand the modified kubeconfig to JoinClientFromKubeconfig, so the
+// rest of the code path runs exactly as it does in production.
 func (s *EtcdLearnerSuite) callJoinEtcd(ctx context.Context, node string, req v1beta1.EtcdRequest) {
 	encToken, err := s.GetJoinToken("controller")
 	s.Require().NoError(err)
@@ -177,12 +167,7 @@ func (s *EtcdLearnerSuite) callJoinEtcd(ctx context.Context, node string, req v1
 		cluster.Server = hostURL
 	}
 
-	rewritten, err := clientcmd.Write(*cfg)
-	s.Require().NoError(err)
-	reencoded, err := token.JoinEncode(bytes.NewReader(rewritten))
-	s.Require().NoError(err)
-
-	client, err := token.JoinClientFromToken(reencoded)
+	client, err := token.JoinClientFromKubeconfig(cfg)
 	s.Require().NoError(err)
 
 	resp, err := client.JoinEtcd(ctx, req)

@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"slices"
 	"strconv"
 	"strings"
@@ -367,15 +368,13 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 	defer etcdClient.Close()
 
-	memberID, isLearner, err := etcdClient.GetMemberByPeerAddress(ctx, e.etcdConfig.GetPeerURL())
+	// The local etcd has already passed its health check by the time this
+	// runs (a learner can't serve linearizable reads), so the member is
+	// guaranteed to be voting here. Stamp Joined=True unconditionally.
+	memberID, err := etcdClient.GetPeerIDByAddress(ctx, e.etcdConfig.GetPeerURL())
 	if err != nil {
 		return err
 	}
-
-	// "Joined" only flips to True once this member is a voting peer. The
-	// leader's promoteLearners pass stamps it after the learner catches up;
-	// until then consumers see a CR without the Joined condition.
-	stampJoined := !isLearner
 
 	// Convert the memberID to hex string
 	memberIDStr := strconv.FormatUint(memberID, 16)
@@ -386,7 +385,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 	var em *etcdv1beta1.EtcdMember
 
-	log.WithField("name", name).WithField("memberID", memberID).WithField("isLearner", isLearner).Info("creating EtcdMember object")
+	log.WithField("name", name).WithField("memberID", memberIDStr).Info("creating EtcdMember object")
 
 	controllerLeaseName := fmt.Sprintf("k0s-ctrl-%s", e.nodeName)
 
@@ -416,9 +415,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 				PeerAddress: e.etcdConfig.PeerAddress,
 				MemberID:    memberIDStr,
 			}
-			if stampJoined {
-				em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
-			}
+			em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
 			_, err = client.UpdateStatus(ctx, em, metav1.UpdateOptions{})
 			if err != nil {
 				log.WithError(err).Error("failed to update member status")
@@ -444,13 +441,9 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 	em.Status.PeerAddress = e.etcdConfig.PeerAddress
 	em.Status.MemberID = memberIDStr
-	if stampJoined {
-		em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
-	}
+	em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
 	if _, err := client.UpdateStatus(ctx, em, metav1.UpdateOptions{}); err != nil {
-		// Status update failures are non-fatal. The leader's reconciler
-		// will re-stamp the status on the next resync.
-		log.WithError(err).Warn("failed to update member status")
+		return err
 	}
 
 	return nil
@@ -658,10 +651,15 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	return true
 }
 
-// promoteLearners walks the etcd member list once and tries to promote any
-// learner to a voting member. On success, the matching EtcdMember CR's
-// Joined condition is flipped to True — "Joined" only becomes True once the
-// member is a full voting peer, not while it's still a non-voting learner.
+// promoteLearners walks the etcd member list and tries to promote at most
+// one learner per call to a voting member. On success, the matching
+// EtcdMember CR's Joined condition is flipped to True — "Joined" only
+// becomes True once the member is a full voting peer, not while it's still
+// a non-voting learner.
+//
+// Promoting gradually (one per tick) keeps raft config changes serialized.
+// Members are shuffled so that successive ticks don't retry the same stuck
+// learner first.
 //
 // Called only from resync, which only runs when this controller holds the
 // leader lease.
@@ -689,21 +687,22 @@ func (e *EtcdMemberReconciler) promoteLearners(
 		crByName[crs[i].Name] = &crs[i]
 	}
 
-	ok := true
-	for _, l := range members {
-		if !l.IsLearner {
+	rand.Shuffle(len(members), func(i, j int) { members[i], members[j] = members[j], members[i] })
+
+	for _, m := range members {
+		if !m.IsLearner {
 			continue
 		}
-		llog := log.WithFields(logrus.Fields{
-			"learnerID":   l.ID,
-			"learnerName": l.Name,
+		log := log.WithFields(logrus.Fields{
+			"memberID":   strconv.FormatUint(m.ID, 16),
+			"memberName": m.Name,
 		})
 
-		if l.Name == "" {
-			// etcd has not seen this learner self-report yet. Skip this
-			// tick; the watch will trigger again once the joining member
-			// publishes its name.
-			llog.Debug("learner has no name yet, skipping")
+		if m.Name == "" {
+			// etcdctl reports this state as "unstarted": the member has
+			// been added to the cluster but hasn't reported its name back
+			// yet. Try another learner on this tick.
+			log.Debug("member is unstarted, skipping")
 			continue
 		}
 
@@ -712,31 +711,32 @@ func (e *EtcdMemberReconciler) promoteLearners(
 		// which can't happen while it is a learner (a learner cannot
 		// serve the readiness Range). We still attempt promotion; CR
 		// status is updated only when the CR exists.
-		cr := crByName[l.Name]
+		cr := crByName[m.Name]
 
-		err := etcdClient.PromoteMember(ctx, l.ID)
-		switch {
+		switch err := etcdClient.PromoteMember(ctx, m.ID); {
 		case err == nil:
-			llog.Info("promoted learner to voting member")
-			e.setJoined(ctx, client, cr, llog)
+			log.Info("promoted learner to voting member")
+			e.setJoined(ctx, client, cr, log)
+			return true
 
 		case errors.Is(err, rpctypes.ErrMemberNotLearner):
 			// Race: someone else promoted it. Treat as success.
-			llog.Debug("member already promoted")
-			e.setJoined(ctx, client, cr, llog)
+			log.Debug("member already promoted")
+			e.setJoined(ctx, client, cr, log)
+			return true
 
 		case errors.Is(err, rpctypes.ErrMemberLearnerNotReady):
-			llog.Debug("learner not ready for promotion yet")
+			log.Debug("learner not ready for promotion yet")
 			// Pending learner — return false so resync re-runs in 10s.
-			ok = false
+			return false
 
 		default:
-			llog.WithError(err).Warn("failed to promote learner")
-			ok = false
+			log.WithError(err).Warn("failed to promote learner")
+			return false
 		}
 	}
 
-	return ok
+	return true
 }
 
 // setJoined stamps ConditionTypeJoined=True on the CR once the member has

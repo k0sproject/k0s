@@ -8,7 +8,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -144,31 +143,16 @@ func (c *Client) AddMemberAsLearner(ctx context.Context, name, peerAddress strin
 
 // GetPeerIDByAddress looks up peer id by peer url
 func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (uint64, error) {
-	resp, err := c.client.MemberList(ctx)
+	members, err := c.ListMembers(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("etcd member list failed: %w", err)
+		return 0, err
 	}
-	for _, m := range resp.Members {
-		if slices.Contains(m.PeerURLs, peerAddress) {
+	for _, m := range members {
+		if m.PeerURL == peerAddress {
 			return m.ID, nil
 		}
 	}
 	return 0, fmt.Errorf("peer not found: %s", peerAddress)
-}
-
-// GetMemberByPeerAddress looks up a member by peer URL and returns its
-// ID along with the IsLearner flag. Returns (0, false, error) if not found.
-func (c *Client) GetMemberByPeerAddress(ctx context.Context, peerAddress string) (uint64, bool, error) {
-	resp, err := c.client.MemberList(ctx)
-	if err != nil {
-		return 0, false, fmt.Errorf("etcd member list failed: %w", err)
-	}
-	for _, m := range resp.Members {
-		if slices.Contains(m.PeerURLs, peerAddress) {
-			return m.ID, m.IsLearner, nil
-		}
-	}
-	return 0, false, fmt.Errorf("peer not found: %s", peerAddress)
 }
 
 // DeleteMember deletes member by peer name
