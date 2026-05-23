@@ -58,8 +58,8 @@ func writeSignalErrorAnnotation(obj crcli.Object, planID, reason, message string
 }
 
 // readSignalErrorAnnotation reads the SignalError annotation from obj and
-// returns "reason: message", or "" if absent or unparseable.
-func readSignalErrorAnnotation(obj crcli.Object) string {
+// returns "reason: message", or "" if absent, unparseable, or from another plan.
+func readSignalErrorAnnotation(obj crcli.Object, planID string) string {
 	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		return ""
@@ -70,6 +70,9 @@ func readSignalErrorAnnotation(obj crcli.Object) string {
 	}
 	var e SignalError
 	if err := json.Unmarshal([]byte(raw), &e); err != nil {
+		return ""
+	}
+	if e.PlanID != planID {
 		return ""
 	}
 	return e.Reason + ": " + e.Message

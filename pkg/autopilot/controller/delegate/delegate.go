@@ -36,7 +36,7 @@ type ControllerDelegate interface {
 	K0sUpdateReady(ctx context.Context, status apv1beta2.PlanCommandK0sUpdateStatus, obj crcli.Object) K0sUpdateReadyStatus
 
 	// Signal error features
-	ReadSignalError(obj crcli.Object) string
+	ReadSignalError(obj crcli.Object, planID string) string
 	WriteSignalError(ctx context.Context, client crcli.Client, obj crcli.Object, planID, reason, message string) error
 	ClearSignalError(ctx context.Context, client crcli.Client, obj crcli.Object)
 }
@@ -47,7 +47,7 @@ type objectListToPlanCommandTargetStatusFunc func(list crcli.ObjectList, status 
 type createNamespacedNameFunc func(name string) types.NamespacedName
 type deepCopyFunc func(obj crcli.Object) crcli.Object
 type k0sUpdateReadyFunc func(context.Context, apv1beta2.PlanCommandK0sUpdateStatus, crcli.Object) K0sUpdateReadyStatus
-type readSignalErrorFunc func(obj crcli.Object) string
+type readSignalErrorFunc func(obj crcli.Object, planID string) string
 type writeSignalErrorFunc func(ctx context.Context, client crcli.Client, obj crcli.Object, planID, reason, message string) error
 type clearSignalErrorFunc func(ctx context.Context, client crcli.Client, obj crcli.Object)
 
@@ -100,8 +100,8 @@ func (d controllerDelegate) DeepCopy(obj crcli.Object) crcli.Object {
 }
 
 // ReadSignalError reads the signal error from the delegate object.
-func (d controllerDelegate) ReadSignalError(obj crcli.Object) string {
-	return d.readSignalError(obj)
+func (d controllerDelegate) ReadSignalError(obj crcli.Object, planID string) string {
+	return d.readSignalError(obj, planID)
 }
 
 // WriteSignalError writes the signal error to the delegate object.

@@ -78,7 +78,7 @@ func (aup *airgapupdate) reconcileSignalNodeStatusTarget(ctx context.Context, pl
 
 						if signalData.Status.Status == apsigcomm.Failed || signalData.Status.Status == apsigcomm.FailedDownload {
 							signalNodes[i].State = appc.SignalApplyFailed
-							signalNodes[i].Description = delegate.ReadSignalError(signalNode)
+							signalNodes[i].Description = delegate.ReadSignalError(signalNode, planID)
 						}
 
 						if signalData.Status.Status == apsigcomm.Completed {

@@ -73,6 +73,7 @@ func TestReadSignalError(t *testing.T) {
 		name     string
 		obj      crcli.Object
 		delegate ControllerDelegate
+		planID   string
 		expected string
 	}{
 		{
@@ -85,12 +86,27 @@ func TestReadSignalError(t *testing.T) {
 				},
 			},
 			ControlNodeControllerDelegate(),
+			"plan1",
 			"FailedDownload: checksum mismatch",
+		},
+		{
+			"ControlNodeStaleErrorAnnotation",
+			&apv1beta2.ControlNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						SignalErrorAnnotation: `{"planID":"old-plan","reason":"FailedDownload","message":"checksum mismatch","timestamp":"2024-01-01T00:00:00Z"}`,
+					},
+				},
+			},
+			ControlNodeControllerDelegate(),
+			"plan1",
+			"",
 		},
 		{
 			"ControlNodeNoAnnotation",
 			&apv1beta2.ControlNode{},
 			ControlNodeControllerDelegate(),
+			"plan1",
 			"",
 		},
 		{
@@ -103,19 +119,34 @@ func TestReadSignalError(t *testing.T) {
 				},
 			},
 			NodeControllerDelegate(),
+			"plan1",
 			"FailedDownload: checksum mismatch",
+		},
+		{
+			"NodeStaleErrorAnnotation",
+			&v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						SignalErrorAnnotation: `{"planID":"old-plan","reason":"FailedDownload","message":"checksum mismatch","timestamp":"2024-01-01T00:00:00Z"}`,
+					},
+				},
+			},
+			NodeControllerDelegate(),
+			"plan1",
+			"",
 		},
 		{
 			"NodeNoAnnotation",
 			&v1.Node{},
 			NodeControllerDelegate(),
+			"plan1",
 			"",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, test.delegate.ReadSignalError(test.obj))
+			assert.Equal(t, test.expected, test.delegate.ReadSignalError(test.obj, test.planID))
 		})
 	}
 }
