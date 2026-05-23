@@ -333,7 +333,7 @@ ipv6-test-images-linux-arm64.txt ipv6-test-image-bundle-linux-arm64.tar: TARGET_
 ipv6-test-images-linux-amd64.txt \
 ipv6-test-images-linux-arm64.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
 	{ \
-	  echo "docker.io/library/nginx:1.31.0-alpine"; \
+	  echo "docker.io/library/nginx:1.31.1-alpine"; \
 	  echo "docker.io/curlimages/curl:8.20.0"; \
 	  echo "docker.io/library/alpine:$(alpine_version)"; \
 	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
