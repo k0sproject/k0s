@@ -18,7 +18,7 @@ func TestCoreDNS_RenderWithPatch(t *testing.T) {
 	cfg := coreDNSConfig{
 		Replicas:      1,
 		ClusterDomain: "cluster.local",
-		ClusterDNSIP:  "10.96.0.10",
+		ClusterDNSIPs: []string{"10.96.0.10"},
 		Image:         "coredns:latest",
 		PullPolicy:    "IfNotPresent",
 	}
