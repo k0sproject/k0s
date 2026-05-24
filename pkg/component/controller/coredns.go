@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"net"
 	"path/filepath"
 	"reflect"
 	"time"
@@ -250,7 +251,18 @@ metadata:
 spec:
   selector:
     k8s-app: kube-dns
-  clusterIP: {{ .ClusterDNSIP }}
+  clusterIP: {{ index .ClusterDNSIPs 0 }}
+  {{- if .DualStack }}
+  clusterIPs:
+  {{- range .ClusterDNSIPs }}
+  - {{ . | quote }}
+  {{- end }}
+  ipFamilies:
+  {{- range .ClusterDNSIPFamilies }}
+  - {{ . | quote }}
+  {{- end }}
+  ipFamilyPolicy: PreferDualStack
+  {{- end }}
   ports:
   - name: dns
     port: 53
@@ -270,7 +282,7 @@ var _ manager.Reconciler = (*CoreDNS)(nil)
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
-	dnsAddress             string
+	dnsAddresses           []net.IP
 	clusterDomain          string
 	client                 metadata.Interface
 	log                    *logrus.Entry
@@ -283,18 +295,20 @@ type CoreDNS struct {
 
 type coreDNSConfig struct {
 	Replicas                   int
-	ClusterDNSIP               string
+	ClusterDNSIPs              []string
+	ClusterDNSIPFamilies       []string
 	ClusterDomain              string
 	Image                      string
 	PullPolicy                 string
 	MaxUnavailableReplicas     *uint
 	DisablePodAntiAffinity     bool
 	DisablePodDisruptionBudget bool
+	DualStack                  bool
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
 func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) (*CoreDNS, error) {
-	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.Spec.PrimaryAddressFamily())
+	dnsAddresses, err := nodeConfig.Spec.Network.DNSAddresses(nodeConfig.Spec.PrimaryAddressFamily())
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +324,7 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 	}
 
 	return &CoreDNS{
-		dnsAddress:    dnsAddress,
+		dnsAddresses:  dnsAddresses,
 		clusterDomain: nodeConfig.Spec.Network.ClusterDomain,
 		client:        client,
 		log:           logrus.WithField("component", "coredns"),
@@ -361,12 +375,28 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 
 	nodeCount := len(nodes.Items)
 
+	var addresses []string
+	var addressFamilies []string
+	for _, address := range c.dnsAddresses {
+		addresses = append(addresses, address.String())
+		if address == nil {
+			return coreDNSConfig{}, fmt.Errorf("invalid IP address %q", address)
+		}
+		if address.To4() == nil {
+			addressFamilies = append(addressFamilies, "IPv6")
+		} else {
+			addressFamilies = append(addressFamilies, "IPv4")
+		}
+	}
+
 	config := coreDNSConfig{
-		Replicas:      replicaCount(nodeCount),
-		ClusterDomain: c.clusterDomain,
-		ClusterDNSIP:  c.dnsAddress,
-		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
-		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,
+		Replicas:             replicaCount(nodeCount),
+		ClusterDomain:        c.clusterDomain,
+		ClusterDNSIPs:        addresses,
+		ClusterDNSIPFamilies: addressFamilies,
+		Image:                clusterConfig.Spec.Images.CoreDNS.URI(),
+		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
+		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
 	}
 
 	if config.Replicas <= 1 {
