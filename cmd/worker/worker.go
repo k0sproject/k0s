@@ -218,11 +218,12 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	}
 
 	kubeletKubeconfigPath := c.K0sVars.KubeletAuthConfigPath
-	workerConfig, err := workerconfig.LoadProfile(
+	workerConfig, err := workerconfig.LoadProfileWithCachedFallback(
 		ctx,
 		kubernetes.KubeconfigFromFile(kubeletKubeconfigPath),
 		c.K0sVars.DataDir,
 		c.WorkerProfile,
+		c.AllowCachedConfig,
 	)
 	if err != nil {
 		return err
