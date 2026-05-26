@@ -5,8 +5,10 @@ package v1beta1
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"fmt"
+	"net/netip"
 	"reflect"
 	"slices"
 	"strings"
@@ -528,8 +530,21 @@ func (c *ClusterConfig) CRValidator() *ClusterConfig {
 }
 
 func (s *ClusterSpec) PrimaryAddressFamily() PrimaryAddressFamilyType {
-	if s != nil && s.Network != nil && s.Network.PrimaryAddressFamily != PrimaryFamilyUnknown {
-		return s.Network.PrimaryAddressFamily
+	if s != nil {
+		if s.Network != nil && s.Network.PrimaryAddressFamily != PrimaryFamilyUnknown {
+			return s.Network.PrimaryAddressFamily
+		}
+
+		// Try to determin the primary address based on the address family of
+		// the cluster's external address, or, of this isn't set, based on the
+		// address family of the API server's address.
+		if s.API != nil {
+			addr, _ := netip.ParseAddr(cmp.Or(s.API.ExternalHost(), s.API.Address))
+			if addr.Is6() {
+				return PrimaryFamilyIPv6
+			}
+		}
 	}
-	return s.API.DetectPrimaryAddressFamily()
+
+	return PrimaryFamilyIPv4
 }
