@@ -36,11 +36,13 @@ const etcdGID = 0
 
 // Etcd implement the component interface to run etcd
 type Etcd struct {
-	CertManager certificate.Manager
-	Config      *v1beta1.EtcdConfig
-	JoinClient  *token.JoinClient
-	K0sVars     *config.CfgVars
-	LogLevel    string
+	CertManager       certificate.Manager
+	Config            *v1beta1.EtcdConfig
+	JoinClient        *token.JoinClient
+	K0sVars           *config.CfgVars
+	LogLevel          string
+	UserName          string
+	APIServerUserName string
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
@@ -58,9 +60,9 @@ func (e *Etcd) Init(_ context.Context) error {
 		return fmt.Errorf("missing environment variable: %w", err)
 	}
 
-	e.uid, err = users.LookupUID(constant.EtcdUser)
+	e.uid, err = users.LookupUID(e.UserName)
 	if err != nil {
-		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.EtcdUser, err)
+		err = fmt.Errorf("failed to lookup UID for %q: %w", e.UserName, err)
 		e.uid = users.RootUID
 		logrus.WithError(err).Warn("Running etcd as root, files with key material for etcd user will be owned by root")
 	}
@@ -272,11 +274,11 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			},
 		}
 
-		uid, err := users.LookupUID(constant.ApiserverUser)
+		uid, err := users.LookupUID(e.APIServerUserName)
 		if err != nil {
-			err = fmt.Errorf("failed to lookup UID for %q: %w", constant.ApiserverUser, err)
+			err = fmt.Errorf("failed to lookup UID for %q: %w", e.APIServerUserName, err)
 			uid = users.RootUID
-			logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")
+			logrus.WithError(err).Warnf("Files with key material for %s user will be owned by root", e.APIServerUserName)
 		}
 
 		_, err = e.CertManager.EnsureCertificate(etcdCertReq, uid, e.Config.CA.CertificatesExpireAfter.Duration)

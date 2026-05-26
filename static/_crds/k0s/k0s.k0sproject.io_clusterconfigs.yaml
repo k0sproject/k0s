@@ -481,21 +481,32 @@ spec:
                     type: object
                 type: object
               installConfig:
-                description: InstallSpec defines the required fields for the `k0s
-                  install` command
+                description: Installation-time settings and related runtime defaults.
                 properties:
                   users:
-                    description: SystemUser defines the user to use for each component
+                    description: |-
+                      System users used to run controller components. Users will be created when
+                      running `k0s install`. They will own the generated certificates and
+                      kubeconfigs and be used to execute the supervised processes. If they don't
+                      exist, k0s will fallback to the root user.
                     properties:
                       etcdUser:
+                        description: User to use for managed etcd (default "etcd")
                         type: string
                       kineUser:
+                        description: User to use for kine (default "kube-apiserver")
                         type: string
                       konnectivityUser:
+                        description: User to use for the konnectivity server (default
+                          "konnectivity-server")
                         type: string
                       kubeAPIserverUser:
+                        description: User to use for the Kubernetes API Server (default
+                          "kube-apiserver")
                         type: string
                       kubeSchedulerUser:
+                        description: User to use for the Kubernetes scheduler (default
+                          "kube-scheduler")
                         type: string
                     type: object
                 type: object

@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -37,6 +38,12 @@ type Certificates struct {
 
 // Init initializes the certificate component
 func (c *Certificates) Init(ctx context.Context) error {
+	defaultUserNames := v1beta1.DefaultSystemUsers()
+	userNames := defaultUserNames
+	if c.ClusterSpec.Install != nil && c.ClusterSpec.Install.SystemUsers != nil {
+		userNames = c.ClusterSpec.Install.SystemUsers
+	}
+
 	eg, _ := errgroup.WithContext(ctx)
 	// Common CA
 	caCertPath := filepath.Join(c.K0sVars.CertRootDir, "ca.crt")
@@ -55,9 +62,10 @@ func (c *Certificates) Init(ctx context.Context) error {
 	c.CACert = string(cert)
 	kubeConfigAPIUrl := c.ClusterSpec.API.LocalURL()
 
-	apiServerUID, err := users.LookupUID(constant.ApiserverUser)
+	apiServerUser := cmp.Or(userNames.KubeAPIServer, defaultUserNames.KubeAPIServer)
+	apiServerUID, err := users.LookupUID(apiServerUser)
 	if err != nil {
-		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.ApiserverUser, err)
+		err = fmt.Errorf("failed to lookup UID for %q: %w", apiServerUser, err)
 		apiServerUID = users.RootUID
 		logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")
 	}
@@ -112,9 +120,10 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CAKey:  caCertKey,
 		}
 
-		uid, err := users.LookupUID(constant.KonnectivityServerUser)
+		konnectivityServerUser := cmp.Or(userNames.Konnectivity, defaultUserNames.Konnectivity)
+		uid, err := users.LookupUID(konnectivityServerUser)
 		if err != nil {
-			err = fmt.Errorf("failed to lookup UID for %q: %w", constant.KonnectivityServerUser, err)
+			err = fmt.Errorf("failed to lookup UID for %q: %w", konnectivityServerUser, err)
 			uid = users.RootUID
 			logrus.WithError(err).Warn("Files with key material for konnectivity-server user will be owned by root")
 		}
@@ -152,9 +161,10 @@ func (c *Certificates) Init(ctx context.Context) error {
 			CAKey:  caCertKey,
 		}
 
-		uid, err := users.LookupUID(constant.SchedulerUser)
+		schedulerUser := cmp.Or(userNames.KubeScheduler, defaultUserNames.KubeScheduler)
+		uid, err := users.LookupUID(schedulerUser)
 		if err != nil {
-			err = fmt.Errorf("failed to lookup UID for %q: %w", constant.SchedulerUser, err)
+			err = fmt.Errorf("failed to lookup UID for %q: %w", schedulerUser, err)
 			uid = users.RootUID
 			logrus.WithError(err).Warn("Files with key material for kube-scheduler user will be owned by root")
 		}

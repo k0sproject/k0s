@@ -34,6 +34,7 @@ type Konnectivity struct {
 	Spec        *v1beta1.KonnectivitySpec // FIXME: This should be reconciled via dynamic config
 	K0sVars     *config.CfgVars
 	LogLevel    string
+	UserName    string
 	ServerCount func() (uint, <-chan struct{})
 
 	supervisor     *supervisor.Supervisor
@@ -54,9 +55,9 @@ var _ prober.Healthz = (*Konnectivity)(nil)
 // Init ...
 func (k *Konnectivity) Init(ctx context.Context) error {
 	var err error
-	k.uid, err = users.LookupUID(constant.KonnectivityServerUser)
+	k.uid, err = users.LookupUID(k.UserName)
 	if err != nil {
-		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.KonnectivityServerUser, err)
+		err = fmt.Errorf("failed to lookup UID for %q: %w", k.UserName, err)
 		k.uid = users.RootUID
 		k.EmitWithPayload("error getting UID for", err)
 		logrus.WithError(err).Warn("Running konnectivity as root")
