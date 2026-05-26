@@ -38,9 +38,9 @@ func kubeConfigAdminCmd() *cobra.Command {
 			}
 
 			const (
-				clusterName = "k0s"
-				contextName = "k0s-admin"
-				userName    = "admin"
+				clusterName = "local"
+				contextName = "Default"
+				userName    = "user"
 			)
 
 			adminConfig := clientcmdapi.Config{

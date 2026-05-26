@@ -62,16 +62,16 @@ clusters:
 - cluster:
     certificate-authority-data: Y29udGVudHMgb2YgY2EuY3J0` /* contents of ca.crt */ +`
     server: https://not-here.example.com:65432
-  name: k0s
+  name: local
 contexts:
 - context:
-    cluster: k0s
-    user: admin
-  name: k0s-admin
-current-context: k0s-admin
+    cluster: local
+    user: user
+  name: Default
+current-context: Default
 kind: Config
 users:
-- name: admin
+- name: user
   user:
     client-certificate-data: Y29udGVudHMgb2YgYWRtaW4uY3J0` /* contents of admin.crt */ +`
     client-key-data: Y29udGVudHMgb2YgYWRtaW4ua2V5` /* contents of admin.key */ +`
