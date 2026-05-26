@@ -226,7 +226,7 @@ func (s *ContainerdUpgradeSuite) getLast35Release(ctx context.Context) string {
 	err = json.NewDecoder(resp.Body).Decode(&releases)
 	s.Require().NoError(err, "failed to decode releases response")
 
-	constraint := version.MustConstraint(">=1.35.0, <1.36.0")
+	constraint := version.MustConstraint(">=1.35.0, <1.36.1")
 
 	var latestVersion *version.Version
 	var latestTag string
