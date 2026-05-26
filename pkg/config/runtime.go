@@ -13,7 +13,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
 
@@ -23,7 +22,7 @@ const (
 
 var (
 	ErrK0sNotRunning        = errors.New("k0s is not running")
-	ErrK0sAlreadyRunning    = errors.New("an instance of k0s is already running")
+	ErrK0sStillRunning      = errors.New("another k0s process is still running")
 	ErrInvalidRuntimeConfig = errors.New("invalid runtime configuration")
 )
 
@@ -39,13 +38,15 @@ type RuntimeConfig struct {
 }
 
 type RuntimeConfigSpec struct {
-	NodeConfig *v1beta1.ClusterConfig `json:"nodeConfig"`
+	NodeConfig *v1beta1.ClusterConfig `json:"nodeConfig,omitempty"`
 	K0sVars    *CfgVars               `json:"k0sVars"`
 	lockFile   *os.File
 }
 
 func LoadRuntimeConfig(path string) (*RuntimeConfigSpec, error) {
-	if !isLocked(path + ".lock") {
+	if locked, err := RuntimeConfigLocked(path); err != nil {
+		return nil, err
+	} else if !locked {
 		return nil, ErrK0sNotRunning
 	}
 
@@ -82,6 +83,11 @@ func ParseRuntimeConfig(content []byte) (*RuntimeConfig, error) {
 	}
 
 	return &config, nil
+}
+
+// Reports whether the runtime config lock is currently held.
+func RuntimeConfigLocked(path string) (bool, error) {
+	return isLocked(path + ".lock")
 }
 
 func NewRuntimeConfig(k0sVars *CfgVars, nodeConfig *v1beta1.ClusterConfig) (*RuntimeConfig, error) {
@@ -136,16 +142,39 @@ func (r *RuntimeConfigSpec) Cleanup() error {
 		return nil
 	}
 
+	var errs []error
 	if err := os.Remove(r.K0sVars.RuntimeConfigPath); err != nil {
-		logrus.Warnf("failed to clean up runtime config file: %v", err)
+		errs = append(errs, fmt.Errorf("failed to clean up runtime config file: %w", err))
 	}
-
 	if err := r.lockFile.Close(); err != nil {
-		return fmt.Errorf("failed to close the runtime config file: %w", err)
+		errs = append(errs, fmt.Errorf("failed to close the runtime config lock file: %w", err))
 	}
 
-	if err := os.Remove(r.lockFile.Name()); err != nil {
-		return fmt.Errorf("failed to delete %s: %w", r.lockFile.Name(), err)
+	return errors.Join(errs...)
+}
+
+// tryLock attempts to acquire the lock. Returns *os.File if successful, nil otherwise.
+func tryLock(path string) (*os.File, error) {
+	if file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600); err != nil {
+		return nil, err
+	} else if locked, err := lockFile(file, true); err != nil {
+		return nil, errors.Join(err, file.Close())
+	} else if locked {
+		return file, nil
+	} else {
+		return nil, errors.Join(ErrK0sStillRunning, file.Close())
 	}
-	return nil
+}
+
+// isLocked checks if the lock is currently held by another process.
+func isLocked(path string) (bool, error) {
+	if file, err := os.OpenFile(path, os.O_RDWR, 0); err == nil {
+		// Attempt to acquire a shared lock to test the lock state
+		acquired, err := lockFile(file, false)
+		return !acquired, errors.Join(err, file.Close())
+	} else if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	} else {
+		return false, err
+	}
 }

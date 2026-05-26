@@ -110,7 +110,26 @@ func NewControllerCmd() *cobra.Command {
 			}
 
 			ctx := cmd.Context()
-			if err := c.start(ctx, &controllerFlags, debugFlags.IsDebug()); err != nil {
+			nodeConfig, err := c.loadNodeConfig()
+			if err != nil {
+				return err
+			}
+
+			if err := c.initDirs(); err != nil {
+				return err
+			}
+
+			rtc, err := config.NewRuntimeConfig(c.K0sVars, nodeConfig)
+			if err != nil {
+				return fmt.Errorf("failed to initialize runtime config: %w", err)
+			}
+			defer func() {
+				if err := rtc.Spec.Cleanup(); err != nil {
+					logrus.WithError(err).Warn("Failed to cleanup runtime config")
+				}
+			}()
+
+			if err := c.start(ctx, rtc, nodeConfig, &controllerFlags, debugFlags.IsDebug()); err != nil {
 				if controllerFlags.InitOnly && errors.Is(err, errInitOnly) {
 					return nil
 				}
@@ -146,25 +165,20 @@ func NewControllerCmd() *cobra.Command {
 
 var errInitOnly = errors.New("init-only")
 
-func (c *command) start(ctx context.Context, flags *config.ControllerOptions, debug bool) error {
-	ctx, cancel := context.WithCancelCause(ctx)
-	defer cancel(nil)
-
-	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
-
+func (c *command) loadNodeConfig() (*v1beta1.ClusterConfig, error) {
 	nodeConfig, err := c.K0sVars.NodeConfig()
 	if err != nil {
-		return fmt.Errorf("failed to load node config: %w", err)
+		return nil, fmt.Errorf("failed to load node config: %w", err)
 	}
 
 	if errs := nodeConfig.Validate(); len(errs) > 0 {
-		return fmt.Errorf("invalid node config: %w", errors.Join(errs...))
+		return nil, fmt.Errorf("invalid node config: %w", errors.Join(errs...))
 	}
 
-	nodeComponents := manager.New(prober.DefaultProber)
-	clusterComponents := manager.New(prober.DefaultProber)
+	return nodeConfig, nil
+}
 
-	// create directories early with the proper permissions
+func (c *command) initDirs() error {
 	if err := dir.Init(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 		return err
 	}
@@ -178,15 +192,17 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		return err
 	}
 
-	rtc, err := config.NewRuntimeConfig(c.K0sVars, nodeConfig)
-	if err != nil {
-		return fmt.Errorf("failed to initialize runtime config: %w", err)
-	}
-	defer func() {
-		if err := rtc.Spec.Cleanup(); err != nil {
-			logrus.WithError(err).Warn("Failed to cleanup runtime config")
-		}
-	}()
+	return nil
+}
+
+func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConfig *v1beta1.ClusterConfig, flags *config.ControllerOptions, debug bool) error {
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
+
+	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
+
+	nodeComponents := manager.New(prober.DefaultProber)
+	clusterComponents := manager.New(prober.DefaultProber)
 
 	// common factory to get the admin kube client that's needed in many components
 	adminClientFactory := &kubernetes.ClientFactory{LoadRESTConfig: func() (*rest.Config, error) {
