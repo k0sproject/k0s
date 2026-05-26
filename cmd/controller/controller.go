@@ -106,6 +106,9 @@ func NewControllerCmd() *cobra.Command {
 
 			ctx := cmd.Context()
 			if err := c.start(ctx, &controllerFlags, debugFlags.IsDebug()); err != nil {
+				if controllerFlags.InitOnly && errors.Is(err, errInitOnly) {
+					return nil
+				}
 				return err
 			}
 
@@ -135,6 +138,8 @@ func NewControllerCmd() *cobra.Command {
 
 	return cmd
 }
+
+var errInitOnly = errors.New("init-only")
 
 func (c *command) start(ctx context.Context, flags *config.ControllerOptions, debug bool) error {
 	ctx, cancel := context.WithCancelCause(ctx)
@@ -407,7 +412,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	perfTimer.Checkpoint("starting-node-components")
 
 	if flags.InitOnly {
-		return nil
+		return errInitOnly
 	}
 
 	// Start components
