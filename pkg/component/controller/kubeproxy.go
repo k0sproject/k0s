@@ -280,7 +280,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 				ClientConnection: configv1alpha1.ClientConnectionConfiguration{
 					Kubeconfig: "/var/lib/kube-proxy/kubeconfig.conf",
 				},
-				ClusterCIDR:        clusterConfig.Spec.Network.BuildPodCIDR(),
+				ClusterCIDR:        clusterConfig.Spec.Network.BuildPodCIDR(clusterConfig.Spec.PrimaryAddressFamily()),
 				FeatureGates:       clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
 				Mode:               kubeproxyv1alpha1.ProxyMode(kubeProxy.Mode),
 				MetricsBindAddress: kubeProxy.MetricsBindAddress,
