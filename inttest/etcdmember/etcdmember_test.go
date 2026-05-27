@@ -88,28 +88,21 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 				WithObjectName(obj).
 				WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
 				Until(ctx, func(item *etcdv1beta1.EtcdMember) (done bool, err error) {
-					c := item.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-					if c != nil {
-						// We have the condition so we can bail out
+					joined := item.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
+					if joined != nil && joined.Status == etcdv1beta1.ConditionTrue {
 						em = item
+						return true, nil
 					}
-					return c != nil, nil
+					return false, nil
 				})
 
-			// We've got the condition, verify status details
+			// We've got the Joined=True condition from the watch; just
+			// cross-check the peer address.
 			if err != nil {
 				return err
 			}
 			if em.Status.PeerAddress != s.GetControllerIPAddress(i) {
 				return fmt.Errorf("expected PeerAddress %s, got %s", s.GetControllerIPAddress(i), em.Status.PeerAddress)
-			}
-
-			c := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-			if c == nil {
-				return fmt.Errorf("expected condition %s, got nil", etcdv1beta1.ConditionTypeJoined)
-			}
-			if c.Status != etcdv1beta1.ConditionTrue {
-				return fmt.Errorf("expected condition %s to be %s, got %s", etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, c.Status)
 			}
 			return nil
 		})

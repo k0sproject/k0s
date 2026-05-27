@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -23,12 +25,14 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
 
@@ -90,6 +94,10 @@ func (e *EtcdMemberReconciler) resync(ctx context.Context, client etcdclient.Etc
 		if !e.reconcileMember(ctx, client, &member) {
 			failed = true
 		}
+	}
+
+	if !e.promoteLearners(ctx, client, members.Items, log) {
+		failed = true
 	}
 
 	return !failed
@@ -203,31 +211,26 @@ func (e *EtcdMemberReconciler) watchAndResync(ctx context.Context, client etcdcl
 	trigger := make(chan struct{}, 1)
 	go e.watchEtcdMembers(ctx, client, log, trigger)
 
-	var retry <-chan time.Time
-
+	// Resync periodically even when no EtcdMember CR changes. Learners
+	// that join before their own controller is ready never have a matching
+	// CR, so the watch alone would never fire for them.
+	var resync <-chan time.Time
 	for {
+		e.resync(ctx, client, log)
+		resync = time.After(wait.Jitter(10*time.Second, 0.1))
+
 		select {
-		case <-retry:
+		case <-resync:
 		case _, ok := <-trigger:
 			if !ok {
 				// The trigger goroutine exited. Return and wait for a restart.
 				return
-			}
-			if retry != nil {
-				// A retry is still pending. Ignore the trigger.
-				continue
 			}
 		case <-ctx.Done():
 			for range trigger {
 				// Wait for trigger goroutine to exit.
 			}
 			return
-		}
-
-		retry = nil
-		if !e.resync(ctx, client, log) {
-			log.Debug("Retrying in ten seconds")
-			retry = time.After(10 * time.Second)
 		}
 	}
 }
@@ -365,6 +368,9 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 	defer etcdClient.Close()
 
+	// The local etcd has already passed its health check by the time this
+	// runs (a learner can't serve linearizable reads), so the member is
+	// guaranteed to be voting here. Stamp Joined=True unconditionally.
 	memberID, err := etcdClient.GetPeerIDByAddress(ctx, e.etcdConfig.GetPeerURL())
 	if err != nil {
 		return err
@@ -379,7 +385,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 	var em *etcdv1beta1.EtcdMember
 
-	log.WithField("name", name).WithField("memberID", memberID).Info("creating EtcdMember object")
+	log.WithField("name", name).WithField("memberID", memberIDStr).Info("creating EtcdMember object")
 
 	controllerLeaseName := fmt.Sprintf("k0s-ctrl-%s", e.nodeName)
 
@@ -436,8 +442,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	em.Status.PeerAddress = e.etcdConfig.PeerAddress
 	em.Status.MemberID = memberIDStr
 	em.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
-	_, err = client.UpdateStatus(ctx, em, metav1.UpdateOptions{})
-	if err != nil {
+	if _, err := client.UpdateStatus(ctx, em, metav1.UpdateOptions{}); err != nil {
 		return err
 	}
 
@@ -526,9 +531,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		return false
 	}
 
+	exists := slices.ContainsFunc(members, func(m etcd.Member) bool {
+		return m.Name == member.Name
+	})
 	// Member marked for leave but no member found in etcd, mark for leaved
-	_, ok := members[member.Name]
-	if !ok {
+	if !exists {
 		log.Debug("member marked for leave but not in actual member list, updating state to reflect that")
 		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
@@ -540,7 +547,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	}
 
 	joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !ok {
+	if joinStatus != nil && joinStatus.Status == etcdv1beta1.ConditionFalse && !exists {
 		log.Debug("member already left, no action needed")
 		return true
 	}
@@ -641,4 +648,113 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	}
 
 	return true
+}
+
+// promoteLearners walks the etcd member list and tries to promote at most
+// one learner per call to a voting member. On success, the matching
+// EtcdMember CR's Joined condition is flipped to True — "Joined" only
+// becomes True once the member is a full voting peer, not while it's still
+// a non-voting learner.
+//
+// Promoting gradually (one per tick) keeps raft config changes serialized.
+// Members are shuffled so that successive ticks don't retry the same stuck
+// learner first.
+//
+// Called only from resync, which only runs when this controller holds the
+// leader lease.
+func (e *EtcdMemberReconciler) promoteLearners(
+	ctx context.Context,
+	client etcdclient.EtcdMemberInterface,
+	crs []etcdv1beta1.EtcdMember,
+	log logrus.FieldLogger,
+) bool {
+	etcdClient, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
+	if err != nil {
+		log.WithError(err).Warn("failed to create etcd client for learner promotion")
+		return false
+	}
+	defer etcdClient.Close()
+
+	members, err := etcdClient.ListMembers(ctx)
+	if err != nil {
+		log.WithError(err).Warn("failed to list etcd members")
+		return false
+	}
+
+	crByName := make(map[string]*etcdv1beta1.EtcdMember, len(crs))
+	for i := range crs {
+		crByName[crs[i].Name] = &crs[i]
+	}
+
+	rand.Shuffle(len(members), func(i, j int) { members[i], members[j] = members[j], members[i] })
+
+	for _, m := range members {
+		if !m.IsLearner {
+			continue
+		}
+		log := log.WithFields(logrus.Fields{
+			"memberID":   strconv.FormatUint(m.ID, 16),
+			"memberName": m.Name,
+		})
+
+		if m.Name == "" {
+			// etcdctl reports this state as "unstarted": the member has
+			// been added to the cluster but hasn't reported its name back
+			// yet. Try another learner on this tick.
+			log.Debug("member is unstarted, skipping")
+			continue
+		}
+
+		// The matching CR may not exist yet — the joining controller
+		// creates it only after its own etcd component reports ready,
+		// which can't happen while it is a learner (a learner cannot
+		// serve the readiness Range). We still attempt promotion; CR
+		// status is updated only when the CR exists.
+		cr := crByName[m.Name]
+
+		switch err := etcdClient.PromoteMember(ctx, m.ID); {
+		case err == nil:
+			log.Info("promoted learner to voting member")
+			e.setJoined(ctx, client, cr, log)
+			return true
+
+		case errors.Is(err, rpctypes.ErrMemberNotLearner):
+			// Race: someone else promoted it. Treat as success.
+			log.Debug("member already promoted")
+			e.setJoined(ctx, client, cr, log)
+			return true
+
+		case errors.Is(err, rpctypes.ErrMemberLearnerNotReady):
+			log.Debug("learner not ready for promotion yet")
+			// Pending learner — return false so resync re-runs in 10s.
+			return false
+
+		default:
+			log.WithError(err).Warn("failed to promote learner")
+			return false
+		}
+	}
+
+	return true
+}
+
+// setJoined stamps ConditionTypeJoined=True on the CR once the member has
+// been promoted to voting. No-op if the CR is nil or already shows True.
+func (e *EtcdMemberReconciler) setJoined(
+	ctx context.Context,
+	client etcdclient.EtcdMemberInterface,
+	cr *etcdv1beta1.EtcdMember,
+	log logrus.FieldLogger,
+) {
+	if cr == nil {
+		return
+	}
+	existing := cr.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
+	if existing != nil && existing.Status == etcdv1beta1.ConditionTrue {
+		return
+	}
+	cr.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, "Member joined", time.Now())
+	if _, err := client.UpdateStatus(ctx, cr, metav1.UpdateOptions{}); err != nil {
+		log.WithError(err).Warn("failed to update Joined condition")
+	}
 }
