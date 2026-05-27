@@ -122,8 +122,7 @@ version = 3
 		}
 		criConfig, err := c.handleImports()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "unsupported containerd configuration version")
-		assert.Contains(t, err.Error(), "contains v2 CRI plugin configuration")
+		assert.Contains(t, err.Error(), "v1 CRI plugin format")
 		assert.Nil(t, criConfig)
 	})
 

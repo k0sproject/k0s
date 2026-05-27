@@ -58,7 +58,7 @@ func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.P
 		K0sVars:     vars,
 		Profile:     profile,
 		confPath:    defaultConfPath,
-		importsPath: defaultImportsPath,
+		importsPath: DefaultImportsPath,
 	}
 	return c
 }

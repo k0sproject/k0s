@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	defaultConfPath    = `C:\Program Files\containerd\config.toml`
-	defaultImportsPath = `C:\etc\k0s\containerd.d\`
+	defaultConfPath = `C:\Program Files\containerd\config.toml`
+
+	// DefaultImportsPath is the default directory for containerd config drop-in files.
+	DefaultImportsPath = `C:\etc\k0s\containerd.d\`
 )
 
 var additionalExecutableNames = [...]string{
