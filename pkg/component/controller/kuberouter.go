@@ -27,7 +27,8 @@ import (
 type KubeRouter struct {
 	log logrus.FieldLogger
 
-	k0sVars *config.CfgVars
+	k0sVars              *config.CfgVars
+	primaryAddressFamily v1beta1.PrimaryAddressFamilyType
 
 	previousConfig kubeRouterConfig
 }
@@ -50,11 +51,12 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars) *KubeRouter {
+func NewKubeRouter(k0sVars *config.CfgVars, primaryAddressFamily v1beta1.PrimaryAddressFamilyType) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
-		k0sVars: k0sVars,
+		k0sVars:              k0sVars,
+		primaryAddressFamily: primaryAddressFamily,
 	}
 }
 
@@ -119,7 +121,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	}
 
 	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic
-	if clusterConfig.Spec.PrimaryAddressFamily() == v1beta1.PrimaryFamilyIPv6 {
+	if k.primaryAddressFamily == v1beta1.PrimaryFamilyIPv6 {
 		args["router-id"] = "generate"
 	}
 

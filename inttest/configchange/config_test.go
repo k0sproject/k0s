@@ -182,17 +182,6 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		}
 
 	})
-
-	s.Run("changing primary address family should fail", func() {
-		originalConfig, err := cfgClient.Get(s.Context(), "k0s", metav1.GetOptions{})
-		s.Require().NoError(err)
-		s.Require().Equal(v1beta1.PrimaryFamilyIPv4, originalConfig.Spec.Network.PrimaryAddressFamily)
-		newConfig := originalConfig.DeepCopy()
-		newConfig.Spec.Network = v1beta1.DefaultNetwork()
-		newConfig.Spec.Network.PrimaryAddressFamily = v1beta1.PrimaryFamilyIPv6
-		_, err = cfgClient.Update(s.Context(), newConfig, metav1.UpdateOptions{})
-		s.Require().Error(err)
-	})
 }
 
 func (s *ConfigSuite) waitForReconcileEvent(eventWatch watch.Interface) (*corev1.Event, error) {
