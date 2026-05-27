@@ -121,6 +121,31 @@ func (c *Client) DeleteMember(ctx context.Context, peerID uint64) error {
 	return err
 }
 
+// DemoteMember demotes member by peer name. It removes the member and adds it back as learner. This is needed to trigger leader transfer if the member is a leader.
+func (c *Client) DemoteMember(ctx context.Context, peerID uint64, peerAddresses []string) error {
+	err := c.DeleteMember(ctx, peerID)
+	if err != nil {
+		return fmt.Errorf("demote member failed on removal: %w", err)
+	}
+	_, err = c.client.MemberAddAsLearner(ctx, peerAddresses)
+	return err
+}
+
+// GetLearnerIDByAddress looks up a learner member's ID by its peer URL.
+// Returns (id, true, nil) if found, (0, false, nil) if not present, or (0, false, err) on failure.
+func (c *Client) GetLearnerIDByAddress(ctx context.Context, peerAddress string) (uint64, bool, error) {
+	resp, err := c.client.MemberList(ctx)
+	if err != nil {
+		return 0, false, fmt.Errorf("etcd member list failed: %w", err)
+	}
+	for _, m := range resp.Members {
+		if m.IsLearner && slices.Contains(m.PeerURLs, peerAddress) {
+			return m.ID, true, nil
+		}
+	}
+	return 0, false, nil
+}
+
 // Close closes the etcd client
 func (c *Client) Close() error {
 	return c.client.Close()
