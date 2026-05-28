@@ -32,7 +32,12 @@ DOCKER ?= docker
 
 K0S_GO_BUILD_CACHE ?= build/cache
 
-GO_SRCS := $(shell $(FIND) . -type f -name "*.go" -not -path "./$(K0S_GO_BUILD_CACHE)/*" -not -path "./inttest/*" -not -name "*_test.go" -not -name "zz_generated*")
+# find evaluates left-to-right: match the dirs first, -prune them (skip their
+# entire subtree without traversing), then -o match the actual .go files. The
+# explicit -print is needed because without it find's implicit -print applies
+# to both sides of -o and would also print the pruned directory names.
+GO_SRCS := $(shell $(FIND) . \( -path "./$(K0S_GO_BUILD_CACHE)" -o -path "./inttest" \) -prune -o -type f -name "*.go" -not -name "*_test.go" -not -name "zz_generated*" -print)
+
 GO_CHECK_UNIT_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 # Disable Docker build integration if DOCKER is set to the empty string.
