@@ -94,13 +94,27 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	}
 	if reflect.DeepEqual(c.Spec.Images, DefaultClusterImages()) {
 		c.Spec.Images = nil
-	} else {
-		stripDefaultImages(c.Spec.Images, DefaultClusterImages())
+	} else if c.Spec.Images != nil {
+		stripDefaultImages(c.Spec.Images, defaultClusterImagesWithRepository(c.Spec.Images.Repository)())
 	}
 	if reflect.DeepEqual(c.Spec.Konnectivity, DefaultKonnectivitySpec()) {
 		c.Spec.Konnectivity = nil
 	}
 	return c
+}
+
+// Strip default images even when they've been rewritten with a custom repository.
+func defaultClusterImagesWithRepository(repository string) func() *ClusterImages {
+	return func() *ClusterImages {
+		defaultImages := DefaultClusterImages()
+		if repository != "" {
+			defaultImages.Repository = repository
+			defaultImages.overrideImageRepositories()
+			defaultImages.Repository = ""
+		}
+
+		return defaultImages
+	}
 }
 
 func stripDefaultImages(cfgImages, defaultImages *ClusterImages) {
