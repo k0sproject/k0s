@@ -537,13 +537,14 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 	// Member marked for leave but no member found in etcd, mark for leaved
 	if !exists {
 		log.Debug("member marked for leave but not in actual member list, updating state to reflect that")
+		member.Status.Message = "No such member"
 		member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
-		member, err = client.UpdateStatus(ctx, member, metav1.UpdateOptions{})
-		if err != nil {
+		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
 			log.WithError(err).Error("failed to update EtcdMember status")
 			return false
 		}
+		return true
 	}
 
 	joinStatus := member.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
