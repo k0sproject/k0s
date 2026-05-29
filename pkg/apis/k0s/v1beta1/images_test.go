@@ -86,6 +86,32 @@ spec:
 	}
 }
 
+func TestStripDefaultsForRepositoryOnlyImages(t *testing.T) {
+	yamlData := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+spec:
+  images:
+    repository: registry.acme.corp
+`)
+
+	cfg, err := ConfigFromBytes(yamlData)
+	require.NoError(t, err)
+
+	persisted := cfg.GetClusterWideConfig().StripDefaults().CRValidator()
+
+	require.NotNil(t, persisted.Spec.Images)
+	require.Equal(t, "registry.acme.corp", persisted.Spec.Images.Repository)
+	require.Nil(t, persisted.Spec.Images.Konnectivity)
+	require.Nil(t, persisted.Spec.Images.PushGateway)
+	require.Nil(t, persisted.Spec.Images.MetricsServer)
+	require.Nil(t, persisted.Spec.Images.KubeProxy)
+	require.Nil(t, persisted.Spec.Images.CoreDNS)
+	require.Nil(t, persisted.Spec.Images.Pause)
+	require.Nil(t, persisted.Spec.Images.Calico)
+	require.Nil(t, persisted.Spec.Images.KubeRouter)
+}
+
 func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 	t.Run("if_has_repository_not_empty_add_prefix_to_all_images", func(t *testing.T) {
 		t.Run("default_config", func(t *testing.T) {
