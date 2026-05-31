@@ -187,15 +187,6 @@ func (n *Network) Validate() []error {
 	return errors
 }
 
-// DNSAddress calculates the 10th address of configured service CIDR block.
-func (n *Network) DNSAddress(primaryAddressFamily PrimaryAddressFamilyType) (string, error) {
-	addresses, err := n.DNSAddresses(primaryAddressFamily)
-	if err != nil {
-		return "", err
-	}
-	return addresses[0].String(), nil
-}
-
 func (n *Network) DNSAddresses(primaryAddressFamily PrimaryAddressFamilyType) ([]net.IP, error) {
 	var cidrs []string
 	if n.DualStack.Enabled {
