@@ -336,6 +336,51 @@ func TestClusterConfig_StripDefaults_DefaultConfig(t *testing.T) {
 	a.Nil(stripped.Spec.Konnectivity)
 }
 
+func TestClusterConfig_GetClusterWideConfig(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		input    *ClusterConfig
+		expected *ClusterConfig
+	}{
+		{"nil", nil, nil},
+		{"zero", &ClusterConfig{}, &ClusterConfig{}},
+		{"zero spec", &ClusterConfig{Spec: &ClusterSpec{}}, &ClusterConfig{Spec: &ClusterSpec{}}},
+		{"zero network", &ClusterConfig{Spec: &ClusterSpec{
+			Network: &Network{},
+		}}, &ClusterConfig{Spec: &ClusterSpec{
+			Network: &Network{},
+		}}},
+		{"RemovesNodeConfig", &ClusterConfig{Spec: &ClusterSpec{
+			API: &APISpec{Address: "127.0.0.1"},
+			Storage: &StorageSpec{
+				Type: KineStorageType,
+			},
+			Install: &InstallSpec{
+				SystemUsers: &SystemUser{
+					KubeAPIServer: t.Name(),
+				},
+			},
+			Network: &Network{
+				Provider:      "calico",
+				ServiceCIDR:   "ServiceCIDR",
+				ClusterDomain: "ClusterDomain",
+				ControlPlaneLoadBalancing: &ControlPlaneLoadBalancingSpec{
+					Enabled: true,
+				},
+				PrimaryAddressFamily: PrimaryFamilyIPv6,
+			}},
+		}, &ClusterConfig{Spec: &ClusterSpec{
+			Network: &Network{
+				Provider: "calico",
+			},
+		}}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.input.GetClusterWideConfig())
+		})
+	}
+}
+
 func TestClusterConfig_StripDefaults_Images(t *testing.T) {
 	//nolint:dupword // it's YAML data
 	yaml := `
@@ -434,12 +479,13 @@ spec:
 }
 
 func TestStrippedClusterWideDefaultConfig(t *testing.T) {
-	underTest := DefaultClusterConfig().GetClusterWideConfig().StripDefaults()
-	if assert.NotNil(t, underTest.Spec) {
+	defaultConfig := DefaultClusterConfig()
+	stripped := defaultConfig.GetClusterWideConfig().StripDefaults()
+	if assert.NotNil(t, stripped.Spec) {
 		// The network and extensions fields aren't properly handled at the moment.
-		underTest.Spec.Network = nil
-		underTest.Spec.Extensions = nil
-		assert.Zero(t, *underTest.Spec, "%+v", underTest.Spec)
+		stripped.Spec.Network = nil
+		stripped.Spec.Extensions = nil
+		assert.Zero(t, *stripped.Spec, "%+v", stripped.Spec)
 	}
 }
 

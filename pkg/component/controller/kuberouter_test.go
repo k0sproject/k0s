@@ -38,7 +38,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.IPMasq = true
 
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv4)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
@@ -123,7 +123,7 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv4)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
@@ -161,7 +161,7 @@ func TestKubeRouterManualMTUManifests(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
 	cfg.Spec.Network.KubeRouter.MTU = 1234
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv4)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
@@ -202,7 +202,7 @@ func TestExtraArgs(t *testing.T) {
 	}
 
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv6)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
@@ -217,6 +217,7 @@ func TestExtraArgs(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, ds)
 
+	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--router-id=generate", "IPv6 related flags not found")
 	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-firewall=false")
 	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--foo=bar")
 }
@@ -237,7 +238,7 @@ func TestRawArgs(t *testing.T) {
 	}
 
 	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars)
+	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv4)
 	require.NoError(t, kr.Init(ctx))
 	require.NoError(t, kr.Start(ctx))
 	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })

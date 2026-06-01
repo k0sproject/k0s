@@ -13,8 +13,6 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -44,7 +42,6 @@ func (*apiConfigSource) Init(context.Context) error { return nil }
 // Start implements [manager.Component].
 func (a *apiConfigSource) Start(context.Context) error {
 	var lastObservedVersion string
-	var lastKnownPAF v1beta1.PrimaryAddressFamilyType
 
 	log := logrus.WithField("component", "clusterconfig.apiConfigSource")
 	watch := watch.ClusterConfigs(a.configClient).
@@ -78,22 +75,6 @@ func (a *apiConfigSource) Start(context.Context) error {
 		defer close(done)
 		defer close(a.resultChan)
 		_ = watch.Until(ctx, func(cfg *v1beta1.ClusterConfig) (bool, error) {
-			// Restore PrimaryAddressFamily if a client dropped it.
-			if cfg.Spec != nil && cfg.Spec.Network != nil {
-				if cfg.Spec.Network.PrimaryAddressFamily == "" && lastKnownPAF != "" {
-					restored := cfg.DeepCopy()
-					restored.Spec.Network.PrimaryAddressFamily = lastKnownPAF
-					if _, err := a.configClient.Update(ctx, restored, metav1.UpdateOptions{}); err != nil {
-						log.WithError(err).Warnf("Failed to restore primary address family to %q", lastKnownPAF)
-					} else {
-						log.Infof("Restored primary address family to %q", lastKnownPAF)
-						return false, nil
-					}
-				} else if cfg.Spec.Network.PrimaryAddressFamily != "" {
-					lastKnownPAF = cfg.Spec.Network.PrimaryAddressFamily
-				}
-			}
-
 			// Push changes only when the config actually changes
 			if lastObservedVersion != cfg.ResourceVersion {
 				log.Debugf("Cluster configuration update to resource version %q", cfg.ResourceVersion)

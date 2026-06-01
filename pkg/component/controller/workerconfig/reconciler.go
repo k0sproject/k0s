@@ -608,7 +608,7 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 		},
 		DualStackEnabled:     snapshot.dualStackEnabled,
 		AutopilotDisabled:    r.autopilotDisabled,
-		PrimaryAddressFamily: snapshot.primaryAddressFamily,
+		PrimaryAddressFamily: r.primaryAddressFamily,
 	}
 
 	if workerProfile.NodeLocalLoadBalancing != nil {

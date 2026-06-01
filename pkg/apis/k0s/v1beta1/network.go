@@ -53,10 +53,10 @@ type Network struct {
 	// If empty, k0s determines it based on `.spec.API.ExternalAddress`,
 	// if this isn't present it will use `.spec.API.Address.`.
 	// If both addresses are empty or the chosen address is a hostname, defaults to `IPv4`.
-	// +kubebuilder:validation:XValidation:rule="oldSelf == '' || self == oldSelf",message="cannot change primary address family"
 	PrimaryAddressFamily PrimaryAddressFamilyType `json:"primaryAddressFamily,omitempty"`
 }
 
+// +kubebuilder:validation:Enum=IPv4;IPv6
 type PrimaryAddressFamilyType string
 
 const (

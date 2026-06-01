@@ -534,7 +534,7 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 			return fmt.Errorf("failed to create Calico component: %w", err)
 		}
 		clusterComponents.Add(ctx, calico)
-		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars))
+		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, nodeConfig.Spec.PrimaryAddressFamily()))
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.MetricsServerComponentName) {

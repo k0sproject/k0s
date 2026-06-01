@@ -55,9 +55,7 @@ func TestClusterConfigInitializer_Create(t *testing.T) {
 			ClusterConfigs(constant.ClusterConfigNamespace).
 			Get(t.Context(), "k0s", metav1.GetOptions{})
 		if assert.NoError(t, err) {
-			expectedConfig := initialConfig.DeepCopy()
-			expectedConfig.Spec.Network.PrimaryAddressFamily = k0sv1beta1.PrimaryFamilyIPv4
-			assert.Equal(t, expectedConfig, actualConfig)
+			assert.Equal(t, initialConfig, actualConfig)
 		}
 	})
 }
