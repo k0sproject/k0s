@@ -118,6 +118,16 @@ func NewWorkerCmd() *cobra.Command {
 				return err
 			}
 
+			rtc, err := config.NewRuntimeConfig(c.K0sVars, nil)
+			if err != nil {
+				return fmt.Errorf("failed to initialize runtime config: %w", err)
+			}
+			defer func() {
+				if err := rtc.Spec.Cleanup(); err != nil {
+					logrus.WithError(err).Warn("Failed to cleanup runtime config")
+				}
+			}()
+
 			return c.Start(ctx, nodeName, kubeletExtraArgs, getBootstrapKubeconfig, nil)
 		},
 	}
