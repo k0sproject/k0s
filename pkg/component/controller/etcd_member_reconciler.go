@@ -38,8 +38,6 @@ import (
 
 const (
 	controllerLeaseLabelName = "k0s.k0sproject.io/controller-lease"
-	shutdownOnLeaveLabelName = "k0s.k0sproject.io/shutdown-on-leave"
-	shutdownLabelName        = "k0s.k0sproject.io/shutdown"
 )
 
 const EtcdMemberStackName = "etcd-member"
@@ -175,7 +173,7 @@ func (e *EtcdMemberReconciler) reconcile(ctx context.Context, log logrus.FieldLo
 			e.watchAndResync(statusCtx, client, log)
 
 		case leaderelection.StatusPending:
-			e.shutdownIfMarked(statusCtx, log, client)
+			e.leaveIfMarked(statusCtx, log, client)
 		}
 
 		// Bail out if the context has been canceled.
@@ -274,8 +272,12 @@ func (e *EtcdMemberReconciler) watchEtcdMembers(ctx context.Context, client etcd
 	}
 }
 
-// Waits for the shutdown label on this member and then requests a k0s shutdown.
-func (e *EtcdMemberReconciler) shutdownIfMarked(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
+// leaveIfMarked watches this node's own EtcdMember for Spec.Leave=true, then
+// removes itself from the etcd cluster and shuts down k0s. Status updates are
+// intentionally left to the leader: after DeleteMember succeeds this node is
+// no longer part of etcd, so any k8s API write would fail. The leader will
+// detect the removal on its next reconcile and update the status accordingly.
+func (e *EtcdMemberReconciler) leaveIfMarked(ctx context.Context, log logrus.FieldLogger, client etcdclient.EtcdMemberInterface) {
 	name := e.etcdConfig.GetMemberName()
 	name, err := nodeutil.GetHostname(name)
 	if err != nil {
@@ -283,18 +285,68 @@ func (e *EtcdMemberReconciler) shutdownIfMarked(ctx context.Context, log logrus.
 		return
 	}
 
-	log.Info("Starting to watch etcd member object ", name, " using invocation ID ", e.k0sVars.InvocationID)
+	log.Info("Starting to watch etcd member object ", name, " for leave signal")
+	var member *etcdv1beta1.EtcdMember
 	err = watch.EtcdMembers(client).
 		WithObjectName(name).
-		WithLabels(labels.Set{shutdownLabelName: e.k0sVars.InvocationID}).
-		Until(ctx, func(*etcdv1beta1.EtcdMember) (bool, error) { return true, nil })
+		Until(ctx, func(em *etcdv1beta1.EtcdMember) (bool, error) {
+			member = em
+			return em.Spec.Leave, nil
+		})
 
-	if err == nil {
-		log.Info("Etcd member marked for shutdown; stopping components and waiting for external termination")
-		e.shutdown(errors.New("etcd member marked for shutdown"))
-	} else if ctxErr := context.Cause(ctx); !errors.Is(err, ctxErr) {
-		log.WithError(err).Error("Error watching etcd member object")
+	if err != nil {
+		if ctxErr := context.Cause(ctx); !errors.Is(err, ctxErr) {
+			log.WithError(err).Error("Error watching etcd member object")
+		}
+		return
 	}
+
+	log.Info("Leave requested; removing self from etcd cluster before shutdown")
+
+	etcdClient, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
+	if err != nil {
+		log.WithError(err).Error("Failed to create etcd client for self-removal")
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
+		member.Status.Message = "Failed to create etcd client: " + err.Error()
+		if _, statusErr := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); statusErr != nil {
+			log.WithError(statusErr).Warn("Failed to update EtcdMember status")
+		}
+		return
+	}
+	defer etcdClient.Close()
+
+	memberID, err := etcdClient.GetPeerIDByAddress(ctx, e.etcdConfig.GetPeerURL())
+	if err != nil {
+		log.WithError(err).Error("Failed to find own etcd member ID")
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
+		member.Status.Message = "Failed to find own etcd member ID: " + err.Error()
+		if _, statusErr := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); statusErr != nil {
+			log.WithError(statusErr).Warn("Failed to update EtcdMember status")
+		}
+		return
+	}
+
+	err = retry.Do(func() error {
+		return etcdClient.DeleteMember(ctx, memberID)
+	},
+		retry.Delay(5*time.Second),
+		retry.LastErrorOnly(true),
+		retry.Attempts(0), // retry until success or context canceled
+		retry.Context(ctx),
+	)
+
+	if err != nil {
+		log.WithError(err).Error("Failed to remove self from etcd cluster")
+		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
+		member.Status.Message = "Failed to remove self from etcd cluster: " + err.Error()
+		if _, statusErr := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); statusErr != nil {
+			log.WithError(statusErr).Warn("Failed to update EtcdMember status")
+		}
+		return
+	}
+
+	log.Info("Successfully removed self from etcd cluster; shutting down")
+	e.shutdown(errors.New("etcd member leave requested"))
 }
 
 // Cancels the reconcile loop and waits for it to exit.
@@ -399,7 +451,6 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 					Name: name,
 					Labels: map[string]string{
 						controllerLeaseLabelName: controllerLeaseName,
-						shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
 					},
 				},
 				Spec: etcdv1beta1.EtcdMemberSpec{
@@ -428,9 +479,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 
 	em.Labels = labels.Merge(em.Labels, labels.Set{
 		controllerLeaseLabelName: controllerLeaseName,
-		shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
 	})
-	delete(em.Labels, shutdownLabelName) // Clear any lingering shutdown request on re-join.
 	em.Spec.Leave = false
 
 	log.Debug("EtcdMember object already exists, updating it")
@@ -560,49 +609,34 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, client etcdc
 		return false
 	}
 
-	if memberInvocationID, ok := member.Labels[shutdownOnLeaveLabelName]; ok && memberInvocationID != "" {
-		clients, err := e.clientFactory.GetClient()
-		if err != nil {
-			log.WithError(err).Error("Failed to get Kubernetes client")
-			return false
+	// Wait for the member's controller to remove itself from etcd before
+	// doing any forced cleanup. This preserves quorum: the leaving node
+	// removes itself first (via leaveIfMarked), then shuts down. Only
+	// proceed with removal here when the controller is no longer running
+	// (dead/crashed node cleanup).
+	memberLeaseName := member.Labels[controllerLeaseLabelName]
+	if memberLeaseName == "" {
+		memberLeaseName = "k0s-ctrl-" + member.Name
+	}
+	k8sClients, err := e.clientFactory.GetClient()
+	if err != nil {
+		log.WithError(err).Error("Failed to get Kubernetes client")
+		return false
+	}
+	memberLease, err := k8sClients.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, memberLeaseName, metav1.GetOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		log.WithError(err).Error("Failed to get controller lease")
+		return false
+	}
+	if err == nil && kubeutil.IsValidLease(*memberLease) {
+		msg := "Member is still active; waiting for it to remove itself from the etcd cluster"
+		log.Info(msg)
+		member.Status.Message = msg
+		member.Status.ReconcileStatus = ""
+		if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+			log.WithError(err).Error("Failed to update member state")
 		}
-
-		memberLeaseName := member.Labels[controllerLeaseLabelName]
-		if memberLeaseName == "" {
-			memberLeaseName = "k0s-ctrl-" + member.Name
-		}
-		if memberLease, err := clients.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, memberLeaseName, metav1.GetOptions{}); err != nil {
-			log.WithError(err).Error("Failed to get etcd member lease")
-			msg := "Failed to get k0s controller lease: " + err.Error()
-			if apierrors.IsNotFound(err) {
-				msg = "No k0s controller lease found"
-			}
-			member.Status.Message = msg
-			member.Status.ReconcileStatus = ""
-			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-				log.WithError(err).Error("Failed to update member state")
-			}
-			return false
-		} else if ident := memberLease.Spec.HolderIdentity; ident != nil && *ident == memberInvocationID && kubeutil.IsValidLease(*memberLease) {
-			if member.Labels[shutdownLabelName] != memberInvocationID {
-				log.Info("Requesting member shutdown before deletion")
-				member.Labels[shutdownLabelName] = memberInvocationID
-				if _, err := client.Update(ctx, member, metav1.UpdateOptions{}); err != nil {
-					log.WithError(err).Error("Failed to update member")
-					return false
-				}
-				return true
-			}
-
-			msg := "Member is still active; waiting for it to shutdown"
-			log.Info(msg)
-			member.Status.Message = msg
-			member.Status.ReconcileStatus = ""
-			if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
-				log.WithError(err).Error("Failed to update member state")
-			}
-			return false
-		}
+		return false
 	}
 
 	log.Debug("Deleting member from cluster")
