@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -63,13 +64,13 @@ func (l *K0sControllersLeaseCounter) Start(context.Context) error {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancelCause(context.Background())
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	go func() { defer wg.Done(); l.runLeaderElection(ctx, client) }()
 	go func() { defer wg.Done(); l.runLeaseCounter(ctx, kubeClient) }()
-	l.stop = func() { cancel(); wg.Wait() }
+	l.stop = func() { cancel(errors.New("component is stopping")); wg.Wait() }
 
 	return nil
 }
@@ -88,7 +89,11 @@ func (l *K0sControllersLeaseCounter) runLeaderElection(ctx context.Context, clie
 		if status == leaderelection.StatusLeading {
 			l.log.Info("Holding the controller lease")
 		} else {
-			l.log.Error("Lost the controller lease")
+			if err := context.Cause(ctx); err != nil {
+				l.log.Info("Lost the controller lease: ", err)
+			} else {
+				l.log.Error("Lost the controller lease")
+			}
 		}
 	})
 }

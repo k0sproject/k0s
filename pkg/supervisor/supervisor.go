@@ -66,7 +66,11 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 	case <-ctx.Done():
 		s.log.Debugf("Attempting to terminate supervised process (%v)", context.Cause(ctx))
 		if err := s.terminateSupervisedProcess(cmd, waitresult); err != nil {
-			s.log.WithError(err).Error("Error while terminating process")
+			if errors.Is(err, errTerminated) {
+				s.log.Warn("Process ", errTerminated)
+			} else {
+				s.log.WithError(err).Error("Error while terminating process")
+			}
 		} else {
 			s.log.Info("Process terminated successfully")
 		}
@@ -88,6 +92,12 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 	}
 }
 
+// Indicates that a process terminated with SIGTERM. Some processes prefer to
+// re-raise SIGTERM instead of exiting with a zero exit code. In that case, k0s
+// cannot determine whether the process had a clean shutdown or if it even had a
+// proper signal handler to begin with.
+var errTerminated = errors.New("terminated with SIGTERM instead of exiting cleanly")
+
 func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error) error {
 	err := requestGracefulTermination(cmd.Process)
 	switch {
@@ -103,7 +113,7 @@ func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan
 				return nil
 			case errors.As(err, &exitErr):
 				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.Signal() == syscall.SIGTERM {
-					return errors.New("process terminated without handling SIGTERM")
+					return errTerminated
 				}
 				return exitErr
 			default:
