@@ -788,7 +788,7 @@ func (s *BootlooseSuite) StopController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	s.T().Log("killing k0s")
+	s.T().Log("Stopping k0s controller on", name)
 
 	return s.launchDelegate.StopController(s.Context(), ssh)
 }
@@ -797,7 +797,7 @@ func (s *BootlooseSuite) RestartController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	s.T().Log("killing k0s")
+	s.T().Log("Restarting k0s controller on", name)
 	err = s.launchDelegate.StopController(s.Context(), ssh)
 	if err != nil {
 		return err

@@ -6,7 +6,6 @@ package etcdlearner
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"slices"
 	"testing"
@@ -18,7 +17,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/stretchr/testify/suite"
@@ -61,12 +59,16 @@ func (s *EtcdLearnerSuite) TestUnreachableLearnerPreservesQuorum() {
 		PeerAddress: phantomPeerURL,
 	})
 
+	ssh, err := s.SSH(ctx, s.ControllerNode(0))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
 	// Wait until the phantom shows up in etcd's member list as a learner.
 	// Using etcdctl rather than `k0s etcd member-list`: the phantom has
 	// not (and cannot) self-report its name, and `k0s etcd member-list`
 	// surfaces only the name→peerURL map, which drops unnamed members.
 	s.Require().NoError(common.Poll(ctx, func(ctx context.Context) (bool, error) {
-		for _, m := range s.listMembers(ctx, s.ControllerNode(0)) {
+		for _, m := range s.listMembers(ctx, ssh) {
 			if slices.Contains(m.PeerURLs, phantomPeerURL) {
 				return m.IsLearner, nil
 			}
@@ -84,30 +86,25 @@ func (s *EtcdLearnerSuite) TestUnreachableLearnerPreservesQuorum() {
 		"etcd quorum was lost after adding an unreachable peer; "+
 			"the new member must enter as a non-voting learner")
 
-	// Confirm the leader's reconciler does not wrongly promote a peer
-	// that cannot have caught up. The reconciler re-ticks every 10s on
-	// stuck learners; observing it stay False over ~30s rules out a
-	// one-shot race.
-	s.T().Log("verifying phantom stays a learner over a 30s observation window")
-	holdCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-	err = wait.PollUntilContextCancel(holdCtx, 5*time.Second, true, func(ctx context.Context) (bool, error) {
-		var found bool
-		for _, m := range s.listMembers(ctx, s.ControllerNode(0)) {
-			if !slices.Contains(m.PeerURLs, phantomPeerURL) {
-				continue
-			}
-			found = true
-			if !m.IsLearner {
-				return false, errors.New("phantom was promoted to voter despite being unreachable")
-			}
+	// Confirm that the leader's reconciler does not incorrectly promote a peer
+	// that hasn't caught up yet. Check the etcd member list three times with a
+	// ten-second delay between each check to ensure that the phantom remains a
+	// learner for at least thirty seconds.
+	s.T().Log("Verifying phantom stays a learner for at least 30 seconds")
+	for range 3 {
+		select {
+		case <-time.After(10 * time.Second):
+		case <-ctx.Done():
+			s.FailNow("Interrupted while observing etcd members")
 		}
-		if !found {
-			return false, errors.New("phantom disappeared from etcd member list mid-test")
-		}
-		return false, nil // keep polling until the deadline elapses
-	})
-	s.Require().ErrorIs(err, context.DeadlineExceeded, "observation window must complete without seeing phantom promoted")
+
+		members := s.listMembers(ctx, ssh)
+		phantomIndex := slices.IndexFunc(members, func(m etcdMember) bool {
+			return slices.Contains(m.PeerURLs, phantomPeerURL)
+		})
+		s.Require().GreaterOrEqual(phantomIndex, 0, "Phantom disappeared from etcd member list mid-test")
+		s.Require().True(members[phantomIndex].IsLearner, "Phantom was promoted to voter despite being unreachable")
+	}
 }
 
 // etcdMember is a minimal subset of etcdctl's member-list -w json output.
@@ -121,11 +118,7 @@ type etcdMember struct {
 // listMembers returns the raw etcd member list via etcdctl. We can't use
 // `k0s etcd member-list` here because it drops unnamed members (the
 // phantom learner has no name).
-func (s *EtcdLearnerSuite) listMembers(ctx context.Context, node string) []etcdMember {
-	ssh, err := s.SSH(ctx, node)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
+func (s *EtcdLearnerSuite) listMembers(ctx context.Context, ssh *common.SSHConnection) []etcdMember {
 	out, err := ssh.ExecWithOutput(ctx,
 		"/opt/etcdctl member list -w json "+
 			"--endpoints=https://127.0.0.1:2379 "+

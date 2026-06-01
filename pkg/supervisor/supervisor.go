@@ -47,7 +47,7 @@ type Supervisor struct {
 	log            logrus.FieldLogger
 	mutex          sync.Mutex
 	startStopMutex sync.Mutex
-	stop           func()
+	stop           func(opts StopOpts)
 }
 
 const k0sManaged = "_K0S_MANAGED=yes"
@@ -64,8 +64,13 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 
 	select {
 	case <-ctx.Done():
-		s.log.Debugf("Attempting to terminate supervised process (%v)", context.Cause(ctx))
-		if err := s.terminateSupervisedProcess(cmd, waitresult); err != nil {
+		cause := context.Cause(ctx)
+		s.log.Debugf("Attempting to terminate supervised process (%v)", cause)
+		var stopOpts StopOpts
+		if stoppingErr := (*stoppingErr)(nil); errors.As(cause, &stoppingErr) {
+			stopOpts = stoppingErr.opts
+		}
+		if err := s.terminateSupervisedProcess(cmd, waitresult, stopOpts); err != nil {
 			s.log.WithError(err).Error("Error while terminating process")
 		} else {
 			s.log.Info("Process terminated successfully")
@@ -88,7 +93,27 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 	}
 }
 
-func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error) error {
+func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error, stopOpts StopOpts) error {
+	if timeout := stopOpts.DeferGracefulTerminationUntil; timeout != nil {
+		// Termination request deferred, wait for process to finish on its own.
+		s.log.Debug("Awaiting process termination")
+
+		select {
+		case err := <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				return nil
+			case errors.As(err, &exitErr):
+				return exitErr
+			default:
+				return fmt.Errorf("failed to wait for process: %w", err)
+			}
+		case <-timeout:
+			s.log.Debug("Timed out while waiting for process to terminate, requesting graceful termination")
+		}
+	}
+
 	err := requestGracefulTermination(cmd.Process)
 	switch {
 	case err == nil:
@@ -142,6 +167,22 @@ func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan
 		return fmt.Errorf("failed to request graceful termination: %w", err)
 	}
 }
+
+// Controls how supervised processes are stopped.
+type StopOpts struct {
+	// Delays sending a graceful termination request to the supervised process
+	// until the channel is closed.
+	//
+	// This is useful when the process is expected to terminate on its own and
+	// an immediate termination request would be premature. Once the channel is
+	// closed, the supervisor reverts to the standard graceful termination
+	// process.
+	DeferGracefulTerminationUntil <-chan struct{}
+}
+
+type stoppingErr struct{ opts StopOpts }
+
+func (*stoppingErr) Error() string { return "supervisor is stopping" }
 
 // Supervise Starts supervising the given process
 func (s *Supervisor) Supervise(ctx context.Context) error {
@@ -247,22 +288,27 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 		return err
 	}
 
-	s.stop = func() {
-		cancel(errors.New("supervisor is stopping"))
+	s.stop = func(opts StopOpts) {
+		cancel(&stoppingErr{opts})
 		<-done
 	}
 	return nil
 }
 
-// Stop stops the supervised
+// Stops the supervised process using the default stop behavior.
 func (s *Supervisor) Stop() error {
+	return s.StopWith(StopOpts{})
+}
+
+// Stops the supervised process using the provided options.
+func (s *Supervisor) StopWith(opts StopOpts) error {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
 	if s.stop == nil {
 		return errors.New("not started")
 	}
 
-	s.stop()
+	s.stop(opts)
 	s.stop = nil
 	return nil
 }

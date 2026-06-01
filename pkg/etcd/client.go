@@ -69,6 +69,44 @@ func NewClientWithConfig(cfg clientv3.Config) (*Client, error) {
 	return client, nil
 }
 
+// Describes the role of a cluster member.
+type MemberRole uint8
+
+const (
+	MemberRoleUnknown  MemberRole = iota
+	MemberRoleLearner             // Non-voting member still catching up.
+	MemberRoleFollower            // Voting member, not the current leader.
+	MemberRoleLeader              // Voting member and leader.
+)
+
+// The status of the local etcd endpoint.
+type EndpointStatus struct {
+	ID   uint64     // Member ID in the etcd cluster.
+	Role MemberRole // Role of this member at the time of the query.
+}
+
+var (
+	ErrServerStopped  = rpctypes.ErrStopped
+	ErrMemberNotFound = rpctypes.ErrMemberNotFound
+)
+
+// Queries the local etcd endpoint's status.
+func (c *Client) Status(ctx context.Context) (*EndpointStatus, error) {
+	resp, err := c.client.Status(ctx, c.Config.Endpoints[0])
+	if err != nil {
+		return nil, err
+	}
+
+	role := MemberRoleFollower
+	if resp.Header.MemberId == resp.Leader {
+		role = MemberRoleLeader
+	} else if resp.IsLearner {
+		role = MemberRoleLearner
+	}
+
+	return &EndpointStatus{resp.Header.MemberId, role}, nil
+}
+
 // ListMembers gets a list of current etcd members.
 func (c *Client) ListMembers(ctx context.Context) ([]Member, error) {
 	resp, err := c.client.MemberList(ctx)
