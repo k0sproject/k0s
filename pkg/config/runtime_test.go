@@ -19,12 +19,15 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+
+	"sigs.k8s.io/yaml"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"sigs.k8s.io/yaml"
 )
 
 func TestLoadRuntimeConfig(t *testing.T) {
@@ -84,6 +87,30 @@ func TestNewRuntimeConfig(t *testing.T) {
 
 	// try to create a new runtime config when one is already active and check if it returns an error
 	_, err = NewRuntimeConfig(k0sVars, nil)
-	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrK0sAlreadyRunning)
+	assert.ErrorIs(t, err, ErrK0sStillRunning)
+}
+
+func TestRuntimeConfigLocked(t *testing.T) {
+	tempDir := t.TempDir()
+	runtimeConfigPath := filepath.Join(tempDir, "k0s.yaml")
+
+	if locked, err := RuntimeConfigLocked(runtimeConfigPath); assert.NoError(t, err) {
+		assert.False(t, locked)
+	}
+
+	cfg, err := NewRuntimeConfig(&CfgVars{
+		RuntimeConfigPath: runtimeConfigPath,
+	}, nil)
+	require.NoError(t, err)
+	unlock := sync.OnceFunc(func() { assert.NoError(t, cfg.Spec.Cleanup()) })
+	t.Cleanup(unlock)
+
+	if locked, err := RuntimeConfigLocked(runtimeConfigPath); assert.NoError(t, err) {
+		assert.True(t, locked)
+	}
+
+	unlock()
+	if locked, err := RuntimeConfigLocked(runtimeConfigPath); assert.NoError(t, err) {
+		assert.False(t, locked)
+	}
 }

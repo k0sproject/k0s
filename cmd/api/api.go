@@ -67,6 +67,8 @@ Reads the runtime configuration from standard input.`,
 
 			if runtimeConfig, err := loadRuntimeConfig(cmd.InOrStdin()); err != nil {
 				return err
+			} else if runtimeConfig.Spec.NodeConfig == nil {
+				return fmt.Errorf("%w: node config missing", config.ErrInvalidRuntimeConfig)
 			} else if run, err = buildServer(runtimeConfig.Spec.K0sVars, runtimeConfig.Spec.NodeConfig); err != nil {
 				return err
 			}
@@ -115,7 +117,7 @@ func buildServer(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) (fu
 	mux := http.NewServeMux()
 	storage := nodeConfig.Spec.Storage
 
-	if storage.Type == v1beta1.EtcdStorageType && !storage.Etcd.IsExternalClusterUsed() {
+	if storage == nil || storage.Type == v1beta1.EtcdStorageType && !storage.Etcd.IsExternalClusterUsed() {
 		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		mux.Handle(prefix+"/etcd/members", mw.AllowMethods(http.MethodPost)(
