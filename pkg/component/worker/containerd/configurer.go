@@ -4,6 +4,7 @@
 package containerd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -73,13 +74,8 @@ func (c *configurer) handleImports() (*resolvedConfig, error) {
 		}
 
 		isV3Config := true
-		if err := assertV3Config(tree); err != nil {
-			errs = append(errs, fmt.Errorf("invalid containerd configuration in %q: %w", filePath, err))
-			isV3Config = false
-		}
-
-		if hasV2CRIConfig(tree) {
-			errs = append(errs, fmt.Errorf("containerd configuration file %q contains v2 CRI plugin configuration, which is not compatible with k0s. Please update the configuration to use the v3 plugin format", filePath))
+		if err := validateConfigTree(tree); err != nil {
+			errs = append(errs, err)
 			isV3Config = false
 		}
 
@@ -136,6 +132,32 @@ func hasCRIPluginConfig(tree *toml.Tree) bool {
 	return tree.HasPath([]string{"plugins", "io.containerd.cri.v1.runtime"}) || tree.HasPath([]string{"plugins", "io.containerd.cri.v1.images"})
 }
 
+// Checks if the given config data is valid and compatible with the k0s-managed
+// version of containerd. Returns a descriptive error if not.
+func ValidateConfigFile(data []byte) error {
+	tree, err := toml.LoadBytes(data)
+	if err != nil {
+		return fmt.Errorf("failed to parse TOML: %w", err)
+	}
+	return validateConfigTree(tree)
+}
+
+// validateConfigTree performs compatibility checks on a parsed containerd
+// configuration tree and returns a combined error if any incompatibilities are found.
+func validateConfigTree(tree *toml.Tree) error {
+	var errs []error
+
+	if err := assertV3Config(tree); err != nil {
+		errs = append(errs, err)
+	}
+
+	if hasV2CRIConfig(tree) {
+		errs = append(errs, errors.New("configuration contains a [plugins.\"io.containerd.grpc.v1.cri\"] section which is the containerd v1 CRI plugin format"))
+	}
+
+	return errors.Join(errs...)
+}
+
 // hasV2CRIConfig checks if the given containerd configuration tree contains any plugins."io.containerd.grpc.v1.cri"
 // configuration section. This is the main difference between containerd v2 and v3 configuration formats, so if this is present we
 // want the user to fix it manually instead of trying to merge it and potentially causing unexpected breakage.
@@ -148,11 +170,11 @@ func assertV3Config(tree *toml.Tree) error {
 	if version != nil {
 		v, ok := version.(int64)
 		if !ok {
-			return fmt.Errorf("unexpected type for version field: expected integer, got %T", version)
+			return fmt.Errorf("unexpected type for version field: expected int64, got %T", version)
 		}
 
 		if v != 3 {
-			return fmt.Errorf("unsupported containerd configuration version: expected 3, got %d", v)
+			return fmt.Errorf("unsupported configuration version: expected 3, got %d", v)
 		}
 	}
 	return nil
