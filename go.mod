@@ -29,7 +29,6 @@ require (
 	github.com/k0sproject/version v0.8.0
 	github.com/kardianos/service v1.2.4
 	github.com/logrusorgru/aurora/v3 v3.0.0
-	github.com/mesosphere/toml-merge v0.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
