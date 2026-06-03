@@ -44,8 +44,9 @@ type Calico struct {
 	manifestsDir         string
 	hasWindowsNodes      func() (*bool, <-chan struct{})
 
-	config value.Latest[*calicoClusterConfig]
-	stop   func()
+	config  value.Latest[*calicoClusterConfig]
+	patches v1beta1.Patches
+	stop    func()
 }
 
 type calicoMode string
@@ -113,6 +114,7 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		primaryAddressFamily: nodeConfig.Spec.PrimaryAddressFamily(),
 		manifestsDir:         manifestsDir,
 		hasWindowsNodes:      hasWindowsNodes,
+		patches:              nodeConfig.Spec.Patches,
 	}, nil
 }
 
@@ -219,6 +221,7 @@ func (c *Calico) dumpCRDs() error {
 			Name:     "calico-crd-" + strings.TrimSuffix(filename, filepath.Ext(filename)),
 			Template: string(contents),
 			Data:     emptyStruct,
+			Patches:  c.patches,
 		}
 		if err := tw.WriteToBuffer(output); err != nil {
 			return fmt.Errorf("failed to write calico crd manifests %s: %w", manifestName, err)
@@ -270,6 +273,7 @@ func (c *Calico) processConfigChanges(newConfig *calicoConfig) error {
 				Name:     fmt.Sprintf("calico-%s-%s", dir, strings.TrimSuffix(filename, filepath.Ext(filename))),
 				Template: string(contents),
 				Data:     newConfig,
+				Patches:  c.patches,
 			}
 			tryAndLog(manifestName, tw.WriteToBuffer(output))
 			tryAndLog(manifestName, file.AtomicWithTarget(filepath.Join(c.manifestsDir, "calico", manifestName)).

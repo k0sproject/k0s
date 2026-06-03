@@ -1096,6 +1096,56 @@ spec:
                     description: Network CIDR to use for cluster VIP services
                     type: string
                 type: object
+              patches:
+                description: |-
+                  Patches is a list of user-defined customizations applied to k0s-generated
+                  resources before they are written and applied.
+                items:
+                  description: Patch is a single customization targeting one generated
+                    resource.
+                  properties:
+                    patch:
+                      description: Patch defines the patch type and content.
+                      properties:
+                        content:
+                          description: Content is the patch body (JSON or YAML; YAML
+                            is converted to JSON).
+                          type: string
+                        type:
+                          description: Type is the patch type to apply.
+                          enum:
+                          - json
+                          - strategic
+                          - merge
+                          type: string
+                      required:
+                      - content
+                      - type
+                      type: object
+                    target:
+                      description: Target selects which generated resource to patch.
+                      properties:
+                        kind:
+                          description: |-
+                            Kind is the Kubernetes Kind of the target resource
+                            (e.g. "Deployment", "Service", "ConfigMap").
+                          type: string
+                        name:
+                          description: Name is the metadata.name of the target resource.
+                          type: string
+                        namespace:
+                          description: Namespace optionally narrows the match to a
+                            namespace.
+                          type: string
+                      required:
+                      - kind
+                      - name
+                      type: object
+                  required:
+                  - patch
+                  - target
+                  type: object
+                type: array
               scheduler:
                 description: SchedulerSpec defines the fields for the Scheduler
                 properties:

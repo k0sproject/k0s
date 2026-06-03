@@ -276,6 +276,7 @@ type CoreDNS struct {
 	log                    *logrus.Entry
 	manifestDir            string
 	previousConfig         coreDNSConfig
+	previousPatches        v1beta1.Patches
 	stopFunc               context.CancelFunc
 	lastKnownClusterConfig *v1beta1.ClusterConfig
 }
@@ -425,7 +426,8 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 	if err != nil {
 		return fmt.Errorf("error calculating coredns configs: %w, will retry", err)
 	}
-	if reflect.DeepEqual(c.previousConfig, cfg) {
+	if reflect.DeepEqual(c.previousConfig, cfg) &&
+		reflect.DeepEqual(c.previousPatches, clusterConfig.Spec.Patches) {
 		c.log.Debug("Configuration is up to date, not gonna do anything")
 		return nil
 	}
@@ -434,12 +436,14 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		Template: coreDNSTemplate,
 		Data:     cfg,
 		Path:     filepath.Join(c.manifestDir, "coredns.yaml"),
+		Patches:  clusterConfig.Spec.Patches,
 	}
 	err = tw.Write()
 	if err != nil {
 		return fmt.Errorf("error writing coredns manifests: %w, will retry", err)
 	}
 	c.previousConfig = cfg
+	c.previousPatches = clusterConfig.Spec.Patches
 	c.lastKnownClusterConfig = clusterConfig
 	return nil
 }

@@ -4,6 +4,7 @@
 package templatewriter
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"text/template"
@@ -11,6 +12,8 @@ import (
 	"github.com/Masterminds/sprig"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/patches"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -20,6 +23,8 @@ type TemplateWriter struct {
 	Template string
 	Data     any
 	Path     string
+	// Patches are applied to the rendered manifest before writing. nil = no-op.
+	Patches v1beta1.Patches
 }
 
 // Write executes the template and writes the results on disk
@@ -27,15 +32,28 @@ func (p *TemplateWriter) Write() error {
 	return file.WriteAtomically(p.Path, constant.CertMode, p.WriteToBuffer)
 }
 
-// WriteToBuffer writes executed template tot he given writer
+// WriteToBuffer writes the executed template (with patches applied) to w.
 func (p *TemplateWriter) WriteToBuffer(w io.Writer) error {
 	t, err := template.New(p.Name).Funcs(sprig.TxtFuncMap()).Parse(p.Template)
 	if err != nil {
 		return fmt.Errorf("failed to parse template for %s: %w", p.Name, err)
 	}
-	err = t.Execute(w, p.Data)
-	if err != nil {
+
+	var rendered bytes.Buffer
+	if err := t.Execute(&rendered, p.Data); err != nil {
 		return fmt.Errorf("failed to execute template for %s: %w", p.Name, err)
+	}
+
+	out := rendered.Bytes()
+	if len(p.Patches) > 0 {
+		out, err = patches.Apply(out, p.Patches)
+		if err != nil {
+			return fmt.Errorf("failed to apply patches for %s: %w", p.Name, err)
+		}
+	}
+
+	if _, err := w.Write(out); err != nil {
+		return fmt.Errorf("failed to write manifest for %s: %w", p.Name, err)
 	}
 
 	return nil

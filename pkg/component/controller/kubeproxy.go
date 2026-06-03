@@ -188,6 +188,7 @@ func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error
 				Name:     "kube-proxy",
 				Template: proxyTemplate,
 				Data:     &templateData,
+				Patches:  cfg.Patches,
 			}).WriteToBuffer(buf); err != nil {
 				return err
 			}
@@ -202,6 +203,7 @@ func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error
 					Name:     "kube-proxy-windows",
 					Template: string(proxyWindowsTemplate),
 					Data:     &templateData,
+					Patches:  cfg.Patches,
 				}).WriteToBuffer(buf); err != nil {
 					return err
 				}
@@ -268,6 +270,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 
 	return &proxyConfig{
 		Enabled: true,
+		Patches: clusterConfig.Spec.Patches,
 		TemplateData: kubeProxyTemplateData{
 			Image:        clusterConfig.Spec.Images.KubeProxy.URI(),
 			WindowsImage: clusterConfig.Spec.Images.Windows.KubeProxy.URI(),
@@ -322,6 +325,7 @@ type proxyConfig struct {
 
 	TemplateData  kubeProxyTemplateData
 	ConfigMapData kubeProxyConfigData
+	Patches       v1beta1.Patches
 }
 
 type kubeProxyTemplateData struct {
