@@ -74,6 +74,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 
 	log.Info("Autopilot client factory created, booting up worker root controller")
 	autopilotRoot, err := apcont.NewRootWorker(aproot.RootConfig{
+		InvocationID:        a.K0sVars.InvocationID,
 		KubeConfig:          a.K0sVars.KubeletAuthConfigPath,
 		K0sDataDir:          a.K0sVars.DataDir,
 		Mode:                "worker",
