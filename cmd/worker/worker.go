@@ -50,8 +50,7 @@ type EmbeddingController interface {
 
 func NewWorkerCmd() *cobra.Command {
 	var (
-		debugFlags            internal.DebugFlags
-		ignorePreFlightChecks bool
+		debugFlags internal.DebugFlags
 	)
 
 	cmd := &cobra.Command{
@@ -99,7 +98,7 @@ func NewWorkerCmd() *cobra.Command {
 				ControllerRoleEnabled: false,
 				WorkerRoleEnabled:     true,
 				DataDir:               c.K0sVars.DataDir,
-			}).RunPreFlightChecks(ignorePreFlightChecks); !ignorePreFlightChecks && err != nil {
+			}).RunPreFlightChecks(opts.IgnorePreFlightChecks); !opts.IgnorePreFlightChecks && err != nil {
 				return err
 			}
 
@@ -140,7 +139,6 @@ func NewWorkerCmd() *cobra.Command {
 	flags := cmd.Flags()
 	flags.AddFlagSet(config.GetPersistentFlagSet())
 	flags.AddFlagSet(config.GetWorkerFlags())
-	flags.BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 
 	return cmd
 }
