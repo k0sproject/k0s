@@ -55,6 +55,7 @@ Flags:
       --enable-worker                                  enable worker (default false)
       --feature-gates mapStringBool                    feature gates to enable (comma separated list of key=value pairs)
   -h, --help                                           help for controller
+      --ignore-pre-flight-checks                       continue even if pre-flight checks fail
       --init-only                                      only initialize controller and exit
       --iptables-mode string                           iptables mode (valid values: nft, legacy, auto). default: auto
       --k0s-cloud-provider-port int                    the port that k0s-cloud-provider binds on (default 10258)

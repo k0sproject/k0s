@@ -65,16 +65,17 @@ type ControllerOptions struct {
 
 // Shared worker cli flags
 type WorkerOptions struct {
-	CloudProvider    bool
-	LogLevels        LogLevels
-	CriSocket        string
-	KubeletExtraArgs string
-	Labels           map[string]string
-	Taints           []string
-	TokenFile        string
-	TokenArg         string
-	WorkerProfile    string
-	IPTablesMode     string
+	CloudProvider         bool
+	IgnorePreFlightChecks bool
+	LogLevels             LogLevels
+	CriSocket             string
+	KubeletExtraArgs      string
+	Labels                map[string]string
+	Taints                []string
+	TokenFile             string
+	TokenArg              string
+	WorkerProfile         string
+	IPTablesMode          string
 }
 
 func (m ControllerMode) WorkloadsEnabled() bool {
@@ -258,6 +259,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 	flagset.StringSliceVarP(&workerOpts.Taints, "taints", "", []string{}, "Node taints, list of key=value:effect strings")
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 	flagset.StringVar(&workerOpts.IPTablesMode, "iptables-mode", "", "iptables mode (valid values: nft, legacy, auto). default: auto")
+	flagset.BoolVar(&workerOpts.IgnorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 	flagset.AddFlagSet(GetCriSocketFlag())
 
 	return flagset
