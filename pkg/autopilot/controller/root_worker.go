@@ -111,7 +111,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, true, clusterID, leaderelection.StatusPending, w.cfg.InvocationID); err != nil {
+		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, true, clusterID, leaderelection.StatusPending); err != nil {
 			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
 

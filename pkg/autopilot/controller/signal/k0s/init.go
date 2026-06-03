@@ -7,6 +7,7 @@ package k0s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,7 +19,11 @@ import (
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
+
+	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	applycoordinationv1 "k8s.io/client-go/applyconfigurations/coordination/v1"
 
@@ -30,7 +35,7 @@ import (
 
 // RegisterControllers registers all of the autopilot controllers used for updating `k0s`
 // to the controller-runtime manager.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, enableWorker bool, clusterID string, leaseStatus leaderelection.Status, invocationID string) error {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
 	logger = logger.WithField("controller", delegate.Name())
 
 	hostname, err := apcomm.FindEffectiveHostname()
@@ -51,11 +56,50 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	}
 
 	if enableWorker {
-		if err := mgr.GetClient().Apply(ctx, applycoordinationv1.
+		// Stamp the node lease with the central cordoning label to signal to
+		// the autopilot controller that this worker supports central cordoning.
+		// Note that if k0s is downgraded to a version that no longer supports
+		// central cordoning, the label will remain in place, and there will be
+		// no way to detect that this has become stale.
+		c := mgr.GetClient()
+		if err := c.Apply(ctx, applycoordinationv1.
 			Lease(hostname, corev1.NamespaceNodeLease).
-			WithLabels(map[string]string{constant.CentralCordoningLabel: invocationID}),
+			WithLabels(map[string]string{constant.CentralCordoningLabel: ""}),
 			client.FieldOwner("k0s/autopilot"), client.ForceOwnership); err != nil {
 			return fmt.Errorf("unable to apply lease labels: %w", err)
+		}
+
+		// The kubelet only sets the holder identity when creating a new lease
+		// from scratch, not when renewing an existing one. The above apply call
+		// may very well happen before the kubelet has had a chance to create
+		// the lease. As a result, the kubelet finds an existing lease in place
+		// and only updates the renewal time, leaving the holder identity unset.
+		//
+		// Work around this by sending a conditional patch that will set the
+		// holder identity if it has not already been set. If the identity has
+		// already been set, the patch will fail with an "Invalid" error. We
+		// treat this as a success.
+		patch, err := json.Marshal([]struct {
+			Op    string `json:"op"`
+			Path  string `json:"path"`
+			Value string `json:"value,omitempty"`
+		}{
+			{"test", "/spec/holderIdentity", ""},
+			{"add", "/spec/holderIdentity", hostname},
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := c.Patch(
+			ctx,
+			&coordinationv1.Lease{ObjectMeta: metav1.ObjectMeta{
+				Name:      hostname,
+				Namespace: corev1.NamespaceNodeLease,
+			}},
+			client.RawPatch(types.JSONPatchType, patch),
+		); err != nil && !apierrors.IsInvalid(err) {
+			return fmt.Errorf("failed to ensure that a holder identity is set: %w", err)
 		}
 	}
 
