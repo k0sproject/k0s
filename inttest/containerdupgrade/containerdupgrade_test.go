@@ -3,10 +3,13 @@
 package containerdupgrade
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,8 +17,12 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/k0sproject/version"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -28,11 +35,14 @@ type ContainerdUpgradeSuite struct {
 	common.BootlooseSuite
 }
 
+// TODO: Remove this test in k0s 1.37+
+
 func (s *ContainerdUpgradeSuite) TestContainerdUpgrade() {
 	ctx := s.Context()
 	var kc *kubernetes.Clientset
 	var oldPIDs map[string]int
 
+	nodeName := s.WorkerNode(0)
 	s.Run("controller_and_workers_get_up", func() {
 		s.Require().NoError(s.InitController(0))
 		var err error
@@ -44,11 +54,12 @@ func (s *ContainerdUpgradeSuite) TestContainerdUpgrade() {
 		s.create1_35WorkerProfileRBAC(ctx, kc)
 
 		// get the latest 1.35 stable release so that we start the node with containerd 1.7.x
-		s.downloadRelease(ctx, s.WorkerNode(0), s.getLast35Release(ctx))
+		s.downloadRelease(ctx, nodeName, s.getLast35Release(ctx))
 		s.Require().NoError(s.RunWorkers())
 
-		s.Require().NoError(s.WaitForNodeReady("worker0", kc))
-		s.ensureContainerdVersion(ctx, s.WorkerNode(0), "1.7")
+		s.Require().NoError(s.WaitForNodeReady(nodeName, kc))
+		actual := s.getContainerdVersion(ctx, nodeName)
+		s.Require().Truef(strings.HasPrefix(actual, "1.7."), "Expected containerd 1.7.x, got %s", actual)
 	})
 
 	s.Run("launch_test_pods", func() {
@@ -67,30 +78,54 @@ func (s *ContainerdUpgradeSuite) TestContainerdUpgrade() {
 	s.Run("gather_pids_before_upgrade", func() {
 		s.Require().NoError(common.WaitForPod(ctx, kc, "nginx-kill", metav1.NamespaceDefault), "nginx pod did not start")
 		s.Require().NoError(common.WaitForPod(ctx, kc, "nginx-graceful", metav1.NamespaceDefault), "nginx pod did not start")
-		oldPIDs = s.gatherPIDs(ctx, s.WorkerNode(0))
+		oldPIDs = s.gatherPIDs(ctx, nodeName)
 	})
 
 	s.Run("add_containerd_v2_config", func() {
-		s.PutFile(s.WorkerNode(0), "/etc/k0s/containerd.d/v2.toml", "version = 2")
+		s.PutFile(nodeName, "/etc/k0s/containerd.d/v2.toml", "version = 2")
 	})
 
 	s.Run("upgrade_k0s_to_testing_version", func() {
-		s.Require().NoError(s.StopWorker(s.WorkerNode(0)))
-		s.upgradeContainerdToTesting(ctx, s.WorkerNode(0))
+		expected := getContainerdVersion(s.T())
+		s.Require().NoError(s.StopWorker(nodeName))
+		s.upgradeContainerdToTesting(ctx, nodeName)
 		// k0s should exit after containerd upgrade because of the containerd v2 config
-		s.validateK0sExitAndCleanUpContainerdV2Conf(ctx, s.WorkerNode(0))
+		s.validateK0sExitAndCleanUpContainerdV2Conf(ctx, nodeName)
 
 		// After removing it, it should start up again
-		s.Require().NoError(s.StartWorker(s.WorkerNode(0)))
+		s.Require().NoError(s.StartWorker(nodeName))
 
-		// Grace period to ensure containerd is up and running
-		time.Sleep(30 * time.Second)
-		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), kc))
-		s.ensureContainerdVersion(ctx, s.WorkerNode(0), "2.2")
+		// Wait for the kubelet to re-appear.
+		var lastRenewTime *metav1.MicroTime
+		s.Require().NoError(watch.FromClient[*coordinationv1.LeaseList, coordinationv1.Lease](kc.CoordinationV1().Leases(corev1.NamespaceNodeLease)).
+			WithObjectName(nodeName).
+			WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
+			Until(ctx, func(lease *coordinationv1.Lease) (done bool, err error) {
+				if lease.Spec.RenewTime == nil || !kubeutil.IsValidLease(*lease) {
+					s.T().Logf("Lease is invalid: %#v", *lease)
+					return false, nil
+				}
+
+				if lastRenewTime == nil {
+					lastRenewTime = lease.Spec.RenewTime
+					s.T().Logf("Waiting for renewal after %v", lastRenewTime)
+					return false, nil
+				}
+
+				if !lastRenewTime.Before(lease.Spec.RenewTime) {
+					s.T().Logf("Still waiting for renewal after %v", lastRenewTime)
+					return false, nil
+				}
+
+				return true, nil
+			}))
+
+		actual := s.getContainerdVersion(ctx, nodeName)
+		s.Require().Equal(expected, actual, "Unexpected containerd version after upgrade")
 	})
 
 	s.Run("validate_no_restarts", func() {
-		newPIDs := s.gatherPIDs(ctx, s.WorkerNode(0))
+		newPIDs := s.gatherPIDs(ctx, nodeName)
 		s.Require().Equal(oldPIDs, newPIDs, "PIDs of running containers changed after containerd upgrade")
 	})
 
@@ -106,7 +141,7 @@ func (s *ContainerdUpgradeSuite) TestContainerdUpgrade() {
 	})
 
 	s.Run("force_kill_nginx_pod", func() {
-		s.forceKillNginx(ctx, s.WorkerNode(0))
+		s.forceKillNginx(ctx, nodeName)
 		s.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, false, func(ctx context.Context) (bool, error) {
 			pod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Get(ctx, "nginx-kill", metav1.GetOptions{})
 			if apierrors.IsNotFound(err) {
@@ -161,18 +196,26 @@ func (s *ContainerdUpgradeSuite) upgradeContainerdToTesting(ctx context.Context,
 	s.Require().NoError(err)
 }
 
-func (s *ContainerdUpgradeSuite) ensureContainerdVersion(ctx context.Context, node string, expectedVersion string) {
-	ssh, err := s.SSH(ctx, node)
+func getContainerdVersion(t *testing.T) string {
+	cmd := exec.Command("."+string(filepath.Separator)+"vars.sh", "containerd_version")
+	cmd.Dir = filepath.Join("..", "..")
+	out, err := cmd.Output()
+	require.NoError(t, err)
+	version, _, _ := bytes.Cut(out, []byte{'\n'})
+	require.NotEmpty(t, version, "Failed to get containerd version")
+	return string(version)
+}
+
+func (s *ContainerdUpgradeSuite) getContainerdVersion(ctx context.Context, nodeName string) string {
+	ssh, err := s.SSH(ctx, nodeName)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(ctx, "k0s ctr version")
+	output, err := ssh.ExecWithOutput(ctx, "/var/lib/k0s/bin/containerd --version")
 	s.Require().NoError(err)
-	for line := range strings.Lines(output) {
-		if strings.Contains(line, "Version:") {
-			s.Require().Contains(line, fmt.Sprintf(" %s.", expectedVersion))
-		}
-	}
+	fields := strings.Fields(output)
+	s.Require().GreaterOrEqualf(len(fields), 3, "Not enough fields in containerd --version output: %v", output)
+	return fields[2]
 }
 
 func (s *ContainerdUpgradeSuite) downloadRelease(ctx context.Context, node string, release string) {
