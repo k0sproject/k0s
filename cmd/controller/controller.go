@@ -74,9 +74,8 @@ type command config.CLIOptions
 
 func NewControllerCmd() *cobra.Command {
 	var (
-		debugFlags            internal.DebugFlags
-		controllerFlags       config.ControllerOptions
-		ignorePreFlightChecks bool
+		debugFlags      internal.DebugFlags
+		controllerFlags config.ControllerOptions
 	)
 
 	cmd := &cobra.Command{
@@ -114,7 +113,7 @@ func NewControllerCmd() *cobra.Command {
 				ControllerRoleEnabled: true,
 				WorkerRoleEnabled:     controllerFlags.Mode().WorkloadsEnabled(),
 				DataDir:               c.K0sVars.DataDir,
-			}).RunPreFlightChecks(ignorePreFlightChecks); !ignorePreFlightChecks && err != nil {
+			}).RunPreFlightChecks(opts.IgnorePreFlightChecks); !opts.IgnorePreFlightChecks && err != nil {
 				return err
 			}
 
@@ -150,7 +149,6 @@ func NewControllerCmd() *cobra.Command {
 	flags.AddFlagSet(config.GetControllerFlags(&controllerFlags))
 	flags.AddFlagSet(config.GetWorkerFlags())
 	flags.AddFlagSet(config.FileInputFlag())
-	flags.BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 
 	return cmd
 }
