@@ -32,6 +32,13 @@ import (
 // LoadProfile loads the worker profile with the given profile name from
 // Kubernetes, using cacheDir as cache folder.
 func LoadProfile(ctx context.Context, kubeconfig clientcmd.KubeconfigGetter, cacheDir, profileName string) (*Profile, error) {
+	return LoadProfileWithCachedFallback(ctx, kubeconfig, cacheDir, profileName, false)
+}
+
+// LoadProfileWithCachedFallback loads the worker profile from Kubernetes. If
+// allowCachedFallback is true and the Kubernetes API is unavailable, it returns
+// a cached profile from cacheDir when the cached profile name matches.
+func LoadProfileWithCachedFallback(ctx context.Context, kubeconfig clientcmd.KubeconfigGetter, cacheDir, profileName string, allowCachedFallback bool) (*Profile, error) {
 	clientConfig, err := kubeutil.ClientConfig(kubeconfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes client config: %w", err)
@@ -45,10 +52,10 @@ func LoadProfile(ctx context.Context, kubeconfig clientcmd.KubeconfigGetter, cac
 		return kubernetes.NewForConfig(&clientConfig)
 	}
 
-	return loadProfile(ctx, logrus.StandardLogger(), clientFactory, cacheDir, profileName)
+	return loadProfile(ctx, logrus.StandardLogger(), clientFactory, cacheDir, profileName, allowCachedFallback)
 }
 
-func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func(host string) (kubernetes.Interface, error), cacheDir, profileName string) (*Profile, error) {
+func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func(host string) (kubernetes.Interface, error), cacheDir, profileName string, allowCachedFallback bool) (*Profile, error) {
 	cachedAPIServerAddresses := loadAPIServerAddressesFromCache(log, cacheDir)
 	if len(cachedAPIServerAddresses) < 1 {
 		log.Info("No cached API server addresses found")
@@ -88,6 +95,17 @@ func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func
 	); err != nil {
 		if apierrors.IsUnauthorized(err) {
 			err = fmt.Errorf("the k0s worker node credentials are invalid, the node needs to be rejoined into the cluster with a fresh bootstrap token: %w", err)
+			return nil, err
+		}
+
+		if allowCachedFallback && isAPIServerUnavailable(err) {
+			profile, cacheErr := loadCachedProfile(log, cacheDir, profileName)
+			if cacheErr != nil {
+				return nil, fmt.Errorf("failed to load worker profile %q from Kubernetes API and no valid cached profile is available: %w", profileName, cacheErr)
+			}
+
+			log.WithError(err).Warnf("Using cached worker profile %q because the Kubernetes API is unavailable", profileName)
+			return profile, nil
 		}
 
 		return nil, err
@@ -105,6 +123,67 @@ func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func
 	return profile, nil
 }
 
+func loadCachedProfile(log logrus.FieldLogger, cacheDir, profileName string) (*Profile, error) {
+	lastProfile, err := loadFromCacheDir(cacheDir)
+	if err != nil {
+		return nil, err
+	}
+
+	if lastProfile.Name != profileName {
+		return nil, fmt.Errorf("cached worker profile %q does not match requested profile %q", lastProfile.Name, profileName)
+	}
+
+	profile, err := FromConfigMapData(lastProfile.Data)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to parse cached worker profile %q", lastProfile.Name)
+		return nil, err
+	}
+
+	return profile, nil
+}
+
+func isAPIServerUnavailable(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		errs := joined.Unwrap()
+		if len(errs) == 0 {
+			return false
+		}
+		for _, err := range errs {
+			if !isAPIServerUnavailable(err) {
+				return false
+			}
+		}
+		return true
+	}
+
+	if apierrors.IsServiceUnavailable(err) || apierrors.IsTimeout(err) || apierrors.IsServerTimeout(err) {
+		return true
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
+		return true
+	}
+
+	msg := strings.ToLower(err.Error())
+	for _, text := range []string{
+		"connection refused",
+		"connection reset by peer",
+		"i/o timeout",
+		"network is unreachable",
+		"no route to host",
+		"host is down",
+	} {
+		if strings.Contains(msg, text) {
+			return true
+		}
+	}
+
+	return false
+}
 func loadAPIServerAddressesFromCache(log logrus.FieldLogger, cacheDir string) (addresses []string) {
 	lastProfile, err := loadFromCacheDir(cacheDir)
 	if err != nil {

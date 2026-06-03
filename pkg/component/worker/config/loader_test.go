@@ -18,8 +18,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
@@ -97,6 +99,7 @@ data:
 			clientFactory,
 			cacheDir,
 			"fake",
+			false,
 		)
 
 		if t.Failed() {
@@ -120,6 +123,90 @@ data:
 		theTriedHosts,
 		"Not all API server addresses were tried",
 	)
+}
+
+func TestLoadProfileWithCachedFallback(t *testing.T) {
+	const cachedProfile = `
+name: fake
+data:
+  apiServerAddresses: |
+    [127.10.10.1:9998]
+  nodeLocalLoadBalancing: |
+    {enabled: true}
+  konnectivity: |
+    {agentPort: 1337}
+`
+
+	cacheDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(cacheDir, "worker-profile.yaml"), []byte(cachedProfile), 0644))
+
+	ctx, cancel := context.WithTimeout(t.Context(), time.Nanosecond)
+	defer cancel()
+
+	log := logrus.New()
+	profile, err := loadProfile(
+		ctx,
+		log.WithField("test", t.Name()),
+		func(string) (kubernetes.Interface, error) { return fake.NewSimpleClientset(), nil },
+		cacheDir,
+		"fake",
+		true,
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, profile)
+	assert.True(t, profile.NodeLocalLoadBalancing.IsEnabled())
+}
+
+func TestLoadProfileWithCachedFallback_ProfileMismatch(t *testing.T) {
+	const cachedProfile = `
+name: other
+data:
+  nodeLocalLoadBalancing: |
+    {enabled: false}
+  konnectivity: |
+    {agentPort: 1337}
+`
+
+	cacheDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(cacheDir, "worker-profile.yaml"), []byte(cachedProfile), 0644))
+
+	ctx, cancel := context.WithTimeout(t.Context(), time.Nanosecond)
+	defer cancel()
+
+	log := logrus.New()
+	_, err := loadProfile(
+		ctx,
+		log.WithField("test", t.Name()),
+		func(string) (kubernetes.Interface, error) { return fake.NewSimpleClientset(), nil },
+		cacheDir,
+		"fake",
+		true,
+	)
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, `cached worker profile "other" does not match requested profile "fake"`)
+}
+
+func TestIsAPIServerUnavailable(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"service_unavailable", apierrors.NewServiceUnavailable("api unavailable"), true},
+		{"too_many_requests", apierrors.NewTooManyRequests("busy", 1), false},
+		{"deadline", context.DeadlineExceeded, true},
+		{"connection_refused", errors.New("Get \"https://127.0.0.1:6443\": dial tcp 127.0.0.1:6443: connect: connection refused"), true},
+		{"joined_unavailable", errors.Join(apierrors.NewServiceUnavailable("api unavailable"), context.DeadlineExceeded), true},
+		{"joined_mixed", errors.Join(apierrors.NewServiceUnavailable("api unavailable"), apierrors.NewNotFound(schema.GroupResource{Resource: "configmaps"}, "worker-config-default")), false},
+		{"not_found", apierrors.NewNotFound(schema.GroupResource{Resource: "configmaps"}, "worker-config-default"), false},
+		{"unauthorized", apierrors.NewUnauthorized("invalid credentials"), false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, isAPIServerUnavailable(test.err))
+		})
+	}
 }
 
 func TestWatchProfile(t *testing.T) {

@@ -65,16 +65,17 @@ type ControllerOptions struct {
 
 // Shared worker cli flags
 type WorkerOptions struct {
-	CloudProvider    bool
-	LogLevels        LogLevels
-	CriSocket        string
-	KubeletExtraArgs string
-	Labels           map[string]string
-	Taints           []string
-	TokenFile        string
-	TokenArg         string
-	WorkerProfile    string
-	IPTablesMode     string
+	CloudProvider     bool
+	LogLevels         LogLevels
+	CriSocket         string
+	KubeletExtraArgs  string
+	Labels            map[string]string
+	Taints            []string
+	TokenFile         string
+	TokenArg          string
+	WorkerProfile     string
+	AllowCachedConfig bool
+	IPTablesMode      string
 }
 
 func (m ControllerMode) WorkloadsEnabled() bool {
@@ -251,6 +252,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 
 	flagset.String("kubelet-root-dir", "", "Kubelet root directory for k0s")
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", defaultWorkerProfile, "worker profile to use on the node")
+	flagset.BoolVar(&workerOpts.AllowCachedConfig, "allow-cached-config", false, "allow worker startup with cached configuration when the Kubernetes API is unavailable")
 	flagset.BoolVar(&workerOpts.CloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.VarP((*logLevelsFlag)(&workerOpts.LogLevels), "logging", "l", "Logging Levels for the different components")
