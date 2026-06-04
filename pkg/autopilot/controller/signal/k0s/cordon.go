@@ -167,8 +167,15 @@ func (r *cordonUncordon) isIgnored(ctx context.Context, signalNode crcli.Object)
 			return "", fmt.Errorf("failed to get node lease: %w", err)
 		}
 
-		label, ident := nodeLease.Labels[apconst.CentralCordoningLabel], nodeLease.Spec.HolderIdentity
-		if label == "" || (ident != nil && label != *ident) {
+		// Since the node lease is a heartbeat lease and not a leader lease, the
+		// holder identity is cosmetic and always equals the lease name. Hence,
+		// we can't pull the same trick as we do with the Autopilot controller
+		// lease, where we compare the annotation's value with the current
+		// holder identity. This means we can't detect stale annotations, e.g.
+		// after downgrading from a k0s version that supports central cordoning
+		// to one that doesn't. It's a pity, but there's not much we can do
+		// about it. There's no practical way for us to figure this out.
+		if _, exists := nodeLease.Labels[apconst.CentralCordoningLabel]; !exists {
 			return "node manages cordoning on its own", nil
 		}
 
