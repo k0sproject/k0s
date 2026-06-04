@@ -62,35 +62,19 @@ state = "/run/k0s/containerd"
 As of 1.27.1, k0s allows dynamic configuration of containerd CRI runtimes. This
 works by k0s creating a special directory in `/etc/k0s/containerd.d/`, where
 users can place partial containerd configuration TOML files (i.e. files with a
-`.toml` extension).
-
-K0s will automatically pick up these files and add them as containerd
-configuration `imports`. If a partial configuration file contains a CRI plugin
-configuration section, k0s will instead treat such a file as a [merge patch] to
-k0s's default containerd configuration. This is to mitigate [containerd's
-decision] to replace rather than merge individual plugin configuration sections
-from imported configuration files. However, this behavior [may][containerd#7347]
-[change][containerd#9982] in future releases of containerd.
+`.toml` extension). k0s will automatically pick up these files and add them as containerd
+configuration `imports`. When k0s sees changes in this directory, it will automatically reload containerd with the new configuration.
 
 Starting with k0s 1.36, k0s uses containerd 2 which modifies the configuration
 and all drop-in files must use the containerd v3 configuration format. Either
 omit the `version` field entirely or set it to `version = 3`. Any file that sets
 `version = 2` or that references the legacy `io.containerd.grpc.v1.cri` plugin
-path will cause k0s to exit with an error on startup.  If you have drop-in files
-from previous versions, update them before restarting k0s.
+path will cause k0s to exit with an error on pre-flight checks.  If you have drop-in files from previous versions,
+update them before restarting k0s.
 
 Please note, that in order for drop-ins in `/etc/k0s/containerd.d` to take effect on running configuration, `/etc/k0s/containerd.toml` needs to be k0s managed.
 
 If you change the first magic line (`# k0s_managed=true`) in the `/etc/k0s/containerd.toml` (by accident or on purpose), it automatically becomes "not k0s managed". To make it "k0s managed" again, remove `/etc/k0s/containerd.toml` and restart k0s service on the node, it'll be recreated by k0s.
-
-To confirm that drop-ins are being applied to the running configuration, you can
-check the contents of `/run/k0s/containerd-cri.toml`; drop-in specific
-configuration should be present in this file.
-
-[merge patch]: https://datatracker.ietf.org/doc/html/rfc7396
-[containerd's decision]: https://github.com/containerd/containerd/pull/3574/commits/24b9e2c1a0a72a7ad302cdce7da3abbc4e6295cb
-[containerd#7347]: https://github.com/containerd/containerd/pull/7347
-[containerd#9982]: https://github.com/containerd/containerd/pull/9982
 
 ### Examples
 

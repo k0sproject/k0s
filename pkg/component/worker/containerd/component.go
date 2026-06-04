@@ -14,7 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -180,23 +179,9 @@ func (c *Component) setupConfig() error {
 		return fmt.Errorf("can't create containerd config imports dir: %w", err)
 	}
 
-	configurer := &configurer{
-		loadPath:   filepath.Join(c.importsPath, "*.toml"),
-		pauseImage: c.Profile.PauseImage.URI(),
-		log:        logrus.WithField("component", "containerd"),
-	}
-
-	config, err := configurer.handleImports()
+	configData, err := marshalContainerdConfig(c.importsPath, c.Profile.PauseImage.URI())
 	if err != nil {
-		return fmt.Errorf("can't handle imports: %w", err)
-	}
-
-	criConfigPath := filepath.Join(c.K0sVars.RunDir, "containerd-cri.toml")
-
-	if err = file.AtomicWithTarget(criConfigPath).
-		WithPermissions(0644).
-		WriteString(config.CRIConfig); err != nil {
-		return fmt.Errorf("can't create containerd CRI config: %w", err)
+		return fmt.Errorf("can't marshal containerd config: %w", err)
 	}
 
 	if err := file.AtomicWithTarget(c.confPath).
@@ -206,10 +191,7 @@ func (c *Component) setupConfig() error {
 			if _, err := w.WriteString(containerdTomlHeader); err != nil {
 				return err
 			}
-			if err := toml.NewEncoder(w).Encode(map[string]any{
-				"version": 3,
-				"imports": append(config.ImportPaths, criConfigPath),
-			}); err != nil {
+			if _, err := w.Write(configData); err != nil {
 				return err
 			}
 			return w.Flush()
@@ -272,11 +254,6 @@ func (c *Component) restart(ctx context.Context) {
 	log := logrus.WithFields(logrus.Fields{"component": "containerd", "phase": "restart"})
 
 	log.Info("restart requested")
-	if err := c.setupConfig(); err != nil {
-		log.WithError(err).Warn("failed to resolve config")
-		return
-	}
-
 	p := c.supervisor.GetProcess()
 	err := p.Signal(syscall.SIGHUP)
 	if err == nil {
