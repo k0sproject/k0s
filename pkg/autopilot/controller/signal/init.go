@@ -21,8 +21,8 @@ import (
 
 // RegisterControllers registers all of the autopilot controllers used by both controller
 // and worker modes.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, k0sDataDir string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status, invocationID string) error {
-	if err := k0s.RegisterControllers(ctx, logger, mgr, delegate, enableWorker, clusterID, leaseStatus, invocationID); err != nil {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, k0sDataDir string, statusSocketPath string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status, invocationID string) error {
+	if err := k0s.RegisterControllers(ctx, logger, mgr, delegate, statusSocketPath, enableWorker, clusterID, leaseStatus, invocationID); err != nil {
 		return fmt.Errorf("unable to register k0s controllers: %w", err)
 	}
 

@@ -54,7 +54,7 @@ var patchOpts = []crcli.PatchOption{
 	crcli.ForceOwnership,
 }
 
-func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID string, collector *ClusterInfoCollector, updateServerToken string) (updater, error) {
+func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID string, collector *ClusterInfoCollector, updateServerToken string, statusSocketPath string) (updater, error) {
 	updateClient, err := uc.NewClient(updateConfig.Spec.UpdateServer, updateServerToken)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 
 	switch updateConfig.Spec.UpgradeStrategy.Type {
 	case apv1beta2.UpdateStrategyTypeCron:
-		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient)
+		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient, statusSocketPath)
 	case apv1beta2.UpdateStrategyTypePeriodic:
 		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, collector, build.Version), nil
 	default:
@@ -70,13 +70,13 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 	}
 }
 
-func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateClient uc.Client) (updater, error) {
+func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateClient uc.Client, statusSocketPath string) (updater, error) {
 	schedule := updateConfig.Spec.UpgradeStrategy.Cron
 	if schedule == "" {
 		schedule = defaultCronSchedule
 	}
 
-	status, err := status.GetStatusInfo(status.DefaultSocketPath)
+	status, err := status.GetStatusInfo(statusSocketPath)
 	if err != nil {
 		return nil, err
 	}

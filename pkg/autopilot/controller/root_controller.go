@@ -21,6 +21,7 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
+	k0sstatus "github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
@@ -63,6 +64,9 @@ var _ aproot.Root = (*rootController)(nil)
 
 // NewRootController builds a root for autopilot "controller" operations.
 func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker bool, acf apcli.FactoryInterface, clusterInfoCollector *updates.ClusterInfoCollector, apiAddress netip.Addr) (aproot.Root, error) {
+	if cfg.StatusSocketPath == "" {
+		cfg.StatusSocketPath = k0sstatus.DefaultSocketPath
+	}
 	c := &rootController{
 		cfg:                    cfg,
 		log:                    logger,
@@ -237,7 +241,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	}
 	clusterID := string(ns.UID)
 
-	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, c.enableWorker, clusterID, event, c.cfg.InvocationID); err != nil {
+	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, c.cfg.StatusSocketPath, c.enableWorker, clusterID, event, c.cfg.InvocationID); err != nil {
 		logger.WithError(err).Error("unable to register signal controllers")
 		return err
 	}
@@ -247,7 +251,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return err
 	}
 
-	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, c.clusterInfoCollector, leaderMode, clusterID); err != nil {
+	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, c.clusterInfoCollector, leaderMode, clusterID, c.cfg.StatusSocketPath); err != nil {
 		logger.WithError(err).Error("unable to register updates controllers")
 		return err
 	}
