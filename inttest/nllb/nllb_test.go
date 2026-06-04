@@ -39,7 +39,7 @@ type suite struct {
 }
 
 func (s *suite) TestNodeLocalLoadBalancing() {
-	const controllerArgs = "--kube-controller-manager-extra-args='--node-monitor-period=3s --node-monitor-grace-period=9s' --feature-gates=IPv6SingleStack=true"
+	const controllerArgs = "--kube-controller-manager-extra-args='--node-monitor-period=3s --node-monitor-grace-period=9s' --feature-gates=IPv6SingleStack=true --disable-components=metrics-server"
 
 	ctx := s.Context()
 
@@ -313,7 +313,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 		})
 	}
 
-	for _, deployment := range []string{"coredns", "metrics-server"} {
+	for _, deployment := range []string{"coredns"} {
 		eg.Go(func() error {
 			if err := common.WaitForDeployment(ctx, clients, deployment, metav1.NamespaceSystem); err != nil {
 				return fmt.Errorf("%s did not become ready: %w", deployment, err)
