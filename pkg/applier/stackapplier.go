@@ -5,16 +5,14 @@ package applier
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"github.com/avast/retry-go"
+	oswatch "github.com/k0sproject/k0s/internal/os/watch"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
-	"github.com/fsnotify/fsnotify"
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -51,65 +49,16 @@ func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInte
 
 // Run watches the stack for updates and executes the initial apply.
 func (s *StackApplier) Run(ctx context.Context) error {
-	if ctx.Err() != nil {
-		return nil // The context is already done.
-	}
-
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return fmt.Errorf("failed to create watcher: %w", err)
-	}
-
-	trigger := make(chan struct{}, 1)
-	watchErr := make(chan error, 1)
-	go func() { watchErr <- s.runWatcher(watcher, trigger, ctx.Done()) }()
-
-	if err := watcher.Add(s.path); err != nil {
-		return fmt.Errorf("failed to watch %q: %w", s.path, err)
-	}
-
-	for {
-		select {
-		case <-trigger:
-			s.apply(ctx)
-		case err := <-watchErr:
-			return err
-		}
-	}
-}
-
-func (s *StackApplier) runWatcher(watcher *fsnotify.Watcher, trigger chan<- struct{}, stop <-chan struct{}) (err error) {
-	defer func() { err = errors.Join(err, watcher.Close()) }()
-
-	const timeout = 1 * time.Second // debounce events for one second
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
-	for {
-		select {
-		case err := <-watcher.Errors:
-			return fmt.Errorf("while watching stack: %w", err)
-
-		case event := <-watcher.Events:
-			// Only consider events on manifest files
-			if match, _ := filepath.Match(manifestFilePattern, filepath.Base(event.Name)); !match {
-				continue
-			}
-			timer.Reset(timeout)
-
-		case <-timer.C:
-			select {
-			case trigger <- struct{}{}:
-			default:
-			}
-
-		case <-stop:
-			return nil
-		}
-	}
+	return oswatch.OnDirChange{
+		Delay: 1 * time.Second,
+		Accepts: oswatch.RejectNames(func(name string) bool {
+			matched, _ := filepath.Match(manifestFilePattern, name)
+			return !matched
+		}),
+	}.Run(ctx, s.path, func(ctx context.Context) error {
+		s.apply(ctx)
+		return nil
+	})
 }
 
 func (s *StackApplier) apply(ctx context.Context) {
