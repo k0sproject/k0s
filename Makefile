@@ -330,7 +330,7 @@ airgap-image-bundle-linux-riscv64.tar \
 airgap-image-bundle-windows2022-amd64.tar: k0s
 	set -- $$(cat -- '$(@:airgap-image-bundle-%.tar=airgap-images-%.txt)') && \
 	$(GO_ENV) ./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' "$$@"
-	chmod a+r -- '$@'
+	chmod a+r '$@'
 
 ipv6-test-images-linux-amd64.txt ipv6-test-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
 ipv6-test-images-linux-arm64.txt ipv6-test-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
@@ -383,7 +383,7 @@ check-unit: $(GO_ENV_REQUISITES) go.sum
 
 .PHONY: clean-gocache
 clean-gocache:
-	-chmod -R u+w -- '$(K0S_GO_BUILD_CACHE)/go/mod'
+	-chmod -R u+w '$(K0S_GO_BUILD_CACHE)/go/mod'
 	rm -rf -- '$(K0S_GO_BUILD_CACHE)/go'
 
 .PHONY: clean-docker-image
