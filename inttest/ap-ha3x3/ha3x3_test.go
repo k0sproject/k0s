@@ -15,6 +15,9 @@ import (
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/k0sproject/k0s/inttest/common"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
 
@@ -181,6 +184,21 @@ spec:
 
 	if iptablesModeAfterUpdate, err := getIPTablesMode(ctx, sshWorker); s.NoError(err) {
 		s.Equal(iptablesModeBeforeUpdate, iptablesModeAfterUpdate)
+	}
+
+	kubeClient, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	for idx := range s.WorkerCount {
+		nodeName := s.WorkerNode(idx)
+		s.Run("kubelet-node-lease-holder-identity/"+nodeName, func() {
+			s.Require().NoError(s.WaitForNodeReady(nodeName, kubeClient))
+			lease, err := kubeClient.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, nodeName, metav1.GetOptions{})
+			if s.NoError(err) {
+				if s.NotNil(lease.Spec.HolderIdentity, "No no holder identity") {
+					s.Equal(nodeName, *lease.Spec.HolderIdentity, "Unexpected holder identity")
+				}
+			}
+		})
 	}
 
 	for idx := range s.ControllerCount {
