@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"slices"
 	"strings"
@@ -188,41 +187,34 @@ func (s *controllerworkerSuite) TestApply() {
 	kc, err := cf.GetK0sClient()
 	s.Require().NoError(err)
 
-	// TODO: Start those goroutines unconditionally in v1.36+.
-	// These trigger bad behavior in old releases, which this test intentionally tries to uncover.
-	// This behavior has been fixed in k0s v1.35+.
-	if _, updatingFromOtherVersion := os.LookupEnv("K0S_UPDATE_FROM_PATH"); updatingFromOtherVersion {
-		s.T().Log("Updating from another k0s version, skipping goroutines that trigger frequent reconcile events")
-	} else {
-		// Start some goroutines that will touch the ControlNode objects to trigger
-		// a constant flow of reconcile events. This produces high concurrency load
-		// on the Autopilot controllers, in order to test any races.
-		s.T().Log("Starting goroutines to trigger frequent reconcile events")
-		for idx := range s.ControllerCount {
-			controlNodes, nodeName := kc.AutopilotV1beta2().ControlNodes(), s.ControllerNode(idx)
-			wg.Go(func() {
-				wait.UntilWithContext(ctx, func(ctx context.Context) {
-					_ = wait.ExponentialBackoffWithContext(ctx, retry.DefaultRetry, func(ctx context.Context) (bool, error) {
-						cn, err := controlNodes.Get(ctx, nodeName, metav1.GetOptions{})
-						if err == nil {
-							if cn.Annotations == nil {
-								cn.Annotations = map[string]string{}
-							}
-							cn.Annotations["test.k0sproject.io/touch"] = time.Now().Format("2006-01-02T15:04:05.000Z07:00")
-							_, err = controlNodes.Update(ctx, cn, metav1.UpdateOptions{})
-							if apierrors.IsConflict(err) {
-								return false, nil
-							}
+	// Start some goroutines that will touch the ControlNode objects to trigger
+	// a constant flow of reconcile events. This produces high concurrency load
+	// on the Autopilot controllers, in order to test any races.
+	s.T().Log("Starting goroutines to trigger frequent reconcile events")
+	for idx := range s.ControllerCount {
+		controlNodes, nodeName := kc.AutopilotV1beta2().ControlNodes(), s.ControllerNode(idx)
+		wg.Go(func() {
+			wait.UntilWithContext(ctx, func(ctx context.Context) {
+				_ = wait.ExponentialBackoffWithContext(ctx, retry.DefaultRetry, func(ctx context.Context) (bool, error) {
+					cn, err := controlNodes.Get(ctx, nodeName, metav1.GetOptions{})
+					if err == nil {
+						if cn.Annotations == nil {
+							cn.Annotations = map[string]string{}
 						}
-						if err != nil {
-							s.T().Logf("Failed to touch %s: %v", nodeName, err)
+						cn.Annotations["test.k0sproject.io/touch"] = time.Now().Format("2006-01-02T15:04:05.000Z07:00")
+						_, err = controlNodes.Update(ctx, cn, metav1.UpdateOptions{})
+						if apierrors.IsConflict(err) {
+							return false, nil
 						}
+					}
+					if err != nil {
+						s.T().Logf("Failed to touch %s: %v", nodeName, err)
+					}
 
-						return true, nil
-					})
-				}, 1*time.Second)
-			})
-		}
+					return true, nil
+				})
+			}, 1*time.Second)
+		})
 	}
 
 	wg.Go(func() {
@@ -366,17 +358,10 @@ func (s *controllerworkerSuite) TestApply() {
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
 	var plan *apv1beta2.Plan
-	var resetTimer *time.Timer
 	err = watch.Plans(kc.AutopilotV1beta2().Plans()).
 		WithObjectName(apconst.AutopilotName).
 		WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
 		Until(ctx, func(item *apv1beta2.Plan) (bool, error) {
-			if resetTimer != nil {
-				if resetTimer.Stop() {
-					s.T().Log("Canceled reset to", appc.PlanSchedulable)
-				}
-			}
-
 			switch item.Status.State {
 			case appc.PlanSchedulable, appc.PlanSchedulableWait, "":
 				return false, nil
@@ -388,32 +373,10 @@ func (s *controllerworkerSuite) TestApply() {
 				plan = item
 				return true, nil
 
-			// TODO: Remove in v1.36+. This is a transitional helper case to allow
-			// upgrade tests from older k0s versions to succeed.
-			case "InconsistentTargets":
-				if _, updatingFromOtherVersion := os.LookupEnv("K0S_UPDATE_FROM_PATH"); updatingFromOtherVersion {
-					s.T().Log("Updating from another k0s version: InconsistentTargets encountered, resetting to", appc.PlanSchedulable, "after 3 seconds")
-					toUpdate := item.DeepCopy()
-					toUpdate.Status.State = appc.PlanSchedulable
-					resetTimer = time.AfterFunc(3*time.Second, func() {
-						_, err := kc.AutopilotV1beta2().Plans().UpdateStatus(ctx, toUpdate, metav1.UpdateOptions{})
-						if err != nil {
-							cancelTest(fmt.Errorf("failed to reset InconsistentTargets state: %w", err))
-						}
-					})
-					return false, nil
-				}
-				fallthrough // Treat it as error otherwise
-
 			default:
 				return false, fmt.Errorf("unexpected plan state: %s", item.Status.State)
 			}
 		})
-	if resetTimer != nil {
-		if resetTimer.Stop() {
-			s.T().Log("Canceled reset to", appc.PlanSchedulable)
-		}
-	}
 	s.Require().NoError(err)
 
 	if s.Len(plan.Status.Commands, 1) {

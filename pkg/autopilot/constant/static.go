@@ -7,7 +7,7 @@ const (
 	AutopilotName                      = "autopilot"
 	AutopilotNamespace                 = "k0s-autopilot"
 	K0sTempFilename                    = "k0s.tmp"
-	CentralCordoningLabel              = "autopilot.k0sproject.io/central-cordoning"
+	CentralCordoningLabel              = "autopilot.k0sproject.io/central-cordoning" // TODO: Remove in v1.37+
 	K0SControlNodeModeAnnotation       = "autopilot.k0sproject.io/mode"
 	K0SControlNodeModeController       = "controller"
 	K0SControlNodeModeControllerWorker = "controller+worker"

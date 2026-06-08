@@ -329,7 +329,6 @@ update operation. There are a number of statuses available:
 | Status | Description | Ends Plan? |
 | ------ | ----------- | ---------- |
 | `IncompleteTargets` | There are nodes in the resolved `Plan` that do not have associated `Node` (worker) or `ControlNode` (controller) objects. | Yes |
-| ~~`InconsistentTargets`~~ | Legacy state used by older k0s releases to indicate controller readiness failures; no longer in use. | Yes |
 | `Schedulable` | Indicates that the `Plan` can be re-evaluated to determine which next node to update. | No |
 | `SchedulableWait` | Scheduling operations are in progress, and no further update scheduling should occur. | No |
 | `Completed` | The `Plan` has run successfully to completion. | Yes |
