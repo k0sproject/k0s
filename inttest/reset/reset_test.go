@@ -13,6 +13,7 @@ import (
 
 	testifysuite "github.com/stretchr/testify/suite"
 
+	"github.com/k0sproject/bootloose/pkg/config"
 	"github.com/k0sproject/k0s/inttest/common"
 )
 
@@ -92,7 +93,7 @@ func (s *suite) TestReset() {
 
 		// /var/lib/k0s is a mount point in the Docker container and can't be deleted, so it must be empty
 		s.NoError(ssh.Exec(ctx, `x="$(ls -A /var/lib/k0s)" && echo "$x" >&2 && [ -z "$x" ]`, common.SSHStreams{}), "/var/lib/k0s is not empty")
-		s.NoError(ssh.Exec(ctx, "! test -e /var/lib/kubelet", common.SSHStreams{}), "/var/lib/kubelet still exists")
+		s.NoError(ssh.Exec(ctx, "test -e /var/lib/kubelet", common.SSHStreams{}), "/var/lib/kubelet does not exists")
 		s.NoError(ssh.Exec(ctx, "! test -e /run/k0s", common.SSHStreams{}), "/run/k0s still exists")
 		s.NoError(ssh.Exec(ctx, "! pidof containerd-shim-runc-v2 >&2", common.SSHStreams{}), "Expected no running containerd shims")
 	})
@@ -103,6 +104,12 @@ func TestResetSuite(t *testing.T) {
 		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
+			ExtraVolumes: []config.Volume{
+				{
+					Type:        "volume",
+					Destination: "/var/lib/kubelet",
+				},
+			},
 		},
 	})
 }
