@@ -73,8 +73,8 @@ func (c *LeaseConfig) buildLock() (resourcelock.Interface, error) {
 		LeaseMeta: metav1.ObjectMeta{
 			Namespace: c.Namespace,
 			Name:      c.Name,
-			Labels:    maps.Clone(c.Labels),
 		},
+		Labels: maps.Clone(c.Labels),
 		Client: c.Client,
 		LockConfig: resourcelock.ResourceLockConfig{
 			Identity: c.Identity,

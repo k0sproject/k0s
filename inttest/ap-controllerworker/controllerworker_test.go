@@ -29,6 +29,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	appsv1 "k8s.io/api/apps/v1"
+	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -290,6 +291,24 @@ func (s *controllerworkerSuite) TestApply() {
 
 		if !s.NoError(err, "While monitoring ControlNodes to reach the %s phase", apsigcomm.Completed) {
 			cancelTest(fmt.Errorf("failed to monitor ControlNodes to reach the %s phase", apsigcomm.Completed))
+		}
+	})
+
+	wg.Go(func() {
+		err := watch.FromClient[*coordinationv1.LeaseList, coordinationv1.Lease](
+			c.CoordinationV1().Leases(apconst.AutopilotNamespace),
+		).
+			WithObjectName(apconst.AutopilotNamespace+"-controller").
+			WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
+			Until(ctx, func(lease *coordinationv1.Lease) (bool, error) {
+				ident := lease.Spec.HolderIdentity
+				if ident == nil || *ident == "" {
+					return false, nil
+				}
+				return lease.Labels[apconst.CentralCordoningLabel] == *ident, nil
+			})
+		if !s.NoError(err, "Autopilot controller lease must carry the central cordoning label matching its holder identity") {
+			cancelTest(errors.New("autopilot controller lease is missing the central cordoning label"))
 		}
 	})
 
