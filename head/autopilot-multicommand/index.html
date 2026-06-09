@@ -3382,7 +3382,6 @@ The core <strong>autopilot</strong> functionality is only interested when in the
 4 core states (<strong>NewPlan</strong>, <strong>SchedulableWait</strong>, <strong>Schedulable</strong>, <strong>Completed</strong>),
 and treats all other states as an error.</p>
 <pre class="mermaid"><code>flowchart TD
-    Errors -. no longer in use .-&gt; InconsistentTargets
     Errors --&gt; IncompleteTargets
     Errors --&gt; Restricted
     Errors -. no longer in use .-&gt; MissingSignalNode</code></pre>
@@ -3396,12 +3395,6 @@ and treats all other states as an error.</p>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td><strong><del>InconsistentTargets</del></strong></td>
-<td><code>k0supdate</code></td>
-<td><strong>Schedulable</strong></td>
-<td>Legacy state used by older k0s releases to indicate controller readiness failures; no longer in use.</td>
-</tr>
 <tr>
 <td><strong>IncompleteTargets</strong></td>
 <td><code>airgapupdate</code>, <code>k0supdate</code></td>
