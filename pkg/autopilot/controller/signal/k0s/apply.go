@@ -108,21 +108,41 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 		return cr.Result{}, nil
 	}
 
+	k0sBinaryFilenamePath := filepath.Join(r.k0sBinaryDir, "k0s")
 	updateFilenamePath := filepath.Join(r.k0sBinaryDir, apconst.K0sTempFilename)
+	updateLinkFilenamePath := filepath.Join(r.k0sBinaryDir, apconst.K0sTempLinkFilename)
 
-	// Ensure that the expected file exists
-	if _, err := os.Stat(updateFilenamePath); errors.Is(err, os.ErrNotExist) {
-		return cr.Result{}, fmt.Errorf("unable to find update file '%s': %w", apconst.K0sTempFilename, err)
-	}
+	// Check if the update file still exists. If not, the rename was already
+	// performed in a previous reconciler run whose client.Update failed.
+	// In that case the file operations can be skipped and we can proceed
+	// directly to updating the signaling status to Restart.
+	if _, err := os.Stat(updateFilenamePath); err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return cr.Result{}, fmt.Errorf("unable to stat update file '%s': %w", updateFilenamePath, err)
+		}
+		logger.Info("Update file already applied, skipping file operations")
+	} else {
+		// Ensure the downloaded temporary file is executable
+		if err := os.Chmod(updateFilenamePath, 0755); err != nil {
+			return cr.Result{}, fmt.Errorf("unable to chmod update file '%s': %w", updateFilenamePath, err)
+		}
 
-	// Ensure that the new file is executable
-	if err := os.Chmod(updateFilenamePath, 0755); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to chmod update file '%s': %w", apconst.K0sTempFilename, err)
-	}
+		// Clean up any stale link file from a previous failed rename attempt
+		os.Remove(updateLinkFilenamePath)
 
-	// Perform the update atomically
-	if err := os.Rename(updateFilenamePath, filepath.Join(r.k0sBinaryDir, "k0s")); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to update (rename) to the new file: %w", err)
+		// Create k0s.new as a hard link to k0s.tmp, sharing the same
+		// inode. This way k0s.tmp survives the subsequent rename,
+		// providing idempotency: if client.Update fails and the
+		// reconciler is re-triggered, k0s.tmp will still exist and
+		// the whole sequence can be replayed.
+		if err := os.Link(updateFilenamePath, updateLinkFilenamePath); err != nil {
+			return cr.Result{}, fmt.Errorf("unable to create hard link '%s' -> '%s': %w", updateLinkFilenamePath, updateFilenamePath, err)
+		}
+
+		// Atomically replace the running k0s binary with the new version
+		if err := os.Rename(updateLinkFilenamePath, k0sBinaryFilenamePath); err != nil {
+			return cr.Result{}, fmt.Errorf("unable to rename '%s' -> '%s': %w", updateLinkFilenamePath, k0sBinaryFilenamePath, err)
+		}
 	}
 
 	// When the k0s process has been terminated, move to 'Restart'
@@ -136,6 +156,14 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 	logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
 	if err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
 		return cr.Result{Requeue: true}, fmt.Errorf("failed to update signal node to status '%s': %w", signalData.Status.Status, err)
+	}
+
+	// Clean up k0s.tmp after a successful apply. If the file does not exist
+	// (e.g. this is a retry where the file was already removed), ignore the error.
+	if err := os.Remove(updateFilenamePath); err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			logger.WithError(err).Warn("Failed to remove update file")
+		}
 	}
 
 	return cr.Result{}, nil
