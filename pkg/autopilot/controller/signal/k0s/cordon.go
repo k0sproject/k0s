@@ -73,8 +73,8 @@ type cordonUncordon struct {
 // controller-runtime manager.
 //
 // This controller is only interested when autopilot signaling annotations have
-// moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
-// the node.
+// moved to a `Cordoning` status. At this point, it will attempt to cordon and
+// drain the node.
 func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, nodeName types.NodeName, leaseStatus leaderelection.Status) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_cordoning"
 	logger.Info("Registering reconciler: ", name)
@@ -148,7 +148,7 @@ func (r *cordonUncordon) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 // from Autopilot deployments that manage (un-)cordoning on each individual node
 // to deployments that manage (un-)cordoning via the Autopilot controller.
 //
-// TODO: Remove in v1.36+
+// TODO: Remove in v1.37+
 func (r *cordonUncordon) isIgnored(ctx context.Context, signalNode crcli.Object) (reason string, _ error) {
 	if r.leaseStatus == leaderelection.StatusLeading {
 		if types.NodeName(signalNode.GetName()) == r.nodeName {

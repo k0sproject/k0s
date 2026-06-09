@@ -103,9 +103,11 @@ func (c *rootController) Run(ctx context.Context) error {
 	le, err := c.newLeaderElector(&leaderelection.LeaseConfig{
 		Namespace: apconst.AutopilotNamespace,
 		Name:      apconst.AutopilotNamespace + "-controller",
-		Labels:    map[string]string{apconst.CentralCordoningLabel: c.cfg.InvocationID},
-		Identity:  c.cfg.InvocationID,
-		Client:    kubeClient.CoordinationV1(),
+		// TODO: Remove in v1.37+ and add some cleanup code to remove the
+		// then-unused label.
+		Labels:   map[string]string{apconst.CentralCordoningLabel: c.cfg.InvocationID},
+		Identity: c.cfg.InvocationID,
+		Client:   kubeClient.CoordinationV1(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create leader elector: %w", err)

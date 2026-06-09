@@ -61,6 +61,9 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		// Note that if k0s is downgraded to a version that no longer supports
 		// central cordoning, the label will remain in place, and there will be
 		// no way to detect that this has become stale.
+		//
+		// TODO: Remove in v1.37+ and add some cleanup code to remove the
+		// then-unused label.
 		c := mgr.GetClient()
 		if err := c.Apply(ctx, applycoordinationv1.
 			Lease(hostname, corev1.NamespaceNodeLease).
@@ -79,6 +82,9 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		// holder identity if it has not already been set. If the identity has
 		// already been set, the patch will fail with an "Invalid" error. We
 		// treat this as a success.
+		//
+		// TODO: Remove in v1.37+. This workaround will no longer be necessary
+		// once the apply call above is gone.
 		patch, err := json.Marshal([]struct {
 			Op    string `json:"op"`
 			Path  string `json:"path"`
@@ -111,7 +117,8 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		return fmt.Errorf("unable to register downloading controller: %w", err)
 	}
 
-	// Man, I wish there would be a saner way to do this!
+	// TODO: Refactor this in v1.37+ so that the (un-)cordoning controllers only
+	// get added for leaders.
 	var nodeDelegate apdel.ControllerDelegate
 	if _, isController := delegate.CreateObject().(*autopilotv1beta2.ControlNode); isController {
 		nodeDelegate = apdel.NodeControllerDelegate()
