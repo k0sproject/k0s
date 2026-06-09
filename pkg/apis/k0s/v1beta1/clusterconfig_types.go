@@ -88,16 +88,30 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 		orig := nllb.DeepCopy()
 		nllb.EnvoyProxy = nil
 		nllb.Traefik = nil
+		// NLLB images are rewritten with spec.images.repository, so strip them
+		// against the defaults rewritten with the same repository.
+		var repository string
+		if c.Spec.Images != nil {
+			repository = c.Spec.Images.Repository
+		}
 		switch nllb.Type {
 		case NllbTypeEnvoyProxy:
 			if orig.EnvoyProxy != nil {
 				nllb.EnvoyProxy = orig.EnvoyProxy
-				stripDefaults(&nllb.EnvoyProxy.Image, DefaultEnvoyProxyImage)
+				stripDefaults(&nllb.EnvoyProxy.Image, func() *ImageSpec {
+					img := DefaultEnvoyProxyImage()
+					img.Image = overrideRepository(repository, img.Image)
+					return img
+				})
 			}
 		case NllbTypeTraefik:
 			if orig.Traefik != nil {
 				nllb.Traefik = orig.Traefik
-				stripDefaults(&nllb.Traefik.Image, DefaultTraefikImage)
+				stripDefaults(&nllb.Traefik.Image, func() *ImageSpec {
+					img := DefaultTraefikImage()
+					img.Image = overrideRepository(repository, img.Image)
+					return img
+				})
 			}
 		}
 	}

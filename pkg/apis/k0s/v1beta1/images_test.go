@@ -150,6 +150,48 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			require.Equal(t, "my.repo/k0sproject/pushgateway-ttl:"+constant.PushGatewayImageVersion, testingConfig.Spec.Images.PushGateway.URI())
 		})
 	})
+	// NLLB Envoy/Traefik images are rewritten with spec.images.repository, so
+	// they must be stripped when they only differ from the defaults by that
+	// repository.
+	t.Run("strips_default_nllb_images_with_repository", func(t *testing.T) {
+		for _, tt := range []struct {
+			nllbType NllbType
+			verify   func(t *testing.T, nllb *NodeLocalLoadBalancing)
+		}{
+			{NllbTypeEnvoyProxy, func(t *testing.T, nllb *NodeLocalLoadBalancing) {
+				require.NotNil(t, nllb.EnvoyProxy)
+				require.Nil(t, nllb.EnvoyProxy.Image, "default Envoy image rewritten with a custom repository should be stripped")
+				require.Nil(t, nllb.Traefik)
+			}},
+			{NllbTypeTraefik, func(t *testing.T, nllb *NodeLocalLoadBalancing) {
+				require.NotNil(t, nllb.Traefik)
+				require.Nil(t, nllb.Traefik.Image, "default Traefik image rewritten with a custom repository should be stripped")
+				require.Nil(t, nllb.EnvoyProxy)
+			}},
+		} {
+			t.Run(string(tt.nllbType), func(t *testing.T) {
+				yamlData := []byte(`apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+spec:
+  images:
+    repository: registry.acme.corp
+  network:
+    nodeLocalLoadBalancing:
+      enabled: true
+      type: ` + tt.nllbType + `
+`)
+
+				cfg, err := ConfigFromBytes(yamlData)
+				require.NoError(t, err)
+
+				// Sanity check: the images were rewritten with the custom repository.
+				require.Equal(t, "registry.acme.corp", cfg.Spec.Images.Repository)
+
+				nllb := cfg.GetClusterWideConfig().StripDefaults().Spec.Network.NodeLocalLoadBalancing
+				tt.verify(t, nllb)
+			})
+		}
+	})
 }
 
 func TestOverrideFunction(t *testing.T) {
