@@ -180,6 +180,10 @@ jobs:
       - build-airgap-image-bundle
       - build-ipv6-test-image-bundle
 
+    permissions:
+      contents: read
+      models: read
+
     uses: ./.github/workflows/smoketest.yaml
     with:
       arch: amd64
@@ -198,6 +202,10 @@ jobs:
     name: "check-${{ matrix.smoke-suite }} :: arm64"
     needs: [build-k0s, build-airgap-image-bundle]
 
+    permissions:
+      contents: read
+      models: read
+
     uses: ./.github/workflows/smoketest.yaml
     with:
       arch: arm64
@@ -214,6 +222,10 @@ jobs:
 
     name: "check-ap-${{ matrix.smoke-suite }} :: ${{ matrix.version }}"
     needs: [prepare, build-k0s]
+
+    permissions:
+      contents: read
+      models: read
 
     uses: ./.github/workflows/smoketest.yaml
     with:

@@ -22,6 +22,7 @@ on:
 
 permissions:
   contents: read
+  models: read
 
 jobs:
   smoketest:
@@ -90,9 +91,21 @@ jobs:
           echo K0S_UPDATE_FROM_PATH="$k0sRealPath" >>"$GITHUB_ENV"
 
       - name: Run inttest
+        id: inttest
         env:
           SMOKETEST_NAME: check-${{ inputs.name }}
-        run: make -C inttest "$SMOKETEST_NAME"
+        run: |
+          set -o pipefail
+          make -C inttest "$SMOKETEST_NAME" 2>&1 | tee inttest.log
+
+      - name: Failure triage
+        if: failure() && steps.inttest.outcome == 'failure'
+        env:
+          GH_TOKEN: "${{ github.token }}"
+          GH_REPO: "${{ github.repository }}"
+          SMOKETEST_NAME: check-${{ inputs.name }}
+          SMOKETEST_ARCH: ${{ inputs.arch }}
+        run: .github/workflows/smoketest-failure-triage.bash
 
       - name: Collect k0s logs, support bundle and conformance test results
         if: failure()
