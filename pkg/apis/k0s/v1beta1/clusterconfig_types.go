@@ -98,7 +98,11 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	} else if c.Spec.Network != nil &&
 		c.Spec.Network.NodeLocalLoadBalancing != nil &&
 		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
-		reflect.DeepEqual(c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, DefaultEnvoyProxyImage()) {
+		reflect.DeepEqual(c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image, func() *ImageSpec {
+			img := DefaultEnvoyProxyImage()
+			img.Image = overrideRepository(c.Spec.Images.Repository, img.Image)
+			return img
+		}()) {
 		c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
 	}
 	if reflect.DeepEqual(c.Spec.Telemetry, DefaultClusterTelemetry()) {
