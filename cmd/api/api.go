@@ -191,7 +191,7 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 			sendError(err, resp)
 			return
 		}
-		log.Infof("etcd API, adding new member: %s", etcdReq.PeerAddress)
+		log.Infof("etcd API, adding new learner member: %s", etcdReq.PeerAddress)
 		err = etcdReq.Validate()
 		if err != nil {
 			sendError(err, resp)
@@ -205,7 +205,7 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 		}
 		defer etcdClient.Close()
 
-		memberList, err := etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
+		memberList, err := etcdClient.AddMemberAsLearner(ctx, etcdReq.Node, etcdReq.PeerAddress)
 		if err != nil {
 			sendError(err, resp)
 			return

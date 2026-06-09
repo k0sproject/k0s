@@ -19,6 +19,8 @@ smoketests := \
 	check-ap-updater \
 	check-ap-updater-periodic \
 	check-backup \
+	check-backup-stream \
+	check-backup-kine \
 	check-basic \
 	check-bind-address \
 	check-byocri \
@@ -48,6 +50,7 @@ smoketests := \
 	check-dualstack-kuberouter \
 	check-dualstack-kuberouter-dynamicconfig \
 	check-embedded-binaries \
+	check-etcdlearner \
 	check-etcdmember \
 	check-externaletcd \
 	check-extraargs \
