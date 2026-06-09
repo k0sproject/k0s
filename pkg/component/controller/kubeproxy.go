@@ -270,7 +270,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 
 	return &proxyConfig{
 		Enabled: true,
-		Patches: clusterConfig.Spec.Patches,
+		Patches: kubeProxy.Patches,
 		TemplateData: kubeProxyTemplateData{
 			Image:        clusterConfig.Spec.Images.KubeProxy.URI(),
 			WindowsImage: clusterConfig.Spec.Images.Windows.KubeProxy.URI(),

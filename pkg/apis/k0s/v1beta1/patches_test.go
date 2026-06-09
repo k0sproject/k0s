@@ -63,15 +63,17 @@ func TestPatches_Validate(t *testing.T) {
 
 func TestClusterSpec_Validate_Patches(t *testing.T) {
 	s := &ClusterSpec{
-		Patches: Patches{{
-			Target: PatchTarget{Kind: "Deployment", Name: "coredns"},
-			Patch:  PatchSpec{Type: "bogus", Content: "{}"},
-		}},
+		MetricsServer: &MetricsServer{
+			Patches: Patches{{
+				Target: PatchTarget{Kind: "Deployment", Name: "metrics-server"},
+				Patch:  PatchSpec{Type: "bogus", Content: "{}"},
+			}},
+		},
 	}
 	errs := s.Validate()
 	found := false
 	for _, e := range errs {
-		if e != nil && strings.Contains(e.Error(), "patches[0]") {
+		if e != nil && strings.Contains(e.Error(), "metricsServer.patches[0]") {
 			found = true
 		}
 	}

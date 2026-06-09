@@ -290,7 +290,10 @@ func (m *MetricServer) Start(ctx context.Context) error {
 					m.log.Warnf("failed to calculate metrics-server config: %s", err.Error())
 					continue
 				}
-				patches := m.clusterConfig.Spec.Patches
+				var patches v1beta1.Patches
+				if ms := m.clusterConfig.Spec.MetricsServer; ms != nil {
+					patches = ms.Patches
+				}
 				if previousConfig == newConfig && reflect.DeepEqual(previousPatches, patches) {
 					continue
 				}

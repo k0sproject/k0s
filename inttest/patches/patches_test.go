@@ -29,33 +29,38 @@ metadata:
 spec:
   network:
     provider: calico
-  patches:
-    - target:
-        kind: Deployment
-        name: coredns
-        namespace: kube-system
-      patch:
-        type: strategic
-        content: |
-          metadata:
-            labels:
-              k0s.k0sproject.io/patched: coredns
-    - target:
-        kind: Deployment
-        name: metrics-server
-        namespace: kube-system
-      patch:
-        type: json
-        content: |
-          [{"op": "add", "path": "/metadata/labels/patched", "value": "metrics-server"}]
-    - target:
-        kind: DaemonSet
-        name: calico-node
-        namespace: kube-system
-      patch:
-        type: merge
-        content: |
-          {"metadata": {"labels": {"patched": "calico-node"}}}
+    coreDNS:
+      patches:
+        - target:
+            kind: Deployment
+            name: coredns
+            namespace: kube-system
+          patch:
+            type: strategic
+            content: |
+              metadata:
+                labels:
+                  k0s.k0sproject.io/patched: coredns
+    calico:
+      patches:
+        - target:
+            kind: DaemonSet
+            name: calico-node
+            namespace: kube-system
+          patch:
+            type: merge
+            content: |
+              {"metadata": {"labels": {"patched": "calico-node"}}}
+  metricsServer:
+    patches:
+      - target:
+          kind: Deployment
+          name: metrics-server
+          namespace: kube-system
+        patch:
+          type: json
+          content: |
+            [{"op": "add", "path": "/metadata/labels/patched", "value": "metrics-server"}]
 `
 
 func (s *PatchesSuite) TestK0sGetsUp() {

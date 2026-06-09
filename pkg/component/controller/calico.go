@@ -104,6 +104,11 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		return nil, err
 	}
 
+	var patches v1beta1.Patches
+	if c := nodeConfig.Spec.Network.Calico; c != nil {
+		patches = c.Patches
+	}
+
 	return &Calico{
 		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
 		nodeConfig: calicoNodeConfig{
@@ -114,7 +119,7 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		primaryAddressFamily: nodeConfig.Spec.PrimaryAddressFamily(),
 		manifestsDir:         manifestsDir,
 		hasWindowsNodes:      hasWindowsNodes,
-		patches:              nodeConfig.Spec.Patches,
+		patches:              patches,
 	}, nil
 }
 

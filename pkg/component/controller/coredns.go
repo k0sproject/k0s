@@ -426,8 +426,12 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 	if err != nil {
 		return fmt.Errorf("error calculating coredns configs: %w, will retry", err)
 	}
+	var patches v1beta1.Patches
+	if cd := clusterConfig.Spec.Network.CoreDNS; cd != nil {
+		patches = cd.Patches
+	}
 	if reflect.DeepEqual(c.previousConfig, cfg) &&
-		reflect.DeepEqual(c.previousPatches, clusterConfig.Spec.Patches) {
+		reflect.DeepEqual(c.previousPatches, patches) {
 		c.log.Debug("Configuration is up to date, not gonna do anything")
 		return nil
 	}
@@ -436,14 +440,14 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		Template: coreDNSTemplate,
 		Data:     cfg,
 		Path:     filepath.Join(c.manifestDir, "coredns.yaml"),
-		Patches:  clusterConfig.Spec.Patches,
+		Patches:  patches,
 	}
 	err = tw.Write()
 	if err != nil {
 		return fmt.Errorf("error writing coredns manifests: %w, will retry", err)
 	}
 	c.previousConfig = cfg
-	c.previousPatches = clusterConfig.Spec.Patches
+	c.previousPatches = patches
 	c.lastKnownClusterConfig = clusterConfig
 	return nil
 }

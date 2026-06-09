@@ -40,7 +40,7 @@ type ClusterSpec struct {
 	Extensions        *ClusterExtensions     `json:"extensions,omitempty"`
 	Konnectivity      *KonnectivitySpec      `json:"konnectivity,omitempty"`
 	FeatureGates      FeatureGates           `json:"featureGates,omitempty"`
-	Patches           Patches                `json:"patches,omitempty"`
+	MetricsServer     *MetricsServer         `json:"metricsServer,omitempty"`
 }
 
 // ClusterConfigStatus defines the observed state of ClusterConfig
@@ -439,7 +439,9 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		}
 	}
 
-	errs = append(errs, s.Patches.Validate()...)
+	if s.MetricsServer != nil {
+		errs = append(errs, s.MetricsServer.Patches.validate(field.NewPath("metricsServer", "patches"))...)
+	}
 
 	return
 }

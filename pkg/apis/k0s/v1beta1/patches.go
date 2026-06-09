@@ -3,7 +3,11 @@
 
 package v1beta1
 
-import "fmt"
+import (
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
+)
 
 // Patches is a list of user-defined customizations applied to k0s-generated
 // resources before they are written and applied.
@@ -58,19 +62,26 @@ const (
 )
 
 // Validate checks every patch for a known type and a non-empty target.
-func (p Patches) Validate() (errs []error) {
+func (p Patches) Validate() []error {
+	return p.validate(field.NewPath("patches"))
+}
+
+// validate checks every patch for a known type and a non-empty target,
+// reporting errors relative to the given field path.
+func (p Patches) validate(path *field.Path) (errs []error) {
 	for i, patch := range p {
+		item := path.Index(i)
 		switch patch.Patch.Type {
 		case JSONPatchType, StrategicMergePatchType, MergePatchType:
 			// valid
 		default:
-			errs = append(errs, fmt.Errorf("patches[%d]: invalid type %q: must be one of json, strategic, merge", i, patch.Patch.Type))
+			errs = append(errs, fmt.Errorf("%s: invalid type %q: must be one of json, strategic, merge", item.Child("patch", "type"), patch.Patch.Type))
 		}
 		if patch.Target.Kind == "" {
-			errs = append(errs, fmt.Errorf("patches[%d]: target.kind is required", i))
+			errs = append(errs, fmt.Errorf("%s is required", item.Child("target", "kind")))
 		}
 		if patch.Target.Name == "" {
-			errs = append(errs, fmt.Errorf("patches[%d]: target.name is required", i))
+			errs = append(errs, fmt.Errorf("%s is required", item.Child("target", "name")))
 		}
 	}
 	return errs

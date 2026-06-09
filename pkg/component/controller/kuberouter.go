@@ -147,8 +147,9 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		Args:              append(args.ToDashedArgs(), clusterConfig.Spec.Network.KubeRouter.RawArgs...),
 	}
 
+	patches := clusterConfig.Spec.Network.KubeRouter.Patches
 	if reflect.DeepEqual(k.previousConfig, cfg) &&
-		reflect.DeepEqual(k.previousPatches, clusterConfig.Spec.Patches) {
+		reflect.DeepEqual(k.previousPatches, patches) {
 		k.log.Info("config matches with previous, not reconciling anything")
 		return nil
 	}
@@ -158,7 +159,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		Name:     "kube-router",
 		Template: kubeRouterTemplate,
 		Data:     cfg,
-		Patches:  clusterConfig.Spec.Patches,
+		Patches:  patches,
 	}
 
 	err := tw.WriteToBuffer(output)
@@ -173,7 +174,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	}
 
 	k.previousConfig = cfg
-	k.previousPatches = clusterConfig.Spec.Patches
+	k.previousPatches = patches
 	return nil
 }
 
