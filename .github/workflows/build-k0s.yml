@@ -87,6 +87,7 @@ jobs:
       - name: "Build :: k0s"
         env:
           EMBEDDED_BINS_CACHED: "${{ steps.cache-embedded-bins.outputs.cache-hit }}"
+          K0S_EXE_PATH: "k0s${{ steps.build-prepare.outputs.executable-suffix }}"
         run: |
           make .k0sbuild.docker-image.k0s
           touch go.sum
@@ -95,7 +96,7 @@ jobs:
           fi
           make --touch codegen
           make build
-          echo "k0s${{ steps.build-prepare.outputs.executable-suffix }} binary size: **$(du -sh k0s${{ steps.build-prepare.outputs.executable-suffix }} | cut -f1)**" >>$GITHUB_STEP_SUMMARY
+          echo "$K0S_EXE_PATH binary size: **$(du -sh "$K0S_EXE_PATH" | cut -f1)**" >>"$GITHUB_STEP_SUMMARY"
 
       - name: "Upload :: k0s"
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -119,12 +120,12 @@ jobs:
           TARGET_OS: ${{ inputs.target-os }}
           TARGET_ARCH: ${{ inputs.target-arch }}
         run: |
-          target=$TARGET_OS-$TARGET_ARCH
-          if [ $TARGET_OS = windows ]; then
-            target=windows2022-$TARGET_ARCH
+          target="$TARGET_OS-$TARGET_ARCH"
+          if [ "$TARGET_OS" = windows ]; then
+            target="windows2022-$TARGET_ARCH"
           fi
-          target=airgap-images-$target.txt
-          make $target && cat $target
+          target="airgap-images-$target.txt"
+          make "$target" && cat "$target"
           echo file-name="$target" >>"$GITHUB_OUTPUT"
 
       - name: "Upload :: Airgap image list"
@@ -140,8 +141,8 @@ jobs:
           TARGET_OS: ${{ inputs.target-os }}
           TARGET_ARCH: ${{ inputs.target-arch }}
         run: |
-          target=ipv6-test-images-$TARGET_OS-$TARGET_ARCH.txt
-          make $target && cat $target
+          target="ipv6-test-images-$TARGET_OS-$TARGET_ARCH.txt"
+          make "$target" && cat "$target"
           echo file-name="$target" >>"$GITHUB_OUTPUT"
 
       - name: "Upload :: IPv6 test image list"

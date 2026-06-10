@@ -133,6 +133,7 @@ jobs:
         # Message format described here: https://api.slack.com/surfaces/messages#payloads
         # The block structure can be tested online: https://app.slack.com/block-kit-builder
         run: |
+          #shellcheck disable=SC2016 # the single-quoted string is a jq program
           gh api "repos/{owner}/{repo}/actions/runs/$GITHUB_RUN_ID/jobs" -q '
             def fmt_duration:
               if . >= 3600 then "\(./3600|floor) h \((.%3600/60|floor)) min"

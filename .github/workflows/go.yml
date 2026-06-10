@@ -69,29 +69,31 @@ jobs:
         #Discard ipv6 kuberouter tests for now, as they are very flaky.
         run: |
           ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
-              'split(" ") | [ .[] | select(startswith("check-")) | .[6:] | select(. != "network-conformance-kuberouter-ipv6" and . != "network-conformance-kuberouter-ipv6-nft") ] | "smoketests=" + tojson' >>$GITHUB_OUTPUT
+              'split(" ") | [ .[] | select(startswith("check-")) | .[6:] | select(. != "network-conformance-kuberouter-ipv6" and . != "network-conformance-kuberouter-ipv6-nft") ] | "smoketests=" + tojson' >>"$GITHUB_OUTPUT"
 
       - name: "Generate :: Autopilot test matrix"
         id: generate-autopilot-matrix
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          k0sSortVersion=$(./vars.sh FROM=. k0s_sort_version)
+          k0sSortVersion="$(./vars.sh FROM=. k0s_sort_version)"
           mkdir -p build/cache/bin
+          #shellcheck disable=SC2086 # CURL_OPTS intentionally expands to multiple arguments
           curl $CURL_OPTS --output build/cache/bin/k0s_sort "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
           chmod +x build/cache/bin/k0s_sort
-          export PATH="$(realpath build/cache/bin):$PATH"
+          k0sSortBinDir="$(realpath build/cache/bin)"
+          export PATH="$k0sSortBinDir:$PATH"
 
           set -x
           k8sVersion="$(./vars.sh kubernetes_version)"
           majorVersion="${k8sVersion%%.*}"
-          minorVersion=${k8sVersion#$majorVersion.}
+          minorVersion="${k8sVersion#"${majorVersion}."}"
           minorVersion="${minorVersion%%.*}"
 
           {
             printf matrix=
-            hack/tools/gen-matrix.sh "$majorVersion.$(($minorVersion - 1))" "$majorVersion.$minorVersion"
-          } >> "$GITHUB_OUTPUT"
+            hack/tools/gen-matrix.sh "$majorVersion.$((minorVersion - 1))" "$majorVersion.$minorVersion"
+          } >>"$GITHUB_OUTPUT"
 
   build-k0s:
     strategy:
@@ -280,7 +282,7 @@ jobs:
           fi
           make --touch codegen
           make build
-          echo "k0s binary size: **$(du -sh k0s | cut -f1)**" >>$GITHUB_STEP_SUMMARY
+          echo "k0s binary size: **$(du -sh k0s | cut -f1)**" >>"$GITHUB_STEP_SUMMARY"
 
       - name: Upload compiled executable
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0

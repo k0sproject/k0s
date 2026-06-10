@@ -438,7 +438,7 @@
         "**/Makefile*"
       ],
       "matchStrings": [
-        "\\b(?<depName>(docker|k8s\\.gcr|quay)\\.io/(?:[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*)(:|.*\\n.*= \")v?(?<currentValue>[0-9_][\\w.-]{0,127})"
+        "\\b(?<depName>(docker|k8s\\.gcr|quay)\\.io/(?:[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*)(:|.*\\n.*= \")v?(?<currentValue>[0-9_][\\w.-]{0,127})(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
       ],
       "datasourceTemplate": "docker",
       "extractVersionTemplate": "^v?(?<version>[\\w][\\w.-]{0,127})"
