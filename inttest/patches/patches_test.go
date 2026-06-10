@@ -36,7 +36,7 @@ spec:
             name: coredns
             namespace: kube-system
           patch:
-            type: strategic
+            type: StrategicMergePatch
             content: |
               metadata:
                 labels:
@@ -48,7 +48,7 @@ spec:
             name: calico-node
             namespace: kube-system
           patch:
-            type: merge
+            type: MergePatch
             content: |
               {"metadata": {"labels": {"patched": "calico-node"}}}
   metricsServer:
@@ -58,7 +58,7 @@ spec:
           name: metrics-server
           namespace: kube-system
         patch:
-          type: json
+          type: JSON
           content: |
             [{"op": "add", "path": "/metadata/labels/patched", "value": "metrics-server"}]
 `

@@ -89,7 +89,7 @@ func applyToDoc(doc []byte, patches v1beta1.Patches) ([]byte, error) {
 			err = fmt.Errorf("unknown patch type %q", p.Patch.Type)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("patches[%d] (%s/%s): %w", i, kind, name, err)
+			return nil, fmt.Errorf("error patching resource (%s/%s): %w", kind, name, err)
 		}
 	}
 

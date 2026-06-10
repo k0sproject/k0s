@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 )
 
@@ -38,9 +39,15 @@ func TestTemplateWriter_AppliesPatches(t *testing.T) {
 	var buf bytes.Buffer
 	require.NoError(t, tw.WriteToBuffer(&buf))
 
-	var parsed map[string]any
-	require.NoError(t, yaml.Unmarshal(buf.Bytes(), &parsed))
-	assert.EqualValues(t, 4, parsed["spec"].(map[string]any)["replicas"])
+	jsonBytes, err := yaml.YAMLToJSON(buf.Bytes())
+	require.NoError(t, err)
+	obj := &unstructured.Unstructured{}
+	require.NoError(t, obj.UnmarshalJSON(jsonBytes))
+
+	replicas, found, err := unstructured.NestedInt64(obj.Object, "spec", "replicas")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.EqualValues(t, 4, replicas)
 }
 
 func TestTemplateWriter_NoPatches_Unchanged(t *testing.T) {

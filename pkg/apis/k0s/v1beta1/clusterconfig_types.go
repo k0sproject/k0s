@@ -439,9 +439,7 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		}
 	}
 
-	if s.MetricsServer != nil {
-		errs = append(errs, s.MetricsServer.Patches.validate(field.NewPath("metricsServer", "patches"))...)
-	}
+	errs = append(errs, s.MetricsServer.Validate(field.NewPath("metricsServer"))...)
 
 	return
 }

@@ -633,12 +633,12 @@ be written as JSON or YAML.
 | `target.kind`       | The Kubernetes `kind` of the generated resource to patch (e.g. `Deployment`, `Service`, `ConfigMap`).         |
 | `target.name`       | The `metadata.name` of the generated resource to patch.                                                       |
 | `target.namespace`  | Optional. Narrows the match to a single namespace.                                                            |
-| `patch.type`        | One of `json` (RFC 6902 JSON Patch), `merge` (RFC 7386 JSON Merge Patch) or `strategic` (strategic merge).    |
+| `patch.type`        | One of `JSON` (RFC 6902 JSON Patch), `MergePatch` (RFC 7386 JSON Merge Patch) or `StrategicMergePatch`.       |
 | `patch.content`     | The patch body, as JSON or YAML.                                                                              |
 
 Multiple patches matching the same resource are applied in the order listed.
-Note that `strategic` patches are only supported for built-in Kubernetes
-resource kinds.
+Note that `StrategicMergePatch` patches are only supported for built-in
+Kubernetes resource kinds.
 
 #### Example
 
@@ -652,7 +652,7 @@ spec:
             name: coredns
             namespace: kube-system
           patch:
-            type: strategic
+            type: StrategicMergePatch
             content: |
               spec:
                 replicas: 3

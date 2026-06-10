@@ -41,7 +41,7 @@ type PatchTarget struct {
 // PatchSpec is the patch type and body.
 type PatchSpec struct {
 	// Type is the patch type to apply.
-	// +kubebuilder:validation:Enum=json;strategic;merge
+	// +kubebuilder:validation:Enum=JSON;StrategicMergePatch;MergePatch
 	// +kubebuilder:validation:Required
 	Type PatchType `json:"type"`
 	// Content is the patch body (JSON or YAML; YAML is converted to JSON).
@@ -53,12 +53,12 @@ type PatchSpec struct {
 type PatchType string
 
 const (
-	// JSONPatchType is RFC 6902 JSON Patch (array of operations).
-	JSONPatchType PatchType = "json"
-	// StrategicMergePatchType is Kubernetes strategic merge patch.
-	StrategicMergePatchType PatchType = "strategic"
-	// MergePatchType is RFC 7386 JSON Merge Patch.
-	MergePatchType PatchType = "merge"
+	// JSONPatchType is an RFC 6902 JSON Patch (array of operations).
+	JSONPatchType PatchType = "JSON"
+	// StrategicMergePatchType is a Kubernetes Strategic Merge Patch.
+	StrategicMergePatchType PatchType = "StrategicMergePatch"
+	// MergePatchType is an RFC 7386 JSON Merge Patch.
+	MergePatchType PatchType = "MergePatch"
 )
 
 // Validate checks every patch for a known type and a non-empty target.
@@ -68,21 +68,29 @@ func (p Patches) Validate() []error {
 
 // validate checks every patch for a known type and a non-empty target,
 // reporting errors relative to the given field path.
-func (p Patches) validate(path *field.Path) (errs []error) {
+func (p Patches) validate(path *field.Path) []error {
+	var errs []error
 	for i, patch := range p {
-		item := path.Index(i)
-		switch patch.Patch.Type {
-		case JSONPatchType, StrategicMergePatchType, MergePatchType:
-			// valid
-		default:
-			errs = append(errs, fmt.Errorf("%s: invalid type %q: must be one of json, strategic, merge", item.Child("patch", "type"), patch.Patch.Type))
-		}
-		if patch.Target.Kind == "" {
-			errs = append(errs, fmt.Errorf("%s is required", item.Child("target", "kind")))
-		}
-		if patch.Target.Name == "" {
-			errs = append(errs, fmt.Errorf("%s is required", item.Child("target", "name")))
-		}
+		errs = append(errs, patch.Validate(path.Index(i))...)
 	}
+	return errs
+}
+
+func (p *Patch) Validate(item *field.Path) []error {
+	var errs []error
+	switch p.Patch.Type {
+	case JSONPatchType, StrategicMergePatchType, MergePatchType:
+		// valid
+	default:
+		errs = append(errs, fmt.Errorf("%s: invalid type %q: must be one of JSON, StrategicMergePatch, MergePatch", item.Child("patch", "type"), p.Patch.Type))
+	}
+
+	if p.Target.Kind == "" {
+		errs = append(errs, fmt.Errorf("%s is required", item.Child("target", "kind")))
+	}
+	if p.Target.Name == "" {
+		errs = append(errs, fmt.Errorf("%s is required", item.Child("target", "name")))
+	}
+
 	return errs
 }

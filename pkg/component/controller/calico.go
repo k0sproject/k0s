@@ -44,9 +44,17 @@ type Calico struct {
 	manifestsDir         string
 	hasWindowsNodes      func() (*bool, <-chan struct{})
 
-	config  value.Latest[*calicoClusterConfig]
+	config value.Latest[*calicoReconcileConfig]
+	stop   func()
+}
+
+// calicoReconcileConfig bundles everything a reconcile depends on. It's held in
+// a single [value.Latest] so that a change to any part of it -- including the
+// patches -- triggers a re-render. Keeping patches outside this value would
+// make patch-only changes invisible to the change detection.
+type calicoReconcileConfig struct {
+	cluster *calicoClusterConfig
 	patches v1beta1.Patches
-	stop    func()
 }
 
 type calicoMode string
@@ -104,11 +112,6 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		return nil, err
 	}
 
-	var patches v1beta1.Patches
-	if c := nodeConfig.Spec.Network.Calico; c != nil {
-		patches = c.Patches
-	}
-
 	return &Calico{
 		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
 		nodeConfig: calicoNodeConfig{
@@ -119,7 +122,6 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		primaryAddressFamily: nodeConfig.Spec.PrimaryAddressFamily(),
 		manifestsDir:         manifestsDir,
 		hasWindowsNodes:      hasWindowsNodes,
-		patches:              patches,
 	}, nil
 }
 
@@ -153,9 +155,9 @@ func (c *Calico) Start(context.Context) error {
 				retry = nil
 				if err := c.processConfigChanges(&calicoConfig{
 					calicoNodeConfig:    &c.nodeConfig,
-					calicoClusterConfig: config,
+					calicoClusterConfig: config.cluster,
 					IncludeWindows:      *hasWin,
-				}); err != nil {
+				}, config.patches); err != nil {
 					retry = time.After(10 * time.Second)
 					c.log.WithError(err).Error("Failed to process configuration changes, retrying in 10 seconds")
 				} else {
@@ -167,7 +169,7 @@ func (c *Calico) Start(context.Context) error {
 			for {
 				select {
 				case <-configChanged:
-					var newConfig *calicoClusterConfig
+					var newConfig *calicoReconcileConfig
 					newConfig, configChanged = c.config.Peek()
 					if updateIfChanged(&config, newConfig) {
 						c.log.Info("Cluster configuration changed")
@@ -202,7 +204,7 @@ func (c *Calico) Start(context.Context) error {
 
 }
 
-func (c *Calico) dumpCRDs() error {
+func (c *Calico) dumpCRDs(patches v1beta1.Patches) error {
 	var emptyStruct struct{}
 
 	// Write the CRD definitions only at "boot", they do not change during runtime
@@ -226,7 +228,7 @@ func (c *Calico) dumpCRDs() error {
 			Name:     "calico-crd-" + strings.TrimSuffix(filename, filepath.Ext(filename)),
 			Template: string(contents),
 			Data:     emptyStruct,
-			Patches:  c.patches,
+			Patches:  patches,
 		}
 		if err := tw.WriteToBuffer(output); err != nil {
 			return fmt.Errorf("failed to write calico crd manifests %s: %w", manifestName, err)
@@ -242,7 +244,7 @@ func (c *Calico) dumpCRDs() error {
 	return nil
 }
 
-func (c *Calico) processConfigChanges(newConfig *calicoConfig) error {
+func (c *Calico) processConfigChanges(newConfig *calicoConfig, patches v1beta1.Patches) error {
 	manifestDirectories, err := fs.ReadDir(static.CalicoManifests, ".")
 	if err != nil {
 		return fmt.Errorf("error retrieving calico manifests: %w, will retry", err)
@@ -278,7 +280,7 @@ func (c *Calico) processConfigChanges(newConfig *calicoConfig) error {
 				Name:     fmt.Sprintf("calico-%s-%s", dir, strings.TrimSuffix(filename, filepath.Ext(filename))),
 				Template: string(contents),
 				Data:     newConfig,
-				Patches:  c.patches,
+				Patches:  patches,
 			}
 			tryAndLog(manifestName, tw.WriteToBuffer(output))
 			tryAndLog(manifestName, file.AtomicWithTarget(filepath.Join(c.manifestsDir, "calico", manifestName)).
@@ -359,7 +361,7 @@ func (c *Calico) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error 
 	}
 
 	calicoCRDOnce.Do(func() {
-		if err := c.dumpCRDs(); err != nil {
+		if err := c.dumpCRDs(cfg.Spec.Network.Calico.Patches); err != nil {
 			c.log.Errorf("error dumping Calico CRDs: %v", err)
 		}
 	})
@@ -367,6 +369,9 @@ func (c *Calico) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error 
 	if err != nil {
 		return fmt.Errorf("while generating Calico configuration: %w", err)
 	}
-	c.config.Set(newConfig)
+	c.config.Set(&calicoReconcileConfig{
+		cluster: newConfig,
+		patches: cfg.Spec.Network.Calico.Patches,
+	})
 	return nil
 }

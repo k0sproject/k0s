@@ -177,24 +177,11 @@ func (n *Network) Validate() []error {
 	}
 
 	errors = append(errors, n.KubeProxy.Validate()...)
-	for _, err := range n.Calico.Validate(field.NewPath("calico")) {
-		errors = append(errors, err)
-	}
+	errors = append(errors, n.KubeRouter.Validate(field.NewPath("kuberouter"))...)
+	errors = append(errors, n.Calico.Validate(field.NewPath("calico"))...)
+	errors = append(errors, n.CoreDNS.Validate(field.NewPath("coreDNS"))...)
 	for _, err := range n.NodeLocalLoadBalancing.Validate(field.NewPath("nodeLocalLoadBalancing")) {
 		errors = append(errors, err)
-	}
-
-	if n.KubeProxy != nil {
-		errors = append(errors, n.KubeProxy.Patches.validate(field.NewPath("kubeProxy", "patches"))...)
-	}
-	if n.KubeRouter != nil {
-		errors = append(errors, n.KubeRouter.Patches.validate(field.NewPath("kuberouter", "patches"))...)
-	}
-	if n.Calico != nil {
-		errors = append(errors, n.Calico.Patches.validate(field.NewPath("calico", "patches"))...)
-	}
-	if n.CoreDNS != nil {
-		errors = append(errors, n.CoreDNS.Patches.validate(field.NewPath("coreDNS", "patches"))...)
 	}
 
 	return errors

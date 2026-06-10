@@ -9,6 +9,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/net"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/kubernetes/pkg/cluster/ports"
 )
 
@@ -104,10 +105,16 @@ func DefaultKubeProxy() *KubeProxy {
 
 // Validate validates kube proxy config
 func (k *KubeProxy) Validate() []error {
-	if k.Disabled {
+	if k == nil {
 		return nil
 	}
-	var errors []error
+
+	// Patches are applied regardless of whether kube-proxy itself is enabled.
+	errors := k.Patches.validate(field.NewPath("kubeProxy", "patches"))
+
+	if k.Disabled {
+		return errors
+	}
 	if k.Mode != ModeIptables && k.Mode != ModeIPVS && k.Mode != ModeUSerspace && k.Mode != ModeNFT {
 		errors = append(errors, fmt.Errorf("unsupported mode %s for kubeProxy config", k.Mode))
 	}
@@ -117,5 +124,6 @@ func (k *KubeProxy) Validate() []error {
 	if _, err := net.ParseHostPort(k.MetricsBindAddress); err != nil {
 		errors = append(errors, fmt.Errorf("metricsBindAddress: %w", err))
 	}
+
 	return errors
 }

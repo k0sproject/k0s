@@ -13,8 +13,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 )
+
+func toUnstructured(t *testing.T, manifest []byte) *unstructured.Unstructured {
+	t.Helper()
+	jsonBytes, err := yaml.YAMLToJSON(manifest)
+	require.NoError(t, err)
+	obj := &unstructured.Unstructured{}
+	require.NoError(t, obj.UnmarshalJSON(jsonBytes))
+	return obj
+}
 
 const cmManifest = `apiVersion: v1
 kind: ConfigMap
@@ -47,10 +57,10 @@ func TestApply_MergePatch(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	var parsed map[string]any
-	require.NoError(t, yaml.Unmarshal(out, &parsed))
-	data := parsed["data"].(map[string]any)
-	assert.Equal(t, "patched", data["key"])
+	got, found, err := unstructured.NestedString(toUnstructured(t, out).Object, "data", "key")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "patched", got)
 }
 
 func TestApply_JSONPatch(t *testing.T) {
@@ -63,10 +73,10 @@ func TestApply_JSONPatch(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	var parsed map[string]any
-	require.NoError(t, yaml.Unmarshal(out, &parsed))
-	spec := parsed["spec"].(map[string]any)
-	assert.EqualValues(t, 3, spec["replicas"])
+	replicas, found, err := unstructured.NestedInt64(toUnstructured(t, out).Object, "spec", "replicas")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.EqualValues(t, 3, replicas)
 }
 
 func TestApply_StrategicMerge(t *testing.T) {
@@ -79,10 +89,10 @@ func TestApply_StrategicMerge(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	var parsed map[string]any
-	require.NoError(t, yaml.Unmarshal(out, &parsed))
-	spec := parsed["spec"].(map[string]any)
-	assert.EqualValues(t, 5, spec["replicas"])
+	replicas, found, err := unstructured.NestedInt64(toUnstructured(t, out).Object, "spec", "replicas")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.EqualValues(t, 5, replicas)
 }
 
 func TestApply_NamespaceNarrowing(t *testing.T) {
@@ -93,10 +103,10 @@ func TestApply_NamespaceNarrowing(t *testing.T) {
 	require.NoError(t, err)
 
 	// A patch targeting a different namespace must not change the document.
-	var parsed map[string]any
-	require.NoError(t, yaml.Unmarshal(out, &parsed))
-	assert.EqualValues(t, 1, parsed["spec"].(map[string]any)["replicas"],
-		"non-matching namespace must leave the doc untouched")
+	replicas, found, err := unstructured.NestedInt64(toUnstructured(t, out).Object, "spec", "replicas")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.EqualValues(t, 1, replicas, "non-matching namespace must leave the doc untouched")
 }
 
 func TestApply_MultiDoc_OnlyMatchedDocPatched(t *testing.T) {
@@ -226,7 +236,8 @@ func TestApply_OrderedMultiPatch(t *testing.T) {
 			Patch: v1beta1.PatchSpec{Type: v1beta1.MergePatchType, Content: `{"spec":{"replicas":7}}`}},
 	})
 	require.NoError(t, err)
-	var parsed map[string]any
-	require.NoError(t, yaml.Unmarshal(out, &parsed))
-	assert.EqualValues(t, 7, parsed["spec"].(map[string]any)["replicas"])
+	replicas, found, err := unstructured.NestedInt64(toUnstructured(t, out).Object, "spec", "replicas")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.EqualValues(t, 7, replicas)
 }
