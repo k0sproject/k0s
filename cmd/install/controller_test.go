@@ -66,6 +66,7 @@ Flags:
       --enable-metrics-scraper                         enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)
       --enable-worker                                  enable worker (default false)
   -h, --help                                           help for controller
+      --ignore-pre-flight-checks                       continue even if pre-flight checks fail
       --init-only                                      only initialize controller and exit
       --iptables-mode string                           iptables mode (valid values: nft, legacy, auto). default: auto
       --k0s-cloud-provider-port int                    the port that k0s-cloud-provider binds on (default 10258)
