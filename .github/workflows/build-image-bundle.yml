@@ -27,6 +27,9 @@ jobs:
     name: "${{ inputs.image-bundle-name }}-${{ inputs.image-bundle-platform }}"
     runs-on: ubuntu-24.04
 
+    outputs:
+      cache-key: ${{ steps.cache-image-bundle-calc-key.outputs.cache-key }}
+
     env:
       IMAGE_BUNDLE_NAME: ${{ inputs.image-bundle-name }}
       IMAGE_BUNDLE_PLATFORM: ${{ inputs.image-bundle-platform }}
@@ -55,7 +58,7 @@ jobs:
         env:
           HASH_VALUE: ${{ hashFiles('Makefile', format('{0}-images-{1}.txt', inputs.image-bundle-name, inputs.image-bundle-platform), 'cmd/airgap/*', 'pkg/airgap/*') }}
         run: |
-          printf 'cache-key=build-%s-image-bundle-%s-%s\n' "$IMAGE_BUNDLE_NAME" "$IMAGE_BUNDLE_PLATFORM" "$HASH_VALUE" >> "$GITHUB_OUTPUT"
+          printf 'cache-key=build-%s-image-bundle-%s-%s\n' "$IMAGE_BUNDLE_NAME" "$IMAGE_BUNDLE_PLATFORM" "$HASH_VALUE" >>"$GITHUB_OUTPUT"
 
       - name: "Cache :: Image bundle"
         id: cache-image-bundle

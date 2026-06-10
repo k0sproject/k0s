@@ -80,6 +80,7 @@ jobs:
             find build/cache/go/build -type f \( -name '*-a' -o -name '*-d' \) -exec touch -r build/cache/_cache_sentinel {} +
           fi
 
+          #shellcheck disable=SC2086 # UNITTEST_EXTRA_ARGS intentionally expands to multiple arguments
           make check-unit $UNITTEST_EXTRA_ARGS
 
           if [ -n "$CACHE_HIT_GOCACHE" ]; then

@@ -8,7 +8,7 @@
 set -euo pipefail
 
 list_k0s_releases() {
-  # shellcheck disable=SC2016
+  #shellcheck disable=SC2016
   local query='.[] | select(.prerelease == false and .draft == false) | .name | select(startswith($ENV.VERSION_PREFIX))'
   VERSION_PREFIX="v$1" gh api -X GET /repos/k0sproject/k0s/releases -F per_page=100 --paginate --jq "$query"
 }
@@ -24,7 +24,7 @@ json_print_latest_releases() {
   for i in "$@"; do
     latestRelease="$(latest_release "$i")"
     [ -z "$latestRelease" ] || {
-      # shellcheck disable=SC2059
+      #shellcheck disable=SC2059
       printf "$pattern" "$latestRelease"
       pattern=', "%s"'
     }

@@ -39,8 +39,8 @@ jobs:
 
         run: |
           set -euo pipefail
-          gh api -X GET repos/{owner}/{repo}/actions/caches -q "$QUERY" | while read -r args; do
+          gh api -X GET 'repos/{owner}/{repo}/actions/caches' -q "$QUERY" | while read -r args; do
             eval "set -- $args"
             echo Deleting cache with id "$1" from "$2": "$3"
-            gh api -X DELETE repos/{owner}/{repo}/actions/caches/"$1" || :
+            gh api -X DELETE "repos/{owner}/{repo}/actions/caches/$1" || :
           done
