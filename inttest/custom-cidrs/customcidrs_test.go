@@ -39,11 +39,10 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 		s.FailNow("failed to obtain Kubernetes client", err)
 	}
 
-	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
-	s.Require().NoError(err)
-
-	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
-	s.Require().NoError(err)
+	for i := range s.WorkerCount {
+		err = s.WaitForNodeReady(s.WorkerNode(i), kc)
+		s.Require().NoError(err)
+	}
 
 	s.AssertSomeKubeSystemPods(kc)
 
@@ -71,7 +70,7 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 				},
 			}},
 			NodeSelector: map[string]string{
-				"kubernetes.io/hostname": "worker0",
+				"kubernetes.io/hostname": s.WorkerNode(0),
 			},
 		},
 	}, metav1.CreateOptions{})
@@ -93,13 +92,17 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 	// Verify lookup actually works
 	nslookup, err := common.PodExecCmdOutput(kc, restConfig, "nginx", metav1.NamespaceDefault, "nslookup kubernetes.default.svc.cluster.local")
 	s.Require().NoError(err)
-	s.Require().Contains(nslookup, "Address: 10.152.184.1")
+	s.Contains(nslookup, "Address: 10.152.184.1")
 
 	// Check that we can access the kubernetes svc via DNS name
 	kubeSvcOutput, err := common.PodExecCmdOutput(kc, restConfig, "nginx", metav1.NamespaceDefault, `curl -v -k --connect-timeout 2 -s -I https://kubernetes.default.svc.cluster.local`)
 	s.Require().NoError(err)
+	s.Contains(kubeSvcOutput, "HTTP/2 401")
 
-	s.Require().Contains(kubeSvcOutput, "HTTP/2 401")
+	// Check that kube-router has the right service CIDR set
+	ds, err := kc.AppsV1().DaemonSets(metav1.NamespaceSystem).Get(ctx, "kube-router", metav1.GetOptions{})
+	s.Require().NoError(err)
+	s.Contains(ds.Spec.Template.Spec.Containers[0].Args, "--service-cluster-ip-range=10.152.184.0/24")
 }
 
 func TestCustomCIDRsSuite(t *testing.T) {
