@@ -11,32 +11,34 @@ package dualstack
 // have proper values for spec.PodCIDRs
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"strings"
-
-	"github.com/stretchr/testify/suite"
-
 	"testing"
-
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/applier"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8s "k8s.io/client-go/kubernetes"
-
-	"context"
-
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	kubeproxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type DualstackSuite struct {
 	common.BootlooseSuite
 
-	client      *k8s.Clientset
-	defaultIPv6 bool
+	client        *kubernetes.Clientset
+	cni           string
+	defaultIPv6   bool
+	dynamicConfig bool
 }
 
 func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
@@ -47,34 +49,95 @@ func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
 	}
 }
 
-func (s *DualstackSuite) TestDualStackControlPlaneComponentsHaveServiceCIDRs() {
-	const expectedIPv4 = "--service-cluster-ip-range=10.96.0.0/12,fd01::/108"
-	const expectedIPv6 = "--service-cluster-ip-range=fd01::/108,10.96.0.0/12"
+func (s *DualstackSuite) TestComponentsHaveCorrectCIDRs() {
+	ctx := s.Context()
+	expectedPodCIDRs := "10.233.0.0/16,fd00::/108"
+	expectedServiceCIDRs := "10.112.0.0/12,fd01::/108"
+	if s.defaultIPv6 {
+		expectedPodCIDRs = "fd00::/108,10.233.0.0/16"
+		expectedServiceCIDRs = "fd01::/108,10.112.0.0/12"
+	}
+
 	node := s.ControllerNode(0)
 
-	expected := expectedIPv4
-	if s.defaultIPv6 {
-		expected = expectedIPv6
+	ssh, err := s.SSH(ctx, node)
+	if !s.NoError(err) {
+		return
 	}
-	s.Contains(s.cmdlineForExecutable(node, "kube-apiserver"), expected)
-	s.Contains(s.cmdlineForExecutable(node, "kube-controller-manager"), expected)
-}
-
-func (s *DualstackSuite) cmdlineForExecutable(node, binary string) []string {
-	require := s.Require()
-	ssh, err := s.SSH(s.Context(), node)
-	require.NoError(err)
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("pidof -- %q", binary))
-	require.NoError(err)
+	s.Run("kube-apiserver", func() {
+		if args, err := cmdlineForExecutable(ctx, ssh, "kube-apiserver"); s.NoError(err) {
+			s.Contains(args, "--service-cluster-ip-range="+expectedServiceCIDRs)
+		}
+	})
 
-	pids := strings.Split(output, " ")
-	require.Len(pids, 1, "Expected a single pid")
+	s.Run("kube-controller-manager", func() {
+		if args, err := cmdlineForExecutable(ctx, ssh, "kube-controller-manager"); s.NoError(err) {
+			s.Contains(args, "--service-cluster-ip-range="+expectedServiceCIDRs)
+			s.Contains(args, "--cluster-cidr="+expectedPodCIDRs)
+		}
+	})
 
-	output, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("cat /proc/%q/cmdline", pids[0]))
-	require.NoErrorf(err, "Failed to get cmdline for PID %s", pids[0])
-	return strings.Split(output, "\x00")
+	kc, err := s.KubeClient(node)
+	if !s.NoError(err) {
+		return
+	}
+
+	s.Run("kube-proxy", func() {
+		cm, err := kc.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(s.Context(), "kube-proxy", metav1.GetOptions{})
+		if !s.NoError(err) {
+			return
+		}
+
+		var config kubeproxyv1alpha1.KubeProxyConfiguration
+		codec := applier.CodecFor(applier.BuildScheme(kubeproxyv1alpha1.AddToScheme))
+		obj, gvk, err := codec.Decode([]byte(cm.Data["config.conf"]), nil, &config)
+		if !s.NoError(err) {
+			return
+		}
+
+		if config, ok := obj.(*kubeproxyv1alpha1.KubeProxyConfiguration); s.Truef(ok, "Unexpected type: %s", gvk) {
+			s.Equal(expectedPodCIDRs, config.ClusterCIDR)
+		}
+	})
+
+	s.Run("kube-router", func() {
+		if s.cni != "kuberouter" {
+			s.T().Skip("Using", s.cni)
+		}
+
+		kc, err := s.KubeClient(node)
+		if !s.NoError(err) {
+			return
+		}
+
+		ds, err := kc.AppsV1().DaemonSets(metav1.NamespaceSystem).Get(s.Context(), "kube-router", metav1.GetOptions{})
+		if !s.NoError(err) {
+			return
+		}
+
+		s.Contains(ds.Spec.Template.Spec.Containers[0].Args, "--service-cluster-ip-range="+expectedServiceCIDRs)
+	})
+}
+
+func cmdlineForExecutable(ctx context.Context, ssh *common.SSHConnection, binary string) ([]string, error) {
+	output, err := ssh.ExecWithOutput(ctx, fmt.Sprintf("pidof -- %q", binary))
+	if err != nil {
+		return nil, err
+	}
+
+	pid, _, multiplePids := strings.Cut(output, " ")
+	if multiplePids {
+		return nil, errors.New("expected a single PID: " + output)
+	}
+
+	output, err = ssh.ExecWithOutput(ctx, fmt.Sprintf("cat /proc/%q/cmdline", pid))
+	if err != nil {
+		return nil, errors.New("failed to get cmdline for PID " + output)
+	}
+
+	return strings.Split(output, "\x00"), nil
 }
 
 func (s *DualstackSuite) SetupSuite() {
@@ -83,19 +146,20 @@ func (s *DualstackSuite) SetupSuite() {
 	s.Require().True(isDockerIPv6Enabled, "Please enable IPv6 in docker before running this test")
 	s.BootlooseSuite.SetupSuite()
 
-	target := os.Getenv("K0S_INTTEST_TARGET")
-
 	k0sConfig := k0sConfigWithCalicoDualStack
-
-	if strings.Contains(target, "kuberouter") {
+	if s.cni == "kuberouter" {
 		s.T().Log("Using kube-router network")
-		ipv6Address := s.getIPv6Address(s.ControllerNode(0))
-		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouterDualStack, ipv6Address)
-		s.defaultIPv6 = true
+		var ipAddress string
+		if s.defaultIPv6 {
+			ipAddress = s.getIPv6Address(s.ControllerNode(0))
+		} else {
+			ipAddress = s.GetIPAddress(s.ControllerNode(0))
+		}
+		k0sConfig = fmt.Sprintf(k0sConfigWithKuberouterDualStack, ipAddress)
 	}
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
-	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "dynamicconfig") {
+	if s.dynamicConfig {
 		s.T().Log("Enabling dynamic config for controller")
 		controllerArgs = append(controllerArgs, "--enable-dynamic-config")
 	}
@@ -103,13 +167,9 @@ func (s *DualstackSuite) SetupSuite() {
 	s.Require().NoError(s.RunWorkers())
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
-	err = s.WaitForNodeReady(s.WorkerNode(0), client)
-	s.Require().NoError(err)
-
-	err = s.WaitForNodeReady(s.WorkerNode(1), client)
-	s.Require().NoError(err)
-
 	for i := range s.WorkerCount {
+		err = s.WaitForNodeReady(s.WorkerNode(i), client)
+		s.Require().NoError(err)
 		ssh, err := s.SSH(s.Context(), s.WorkerNode(i))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
@@ -118,54 +178,62 @@ func (s *DualstackSuite) SetupSuite() {
 		s.T().Logf("worker%d: /proc/sys/net/ipv6/conf/all/disable_ipv6=%s", i, output)
 	}
 
-	kc, err := s.KubeClient("controller0", "")
+	kc, err := s.KubeClient(s.ControllerNode(0), "")
 	s.Require().NoError(err)
-	restConfig, err := s.GetKubeConfig("controller0", "")
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0), "")
 	s.Require().NoError(err)
 
-	createdTargetPod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
+	targetPod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker0"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nginx-" + s.WorkerNode(0)},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.31.1-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.31.1-alpine"}},
 			NodeSelector: map[string]string{
-				"kubernetes.io/hostname": "worker0",
+				"kubernetes.io/hostname": s.WorkerNode(0),
 			},
 		},
 	}, metav1.CreateOptions{})
-	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx-worker0", metav1.NamespaceDefault), "nginx-worker0 pod did not start")
-
-	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(s.Context(), createdTargetPod.Name, metav1.GetOptions{})
 	s.Require().NoError(err)
 
 	sourcePod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nginx-" + s.WorkerNode(1)},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.31.1-alpine"}},
 			NodeSelector: map[string]string{
-				"kubernetes.io/hostname": "worker1",
+				"kubernetes.io/hostname": s.WorkerNode(1),
 			},
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.NoError(common.WaitForPod(s.Context(), kc, "nginx-worker1", metav1.NamespaceDefault), "nginx-worker1 pod did not start")
+
+	s.T().Logf("Waiting for pod: %s", targetPod.Name)
+	s.Require().NoErrorf(common.WaitForPod(s.Context(), kc, targetPod.Name, metav1.NamespaceDefault), "%s pod did not start", targetPod.Name)
+	targetPod, err = kc.CoreV1().Pods(targetPod.Namespace).Get(s.Context(), targetPod.Name, metav1.GetOptions{})
+	s.Require().NoError(err)
+
+	s.T().Logf("Waiting for pod: %s", sourcePod.Name)
+	s.NoErrorf(common.WaitForPod(s.Context(), kc, sourcePod.Name, metav1.NamespaceDefault), "%s pod did not start", sourcePod.Name)
 
 	// test both ipv4 and ipv6 addresses
 	podIPs := map[string]string{}
 	podIPs["ipv4"], podIPs["ipv6"] = s.getPodIPs(targetPod)
 	for ipVersion, podIP := range podIPs {
+		target := net.JoinHostPort(podIP, "80")
+		s.T().Logf("Trying to access %s address %s of pod %s from pod %s", ipVersion, target, targetPod.Name, sourcePod.Name)
 		err := wait.PollUntilContextTimeout(s.Context(), 100*time.Millisecond, time.Minute, true, func(ctx context.Context) (done bool, err error) {
-			target := net.JoinHostPort(podIP, "80")
 			out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, "/usr/bin/wget -qO- http://"+target)
-			s.T().Logf("Trying to access %s address %s: %s", ipVersion, target, out)
 			if err != nil {
-				s.T().Logf("error calling %s address: %v", ipVersion, err)
+				s.T().Logf("Error calling %s address of pod %s: %v", ipVersion, targetPod.Name, err)
 				return false, nil
 			}
-			s.T().Logf("server response from %s address: %s", ipVersion, out)
-			return strings.Contains(out, "Welcome to nginx"), nil
+			if !strings.Contains(out, "Welcome to nginx") {
+				s.T().Logf("Server response from %s address of pod %s: %s", ipVersion, targetPod.Name, out)
+				return false, nil
+			}
+
+			s.T().Logf("Connection to %s address of pod %s from pod %s was successful", ipVersion, targetPod.Name, sourcePod.Name)
+			return true, nil
 		})
 		s.Require().NoErrorf(err, "failed to access nginx server via %s address", ipVersion)
 	}
@@ -198,7 +266,7 @@ func (s *DualstackSuite) getPodIPs(pod *corev1.Pod) (string, string) {
 	return ipv4, ipv6
 }
 
-func (s *DualstackSuite) validateKubeDNSIP(client *k8s.Clientset) {
+func (s *DualstackSuite) validateKubeDNSIP(client *kubernetes.Clientset) {
 	svc, err := client.CoreV1().Services(metav1.NamespaceSystem).Get(s.Context(), "kube-dns", metav1.GetOptions{})
 	s.NoError(err, "failed to get service kube-dns")
 	svcIP := net.ParseIP(svc.Spec.ClusterIP)
@@ -222,14 +290,19 @@ func (s *DualstackSuite) getIPv6Address(nodeName string) string {
 }
 
 func TestDualStack(t *testing.T) {
-
+	target := os.Getenv("K0S_INTTEST_TARGET")
 	s := DualstackSuite{
-		common.BootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},
-		nil,
-		false,
+		cni:           "calico",
+		dynamicConfig: strings.Contains(target, "dynamicconfig"),
+	}
+
+	if strings.Contains(target, "kuberouter") {
+		s.cni = "kuberouter"
+		s.defaultIPv6 = true
 	}
 
 	suite.Run(t, &s)
@@ -248,8 +321,8 @@ spec:
       enabled: true
       IPv6podCIDR: "fd00::/108"
       IPv6serviceCIDR: "fd01::/108"
-    podCIDR: 10.244.0.0/16
-    serviceCIDR: 10.96.0.0/12
+    podCIDR: 10.233.0.0/16
+    serviceCIDR: 10.112.0.0/12
 `
 
 const k0sConfigWithKuberouterDualStack = `
@@ -262,6 +335,6 @@ spec:
       enabled: true
       IPv6podCIDR: "fd00::/108"
       IPv6serviceCIDR: "fd01::/108"
-    podCIDR: 10.244.0.0/16
-    serviceCIDR: 10.96.0.0/12
+    podCIDR: 10.233.0.0/16
+    serviceCIDR: 10.112.0.0/12
 `

@@ -29,6 +29,7 @@ type KubeRouter struct {
 
 	k0sVars              *config.CfgVars
 	primaryAddressFamily v1beta1.PrimaryAddressFamilyType
+	serviceCIDRs         string
 
 	previousConfig  kubeRouterConfig
 	previousPatches v1beta1.Patches
@@ -52,12 +53,13 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars, primaryAddressFamily v1beta1.PrimaryAddressFamilyType) *KubeRouter {
+func NewKubeRouter(k0sVars *config.CfgVars, primaryAddressFamily v1beta1.PrimaryAddressFamilyType, serviceCIDRs string) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
 		k0sVars:              k0sVars,
 		primaryAddressFamily: primaryAddressFamily,
+		serviceCIDRs:         serviceCIDRs,
 	}
 }
 
@@ -118,7 +120,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"auto-mtu":                 strconv.FormatBool(clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
 		"metrics-port":             strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode":             strconv.FormatBool(globalHairpin),
-		"service-cluster-ip-range": clusterConfig.Spec.Network.BuildServiceCIDR(clusterConfig.Spec.PrimaryAddressFamily()),
+		"service-cluster-ip-range": k.serviceCIDRs,
 	}
 
 	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic
