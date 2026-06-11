@@ -93,13 +93,14 @@ jobs:
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign public-key \
             --key=env://COSIGN_KEY --output-file=cosign.pub
+
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=k0s.sig k0s
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=spdx.json.sig spdx.json
 
       - name: Set up Go for smoke tests
@@ -246,7 +247,7 @@ jobs:
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=k0s.exe.sig k0s.exe
           cat k0s.exe.sig
 
@@ -342,7 +343,7 @@ jobs:
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=k0s.sig k0s
           cat k0s.sig
 
@@ -457,7 +458,7 @@ jobs:
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=k0s.sig k0s
           cat k0s.sig
 
