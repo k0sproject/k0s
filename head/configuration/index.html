@@ -1283,6 +1283,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#component-patches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component patches
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3323,6 +3334,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#component-patches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component patches
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4270,6 +4292,103 @@ will not disable component deployment.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">telemetry</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="component-patches">Component patches<a class="headerlink" href="#component-patches" title="Permanent link">#</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Experimental feature</p>
+<p>Patching is an experimental feature, which means the behavior of this feature might be unstable and may change without a major version bump.</p>
+</div>
+<p>Several k0s-managed components let you customize the Kubernetes resources they
+generate before those resources are written and applied. This is an escape
+hatch for adjustments k0s does not expose as dedicated config options. Patches
+live under the component they belong to:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Config key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CoreDNS</td>
+<td><code>spec.network.coreDNS.patches</code></td>
+</tr>
+<tr>
+<td>kube-proxy</td>
+<td><code>spec.network.kubeProxy.patches</code></td>
+</tr>
+<tr>
+<td>kube-router</td>
+<td><code>spec.network.kuberouter.patches</code></td>
+</tr>
+<tr>
+<td>Calico</td>
+<td><code>spec.network.calico.patches</code></td>
+</tr>
+<tr>
+<td>metrics-server</td>
+<td><code>spec.metricsServer.patches</code></td>
+</tr>
+</tbody>
+</table>
+<p>Each entry selects a target resource by <code>kind</code> and <code>name</code> (optionally narrowed
+by <code>namespace</code>) and provides the patch <code>type</code> and <code>content</code>. The <code>content</code> may
+be written as JSON or YAML.</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target.kind</code></td>
+<td>The Kubernetes <code>kind</code> of the generated resource to patch (e.g. <code>Deployment</code>, <code>Service</code>, <code>ConfigMap</code>).</td>
+</tr>
+<tr>
+<td><code>target.name</code></td>
+<td>The <code>metadata.name</code> of the generated resource to patch.</td>
+</tr>
+<tr>
+<td><code>target.namespace</code></td>
+<td>Optional. Narrows the match to a single namespace.</td>
+</tr>
+<tr>
+<td><code>patch.type</code></td>
+<td>One of <code>JSON</code> (RFC 6902 JSON Patch), <code>MergePatch</code> (RFC 7386 JSON Merge Patch) or <code>StrategicMergePatch</code>.</td>
+</tr>
+<tr>
+<td><code>patch.content</code></td>
+<td>The patch body, as JSON or YAML.</td>
+</tr>
+</tbody>
+</table>
+<p>Multiple patches matching the same resource are applied in the order listed.
+Note that <code>StrategicMergePatch</code> patches are only supported for built-in
+Kubernetes resource kinds.</p>
+<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h4>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">coreDNS</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">patches</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">target</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coredns</span>
+<span class="w">            </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
+<span class="w">          </span><span class="nt">patch</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">StrategicMergePatch</span>
+<span class="w">            </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">              </span><span class="no">spec:</span>
+<span class="w">                </span><span class="no">replicas: 3</span>
+<span class="w">                </span><span class="no">template:</span>
+<span class="w">                  </span><span class="no">spec:</span>
+<span class="w">                    </span><span class="no">containers:</span>
+<span class="w">                      </span><span class="no">- name: coredns</span>
+<span class="w">                        </span><span class="no">resources:</span>
+<span class="w">                          </span><span class="no">limits:</span>
+<span class="w">                            </span><span class="no">memory: 256Mi</span>
 </code></pre></div>
 <h2 id="disabling-controller-components">Disabling controller components<a class="headerlink" href="#disabling-controller-components" title="Permanent link">#</a></h2>
 <p>k0s allows to completely disable some of the system components. This allows
