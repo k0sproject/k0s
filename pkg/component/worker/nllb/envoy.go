@@ -264,6 +264,10 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 		},
 		Spec: corev1.PodSpec{
 			HostNetwork: true,
+			// The Envoy Pod is the worker's load-balanced path to the control
+			// plane, so it must outlive ordinary workloads during graceful node
+			// shutdown and be protected from node-pressure eviction.
+			PriorityClassName: "system-node-critical",
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsNonRoot: ptr.To(true),
 			},
