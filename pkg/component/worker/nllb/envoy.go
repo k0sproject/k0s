@@ -65,6 +65,12 @@ type envoyPodParams struct {
 
 	// The pull policy to use for the Envoy container.
 	pullPolicy corev1.PullPolicy
+
+	// The name of the PriorityClass to assign to the Envoy Pod. Empty if none.
+	priorityClassName string
+
+	// The grace period for the Envoy Pod to terminate. Nil for the default.
+	terminationGracePeriodSeconds *int64
 }
 
 // envoyFilesParams holds the parameters for the Envoy config files.
@@ -139,8 +145,10 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 			konnectivityBindPort,
 		},
 		envoyPodParams{
-			*nllb.EnvoyProxy.Image,
-			nllb.EnvoyProxy.ImagePullPolicy,
+			image:                         *nllb.EnvoyProxy.Image,
+			pullPolicy:                    nllb.EnvoyProxy.ImagePullPolicy,
+			priorityClassName:             nllb.EnvoyProxy.PriorityClassName,
+			terminationGracePeriodSeconds: nllb.EnvoyProxy.TerminationGracePeriodSeconds,
 		},
 		envoyFilesParams{
 			konnectivityServerPort: profile.Konnectivity.AgentPort,
@@ -263,7 +271,9 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 			Labels:    applier.CommonLabels("nllb"),
 		},
 		Spec: corev1.PodSpec{
-			HostNetwork: true,
+			HostNetwork:                   true,
+			PriorityClassName:             podParams.priorityClassName,
+			TerminationGracePeriodSeconds: podParams.terminationGracePeriodSeconds,
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsNonRoot: ptr.To(true),
 			},
