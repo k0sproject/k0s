@@ -3147,6 +3147,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <h2 id="configuration-options">Configuration options<a class="headerlink" href="#configuration-options" title="Permanent link">#</a></h2>
 <p>The configuration object is a 1-to-1 mapping with the existing <a href="../configuration/">configuration YAML</a>. All the configuration options EXCEPT options under <code>spec.api</code> and <code>spec.storage</code> are dynamically reconciled.</p>
 <p>As with any Kubernetes cluster there are certain things that just cannot be changed on-the-fly, this is the list of non-changeable options:</p>
+<!--
+Technically, k0s currently supports reconciling the pod CIDR from dynamic
+config. This has supposedly been an oversight during implementation. Actually
+attempting to change it on a live cluster would likely wreak havoc.
+-->
 <ul>
 <li><code>network.podCIDR</code></li>
 <li><code>network.serviceCIDR</code></li>
