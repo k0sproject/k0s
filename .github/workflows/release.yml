@@ -96,11 +96,13 @@ jobs:
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
             --tlog-upload=true --yes \
-            --output-file=k0s.sig k0s
+            --output-file=k0s.sig k0s \
+            --bundle k0s.sig.bundle
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
             --tlog-upload=true --yes \
-            --output-file=spdx.json.sig spdx.json
+            --output-file=spdx.json.sig spdx.json \
+            --bundle spdx.json.sig.bundle
 
       - name: Set up Go for smoke tests
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
@@ -247,7 +249,8 @@ jobs:
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
             --tlog-upload=true --yes \
-            --output-file=k0s.exe.sig k0s.exe
+            --output-file=k0s.exe.sig k0s.exe \
+            --bundle k0s.exe.sig.bundle
           cat k0s.exe.sig
 
       - name: Upload Release Assets - Binary
@@ -343,7 +346,8 @@ jobs:
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
             --tlog-upload=true --yes \
-            --output-file=k0s.sig k0s
+            --output-file=k0s.sig k0s \
+            --bundle k0s.sig.bundle
           cat k0s.sig
 
       - name: Set up Go for smoke tests
@@ -458,7 +462,8 @@ jobs:
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
             --tlog-upload=true --yes \
-            --output-file=k0s.sig k0s
+            --output-file=k0s.sig k0s \
+            --bundle k0s.sig.bundle
           cat k0s.sig
 
       - name: Set up Go for smoke tests
