@@ -606,6 +606,65 @@ spec:
     enabled: true
 ```
 
+### Component patches
+
+!!! warning "Experimental feature"
+     Patching is an experimental feature, which means the behavior of this feature might be unstable and may change without a major version bump.
+
+Several k0s-managed components let you customize the Kubernetes resources they
+generate before those resources are written and applied. This is an escape
+hatch for adjustments k0s does not expose as dedicated config options. Patches
+live under the component they belong to:
+
+| Component      | Config key                        |
+|----------------|-----------------------------------|
+| CoreDNS        | `spec.network.coreDNS.patches`    |
+| kube-proxy     | `spec.network.kubeProxy.patches`  |
+| kube-router    | `spec.network.kuberouter.patches` |
+| Calico         | `spec.network.calico.patches`     |
+| metrics-server | `spec.metricsServer.patches`      |
+
+Each entry selects a target resource by `kind` and `name` (optionally narrowed
+by `namespace`) and provides the patch `type` and `content`. The `content` may
+be written as JSON or YAML.
+
+| Element             | Description                                                                                                   |
+|---------------------|---------------------------------------------------------------------------------------------------------------|
+| `target.kind`       | The Kubernetes `kind` of the generated resource to patch (e.g. `Deployment`, `Service`, `ConfigMap`).         |
+| `target.name`       | The `metadata.name` of the generated resource to patch.                                                       |
+| `target.namespace`  | Optional. Narrows the match to a single namespace.                                                            |
+| `patch.type`        | One of `JSON` (RFC 6902 JSON Patch), `MergePatch` (RFC 7386 JSON Merge Patch) or `StrategicMergePatch`.       |
+| `patch.content`     | The patch body, as JSON or YAML.                                                                              |
+
+Multiple patches matching the same resource are applied in the order listed.
+Note that `StrategicMergePatch` patches are only supported for built-in
+Kubernetes resource kinds.
+
+#### Example
+
+```yaml
+spec:
+  network:
+    coreDNS:
+      patches:
+        - target:
+            kind: Deployment
+            name: coredns
+            namespace: kube-system
+          patch:
+            type: StrategicMergePatch
+            content: |
+              spec:
+                replicas: 3
+                template:
+                  spec:
+                    containers:
+                      - name: coredns
+                        resources:
+                          limits:
+                            memory: 256Mi
+```
+
 ## Disabling controller components
 
 k0s allows to completely disable some of the system components. This allows

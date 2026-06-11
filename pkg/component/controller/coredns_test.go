@@ -3,7 +3,38 @@
 
 package controller
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestCoreDNS_RenderWithPatch(t *testing.T) {
+	cfg := coreDNSConfig{
+		Replicas:      1,
+		ClusterDomain: "cluster.local",
+		ClusterDNSIP:  "10.96.0.10",
+		Image:         "coredns:latest",
+		PullPolicy:    "IfNotPresent",
+	}
+	tw := templatewriter.TemplateWriter{
+		Name:     "coredns",
+		Template: coreDNSTemplate,
+		Data:     cfg,
+		Patches: v1beta1.Patches{{
+			Target: v1beta1.PatchTarget{Kind: "Deployment", Name: "coredns"},
+			Patch:  v1beta1.PatchSpec{Type: v1beta1.MergePatchType, Content: `{"metadata":{"annotations":{"patched":"true"}}}`},
+		}},
+	}
+	var buf bytes.Buffer
+	require.NoError(t, tw.WriteToBuffer(&buf))
+	assert.Contains(t, buf.String(), "patched")
+}
 
 func Test_replicaCount(t *testing.T) {
 	tests := []struct {

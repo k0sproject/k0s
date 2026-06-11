@@ -164,6 +164,7 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - footnotes
+  - admonition
 
 extra:
   generator: false

@@ -27,6 +27,9 @@ type Network struct {
 	KubeProxy  *KubeProxy  `json:"kubeProxy,omitempty"`
 	KubeRouter *KubeRouter `json:"kuberouter,omitempty"`
 
+	// CoreDNS defines the configuration options for the CoreDNS component.
+	CoreDNS *CoreDNS `json:"coreDNS,omitempty"`
+
 	// NodeLocalLoadBalancing defines the configuration options related to k0s's
 	// node-local load balancing feature.
 	NodeLocalLoadBalancing *NodeLocalLoadBalancing `json:"nodeLocalLoadBalancing,omitempty"`
@@ -174,9 +177,9 @@ func (n *Network) Validate() []error {
 	}
 
 	errors = append(errors, n.KubeProxy.Validate()...)
-	for _, err := range n.Calico.Validate(field.NewPath("calico")) {
-		errors = append(errors, err)
-	}
+	errors = append(errors, n.KubeRouter.Validate(field.NewPath("kuberouter"))...)
+	errors = append(errors, n.Calico.Validate(field.NewPath("calico"))...)
+	errors = append(errors, n.CoreDNS.Validate(field.NewPath("coreDNS"))...)
 	for _, err := range n.NodeLocalLoadBalancing.Validate(field.NewPath("nodeLocalLoadBalancing")) {
 		errors = append(errors, err)
 	}

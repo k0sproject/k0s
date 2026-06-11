@@ -30,7 +30,8 @@ type KubeRouter struct {
 	k0sVars              *config.CfgVars
 	primaryAddressFamily v1beta1.PrimaryAddressFamilyType
 
-	previousConfig kubeRouterConfig
+	previousConfig  kubeRouterConfig
+	previousPatches v1beta1.Patches
 }
 
 var _ manager.Component = (*KubeRouter)(nil)
@@ -148,7 +149,9 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		Args:              append(args.ToDashedArgs(), clusterConfig.Spec.Network.KubeRouter.RawArgs...),
 	}
 
-	if reflect.DeepEqual(k.previousConfig, cfg) {
+	patches := clusterConfig.Spec.Network.KubeRouter.Patches
+	if reflect.DeepEqual(k.previousConfig, cfg) &&
+		reflect.DeepEqual(k.previousPatches, patches) {
 		k.log.Info("config matches with previous, not reconciling anything")
 		return nil
 	}
@@ -158,6 +161,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		Name:     "kube-router",
 		Template: kubeRouterTemplate,
 		Data:     cfg,
+		Patches:  patches,
 	}
 
 	err := tw.WriteToBuffer(output)
@@ -172,6 +176,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	}
 
 	k.previousConfig = cfg
+	k.previousPatches = patches
 	return nil
 }
 
