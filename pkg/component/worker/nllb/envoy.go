@@ -48,8 +48,8 @@ type envoyParams struct {
 	// Directory in which the envoy config files are stored.
 	configDir string
 
-	// IP to which Envoy will bind.
-	bindIP net.IP
+	// IPs to which Envoy will bind.
+	bindIPs []net.IP
 
 	// Port to which Envoy will bind the API server load balancer.
 	apiServerBindPort uint16
@@ -117,12 +117,12 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		}
 	}()
 
-	loopbackIP, err := getLoopbackIP(ctx)
+	loopbackIPs, err := getLoopbackIPs(ctx)
 	if err != nil {
 		if errors.Is(err, ctx.Err()) {
 			return err
 		}
-		e.log.WithError(err).Infof("Falling back to %s as bind address", loopbackIP)
+		e.log.WithError(err).Infof("Falling back to %v as bind addresses", loopbackIPs)
 	}
 
 	nllb := profile.NodeLocalLoadBalancing
@@ -134,7 +134,7 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 	e.config = &envoyConfig{
 		envoyParams{
 			e.dir,
-			loopbackIP,
+			loopbackIPs,
 			uint16(profile.NodeLocalLoadBalancing.EnvoyProxy.APIServerBindPort),
 			konnectivityBindPort,
 		},
@@ -165,7 +165,7 @@ func (e *envoyProxy) getAPIServerAddress() (*k0snet.HostPort, error) {
 	if e.config == nil {
 		return nil, errors.New("not yet started")
 	}
-	return k0snet.NewHostPort(e.config.bindIP.String(), e.config.apiServerBindPort)
+	return k0snet.NewHostPort(e.config.getBindHost(), e.config.apiServerBindPort)
 }
 
 func (e *envoyProxy) updateAPIServers(apiServers []k0snet.HostPort) error {
@@ -199,15 +199,23 @@ func (e *envoyProxy) stop() {
 	e.config = nil
 }
 
+func (p *envoyParams) getBindHost() string {
+	if len(p.bindIPs) == 1 {
+		return p.bindIPs[0].String()
+	}
+
+	return "localhost"
+}
+
 func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) error {
 	data := struct {
-		BindIP                     net.IP
+		BindIPs                    []net.IP
 		APIServerBindPort          uint16
 		KonnectivityServerBindPort uint16
 		KonnectivityServerPort     uint16
 		UpstreamServers            []k0snet.HostPort
 	}{
-		BindIP:                     params.bindIP,
+		BindIPs:                    params.bindIPs,
 		APIServerBindPort:          params.apiServerBindPort,
 		KonnectivityServerBindPort: params.konnectivityServerBindPort,
 		KonnectivityServerPort:     filesParams.konnectivityServerPort,
@@ -292,7 +300,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 					TimeoutSeconds:   3,
 					ProbeHandler: corev1.ProbeHandler{
 						TCPSocket: &corev1.TCPSocketAction{
-							Host: params.bindIP.String(), Port: intstr.FromInt(int(params.apiServerBindPort)),
+							Host: params.getBindHost(), Port: intstr.FromInt(int(params.apiServerBindPort)),
 						},
 					},
 				},
@@ -323,13 +331,15 @@ dynamic_resources:
   cds_config:
     path: /etc/envoy/cds.yaml
 
-{{ $localKonnectivityPort := .KonnectivityServerBindPort -}}
+{{ $apiServerPort := .APIServerBindPort -}}
+{{- $localKonnectivityPort := .KonnectivityServerBindPort -}}
 {{- $remoteKonnectivityPort := .KonnectivityServerPort -}}
 static_resources:
   listeners:
-  - name: apiserver
+  {{- range $idx, $bindIP := .BindIPs }}
+  - name: apiserver-ip-{{ $idx }}
     address:
-      socket_address: { address: {{ printf "%q" .BindIP }}, port_value: {{ .APIServerBindPort }} }
+      socket_address: { address: {{ printf "%q" $bindIP }}, port_value: {{ $apiServerPort }} }
     filter_chains:
     - filters:
       - name: envoy.filters.network.tcp_proxy
@@ -337,10 +347,12 @@ static_resources:
           "@type": type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
           stat_prefix: apiserver
           cluster: apiserver
+  {{- end }}
   {{- if ne $localKonnectivityPort 0 }}
-  - name: konnectivity
+  {{- range $idx, $bindIP := .BindIPs }}
+  - name: konnectivity-ip-{{ $idx }}
     address:
-      socket_address: { address: {{ printf "%q" .BindIP }}, port_value: {{ $localKonnectivityPort }} }
+      socket_address: { address: {{ printf "%q" $bindIP }}, port_value: {{ $localKonnectivityPort }} }
     filter_chains:
     - filters:
       - name: envoy.filters.network.tcp_proxy
@@ -348,6 +360,7 @@ static_resources:
           "@type": type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
           stat_prefix: konnectivity
           cluster: konnectivity
+  {{- end }}
   {{- end }}
 `))
 
