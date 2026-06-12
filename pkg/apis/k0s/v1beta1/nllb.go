@@ -144,6 +144,23 @@ type EnvoyProxy struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
 	KonnectivityServerBindPort *int32 `json:"konnectivityServerBindPort,omitempty"`
+
+	// priorityClassName specifies the name of the PriorityClass that will be
+	// assigned to the Envoy Pod. As node-local load balancing is critical for a
+	// worker to reach the control plane, this can be used to protect the Envoy
+	// Pod from node-pressure eviction by assigning it a system-critical priority
+	// class, such as "system-node-critical". The referenced PriorityClass must
+	// exist, otherwise the Pod won't be admitted. If empty, no priority class is
+	// assigned and the Pod's priority defaults to zero.
+	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// terminationGracePeriodSeconds is the optional duration in seconds the
+	// Envoy Pod needs to terminate gracefully. If set, it overrides Kubernetes's
+	// default grace period of 30 seconds, e.g. to give Envoy more time to drain
+	// in-flight connections on shutdown. Must be a non-negative integer. A value
+	// of zero indicates that the Pod will be deleted immediately.
+	// +kubebuilder:validation:Minimum=0
+	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
 }
 
 // Describes configuration options required for using Traefik as the backing
@@ -226,7 +243,15 @@ func (p *EnvoyProxy) Validate(path *field.Path) (errs field.ErrorList) {
 	if p == nil {
 		return
 	}
-	return validateProxyConfig(path, p.Image, p.ImagePullPolicy, p.APIServerBindPort, p.KonnectivityServerBindPort)
+	errs = validateProxyConfig(path, p.Image, p.ImagePullPolicy, p.APIServerBindPort, p.KonnectivityServerBindPort)
+	if p.TerminationGracePeriodSeconds != nil && *p.TerminationGracePeriodSeconds < 0 {
+		errs = append(errs, field.Invalid(
+			path.Child("terminationGracePeriodSeconds"),
+			*p.TerminationGracePeriodSeconds,
+			"must be a non-negative integer",
+		))
+	}
+	return errs
 }
 
 // Returns the default Traefik configuration.

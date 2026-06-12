@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 
 	"github.com/stretchr/testify/assert"
@@ -80,6 +81,40 @@ spec:
 			tt.verify(t, c.Spec.Network.NodeLocalLoadBalancing)
 		})
 	}
+}
+
+func TestEnvoyProxy_PriorityClassAndGracePeriod(t *testing.T) {
+	yamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: TestEnvoyProxy_PriorityClassAndGracePeriod
+spec:
+  network:
+    nodeLocalLoadBalancing:
+      envoyProxy:
+        priorityClassName: system-node-critical
+        terminationGracePeriodSeconds: 60
+`
+
+	t.Run("parsed", func(t *testing.T) {
+		c, err := ConfigFromBytes([]byte(yamlData))
+		require.NoError(t, err)
+		require.Empty(t, c.Validate())
+		envoy := c.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy
+		require.NotNil(t, envoy)
+		assert.Equal(t, "system-node-critical", envoy.PriorityClassName)
+		require.NotNil(t, envoy.TerminationGracePeriodSeconds)
+		assert.Equal(t, int64(60), *envoy.TerminationGracePeriodSeconds)
+	})
+
+	t.Run("negative_grace_period_invalid", func(t *testing.T) {
+		envoy := &EnvoyProxy{TerminationGracePeriodSeconds: ptr.To(int64(-1))}
+		envoy.setDefaults()
+		errs := envoy.Validate(field.NewPath("envoyProxy"))
+		require.Len(t, errs, 1)
+		assert.ErrorContains(t, errs[0], "envoyProxy.terminationGracePeriodSeconds: Invalid value: -1: must be a non-negative integer")
+	})
 }
 
 func TestEnvoyProxyImage_Unmarshal(t *testing.T) {

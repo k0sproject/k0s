@@ -12,13 +12,39 @@ import (
 	"testing"
 
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
 	"k8s.io/client-go/util/jsonpath"
+	"k8s.io/utils/ptr"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 )
+
+func TestMakePodManifest(t *testing.T) {
+	params := envoyParams{
+		configDir: "/run/k0s/nllb/envoy",
+		bindIP:    net.IPv6loopback,
+	}
+
+	t.Run("defaults_leave_lifecycle_fields_unset", func(t *testing.T) {
+		pod := makePodManifest(&params, &envoyPodParams{image: v1beta1.ImageSpec{Image: "envoy", Version: "v1"}})
+		assert.Empty(t, pod.Spec.PriorityClassName)
+		assert.Nil(t, pod.Spec.TerminationGracePeriodSeconds)
+	})
+
+	t.Run("propagates_priority_class_and_grace_period", func(t *testing.T) {
+		pod := makePodManifest(&params, &envoyPodParams{
+			image:                         v1beta1.ImageSpec{Image: "envoy", Version: "v1"},
+			priorityClassName:             "system-node-critical",
+			terminationGracePeriodSeconds: ptr.To(int64(60)),
+		})
+		assert.Equal(t, "system-node-critical", pod.Spec.PriorityClassName)
+		require.NotNil(t, pod.Spec.TerminationGracePeriodSeconds)
+		assert.Equal(t, int64(60), *pod.Spec.TerminationGracePeriodSeconds)
+	})
+}
 
 func TestWriteEnvoyConfigFiles(t *testing.T) {
 	for _, test := range []struct {

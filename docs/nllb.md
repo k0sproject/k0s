@@ -78,6 +78,29 @@ the new configuration to take effect.
 
 [specapi]: configuration.md#specapi
 
+### Tuning the Envoy Pod
+
+The Envoy Pod that backs node-local load balancing is a static Pod managed by
+k0s. A worker depends on it to reach the control plane, so it can be worthwhile
+to make it more resilient and to control how it shuts down:
+
+```yaml
+spec:
+  network:
+    nodeLocalLoadBalancing:
+      enabled: true
+      type: EnvoyProxy
+      envoyProxy:
+        # Protect the Envoy Pod from node-pressure eviction. The referenced
+        # PriorityClass must exist in the cluster.
+        priorityClassName: system-node-critical
+        # Give Envoy more time to drain in-flight connections on shutdown.
+        terminationGracePeriodSeconds: 60
+```
+
+By default no priority class is assigned (the Pod's priority is zero) and
+Kubernetes's default termination grace period of 30 seconds applies.
+
 ## Full example using `k0sctl`
 
 The following example shows a full `k0sctl` configuration file featuring three
