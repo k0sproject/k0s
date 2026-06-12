@@ -4,6 +4,7 @@
 package cleanup
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/vishvananda/netlink"
@@ -21,7 +22,7 @@ func (linuxBridge) Name() string {
 }
 
 // Run removes found kube-bridge leftovers
-func (linuxBridge) Run() error {
+func (linuxBridge) Run(ctx context.Context) error {
 	lnks, err := netlink.LinkList()
 	if err != nil {
 		return fmt.Errorf("failed to get link list from netlink: %w", err)

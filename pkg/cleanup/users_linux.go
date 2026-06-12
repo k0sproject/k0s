@@ -4,6 +4,7 @@
 package cleanup
 
 import (
+	"context"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/install"
 
@@ -20,7 +21,7 @@ func (u *users) Name() string {
 }
 
 // Run removes all controller users that are present on the host
-func (u *users) Run() error {
+func (u *users) Run(ctx context.Context) error {
 	if err := install.DeleteControllerUsers(u.systemUsers); err != nil {
 		// don't fail, just notify on delete error
 		logrus.Warnf("failed to delete controller users: %v", err)

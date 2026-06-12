@@ -57,6 +57,18 @@ func Copy(src, dst string) (err error) {
 	})
 }
 
+// WriteNew creates a new file at name with the given permissions and writes
+// data to it. It returns an error wrapping [fs.ErrExist] if the file already
+// exists, so callers can use errors.Is(err, fs.ErrExist) to detect that case.
+func WriteNew(name string, data []byte, perm os.FileMode) error {
+	f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perm)
+	if err != nil {
+		return err
+	}
+	_, writeErr := f.Write(data)
+	return errors.Join(writeErr, f.Close())
+}
+
 func WriteTmpFile(data string, prefix string) (path string, err error) {
 	tmpFile, err := os.CreateTemp("", prefix)
 	if err != nil {
