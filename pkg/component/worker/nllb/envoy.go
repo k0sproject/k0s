@@ -377,7 +377,7 @@ resources:
     timeout: 1s
     interval: 5s
     healthy_threshold: 3
-    unhealthy_threshold: 5
+    unhealthy_threshold: 2
   {{- if ne $localKonnectivityPort 0 }}
 - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
   name: konnectivity
@@ -401,6 +401,6 @@ resources:
     timeout: 1s
     interval: 5s
     healthy_threshold: 3
-    unhealthy_threshold: 5
+    unhealthy_threshold: 2
 {{- end }}
 `))
