@@ -181,12 +181,6 @@ type Repository struct {
 	Password string `json:"password,omitempty"`
 }
 
-func (r *Repository) IsInsecure() bool {
-	// This defaults to true when not explicitly set to false.
-	// Better have this the other way round in the next API version.
-	return r == nil || r.Insecure == nil || *r.Insecure
-}
-
 // Validate performs validation
 func (r *Repository) Validate() error {
 	if r.Name == "" {
