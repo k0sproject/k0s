@@ -30,6 +30,7 @@ jobs:
       ${{
         case(
           inputs.arch == 'arm64', 'ubuntu-24.04-arm',
+          inputs.arch == 'riscv64', 'ubuntu-24.04-riscv',
           'ubuntu-24.04'
         )
       }}
