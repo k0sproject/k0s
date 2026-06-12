@@ -59,7 +59,7 @@ require (
 	golang.org/x/text v0.38.0
 	golang.org/x/tools v0.45.0
 	google.golang.org/grpc v1.81.1
-	helm.sh/helm/v3 v3.21.1
+	helm.sh/helm/v4 v4.2.1
 	modernc.org/sqlite v1.52.0
 	oras.land/oras-go/v2 v2.6.1
 	sigs.k8s.io/controller-runtime v0.24.1
@@ -87,6 +87,8 @@ require (
 	k8s.io/mount-utils v0.36.1
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5
 )
+
+require helm.sh/helm/v3 v3.21.1
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -132,15 +134,15 @@ require (
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
-	github.com/fatih/color v1.18.0 // indirect
+	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/go-errors/errors v1.4.2 // indirect
+	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-openapi/jsonreference v0.20.2 // indirect
+	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.26.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
