@@ -236,6 +236,12 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 		},
 		Spec: corev1.PodSpec{
 			HostNetwork: true,
+			// The Traefik Pod is the worker's load-balanced path to the control
+			// plane, so it must outlive ordinary workloads during graceful node
+			// shutdown and be protected from node-pressure eviction. As a static
+			// Pod, the kubelet doesn't resolve PriorityClassName, so the numeric
+			// Priority is set directly to the value of system-node-critical.
+			Priority: ptr.To(int32(2000001000)),
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsNonRoot: ptr.To(true),
 				// https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/
