@@ -202,14 +202,17 @@ jobs:
 
       - name: "e2e tests :: Run serial tests"
         working-directory: inttest
-        timeout-minutes: 180 # three hours
+        timeout-minutes: ${{ inputs.e2e-concurrency-level > 1 && 60 || 240 }} # 1 hour in parallel mode, 4 hours in serial mode
+        env:
+          K0S_SONOBUOY_WAIT: "${{ inputs.e2e-concurrency-level > 1 && 45 || 210 }}" # 45 mins in parallel mode, 3.5 hours in serial mode
+          K0S_GINKGO_TIMEOUT: "${{ inputs.e2e-concurrency-level > 1 && '30m' || '3h' }}" # 30 mins in parallel mode, 3 hours in serial mode
         run: |
           make bin/sonobuoy
-          ginkgoArgs="-v --timeout=120m"
+          ginkgoArgs="-v --timeout=$K0S_GINKGO_TIMEOUT"
           if [ "$E2E_FAIL_FAST" = true ]; then
             ginkgoArgs="$ginkgoArgs --fail-fast"
           fi
-          bin/sonobuoy run -p e2e --wait=150 \
+          bin/sonobuoy run -p e2e --wait="$K0S_SONOBUOY_WAIT" \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
             --plugin-env=e2e.E2E_SKIP='' \
