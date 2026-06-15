@@ -180,6 +180,9 @@ $ gh workflow run ostests-matrix.yaml --ref some/experimental/branch \
 To see runs for this workflow, try: gh run list --workflow=ostests-matrix.yaml
 ```
 
+Add `-f fail-fast=true` to the above command line to stop the e2e test suite
+after the first test failure has been recorded.
+
 [gh]: https://github.com/cli/cli
 
 ## TODO
