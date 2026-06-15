@@ -20,6 +20,10 @@ on:
         type: string
         description: The selector for the e2e tests to be run.
         default: \[Conformance\]
+      fail-fast:
+        type: boolean
+        description: Stop each e2e test suite after the first test failure.
+        default: false
       oses:
         type: string
         description: The operating systems to test.
@@ -89,6 +93,7 @@ jobs:
       k0sctl-version: ${{ inputs.k0sctl-version }}
       e2e-concurrency-level: ${{ fromJSON(inputs.e2e-concurrency-level) }} # infamous GH workflows bug that looses type information (actions/runner#2206)
       e2e-focus: ${{ inputs.e2e-focus }}
+      fail-fast: ${{ inputs.fail-fast }}
       os: ${{ matrix.os }}
       arch: ${{ inputs.arch }}
       network-provider: ${{ matrix.network-provider }}

@@ -584,6 +584,7 @@ jobs:
       os: debian_12
       arch: ${{ matrix.arch }}
       network-provider: kuberouter
+      fail-fast: true
     secrets:
       aws-access-key-id: ${{ secrets.AWS_TERRAFORM_ID }}
       aws-secret-access-key: ${{ secrets.AWS_TERRAFORM_KEY }}
