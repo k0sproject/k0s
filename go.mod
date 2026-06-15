@@ -57,7 +57,7 @@ require (
 	golang.org/x/sync v0.21.0
 	golang.org/x/sys v0.46.0
 	golang.org/x/text v0.38.0
-	golang.org/x/tools v0.45.0
+	golang.org/x/tools v0.46.0
 	google.golang.org/grpc v1.81.1
 	helm.sh/helm/v3 v3.21.1
 	modernc.org/sqlite v1.52.0
@@ -261,7 +261,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
