@@ -16,6 +16,10 @@ on:
         type: string
         description: The selector for the e2e tests to be run.
         default: \[Conformance\]
+      fail-fast:
+        type: boolean
+        description: Stop the e2e test suite after the first test failure.
+        default: false
       os:
         type: string
         description: The operating system to test.
@@ -64,6 +68,7 @@ jobs:
 
     env:
       E2E_FOCUS: ${{ inputs.e2e-focus }}
+      E2E_FAIL_FAST: ${{ inputs.fail-fast }}
       TF_VAR_os: ${{ inputs.os }}
       TF_VAR_additional_tags: '{
         "ostests.k0sproject.io/github-run-id"="${{ github.run_id }}",
@@ -168,12 +173,16 @@ jobs:
           E2E_CONCURRENCY_LEVEL: ${{ inputs.e2e-concurrency-level }}
         run: |
           make bin/sonobuoy
+          ginkgoArgs="-v --timeout=120m --procs=$E2E_CONCURRENCY_LEVEL"
+          if [ "$E2E_FAIL_FAST" = true ]; then
+            ginkgoArgs="$ginkgoArgs --fail-fast"
+          fi
           bin/sonobuoy run -p e2e --wait=150 \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_PARALLEL=true \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
             --plugin-env=e2e.E2E_SKIP='\[Serial\]' \
-            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="-v --timeout=120m --procs=$E2E_CONCURRENCY_LEVEL"
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="$ginkgoArgs"
 
       - name: "e2e tests :: Retrieve parallel results"
         id: e2e-retrieve-parallel
@@ -193,14 +202,21 @@ jobs:
 
       - name: "e2e tests :: Run serial tests"
         working-directory: inttest
-        timeout-minutes: 180 # three hours
+        timeout-minutes: ${{ inputs.e2e-concurrency-level > 1 && 60 || 240 }} # 1 hour in parallel mode, 4 hours in serial mode
+        env:
+          K0S_SONOBUOY_WAIT: "${{ inputs.e2e-concurrency-level > 1 && 45 || 210 }}" # 45 mins in parallel mode, 3.5 hours in serial mode
+          K0S_GINKGO_TIMEOUT: "${{ inputs.e2e-concurrency-level > 1 && '30m' || '3h' }}" # 30 mins in parallel mode, 3 hours in serial mode
         run: |
           make bin/sonobuoy
-          bin/sonobuoy run -p e2e --wait=150 \
+          ginkgoArgs="-v --timeout=$K0S_GINKGO_TIMEOUT"
+          if [ "$E2E_FAIL_FAST" = true ]; then
+            ginkgoArgs="$ginkgoArgs --fail-fast"
+          fi
+          bin/sonobuoy run -p e2e --wait="$K0S_SONOBUOY_WAIT" \
             --kubernetes-version=v"$KUBERNETES_VERSION" \
             --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
             --plugin-env=e2e.E2E_SKIP='' \
-            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=120m'
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="$ginkgoArgs"
 
       - name: "e2e tests :: Retrieve serial results"
         id: e2e-retrieve-serial
@@ -231,11 +247,18 @@ jobs:
         run: |
           fail=0
           for f in sonobuoy-e2e-*.tar.gz; do
-            echo "::group::$f"
-            bin/sonobuoy results "$f"
-            numNotPassedOrSkipped=$(bin/sonobuoy results "$f" -p=e2e --mode=detailed | jq --slurp '[.[] | select(.status != "passed" and .status != "skipped")] | length')
-            echo "Number of tests that didn't pass and weren't skipped: $numNotPassedOrSkipped"
-            echo ::endgroup::
+            {
+              echo "### $f"
+              numNotPassedOrSkipped=$(bin/sonobuoy results "$f" -p=e2e --mode=detailed | jq --slurp '[.[] | select(.status != "passed" and .status != "skipped")] | length')
+              echo '<details>'
+              echo '<summary>'
+              echo "Number of tests that didn't pass and weren't skipped: $numNotPassedOrSkipped"
+              echo '</summary>'
+              echo
+              echo '```text'
+              bin/sonobuoy results "$f"
+              echo '```'
+            } >>"$GITHUB_STEP_SUMMARY"
             [ "$numNotPassedOrSkipped" = 0 ] || fail=1
           done
           [ "$fail" = 0 ] || exit 1
