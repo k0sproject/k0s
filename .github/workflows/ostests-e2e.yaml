@@ -247,11 +247,18 @@ jobs:
         run: |
           fail=0
           for f in sonobuoy-e2e-*.tar.gz; do
-            echo "::group::$f"
-            bin/sonobuoy results "$f"
-            numNotPassedOrSkipped=$(bin/sonobuoy results "$f" -p=e2e --mode=detailed | jq --slurp '[.[] | select(.status != "passed" and .status != "skipped")] | length')
-            echo "Number of tests that didn't pass and weren't skipped: $numNotPassedOrSkipped"
-            echo ::endgroup::
+            {
+              echo "### $f"
+              numNotPassedOrSkipped=$(bin/sonobuoy results "$f" -p=e2e --mode=detailed | jq --slurp '[.[] | select(.status != "passed" and .status != "skipped")] | length')
+              echo '<details>'
+              echo '<summary>'
+              echo "Number of tests that didn't pass and weren't skipped: $numNotPassedOrSkipped"
+              echo '</summary>'
+              echo
+              echo '```text'
+              bin/sonobuoy results "$f"
+              echo '```'
+            } >>"$GITHUB_STEP_SUMMARY"
             [ "$numNotPassedOrSkipped" = 0 ] || fail=1
           done
           [ "$fail" = 0 ] || exit 1
