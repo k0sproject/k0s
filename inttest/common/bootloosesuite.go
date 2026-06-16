@@ -563,7 +563,7 @@ func (s *BootlooseSuite) startHAProxy() {
 
 	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput(s.Context(), "haproxy -c -f /tmp/haproxy.cfg")
-	s.Require().NoError(err, "LB configuration is broken", err)
+	s.Require().NoError(err, "LB configuration is broken")
 	_, err = ssh.ExecWithOutput(s.Context(), "haproxy -D -f /tmp/haproxy.cfg")
 	s.Require().NoError(err, "Can't start LB")
 }
@@ -577,23 +577,17 @@ defaults
     timeout client 30s
     timeout server 30s
 
-frontend kubeapi
-
+frontend kubeapi_frontend
     bind :{{ .KubeAPIExternalPort }}
     default_backend kubeapi
 
-frontend k0sapi
+frontend k0sapi_frontend
     bind :{{ .K0sAPIExternalPort }}
     default_backend k0sapi
 
-frontend konnectivityAdmin
-    bind :{{ .KonnectivityAdminPort }}
-    default_backend admin
-
-
-frontend konnectivityAgent
+frontend konnectivity_server_frontend
     bind :{{ .KonnectivityAgentPort }}
-    default_backend agent
+    default_backend konnectivity_server
 
 
 {{ $OUT := .}}
@@ -608,12 +602,7 @@ backend k0sapi
 	server {{ $addr }} {{ $addr }}:{{ $OUT.K0sAPIExternalPort }}
 {{ end }}
 
-backend admin
-{{ range $addr := .IPAddresses }}
-	server {{ $addr }} {{ $addr }}:{{ $OUT.KonnectivityAdminPort }}
-{{ end }}
-
-backend agent
+backend konnectivity_server
 {{ range $addr := .IPAddresses }}
 	server {{ $addr }} {{ $addr }}:{{ $OUT.KonnectivityAgentPort }}
 {{ end }}
