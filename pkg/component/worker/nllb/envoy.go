@@ -266,10 +266,17 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 			HostNetwork: true,
 			// The Envoy Pod is the worker's load-balanced path to the control
 			// plane, so it must outlive ordinary workloads during graceful node
-			// shutdown and be protected from node-pressure eviction. As a static
-			// Pod, the kubelet doesn't resolve PriorityClassName, so the numeric
-			// Priority is set directly to the value of system-node-critical.
-			Priority: ptr.To(int32(2000001000)),
+			// shutdown and be protected from node-pressure eviction.
+			//
+			// PriorityClassName satisfies the kube-apiserver Priority admission
+			// controller, which validates the mirror Pod the kubelet registers
+			// for this static Pod. The numeric Priority is also set so the local
+			// kubelet (which does not resolve PriorityClassName for static Pods)
+			// uses it for shutdown/eviction ordering. The two must agree:
+			// admission computes the integer from the class name and rejects the
+			// mirror Pod if an explicit, mismatched Priority is provided.
+			PriorityClassName: "system-node-critical",
+			Priority:          ptr.To(int32(2000001000)),
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsNonRoot: ptr.To(true),
 			},
