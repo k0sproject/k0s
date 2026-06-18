@@ -45,8 +45,6 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 		return nil
 	}
 
-	logrus.Infof("Previously used k0s.yaml saved under the data directory `%s`", restoreTo)
-
 	if c.restoredConfigPath == "-" {
 		f, err := os.Open(objectPathInArchive)
 		if err != nil {
