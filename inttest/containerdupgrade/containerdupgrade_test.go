@@ -68,7 +68,7 @@ func (s *ContainerdUpgradeSuite) TestContainerdUpgrade() {
 				TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 				ObjectMeta: metav1.ObjectMeta{Name: podName},
 				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.31.1-alpine"}},
+					Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.31.2-alpine"}},
 				},
 			}, metav1.CreateOptions{})
 			s.Require().NoError(err)
