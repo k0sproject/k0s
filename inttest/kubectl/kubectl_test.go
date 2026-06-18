@@ -198,12 +198,8 @@ func checkClientVersion(t *testing.T, v map[string]any) {
 }
 
 func checkServerVersion(t *testing.T, v map[string]any) {
-	expectedVersion := constant.KubernetesMajorMinorVersion
-	if constant.KubernetesPreRelease {
-		expectedVersion += "+"
-	}
 	assert.Equal(t,
-		expectedVersion,
+		constant.KubernetesMajorMinorVersion,
 		fmt.Sprintf("%v.%v", requiredValue[string](t, v, "major"), requiredValue[string](t, v, "minor")),
 	)
 	assert.Contains(t,
