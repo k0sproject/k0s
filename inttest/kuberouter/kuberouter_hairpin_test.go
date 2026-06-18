@@ -148,7 +148,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: docker.io/library/nginx:1.31.1-alpine
+    image: docker.io/library/nginx:1.31.2-alpine
     ports:
     - containerPort: 80
   - name: curl

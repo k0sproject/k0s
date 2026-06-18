@@ -187,7 +187,7 @@ func (s *DualstackSuite) SetupSuite() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-" + s.WorkerNode(0)},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.31.1-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.31.2-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": s.WorkerNode(0),
 			},
@@ -199,7 +199,7 @@ func (s *DualstackSuite) SetupSuite() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx-" + s.WorkerNode(1)},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.31.1-alpine"}},
+			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.31.2-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": s.WorkerNode(1),
 			},
