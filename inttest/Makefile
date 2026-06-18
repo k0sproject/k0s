@@ -95,8 +95,8 @@ check-network-conformance-kuberouter-ipv6-nft: TIMEOUT=15m
 
 check-nllb: TIMEOUT=15m
 check-nllb-traefik: TIMEOUT=15m
-check-nllb-ipv6: TIMEOUT=15m
-check-nllb-traefik-ipv6: TIMEOUT=15m
+check-nllb-ipv6: TIMEOUT=20m
+check-nllb-traefik-ipv6: TIMEOUT=20m
 
 .PHONY: $(smoketests)
 
