@@ -31,7 +31,7 @@ on:
         default: >-
           [
             "al2023",
-            "alpine_3_21", "alpine_3_23",
+            "alpine_3_21", "alpine_3_24",
             "centos_9", "centos_10",
             "debian_11", "debian_12",
             "fcos_stable",
