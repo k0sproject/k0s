@@ -41,7 +41,7 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-apiserver", "--disable-admission-plugins=PodSecurity")
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-controller-manager", "--terminated-pod-gc-threshold=1000")
-	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-controller-manager", "--concurrent-service-syncs=5")
+	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-controller-manager", "--concurrent-deployment-syncs=1")
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-scheduler", "--v=4")
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/kube-scheduler", "--bind-address=0.0.0.0")
 	s.checkFlag(sshCtrl, "/var/lib/k0s/bin/etcd", "--log-level=warn")
@@ -104,7 +104,7 @@ spec:
     extraArgs:
       terminated-pod-gc-threshold: "1000"
     rawArgs:
-    - --concurrent-service-syncs=5
+    - --concurrent-deployment-syncs=1
   scheduler:
     extraArgs:
       v: "4"
