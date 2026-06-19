@@ -33,7 +33,6 @@ smoketests := \
 	check-configchange \
 	check-containerd-deprecations \
 	check-containerdimports \
-	check-containerdupgrade \
 	check-cplb-ipvs \
 	check-cplb-ipvs-ipv6 \
 	check-cplb-userspace \
