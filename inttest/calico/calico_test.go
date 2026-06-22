@@ -144,7 +144,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 }
 
 func getAlpineVersion(t *testing.T) string {
-	cmd := exec.Command("."+string(filepath.Separator)+"vars.sh", "alpine_version")
+	cmd := exec.Command("."+string(filepath.Separator)+"vars.sh", "alpine_patch_version")
 	cmd.Dir = filepath.Join("..", "..")
 	out, err := cmd.Output()
 	require.NoError(t, err)

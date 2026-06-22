@@ -340,7 +340,7 @@ ipv6-test-images-linux-arm64.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.va
 	{ \
 	  echo "docker.io/library/nginx:1.31.2-alpine"; \
 	  echo "docker.io/curlimages/curl:8.20.0"; \
-	  echo "docker.io/library/alpine:$(alpine_version)"; \
+	  echo "docker.io/library/alpine:$(alpine_patch_version)"; \
 	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
 	  echo "registry.k8s.io/conformance:v$(kubernetes_version)"; \
 	  $(GO) run -tags=hack ./hack/gen-test-images-list; \
