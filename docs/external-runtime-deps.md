@@ -100,20 +100,32 @@ and, if enabled as a module, to load the `configs` module: `modprobe configs`.
 
 ### Control Groups (cgroups)
 
-[cgroup v2] is required. k0s rejects [cgroup v1] during pre-flight checks.
+[cgroup v2] is required by default, k0s will fail its pre-flight checks if it's
+unavailable on the node.
 
-Starting with Kubernetes 1.31 already, [cgroup v1] is in [maintenance mode] and starting in Kubernetes 1.35 by default kubelet will fail to start if
-[cgroup v1] is detected on the system. If you want to run Kubernetes with [cgroup v1], you need to bypass k0s pre-flight checks and explicitly enable it by
-setting `failCgroupV1: false` in kubelet configuration, via k0s [worker profile](worker-node-config.md#kubelet-configuration):
+As of Kubernetes 1.31, [cgroup v1] is in [maintenance mode] ([KEP-4569]). As of
+Kubernetes 1.35, the kubelet will fail to start by default if cgroup v2 is not
+detected on the node. In order to run Kubernetes with cgroup v1, bypass the k0s
+pre-flight checks via `--ignore-pre-flight-checks` and set `failCgroupV1: false`
+in the kubelet configuration via the k0s [worker profiles]:
 
 ```yaml
 ...
 spec:
   workerProfiles:
-    - name: default # Applies to the default profile which all workers pick up if no profile is specified in the worker startup
+    # By default, workers will pick up the default profile.
+    - name: default
       values:
         failCgroupV1: false
 ```
+
+!!! warning "Migrate to cgroup v2 now!"
+    The above escape hatch will not be available indefinitely, so plan
+    accordingly. [KEP-5573] states:
+    <!-- markdownlint-disable-next-line MD046 -->
+    > We will commit to removing cgroup v1 code but there is not yet a timeline for
+    > removal. The removal will be done no earlier than 1.38 to maintain the k8s
+    > deprecation policy.
 
 Required [cgroup] controllers:
 
@@ -138,6 +150,9 @@ Optional cgroup controllers:
 [kubernetes/kubeadm#2335 (comment)]: https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527
 [kubernetes/kubernetes#92287 (comment)]: https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587
 [maintenance mode]: https://kubernetes.io/blog/2024/08/14/kubernetes-1-31-moving-cgroup-v1-support-maintenance-mode/
+[KEP-4569]: https://www.kubernetes.dev/resources/keps/4569/
+[KEP-5573]: https://www.kubernetes.dev/resources/keps/5573/
+[worker profiles]: worker-node-config.md#kubelet-configuration
 
 ### No integration with Name Service Switch (NSS) APIs
 
