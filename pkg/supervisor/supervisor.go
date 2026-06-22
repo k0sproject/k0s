@@ -57,10 +57,13 @@ const k0sManaged = "_K0S_MANAGED=yes"
 func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 	waitresult := make(chan error, 1)
 	go func() {
-		waitresult <- cmd.Wait()
+		defer close(waitresult)
+		err := cmd.Wait()
+		defer func() { waitresult <- err }()
+		if err := os.Remove(s.PidFile); err != nil && !errors.Is(err, os.ErrNotExist) {
+			s.log.WithError(err).Error("Failed to remove PID file")
+		}
 	}()
-
-	defer os.Remove(s.PidFile)
 
 	select {
 	case <-ctx.Done():
@@ -77,10 +80,12 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 		}
 		return true
 
-	case err := <-waitresult:
+	case err, ok := <-waitresult:
 		var exitErr *exec.ExitError
 		state := cmd.ProcessState
 		switch {
+		case !ok:
+			s.log.Error("Failed to wait for process: ", state)
 		case errors.As(err, &exitErr):
 			state = exitErr.ProcessState
 			fallthrough
