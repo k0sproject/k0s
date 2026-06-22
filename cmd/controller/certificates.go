@@ -232,8 +232,8 @@ func (c *Certificates) generateSANList(ctx context.Context) ([]string, error) {
 		"kubernetes",
 		"kubernetes.default",
 		"kubernetes.default.svc",
-		"kubernetes.default.svc.cluster",
-		"kubernetes.svc." + c.ClusterSpec.Network.ClusterDomain,
+		"kubernetes.default.svc." + c.ClusterSpec.Network.ClusterDomain,
+		"kubernetes.default.svc." + c.ClusterSpec.Network.ClusterDomain + ".",
 		"localhost",
 		"127.0.0.1",
 	}
