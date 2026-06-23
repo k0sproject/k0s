@@ -63,7 +63,7 @@ const (
 	KeepalivedUser = "keepalived"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
-	KubernetesMajorMinorVersion = "1.36"
+	KubernetesMajorMinorVersion = "1.37"
 
 	/* Image Constants */
 
@@ -78,9 +78,9 @@ const (
 	KubePauseWindowsContainerImage        = "registry.k8s.io/pause"
 	KubePauseWindowsContainerImageVersion = "3.10.1"
 	KubeProxyImage                        = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion                 = "v1.36.1"
+	KubeProxyImageVersion                 = "v1.37.0-alpha.1"
 	KubeProxyWindowsImage                 = "docker.io/sigwindowstools/kube-proxy"
-	KubeProxyWindowsImageVersion          = "v1.36.1-calico-hostprocess"
+	KubeProxyWindowsImageVersion          = "v1.37.0-alpha.1-calico-hostprocess"
 	CoreDNSImage                          = "quay.io/k0sproject/coredns"
 	CoreDNSImageVersion                   = "1.14.3-k0s.0"
 	EnvoyProxyImage                       = "quay.io/k0sproject/envoy-distroless"
