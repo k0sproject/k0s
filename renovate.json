@@ -13,7 +13,7 @@
   ],
   "baseBranchPatterns": [
     "main",
-    "/^release-1\\.3[3-5]$/"
+    "/^release-1\\.3[3-6]$/"
   ],
   "prTitleStrict": true,
   "commitMessageAction": "Bump",
@@ -237,6 +237,64 @@
       "respectLatest": true
     },
     {
+      "description": "Bump Kubernetes for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchPackageNames": [
+        "k8s.io/**",
+        "**/kubernetes",
+        "**/kube-proxy"
+      ],
+      "allowedVersions": "/^v?[01]\\.36\\./"
+    },
+    {
+      "description": "Bump Alpine for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchDepNames": [
+        "docker.io/library/alpine"
+      ],
+      "allowedVersions": "<=3.23"
+    },
+    {
+      "description": "Bump etcd for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchPackageNames": [
+        "go.etcd.io/etcd/**/v3",
+        "etcd-io/etcd"
+      ],
+      "allowedVersions": "<=3.6"
+    },
+    {
+      "description": "Bump keepalived for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchDepNames": [
+        "acassen/keepalived"
+      ],
+      "allowedVersions": "<=2.3"
+    },
+    {
+      "description": "Bump runc for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchDepNames": [
+        "opencontainers/runc"
+      ],
+      "allowedVersions": "<=1.4"
+    },
+    {
       "description": "Bump Go for release-1.35",
       "enabled": true,
       "matchBaseBranches": [
@@ -271,19 +329,6 @@
         "**/kube-proxy"
       ],
       "allowedVersions": "/^v?[01]\\.35\\./"
-    },
-    {
-      "description": "Disallow Kubernetes digest bumps for release-1.35",
-      "enabled": false,
-      "matchBaseBranches": [
-        "release-1.35"
-      ],
-      "matchPackageNames": [
-        "k8s.io/**"
-      ],
-      "matchUpdateTypes": [
-        "digest"
-      ]
     },
     {
       "description": "Bump Alpine for release-1.34",
@@ -333,19 +378,6 @@
       "allowedVersions": "/^v?[01]\\.34\\./"
     },
     {
-      "description": "Disallow Kubernetes digest bumps for release-1.34",
-      "enabled": false,
-      "matchBaseBranches": [
-        "release-1.34"
-      ],
-      "matchPackageNames": [
-        "k8s.io/**"
-      ],
-      "matchUpdateTypes": [
-        "digest"
-      ]
-    },
-    {
       "description": "Bump runc for release-1.34",
       "enabled": true,
       "matchBaseBranches": [
@@ -393,10 +425,10 @@
       "allowedVersions": "/^v?[01]\\.33\\./"
     },
     {
-      "description": "Disallow Kubernetes digest bumps for release-1.33",
+      "description": "Disallow Kubernetes digest bumps for release branches",
       "enabled": false,
       "matchBaseBranches": [
-        "release-1.33"
+        "/^release-1\\.\\d+$/"
       ],
       "matchPackageNames": [
         "k8s.io/**"
