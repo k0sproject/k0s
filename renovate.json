@@ -271,19 +271,6 @@
       "allowedVersions": "/^v?[01]\\.35\\./"
     },
     {
-      "description": "Disallow Kubernetes digest bumps for release-1.35",
-      "enabled": false,
-      "matchBaseBranches": [
-        "release-1.35"
-      ],
-      "matchPackageNames": [
-        "k8s.io/**"
-      ],
-      "matchUpdateTypes": [
-        "digest"
-      ]
-    },
-    {
       "description": "Bump Alpine for release-1.34",
       "enabled": true,
       "matchBaseBranches": [
@@ -329,19 +316,6 @@
         "**/kube-proxy"
       ],
       "allowedVersions": "/^v?[01]\\.34\\./"
-    },
-    {
-      "description": "Disallow Kubernetes digest bumps for release-1.34",
-      "enabled": false,
-      "matchBaseBranches": [
-        "release-1.34"
-      ],
-      "matchPackageNames": [
-        "k8s.io/**"
-      ],
-      "matchUpdateTypes": [
-        "digest"
-      ]
     },
     {
       "description": "Bump runc for release-1.34",
@@ -391,10 +365,10 @@
       "allowedVersions": "/^v?[01]\\.33\\./"
     },
     {
-      "description": "Disallow Kubernetes digest bumps for release-1.33",
+      "description": "Disallow Kubernetes digest bumps for release branches",
       "enabled": false,
       "matchBaseBranches": [
-        "release-1.33"
+        "/^release-1\\.\\d+$/"
       ],
       "matchPackageNames": [
         "k8s.io/**"
