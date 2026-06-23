@@ -169,6 +169,11 @@ func (d *PodDialer) dialPod(ctx context.Context, pod types.NamespacedName) (*Pod
 	if err != nil {
 		var statusErr *apierrors.StatusError
 		if !errors.As(err, &statusErr) {
+			// https://github.com/kubernetes-sigs/apiserver-network-proxy/blob/v0.36.0/pkg/server/backend_manager.go#L351
+			if strings.HasSuffix(err.Error(), ": No agent available") {
+				return nil, &APIServerEgressProxyError{Type: ErrNoKonnectivityAgent, Err: err}
+			}
+
 			return nil, fmt.Errorf("failed to negotiate: %w", err)
 		}
 		if d := statusErr.ErrStatus.Details; d != nil && d.Kind == "pods" && statusErr.ErrStatus.Reason == metav1.StatusReasonNotFound {
@@ -251,6 +256,16 @@ func (*PodNotFoundError) Error() string   { return "pod not found" }
 func (e *PodNotFoundError) Unwrap() error { return (*apierrors.StatusError)(e) }
 
 var errPodConnectionClosed = errors.New("pod connection closed")
+
+var ErrNoKonnectivityAgent = errors.New("no suitable konnectivity agent connected")
+
+type APIServerEgressProxyError struct {
+	Type error
+	Err  error
+}
+
+func (e *APIServerEgressProxyError) Error() string   { return e.Type.Error() }
+func (e *APIServerEgressProxyError) Unwrap() []error { return []error{e.Type, e.Err} }
 
 // A port-forwarded connection to a specific port on a pod.
 type PodPortConnection struct {

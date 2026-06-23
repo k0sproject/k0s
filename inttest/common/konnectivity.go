@@ -6,23 +6,28 @@ package common
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"math/bits"
 	"net/http"
+	"slices"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/k0sproject/k0s/internal/testutil"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 )
 
 func VerifyKonnectivityMesh(ctx context.Context, config *rest.Config, kc kubernetes.Interface, t *testing.T, numControllers, numWorkers uint) error {
@@ -39,39 +44,156 @@ func VerifyKonnectivityMesh(ctx context.Context, config *rest.Config, kc kuberne
 	}
 	t.Cleanup(client.CloseIdleConnections)
 
-	return wait.PollUntilContextCancel(ctx, 3*time.Second, true, func(ctx context.Context) (bool, error) {
-		pods, err := kc.CoreV1().Pods(metav1.NamespaceSystem).List(ctx, metav1.ListOptions{
-			LabelSelector: fields.OneTermEqualSelector("k8s-app", "konnectivity-agent").String(),
-		})
-		if err != nil {
-			t.Logf("Failed to get konnectivity pods: %v", err)
-			return false, nil
-		}
+	type monitor struct {
+		node, pod string
+		cancel    context.CancelCauseFunc
+		mu        sync.Mutex
+	}
 
-		if len := uint(len(pods.Items)); len > numWorkers {
-			return false, fmt.Errorf("unexpected number of konnectivity pods: %d", len)
-		}
+	var (
+		monitors []*monitor
+		goodPods atomic.Int32
+	)
 
-		var goodPods uint
-		for _, pod := range pods.Items {
-			openServerConnections, err := fetchOpenKonnectivityServerConnections(ctx, &client, &pod)
-			if err != nil {
-				t.Logf("Failed to fetch konnectivity metrics from pod %s on node %s: %v", pod.Name, pod.Spec.NodeName, err)
+	allGood := errors.New("all good")
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return watch.Pods(kc.CoreV1().Pods(metav1.NamespaceSystem)).
+			WithLabels(labels.Set{"k8s-app": "konnectivity-agent"}).
+			WithErrorCallback(RetryWatchErrors(t.Logf)).
+			IncludingDeletions().
+			Until(ctx, func(pod *corev1.Pod) (bool, error) {
+				var badMsg string
+				if pod.DeletionTimestamp != nil {
+					badMsg = "pod deleted"
+				} else if idx := slices.IndexFunc(pod.Status.Conditions, func(cond corev1.PodCondition) bool {
+					return cond.Type == corev1.PodReady
+				}); idx < 0 || pod.Status.Conditions[idx].Status != corev1.ConditionTrue {
+					badMsg = "pod not ready"
+				} else if pod.Spec.NodeName == "" {
+					badMsg = "pod is not assigned to a node"
+				}
+
+				if badMsg != "" {
+					for _, monitor := range monitors {
+						if monitor.pod == pod.Name {
+							if monitor.cancel != nil {
+								monitor.cancel(errors.New(badMsg))
+								monitor.cancel = nil
+							}
+							break
+						}
+					}
+					return false, nil
+				}
+
+				var monitorForNode *monitor
+				for _, monitor := range monitors {
+					if monitor.node == pod.Spec.NodeName {
+						monitorForNode = monitor
+						break
+					}
+				}
+				if monitorForNode == nil {
+					monitorForNode = &monitor{node: pod.Spec.NodeName, pod: pod.Name}
+					monitors = append(monitors, monitorForNode)
+				} else if monitorForNode.pod != pod.Name {
+					if monitorForNode.cancel != nil {
+						monitorForNode.cancel(errors.New("pod has been replaced"))
+					}
+					monitorForNode.pod = pod.Name
+				} else if monitorForNode.cancel != nil {
+					return false, nil
+				}
+
+				ctx, cancelPod := context.WithCancelCause(ctx)
+				monitorForNode.cancel = func(cause error) {
+					t.Logf("Canceling monitoring konnectivity metrics from %s on %s: %v", monitorForNode.pod, monitorForNode.node, cause)
+					cancelPod(cause)
+				}
+
+				eg.Go(func() (err error) {
+					monitorForNode.mu.Lock()
+					defer monitorForNode.mu.Unlock()
+
+					t.Logf("Monitoring konnectivity metrics from %s on %s", pod.Name, pod.Spec.NodeName)
+
+					var (
+						openServerConnections uint
+						good                  bool
+						lastErrMsg            string
+					)
+					defer func() {
+						if good {
+							numGood := goodPods.Add(-1)
+							if err != nil && !errors.Is(err, allGood) {
+								t.Logf(
+									"Fully connected konnectivity agents: %d/%d (%s on %s: %v)",
+									numGood, numWorkers, pod.Name, pod.Spec.NodeName, err,
+								)
+							}
+						}
+					}()
+
+					for {
+						select {
+						case <-time.After(1 * time.Second):
+						case <-ctx.Done():
+							return nil
+						}
+
+						if conns, err := func() (uint, error) {
+							ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+							defer cancel()
+							return fetchOpenKonnectivityServerConnections(ctx, &client, pod)
+						}(); err != nil {
+							// More concise message for an expected failure case.
+							if errors.Is(err, testutil.ErrNoKonnectivityAgent) {
+								err = testutil.ErrNoKonnectivityAgent
+							}
+							if errMsg := err.Error(); errMsg != lastErrMsg {
+								t.Logf("Failed to fetch konnectivity metrics from %s on node %s: %s", pod.Name, pod.Spec.NodeName, errMsg)
+								lastErrMsg = errMsg
+							}
+							if good {
+								good = false
+								goodPods.Add(-1)
+							}
+							continue
+						} else {
+							if conns == openServerConnections && lastErrMsg == "" {
+								continue
+							}
+							openServerConnections, lastErrMsg = conns, ""
+						}
+
+						t.Logf("Open konnectivity server connections for %s on %s: %d/%d", pod.Name, pod.Spec.NodeName, openServerConnections, numControllers)
+						if openServerConnections == numControllers {
+							if !good {
+								good = true
+								numGood := uint(goodPods.Add(1))
+								t.Logf("Fully connected konnectivity agents: %d/%d", numGood, numWorkers)
+								if numGood == numWorkers {
+									return allGood
+								}
+							}
+						} else if good {
+							good = false
+							goodPods.Add(-1)
+						}
+					}
+				})
+
 				return false, nil
-			}
-
-			t.Logf("Open konnectivity server connections for %s on %s: %d", pod.Name, pod.Spec.NodeName, openServerConnections)
-			if openServerConnections > numControllers {
-				return false, fmt.Errorf("too many open server connections for pod %s on node %s: %d exceeds the number of controllers (%d)", pod.Name, pod.Spec.NodeName, openServerConnections, numControllers)
-			}
-			if openServerConnections == numControllers {
-				goodPods++
-			}
-		}
-
-		t.Logf("Pods with the desired amount of konnectivity server connections: %d/%d", goodPods, len(pods.Items))
-		return goodPods == numWorkers, nil
+			})
 	})
+
+	if err := eg.Wait(); !errors.Is(err, allGood) {
+		return cmp.Or(err, ctx.Err())
+	}
+
+	t.Log("Konnectivity mesh is complete")
+	return nil
 }
 
 func fetchOpenKonnectivityServerConnections(ctx context.Context, client *http.Client, pod *corev1.Pod) (_ uint, err error) {
