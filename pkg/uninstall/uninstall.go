@@ -4,6 +4,7 @@
 package uninstall
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -21,7 +22,7 @@ type Options struct {
 }
 
 // Run performs the reset orchestration common to all supported operating systems.
-func Run(opts Options) error {
+func Run(ctx context.Context, opts Options) error {
 	if opts.Vars == nil {
 		return errors.New("k0s vars must not be nil")
 	}
@@ -49,7 +50,7 @@ func Run(opts Options) error {
 		return fmt.Errorf("failed to configure cleanup: %w", err)
 	}
 
-	err = cfg.Cleanup()
+	err = cfg.Cleanup(ctx)
 	logrus.Info("k0s cleanup operations done.")
 	logrus.Warn("To ensure a full reset, a node reboot is recommended.")
 

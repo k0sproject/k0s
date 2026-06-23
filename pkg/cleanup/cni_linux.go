@@ -6,6 +6,7 @@
 package cleanup
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -15,7 +16,7 @@ import (
 )
 
 // Run removes found CNI leftovers
-func (c *cni) Run() error {
+func (c *cni) Run(ctx context.Context) error {
 	var errs []error
 
 	files := []string{

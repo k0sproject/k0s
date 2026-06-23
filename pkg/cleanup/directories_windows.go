@@ -6,6 +6,7 @@
 package cleanup
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,7 +16,7 @@ import (
 )
 
 // Run removes the k0s data, kubelet root, and run directories.
-func (d *directories) Run() error {
+func (d *directories) Run(ctx context.Context) error {
 	paths := dedupePaths([]string{d.kubeletRootDir, d.dataDir, d.runDir})
 	for _, path := range paths {
 		if path == "" {
