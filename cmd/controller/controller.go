@@ -120,17 +120,17 @@ func NewControllerCmd() *cobra.Command {
 				return err
 			}
 
-			rtc, err := config.NewRuntimeConfig(c.K0sVars, nodeConfig)
+			runtimeConfig, err := config.NewRuntimeConfig(c.K0sVars, nodeConfig)
 			if err != nil {
 				return fmt.Errorf("failed to initialize runtime config: %w", err)
 			}
 			defer func() {
-				if err := rtc.Spec.Cleanup(); err != nil {
+				if err := runtimeConfig.Spec.Cleanup(); err != nil {
 					logrus.WithError(err).Warn("Failed to cleanup runtime config")
 				}
 			}()
 
-			if err := c.start(ctx, rtc, nodeConfig, &controllerFlags, debugFlags.IsDebug()); err != nil {
+			if err := c.start(ctx, runtimeConfig, nodeConfig, &controllerFlags, debugFlags.IsDebug()); err != nil {
 				if controllerFlags.InitOnly && errors.Is(err, errInitOnly) {
 					return nil
 				}
@@ -195,7 +195,7 @@ func (c *command) initDirs() error {
 	return nil
 }
 
-func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConfig *v1beta1.ClusterConfig, flags *config.ControllerOptions, debug bool) error {
+func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig, nodeConfig *v1beta1.ClusterConfig, flags *config.ControllerOptions, debug bool) error {
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
 
@@ -329,7 +329,7 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 	}
 
 	nodeComponents.Add(ctx, &controller.APIServer{
-		ClusterConfig:      nodeConfig,
+		NodeConfig:         nodeConfig,
 		K0sVars:            c.K0sVars,
 		LogLevel:           c.LogLevels.KubeAPIServer,
 		EnableKonnectivity: enableKonnectivity,
@@ -348,7 +348,6 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 		nodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
 			NodeName:              nodeName,
 			InvocationID:          c.K0sVars.InvocationID,
-			ClusterConfig:         nodeConfig,
 			KubeClientFactory:     adminClientFactory,
 			UpdateControllerCount: numActiveControllers.Set,
 		})
@@ -386,13 +385,11 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.ControlAPIComponentName) && nodeConfig.Spec.Storage.IsJoinable() {
-		nodeComponents.Add(ctx, &controller.K0SControlAPI{RuntimeConfig: rtc})
+		nodeComponents.Add(ctx, &controller.K0SControlAPI{RuntimeConfig: runtimeConfig})
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.CsrApproverComponentName) {
-		nodeComponents.Add(ctx, controller.NewCSRApprover(nodeConfig,
-			leaderElector,
-			adminClientFactory))
+		nodeComponents.Add(ctx, controller.NewCSRApprover(leaderElector, adminClientFactory))
 	}
 
 	if flags.EnableK0sCloudProvider {
