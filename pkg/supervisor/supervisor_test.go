@@ -461,6 +461,51 @@ func TestCleanupPIDFile_BogusPIDFile(t *testing.T) {
 	assert.ErrorContains(t, s.Supervise(t.Context()), `"rubbish": invalid`)
 }
 
+func TestStop_PIDFileRemainsOnTerminationTimeout(t *testing.T) {
+	switch runtime.GOOS {
+	case "darwin":
+		t.Skip("PID file cleanup not implemented on macOS")
+	}
+
+	// Prepare a process that won't terminate gracefully.
+	pingPong := pingpong.New(t)
+	pingPong.IgnoreGracefulTerminationRequests = true
+
+	// Start to supervise the process.
+	runDir := t.TempDir()
+	s := Supervisor{
+		Name:           t.Name(),
+		BinPath:        pingPong.BinPath(),
+		RunDir:         runDir,
+		Args:           pingPong.BinArgs(),
+		TimeoutStop:    10 * time.Millisecond,
+		TimeoutRespawn: 1 * time.Hour,
+	}
+
+	// Await process startup.
+	require.NoError(t, s.Supervise(t.Context()))
+	require.NoError(t, pingPong.AwaitPing())
+
+	// Expect the previous process to still be alive at the end of the test.
+	t.Cleanup(func() {
+		assert.NoError(t, pingPong.SendPong())
+	})
+
+	// Ensure the PID file is present on disk.
+	pidFilePath := filepath.Join(s.RunDir, s.Name+".pid")
+	pidStat, err := os.Stat(pidFilePath)
+	require.NoError(t, err)
+	require.True(t, pidStat.Mode().IsRegular())
+
+	// Stop the supervisor. The process should survive that.
+	assert.NoError(t, s.Stop())
+
+	// PID file should be unchanged.
+	if newPidStat, err := os.Stat(pidFilePath); assert.NoError(t, err, "While ensuring the existence of the PID file") {
+		assert.Equal(t, pidStat, newPidStat)
+	}
+}
+
 type cmd struct {
 	binPath string
 	binArgs []string
