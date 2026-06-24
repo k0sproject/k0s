@@ -267,8 +267,11 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 | `extraArgs`          | Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. `extraArgs` are recommended over `rawArgs` if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty)                         |
 | `rawArgs`            | Slice of strings for any raw arguments to pass down to the kube-proxy process. These are appended after `extraArgs`. If possible, it's recommended to use `extraArgs` over `rawArgs`. Any behavior triggered by these parameters is outside k0s support. (default: empty) |
 
-¹ For nftables, the kubeproxy container's nftables version needs to be less than or equal to the host OS's in order to avoid segmentation faults.
-For example, a host OS with nftables v1.1.1 requires quay.io/k0sproject/kube-proxy:v1.33.2 or lower.
+¹ For nftables, the kube-proxy container's nftables version needs to be less
+than or equal to the host OS's in order to avoid segmentation faults. For
+example, a host OS with nftables v1.1.1 requires
+`quay.io/k0sproject/kube-proxy:{# no auto-bumps-here #}{{{ "v1.33.2" }}}` or
+lower.
 
 Default kube-proxy iptables settings:
 
