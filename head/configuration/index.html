@@ -3845,8 +3845,11 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 </tr>
 </tbody>
 </table>
-<p>¹ For nftables, the kubeproxy container's nftables version needs to be less than or equal to the host OS's in order to avoid segmentation faults.
-For example, a host OS with nftables v1.1.1 requires quay.io/k0sproject/kube-proxy:v1.33.2 or lower.</p>
+<p>¹ For nftables, the kube-proxy container's nftables version needs to be less
+than or equal to the host OS's in order to avoid segmentation faults. For
+example, a host OS with nftables v1.1.1 requires
+<code>quay.io/k0sproject/kube-proxy:v1.33.2</code> or
+lower.</p>
 <p>Default kube-proxy iptables settings:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">iptables</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">masqueradeAll</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
