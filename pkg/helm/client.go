@@ -130,7 +130,7 @@ checkAllResources:
 				case <-ctx.Done():
 					stop = true
 				default:
-					if status, ok := errors.AsType[apierrors.APIStatus](err); ok {
+					if status := (apierrors.APIStatus)(nil); errors.As(err, &status) {
 						code := status.Status().Code
 						stop = code != 0 && code != http.StatusTooManyRequests && (code < 500 || code == http.StatusNotImplemented)
 					}

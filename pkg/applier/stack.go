@@ -339,7 +339,7 @@ func getRESTMapping(mapper meta.ResettableRESTMapper, gvk *schema.GroupVersionKi
 	// that the corresponding CRD has already been applied, but the RESTMapper
 	// is still operating on stale cached data. Force a reset of the mapper and
 	// retry the call once.
-	if noMatchErr, ok := errors.AsType[*meta.NoKindMatchError](err); ok {
+	if _, ok := errors.AsType[*meta.NoKindMatchError](err); ok {
 		mapper.Reset()
 		mapping, err = mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	}
