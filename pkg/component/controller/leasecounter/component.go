@@ -100,12 +100,12 @@ func (c *Component) runLeaseCounter(ctx context.Context, clients kubernetes.Inte
 		c.log.Debug("Counting active controller leases")
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
-		count, err := kubeutil.CountActiveControllerLeases(ctx, clients)
+		numActiveLeases, err := ActiveLeases(ctx, clients)
 		if err != nil {
 			c.log.WithError(err).Error("Failed to count controller lease holders")
 			return
 		}
 
-		c.UpdateControllerCount(count)
+		c.UpdateControllerCount(numActiveLeases)
 	}, 10*time.Second)
 }
