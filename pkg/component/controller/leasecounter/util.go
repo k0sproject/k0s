@@ -22,7 +22,8 @@ func ActiveLeases(ctx context.Context, kubeClient kubernetes.Interface) (count u
 	}
 	for _, l := range leases.Items {
 		switch {
-		case !strings.HasPrefix(l.Name, "k0s-ctrl-"):
+		// FIXME: Remove the name prefix check in k0s 1.38+.
+		case l.Labels[leaseTypeLabel] != leaseTypeLabelValueController && !strings.HasPrefix(l.Name, "k0s-ctrl-"):
 		case l.Spec.HolderIdentity == nil || *l.Spec.HolderIdentity == "":
 		case kubeutil.IsValidLease(l):
 			count++

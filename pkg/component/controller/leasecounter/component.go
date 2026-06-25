@@ -21,6 +21,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	nodeNameLabel = "k0s.k0sproject.io/node-name"
+
+	leaseTypeLabel                = "k0s.k0sproject.io/lease-type"
+	leaseTypeLabelValueController = "controller"
+)
+
 // Implements a component that manages a lease per controller. The
 // per-controller leases are used to determine the amount of currently running
 // controllers
@@ -55,8 +62,12 @@ func (c *Component) Start(context.Context) error {
 	client, err := leaderelection.NewClient(&leaderelection.LeaseConfig{
 		Namespace: corev1.NamespaceNodeLease,
 		Name:      leaseName,
-		Identity:  c.InvocationID,
-		Client:    kubeClient.CoordinationV1(),
+		Labels: map[string]string{
+			nodeNameLabel:  string(c.NodeName),
+			leaseTypeLabel: leaseTypeLabelValueController,
+		},
+		Identity: c.InvocationID,
+		Client:   kubeClient.CoordinationV1(),
 	})
 	if err != nil {
 		return err

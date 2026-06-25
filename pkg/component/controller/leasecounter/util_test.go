@@ -26,16 +26,20 @@ func TestActiveLeases(t *testing.T) {
 		leases   []runtime.Object
 	}{
 		{
-			"counts a single active controller lease",
+			"counts a controller lease identified by label",
 			1, []runtime.Object{makeLease()},
+		},
+		{
+			"counts a legacy controller lease identified by name prefix",
+			1, []runtime.Object{makeLease(withoutControllerLabel, withName("k0s-ctrl-foo"))},
 		},
 		{
 			"returns zero when there are no leases",
 			0, nil,
 		},
 		{
-			"ignores leases without the controller prefix",
-			0, []runtime.Object{makeLease(withName("some-other-lease"))},
+			"ignores leases without the controller label or name prefix",
+			0, []runtime.Object{makeLease(withoutControllerLabel, withName("some-other-lease"))},
 		},
 		{
 			"ignores leases with no holder identity",
@@ -52,15 +56,18 @@ func TestActiveLeases(t *testing.T) {
 		{
 			"counts only the active controller leases among a mix",
 			3, []runtime.Object{
-				makeLease(withName("k0s-ctrl-0")),
-				makeLease(withName("k0s-ctrl-1")),
-				makeLease(withName("k0s-ctrl-2")),
-				// Not counted: doesn't have the controller prefix.
-				makeLease(withName("kube-node-lease-holder")),
+				// Counted: identified by label.
+				makeLease(withName("lease-0")),
+				makeLease(withName("lease-1")),
+				// FIXME: remove in k0s 1.38+
+				// Counted: legacy lease identified by name prefix.
+				makeLease(withoutControllerLabel, withName("k0s-ctrl-legacy")),
+				// Not counted: neither label nor prefix.
+				makeLease(withoutControllerLabel, withName("kube-node-lease-holder")),
 				// Not counted: no holder identity.
-				makeLease(withName("k0s-ctrl-no-holder"), noHolderIdentity),
+				makeLease(withName("lease-no-holder"), noHolderIdentity),
 				// Not counted: expired.
-				makeLease(withName("k0s-ctrl-expired"), expired),
+				makeLease(withName("lease-expired"), expired),
 			},
 		},
 	} {
@@ -77,8 +84,11 @@ func makeLease(funcs ...func(*coordinationv1.Lease)) *coordinationv1.Lease {
 	now := metav1.NowMicro()
 	lease := &coordinationv1.Lease{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "k0s-ctrl-foo",
+			Name:      "foo",
 			Namespace: corev1.NamespaceNodeLease,
+			Labels: map[string]string{
+				leaseTypeLabel: leaseTypeLabelValueController,
+			},
 		},
 		Spec: coordinationv1.LeaseSpec{
 			HolderIdentity:       new("foo"),
@@ -97,6 +107,12 @@ func withName(name string) func(*coordinationv1.Lease) {
 	return func(l *coordinationv1.Lease) {
 		l.Name = name
 	}
+}
+
+// Removes the controller lease type label, so the lease is only considered a
+// controller lease if its name carries the legacy prefix.
+func withoutControllerLabel(l *coordinationv1.Lease) {
+	delete(l.Labels, leaseTypeLabel)
 }
 
 // Pushes the lease's renew time far enough into the past that its duration has
