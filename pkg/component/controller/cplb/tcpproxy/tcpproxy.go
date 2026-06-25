@@ -273,16 +273,21 @@ func tcpConn(c net.Conn) (t *net.TCPConn, ok bool) {
 	return nil, false
 }
 
+type closeReader interface{ CloseRead() error }
+type closeWriter interface{ CloseWrite() error }
+
 func goCloseConn(c net.Conn) { go c.Close() }
 
 func closeRead(c net.Conn) {
-	if c, ok := tcpConn(c); ok {
+	// prefer the interfaces, for compatibility with e.g. gvisor/netstack.
+	if c, ok := UnderlyingConn(c).(closeReader); ok {
 		_ = c.CloseRead()
 	}
 }
 
 func closeWrite(c net.Conn) {
-	if c, ok := tcpConn(c); ok {
+	// prefer the interfaces, for compatibility with e.g. gvisor/netstack.
+	if c, ok := UnderlyingConn(c).(closeWriter); ok {
 		_ = c.CloseWrite()
 	}
 }
