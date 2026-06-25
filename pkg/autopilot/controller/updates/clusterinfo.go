@@ -13,8 +13,9 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
+	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -109,7 +110,7 @@ func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, er
 	}
 
 	// Collect control plane node count
-	ci.ControlPlaneNodesCount, err = kubeutil.CountActiveControllerLeases(ctx, kc)
+	ci.ControlPlaneNodesCount, err = leasecounter.ActiveLeases(ctx, kc)
 	if err != nil {
 		return ci, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
