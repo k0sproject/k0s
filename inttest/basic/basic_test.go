@@ -93,9 +93,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 		s.Require().NoError(err, lease)
 	}
 
-	// We need to first wait till we see pod logs, that's a signal that konnectivity tunnels are up and thus we can then connect to kubelet
-	// via the API.
-	s.Require().NoError(common.WaitForPodLogs(ctx, kc, metav1.NamespaceSystem))
+	s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, kc, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
 	for i := range s.WorkerCount {
 		node := s.WorkerNode(i)
 		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)

@@ -11,6 +11,7 @@ import (
 	"github.com/k0sproject/k0s/inttest/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 type CapitalHostnamesSuite struct {
@@ -18,6 +19,7 @@ type CapitalHostnamesSuite struct {
 }
 
 func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
+	ctx := s.Context()
 
 	s.NoError(s.setHostname(s.ControllerNode(0), "k0s-CONTROLLER"))
 	s.NoError(s.setHostname(s.WorkerNode(0), "k0s-WORKER"))
@@ -28,10 +30,10 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	s.NoError(s.RunWorkersWithToken(token))
 
-	kc, err := s.KubeClient(s.ControllerNode(0))
-	if err != nil {
-		s.FailNow("failed to obtain Kubernetes client", err)
-	}
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+	s.Require().NoError(err)
+	kc, err := kubernetes.NewForConfig(restConfig)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady("k0s-worker", kc)
 	s.NoError(err)
@@ -39,21 +41,20 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(ctx, kc), "kube-router did not start")
 
-	// Test that we get logs, it's a signal that konnectivity tunnels work
-	s.T().Log("waiting to get logs from pods")
-	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceSystem))
+	s.T().Log("waiting for konnectivity")
+	s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, kc, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
 
 	// Verify API that we get proper controller counter lease
-	_, err = kc.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(s.Context(), "k0s-ctrl-k0s-controller", metav1.GetOptions{})
+	_, err = kc.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, "k0s-ctrl-k0s-controller", metav1.GetOptions{})
 	s.NoError(err)
 
 	// Verify the autopilot controller node is created
 	apClient, err := s.AutopilotClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 	s.NotEmpty(apClient)
-	_, err = apClient.AutopilotV1beta2().ControlNodes().Get(s.Context(), "k0s-controller", metav1.GetOptions{})
+	_, err = apClient.AutopilotV1beta2().ControlNodes().Get(ctx, "k0s-controller", metav1.GetOptions{})
 	s.NoError(err)
 }
 

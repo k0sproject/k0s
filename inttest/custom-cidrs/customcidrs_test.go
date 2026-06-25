@@ -8,6 +8,7 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/stretchr/testify/suite"
 
@@ -34,10 +35,10 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components metrics-server", "--enable-dynamic-config"))
 	s.Require().NoError(s.RunWorkers())
 
-	kc, err := s.KubeClient(s.ControllerNode(0))
-	if err != nil {
-		s.FailNow("failed to obtain Kubernetes client", err)
-	}
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+	s.Require().NoError(err)
+	kc, err := kubernetes.NewForConfig(restConfig)
+	s.Require().NoError(err)
 
 	for i := range s.WorkerCount {
 		err = s.WaitForNodeReady(s.WorkerNode(i), kc)
@@ -75,14 +76,8 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	// Wait till we see the pod ready and are able to get logs
-	// Getting logs means konnectivity tunnels are up and running
 	s.Require().NoError(common.WaitForPod(ctx, kc, "nginx", metav1.NamespaceDefault))
-	s.Require().NoError(common.WaitForPodLogs(ctx, kc, metav1.NamespaceDefault))
-
-	restConfig, err := s.GetKubeConfig("controller0", "")
-	s.Require().NoError(err)
-	s.Require().NotNil(restConfig)
+	s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, kc, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
 
 	// Check the pod resolv.conf is correct
 	resolv, err := common.PodExecCmdOutput(kc, restConfig, "nginx", metav1.NamespaceDefault, "cat /etc/resolv.conf")
