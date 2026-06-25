@@ -183,8 +183,8 @@ func (c *Certificates) Init(ctx context.Context) error {
 		"kubernetes",
 		"kubernetes.default",
 		"kubernetes.default.svc",
-		"kubernetes.default.svc.cluster",
-		"kubernetes.svc." + c.ClusterSpec.Network.ClusterDomain,
+		"kubernetes.default.svc." + c.ClusterSpec.Network.ClusterDomain,
+		"kubernetes.default.svc." + c.ClusterSpec.Network.ClusterDomain + ".",
 		"localhost",
 		"127.0.0.1",
 	}
