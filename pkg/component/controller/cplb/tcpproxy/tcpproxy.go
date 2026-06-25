@@ -276,8 +276,6 @@ func tcpConn(c net.Conn) (t *net.TCPConn, ok bool) {
 type closeReader interface{ CloseRead() error }
 type closeWriter interface{ CloseWrite() error }
 
-func goCloseConn(c net.Conn) { go c.Close() }
-
 func closeRead(c net.Conn) {
 	// prefer the interfaces, for compatibility with e.g. gvisor/netstack.
 	if c, ok := UnderlyingConn(c).(closeReader); ok {
@@ -307,13 +305,13 @@ func (r *Route) HandleConn(src net.Conn) {
 		r.onDialError()(src, err)
 		return
 	}
-	defer goCloseConn(dst)
+	defer dst.Close()
 
 	if err = r.sendProxyHeader(dst, src); err != nil {
 		r.onDialError()(src, err)
 		return
 	}
-	defer goCloseConn(src)
+	defer src.Close()
 
 	if ka := r.keepAlivePeriod(); ka > 0 {
 		for _, c := range []net.Conn{src, dst} {
