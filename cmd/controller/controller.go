@@ -346,7 +346,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	}
 
 	if !singleController {
-		nodeComponents.Add(ctx, &leasecounter.K0sControllersLeaseCounter{
+		nodeComponents.Add(ctx, &leasecounter.Component{
 			NodeName:              nodeName,
 			InvocationID:          c.K0sVars.InvocationID,
 			KubeClientFactory:     adminClientFactory,
