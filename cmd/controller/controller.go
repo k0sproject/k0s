@@ -36,6 +36,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 	"github.com/k0sproject/k0s/pkg/component/controller/workerconfig"
 	"github.com/k0sproject/k0s/pkg/component/iptables"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -345,7 +346,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	}
 
 	if !singleController {
-		nodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
+		nodeComponents.Add(ctx, &leasecounter.K0sControllersLeaseCounter{
 			NodeName:              nodeName,
 			InvocationID:          c.K0sVars.InvocationID,
 			KubeClientFactory:     adminClientFactory,
