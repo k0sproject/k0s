@@ -413,7 +413,13 @@ func (r *Route) onDialError() func(src net.Conn, dstDialErr error) {
 		return r.OnDialError
 	}
 	return func(src net.Conn, dstDialErr error) {
-		logrus.WithFields(logrus.Fields{"component": "tcpproxy"}).Errorf("for incoming conn %v, error dialing %q: %v", src.RemoteAddr().String(), r.Addr, dstDialErr)
+		var remoteAddr string
+		if ra := src.RemoteAddr(); ra != nil {
+			remoteAddr = ra.String()
+		} else {
+			remoteAddr = fmt.Sprintf("[%T with nil RemoteAddr]", src)
+		}
+		logrus.WithFields(logrus.Fields{"component": "tcpproxy"}).Errorf("for incoming conn %v, error dialing %q: %v", remoteAddr, r.Addr, dstDialErr)
 		src.Close()
 	}
 }
