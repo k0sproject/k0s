@@ -103,12 +103,8 @@ func isUnderPath(path, base string) bool {
 // we can't rely on os.RemoveAll instead of recursively deleting the
 // contents of the directory
 func errorIsUnlinkat(err error, dir string) bool {
-	if err == nil {
-		return false
+	if pathErr, ok := errors.AsType[*os.PathError](err); ok {
+		return pathErr.Path == dir && pathErr.Op == "unlinkat"
 	}
-	var pathErr *os.PathError
-	if !errors.As(err, &pathErr) {
-		return false
-	}
-	return pathErr.Path == dir && pathErr.Op == "unlinkat"
+	return false
 }

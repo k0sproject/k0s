@@ -60,7 +60,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 			}
 
 			if err := clientcmdapi.FlattenConfig(&adminConfig); err != nil {
-				if pathErr := (*fs.PathError)(nil); errors.As(err, &pathErr) &&
+				if pathErr, ok := errors.AsType[*fs.PathError](err); ok &&
 					filepath.Dir(pathErr.Path) == opts.K0sVars.CertRootDir &&
 					errors.Is(pathErr.Err, fs.ErrNotExist) {
 					return fmt.Errorf("admin PKI file %q not found, check if the control plane is initialized on this node", pathErr.Path)

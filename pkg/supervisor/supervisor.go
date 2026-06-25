@@ -70,7 +70,7 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 		cause := context.Cause(ctx)
 		s.log.Debugf("Attempting to terminate supervised process (%v)", cause)
 		var stopOpts StopOpts
-		if stoppingErr := (*stoppingErr)(nil); errors.As(cause, &stoppingErr) {
+		if stoppingErr, ok := errors.AsType[*stoppingErr](cause); ok {
 			stopOpts = stoppingErr.opts
 		}
 		if err := s.terminateSupervisedProcess(cmd, waitresult, stopOpts); err != nil {

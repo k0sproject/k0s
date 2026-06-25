@@ -181,8 +181,7 @@ func requestGracefulTermination(p *os.Process) error {
 		// Sending a direct Ctrl+Break event might fail if k0s itself is not
 		// attached to a console. This is usually the case when running as a
 		// service. Fall back to the termination helper in this case.
-		var sysErr *os.SyscallError
-		if errors.As(err, &sysErr) && sysErr.Syscall == "GenerateConsoleCtrlEvent" && errors.Is(sysErr.Err, syswindows.ERROR_INVALID_HANDLE) {
+		if sysErr, ok := errors.AsType[*os.SyscallError](err); ok && sysErr.Syscall == "GenerateConsoleCtrlEvent" && errors.Is(sysErr.Err, syswindows.ERROR_INVALID_HANDLE) {
 			logrus.Debug("Failed to send Ctrl+Break to process with ID ", p.Pid, ", trying to attach to target console")
 			if pidErr := sendCtrlBreakOnTargetConsole(uint32(p.Pid)); pidErr != nil {
 				return errors.Join(pidErr, err)

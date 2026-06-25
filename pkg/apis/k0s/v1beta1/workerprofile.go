@@ -122,11 +122,8 @@ func (wp *WorkerProfile) validateConfig(path *field.Path) []error {
 	defaultGates := utilfeature.DefaultMutableFeatureGate.DeepCopyAndReset()
 	if err := kubeletvalidation.ValidateKubeletConfiguration(validatedCfg, defaultGates); err != nil {
 		// Flatten aggregate validation errors
-		var (
-			agg            utilerrors.Aggregate
-			validationErrs []error
-		)
-		if errors.As(err, &agg) {
+		var validationErrs []error
+		if agg, ok := errors.AsType[utilerrors.Aggregate](err); ok {
 			validationErrs = agg.Errors()
 		} else {
 			validationErrs = []error{err}
