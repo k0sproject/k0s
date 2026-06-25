@@ -207,10 +207,10 @@ func TestClient_LeadTakeover(t *testing.T) {
 			Name: "bar",
 		},
 		Spec: coordinationv1.LeaseSpec{
-			HolderIdentity:       ptr.To("Red"),
+			HolderIdentity:       new("Red"),
 			AcquireTime:          &now,
 			RenewTime:            &now,
-			LeaseDurationSeconds: ptr.To(int32((1 * time.Hour).Seconds())), // block lease for a very long time
+			LeaseDurationSeconds: new(int32((1 * time.Hour).Seconds())), // block lease for a very long time
 		},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)

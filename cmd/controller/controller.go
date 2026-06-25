@@ -53,7 +53,6 @@ import (
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
-	"k8s.io/utils/ptr"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
@@ -497,7 +496,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		))
 	}
 
-	hasWindowsNodes := func() (*bool, <-chan struct{}) { return ptr.To(false), nil }
+	hasWindowsNodes := func() (*bool, <-chan struct{}) { return new(false), nil }
 	if !slices.Contains(flags.DisableComponents, constant.WindowsNodeComponentName) {
 		var windowsNodeCount value.Latest[*uint]
 		windowsStack, err := controller.NewWindowsStackComponent(adminClientFactory, windowsNodeCount.Set)
@@ -508,7 +507,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		hasWindowsNodes = func() (*bool, <-chan struct{}) {
 			count, changed := windowsNodeCount.Peek()
 			if count != nil {
-				return ptr.To(*count > 0), changed
+				return new(*count > 0), changed
 			}
 			return nil, changed
 		}

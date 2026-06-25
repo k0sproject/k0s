@@ -438,7 +438,7 @@ func (k *Keepalived) setProxyRoutes() {
 func (k *Keepalived) redirectToProxyIPTables(op string) error {
 	for _, vrrp := range k.Config.VRRPInstances {
 		for _, vipCIDR := range vrrp.VirtualIPs {
-			vip := strings.Split(vipCIDR, "/")[0]
+			vip, _, _ := strings.Cut(vipCIDR, "/")
 
 			cmdArgs := []string{
 				"-t", "nat", op, "PREROUTING", "-p", "tcp",

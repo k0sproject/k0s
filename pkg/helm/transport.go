@@ -14,7 +14,6 @@ import (
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/client-go/transport"
-	"k8s.io/utils/ptr"
 )
 
 // Injects an external interruption signal into HTTP transports.
@@ -214,7 +213,7 @@ func (c *transportControl) wrapBody(body io.ReadCloser, cancel context.CancelCau
 		}
 
 	default:
-		return ptr.To(makeBodyWrapper(c, body, close))
+		return new(makeBodyWrapper(c, body, close))
 	}
 }
 

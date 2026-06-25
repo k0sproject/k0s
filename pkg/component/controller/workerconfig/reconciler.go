@@ -36,7 +36,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
@@ -499,7 +498,7 @@ func (r *Reconciler) buildConfigMaps(snapshot *snapshot) ([]*corev1.ConfigMap, e
 
 	workerProfile = r.buildProfile(snapshot)
 	workerProfile.PauseImage = snapshot.pauseWindowsImage.DeepCopy()
-	workerProfile.KubeletConfiguration.CgroupsPerQOS = ptr.To(false)
+	workerProfile.KubeletConfiguration.CgroupsPerQOS = new(false)
 	workerProfile.KubeletConfiguration.KubeReservedCgroup = ""
 	workerProfile.KubeletConfiguration.KubeletCgroups = ""
 	workerProfiles["default-windows"] = workerProfile
@@ -594,10 +593,10 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			KubeletCgroups:     "/system.slice/containerd.service",
 			TLSMinVersion:      "VersionTLS12",
 			TLSCipherSuites:    cipherSuites,
-			FailSwapOn:         ptr.To(false),
+			FailSwapOn:         new(false),
 			RotateCertificates: true,
 			ServerTLSBootstrap: true,
-			EventRecordQPS:     ptr.To(int32(0)),
+			EventRecordQPS:     new(int32(0)),
 			VolumePluginDir:    "/usr/libexec/k0s/kubelet-plugins/volume/exec",
 		},
 		PauseImage:             snapshot.pauseImage.DeepCopy(),

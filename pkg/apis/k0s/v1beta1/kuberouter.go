@@ -5,7 +5,6 @@ package v1beta1
 
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/ptr"
 )
 
 // KubeRouter defines the kube-router related config options
@@ -85,7 +84,7 @@ const (
 func DefaultKubeRouter() *KubeRouter {
 	return &KubeRouter{
 		MTU:         0,
-		AutoMTU:     ptr.To(true),
+		AutoMTU:     new(true),
 		MetricsPort: 8080,
 		Hairpin:     HairpinEnabled,
 	}

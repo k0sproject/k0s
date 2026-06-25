@@ -37,7 +37,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
-	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
@@ -127,7 +126,7 @@ func (s *controllerworkerSuite) TestApply() {
 			Name: "drain-blocker",
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: ptr.To(int32(s.ControllerCount)),
+			Replicas: new(int32(s.ControllerCount)),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"test.k0sproject.io/app": "drain-blocker",
@@ -174,7 +173,7 @@ func (s *controllerworkerSuite) TestApply() {
 		},
 		Spec: policyv1.PodDisruptionBudgetSpec{
 			Selector:     drainBlocker.Spec.Selector,
-			MinAvailable: ptr.To(intstr.FromInt32(*drainBlocker.Spec.Replicas)),
+			MinAvailable: new(intstr.FromInt32(*drainBlocker.Spec.Replicas)),
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)

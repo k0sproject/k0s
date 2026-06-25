@@ -3,8 +3,6 @@
 
 package v1beta1
 
-import "k8s.io/utils/ptr"
-
 var _ Validateable = (*ClusterTelemetry)(nil)
 
 // ClusterTelemetry holds telemetry related settings
@@ -20,7 +18,7 @@ func (t *ClusterTelemetry) IsEnabled() bool {
 // DefaultClusterTelemetry default settings
 func DefaultClusterTelemetry() *ClusterTelemetry {
 	return &ClusterTelemetry{
-		Enabled: ptr.To(false),
+		Enabled: new(false),
 	}
 }
 

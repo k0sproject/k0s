@@ -100,7 +100,7 @@ func defaultConfigFileOutputPath(archivePath string) string {
 		return "-"
 	}
 	f := filepath.Base(archivePath)
-	nameWithoutExt := strings.Split(f, ".")[0]
+	nameWithoutExt, _, _ := strings.Cut(f, ".")
 	fName := strings.TrimPrefix(nameWithoutExt, "k0s_backup_")
 	return fmt.Sprintf("k0s_%s.yaml", fName)
 }

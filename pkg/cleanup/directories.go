@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -41,8 +42,8 @@ func (d *directories) Run() error {
 	// desired behavior. See MS_SHARED and NOTES:
 	//  - https://man7.org/linux/man-pages/man2/mount.2.html
 	//  - https://man7.org/linux/man-pages/man2/umount.2.html#NOTES
-	for i := len(procMounts) - 1; i >= 0; i-- {
-		v := procMounts[i]
+	for _, v := range slices.Backward(procMounts) {
+
 		// avoid unmount datadir if its mounted on separate partition
 		// k0s didn't mount it so leave it alone
 		if v.Path == d.dataDir {

@@ -11,7 +11,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/ptr"
 )
 
 // NodeLocalLoadBalancing defines the configuration options related to k0s's
@@ -218,7 +217,7 @@ func (p *EnvoyProxy) setDefaults() {
 		p.APIServerBindPort = 7443
 	}
 	if p.KonnectivityServerBindPort == nil {
-		p.KonnectivityServerBindPort = ptr.To(int32(7132))
+		p.KonnectivityServerBindPort = new(int32(7132))
 	}
 }
 
@@ -271,7 +270,7 @@ func (p *Traefik) setDefaults() {
 		p.APIServerBindPort = 7443
 	}
 	if p.KonnectivityServerBindPort == nil {
-		p.KonnectivityServerBindPort = ptr.To(int32(7132))
+		p.KonnectivityServerBindPort = new(int32(7132))
 	}
 }
 

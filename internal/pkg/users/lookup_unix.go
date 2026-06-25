@@ -30,8 +30,7 @@ func LookupUID(name string) (int, error) {
 		// fallback to call external `id` in case NSS is used
 		out, idErr := exec.Command("id", "-u", name).Output()
 		if idErr != nil {
-			var exitErr *exec.ExitError
-			if errors.As(idErr, &exitErr) {
+			if exitErr, ok := errors.AsType[*exec.ExitError](idErr); ok {
 				return UnknownUID, fmt.Errorf("%w (%w: %s)", err, idErr, bytes.TrimSpace(exitErr.Stderr))
 			}
 			return UnknownUID, fmt.Errorf("%w (%w)", err, idErr)

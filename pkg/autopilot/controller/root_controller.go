@@ -28,7 +28,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
-	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crconfig "sigs.k8s.io/controller-runtime/pkg/config"
@@ -171,7 +170,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 			// currently provide a way to unregister names from discarded
 			// managers. So it's necessary to suppress the global name check
 			// whenever things are restarted for reconfiguration.
-			SkipNameValidation: ptr.To(c.initialized),
+			SkipNameValidation: new(c.initialized),
 		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: c.cfg.ManagerPort,
