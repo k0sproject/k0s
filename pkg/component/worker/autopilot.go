@@ -47,10 +47,10 @@ func (a *Autopilot) Start(ctx context.Context) error {
 	defer cancel()
 
 	var restConfig *rest.Config
-	// wait.PollUntilWithContext passes it is own ctx argument as a ctx to the given function
 	// Poll until the kubelet config can be loaded successfully, as this is the access to the kube api
-	// needed by autopilot.
-	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
+	// needed by autopilot. immediate=true checks the condition before the first wait interval, so if
+	// the cert is already in place (the common case) there is no delay.
+	if err := wait.PollUntilContextCancel(timeout, defaultPollDuration, true, func(ctx context.Context) (done bool, err error) {
 		log.Debugf("Attempting to load autopilot client config")
 		if restConfig, err = a.CertManager.GetRestConfig(ctx); err != nil {
 			log.WithError(err).Warnf("Failed to load autopilot client config, retrying in %v", defaultPollDuration)
