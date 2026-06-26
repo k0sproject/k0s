@@ -52,6 +52,22 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 					if s.nllbType != "" {
 						network.NodeLocalLoadBalancing.Type = s.nllbType
 					}
+					network.NodeLocalLoadBalancing.Patches = []v1beta1.Patch{
+						{
+							Target: v1beta1.PatchTarget{
+								Kind: "Pod",
+								Name: "nllb",
+							},
+							Patch: v1beta1.PatchSpec{
+								Type: v1beta1.StrategicMergePatchType,
+								Content: `
+metadata:
+  annotations:
+    test.k0sproject.io/patch-applied: "true"
+`,
+							},
+						},
+					}
 					return network
 				}(),
 
@@ -260,6 +276,17 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 				return fmt.Errorf("Pod %s/%s is not ready: %w", nllbPodName, metav1.NamespaceSystem, err)
 			}
 			s.T().Logf("Pod %s/%s is ready", metav1.NamespaceSystem, nllbPodName)
+
+			pod, err := clients.CoreV1().Pods(metav1.NamespaceSystem).Get(ctx, nllbPodName, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("failed to get pod %s/%s: %w", metav1.NamespaceSystem, nllbPodName, err)
+			}
+
+			if pod.Annotations["test.k0sproject.io/patch-applied"] != "true" {
+				return fmt.Errorf("patch was not applied to pod %s/%s", metav1.NamespaceSystem, nllbPodName)
+			}
+
+			s.T().Logf("Patch was applied to pod %s/%s", metav1.NamespaceSystem, nllbPodName)
 
 			// Test that we get logs, it's a signal that konnectivity tunnels work.
 			var logsErr error

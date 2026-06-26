@@ -48,6 +48,7 @@ type traefikPodParams struct {
 	image         v1beta1.ImageSpec
 	pullPolicy    corev1.PullPolicy
 	hostConfigDir string
+	patches       v1beta1.Patches
 }
 
 type traefikInstallConfig struct {
@@ -120,6 +121,7 @@ func (t *traefik) start(ctx context.Context, profile workerconfig.Profile, apiSe
 			image:         *nllb.Traefik.Image,
 			pullPolicy:    nllb.Traefik.ImagePullPolicy,
 			hostConfigDir: t.dir,
+			patches:       nllb.Patches,
 		},
 		traefikInstallConfig: traefikInstallConfig{
 			bindIP:                     loopbackIP,
@@ -204,7 +206,10 @@ func (t *traefik) writeConfigFile(name string, content []byte) error {
 }
 
 func (t *traefik) provision() error {
-	manifest := makeTraefikPodManifest(&t.config.traefikPodParams, &t.config.traefikInstallConfig)
+	manifest, err := makeTraefikPodManifest(&t.config.traefikPodParams, &t.config.traefikInstallConfig)
+	if err != nil {
+		return fmt.Errorf("failed to generate Traefik pod manifest: %w", err)
+	}
 	if err := t.pod.SetManifest(manifest); err != nil {
 		return err
 	}
@@ -217,7 +222,7 @@ func traefikContainerConfigDir() string {
 	return filepath.Join(string(filepath.Separator), "etc", "traefik")
 }
 
-func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikInstallConfig) *corev1.Pod {
+func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikInstallConfig) (*corev1.Pod, error) {
 	ports := []corev1.ContainerPort{
 		{Name: "api-server", ContainerPort: int32(installConfig.apiServerBindPort), Protocol: corev1.ProtocolTCP},
 	}
@@ -227,7 +232,7 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 
 	configDir := traefikContainerConfigDir()
 
-	return &corev1.Pod{
+	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nllb",
@@ -302,6 +307,13 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 			EnableServiceLinks: ptr.To(false),
 		},
 	}
+
+	patchedPod, err := patchPod(pod, podParams.patches)
+	if err != nil {
+		return pod, fmt.Errorf("failed to apply patches to pod manifest: %w", err)
+	}
+
+	return patchedPod, nil
 }
 
 func (i *traefikInstallConfig) toFileContent() ([]byte, error) {
