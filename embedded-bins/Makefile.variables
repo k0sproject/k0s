@@ -22,7 +22,7 @@ containerd_revision = $(word 2,$(subst @, ,$(containerd_version_and_rev)))
 containerd_version = $(word 1,$(subst @, ,$(containerd_version_and_rev)))
 containerd_build_extra_args = --build-arg REVISION=$(containerd_revision)
 containerd_buildimage = $(golang_buildimage)
-containerd_build_go_tags = "apparmor,selinux"
+containerd_build_go_tags = "apparmor selinux"
 containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_cgo_enabled =
 #containerd_build_go_cgo_cflags =
