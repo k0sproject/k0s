@@ -386,7 +386,7 @@ func TestReconciler_ConfigMgmt(t *testing.T) {
 		err = underTest.Init(testContext(t))
 		require.NoError(t, err)
 
-		staticPod.On("SetManifest", mock.AnythingOfType("v1.Pod")).Return(nil)
+		staticPod.On("SetManifest", mock.AnythingOfType("*v1.Pod")).Return(nil)
 		err = underTest.Start(testContext(t))
 		require.NoError(t, err)
 
