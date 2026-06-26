@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -294,6 +295,7 @@ func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string, r
 
 func (hc *Commands) locateChart(name string, version string, registryClient *registry.Client) (string, error) {
 	name = strings.TrimSpace(name)
+	version = strings.TrimSpace(version)
 
 	if _, err := os.Stat(name); err == nil {
 		abs, err := filepath.Abs(name)
@@ -304,6 +306,11 @@ func (hc *Commands) locateChart(name string, version string, registryClient *reg
 	}
 	if filepath.IsAbs(name) || strings.HasPrefix(name, ".") {
 		return name, fmt.Errorf("can't locate chart: path not found: %s", name)
+	}
+	if registry.IsOCI(name) {
+		if _, err := semver.NewVersion(version); err != nil {
+			return "", fmt.Errorf("can't locate chart `%s-%s`: OCI charts require a fixed SemVer version: %w", name, version, err)
+		}
 	}
 
 	dl := downloader.ChartDownloader{
