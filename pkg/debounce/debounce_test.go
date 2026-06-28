@@ -16,16 +16,16 @@ import (
 func TestDebounce(t *testing.T) {
 	const numEvents = 5
 	eventChan := make(chan int32, numEvents)
-	var debounceCalled uint32
-	var lastItem int32
+	var debounceCalled atomic.Uint32
+	var lastItem atomic.Int32
 	ctx, cancel := context.WithCancel(t.Context())
 
 	debouncer := Debouncer[int32]{
 		Input:   eventChan,
 		Timeout: 10 * time.Millisecond,
 		Callback: func(item int32) {
-			atomic.AddUint32(&debounceCalled, 1)
-			atomic.StoreInt32(&lastItem, item)
+			debounceCalled.Add(1)
+			lastItem.Store(item)
 		},
 	}
 
@@ -38,7 +38,7 @@ func TestDebounce(t *testing.T) {
 
 	for range 1000 {
 		time.Sleep(10 * time.Millisecond)
-		if atomic.LoadInt32(&lastItem) == numEvents {
+		if lastItem.Load() == numEvents {
 			break
 		}
 	}
@@ -52,20 +52,20 @@ func TestDebounce(t *testing.T) {
 		assert.Same(t, context.Canceled, err)
 	}
 
-	assert.Equal(t, uint32(1), atomic.LoadUint32(&debounceCalled))
-	assert.Equal(t, int32(numEvents), atomic.LoadInt32(&lastItem))
+	assert.Equal(t, uint32(1), debounceCalled.Load())
+	assert.Equal(t, int32(numEvents), lastItem.Load())
 }
 
 func TestDebounceStopWithoutActuallyDebouncing(t *testing.T) {
 	const numEvents = 5
 	eventChan := make(chan int, numEvents)
-	var debounceCalled uint32
+	var debounceCalled atomic.Uint32
 	ctx, cancel := context.WithCancel(t.Context())
 
 	debouncer := Debouncer[int]{
 		Input:    eventChan,
 		Timeout:  10 * time.Second,
-		Callback: func(int) { atomic.AddUint32(&debounceCalled, 1) },
+		Callback: func(int) { debounceCalled.Add(1) },
 	}
 
 	for i := 1; i <= numEvents; i++ {
@@ -85,7 +85,7 @@ func TestDebounceStopWithoutActuallyDebouncing(t *testing.T) {
 		assert.Same(t, context.Canceled, err)
 	}
 
-	assert.Equal(t, uint32(0), atomic.LoadUint32(&debounceCalled))
+	assert.Equal(t, uint32(0), debounceCalled.Load())
 
 	eventChan <- -1
 	sentinel := <-eventChan

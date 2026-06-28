@@ -42,6 +42,6 @@ func (s *services) Run() error {
 }
 
 func isExitCode(err error, exitcode int) bool {
-	var e *exec.ExitError
-	return errors.As(err, &e) && e.ExitCode() == exitcode
+	e, ok := errors.AsType[*exec.ExitError](err)
+	return ok && e.ExitCode() == exitcode
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -224,7 +223,7 @@ func TestOCIRegistryManager_GetRegistryClient_Settings(t *testing.T) {
 			name: "Valid OCI Registry, insecure",
 			repoCfg: Repository{
 				URL:      testOCIRegistryURL,
-				Insecure: ptr.To(true),
+				Insecure: new(true),
 			},
 		},
 		{

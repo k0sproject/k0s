@@ -380,8 +380,7 @@ func retry(ctx context.Context, errorCallback ErrorCallback, runWatch func(conte
 			return nil
 		}
 
-		var condErr conditionError
-		if errors.As(err, &condErr) {
+		if condErr, ok := errors.AsType[conditionError](err); ok {
 			// The user-specified condition returned an error.
 			return condErr.error
 		}

@@ -276,9 +276,9 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 			// admission computes the integer from the class name and rejects the
 			// mirror Pod if an explicit, mismatched Priority is provided.
 			PriorityClassName: "system-node-critical",
-			Priority:          ptr.To(int32(2000001000)),
+			Priority:          new(int32(2000001000)),
 			SecurityContext: &corev1.PodSecurityContext{
-				RunAsNonRoot: ptr.To(true),
+				RunAsNonRoot: new(true),
 			},
 			Containers: []corev1.Container{{
 				Name:            "nllb",
@@ -287,9 +287,9 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 				Ports:           ports,
 				Args:            []string{"-c", "/etc/envoy/envoy.yaml", "--use-dynamic-base-id"},
 				SecurityContext: &corev1.SecurityContext{
-					ReadOnlyRootFilesystem:   ptr.To(true),
-					Privileged:               ptr.To(false),
-					AllowPrivilegeEscalation: ptr.To(false),
+					ReadOnlyRootFilesystem:   new(true),
+					Privileged:               new(false),
+					AllowPrivilegeEscalation: new(false),
 					Capabilities: &corev1.Capabilities{
 						Drop: []corev1.Capability{"ALL"},
 					},

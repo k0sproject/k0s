@@ -19,7 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/stretchr/testify/assert"
@@ -209,7 +208,7 @@ status: {}
 				Version:      "0.0.1",
 				Values:       "values",
 				TargetNS:     metav1.NamespaceDefault,
-				ForceUpgrade: ptr.To(false),
+				ForceUpgrade: new(false),
 				Timeout: k0sv1beta1.BackwardCompatibleDuration(
 					metav1.Duration{Duration: 5 * time.Minute},
 				),

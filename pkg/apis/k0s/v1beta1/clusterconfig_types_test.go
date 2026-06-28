@@ -430,7 +430,7 @@ spec:
 		{"traefik", NllbTypeTraefik, "type: Traefik"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			input, err := ConfigFromBytes([]byte(fmt.Sprintf(yaml, tt.snippet)))
+			input, err := ConfigFromBytes(fmt.Appendf(nil, yaml, tt.snippet))
 			require.NoError(t, err)
 
 			stripped := input.StripDefaults()

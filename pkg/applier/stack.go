@@ -27,7 +27,6 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
-	"k8s.io/utils/ptr"
 
 	"github.com/avast/retry-go"
 	jsonpatch "github.com/evanphx/json-patch"
@@ -102,7 +101,7 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 
 	var errs []error
 	for _, resource := range sortedResources {
-		mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
+		mapping, err := getRESTMapping(mapper, new(resource.GroupVersionKind()))
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -340,8 +339,7 @@ func getRESTMapping(mapper meta.ResettableRESTMapper, gvk *schema.GroupVersionKi
 	// that the corresponding CRD has already been applied, but the RESTMapper
 	// is still operating on stale cached data. Force a reset of the mapper and
 	// retry the call once.
-	var noMatchErr *meta.NoKindMatchError
-	if errors.As(err, &noMatchErr) {
+	if _, ok := errors.AsType[*meta.NoKindMatchError](err); ok {
 		mapper.Reset()
 		mapping, err = mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	}
@@ -354,7 +352,7 @@ func getRESTMapping(mapper meta.ResettableRESTMapper, gvk *schema.GroupVersionKi
 }
 
 func (s *Stack) clientForResource(mapper meta.ResettableRESTMapper, resource unstructured.Unstructured) (dynamic.ResourceInterface, error) {
-	mapping, err := getRESTMapping(mapper, ptr.To(resource.GroupVersionKind()))
+	mapping, err := getRESTMapping(mapper, new(resource.GroupVersionKind()))
 	if err != nil {
 		return nil, fmt.Errorf("mapping error: %w", err)
 	}

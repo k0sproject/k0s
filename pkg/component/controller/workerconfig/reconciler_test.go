@@ -28,7 +28,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
@@ -390,14 +389,14 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		},
 
 		"worker-config-default-windows-1.37": func(expected *kubeletConfig) {
-			expected.CgroupsPerQOS = ptr.To(false)
+			expected.CgroupsPerQOS = new(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 			expected.KubeletCgroups = ""
 			expected.KubeReservedCgroup = ""
 		},
 
 		"worker-config-profile_XXX-1.37": func(expected *kubeletConfig) {
-			expected.Authentication.Anonymous.Enabled = ptr.To(true)
+			expected.Authentication.Anonymous.Enabled = new(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
@@ -407,7 +406,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 		},
 
 		"worker-config-profile_ZZZ-1.37": func(expected *kubeletConfig) {
-			expected.CgroupsPerQOS = ptr.To(false)
+			expected.CgroupsPerQOS = new(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 			expected.KubeletCgroups = ""
 			expected.KubeReservedCgroup = ""
@@ -784,8 +783,8 @@ func makeKubeletConfig(t *testing.T, mods ...func(*kubeletConfig)) string {
 		},
 		ClusterDNS:         []string{"99.99.99.10"},
 		ClusterDomain:      "test.local",
-		EventRecordQPS:     ptr.To(int32(0)),
-		FailSwapOn:         ptr.To(false),
+		EventRecordQPS:     new(int32(0)),
+		FailSwapOn:         new(false),
 		KubeletCgroups:     "/system.slice/containerd.service",
 		KubeReservedCgroup: "system.slice",
 		RotateCertificates: true,

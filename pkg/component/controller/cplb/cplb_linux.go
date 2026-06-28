@@ -206,7 +206,7 @@ func (k *Keepalived) Stop() error {
 		k.log.Info("Deleting dummy interface")
 		link, err := netlink.LinkByName(dummyLinkName)
 		if err != nil {
-			if errors.As(err, &netlink.LinkNotFoundError{}) {
+			if _, ok := errors.AsType[*netlink.LinkNotFoundError](err); ok {
 				return nil
 			}
 			k.log.Errorf("failed to get link by name %s. Attempting to delete it anyway: %v", dummyLinkName, err)
@@ -253,8 +253,8 @@ func (k *Keepalived) ensureDummyInterface(linkName string) error {
 		// There are multiple reasons why the link may not be returned besides
 		// it not existing. If we don't know what failed log it and attempt to
 		// create the link anyway.
-		if !errors.As(err, &netlink.LinkNotFoundError{}) {
-			k.log.Warnf("failed to get link by name %s. Attempting to create it anyway: %v", linkName, err)
+		if _, ok := errors.AsType[*netlink.LinkNotFoundError](err); !ok {
+			k.log.WithError(err).Warnf("Failed to get link by name %s, attempting to create it anyway", linkName)
 		}
 		return k.createDummyInterface(linkName)
 	}
@@ -438,7 +438,7 @@ func (k *Keepalived) setProxyRoutes() {
 func (k *Keepalived) redirectToProxyIPTables(op string) error {
 	for _, vrrp := range k.Config.VRRPInstances {
 		for _, vipCIDR := range vrrp.VirtualIPs {
-			vip := strings.Split(vipCIDR, "/")[0]
+			vip, _, _ := strings.Cut(vipCIDR, "/")
 
 			cmdArgs := []string{
 				"-t", "nat", op, "PREROUTING", "-p", "tcp",

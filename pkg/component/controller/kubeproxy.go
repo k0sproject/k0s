@@ -35,7 +35,6 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	configv1alpha1 "k8s.io/component-base/config/v1alpha1"
 	kubeproxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
-	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 )
@@ -289,7 +288,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 				MetricsBindAddress: kubeProxy.MetricsBindAddress,
 				HealthzBindAddress: kubeProxy.HealthzBindAddress,
 				Conntrack: kubeproxyv1alpha1.KubeProxyConntrackConfiguration{
-					MaxPerCore: ptr.To(int32(0)),
+					MaxPerCore: new(int32(0)),
 				},
 				IPTables: kubeproxyv1alpha1.KubeProxyIPTablesConfiguration{
 					MasqueradeBit:      kubeProxy.IPTables.MasqueradeBit,

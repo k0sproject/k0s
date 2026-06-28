@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeproxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
-	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/yaml"
 
@@ -74,7 +73,7 @@ func startComponent(t *testing.T, cfg *v1beta1.ClusterConfig) (*KubeProxy, strin
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
 	noWindowsNodes := func() (*bool, <-chan struct{}) {
-		return ptr.To(false), nil
+		return new(false), nil
 	}
 
 	underTest := NewKubeProxy(k0sVars, cfg, noWindowsNodes)

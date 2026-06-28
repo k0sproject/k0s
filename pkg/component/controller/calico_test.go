@@ -10,7 +10,6 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +20,7 @@ func TestCalicoManifests(t *testing.T) {
 	newTestInstance := func(t *testing.T) *Calico {
 		manifestsDir := t.TempDir()
 		ctx := t.Context()
-		calico, err := NewCalico(v1beta1.DefaultClusterConfig(), manifestsDir, func() (*bool, <-chan struct{}) { return ptr.To(true), nil })
+		calico, err := NewCalico(v1beta1.DefaultClusterConfig(), manifestsDir, func() (*bool, <-chan struct{}) { return new(true), nil })
 		require.NoError(t, err)
 		require.NoError(t, calico.Init(ctx))
 		require.NoError(t, calico.Start(ctx))
