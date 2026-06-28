@@ -186,7 +186,7 @@ func (k *Konnectivity) runServer(ctx context.Context, count uint) error {
 	err := k.supervisor.Supervise(ctx)
 	if err != nil {
 		k.supervisor = nil // not to make the next loop to try to stop it first
-		return err
+		return fmt.Errorf("failed to supervise konnectivity server: %w", err)
 	}
 	k.EmitWithPayload("started konnectivity server", map[string]any{"serverCount": count})
 
