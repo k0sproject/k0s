@@ -104,6 +104,8 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 			case <-serverCountChanged:
 				prevServerCount := serverCount
 				serverCount, serverCountChanged = k.ServerCount()
+				// Never drop below one server: the agent treats zero as one internally anyways.
+				serverCount = max(1, serverCount)
 				// restart only if the server count actually changed
 				if serverCount == prevServerCount {
 					continue
