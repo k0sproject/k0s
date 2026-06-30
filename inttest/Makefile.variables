@@ -84,6 +84,7 @@ smoketests := \
 	check-patches \
 	check-psp \
 	check-reset \
+	check-restore-ipchange \
 	check-singlenode \
 	check-stackapplier \
 	check-statussocket \
