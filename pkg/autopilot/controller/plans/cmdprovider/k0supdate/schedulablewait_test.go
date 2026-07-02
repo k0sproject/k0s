@@ -36,14 +36,16 @@ func signalNodeStatusDataAnnotations(sd apsigv2.SignalData) map[string]string {
 // to `Schedulable` only under certain conditions.
 func TestSchedulableWait(t *testing.T) {
 	var tests = []struct {
-		name                          string
-		objects                       []crcli.Object
-		command                       apv1beta2.PlanCommand
-		status                        apv1beta2.PlanCommandStatus
-		expectedNextState             apv1beta2.PlanStateType
-		expectedRetry                 bool
-		expectedPlanStatusControllers []apv1beta2.PlanCommandTargetStatus
-		expectedPlanStatusWorkers     []apv1beta2.PlanCommandTargetStatus
+		name                           string
+		objects                        []crcli.Object
+		command                        apv1beta2.PlanCommand
+		status                         apv1beta2.PlanCommandStatus
+		expectedNextState              apv1beta2.PlanStateType
+		expectedRetry                  bool
+		expectedPlanStatusControllers  []apv1beta2.PlanCommandTargetStatus
+		expectedPlanStatusWorkers      []apv1beta2.PlanCommandTargetStatus
+		expectedControllerDescriptions map[string]string // name -> Description
+		expectedCommandDescription     string
 	}{
 		// Controller-only tests
 
@@ -71,6 +73,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("controller1", appc.SignalCompleted),
 			},
 			nil,
+			nil,
+			"",
 		},
 
 		// Ensures that if a node has been sent a signal, the state of the command should stay in
@@ -96,6 +100,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("controller1", appc.SignalCompleted),
 			},
 			nil,
+			nil,
+			"",
 		},
 
 		// Ensures that if any of the nodes are in 'PendingSignal', they can be scheduled and the command
@@ -122,6 +128,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("controller1", appc.SignalCompleted),
 			},
 			nil,
+			nil,
+			"",
 		},
 
 		// Worker-only tests
@@ -150,6 +158,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Ensures that if a node has been sent a signal, the state of the command should stay in
@@ -176,6 +186,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Ensures that if any of the nodes are in 'PendingSignal', they can be scheduled and the command
@@ -210,6 +222,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Ensures that if worker concurrency is == 2 and only one worker is considered pending, then
@@ -246,6 +260,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("worker2", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Ensures that if a signal node status is different than what is known by
@@ -297,6 +313,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalCompleted),
 			},
 			nil,
+			nil,
+			"",
 		},
 
 		// Cover the scenario where a node fails to apply an update, and that the failure
@@ -348,6 +366,227 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalApplyFailed),
 			},
 			nil,
+			nil,
+			"",
+		},
+
+		// Case 1: Controller with FailedDownload and lastSignalError set
+		{
+			"SignalNodeApplyFailureControllerDescription",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "controller0",
+						Annotations: func() map[string]string {
+							m := signalNodeStatusDataAnnotations(
+								apsigv2.SignalData{
+									PlanID:  "id123",
+									Created: "now",
+									Command: apsigv2.Command{
+										ID: new(int),
+										K0sUpdate: &apsigv2.CommandK0sUpdate{
+											URL:     "https://foo.bar.baz/download.tar.gz",
+											Version: "v1.2.3",
+										},
+									},
+									Status: &apsigv2.Status{
+										Status:    apsigcomm.FailedDownload,
+										Timestamp: "now",
+									},
+								},
+							)
+							m[apdel.SignalErrorAnnotation] = `{"planID":"id123","reason":"FailedDownload","message":"checksum mismatch","timestamp":"2024-01-01T00:00:00Z"}`
+							return m
+						}(),
+					},
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ControlNode",
+						APIVersion: "autopilot.k0sproject.io/v1beta2",
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Controllers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				{Name: "controller0", State: appc.SignalApplyFailed, Description: "FailedDownload: checksum mismatch"},
+			},
+			nil,
+			map[string]string{"controller0": "FailedDownload: checksum mismatch"},
+			"controller0: FailedDownload: checksum mismatch",
+		},
+
+		// Case 2: Worker with FailedDownload and last-error annotation
+		{
+			"SignalNodeApplyFailureWorkerDescription",
+			[]crcli.Object{
+				&v1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: func() map[string]string {
+							m := signalNodeStatusDataAnnotations(apsigv2.SignalData{
+								PlanID:  "id123",
+								Created: "now",
+								Command: apsigv2.Command{
+									ID: new(int),
+									K0sUpdate: &apsigv2.CommandK0sUpdate{
+										URL:     "https://foo.bar.baz/download.tar.gz",
+										Version: "v1.2.3",
+									},
+								},
+								Status: &apsigv2.Status{
+									Status:    apsigcomm.FailedDownload,
+									Timestamp: "now",
+								},
+							})
+							m[apdel.SignalErrorAnnotation] = `{"planID":"id123","reason":"FailedDownload","message":"checksum mismatch","timestamp":"2024-01-01T00:00:00Z"}`
+							return m
+						}(),
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			nil,
+			[]apv1beta2.PlanCommandTargetStatus{
+				{Name: "worker0", State: appc.SignalApplyFailed, Description: "FailedDownload: checksum mismatch"},
+			},
+			map[string]string{"worker0": "FailedDownload: checksum mismatch"},
+			"worker0: FailedDownload: checksum mismatch",
+		},
+
+		// Case 3: Two nodes both fail — command Description has both
+		{
+			"SignalNodeApplyFailureMultiNodeDescription",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "controller0",
+						Annotations: func() map[string]string {
+							m := signalNodeStatusDataAnnotations(apsigv2.SignalData{
+								PlanID:  "id123",
+								Created: "now",
+								Command: apsigv2.Command{
+									ID:        new(int),
+									K0sUpdate: &apsigv2.CommandK0sUpdate{URL: "https://foo.bar.baz/download.tar.gz", Version: "v1.2.3"},
+								},
+								Status: &apsigv2.Status{Status: apsigcomm.FailedDownload, Timestamp: "now"},
+							})
+							m[apdel.SignalErrorAnnotation] = `{"planID":"id123","reason":"FailedDownload","message":"checksum mismatch","timestamp":"2024-01-01T00:00:00Z"}`
+							return m
+						}(),
+					},
+					TypeMeta: metav1.TypeMeta{Kind: "ControlNode", APIVersion: "autopilot.k0sproject.io/v1beta2"},
+				},
+				&v1.Node{
+					TypeMeta: metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: func() map[string]string {
+							m := signalNodeStatusDataAnnotations(apsigv2.SignalData{
+								PlanID: "id123", Created: "now",
+								Command: apsigv2.Command{
+									ID:        new(int),
+									K0sUpdate: &apsigv2.CommandK0sUpdate{URL: "https://foo.bar.baz/download.tar.gz", Version: "v1.2.3"},
+								},
+								Status: &apsigv2.Status{Status: apsigcomm.FailedDownload, Timestamp: "now"},
+							})
+							m[apdel.SignalErrorAnnotation] = `{"planID":"id123","reason":"FailedDownload","message":"checksum mismatch","timestamp":"2024-01-01T00:00:00Z"}`
+							return m
+						}(),
+					},
+				},
+			},
+			apv1beta2.PlanCommand{K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{}},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Controllers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalSent),
+					},
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				{Name: "controller0", State: appc.SignalApplyFailed, Description: "FailedDownload: checksum mismatch"},
+			},
+			[]apv1beta2.PlanCommandTargetStatus{
+				{Name: "worker0", State: appc.SignalApplyFailed, Description: "FailedDownload: checksum mismatch"},
+			},
+			map[string]string{
+				"controller0": "FailedDownload: checksum mismatch",
+				"worker0":     "FailedDownload: checksum mismatch",
+			},
+			"controller0: FailedDownload: checksum mismatch",
+		},
+
+		// Case 4: FailedDownload but no error detail — Description stays empty
+		{
+			"SignalNodeApplyFailureNoErrorDetail",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "controller0",
+						Annotations: signalNodeStatusDataAnnotations(apsigv2.SignalData{
+							PlanID:  "id123",
+							Created: "now",
+							Command: apsigv2.Command{
+								ID:        new(int),
+								K0sUpdate: &apsigv2.CommandK0sUpdate{URL: "https://foo.bar.baz/download.tar.gz", Version: "v1.2.3"},
+							},
+							Status: &apsigv2.Status{Status: apsigcomm.FailedDownload, Timestamp: "now"},
+						}),
+					},
+					TypeMeta: metav1.TypeMeta{Kind: "ControlNode", APIVersion: "autopilot.k0sproject.io/v1beta2"},
+					// No error annotation — simulates failed WriteSignalError
+				},
+			},
+			apv1beta2.PlanCommand{K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{}},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Controllers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				{Name: "controller0", State: appc.SignalApplyFailed, Description: ""},
+			},
+			nil,
+			nil,
+			"",
 		},
 
 		// Controller + worker combinations
@@ -395,6 +634,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("worker2", appc.SignalPending),
 			},
+			nil,
+			"",
 		},
 
 		// Ensure that if all controllers are completed, that the status transitions to `Schedulable`
@@ -440,6 +681,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("worker2", appc.SignalPending),
 			},
+			nil,
+			"",
 		},
 
 		// Covers the scenario of a v1.Node that contains autopilot state that indicates that
@@ -487,6 +730,8 @@ func TestSchedulableWait(t *testing.T) {
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
 			},
+			nil,
+			"",
 		},
 
 		// Covers the scenario of a v1.Node that contains autopilot state that indicates that
@@ -534,6 +779,8 @@ func TestSchedulableWait(t *testing.T) {
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 	}
 
@@ -565,6 +812,29 @@ func TestSchedulableWait(t *testing.T) {
 
 			assert.True(t, cmp.Equal(test.expectedPlanStatusControllers, test.status.K0sUpdate.Controllers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
 			assert.True(t, cmp.Equal(test.expectedPlanStatusWorkers, test.status.K0sUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
+			if test.expectedCommandDescription != "" {
+				assert.Contains(t, test.status.Description, test.expectedCommandDescription)
+			}
+			for name, desc := range test.expectedControllerDescriptions {
+				found := false
+				for _, cs := range test.status.K0sUpdate.Controllers {
+					if cs.Name == name {
+						assert.Equal(t, desc, cs.Description)
+						found = true
+					}
+				}
+				if !found {
+					for _, cs := range test.status.K0sUpdate.Workers {
+						if cs.Name == name {
+							assert.Equal(t, desc, cs.Description)
+							found = true
+						}
+					}
+				}
+				if !found {
+					t.Errorf("expected node %q not found in status", name)
+				}
+			}
 		})
 	}
 }

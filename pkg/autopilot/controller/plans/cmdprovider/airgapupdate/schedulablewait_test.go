@@ -36,13 +36,15 @@ func signalNodeStatusDataAnnotations(sd apsigv2.SignalData) map[string]string {
 // to `Schedulable` only under certain conditions.
 func TestSchedulableWait(t *testing.T) {
 	var tests = []struct {
-		name                      string
-		objects                   []crcli.Object
-		command                   apv1beta2.PlanCommand
-		status                    apv1beta2.PlanCommandStatus
-		expectedNextState         apv1beta2.PlanStateType
-		expectedRetry             bool
-		expectedPlanStatusWorkers []apv1beta2.PlanCommandTargetStatus
+		name                       string
+		objects                    []crcli.Object
+		command                    apv1beta2.PlanCommand
+		status                     apv1beta2.PlanCommandStatus
+		expectedNextState          apv1beta2.PlanStateType
+		expectedRetry              bool
+		expectedPlanStatusWorkers  []apv1beta2.PlanCommandTargetStatus
+		expectedWorkerDescriptions map[string]string
+		expectedCommandDescription string
 	}{
 		// Worker-only tests
 
@@ -69,6 +71,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Ensures that if a node has been sent a signal, the state of the command should stay in
@@ -94,6 +98,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Ensures that if any of the nodes are in 'PendingSignal', they can be scheduled and the command
@@ -125,6 +131,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Ensures that if worker concurrency is == 2 and only one worker is considered pending, then
@@ -158,6 +166,8 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalPending),
 				apv1beta2.NewPlanCommandTargetStatus("worker2", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Ensures that if a signal node status is different than what is known by
@@ -207,6 +217,8 @@ func TestSchedulableWait(t *testing.T) {
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 			},
+			nil,
+			"",
 		},
 
 		// Covers the scenario of a v1.Node that contains autopilot state that indicates that
@@ -251,6 +263,8 @@ func TestSchedulableWait(t *testing.T) {
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
 			},
+			nil,
+			"",
 		},
 
 		// Covers the scenario of a v1.Node that contains autopilot state that indicates that
@@ -295,6 +309,8 @@ func TestSchedulableWait(t *testing.T) {
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
 			},
+			nil,
+			"",
 		},
 
 		// Cover the scenario where a node fails to apply an update, and that the failure
@@ -345,6 +361,196 @@ func TestSchedulableWait(t *testing.T) {
 			[]apv1beta2.PlanCommandTargetStatus{
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalApplyFailed),
 			},
+			nil,
+			"",
+		},
+
+		// Cover the scenario where a worker node has a last-error annotation and fails.
+		// The worker's Description in plan status should be populated and status.Description
+		// should contain the summary.
+		{
+			"SignalNodeApplyFailureWorkerDescription",
+			[]crcli.Object{
+				&v1.Node{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: func() map[string]string {
+							m := signalNodeStatusDataAnnotations(
+								apsigv2.SignalData{
+									PlanID:  "id123",
+									Created: "now",
+									Command: apsigv2.Command{
+										ID: new(int),
+										AirgapUpdate: &apsigv2.CommandAirgapUpdate{
+											URL:     "https://foo.bar.baz/download.tar.gz",
+											Version: "v1.2.3",
+										},
+									},
+									Status: &apsigv2.Status{
+										Status:    apsigcomm.FailedDownload,
+										Timestamp: "now",
+									},
+								},
+							)
+							m["k0sproject.io/autopilot-last-error"] = `{"planID":"id123","reason":"FailedDownload","message":"checksum mismatch","timestamp":"2024-01-01T00:00:00Z"}`
+							return m
+						}(),
+					},
+					TypeMeta: metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				{Name: "worker0", State: appc.SignalApplyFailed, Description: "FailedDownload: checksum mismatch"},
+			},
+			map[string]string{"worker0": "FailedDownload: checksum mismatch"},
+			"worker0: FailedDownload: checksum mismatch",
+		},
+
+		// Cover the scenario where a worker fails but has no last-error annotation.
+		// Description should be empty.
+		{
+			"SignalNodeApplyFailureNoErrorDetail",
+			[]crcli.Object{
+				&v1.Node{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: signalNodeStatusDataAnnotations(
+							apsigv2.SignalData{
+								PlanID:  "id123",
+								Created: "now",
+								Command: apsigv2.Command{
+									ID: new(int),
+									AirgapUpdate: &apsigv2.CommandAirgapUpdate{
+										URL:     "https://foo.bar.baz/download.tar.gz",
+										Version: "v1.2.3",
+									},
+								},
+								Status: &apsigv2.Status{
+									Status:    apsigcomm.Failed,
+									Timestamp: "now",
+								},
+							},
+						),
+					},
+					TypeMeta: metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				{Name: "worker0", State: appc.SignalApplyFailed, Description: ""},
+			},
+			nil,
+			"",
+		},
+
+		// Cover the scenario where multiple worker nodes fail with error annotations.
+		// The command description should contain a summary of all failures.
+		{
+			"SignalNodeApplyFailureMultiWorkerDescription",
+			[]crcli.Object{
+				&v1.Node{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: func() map[string]string {
+							m := signalNodeStatusDataAnnotations(
+								apsigv2.SignalData{
+									PlanID:  "id123",
+									Created: "now",
+									Command: apsigv2.Command{
+										ID: new(int),
+										AirgapUpdate: &apsigv2.CommandAirgapUpdate{
+											URL:     "https://foo.bar.baz/download.tar.gz",
+											Version: "v1.2.3",
+										},
+									},
+									Status: &apsigv2.Status{
+										Status:    apsigcomm.FailedDownload,
+										Timestamp: "now",
+									},
+								},
+							)
+							m["k0sproject.io/autopilot-last-error"] = `{"planID":"id123","reason":"FailedDownload","message":"checksum mismatch","timestamp":"2024-01-01T00:00:00Z"}`
+							return m
+						}(),
+					},
+					TypeMeta: metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+				},
+				&v1.Node{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker1",
+						Annotations: func() map[string]string {
+							m := signalNodeStatusDataAnnotations(
+								apsigv2.SignalData{
+									PlanID:  "id123",
+									Created: "now",
+									Command: apsigv2.Command{
+										ID: new(int),
+										AirgapUpdate: &apsigv2.CommandAirgapUpdate{
+											URL:     "https://foo.bar.baz/download.tar.gz",
+											Version: "v1.2.3",
+										},
+									},
+									Status: &apsigv2.Status{
+										Status:    apsigcomm.FailedDownload,
+										Timestamp: "now",
+									},
+								},
+							)
+							m["k0sproject.io/autopilot-last-error"] = `{"planID":"id123","reason":"FailedDownload","message":"disk full","timestamp":"2024-01-01T00:00:00Z"}`
+							return m
+						}(),
+					},
+					TypeMeta: metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+						apv1beta2.NewPlanCommandTargetStatus("worker1", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				{Name: "worker0", State: appc.SignalApplyFailed, Description: "FailedDownload: checksum mismatch"},
+				{Name: "worker1", State: appc.SignalApplyFailed, Description: "FailedDownload: disk full"},
+			},
+			map[string]string{
+				"worker0": "FailedDownload: checksum mismatch",
+				"worker1": "FailedDownload: disk full",
+			},
+			"worker0: FailedDownload: checksum mismatch; worker1: FailedDownload: disk full",
 		},
 	}
 
@@ -374,6 +580,12 @@ func TestSchedulableWait(t *testing.T) {
 			assert.Equal(t, test.expectedRetry, retry)
 			assert.NoError(t, err)
 			assert.True(t, cmp.Equal(test.expectedPlanStatusWorkers, test.status.AirgapUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
+			for _, worker := range test.status.AirgapUpdate.Workers {
+				if test.expectedWorkerDescriptions != nil {
+					assert.Equal(t, test.expectedWorkerDescriptions[worker.Name], worker.Description)
+				}
+			}
+			assert.Equal(t, test.expectedCommandDescription, test.status.Description)
 		})
 	}
 }

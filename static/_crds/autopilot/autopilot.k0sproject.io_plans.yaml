@@ -309,6 +309,11 @@ spec:
                             description: PlanCommandTargetStatus is the status of
                               a resolved node (controller/worker).
                             properties:
+                              description:
+                                description: |-
+                                  Description is an optional human-readable explanation of the current state,
+                                  populated when the node is in a failed state.
+                                type: string
                               lastUpdatedTimestamp:
                                 description: LastUpdatedTimestamp is a timestamp of
                                   the last time the status has changed.
@@ -346,6 +351,11 @@ spec:
                             description: PlanCommandTargetStatus is the status of
                               a resolved node (controller/worker).
                             properties:
+                              description:
+                                description: |-
+                                  Description is an optional human-readable explanation of the current state,
+                                  populated when the node is in a failed state.
+                                type: string
                               lastUpdatedTimestamp:
                                 description: LastUpdatedTimestamp is a timestamp of
                                   the last time the status has changed.
@@ -371,6 +381,11 @@ spec:
                             description: PlanCommandTargetStatus is the status of
                               a resolved node (controller/worker).
                             properties:
+                              description:
+                                description: |-
+                                  Description is an optional human-readable explanation of the current state,
+                                  populated when the node is in a failed state.
+                                type: string
                               lastUpdatedTimestamp:
                                 description: LastUpdatedTimestamp is a timestamp of
                                   the last time the status has changed.
