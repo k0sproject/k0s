@@ -48,10 +48,10 @@ require (
 	github.com/vishvananda/netlink v1.3.1
 	github.com/vmware-tanzu/sonobuoy v0.57.2
 	github.com/zcalusic/sysinfo v1.1.3
-	go.etcd.io/etcd/api/v3 v3.5.31
-	go.etcd.io/etcd/client/pkg/v3 v3.5.31
-	go.etcd.io/etcd/client/v3 v3.5.31
-	go.etcd.io/etcd/etcdutl/v3 v3.5.31
+	go.etcd.io/etcd/api/v3 v3.5.32
+	go.etcd.io/etcd/client/pkg/v3 v3.5.32
+	go.etcd.io/etcd/client/v3 v3.5.32
+	go.etcd.io/etcd/etcdutl/v3 v3.5.32
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.52.0
 	golang.org/x/mod v0.35.0
@@ -232,20 +232,20 @@ require (
 	github.com/zmap/zcrypto v0.0.0-20210511125630-18f1e0152cfc // indirect
 	github.com/zmap/zlint/v3 v3.1.0 // indirect
 	go.etcd.io/bbolt v1.3.12 // indirect
-	go.etcd.io/etcd/client/v2 v2.305.31 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.5.31 // indirect
-	go.etcd.io/etcd/raft/v3 v3.5.31 // indirect
-	go.etcd.io/etcd/server/v3 v3.5.31 // indirect
+	go.etcd.io/etcd/client/v2 v2.305.32 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.5.32 // indirect
+	go.etcd.io/etcd/raft/v3 v3.5.32 // indirect
+	go.etcd.io/etcd/server/v3 v3.5.32 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.58.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0 // indirect
-	go.opentelemetry.io/otel v1.41.0 // indirect
+	go.opentelemetry.io/otel v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.33.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.33.0 // indirect
-	go.opentelemetry.io/otel/metric v1.41.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.40.0 // indirect
-	go.opentelemetry.io/otel/trace v1.41.0 // indirect
+	go.opentelemetry.io/otel/metric v1.43.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
+	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
