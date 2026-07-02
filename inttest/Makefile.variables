@@ -1,5 +1,5 @@
 # renovate: datasource=github-releases depName=vmware-tanzu/sonobuoy
-sonobuoy_version = 0.57.3
+sonobuoy_version = 0.57.5
 
 # renovate: datasource=github-releases depName=helm/helm
 helm_version = 3.21.2
