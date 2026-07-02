@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync/atomic"
+	"strings"
 	"time"
 
 	"github.com/k0sproject/k0s/cmd/internal"
@@ -240,11 +241,15 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	logrus.Infof("using listen port: %d", nodeConfig.Spec.API.Port)
 	logrus.Infof("using sans: %s", nodeConfig.Spec.API.SANs)
 
-	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.Spec.PrimaryAddressFamily())
+	dnsAddresses, err := nodeConfig.Spec.Network.DNSAddresses(nodeConfig.Spec.PrimaryAddressFamily())
 	if err != nil {
 		return err
 	}
-	logrus.Infof("DNS address: %s", dnsAddress)
+	addressStrings := make([]string, len(dnsAddresses))
+	for i, address := range dnsAddresses {
+		addressStrings[i] = address.String()
+	}
+	logrus.Infof("DNS addresses: %s", strings.Join(addressStrings, ", "))
 
 	var storageBackend manager.Component
 	var leaveEtcdClusterOnStop *atomic.Bool
