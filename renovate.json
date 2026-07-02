@@ -44,9 +44,10 @@
     {
       "description": "Special version scheme for k0sproject OCI images",
       "matchPackageNames": [
-        "quay.io/k0sproject/*"
+        "quay.io/k0sproject/*",
+        "docker.io/sigwindowstools/kube-proxy"
       ],
-      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:-(?:iptables\\d+\\.\\d+\\.\\d+-)?(?:k0s\\.)?(?<build>\\d+))?$"
+      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:-(?<prerelease>(?:alpha|beta|rc)\\.\\d+))?(?:-(?<compatibility>.+?))??(?:-(?:iptables\\d+\\.\\d+\\.\\d+))?(?:-(?:k0s\\.)?(?<build>\\d+))?$"
     },
     {
       "description": "Ignore all Go dependencies by default",
