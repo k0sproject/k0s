@@ -10,6 +10,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -23,8 +24,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 
 	testifysuite "github.com/stretchr/testify/suite"
@@ -99,7 +100,9 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 		s.Require().NoError(err)
 		s.Require().NoError(s.RunWorkersWithToken(token))
 
-		clients, err := s.KubeClient(s.ControllerNode(0))
+		restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+		s.Require().NoError(err)
+		clients, err := kubernetes.NewForConfig(restConfig)
 		s.Require().NoError(err)
 
 		eg, _ := errgroup.WithContext(ctx)
@@ -114,7 +117,7 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 		}
 		s.Require().NoError(eg.Wait())
 
-		s.Require().NoError(s.checkClusterReadiness(ctx, clients, 1))
+		s.Require().NoError(s.checkClusterReadiness(ctx, restConfig, clients, 1))
 	})
 
 	s.Run("join_new_controllers", func() {
@@ -127,12 +130,24 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 
 		s.Require().NoError(eg.Wait())
 
-		clients, err := s.KubeClient(s.ControllerNode(1))
+		restConfig, err := s.GetKubeConfig(s.ControllerNode(1))
+		s.Require().NoError(err)
+		clients, err := kubernetes.NewForConfig(restConfig)
 		s.Require().NoError(err)
 
 		s.T().Logf("Checking if HA cluster is ready")
-		s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount))
+		s.Require().NoError(s.checkClusterReadiness(ctx, restConfig, clients, s.ControllerCount))
 	})
+
+	// At the time of writing, reaching this point will take ~4m.
+	//
+	// Each controller iteration below will again take ~4m:
+	//
+	// - stopping nodes ~30s
+	// - Two agent rollouts after controller removal and restart ~100s each
+	//
+	// So the overall test timeout should be no less than 20m (including 4m
+	// buffer).
 
 	workerNameToRestart := s.WorkerNode(0)
 	for i := range s.ControllerCount {
@@ -169,11 +184,13 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 			s.Require().NoError(err)
 		})
 
-		clients, err := s.KubeClient(s.ControllerNode((i + 1) % s.ControllerCount))
+		restConfig, err := s.GetKubeConfig(s.ControllerNode((i + 1) % s.ControllerCount))
+		s.Require().NoError(err)
+		clients, err := kubernetes.NewForConfig(restConfig)
 		s.Require().NoError(err)
 
 		s.Run("cluster_ready_without_"+controllerName, func() {
-			s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount, controllerName))
+			s.Require().NoError(s.checkClusterReadiness(ctx, restConfig, clients, s.ControllerCount, controllerName))
 		})
 
 		s.Run("workloads_still_runnable_without_"+controllerName, func() {
@@ -207,18 +224,20 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 			s.Require().NoError(s.StartController(controllerName))
 			clients, err := s.KubeClient(controllerName)
 			s.Require().NoError(err)
-			s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount))
+			s.Require().NoError(s.checkClusterReadiness(ctx, restConfig, clients, s.ControllerCount))
 		})
 	}
 
 	s.Run("cluster_ready_after_all_controllers_restarted", func() {
-		clients, err := s.KubeClient(s.ControllerNode(0))
+		restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
 		s.Require().NoError(err)
-		s.Require().NoError(s.checkClusterReadiness(ctx, clients, s.ControllerCount))
+		clients, err := kubernetes.NewForConfig(restConfig)
+		s.Require().NoError(err)
+		s.Require().NoError(s.checkClusterReadiness(ctx, restConfig, clients, s.ControllerCount))
 	})
 }
 
-func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.Clientset, numControllers int, degradedControllers ...string) error {
+func (s *suite) checkClusterReadiness(ctx context.Context, restConfig *rest.Config, clients *kubernetes.Clientset, numControllers int, degradedControllers ...string) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	for i := range numControllers {
@@ -245,6 +264,9 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 		})
 	}
 
+	var pendingWorkers atomic.Int64
+	pendingWorkers.Store(int64(s.WorkerCount))
+	workersReady := make(chan struct{})
 	for i := range s.WorkerCount {
 		nodeName := s.WorkerNode(i)
 
@@ -261,25 +283,10 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 			}
 			s.T().Logf("Pod %s/%s is ready", metav1.NamespaceSystem, nllbPodName)
 
-			// Test that we get logs, it's a signal that konnectivity tunnels work.
-			var logsErr error
-			if err := wait.PollImmediateUntilWithContext(ctx, 1*time.Second, func(ctx context.Context) (bool, error) {
-				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-				defer cancel()
-				logs, err := clients.CoreV1().Pods(metav1.NamespaceSystem).GetLogs(nllbPodName, &corev1.PodLogOptions{}).Stream(ctx)
-				if err != nil {
-					if logsErr == nil || err.Error() != logsErr.Error() {
-						s.T().Logf("No logs yet from %s/%s: %v", metav1.NamespaceSystem, nllbPodName, err)
-					}
-					logsErr = err
-					return false, nil
-				}
-				return true, logs.Close()
-			}); err != nil {
-				return fmt.Errorf("failed to get pod logs from %s/%s: %w", metav1.NamespaceSystem, nllbPodName, logsErr)
+			if pendingWorkers.Add(-1) < 1 {
+				close(workersReady)
 			}
 
-			s.T().Logf("Got some pod logs from %s/%s", metav1.NamespaceSystem, nllbPodName)
 			return nil
 		})
 	}
@@ -303,15 +310,33 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 		})
 	}
 
-	for _, daemonSet := range []string{"kube-proxy", "konnectivity-agent"} {
-		eg.Go(func() error {
-			if err := common.WaitForDaemonSet(ctx, clients, daemonSet, metav1.NamespaceSystem); err != nil {
-				return fmt.Errorf("%s is not ready: %w", daemonSet, err)
-			}
-			s.T().Log(daemonSet, "is ready")
-			return nil
-		})
+	select {
+	case <-workersReady:
+	case <-ctx.Done():
+		return context.Cause(ctx)
 	}
+
+	eg.Go(func() error {
+		if err := common.WaitForDaemonSet(ctx, clients, "konnectivity-agent", metav1.NamespaceSystem); err != nil {
+			return fmt.Errorf("konnectivity-agent is not ready: %w", err)
+		}
+		s.T().Log("konnectivity-agent is ready")
+
+		if err := common.VerifyKonnectivityMesh(ctx, restConfig, clients, s.T(), uint(max(0, numControllers-len(degradedControllers))), uint(s.WorkerCount)); err != nil {
+			return fmt.Errorf("failed to verify konnectivity mesh: %w", err)
+		}
+		s.T().Log("Konnectivity mesh is complete")
+
+		return nil
+	})
+
+	eg.Go(func() error {
+		if err := common.WaitForDaemonSet(ctx, clients, "kube-proxy", metav1.NamespaceSystem); err != nil {
+			return fmt.Errorf("kube-proxy is not ready: %w", err)
+		}
+		s.T().Log("kube-proxy is ready")
+		return nil
+	})
 
 	for _, deployment := range []string{"coredns", "metrics-server"} {
 		eg.Go(func() error {

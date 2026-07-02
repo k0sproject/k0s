@@ -26,7 +26,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -246,33 +245,6 @@ func WaitForPod(ctx context.Context, kc kubernetes.Interface, name, namespace st
 
 			return false, nil
 		})
-}
-
-// WaitForPodLogs waits until it can stream the logs of the first running pod
-// that comes along in the given namespace as long as the given context isn't
-// canceled.
-func WaitForPodLogs(ctx context.Context, kc kubernetes.Interface, namespace string) error {
-	return Poll(ctx, func(ctx context.Context) (done bool, err error) {
-		pods, err := kc.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-			Limit:         100,
-			FieldSelector: fields.OneTermEqualSelector("status.phase", string(corev1.PodRunning)).String(),
-		})
-		if err != nil {
-			return false, err // stop polling with error in case the pod listing fails
-		}
-		if len(pods.Items) < 1 {
-			return false, nil
-		}
-
-		pod := &pods.Items[0]
-		logs, err := kc.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: pod.Spec.Containers[0].Name}).Stream(ctx)
-		if err != nil {
-			return false, nil // do not return the error so we keep on polling
-		}
-		defer logs.Close()
-
-		return true, nil
-	})
 }
 
 func WaitForLease(ctx context.Context, kc kubernetes.Interface, name string, namespace string) (string, error) {
