@@ -83,6 +83,7 @@ func NewWorkerCmd() *cobra.Command {
 			c := (*Command)(opts)
 			if len(args) > 0 {
 				c.TokenArg = args[0]
+				logrus.Warn("Passing the join token as a positional CLI argument is deprecated and will be removed in a future release. Please use the --token-file flag or the K0S_JOIN_TOKEN environment variable instead.")
 			}
 			if err := internal.CheckSingleTokenSource(c.TokenArg, c.TokenFile); err != nil {
 				return err
@@ -171,7 +172,11 @@ func kubeconfigGetterFromJoinToken(tokenFile, tokenArg string) clientcmd.Kubecon
 		}
 	}
 
-	if envToken := os.Getenv(internal.EnvVarToken); envToken != "" {
+	envToken := os.Getenv(internal.EnvVarJoinToken)
+	if envToken == "" {
+		envToken = os.Getenv(internal.EnvVarToken)
+	}
+	if envToken != "" {
 		return func() (*clientcmdapi.Config, error) {
 			return loadKubeconfigFromJoinToken(envToken)
 		}
