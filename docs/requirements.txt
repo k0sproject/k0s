@@ -38,4 +38,4 @@ termcolor==3.3.0
 urllib3==2.7.0
 verspec==0.1.0
 watchdog==6.0.0
-wcmatch==10.2.1
+wcmatch==11.0
