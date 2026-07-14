@@ -110,10 +110,11 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	isSingleStackIPv6 := clusterConfig.Spec.Network.IsSingleStackIPv6()
 	args := stringmap.StringMap{
 		// k0s set default args
-		"run-router":           "true",
-		"run-firewall":         "true",
-		"run-service-proxy":    "false",
-		"bgp-graceful-restart": "true",
+		"run-router":              "true",
+		"run-firewall":            "true",
+		"use-nftables-for-netpol": "true",
+		"run-service-proxy":       "false",
+		"bgp-graceful-restart":    "true",
 		// Args from config values
 		"enable-ipv4":              strconv.FormatBool(!isSingleStackIPv6),
 		"enable-ipv6":              strconv.FormatBool(clusterConfig.Spec.Network.DualStack.Enabled || isSingleStackIPv6),
