@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -19,6 +20,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -142,7 +144,26 @@ func (a *APIServer) Start(ctx context.Context) error {
 		args[name] = value
 	}
 	args = a.NodeConfig.Spec.FeatureGates.BuildArgs(args, kubeAPIComponentName)
+
+	// kube-apiserver refuses to start if the --anonymous-auth flag is set
+	// while the file referenced by --authentication-config contains the
+	// anonymous field. Skip the anonymous-auth default in that case, so that
+	// anonymous authentication can be managed via the configuration file.
+	anonymousAuthManaged := false
+	if path := args["authentication-config"]; path != "" {
+		var err error
+		anonymousAuthManaged, err = authenticationConfigHasAnonymous(path)
+		if err != nil {
+			logrus.WithError(err).Warn("Failed to check the authentication configuration for the anonymous field, applying the anonymous-auth default")
+		} else if anonymousAuthManaged && args["anonymous-auth"] != "" {
+			logrus.Warn("The anonymous-auth flag is set while the authentication configuration contains the anonymous field, kube-apiserver will refuse to start")
+		}
+	}
+
 	for name, value := range apiDefaultArgs {
+		if name == "anonymous-auth" && anonymousAuthManaged {
+			continue
+		}
 		if args[name] == "" {
 			args[name] = value
 		}
@@ -283,6 +304,26 @@ func (a *APIServer) Ready() error {
 		return fmt.Errorf("expected 200 for api server ready check, got %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// authenticationConfigHasAnonymous reports whether the authentication
+// configuration file at path contains the anonymous field. If it does,
+// kube-apiserver manages anonymous authentication via the configuration file
+// and refuses to start when the --anonymous-auth flag is set as well.
+func authenticationConfigHasAnonymous(path string) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false, err
+	}
+
+	var authConfig struct {
+		Anonymous json.RawMessage `json:"anonymous"`
+	}
+	if err := yaml.Unmarshal(data, &authConfig); err != nil {
+		return false, fmt.Errorf("failed to parse %q: %w", path, err)
+	}
+
+	return len(authConfig.Anonymous) > 0 && string(authConfig.Anonymous) != "null", nil
 }
 
 func getEtcdArgs(storage *v1beta1.StorageSpec, k0sVars *config.CfgVars) ([]string, error) {
