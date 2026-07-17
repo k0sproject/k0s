@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.32.0/charts/calico/templates/calico-node-rbac.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.32.1/charts/calico/templates/calico-node-rbac.yaml
 # Include a clusterrole for the calico-node DaemonSet,
 # and bind it to the calico-node serviceaccount.
 kind: ClusterRole
@@ -112,7 +112,7 @@ rules:
       - get
       - list
       - watch
-   # Calico creates some tiers on startup.
+  # Calico creates some tiers on startup.
   - apiGroups: ["projectcalico.org", "crd.projectcalico.org"]
     resources:
       - tiers
@@ -167,6 +167,7 @@ rules:
   # IPAMConfiguration
   - apiGroups: ["projectcalico.org", "crd.projectcalico.org"]
     resources:
+      - ipamconfigurations
       - ipamconfigs
     verbs:
       - get
