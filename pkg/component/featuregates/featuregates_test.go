@@ -15,15 +15,15 @@ import (
 
 func TestToArgs(t *testing.T) {
 	someGates := k0sv1beta1.FeatureGates{
-		{Name: "DefaultComponents", Enabled: true},
+		{Name: "AllComponents", Enabled: true},
 		{Name: "APIServerOnly", Components: []string{"kube-apiserver"}},
 	}
 
 	for _, test := range []struct {
-		name                                                string
-		gates                                               k0sv1beta1.FeatureGates
-		args                                                stringmap.StringMap
-		expectedDefault, expectedAPIServer, expectedUnknown stringmap.StringMap
+		name                             string
+		gates                            k0sv1beta1.FeatureGates
+		args                             stringmap.StringMap
+		expectedAPIServer, expectedOther stringmap.StringMap
 	}{
 		{
 			name:  "nil",
@@ -31,13 +31,10 @@ func TestToArgs(t *testing.T) {
 			args: stringmap.StringMap{
 				"unrelated": "value",
 			},
-			expectedDefault: stringmap.StringMap{
-				"unrelated": "value",
-			},
 			expectedAPIServer: stringmap.StringMap{
 				"unrelated": "value",
 			},
-			expectedUnknown: stringmap.StringMap{
+			expectedOther: stringmap.StringMap{
 				"unrelated": "value",
 			},
 		},
@@ -47,13 +44,10 @@ func TestToArgs(t *testing.T) {
 			args: stringmap.StringMap{
 				"unrelated": "value",
 			},
-			expectedDefault: stringmap.StringMap{
-				"unrelated": "value",
-			},
 			expectedAPIServer: stringmap.StringMap{
 				"unrelated": "value",
 			},
-			expectedUnknown: stringmap.StringMap{
+			expectedOther: stringmap.StringMap{
 				"unrelated": "value",
 			},
 		},
@@ -61,28 +55,24 @@ func TestToArgs(t *testing.T) {
 			name:  "without existing arguments",
 			gates: someGates,
 			args:  stringmap.StringMap{},
-			expectedDefault: stringmap.StringMap{
-				"feature-gates": "DefaultComponents=true",
-			},
 			expectedAPIServer: stringmap.StringMap{
-				"feature-gates": "DefaultComponents=true,APIServerOnly=false",
+				"feature-gates": "AllComponents=true,APIServerOnly=false",
 			},
-			expectedUnknown: stringmap.StringMap{},
+			expectedOther: stringmap.StringMap{
+				"feature-gates": "AllComponents=true",
+			},
 		},
 		{
 			name:  "preserves unrelated arguments",
 			gates: someGates,
 			args:  stringmap.StringMap{"unrelated": "value"},
-			expectedDefault: stringmap.StringMap{
-				"feature-gates": "DefaultComponents=true",
-				"unrelated":     "value",
-			},
 			expectedAPIServer: stringmap.StringMap{
-				"feature-gates": "DefaultComponents=true,APIServerOnly=false",
+				"feature-gates": "AllComponents=true,APIServerOnly=false",
 				"unrelated":     "value",
 			},
-			expectedUnknown: stringmap.StringMap{
-				"unrelated": "value",
+			expectedOther: stringmap.StringMap{
+				"feature-gates": "AllComponents=true",
+				"unrelated":     "value",
 			},
 		},
 		{
@@ -91,37 +81,24 @@ func TestToArgs(t *testing.T) {
 			args: stringmap.StringMap{
 				"feature-gates": "Existing=true",
 			},
-			expectedDefault: stringmap.StringMap{
-				"feature-gates": "Existing=true,DefaultComponents=true",
-			},
 			expectedAPIServer: stringmap.StringMap{
-				"feature-gates": "Existing=true,DefaultComponents=true,APIServerOnly=false",
+				"feature-gates": "Existing=true,AllComponents=true,APIServerOnly=false",
 			},
-			expectedUnknown: stringmap.StringMap{
-				"feature-gates": "Existing=true",
+			expectedOther: stringmap.StringMap{
+				"feature-gates": "Existing=true,AllComponents=true",
 			},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			for _, component := range defaultComponents {
-				expected := test.expectedDefault
-				if component == "kube-apiserver" {
-					expected = test.expectedAPIServer
-				}
-				args := maps.Clone(test.args)
-
-				actual := ToArgs(args, test.gates, component)
-
-				assert.Equalf(t, test.args, args, "Arguments were modified in-place")
-				assert.Equalf(t, expected, actual, "For component %s", component)
-			}
-
 			args := maps.Clone(test.args)
+			actual := ToArgs(args, test.gates, "kube-apiserver")
+			assert.Equal(t, test.args, args, "Arguments were modified in-place")
+			assert.Equal(t, test.expectedAPIServer, actual)
 
-			actual := ToArgs(args, test.gates, "some-unknown-component")
-
-			assert.Equalf(t, test.args, args, "Arguments were modified in-place")
-			assert.Equalf(t, test.expectedUnknown, actual, "For some unknown component")
+			args = maps.Clone(test.args)
+			actual = ToArgs(args, test.gates, "some-other-component")
+			assert.Equal(t, test.args, args, "Arguments were modified in-place")
+			assert.Equal(t, test.expectedOther, actual)
 		})
 	}
 }
@@ -133,8 +110,8 @@ func TestToMap(t *testing.T) {
 	})
 
 	featureGates := k0sv1beta1.FeatureGates{
-		{Name: "DefaultComponentsEnabled", Enabled: true},
-		{Name: "DefaultComponentsDisabled"},
+		{Name: "AllComponentsEnabled", Enabled: true},
+		{Name: "AllComponentsDisabled"},
 		{Name: "APIEnabled", Enabled: true, Components: []string{"kube-apiserver"}},
 		{Name: "SchedulerEnabled", Enabled: true, Components: []string{"kube-scheduler"}},
 	}
@@ -146,22 +123,25 @@ func TestToMap(t *testing.T) {
 		{
 			component: "kube-apiserver",
 			expected: map[string]bool{
-				"DefaultComponentsEnabled":  true,
-				"DefaultComponentsDisabled": false,
-				"APIEnabled":                true,
+				"AllComponentsEnabled":  true,
+				"AllComponentsDisabled": false,
+				"APIEnabled":            true,
 			},
 		},
 		{
 			component: "kube-scheduler",
 			expected: map[string]bool{
-				"DefaultComponentsEnabled":  true,
-				"DefaultComponentsDisabled": false,
-				"SchedulerEnabled":          true,
+				"AllComponentsEnabled":  true,
+				"AllComponentsDisabled": false,
+				"SchedulerEnabled":      true,
 			},
 		},
 		{
 			component: "other",
-			expected:  map[string]bool{},
+			expected: map[string]bool{
+				"AllComponentsEnabled":  true,
+				"AllComponentsDisabled": false,
+			},
 		},
 	} {
 		t.Run(test.component, func(t *testing.T) {
