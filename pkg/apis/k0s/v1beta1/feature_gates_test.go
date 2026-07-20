@@ -7,8 +7,34 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestFeatureGatesFromConfig(t *testing.T) {
+	c, err := ConfigFromBytes([]byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  featureGates:
+    - name: feature_XXX
+      enabled: true
+      components: ["x", "y", "z"]
+    - name: feature_YYY
+      enabled: true
+    - name: feature_ZZZ
+      enabled: false
+`))
+	require.NoError(t, err)
+	assert.Equal(t, FeatureGates{
+		{Name: "feature_XXX", Enabled: true, Components: []string{"x", "y", "z"}},
+		{Name: "feature_YYY", Enabled: true},
+		{Name: "feature_ZZZ"},
+	}, c.Spec.FeatureGates)
+}
 
 func TestArgsFeatureGates(t *testing.T) {
 	featureGates := FeatureGates{
