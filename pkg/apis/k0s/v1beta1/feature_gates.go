@@ -6,6 +6,7 @@ package v1beta1
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -38,7 +39,7 @@ func (fgs FeatureGates) Validate() []error {
 	return errors
 }
 
-// BuildArgs build cli args using the given args and component name
+// BuildArgs builds CLI args using the given args and component name.
 func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
 	componentFeatureGates := fgs.AsSliceOfStrings(component)
 	fg, componentHasFeatureGates := args["feature-gates"]
@@ -48,6 +49,10 @@ func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) st
 	} else {
 		fg = featureGatesString
 	}
+	if len(args) < 1 {
+		return stringmap.StringMap{"feature-gates": fg}
+	}
+	args = maps.Clone(args)
 	args["feature-gates"] = fg
 	return args
 }

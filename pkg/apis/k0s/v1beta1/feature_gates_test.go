@@ -250,16 +250,19 @@ func TestFeatureGates_BuildArgs(t *testing.T) {
 				if component == "kube-apiserver" {
 					expected = test.expectedAPIServer
 				}
+				args := maps.Clone(test.args)
 
-				args := maps.Clone(test.args) // FIXME shouldn't be necessary
 				actual := test.gates.BuildArgs(args, component)
 
+				assert.Equalf(t, test.args, args, "Arguments were modified in-place")
 				assert.Equalf(t, expected, actual, "For component %s", component)
 			}
 
-			args := maps.Clone(test.args) // FIXME shouldn't be necessary
+			args := maps.Clone(test.args)
+
 			actual := test.gates.BuildArgs(args, "some-unknown-component")
 
+			assert.Equalf(t, test.args, args, "Arguments were modified in-place")
 			assert.Equalf(t, test.expectedUnknown, actual, "For some unknown component")
 		})
 	}
