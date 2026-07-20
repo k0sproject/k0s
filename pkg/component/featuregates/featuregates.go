@@ -71,19 +71,6 @@ func forComponent(gates k0sv1beta1.FeatureGates, component string) iter.Seq2[str
 	}
 }
 
-// Default components to use feature gates with.
-var defaultComponents = []string{
-	"kube-apiserver",
-	"kube-controller-manager",
-	"kubelet",
-	"kube-scheduler",
-	"kube-proxy",
-}
-
 func isComponentSelected(components []string, component string) bool {
-	if len(components) > 0 {
-		return slices.Contains(components, component)
-	}
-
-	return slices.Contains(defaultComponents, component)
+	return len(components) == 0 || slices.Contains(components, component)
 }

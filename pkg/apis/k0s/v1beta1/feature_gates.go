@@ -32,10 +32,8 @@ type FeatureGate struct {
 	Name string `json:"name"`
 	// Enabled or disabled
 	Enabled bool `json:"enabled"`
-	// Components to use feature gate on
-	// Default: kube-apiserver, kube-controller-manager, kubelet, kube-scheduler, kube-proxy
-	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:default={kube-apiserver,kube-controller-manager,kubelet,kube-scheduler,kube-proxy}
+	// Components to use feature gate on. Applies to all Kubernetes components
+	// if empty.
 	// +listType=set
 	Components []string `json:"components,omitempty"`
 }
