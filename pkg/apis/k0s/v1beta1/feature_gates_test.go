@@ -165,16 +165,13 @@ func TestFeatureGates_BuildArgs(t *testing.T) {
 				"unrelated": "value",
 			},
 			expectedDefault: stringmap.StringMap{
-				"feature-gates": "",
-				"unrelated":     "value",
+				"unrelated": "value",
 			},
 			expectedAPIServer: stringmap.StringMap{
-				"feature-gates": "",
-				"unrelated":     "value",
+				"unrelated": "value",
 			},
 			expectedUnknown: stringmap.StringMap{
-				"feature-gates": "",
-				"unrelated":     "value",
+				"unrelated": "value",
 			},
 		},
 		{
@@ -184,16 +181,13 @@ func TestFeatureGates_BuildArgs(t *testing.T) {
 				"unrelated": "value",
 			},
 			expectedDefault: stringmap.StringMap{
-				"feature-gates": "",
-				"unrelated":     "value",
+				"unrelated": "value",
 			},
 			expectedAPIServer: stringmap.StringMap{
-				"feature-gates": "",
-				"unrelated":     "value",
+				"unrelated": "value",
 			},
 			expectedUnknown: stringmap.StringMap{
-				"feature-gates": "",
-				"unrelated":     "value",
+				"unrelated": "value",
 			},
 		},
 		{
@@ -201,21 +195,19 @@ func TestFeatureGates_BuildArgs(t *testing.T) {
 			gates: someGates,
 			args:  stringmap.StringMap{},
 			expectedDefault: stringmap.StringMap{
-				"feature-gates": "DefaultComponents=true,",
+				"feature-gates": "DefaultComponents=true",
 			},
 			expectedAPIServer: stringmap.StringMap{
 				"feature-gates": "DefaultComponents=true,APIServerOnly=false",
 			},
-			expectedUnknown: stringmap.StringMap{
-				"feature-gates": ",",
-			},
+			expectedUnknown: stringmap.StringMap{},
 		},
 		{
 			name:  "preserves unrelated arguments",
 			gates: someGates,
 			args:  stringmap.StringMap{"unrelated": "value"},
 			expectedDefault: stringmap.StringMap{
-				"feature-gates": "DefaultComponents=true,",
+				"feature-gates": "DefaultComponents=true",
 				"unrelated":     "value",
 			},
 			expectedAPIServer: stringmap.StringMap{
@@ -223,8 +215,7 @@ func TestFeatureGates_BuildArgs(t *testing.T) {
 				"unrelated":     "value",
 			},
 			expectedUnknown: stringmap.StringMap{
-				"feature-gates": ",",
-				"unrelated":     "value",
+				"unrelated": "value",
 			},
 		},
 		{
@@ -234,13 +225,13 @@ func TestFeatureGates_BuildArgs(t *testing.T) {
 				"feature-gates": "Existing=true",
 			},
 			expectedDefault: stringmap.StringMap{
-				"feature-gates": "Existing=true,DefaultComponents=true,",
+				"feature-gates": "Existing=true,DefaultComponents=true",
 			},
 			expectedAPIServer: stringmap.StringMap{
 				"feature-gates": "Existing=true,DefaultComponents=true,APIServerOnly=false",
 			},
 			expectedUnknown: stringmap.StringMap{
-				"feature-gates": "Existing=true,,",
+				"feature-gates": "Existing=true",
 			},
 		},
 	} {
@@ -288,7 +279,6 @@ func TestFeatureGates_AsSliceOfStrings(t *testing.T) {
 			"FeatureGate1=true",
 			"FeatureGate2=false",
 			"FeatureGate3=true",
-			"",
 		}, underTest.AsSliceOfStrings("kubelet"))
 	})
 
@@ -302,12 +292,7 @@ func TestFeatureGates_AsSliceOfStrings(t *testing.T) {
 	})
 
 	t.Run("no matching gates", func(t *testing.T) {
-		assert.Equal(t, []string{
-			"",
-			"",
-			"",
-			"",
-		}, underTest.AsSliceOfStrings("some-unknown-component"))
+		assert.Empty(t, underTest.AsSliceOfStrings("some-unknown-component"))
 	})
 }
 
