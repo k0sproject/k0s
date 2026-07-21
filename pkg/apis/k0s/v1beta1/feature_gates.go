@@ -25,6 +25,17 @@ func (fgs FeatureGates) Validate() []error {
 	return errors
 }
 
+type FeatureComponent string
+
+// The different upstream components that deal with feature gates.
+const (
+	FeatureComponentKubeAPIServer         FeatureComponent = "kube-apiserver"
+	FeatureComponentKubeControllerManager FeatureComponent = "kube-controller-manager"
+	FeatureComponentKubeProxy             FeatureComponent = "kube-proxy"
+	FeatureComponentKubeScheduler         FeatureComponent = "kube-scheduler"
+	FeatureComponentKubelet               FeatureComponent = "kubelet"
+)
+
 // FeatureGate specifies single feature gate
 type FeatureGate struct {
 	// Name of the feature gate
@@ -35,7 +46,7 @@ type FeatureGate struct {
 	// Components to use feature gate on. Applies to all Kubernetes components
 	// if empty.
 	// +listType=set
-	Components []string `json:"components,omitempty"`
+	Components []FeatureComponent `json:"components,omitempty"`
 }
 
 // Validate given feature gate
