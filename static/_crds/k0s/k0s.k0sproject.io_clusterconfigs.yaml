@@ -231,6 +231,12 @@ spec:
                         Components to use feature gate on. Applies to all Kubernetes components
                         if empty.
                       items:
+                        enum:
+                        - kube-apiserver
+                        - kube-controller-manager
+                        - kube-proxy
+                        - kube-scheduler
+                        - kubelet
                         type: string
                       type: array
                       x-kubernetes-list-type: set
