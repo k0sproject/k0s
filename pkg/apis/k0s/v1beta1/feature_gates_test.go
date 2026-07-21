@@ -48,7 +48,7 @@ spec:
 `))
 	require.NoError(t, err)
 	assert.Equal(t, FeatureGates{
-		{Name: "feature_XXX", Enabled: true, Components: []string{"x", "y", "z"}},
+		{Name: "feature_XXX", Enabled: true, Components: []FeatureComponent{"x", "y", "z"}},
 		{Name: "feature_YYY", Enabled: true},
 		{Name: "feature_ZZZ"},
 	}, c.Spec.FeatureGates)

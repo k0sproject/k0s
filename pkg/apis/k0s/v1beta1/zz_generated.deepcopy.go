@@ -720,7 +720,7 @@ func (in *FeatureGate) DeepCopyInto(out *FeatureGate) {
 	*out = *in
 	if in.Components != nil {
 		in, out := &in.Components, &out.Components
-		*out = make([]string, len(*in))
+		*out = make([]FeatureComponent, len(*in))
 		copy(*out, *in)
 	}
 }

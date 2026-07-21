@@ -24,7 +24,7 @@ import (
 // the way the component's --feature-gates CLI flag expects. Feature gates are
 // appended to any feature-gates value already present in args, so user-provided
 // extra arguments are preserved.
-func ToArgs(args stringmap.StringMap, gates k0sv1beta1.FeatureGates, component string) stringmap.StringMap {
+func ToArgs(args stringmap.StringMap, gates k0sv1beta1.FeatureGates, component k0sv1beta1.FeatureComponent) stringmap.StringMap {
 	var newValue strings.Builder
 
 	oldValueLen, _ := newValue.WriteString(args["feature-gates"])
@@ -53,13 +53,13 @@ func ToArgs(args stringmap.StringMap, gates k0sv1beta1.FeatureGates, component s
 // Returns the feature gates that apply to the given component as a map, in the
 // form used by the FeatureGates field of component configuration files such as
 // KubeletConfiguration and KubeProxyConfiguration.
-func ToMap(gates k0sv1beta1.FeatureGates, component string) map[string]bool {
+func ToMap(gates k0sv1beta1.FeatureGates, component k0sv1beta1.FeatureComponent) map[string]bool {
 	return maps.Collect(forComponent(gates, component))
 }
 
 // Yields the names and enabled states of the feature gates that apply to the
 // given component.
-func forComponent(gates k0sv1beta1.FeatureGates, component string) iter.Seq2[string, bool] {
+func forComponent(gates k0sv1beta1.FeatureGates, component k0sv1beta1.FeatureComponent) iter.Seq2[string, bool] {
 	return func(yield func(string, bool) bool) {
 		for _, feature := range gates {
 			if isComponentSelected(feature.Components, component) {
@@ -71,6 +71,6 @@ func forComponent(gates k0sv1beta1.FeatureGates, component string) iter.Seq2[str
 	}
 }
 
-func isComponentSelected(components []string, component string) bool {
+func isComponentSelected(components []k0sv1beta1.FeatureComponent, component k0sv1beta1.FeatureComponent) bool {
 	return len(components) == 0 || slices.Contains(components, component)
 }
