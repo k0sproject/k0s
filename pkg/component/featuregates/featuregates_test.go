@@ -16,7 +16,7 @@ import (
 func TestToArgs(t *testing.T) {
 	someGates := k0sv1beta1.FeatureGates{
 		{Name: "AllComponents", Enabled: true},
-		{Name: "APIServerOnly", Components: []string{"kube-apiserver"}},
+		{Name: "APIServerOnly", Components: []k0sv1beta1.FeatureComponent{"kube-apiserver"}},
 	}
 
 	for _, test := range []struct {
@@ -112,16 +112,16 @@ func TestToMap(t *testing.T) {
 	featureGates := k0sv1beta1.FeatureGates{
 		{Name: "AllComponentsEnabled", Enabled: true},
 		{Name: "AllComponentsDisabled"},
-		{Name: "APIEnabled", Enabled: true, Components: []string{"kube-apiserver"}},
-		{Name: "SchedulerEnabled", Enabled: true, Components: []string{"kube-scheduler"}},
+		{Name: "APIEnabled", Enabled: true, Components: []k0sv1beta1.FeatureComponent{k0sv1beta1.FeatureComponentKubeAPIServer}},
+		{Name: "SchedulerEnabled", Enabled: true, Components: []k0sv1beta1.FeatureComponent{k0sv1beta1.FeatureComponentKubeScheduler}},
 	}
 
 	for _, test := range []struct {
-		component string
+		component k0sv1beta1.FeatureComponent
 		expected  map[string]bool
 	}{
 		{
-			component: "kube-apiserver",
+			component: k0sv1beta1.FeatureComponentKubeAPIServer,
 			expected: map[string]bool{
 				"AllComponentsEnabled":  true,
 				"AllComponentsDisabled": false,
@@ -129,7 +129,7 @@ func TestToMap(t *testing.T) {
 			},
 		},
 		{
-			component: "kube-scheduler",
+			component: k0sv1beta1.FeatureComponentKubeScheduler,
 			expected: map[string]bool{
 				"AllComponentsEnabled":  true,
 				"AllComponentsDisabled": false,
@@ -144,7 +144,7 @@ func TestToMap(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(test.component, func(t *testing.T) {
+		t.Run(string(test.component), func(t *testing.T) {
 			assert.Equal(t, test.expected, ToMap(featureGates, test.component))
 		})
 	}
