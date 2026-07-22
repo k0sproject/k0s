@@ -42,7 +42,12 @@ func (fgs FeatureGates) Validate() []error {
 // BuildArgs builds CLI args using the given args and component name.
 func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
 	args = maps.Clone(args)
-	componentFeatureGates := fgs.AsSliceOfStrings(component)
+	componentFeatureGates := []string{}
+	for _, feature := range fgs {
+		if value, found := feature.EnabledFor(component); found {
+			componentFeatureGates = append(componentFeatureGates, fmt.Sprintf("%s=%t", feature.Name, value))
+		}
+	}
 	if len(componentFeatureGates) == 0 {
 		return args
 	}
@@ -71,17 +76,6 @@ func (fgs FeatureGates) AsMap(component string) map[string]bool {
 		}
 	}
 	return componentFeatureGates
-}
-
-// AsSliceOfStrings returns feature gates as slice of strings, used in arguments
-func (fgs FeatureGates) AsSliceOfStrings(component string) []string {
-	featureGates := []string{}
-	for _, feature := range fgs {
-		if value, found := feature.EnabledFor(component); found {
-			featureGates = append(featureGates, fmt.Sprintf("%s=%t", feature.Name, value))
-		}
-	}
-	return featureGates
 }
 
 // FeatureGate specifies single feature gate

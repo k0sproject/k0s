@@ -235,36 +235,6 @@ func TestFeatureGates_Validate(t *testing.T) {
 	assert.EqualError(t, errs[1], "feature gate must have name")
 }
 
-func TestFeatureGates_AsSliceOfStrings(t *testing.T) {
-	underTest := FeatureGates{
-		{Name: "FeatureGate1", Enabled: true},
-		{Name: "FeatureGate2"},
-		{Name: "FeatureGate3", Enabled: true},
-		{Name: "SchedulerOnly", Enabled: true, Components: []string{"kube-scheduler"}},
-	}
-
-	t.Run("skips gates for other components", func(t *testing.T) {
-		assert.Equal(t, []string{
-			"FeatureGate1=true",
-			"FeatureGate2=false",
-			"FeatureGate3=true",
-		}, underTest.AsSliceOfStrings("kubelet"))
-	})
-
-	t.Run("includes gates for the given component", func(t *testing.T) {
-		assert.Equal(t, []string{
-			"FeatureGate1=true",
-			"FeatureGate2=false",
-			"FeatureGate3=true",
-			"SchedulerOnly=true",
-		}, underTest.AsSliceOfStrings("kube-scheduler"))
-	})
-
-	t.Run("no matching gates", func(t *testing.T) {
-		assert.Empty(t, underTest.AsSliceOfStrings("some-unknown-component"))
-	})
-}
-
 func TestFeatureGates_AsMap(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		actual := FeatureGates{}.AsMap("component")
