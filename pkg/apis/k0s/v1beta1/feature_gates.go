@@ -77,8 +77,8 @@ func (fgs FeatureGates) AsMap(component string) map[string]bool {
 func (fgs FeatureGates) AsSliceOfStrings(component string) []string {
 	featureGates := []string{}
 	for _, feature := range fgs {
-		if flag := feature.String(component); flag != "" {
-			featureGates = append(featureGates, flag)
+		if value, found := feature.EnabledFor(component); found {
+			featureGates = append(featureGates, fmt.Sprintf("%s=%t", feature.Name, value))
 		}
 	}
 	return featureGates
@@ -123,13 +123,4 @@ func (fg *FeatureGate) Validate() error {
 		return errors.New("feature gate must have name")
 	}
 	return nil
-}
-
-// String represents feature gate as a string
-func (fg *FeatureGate) String(component string) string {
-	value, found := fg.EnabledFor(component)
-	if !found {
-		return ""
-	}
-	return fmt.Sprintf("%s=%t", fg.Name, value)
 }
