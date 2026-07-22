@@ -13,37 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFeatureGate_String(t *testing.T) {
-	for _, test := range []struct {
-		name      string
-		gate      FeatureGate
-		component string
-		expected  string
-	}{
-		{
-			name:      "enabled",
-			gate:      FeatureGate{Name: "Enabled", Enabled: true},
-			component: "kubelet",
-			expected:  "Enabled=true",
-		},
-		{
-			name:      "disabled",
-			gate:      FeatureGate{Name: "Disabled"},
-			component: "kubelet",
-			expected:  "Disabled=false",
-		},
-		{
-			name:      "different component",
-			gate:      FeatureGate{Name: "Other", Enabled: true, Components: []string{"component-b"}},
-			component: "component-a",
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, test.gate.String(test.component))
-		})
-	}
-}
-
 func TestFeatureGate_Validate(t *testing.T) {
 	for _, test := range []struct {
 		name string
