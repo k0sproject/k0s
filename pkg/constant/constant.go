@@ -84,7 +84,7 @@ const (
 	CoreDNSImage                          = "quay.io/k0sproject/coredns"
 	CoreDNSImageVersion                   = "1.14.6-k0s.0"
 	EnvoyProxyImage                       = "quay.io/k0sproject/envoy-distroless"
-	EnvoyProxyImageVersion                = "v1.37.2"
+	EnvoyProxyImageVersion                = "v1.39.0"
 	TraefikImage                          = "quay.io/k0sproject/traefik"
 	TraefikImageVersion                   = "v3.7.7-k0s.0"
 	CalicoCNIImage                        = "quay.io/k0sproject/calico-cni"
