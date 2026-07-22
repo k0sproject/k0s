@@ -5,9 +5,9 @@ package v1beta1
 
 import (
 	"errors"
-	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -42,28 +42,30 @@ func (fgs FeatureGates) Validate() []error {
 
 // BuildArgs builds CLI args using the given args and component name.
 func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
-	args = maps.Clone(args)
-	componentFeatureGates := []string{}
+	var newValue strings.Builder
+
+	oldValueLen, _ := newValue.WriteString(args["feature-gates"])
 	for _, feature := range fgs {
 		if feature.AppliesTo(component) {
-			componentFeatureGates = append(componentFeatureGates, fmt.Sprintf("%s=%t", feature.Name, feature.Enabled))
+			if newValue.Len() > 0 {
+				newValue.WriteByte(',')
+			}
+			newValue.WriteString(feature.Name)
+			newValue.WriteByte('=')
+			newValue.WriteString(strconv.FormatBool(feature.Enabled))
 		}
 	}
-	if len(componentFeatureGates) == 0 {
+
+	args = maps.Clone(args)
+	if newValue.Len() == oldValueLen {
 		return args
 	}
 
-	fg := args["feature-gates"]
-	featureGatesString := strings.Join(componentFeatureGates, ",")
-	if fg != "" {
-		fg = fmt.Sprintf("%s,%s", fg, featureGatesString)
-	} else {
-		fg = featureGatesString
-	}
 	if args == nil {
-		return stringmap.StringMap{"feature-gates": fg}
+		return stringmap.StringMap{"feature-gates": newValue.String()}
 	}
-	args["feature-gates"] = fg
+
+	args["feature-gates"] = newValue.String()
 	return args
 }
 
