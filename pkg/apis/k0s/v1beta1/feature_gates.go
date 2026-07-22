@@ -5,12 +5,7 @@ package v1beta1
 
 import (
 	"errors"
-	"maps"
 	"slices"
-	"strconv"
-	"strings"
-
-	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 )
 
 var _ Validateable = (*FeatureGates)(nil)
@@ -38,46 +33,6 @@ func (fgs FeatureGates) Validate() []error {
 		}
 	}
 	return errors
-}
-
-// BuildArgs builds CLI args using the given args and component name.
-func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
-	var newValue strings.Builder
-
-	oldValueLen, _ := newValue.WriteString(args["feature-gates"])
-	for _, feature := range fgs {
-		if feature.AppliesTo(component) {
-			if newValue.Len() > 0 {
-				newValue.WriteByte(',')
-			}
-			newValue.WriteString(feature.Name)
-			newValue.WriteByte('=')
-			newValue.WriteString(strconv.FormatBool(feature.Enabled))
-		}
-	}
-
-	args = maps.Clone(args)
-	if newValue.Len() == oldValueLen {
-		return args
-	}
-
-	if args == nil {
-		return stringmap.StringMap{"feature-gates": newValue.String()}
-	}
-
-	args["feature-gates"] = newValue.String()
-	return args
-}
-
-// AsMap returns feature gates as map[string]bool, used in kubelet
-func (fgs FeatureGates) AsMap(component string) map[string]bool {
-	componentFeatureGates := map[string]bool{}
-	for _, feature := range fgs {
-		if feature.AppliesTo(component) {
-			componentFeatureGates[feature.Name] = feature.Enabled
-		}
-	}
-	return componentFeatureGates
 }
 
 // FeatureGate specifies single feature gate
