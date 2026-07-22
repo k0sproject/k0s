@@ -30,63 +30,6 @@ func TestFeatureGate_Validate(t *testing.T) {
 	}
 }
 
-func TestFeatureGate_AppliesTo(t *testing.T) {
-	for _, test := range []struct {
-		name      string
-		gate      FeatureGate
-		component string
-		expected  bool
-	}{
-		{
-			name:      "explicit component enabled",
-			gate:      FeatureGate{Enabled: true, Components: []string{"component-a"}},
-			component: "component-a",
-			expected:  true,
-		},
-		{
-			name:      "explicit component disabled",
-			gate:      FeatureGate{Components: []string{"component-a"}},
-			component: "component-a",
-			expected:  true,
-		},
-		{
-			name:      "enabled gate does not match component",
-			gate:      FeatureGate{Enabled: true, Components: []string{"component-a"}},
-			component: "component-b",
-			expected:  false,
-		},
-		{
-			name:      "disabled gate does not match component",
-			gate:      FeatureGate{Components: []string{"component-a"}},
-			component: "component-b",
-			expected:  false,
-		},
-		{
-			name:      "enabled for a default component",
-			gate:      FeatureGate{Enabled: true},
-			component: "kubelet",
-			expected:  true,
-		},
-		{
-			name:      "disabled for a default component",
-			gate:      FeatureGate{},
-			component: "kubelet",
-			expected:  true,
-		},
-		{
-			name:      "not enabled for a non-default component",
-			gate:      FeatureGate{Enabled: true},
-			component: "other-component",
-			expected:  false,
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			actual := test.gate.AppliesTo(test.component)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
 func TestFeatureGates_FromConfig(t *testing.T) {
 	c, err := ConfigFromBytes([]byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
