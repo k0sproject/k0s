@@ -47,7 +47,7 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 		ssh, err := s.SSH(ctx, s.ControllerNode(0))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
-		_, err = ssh.ExecWithOutput(ctx, "/usr/local/bin/k0s kc run nginx --image docker.io/library/nginx:1.31.2-alpine")
+		_, err = ssh.ExecWithOutput(ctx, "/usr/local/bin/k0s kc run nginx --image docker.io/library/nginx:1.31.3-alpine")
 		s.Require().NoError(err)
 		s.NoError(common.WaitForPod(ctx, kc, "nginx", metav1.NamespaceDefault))
 		s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, kc, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
