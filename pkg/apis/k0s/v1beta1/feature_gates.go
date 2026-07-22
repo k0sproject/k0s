@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -44,8 +45,8 @@ func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) st
 	args = maps.Clone(args)
 	componentFeatureGates := []string{}
 	for _, feature := range fgs {
-		if value, found := feature.EnabledFor(component); found {
-			componentFeatureGates = append(componentFeatureGates, fmt.Sprintf("%s=%t", feature.Name, value))
+		if feature.AppliesTo(component) {
+			componentFeatureGates = append(componentFeatureGates, fmt.Sprintf("%s=%t", feature.Name, feature.Enabled))
 		}
 	}
 	if len(componentFeatureGates) == 0 {
@@ -70,9 +71,8 @@ func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) st
 func (fgs FeatureGates) AsMap(component string) map[string]bool {
 	componentFeatureGates := map[string]bool{}
 	for _, feature := range fgs {
-		value, found := feature.EnabledFor(component)
-		if found {
-			componentFeatureGates[feature.Name] = value
+		if feature.AppliesTo(component) {
+			componentFeatureGates[feature.Name] = feature.Enabled
 		}
 	}
 	return componentFeatureGates
@@ -93,22 +93,13 @@ type FeatureGate struct {
 	Components []string `json:"components,omitempty"`
 }
 
-// EnabledFor checks if current feature gate is enabled for a given component
-func (fg *FeatureGate) EnabledFor(component string) (value bool, found bool) {
+// Checks if this feature gate applies to a given component or not.
+func (fg *FeatureGate) AppliesTo(component string) bool {
 	components := fg.Components
 	if len(components) == 0 {
 		components = KubernetesComponents
 	}
-
-	for _, c := range components {
-		if c == component {
-			found = true
-		}
-	}
-	if found {
-		value = fg.Enabled
-	}
-	return
+	return slices.Contains(components, component)
 }
 
 // Validate given feature gate

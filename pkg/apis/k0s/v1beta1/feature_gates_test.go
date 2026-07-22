@@ -33,60 +33,59 @@ func TestFeatureGate_Validate(t *testing.T) {
 	}
 }
 
-func TestFeatureGate_EnabledFor(t *testing.T) {
+func TestFeatureGate_AppliesTo(t *testing.T) {
 	for _, test := range []struct {
-		name           string
-		gate           FeatureGate
-		component      string
-		enabled, found bool
+		name      string
+		gate      FeatureGate
+		component string
+		expected  bool
 	}{
 		{
 			name:      "explicit component enabled",
 			gate:      FeatureGate{Enabled: true, Components: []string{"component-a"}},
 			component: "component-a",
-			enabled:   true, found: true,
+			expected:  true,
 		},
 		{
 			name:      "explicit component disabled",
 			gate:      FeatureGate{Components: []string{"component-a"}},
 			component: "component-a",
-			enabled:   false, found: true,
+			expected:  true,
 		},
 		{
 			name:      "enabled gate does not match component",
 			gate:      FeatureGate{Enabled: true, Components: []string{"component-a"}},
 			component: "component-b",
-			enabled:   false, found: false,
+			expected:  false,
 		},
 		{
 			name:      "disabled gate does not match component",
 			gate:      FeatureGate{Components: []string{"component-a"}},
 			component: "component-b",
-			enabled:   false, found: false,
+			expected:  false,
 		},
 		{
 			name:      "enabled for a default component",
 			gate:      FeatureGate{Enabled: true},
 			component: "kubelet",
-			enabled:   true, found: true,
+			expected:  true,
 		},
 		{
 			name:      "disabled for a default component",
 			gate:      FeatureGate{},
 			component: "kubelet",
-			enabled:   false, found: true,
+			expected:  true,
 		},
 		{
 			name:      "not enabled for a non-default component",
 			gate:      FeatureGate{Enabled: true},
 			component: "other-component",
-			enabled:   false, found: false,
+			expected:  false,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			value, found := test.gate.EnabledFor(test.component)
-			assert.Equal(t, test.enabled, value)
-			assert.Equal(t, test.found, found)
+			actual := test.gate.AppliesTo(test.component)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
