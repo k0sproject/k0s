@@ -103,7 +103,7 @@ func TestToArgs(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			for _, component := range k0sv1beta1.KubernetesComponents {
+			for _, component := range defaultComponents {
 				expected := test.expectedDefault
 				if component == "kube-apiserver" {
 					expected = test.expectedAPIServer

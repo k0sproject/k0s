@@ -5,19 +5,9 @@ package v1beta1
 
 import (
 	"errors"
-	"slices"
 )
 
 var _ Validateable = (*FeatureGates)(nil)
-
-// KubernetesComponents default components to use feature gates with
-var KubernetesComponents = []string{
-	"kube-apiserver",
-	"kube-controller-manager",
-	"kubelet",
-	"kube-scheduler",
-	"kube-proxy",
-}
 
 // FeatureGates collection of feature gate specs
 // +listType=map
@@ -48,15 +38,6 @@ type FeatureGate struct {
 	// +kubebuilder:default={kube-apiserver,kube-controller-manager,kubelet,kube-scheduler,kube-proxy}
 	// +listType=set
 	Components []string `json:"components,omitempty"`
-}
-
-// Checks if this feature gate applies to a given component or not.
-func (fg *FeatureGate) AppliesTo(component string) bool {
-	components := fg.Components
-	if len(components) == 0 {
-		components = KubernetesComponents
-	}
-	return slices.Contains(components, component)
 }
 
 // Validate given feature gate

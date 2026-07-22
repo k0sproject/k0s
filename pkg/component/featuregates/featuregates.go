@@ -10,6 +10,7 @@ package featuregates
 
 import (
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -27,7 +28,7 @@ func ToArgs(args stringmap.StringMap, gates k0sv1beta1.FeatureGates, component s
 
 	oldValueLen, _ := newValue.WriteString(args["feature-gates"])
 	for _, feature := range gates {
-		if feature.AppliesTo(component) {
+		if isComponentSelected(feature.Components, component) {
 			if newValue.Len() > 0 {
 				newValue.WriteByte(',')
 			}
@@ -56,9 +57,26 @@ func ToArgs(args stringmap.StringMap, gates k0sv1beta1.FeatureGates, component s
 func ToMap(gates k0sv1beta1.FeatureGates, component string) map[string]bool {
 	componentFeatureGates := map[string]bool{}
 	for _, feature := range gates {
-		if feature.AppliesTo(component) {
+		if isComponentSelected(feature.Components, component) {
 			componentFeatureGates[feature.Name] = feature.Enabled
 		}
 	}
 	return componentFeatureGates
+}
+
+// Default components to use feature gates with.
+var defaultComponents = []string{
+	"kube-apiserver",
+	"kube-controller-manager",
+	"kubelet",
+	"kube-scheduler",
+	"kube-proxy",
+}
+
+func isComponentSelected(components []string, component string) bool {
+	if len(components) > 0 {
+		return slices.Contains(components, component)
+	}
+
+	return slices.Contains(defaultComponents, component)
 }
