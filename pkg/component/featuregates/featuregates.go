@@ -9,6 +9,7 @@
 package featuregates
 
 import (
+	"iter"
 	"maps"
 	"slices"
 	"strconv"
@@ -27,15 +28,13 @@ func ToArgs(args stringmap.StringMap, gates k0sv1beta1.FeatureGates, component s
 	var newValue strings.Builder
 
 	oldValueLen, _ := newValue.WriteString(args["feature-gates"])
-	for _, feature := range gates {
-		if isComponentSelected(feature.Components, component) {
-			if newValue.Len() > 0 {
-				newValue.WriteByte(',')
-			}
-			newValue.WriteString(feature.Name)
-			newValue.WriteByte('=')
-			newValue.WriteString(strconv.FormatBool(feature.Enabled))
+	for name, enabled := range forComponent(gates, component) {
+		if newValue.Len() > 0 {
+			newValue.WriteByte(',')
 		}
+		newValue.WriteString(name)
+		newValue.WriteByte('=')
+		newValue.WriteString(strconv.FormatBool(enabled))
 	}
 
 	args = maps.Clone(args)
@@ -55,13 +54,21 @@ func ToArgs(args stringmap.StringMap, gates k0sv1beta1.FeatureGates, component s
 // form used by the FeatureGates field of component configuration files such as
 // KubeletConfiguration and KubeProxyConfiguration.
 func ToMap(gates k0sv1beta1.FeatureGates, component string) map[string]bool {
-	componentFeatureGates := map[string]bool{}
-	for _, feature := range gates {
-		if isComponentSelected(feature.Components, component) {
-			componentFeatureGates[feature.Name] = feature.Enabled
+	return maps.Collect(forComponent(gates, component))
+}
+
+// Yields the names and enabled states of the feature gates that apply to the
+// given component.
+func forComponent(gates k0sv1beta1.FeatureGates, component string) iter.Seq2[string, bool] {
+	return func(yield func(string, bool) bool) {
+		for _, feature := range gates {
+			if isComponentSelected(feature.Components, component) {
+				if !yield(feature.Name, feature.Enabled) {
+					return
+				}
+			}
 		}
 	}
-	return componentFeatureGates
 }
 
 // Default components to use feature gates with.

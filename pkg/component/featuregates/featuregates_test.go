@@ -169,3 +169,18 @@ func TestToMap(t *testing.T) {
 		})
 	}
 }
+
+func TestForComponent_StopsEarly(t *testing.T) {
+	gates := k0sv1beta1.FeatureGates{
+		{Name: "First", Enabled: true},
+		{Name: "Second"},
+	}
+
+	collected := map[string]bool{}
+	for name, enabled := range forComponent(gates, "kubelet") {
+		collected[name] = enabled
+		break
+	}
+
+	assert.Equal(t, map[string]bool{"First": true}, collected)
+}
