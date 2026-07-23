@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.32.0/charts/calico/templates/calico-node-rbac.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.32.1/charts/calico/templates/calico-node-rbac.yaml
 # CNI cluster role
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -26,6 +26,7 @@ rules:
       - clusterinformations
       - ippools
       - ipreservations
+      - ipamconfigurations
       - ipamconfigs
     verbs:
       - get
@@ -33,3 +34,10 @@ rules:
       - create
       - update
       - delete
+  # The CNI plugin reads KubeVirt resources for IPAM of KubeVirt workloads.
+  - apiGroups: ["kubevirt.io"]
+    resources:
+      - virtualmachineinstances
+      - virtualmachines
+    verbs:
+      - get
