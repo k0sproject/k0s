@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -21,6 +22,77 @@ func TestApiServerSuite(t *testing.T) {
 	apiServerSuite := &apiServerSuite{}
 
 	suite.Run(t, apiServerSuite)
+}
+
+func (a *apiServerSuite) TestAuthenticationConfigHasAnonymous() {
+	writeConfig := func(content string) string {
+		path := filepath.Join(a.T().TempDir(), "authentication-config.yaml")
+		a.Require().NoError(os.WriteFile(path, []byte(content), 0o600))
+		return path
+	}
+
+	a.Run("anonymous field present", func() {
+		path := writeConfig(`
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+anonymous:
+  enabled: true
+  conditions:
+    - path: /readyz
+`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().NoError(err)
+		a.Require().True(hasAnonymous)
+	})
+
+	a.Run("anonymous field present but disabled", func() {
+		path := writeConfig(`
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+anonymous:
+  enabled: false
+`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().NoError(err)
+		a.Require().True(hasAnonymous)
+	})
+
+	a.Run("anonymous field absent", func() {
+		path := writeConfig(`
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+jwt:
+  - issuer:
+      url: https://example.com/dex
+`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().NoError(err)
+		a.Require().False(hasAnonymous)
+	})
+
+	a.Run("anonymous field null", func() {
+		path := writeConfig(`
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+anonymous: null
+`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().NoError(err)
+		a.Require().False(hasAnonymous)
+	})
+
+	a.Run("file missing", func() {
+		hasAnonymous, err := authenticationConfigHasAnonymous(filepath.Join(a.T().TempDir(), "nonexistent.yaml"))
+		a.Require().Error(err)
+		a.Require().False(hasAnonymous)
+	})
+
+	a.Run("file malformed", func() {
+		path := writeConfig(`{unparseable`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().Error(err)
+		a.Require().False(hasAnonymous)
+	})
 }
 
 func (a *apiServerSuite) TestGetEtcdArgs() {
