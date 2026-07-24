@@ -16,6 +16,7 @@ import (
 	aptu "github.com/k0sproject/k0s/internal/autopilot/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
+	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/static"
@@ -80,7 +81,7 @@ func TestModeSwitch(t *testing.T) {
 		rootController.newLeaderElector = func(c leaderelection.Config) (leaderElector, error) {
 			return &leaseEventStatusCh, nil
 		}
-		rootController.startSubHandlerRoutine = func(ctx context.Context, logger *logrus.Entry, event leaderelection.Status) error {
+		rootController.startSubHandlerRoutine = func(ctx context.Context, logger *logrus.Entry, restartTracker *apsigk0s.RestartTracker, event leaderelection.Status) error {
 			seenEvents = append(seenEvents, "start: "+event.String())
 			<-ctx.Done()
 			seenEvents = append(seenEvents, "stop: "+event.String())

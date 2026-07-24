@@ -51,10 +51,11 @@ func applyingUpdateEventFilter(hostname string, handler apsigpred.ErrorHandler) 
 }
 
 type applyingUpdate struct {
-	log          *logrus.Entry
-	client       crcli.Client
-	delegate     apdel.ControllerDelegate
-	k0sBinaryDir string
+	log              *logrus.Entry
+	client           crcli.Client
+	delegate         apdel.ControllerDelegate
+	k0sBinaryDir     string
+	restartInitiated RestartInitiatedFunc
 }
 
 // registeryApplyingUpdate registers the 'applying-update' controller to the
@@ -68,6 +69,7 @@ func registerApplyingUpdate(
 	eventFilter crpred.Predicate,
 	delegate apdel.ControllerDelegate,
 	k0sBinaryDir string,
+	restartInitiated RestartInitiatedFunc,
 ) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_applying_update"
 	logger.Info("Registering reconciler: ", name)
@@ -78,10 +80,11 @@ func registerApplyingUpdate(
 		WithEventFilter(eventFilter).
 		Complete(
 			&applyingUpdate{
-				log:          logger.WithFields(logrus.Fields{"reconciler": "k0s-applying-update", "object": delegate.Name()}),
-				client:       mgr.GetClient(),
-				delegate:     delegate,
-				k0sBinaryDir: k0sBinaryDir,
+				log:              logger.WithFields(logrus.Fields{"reconciler": "k0s-applying-update", "object": delegate.Name()}),
+				client:           mgr.GetClient(),
+				delegate:         delegate,
+				k0sBinaryDir:     k0sBinaryDir,
+				restartInitiated: restartInitiated,
 			},
 		)
 }
@@ -134,6 +137,12 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 	}
 
 	logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
+
+	// Record the pending restart before making the 'Restart' status visible to
+	// the API. The restart controllers may never observe a 'Restart' status
+	// that has been written by this process without knowing that it's pending.
+	r.restartInitiated(signalData)
+
 	if err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
 		return cr.Result{Requeue: true}, fmt.Errorf("failed to update signal node to status '%s': %w", signalData.Status.Status, err)
 	}
