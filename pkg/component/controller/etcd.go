@@ -443,7 +443,7 @@ func (e *Etcd) Ready() error {
 }
 
 func detectUnsupportedEtcdArch() error {
-	// https://github.com/etcd-io/etcd/blob/v3.7.0/server/etcdmain/etcd.go#L232-L253
+	// https://github.com/etcd-io/etcd/blob/v3.7.1/server/etcdmain/etcd.go#L232-L253
 	switch runtime.GOARCH {
 	case "amd64", "arm64", "ppc64le", "s390x", os.Getenv("ETCD_UNSUPPORTED_ARCH"):
 		return nil
