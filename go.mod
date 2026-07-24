@@ -48,18 +48,18 @@ require (
 	github.com/vishvananda/netlink v1.3.1
 	github.com/vmware-tanzu/sonobuoy v0.57.2
 	github.com/zcalusic/sysinfo v1.1.3
-	go.etcd.io/etcd/api/v3 v3.5.32
-	go.etcd.io/etcd/client/pkg/v3 v3.5.32
-	go.etcd.io/etcd/client/v3 v3.5.32
-	go.etcd.io/etcd/etcdutl/v3 v3.5.32
+	go.etcd.io/etcd/api/v3 v3.5.33
+	go.etcd.io/etcd/client/pkg/v3 v3.5.33
+	go.etcd.io/etcd/client/v3 v3.5.33
+	go.etcd.io/etcd/etcdutl/v3 v3.5.33
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.53.0
-	golang.org/x/mod v0.36.0
+	golang.org/x/mod v0.37.0
 	golang.org/x/sync v0.21.0
 	golang.org/x/sys v0.46.0
-	golang.org/x/text v0.38.0
+	golang.org/x/text v0.39.0
 	golang.org/x/time v0.12.0
-	golang.org/x/tools v0.45.0
+	golang.org/x/tools v0.47.0
 	google.golang.org/grpc v1.82.1
 	helm.sh/helm/v3 v3.18.6
 	oras.land/oras-go/v2 v2.6.0
@@ -232,10 +232,10 @@ require (
 	github.com/zmap/zcrypto v0.0.0-20210511125630-18f1e0152cfc // indirect
 	github.com/zmap/zlint/v3 v3.1.0 // indirect
 	go.etcd.io/bbolt v1.3.12 // indirect
-	go.etcd.io/etcd/client/v2 v2.305.32 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.5.32 // indirect
-	go.etcd.io/etcd/raft/v3 v3.5.32 // indirect
-	go.etcd.io/etcd/server/v3 v3.5.32 // indirect
+	go.etcd.io/etcd/client/v2 v2.305.33 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.5.33 // indirect
+	go.etcd.io/etcd/raft/v3 v3.5.33 // indirect
+	go.etcd.io/etcd/server/v3 v3.5.33 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.58.0 // indirect
@@ -251,7 +251,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
