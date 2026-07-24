@@ -21,6 +21,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/featuregates"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -582,7 +583,7 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 	workerProfile := &workerconfig.Profile{
 		APIServerAddresses: slices.Clone(snapshot.apiServers),
 		KubeletConfiguration: kubeletv1beta1.KubeletConfiguration{
-			FeatureGates: snapshot.featureGates.AsMap("kubelet"),
+			FeatureGates: featuregates.ToMap(snapshot.featureGates, "kubelet"),
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: kubeletv1beta1.SchemeGroupVersion.String(),
 				Kind:       "KubeletConfiguration",

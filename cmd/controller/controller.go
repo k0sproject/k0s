@@ -465,7 +465,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			nodeConfig,
 		))
 
-		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
+		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory, leaderElector.CurrentStatus)
 		if err != nil {
 			return err
 		}

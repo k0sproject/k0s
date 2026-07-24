@@ -23,6 +23,7 @@ import (
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
+	"github.com/k0sproject/k0s/pkg/component/featuregates"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -283,7 +284,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 					Kubeconfig: "/var/lib/kube-proxy/kubeconfig.conf",
 				},
 				ClusterCIDR:        clusterConfig.Spec.Network.BuildPodCIDR(k.nodeConfig.Spec.PrimaryAddressFamily()),
-				FeatureGates:       clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
+				FeatureGates:       featuregates.ToMap(clusterConfig.Spec.FeatureGates, v1beta1.FeatureComponentKubeProxy),
 				Mode:               kubeproxyv1alpha1.ProxyMode(kubeProxy.Mode),
 				MetricsBindAddress: kubeProxy.MetricsBindAddress,
 				HealthzBindAddress: kubeProxy.HealthzBindAddress,

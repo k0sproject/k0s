@@ -4,23 +4,11 @@
 package v1beta1
 
 import (
-	"errors"
-	"fmt"
-	"strings"
+	"iter"
+	"slices"
 
-	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
-
-var _ Validateable = (*FeatureGates)(nil)
-
-// KubernetesComponents default components to use feature gates with
-var KubernetesComponents = []string{
-	"kube-apiserver",
-	"kube-controller-manager",
-	"kubelet",
-	"kube-scheduler",
-	"kube-proxy",
-}
 
 // FeatureGates collection of feature gate specs
 // +listType=map
@@ -28,49 +16,96 @@ var KubernetesComponents = []string{
 type FeatureGates []FeatureGate
 
 // Validate validates all profiles
-func (fgs FeatureGates) Validate() []error {
-	var errors []error
-	for _, p := range fgs {
-		if err := p.Validate(); err != nil {
-			errors = append(errors, err)
+func (fgs FeatureGates) Validate(path *field.Path) iter.Seq[*field.Error] {
+	return func(yield func(*field.Error) bool) {
+		for idx := range fgs {
+			if name := fgs[idx].Name; name != "" {
+				for prev := range idx {
+					if fgs[prev].Name == fgs[idx].Name {
+						if !yield(field.Duplicate(path.Index(idx).Child("name"), fgs[idx].Name)) {
+							return
+						}
+						break
+					}
+				}
+			}
+
+			for err := range fgs[idx].Validate(path.Index(idx)) {
+				if !yield(err) {
+					return
+				}
+			}
 		}
 	}
-	return errors
 }
 
-// BuildArgs build cli args using the given args and component name
-func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
-	componentFeatureGates := fgs.AsSliceOfStrings(component)
-	fg, componentHasFeatureGates := args["feature-gates"]
-	featureGatesString := strings.Join(componentFeatureGates, ",")
-	if componentHasFeatureGates {
-		fg = fmt.Sprintf("%s,%s", fg, featureGatesString)
-	} else {
-		fg = featureGatesString
+// Returns a sanitized set of feature gates, with all unknown components
+// stripped. Returns nil if the feature gates are already sane.
+//
+// Deprecated: A transitional helper function to be removed in k0s 1.38+.
+func (fgs FeatureGates) Sanitized() FeatureGates {
+	fgLen := len(fgs)
+	if fgLen < 1 {
+		return nil
 	}
-	args["feature-gates"] = fg
-	return args
-}
 
-// AsMap returns feature gates as map[string]bool, used in kubelet
-func (fgs FeatureGates) AsMap(component string) map[string]bool {
-	componentFeatureGates := map[string]bool{}
-	for _, feature := range fgs {
-		value, found := feature.EnabledFor(component)
-		if found {
-			componentFeatureGates[feature.Name] = value
+	var sanitized bool
+	sanitizedGates := make(FeatureGates, 0, fgLen)
+	for _, fg := range fgs {
+		if compLen := len(fg.Components); compLen > 0 {
+			components := make([]FeatureComponent, 0, compLen)
+			for _, c := range fg.Components {
+				idx := slices.Index(allFeatureComponents[:], c)
+				if idx < 0 {
+					sanitized = true
+					continue
+				}
+
+				components = append(components, allFeatureComponents[idx])
+			}
+
+			// Before k0s 1.37, it wasn't possible to have an empty component
+			// list because it would default to the set of well-known
+			// components. After sanitation, if there are no components left,
+			// the feature gate doesn't apply to any of the known components.
+			// However, starting with k0s 1.37, the absence of components on a
+			// feature gate means that it applies to all components, which is
+			// the opposite. Therefore, omit the feature gate completely.
+			if len(components) < 1 {
+				continue
+			}
+
+			fg.Components = components
 		}
+
+		sanitizedGates = append(sanitizedGates, fg)
 	}
-	return componentFeatureGates
+
+	if !sanitized {
+		return nil
+	}
+
+	return sanitizedGates
 }
 
-// AsSliceOfStrings returns feature gates as slice of strings, used in arguments
-func (fgs FeatureGates) AsSliceOfStrings(component string) []string {
-	featureGates := []string{}
-	for _, feature := range fgs {
-		featureGates = append(featureGates, feature.String(component))
-	}
-	return featureGates
+// +kubebuilder:validation:Enum=kube-apiserver;kube-controller-manager;kube-proxy;kube-scheduler;kubelet
+type FeatureComponent string
+
+// The different upstream components that deal with feature gates.
+const (
+	FeatureComponentKubeAPIServer         FeatureComponent = "kube-apiserver"
+	FeatureComponentKubeControllerManager FeatureComponent = "kube-controller-manager"
+	FeatureComponentKubeProxy             FeatureComponent = "kube-proxy"
+	FeatureComponentKubeScheduler         FeatureComponent = "kube-scheduler"
+	FeatureComponentKubelet               FeatureComponent = "kubelet"
+)
+
+var allFeatureComponents = [...]FeatureComponent{
+	FeatureComponentKubeAPIServer,
+	FeatureComponentKubeControllerManager,
+	FeatureComponentKubeProxy,
+	FeatureComponentKubeScheduler,
+	FeatureComponentKubelet,
 }
 
 // FeatureGate specifies single feature gate
@@ -80,45 +115,41 @@ type FeatureGate struct {
 	Name string `json:"name"`
 	// Enabled or disabled
 	Enabled bool `json:"enabled"`
-	// Components to use feature gate on
-	// Default: kube-apiserver, kube-controller-manager, kubelet, kube-scheduler, kube-proxy
-	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:default={kube-apiserver,kube-controller-manager,kubelet,kube-scheduler,kube-proxy}
+	// Components to use feature gate on. Applies to all Kubernetes components
+	// if empty.
 	// +listType=set
-	Components []string `json:"components,omitempty"`
-}
-
-// EnabledFor checks if current feature gate is enabled for a given component
-func (fg *FeatureGate) EnabledFor(component string) (value bool, found bool) {
-	components := fg.Components
-	if len(components) == 0 {
-		components = KubernetesComponents
-	}
-
-	for _, c := range components {
-		if c == component {
-			found = true
-		}
-	}
-	if found {
-		value = fg.Enabled
-	}
-	return
+	Components []FeatureComponent `json:"components,omitempty"`
 }
 
 // Validate given feature gate
-func (fg *FeatureGate) Validate() error {
-	if fg.Name == "" {
-		return errors.New("feature gate must have name")
-	}
-	return nil
-}
+func (fg *FeatureGate) Validate(path *field.Path) iter.Seq[*field.Error] {
+	return func(yield func(*field.Error) bool) {
+		if fg == nil {
+			return
+		}
 
-// String represents feature gate as a string
-func (fg *FeatureGate) String(component string) string {
-	value, found := fg.EnabledFor(component)
-	if !found {
-		return ""
+		if fg.Name == "" {
+			if !yield(field.Required(path.Child("name"), "")) {
+				return
+			}
+		}
+
+		for idx, component := range fg.Components {
+			if slices.Contains(fg.Components[:idx], component) {
+				if !yield(field.Duplicate(path.Child("components").Index(idx), component)) {
+					return
+				}
+
+				// This is a duplicate, the previous index has been checked
+				// already, no need to do it again.
+				continue
+			}
+
+			if !slices.Contains(allFeatureComponents[:], component) {
+				if !yield(field.NotSupported(path.Child("components").Index(idx), component, allFeatureComponents[:])) {
+					return
+				}
+			}
+		}
 	}
-	return fmt.Sprintf("%s=%t", fg.Name, value)
 }

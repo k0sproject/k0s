@@ -25,6 +25,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component/featuregates"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -141,7 +142,7 @@ func (a *APIServer) Start(ctx context.Context) error {
 		}
 		args[name] = value
 	}
-	args = a.NodeConfig.Spec.FeatureGates.BuildArgs(args, kubeAPIComponentName)
+	args = featuregates.ToArgs(args, a.NodeConfig.Spec.FeatureGates, kubeAPIComponentName)
 	for name, value := range apiDefaultArgs {
 		if args[name] == "" {
 			args[name] = value
