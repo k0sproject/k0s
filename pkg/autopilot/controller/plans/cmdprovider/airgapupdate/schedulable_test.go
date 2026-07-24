@@ -19,6 +19,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -132,6 +133,55 @@ func TestSchedulable(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 			},
 		},
+
+		// Ensures that when a new signal is sent to a worker node that had a stale error annotation,
+		// the error annotation is cleared before sending the signal.
+		{
+			"NodeErrorAnnotationClearedOnNewSignal",
+			[]crcli.Object{
+				&corev1.Node{
+					TypeMeta: metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "worker0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+						Annotations: map[string]string{
+							"k0sproject.io/autopilot-last-error": `{"planID":"oldplan","reason":"FailedDownload","message":"stale error","timestamp":"2024-01-01T00:00:00Z"}`,
+						},
+					},
+					Status: corev1.NodeStatus{
+						Conditions: []corev1.NodeCondition{{Type: corev1.NodeReady, Status: corev1.ConditionTrue}},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
+					Version: "v99.99.99",
+					Platforms: apv1beta2.PlanPlatformResourceURLMap{
+						"theOS-theArch": {URL: "https://k0s.example.com/downloads/k0s-v99.99.99-theOS-theArch"},
+					},
+					Workers: apv1beta2.PlanCommandTarget{
+						Discovery: apv1beta2.PlanCommandTargetDiscovery{
+							Static: &apv1beta2.PlanCommandTargetDiscoveryStatic{Nodes: []string{"worker0"}},
+						},
+						Limits: apv1beta2.PlanCommandTargetLimits{Concurrent: 1},
+					},
+				},
+			},
+			apv1beta2.PlanCommandStatus{
+				ID:    123,
+				State: appc.PlanSchedulable,
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+					},
+				},
+			},
+			appc.PlanSchedulableWait,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+			},
+		},
 	}
 
 	scheme := apimruntime.NewScheme()
@@ -159,6 +209,13 @@ func TestSchedulable(t *testing.T) {
 			assert.Equal(t, test.expectedRetry, retry)
 			assert.NoError(t, err)
 			assert.True(t, cmp.Equal(test.expectedPlanStatusWorkers, test.status.AirgapUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
+
+			if test.name == "NodeErrorAnnotationClearedOnNewSignal" {
+				node := &corev1.Node{}
+				assert.NoError(t, client.Get(ctx, types.NamespacedName{Name: "worker0"}, node))
+				_, hasAnnotation := node.GetAnnotations()["k0sproject.io/autopilot-last-error"]
+				assert.False(t, hasAnnotation)
+			}
 		})
 	}
 }

@@ -277,4 +277,9 @@ type PlanCommandTargetStatus struct {
 
 	// LastUpdatedTimestamp is a timestamp of the last time the status has changed.
 	LastUpdatedTimestamp metav1.Time `json:"lastUpdatedTimestamp"`
+
+	// Description is an optional human-readable explanation of the current state,
+	// populated when the node is in a failed state.
+	// +optional
+	Description string `json:"description,omitempty"`
 }
