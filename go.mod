@@ -59,7 +59,7 @@ require (
 	golang.org/x/text v0.40.0
 	golang.org/x/tools v0.48.0
 	google.golang.org/grpc v1.82.1
-	helm.sh/helm/v3 v3.21.3
+	helm.sh/helm/v4 v4.2.3
 	modernc.org/sqlite v1.54.0
 	oras.land/oras-go/v2 v2.6.2
 	sigs.k8s.io/controller-runtime v0.24.1
@@ -87,6 +87,8 @@ require (
 	k8s.io/mount-utils v0.37.0-alpha.2
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5
 )
+
+require helm.sh/helm/v3 v3.21.3
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -137,7 +139,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/go-errors/errors v1.4.2 // indirect
+	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonreference v0.21.4 // indirect
