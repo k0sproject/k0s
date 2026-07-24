@@ -139,7 +139,8 @@
         "projectcalico/calico"
       ],
       "groupName": "Calico",
-      "groupSlug": "calico"
+      "groupSlug": "calico",
+      "commitMessageExtra": "{{~#if (includes (lookupArray upgrades \"depName\") \"quay.io/k0sproject/calico-node\")}}{{~#each (distinct (lookupArray upgrades \"prettyNewVersion\"))}}{{~#if (containsString . \"-\")}} to {{{.}}}{{/if}}{{/each~}}{{~else}}{{~#each (distinct (lookupArray upgrades \"prettyNewVersion\"))}} to {{{.}}}{{/each~}}{{/if~}}"
     },
     {
       "description": "Group all etcd bumps",
@@ -212,7 +213,7 @@
       ],
       "groupName": "Traefik",
       "groupSlug": "traefik",
-      "commitMessageExtra": "{{~#if (includes (lookupArray upgrades \"depName\") \"quay.io/k0sproject/traefik\")}}{{~#each upgrades}}{{~#if (equals depName \"quay.io/k0sproject/traefik\")}} to {{{prettyNewVersion}}}{{/if}}{{/each~}}{{~else}}{{~#each (distinct (lookupArray upgrades \"prettyNewVersion\"))}} to {{{.}}}{{/each~}}{{/if~}}"
+      "commitMessageExtra": "{{~#if (includes (lookupArray upgrades \"depName\") \"quay.io/k0sproject/traefik\")}}{{~#each (distinct (lookupArray upgrades \"prettyNewVersion\"))}}{{~#if (containsString . \"-\")}} to {{{.}}}{{/if}}{{/each~}}{{~else}}{{~#each (distinct (lookupArray upgrades \"prettyNewVersion\"))}} to {{{.}}}{{/each~}}{{/if~}}"
     },
     {
       "description": "Run codegen if required",
