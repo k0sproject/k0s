@@ -51,7 +51,7 @@ type Reconciler struct {
 	log logrus.FieldLogger
 
 	clusterDomain        string
-	clusterDNSIP         net.IP
+	clusterDNSIPs        []net.IP
 	clientFactory        kubeutil.ClientFactoryInterface
 	leaderElector        leaderelector.Interface
 	konnectivityEnabled  bool
@@ -88,20 +88,16 @@ var (
 func NewReconciler(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled, autopilotDisabled bool) (*Reconciler, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "workerconfig.Reconciler"})
 
-	clusterDNSIPString, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.Spec.PrimaryAddressFamily())
+	clusterDNSIPs, err := nodeConfig.Spec.Network.DNSAddresses(nodeConfig.Spec.PrimaryAddressFamily())
 	if err != nil {
 		return nil, err
-	}
-	clusterDNSIP := net.ParseIP(clusterDNSIPString)
-	if clusterDNSIP == nil {
-		return nil, fmt.Errorf("not an IP address: %q", clusterDNSIPString)
 	}
 
 	reconciler := &Reconciler{
 		log: log,
 
 		clusterDomain:        nodeConfig.Spec.Network.ClusterDomain,
-		clusterDNSIP:         clusterDNSIP,
+		clusterDNSIPs:        clusterDNSIPs,
 		clientFactory:        clientFactory,
 		leaderElector:        leaderElector,
 		konnectivityEnabled:  konnectivityEnabled,
@@ -578,6 +574,10 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 	for i, cipherSuite := range constant.AllowedTLS12CipherSuiteIDs {
 		cipherSuites[i] = tls.CipherSuiteName(cipherSuite)
 	}
+	var clusterDNSIPs []string
+	for _, ip := range r.clusterDNSIPs {
+		clusterDNSIPs = append(clusterDNSIPs, ip.String())
+	}
 
 	workerProfile := &workerconfig.Profile{
 		APIServerAddresses: slices.Clone(snapshot.apiServers),
@@ -587,7 +587,7 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 				APIVersion: kubeletv1beta1.SchemeGroupVersion.String(),
 				Kind:       "KubeletConfiguration",
 			},
-			ClusterDNS:         []string{r.clusterDNSIP.String()},
+			ClusterDNS:         clusterDNSIPs,
 			ClusterDomain:      r.clusterDomain,
 			KubeReservedCgroup: "system.slice",
 			KubeletCgroups:     "/system.slice/containerd.service",
