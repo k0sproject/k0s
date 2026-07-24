@@ -115,6 +115,39 @@ secretRef:
   name: artifacts-token-based-auth
 ```
 
+#### Expected workflow
+
+This feature supports pulling both the k0s binary and the k0s air-gap bundle.
+Each repository tag should host only one artifact. To remotely host an artifact
+and later retrieve it using this feature, the following command is sufficient:
+
+```sh
+oras push <registry-address>/<namespace>/<repository>:<tag> <artifact path>
+```
+
+For example, to push the k0s binary and its corresponding airgap bundle, use
+the following commands:
+
+```sh
+# pushing the k0s binary.
+oras push registry.company.com/k0s/binary:v1.31.1 k0s
+
+# pushing the k0s airgap bundle.
+oras push registry.company.com/k0s/bundle:v1.31.1 k0s-airgap-bundle
+```
+
+Once the artifacts are hosted in the OCI registry, the following configuration
+is sufficient to enable the pull through OCI:
+
+```yaml
+url: oci://registry.company.com/k0s/binary:v1.31.1
+sha256: <sha-for-the-binary>
+secretRef:
+  # if auth is required to pull the artifact.
+  namespace: kube-system
+  name: artifacts-registry
+```
+
 ### Secrets Layout
 
 The following standard Kubernetes secret types are supported:
