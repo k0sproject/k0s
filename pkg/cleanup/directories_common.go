@@ -5,10 +5,15 @@
 
 package cleanup
 
+import "time"
+
 type directories struct {
 	dataDir        string
 	kubeletRootDir string
 	runDir         string
+
+	// unmountTimeout bounds each blocking unmount. Overridable in tests.
+	unmountTimeout time.Duration
 }
 
 // Name returns the name of the step
