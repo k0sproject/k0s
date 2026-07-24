@@ -47,14 +47,14 @@ type Supervisor struct {
 	log            logrus.FieldLogger
 	mutex          sync.Mutex
 	startStopMutex sync.Mutex
-	stop           func(opts StopOpts)
+	stop           func(opts StopOpts) error
 }
 
 const k0sManaged = "_K0S_MANAGED=yes"
 
-// processWaitQuit waits for a process to exit or a shut down signal
-// returns true if shutdown is requested
-func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
+// processWaitQuit waits for a process to exit or a shut down signal.
+// It returns true if shutdown is requested and an error if the shutdown failed.
+func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) (bool, error) {
 	waitresult := make(chan error, 1)
 	go func() {
 		defer close(waitresult)
@@ -73,12 +73,15 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 		if stoppingErr, ok := errors.AsType[*stoppingErr](cause); ok {
 			stopOpts = stoppingErr.opts
 		}
-		if err := s.terminateSupervisedProcess(cmd, waitresult, stopOpts); err != nil {
+		if terminated, err := s.terminateSupervisedProcess(cmd, waitresult, stopOpts); err != nil && !terminated {
 			s.log.WithError(err).Error("Error while terminating process")
+			return true, err
+		} else if err != nil {
+			s.log.WithError(err).Warn("Process terminated with errors")
 		} else {
 			s.log.Info("Process terminated successfully")
 		}
-		return true
+		return true, nil
 
 	case err, ok := <-waitresult:
 		var exitErr *exec.ExitError
@@ -94,25 +97,27 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 		default:
 			s.log.WithError(err).Error("Failed to wait for process: ", state)
 		}
-		return false
+		return false, nil
 	}
 }
 
-func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error, stopOpts StopOpts) error {
+func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error, stopOpts StopOpts) (bool, error) {
 	if timeout := stopOpts.DeferGracefulTerminationUntil; timeout != nil {
 		// Termination request deferred, wait for process to finish on its own.
 		s.log.Debug("Awaiting process termination")
 
 		select {
-		case err := <-waitresult:
+		case err, ok := <-waitresult:
 			var exitErr *exec.ExitError
 			switch {
+			case !ok:
+				return true, errors.New("process wait result unavailable")
 			case err == nil:
-				return nil
+				return true, nil
 			case errors.As(err, &exitErr):
-				return exitErr
+				return true, fmt.Errorf("process terminated while awaiting deferred stop: %w", exitErr)
 			default:
-				return fmt.Errorf("failed to wait for process: %w", err)
+				return true, fmt.Errorf("failed to wait for process: %w", err)
 			}
 		case <-timeout:
 			s.log.Debug("Timed out while waiting for process to terminate, requesting graceful termination")
@@ -126,50 +131,55 @@ func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan
 		s.log.Debug("Awaiting graceful process termination for ", s.TimeoutStop)
 
 		select {
-		case err := <-waitresult:
+		case err, ok := <-waitresult:
 			var exitErr *exec.ExitError
 			switch {
+			case !ok:
+				return true, errors.New("process wait result unavailable")
 			case err == nil:
-				return nil
+				return true, nil
 			case errors.As(err, &exitErr):
 				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.Signal() == syscall.SIGTERM {
-					return errors.New("process terminated without handling SIGTERM")
+					return true, errors.New("process terminated without handling SIGTERM")
 				}
-				return exitErr
+				return true, fmt.Errorf("process terminated while stopping: %w", exitErr)
 			default:
-				return fmt.Errorf("failed to wait for process: %w", err)
+				return true, fmt.Errorf("failed to wait for process: %w", err)
 			}
 
 		case <-time.After(s.TimeoutStop):
 			err = fmt.Errorf("timed out after %s while waiting for process to terminate", s.TimeoutStop)
 		}
 
-		return err
+		return false, err
 
 	case errors.Is(err, os.ErrProcessDone):
 		// The process has finished even before the termination could be requested.
+		var waitErr error
 		select {
-		case err = <-waitresult:
+		case err, ok := <-waitresult:
 			var exitErr *exec.ExitError
 			state := cmd.ProcessState
 			switch {
+			case !ok:
+				waitErr = errors.New("process wait result unavailable")
 			case errors.As(err, &exitErr):
 				state = exitErr.ProcessState
 				fallthrough
 			case err == nil:
-				err = errors.New(state.String())
+				waitErr = errors.New(state.String())
 			default:
-				return fmt.Errorf("failed to wait for process: %s (%w)", state, err)
+				waitErr = fmt.Errorf("failed to wait for process: %s (%w)", state, err)
 			}
 		default:
-			err = errors.New("process state unavailable")
+			waitErr = errors.New("process state unavailable")
 		}
 
-		return fmt.Errorf("process terminated before graceful termination could be requested: %w", err)
+		return true, fmt.Errorf("process terminated before graceful termination could be requested: %w", waitErr)
 
 	default:
 		// Something else went wrong
-		return fmt.Errorf("failed to request graceful termination: %w", err)
+		return false, fmt.Errorf("failed to request graceful termination: %w", err)
 	}
 }
 
@@ -216,7 +226,8 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 	}
 
 	ctx, cancel := context.WithCancelCause(context.Background())
-	started, done := make(chan error, 1), make(chan bool)
+	started, done := make(chan error, 1), make(chan struct{})
+	var stopErr error
 
 	go func() {
 		defer close(done)
@@ -269,7 +280,8 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 					s.log.Infof("Restarted (%d)", restarts)
 				}
 				restarts++
-				if s.processWaitQuit(ctx, s.cmd) {
+				if stopped, err := s.processWaitQuit(ctx, s.cmd); stopped {
+					stopErr = err
 					return
 				}
 			}
@@ -293,9 +305,10 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 		return err
 	}
 
-	s.stop = func(opts StopOpts) {
+	s.stop = func(opts StopOpts) error {
 		cancel(&stoppingErr{opts})
 		<-done
+		return stopErr
 	}
 	return nil
 }
@@ -313,9 +326,9 @@ func (s *Supervisor) StopWith(opts StopOpts) error {
 		return errors.New("not started")
 	}
 
-	s.stop(opts)
+	err := s.stop(opts)
 	s.stop = nil
-	return nil
+	return err
 }
 
 // Checks if the process referenced in the PID file is a k0s-managed process.
