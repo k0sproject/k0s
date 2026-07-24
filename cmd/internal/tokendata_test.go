@@ -17,6 +17,7 @@ func TestCheckSingleTokenSource(t *testing.T) {
 
 	t.Run("returns nil when no token sources provided", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		err := CheckSingleTokenSource("", "")
 		require.NoError(t, err)
@@ -24,6 +25,7 @@ func TestCheckSingleTokenSource(t *testing.T) {
 
 	t.Run("returns nil when only arg provided", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		err := CheckSingleTokenSource(testToken, "")
 		require.NoError(t, err)
@@ -31,20 +33,31 @@ func TestCheckSingleTokenSource(t *testing.T) {
 
 	t.Run("returns nil when only file provided", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		err := CheckSingleTokenSource("", "/path/to/token")
 		require.NoError(t, err)
 	})
 
-	t.Run("returns nil when only env provided", func(t *testing.T) {
+	t.Run("returns nil when only env provided (K0S_TOKEN)", func(t *testing.T) {
 		t.Setenv(EnvVarToken, testToken)
+		t.Setenv(EnvVarJoinToken, "")
 
 		err := CheckSingleTokenSource("", "")
 		require.NoError(t, err)
 	})
 
-	t.Run("returns error when multiple token sources provided - env and arg", func(t *testing.T) {
+	t.Run("returns nil when only env provided (K0S_JOIN_TOKEN)", func(t *testing.T) {
+		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, testToken)
+
+		err := CheckSingleTokenSource("", "")
+		require.NoError(t, err)
+	})
+
+	t.Run("returns error when multiple token sources provided - env (K0S_TOKEN) and arg", func(t *testing.T) {
 		t.Setenv(EnvVarToken, testToken)
+		t.Setenv(EnvVarJoinToken, "")
 
 		err := CheckSingleTokenSource(testToken, "")
 		require.Error(t, err)
@@ -52,8 +65,28 @@ func TestCheckSingleTokenSource(t *testing.T) {
 		assert.Contains(t, err.Error(), EnvVarToken)
 	})
 
-	t.Run("returns error when multiple token sources provided - env and file", func(t *testing.T) {
+	t.Run("returns error when multiple token sources provided - env (K0S_JOIN_TOKEN) and arg", func(t *testing.T) {
+		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, testToken)
+
+		err := CheckSingleTokenSource(testToken, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+		assert.Contains(t, err.Error(), EnvVarJoinToken)
+	})
+
+	t.Run("returns error when multiple token sources provided - env (K0S_TOKEN) and file", func(t *testing.T) {
 		t.Setenv(EnvVarToken, testToken)
+		t.Setenv(EnvVarJoinToken, "")
+
+		err := CheckSingleTokenSource("", "/path/to/token")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "you can only pass one token source")
+	})
+
+	t.Run("returns error when multiple token sources provided - env (K0S_JOIN_TOKEN) and file", func(t *testing.T) {
+		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, testToken)
 
 		err := CheckSingleTokenSource("", "/path/to/token")
 		require.Error(t, err)
@@ -62,6 +95,7 @@ func TestCheckSingleTokenSource(t *testing.T) {
 
 	t.Run("returns error when multiple token sources provided - arg and file", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		err := CheckSingleTokenSource(testToken, "/path/to/token")
 		require.Error(t, err)
@@ -70,6 +104,7 @@ func TestCheckSingleTokenSource(t *testing.T) {
 
 	t.Run("returns error when all three token sources provided", func(t *testing.T) {
 		t.Setenv(EnvVarToken, testToken)
+		t.Setenv(EnvVarJoinToken, testToken)
 
 		err := CheckSingleTokenSource(testToken, "/path/to/token")
 		require.Error(t, err)
@@ -79,17 +114,38 @@ func TestCheckSingleTokenSource(t *testing.T) {
 
 func TestGetTokenData_EnvVar(t *testing.T) {
 	testToken := "test-token-data"
+	legacyToken := "legacy-token-data"
 
-	t.Run("reads token from K0S_TOKEN env var", func(t *testing.T) {
-		t.Setenv(EnvVarToken, testToken)
+	t.Run("reads token from K0S_JOIN_TOKEN env var", func(t *testing.T) {
+		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, testToken)
 
 		token, err := GetTokenData("", "")
 		require.NoError(t, err)
 		assert.Equal(t, testToken, token)
 	})
 
-	t.Run("empty K0S_TOKEN returns empty string", func(t *testing.T) {
+	t.Run("reads token from K0S_TOKEN env var when K0S_JOIN_TOKEN is empty", func(t *testing.T) {
+		t.Setenv(EnvVarToken, legacyToken)
+		t.Setenv(EnvVarJoinToken, "")
+
+		token, err := GetTokenData("", "")
+		require.NoError(t, err)
+		assert.Equal(t, legacyToken, token)
+	})
+
+	t.Run("prioritizes K0S_JOIN_TOKEN over K0S_TOKEN", func(t *testing.T) {
+		t.Setenv(EnvVarToken, legacyToken)
+		t.Setenv(EnvVarJoinToken, testToken)
+
+		token, err := GetTokenData("", "")
+		require.NoError(t, err)
+		assert.Equal(t, testToken, token)
+	})
+
+	t.Run("empty environment variables returns empty string", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		token, err := GetTokenData("", "")
 		require.NoError(t, err)
@@ -102,6 +158,7 @@ func TestGetTokenData_TokenArg(t *testing.T) {
 
 	t.Run("reads token from argument", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		token, err := GetTokenData(testToken, "")
 		require.NoError(t, err)
@@ -114,6 +171,7 @@ func TestGetTokenData_TokenFile(t *testing.T) {
 
 	t.Run("reads token from file", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		tmpDir := t.TempDir()
 		tokenFile := filepath.Join(tmpDir, "token")
@@ -126,6 +184,7 @@ func TestGetTokenData_TokenFile(t *testing.T) {
 
 	t.Run("returns error for non-existent file", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		_, err := GetTokenData("", "/non/existent/path")
 		require.Error(t, err)
@@ -136,6 +195,7 @@ func TestGetTokenData_TokenFile(t *testing.T) {
 
 	t.Run("returns error for empty file", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		tmpDir := t.TempDir()
 		tokenFile := filepath.Join(tmpDir, "empty-token")
@@ -152,6 +212,7 @@ func TestGetTokenData_TokenFile(t *testing.T) {
 func TestGetTokenData_NoToken(t *testing.T) {
 	t.Run("returns empty string when no token provided", func(t *testing.T) {
 		t.Setenv(EnvVarToken, "")
+		t.Setenv(EnvVarJoinToken, "")
 
 		token, err := GetTokenData("", "")
 		require.NoError(t, err)
