@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -94,11 +95,16 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	}
 
 	s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, kc, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
+	var wg sync.WaitGroup
 	for i := range s.WorkerCount {
-		node := s.WorkerNode(i)
-		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)
-		s.Require().NoError(common.VerifyKubeletMetrics(ctx, kc, node))
+		t, node := s.T(), s.WorkerNode(i)
+		wg.Go(func() {
+			if verifyCAdvisorMetrics(ctx, t, kc, node) {
+				t.Log("Verified cAdvisor metrics on", node)
+			}
+		})
 	}
+	defer wg.Wait()
 
 	s.T().Log("checking kube-router gobgp functionality")
 	kubeRouterPods, err := kc.CoreV1().Pods(metav1.NamespaceSystem).List(ctx, metav1.ListOptions{LabelSelector: "k8s-app=kube-router"})
