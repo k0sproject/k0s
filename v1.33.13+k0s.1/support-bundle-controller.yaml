@@ -1,0 +1,239 @@
+apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: controller
+spec:
+  uri: # TODO
+  collectors:
+    - clusterInfo: {}
+    - clusterResources:
+        namespaces:
+        - kube-system
+        - k0s-autopilot
+        - kube-node-lease
+        - default # so we get kubernetes svc endpoints
+    - nodeMetrics: {}
+  hostCollectors:
+    # System Info Collectors
+    - cpu: {}
+    - hostOS: {}
+    - hostServices: {}
+    - ipv4Interfaces: {}
+    - memory: {}
+    - time: {}
+    # Certificate Info for ETCD and K8s API
+    - certificate:
+        collectorName: k8s-api-keypair
+        certificatePath: /var/lib/k0s/pki/server.crt
+        keyPath: /var/lib/k0s/pki/server.key
+    - certificate:
+        collectorName: etcd-keypair
+        certificatePath: /var/lib/k0s/pki/etcd/server.crt
+        keyPath: /var/lib/k0s/pki/etcd/server.key
+    # Disk usage for commonly used directories in kURL installs
+    - diskUsage:
+        collectorName: root
+        path: /
+    # Run collectors for system information
+    - run:
+        collectorName: k8s-api-healthz-6443
+        command: "curl"
+        args: ["-k", "--cert", "/var/lib/k0s/pki/admin.crt", "--key", "/var/lib/k0s/pki/admin.key", "https://localhost:6443/healthz?verbose"]
+    - run:
+        collectorName: curl-etcd-health-2379
+        command: "curl"
+        args: ["-ki", "https://localhost:2379/health", "--cert", "/var/lib/k0s/pki/apiserver-etcd-client.crt", "--key", "/var/lib/k0s/pki/apiserver-etcd-client.key"]
+    - run:
+        collectorName: etcd-members
+        command: "k0s"
+        args: ["etcd", "member-list"]
+    - run:
+        collectorName: "free"
+        command: "free"
+        args: ["-m"]
+    - run:
+        collectorName: "top"
+        command: "top"
+        args: ["-b", "-n", "1"]
+    - run:
+        collectorName: "uptime"
+        command: "uptime"
+        args: []
+    - run:
+        collectorName: "uname"
+        command: "uname"
+        args: ["-a"]
+    - run:
+        collectorName: "df"
+        command: "df"
+        args: ["-h"]
+    - run:
+        collectorName: "iostat"
+        command: "iostat"
+        args: ["-x"]
+    # Systemctl service statuses
+    - run:
+        collectorName: "systemctl-firewalld-status"
+        command: "systemctl"
+        args: ["status", "firewalld"]
+    - run:
+        collectorName: "systemctl-ufw-status"
+        command: "systemctl"
+        args: ["status", "ufw"]
+    - run:
+        collectorName: "systemctl-k0s-status"
+        command: "systemctl"
+        args: ["status", "k0s*"]
+    # Systemd Service Configurations
+    - run:
+        collectorName: "systemctl-cat-journald"
+        command: "systemctl"
+        args: ["cat", "systemd-journald"]
+    - run:
+        collectorName: "systemctl-cat-k0s"
+        command: "systemctl"
+        args: ["cat", "k0s*"]
+    # TODO Add same checks for rc-service
+    # Logs for k0s
+    - run:
+        collectorName: "journalctl-k0s"
+        command: "journalctl"
+        args: ["-u", "k0s*", "--no-pager", "-S", "7 days ago"]
+    - run:
+        collectorName: "journalctl-dmesg"
+        command: "journalctl"
+        args: ["--dmesg", "--no-pager", "-S", "7 days ago"]
+    # k0s status
+    - run:
+        collectorName: k0s-status
+        command: "k0s"
+        args: ["status", "-o", "yaml"]
+    # Gathering hostname info to help troubleshoot scenarios where the hostname mismatch
+    - run:
+        collectorName: "hostnames"
+        command: "sh"
+        args:
+          - -c
+          - |
+            echo "hostname = $(hostname)"
+            echo "/proc/sys/kernel/hostname = $(cat /proc/sys/kernel/hostname)"
+            echo "uname -n = $(uname -n)"
+    # System Info Collectors
+    - run:
+        collectorName: "vmstat"
+        command: "vmstat"
+        args: ["-w"]
+    - run:
+        collectorName: "ps-high-load"
+        command: "sh"
+        args: ["-c", "ps -eo s,user,cmd | grep ^[RD] | sort | uniq -c | sort -nbr | head -20"]
+    - filesystemPerformance:
+        collectorName: filesystem-latency-two-minute-benchmark
+        timeout: 2m
+        directory: /var/lib/k0s/etcd
+        fileSize: 22Mi
+        operationSizeBytes: 2300
+        datasync: true
+        enableBackgroundIOPS: true
+        backgroundIOPSWarmupSeconds: 10
+        backgroundWriteIOPS: 300
+        backgroundWriteIOPSJobs: 6
+        backgroundReadIOPS: 50
+        backgroundReadIOPSJobs: 1
+        exclude: true
+    - run:
+        collectorName: "localhost-ips"
+        command: "sh"
+        args: ["-c", "host localhost"]
+  hostAnalyzers:
+    - time:
+        checkName: "ntp-status"
+        outcomes:
+          - fail:
+              when: "ntp == unsynchronized+inactive"
+              message: "System clock is not synchronized"
+          - warn:
+              when: "ntp == unsynchronized+active"
+              message: System clock not yet synchronized
+          - pass:
+              when: "ntp == synchronized+active"
+              message: "System clock is synchronized"
+          - warn:
+              when: "timezone != UTC"
+              message: "Non UTC timezone can interfere with system function"
+          - pass:
+              when: "timezone == UTC"
+              message: "Timezone is set to UTC"
+    - diskUsage:
+        checkName: "root"
+        collectorName: "root"
+        outcomes:
+          - fail:
+              when: "total < 40Gi"
+              message: The disk containing directory / has less than 40Gi of total space
+          - warn:
+              when: "used/total > 80%"
+              message: The disk containing directory / is more than 80% full
+          - warn:
+              when: "available < 10Gi"
+              message: The disk containing directory / has less than 10Gi of disk space available
+          - pass:
+              message: The disk containing directory / has sufficient space
+    - diskUsage:
+        checkName: "tmp"
+        collectorName: "tmp"
+        outcomes:
+          - warn:
+              when: "total < 8Gi"
+              message: The disk containing directory /tmp has less than 8Gi of total space
+          - warn:
+              when: "used/total > 80%"
+              message: The disk containing directory /tmp is more than 80% full
+          - warn:
+              when: "available < 2Gi"
+              message: The disk containing directory /tmp has less than 2Gi of disk space available
+          - pass:
+              message: The disk containing directory /tmp has sufficient space
+    - filesystemPerformance:
+        collectorName: filesystem-latency-two-minute-benchmark
+        outcomes:
+          - pass:
+              when: "p99 < 10ms"
+              message: "Write latency is ok (p99 target < 10ms)"
+          - warn:
+              message: "Write latency is high. p99 target >= 10ms)"
+        exclude: true
+  analyzers:
+    - textAnalyze:
+        checkName: Kubernetes API health check
+        fileName: host-collectors/run-host/k8s-api-healthz-6443.txt
+        regex: ".*healthz check passed*"
+        outcomes:
+          - fail:
+              when: "false"
+              message: "Kubernetes API health check did not pass. One or more components are not working."
+          - pass:
+              when: "true"
+              message: "Kubernetes API health check passed"
+    - textAnalyze:
+        checkName: ETCD API Health
+        fileName: host-collectors/run-host/curl-etcd-health-2379.txt
+        regex: ".*\"health\":\"true\"*"
+        outcomes:
+          - fail:
+              when: "false"
+              message: "ETCD status returned: unhealthy"
+          - pass:
+              when: "true"
+              message: "ETCD status returned: healthy"
+    - textAnalyze:
+        checkName: Check if localhost resolves to 127.0.0.1
+        fileName: host-collectors/run-host/localhost-ips.txt
+        regex: 'localhost has address 127.0.0.1'
+        outcomes:
+          - fail:
+              when: "false"
+              message: "'localhost' does not resolve to 127.0.0.1 ip address"
+          - pass:
+              when: "true"
+              message: "'localhost' resolves to 127.0.0.1 ip address"
