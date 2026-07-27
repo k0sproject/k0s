@@ -401,21 +401,28 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			),
 		)
 	}
-	nodeComponents.Add(ctx, &status.Status{
+	statusComponent := status.Status{
 		Prober: prober.DefaultProber,
 		StatusInformation: status.K0sStatus{
 			Pid:           os.Getpid(),
 			Role:          "controller",
 			Args:          os.Args,
 			Version:       build.Version,
-			Workloads:     controllerMode.WorkloadsEnabled(),
 			SingleNode:    controllerMode == config.SingleNodeMode,
 			K0sVars:       c.K0sVars,
 			ClusterConfig: nodeConfig,
 		},
-		Socket:      c.K0sVars.StatusSocketPath,
-		CertManager: worker.NewCertificateManager(c.K0sVars.KubeletAuthConfigPath),
-	})
+		Socket: c.K0sVars.StatusSocketPath,
+	}
+	if controllerMode.WorkloadsEnabled() {
+		// The status component must use the same Kubernetes client configuration as
+		// the embedded kubelet, otherwise the API connectivity check would be
+		// inaccurate. For embedded workers, this is always the "direct"
+		// configuration.
+		statusComponent.StatusInformation.Workloads = true
+		statusComponent.CertManager = worker.NewCertificateManager(worker.DirectKubeletKubeconfigPath(c.K0sVars))
+	}
+	nodeComponents.Add(ctx, &statusComponent)
 
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
