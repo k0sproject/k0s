@@ -216,17 +216,6 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	}
 
 	kubeletKubeconfigPath := c.K0sVars.KubeletAuthConfigPath
-	workerConfig, err := workerconfig.LoadProfile(
-		ctx,
-		kubernetes.KubeconfigFromFile(kubeletKubeconfigPath),
-		c.K0sVars.DataDir,
-		c.WorkerProfile,
-	)
-	if err != nil {
-		return err
-	}
-
-	componentManager := manager.New(prober.DefaultProber)
 
 	// When upgrading controller+worker nodes in a multi-node cluster with a load balancer, the API
 	// server address needs to be overridden to point to the local API server. This is needed so
@@ -239,6 +228,18 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		}
 		kubeletKubeconfigPath = directKubeconfigPath
 	}
+
+	workerConfig, err := workerconfig.LoadProfile(
+		ctx,
+		kubernetes.KubeconfigFromFile(kubeletKubeconfigPath),
+		c.K0sVars.DataDir,
+		c.WorkerProfile,
+	)
+	if err != nil {
+		return err
+	}
+
+	componentManager := manager.New(prober.DefaultProber)
 
 	var staticPods worker.StaticPods
 

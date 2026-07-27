@@ -144,6 +144,12 @@ func writeKubeletBootstrapKubeconfig(kubeconfig clientcmdapi.Config) (string, er
 	return bootstrapFile.Name(), nil
 }
 
+// DirectKubeletKubeconfigPath returns the path to the kubeconfig written by
+// [CreateDirectKubeletKubeconfig].
+func DirectKubeletKubeconfigPath(k0sVars *config.CfgVars) string {
+	return filepath.Join(k0sVars.RunDir, "kubelet-direct.conf")
+}
+
 // CreateDirectKubeletKubeconfig creates a kubelet kubeconfig that points directly to the local API
 // server instead of using NLLB. This is used on controller+worker nodes where we want kubelet to
 // connect directly to the local API server.
@@ -180,7 +186,7 @@ func CreateDirectKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars,
 		return "", fmt.Errorf("failed to read kubeconfig: %w", err)
 	}
 
-	directKubeconfigPath := filepath.Join(k0sVars.RunDir, "kubelet-direct.conf")
+	directKubeconfigPath := DirectKubeletKubeconfigPath(k0sVars)
 
 	if err := writePatchedKubeconfig(directKubeconfigPath, directKubeconfig, localAPIServer); err != nil {
 		return "", fmt.Errorf("failed to write load-balanced kubeconfig file: %w", err)
