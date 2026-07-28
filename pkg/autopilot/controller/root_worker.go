@@ -14,6 +14,7 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
+	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,6 +75,10 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
 	}
 
+	// The restart tracker needs to outlive the individual controller managers,
+	// which get rebuilt on each retry attempt.
+	var restartTracker apsigk0s.RestartTracker
+
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
 	var attempt uint
 	return k8sretry.OnError(wait.Backoff{
@@ -111,7 +116,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, true, clusterID, leaderelection.StatusPending); err != nil {
+		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), &restartTracker, w.cfg.K0sDataDir, true, clusterID, leaderelection.StatusPending); err != nil {
 			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
 
