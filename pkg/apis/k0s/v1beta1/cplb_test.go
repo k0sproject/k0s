@@ -8,15 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stretchr/testify/require"
 )
 
-type CPLBSuite struct {
-	suite.Suite
-}
-
-func (s *CPLBSuite) TestValidateVRRPInstances() {
+func TestValidateVRRPInstances(t *testing.T) {
 	tests := []struct {
 		name          string
 		vrrps         []VRRPInstance
@@ -165,21 +162,21 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 	}
 
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
+		t.Run(tt.name, func(t *testing.T) {
 			k := &KeepalivedSpec{
 				VRRPInstances: tt.vrrps,
 			}
 			errs := k.validateVRRPInstances(returnNIC)
 			if tt.wantErr {
-				s.Require().Error(errors.Join(errs...))
+				require.Error(t, errors.Join(errs...))
 			} else {
-				s.Require().Empty(errs)
-				s.T().Log(k.VRRPInstances)
-				s.Require().Len(k.VRRPInstances, len(tt.expectedVRRPs), "Expected and actual VRRPInstances length mismatch")
+				require.Empty(t, errs)
+				t.Log(k.VRRPInstances)
+				require.Len(t, k.VRRPInstances, len(tt.expectedVRRPs), "Expected and actual VRRPInstances length mismatch")
 				for i := range tt.expectedVRRPs {
-					s.Require().Equal(tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
-					s.Require().Equal(tt.expectedVRRPs[i].VirtualRouterID, k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
-					s.Require().Equal(tt.expectedVRRPs[i].AdvertIntervalSeconds, k.VRRPInstances[i].AdvertIntervalSeconds, "Advertisement interval mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].VirtualRouterID, k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].AdvertIntervalSeconds, k.VRRPInstances[i].AdvertIntervalSeconds, "Advertisement interval mismatch")
 				}
 			}
 		})
@@ -190,7 +187,7 @@ func returnNIC() (string, error) {
 	return "fake-nic-0", nil
 }
 
-func (s *CPLBSuite) TestValidateVirtualServers() {
+func TestValidateVirtualServers(t *testing.T) {
 	tests := []struct {
 		name        string
 		vss         []VirtualServer
@@ -308,25 +305,20 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 		},
 	}
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
+		t.Run(tt.name, func(t *testing.T) {
 			k := &KeepalivedSpec{VirtualServers: tt.vss}
 			errs := k.validateVirtualServers()
 			if tt.wantErr {
-				s.Require().Error(errors.Join(errs...))
+				require.Error(t, errors.Join(errs...))
 			} else {
-				s.Require().Empty(errs)
+				require.Empty(t, errs)
 				for i := range tt.expectedVSS {
-					s.Require().Equal(tt.expectedVSS[i].DelayLoop, k.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
-					s.Require().Equal(tt.expectedVSS[i].LBAlgo, k.VirtualServers[i].LBAlgo, "LBalgo mismatch")
-					s.Require().Equal(tt.expectedVSS[i].LBKind, k.VirtualServers[i].LBKind, "LBKind mismatch")
-					s.Require().Equal(tt.expectedVSS[i].PersistenceTimeoutSeconds, k.VirtualServers[i].PersistenceTimeoutSeconds, "PersistenceTimeout mismatch")
+					require.Equal(t, tt.expectedVSS[i].DelayLoop, k.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
+					require.Equal(t, tt.expectedVSS[i].LBAlgo, k.VirtualServers[i].LBAlgo, "LBalgo mismatch")
+					require.Equal(t, tt.expectedVSS[i].LBKind, k.VirtualServers[i].LBKind, "LBKind mismatch")
+					require.Equal(t, tt.expectedVSS[i].PersistenceTimeoutSeconds, k.VirtualServers[i].PersistenceTimeoutSeconds, "PersistenceTimeout mismatch")
 				}
 			}
 		})
 	}
-}
-func TestCPLBSuite(t *testing.T) {
-	cplbSuite := &CPLBSuite{}
-
-	suite.Run(t, cplbSuite)
 }
