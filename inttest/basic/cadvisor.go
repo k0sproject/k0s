@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"iter"
 	"maps"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -309,6 +310,14 @@ func verifyCAdvisorMetrics(ctx context.Context, t *testing.T, client kubernetes.
 			_, found := slices.BinarySearchFunc(allMetrics, c, slices.Compare)
 			return found
 		})
+
+		// PSI metrics are only available on kernels that support it.
+		if _, err := os.Stat("/sys/fs/cgroup/cpu.pressure"); err != nil && assert.ErrorIs(&f, err, os.ErrNotExist) {
+			missingMetrics = slices.DeleteFunc(missingMetrics, func(c []string) bool {
+				return strings.HasPrefix(c[0], "container_pressure_")
+			})
+		}
+
 		assert.Empty(&f, missingMetrics, "Some expected cAdvisor metrics are missing")
 
 		verifyContainerMetricsImageLabels(&f, families)
@@ -331,9 +340,14 @@ func collectAllMetrics(families map[string]*clientmodel.MetricFamily) (all [][]s
 			labels[0] = name
 
 			for name, value := range nonNilLabels(metric.Label) {
-				if value != "" {
-					labels = append(labels, name)
+				if value == "" && // Skip labels with empty values...
+					// ...except if they are reporting the system UUID, which
+					// might or might not be there, depending on the test
+					// environment.
+					(name != "system_uuid" || !strings.HasPrefix(labels[0], "machine_")) {
+					continue
 				}
+				labels = append(labels, name)
 			}
 			slices.Sort(labels[1:])
 			if !slices.ContainsFunc(all[off:], func(c []string) bool {
