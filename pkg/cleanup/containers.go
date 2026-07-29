@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
@@ -21,9 +22,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// containerStopTimeout bounds each CRI stop or remove call so a stuck CNI
+// teardown cannot hang reset. Kept under containerd 60s CNI timeout.
+const containerStopTimeout = 30 * time.Second
+
 type containers struct {
 	managedContainerd *containerd.Component
 	containerRuntime  runtime.ContainerRuntime
+
+	stopTimeout   time.Duration // overridable in tests
+	cleanupMounts func() error  // overridable in tests
 }
 
 // Name returns the name of the step
@@ -76,26 +84,27 @@ func (c *containers) stopAllContainers() error {
 		return fmt.Errorf("failed at listing pods %w", err)
 	}
 	if len(pods) > 0 {
-		if err := cleanupContainerMounts(); err != nil {
+		if err := c.cleanupMounts(); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
 	for _, pod := range pods {
 		logrus.Debugf("stopping container: %v", pod)
-		err := c.containerRuntime.StopContainer(ctx, pod)
-		if err != nil {
-			if strings.Contains(err.Error(), "443: connect: connection refused") {
-				// on a single node instance, we will see "connection refused" error. this is to be expected
-				// since we're deleting the API pod itself. so we're ignoring this error
-				logrus.Debugf("ignoring container stop err: %v", err.Error())
+		if err := c.stopContainer(ctx, pod); err != nil {
+			if isExpectedStopError(err) {
+				// expected during reset, API gone or CNI teardown timed out
+				logrus.Debugf("ignoring pod %s stop error: %v", pod, err)
 			} else {
 				errs = append(errs, fmt.Errorf("failed to stop running pod %s: %w", pod, err))
 			}
 		}
-		err = c.containerRuntime.RemoveContainer(ctx, pod)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to remove pod %s: %w", pod, err))
+		if err := c.removeContainer(ctx, pod); err != nil {
+			if isExpectedStopError(err) {
+				logrus.Debugf("ignoring pod %s remove error: %v", pod, err)
+			} else {
+				errs = append(errs, fmt.Errorf("failed to remove pod %s: %w", pod, err))
+			}
 		}
 	}
 
@@ -110,6 +119,38 @@ func (c *containers) stopAllContainers() error {
 	return nil
 }
 
+// stopContainer stops one pod sandbox under a deadline.
+func (c *containers) stopContainer(ctx context.Context, pod string) error {
+	ctx, cancel := context.WithTimeout(ctx, c.stopTimeout)
+	defer cancel()
+	return c.containerRuntime.StopContainer(ctx, pod)
+}
+
+// removeContainer removes one pod sandbox under a deadline.
+func (c *containers) removeContainer(ctx context.Context, pod string) error {
+	ctx, cancel := context.WithTimeout(ctx, c.stopTimeout)
+	defer cancel()
+	return c.containerRuntime.RemoveContainer(ctx, pod)
+}
+
+// isExpectedStopError reports whether a stop or remove error is a normal
+// consequence of tearing down the control plane and can be ignored.
+func isExpectedStopError(err error) bool {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return true
+	}
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "443: connect: connection refused"):
+		return true
+	case strings.Contains(msg, "context deadline exceeded"),
+		strings.Contains(msg, "the server was unable to return a response in the time allotted"):
+		return true
+	default:
+		return false
+	}
+}
+
 func newContainersStep(debug bool, k0sVars *config.CfgVars, criSocketFlag string) (*containers, error) {
 	runtimeEndpoint, err := worker.GetContainerRuntimeEndpoint(criSocketFlag, k0sVars.RunDir)
 	if err != nil {
@@ -118,6 +159,8 @@ func newContainersStep(debug bool, k0sVars *config.CfgVars, criSocketFlag string
 
 	containers := containers{
 		containerRuntime: runtime.NewContainerRuntime(runtimeEndpoint),
+		stopTimeout:      containerStopTimeout,
+		cleanupMounts:    cleanupContainerMounts,
 	}
 
 	if criSocketFlag == "" {

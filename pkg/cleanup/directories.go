@@ -11,10 +11,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
 )
+
+// defaultUnmountTimeout bounds a single blocking unmount. A umount(2) of a
+// mount whose backend is gone or frozen blocks uninterruptibly and never
+// returns, so the lazy fallback is never reached. Bound it so reset makes
+// progress.
+const defaultUnmountTimeout = 30 * time.Second
 
 // Run removes all kubelet mounts and deletes generated dataDir and runDir
 func (d *directories) Run() error {
@@ -51,11 +58,11 @@ func (d *directories) Run() error {
 		}
 		if isUnderPath(v.Path, d.kubeletRootDir) || isUnderPath(v.Path, d.dataDir) {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
-			if err = mounter.Unmount(v.Path); err != nil {
-				// if we fail to unmount, try lazy unmount so
-				// we don't end up deleting stuff that we
-				// shouldn't
-				logrus.Warningf("lazy unmounting %v", v.Path)
+			if err = d.unmount(mounter, v.Path); err != nil {
+				// clean unmount failed or wedged. Detach lazily, which returns
+				// at once even on a dead or frozen backend and disconnects the
+				// mount from the path so RemoveAll cannot reach volume data.
+				logrus.Warningf("lazy unmounting %v: %v", v.Path, err)
 				if err = UnmountLazy(v.Path); err != nil {
 					return fmt.Errorf("failed unmount %v", v.Path)
 				}
@@ -89,6 +96,25 @@ func (d *directories) Run() error {
 	}
 
 	return nil
+}
+
+// unmount attempts a normal unmount but never blocks past the timeout. A
+// umount(2) can wedge in D state on a dead or frozen backend, so the attempt
+// runs in a goroutine we abandon on timeout (the process exits soon after
+// reset). A non nil return tells the caller to fall back to a lazy detach.
+func (d *directories) unmount(mounter mount.Interface, path string) error {
+	timeout := d.unmountTimeout
+	if timeout <= 0 {
+		timeout = defaultUnmountTimeout
+	}
+	done := make(chan error, 1)
+	go func() { done <- mounter.Unmount(path) }()
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(timeout):
+		return fmt.Errorf("timed out after %s", timeout)
+	}
 }
 
 // test if the path is a directory equal to or under base
