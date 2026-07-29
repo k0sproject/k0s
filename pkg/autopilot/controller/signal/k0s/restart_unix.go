@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -49,17 +50,49 @@ func restartEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.
 	)
 }
 
+// Records that this process is about to initiate a restart for the given signal data.
+type RestartInitiatedFunc = func(apsigv2.SignalData)
+
+// Indicates whether this process initiated a restart for the given signal data.
+// Since this process is still running, such a restart has yet to be performed.
+// Conversely, a 'Restart' status that this process didn't write itself predates
+// it, i.e. the restart has already taken place.
+type IsRestartPendingFunc = func(apsigv2.SignalData) bool
+
+// Keeps track of a k0s restart that has been initiated by the currently running
+// process. Its lifetime needs to be tied to the k0s process. Whether a restart
+// is still pending or has already been performed can only be decided by knowing
+// if the 'Restart' status has been written by this very process.
+type RestartTracker struct {
+	initiatedData atomic.Pointer[apsigv2.SignalData]
+}
+
+// See [RestartInitiatedFunc].
+func (t *RestartTracker) RestartInitiated(signalData apsigv2.SignalData) {
+	t.initiatedData.Store(&signalData)
+}
+
+// See [IsRestartPendingFunc].
+func (t *RestartTracker) IsRestartPending(pendingData apsigv2.SignalData) bool {
+	if initiatedData := t.initiatedData.Load(); initiatedData != nil {
+		return initiatedData.PlanID == pendingData.PlanID && initiatedData.Created == pendingData.Created &&
+			initiatedData.Status != nil && pendingData.Status != nil && *initiatedData.Status == *pendingData.Status
+	}
+	return false
+}
+
 type restart struct {
-	log      *logrus.Entry
-	client   crcli.Client
-	delegate apdel.ControllerDelegate
+	log              *logrus.Entry
+	client           crcli.Client
+	delegate         apdel.ControllerDelegate
+	isRestartPending IsRestartPendingFunc
 }
 
 // registerRestart registers the 'restart' controller to the controller-runtime manager.
 //
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
-func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, isRestartPending IsRestartPendingFunc) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_restart"
 	logger.Info("Registering reconciler: ", name)
 
@@ -69,9 +102,10 @@ func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred
 		WithEventFilter(eventFilter).
 		Complete(
 			&restart{
-				log:      logger.WithFields(logrus.Fields{"reconciler": "k0s-restart", "object": delegate.Name()}),
-				client:   mgr.GetClient(),
-				delegate: delegate,
+				log:              logger.WithFields(logrus.Fields{"reconciler": "k0s-restart", "object": delegate.Name()}),
+				client:           mgr.GetClient(),
+				delegate:         delegate,
+				isRestartPending: isRestartPending,
 			},
 		)
 }
@@ -111,7 +145,13 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 		return cr.Result{}, nil
 	}
 
-	if k0sVersion == signalData.Command.K0sUpdate.Version {
+	// Check if this very process wrote the 'Restart' status. Such a restart is
+	// still pending and needs to be performed by terminating k0s. Conversely, a
+	// 'Restart' status that hasn't been written by this process predates it,
+	// which means that the restart has already been performed.
+	restartPending := r.isRestartPending(signalData)
+
+	if k0sVersion == signalData.Command.K0sUpdate.Version || (!restartPending && signalData.Command.K0sUpdate.ForceUpdate) {
 		signalNodeCopy := r.delegate.DeepCopy(signalNode)
 		signalData.Status = apsigv2.NewStatus(UnCordoning)
 
@@ -124,6 +164,13 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 			return cr.Result{}, fmt.Errorf("unable to update signal node with '%s' status: %w", signalData.Status.Status, err)
 		}
 
+		return cr.Result{}, nil
+	}
+
+	if !restartPending {
+		// The restart has already been performed, but the expected version of
+		// k0s still isn't running. Performing another restart won't help.
+		logger.Debug("Not restarting k0s: the restart has already been performed")
 		return cr.Result{}, nil
 	}
 
