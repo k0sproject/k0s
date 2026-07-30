@@ -565,7 +565,7 @@ If you want the list of default images and their versions to be included, use `k
 
 #### Image example
 
-{% set cali_ver = src_var('CalicoKubeControllersImage') -%}
+{% set cali_ver = src_var('CalicoKubeControllersImageVersion') -%}
 {% set metrics_ver = src_var('MetricsImageVersion') -%}
 
 ```yaml
