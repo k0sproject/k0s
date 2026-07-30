@@ -16,13 +16,13 @@ import (
 func TestValidateVRRPInstances(t *testing.T) {
 	tests := []struct {
 		name          string
-		vrrps         []VRRPInstance
-		expectedVRRPs []VRRPInstance
+		vrrps         VRRPInstances
+		expectedVRRPs VRRPInstances
 		wantErr       bool
 	}{
 		{
 			name: "Set expected defaults",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualIPs: []string{"192.168.1.1/24"},
 					AuthPass:   "123456",
@@ -32,7 +32,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 					AuthPass:   "12345678",
 				},
 			},
-			expectedVRRPs: []VRRPInstance{
+			expectedVRRPs: VRRPInstances{
 				{
 					VirtualRouterID:       defaultVirtualRouterID,
 					Interface:             "fake-nic-0",
@@ -52,7 +52,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 		},
 		{
 			name: "valid instance no overrides",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -63,7 +63,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
-			expectedVRRPs: []VRRPInstance{
+			expectedVRRPs: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -77,7 +77,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 			wantErr: false,
 		}, {
 			name: "No password",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -88,7 +88,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 			wantErr: true,
 		}, {
 			name: "Password too long",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualIPs: []string{"192.168.1.1/24"},
 					AuthPass:   "012345678",
@@ -97,7 +97,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 			wantErr: true,
 		}, {
 			name: "Invalid CIDR",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualIPs: []string{"192.168.1.1"},
 					AuthPass:   "123456",
@@ -106,7 +106,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 			wantErr: true,
 		}, {
 			name: "Unicast Peers without unicast source",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -119,7 +119,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 			wantErr: true,
 		}, {
 			name: "Invalid unicast peers",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -132,7 +132,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 			wantErr: true,
 		}, {
 			name: "Invalid unicast source",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -146,7 +146,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 			wantErr: true,
 		}, {
 			name: "Unicast peers includes unicast source",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -163,20 +163,18 @@ func TestValidateVRRPInstances(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := &KeepalivedSpec{
-				VRRPInstances: tt.vrrps,
-			}
-			errs := k.validateVRRPInstances(returnNIC)
+			underTest := tt.vrrps.DeepCopy()
+			errs := underTest.validate(returnNIC)
 			if tt.wantErr {
 				require.Error(t, errors.Join(errs...))
 			} else {
 				require.Empty(t, errs)
-				t.Log(k.VRRPInstances)
-				require.Len(t, k.VRRPInstances, len(tt.expectedVRRPs), "Expected and actual VRRPInstances length mismatch")
+				t.Log(underTest)
+				require.Len(t, underTest, len(tt.expectedVRRPs), "Expected and actual VRRPInstances length mismatch")
 				for i := range tt.expectedVRRPs {
-					require.Equal(t, tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
-					require.Equal(t, tt.expectedVRRPs[i].VirtualRouterID, k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
-					require.Equal(t, tt.expectedVRRPs[i].AdvertIntervalSeconds, k.VRRPInstances[i].AdvertIntervalSeconds, "Advertisement interval mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].Interface, underTest[i].Interface, "Interface mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].VirtualRouterID, underTest[i].VirtualRouterID, "Virtual router ID mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].AdvertIntervalSeconds, underTest[i].AdvertIntervalSeconds, "Advertisement interval mismatch")
 				}
 			}
 		})
@@ -190,13 +188,13 @@ func returnNIC() (string, error) {
 func TestValidateVirtualServers(t *testing.T) {
 	tests := []struct {
 		name        string
-		vss         []VirtualServer
-		expectedVSS []VirtualServer
+		vss         VirtualServers
+		expectedVSS VirtualServers
 		wantErr     bool
 	}{
 		{
 			name: "Set expected defaults",
-			vss: []VirtualServer{
+			vss: VirtualServers{
 				{
 					IPAddress: "1.2.3.4",
 				},
@@ -204,7 +202,7 @@ func TestValidateVirtualServers(t *testing.T) {
 					IPAddress: "1.2.3.5",
 				},
 			},
-			expectedVSS: []VirtualServer{
+			expectedVSS: VirtualServers{
 				{
 					IPAddress:                 "1.2.3.4",
 					DelayLoop:                 metav1.Duration{Duration: time.Minute},
@@ -224,7 +222,7 @@ func TestValidateVirtualServers(t *testing.T) {
 		},
 		{
 			name: "valid instance no overrides",
-			vss: []VirtualServer{
+			vss: VirtualServers{
 				{
 					IPAddress:                 "1.2.3.4",
 					DelayLoop:                 metav1.Duration{Duration: 1 * time.Second},
@@ -233,7 +231,7 @@ func TestValidateVirtualServers(t *testing.T) {
 					PersistenceTimeoutSeconds: 100,
 				},
 			},
-			expectedVSS: []VirtualServer{
+			expectedVSS: VirtualServers{
 				{
 					IPAddress:                 "1.2.3.4",
 					DelayLoop:                 metav1.Duration{Duration: 1 * time.Second},
@@ -246,13 +244,13 @@ func TestValidateVirtualServers(t *testing.T) {
 		},
 		{
 			name: "truncate DelayLoop",
-			vss: []VirtualServer{
+			vss: VirtualServers{
 				{
 					IPAddress: "1.2.3.4",
 					DelayLoop: metav1.Duration{Duration: 1234567 * time.Nanosecond},
 				},
 			},
-			expectedVSS: []VirtualServer{
+			expectedVSS: VirtualServers{
 				{
 					IPAddress:                 "1.2.3.4",
 					DelayLoop:                 metav1.Duration{Duration: 1234 * time.Microsecond},
@@ -265,40 +263,40 @@ func TestValidateVirtualServers(t *testing.T) {
 		},
 		{
 			name:    "empty ip address",
-			vss:     []VirtualServer{{}},
+			vss:     VirtualServers{{}},
 			wantErr: true,
 		},
 		{
 			name: "invalid IP address",
-			vss: []VirtualServer{{
+			vss: VirtualServers{{
 				IPAddress: "INVALID",
 			}},
 			wantErr: true,
 		},
 		{
 			name: "invalid LBAlgo",
-			vss: []VirtualServer{{
+			vss: VirtualServers{{
 				LBAlgo: "invalid",
 			}},
 			wantErr: true,
 		},
 		{
 			name: "invalid LBKind",
-			vss: []VirtualServer{{
+			vss: VirtualServers{{
 				LBKind: "invalid",
 			}},
 			wantErr: true,
 		},
 		{
 			name: "invalid persistencee timeout",
-			vss: []VirtualServer{{
+			vss: VirtualServers{{
 				PersistenceTimeoutSeconds: -1,
 			}},
 			wantErr: true,
 		},
 		{
 			name: "invalid delay loop",
-			vss: []VirtualServer{{
+			vss: VirtualServers{{
 				DelayLoop: metav1.Duration{Duration: -1},
 			}},
 			wantErr: true,
@@ -306,17 +304,17 @@ func TestValidateVirtualServers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			k := &KeepalivedSpec{VirtualServers: tt.vss}
-			errs := k.validateVirtualServers()
+			underTest := tt.vss.DeepCopy()
+			errs := underTest.validate()
 			if tt.wantErr {
 				require.Error(t, errors.Join(errs...))
 			} else {
 				require.Empty(t, errs)
 				for i := range tt.expectedVSS {
-					require.Equal(t, tt.expectedVSS[i].DelayLoop, k.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
-					require.Equal(t, tt.expectedVSS[i].LBAlgo, k.VirtualServers[i].LBAlgo, "LBalgo mismatch")
-					require.Equal(t, tt.expectedVSS[i].LBKind, k.VirtualServers[i].LBKind, "LBKind mismatch")
-					require.Equal(t, tt.expectedVSS[i].PersistenceTimeoutSeconds, k.VirtualServers[i].PersistenceTimeoutSeconds, "PersistenceTimeout mismatch")
+					require.Equal(t, tt.expectedVSS[i].DelayLoop, underTest[i].DelayLoop, "DelayLoop mismatch")
+					require.Equal(t, tt.expectedVSS[i].LBAlgo, underTest[i].LBAlgo, "LBalgo mismatch")
+					require.Equal(t, tt.expectedVSS[i].LBKind, underTest[i].LBKind, "LBKind mismatch")
+					require.Equal(t, tt.expectedVSS[i].PersistenceTimeoutSeconds, underTest[i].PersistenceTimeoutSeconds, "PersistenceTimeout mismatch")
 				}
 			}
 		})
