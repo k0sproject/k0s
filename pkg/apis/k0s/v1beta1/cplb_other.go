@@ -12,9 +12,9 @@ import (
 )
 
 func getDefaultNIC() (string, error) {
-	return "", fmt.Errorf("getDefaultNIC on %s is not supported", runtime.GOOS)
+	return "", fmt.Errorf("%w on %s", errors.ErrUnsupported, runtime.GOOS)
 }
 
-func macToInterfaceName(_ *string, errs *[]error) {
-	*errs = append(*errs, fmt.Errorf("%w on %s: resolving interface names for MAC addresses", errors.ErrUnsupported, runtime.GOOS))
+func getNIC(string) (string, error) {
+	return "", fmt.Errorf("%w on %s", errors.ErrUnsupported, runtime.GOOS)
 }

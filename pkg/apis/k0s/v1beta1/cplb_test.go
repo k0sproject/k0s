@@ -9,6 +9,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -108,7 +109,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 				VirtualIPs:      []string{"192.168.2.1/24"},
 				AuthPass:        "123456",
 			}},
-			wantErr: `VirtualRouterID must be in the range of 1-255`,
+			wantErr: `vrrpInstances[1].virtualRouterID: Invalid value: 256: must be between 1 and 255, inclusive`,
 		}, {
 			name: "Negative virtual router ID",
 			vrrps: VRRPInstances{{
@@ -117,7 +118,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 				VirtualIPs:      []string{"192.168.1.1/24"},
 				AuthPass:        "123456",
 			}},
-			wantErr: `VirtualRouterID must be in the range of 1-255`,
+			wantErr: `vrrpInstances[0].virtualRouterID: Invalid value: -1: must be between 1 and 255, inclusive`,
 		}, {
 			name: "Reserved address label",
 			vrrps: VRRPInstances{{
@@ -126,7 +127,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 				AuthPass:     "123456",
 				AddressLabel: math.MaxUint32,
 			}},
-			wantErr: `AddressLabel 0xffffffff is reserved`,
+			wantErr: `vrrpInstances[0].addressLabel: Invalid value: 4294967295: 0xffffffff is reserved`,
 		}, {
 			name: "No password",
 			vrrps: VRRPInstances{
@@ -137,7 +138,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 					AdvertIntervalSeconds: 1,
 				},
 			},
-			wantErr: `AuthPass must be defined`,
+			wantErr: `vrrpInstances[0].authPass: Required value`,
 		}, {
 			name: "Password too long",
 			vrrps: VRRPInstances{
@@ -146,23 +147,23 @@ func TestValidateVRRPInstances(t *testing.T) {
 					AuthPass:   "012345678",
 				},
 			},
-			wantErr: `AuthPass must be 8 characters or less`,
+			wantErr: `vrrpInstances[0].authPass: Too long: may not be more than 8 bytes`,
 		}, {
 			name: "No virtual IPs",
 			vrrps: VRRPInstances{{
 				Interface: "eth0",
 				AuthPass:  "123456",
 			}},
-			wantErr: `VirtualIPs must be defined`,
+			wantErr: `vrrpInstances[0].virtualIPs: Required value`,
 		}, {
 			name: "Invalid CIDR",
 			vrrps: VRRPInstances{
 				{
-					VirtualIPs: []string{"192.168.1.1"},
+					VirtualIPs: []string{"192.168.1.1/24", "192.168.1.1"},
 					AuthPass:   "123456",
 				},
 			},
-			wantErr: `VirtualIPs must be a CIDR. Got: 192.168.1.1`,
+			wantErr: `vrrpInstances[0].virtualIPs[1]: Invalid value: "192.168.1.1": must be a valid address in CIDR form, (e.g. 10.9.8.7/24 or 2001:db8::1/64)`,
 		}, {
 			name: "Unicast Peers without unicast source",
 			vrrps: VRRPInstances{
@@ -175,7 +176,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
-			wantErr: `UnicastPeers require a valid UnicastSourceIP. Got: `,
+			wantErr: `vrrpInstances[0].unicastSourceIP: Required value: when unicastPeers are specified`,
 		}, {
 			name: "Invalid unicast peers",
 			vrrps: VRRPInstances{
@@ -186,10 +187,10 @@ func TestValidateVRRPInstances(t *testing.T) {
 					AdvertIntervalSeconds: 1,
 					AuthPass:              "123456",
 					UnicastSourceIP:       "192.168.1.1",
-					UnicastPeers:          []string{"example.com", "192.168.1.3"},
+					UnicastPeers:          []string{"192.168.1.2", "example.com"},
 				},
 			},
-			wantErr: `UnicastPeers require valid IP addresses. Got: example.com`,
+			wantErr: `vrrpInstances[0].unicastPeers[1]: Invalid value: "example.com": must be a valid IP address, (e.g. 10.9.8.7 or 2001:db8::ffff)`,
 		}, {
 			name: "Invalid unicast source",
 			vrrps: VRRPInstances{
@@ -203,7 +204,7 @@ func TestValidateVRRPInstances(t *testing.T) {
 					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
-			wantErr: `UnicastPeers require a valid UnicastSourceIP. Got: example.com`,
+			wantErr: `vrrpInstances[0].unicastSourceIP: Invalid value: "example.com": must be a valid IP address, (e.g. 10.9.8.7 or 2001:db8::ffff)`,
 		}, {
 			name: "Unicast peers includes unicast source",
 			vrrps: VRRPInstances{
@@ -217,14 +218,14 @@ func TestValidateVRRPInstances(t *testing.T) {
 					UnicastPeers:          []string{"192.168.1.1", "192.168.1.2", "192.168.1.3"},
 				},
 			},
-			wantErr: `UnicastPeers must not contain the UnicastSourceIP. Got: 192.168.1.1`,
+			wantErr: `vrrpInstances[0].unicastPeers[0]: Invalid value: "192.168.1.1": must not be the same as unicastSourceIP`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			underTest := tt.vrrps.DeepCopy()
-			errs := underTest.validate(returnNIC)
+			errs := underTest.validate(field.NewPath("vrrpInstances"), returnNIC)
 			if tt.wantErr != "" {
 				if assert.Len(t, errs, 1) {
 					assert.ErrorContains(t, errs[0], tt.wantErr)
@@ -254,10 +255,12 @@ func TestValidateVRRPInstances(t *testing.T) {
 			}
 		}
 
-		errs := VRRPInstances(underTest[:]).validate(returnNIC)
+		errs := VRRPInstances(underTest[:]).validate(field.NewPath("vrrpInstances"), returnNIC)
 
 		if assert.Lenf(t, errs, 1, "Expected exactly one error") {
-			assert.ErrorContains(t, errs[0], `automatic virtualRouterIDs exceeded, specify them explicitly`)
+			assert.ErrorContains(t, errs[0],
+				`vrrpInstances[205].virtualRouterID: Internal error: automatic virtualRouterIDs exceeded, specify them explicitly`,
+			)
 		}
 		assert.EqualValues(t, 255, underTest[len(underTest)-2].VirtualRouterID)
 		assert.Zero(t, underTest[len(underTest)-1].VirtualRouterID)
@@ -343,15 +346,15 @@ func TestValidateVirtualServers(t *testing.T) {
 		},
 		{
 			name:    "empty ip address",
-			vss:     VirtualServers{{}},
-			wantErr: `IPAddress must be defined`,
+			vss:     VirtualServers{{IPAddress: "1.2.3.4"}, {}},
+			wantErr: `virtualServers[1].ipAddress: Required value`,
 		},
 		{
 			name: "invalid IP address",
 			vss: VirtualServers{{
 				IPAddress: "INVALID",
 			}},
-			wantErr: `invalid IP address: INVALID`,
+			wantErr: `virtualServers[0].ipAddress: Invalid value: "INVALID": must be a valid IP address, (e.g. 10.9.8.7 or 2001:db8::ffff)`,
 		},
 		{
 			name: "invalid LBAlgo",
@@ -359,7 +362,7 @@ func TestValidateVirtualServers(t *testing.T) {
 				IPAddress: "1.2.3.4",
 				LBAlgo:    "invalid",
 			}},
-			wantErr: `invalid LBAlgo: invalid`,
+			wantErr: `virtualServers[0].lbAlgo: Unsupported value: "invalid": supported values: "rr", "wrr", "lc", "wlc", "lblc", "dh", "sh", "sed", "nq"`,
 		},
 		{
 			name: "invalid LBKind",
@@ -367,7 +370,7 @@ func TestValidateVirtualServers(t *testing.T) {
 				IPAddress: "1.2.3.4",
 				LBKind:    "invalid",
 			}},
-			wantErr: `invalid LBKind: invalid`,
+			wantErr: `virtualServers[0].lbKind: Unsupported value: "invalid": supported values: "NAT", "DR", "TUN"`,
 		},
 		{
 			name: "negative persistence timeout",
@@ -375,7 +378,7 @@ func TestValidateVirtualServers(t *testing.T) {
 				IPAddress:                 "1.2.3.4",
 				PersistenceTimeoutSeconds: -1,
 			}},
-			wantErr: `PersistenceTimeout must be in the range of 1-2678400`,
+			wantErr: `virtualServers[0].persistenceTimeoutSeconds: Invalid value: -1: must be between 1 and 2678400, inclusive`,
 		},
 		{
 			name: "persistence timeout too long",
@@ -383,15 +386,15 @@ func TestValidateVirtualServers(t *testing.T) {
 				IPAddress:                 "1.2.3.4",
 				PersistenceTimeoutSeconds: 2678401,
 			}},
-			wantErr: `PersistenceTimeout must be in the range of 1-2678400`,
+			wantErr: `virtualServers[0].persistenceTimeoutSeconds: Invalid value: 2678401: must be between 1 and 2678400, inclusive`,
 		},
 		{
 			name: "negative delay loop",
 			vss: VirtualServers{{
 				IPAddress: "1.2.3.4",
-				DelayLoop: metav1.Duration{Duration: -1},
+				DelayLoop: metav1.Duration{Duration: -1 * time.Second},
 			}},
-			wantErr: `DelayLoop must be positive`,
+			wantErr: `virtualServers[0].delayLoop: Invalid value: "-1s": must be positive`,
 		},
 		{
 			name: "sub-microsecond delay loop",
@@ -399,13 +402,13 @@ func TestValidateVirtualServers(t *testing.T) {
 				IPAddress: "1.2.3.4",
 				DelayLoop: metav1.Duration{Duration: 999 * time.Nanosecond},
 			}},
-			wantErr: `DelayLoop must be positive`,
+			wantErr: `virtualServers[0].delayLoop: Invalid value: "0s": must be positive`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			underTest := tt.vss.DeepCopy()
-			errs := underTest.validate()
+			errs := underTest.validate(field.NewPath("virtualServers"))
 			if tt.wantErr != "" {
 				if assert.Len(t, errs, 1) {
 					assert.ErrorContains(t, errs[0], tt.wantErr)
@@ -443,12 +446,12 @@ func TestKeepalivedSpec_Validate(t *testing.T) {
 		{
 			name:    "rejects out of range port",
 			port:    70000,
-			wantErr: "UserSpaceProxyPort must be in the range of 1-65535",
+			wantErr: "userSpaceProxyBindPort: Invalid value: 70000: must be between 1 and 65535, inclusive",
 		},
 	} {
 		t.Run("userSpaceProxyBindPort "+tt.name, func(t *testing.T) {
 			k := &KeepalivedSpec{UserSpaceProxyPort: tt.port}
-			errs := k.Validate()
+			errs := k.Validate(nil)
 			if tt.wantErr != "" {
 				require.Len(t, errs, 1)
 				assert.ErrorContains(t, errs[0], tt.wantErr)

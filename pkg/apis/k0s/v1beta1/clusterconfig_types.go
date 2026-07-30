@@ -463,12 +463,6 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		errs = append(errs, err)
 	}
 
-	if s.Network != nil && s.Network.ControlPlaneLoadBalancing != nil {
-		for _, err := range s.Network.ControlPlaneLoadBalancing.Validate() {
-			errs = append(errs, fmt.Errorf("controlPlaneLoadBalancing: %w", err))
-		}
-	}
-
 	errs = append(errs, s.MetricsServer.Validate(field.NewPath("metricsServer"))...)
 
 	return
