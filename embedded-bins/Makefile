@@ -110,3 +110,5 @@ build_docker_image = \
 
 .docker-image.%.windows.stamp: %/Dockerfile Makefile.variables
 	$(build_docker_image)
+
+.docker-image.kubernetes.stamp .docker-image.kubernetes.windows.stamp: $(wildcard kubernetes/patches/*)
