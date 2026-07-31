@@ -260,6 +260,10 @@ jobs:
           & kubectl get nodes,pods -A
           go test -v -count=1 ./inttest/windows
 
+      - name: Reinstall with force
+        run: |
+          & .\k0s.exe install worker --force --token-file=k0s-worker-token --debug --labels test.k0sproject.io/foo=bar --kubelet-extra-args="--hostname-override=windowsworker"
+          & .\k0s.exe start
       - name: Stop & reset k0s worker
         run: |
           & .\k0s.exe stop --debug
