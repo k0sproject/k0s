@@ -60,7 +60,7 @@ require (
 	golang.org/x/sys v0.47.0
 	golang.org/x/text v0.40.0
 	golang.org/x/tools v0.48.0
-	google.golang.org/grpc v1.82.1
+	google.golang.org/grpc v1.83.0
 	helm.sh/helm/v3 v3.21.3
 	modernc.org/sqlite v1.54.0
 	oras.land/oras-go/v2 v2.6.2
@@ -91,7 +91,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.25.1 // indirect
+	cel.dev/expr v0.25.2 // indirect
 	cyphar.com/go-pathrs v0.2.5 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
