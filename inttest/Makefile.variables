@@ -82,6 +82,7 @@ smoketests := \
 	check-noderole-no-taints \
 	check-noderole-single \
 	check-patches \
+	check-privileged-port \
 	check-psp \
 	check-reset \
 	check-singlenode \
