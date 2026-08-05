@@ -3542,7 +3542,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>port</code>¹</td>
-<td>Custom port for the Kubernetes API server to listen on (default: 6443)</td>
+<td>Custom port for the Kubernetes API server to listen on (default: 6443). When set to a privileged port (&lt; 1024), k0s automatically grants the <code>CAP_NET_BIND_SERVICE</code> capability to the kube-apiserver process to allow binding to the port.</td>
 </tr>
 <tr>
 <td><code>k0sApiPort</code>¹</td>
