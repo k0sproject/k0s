@@ -32,7 +32,12 @@ DOCKER ?= docker
 
 K0S_GO_BUILD_CACHE ?= build/cache
 
-GO_SRCS := $(shell $(FIND) . -type f -name "*.go" -not -path "./$(K0S_GO_BUILD_CACHE)/*" -not -path "./inttest/*" -not -name "*_test.go" -not -name "zz_generated*")
+# find evaluates left-to-right: match the dirs first, -prune them (skip their
+# entire subtree without traversing), then -o match the actual .go files. The
+# explicit -print is needed because without it find's implicit -print applies
+# to both sides of -o and would also print the pruned directory names.
+GO_SRCS := $(shell $(FIND) . \( -path "./$(K0S_GO_BUILD_CACHE)" -o -path "./inttest" \) -prune -o -type f -name "*.go" -not -name "*_test.go" -not -name "zz_generated*" -print)
+
 GO_CHECK_UNIT_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 # Disable Docker build integration if DOCKER is set to the empty string.
@@ -325,7 +330,7 @@ airgap-image-bundle-linux-riscv64.tar \
 airgap-image-bundle-windows2022-amd64.tar: k0s
 	set -- $$(cat -- '$(@:airgap-image-bundle-%.tar=airgap-images-%.txt)') && \
 	$(GO_ENV) ./k0s airgap bundle-artifacts --concurrency=1 -v --platform='$(TARGET_PLATFORM)' -o '$@' "$$@"
-	chmod a+r -- '$@'
+	chmod a+r '$@'
 
 ipv6-test-images-linux-amd64.txt ipv6-test-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
 ipv6-test-images-linux-arm64.txt ipv6-test-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
@@ -333,9 +338,9 @@ ipv6-test-images-linux-arm64.txt ipv6-test-image-bundle-linux-arm64.tar: TARGET_
 ipv6-test-images-linux-amd64.txt \
 ipv6-test-images-linux-arm64.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
 	{ \
-	  echo "docker.io/library/nginx:1.30.0-alpine"; \
-	  echo "docker.io/curlimages/curl:8.20.0"; \
-	  echo "docker.io/library/alpine:$(alpine_version)"; \
+	  echo "docker.io/library/nginx:1.31.3-alpine"; \
+	  echo "docker.io/curlimages/curl:8.21.0"; \
+	  echo "docker.io/library/alpine:$(alpine_patch_version)"; \
 	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
 	  echo "registry.k8s.io/conformance:v$(kubernetes_version)"; \
 	  $(GO) run -tags=hack ./hack/gen-test-images-list; \
@@ -378,7 +383,7 @@ check-unit: $(GO_ENV_REQUISITES) go.sum
 
 .PHONY: clean-gocache
 clean-gocache:
-	-chmod -R u+w -- '$(K0S_GO_BUILD_CACHE)/go/mod'
+	-chmod -R u+w '$(K0S_GO_BUILD_CACHE)/go/mod'
 	rm -rf -- '$(K0S_GO_BUILD_CACHE)/go'
 
 .PHONY: clean-docker-image
@@ -427,6 +432,6 @@ spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
 	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
 	  -w /k0s \
-	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.44.0 \
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.50.0 \
 	  --source-name k0s --source-version '$(VERSION)' \
 	  -c syft.yaml -o spdx-json@2.2 . >'$@'

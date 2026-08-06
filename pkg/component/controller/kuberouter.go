@@ -27,9 +27,12 @@ import (
 type KubeRouter struct {
 	log logrus.FieldLogger
 
-	k0sVars *config.CfgVars
+	k0sVars              *config.CfgVars
+	primaryAddressFamily v1beta1.PrimaryAddressFamilyType
+	serviceCIDRs         string
 
-	previousConfig kubeRouterConfig
+	previousConfig  kubeRouterConfig
+	previousPatches v1beta1.Patches
 }
 
 var _ manager.Component = (*KubeRouter)(nil)
@@ -50,11 +53,13 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars) *KubeRouter {
+func NewKubeRouter(k0sVars *config.CfgVars, primaryAddressFamily v1beta1.PrimaryAddressFamilyType, serviceCIDRs string) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
-		k0sVars: k0sVars,
+		k0sVars:              k0sVars,
+		primaryAddressFamily: primaryAddressFamily,
+		serviceCIDRs:         serviceCIDRs,
 	}
 }
 
@@ -115,11 +120,11 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"auto-mtu":                 strconv.FormatBool(clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
 		"metrics-port":             strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode":             strconv.FormatBool(globalHairpin),
-		"service-cluster-ip-range": clusterConfig.Spec.Network.ServiceCIDR,
+		"service-cluster-ip-range": k.serviceCIDRs,
 	}
 
 	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic
-	if clusterConfig.Spec.PrimaryAddressFamily() == v1beta1.PrimaryFamilyIPv6 {
+	if k.primaryAddressFamily == v1beta1.PrimaryFamilyIPv6 {
 		args["router-id"] = "generate"
 	}
 
@@ -146,7 +151,9 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		Args:              append(args.ToDashedArgs(), clusterConfig.Spec.Network.KubeRouter.RawArgs...),
 	}
 
-	if reflect.DeepEqual(k.previousConfig, cfg) {
+	patches := clusterConfig.Spec.Network.KubeRouter.Patches
+	if reflect.DeepEqual(k.previousConfig, cfg) &&
+		reflect.DeepEqual(k.previousPatches, patches) {
 		k.log.Info("config matches with previous, not reconciling anything")
 		return nil
 	}
@@ -156,6 +163,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		Name:     "kube-router",
 		Template: kubeRouterTemplate,
 		Data:     cfg,
+		Patches:  patches,
 	}
 
 	err := tw.WriteToBuffer(output)
@@ -170,6 +178,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	}
 
 	k.previousConfig = cfg
+	k.previousPatches = patches
 	return nil
 }
 

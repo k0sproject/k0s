@@ -49,7 +49,7 @@ func ParseHostPortWithDefault(hostPort string, defaultPort uint16) (*HostPort, e
 	var port uint16
 	host, portStr, err := net.SplitHostPort(hostPort)
 	if err != nil {
-		addrErr := &net.AddrError{}
+		var addrErr *net.AddrError
 		if !errors.As(err, &addrErr) {
 			return nil, err
 		}

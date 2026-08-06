@@ -1,7 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.32.0/charts/calico/templates/calico-kube-controllers-rbac.yaml
-# assuming datastore == "kubernetes"
-#
+# Source: https://github.com/projectcalico/calico/blob/v3.32.1/charts/calico/templates/calico-kube-controllers-rbac.yaml
 # Include a clusterrole for the kube-controllers component,
 # and bind it to the calico-kube-controllers serviceaccount.
 kind: ClusterRole
@@ -181,6 +179,15 @@ rules:
   - apiGroups: ["crd.projectcalico.org"]
     resources:
       - "*"
+    verbs:
+      - get
+      - list
+      - watch
+  # KubeVirt VM/VMI informers for IPAM garbage collection of KubeVirt workloads.
+  - apiGroups: ["kubevirt.io"]
+    resources:
+      - virtualmachines
+      - virtualmachineinstances
     verbs:
       - get
       - list

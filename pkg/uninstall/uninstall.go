@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/cleanup"
-	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
@@ -31,9 +30,10 @@ func Run(opts Options) error {
 		return err
 	}
 
-	k0sStatus, _ := status.GetStatusInfo(opts.Vars.StatusSocketPath)
-	if k0sStatus != nil && k0sStatus.Pid != 0 {
-		return errors.New("k0s seems to be running, please stop k0s before reset")
+	if locked, err := config.RuntimeConfigLocked(opts.Vars.RuntimeConfigPath); err != nil {
+		return err
+	} else if locked {
+		return config.ErrK0sStillRunning
 	}
 
 	nodeCfg, err := opts.Vars.NodeConfig()

@@ -94,6 +94,7 @@ jobs:
             find build/cache/go/build build/cache/golangci-lint -type f \( -name '*-a' -o -name '*-d' \) -exec touch -r build/cache/_cache_sentinel {} +
           fi
 
+          #shellcheck disable=SC2086 # MAKE_EXTRA_ARGS intentionally expands to multiple arguments
           make lint-go $MAKE_EXTRA_ARGS
 
           if [ -n "$CACHE_HIT_GOLANGCI" ]; then
@@ -135,7 +136,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     env:
-      TOFU_VERSION: 1.11.6 # renovate: datasource=github-releases depName=opentofu/opentofu
+      TOFU_VERSION: 1.12.5 # renovate: datasource=github-releases depName=opentofu/opentofu
 
     defaults:
       run:

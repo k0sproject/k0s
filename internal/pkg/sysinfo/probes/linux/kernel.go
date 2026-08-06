@@ -193,8 +193,7 @@ func (k *kConfigProbe) DisplayName() string {
 func (k *kConfigProbe) Probe(reporter probes.Reporter) error {
 	option, err := k.probeConfig(k.kConfig)
 	if err != nil {
-		var notFoundErr *noKConfigsFound
-		if errors.As(err, &notFoundErr) {
+		if notFoundErr, ok := errors.AsType[*noKConfigsFound](err); ok {
 			return reporter.Warn(k, notFoundErr, "")
 		}
 		return reporter.Error(k, err)

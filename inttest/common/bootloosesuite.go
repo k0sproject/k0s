@@ -563,7 +563,7 @@ func (s *BootlooseSuite) startHAProxy() {
 
 	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput(s.Context(), "haproxy -c -f /tmp/haproxy.cfg")
-	s.Require().NoError(err, "LB configuration is broken", err)
+	s.Require().NoError(err, "LB configuration is broken")
 	_, err = ssh.ExecWithOutput(s.Context(), "haproxy -D -f /tmp/haproxy.cfg")
 	s.Require().NoError(err, "Can't start LB")
 }
@@ -577,23 +577,17 @@ defaults
     timeout client 30s
     timeout server 30s
 
-frontend kubeapi
-
+frontend kubeapi_frontend
     bind :{{ .KubeAPIExternalPort }}
     default_backend kubeapi
 
-frontend k0sapi
+frontend k0sapi_frontend
     bind :{{ .K0sAPIExternalPort }}
     default_backend k0sapi
 
-frontend konnectivityAdmin
-    bind :{{ .KonnectivityAdminPort }}
-    default_backend admin
-
-
-frontend konnectivityAgent
+frontend konnectivity_server_frontend
     bind :{{ .KonnectivityAgentPort }}
-    default_backend agent
+    default_backend konnectivity_server
 
 
 {{ $OUT := .}}
@@ -608,12 +602,7 @@ backend k0sapi
 	server {{ $addr }} {{ $addr }}:{{ $OUT.K0sAPIExternalPort }}
 {{ end }}
 
-backend admin
-{{ range $addr := .IPAddresses }}
-	server {{ $addr }} {{ $addr }}:{{ $OUT.KonnectivityAdminPort }}
-{{ end }}
-
-backend agent
+backend konnectivity_server
 {{ range $addr := .IPAddresses }}
 	server {{ $addr }} {{ $addr }}:{{ $OUT.KonnectivityAgentPort }}
 {{ end }}
@@ -788,7 +777,7 @@ func (s *BootlooseSuite) StopController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	s.T().Log("killing k0s")
+	s.T().Log("Stopping k0s controller on", name)
 
 	return s.launchDelegate.StopController(s.Context(), ssh)
 }
@@ -797,7 +786,7 @@ func (s *BootlooseSuite) RestartController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	s.T().Log("killing k0s")
+	s.T().Log("Restarting k0s controller on", name)
 	err = s.launchDelegate.StopController(s.Context(), ssh)
 	if err != nil {
 		return err
@@ -1237,6 +1226,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					Networks:     s.Networks,
 				},
 			},
 		},
@@ -1250,6 +1240,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 				Privileged:   true,
 				Volumes:      volumes,
 				PortMappings: portMaps,
+				Networks:     s.Networks,
 			},
 			Count: 1,
 		})
@@ -1262,6 +1253,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 				Image:        defaultBootLooseImage,
 				Privileged:   true,
 				PortMappings: []config.PortMapping{{ContainerPort: 22}},
+				Networks:     s.Networks,
 			},
 			Count: 1,
 		})
@@ -1281,6 +1273,7 @@ func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 						ContainerPort: 80,
 					},
 				},
+				Networks: s.Networks,
 			},
 			Count: 1,
 		})

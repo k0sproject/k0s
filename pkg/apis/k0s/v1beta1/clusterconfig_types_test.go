@@ -336,6 +336,51 @@ func TestClusterConfig_StripDefaults_DefaultConfig(t *testing.T) {
 	a.Nil(stripped.Spec.Konnectivity)
 }
 
+func TestClusterConfig_GetClusterWideConfig(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		input    *ClusterConfig
+		expected *ClusterConfig
+	}{
+		{"nil", nil, nil},
+		{"zero", &ClusterConfig{}, &ClusterConfig{}},
+		{"zero spec", &ClusterConfig{Spec: &ClusterSpec{}}, &ClusterConfig{Spec: &ClusterSpec{}}},
+		{"zero network", &ClusterConfig{Spec: &ClusterSpec{
+			Network: &Network{},
+		}}, &ClusterConfig{Spec: &ClusterSpec{
+			Network: &Network{},
+		}}},
+		{"RemovesNodeConfig", &ClusterConfig{Spec: &ClusterSpec{
+			API: &APISpec{Address: "127.0.0.1"},
+			Storage: &StorageSpec{
+				Type: KineStorageType,
+			},
+			Install: &InstallSpec{
+				SystemUsers: &SystemUser{
+					KubeAPIServer: t.Name(),
+				},
+			},
+			Network: &Network{
+				Provider:      "calico",
+				ServiceCIDR:   "ServiceCIDR",
+				ClusterDomain: "ClusterDomain",
+				ControlPlaneLoadBalancing: &ControlPlaneLoadBalancingSpec{
+					Enabled: true,
+				},
+				PrimaryAddressFamily: PrimaryFamilyIPv6,
+			}},
+		}, &ClusterConfig{Spec: &ClusterSpec{
+			Network: &Network{
+				Provider: "calico",
+			},
+		}}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.input.GetClusterWideConfig())
+		})
+	}
+}
+
 func TestClusterConfig_StripDefaults_Images(t *testing.T) {
 	//nolint:dupword // it's YAML data
 	yaml := `
@@ -385,7 +430,7 @@ spec:
 		{"traefik", NllbTypeTraefik, "type: Traefik"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			input, err := ConfigFromBytes([]byte(fmt.Sprintf(yaml, tt.snippet)))
+			input, err := ConfigFromBytes(fmt.Appendf(nil, yaml, tt.snippet))
 			require.NoError(t, err)
 
 			stripped := input.StripDefaults()
@@ -434,12 +479,13 @@ spec:
 }
 
 func TestStrippedClusterWideDefaultConfig(t *testing.T) {
-	underTest := DefaultClusterConfig().GetClusterWideConfig().StripDefaults()
-	if assert.NotNil(t, underTest.Spec) {
+	defaultConfig := DefaultClusterConfig()
+	stripped := defaultConfig.GetClusterWideConfig().StripDefaults()
+	if assert.NotNil(t, stripped.Spec) {
 		// The network and extensions fields aren't properly handled at the moment.
-		underTest.Spec.Network = nil
-		underTest.Spec.Extensions = nil
-		assert.Zero(t, *underTest.Spec, "%+v", underTest.Spec)
+		stripped.Spec.Network = nil
+		stripped.Spec.Extensions = nil
+		assert.Zero(t, *stripped.Spec, "%+v", stripped.Spec)
 	}
 }
 
@@ -447,46 +493,4 @@ func TestDefaultClusterConfigYaml(t *testing.T) {
 	data, err := yaml.Marshal(DefaultClusterConfig())
 	assert.NoError(t, err)
 	assert.NotContains(t, string(data), "status: {}")
-}
-
-func TestFeatureGates(t *testing.T) {
-	yamlData := []byte(`
-    apiVersion: k0s.k0sproject.io/v1beta1
-    kind: ClusterConfig
-    metadata:
-      name: foobar
-    spec:
-      featureGates:
-        - name: feature_XXX
-          enabled: true
-          components: ["x", "y", "z"]
-        - name: feature_YYY
-          enabled: true
-        -
-          name: feature_ZZZ
-          enabled: false
-`)
-	c, err := ConfigFromBytes(yamlData)
-	assert.NoError(t, err)
-	require.Len(t, c.Spec.FeatureGates, 3)
-	assert.Equal(t, "feature_XXX", c.Spec.FeatureGates[0].Name)
-	assert.True(t, c.Spec.FeatureGates[0].Enabled)
-	for _, component := range []string{"x", "y", "z"} {
-		value, found := c.Spec.FeatureGates[0].EnabledFor(component)
-		assert.True(t, value)
-		assert.True(t, found)
-	}
-
-	assert.Equal(t, "feature_YYY", c.Spec.FeatureGates[1].Name)
-	assert.True(t, c.Spec.FeatureGates[1].Enabled)
-
-	for _, k8sComponent := range KubernetesComponents {
-		value, found := c.Spec.FeatureGates[1].EnabledFor(k8sComponent)
-		assert.True(t, value)
-		assert.True(t, found)
-	}
-
-	assert.Equal(t, "feature_ZZZ", c.Spec.FeatureGates[2].Name)
-
-	assert.False(t, c.Spec.FeatureGates[2].Enabled)
 }

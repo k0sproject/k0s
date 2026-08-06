@@ -19,7 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/metadata"
-	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -276,6 +275,7 @@ type CoreDNS struct {
 	log                    *logrus.Entry
 	manifestDir            string
 	previousConfig         coreDNSConfig
+	previousPatches        v1beta1.Patches
 	stopFunc               context.CancelFunc
 	lastKnownClusterConfig *v1beta1.ClusterConfig
 }
@@ -392,7 +392,7 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		// to 7 replicas, it would be the same as the default, and for
 		// deployments with 8 or more replicas, this would artificially
 		// constrain the rolling update speed.
-		config.MaxUnavailableReplicas = ptr.To(uint(1))
+		config.MaxUnavailableReplicas = new(uint(1))
 
 	}
 
@@ -425,7 +425,12 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 	if err != nil {
 		return fmt.Errorf("error calculating coredns configs: %w, will retry", err)
 	}
-	if reflect.DeepEqual(c.previousConfig, cfg) {
+	var patches v1beta1.Patches
+	if cd := clusterConfig.Spec.Network.CoreDNS; cd != nil {
+		patches = cd.Patches
+	}
+	if reflect.DeepEqual(c.previousConfig, cfg) &&
+		reflect.DeepEqual(c.previousPatches, patches) {
 		c.log.Debug("Configuration is up to date, not gonna do anything")
 		return nil
 	}
@@ -434,12 +439,14 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		Template: coreDNSTemplate,
 		Data:     cfg,
 		Path:     filepath.Join(c.manifestDir, "coredns.yaml"),
+		Patches:  patches,
 	}
 	err = tw.Write()
 	if err != nil {
 		return fmt.Errorf("error writing coredns manifests: %w, will retry", err)
 	}
 	c.previousConfig = cfg
+	c.previousPatches = patches
 	c.lastKnownClusterConfig = clusterConfig
 	return nil
 }

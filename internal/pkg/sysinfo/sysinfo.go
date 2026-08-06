@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
+	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 
 	"github.com/sirupsen/logrus"
 )
@@ -64,6 +65,10 @@ func (s *K0sSysinfoSpec) NewSysinfoProbes() probes.Probes {
 		probes.AssertRelativeFreeDiskSpace(p, s.DataDir, 15)
 	}
 	probes.RequireNameResolution(p, net.LookupIP, "localhost")
+
+	if s.WorkerRoleEnabled {
+		probes.RequireContainerdV2ConfigSnippets(p, containerd.DefaultImportsPath)
+	}
 
 	s.addHostSpecificProbes(p)
 

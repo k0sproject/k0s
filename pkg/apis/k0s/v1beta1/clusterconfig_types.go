@@ -5,8 +5,10 @@ package v1beta1
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"fmt"
+	"net/netip"
 	"reflect"
 	"slices"
 	"strings"
@@ -40,6 +42,7 @@ type ClusterSpec struct {
 	Extensions        *ClusterExtensions     `json:"extensions,omitempty"`
 	Konnectivity      *KonnectivitySpec      `json:"konnectivity,omitempty"`
 	FeatureGates      FeatureGates           `json:"featureGates,omitempty"`
+	MetricsServer     *MetricsServer         `json:"metricsServer,omitempty"`
 }
 
 // ClusterConfigStatus defines the observed state of ClusterConfig
@@ -88,16 +91,30 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 		orig := nllb.DeepCopy()
 		nllb.EnvoyProxy = nil
 		nllb.Traefik = nil
+		// NLLB images are rewritten with spec.images.repository, so strip them
+		// against the defaults rewritten with the same repository.
+		var repository string
+		if c.Spec.Images != nil {
+			repository = c.Spec.Images.Repository
+		}
 		switch nllb.Type {
 		case NllbTypeEnvoyProxy:
 			if orig.EnvoyProxy != nil {
 				nllb.EnvoyProxy = orig.EnvoyProxy
-				stripDefaults(&nllb.EnvoyProxy.Image, DefaultEnvoyProxyImage)
+				stripDefaults(&nllb.EnvoyProxy.Image, func() *ImageSpec {
+					img := DefaultEnvoyProxyImage()
+					img.Image = overrideRepository(repository, img.Image)
+					return img
+				})
 			}
 		case NllbTypeTraefik:
 			if orig.Traefik != nil {
 				nllb.Traefik = orig.Traefik
-				stripDefaults(&nllb.Traefik.Image, DefaultTraefikImage)
+				stripDefaults(&nllb.Traefik.Image, func() *ImageSpec {
+					img := DefaultTraefikImage()
+					img.Image = overrideRepository(repository, img.Image)
+					return img
+				})
 			}
 		}
 	}
@@ -106,13 +123,27 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	}
 	if reflect.DeepEqual(c.Spec.Images, DefaultClusterImages()) {
 		c.Spec.Images = nil
-	} else {
-		stripDefaults(&c.Spec.Images, DefaultClusterImages)
+	} else if c.Spec.Images != nil {
+		stripDefaults(&c.Spec.Images, defaultClusterImagesWithRepository(c.Spec.Images.Repository))
 	}
 	if reflect.DeepEqual(c.Spec.Konnectivity, DefaultKonnectivitySpec()) {
 		c.Spec.Konnectivity = nil
 	}
 	return c
+}
+
+// Strip default images even when they've been rewritten with a custom repository.
+func defaultClusterImagesWithRepository(repository string) func() *ClusterImages {
+	return func() *ClusterImages {
+		defaultImages := DefaultClusterImages()
+		if repository != "" {
+			defaultImages.Repository = repository
+			defaultImages.overrideImageRepositories()
+			defaultImages.Repository = ""
+		}
+
+		return defaultImages
+	}
 }
 
 func stripDefaults[T any](actual **T, makeDefaults func() *T) {
@@ -438,6 +469,8 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		}
 	}
 
+	errs = append(errs, s.MetricsServer.Validate(field.NewPath("metricsServer"))...)
+
 	return
 }
 
@@ -501,7 +534,6 @@ func (c *ClusterConfig) Validate() (errs []error) {
 // - Network.PrimaryAddressFamily
 // - Install
 func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
-	primaryAF := c.Spec.PrimaryAddressFamily()
 	c = c.DeepCopy()
 	if c != nil && c.Spec != nil {
 		c.Spec.API = nil
@@ -510,7 +542,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 			c.Spec.Network.ServiceCIDR = ""
 			c.Spec.Network.ClusterDomain = ""
 			c.Spec.Network.ControlPlaneLoadBalancing = nil
-			c.Spec.Network.PrimaryAddressFamily = primaryAF
+			c.Spec.Network.PrimaryAddressFamily = ""
 		}
 		c.Spec.Install = nil
 	}
@@ -528,8 +560,21 @@ func (c *ClusterConfig) CRValidator() *ClusterConfig {
 }
 
 func (s *ClusterSpec) PrimaryAddressFamily() PrimaryAddressFamilyType {
-	if s != nil && s.Network != nil && s.Network.PrimaryAddressFamily != PrimaryFamilyUnknown {
-		return s.Network.PrimaryAddressFamily
+	if s != nil {
+		if s.Network != nil && s.Network.PrimaryAddressFamily != PrimaryFamilyUnknown {
+			return s.Network.PrimaryAddressFamily
+		}
+
+		// Try to determin the primary address based on the address family of
+		// the cluster's external address, or, of this isn't set, based on the
+		// address family of the API server's address.
+		if s.API != nil {
+			addr, _ := netip.ParseAddr(cmp.Or(s.API.ExternalHost(), s.API.Address))
+			if addr.Is6() {
+				return PrimaryFamilyIPv6
+			}
+		}
 	}
-	return s.API.DetectPrimaryAddressFamily()
+
+	return PrimaryFamilyIPv4
 }

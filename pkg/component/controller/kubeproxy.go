@@ -35,7 +35,6 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	configv1alpha1 "k8s.io/component-base/config/v1alpha1"
 	kubeproxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
-	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 )
@@ -44,7 +43,7 @@ import (
 type KubeProxy struct {
 	log logrus.FieldLogger
 
-	nodeConf        *v1beta1.ClusterConfig
+	nodeConfig      *v1beta1.ClusterConfig
 	K0sVars         *config.CfgVars
 	manifestDir     string
 	hasWindowsNodes func() (*bool, <-chan struct{})
@@ -61,7 +60,7 @@ func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, ha
 	return &KubeProxy{
 		log: logrus.WithFields(logrus.Fields{"component": "kubeproxy"}),
 
-		nodeConf:        nodeConfig,
+		nodeConfig:      nodeConfig,
 		K0sVars:         k0sVars,
 		manifestDir:     filepath.Join(k0sVars.ManifestsDir, "kubeproxy"),
 		hasWindowsNodes: hasWindowsNodes,
@@ -188,6 +187,7 @@ func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error
 				Name:     "kube-proxy",
 				Template: proxyTemplate,
 				Data:     &templateData,
+				Patches:  cfg.Patches,
 			}).WriteToBuffer(buf); err != nil {
 				return err
 			}
@@ -202,6 +202,7 @@ func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error
 					Name:     "kube-proxy-windows",
 					Template: string(proxyWindowsTemplate),
 					Data:     &templateData,
+					Patches:  cfg.Patches,
 				}).WriteToBuffer(buf); err != nil {
 					return err
 				}
@@ -216,7 +217,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 		return &proxyConfig{}
 	}
 
-	controlPlaneEndpoint := k.nodeConf.Spec.API.APIAddressURL()
+	controlPlaneEndpoint := k.nodeConfig.Spec.API.APIAddressURL()
 	nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
 	if nllb.IsEnabled() {
 		// FIXME: Transitions from non-node-local load balanced to node-local
@@ -268,6 +269,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 
 	return &proxyConfig{
 		Enabled: true,
+		Patches: kubeProxy.Patches,
 		TemplateData: kubeProxyTemplateData{
 			Image:        clusterConfig.Spec.Images.KubeProxy.URI(),
 			WindowsImage: clusterConfig.Spec.Images.Windows.KubeProxy.URI(),
@@ -280,13 +282,13 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 				ClientConnection: configv1alpha1.ClientConnectionConfiguration{
 					Kubeconfig: "/var/lib/kube-proxy/kubeconfig.conf",
 				},
-				ClusterCIDR:        clusterConfig.Spec.Network.BuildPodCIDR(),
+				ClusterCIDR:        clusterConfig.Spec.Network.BuildPodCIDR(k.nodeConfig.Spec.PrimaryAddressFamily()),
 				FeatureGates:       clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
 				Mode:               kubeproxyv1alpha1.ProxyMode(kubeProxy.Mode),
 				MetricsBindAddress: kubeProxy.MetricsBindAddress,
 				HealthzBindAddress: kubeProxy.HealthzBindAddress,
 				Conntrack: kubeproxyv1alpha1.KubeProxyConntrackConfiguration{
-					MaxPerCore: ptr.To(int32(0)),
+					MaxPerCore: new(int32(0)),
 				},
 				IPTables: kubeproxyv1alpha1.KubeProxyIPTablesConfiguration{
 					MasqueradeBit:      kubeProxy.IPTables.MasqueradeBit,
@@ -322,6 +324,7 @@ type proxyConfig struct {
 
 	TemplateData  kubeProxyTemplateData
 	ConfigMapData kubeProxyConfigData
+	Patches       v1beta1.Patches
 }
 
 type kubeProxyTemplateData struct {

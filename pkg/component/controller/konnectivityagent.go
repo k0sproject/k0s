@@ -51,12 +51,14 @@ func (k *KonnectivityAgent) Start(ctx context.Context) error {
 		var retry <-chan time.Time
 		for {
 			select {
-			case config := <-k.configChangeChan:
-				clusterConfig = config
+			case updatedClusterConfig := <-k.configChangeChan:
+				clusterConfig = updatedClusterConfig
 
 			case <-serverCountChanged:
 				prevServerCount := serverCount
 				serverCount, serverCountChanged = k.ServerCount()
+				// Never drop below one server: the agent treats zero as one internally anyways.
+				serverCount = max(1, serverCount)
 				// write only if the server count actually changed
 				if serverCount == prevServerCount {
 					continue

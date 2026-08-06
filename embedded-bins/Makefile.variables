@@ -1,13 +1,13 @@
 # renovate: datasource=docker depName=docker.io/library/alpine versioning=docker
-alpine_patch_version = 3.23.4
+alpine_patch_version = 3.24.1
 alpine_version = $(word 1,$(subst ., ,$(alpine_patch_version))).$(word 2,$(subst ., ,$(alpine_patch_version)))
 
 # renovate: datasource=golang-version depName=go
-go_version = 1.26.3
+go_version = 1.26.5
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
 
 # renovate: datasource=github-releases depName=opencontainers/runc
-runc_version = 1.4.2
+runc_version = 1.5.1
 runc_buildimage = $(golang_buildimage)
 runc_build_go_tags = "seccomp"
 #runc_build_go_cgo_enabled =
@@ -17,12 +17,12 @@ runc_build_go_ldflags = -w -s
 runc_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-tags depName=containerd/containerd
-containerd_version_and_rev = 2.2.3@77c84241c7cbdd9b4eca2591793e3d4f4317c590
+containerd_version_and_rev = 2.3.3@aad11006b869517fcd3009450b6f82da282e1a9b
 containerd_revision = $(word 2,$(subst @, ,$(containerd_version_and_rev)))
 containerd_version = $(word 1,$(subst @, ,$(containerd_version_and_rev)))
 containerd_build_extra_args = --build-arg REVISION=$(containerd_revision)
 containerd_buildimage = $(golang_buildimage)
-containerd_build_go_tags = "apparmor,selinux"
+containerd_build_go_tags = "apparmor selinux"
 containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_cgo_enabled =
 #containerd_build_go_cgo_cflags =
@@ -31,7 +31,7 @@ containerd_build_go_ldflags = -w -s
 containerd_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-kubernetes_version = 1.36.0
+kubernetes_version = 1.37.0-alpha.3
 kubernetes_buildimage = $(golang_buildimage)
 kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_enabled =
@@ -41,11 +41,11 @@ kubernetes_build_go_flags = "-v"
 kubernetes_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=k3s-io/kine
-kine_version = 0.14.16
+kine_version = 0.16.3
 kine_buildimage = $(golang_buildimage)
 kine_build_go_tags = nats
 #kine_build_go_cgo_enabled =
-# Flags taken from https://github.com/k3s-io/kine/blob/v0.14.16/scripts/build#L25
+# Flags taken from https://github.com/k3s-io/kine/blob/v0.16.3/scripts/build#L30
 kine_build_go_cgo_cflags = -DSQLITE_USE_ALLOCA=1
 
 #kine_build_go_flags =
@@ -53,7 +53,7 @@ kine_build_go_ldflags = -w -s
 kine_build_go_ldflags_extra = -extldflags=-static
 
 # renovate: datasource=github-releases depName=etcd-io/etcd
-etcd_version = 3.6.11
+etcd_version = 3.7.1
 etcd_buildimage = $(golang_buildimage)
 #etcd_build_go_tags =
 etcd_build_go_cgo_enabled = 0
@@ -63,7 +63,7 @@ etcd_build_go_ldflags = -w -s
 #etcd_build_go_ldflags_extra =
 
 # renovate: datasource=github-tags depName=kubernetes-sigs/apiserver-network-proxy
-konnectivity_version = 0.34.0
+konnectivity_version = 0.36.0
 konnectivity_buildimage = $(golang_buildimage)
 #konnectivity_build_go_tags =
 konnectivity_build_go_cgo_enabled = 0
@@ -76,7 +76,7 @@ iptables_version = 1.8.13
 iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 
 # renovate: datasource=github-tags depName=acassen/keepalived
-keepalived_version = 2.3.4
+keepalived_version = 2.4.3
 keepalived_buildimage = docker.io/library/alpine:$(alpine_patch_version)
 keepalived_build_cflags = -static -s
 keepalived_build_ldflags = -static

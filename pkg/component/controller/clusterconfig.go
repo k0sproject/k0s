@@ -60,19 +60,19 @@ func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 		r.log.Debug("start listening changes from config source")
 		for {
 			select {
-			case cfg, ok := <-r.configSource.ResultChan():
+			case clusterConfig, ok := <-r.configSource.ResultChan():
 				if !ok {
 					// Recv channel close, we can stop now
 					r.log.Debug("config source closed channel")
 					return
 				}
-				err := errors.Join(cfg.Validate()...)
+				err := errors.Join(clusterConfig.Validate()...)
 				if err != nil {
 					err = fmt.Errorf("failed to validate cluster configuration: %w", err)
 				} else {
-					err = r.reconciler.Reconcile(ctx, cfg)
+					err = r.reconciler.Reconcile(ctx, clusterConfig)
 				}
-				r.reportStatus(statusCtx, cfg, err)
+				r.reportStatus(statusCtx, clusterConfig, err)
 				if err != nil {
 					r.log.WithError(err).Error("Failed to reconcile cluster configuration")
 				} else {
@@ -94,7 +94,7 @@ func (r *ClusterConfigReconciler) Stop() error {
 	return nil
 }
 
-func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *k0sv1beta1.ClusterConfig, reconcileError error) {
+func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, clusterConfig *k0sv1beta1.ClusterConfig, reconcileError error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		r.log.Error("failed to get hostname:", err)
@@ -114,11 +114,11 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *k0sv
 		LastTimestamp:  metav1.Now(),
 		InvolvedObject: corev1.ObjectReference{
 			Kind:            k0sv1beta1.ClusterConfigKind,
-			Namespace:       config.Namespace,
-			Name:            config.Name,
-			UID:             config.UID,
+			Namespace:       clusterConfig.Namespace,
+			Name:            clusterConfig.Name,
+			UID:             clusterConfig.UID,
 			APIVersion:      k0sv1beta1.ClusterConfigAPIVersion,
-			ResourceVersion: config.ResourceVersion,
+			ResourceVersion: clusterConfig.ResourceVersion,
 		},
 		Action:              "ConfigReconciling",
 		ReportingController: "k0s-controller",

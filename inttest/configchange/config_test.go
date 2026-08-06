@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
@@ -128,7 +127,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		s.Require().NoError(err)
 		newConfig := originalConfig.DeepCopy()
 		newConfig.Spec.Network = v1beta1.DefaultNetwork()
-		newConfig.Spec.Network.KubeRouter.AutoMTU = ptr.To(false)
+		newConfig.Spec.Network.KubeRouter.AutoMTU = new(false)
 		newConfig.Spec.Network.KubeRouter.MTU = 1300
 
 		// Get the resource version for current kuberouter configmap
@@ -181,17 +180,6 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 			}
 		}
 
-	})
-
-	s.Run("changing primary address family should fail", func() {
-		originalConfig, err := cfgClient.Get(s.Context(), "k0s", metav1.GetOptions{})
-		s.Require().NoError(err)
-		s.Require().Equal(v1beta1.PrimaryFamilyIPv4, originalConfig.Spec.Network.PrimaryAddressFamily)
-		newConfig := originalConfig.DeepCopy()
-		newConfig.Spec.Network = v1beta1.DefaultNetwork()
-		newConfig.Spec.Network.PrimaryAddressFamily = v1beta1.PrimaryFamilyIPv6
-		_, err = cfgClient.Update(s.Context(), newConfig, metav1.UpdateOptions{})
-		s.Require().Error(err)
 	})
 }
 

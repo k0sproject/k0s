@@ -27,6 +27,9 @@ type Network struct {
 	KubeProxy  *KubeProxy  `json:"kubeProxy,omitempty"`
 	KubeRouter *KubeRouter `json:"kuberouter,omitempty"`
 
+	// CoreDNS defines the configuration options for the CoreDNS component.
+	CoreDNS *CoreDNS `json:"coreDNS,omitempty"`
+
 	// NodeLocalLoadBalancing defines the configuration options related to k0s's
 	// node-local load balancing feature.
 	NodeLocalLoadBalancing *NodeLocalLoadBalancing `json:"nodeLocalLoadBalancing,omitempty"`
@@ -53,10 +56,10 @@ type Network struct {
 	// If empty, k0s determines it based on `.spec.API.ExternalAddress`,
 	// if this isn't present it will use `.spec.API.Address.`.
 	// If both addresses are empty or the chosen address is a hostname, defaults to `IPv4`.
-	// +kubebuilder:validation:XValidation:rule="oldSelf == '' || self == oldSelf",message="cannot change primary address family"
 	PrimaryAddressFamily PrimaryAddressFamilyType `json:"primaryAddressFamily,omitempty"`
 }
 
+// +kubebuilder:validation:Enum=IPv4;IPv6
 type PrimaryAddressFamilyType string
 
 const (
@@ -114,7 +117,7 @@ func (n *Network) Validate() []error {
 		}
 
 		// Validate IPv6 ServiceCIDR prefix length per Kubernetes requirements (<= /108).
-		// https://github.com/kubernetes/kubernetes/blob/v1.34.3/cmd/kube-apiserver/app/options/validation.go#L52-L58
+		// https://github.com/kubernetes/kubernetes/blob/v1.37.0-alpha.3/cmd/kube-apiserver/app/options/validation.go#L52-L58
 		if serviceNetIP.To4() == nil {
 			ones, bits := serviceNet.Mask.Size()
 			if bits == 128 && ones > 108 {
@@ -151,7 +154,7 @@ func (n *Network) Validate() []error {
 		} else {
 			ones, bits := ipv6SvcNet.Mask.Size()
 
-			// https://github.com/kubernetes/kubernetes/blob/v1.34.3/cmd/kube-apiserver/app/options/validation.go#L39
+			// https://github.com/kubernetes/kubernetes/blob/v1.37.0-alpha.3/cmd/kube-apiserver/app/options/validation.go#L39
 			maxCIDRBits := 20
 			if bits-ones > maxCIDRBits {
 				errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "IPv6 service CIDR prefix must be <= 108"))
@@ -174,9 +177,9 @@ func (n *Network) Validate() []error {
 	}
 
 	errors = append(errors, n.KubeProxy.Validate()...)
-	for _, err := range n.Calico.Validate(field.NewPath("calico")) {
-		errors = append(errors, err)
-	}
+	errors = append(errors, n.KubeRouter.Validate(field.NewPath("kuberouter"))...)
+	errors = append(errors, n.Calico.Validate(field.NewPath("calico"))...)
+	errors = append(errors, n.CoreDNS.Validate(field.NewPath("coreDNS"))...)
 	for _, err := range n.NodeLocalLoadBalancing.Validate(field.NewPath("nodeLocalLoadBalancing")) {
 		errors = append(errors, err)
 	}
@@ -282,16 +285,27 @@ func (n *Network) BuildServiceCIDR(primaryAddressFamily PrimaryAddressFamilyType
 	case PrimaryFamilyIPv6:
 		return n.DualStack.IPv6ServiceCIDR + "," + n.ServiceCIDR
 	default:
-		panic(fmt.Sprintf("BuildServiceCIDR called invalid PrimaryAddressFamily %q family. This is theoretically impossible", primaryAddressFamily))
+		panic(fmt.Sprintf("BuildServiceCIDR called with invalid PrimaryAddressFamily %q family. This is theoretically impossible", primaryAddressFamily))
 	}
 }
 
 // BuildPodCIDR returns actual argument value for pod cidr
-func (n *Network) BuildPodCIDR() string {
-	if n.DualStack.Enabled {
-		return n.DualStack.IPv6PodCIDR + "," + n.PodCIDR
+func (n *Network) BuildPodCIDR(primaryAddressFamily PrimaryAddressFamilyType) string {
+	if !n.DualStack.Enabled {
+		return n.PodCIDR
 	}
-	return n.PodCIDR
+
+	// Because Kubernetes relies on the order of the given CIDRs in dual-stack
+	// mode, the CIDR whose version matches the version of the IP address the
+	// API server is listening on must be specified first.
+	switch primaryAddressFamily {
+	case PrimaryFamilyIPv4:
+		return n.PodCIDR + "," + n.DualStack.IPv6PodCIDR
+	case PrimaryFamilyIPv6:
+		return n.DualStack.IPv6PodCIDR + "," + n.PodCIDR
+	default:
+		panic(fmt.Sprintf("BuildPodCIDR called with invalid PrimaryAddressFamily %q family. This is theoretically impossible", primaryAddressFamily))
+	}
 }
 
 // IsSingleStackIPv6 returns true if the ServiceCIDR is IPv6.

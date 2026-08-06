@@ -46,12 +46,12 @@ type Command config.CLIOptions
 // Interface between an embedded worker and its embedding controller.
 type EmbeddingController interface {
 	IsSingleNode() bool
+	UsesIPTables() bool
 }
 
 func NewWorkerCmd() *cobra.Command {
 	var (
-		debugFlags            internal.DebugFlags
-		ignorePreFlightChecks bool
+		debugFlags internal.DebugFlags
 	)
 
 	cmd := &cobra.Command{
@@ -99,7 +99,7 @@ func NewWorkerCmd() *cobra.Command {
 				ControllerRoleEnabled: false,
 				WorkerRoleEnabled:     true,
 				DataDir:               c.K0sVars.DataDir,
-			}).RunPreFlightChecks(ignorePreFlightChecks); !ignorePreFlightChecks && err != nil {
+			}).RunPreFlightChecks(opts.IgnorePreFlightChecks); !opts.IgnorePreFlightChecks && err != nil {
 				return err
 			}
 
@@ -121,6 +121,16 @@ func NewWorkerCmd() *cobra.Command {
 				return err
 			}
 
+			rtc, err := config.NewRuntimeConfig(c.K0sVars, nil)
+			if err != nil {
+				return fmt.Errorf("failed to initialize runtime config: %w", err)
+			}
+			defer func() {
+				if err := rtc.Spec.Cleanup(); err != nil {
+					logrus.WithError(err).Warn("Failed to cleanup runtime config")
+				}
+			}()
+
 			return c.Start(ctx, nodeName, kubeletExtraArgs, getBootstrapKubeconfig, nil)
 		},
 	}
@@ -130,7 +140,6 @@ func NewWorkerCmd() *cobra.Command {
 	flags := cmd.Flags()
 	flags.AddFlagSet(config.GetPersistentFlagSet())
 	flags.AddFlagSet(config.GetWorkerFlags())
-	flags.BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 
 	return cmd
 }
@@ -207,17 +216,6 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	}
 
 	kubeletKubeconfigPath := c.K0sVars.KubeletAuthConfigPath
-	workerConfig, err := workerconfig.LoadProfile(
-		ctx,
-		kubernetes.KubeconfigFromFile(kubeletKubeconfigPath),
-		c.K0sVars.DataDir,
-		c.WorkerProfile,
-	)
-	if err != nil {
-		return err
-	}
-
-	componentManager := manager.New(prober.DefaultProber)
 
 	// When upgrading controller+worker nodes in a multi-node cluster with a load balancer, the API
 	// server address needs to be overridden to point to the local API server. This is needed so
@@ -230,6 +228,18 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		}
 		kubeletKubeconfigPath = directKubeconfigPath
 	}
+
+	workerConfig, err := workerconfig.LoadProfile(
+		ctx,
+		kubernetes.KubeconfigFromFile(kubeletKubeconfigPath),
+		c.K0sVars.DataDir,
+		c.WorkerProfile,
+	)
+	if err != nil {
+		return err
+	}
+
+	componentManager := manager.New(prober.DefaultProber)
 
 	var staticPods worker.StaticPods
 
@@ -266,7 +276,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		))
 	}
 
-	if controller == nil && runtime.GOOS == "linux" {
+	if runtime.GOOS == "linux" && (controller == nil || !controller.UsesIPTables()) {
 		componentManager.Add(ctx, &iptables.Component{
 			IPTablesMode: c.IPTablesMode,
 			BinDir:       c.K0sVars.BinDir,

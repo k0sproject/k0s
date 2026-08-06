@@ -22,6 +22,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
@@ -146,7 +147,9 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	// Start the workers using the join token
 	s.Require().NoError(s.RunWorkersWithToken(workerJoinToken))
 
-	client, err := s.KubeClient(s.ControllerNode(0))
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+	s.Require().NoError(err)
+	client, err := kubernetes.NewForConfig(restConfig)
 	s.Require().NoError(err)
 
 	for idx := range s.ControllerCount {
@@ -178,8 +181,15 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 
 	s.T().Log("waiting to see konnectivity-agent pods ready")
 	s.Require().NoError(common.WaitForDaemonSet(ctx, client, "konnectivity-agent", metav1.NamespaceSystem), "konnectivity-agent did not start")
-	s.T().Log("waiting to get logs from pods")
-	s.Require().NoError(common.WaitForPodLogs(ctx, client, metav1.NamespaceSystem))
+	{
+		s.T().Log("waiting for konnectivity")
+		controllerCount := uint(s.ControllerCount)
+		// FIXME: Currently, the external address doesn't load-balance konnectivity properly.
+		if s.useExternalAddress {
+			controllerCount = 1
+		}
+		s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, client, s.T(), controllerCount, uint(s.ControllerCount+s.WorkerCount)), "While verifying konnectivity mesh")
+	}
 
 	s.T().Log("Testing that the load balancer is actually balancing the load")
 	// Other stuff may be querying the controller, running the HTTPS request 15 times

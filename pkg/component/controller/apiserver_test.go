@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -21,6 +22,77 @@ func TestApiServerSuite(t *testing.T) {
 	apiServerSuite := &apiServerSuite{}
 
 	suite.Run(t, apiServerSuite)
+}
+
+func (a *apiServerSuite) TestAuthenticationConfigHasAnonymous() {
+	writeConfig := func(content string) string {
+		path := filepath.Join(a.T().TempDir(), "authentication-config.yaml")
+		a.Require().NoError(os.WriteFile(path, []byte(content), 0o600))
+		return path
+	}
+
+	a.Run("anonymous field present", func() {
+		path := writeConfig(`
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+anonymous:
+  enabled: true
+  conditions:
+    - path: /readyz
+`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().NoError(err)
+		a.Require().True(hasAnonymous)
+	})
+
+	a.Run("anonymous field present but disabled", func() {
+		path := writeConfig(`
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+anonymous:
+  enabled: false
+`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().NoError(err)
+		a.Require().True(hasAnonymous)
+	})
+
+	a.Run("anonymous field absent", func() {
+		path := writeConfig(`
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+jwt:
+  - issuer:
+      url: https://example.com/dex
+`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().NoError(err)
+		a.Require().False(hasAnonymous)
+	})
+
+	a.Run("anonymous field null", func() {
+		path := writeConfig(`
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+anonymous: null
+`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().NoError(err)
+		a.Require().False(hasAnonymous)
+	})
+
+	a.Run("file missing", func() {
+		hasAnonymous, err := authenticationConfigHasAnonymous(filepath.Join(a.T().TempDir(), "nonexistent.yaml"))
+		a.Require().Error(err)
+		a.Require().False(hasAnonymous)
+	})
+
+	a.Run("file malformed", func() {
+		path := writeConfig(`{unparseable`)
+		hasAnonymous, err := authenticationConfigHasAnonymous(path)
+		a.Require().Error(err)
+		a.Require().False(hasAnonymous)
+	})
 }
 
 func (a *apiServerSuite) TestGetEtcdArgs() {
@@ -107,5 +179,68 @@ func (a *apiServerSuite) TestGetEtcdArgs() {
 		require.Len(result, 2)
 		require.Contains(result[0], "--etcd-servers=http://192.168.10.10:2379,http://192.168.10.11:2379")
 		require.Contains(result[1], "--etcd-prefix=k0s-tenant-1")
+	})
+}
+
+func (a *apiServerSuite) TestCapNetBindServiceForLowPorts() {
+	k0sVars := &config.CfgVars{
+		BinDir:      "/var/lib/k0s/bin",
+		CertRootDir: "/var/lib/k0s/pki",
+		DataDir:     "/var/lib/k0s",
+		RunDir:      "/run/k0s",
+	}
+
+	a.Run("port 443 requires CAP_NET_BIND_SERVICE", func() {
+		clusterConfig := v1beta1.DefaultClusterConfig()
+		clusterConfig.Spec.API.Port = 443
+
+		apiServer := &APIServer{
+			NodeConfig:     clusterConfig,
+			K0sVars:        k0sVars,
+			LogLevel:       "1",
+			executablePath: "/fake/path/kube-apiserver",
+		}
+
+		supervisor, err := apiServer.buildSupervisor()
+		require := a.Require()
+		require.NoError(err)
+		require.True(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
+			"Port 443 should require CAP_NET_BIND_SERVICE capability")
+	})
+
+	a.Run("port 6443 does not require CAP_NET_BIND_SERVICE", func() {
+		clusterConfig := v1beta1.DefaultClusterConfig()
+		clusterConfig.Spec.API.Port = 6443
+
+		apiServer := &APIServer{
+			NodeConfig:     clusterConfig,
+			K0sVars:        k0sVars,
+			LogLevel:       "1",
+			executablePath: "/fake/path/kube-apiserver",
+		}
+
+		supervisor, err := apiServer.buildSupervisor()
+		require := a.Require()
+		require.NoError(err)
+		require.False(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
+			"Port 6443 should not require CAP_NET_BIND_SERVICE capability")
+	})
+
+	a.Run("port 80 requires CAP_NET_BIND_SERVICE", func() {
+		clusterConfig := v1beta1.DefaultClusterConfig()
+		clusterConfig.Spec.API.Port = 80
+
+		apiServer := &APIServer{
+			NodeConfig:     clusterConfig,
+			K0sVars:        k0sVars,
+			LogLevel:       "1",
+			executablePath: "/fake/path/kube-apiserver",
+		}
+
+		supervisor, err := apiServer.buildSupervisor()
+		require := a.Require()
+		require.NoError(err)
+		require.True(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
+			"Port 80 should require CAP_NET_BIND_SERVICE capability")
 	})
 }

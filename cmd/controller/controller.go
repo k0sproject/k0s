@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sync/atomic"
 	"time"
 
 	"github.com/k0sproject/k0s/cmd/internal"
@@ -52,7 +53,6 @@ import (
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
-	"k8s.io/utils/ptr"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
@@ -63,9 +63,8 @@ type command config.CLIOptions
 
 func NewControllerCmd() *cobra.Command {
 	var (
-		debugFlags            internal.DebugFlags
-		controllerFlags       config.ControllerOptions
-		ignorePreFlightChecks bool
+		debugFlags      internal.DebugFlags
+		controllerFlags config.ControllerOptions
 	)
 
 	cmd := &cobra.Command{
@@ -106,12 +105,34 @@ func NewControllerCmd() *cobra.Command {
 				ControllerRoleEnabled: true,
 				WorkerRoleEnabled:     controllerFlags.Mode().WorkloadsEnabled(),
 				DataDir:               c.K0sVars.DataDir,
-			}).RunPreFlightChecks(ignorePreFlightChecks); !ignorePreFlightChecks && err != nil {
+			}).RunPreFlightChecks(opts.IgnorePreFlightChecks); !opts.IgnorePreFlightChecks && err != nil {
 				return err
 			}
 
 			ctx := cmd.Context()
-			if err := c.start(ctx, &controllerFlags, debugFlags.IsDebug()); err != nil {
+			nodeConfig, err := c.loadNodeConfig()
+			if err != nil {
+				return err
+			}
+
+			if err := c.initDirs(); err != nil {
+				return err
+			}
+
+			runtimeConfig, err := config.NewRuntimeConfig(c.K0sVars, nodeConfig)
+			if err != nil {
+				return fmt.Errorf("failed to initialize runtime config: %w", err)
+			}
+			defer func() {
+				if err := runtimeConfig.Spec.Cleanup(); err != nil {
+					logrus.WithError(err).Warn("Failed to cleanup runtime config")
+				}
+			}()
+
+			if err := c.start(ctx, runtimeConfig, nodeConfig, &controllerFlags, debugFlags.IsDebug()); err != nil {
+				if controllerFlags.InitOnly && errors.Is(err, errInitOnly) {
+					return nil
+				}
 				return err
 			}
 
@@ -137,30 +158,26 @@ func NewControllerCmd() *cobra.Command {
 	flags.AddFlagSet(config.GetControllerFlags(&controllerFlags))
 	flags.AddFlagSet(config.GetWorkerFlags())
 	flags.AddFlagSet(config.FileInputFlag())
-	flags.BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 
 	return cmd
 }
 
-func (c *command) start(ctx context.Context, flags *config.ControllerOptions, debug bool) error {
-	ctx, cancel := context.WithCancelCause(ctx)
-	defer cancel(nil)
+var errInitOnly = errors.New("init-only")
 
-	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
-
+func (c *command) loadNodeConfig() (*v1beta1.ClusterConfig, error) {
 	nodeConfig, err := c.K0sVars.NodeConfig()
 	if err != nil {
-		return fmt.Errorf("failed to load node config: %w", err)
+		return nil, fmt.Errorf("failed to load node config: %w", err)
 	}
 
 	if errs := nodeConfig.Validate(); len(errs) > 0 {
-		return fmt.Errorf("invalid node config: %w", errors.Join(errs...))
+		return nil, fmt.Errorf("invalid node config: %w", errors.Join(errs...))
 	}
 
-	nodeComponents := manager.New(prober.DefaultProber)
-	clusterComponents := manager.New(prober.DefaultProber)
+	return nodeConfig, nil
+}
 
-	// create directories early with the proper permissions
+func (c *command) initDirs() error {
 	if err := dir.Init(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 		return err
 	}
@@ -174,15 +191,17 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		return err
 	}
 
-	rtc, err := config.NewRuntimeConfig(c.K0sVars, nodeConfig)
-	if err != nil {
-		return fmt.Errorf("failed to initialize runtime config: %w", err)
-	}
-	defer func() {
-		if err := rtc.Spec.Cleanup(); err != nil {
-			logrus.WithError(err).Warn("Failed to cleanup runtime config")
-		}
-	}()
+	return nil
+}
+
+func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig, nodeConfig *v1beta1.ClusterConfig, flags *config.ControllerOptions, debug bool) error {
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
+
+	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
+
+	nodeComponents := manager.New(prober.DefaultProber)
+	clusterComponents := manager.New(prober.DefaultProber)
 
 	// common factory to get the admin kube client that's needed in many components
 	adminClientFactory := &kubernetes.ClientFactory{LoadRESTConfig: func() (*rest.Config, error) {
@@ -228,6 +247,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	logrus.Infof("DNS address: %s", dnsAddress)
 
 	var storageBackend manager.Component
+	var leaveEtcdClusterOnStop *atomic.Bool
 	storageType := nodeConfig.Spec.Storage.Type
 
 	switch storageType {
@@ -237,18 +257,25 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			K0sVars: c.K0sVars,
 		}
 	case v1beta1.EtcdStorageType:
-		storageBackend = &controller.Etcd{
-			CertManager: certificateManager,
-			Config:      nodeConfig.Spec.Storage.Etcd,
-			JoinClient:  joinClient,
-			K0sVars:     c.K0sVars,
-			LogLevel:    c.LogLevels.Etcd,
+		config := nodeConfig.Spec.Storage.Etcd
+		if !config.IsExternalClusterUsed() {
+			leaveEtcdClusterOnStop = new(atomic.Bool)
+			storageBackend = &controller.Etcd{
+				CertManager: certificateManager,
+				Config:      config,
+				JoinClient:  joinClient,
+				K0sVars:     c.K0sVars,
+				LogLevel:    c.LogLevels.Etcd,
+				LeaveOnStop: leaveEtcdClusterOnStop.Load,
+			}
 		}
 	default:
 		return fmt.Errorf("invalid storage type: %s", nodeConfig.Spec.Storage.Type)
 	}
-	logrus.Infof("using storage backend %s", nodeConfig.Spec.Storage.Type)
-	nodeComponents.Add(ctx, storageBackend)
+	if storageBackend != nil {
+		logrus.Infof("using storage backend %s", nodeConfig.Spec.Storage.Type)
+		nodeComponents.Add(ctx, storageBackend)
+	}
 
 	controllerMode := flags.Mode()
 	// Will the cluster support multiple controllers, or just a single one?
@@ -257,10 +284,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	// Assume a single active controller during startup
 	numActiveControllers := value.NewLatest[uint](1)
 
-	nodeComponents.Add(ctx, &iptables.Component{
-		IPTablesMode: c.IPTablesMode,
-		BinDir:       c.K0sVars.BinDir,
-	})
+	workerInterface := embeddingController{opts: flags}
 
 	enableK0sEndpointReconciler := nodeConfig.Spec.API.ExternalAddress != "" &&
 		!slices.Contains(flags.DisableComponents, constant.APIEndpointReconcilerComponentName)
@@ -274,6 +298,12 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			enableK0sEndpointReconciler = false
 			logrus.Info("Disabling k0s endpoint reconciler in favor of control plane load balancing")
 		}
+
+		workerInterface.usesIPTables = true
+		nodeComponents.Add(ctx, &iptables.Component{
+			IPTablesMode: c.IPTablesMode,
+			BinDir:       c.K0sVars.BinDir,
+		})
 
 		nodeComponents.Add(ctx, &cplb.Keepalived{
 			K0sVars:         c.K0sVars,
@@ -298,11 +328,11 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	nodeComponents.Add(ctx, &controller.APIServer{
-		ClusterConfig:      nodeConfig,
+		NodeConfig:         nodeConfig,
 		K0sVars:            c.K0sVars,
 		LogLevel:           c.LogLevels.KubeAPIServer,
-		Storage:            storageBackend,
 		EnableKonnectivity: enableKonnectivity,
+		StopTimeout:        flags.APIServerStopTimeout,
 
 		// If k0s reconciles the kubernetes endpoint, the API server shouldn't do it.
 		DisableEndpointReconciler: enableK0sEndpointReconciler,
@@ -317,7 +347,6 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		nodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
 			NodeName:              nodeName,
 			InvocationID:          c.K0sVars.InvocationID,
-			ClusterConfig:         nodeConfig,
 			KubeClientFactory:     adminClientFactory,
 			UpdateControllerCount: numActiveControllers.Set,
 		})
@@ -355,13 +384,11 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.ControlAPIComponentName) && nodeConfig.Spec.Storage.IsJoinable() {
-		nodeComponents.Add(ctx, &controller.K0SControlAPI{RuntimeConfig: rtc})
+		nodeComponents.Add(ctx, &controller.K0SControlAPI{RuntimeConfig: runtimeConfig})
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.CsrApproverComponentName) {
-		nodeComponents.Add(ctx, controller.NewCSRApprover(nodeConfig,
-			leaderElector,
-			adminClientFactory))
+		nodeComponents.Add(ctx, controller.NewCSRApprover(leaderElector, adminClientFactory))
 	}
 
 	if flags.EnableK0sCloudProvider {
@@ -374,27 +401,35 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			),
 		)
 	}
-	nodeComponents.Add(ctx, &status.Status{
+	statusComponent := status.Status{
 		Prober: prober.DefaultProber,
 		StatusInformation: status.K0sStatus{
 			Pid:           os.Getpid(),
 			Role:          "controller",
 			Args:          os.Args,
 			Version:       build.Version,
-			Workloads:     controllerMode.WorkloadsEnabled(),
 			SingleNode:    controllerMode == config.SingleNodeMode,
 			K0sVars:       c.K0sVars,
 			ClusterConfig: nodeConfig,
 		},
-		Socket:      c.K0sVars.StatusSocketPath,
-		CertManager: worker.NewCertificateManager(c.K0sVars.KubeletAuthConfigPath),
-	})
+		Socket: c.K0sVars.StatusSocketPath,
+	}
+	if controllerMode.WorkloadsEnabled() {
+		// The status component must use the same Kubernetes client configuration as
+		// the embedded kubelet, otherwise the API connectivity check would be
+		// inaccurate. For embedded workers, this is always the "direct"
+		// configuration.
+		statusComponent.StatusInformation.Workloads = true
+		statusComponent.CertManager = worker.NewCertificateManager(worker.DirectKubeletKubeconfigPath(c.K0sVars))
+	}
+	nodeComponents.Add(ctx, &statusComponent)
 
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
-		ClusterSpec: nodeConfig.Spec,
-		CertManager: certificateManager,
-		K0sVars:     c.K0sVars,
+		ClusterSpec:         nodeConfig.Spec,
+		CertManager:         certificateManager,
+		K0sVars:             c.K0sVars,
+		KonnectivityEnabled: enableKonnectivity,
 	}
 	if err := certs.Init(ctx); err != nil {
 		return err
@@ -410,7 +445,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	perfTimer.Checkpoint("starting-node-components")
 
 	if flags.InitOnly {
-		return nil
+		return errInitOnly
 	}
 
 	// Start components
@@ -468,7 +503,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		))
 	}
 
-	hasWindowsNodes := func() (*bool, <-chan struct{}) { return ptr.To(false), nil }
+	hasWindowsNodes := func() (*bool, <-chan struct{}) { return new(false), nil }
 	if !slices.Contains(flags.DisableComponents, constant.WindowsNodeComponentName) {
 		var windowsNodeCount value.Latest[*uint]
 		windowsStack, err := controller.NewWindowsStackComponent(adminClientFactory, windowsNodeCount.Set)
@@ -479,7 +514,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 		hasWindowsNodes = func() (*bool, <-chan struct{}) {
 			count, changed := windowsNodeCount.Peek()
 			if count != nil {
-				return ptr.To(*count > 0), changed
+				return new(*count > 0), changed
 			}
 			return nil, changed
 		}
@@ -504,7 +539,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			return fmt.Errorf("failed to create Calico component: %w", err)
 		}
 		clusterComponents.Add(ctx, calico)
-		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars))
+		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, nodeConfig.Spec.PrimaryAddressFamily(), nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily())))
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.MetricsServerComponentName) {
@@ -572,11 +607,12 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 			K0sVars:               c.K0sVars,
 			DisableLeaderElection: singleController,
 			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
+			PrimaryAddressFamily:  nodeConfig.Spec.PrimaryAddressFamily(),
 			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
 	}
 
-	if nodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType && !nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+	if leaveEtcdClusterOnStop != nil {
 		etcdReconciler, err := controller.NewEtcdMemberReconciler(
 			adminClientFactory,
 			nodeName,
@@ -587,6 +623,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 				num, _ := numActiveControllers.Peek()
 				return num
 			},
+			leaveEtcdClusterOnStop.Store,
 			cancel,
 		)
 		if err != nil {
@@ -669,7 +706,7 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	perfTimer.Output()
 
 	if controllerMode.WorkloadsEnabled() {
-		return c.startWorker(ctx, nodeName, kubeletExtraArgs, flags)
+		return c.startWorker(ctx, nodeName, kubeletExtraArgs, &workerInterface)
 	}
 
 	if supervised := supervised.Get(ctx); supervised != nil {
@@ -684,23 +721,31 @@ func (c *command) start(ctx context.Context, flags *config.ControllerOptions, de
 	return nil
 }
 
-func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, opts *config.ControllerOptions) error {
+func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, e *embeddingController) error {
 	// Cast and make a copy of the controller command so it can use the same
 	// opts to start the worker. Needs to be a copy so the original token and
 	// possibly other args won't get messed up.
 	wc := workercmd.Command(*(*config.CLIOptions)(c))
 	wc.Labels[constant.K0SNodeRoleLabel] = "control-plane"
-	if opts.Mode() == config.ControllerPlusWorkerMode && !opts.NoTaints {
+	if e.opts.Mode() == config.ControllerPlusWorkerMode && !e.opts.NoTaints {
 		wc.Taints = append(wc.Taints, constants.ControlPlaneTaint.ToString())
 	}
-	return wc.Start(ctx, nodeName, kubeletExtraArgs, kubernetes.KubeconfigFromFile(c.K0sVars.AdminKubeConfigPath), (*embeddingController)(opts))
+	return wc.Start(ctx, nodeName, kubeletExtraArgs, kubernetes.KubeconfigFromFile(c.K0sVars.AdminKubeConfigPath), e)
 }
 
-type embeddingController config.ControllerOptions
+type embeddingController struct {
+	opts         *config.ControllerOptions
+	usesIPTables bool
+}
 
 // IsSingleNode implements [workercmd.EmbeddingController].
 func (c *embeddingController) IsSingleNode() bool {
-	return (*config.ControllerOptions)(c).Mode() == config.SingleNodeMode
+	return c.opts.Mode() == config.SingleNodeMode
+}
+
+// UsesIPTables implements [worker.EmbeddingController].
+func (c *embeddingController) UsesIPTables() bool {
+	return c.usesIPTables
 }
 
 // If we've got an etcd data directory in place for embedded etcd, or a ca for

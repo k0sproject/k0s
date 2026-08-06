@@ -29,8 +29,7 @@ type assertTotalMem struct {
 func (a *assertTotalMem) Probe(reporter Reporter) error {
 	desc := NewProbeDesc("Total memory", a.path)
 	if totalMemory, err := a.probeTotalMemory(); err != nil {
-		var unsupportedErr probeUnsupported
-		if errors.As(err, &unsupportedErr) {
+		if unsupportedErr, ok := errors.AsType[probeUnsupported](err); ok {
 			return reporter.Warn(desc, unsupportedErr, "")
 		}
 		return reporter.Error(desc, err)

@@ -4,19 +4,15 @@
 package common
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
-	"strings"
 	"syscall"
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
@@ -26,7 +22,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -248,33 +243,6 @@ func WaitForPod(ctx context.Context, kc kubernetes.Interface, name, namespace st
 		})
 }
 
-// WaitForPodLogs waits until it can stream the logs of the first running pod
-// that comes along in the given namespace as long as the given context isn't
-// canceled.
-func WaitForPodLogs(ctx context.Context, kc kubernetes.Interface, namespace string) error {
-	return Poll(ctx, func(ctx context.Context) (done bool, err error) {
-		pods, err := kc.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-			Limit:         100,
-			FieldSelector: fields.OneTermEqualSelector("status.phase", string(corev1.PodRunning)).String(),
-		})
-		if err != nil {
-			return false, err // stop polling with error in case the pod listing fails
-		}
-		if len(pods.Items) < 1 {
-			return false, nil
-		}
-
-		pod := &pods.Items[0]
-		logs, err := kc.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: pod.Spec.Containers[0].Name}).Stream(ctx)
-		if err != nil {
-			return false, nil // do not return the error so we keep on polling
-		}
-		defer logs.Close()
-
-		return true, nil
-	})
-}
-
 func WaitForLease(ctx context.Context, kc kubernetes.Interface, name string, namespace string) (string, error) {
 	var holderIdentity string
 	watchLeases := watch.FromClient[*coordinationv1.LeaseList, coordinationv1.Lease]
@@ -319,42 +287,6 @@ func RetryWatchErrors(logf LogfFn) watch.ErrorCallback {
 
 		return 0, err
 	}
-}
-
-// VerifyKubeletMetrics checks whether we see container and image labels in kubelet metrics.
-// It does it via polling as it takes some time for kubelet to start reporting metrics.
-func VerifyKubeletMetrics(ctx context.Context, kc kubernetes.Interface, node string) error {
-	image := constant.KubeRouterCNIImage
-	if ver, hash, found := strings.Cut(constant.KubeRouterCNIImageVersion, "@"); found {
-		image = fmt.Sprintf("%s@%s", image, hash)
-	} else {
-		image = fmt.Sprintf("%s:%s", image, ver)
-	}
-
-	re := fmt.Sprintf(`^container_cpu_usage_seconds_total\{container="kube-router".*image="%s"`, regexp.QuoteMeta(image))
-	containerRegex := regexp.MustCompile(re)
-
-	path := fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics/cadvisor", node)
-
-	return Poll(ctx, func(ctx context.Context) (done bool, err error) {
-		metrics, err := kc.CoreV1().RESTClient().Get().AbsPath(path).Param("format", "text").DoRaw(ctx)
-		if err != nil {
-			return false, nil // do not return the error so we keep on polling
-		}
-
-		scanner := bufio.NewScanner(bytes.NewReader(metrics))
-		for scanner.Scan() {
-			line := scanner.Text()
-			if containerRegex.MatchString(line) {
-				return true, nil
-			}
-		}
-		if err := scanner.Err(); err != nil {
-			return false, err
-		}
-
-		return false, nil
-	})
 }
 
 func ResetNode(name string, suite *BootlooseSuite) error {

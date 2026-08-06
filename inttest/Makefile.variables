@@ -2,7 +2,7 @@
 sonobuoy_version = 0.57.3
 
 # renovate: datasource=github-releases depName=helm/helm
-helm_version = 3.20.2
+helm_version = 3.21.3
 
 smoketests := \
 	check-addons \
@@ -20,6 +20,8 @@ smoketests := \
 	check-ap-updater \
 	check-ap-updater-periodic \
 	check-backup \
+	check-backup-stream \
+	check-backup-kine \
 	check-basic \
 	check-bind-address \
 	check-byocri \
@@ -32,7 +34,6 @@ smoketests := \
 	check-configchange \
 	check-containerd-deprecations \
 	check-containerdimports \
-	check-containerdupgrade \
 	check-cplb-ipvs \
 	check-cplb-ipvs-ipv6 \
 	check-cplb-userspace \
@@ -50,6 +51,7 @@ smoketests := \
 	check-dualstack-kuberouter \
 	check-dualstack-kuberouter-dynamicconfig \
 	check-embedded-binaries \
+	check-etcdlearner \
 	check-etcdmember \
 	check-externaletcd \
 	check-extraargs \
@@ -80,6 +82,8 @@ smoketests := \
 	check-noderole \
 	check-noderole-no-taints \
 	check-noderole-single \
+	check-patches \
+	check-privileged-port \
 	check-psp \
 	check-reset \
 	check-singlenode \

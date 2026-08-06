@@ -1,2 +1,2 @@
 # renovate: datasource=github-releases depName=containerbase/python-prebuild versioning=python
-python_version = 3.14.4
+python_version = 3.14.6

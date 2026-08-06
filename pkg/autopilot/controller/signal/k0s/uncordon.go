@@ -51,7 +51,7 @@ func unCordoningEventFilter(handler apsigpred.ErrorHandler) crpred.Predicate {
 // controller-runtime manager.
 //
 // This controller is only interested when autopilot signaling annotations have
-// moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
+// moved to a `UnCordoning` status. At this point, it will attempt to uncordon
 // the node.
 func registerUncordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, nodeName types.NodeName, leaseStatus leaderelection.Status) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_uncordoning"

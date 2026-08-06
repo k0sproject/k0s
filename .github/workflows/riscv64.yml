@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 k0s authors
+
+name: "RISC-V build"
+
+on:
+  workflow_dispatch:
+    inputs:
+      smoketests:
+        description: Which smoketests to run.
+        type: string
+  schedule:
+    - cron: 45 2 * * *
+
+jobs:
+  build-k0s:
+    name: "Build :: k0s :: linux-riscv64"
+    uses: ./.github/workflows/build-k0s.yml
+    with:
+      target-os: linux
+      target-arch: riscv64
+
+  build-airgap-image-bundle:
+    name: "Build :: Airgap image bundle"
+    needs: [build-k0s]
+    uses: ./.github/workflows/build-image-bundle.yml
+    with:
+      image-bundle-name: airgap
+      image-bundle-platform: linux-riscv64
+      runs-on: ubuntu-24.04-riscv
+
+  unittests-k0s:
+    name: "check-unit :: k0s :: linux-riscv64"
+    uses: ./.github/workflows/unittests-k0s.yml
+    with:
+      runs-on: ubuntu-24.04-riscv
+
+  smoketests:
+    strategy:
+      fail-fast: false
+      matrix:
+        smoke-suite: >-
+          ${{ fromJSON(inputs.smoketests || '
+              [
+                "airgap",
+                "basic"
+              ]
+            ')
+          }}
+    name: "check-${{ matrix.smoke-suite }} :: riscv64"
+    needs: [build-k0s, build-airgap-image-bundle]
+
+    uses: ./.github/workflows/smoketest.yaml
+    with:
+      arch: riscv64
+      name: ${{ matrix.smoke-suite }}

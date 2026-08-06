@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"reflect"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -280,6 +281,7 @@ func (m *MetricServer) Start(ctx context.Context) error {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 		previousConfig := metricsConfig{}
+		var previousPatches v1beta1.Patches
 		for {
 			select {
 			case <-ticker.C:
@@ -288,7 +290,11 @@ func (m *MetricServer) Start(ctx context.Context) error {
 					m.log.Warnf("failed to calculate metrics-server config: %s", err.Error())
 					continue
 				}
-				if previousConfig == newConfig {
+				var patches v1beta1.Patches
+				if ms := m.clusterConfig.Spec.MetricsServer; ms != nil {
+					patches = ms.Patches
+				}
+				if previousConfig == newConfig && reflect.DeepEqual(previousPatches, patches) {
 					continue
 				}
 				tw := templatewriter.TemplateWriter{
@@ -296,6 +302,7 @@ func (m *MetricServer) Start(ctx context.Context) error {
 					Template: metricServerTemplate,
 					Data:     newConfig,
 					Path:     filepath.Join(msDir, "metric_server.yaml"),
+					Patches:  patches,
 				}
 				err = tw.Write()
 				if err != nil {
@@ -303,6 +310,7 @@ func (m *MetricServer) Start(ctx context.Context) error {
 					continue
 				}
 				previousConfig = newConfig
+				previousPatches = patches
 			case <-ctx.Done():
 				m.log.Info("metric server reconciler done")
 				return

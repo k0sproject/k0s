@@ -38,7 +38,6 @@ type configSnapshot struct {
 	featureGates           v1beta1.FeatureGates
 	pauseImage             *v1beta1.ImageSpec
 	pauseWindowsImage      *v1beta1.ImageSpec
-	primaryAddressFamily   v1beta1.PrimaryAddressFamilyType
 }
 
 func (s *snapshot) DeepCopy() *snapshot {
@@ -72,7 +71,6 @@ func (s *configSnapshot) DeepCopyInto(out *configSnapshot) {
 	out.featureGates = s.featureGates.DeepCopy()
 	out.pauseImage = s.pauseImage.DeepCopy()
 	out.pauseWindowsImage = s.pauseWindowsImage.DeepCopy()
-	out.primaryAddressFamily = s.primaryAddressFamily
 }
 
 // takeConfigSnapshot converts ClusterSpec to a delta snapshot
@@ -93,6 +91,5 @@ func takeConfigSnapshot(spec *v1beta1.ClusterSpec) configSnapshot {
 		spec.FeatureGates.DeepCopy(),
 		spec.Images.Pause.DeepCopy(),
 		spec.Images.Windows.Pause.DeepCopy(),
-		spec.PrimaryAddressFamily(),
 	}
 }

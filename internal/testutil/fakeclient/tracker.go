@@ -43,9 +43,8 @@ func NewClientset[T any](discovery *discoveryfake.FakeDiscovery, tracker testing
 	})
 
 	// Set the fake clientset's discovery and tracker.
-	ty := reflect.TypeOf(p).Elem()
-	for i := range ty.NumField() {
-		f := ty.Field(i)
+	ty := reflect.TypeFor[T]()
+	for f := range ty.Fields() {
 		if f.Name == "discovery" && f.Type == reflect.TypeFor[*discoveryfake.FakeDiscovery]() {
 			*(**discoveryfake.FakeDiscovery)(unsafe.Add(unsafe.Pointer(p), f.Offset)) = discovery
 		} else if f.Name == "tracker" && f.Type == reflect.TypeFor[testing.ObjectTracker]() {

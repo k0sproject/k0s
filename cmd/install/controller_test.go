@@ -43,6 +43,7 @@ With the controller subcommand you can setup a single node cluster by running:
 	
 
 Flags:
+      --api-server-stop-timeout duration               time to wait for the API server to stop
   -c, --config string                                  config file, use '-' to read the config from stdin (default `+defaultConfigPath+`)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --data-dir string                                Data Directory for k0s. DO NOT CHANGE for an existing setup, things will break! (default `+defaultDataDir+`)
@@ -54,6 +55,7 @@ Flags:
       --enable-worker                                  enable worker (default false)
       --feature-gates mapStringBool                    feature gates to enable (comma separated list of key=value pairs)
   -h, --help                                           help for controller
+      --ignore-pre-flight-checks                       continue even if pre-flight checks fail
       --init-only                                      only initialize controller and exit
       --iptables-mode string                           iptables mode (valid values: nft, legacy, auto). default: auto
       --k0s-cloud-provider-port int                    the port that k0s-cloud-provider binds on (default 10258)

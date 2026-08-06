@@ -73,6 +73,16 @@ func TestPeriodicUpgradeStrategy_IsWithinPeriod(t *testing.T) {
 			time: time.Now().Add(time.Hour * -24),
 			want: false,
 		},
+		{
+			name: "Fixed future time within window",
+			fields: fields{
+				Days:      []string{"Monday"},
+				StartTime: "10:00",
+				Length:    "1h",
+			},
+			time: time.Date(2099, time.January, 5, 10, 30, 0, 0, time.UTC),
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

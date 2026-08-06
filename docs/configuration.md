@@ -135,7 +135,7 @@ spec:
 | `ca.certificatesExpireAfter` | The expiration duration of the server certificate (default: 8760h)                                                                                                                                                                                                            |
 | `extraArgs`                  | Map of key-values (strings) for any extra arguments to pass down to Kubernetes API server process. `extraArgs` are recommended over `rawArgs` if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty)                  |
 | `rawArgs`                    | Slice of strings for any raw arguments to pass down to the kube-apiserver process. These are appended after `extraArgs`. If possible, it's recommended to use `extraArgs` over `rawArgs`. Any behavior triggered by these parameters is outside k0s support. (default: empty) |
-| `port`¹                      | Custom port for the Kubernetes API server to listen on (default: 6443)                                                                                                                                                                                                        |
+| `port`¹                      | Custom port for the Kubernetes API server to listen on (default: 6443). When set to a privileged port (< 1024), k0s automatically grants the `CAP_NET_BIND_SERVICE` capability to the kube-apiserver process to allow binding to the port.                                    |
 | `k0sApiPort`¹                | Custom port for k0s API server to listen on (default: 9443)                                                                                                                                                                                                                   |
 
 ¹ If `port` and `k0sApiPort` are used with the `externalAddress` element, the load balancer serving at `externalAddress` must listen on the same ports.
@@ -267,8 +267,11 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 | `extraArgs`          | Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. `extraArgs` are recommended over `rawArgs` if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty)                         |
 | `rawArgs`            | Slice of strings for any raw arguments to pass down to the kube-proxy process. These are appended after `extraArgs`. If possible, it's recommended to use `extraArgs` over `rawArgs`. Any behavior triggered by these parameters is outside k0s support. (default: empty) |
 
-¹ For nftables, the kubeproxy container's nftables version needs to be less than or equal to the host OS's in order to avoid segmentation faults.
-For example, a host OS with nftables v1.1.1 requires quay.io/k0sproject/kube-proxy:v1.33.2 or lower.
+¹ For nftables, the kube-proxy container's nftables version needs to be less
+than or equal to the host OS's in order to avoid segmentation faults. For
+example, a host OS with nftables v1.1.1 requires
+`quay.io/k0sproject/kube-proxy:{# no auto-bumps-here #}{{{ "v1.33.2" }}}` or
+lower.
 
 Default kube-proxy iptables settings:
 
@@ -562,7 +565,7 @@ If you want the list of default images and their versions to be included, use `k
 
 #### Image example
 
-{% set cali_ver = src_var('CalicoKubeControllersImage') -%}
+{% set cali_ver = src_var('CalicoKubeControllersImageVersion') -%}
 {% set metrics_ver = src_var('MetricsImageVersion') -%}
 
 ```yaml
@@ -604,6 +607,65 @@ The telemetry interval is ten minutes.
 spec:
   telemetry:
     enabled: true
+```
+
+### Component patches
+
+!!! warning "Experimental feature"
+     Patching is an experimental feature, which means the behavior of this feature might be unstable and may change without a major version bump.
+
+Several k0s-managed components let you customize the Kubernetes resources they
+generate before those resources are written and applied. This is an escape
+hatch for adjustments k0s does not expose as dedicated config options. Patches
+live under the component they belong to:
+
+| Component      | Config key                        |
+|----------------|-----------------------------------|
+| CoreDNS        | `spec.network.coreDNS.patches`    |
+| kube-proxy     | `spec.network.kubeProxy.patches`  |
+| kube-router    | `spec.network.kuberouter.patches` |
+| Calico         | `spec.network.calico.patches`     |
+| metrics-server | `spec.metricsServer.patches`      |
+
+Each entry selects a target resource by `kind` and `name` (optionally narrowed
+by `namespace`) and provides the patch `type` and `content`. The `content` may
+be written as JSON or YAML.
+
+| Element             | Description                                                                                                   |
+|---------------------|---------------------------------------------------------------------------------------------------------------|
+| `target.kind`       | The Kubernetes `kind` of the generated resource to patch (e.g. `Deployment`, `Service`, `ConfigMap`).         |
+| `target.name`       | The `metadata.name` of the generated resource to patch.                                                       |
+| `target.namespace`  | Optional. Narrows the match to a single namespace.                                                            |
+| `patch.type`        | One of `JSON` (RFC 6902 JSON Patch), `MergePatch` (RFC 7386 JSON Merge Patch) or `StrategicMergePatch`.       |
+| `patch.content`     | The patch body, as JSON or YAML.                                                                              |
+
+Multiple patches matching the same resource are applied in the order listed.
+Note that `StrategicMergePatch` patches are only supported for built-in
+Kubernetes resource kinds.
+
+#### Example
+
+```yaml
+spec:
+  network:
+    coreDNS:
+      patches:
+        - target:
+            kind: Deployment
+            name: coredns
+            namespace: kube-system
+          patch:
+            type: StrategicMergePatch
+            content: |
+              spec:
+                replicas: 3
+                template:
+                  spec:
+                    containers:
+                      - name: coredns
+                        resources:
+                          limits:
+                            memory: 256Mi
 ```
 
 ## Disabling controller components

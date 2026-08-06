@@ -6,8 +6,6 @@ package v1beta1
 import (
 	"testing"
 
-	"k8s.io/utils/ptr"
-
 	"github.com/k0sproject/k0s/pkg/featuregate"
 	"github.com/stretchr/testify/suite"
 )
@@ -195,7 +193,7 @@ spec:
 	s.NotNil(n.KubeRouter)
 	s.Nil(n.Calico)
 
-	s.Equal(ptr.To(true), n.KubeRouter.AutoMTU)
+	s.Equal(new(true), n.KubeRouter.AutoMTU)
 	s.Equal(0, n.KubeRouter.MTU)
 	s.Empty(n.KubeRouter.PeerRouterASNs)
 	s.Empty(n.KubeRouter.PeerRouterIPs)
@@ -223,7 +221,7 @@ spec:
 	s.NotNil(n.KubeRouter)
 	s.Nil(n.Calico)
 
-	s.Equal(ptr.To(false), n.KubeRouter.AutoMTU)
+	s.Equal(new(false), n.KubeRouter.AutoMTU)
 	s.Equal(1500, n.KubeRouter.MTU)
 }
 

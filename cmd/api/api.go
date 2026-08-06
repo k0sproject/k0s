@@ -60,6 +60,8 @@ Reads the runtime configuration from standard input.`,
 
 			if runtimeConfig, err := loadRuntimeConfig(log, cmd.InOrStdin()); err != nil {
 				return err
+			} else if runtimeConfig.Spec.NodeConfig == nil {
+				return fmt.Errorf("%w: node config missing", config.ErrInvalidRuntimeConfig)
 			} else if server, err = buildServer(log, runtimeConfig.Spec.K0sVars, runtimeConfig.Spec.NodeConfig); err != nil {
 				return err
 			}
@@ -142,7 +144,7 @@ func buildServer(log logrus.FieldLogger, k0sVars *config.CfgVars, nodeConfig *v1
 	mux := http.NewServeMux()
 	storage := nodeConfig.Spec.Storage
 
-	if storage.Type == v1beta1.EtcdStorageType && !storage.Etcd.IsExternalClusterUsed() {
+	if storage == nil || storage.Type == v1beta1.EtcdStorageType && !storage.Etcd.IsExternalClusterUsed() {
 		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		mux.Handle(prefix+"/etcd/members", mw.AllowMethods(http.MethodPost)(
@@ -189,7 +191,7 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 			sendError(err, resp)
 			return
 		}
-		log.Infof("etcd API, adding new member: %s", etcdReq.PeerAddress)
+		log.Infof("etcd API, adding new learner member: %s", etcdReq.PeerAddress)
 		err = etcdReq.Validate()
 		if err != nil {
 			sendError(err, resp)
@@ -203,7 +205,7 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 		}
 		defer etcdClient.Close()
 
-		memberList, err := etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
+		memberList, err := etcdClient.AddMemberAsLearner(ctx, etcdReq.Node, etcdReq.PeerAddress)
 		if err != nil {
 			sendError(err, resp)
 			return

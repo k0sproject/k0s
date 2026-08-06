@@ -63,6 +63,7 @@ jobs:
 
           k0sSortVersion=$(./vars.sh FROM=. k0s_sort_version)
           mkdir -p build/cache/bin
+          #shellcheck disable=SC2086 # CURL_OPTS intentionally expands to multiple arguments
           curl $CURL_OPTS --output build/cache/bin/k0s_sort "https://github.com/k0sproject/version/releases/download/$k0sSortVersion/k0s_sort-linux-amd64"
           chmod +x build/cache/bin/k0s_sort
           printf '%s\n' "$(realpath build/cache/bin)" >>"$GITHUB_PATH"
@@ -104,8 +105,8 @@ jobs:
           mike alias -u head main
           mike alias -u "${STABLE}" stable
           mike set-default --push stable
-          echo LATEST="$LATEST" >> $GITHUB_OUTPUT
-          echo STABLE="$STABLE" >> $GITHUB_OUTPUT
+          echo LATEST="$LATEST" >>"$GITHUB_OUTPUT"
+          echo STABLE="$STABLE" >>"$GITHUB_OUTPUT"
 
       # Ensures the current branch is gh-pages,
       # Creates / updates the "stable" and "latest" plain text files with the corresponding versions
@@ -113,16 +114,17 @@ jobs:
       # Finally pushes if there are unpushed commits
       - name: Create version files
         if: github.repository == 'k0sproject/k0s'
+        env:
+          LATEST: "${{ steps.set_versions.outputs.LATEST }}"
+          STABLE: "${{ steps.set_versions.outputs.STABLE }}"
         run: |
-          LATEST=${{ steps.set_versions.outputs.LATEST }}
-          STABLE=${{ steps.set_versions.outputs.STABLE }}
           cp .github/workflows/channel.yaml.tpl /tmp/tpl
           git checkout gh-pages
-          echo "${STABLE}" > stable.txt
+          echo "${STABLE}" >stable.txt
           git add stable.txt && git update-index --refresh
           git diff-index --quiet HEAD -- || git commit -m "Set stable to ${STABLE}"
-          echo "${LATEST}" > latest.txt
-          cat /tmp/tpl | sed "s/{{ .Version }}/${LATEST}/g" > edge_release
+          echo "${LATEST}" >latest.txt
+          cat /tmp/tpl | sed "s/{{ .Version }}/${LATEST}/g" >edge_release
           git add latest.txt edge_release && git update-index --refresh
           git diff-index --quiet HEAD -- || git commit -m "Set latest to ${LATEST}"
           git push origin gh-pages

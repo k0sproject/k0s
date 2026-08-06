@@ -53,6 +53,11 @@ The configuration object is a 1-to-1 mapping with the existing [configuration YA
 
 As with any Kubernetes cluster there are certain things that just cannot be changed on-the-fly, this is the list of non-changeable options:
 
+<!--
+Technically, k0s currently supports reconciling the pod CIDR from dynamic
+config. This has supposedly been an oversight during implementation. Actually
+attempting to change it on a live cluster would likely wreak havoc.
+-->
 - `network.podCIDR`
 - `network.serviceCIDR`
 - `network.provider`

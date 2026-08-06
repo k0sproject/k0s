@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 k0s authors
+
+name: Lint GitHub Actions
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - .github/workflows/actionlint-matcher.json
+      - .github/workflows/*.yaml
+      - .github/workflows/*.yml
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths:
+      - .github/workflows/actionlint-matcher.json
+      - .github/workflows/*.yaml
+      - .github/workflows/*.yml
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Add actionlint problem matcher
+        run: echo "::add-matcher::.github/workflows/actionlint-matcher.json"
+
+      - name: Run actionlint
+        uses: docker://docker.io/rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667

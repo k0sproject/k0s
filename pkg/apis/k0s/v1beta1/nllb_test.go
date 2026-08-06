@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"testing"
 
-	"k8s.io/utils/ptr"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,13 +38,13 @@ func TestNodeLocalLoadBalancing_Unmarshal_ImageOverride(t *testing.T) {
 			require.NotNil(t, nllb.EnvoyProxy.Image)
 			require.Contains(t, nllb.EnvoyProxy.Image.Image, "example.com/")
 		}},
-		{ptr.To(NllbTypeEnvoyProxy), func(t *testing.T, nllb *NodeLocalLoadBalancing) {
+		{new(NllbTypeEnvoyProxy), func(t *testing.T, nllb *NodeLocalLoadBalancing) {
 			require.NotNil(t, nllb.EnvoyProxy)
 			require.NotNil(t, nllb.EnvoyProxy.Image)
 			require.Contains(t, nllb.EnvoyProxy.Image.Image, "example.com/")
 
 		}},
-		{ptr.To(NllbTypeTraefik), func(t *testing.T, nllb *NodeLocalLoadBalancing) {
+		{new(NllbTypeTraefik), func(t *testing.T, nllb *NodeLocalLoadBalancing) {
 			require.NotNil(t, nllb.Traefik)
 			require.NotNil(t, nllb.Traefik.Image)
 			require.Contains(t, nllb.Traefik.Image.Image, "example.com/")

@@ -1,0 +1,33 @@
+diff --git a/cmd/kubelet/app/options/globalflags_linux.go b/cmd/kubelet/app/options/globalflags_linux.go
+index b68c9591fea..e8dcecac6bb 100644
+--- a/cmd/kubelet/app/options/globalflags_linux.go
++++ b/cmd/kubelet/app/options/globalflags_linux.go
+@@ -24,6 +24,8 @@ import (
+ 
+ 	"github.com/spf13/pflag"
+ 
++	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
++
+ 	"github.com/google/cadvisor/lib/cadvisorflags"
+ 
+ 	// registers housekeeping_interval on the global flag set
+@@ -36,9 +38,19 @@ func addCadvisorFlags(fs *pflag.FlagSet) {
+ 	global := flag.CommandLine
+ 	local := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
+ 
++	register(global, local, cadvisorflags.Containerd)
++	register(global, local, cadvisorflags.ContainerdNamespace)
++
+ 	// e2e node tests rely on this
+ 	register(global, local, cadvisorflags.HousekeepingInterval)
+ 
++	for _, flag := range []string{
++		cadvisorflags.Containerd,
++		cadvisorflags.ContainerdNamespace,
++	} {
++		utilruntime.Must(local.MarkDeprecated(flag, "This is a cadvisor flag that was mistakenly registered with the Kubelet. Due to legacy concerns, it will follow the standard CLI deprecation timeline before being removed."))
++	}
++
+ 	// finally, add cadvisor flags to the provided flagset
+ 	fs.AddFlagSet(local)
+ }

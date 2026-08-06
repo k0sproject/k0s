@@ -13,8 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/utils/ptr"
-
 	"github.com/cilium/ebpf/rlimit"
 	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -79,8 +77,8 @@ func attachDummyDeviceFilter(mountPoint string) (err error) {
 	insts, license, err := cgroup2.DeviceFilter([]specs.LinuxDeviceCgroup{{
 		Allow:  true,
 		Type:   "a",
-		Major:  ptr.To(int64(-1)),
-		Minor:  ptr.To(int64(-1)),
+		Major:  new(int64(-1)),
+		Minor:  new(int64(-1)),
 		Access: "rwm",
 	}})
 	if err != nil {

@@ -25,6 +25,14 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
+// RequiredPrivileges encodes the intent of required privileges for a supervised process
+// in a platform-agnostic way. Platform-specific implementations translate these into
+// the appropriate mechanisms (e.g., ambient capabilities on Linux).
+type RequiredPrivileges struct {
+	// BindsPrivilegedPorts indicates that the process needs to bind to ports < 1024
+	BindsPrivilegedPorts bool
+}
+
 // Supervisor is dead simple and stupid process supervisor, just tries to keep the process running in a while-true loop
 type Supervisor struct {
 	Name           string
@@ -42,12 +50,14 @@ type Supervisor struct {
 	KeepEnvPrefix bool
 	// A function to clean some leftovers before starting or restarting the supervised process
 	CleanBeforeFn func() error
+	// Required privileges for the supervised process
+	RequiredPrivileges RequiredPrivileges
 
 	cmd            *exec.Cmd
 	log            logrus.FieldLogger
 	mutex          sync.Mutex
 	startStopMutex sync.Mutex
-	stop           func()
+	stop           func(opts StopOpts)
 }
 
 const k0sManaged = "_K0S_MANAGED=yes"
@@ -57,25 +67,35 @@ const k0sManaged = "_K0S_MANAGED=yes"
 func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 	waitresult := make(chan error, 1)
 	go func() {
-		waitresult <- cmd.Wait()
+		defer close(waitresult)
+		err := cmd.Wait()
+		defer func() { waitresult <- err }()
+		if err := os.Remove(s.PidFile); err != nil && !errors.Is(err, os.ErrNotExist) {
+			s.log.WithError(err).Error("Failed to remove PID file")
+		}
 	}()
-
-	defer os.Remove(s.PidFile)
 
 	select {
 	case <-ctx.Done():
-		s.log.Debugf("Attempting to terminate supervised process (%v)", context.Cause(ctx))
-		if err := s.terminateSupervisedProcess(cmd, waitresult); err != nil {
+		cause := context.Cause(ctx)
+		s.log.Debugf("Attempting to terminate supervised process (%v)", cause)
+		var stopOpts StopOpts
+		if stoppingErr, ok := errors.AsType[*stoppingErr](cause); ok {
+			stopOpts = stoppingErr.opts
+		}
+		if err := s.terminateSupervisedProcess(cmd, waitresult, stopOpts); err != nil {
 			s.log.WithError(err).Error("Error while terminating process")
 		} else {
 			s.log.Info("Process terminated successfully")
 		}
 		return true
 
-	case err := <-waitresult:
+	case err, ok := <-waitresult:
 		var exitErr *exec.ExitError
 		state := cmd.ProcessState
 		switch {
+		case !ok:
+			s.log.Error("Failed to wait for process: ", state)
 		case errors.As(err, &exitErr):
 			state = exitErr.ProcessState
 			fallthrough
@@ -88,7 +108,27 @@ func (s *Supervisor) processWaitQuit(ctx context.Context, cmd *exec.Cmd) bool {
 	}
 }
 
-func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error) error {
+func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan error, stopOpts StopOpts) error {
+	if timeout := stopOpts.DeferGracefulTerminationUntil; timeout != nil {
+		// Termination request deferred, wait for process to finish on its own.
+		s.log.Debug("Awaiting process termination")
+
+		select {
+		case err := <-waitresult:
+			var exitErr *exec.ExitError
+			switch {
+			case err == nil:
+				return nil
+			case errors.As(err, &exitErr):
+				return exitErr
+			default:
+				return fmt.Errorf("failed to wait for process: %w", err)
+			}
+		case <-timeout:
+			s.log.Debug("Timed out while waiting for process to terminate, requesting graceful termination")
+		}
+	}
+
 	err := requestGracefulTermination(cmd.Process)
 	switch {
 	case err == nil:
@@ -143,6 +183,22 @@ func (s *Supervisor) terminateSupervisedProcess(cmd *exec.Cmd, waitresult <-chan
 	}
 }
 
+// Controls how supervised processes are stopped.
+type StopOpts struct {
+	// Delays sending a graceful termination request to the supervised process
+	// until the channel is closed.
+	//
+	// This is useful when the process is expected to terminate on its own and
+	// an immediate termination request would be premature. Once the channel is
+	// closed, the supervisor reverts to the standard graceful termination
+	// process.
+	DeferGracefulTerminationUntil <-chan struct{}
+}
+
+type stoppingErr struct{ opts StopOpts }
+
+func (*stoppingErr) Error() string { return "supervisor is stopping" }
+
 // Supervise Starts supervising the given process
 func (s *Supervisor) Supervise(ctx context.Context) error {
 	s.startStopMutex.Lock()
@@ -196,7 +252,7 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 
 				// detach from the process group so children don't
 				// get signals sent directly to parent.
-				s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
+				s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID, s.RequiredPrivileges)
 
 				const maxLogChunkLen = 16 * 1024
 				s.cmd.Stdout = log.NewWriter(s.log.WithField("stream", "stdout"), logrus.InfoLevel, maxLogChunkLen)
@@ -247,22 +303,27 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 		return err
 	}
 
-	s.stop = func() {
-		cancel(errors.New("supervisor is stopping"))
+	s.stop = func(opts StopOpts) {
+		cancel(&stoppingErr{opts})
 		<-done
 	}
 	return nil
 }
 
-// Stop stops the supervised
+// Stops the supervised process using the default stop behavior.
 func (s *Supervisor) Stop() error {
+	return s.StopWith(StopOpts{})
+}
+
+// Stops the supervised process using the provided options.
+func (s *Supervisor) StopWith(opts StopOpts) error {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
 	if s.stop == nil {
 		return errors.New("not started")
 	}
 
-	s.stop()
+	s.stop(opts)
 	s.stop = nil
 	return nil
 }

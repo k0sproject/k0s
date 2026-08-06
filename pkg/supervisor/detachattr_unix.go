@@ -1,4 +1,4 @@
-//go:build unix
+//go:build unix && !linux
 
 // SPDX-FileCopyrightText: 2020 k0s authors
 // SPDX-License-Identifier: Apache-2.0
@@ -10,8 +10,10 @@ import (
 	"syscall"
 )
 
-// DetachAttr creates the proper syscall attributes to run the managed processes
-func DetachAttr(uid, gid int) *syscall.SysProcAttr {
+// DetachAttr creates the proper syscall attributes to run the managed processes.
+// On non-Linux Unix systems, RequiredPrivileges are not translated as ambient
+// capabilities are not supported.
+func DetachAttr(uid, gid int, privs RequiredPrivileges) *syscall.SysProcAttr {
 	var creds *syscall.Credential
 
 	if os.Geteuid() == 0 {

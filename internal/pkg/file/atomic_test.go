@@ -215,11 +215,10 @@ func TestWriteAtomically(t *testing.T) {
 			)
 			assert.Equal(t, file, linkErr.New)
 			if runtime.GOOS == "windows" {
-				// https://github.com/golang/go/blob/go1.26.3/src/syscall/types_windows.go#L13
+				// https://github.com/golang/go/blob/go1.26.5/src/syscall/types_windows.go#L13
 				//revive:disable-next-line:var-naming
 				const ERROR_ACCESS_DENIED syscall.Errno = 5
-				var errno syscall.Errno
-				ok := errors.As(linkErr.Err, &errno)
+				errno, ok := errors.AsType[syscall.Errno](linkErr.Err)
 				ok = ok && errno == ERROR_ACCESS_DENIED
 				assert.Truef(t, ok, "Expected ERROR_ACCESS_DENIED: %v", linkErr.Err)
 			} else {

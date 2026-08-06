@@ -11,7 +11,7 @@ permissions:
 env:
   MAKEFLAGS: -j
   CURL_OPTS: --proto =https --tlsv1.2 --retry 5 --retry-all-errors --silent --show-error --location --fail
-  COSIGN_VERSION: "3.0.6" # renovate: datasource=github-releases depName=sigstore/cosign
+  COSIGN_VERSION: "3.1.2" # renovate: datasource=github-releases depName=sigstore/cosign
 
 jobs:
   release:
@@ -31,7 +31,7 @@ jobs:
       - name: Branch name
         id: branch_name
         run: |
-          echo TAG_NAME="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo TAG_NAME="${GITHUB_REF#refs/tags/}" >>"$GITHUB_OUTPUT"
       - name: Create Release
         id: create_release
         uses: shogo82148/actions-create-release@6a396031bc74c57403da1018fec74d24c6aa03cd # v1.9.0
@@ -45,7 +45,7 @@ jobs:
           TAGS: ${{ steps.branch_name.outputs.TAG_NAME }}
         # Basically just replace the '+' with '-' as '+' is not allowed in tags
         run: |
-          echo IMAGE_TAGS="${TAGS//+/-}" >> $GITHUB_OUTPUT
+          echo IMAGE_TAGS="${TAGS//+/-}" >>"$GITHUB_OUTPUT"
   x64:
     needs: release
     runs-on: [self-hosted, linux, x64]
@@ -88,17 +88,19 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-amd64
+          #shellcheck disable=SC2086 # CURL_OPTS intentionally expands to multiple arguments
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v"$COSIGN_VERSION"/cosign-linux-amd64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign public-key \
             --key=env://COSIGN_KEY --output-file=cosign.pub
+
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=k0s.sig k0s
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=spdx.json.sig spdx.json
 
       - name: Set up Go for smoke tests
@@ -240,11 +242,12 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-amd64
+          #shellcheck disable=SC2086 # CURL_OPTS intentionally expands to multiple arguments
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v"$COSIGN_VERSION"/cosign-linux-amd64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=k0s.exe.sig k0s.exe
           cat k0s.exe.sig
 
@@ -335,11 +338,12 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-arm64
+          #shellcheck disable=SC2086 # CURL_OPTS intentionally expands to multiple arguments
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v"$COSIGN_VERSION"/cosign-linux-arm64
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=k0s.sig k0s
           cat k0s.sig
 
@@ -449,11 +453,12 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v$COSIGN_VERSION/cosign-linux-arm
+          #shellcheck disable=SC2086 # CURL_OPTS intentionally expands to multiple arguments
+          curl $CURL_OPTS --output cosign https://github.com/sigstore/cosign/releases/download/v"$COSIGN_VERSION"/cosign-linux-arm
           chmod +x ./cosign
           COSIGN_KEY="$(printf %s "$COSIGN_KEY" | base64 -d)" ./cosign sign-blob \
             --key=env://COSIGN_KEY --use-signing-config=false \
-            --tlog-upload=true --yes \
+            --new-bundle-format=false --yes \
             --output-file=k0s.sig k0s
           cat k0s.sig
 
@@ -547,8 +552,7 @@ jobs:
           out-file-path: release_assets
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate checksums
-        run: |
-          cd release_assets && sha256sum -b * > ../sha256sums.txt
+        run: cd release_assets && sha256sum -b -- * >../sha256sums.txt
       - name: Upload sha256sums.txt
         uses: shogo82148/actions-upload-release-asset@96bc1f0cb850b65efd58a6b5eaa0a69f88d38077 # v1.10.0
         with:
@@ -652,6 +656,7 @@ jobs:
       os: debian_12
       arch: ${{ matrix.arch }}
       network-provider: kuberouter
+      fail-fast: true
     secrets:
       aws-access-key-id: ${{ secrets.AWS_TERRAFORM_ID }}
       aws-secret-access-key: ${{ secrets.AWS_TERRAFORM_KEY }}

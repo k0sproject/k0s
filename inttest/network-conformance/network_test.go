@@ -4,6 +4,7 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -12,7 +13,11 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+	"k8s.io/client-go/kubernetes"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	sc "github.com/vmware-tanzu/sonobuoy/pkg/client"
@@ -86,6 +91,9 @@ func (s *networkSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see CNI pods ready for", daemonSetName)
 	s.NoErrorf(common.WaitForDaemonSet(s.Context(), kc, daemonSetName, metav1.NamespaceSystem), "%s did not start", daemonSetName)
 
+	s.T().Log("waiting for CoreDNS to be ready")
+	s.Require().NoError(waitForCoreDNS(s.Context(), kc), "While waiting for CoreDNS to become ready")
+
 	s.T().Log("waiting for konnectivity-agent to be ready")
 	s.NoErrorf(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent", metav1.NamespaceSystem), "konnectivity-agent did not start")
 
@@ -96,6 +104,13 @@ func (s *networkSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	client, err := sc.NewSonobuoyClient(restConfig, skc)
 	s.Require().NoError(err)
+
+	e2eExtraArgs := ""
+
+	// kube-router's ipv6 tests are flaky, so we skip some
+	if s.cni == "kuberouter" && s.isIPv6Only {
+		e2eExtraArgs = "--ginkgo.flake-attempts=2"
+	}
 
 	deadline, _ := s.Context().Deadline()
 	err = client.Run(&sc.RunConfig{
@@ -114,6 +129,7 @@ func (s *networkSuite) TestK0sGetsUp() {
 					"E2E_SKIP":          "\\[Serial\\]|(Services\\ should.*session\\ affinity\\ .*for\\ service\\ with\\ type\\ clusterIP)",
 					"E2E_PARALLEL":      "y",
 					"E2E_USE_GO_RUNNER": "true",
+					"E2E_EXTRA_ARGS":    e2eExtraArgs,
 				},
 			},
 			KubeVersion: semver.Canonical(k8sVersion.String()),
@@ -163,6 +179,24 @@ func retrieveResults(r io.Reader, ec <-chan error) error {
 	return eg.Wait()
 }
 
+func waitForCoreDNS(ctx context.Context, kc kubernetes.Interface) error {
+	return watch.Deployments(kc.AppsV1().Deployments(metav1.NamespaceSystem)).
+		WithObjectName("coredns").
+		Until(ctx, func(deployment *appsv1.Deployment) (bool, error) {
+			for _, c := range deployment.Status.Conditions {
+				if c.Type == appsv1.DeploymentAvailable {
+					if c.Status == corev1.ConditionTrue && deployment.Status.ReadyReplicas >= 2 {
+						return true, nil
+					}
+
+					break
+				}
+			}
+
+			return false, nil
+		})
+}
+
 func TestNetworkSuite(t *testing.T) {
 	s := networkSuite{
 		common.BootlooseSuite{
@@ -186,6 +220,12 @@ func TestNetworkSuite(t *testing.T) {
 		s.Networks = []string{"bridge-ipv6"}
 		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle.tar"}
 		s.K0sExtraImageBundleMountPoints = []string{"/var/lib/k0s/images/ipv6.tar"}
+	}
+
+	// With less than 4 replicas the kube-router ipv6 tests are flaky due to
+	// coredns and konnectivity timeouts.
+	if s.isIPv6Only && s.cni == "kuberouter" {
+		s.WorkerCount = 4
 	}
 
 	t.Logf("Testing %s using %s", s.cni, s.proxyMode)

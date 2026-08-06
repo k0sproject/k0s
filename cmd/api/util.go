@@ -18,7 +18,7 @@ func sendError(err error, resp http.ResponseWriter, status ...int) {
 	resp.Header().Set("Content-Type", "text/plain")
 	resp.WriteHeader(code)
 	if _, err := resp.Write([]byte(err.Error())); err != nil {
-		sendError(err, resp)
+		logrus.WithError(err).Error("failed to write error response")
 		return
 	}
 }

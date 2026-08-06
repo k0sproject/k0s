@@ -8,6 +8,7 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/stretchr/testify/suite"
 
@@ -34,16 +35,15 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components metrics-server", "--enable-dynamic-config"))
 	s.Require().NoError(s.RunWorkers())
 
-	kc, err := s.KubeClient(s.ControllerNode(0))
-	if err != nil {
-		s.FailNow("failed to obtain Kubernetes client", err)
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+	s.Require().NoError(err)
+	kc, err := kubernetes.NewForConfig(restConfig)
+	s.Require().NoError(err)
+
+	for i := range s.WorkerCount {
+		err = s.WaitForNodeReady(s.WorkerNode(i), kc)
+		s.Require().NoError(err)
 	}
-
-	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
-	s.Require().NoError(err)
-
-	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
-	s.Require().NoError(err)
 
 	s.AssertSomeKubeSystemPods(kc)
 
@@ -59,7 +59,7 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:  "nginx",
-				Image: "docker.io/library/nginx:1.30.0-alpine",
+				Image: "docker.io/library/nginx:1.31.3-alpine",
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
@@ -71,19 +71,13 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 				},
 			}},
 			NodeSelector: map[string]string{
-				"kubernetes.io/hostname": "worker0",
+				"kubernetes.io/hostname": s.WorkerNode(0),
 			},
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	// Wait till we see the pod ready and are able to get logs
-	// Getting logs means konnectivity tunnels are up and running
 	s.Require().NoError(common.WaitForPod(ctx, kc, "nginx", metav1.NamespaceDefault))
-	s.Require().NoError(common.WaitForPodLogs(ctx, kc, metav1.NamespaceDefault))
-
-	restConfig, err := s.GetKubeConfig("controller0", "")
-	s.Require().NoError(err)
-	s.Require().NotNil(restConfig)
+	s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, kc, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
 
 	// Check the pod resolv.conf is correct
 	resolv, err := common.PodExecCmdOutput(kc, restConfig, "nginx", metav1.NamespaceDefault, "cat /etc/resolv.conf")
@@ -93,13 +87,17 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 	// Verify lookup actually works
 	nslookup, err := common.PodExecCmdOutput(kc, restConfig, "nginx", metav1.NamespaceDefault, "nslookup kubernetes.default.svc.cluster.local")
 	s.Require().NoError(err)
-	s.Require().Contains(nslookup, "Address: 10.152.184.1")
+	s.Contains(nslookup, "Address: 10.152.184.1")
 
 	// Check that we can access the kubernetes svc via DNS name
 	kubeSvcOutput, err := common.PodExecCmdOutput(kc, restConfig, "nginx", metav1.NamespaceDefault, `curl -v -k --connect-timeout 2 -s -I https://kubernetes.default.svc.cluster.local`)
 	s.Require().NoError(err)
+	s.Contains(kubeSvcOutput, "HTTP/2 401")
 
-	s.Require().Contains(kubeSvcOutput, "HTTP/2 401")
+	// Check that kube-router has the right service CIDR set
+	ds, err := kc.AppsV1().DaemonSets(metav1.NamespaceSystem).Get(ctx, "kube-router", metav1.GetOptions{})
+	s.Require().NoError(err)
+	s.Contains(ds.Spec.Template.Spec.Containers[0].Args, "--service-cluster-ip-range=10.152.184.0/24")
 }
 
 func TestCustomCIDRsSuite(t *testing.T) {

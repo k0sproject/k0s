@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	cliflag "k8s.io/component-base/cli/flag"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
@@ -118,7 +117,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		// Kubelet uses a DNS lookup of the node name to figure out the node IP,
 		// but will only pick one for a single family. Do something similar as
 		// kubelet, but for both IPv4 and IPv6.
-		// https://github.com/kubernetes/kubernetes/blob/v1.36.0/pkg/kubelet/nodestatus/setters.go#L151-L179
+		// https://github.com/kubernetes/kubernetes/blob/v1.37.0-alpha.3/pkg/kubelet/nodestatus/setters.go#L151-L179
 		ipv4, ipv6, err := k.lookupNodeName(ctx)
 		if err == nil && (ipv4 == nil || ipv6 == nil) {
 			err = fmt.Errorf("node name IP address lookup didn't return addresses for both families: IPv4: %s, IPv6: %s", ipv4, ipv6)
@@ -321,7 +320,7 @@ func determineKubeletResolvConfPath() *string {
 	switch runtime.GOOS {
 	case "windows":
 		// https://github.com/kubernetes/kubernetes/issues/116782#issuecomment-1477536396
-		return ptr.To("")
+		return new("")
 
 	case "linux":
 		// https://www.freedesktop.org/software/systemd/man/systemd-resolved.service.html#/etc/resolv.conf

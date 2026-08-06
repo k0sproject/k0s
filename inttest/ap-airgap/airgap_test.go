@@ -16,8 +16,10 @@ import (
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/containerd/platforms"
 
@@ -40,13 +42,15 @@ func (s *airgapSuite) SetupTest() {
 	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
-	cClient, err := s.ExtensionsClient(s.ControllerNode(0))
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+	s.Require().NoError(err)
+	cClient, err := apiextensionsclient.NewForConfig(restConfig)
 	s.Require().NoError(err)
 
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, cClient, "plans"))
 	s.Require().NoError(aptest.WaitForCRDByName(ctx, cClient, "controlnodes"))
 
-	wClient, err := s.KubeClient(s.ControllerNode(0))
+	wClient, err := kubernetes.NewForConfig(restConfig)
 	s.Require().NoError(err)
 
 	// Create a worker join token
@@ -61,7 +65,7 @@ func (s *airgapSuite) SetupTest() {
 	// Wait until all the cluster components are up.
 	s.Require().NoError(common.WaitForKubeRouterReady(ctx, wClient), "While waiting for kube-router to become ready")
 	s.Require().NoError(common.WaitForCoreDNSReady(ctx, wClient), "While waiting for CoreDNS to become ready")
-	s.Require().NoError(common.WaitForPodLogs(ctx, wClient, metav1.NamespaceSystem), "While waiting for some pod logs")
+	s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, wClient, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
 
 	// Check that none of the images in the airgap bundle are pinned.
 	// This will happen as soon as k0s imports them after the Autopilot update.
@@ -158,11 +162,11 @@ spec:
 	s.NotEmpty(lsout)
 
 	// Wait until all the cluster components are up.
-	kc, err := s.KubeClient(s.ControllerNode(0))
+	kc, err := kubernetes.NewForConfig(restConfig)
 	s.Require().NoError(err)
 	s.Require().NoError(common.WaitForKubeRouterReady(ctx, kc), "While waiting for kube-router to become ready")
 	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc), "While waiting for CoreDNS to become ready")
-	s.Require().NoError(common.WaitForPodLogs(ctx, kc, metav1.NamespaceSystem), "While waiting for some pod logs")
+	s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, kc, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
 
 	// At that moment we can assume that all pods have at least started.
 	// Inspect the Pulled events if there are some unexpected image pulls.

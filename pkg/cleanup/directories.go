@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -41,8 +42,8 @@ func (d *directories) Run() error {
 	// desired behavior. See MS_SHARED and NOTES:
 	//  - https://man7.org/linux/man-pages/man2/mount.2.html
 	//  - https://man7.org/linux/man-pages/man2/umount.2.html#NOTES
-	for i := len(procMounts) - 1; i >= 0; i-- {
-		v := procMounts[i]
+	for _, v := range slices.Backward(procMounts) {
+
 		// avoid unmount datadir if its mounted on separate partition
 		// k0s didn't mount it so leave it alone
 		if v.Path == d.dataDir {
@@ -102,12 +103,8 @@ func isUnderPath(path, base string) bool {
 // we can't rely on os.RemoveAll instead of recursively deleting the
 // contents of the directory
 func errorIsUnlinkat(err error, dir string) bool {
-	if err == nil {
-		return false
+	if pathErr, ok := errors.AsType[*os.PathError](err); ok {
+		return pathErr.Path == dir && pathErr.Op == "unlinkat"
 	}
-	var pathErr *os.PathError
-	if !errors.As(err, &pathErr) {
-		return false
-	}
-	return pathErr.Path == dir && pathErr.Op == "unlinkat"
+	return false
 }

@@ -11,7 +11,7 @@ on:
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping test clusters.
-        default: 0.30.1 # renovate: datasource=github-releases depName=k0sproject/k0sctl
+        default: 0.32.2 # renovate: datasource=github-releases depName=k0sproject/k0sctl
       e2e-concurrency-level:
         type: number
         description: The number of tests that may be run concurrently.
@@ -20,6 +20,10 @@ on:
         type: string
         description: The selector for the e2e tests to be run.
         default: \[Conformance\]
+      fail-fast:
+        type: boolean
+        description: Stop each e2e test suite after the first test failure.
+        default: false
       oses:
         type: string
         description: The operating systems to test.
@@ -27,7 +31,7 @@ on:
         default: >-
           [
             "al2023",
-            "alpine_3_20", "alpine_3_23",
+            "alpine_3_21", "alpine_3_24",
             "centos_9", "centos_10",
             "debian_11", "debian_12",
             "fcos_stable",
@@ -89,6 +93,7 @@ jobs:
       k0sctl-version: ${{ inputs.k0sctl-version }}
       e2e-concurrency-level: ${{ fromJSON(inputs.e2e-concurrency-level) }} # infamous GH workflows bug that looses type information (actions/runner#2206)
       e2e-focus: ${{ inputs.e2e-focus }}
+      fail-fast: ${{ inputs.fail-fast }}
       os: ${{ matrix.os }}
       arch: ${{ inputs.arch }}
       network-provider: ${{ matrix.network-provider }}

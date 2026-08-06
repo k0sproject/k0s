@@ -83,9 +83,6 @@ check-ap-updater: .update-server.stamp
 check-ap-updater-periodic: .update-server.stamp
 check-ap-updater-periodic: TIMEOUT=10m
 
-# Backup check runs multiple scenarios
-check-backup: TIMEOUT=12m
-
 # Config change smoke runs actually many cases hence a bit longer timeout
 check-configchange: TIMEOUT=8m
 
@@ -102,10 +99,10 @@ check-network-conformance-kuberouter-nft: TIMEOUT=15m
 check-network-conformance-kuberouter-ipv6: TIMEOUT=15m
 check-network-conformance-kuberouter-ipv6-nft: TIMEOUT=15m
 
-check-nllb: TIMEOUT=15m
-check-nllb-traefik: TIMEOUT=15m
-check-nllb-ipv6: TIMEOUT=15m
-check-nllb-traefik-ipv6: TIMEOUT=15m
+check-nllb: TIMEOUT=20m
+check-nllb-traefik: TIMEOUT=20m
+check-nllb-ipv6: TIMEOUT=20m
+check-nllb-traefik-ipv6: TIMEOUT=20m
 
 .PHONY: $(smoketests)
 

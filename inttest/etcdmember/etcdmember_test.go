@@ -57,7 +57,6 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 		// Note that the token is intentionally empty for the first controller
 		s.Require().NoError(s.InitController(idx, joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
-		s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(idx)))
 		// With the primary controller running, create the join token for subsequent controllers.
 		if idx == 0 {
 			token, err := s.GetJoinToken("controller")
@@ -88,28 +87,21 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 				WithObjectName(obj).
 				WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
 				Until(ctx, func(item *etcdv1beta1.EtcdMember) (done bool, err error) {
-					c := item.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-					if c != nil {
-						// We have the condition so we can bail out
+					joined := item.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
+					if joined != nil && joined.Status == etcdv1beta1.ConditionTrue {
 						em = item
+						return true, nil
 					}
-					return c != nil, nil
+					return false, nil
 				})
 
-			// We've got the condition, verify status details
+			// We've got the Joined=True condition from the watch; just
+			// cross-check the peer address.
 			if err != nil {
 				return err
 			}
 			if em.Status.PeerAddress != s.GetControllerIPAddress(i) {
 				return fmt.Errorf("expected PeerAddress %s, got %s", s.GetControllerIPAddress(i), em.Status.PeerAddress)
-			}
-
-			c := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
-			if c == nil {
-				return fmt.Errorf("expected condition %s, got nil", etcdv1beta1.ConditionTypeJoined)
-			}
-			if c.Status != etcdv1beta1.ConditionTrue {
-				return fmt.Errorf("expected condition %s to be %s, got %s", etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionTrue, c.Status)
 			}
 			return nil
 		})
@@ -119,48 +111,60 @@ func (s *EtcdMemberSuite) TestDeregistration() {
 	s.T().Log("waiting to see correct statuses on EtcdMembers")
 	s.NoError(eg.Wait())
 	s.T().Log("All statuses found")
-	// Make one of the nodes leave
-	s.leaveNode(ctx, "controller2")
 
-	// Check that the node is gone from the etcd cluster according to etcd itself
-	members := s.getMembers(ctx, 0)
-	s.Require().Len(members, s.ControllerCount-1)
-	s.Require().NotContains(members, "controller2")
+	for i := s.ControllerCount - 1; i > 0; i-- {
+		nodeName := s.ControllerNode(i)
 
-	// Make sure the EtcdMember CR status is successfully updated
-	em := s.getMember(ctx, "controller2")
-	s.Require().Equal(etcdv1beta1.ReconcileStatusSuccess, em.Status.ReconcileStatus)
-	s.Require().Equal(etcdv1beta1.ConditionFalse, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
+		// Make one of the nodes leave
+		s.leaveNode(ctx, nodeName)
 
-	// Stop k0s and reset the node
-	s.Require().NoError(s.StopController(s.ControllerNode(2)))
-	s.Require().NoError(common.ResetNode(s.ControllerNode(2), &s.BootlooseSuite))
+		// Check that the node is gone from the etcd cluster according to etcd itself
+		members := s.getMembers(ctx, 0)
+		s.Require().Len(members, i)
+		s.Require().NotContains(members, nodeName)
 
-	// Make the node rejoin
-	s.Require().NoError(s.InitController(2, joinToken))
-	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(2)))
+		// Make sure the EtcdMember CR status is successfully updated
+		em := s.getMember(ctx, nodeName)
+		s.Require().Equal(etcdv1beta1.ReconcileStatusSuccess, em.Status.ReconcileStatus)
+		s.Require().Equal(etcdv1beta1.ConditionFalse, em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined).Status)
 
-	// Final sanity -- ensure all nodes see each other according to etcd
-	members = s.getMembers(ctx, 0)
-	s.Require().Len(members, s.ControllerCount)
-	s.Require().Contains(members, s.ControllerNode(2))
-	s.Require().EventuallyWithT(func(tt *assert.CollectT) {
-		s.Require().NoError(context.Cause(ctx), "Context done")
-		// Check the CR is present again
-		em = s.getMember(ctx, s.ControllerNode(2))
-		assert.Equal(tt, em.Status.PeerAddress, s.GetControllerIPAddress(2))
-		assert.False(tt, em.Spec.Leave, "Node is still flagged to be leaving")
-		if cond := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined); assert.NotNilf(tt, cond, "condition not found: %s", etcdv1beta1.ConditionTypeJoined) {
-			assert.Equal(tt, etcdv1beta1.ConditionTrue, cond.Status, "node not joined yet")
-		}
-	}, 30*time.Second, 1*time.Second)
+		// Stop k0s and reset the node
+		s.Require().NoError(s.StopController(nodeName))
+		s.Require().NoError(common.ResetNode(nodeName, &s.BootlooseSuite))
+	}
 
-	// Check that after restarting the controller, the member is still present
-	s.Require().NoError(s.RestartController(s.ControllerNode(2)))
-	em = &etcdv1beta1.EtcdMember{}
-	err = kc.RESTClient().Get().AbsPath(fmt.Sprintf(basePath, "controller2")).Do(ctx).Into(em)
-	s.Require().NoError(err)
-	s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(2))
+	for i := 1; i < s.ControllerCount; i++ {
+		nodeName := s.ControllerNode(i)
+
+		// Make the node rejoin
+		s.Require().NoError(s.InitController(i, joinToken))
+
+		// Final sanity -- ensure all nodes see each other according to etcd
+		members := s.getMembers(ctx, 0)
+		s.Require().Len(members, i+1)
+		s.Require().Contains(members, nodeName)
+		s.Require().EventuallyWithT(func(tt *assert.CollectT) {
+			s.Require().NoError(context.Cause(ctx), "Context done")
+			// Check the CR is present again
+			em := s.getMember(ctx, nodeName)
+			assert.Equal(tt, em.Status.PeerAddress, s.GetControllerIPAddress(i))
+			assert.False(tt, em.Spec.Leave, "Node is still flagged to be leaving")
+			if cond := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined); assert.NotNilf(tt, cond, "condition not found: %s", etcdv1beta1.ConditionTypeJoined) {
+				assert.Equal(tt, etcdv1beta1.ConditionTrue, cond.Status, "node not joined yet")
+			}
+		}, 30*time.Second, 1*time.Second)
+
+		// Check that after restarting the controller, the member is still present
+		s.Require().NoError(s.RestartController(nodeName))
+		s.Require().NoError(s.WaitForKubeAPI(nodeName))
+		var em etcdv1beta1.EtcdMember
+		err = kc.RESTClient().Get().AbsPath(fmt.Sprintf(basePath, nodeName)).Do(ctx).Into(&em)
+		s.Require().NoError(err)
+		s.Require().Equal(em.Status.PeerAddress, s.GetControllerIPAddress(i))
+		joined := em.Status.GetCondition(etcdv1beta1.ConditionTypeJoined)
+		s.Require().NotNil(joined)
+		s.Require().Equal(etcdv1beta1.ConditionTrue, joined.Status)
+	}
 
 	// Figure out what node is the leader and mark it as leaving
 	leader := s.getLeader(ctx)

@@ -28,6 +28,7 @@ type restarted struct {
 	client           crcli.Client
 	delegate         apdel.ControllerDelegate
 	statusSocketPath string
+	isRestartPending IsRestartPendingFunc
 }
 
 // restartedEventFilter creates a controller-runtime predicate that governs which
@@ -51,7 +52,7 @@ func restartedEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 //
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
-func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, statusSocketPath string) error {
+func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, statusSocketPath string, isRestartPending IsRestartPendingFunc) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_restarted"
 	logger.Info("Registering reconciler: ", name)
 
@@ -65,6 +66,7 @@ func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 				client:           mgr.GetClient(),
 				delegate:         delegate,
 				statusSocketPath: statusSocketPath,
+				isRestartPending: isRestartPending,
 			},
 		)
 }
@@ -103,6 +105,13 @@ func (r *restarted) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 
 	if signalData.Status != nil && signalData.Status.Status != Restart {
 		logger.Debug("Ignoring signal status ", signalData.Status.Status)
+		return cr.Result{}, nil
+	}
+
+	if r.isRestartPending(signalData) {
+		// This process initiated the restart, and it hasn't been performed
+		// yet. Advancing the state now would skip the restart entirely.
+		logger.Info("Not advancing: the restart initiated by this process is still pending")
 		return cr.Result{}, nil
 	}
 

@@ -35,8 +35,6 @@ git diff ':!static/manifests/calico/CustomResourceDefinition'
 
 That'll make it easier to spot any needed changes.
 
-`static/manifests/calico/DaemonSet/calico-node.yaml`:
-
 ### Inlining the `calico-config` ConfigMap
 
 Instead of using a ConfigMap to manage the Calico backend and MTU settings,

@@ -14,13 +14,13 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
+	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sretry "k8s.io/client-go/util/retry"
-	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
 	crconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
@@ -67,7 +67,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			// currently provide a way to unregister names from discarded
 			// managers. So it's necessary to suppress the global name check
 			// whenever things retried.
-			SkipNameValidation: ptr.To(w.initialized),
+			SkipNameValidation: new(w.initialized),
 		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: w.cfg.ManagerPort,
@@ -77,6 +77,10 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		},
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
 	}
+
+	// The restart tracker needs to outlive the individual controller managers,
+	// which get rebuilt on each retry attempt.
+	var restartTracker apsigk0s.RestartTracker
 
 	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
 	var attempt uint
@@ -115,7 +119,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, w.cfg.StatusSocketPath, true, clusterID, leaderelection.StatusPending, w.cfg.InvocationID); err != nil {
+		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), &restartTracker, w.cfg.K0sDataDir, w.cfg.StatusSocketPath, true, clusterID, leaderelection.StatusPending); err != nil {
 			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
 

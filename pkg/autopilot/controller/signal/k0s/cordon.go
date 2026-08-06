@@ -73,8 +73,8 @@ type cordonUncordon struct {
 // controller-runtime manager.
 //
 // This controller is only interested when autopilot signaling annotations have
-// moved to a `Cordoning` status. At this point, it will attempt to cordong & drain
-// the node.
+// moved to a `Cordoning` status. At this point, it will attempt to cordon and
+// drain the node.
 func registerCordoning(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, nodeName types.NodeName, leaseStatus leaderelection.Status) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_cordoning"
 	logger.Info("Registering reconciler: ", name)
@@ -148,7 +148,7 @@ func (r *cordonUncordon) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 // from Autopilot deployments that manage (un-)cordoning on each individual node
 // to deployments that manage (un-)cordoning via the Autopilot controller.
 //
-// TODO: Remove in v1.36+
+// TODO: Remove in v1.37+
 func (r *cordonUncordon) isIgnored(ctx context.Context, signalNode crcli.Object) (reason string, _ error) {
 	if r.leaseStatus == leaderelection.StatusLeading {
 		if types.NodeName(signalNode.GetName()) == r.nodeName {
@@ -167,8 +167,15 @@ func (r *cordonUncordon) isIgnored(ctx context.Context, signalNode crcli.Object)
 			return "", fmt.Errorf("failed to get node lease: %w", err)
 		}
 
-		label, ident := nodeLease.Labels[apconst.CentralCordoningLabel], nodeLease.Spec.HolderIdentity
-		if label == "" || (ident != nil && label != *ident) {
+		// Since the node lease is a heartbeat lease and not a leader lease, the
+		// holder identity is cosmetic and always equals the lease name. Hence,
+		// we can't pull the same trick as we do with the Autopilot controller
+		// lease, where we compare the annotation's value with the current
+		// holder identity. This means we can't detect stale annotations, e.g.
+		// after downgrading from a k0s version that supports central cordoning
+		// to one that doesn't. It's a pity, but there's not much we can do
+		// about it. There's no practical way for us to figure this out.
+		if _, exists := nodeLease.Labels[apconst.CentralCordoningLabel]; !exists {
 			return "node manages cordoning on its own", nil
 		}
 

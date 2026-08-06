@@ -71,8 +71,7 @@ func (c *CgroupsProbes) probe(reporter probes.Reporter) error {
 }
 
 func reportCgroupSystemErr(reporter probes.Reporter, d probes.ProbeDesc, err error) error {
-	var detectionFailedErr cgroupFsDetectionFailed
-	if errors.As(err, &detectionFailedErr) {
+	if detectionFailedErr, ok := errors.AsType[cgroupFsDetectionFailed](err); ok {
 		return reporter.Reject(d, detectionFailedErr, "")
 	}
 

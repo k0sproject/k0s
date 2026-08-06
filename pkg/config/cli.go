@@ -4,6 +4,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"slices"
@@ -57,22 +58,24 @@ type ControllerOptions struct {
 	EnableMetricsScraper            bool
 	KubeControllerManagerExtraArgs  string
 	FeatureGates                    featuregate.FeatureGates
+	APIServerStopTimeout            time.Duration
 
 	enableWorker, singleNode bool
 }
 
 // Shared worker cli flags
 type WorkerOptions struct {
-	CloudProvider    bool
-	LogLevels        LogLevels
-	CriSocket        string
-	KubeletExtraArgs string
-	Labels           map[string]string
-	Taints           []string
-	TokenFile        string
-	TokenArg         string
-	WorkerProfile    string
-	IPTablesMode     string
+	CloudProvider         bool
+	IgnorePreFlightChecks bool
+	LogLevels             LogLevels
+	CriSocket             string
+	KubeletExtraArgs      string
+	Labels                map[string]string
+	Taints                []string
+	TokenFile             string
+	TokenArg              string
+	WorkerProfile         string
+	IPTablesMode          string
 }
 
 func (m ControllerMode) WorkloadsEnabled() bool {
@@ -256,6 +259,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 	flagset.StringSliceVarP(&workerOpts.Taints, "taints", "", []string{}, "Node taints, list of key=value:effect strings")
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 	flagset.StringVar(&workerOpts.IPTablesMode, "iptables-mode", "", "iptables mode (valid values: nft, legacy, auto). default: auto")
+	flagset.BoolVar(&workerOpts.IgnorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 	flagset.AddFlagSet(GetCriSocketFlag())
 
 	return flagset
@@ -302,6 +306,7 @@ func GetControllerFlags(controllerOpts *ControllerOptions) *pflag.FlagSet {
 	flagset.StringVar(&controllerOpts.KubeControllerManagerExtraArgs, "kube-controller-manager-extra-args", "", "extra args for kube-controller-manager")
 	flagset.BoolVar(&controllerOpts.InitOnly, "init-only", false, "only initialize controller and exit")
 	flagset.Var(&controllerOpts.FeatureGates, "feature-gates", "feature gates to enable (comma separated list of key=value pairs)")
+	flagset.Var((*positiveDurationFlag)(&controllerOpts.APIServerStopTimeout), "api-server-stop-timeout", "time to wait for the API server to stop")
 	return flagset
 }
 
@@ -333,4 +338,40 @@ func GetCmdOpts(cobraCmd command) (*CLIOptions, error) {
 		CfgFile: CfgFile,
 		K0sVars: k0sVars,
 	}, nil
+}
+
+type positiveDurationFlag time.Duration
+
+// Type implements [pflag.Value].
+func (f *positiveDurationFlag) Type() string {
+	return "duration"
+}
+
+// String implements [pflag.Value].
+func (f *positiveDurationFlag) String() string {
+	if *(*time.Duration)(f) <= 0 {
+		return ""
+	}
+
+	return (*time.Duration)(f).String()
+}
+
+// Set implements [pflag.Value].
+func (f *positiveDurationFlag) Set(value string) error {
+	if value == "" {
+		*(*time.Duration)(f) = 0
+		return nil
+	}
+
+	parsed, err := time.ParseDuration(value)
+	if err != nil {
+		return err
+	}
+
+	if parsed <= 0 {
+		return errors.New("must be positive")
+	}
+
+	*(*time.Duration)(f) = parsed
+	return nil
 }

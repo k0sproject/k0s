@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -16,8 +17,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -32,12 +35,12 @@ import (
 
 // APIServer implement the component interface to run kube api
 type APIServer struct {
-	ClusterConfig             *v1beta1.ClusterConfig
+	NodeConfig                *v1beta1.ClusterConfig
 	K0sVars                   *config.CfgVars
 	LogLevel                  string
-	Storage                   manager.Component
 	EnableKonnectivity        bool
 	DisableEndpointReconciler bool
+	StopTimeout               time.Duration
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
@@ -87,12 +90,12 @@ func (a *APIServer) Init(_ context.Context) error {
 	return err
 }
 
-// Run runs kube api
-func (a *APIServer) Start(ctx context.Context) error {
-	logrus.Info("Starting kube-apiserver")
+// buildSupervisor constructs and configures the supervisor for the kube-apiserver
+// without starting it. This allows for testing the configuration logic independently.
+func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
 	args := stringmap.StringMap{
-		"advertise-address":                a.ClusterConfig.Spec.API.Address,
-		"secure-port":                      strconv.Itoa(a.ClusterConfig.Spec.API.Port),
+		"advertise-address":                a.NodeConfig.Spec.API.Address,
+		"secure-port":                      strconv.Itoa(a.NodeConfig.Spec.API.Port),
 		"authorization-mode":               "Node,RBAC",
 		"client-ca-file":                   filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"enable-bootstrap-token-auth":      "true",
@@ -104,7 +107,7 @@ func (a *APIServer) Start(ctx context.Context) error {
 		"requestheader-allowed-names":      "front-proxy-client",
 		"requestheader-client-ca-file":     filepath.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"service-account-key-file":         filepath.Join(a.K0sVars.CertRootDir, "sa.pub"),
-		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.PrimaryAddressFamily()),
+		"service-cluster-ip-range":         a.NodeConfig.Spec.Network.BuildServiceCIDR(a.NodeConfig.Spec.PrimaryAddressFamily()),
 		"tls-min-version":                  "VersionTLS12",
 		"tls-cert-file":                    filepath.Join(a.K0sVars.CertRootDir, "server.crt"),
 		"tls-private-key-file":             filepath.Join(a.K0sVars.CertRootDir, "server.key"),
@@ -117,8 +120,8 @@ func (a *APIServer) Start(ctx context.Context) error {
 		"enable-admission-plugins":         "NodeRestriction",
 	}
 
-	if a.ClusterConfig.Spec.API.OnlyBindToAddress {
-		args["bind-address"] = a.ClusterConfig.Spec.API.Address
+	if a.NodeConfig.Spec.API.OnlyBindToAddress {
+		args["bind-address"] = a.NodeConfig.Spec.API.Address
 	}
 
 	apiAudiences := []string{"https://kubernetes.default.svc"}
@@ -126,7 +129,7 @@ func (a *APIServer) Start(ctx context.Context) error {
 	if a.EnableKonnectivity {
 		err := a.writeKonnectivityConfig()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		args["egress-selector-config-file"] = filepath.Join(a.K0sVars.DataDir, "konnectivity.conf")
 		apiAudiences = append(apiAudiences, "system:konnectivity-server")
@@ -134,14 +137,33 @@ func (a *APIServer) Start(ctx context.Context) error {
 
 	args["api-audiences"] = strings.Join(apiAudiences, ",")
 
-	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
+	for name, value := range a.NodeConfig.Spec.API.ExtraArgs {
 		if _, ok := args[name]; ok {
 			logrus.Warnf("overriding apiserver flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
-	args = a.ClusterConfig.Spec.FeatureGates.BuildArgs(args, kubeAPIComponentName)
+	args = a.NodeConfig.Spec.FeatureGates.BuildArgs(args, kubeAPIComponentName)
+
+	// kube-apiserver refuses to start if the --anonymous-auth flag is set
+	// while the file referenced by --authentication-config contains the
+	// anonymous field. Skip the anonymous-auth default in that case, so that
+	// anonymous authentication can be managed via the configuration file.
+	anonymousAuthManaged := false
+	if path := args["authentication-config"]; path != "" {
+		var err error
+		anonymousAuthManaged, err = authenticationConfigHasAnonymous(path)
+		if err != nil {
+			logrus.WithError(err).Warn("Failed to check the authentication configuration for the anonymous field, applying the anonymous-auth default")
+		} else if anonymousAuthManaged && args["anonymous-auth"] != "" {
+			logrus.Warn("The anonymous-auth flag is set while the authentication configuration contains the anonymous field, kube-apiserver will refuse to start")
+		}
+	}
+
 	for name, value := range apiDefaultArgs {
+		if name == "anonymous-auth" && anonymousAuthManaged {
+			continue
+		}
 		if args[name] == "" {
 			args[name] = value
 		}
@@ -154,26 +176,85 @@ func (a *APIServer) Start(ctx context.Context) error {
 		args["endpoint-reconciler-type"] = "none"
 	}
 
+	stopTimeout := a.StopTimeout
+
+	// If the timeout hasn't been specified, do a
+	// best guess based on the API server flags.
+	if stopTimeout <= 0 {
+		requestTimeout := 1 * time.Minute
+		if value, ok := args["request-timeout"]; ok {
+			if parsed, err := time.ParseDuration(value); err == nil {
+				requestTimeout = parsed
+			}
+		}
+
+		watchTerminationGrace := 0 * time.Second
+		if value, ok := args["shutdown-watch-termination-grace-period"]; ok {
+			if parsed, err := time.ParseDuration(value); err == nil {
+				watchTerminationGrace = parsed
+			}
+		}
+
+		stopTimeout = max(requestTimeout, watchTerminationGrace) + (2 * time.Second)
+
+		// Clamp the timeout between 5 and 20 seconds. We can't wait for too long
+		// currently because the init system will likely kill the process otherwise.
+		stopTimeout = max(5*time.Second, min(stopTimeout, 20*time.Second))
+	}
+
+	// Enable the API server's watch-drain facility on shutdown, if that flag
+	// hasn't been specified by the user. Without this flag, the API server will
+	// almost always encounter the request timeout if anything is connected to
+	// it via client-go watches. These have a timeout of between five and ten
+	// minutes. Note that other types of long-running requests, such as log
+	// streams, can still prevent a timely shutdown. However, there's not much
+	// that can be done about them apart from setting a short request timeout.
+	if _, ok := args["shutdown-watch-termination-grace-period"]; !ok {
+		if gracePeriod := stopTimeout - 2*time.Second; gracePeriod > 0 {
+			args["shutdown-watch-termination-grace-period"] = gracePeriod.String()
+		}
+	}
+
 	var apiServerArgs []string
 	for name, value := range args {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
-	apiServerArgs = append(apiServerArgs, a.ClusterConfig.Spec.API.RawArgs...)
+	apiServerArgs = append(apiServerArgs, a.NodeConfig.Spec.API.RawArgs...)
 
-	a.supervisor = &supervisor.Supervisor{
-		Name:    kubeAPIComponentName,
-		BinPath: a.executablePath,
-		RunDir:  a.K0sVars.RunDir,
-		DataDir: a.K0sVars.DataDir,
-		Args:    apiServerArgs,
-		UID:     a.uid,
+	sup := &supervisor.Supervisor{
+		Name:        kubeAPIComponentName,
+		BinPath:     a.executablePath,
+		RunDir:      a.K0sVars.RunDir,
+		DataDir:     a.K0sVars.DataDir,
+		Args:        apiServerArgs,
+		UID:         a.uid,
+		TimeoutStop: stopTimeout,
 	}
 
-	etcdArgs, err := getEtcdArgs(a.ClusterConfig.Spec.Storage, a.K0sVars)
+	// If the API port is less than 1024, the process needs to bind to a privileged port
+	if a.NodeConfig.Spec.API.Port < 1024 {
+		sup.RequiredPrivileges.BindsPrivilegedPorts = true
+		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
+	}
+
+	etcdArgs, err := getEtcdArgs(a.NodeConfig.Spec.Storage, a.K0sVars)
+	if err != nil {
+		return nil, err
+	}
+	sup.Args = append(sup.Args, etcdArgs...)
+
+	return sup, nil
+}
+
+// Run runs kube api
+func (a *APIServer) Start(ctx context.Context) error {
+	logrus.Info("Starting kube-apiserver")
+
+	var err error
+	a.supervisor, err = a.buildSupervisor()
 	if err != nil {
 		return err
 	}
-	a.supervisor.Args = append(a.supervisor.Args, etcdArgs...)
 
 	return a.supervisor.Supervise(ctx)
 }
@@ -228,7 +309,7 @@ func (a *APIServer) Ready() error {
 		TLSClientConfig: tlsConfig,
 	}
 	client := &http.Client{Transport: tr}
-	apiAddress := net.JoinHostPort(a.ClusterConfig.Spec.API.Address, strconv.Itoa(a.ClusterConfig.Spec.API.Port))
+	apiAddress := net.JoinHostPort(a.NodeConfig.Spec.API.Address, strconv.Itoa(a.NodeConfig.Spec.API.Port))
 	resp, err := client.Get(fmt.Sprintf("https://%s/readyz?verbose", apiAddress))
 	if err != nil {
 		return err
@@ -242,6 +323,26 @@ func (a *APIServer) Ready() error {
 		return fmt.Errorf("expected 200 for api server ready check, got %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// authenticationConfigHasAnonymous reports whether the authentication
+// configuration file at path contains the anonymous field. If it does,
+// kube-apiserver manages anonymous authentication via the configuration file
+// and refuses to start when the --anonymous-auth flag is set as well.
+func authenticationConfigHasAnonymous(path string) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false, err
+	}
+
+	var authConfig struct {
+		Anonymous json.RawMessage `json:"anonymous"`
+	}
+	if err := yaml.Unmarshal(data, &authConfig); err != nil {
+		return false, fmt.Errorf("failed to parse %q: %w", path, err)
+	}
+
+	return len(authConfig.Anonymous) > 0 && string(authConfig.Anonymous) != "null", nil
 }
 
 func getEtcdArgs(storage *v1beta1.StorageSpec, k0sVars *config.CfgVars) ([]string, error) {

@@ -26,7 +26,14 @@ permissions:
 jobs:
   smoketest:
     name: Test
-    runs-on: ${{ inputs.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: >-
+      ${{
+        case(
+          inputs.arch == 'arm64', 'ubuntu-24.04-arm',
+          inputs.arch == 'riscv64', 'ubuntu-24.04-riscv',
+          'ubuntu-24.04'
+        )
+      }}
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1

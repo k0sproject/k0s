@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/metadata"
-	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 )
@@ -72,7 +71,7 @@ func (n *WindowsStackComponent) Start(context.Context) error {
 				if ctx.Err() == nil {
 					n.log.WithError(err).Error("Failed to list Windows nodes")
 				}
-			} else if updateIfChanged(&windowsNodeCount, ptr.To(uint(len(nodes.Items)))) {
+			} else if updateIfChanged(&windowsNodeCount, new(uint(len(nodes.Items)))) {
 				n.log.WithField("count", *windowsNodeCount).Info("Windows node count changed")
 				n.updateWindowsNodeCount(windowsNodeCount)
 			} else {

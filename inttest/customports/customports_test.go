@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
@@ -23,7 +23,7 @@ import (
 type customPortsSuite struct {
 	common.BootlooseSuite
 
-	client *k8s.Clientset
+	client *kubernetes.Clientset
 }
 
 const configWithExternaladdress = `
@@ -83,6 +83,8 @@ func (s *customPortsSuite) getControllerConfig(ipAddress string) string {
 }
 
 func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
+	ctx := s.Context()
+
 	ipAddress := s.GetLBAddress()
 	s.T().Logf("ip address: %s", ipAddress)
 	config := s.getControllerConfig(ipAddress)
@@ -102,7 +104,9 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.Require().NoError(err)
 	s.Require().NoError(s.RunWorkersWithToken(workerToken))
 
-	kc, err := s.KubeClient("controller0")
+	restConfig, err := s.GetKubeConfig(s.ControllerNode(0))
+	s.Require().NoError(err)
+	kc, err := kubernetes.NewForConfig(restConfig)
 	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady("worker0", kc)
@@ -119,21 +123,21 @@ func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see CNI pods ready")
-	s.Require().NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
+	s.Require().NoError(common.WaitForKubeRouterReady(ctx, kc), "kube-router did not start")
 	s.T().Log("waiting to see konnectivity-agent pods ready")
-	s.Require().NoError(common.WaitForDaemonSet(s.Context(), kc, "konnectivity-agent", metav1.NamespaceSystem), "konnectivity-agent did not start")
+	s.Require().NoError(common.WaitForDaemonSet(ctx, kc, "konnectivity-agent", metav1.NamespaceSystem), "konnectivity-agent did not start")
 
-	s.T().Log("waiting to get logs from pods")
-	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, metav1.NamespaceSystem))
+	s.T().Log("waiting for konnectivity")
+	s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, kc, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)), "While verifying konnectivity mesh")
 
 	// https://github.com/k0sproject/k0s/issues/1202
 	s.Run("kubeconfigIncludesExternalAddress", func() {
 		expectedURL := url.URL{Scheme: "https", Host: net.JoinHostPort(ipAddress, strconv.Itoa(kubeAPIPort))}
-		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
+		ssh, err := s.SSH(ctx, s.ControllerNode(0))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
 
-		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kubeconfig create user | awk '$1 == \"server:\" {print $2}'")
+		out, err := ssh.ExecWithOutput(ctx, "/usr/local/bin/k0s kubeconfig create user | awk '$1 == \"server:\" {print $2}'")
 		s.Require().NoError(err)
 		s.Require().Equal(expectedURL.String(), out)
 	})

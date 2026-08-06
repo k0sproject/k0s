@@ -11,7 +11,6 @@ import (
 
 	// "github.com/k0sproject/k0s/pkg/component/manager"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/autopilot/channels"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/build"
@@ -28,7 +27,6 @@ var _ manager.Component = (*UpdateProber)(nil)
 
 type UpdateProber struct {
 	APClientFactory kubeutil.ClientFactoryInterface
-	ClusterConfig   *v1beta1.ClusterConfig
 	log             logrus.FieldLogger
 	leaderElector   leaderelector.Interface
 	collector       *updates.ClusterInfoCollector

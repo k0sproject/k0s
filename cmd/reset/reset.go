@@ -4,6 +4,9 @@
 package reset
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/k0sproject/k0s/cmd/internal"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/uninstall"
@@ -24,11 +27,15 @@ func NewResetCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return uninstall.Run(uninstall.Options{
+			err = uninstall.Run(uninstall.Options{
 				Vars:      opts.K0sVars,
 				CriSocket: opts.CriSocket,
 				Debug:     debugFlags.IsDebug(),
 			})
+			if errors.Is(err, config.ErrK0sStillRunning) {
+				return fmt.Errorf("%w, please stop k0s before reset", err)
+			}
+			return err
 		},
 	}
 

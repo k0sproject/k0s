@@ -236,12 +236,25 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 		},
 		Spec: corev1.PodSpec{
 			HostNetwork: true,
+			// The Traefik Pod is the worker's load-balanced path to the control
+			// plane, so it must outlive ordinary workloads during graceful node
+			// shutdown and be protected from node-pressure eviction.
+			//
+			// PriorityClassName satisfies the kube-apiserver Priority admission
+			// controller, which validates the mirror Pod the kubelet registers
+			// for this static Pod. The numeric Priority is also set so the local
+			// kubelet (which does not resolve PriorityClassName for static Pods)
+			// uses it for shutdown/eviction ordering. The two must agree:
+			// admission computes the integer from the class name and rejects the
+			// mirror Pod if an explicit, mismatched Priority is provided.
+			PriorityClassName: "system-node-critical",
+			Priority:          new(int32(2000001000)),
 			SecurityContext: &corev1.PodSecurityContext{
-				RunAsNonRoot: ptr.To(true),
+				RunAsNonRoot: new(true),
 				// https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/
 				WindowsOptions: &corev1.WindowsSecurityContextOptions{
-					HostProcess:   ptr.To(true),
-					RunAsUserName: ptr.To(`NT AUTHORITY\Local service`),
+					HostProcess:   new(true),
+					RunAsUserName: new(`NT AUTHORITY\Local service`),
 				},
 			},
 			Containers: []corev1.Container{{
@@ -250,9 +263,9 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 				ImagePullPolicy: podParams.pullPolicy,
 				Ports:           ports,
 				SecurityContext: &corev1.SecurityContext{
-					ReadOnlyRootFilesystem:   ptr.To(true),
-					Privileged:               ptr.To(false),
-					AllowPrivilegeEscalation: ptr.To(false),
+					ReadOnlyRootFilesystem:   new(true),
+					Privileged:               new(false),
+					AllowPrivilegeEscalation: new(false),
 					Capabilities: &corev1.Capabilities{
 						Drop: []corev1.Capability{"ALL"},
 					},
@@ -286,7 +299,7 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 			Tolerations: []corev1.Toleration{{
 				Operator: corev1.TolerationOpExists,
 			}},
-			EnableServiceLinks: ptr.To(false),
+			EnableServiceLinks: new(false),
 		},
 	}
 }

@@ -10,8 +10,10 @@ import (
 )
 
 const (
-	defaultConfPath    = "/etc/k0s/containerd.toml"
-	defaultImportsPath = "/etc/k0s/containerd.d/"
+	defaultConfPath = "/etc/k0s/containerd.toml"
+
+	// DefaultImportsPath is the default directory for containerd config drop-in files.
+	DefaultImportsPath = "/etc/k0s/containerd.d/"
 )
 
 // containerRuntimeExecLabel is the SELinux label for container runtime executables.

@@ -9,7 +9,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/utils/ptr"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
@@ -63,7 +62,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 					Name:  "pause",
 					Image: "quay.io/k0sproject/pause",
 					SecurityContext: &corev1.SecurityContext{
-						RunAsUser: ptr.To(int64(0)),
+						RunAsUser: new(int64(0)),
 					},
 				},
 			},
