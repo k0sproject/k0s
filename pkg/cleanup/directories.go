@@ -26,7 +26,14 @@ func (d *directories) Run() error {
 		return err
 	}
 
-	var dataDirMounted bool
+	var dataDirMounted, kubeletRootDirMounted bool
+
+	// The kubelet root dir only needs special handling when it lives outside
+	// the data dir. When it's under the data dir (the default location), it
+	// gets cleaned up together with the data dir below, so we must let its
+	// own mount be unmounted here just like any other mount under the data
+	// dir; otherwise the data dir cleanup would choke on the busy mount.
+	kubeletRootDirSeparate := !isUnderPath(d.kubeletRootDir, d.dataDir)
 
 	// ensure that we don't delete any persistent data volumes that may be
 	// mounted by kubernetes by unmount every mount point under DataDir.
@@ -43,11 +50,16 @@ func (d *directories) Run() error {
 	//  - https://man7.org/linux/man-pages/man2/mount.2.html
 	//  - https://man7.org/linux/man-pages/man2/umount.2.html#NOTES
 	for _, v := range slices.Backward(procMounts) {
-
-		// avoid unmount datadir if its mounted on separate partition
-		// k0s didn't mount it so leave it alone
+		// avoid unmounting the data dir or a separate kubelet root dir
+		// themselves if they are mounted on a separate partition/volume:
+		// k0s didn't mount them, so leave them alone and just empty their
+		// contents.
 		if v.Path == d.dataDir {
 			dataDirMounted = true
+			continue
+		}
+		if v.Path == d.kubeletRootDir && kubeletRootDirSeparate {
+			kubeletRootDirMounted = true
 			continue
 		}
 		if isUnderPath(v.Path, d.kubeletRootDir) || isUnderPath(v.Path, d.dataDir) {
@@ -66,7 +78,15 @@ func (d *directories) Run() error {
 
 	logrus.Debugf("removing kubelet root dir (%s)", d.kubeletRootDir)
 	if err := os.RemoveAll(d.kubeletRootDir); err != nil {
-		return fmt.Errorf("failed to delete k0s kubelet root direcotory: %w", err)
+		// if the kubelet root dir is itself a mount point (e.g. mounted on
+		// a separate volume), it can't be removed; emptying its contents is
+		// enough. Bail out only on other errors.
+		if !kubeletRootDirMounted {
+			return fmt.Errorf("failed to delete k0s kubelet root directory: %w", err)
+		}
+		if !errorIsUnlinkat(err, d.kubeletRootDir) {
+			return fmt.Errorf("failed to delete contents of mounted kubelet root directory: %w", err)
+		}
 	}
 
 	if dataDirMounted {
