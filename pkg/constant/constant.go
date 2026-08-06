@@ -100,7 +100,7 @@ const (
 	CalicoKubeControllersImage            = "quay.io/k0sproject/calico-kube-controllers"
 	CalicoKubeControllersImageVersion     = "v3.32.1-1"
 	KubeRouterCNIImage                    = "quay.io/k0sproject/kube-router"
-	KubeRouterCNIImageVersion             = "v2.10.0-iptables1.8.13-k0s.0"
+	KubeRouterCNIImageVersion             = "v2.10.0-iptables1.8.13-k0s.1"
 	KubeRouterCNIInstallerImage           = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion    = "v1.9.1-k0s.1"
 
