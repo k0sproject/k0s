@@ -33,9 +33,8 @@ func (c *containers) Name() string {
 
 // Run removes all the pods and mounts and stops containers afterwards
 // Run starts containerd if custom CRI is not configured
-func (c *containers) Run() error {
+func (c *containers) Run(ctx context.Context) error {
 	if c.managedContainerd != nil {
-		ctx := context.TODO()
 		if err := c.managedContainerd.Init(ctx); err != nil {
 			logrus.WithError(err).Warn("Failed to initialize containerd, skipping container cleanup")
 			return nil
@@ -51,18 +50,17 @@ func (c *containers) Run() error {
 		}()
 	}
 
-	if err := c.stopAllContainers(); err != nil {
+	if err := c.stopAllContainers(ctx); err != nil {
 		logrus.Debugf("error stopping containers: %v", err)
 	}
 
 	return nil
 }
 
-func (c *containers) stopAllContainers() error {
+func (c *containers) stopAllContainers(ctx context.Context) error {
 	var errs []error
 
 	var pods []string
-	ctx := context.TODO()
 	err := retry.Do(func() error {
 		logrus.Debugf("trying to list all pods")
 		var err error
