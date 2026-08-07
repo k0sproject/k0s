@@ -32,8 +32,8 @@ func (c *Config) Cleanup(ctx context.Context) error {
 	for _, step := range c.cleanupSteps {
 		// Some steps are not-so context aware, before each step,
 		// check if the context is still valid, if not, abort the cleanup
-		if ctx.Err() != nil {
-			errs = append(errs, fmt.Errorf("cleanup aborted due to context error: %w", ctx.Err()))
+		if err := context.Cause(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("cleanup aborted due to context error: %w", err))
 			break
 		}
 		logrus.Info("* ", step.Name())

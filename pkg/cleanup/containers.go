@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
@@ -79,23 +81,39 @@ func (c *containers) stopAllContainers(ctx context.Context) error {
 		}
 	}
 
+	var wg sync.WaitGroup
+	var errsMu sync.Mutex
 	for _, pod := range pods {
-		logrus.Debugf("stopping container: %v", pod)
-		err := c.containerRuntime.StopContainer(ctx, pod)
-		if err != nil {
-			if strings.Contains(err.Error(), "443: connect: connection refused") {
-				// on a single node instance, we will see "connection refused" error. this is to be expected
-				// since we're deleting the API pod itself. so we're ignoring this error
-				logrus.Debugf("ignoring container stop err: %v", err.Error())
-			} else {
-				errs = append(errs, fmt.Errorf("failed to stop running pod %s: %w", pod, err))
+		wg.Go(func() {
+			logrus.Debugf("stopping container: %v", pod)
+			// StopContainer can take a long time if the container is not responding,
+			// IO pressure is high (umount can take 10+ secs) or other such cases,
+			// so we set a timeout to avoid hanging indefinitely
+			stopCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			err := c.containerRuntime.StopContainer(stopCtx, pod)
+			if err != nil {
+				if strings.Contains(err.Error(), "443: connect: connection refused") {
+					// on a single node instance, we will see "connection refused" error. this is to be expected
+					// since we're deleting the API pod itself. so we're ignoring this error
+					logrus.Debugf("ignoring container stop err: %v", err.Error())
+				} else {
+					errsMu.Lock()
+					errs = append(errs, fmt.Errorf("failed to stop running pod %s: %w", pod, err))
+					errsMu.Unlock()
+				}
 			}
-		}
-		err = c.containerRuntime.RemoveContainer(ctx, pod)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to remove pod %s: %w", pod, err))
-		}
+			removeCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			err = c.containerRuntime.RemoveContainer(removeCtx, pod)
+			if err != nil {
+				errsMu.Lock()
+				errs = append(errs, fmt.Errorf("failed to remove pod %s: %w", pod, err))
+				errsMu.Unlock()
+			}
+		})
 	}
+	wg.Wait()
 
 	pods, err = c.containerRuntime.ListContainers(ctx)
 	if err == nil && len(pods) == 0 {
