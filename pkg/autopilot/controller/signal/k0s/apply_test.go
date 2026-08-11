@@ -7,7 +7,7 @@ package k0s
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -38,7 +38,7 @@ type failFirstUpdateClient struct {
 func (c *failFirstUpdateClient) Update(ctx context.Context, obj crcli.Object, opts ...crcli.UpdateOption) error {
 	c.updateAttempts++
 	if c.updateAttempts == 1 {
-		return fmt.Errorf("simulated update conflict")
+		return errors.New("simulated update conflict")
 	}
 	return c.Client.Update(ctx, obj, opts...)
 }
