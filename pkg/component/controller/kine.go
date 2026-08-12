@@ -106,7 +106,6 @@ func (k *Kine) Start(ctx context.Context) error {
 	logrus.Info("Starting kine")
 
 	args := stringmap.StringMap{
-		"--endpoint": k.Config.DataSource,
 		// NB: kine doesn't parse URLs properly, so construct potentially
 		// invalid URLs that are understood by kine.
 		// https://github.com/k3s-io/kine/blob/v0.16.3/pkg/util/network.go#L5-L13
@@ -132,7 +131,7 @@ func (k *Kine) Start(ctx context.Context) error {
 		UID:     k.uid,
 		GID:     kineGID,
 	}
-
+	os.Setenv("KINE_ENDPOINT", k.Config.DataSource)
 	return k.supervisor.Supervise(ctx)
 }
 
