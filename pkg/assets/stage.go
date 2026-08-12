@@ -4,10 +4,10 @@
 package assets
 
 import (
-	"archive/zip"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -91,54 +91,37 @@ func StageExecutable(dir, name string, opts ...StageOpt) (string, error) {
 	return path, fmt.Errorf("%w, %w, %w", err, statErr, lookErr)
 }
 
-func stage(name, path string, perm os.FileMode, opts ...StageOpt) error {
+func stage(name, path string, perm os.FileMode, opts ...StageOpt) (err error) {
+	payload, err := OpenSelfPayload()
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, payload.Close()) }()
+
+	return stageFrom(payload, name, path, perm, opts...)
+}
+
+func stageFrom(payload *Payload, name, path string, perm os.FileMode, opts ...StageOpt) (err error) {
 	log := logrus.WithField("path", path)
 	log.Infof("Staging")
-
-	selfexe, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("unable to determine current executable: %w", err)
-	}
-
-	exinfo, err := os.Stat(selfexe)
-	if err != nil {
-		return fmt.Errorf("unable to stat current executable: %w", err)
-	}
-
-	// Note that OpenReader may return a usable reader alongside an error, e.g.
-	// for ErrInsecurePath, in which case closing it is up to the caller.
-	zipFile, err := zip.OpenReader(selfexe)
-	defer func() {
-		if zipFile != nil {
-			err = errors.Join(err, zipFile.Close())
-		}
-	}()
-	if err != nil {
-		// If the error indicates an invalid ZIP file, we assume that this is a
-		// bare k0s executable, without any ZIP payload appended.
-		if errors.Is(err, zip.ErrFormat) {
-			return errNoPayloadAttached
-		}
-		return fmt.Errorf("while staging %q: %w", name, err)
-	}
 
 	// ZIP entry names are always slash-separated, on all platforms, so this
 	// must not use filepath.Join. (Which it couldn't anyways, since the path
 	// parameter shadows the path package.)
-	entryName := EmbeddedBinDir + "/" + name
-
-	var (
-		fileToExtract *zip.File
-		fileInfo      os.FileInfo
-	)
-	for _, archivedFile := range zipFile.File {
-		if archivedFile.Name == entryName {
-			fileToExtract = archivedFile
-			fileInfo = fileToExtract.FileInfo()
-			break
+	contents, err := payload.Open(EmbeddedBinDir + "/" + name)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return errNotEmbedded
 		}
+		return fmt.Errorf("while extracting %q: %w", name, err)
 	}
-	if fileToExtract == nil || fileInfo.IsDir() {
+	defer func() { err = errors.Join(err, contents.Close()) }()
+
+	fileInfo, err := contents.Stat()
+	if err != nil {
+		return fmt.Errorf("while extracting %q: %w", name, err)
+	}
+	if fileInfo.IsDir() {
 		return errNotEmbedded
 	}
 
@@ -146,7 +129,7 @@ func stage(name, path string, perm os.FileMode, opts ...StageOpt) error {
 	// matches the one of the k0s executable and its file size matches the one
 	// of the to-be-staged file.
 	if info, err := os.Stat(path); err == nil {
-		if !exinfo.IsDir() && exinfo.ModTime().Equal(info.ModTime()) && info.Size() == fileInfo.Size() {
+		if payload.ModTime().Equal(info.ModTime()) && info.Size() == fileInfo.Size() {
 			log.Debug("Re-use existing file")
 			return nil
 		}
@@ -156,16 +139,6 @@ func stage(name, path string, perm os.FileMode, opts ...StageOpt) error {
 		return err
 	}
 
-	// Get a reader for the uncompressed file contents
-	contents, err := fileToExtract.Open()
-	if err != nil {
-		if errors.Is(err, zip.ErrAlgorithm) {
-			err = fmt.Errorf("%w (compression method %d)", err, fileToExtract.Method)
-		}
-		return fmt.Errorf("while extracting %q: %w", name, err)
-	}
-	defer func() { err = errors.Join(err, contents.Close()) }()
-
 	log.Debug("Writing static file")
 
 	opener := file.AtomicWithTarget(path).
@@ -173,7 +146,7 @@ func stage(name, path string, perm os.FileMode, opts ...StageOpt) error {
 		// In order to properly determine if an update of an embedded binary
 		// file is needed, the staged embedded binary needs to have the same
 		// modification time as the `k0s` executable.
-		WithModificationTime(exinfo.ModTime())
+		WithModificationTime(payload.ModTime())
 
 	// Apply any additional options
 	for _, opt := range opts {
