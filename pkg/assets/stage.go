@@ -100,7 +100,14 @@ func stage(name, path string, perm os.FileMode, opts ...StageOpt) error {
 		return fmt.Errorf("unable to stat current executable: %w", err)
 	}
 
+	// Note that OpenReader may return a usable reader alongside an error, e.g.
+	// for ErrInsecurePath, in which case closing it is up to the caller.
 	zipFile, err := zip.OpenReader(selfexe)
+	defer func() {
+		if zipFile != nil {
+			err = errors.Join(err, zipFile.Close())
+		}
+	}()
 	if err != nil {
 		// If the error indicates an invalid ZIP file, we assume that this is a
 		// bare k0s executable, without any ZIP payload appended.
@@ -109,7 +116,6 @@ func stage(name, path string, perm os.FileMode, opts ...StageOpt) error {
 		}
 		return fmt.Errorf("while staging %q: %w", name, err)
 	}
-	defer func() { err = errors.Join(err, zipFile.Close()) }()
 
 	var (
 		fileToExtract *zip.File
