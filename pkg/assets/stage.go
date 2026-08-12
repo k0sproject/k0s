@@ -19,6 +19,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// EmbeddedBinDir is the directory inside the ZIP payload that holds the
+// embedded executables. The payload's root is reserved. Keep this in sync with
+// hack/zip-files, which produces the payload.
+const EmbeddedBinDir = "bin"
+
 var errNoPayloadAttached = errors.New("no payload attached")
 var errNotEmbedded = errors.New("not an embedded asset")
 
@@ -117,12 +122,17 @@ func stage(name, path string, perm os.FileMode, opts ...StageOpt) error {
 		return fmt.Errorf("while staging %q: %w", name, err)
 	}
 
+	// ZIP entry names are always slash-separated, on all platforms, so this
+	// must not use filepath.Join. (Which it couldn't anyways, since the path
+	// parameter shadows the path package.)
+	entryName := EmbeddedBinDir + "/" + name
+
 	var (
 		fileToExtract *zip.File
 		fileInfo      os.FileInfo
 	)
 	for _, archivedFile := range zipFile.File {
-		if archivedFile.Name == name {
+		if archivedFile.Name == entryName {
 			fileToExtract = archivedFile
 			fileInfo = fileToExtract.FileInfo()
 			break
