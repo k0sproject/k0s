@@ -24,7 +24,6 @@ import (
 // hack/zip-files, which produces the payload.
 const EmbeddedBinDir = "bin"
 
-var errNoPayloadAttached = errors.New("no payload attached")
 var errNotEmbedded = errors.New("not an embedded asset")
 
 // StageOpt configures how an executable is staged.
@@ -64,7 +63,7 @@ func StageExecutable(dir, name string, opts ...StageOpt) (string, error) {
 	}
 
 	// If the executable is not embedded, try to find an existing one.
-	if !errors.Is(err, errNoPayloadAttached) && !errors.Is(err, errNotEmbedded) {
+	if !errors.Is(err, ErrNoPayload) && !errors.Is(err, errNotEmbedded) {
 		return path, err
 	}
 
