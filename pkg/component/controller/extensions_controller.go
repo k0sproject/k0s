@@ -44,9 +44,11 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/bombsimon/logrusr/v4"
 	"github.com/sirupsen/logrus"
-	"helm.sh/helm/v3/pkg/registry"
-	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage/driver"
+	charts "helm.sh/helm/v4/pkg/chart"
+	"helm.sh/helm/v4/pkg/registry"
+	"helm.sh/helm/v4/pkg/release"
+	"helm.sh/helm/v4/pkg/release/common"
+	"helm.sh/helm/v4/pkg/storage/driver"
 
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -427,7 +429,7 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) (err error) {
 	var isInstalling bool
-	var chartRelease *release.Release
+	var chartRelease release.Releaser
 	var timeout time.Duration
 	timeout, err = time.ParseDuration(chart.Spec.Timeout)
 	if err != nil {
@@ -495,21 +497,25 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 
 	if chart.Status.ReleaseName == "" {
 		isInstalling = true
-		status := release.StatusUnknown
+		status := common.StatusUnknown
+		var version int
 		releaseName := effectiveChartReleaseName(&chart)
-		if chartRelease, err = helmCmd.GetRelease(ctx, releaseName, chart.Spec.Namespace); err == nil && chartRelease.Info != nil {
-			status = chartRelease.Info.Status
+		if chartRelease, err = helmCmd.GetRelease(ctx, releaseName, chart.Spec.Namespace); err == nil {
+			if chartRelease, err := release.NewAccessor(chartRelease); err == nil && chartRelease.Status() != "" {
+				status = common.Status(chartRelease.Status())
+				version = chartRelease.Version()
+			}
 		}
 
 		switch {
-		case status == release.StatusPendingInstall, status == release.StatusFailed, status == release.StatusUninstalling:
+		case status == common.StatusPendingInstall, status == common.StatusFailed, status == common.StatusUninstalling:
 			if err := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace); err != nil {
 				return fmt.Errorf("failed to uninstall %q in %q before reinstall: %w", releaseName, chart.Spec.Namespace, err)
 			}
 			cr.L.Info("Uninstalled release ", releaseName, " before reinstall due to status ", status)
 			fallthrough // proceed with installation
 
-		case status == release.StatusUninstalled, err != nil:
+		case status == common.StatusUninstalled, err != nil:
 			if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 				return fmt.Errorf("failed to get release: %w", err)
 			}
@@ -523,7 +529,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 				chart.Spec.Namespace,
 				chart.Spec.YamlValues(),
 				timeout,
-				status == release.StatusUninstalled,
+				status == common.StatusUninstalled,
 			)
 			if err != nil {
 				if !errors.Is(err, driver.ErrReleaseExists) /* don't uninstall if existing */ {
@@ -547,7 +553,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			// next reconciliation, execution may be routed to the upgrade
 			// branch instead of the install branch.
 			isInstalling = false
-			return fmt.Errorf("unsupported status %s in release version %d", status, chartRelease.Version)
+			return fmt.Errorf("unsupported status %s in release version %d", status, version)
 		}
 	} else {
 		if !cr.chartNeedsUpgrade(chart) {
@@ -681,21 +687,30 @@ func hashChartValues(chart *helmv1beta1.Chart) string {
 // to complete and the chart may have been updated in the meantime. If returns the error returned
 // by the Update operation. Moreover, if the chart has indeed changed in the meantime we already
 // have an event for it so we will see it again soon.
-func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.Chart, chartRelease *release.Release, installed bool, err error) error {
+func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.Chart, chartReleaser release.Releaser, installed bool, err error) error {
 	nsn := types.NamespacedName{Namespace: chart.Namespace, Name: chart.Name}
 	var updchart helmv1beta1.Chart
 	if err := cr.Get(ctx, nsn, &updchart); err != nil {
 		return fmt.Errorf("can't get updated version of chart %s: %w", chart.Name, err)
 	}
 	chart.Spec.YamlValues() // XXX what is this function for ?
-	if chartRelease != nil {
-		if installed {
-			updchart.Status.ReleaseName = chartRelease.Name
+	if chartReleaser != nil {
+		chartRelease, err := release.NewAccessor(chartReleaser)
+		if err != nil {
+			return fmt.Errorf("failed to access updated release of chart %s: %w", nsn, err)
 		}
-		updchart.Status.Version = chartRelease.Chart.Metadata.Version
-		updchart.Status.AppVersion = chartRelease.Chart.AppVersion()
-		updchart.Status.Revision = int64(chartRelease.Version)
-		updchart.Status.Namespace = chartRelease.Namespace
+		chartAccessor, err := charts.NewAccessor(chartRelease.Chart())
+		if err != nil {
+			return fmt.Errorf("failed to access updated chart %s: %w", nsn, err)
+		}
+		if installed {
+			updchart.Status.ReleaseName = chartRelease.Name()
+		}
+		metadata := chartAccessor.MetadataAsMap()
+		updchart.Status.Version = fmt.Sprint(cmp.Or(metadata["Version"], ""))
+		updchart.Status.AppVersion = fmt.Sprint(cmp.Or(metadata["AppVersion"], ""))
+		updchart.Status.Revision = int64(chartRelease.Version())
+		updchart.Status.Namespace = chartRelease.Namespace()
 	}
 	updchart.Status.Updated = time.Now().String()
 	updchart.Status.Error = ""
