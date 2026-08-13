@@ -231,6 +231,10 @@ endif
 .PHONY: codegen
 codegen: $(codegen_targets)
 
+.PHONY: list-images
+list-images:
+	@$(GO) run ./hack/list-images
+
 .PHONY: lint-copyright
 lint-copyright:
 	hack/copyright.sh
