@@ -15,7 +15,7 @@ import (
 	"testing/synctest"
 	"time"
 
-	"helm.sh/helm/v3/pkg/kube"
+	"helm.sh/helm/v4/pkg/kube"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -82,7 +82,7 @@ func TestClient_Wait(t *testing.T) {
 
 				synctest.Test(t, func(t *testing.T) {
 					underTest := &client{
-						Client: &kube.Client{Factory: &fakeKubeFactory{transport}, Log: t.Logf, Namespace: "ns"},
+						Client: &kube.Client{Factory: &fakeKubeFactory{transport}, Namespace: "ns"},
 						ctx:    t.Context(),
 						log:    log,
 					}
@@ -115,7 +115,7 @@ func TestClient_Wait(t *testing.T) {
 					})}
 
 					underTest := &client{
-						Client: &kube.Client{Factory: &fakeKubeFactory{transport}, Log: t.Logf, Namespace: "ns"},
+						Client: &kube.Client{Factory: &fakeKubeFactory{transport}, Namespace: "ns"},
 						ctx:    ctx,
 						log:    log,
 					}
@@ -154,7 +154,7 @@ func TestClient_Wait(t *testing.T) {
 
 				synctest.Test(t, func(t *testing.T) {
 					underTest := &client{
-						Client: &kube.Client{Factory: &fakeKubeFactory{transport}, Log: t.Logf, Namespace: "ns"},
+						Client: &kube.Client{Factory: &fakeKubeFactory{transport}, Namespace: "ns"},
 						ctx:    t.Context(),
 						log:    log,
 					}
@@ -329,5 +329,10 @@ func (f *fakeKubeFactory) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 
 // Validator implements [kube.Factory].
 func (f *fakeKubeFactory) Validator(validationDirective string) (validation.Schema, error) {
+	panic("unimplemented")
+}
+
+// ToRESTConfig implements [kube.Factory].
+func (f *fakeKubeFactory) ToRESTConfig() (*rest.Config, error) {
 	panic("unimplemented")
 }

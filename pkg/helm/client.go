@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -14,7 +15,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/sirupsen/logrus"
-	"helm.sh/helm/v3/pkg/kube"
+	sloghook "github.com/sirupsen/logrus/hooks/slog"
+	"helm.sh/helm/v4/pkg/kube"
 )
 
 // A bespoke Helm kube client to make readiness waits context-aware.
@@ -31,7 +33,8 @@ type client struct {
 // interrupted by the surrounding Helm action lifecycle.
 func newKubeClient(ctx context.Context, getter genericclioptions.RESTClientGetter, log logrus.FieldLogger) *client {
 	wrapped := kube.New(getter)
-	wrapped.Log = log.WithField("client", "wrapped").Debugf
+	sloglogger := slog.New(sloghook.NewHandler(log.WithField("client", "wrapped").Logger, nil))
+	wrapped.SetLogger(sloglogger.Handler())
 	return &client{wrapped, ctx, log}
 }
 
@@ -113,7 +116,7 @@ func (c *client) waitForResources(resources kube.ResourceList, timeout time.Dura
 		return err
 	}
 
-	checker := kube.NewReadyChecker(clients, c.log.WithField("client", "readychecker").Debugf, opts...)
+	checker := kube.NewReadyChecker(clients, opts...)
 
 	ctx, cancel := context.WithTimeout(c.ctx, timeout)
 	defer cancel()
