@@ -56,7 +56,7 @@ func TestOpenPayload_NoPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		payload, err := openPayload(file)
-		assert.ErrorIs(t, err, errNoPayloadAttached)
+		assert.ErrorIs(t, err, ErrNoPayload)
 		assert.Nil(t, payload)
 	})
 
@@ -76,14 +76,14 @@ func TestOpenPayload_InaccessibleExecutable(t *testing.T) {
 	t.Run("nonExistent", func(t *testing.T) {
 		payload, err := openPayload(filepath.Join(t.TempDir(), "enoent"))
 		assert.ErrorIs(t, err, fs.ErrNotExist)
-		assert.NotErrorIs(t, err, errNoPayloadAttached)
+		assert.NotErrorIs(t, err, ErrNoPayload)
 		assert.Nil(t, payload)
 	})
 
 	t.Run("directory", func(t *testing.T) {
 		payload, err := openPayload(t.TempDir())
 		assert.ErrorIs(t, err, syscall.EISDIR)
-		assert.NotErrorIs(t, err, errNoPayloadAttached)
+		assert.NotErrorIs(t, err, ErrNoPayload)
 		assert.Nil(t, payload)
 	})
 }
@@ -136,6 +136,78 @@ func TestPayload_SynthesizedDirectories(t *testing.T) {
 			names[i] = entry.Name()
 		}
 		assert.Equal(t, []string{"containerd", "etcd"}, names)
+	})
+}
+
+func TestContentID(t *testing.T) {
+	contentID := func(t *testing.T, payload *Payload, name string) (string, bool) {
+		info, err := fs.Stat(payload, name)
+		require.NoError(t, err)
+		return ContentID(info)
+	}
+
+	openPayloadWith := func(t *testing.T, entries map[string][]byte) *Payload {
+		payload, err := openPayload(writeExecutableWithPayload(t, entries))
+		require.NoError(t, err)
+		t.Cleanup(func() { assert.NoError(t, payload.Close()) })
+		return payload
+	}
+
+	t.Run("identifiesContents", func(t *testing.T) {
+		payload := openPayloadWith(t, map[string][]byte{
+			"images/foo.tar": []byte("some bundle"),
+			"images/bar.tar": []byte("another bundle"),
+		})
+
+		foo, ok := contentID(t, payload, "images/foo.tar")
+		require.True(t, ok)
+		assert.NotEmpty(t, foo)
+		bar, ok := contentID(t, payload, "images/bar.tar")
+		require.True(t, ok)
+		assert.NotEqual(t, foo, bar, "Entries with differing contents should be distinguishable")
+	})
+
+	// Identifiers have to survive rebuilds of the executable, so that unchanged
+	// bundles won't be imported again after an upgrade.
+	t.Run("stableAcrossExecutables", func(t *testing.T) {
+		entries := map[string][]byte{"images/foo.tar": []byte("some bundle")}
+		first := openPayloadWith(t, entries)
+		second := openPayloadWith(t, entries)
+
+		firstID, ok := contentID(t, first, "images/foo.tar")
+		require.True(t, ok)
+		secondID, ok := contentID(t, second, "images/foo.tar")
+		require.True(t, ok)
+		assert.Equal(t, firstID, secondID)
+	})
+
+	t.Run("unidentifiable", func(t *testing.T) {
+		payload := openPayloadWith(t, map[string][]byte{
+			"bin/containerd":   []byte("containerd"),
+			"images/empty.tar": nil,
+		})
+
+		// Directories are synthesized, so they have no recorded contents.
+		t.Run("directory", func(t *testing.T) {
+			id, ok := contentID(t, payload, EmbeddedBinDir)
+			assert.False(t, ok)
+			assert.Empty(t, id)
+		})
+
+		t.Run("emptyEntry", func(t *testing.T) {
+			id, ok := contentID(t, payload, "images/empty.tar")
+			assert.False(t, ok)
+			assert.Empty(t, id)
+		})
+
+		// FileInfos that don't originate from a payload can't be identified.
+		t.Run("foreignFileInfo", func(t *testing.T) {
+			info, err := os.Stat(t.TempDir())
+			require.NoError(t, err)
+			id, ok := ContentID(info)
+			assert.False(t, ok)
+			assert.Empty(t, id)
+		})
 	})
 }
 

@@ -13,6 +13,10 @@ import (
 	"time"
 )
 
+// ErrNoPayload indicates that an executable has no ZIP payload appended to it.
+// This is the case for k0s executables built with EMBEDDED_BINS_BUILDMODE=none.
+var ErrNoPayload = errors.New("no payload attached")
+
 // Payload provides read-only access to the ZIP archive that is appended to a
 // k0s executable.
 //
@@ -31,7 +35,7 @@ type Payload struct {
 var _ fs.FS = (*Payload)(nil)
 
 // OpenSelfPayload opens the ZIP payload that is appended to the currently
-// running executable. Returns errNoPayloadAttached if there's no ZIP archive
+// running executable. Returns ErrNoPayload if there's no ZIP archive
 // appended to it.
 func OpenSelfPayload() (*Payload, error) {
 	path, err := os.Executable()
@@ -43,7 +47,7 @@ func OpenSelfPayload() (*Payload, error) {
 }
 
 // openPayload opens the ZIP payload that is appended to the executable at path.
-// Returns errNoPayloadAttached if there's no ZIP archive appended to it.
+// Returns ErrNoPayload if there's no ZIP archive appended to it.
 func openPayload(path string) (*Payload, error) {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -64,7 +68,7 @@ func openPayload(path string) (*Payload, error) {
 		// An invalid ZIP file means that this is a bare executable, without any
 		// ZIP payload appended to it.
 		if errors.Is(err, zip.ErrFormat) {
-			return nil, errNoPayloadAttached
+			return nil, ErrNoPayload
 		}
 
 		return nil, fmt.Errorf("while opening the payload of %s: %w", path, err)
@@ -88,4 +92,27 @@ func (p *Payload) ModTime() time.Time {
 // Close closes the payload.
 func (p *Payload) Close() error {
 	return p.zip.Close()
+}
+
+// ContentID returns an opaque identifier for the contents of the payload entry
+// described by info, which is expected to have been obtained from a [Payload].
+// The identifier changes whenever the entry's contents change, and is stable
+// across rebuilds, copies and reinstallations of the executable. Returns false
+// if info doesn't describe a payload entry whose contents can be identified.
+//
+// Note that the identifier is not a cryptographic checksum. It is only intended
+// to detect changed contents, not to protect against tampering.
+func ContentID(info fs.FileInfo) (string, bool) {
+	header, ok := info.Sys().(*zip.FileHeader)
+	if !ok || info.IsDir() {
+		return "", false
+	}
+
+	// Empty entries have no CRC32 checksum recorded, but there's nothing to
+	// distinguish them by, either.
+	if header.CRC32 == 0 && header.UncompressedSize64 == 0 {
+		return "", false
+	}
+
+	return fmt.Sprintf("crc32:%08x/%d", header.CRC32, header.UncompressedSize64), true
 }
