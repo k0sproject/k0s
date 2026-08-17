@@ -130,8 +130,10 @@ func (k *Kine) Start(ctx context.Context) error {
 		Args:    append(args.ToArgs(), k.Config.RawArgs...),
 		UID:     k.uid,
 		GID:     kineGID,
+
+		AdditionalEnv: []string{"KINE_ENDPOINT=" + k.Config.DataSource},
+		KeepEnvPrefix: true,
 	}
-	os.Setenv("KINE_ENDPOINT", k.Config.DataSource)
 	return k.supervisor.Supervise(ctx)
 }
 
