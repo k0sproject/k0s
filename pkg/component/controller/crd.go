@@ -42,8 +42,10 @@ func NewCRDStack(clients kubernetes.ClientFactoryInterface, leaderElector leader
 		opt(&options)
 	}
 
-	if options.assetsDir == "" {
+	if options.stackName == "" {
 		options.stackName = bundle
+	}
+	if options.assetsDir == "" {
 		options.assetsDir = bundle
 	}
 
