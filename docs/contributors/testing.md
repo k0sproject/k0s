@@ -63,9 +63,10 @@ Please run the following style and formatting commands and fix/check-in any chan
 
 The integration tests are located in the inttest directory and are run in CI as
 "smoketests". These tests use Docker and [bootloose-based][bootloose] nodes to
-launch k0s clusters locally.
+launch k0s clusters locally. See [README.md][inttest-readme].
 
 [bootloose]: https://github.com/k0sproject/bootloose
+[inttest-readme]: https://github.com/k0sproject/k0s/blob/main/inttest/README.md
 
 ### Requirements
 
