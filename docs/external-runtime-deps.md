@@ -179,6 +179,40 @@ to manually add `localhost` entries to the `/etc/hosts` file as shown below:
 [glibc's NSS APIs]: https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html
 [nss-myhostname]: https://www.freedesktop.org/software/systemd/man/latest/nss-myhostname.html
 
+### Kernel Parameters
+
+#### Inotify Instance Limit
+
+[Inotify API](https://www.man7.org/linux/man-pages/man7/inotify.7.html) allows
+applications to monitor filesystem changes.
+
+Workloads that run many pods or watch large numbers of files can exhaust the
+node's default inotify limits, particularly `fs.inotify.max_user_instances`,
+which limits how many inotify instances one user (UID) can have.
+
+A value of at least 1024 is recommended; 8192 is commonly used in Kubernetes
+environments:
+
+```text
+fs.inotify.max_user_instances = 8192
+```
+
+1. Check the current value:
+
+   ```bash
+   cat /proc/sys/fs/inotify/max_user_instances
+   ```
+
+2. To apply the new value persistently, create a `sysctl` configuration file,
+   for example, `/etc/sysctl.d/99-inotify.conf`, and place the parameter
+   setting from above in it.
+
+3. Load the new kernel values:
+
+   ```bash
+   sudo sysctl --system
+   ```
+
 ### External hard dependencies
 
 There are very few external tools that are needed or used.
