@@ -71,7 +71,7 @@ func TestRequireContainerdV2ConfigSnippets(t *testing.T) {
 version = 3
 
 [plugins."io.containerd.cri.v1.runtime"]
-  sandbox_image = "registry.k8s.io/pause:3.9"
+  sandbox_image = "registry.k8s.io/pause:3.10"
 `)
 
 		p := probes.NewRootProbes()
@@ -88,7 +88,7 @@ version = 3
 		dir := t.TempDir()
 		writeFile(t, dir, "noversion.toml", `
 [plugins."io.containerd.cri.v1.runtime"]
-  sandbox_image = "registry.k8s.io/pause:3.9"
+  sandbox_image = "registry.k8s.io/pause:3.10"
 `)
 
 		p := probes.NewRootProbes()
@@ -121,7 +121,7 @@ version = 3
 version = 3
 
 [plugins."io.containerd.grpc.v1.cri"]
-  sandbox_image = "registry.k8s.io/pause:3.9"
+  sandbox_image = "registry.k8s.io/pause:3.10"
 `)
 
 		p := probes.NewRootProbes()
