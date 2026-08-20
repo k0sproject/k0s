@@ -223,6 +223,16 @@ func (m *Manager) isManagedByK0s(cert *certinfo.Certificate) (bool, error) {
 		return false, fmt.Errorf("unable to parse ca certificate: %w", err)
 	}
 
+	etcdCA, err := certinfo.ParseCertificateFile(filepath.Join(m.K0sVars.EtcdCertDir, "ca.crt"))
+	if err != nil {
+		// etcd CA is created separately from the cluster CA
+		// and may not available right away on the first start,
+		// this is expected and should not result in an error
+		logrus.Warnf("unable to parse etcd ca certificate: %v ", err)
+		// fall back to the default etcd CA
+		etcdCA = &certinfo.Certificate{Subject: certinfo.Name{CommonName: "etcd-ca"}}
+	}
+
 	switch cert.Issuer.CommonName {
 	case "kubernetes-ca":
 		return true, nil
@@ -235,6 +245,12 @@ func (m *Manager) isManagedByK0s(cert *certinfo.Certificate) (bool, error) {
 			return true, nil
 		}
 		logrus.Warnf("certificate issued by %q, but no ca.key found, not renewing the certificate %q", ca.Subject.CommonName, cert.Subject.CommonName)
+		return false, nil
+	case etcdCA.Subject.CommonName:
+		if file.Exists(filepath.Join(m.K0sVars.EtcdCertDir, "ca.key")) {
+			return true, nil
+		}
+		logrus.Warnf("certificate issued by %q, but no ca.key found, not renewing the certificate %q", etcdCA.Subject.CommonName, cert.Subject.CommonName)
 		return false, nil
 	}
 
