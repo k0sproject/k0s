@@ -831,6 +831,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#kernel-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#external-hard-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3093,6 +3104,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#kernel-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#external-hard-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3310,6 +3332,34 @@ to manually add <code>localhost</code> entries to the <code>/etc/hosts</code> fi
 <div class="highlight"><pre><span></span><code>127.0.0.1 localhost
 ::1 localhost
 </code></pre></div>
+<h3 id="kernel-parameters">Kernel Parameters<a class="headerlink" href="#kernel-parameters" title="Permanent link">#</a></h3>
+<h4 id="inotify-instance-limit">Inotify Instance Limit<a class="headerlink" href="#inotify-instance-limit" title="Permanent link">#</a></h4>
+<p><a href="https://www.man7.org/linux/man-pages/man7/inotify.7.html">Inotify API</a> allows
+applications to monitor filesystem changes.</p>
+<p>Workloads that run many pods or watch large numbers of files can exhaust the
+node's default inotify limits, particularly <code>fs.inotify.max_user_instances</code>,
+which limits how many inotify instances one user (UID) can have.</p>
+<p>A value of at least 1024 is recommended; 8192 is commonly used in Kubernetes
+environments:</p>
+<div class="highlight"><pre><span></span><code>fs.inotify.max_user_instances = 8192
+</code></pre></div>
+<ol>
+<li>
+<p>Check the current value:</p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>/proc/sys/fs/inotify/max_user_instances
+</code></pre></div>
+</li>
+<li>
+<p>To apply the new value persistently, create a <code>sysctl</code> configuration file,
+   for example, <code>/etc/sysctl.d/99-inotify.conf</code>, and place the parameter
+   setting from above in it.</p>
+</li>
+<li>
+<p>Load the new kernel values:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sysctl<span class="w"> </span>--system
+</code></pre></div>
+</li>
+</ol>
 <h3 id="external-hard-dependencies">External hard dependencies<a class="headerlink" href="#external-hard-dependencies" title="Permanent link">#</a></h3>
 <p>There are very few external tools that are needed or used.</p>
 <h4 id="mountumount">mount/umount<a class="headerlink" href="#mountumount" title="Permanent link">#</a></h4>
