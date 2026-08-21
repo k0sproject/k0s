@@ -107,6 +107,15 @@ linters:
       - linters:
           - staticcheck
         text: '^SA1019:'
+      # Platform stubs, such as users.LookupUID or cleanup.buildSteps, return an
+      # unconditional error on the platforms they don't support. Portable
+      # callers still have to check that error, which trips SA4023 on those
+      # platforms only. Per-site nolint directives aren't an option: they'd be
+      # reported as unused by nolintlint on the platforms where the stub isn't
+      # in use.
+      - linters:
+          - staticcheck
+        text: '^SA4023[:(]'
     paths:
       - zz_*
       - build
