@@ -25,7 +25,7 @@ func Marshal(m map[string]string, value any) {
 		if value.Kind() == reflect.Struct {
 			Marshal(m, value.Interface())
 		} else {
-			if val, ok := value.Interface().(string); ok {
+			if val, ok := reflect.TypeAssert[string](value); ok {
 				if fieldName, ok := field.Tag.Lookup(TagAutopilot); ok {
 					m[fieldName] = val
 				}

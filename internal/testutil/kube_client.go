@@ -120,7 +120,7 @@ func makeAPIResourceLists(scheme *runtime.Scheme) (allResources []*metav1.APIRes
 		var resources []metav1.APIResource
 		for kind, ty := range scheme.KnownTypes(gv) {
 			// Skip list kinds themselves.
-			if o, ok := reflect.New(ty).Interface().(runtime.Object); ok && meta.IsListType(o) {
+			if o, ok := reflect.TypeAssert[runtime.Object](reflect.New(ty)); ok && meta.IsListType(o) {
 				continue
 			}
 
