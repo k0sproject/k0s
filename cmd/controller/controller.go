@@ -93,6 +93,7 @@ func NewControllerCmd() *cobra.Command {
 
 			if len(args) > 0 {
 				c.TokenArg = args[0]
+				logrus.Warn("Passing the join token as a positional CLI argument is deprecated and will be removed in a future release. Please use the --token-file flag or the K0S_JOIN_TOKEN environment variable instead.")
 			}
 			if err := internal.CheckSingleTokenSource(c.TokenArg, c.TokenFile); err != nil {
 				return err
