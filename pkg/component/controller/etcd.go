@@ -145,7 +145,7 @@ func (e *Etcd) syncEtcdConfig(ctx context.Context, etcdRequest v1beta1.EtcdReque
 }
 
 // Run runs etcd if external cluster is not configured
-func (e *Etcd) Start(ctx context.Context) error {
+func (e *Etcd) Start(ctx context.Context) (err error) {
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 	etcdServerCert := filepath.Join(e.K0sVars.EtcdCertDir, "server.crt")
@@ -243,7 +243,77 @@ func (e *Etcd) Start(ctx context.Context) error {
 		KeepEnvPrefix: true,
 	}
 
-	return e.supervisor.Supervise(ctx)
+	if err := e.supervisor.Supervise(ctx); err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, e.supervisor.Stop())
+		}
+	}()
+
+	for {
+		select {
+		case <-time.After(1 * time.Second):
+		case <-ctx.Done():
+			return fmt.Errorf("while checking peer URL: %w", context.Cause(ctx))
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		err := e.fixupPeerURL(ctx)
+		cancel()
+		if err == nil {
+			return nil
+		}
+
+		logrus.WithError(err).Debug("Failed to check peer URL")
+	}
+}
+
+func (e *Etcd) fixupPeerURL(ctx context.Context) (err error) {
+	c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, c.Close()) }()
+
+	status, err := c.Status(ctx)
+	if err != nil {
+		return err
+	}
+
+	memberList, err := c.ListMembers(ctx)
+	if err != nil {
+		return err
+	}
+
+	var clusterPeerURL string
+	for _, member := range memberList {
+		if member.ID == status.ID {
+			clusterPeerURL = member.PeerURL
+			break
+		}
+	}
+	if clusterPeerURL == "" {
+		return fmt.Errorf("local endpoint %x not in member list", status.ID)
+	}
+
+	peerURL := e.Config.GetPeerURL()
+	if clusterPeerURL == peerURL {
+		return nil
+	}
+
+	if len(memberList) != 1 {
+		logrus.Warnf("Unexpected peer URL for local etcd endpoint %x: %s", status.ID, clusterPeerURL)
+		return nil
+	}
+
+	if err := c.SetPeerURL(ctx, status.ID, peerURL); err != nil {
+		return fmt.Errorf("failed to change peer URL for local endpoint %x from %s to %s: %w", status.ID, clusterPeerURL, peerURL, err)
+	}
+	logrus.Infof("Changed peer URL for local etcd endpoint %x from %s to %s", status.ID, clusterPeerURL, peerURL)
+
+	return nil
 }
 
 // Stop stops etcd
