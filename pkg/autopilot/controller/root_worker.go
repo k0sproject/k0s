@@ -15,6 +15,7 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
+	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +42,9 @@ var _ aproot.Root = (*rootWorker)(nil)
 
 // NewRootWorker builds a root for autopilot "worker" operations.
 func NewRootWorker(cfg aproot.RootConfig, logger *logrus.Entry, cf apcli.FactoryInterface) (aproot.Root, error) {
+	if cfg.StatusSocketPath == "" {
+		cfg.StatusSocketPath = status.DefaultSocketPath
+	}
 	c := &rootWorker{
 		cfg:           cfg,
 		log:           logger,
@@ -115,7 +119,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), &restartTracker, w.cfg.K0sDataDir, true, clusterID, leaderelection.StatusPending); err != nil {
+		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), &restartTracker, w.cfg.K0sDataDir, w.cfg.StatusSocketPath, true, clusterID, leaderelection.StatusPending); err != nil {
 			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
 

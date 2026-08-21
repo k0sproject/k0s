@@ -16,6 +16,7 @@ smoketests := \
 	check-ap-removedapis \
 	check-ap-selector \
 	check-ap-single \
+	check-ap-single-custom-socket \
 	check-ap-updater \
 	check-ap-updater-periodic \
 	check-backup \

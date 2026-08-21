@@ -73,6 +73,12 @@ check-addons: TIMEOUT=10m
 # Autopilot 3x3 HA test can take a while to run
 check-ap-ha3x3: export K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
+# Variant of ap-single that launches the controller with a non-default
+# --status-socket and --data-dir, exercising the StatusSocketPath plumbing
+# through the autopilot signal controllers (regression test for the
+# hardcoded-default-socket bug).
+check-ap-single-custom-socket: K0S_INTTEST_PACKAGE = ap-single
+
 check-ap-updater: .update-server.stamp
 check-ap-updater-periodic: .update-server.stamp
 check-ap-updater-periodic: TIMEOUT=10m

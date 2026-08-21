@@ -4,6 +4,8 @@
 package single
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
@@ -18,7 +20,23 @@ import (
 
 const (
 	ManifestTestDirPerms = "775"
+
+	// customStatusSocketPath is a non-default socket location used by the
+	// "ap-single-custom-socket" target to verify that autopilot signal
+	// controllers honor --status-socket. Default would be /run/k0s/status.sock.
+	customStatusSocketPath = "/run/k0s/custom/status.sock"
+	// customDataDir places the data dir (and therefore many derived paths) in
+	// a non-default location, exercising the wider --data-dir surface.
+	customDataDir = "/var/lib/k0s-custom"
 )
+
+// useCustomStatusSocket reports whether the suite was invoked through the
+// "ap-single-custom-socket" check target. Driven by K0S_INTTEST_TARGET, the
+// same env-var convention used by other parameterized inttests
+// (cplb-userspace, dualstack, network-conformance, ...).
+func useCustomStatusSocket() bool {
+	return strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "custom-socket")
+}
 
 type plansSingleControllerSuite struct {
 	common.BootlooseSuite
@@ -35,7 +53,19 @@ func (s *plansSingleControllerSuite) SetupTest() {
 	defer ssh.Disconnect()
 	require.NoError(ssh.Exec(ctx, "cp /dist/k0s /tmp/k0s", common.SSHStreams{}))
 
-	require.NoError(s.InitController(0, "--single", "--disable-components=metrics-server"))
+	args := []string{"--single", "--disable-components=metrics-server"}
+	if useCustomStatusSocket() {
+		// Pre-create the parent directories so k0s doesn't have to mkdir at
+		// odd paths during early boot. These match the flags below.
+		require.NoError(ssh.Exec(ctx, "mkdir -p /run/k0s/custom "+customDataDir, common.SSHStreams{}))
+		args = append(args,
+			"--status-socket="+customStatusSocketPath,
+			"--data-dir="+customDataDir,
+		)
+		s.T().Logf("Launching controller with custom status socket %q and data dir %q",
+			customStatusSocketPath, customDataDir)
+	}
+	require.NoError(s.InitController(0, args...))
 
 	client, err := s.KubeClient(nodeName)
 	require.NoError(err)
@@ -96,6 +126,27 @@ spec:
 		s.NotNil(cmd.K0sUpdate.Controllers)
 		s.Empty(cmd.K0sUpdate.Workers)
 		s.Equal(appc.SignalCompleted, cmd.K0sUpdate.Controllers[0].State)
+	}
+
+	if useCustomStatusSocket() {
+		// Defense against #3719: an AP test can report PlanCompleted even
+		// when the cluster is unhealthy. Cross-check that:
+		//   1. The custom status socket was actually created (the controller
+		//      honored --status-socket).
+		//   2. The default /run/k0s/status.sock was NOT created (no caller
+		//      fell back to the hardcoded path).
+		// If autopilot's signal controllers had still hardcoded the default
+		// path (the bug this PR fixes), step 2 would fail because the
+		// post-restart status probe would either create or contact the
+		// default socket location.
+		ssh, err := s.SSH(ctx, s.ControllerNode(0))
+		s.Require().NoError(err)
+		defer ssh.Disconnect()
+
+		s.NoError(ssh.Exec(ctx, "test -S "+customStatusSocketPath, common.SSHStreams{}),
+			"custom status socket %q should exist", customStatusSocketPath)
+		s.Error(ssh.Exec(ctx, "test -e /run/k0s/status.sock", common.SSHStreams{}),
+			"default status socket /run/k0s/status.sock should NOT exist when --status-socket is set")
 	}
 }
 

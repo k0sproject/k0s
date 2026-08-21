@@ -38,10 +38,11 @@ import (
 // controller-runtime manager. The restart tracker's lifetime needs to be tied
 // to the process, i.e. it has to be shared by all the managers this function is
 // called with throughout the lifetime of the process.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *RestartTracker, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *RestartTracker, statusSocketPath string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
 	if restartTracker == nil {
 		return errors.New("restart tracker is required")
 	}
+
 
 	logger = logger.WithField("controller", delegate.Name())
 
@@ -59,7 +60,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	logger.Infof("Using effective hostname = '%v'", hostname)
 
 	k0sVersionHandler := func() (string, error) {
-		return getK0sVersion(status.DefaultSocketPath)
+		return getK0sVersion(statusSocketPath)
 	}
 
 	if enableWorker {
@@ -150,11 +151,11 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		return fmt.Errorf("unable to register applying-update controller: %w", err)
 	}
 
-	if err := registerRestart(logger, mgr, restartEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restart")), delegate, restartTracker.IsRestartPending); err != nil {
+	if err := registerRestart(logger, mgr, restartEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restart")), delegate, statusSocketPath, restartTracker.IsRestartPending); err != nil {
 		return fmt.Errorf("unable to register restart controller: %w", err)
 	}
 
-	if err := registerRestarted(logger, mgr, restartedEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restarted")), delegate, restartTracker.IsRestartPending); err != nil {
+	if err := registerRestarted(logger, mgr, restartedEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restarted")), delegate, statusSocketPath, restartTracker.IsRestartPending); err != nil {
 		return fmt.Errorf("unable to register restarted controller: %w", err)
 	}
 
