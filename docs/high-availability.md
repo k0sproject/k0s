@@ -102,25 +102,25 @@ The second important aspect is: the load balancer address must be configured to 
 
 ### Configuration using k0s.yaml (for each controller)
 
-Note to update your load balancer's public IP address into two places.
+Note: Update the load balancer's public IP address in two places.
 
 ```yaml
 spec:
   api:
-    externalAddress: <load balancer public ip address>
+    externalAddress: <load balancer public IP address>
 ```
 
 ### Configuration using k0sctl.yaml (for k0sctl)
 
-Add the following lines at the end of `k0sctl.yaml`. Note to update your load
-balancer's public IP address into two places.
+Add the following lines at the end of `k0sctl.yaml`. Note: Update the load
+balancer's public IP address in two places.
 
 ```yaml
   k0s:
     config:
       spec:
         api:
-          externalAddress: <load balancer public ip address>
+          externalAddress: <load balancer public IP address>
 ```
 
 For greater detail about k0s configuration, refer to the [Full configuration file reference](configuration.md).
