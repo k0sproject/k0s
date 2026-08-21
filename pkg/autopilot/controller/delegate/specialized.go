@@ -75,6 +75,13 @@ func ControlNodeControllerDelegate(opts ...ControllerDelegateOption) ControllerD
 
 			return nil
 		},
+		readSignalErrorAnnotation,
+		func(_ context.Context, _ crcli.Client, obj crcli.Object, planID, reason, message string) error {
+			return writeSignalErrorAnnotation(obj, planID, reason, message)
+		},
+		func(_ context.Context, _ crcli.Client, obj crcli.Object) {
+			clearSignalErrorAnnotation(obj)
+		},
 	}
 
 	for _, opt := range opts {
@@ -128,6 +135,13 @@ func NodeControllerDelegate(opts ...ControllerDelegateOption) ControllerDelegate
 			}
 
 			return nil
+		},
+		readSignalErrorAnnotation,
+		func(_ context.Context, _ crcli.Client, obj crcli.Object, planID, reason, message string) error {
+			return writeSignalErrorAnnotation(obj, planID, reason, message)
+		},
+		func(_ context.Context, _ crcli.Client, obj crcli.Object) {
+			clearSignalErrorAnnotation(obj)
 		},
 	}
 

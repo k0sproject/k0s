@@ -52,6 +52,10 @@ func (aup *airgapupdate) Schedulable(ctx context.Context, planID string, cmd apv
 	logger.Infof("Sending signaling to node='%s'", nextForSignal.Name)
 
 	signalNodeCopy := signalNodeDelegate.DeepCopy(signalNode)
+
+	// Clear any stale error annotation from a previous attempt before sending the new signal.
+	signalNodeDelegate.ClearSignalError(ctx, aup.client, signalNodeCopy)
+
 	signalNodeCommandBuilder, err := signalNodeAirgapUpdateCommandBuilder(signalNodeCopy, cmd, status)
 	if err != nil {
 		logger.Warnf("Unable to build signal node content: %v", err)
