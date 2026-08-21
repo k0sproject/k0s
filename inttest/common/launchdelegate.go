@@ -18,6 +18,7 @@ type LaunchMode string
 const (
 	LaunchModeStandalone LaunchMode = "standalone"
 	LaunchModeOpenRC     LaunchMode = "OpenRC"
+	LaunchModeSystemd    LaunchMode = "systemd"
 )
 
 // launchDelegate provides an indirection to the launch operations in
@@ -169,9 +170,9 @@ func (o *openRCLaunchDelegate) StartController(ctx context.Context, conn *SSHCon
 
 // StopController stops a k0s controller that was started using OpenRC.
 func (*openRCLaunchDelegate) StopController(ctx context.Context, conn *SSHConnection) error {
-	startCmd := "/etc/init.d/k0scontroller stop"
-	if err := conn.Exec(ctx, startCmd, SSHStreams{}); err != nil {
-		return fmt.Errorf("unable to execute %q: %w", startCmd, err)
+	cmd := "/etc/init.d/k0scontroller stop"
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
 	}
 	return nil
 }
@@ -209,9 +210,9 @@ func (o *openRCLaunchDelegate) StartWorker(ctx context.Context, conn *SSHConnect
 
 // StopWorker stops a k0s worker that was started using OpenRC.
 func (*openRCLaunchDelegate) StopWorker(ctx context.Context, conn *SSHConnection) error {
-	startCmd := "/etc/init.d/k0sworker stop"
-	if err := conn.Exec(ctx, startCmd, SSHStreams{}); err != nil {
-		return fmt.Errorf("unable to execute %q: %w", startCmd, err)
+	cmd := "/etc/init.d/k0sworker stop"
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
 	}
 	return nil
 }
@@ -257,6 +258,99 @@ func configureK0sServiceArgs(ctx context.Context, conn *SSHConnection, k0sType s
 	_, err := conn.ExecWithOutput(ctx, cmd)
 	if err != nil {
 		return fmt.Errorf("failed to execute '%s' on %s: %w", cmd, conn.Address, err)
+	}
+
+	return nil
+}
+
+// systemdLaunchDelegate is a launchDelegate that starts controllers and workers
+// via a systemd service.
+type systemdLaunchDelegate struct {
+	k0sFullPath string
+}
+
+var _ launchDelegate = (*systemdLaunchDelegate)(nil)
+
+func (s *systemdLaunchDelegate) InitController(ctx context.Context, conn *SSHConnection, k0sArgs ...string) error {
+	if err := s.installK0sService(ctx, conn, "controller"); err != nil {
+		return fmt.Errorf("unable to install systemd k0s controller: %w", err)
+	}
+
+	controllerArgs := "controller --debug " + strings.Join(k0sArgs, " ")
+	if err := s.configureK0sServiceArgs(ctx, conn, "controller", controllerArgs); err != nil {
+		return fmt.Errorf("failed to configure k0s with %q: %w", controllerArgs, err)
+	}
+
+	return s.StartController(ctx, conn)
+}
+
+func (s *systemdLaunchDelegate) StartController(ctx context.Context, conn *SSHConnection) error {
+	return s.systemctl(ctx, conn, "start", "controller")
+}
+
+func (s *systemdLaunchDelegate) StopController(ctx context.Context, conn *SSHConnection) error {
+	return s.systemctl(ctx, conn, "stop", "controller")
+}
+
+func (s *systemdLaunchDelegate) InitWorker(ctx context.Context, conn *SSHConnection, token string, k0sArgs ...string) error {
+	if err := s.installK0sService(ctx, conn, "worker"); err != nil {
+		return fmt.Errorf("unable to install systemd k0s worker: %w", err)
+	}
+
+	workerArgs := fmt.Sprintf("worker --debug %s %s", strings.Join(k0sArgs, " "), token)
+	if err := s.configureK0sServiceArgs(ctx, conn, "worker", workerArgs); err != nil {
+		return fmt.Errorf("failed to configure k0s with %q: %w", workerArgs, err)
+	}
+
+	return s.StartWorker(ctx, conn)
+}
+
+func (s *systemdLaunchDelegate) StartWorker(ctx context.Context, conn *SSHConnection) error {
+	return s.systemctl(ctx, conn, "start", "worker")
+}
+
+func (s *systemdLaunchDelegate) StopWorker(ctx context.Context, conn *SSHConnection) error {
+	return s.systemctl(ctx, conn, "stop", "worker")
+}
+
+func (s *systemdLaunchDelegate) systemctl(ctx context.Context, conn *SSHConnection, action, k0sType string) error {
+	cmd := fmt.Sprintf("systemctl %s k0s%s.service", action, k0sType)
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
+	}
+	return nil
+}
+
+func (*systemdLaunchDelegate) ReadK0sLogs(ctx context.Context, conn *SSHConnection, out, _ io.Writer) error {
+	const cmd = "journalctl --no-pager -u k0scontroller.service -u k0sworker.service"
+	return conn.Exec(ctx, cmd, SSHStreams{Out: out})
+}
+
+func (s *systemdLaunchDelegate) installK0sService(ctx context.Context, conn *SSHConnection, k0sType string) error {
+	serviceFile := "/etc/systemd/system/k0s" + k0sType + ".service"
+	existsCommand := "/usr/bin/file " + serviceFile
+	if _, err := conn.ExecWithOutput(ctx, existsCommand); err != nil {
+		cmd := fmt.Sprintf("%s install %s", s.k0sFullPath, k0sType)
+		if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+			return fmt.Errorf("unable to execute %q: %w", cmd, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *systemdLaunchDelegate) configureK0sServiceArgs(ctx context.Context, conn *SSHConnection, k0sType string, args string) error {
+	serviceName := "k0s" + k0sType + ".service"
+	overrideDir := "/etc/systemd/system/" + serviceName + ".d"
+	overrideCmd := fmt.Sprintf(
+		"mkdir -p %[1]s && cat >%[1]s/override.conf <<'EOF'\n[Service]\nExecStart=\nExecStart=%[2]s %[3]s\nEOF\nsystemctl daemon-reload",
+		overrideDir,
+		s.k0sFullPath,
+		args,
+	)
+
+	if err := conn.Exec(ctx, overrideCmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("failed to execute override update for %s on %s: %w", serviceName, conn.Address, err)
 	}
 
 	return nil
