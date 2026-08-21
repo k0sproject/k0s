@@ -6,6 +6,7 @@
 package cleanup
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -18,7 +19,7 @@ import (
 )
 
 // Run removes all kubelet mounts and deletes generated dataDir and runDir
-func (d *directories) Run() error {
+func (d *directories) Run(context.Context) error {
 	// unmount any leftover overlays (such as in alpine)
 	mounter := mount.New("")
 	procMounts, err := mounter.List()
