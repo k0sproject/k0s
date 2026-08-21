@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -31,6 +33,7 @@ type Manager struct {
 	ServiceClusterIPRange string
 	PrimaryAddressFamily  v1beta1.PrimaryAddressFamilyType
 	ExtraArgs             string
+	KubeClientFactory     kubeutil.ClientFactoryInterface
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
@@ -79,6 +82,40 @@ func (a *Manager) Start(_ context.Context) error { return nil }
 func (a *Manager) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logger := logrus.WithField("component", kubeControllerManagerComponent)
 	logger.Info("Starting reconcile")
+
+	args, err := a.buildArgs(ctx, clusterConfig)
+	if err != nil {
+		return err
+	}
+
+	if args.Equals(a.previousConfig) && a.supervisor != nil {
+		// no changes and supervisor already running, do nothing
+		logger.Info("reconcile has nothing to do")
+		return nil
+	}
+	// Stop in case there's process running already and we need to change the config
+	if a.supervisor != nil {
+		logger.Info("reconcile has nothing to do")
+		if err := a.supervisor.Stop(); err != nil {
+			logger.WithError(err).Error("Failed to stop executable")
+		}
+		a.supervisor = nil
+	}
+
+	a.supervisor = &supervisor.Supervisor{
+		Name:    kubeControllerManagerComponent,
+		BinPath: a.executablePath,
+		RunDir:  a.K0sVars.RunDir,
+		DataDir: a.K0sVars.DataDir,
+		Args:    append(args.ToDashedArgs(), clusterConfig.Spec.ControllerManager.RawArgs...),
+		UID:     a.uid,
+	}
+	a.previousConfig = args
+	return a.supervisor.Supervise(ctx)
+}
+
+func (a *Manager) buildArgs(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) (stringmap.StringMap, error) {
+	logger := logrus.WithField("component", kubeControllerManagerComponent)
 	ccmAuthConf := filepath.Join(a.K0sVars.CertRootDir, "ccm.conf")
 	args := stringmap.StringMap{
 		"authentication-kubeconfig":        ccmAuthConf,
@@ -90,12 +127,32 @@ func (a *Manager) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		"requestheader-client-ca-file":     filepath.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"root-ca-file":                     filepath.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"service-account-private-key-file": filepath.Join(a.K0sVars.CertRootDir, "sa.key"),
-		"cluster-cidr":                     clusterConfig.Spec.Network.BuildPodCIDR(a.PrimaryAddressFamily),
 		"service-cluster-ip-range":         a.ServiceClusterIPRange,
 		"profiling":                        "false",
 		"terminated-pod-gc-threshold":      "12500",
 		"v":                                a.LogLevel,
 	}
+
+	// For dual-stack clusters, k0s < 1.36 used to allocate IPv6-first pod CIDRs
+	// unconditionally, whereas newer versions follow the primary address family
+	// (see https://github.com/k0sproject/k0s/issues/7927). Since
+	// kube-controller-manager expects the --cluster-cidr order to match the
+	// order persisted in the nodes' spec.podCIDRs, derive the order from the
+	// existing nodes to stay compatible with pre-1.36 clusters.
+	podCIDRs := clusterConfig.Spec.Network.BuildPodCIDR(a.PrimaryAddressFamily)
+	if a.KubeClientFactory != nil {
+		detected, err := podCIDRForCluster(ctx, a.KubeClientFactory, clusterConfig.Spec.Network, a.PrimaryAddressFamily)
+		if err != nil {
+			var inconsistent *inconsistentPodCIDROrderError
+			if errors.As(err, &inconsistent) {
+				return nil, fmt.Errorf("refusing to start kube-controller-manager: %w; set controllerManager.extraArgs.cluster-cidr explicitly to fix the pod CIDR order", err)
+			}
+			logger.WithError(err).Warn("Failed to detect pod CIDR order from existing nodes, using primary address family order")
+		} else {
+			podCIDRs = detected
+		}
+	}
+	args["cluster-cidr"] = podCIDRs
 
 	// Handle the extra args as last so they can be used to override some k0s "hardcodings"
 	if a.ExtraArgs != "" {
@@ -129,30 +186,7 @@ func (a *Manager) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 
 	args = clusterConfig.Spec.FeatureGates.BuildArgs(args, kubeControllerManagerComponent)
 
-	if args.Equals(a.previousConfig) && a.supervisor != nil {
-		// no changes and supervisor already running, do nothing
-		logger.Info("reconcile has nothing to do")
-		return nil
-	}
-	// Stop in case there's process running already and we need to change the config
-	if a.supervisor != nil {
-		logger.Info("reconcile has nothing to do")
-		if err := a.supervisor.Stop(); err != nil {
-			logger.WithError(err).Error("Failed to stop executable")
-		}
-		a.supervisor = nil
-	}
-
-	a.supervisor = &supervisor.Supervisor{
-		Name:    kubeControllerManagerComponent,
-		BinPath: a.executablePath,
-		RunDir:  a.K0sVars.RunDir,
-		DataDir: a.K0sVars.DataDir,
-		Args:    append(args.ToDashedArgs(), clusterConfig.Spec.ControllerManager.RawArgs...),
-		UID:     a.uid,
-	}
-	a.previousConfig = args
-	return a.supervisor.Supervise(ctx)
+	return args, nil
 }
 
 // Stop stops Manager

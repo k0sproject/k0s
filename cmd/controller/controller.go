@@ -609,6 +609,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
 			PrimaryAddressFamily:  nodeConfig.Spec.PrimaryAddressFamily(),
 			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
+			KubeClientFactory:     adminClientFactory,
 		})
 	}
 
