@@ -68,7 +68,7 @@ const (
 	/* Image Constants */
 
 	KonnectivityImage                     = "quay.io/k0sproject/apiserver-network-proxy-agent"
-	KonnectivityImageVersion              = "v0.36.0-k0s.0"
+	KonnectivityImageVersion              = "v0.36.0-k0s.1"
 	PushGatewayImage                      = "quay.io/k0sproject/pushgateway-ttl"
 	PushGatewayImageVersion               = "1.4.0-k0s.2"
 	MetricsImage                          = "quay.io/k0sproject/metrics-server"
