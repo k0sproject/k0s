@@ -12,6 +12,7 @@ type RootConfig struct {
 	InvocationID        string
 	KubeConfig          string
 	K0sDataDir          string
+	StatusSocketPath    string
 	KubeletExtraArgs    string
 	KubeAPIPort         int
 	Mode                string
