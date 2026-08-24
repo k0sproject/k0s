@@ -308,17 +308,6 @@
       "allowedVersions": "<=1.4"
     },
     {
-      "description": "Bump Go for release-1.35",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.35"
-      ],
-      "matchDepNames": [
-        "go"
-      ],
-      "allowedVersions": "<=1.25"
-    },
-    {
       "description": "Bump containerd for release-1.35",
       "enabled": true,
       "matchBaseBranches": [
