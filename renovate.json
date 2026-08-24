@@ -316,7 +316,7 @@
       "matchDepNames": [
         "go"
       ],
-      "allowedVersions": "<=1.26"
+      "allowedVersions": "<=1.25"
     },
     {
       "description": "Bump containerd for release-1.35",
@@ -342,17 +342,6 @@
         "**/kube-proxy"
       ],
       "allowedVersions": "/^v?[01]\\.35\\./"
-    },
-    {
-      "description": "Bump Go for release-1.34",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.34"
-      ],
-      "matchDepNames": [
-        "go"
-      ],
-      "allowedVersions": "<=1.26"
     },
     {
       "description": "Bump Alpine for release-1.34",
