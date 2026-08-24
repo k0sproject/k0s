@@ -13,7 +13,7 @@
   ],
   "baseBranchPatterns": [
     "main",
-    "/^release-1\\.3[3-6]$/"
+    "/^release-1\\.3[4-6]$/"
   ],
   "prTitleStrict": true,
   "commitMessageAction": "Bump",
@@ -400,42 +400,6 @@
         "opencontainers/runc"
       ],
       "allowedVersions": "<=1.3"
-    },
-    {
-      "description": "Bump etcd for release-1.33",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.33"
-      ],
-      "matchPackageNames": [
-        "go.etcd.io/etcd/**/v3",
-        "etcd-io/etcd"
-      ],
-      "allowedVersions": "<=3.5"
-    },
-    {
-      "description": "Bump Envoy for release-1.33",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.33"
-      ],
-      "matchDepNames": [
-        "quay.io/k0sproject/envoy-distroless"
-      ],
-      "allowedVersions": "<=1.32"
-    },
-    {
-      "description": "Bump Kubernetes for release-1.33",
-      "enabled": true,
-      "matchBaseBranches": [
-        "release-1.33"
-      ],
-      "matchPackageNames": [
-        "k8s.io/**",
-        "**/kubernetes",
-        "**/kube-proxy"
-      ],
-      "allowedVersions": "/^v?[01]\\.33\\./"
     },
     {
       "description": "Disallow Kubernetes digest bumps for release branches",
