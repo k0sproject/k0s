@@ -3230,13 +3230,13 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <h3 id="3-download-and-install-k0s">3. Download and install k0s<a class="headerlink" href="#3-download-and-install-k0s" title="Permanent link">#</a></h3>
 <p>After rebooting, open PowerShell as Administrator and run:</p>
 <div class="highlight"><pre><span></span><code><span class="c"># Set variables</span>
-<span class="nv">$K0S_VERSION</span> <span class="p">=</span> <span class="s2">&quot;v1.34.3+k0s.0&quot;</span>
-<span class="nv">$TOKEN_FILE</span> <span class="p">=</span> <span class="s2">&quot;C:\k0s-token.txt&quot;</span>
+<span class="nv">$K0S_VERSION</span> <span class="p">=</span> <span class="s2">"v1.34.3+k0s.0"</span>
+<span class="nv">$TOKEN_FILE</span> <span class="p">=</span> <span class="s2">"C:\k0s-token.txt"</span>
 
 <span class="c"># Download k0s</span>
-<span class="nv">$encodedVersion</span> <span class="p">=</span> <span class="nv">$K0S_VERSION</span><span class="p">.</span><span class="n">Replace</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="s1">&#39;%2B&#39;</span><span class="p">)</span>
-<span class="nv">$url</span> <span class="p">=</span> <span class="s2">&quot;https://github.com/k0sproject/k0s/releases/download/$encodedVersion/k0s-$K0S_VERSION-amd64.exe&quot;</span>
-<span class="nb">Invoke-WebRequest</span> <span class="n">-Uri</span> <span class="nv">$url</span> <span class="n">-OutFile</span> <span class="s2">&quot;$env:LOCALAPPDATA\Microsoft\WindowsApps\k0s.exe&quot;</span>
+<span class="nv">$encodedVersion</span> <span class="p">=</span> <span class="nv">$K0S_VERSION</span><span class="p">.</span><span class="n">Replace</span><span class="p">(</span><span class="s1">'+'</span><span class="p">,</span> <span class="s1">'%2B'</span><span class="p">)</span>
+<span class="nv">$url</span> <span class="p">=</span> <span class="s2">"https://github.com/k0sproject/k0s/releases/download/$encodedVersion/k0s-$K0S_VERSION-amd64.exe"</span>
+<span class="nb">Invoke-WebRequest</span> <span class="n">-Uri</span> <span class="nv">$url</span> <span class="n">-OutFile</span> <span class="s2">"$env:LOCALAPPDATA\Microsoft\WindowsApps\k0s.exe"</span>
 
 <span class="c"># Install and start k0s worker</span>
 <span class="n">k0s</span> <span class="n">install</span> <span class="n">worker</span> <span class="p">-</span><span class="n">-token</span><span class="o">-file</span> <span class="nv">$TOKEN_FILE</span>

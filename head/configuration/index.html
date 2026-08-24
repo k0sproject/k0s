@@ -3719,28 +3719,28 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calico</span>
 <span class="w">    </span><span class="nt">calico</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">envVars</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">TEST_BOOL_VAR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<span class="w">        </span><span class="nt">TEST_INT_VAR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;42&quot;</span>
+<span class="w">        </span><span class="nt">TEST_BOOL_VAR</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<span class="w">        </span><span class="nt">TEST_INT_VAR</span><span class="p">:</span><span class="w"> </span><span class="s">"42"</span>
 <span class="w">        </span><span class="nt">TEST_STRING_VAR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
 </code></pre></div>
 <p>K0s runs Calico with some predefined vars, which can be overwritten by setting new value in <code>spec.network.calico.envVars</code>:</p>
-<div class="highlight"><pre><span></span><code>CALICO_IPV4POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.network.podCIDR }}&quot;</span>
-CALICO_DISABLE_FILE_LOGGING:<span class="w"> </span><span class="s2">&quot;true&quot;</span>
-FELIX_DEFAULTENDPOINTTOHOSTACTION:<span class="w"> </span><span class="s2">&quot;ACCEPT&quot;</span>
-FELIX_LOGSEVERITYSCREEN:<span class="w"> </span><span class="s2">&quot;info&quot;</span>
-FELIX_HEALTHENABLED:<span class="w"> </span><span class="s2">&quot;true&quot;</span>
-FELIX_PROMETHEUSMETRICSENABLED:<span class="w"> </span><span class="s2">&quot;true&quot;</span>
-FELIX_FEATUREDETECTOVERRIDE:<span class="w"> </span><span class="s2">&quot;ChecksumOffloadBroken=true&quot;</span>
+<div class="highlight"><pre><span></span><code>CALICO_IPV4POOL_CIDR:<span class="w"> </span><span class="s2">"{{ spec.network.podCIDR }}"</span>
+CALICO_DISABLE_FILE_LOGGING:<span class="w"> </span><span class="s2">"true"</span>
+FELIX_DEFAULTENDPOINTTOHOSTACTION:<span class="w"> </span><span class="s2">"ACCEPT"</span>
+FELIX_LOGSEVERITYSCREEN:<span class="w"> </span><span class="s2">"info"</span>
+FELIX_HEALTHENABLED:<span class="w"> </span><span class="s2">"true"</span>
+FELIX_PROMETHEUSMETRICSENABLED:<span class="w"> </span><span class="s2">"true"</span>
+FELIX_FEATUREDETECTOVERRIDE:<span class="w"> </span><span class="s2">"ChecksumOffloadBroken=true"</span>
 </code></pre></div>
 <p><code>FELIX_FEATUREDETECTOVERRIDE: ChecksumOffloadBroken=true</code> disables VXLAN offloading because of <a href="https://github.com/projectcalico/calico/issues/4727">projectcalico/calico#4727</a>.</p>
 <p>In single-stack mode, there are additional vars:</p>
-<div class="highlight"><pre><span></span><code>FELIX_IPV6SUPPORT:<span class="w"> </span><span class="s2">&quot;false&quot;</span>
+<div class="highlight"><pre><span></span><code>FELIX_IPV6SUPPORT:<span class="w"> </span><span class="s2">"false"</span>
 </code></pre></div>
 <p>In dual-stack mode, there are additional vars:</p>
-<div class="highlight"><pre><span></span><code>CALICO_IPV6POOL_NAT_OUTGOING:<span class="w"> </span><span class="s2">&quot;true&quot;</span>
-FELIX_IPV6SUPPORT:<span class="w"> </span><span class="s2">&quot;true&quot;</span>
-IP6:<span class="w"> </span><span class="s2">&quot;autodetect&quot;</span>
-CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.network.dualStack.IPv6podCIDR }}&quot;</span>
+<div class="highlight"><pre><span></span><code>CALICO_IPV6POOL_NAT_OUTGOING:<span class="w"> </span><span class="s2">"true"</span>
+FELIX_IPV6SUPPORT:<span class="w"> </span><span class="s2">"true"</span>
+IP6:<span class="w"> </span><span class="s2">"autodetect"</span>
+CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">"{{ spec.network.dualStack.IPv6podCIDR }}"</span>
 </code></pre></div>
 <h4 id="specnetworkkuberouter"><code>spec.network.kuberouter</code><a class="headerlink" href="#specnetworkkuberouter" title="Permanent link">#</a></h4>
 <table>
@@ -3861,7 +3861,7 @@ lower.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">ipvs</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">excludeCIDRs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">  </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
-<span class="w">  </span><span class="nt">scheduler</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">  </span><span class="nt">scheduler</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
 <span class="w">  </span><span class="nt">strictARP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">  </span><span class="nt">syncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">  </span><span class="nt">tcpFinTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
@@ -4187,13 +4187,13 @@ by k0s.</p>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-eviction</span>
 <span class="w">      </span><span class="nt">values</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">evictionHard</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">memory.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;500Mi&quot;</span>
-<span class="w">          </span><span class="nt">nodefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1Gi&quot;</span>
-<span class="w">          </span><span class="nt">imagefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;100Gi&quot;</span>
+<span class="w">          </span><span class="nt">memory.available</span><span class="p">:</span><span class="w"> </span><span class="s">"500Mi"</span>
+<span class="w">          </span><span class="nt">nodefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">"1Gi"</span>
+<span class="w">          </span><span class="nt">imagefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">"100Gi"</span>
 <span class="w">        </span><span class="nt">evictionMinimumReclaim</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">memory.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0Mi&quot;</span>
-<span class="w">          </span><span class="nt">nodefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;500Mi&quot;</span>
-<span class="w">          </span><span class="nt">imagefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2Gi&quot;</span>
+<span class="w">          </span><span class="nt">memory.available</span><span class="p">:</span><span class="w"> </span><span class="s">"0Mi"</span>
+<span class="w">          </span><span class="nt">nodefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">"500Mi"</span>
+<span class="w">          </span><span class="nt">imagefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">"2Gi"</span>
 </code></pre></div>
 <h5 id="unsafe-sysctls">Unsafe Sysctls<a class="headerlink" href="#unsafe-sysctls" title="Permanent link">#</a></h5>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
@@ -4220,7 +4220,7 @@ by k0s.</p>
 <span class="w">    </span><span class="nt">featureGates</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-0</span>
 <span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kube-apiserver&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kube-controller-manager&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kube-scheduler&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"kube-apiserver"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"kube-controller-manager"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"kubelet"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"kube-scheduler"</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-1</span>
 <span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-2</span>
@@ -4232,10 +4232,10 @@ by k0s.</p>
 <span class="w">    </span><span class="nt">featureGates</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DevicePlugins</span>
 <span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"kubelet"</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Accelerators</span>
 <span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"kubelet"</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AllowExtTrafficLocalEndpoints</span>
 <span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>

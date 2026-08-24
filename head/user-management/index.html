@@ -3043,7 +3043,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 </code></pre></div>
 <h2 id="enabling-access-to-cluster-resources">Enabling Access to Cluster Resources<a class="headerlink" href="#enabling-access-to-cluster-resources" title="Permanent link">#</a></h2>
 <p>Create the user with the <code>system:masters</code> group to grant the user access to the cluster:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubeconfig<span class="w"> </span>create<span class="w"> </span>--groups<span class="w"> </span><span class="s2">&quot;system:masters&quot;</span><span class="w"> </span>testUser<span class="w"> </span>&gt;<span class="w"> </span>k0s.config
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubeconfig<span class="w"> </span>create<span class="w"> </span>--groups<span class="w"> </span><span class="s2">"system:masters"</span><span class="w"> </span>testUser<span class="w"> </span>&gt;<span class="w"> </span>k0s.config
 </code></pre></div>
 <p>Create a <code>roleBinding</code> to grant the user access to the resources:</p>
 <div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>kubectl<span class="w"> </span>create<span class="w"> </span>clusterrolebinding<span class="w"> </span>--kubeconfig<span class="w"> </span>k0s.config<span class="w"> </span>testUser-admin-binding<span class="w"> </span>--clusterrole<span class="o">=</span>admin<span class="w"> </span>--user<span class="o">=</span>testUser

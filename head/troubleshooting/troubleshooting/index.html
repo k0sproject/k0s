@@ -3207,7 +3207,7 @@ kube-system<span class="w">   </span>metrics-server-7d4bcb75dd-pqkrs<span class=
 <p>When you check the logs, it'll show something like this:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>logs<span class="w"> </span>coredns-5c98d7d4d8-tfs4q
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>plugin/loop:<span class="w"> </span>Loop<span class="w"> </span><span class="o">(</span><span class="m">127</span>.0.0.1:55953<span class="w"> </span>-&gt;<span class="w"> </span>:1053<span class="o">)</span><span class="w"> </span>detected<span class="w"> </span><span class="k">for</span><span class="w"> </span>zone<span class="w"> </span><span class="s2">&quot;.&quot;</span>,<span class="w"> </span>see<span class="w"> </span>https://coredns.io/plugins/loop#troubleshooting.<span class="w"> </span>Query:<span class="w"> </span><span class="s2">&quot;HINFO 4547991504243258144.3688648895315093531.&quot;</span>
+<div class="highlight"><pre><span></span><code>plugin/loop:<span class="w"> </span>Loop<span class="w"> </span><span class="o">(</span><span class="m">127</span>.0.0.1:55953<span class="w"> </span>-&gt;<span class="w"> </span>:1053<span class="o">)</span><span class="w"> </span>detected<span class="w"> </span><span class="k">for</span><span class="w"> </span>zone<span class="w"> </span><span class="s2">"."</span>,<span class="w"> </span>see<span class="w"> </span>https://coredns.io/plugins/loop#troubleshooting.<span class="w"> </span>Query:<span class="w"> </span><span class="s2">"HINFO 4547991504243258144.3688648895315093531."</span>
 </code></pre></div>
 <p>This is most often caused by systemd-resolved stub (or something similar) running locally and CoreDNS detects a possible loop with DNS queries.</p>
 <p>The easiest but most crude way to workaround is to disable the systemd-resolved stub and revert the hosts <code>/etc/resolv.conf</code> to original</p>
@@ -3234,14 +3234,14 @@ with etcd itself is not fully supported on ARM either.</p>
 <li>modify the line in <code>/etc/k0s/containerd.toml</code>:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="p">...</span>
-<span class="w">    </span><span class="k">[plugins.</span><span class="s1">&#39;io.containerd.cri.v1.images&#39;</span><span class="k">]</span>
-<span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;overlayfs&quot;</span>
+<span class="w">    </span><span class="k">[plugins.</span><span class="s1">'io.containerd.cri.v1.images'</span><span class="k">]</span>
+<span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"overlayfs"</span>
 <span class="p">...</span>
 </code></pre></div>
 <p>to</p>
 <div class="highlight"><pre><span></span><code><span class="p">...</span>
-<span class="w">    </span><span class="k">[plugins.</span><span class="s1">&#39;io.containerd.cri.v1.images&#39;</span><span class="k">]</span>
-<span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;zfs&quot;</span>
+<span class="w">    </span><span class="k">[plugins.</span><span class="s1">'io.containerd.cri.v1.images'</span><span class="k">]</span>
+<span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"zfs"</span>
 <span class="p">...</span>
 </code></pre></div>
 <ul>
@@ -3259,7 +3259,7 @@ with etcd itself is not fully supported on ARM either.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">flex-volume-plugin-dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/etc/kubernetes/kubelet-plugins/volume/exec&quot;</span>
+<span class="w">      </span><span class="nt">flex-volume-plugin-dir</span><span class="p">:</span><span class="w"> </span><span class="s">"/etc/kubernetes/kubelet-plugins/volume/exec"</span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">calico</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">flexVolumeDriverPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/nodeagent~uds</span>
@@ -3284,7 +3284,7 @@ as bundled with k0s. The k0s version is found in <code>/var/lib/k0s/bin</code>.<
 </code></pre></div>
 <p>Any value not equal to the "false" would work.</p>
 <p>To add custom linker flags use <code>LDFLAGS</code> variable.</p>
-<div class="highlight"><pre><span></span><code><span class="nv">LD_FLAGS</span><span class="o">=</span><span class="s2">&quot;--custom-flag=value&quot;</span><span class="w"> </span>make<span class="w"> </span>k0s
+<div class="highlight"><pre><span></span><code><span class="nv">LD_FLAGS</span><span class="o">=</span><span class="s2">"--custom-flag=value"</span><span class="w"> </span>make<span class="w"> </span>k0s
 </code></pre></div>
 <h2 id="using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics">Using a custom container runtime and missing labels in Prometheus metrics<a class="headerlink" href="#using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics" title="Permanent link">#</a></h2>
 <p>With Kubernetes' shift to CRI, Kubelet's method of obtaining container metrics

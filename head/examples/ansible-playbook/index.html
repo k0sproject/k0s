@@ -3194,11 +3194,11 @@ k0s-7<span class="w"> </span>Running<span class="w"> </span><span class="m">192<
 <div class="highlight"><pre><span></span><code>ansible<span class="w"> </span>-i<span class="w"> </span>inventory/multipass/inventory.yml<span class="w"> </span>-m<span class="w"> </span>ping
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>k0s-4<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nv">SUCCESS</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span><span class="o">{</span>
-<span class="w">    </span><span class="s2">&quot;ansible_facts&quot;</span>:<span class="w"> </span><span class="o">{</span>
-<span class="w">        </span><span class="s2">&quot;discovered_interpreter_python&quot;</span>:<span class="w"> </span><span class="s2">&quot;/usr/bin/python3&quot;</span>
+<span class="w">    </span><span class="s2">"ansible_facts"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">"discovered_interpreter_python"</span>:<span class="w"> </span><span class="s2">"/usr/bin/python3"</span>
 <span class="w">    </span><span class="o">}</span>,
-<span class="w">    </span><span class="s2">&quot;changed&quot;</span>:<span class="w"> </span>false,
-<span class="w">    </span><span class="s2">&quot;ping&quot;</span>:<span class="w"> </span><span class="s2">&quot;pong&quot;</span>
+<span class="w">    </span><span class="s2">"changed"</span>:<span class="w"> </span>false,
+<span class="w">    </span><span class="s2">"ping"</span>:<span class="w"> </span><span class="s2">"pong"</span>
 <span class="o">}</span>
 ...
 </code></pre></div>
@@ -3212,7 +3212,7 @@ k0s-7<span class="w"> </span>Running<span class="w"> </span><span class="m">192<
 <div class="highlight"><pre><span></span><code>TASK<span class="w"> </span><span class="o">[</span>k0s/initial_controller<span class="w"> </span>:<span class="w"> </span>print<span class="w"> </span>kubeconfig<span class="w"> </span>command<span class="o">]</span><span class="w"> </span>*******************************************************
 Tuesday<span class="w"> </span><span class="m">22</span><span class="w"> </span>December<span class="w"> </span><span class="m">2020</span><span class="w">  </span><span class="m">17</span>:43:20<span class="w"> </span>+0100<span class="w"> </span><span class="o">(</span><span class="m">0</span>:00:00.257<span class="o">)</span><span class="w">       </span><span class="m">0</span>:00:41.287<span class="w"> </span>******
 ok:<span class="w"> </span><span class="o">[</span>k0s-1<span class="o">]</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span><span class="o">{</span>
-<span class="w">    </span><span class="s2">&quot;msg&quot;</span>:<span class="w"> </span><span class="s2">&quot;To use Cluster: export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml&quot;</span>
+<span class="w">    </span><span class="s2">"msg"</span>:<span class="w"> </span><span class="s2">"To use Cluster: export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml"</span>
 <span class="o">}</span>
 ...
 PLAY<span class="w"> </span>RECAP<span class="w"> </span>*****************************************************************************************************
@@ -3266,17 +3266,17 @@ k0s-6<span class="w">   </span>NotReady<span class="w">   </span>&lt;none&gt;<sp
 k0s-7<span class="w">   </span>NotReady<span class="w">   </span>&lt;none&gt;<span class="w">   </span>21s<span class="w">   </span>v1.20.1-k0s1<span class="w">   </span><span class="m">192</span>.168.64.61<span class="w">   </span>&lt;none&gt;<span class="w">        </span>Ubuntu<span class="w"> </span><span class="m">20</span>.04.1<span class="w"> </span>LTS<span class="w">   </span><span class="m">5</span>.4.0-54-generic<span class="w">   </span>containerd://1.4.3
 </code></pre></div>
 <p><strong>Note</strong>: The first three control plane nodes will not display, as the control plane is fully isolated. To check on the distributed etcd cluster, you can use ssh to securely log a controller node, or you can run the following ad-hoc command:</p>
-<div class="highlight"><pre><span></span><code>ansible<span class="w"> </span>k0s-1<span class="w"> </span>-a<span class="w"> </span><span class="s2">&quot;k0s etcd member-list -c /etc/k0s/k0s.yaml&quot;</span><span class="w"> </span>-i<span class="w"> </span>inventory/multipass/inventory.yml<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+<div class="highlight"><pre><span></span><code>ansible<span class="w"> </span>k0s-1<span class="w"> </span>-a<span class="w"> </span><span class="s2">"k0s etcd member-list -c /etc/k0s/k0s.yaml"</span><span class="w"> </span>-i<span class="w"> </span>inventory/multipass/inventory.yml<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;info&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;members&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;k0s-1&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://192.168.64.32:2380&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;k0s-2&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://192.168.64.33:2380&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;k0s-3&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://192.168.64.56:2380&quot;</span>
+<span class="w">  </span><span class="nt">"level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"info"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"members"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"k0s-1"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://192.168.64.32:2380"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"k0s-2"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://192.168.64.33:2380"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"k0s-3"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://192.168.64.56:2380"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;msg&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;done&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-12-23T00:21:22+01:00&quot;</span>
+<span class="w">  </span><span class="nt">"msg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"done"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"time"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2020-12-23T00:21:22+01:00"</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>Once all worker nodes are at <code>Ready</code> state you can use the cluster. You can test the cluster state by creating a simple nginx deployment.</p>
@@ -3295,7 +3295,7 @@ k0s-7<span class="w">   </span>NotReady<span class="w">   </span>&lt;none&gt;<sp
 &lt;head&gt;
 &lt;title&gt;Welcome<span class="w"> </span>to<span class="w"> </span>nginx<span class="w"> </span>on<span class="w"> </span>Debian!&lt;/title&gt;
 ...
-pod<span class="w"> </span><span class="s2">&quot;hello-k0s&quot;</span><span class="w"> </span>deleted
+pod<span class="w"> </span><span class="s2">"hello-k0s"</span><span class="w"> </span>deleted
 </code></pre></div>
 <p><strong>Note</strong>: k0s users are the developers of k0s-ansible. Please send your feedback, bug reports, and pull requests to <a href="https://github.com/movd/k0s-ansible">github.com/movd/k0s-ansible</a>._</p>
 

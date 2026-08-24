@@ -3284,7 +3284,7 @@ listed, too:</p>
 <p>The cluster is using node-local load balancing and is able to tolerate the
 outage of one controller node. Shutdown the first controller to simulate a
 failure condition:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>ssh<span class="w"> </span>-i<span class="w"> </span>k0s-ssh-private-key.pem<span class="w"> </span>k0s@10.81.146.254<span class="w"> </span><span class="s1">&#39;echo &quot;Powering off $(hostname) ...&quot; &amp;&amp; sudo poweroff&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>ssh<span class="w"> </span>-i<span class="w"> </span>k0s-ssh-private-key.pem<span class="w"> </span>k0s@10.81.146.254<span class="w"> </span><span class="s1">'echo "Powering off $(hostname) ..." &amp;&amp; sudo poweroff'</span>
 <span class="go">Powering off k0s-controller-0 ...</span>
 </code></pre></div>
 <p>Node-local load balancing provides high availability from within the cluster,
@@ -3349,7 +3349,7 @@ third controller has become the new k0s leader. Workloads will run just fine:</p
 <span class="go">/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh</span>
 <span class="go">/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh</span>
 <span class="go">/docker-entrypoint.sh: Configuration complete; ready for start up</span>
-<span class="go">[notice] 1#1: using the &quot;epoll&quot; event method</span>
+<span class="go">[notice] 1#1: using the "epoll" event method</span>
 <span class="go">[notice] 1#1: nginx/1.23.3</span>
 <span class="go">[notice] 1#1: built by gcc 10.2.1 20210110 (Debian 10.2.1-6)</span>
 <span class="go">[notice] 1#1: OS: Linux 5.15.83-0-virt</span>

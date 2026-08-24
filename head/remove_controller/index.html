@@ -3082,9 +3082,9 @@ k0s<span class="w"> </span>kubectl<span class="w"> </span>delete<span class="w">
 For example, if you want to remove <code>controller01</code> from a cluster with 3 controllers:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># First, list the Etcd members</span>
 k0s<span class="w"> </span>etcd<span class="w"> </span>member-list
-<span class="o">{</span><span class="s2">&quot;members&quot;</span>:<span class="o">{</span><span class="s2">&quot;controller01&quot;</span>:<span class="s2">&quot;&lt;PEER_ADDRESS1&gt;&quot;</span>,<span class="w"> </span><span class="s2">&quot;controller02&quot;</span>:<span class="w"> </span><span class="s2">&quot;&lt;PEER_ADDRESS2&gt;&quot;</span>,<span class="w"> </span><span class="s2">&quot;controller03&quot;</span>:<span class="w"> </span><span class="s2">&quot;&lt;PEER_ADDRESS3&gt;&quot;</span><span class="o">}}</span>
+<span class="o">{</span><span class="s2">"members"</span>:<span class="o">{</span><span class="s2">"controller01"</span>:<span class="s2">"&lt;PEER_ADDRESS1&gt;"</span>,<span class="w"> </span><span class="s2">"controller02"</span>:<span class="w"> </span><span class="s2">"&lt;PEER_ADDRESS2&gt;"</span>,<span class="w"> </span><span class="s2">"controller03"</span>:<span class="w"> </span><span class="s2">"&lt;PEER_ADDRESS3&gt;"</span><span class="o">}}</span>
 <span class="c1"># Then, remove the controller01 using its peer address</span>
-k0s<span class="w"> </span>etcd<span class="w"> </span>leave<span class="w"> </span>--peer-address<span class="w"> </span><span class="s2">&quot;&lt;PEER_ADDRESS1&gt;&quot;</span>
+k0s<span class="w"> </span>etcd<span class="w"> </span>leave<span class="w"> </span>--peer-address<span class="w"> </span><span class="s2">"&lt;PEER_ADDRESS1&gt;"</span>
 </code></pre></div>
 <p>The controller is now removed from the cluster.
 To <a href="../reset/">reset k0s on the machine</a>, run the following commands:</p>
@@ -3107,7 +3107,7 @@ controller2<span class="w">   </span><span class="m">172</span>.17.0.4<span clas
 <p>By marking an <code>EtcdMember</code> object to leave the etcd cluster, k0s will handle the
 interaction with etcd. For example, in a 3 controller HA setup, you can
 remove a member by flagging it to leave:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>patch<span class="w"> </span>etcdmember<span class="w"> </span>controller2<span class="w"> </span>-p<span class="w"> </span><span class="s1">&#39;{&quot;spec&quot;:{&quot;leave&quot;:true}}&#39;</span><span class="w"> </span>--type<span class="w"> </span>merge
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>patch<span class="w"> </span>etcdmember<span class="w"> </span>controller2<span class="w"> </span>-p<span class="w"> </span><span class="s1">'{"spec":{"leave":true}}'</span><span class="w"> </span>--type<span class="w"> </span>merge
 <span class="go">etcdmember.etcd.k0sproject.io/controller2 patched</span>
 </code></pre></div>
 <p>The join/leave status is tracked in the object's conditions. This allows you to
@@ -3123,7 +3123,7 @@ wait for the leave to actually happen:</p>
 <span class="go">controller2   172.17.0.4     9c90504b1bc867bb    False    Success</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>k0s<span class="w"> </span>etcd<span class="w"> </span>member-list
-<span class="go">{&quot;members&quot;:{&quot;controller0&quot;:&quot;https://172.17.0.2:2380&quot;,&quot;controller1&quot;:&quot;https://172.17.0.3:2380&quot;}}</span>
+<span class="go">{"members":{"controller0":"https://172.17.0.2:2380","controller1":"https://172.17.0.3:2380"}}</span>
 </code></pre></div>
 <p>The objects for members that have already left the etcd cluster are kept
 available for tracking purposes. Once the member has left the cluster, the

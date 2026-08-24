@@ -3509,8 +3509,8 @@ and doesn't prevent malicious attacks in any way.</li>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
 <span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
-<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;"</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance ["172.16.0.100/16"]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;my</span><span class="nv"> </span><span class="s">password&gt;"</span>
 </code></pre></div>
 <p>By default, VRRP Instances use multicast as per <a href="https://datatracker.ietf.org/doc/html/rfc3768#section-5.2.2">RFC 3768</a>. It's possible to configure VRRP
 instances to use unicast:</p>
@@ -3521,8 +3521,8 @@ instances to use unicast:</p>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
 <span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
-<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;"</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance ["172.16.0.100/16"]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;my</span><span class="nv"> </span><span class="s">password&gt;"</span>
 <span class="w">          </span><span class="nt">unicastSourceIP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ip address of this controller&gt;</span>
 <span class="w">          </span><span class="nt">unicastPeers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">&lt;ip address of other controllers&gt;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">]</span>
 </code></pre></div>
@@ -3540,8 +3540,8 @@ either IP labels or IP rules. K0s Virtual Addresses uses <a href="https://datatr
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
 <span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;2001:db8:2::1/64&quot;]</span>
-<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;"</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance ["2001:db8:2::1/64"]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;my</span><span class="nv"> </span><span class="s">password&gt;"</span>
 <span class="w">          </span><span class="nt">addressLabel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30000</span>
 </code></pre></div>
 <p>The label value can be verified using iproute2:</p>
@@ -3568,8 +3568,8 @@ using a VRRP instance.</p>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
 <span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
-<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;"</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance ["172.16.0.100/16"]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;my</span><span class="nv"> </span><span class="s">password&gt;"</span>
 </code></pre></div>
 <h3 id="keepalived-virtual-servers-load-balancing">Keepalived Virtual Servers Load Balancing<a class="headerlink" href="#keepalived-virtual-servers-load-balancing" title="Permanent link">#</a></h3>
 <p>The Keepalived virtual servers Load Balancing is more performant than the userspace reverse proxy load balancer. However, it's
@@ -3588,10 +3588,10 @@ which in some rare circumstances can provoke temporary routing loops.</li>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
 <span class="w">      </span><span class="nt">keepalived</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;&quot;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance [&quot;172.16.0.100/16&quot;]</span>
-<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;my</span><span class="nv"> </span><span class="s">password&gt;&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"&lt;VIP</span><span class="nv"> </span><span class="s">address&gt;/&lt;netmask&gt;"</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># for instance ["172.16.0.100/16"]</span>
+<span class="w">          </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;my</span><span class="nv"> </span><span class="s">password&gt;"</span>
 <span class="w">        </span><span class="nt">virtualServers</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ipAddress</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;VIP</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">without</span><span class="nv"> </span><span class="s">netmask&gt;&quot;</span><span class="w"> </span><span class="c1"># for instance 172.16.0.100</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ipAddress</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;VIP</span><span class="nv"> </span><span class="s">address</span><span class="nv"> </span><span class="s">without</span><span class="nv"> </span><span class="s">netmask&gt;"</span><span class="w"> </span><span class="c1"># for instance 172.16.0.100</span>
 </code></pre></div>
 <h2 id="full-example-using-k0sctl">Full example using <code>k0sctl</code><a class="headerlink" href="#full-example-using-k0sctl" title="Permanent link">#</a></h2>
 <p>The following example shows a full <code>k0sctl</code> configuration file featuring three
@@ -3654,7 +3654,7 @@ controllers and three workers with control plane load balancing enabled.</p>
 <span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Keepalived</span>
 <span class="w">            </span><span class="nt">keepalived</span><span class="p">:</span>
 <span class="w">              </span><span class="nt">vrrpInstances</span><span class="p">:</span>
-<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;192.168.122.200/24&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">              </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualIPs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"192.168.122.200/24"</span><span class="p p-Indicator">]</span>
 <span class="w">                </span><span class="nt">authPass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Example</span>
 <span class="w">          </span><span class="nt">nodeLocalLoadBalancing</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional, but CPLB will often be used with NLLB.</span>
 <span class="w">            </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
@@ -3792,7 +3792,7 @@ file in order to interact with it:</p>
 <p>The cluster is using control plane load balancing and is able to tolerate the
 outage of one controller node. Shutdown the first controller to simulate a
 failure condition:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>ssh<span class="w"> </span>controller-0<span class="w"> </span><span class="s1">&#39;sudo poweroff&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>ssh<span class="w"> </span>controller-0<span class="w"> </span><span class="s1">'sudo poweroff'</span>
 <span class="go">Connection to 192.168.122.37 closed by remote host.</span>
 </code></pre></div>
 <p>Control plane load balancing provides high availability, the VIP will have moved to a different node:</p>
@@ -3847,9 +3847,9 @@ This isn't the VIP and has to be there even if the VIP is held by another node.<
 <p>If this isn't present in the nodes, keepalived logs can be seen in the k0s-logs, and
 can be filtered with <code>component=keepalived</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>journalctl<span class="w"> </span>-u<span class="w"> </span>k0scontroller<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="nv">component</span><span class="o">=</span>keepalived
-<span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Starting to supervise&quot; component=keepalived</span>
-<span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Started successfully, go nuts pid 409&quot; component=keepalived</span>
-<span class="go">time=&quot;2024-11-19 12:56:11&quot; level=info msg=&quot;Tue Nov 19 12:56:11 2024: Starting Keepalived v2.4.3&quot; component=keepalived stream=stderr</span>
+<span class="go">time="2024-11-19 12:56:11" level=info msg="Starting to supervise" component=keepalived</span>
+<span class="go">time="2024-11-19 12:56:11" level=info msg="Started successfully, go nuts pid 409" component=keepalived</span>
+<span class="go">time="2024-11-19 12:56:11" level=info msg="Tue Nov 19 12:56:11 2024: Starting Keepalived v2.4.3" component=keepalived stream=stderr</span>
 <span class="go">[...]</span>
 </code></pre></div>
 <p>The Keepalived configuration is stored in a file called <code>keepalived.conf</code> in the
@@ -3867,10 +3867,10 @@ load balancer's endpoint list. This component monitors constantly the endpoint <
 </code></pre></div>
 <p>You can see the <code>cplb-reconciler</code> updates by running:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>journalctl<span class="w"> </span>-u<span class="w"> </span>k0scontroller<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="nv">component</span><span class="o">=</span>cplb-reconciler
-<span class="go">time=&quot;2024-11-20 20:29:28&quot; level=error msg=&quot;Failed to watch API server endpoints, last observed version is \&quot;\&quot;, starting over in 10s ...&quot; component=cplb-reconciler error=&quot;Get \&quot;https://172.17.0.6:6443/api/v1/namespaces/default/endpoints?fieldSelector=metadata.name%3Dkubernetes&amp;timeout=30s&amp;timeoutSeconds=30\&quot;: dial tcp 172.17.0.6:6443: connect: connection refused&quot;</span>
-<span class="go">time=&quot;2024-11-20 20:29:38&quot; level=info msg=&quot;Updated the list of IPs: [172.17.0.6]&quot; component=cplb-reconciler</span>
-<span class="go">time=&quot;2024-11-20 20:29:55&quot; level=info msg=&quot;Updated the list of IPs: [172.17.0.6 172.17.0.7]&quot; component=cplb-reconciler</span>
-<span class="go">time=&quot;2024-11-20 20:29:59&quot; level=info msg=&quot;Updated the list of IPs: [172.17.0.6 172.17.0.7 172.17.0.8]&quot; component=cplb-reconciler</span>
+<span class="go">time="2024-11-20 20:29:28" level=error msg="Failed to watch API server endpoints, last observed version is \"\", starting over in 10s ..." component=cplb-reconciler error="Get \"https://172.17.0.6:6443/api/v1/namespaces/default/endpoints?fieldSelector=metadata.name%3Dkubernetes&amp;timeout=30s&amp;timeoutSeconds=30\": dial tcp 172.17.0.6:6443: connect: connection refused"</span>
+<span class="go">time="2024-11-20 20:29:38" level=info msg="Updated the list of IPs: [172.17.0.6]" component=cplb-reconciler</span>
+<span class="go">time="2024-11-20 20:29:55" level=info msg="Updated the list of IPs: [172.17.0.6 172.17.0.7]" component=cplb-reconciler</span>
+<span class="go">time="2024-11-20 20:29:59" level=info msg="Updated the list of IPs: [172.17.0.6 172.17.0.7 172.17.0.8]" component=cplb-reconciler</span>
 </code></pre></div>
 <h3 id="troubleshooting-the-user-space-reverse-proxy-load-balancer">Troubleshooting the user space reverse proxy load balancer<a class="headerlink" href="#troubleshooting-the-user-space-reverse-proxy-load-balancer" title="Permanent link">#</a></h3>
 <p>The user space reverse proxy load balancer runs in the k0s process. It listens a separate socket, by default on port 6444:</p>
@@ -3943,8 +3943,8 @@ there is exactly one VRRP instance.</li>
 <span class="go">      type: Keepalived</span>
 <span class="go">      keepalived:</span>
 <span class="go">        vrrpInstances:</span>
-<span class="go">        - virtualIPs: [&quot;&lt;VIP address&gt;/&lt;netmask&gt;&quot;]</span>
-<span class="go">          authPass: &quot;&lt;my password&gt;&quot;</span>
+<span class="go">        - virtualIPs: ["&lt;VIP address&gt;/&lt;netmask&gt;"]</span>
+<span class="go">          authPass: "&lt;my password&gt;"</span>
 <span class="go">        configTemplateVRRP: /path/to/custom-vrrp-template.conf</span>
 <span class="go">        configTemplateVS: /path/to/custom-virtualservers-template.conf</span>
 </code></pre></div>

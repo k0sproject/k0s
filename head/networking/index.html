@@ -3319,29 +3319,29 @@ The k0s automated test suite uses the following XML snippets, so using them will
 ensure that your configuration is aligned with our automated validation process:</p>
 <p>Create the service file for controller nodes in
 <code>/etc/firewalld/services/k0s-controller.xml</code> as follows:</p>
-<div class="highlight"><pre><span></span><code><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span>
 <span class="nt">&lt;service&gt;</span>
 <span class="w">  </span><span class="nt">&lt;short&gt;</span>k0s-controller<span class="nt">&lt;/short&gt;</span>
 <span class="w">  </span><span class="nt">&lt;description&gt;</span>k0s<span class="w"> </span>-<span class="w"> </span>The<span class="w"> </span>Zero<span class="w"> </span>Friction<span class="w"> </span>Kubernetes<span class="w"> </span>(controller<span class="w"> </span>node)<span class="nt">&lt;/description&gt;</span>
 
 <span class="w">  </span><span class="cm">&lt;!-- see docs/networking.md: Required ports and protocols --&gt;</span>
-<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;2380&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- etcd peers --&gt;</span>
-<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;6443&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- kube-apiserver --&gt;</span>
-<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;8132&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- konnectivity --&gt;</span>
-<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;9443&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- k0s-api --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">"tcp"</span><span class="w"> </span><span class="na">port=</span><span class="s">"2380"</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- etcd peers --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">"tcp"</span><span class="w"> </span><span class="na">port=</span><span class="s">"6443"</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- kube-apiserver --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">"tcp"</span><span class="w"> </span><span class="na">port=</span><span class="s">"8132"</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- konnectivity --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">"tcp"</span><span class="w"> </span><span class="na">port=</span><span class="s">"9443"</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- k0s-api --&gt;</span>
 <span class="nt">&lt;/service&gt;</span>
 </code></pre></div>
 <p>Create the service file for worker nodes in
 <code>/etc/firewalld/services/k0s-worker.xml</code> as follows:</p>
-<div class="highlight"><pre><span></span><code><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span>
 <span class="nt">&lt;service&gt;</span>
 <span class="w">  </span><span class="nt">&lt;short&gt;</span>k0s-worker<span class="nt">&lt;/short&gt;</span>
 <span class="w">  </span><span class="nt">&lt;description&gt;</span>k0s<span class="w"> </span>-<span class="w"> </span>The<span class="w"> </span>Zero<span class="w"> </span>Friction<span class="w"> </span>Kubernetes<span class="w"> </span>(worker<span class="w"> </span>node)<span class="nt">&lt;/description&gt;</span>
 
 <span class="w">  </span><span class="cm">&lt;!-- see docs/networking.md: Required ports and protocols --&gt;</span>
-<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;179&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">   </span><span class="cm">&lt;!-- kube-router --&gt;</span>
-<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;udp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;4789&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- calico --&gt;</span>
-<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">&quot;tcp&quot;</span><span class="w"> </span><span class="na">port=</span><span class="s">&quot;10250&quot;</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w"> </span><span class="cm">&lt;!-- kubelet --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">"tcp"</span><span class="w"> </span><span class="na">port=</span><span class="s">"179"</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">   </span><span class="cm">&lt;!-- kube-router --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">"udp"</span><span class="w"> </span><span class="na">port=</span><span class="s">"4789"</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w">  </span><span class="cm">&lt;!-- calico --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;port</span><span class="w"> </span><span class="na">protocol=</span><span class="s">"tcp"</span><span class="w"> </span><span class="na">port=</span><span class="s">"10250"</span><span class="w"> </span><span class="nt">/&gt;</span><span class="w"> </span><span class="cm">&lt;!-- kubelet --&gt;</span>
 <span class="nt">&lt;/service&gt;</span>
 </code></pre></div>
 <p>With the services in place, enable them on the nodes. For nodes running

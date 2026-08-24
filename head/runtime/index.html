@@ -3177,12 +3177,12 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 </code></pre></div>
 <p>Next, add the following default values to the configuration file:</p>
 <div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
-<span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/var/lib/k0s/containerd&quot;</span>
-<span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/run/k0s/containerd&quot;</span>
+<span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/var/lib/k0s/containerd"</span>
+<span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/run/k0s/containerd"</span>
 <span class="p">...</span>
 
 <span class="k">[grpc]</span>
-<span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/run/k0s/containerd.sock&quot;</span>
+<span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/run/k0s/containerd.sock"</span>
 </code></pre></div>
 <h2 id="k0s-managed-dynamic-runtime-configuration">k0s managed dynamic runtime configuration<a class="headerlink" href="#k0s-managed-dynamic-runtime-configuration" title="Permanent link">#</a></h2>
 <p>As of 1.27.1, k0s allows dynamic configuration of containerd CRI runtimes. This
@@ -3208,25 +3208,25 @@ configuration:</p>
 <p><code>/etc/k0s/containerd.d/cri-registry.toml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
 
-<span class="k">[plugins.</span><span class="s2">&quot;io.containerd.cri.v1.images&quot;</span><span class="k">.registry]</span>
-<span class="n">config_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/etc/k0s/containerd.d/certs.d&quot;</span>
+<span class="k">[plugins.</span><span class="s2">"io.containerd.cri.v1.images"</span><span class="k">.registry]</span>
+<span class="n">config_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/etc/k0s/containerd.d/certs.d"</span>
 </code></pre></div>
 <p>Create the file <code>/etc/k0s/containerd.d/certs.d/docker.io/hosts.toml</code> with the following content:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Always resolve tags against Docker Hub as the &quot;server&quot;</span>
-<span class="n">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://registry-1.docker.io&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Always resolve tags against Docker Hub as the "server"</span>
+<span class="n">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://registry-1.docker.io"</span>
 
-<span class="k">[host.</span><span class="s2">&quot;https://docker-mirror.internal.acme.corp:5000&quot;</span><span class="k">]</span>
-<span class="n">capabilities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pull&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;resolve&quot;</span><span class="p">]</span>
-<span class="c1"># Trust the internal mirror&#39;s certificate. Paths will be resolved relative to</span>
-<span class="c1"># the containing file&#39;s directory, e.g. the below path will be resolved to</span>
+<span class="k">[host.</span><span class="s2">"https://docker-mirror.internal.acme.corp:5000"</span><span class="k">]</span>
+<span class="n">capabilities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"pull"</span><span class="p">,</span><span class="w"> </span><span class="s2">"resolve"</span><span class="p">]</span>
+<span class="c1"># Trust the internal mirror's certificate. Paths will be resolved relative to</span>
+<span class="c1"># the containing file's directory, e.g. the below path will be resolved to</span>
 <span class="c1"># /etc/k0s/containerd.d/certs.d/docker.io/internal-mirror.crt</span>
-<span class="n">ca</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;internal-mirror.crt&quot;</span>
-<span class="c1"># Or, alternatively, disable TLS verification, if you know what you&#39;re doing:</span>
+<span class="n">ca</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"internal-mirror.crt"</span>
+<span class="c1"># Or, alternatively, disable TLS verification, if you know what you're doing:</span>
 <span class="c1"># skip_verify = true</span>
 
-<span class="c1"># Use Google&#39;s public pull-through cache</span>
-<span class="k">[host.</span><span class="s2">&quot;https://mirror.gcr.io&quot;</span><span class="k">]</span>
-<span class="n">capabilities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;pull&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;resolve&quot;</span><span class="p">]</span>
+<span class="c1"># Use Google's public pull-through cache</span>
+<span class="k">[host.</span><span class="s2">"https://mirror.gcr.io"</span><span class="k">]</span>
+<span class="n">capabilities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"pull"</span><span class="p">,</span><span class="w"> </span><span class="s2">"resolve"</span><span class="p">]</span>
 </code></pre></div>
 <p>For more details on how to configure registry hosts, please refer to the
 <a href="https://github.com/containerd/containerd/blob/release/2.2/docs/hosts.md">official containerd configuration</a>.</p>
@@ -3255,8 +3255,8 @@ configuration:</p>
 <div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.d/gvisor.toml</span>
 <span class="s">version = 3</span>
 
-<span class="s">[plugins.&quot;io.containerd.cri.v1.runtime&quot;.containerd.runtimes.runsc]</span>
-<span class="s">  runtime_type = &quot;io.containerd.runsc.v1&quot;</span>
+<span class="s">[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runsc]</span>
+<span class="s">  runtime_type = "io.containerd.runsc.v1"</span>
 <span class="s">EOF</span>
 </code></pre></div>
 </li>
@@ -3385,7 +3385,7 @@ metrics</a> when using cri-dockerd.</p>
 </code></pre></div>
 <p>On the worker nodes, the Kubernetes containers should be listed as regular
 Docker containers:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">&quot;table {{.ID}}\t{{.Names}}\t{{.State}}\t{{.Status}}&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">"table {{.ID}}\t{{.Names}}\t{{.State}}\t{{.Status}}"</span>
 <span class="go">CONTAINER ID   NAMES                                                                                                   STATE     STATUS</span>
 <span class="go">9167a937af28   k8s_konnectivity-agent_konnectivity-agent-9rnj7_kube-system_430027b4-75c3-487c-b94d-efeb7204616d_1      running   Up 14 minutes</span>
 <span class="go">b6978162a05d   k8s_metrics-server_metrics-server-7556957bb7-wfg8k_kube-system_5f642105-78c8-450a-bfd2-2021b680b932_1   running   Up 14 minutes</span>

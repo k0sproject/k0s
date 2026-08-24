@@ -3081,7 +3081,7 @@ to dual stack are possible as long as the primary address family remains IPv6.</
 </code></pre></div>
 <p>Ensure that every controller in the cluster is executed with the
 <a href="../feature-gates/">IPv6SingleStack feature gate</a> enabled:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>controller<span class="w"> </span>--feature-gates<span class="o">=</span><span class="s2">&quot;IPv6SingleStack=true&quot;</span>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>controller<span class="w"> </span>--feature-gates<span class="o">=</span><span class="s2">"IPv6SingleStack=true"</span>
 </code></pre></div>
 <p>This configuration will set up all Kubernetes components and Kube-router for IPv6
 single-stack networking.</p>
@@ -3096,7 +3096,7 @@ pod allocation (128 - 117 = 11). This allows 512 nodes with 2048 IPs per node.</
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">node-cidr-mask-size</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;120&quot;</span>
+<span class="w">      </span><span class="nt">node-cidr-mask-size</span><span class="p">:</span><span class="w"> </span><span class="s">"120"</span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd00::/108</span>
 <span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fd01::/108</span>

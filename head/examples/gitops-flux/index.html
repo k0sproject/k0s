@@ -3149,7 +3149,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
 <p>Let's start by installing k0s. Any k0s deployment option will do, but to keep things simple, this <a href="../../install/">Quick Start Guide</a> gets you started with a single node k0s cluster.</p>
 <p>Run these three commands to download k0s, install and start it:</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">'=https'</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single
 sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
@@ -3163,7 +3163,7 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>start
 <div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>fluxcd/tap/flux
 </code></pre></div>
 <p>or</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://fluxcd.io/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>bash
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">'=https'</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://fluxcd.io/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>bash
 </code></pre></div>
 <p>For more details of the Flux installation, check the <a href="https://fluxcd.io/docs/get-started/">Flux documentation</a>.</p>
 <h2 id="configure-flux-for-a-github-repository">Configure Flux for a GitHub repository<a class="headerlink" href="#configure-flux-for-a-github-repository" title="Permanent link">#</a></h2>
@@ -3172,7 +3172,7 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>start
 <span class="nb">export</span><span class="w"> </span><span class="nv">GITHUB_USER</span><span class="o">=</span>&lt;your-username&gt;
 </code></pre></div>
 <p>Come up with a GitHub repo name (e.g. flux-demo), which will be used by Flux to store (and sync) the config files.</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">GITHUB_REPO_NAME</span><span class="o">=</span>&lt;<span class="k">select</span>-repo-name-to-be-created&gt;
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">GITHUB_REPO_NAME</span><span class="o">=</span>&lt;select-repo-name-to-be-created&gt;
 </code></pre></div>
 <p>Bootstrap flux to your cluster. The GitHub repo will be created automatically by Flux:</p>
 <div class="highlight"><pre><span></span><code>flux<span class="w"> </span>bootstrap<span class="w"> </span>github<span class="w"> </span><span class="se">\</span>
@@ -3230,7 +3230,7 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
 <p>Then push the new file to the repository:</p>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>.
-git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Add web server manifest&quot;</span>
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Add web server manifest"</span>
 git<span class="w"> </span>push
 </code></pre></div>
 <p>Check that Flux detects your changes and the web server gets applied (by default this should happen within 1 min):</p>

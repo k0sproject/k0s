@@ -3677,7 +3677,7 @@ There is a public update-server hosted on the same domain as the documentation s
 <span class="w">    </span><span class="nt">periodic</span><span class="p">:</span>
 <span class="w">      </span><span class="c1"># The following fields configures updates to happen only on Tue or Wed at 13:00-15:00</span>
 <span class="w">      </span><span class="nt">days</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Tuesdays</span><span class="p p-Indicator">,</span><span class="nv">Wednesday</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">startTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;13:00&quot;</span>
+<span class="w">      </span><span class="nt">startTime</span><span class="p">:</span><span class="w"> </span><span class="s">"13:00"</span>
 <span class="w">      </span><span class="nt">length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2h</span>
 <span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span><span class="w"> </span><span class="c1"># This defines the plan to be created IF there are updates available</span>
 <span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span>
@@ -3748,7 +3748,7 @@ additional changes to the plan (other than status) will be recognized.<ul>
 <span class="w">        </span><span class="nt">platforms</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">linux-amd64</span><span class="p">:</span>
 <span class="w">            </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.37.0-alpha.3+head/k0s-v1.37.0-alpha.3+head-amd64</span>
-<span class="w">            </span><span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;0000000000000000000000000000000000000000000000000000000000000000&#39;</span>
+<span class="w">            </span><span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="s">'0000000000000000000000000000000000000000000000000000000000000000'</span>
 <span class="w">        </span><span class="nt">targets</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">controllers</span><span class="p">:</span>
 <span class="w">            </span><span class="nt">discovery</span><span class="p">:</span>
@@ -3914,23 +3914,23 @@ for the update of this target set.<ul>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span>
 <span class="w">      </span><span class="nt">k0supdate</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">controllers</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:44Z&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">"2022-04-07T15:52:44Z"</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span>
 <span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalCompleted</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">"2022-04-07T15:52:24Z"</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller1</span>
 <span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalCompleted</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">"2022-04-07T15:52:24Z"</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller2</span>
 <span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
 <span class="w">        </span><span class="nt">workers</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">"2022-04-07T15:52:24Z"</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span>
 <span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">"2022-04-07T15:52:24Z"</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker1</span>
 <span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">"2022-04-07T15:52:24Z"</span>
 <span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker2</span>
 <span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
 </code></pre></div>
@@ -4066,7 +4066,7 @@ update operation. There are a number of statuses available:</p>
 <span class="w">    </span><span class="nt">periodic</span><span class="p">:</span>
 <span class="w">      </span><span class="c1"># The following fields configures updates to happen only on Tue or Wed at 13:00-15:00</span>
 <span class="w">      </span><span class="nt">days</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Tuesdays</span><span class="p p-Indicator">,</span><span class="nv">Wednesday</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">startTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;13:00&quot;</span>
+<span class="w">      </span><span class="nt">startTime</span><span class="p">:</span><span class="w"> </span><span class="s">"13:00"</span>
 <span class="w">      </span><span class="nt">length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2h</span>
 <span class="w">  </span><span class="c1"># Optional. Specifies a created Plan object</span>
 <span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span>

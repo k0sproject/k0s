@@ -3352,24 +3352,24 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 ls<span class="w"> </span>-l
 </code></pre></div>
 <p>Open <code>variables.tf</code> and set the number of controller and worker nodes like this:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;cluster_name&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">"cluster_name"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
-<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;k0sctl&quot;</span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"k0sctl"</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;controller_count&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"controller_count"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span>
 <span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;worker_count&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"worker_count"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span>
 <span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;cluster_flavor&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"cluster_flavor"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
-<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;t3.small&quot;</span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"t3.small"</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>Open <code>main.tf</code> to check or modify k0s version near the end of the file.</p>
@@ -3428,7 +3428,7 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> <
 <span class="nb">cd</span><span class="w"> </span>rook/cluster/examples/kubernetes/ceph
 </code></pre></div>
 <p>We will use mostly the default Rook configuration. However, k0s kubelet directory must be configured in <code>operator.yaml</code> like this</p>
-<div class="highlight"><pre><span></span><code><span class="nt">ROOK_CSI_KUBELET_DIR_PATH</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/kubelet&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="nt">ROOK_CSI_KUBELET_DIR_PATH</span><span class="p">:</span><span class="w"> </span><span class="s">"/var/lib/k0s/kubelet"</span>
 </code></pre></div>
 <p>To create the resources, which are needed by the Rook’s Ceph operator, run</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>crds.yaml<span class="w"> </span>-f<span class="w"> </span>common.yaml<span class="w"> </span>-f<span class="w"> </span>operator.yaml
@@ -3543,21 +3543,21 @@ mongo-b87cbd5cc-4wx8t<span class="w">   </span><span class="m">1</span>/1<span c
 <p>Create a DB and insert some data:</p>
 <div class="highlight"><pre><span></span><code>&gt; use testDB
 switched to db testDB
-&gt; db.testDB.insertOne( {name: &quot;abc&quot;, number: 123  })
+&gt; db.testDB.insertOne( {name: "abc", number: 123  })
 {
-  &quot;acknowledged&quot; : true,
-  &quot;insertedId&quot; : ObjectId(&quot;60815690a709d344f83b651d&quot;)
+  "acknowledged" : true,
+  "insertedId" : ObjectId("60815690a709d344f83b651d")
 }
-&gt; db.testDB.insertOne( {name: &quot;bcd&quot;, number: 234  })
+&gt; db.testDB.insertOne( {name: "bcd", number: 234  })
 {
-  &quot;acknowledged&quot; : true,
-  &quot;insertedId&quot; : ObjectId(&quot;6081569da709d344f83b651e&quot;)
+  "acknowledged" : true,
+  "insertedId" : ObjectId("6081569da709d344f83b651e")
 }
 </code></pre></div>
 <p>Read the data:</p>
-<div class="highlight"><pre><span></span><code>&gt; db.getCollection(&quot;testDB&quot;).find()
-{ &quot;_id&quot; : ObjectId(&quot;60815690a709d344f83b651d&quot;), &quot;name&quot; : &quot;abc&quot;, &quot;number&quot; : 123 }
-{ &quot;_id&quot; : ObjectId(&quot;6081569da709d344f83b651e&quot;), &quot;name&quot; : &quot;bcd&quot;, &quot;number&quot; : 234 }
+<div class="highlight"><pre><span></span><code>&gt; db.getCollection("testDB").find()
+{ "_id" : ObjectId("60815690a709d344f83b651d"), "name" : "abc", "number" : 123 }
+{ "_id" : ObjectId("6081569da709d344f83b651e"), "name" : "bcd", "number" : 234 }
 &gt;
 </code></pre></div>
 <p>You can also try to restart the MongoDB pod or restart the worker nodes to verity that the storage is persistent.</p>

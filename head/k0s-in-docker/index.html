@@ -3281,11 +3281,11 @@ local testing "cluster":</p>
 <p>By default, the k0s image starts a k0s controller with worker components enabled
 within the same container, creating a cluster with a single
 controller-and-worker node using the following command:</p>
-<div class="highlight"><pre><span></span><code><span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;k0s&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;controller&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--enable-worker&quot;</span><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"k0s"</span><span class="p">,</span><span class="w"> </span><span class="s2">"controller"</span><span class="p">,</span><span class="w"> </span><span class="s2">"--enable-worker"</span><span class="p">]</span>
 </code></pre></div>
 <p>Alternatively, a controller-only node can be run like this:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>k0s-controller<span class="w"> </span>--hostname<span class="w"> </span>k0s-controller<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--read-only<span class="w"> </span><span class="sb">`</span><span class="c1"># k0s won&#39;t write any data outside the below paths` \</span>
+<span class="w">  </span>--read-only<span class="w"> </span><span class="sb">`</span><span class="c1"># k0s won't write any data outside the below paths` \</span>
 <span class="w">  </span>-v<span class="w"> </span>/var/lib/k0s<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores its data` \</span>
 <span class="w">  </span>--tmpfs<span class="w"> </span>/run<span class="w"> </span><span class="sb">`</span><span class="c1"># this is where k0s stores runtime data` \</span>
 <span class="w">  </span>--tmpfs<span class="w"> </span>/tmp<span class="w"> </span><span class="sb">`</span><span class="c1"># allow writing temporary files` \</span>
@@ -3340,7 +3340,7 @@ application containers to separate workers.</p>
 <span class="w">  </span>--cap-add<span class="w"> </span>sys_resource<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cap-add<span class="w"> </span>syslog<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>docker.io/k0sproject/k0s:v1.37.0-alpha.3-head<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$token</span><span class="s2">&quot;</span>
+<span class="w">  </span>k0s<span class="w"> </span>worker<span class="w"> </span><span class="s2">"</span><span class="nv">$token</span><span class="s2">"</span>
 </code></pre></div>
 <p>Notes on the security-related flags:</p>
 <ul>
@@ -3403,7 +3403,7 @@ application containers to separate workers.</p>
 <li>
 <p>Update kubeconfig with Localhost Access:</p>
 <p>To automatically replace the server IP with localhost dynamically in <code>~/.kube/k0s.config</code>, use the following command:</p>
-<div class="highlight"><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>awk<span class="w"> </span><span class="s1">&#39;/server:/ {print NR; exit}&#39;</span><span class="w"> </span>~/.kube/k0s.config<span class="k">)</span><span class="s2">s|https://.*:6443|https://localhost:6443|&quot;</span><span class="w"> </span>~/.kube/k0s.config
+<div class="highlight"><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">''</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>awk<span class="w"> </span><span class="s1">'/server:/ {print NR; exit}'</span><span class="w"> </span>~/.kube/k0s.config<span class="k">)</span><span class="s2">s|https://.*:6443|https://localhost:6443|"</span><span class="w"> </span>~/.kube/k0s.config
 </code></pre></div>
 <p>This command updates the kubeconfig to point to localhost, allowing access to the API server from your host machine</p>
 </li>
@@ -3439,7 +3439,7 @@ cluster</a>.</p>
 <span class="w">    </span><span class="nt">tmpfs</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/run</span><span class="w"> </span><span class="c1"># this is where k0s stores runtime data</span>
 <span class="w">    </span><span class="nt">devices</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg</span><span class="w"> </span><span class="c1"># required by kubelet&#39;s OOM watcher</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg</span><span class="w"> </span><span class="c1"># required by kubelet's OOM watcher</span>
 <span class="w">    </span><span class="nt">cap_add</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_admin</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">net_admin</span>
@@ -3513,7 +3513,7 @@ three controller and three worker nodes:</p>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/run</span><span class="w"> </span><span class="c1"># this is where k0s stores runtime data</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/tmp</span>
 <span class="w">  </span><span class="nt">devices</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg</span><span class="w"> </span><span class="c1"># required by kubelet&#39;s OOM watcher</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/dev/kmsg</span><span class="w"> </span><span class="c1"># required by kubelet's OOM watcher</span>
 <span class="w">  </span><span class="nt">cap_add</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sys_admin</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">net_admin</span>
@@ -3560,7 +3560,7 @@ three controller and three worker nodes:</p>
 <span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-euc</span>
 <span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <span class="w">            </span><span class="no">bootstrap() {</span>
-<span class="w">              </span><span class="no"># this works even if etcd isn&#39;t up</span>
+<span class="w">              </span><span class="no"># this works even if etcd isn't up</span>
 
 <span class="w">              </span><span class="no">find /run/secrets/k0sproject.io/controller-token ! -path /run/secrets/k0sproject.io/controller-token -prune -exec rm -rf {} +</span>
 <span class="w">              </span><span class="no">k0s token pre-shared --role controller \</span>
@@ -3654,12 +3654,12 @@ three controller and three worker nodes:</p>
 <span class="w">          </span><span class="no">externalAddress: k0s-lb</span>
 </code></pre></div>
 <p>Running the above:</p>
-<div class="highlight"><pre><span></span><code><span class="go"> ❯ docker compose up -d</span>
+<div class="highlight"><pre><span></span><code><span class="gp"> ❯ </span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
 <span class="go">[+] Running 11/11</span>
 <span class="go"> ✔ Network compose-cluster_k0s-net                Created                0.1s</span>
-<span class="go"> ✔ Volume &quot;compose-cluster_k0s-token-secrets&quot;     Created                0.0s</span>
-<span class="go"> ✔ Volume &quot;compose-cluster_k0s-controller-token&quot;  Created                0.0s</span>
-<span class="go"> ✔ Volume &quot;compose-cluster_k0s-worker-token&quot;      Created                0.0s</span>
+<span class="go"> ✔ Volume "compose-cluster_k0s-token-secrets"     Created                0.0s</span>
+<span class="go"> ✔ Volume "compose-cluster_k0s-controller-token"  Created                0.0s</span>
+<span class="go"> ✔ Volume "compose-cluster_k0s-worker-token"      Created                0.0s</span>
 <span class="go"> ✔ Container k0s-lb                               Started                0.5s</span>
 <span class="go"> ✔ Container k0s-controller-1                     Started                11.8s</span>
 <span class="go"> ✔ Container k0s-controller-2                     Started                12.2s</span>

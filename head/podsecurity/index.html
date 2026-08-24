@@ -2956,13 +2956,13 @@ plugins:
     kind: PodSecurityConfiguration
     # Defaults applied when a mode label is not set.
     defaults:
-      enforce: &quot;privileged&quot;
-      enforce-version: &quot;latest&quot;
+      enforce: "privileged"
+      enforce-version: "latest"
     exemptions:
-      # Don&#39;t forget to exempt namespaces or users that are responsible for deploying
+      # Don't forget to exempt namespaces or users that are responsible for deploying
       # cluster components, because they need to run privileged containers
-      usernames: [&quot;admin&quot;]
-      namespaces: [&quot;kube-system&quot;]
+      usernames: ["admin"]
+      namespaces: ["kube-system"]
 ```
 </code></pre></div>
 <p>Add these extra arguments to the k0s configuration:</p>

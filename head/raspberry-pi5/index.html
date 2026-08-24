@@ -3366,7 +3366,7 @@ sudo<span class="w"> </span>install<span class="w"> </span>/tmp/k0s<span class="
 <p>― or ―</p>
 <p>Use the k0s download script (as one command) to download the latest stable k0s
 and make it executable in <code>/usr/bin/k0s</code>.</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">'=https'</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 </code></pre></div>
 <p>At this point you can run <code>k0s</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>version
@@ -3390,15 +3390,15 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 <span class="go">  Executable in PATH: umount: /usr/bin/umount (pass)</span>
 <span class="go">  /proc file system: mounted (0x9fa0) (pass)</span>
 <span class="go">  Control Groups: version 2 (pass)</span>
-<span class="go">    cgroup controller &quot;cpu&quot;: available (is a listed root controller) (pass)</span>
-<span class="go">    cgroup controller &quot;cpuacct&quot;: available (via cpu in version 2) (pass)</span>
-<span class="go">    cgroup controller &quot;cpuset&quot;: available (is a listed root controller) (pass)</span>
-<span class="go">    cgroup controller &quot;memory&quot;: available (is a listed root controller) (pass)</span>
-<span class="go">    cgroup controller &quot;devices&quot;: available (device filters attachable) (pass)</span>
-<span class="go">    cgroup controller &quot;freezer&quot;: available (cgroup.freeze exists) (pass)</span>
-<span class="go">    cgroup controller &quot;pids&quot;: available (is a listed root controller) (pass)</span>
-<span class="go">    cgroup controller &quot;hugetlb&quot;: unavailable (warning)</span>
-<span class="go">    cgroup controller &quot;blkio&quot;: available (via io in version 2) (pass)</span>
+<span class="go">    cgroup controller "cpu": available (is a listed root controller) (pass)</span>
+<span class="go">    cgroup controller "cpuacct": available (via cpu in version 2) (pass)</span>
+<span class="go">    cgroup controller "cpuset": available (is a listed root controller) (pass)</span>
+<span class="go">    cgroup controller "memory": available (is a listed root controller) (pass)</span>
+<span class="go">    cgroup controller "devices": available (device filters attachable) (pass)</span>
+<span class="go">    cgroup controller "freezer": available (cgroup.freeze exists) (pass)</span>
+<span class="go">    cgroup controller "pids": available (is a listed root controller) (pass)</span>
+<span class="go">    cgroup controller "hugetlb": unavailable (warning)</span>
+<span class="go">    cgroup controller "blkio": available (via io in version 2) (pass)</span>
 <span class="go">  CONFIG_CGROUPS: Control Group support: built-in (pass)</span>
 <span class="go">    CONFIG_CGROUP_SCHED: Group CPU scheduler: built-in (pass)</span>
 <span class="go">      CONFIG_FAIR_GROUP_SCHED: Group scheduling for SCHED_OTHER: built-in (pass)</span>
@@ -3417,16 +3417,16 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 <span class="go">      CONFIG_NF_CONNTRACK: Netfilter connection tracking support: module (pass)</span>
 <span class="go">      CONFIG_NETFILTER_XTABLES: Netfilter Xtables support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_TARGET_REDIRECT: REDIRECT target support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_COMMENT: &quot;comment&quot; match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_COMMENT: "comment" match support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_MARK: nfmark target and match support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_SET: set target and match support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_TARGET_MASQUERADE: MASQUERADE target support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_NAT: &quot;SNAT and DNAT&quot; targets support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_ADDRTYPE: &quot;addrtype&quot; address type match support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_CONNTRACK: &quot;conntrack&quot; connection tracking match support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_MULTIPORT: &quot;multiport&quot; Multiple port match support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_RECENT: &quot;recent&quot; match support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_STATISTIC: &quot;statistic&quot; match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_NAT: "SNAT and DNAT" targets support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_ADDRTYPE: "addrtype" address type match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_CONNTRACK: "conntrack" connection tracking match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_MULTIPORT: "multiport" Multiple port match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_RECENT: "recent" match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_STATISTIC: "statistic" match support: module (pass)</span>
 <span class="go">      CONFIG_NETFILTER_NETLINK: module (pass)</span>
 <span class="go">      CONFIG_NF_NAT: module (pass)</span>
 <span class="go">      CONFIG_IP_SET: IP set support: module (pass)</span>
@@ -3484,7 +3484,7 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 <p>By default, k0sctl doesn’t prompt you for passphrases, so the easiest solution is to load your key into an SSH agent before running k0sctl. Here’s how you can do it:</p>
 <p>1. Start the SSH agent (if not already running)</p>
 <div class="highlight"><pre><span></span><code>  ```bash
-  eval &quot;$(ssh-agent -s)&quot;
+  eval "$(ssh-agent -s)"
   ```
 </code></pre></div>
 <p>2. Add your private key (you’ll be prompted for the passphrase)</p>

@@ -3192,7 +3192,7 @@ NAME<span class="w">    </span>CONTROLLER<span class="w">             </span>PAR
 nginx<span class="w">   </span>k8s.io/ingress-nginx<span class="w">   </span>&lt;none&gt;<span class="w">       </span>162m
 </code></pre></div>
 <p>If this is only instance of the Ingress NGINX Controller, you should <a href="https://kubernetes.github.io/ingress-nginx/#i-have-only-one-instance-of-the-ingresss-nginx-controller-in-my-cluster-what-should-i-do">add the annotation</a> <code>ingressclass.kubernetes.io/is-default-class</code> in your ingress class:</p>
-<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>ingress-nginx<span class="w"> </span>annotate<span class="w"> </span>ingressclasses<span class="w"> </span>nginx<span class="w"> </span>ingressclass.kubernetes.io/is-default-class<span class="o">=</span><span class="s2">&quot;true&quot;</span>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>ingress-nginx<span class="w"> </span>annotate<span class="w"> </span>ingressclasses<span class="w"> </span>nginx<span class="w"> </span>ingressclass.kubernetes.io/is-default-class<span class="o">=</span><span class="s2">"true"</span>
 </code></pre></div>
 </li>
 <li>
@@ -3267,7 +3267,7 @@ nginx<span class="w">   </span>k8s.io/ingress-nginx<span class="w">   </span>&lt
 </li>
 <li>
 <p>Verify that you can access your application using the <code>NodePort</code> from step 3.</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>&lt;worker-external-ip&gt;:&lt;node-port&gt;<span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;Host: web.example.com&#39;</span>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>&lt;worker-external-ip&gt;:&lt;node-port&gt;<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Host: web.example.com'</span>
 </code></pre></div>
 <p>If you are successful, you should see <code>&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</code>.</p>
 </li>
@@ -3337,7 +3337,7 @@ nginx<span class="w">   </span>k8s.io/ingress-nginx<span class="w">   </span>&lt
 </li>
 <li>
 <p>Verify that you can access your application through the <code>LoadBalancer</code> and ingress controller.</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>&lt;worker-external-ip&gt;<span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;Host: web.example.com&#39;</span>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>&lt;worker-external-ip&gt;<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Host: web.example.com'</span>
 </code></pre></div>
 <p>If you are successful, you should see <code>&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</code>.</p>
 </li>

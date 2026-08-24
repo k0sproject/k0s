@@ -3304,7 +3304,7 @@ This shows not only that the API surface exists, but that the allocation path is
 <span class="go">dra-demo-pod-gpu-nd7zh   allocated,reserved</span>
 
 <span class="gp">$ </span>kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>dra-demo<span class="w"> </span>dra-demo-pod<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>GPU_DEVICE_0
-<span class="go">GPU_DEVICE_0=&quot;gpu-0&quot;</span>
+<span class="go">GPU_DEVICE_0="gpu-0"</span>
 </code></pre></div>
 <p>Further reading:</p>
 <ul>
@@ -3343,7 +3343,7 @@ On the test cluster, a single Tesla T4 was reconfigured to advertise four schedu
 T4 hardware does not support MIG, so time-slicing is the applicable sharing mechanism on this setup.
 This demonstrates a real sharing mode on hardware commonly used for inference and smaller training workloads.</p>
 <p>Minimal example:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>k0s-gpu-0<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.capacity.nvidia\.com/gpu}{&quot;\n&quot;}&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>k0s-gpu-0<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.capacity.nvidia\.com/gpu}{"\n"}'</span>
 <span class="go">4</span>
 
 <span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-l<span class="w"> </span><span class="nv">app</span><span class="o">=</span>shared-gpu<span class="w"> </span>-o<span class="w"> </span>wide
@@ -3353,7 +3353,7 @@ This demonstrates a real sharing mode on hardware commonly used for inference an
 <span class="go">shared-gpu-3   1/1     Running   k0s-gpu-0</span>
 <span class="go">shared-gpu-4   1/1     Running   k0s-gpu-0</span>
 
-<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>k0s-gpu-0<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.metadata.labels.nvidia\.com/gpu\.sharing-strategy}{&quot;\n&quot;}&#39;</span>
+<span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>k0s-gpu-0<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.metadata.labels.nvidia\.com/gpu\.sharing-strategy}{"\n"}'</span>
 <span class="go">time-slicing</span>
 </code></pre></div>
 <p>Further reading:</p>
@@ -3387,7 +3387,7 @@ This provides concrete evidence that k0s can host an inference ingress stack wit
 <span class="gp">$ </span>curl<span class="w"> </span>-si<span class="w"> </span>http://localhost:8888/predict
 <span class="go">HTTP/1.1 200 OK</span>
 <span class="go">x-app-name: http-echo</span>
-<span class="go">{&quot;prediction&quot;:0.87}</span>
+<span class="go">{"prediction":0.87}</span>
 
 <span class="gp">$ </span>curl<span class="w"> </span>-si<span class="w"> </span>http://localhost:8888/
 <span class="go">HTTP/1.1 404 Not Found</span>
@@ -3466,12 +3466,12 @@ This is the expected and correct interaction: autoscaling decisions are made fro
 We integrated DCGM Exporter with <code>kube-prometheus-stack</code> using a <code>ServiceMonitor</code> and verified that Prometheus scraped per-GPU metrics with labels such as UUID, model, PCI bus ID, node name, and driver version.
 The important part here is not just that metrics exist, but that they are queryable through the standard Prometheus API with enough labels to identify a specific GPU on a specific node.</p>
 <p>Minimal example:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">&#39;http://localhost:9090/api/v1/query?query=DCGM_FI_DEV_GPU_UTIL&#39;</span>
-<span class="go">&quot;__name__&quot;:&quot;DCGM_FI_DEV_GPU_UTIL&quot;</span>
-<span class="go">&quot;UUID&quot;:&quot;GPU-df2bfa0a-183e-d378-e4ab-1042a1736a51&quot;</span>
-<span class="go">&quot;modelName&quot;:&quot;Tesla T4&quot;</span>
-<span class="go">&quot;Hostname&quot;:&quot;k0s-gpu-0&quot;</span>
-<span class="go">&quot;pci_bus_id&quot;:&quot;00000001:00:00.0&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">'http://localhost:9090/api/v1/query?query=DCGM_FI_DEV_GPU_UTIL'</span>
+<span class="go">"__name__":"DCGM_FI_DEV_GPU_UTIL"</span>
+<span class="go">"UUID":"GPU-df2bfa0a-183e-d378-e4ab-1042a1736a51"</span>
+<span class="go">"modelName":"Tesla T4"</span>
+<span class="go">"Hostname":"k0s-gpu-0"</span>
+<span class="go">"pci_bus_id":"00000001:00:00.0"</span>
 </code></pre></div>
 <p>Further reading:</p>
 <ul>
@@ -3485,16 +3485,16 @@ The important part here is not just that metrics exist, but that they are querya
 We installed <code>kube-prometheus-stack</code>, created a <code>ServiceMonitor</code> for a sample inference-shaped workload, and verified that Prometheus discovered the target and stored its metrics with workload-identifying labels.
 This demonstrates the standard collection path most AI services use in practice: workload metrics exposed on <code>/metrics</code>, discovered by <code>ServiceMonitor</code>, and stored in Prometheus.</p>
 <p>Minimal example:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">&#39;http://localhost:9090/api/v1/query&#39;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--data-urlencode<span class="w"> </span><span class="s1">&#39;query=up{job=&quot;sample-inference&quot;}&#39;</span>
-<span class="go">&quot;job&quot;:&quot;sample-inference&quot;</span>
-<span class="go">&quot;namespace&quot;:&quot;default&quot;</span>
-<span class="go">&quot;service&quot;:&quot;sample-inference&quot;</span>
-<span class="go">&quot;value&quot;:[..., &quot;1&quot;]</span>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">'http://localhost:9090/api/v1/query'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--data-urlencode<span class="w"> </span><span class="s1">'query=up{job="sample-inference"}'</span>
+<span class="go">"job":"sample-inference"</span>
+<span class="go">"namespace":"default"</span>
+<span class="go">"service":"sample-inference"</span>
+<span class="go">"value":[..., "1"]</span>
 
-<span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">&#39;http://localhost:9090/api/v1/query&#39;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--data-urlencode<span class="w"> </span><span class="s1">&#39;query=node_cpu_seconds_total{job=&quot;sample-inference&quot;}&#39;</span>
-<span class="go">&quot;__name__&quot;:&quot;node_cpu_seconds_total&quot;</span>
+<span class="gp">$ </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">'http://localhost:9090/api/v1/query'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--data-urlencode<span class="w"> </span><span class="s1">'query=node_cpu_seconds_total{job="sample-inference"}'</span>
+<span class="go">"__name__":"node_cpu_seconds_total"</span>
 </code></pre></div>
 <p>Further reading:</p>
 <ul>
@@ -3541,9 +3541,9 @@ This goes beyond a basic install check: it shows CRD registration, reconciliatio
 <span class="go">DeletedHeadPod</span>
 <span class="go">CreatedHeadPod</span>
 
-<span class="gp">$ </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HEAD_POD</span><span class="s2">&quot;</span><span class="w"> </span>--<span class="w"> </span>python<span class="w"> </span>-
+<span class="gp">$ </span>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span><span class="s2">"</span><span class="nv">$HEAD_POD</span><span class="s2">"</span><span class="w"> </span>--<span class="w"> </span>python<span class="w"> </span>-
 <span class="go">Result: [0, 1, 4, 9, 16]</span>
-<span class="go">Cluster resources: {&#39;CPU&#39;: 2.0, ...}</span>
+<span class="go">Cluster resources: {'CPU': 2.0, ...}</span>
 </code></pre></div>
 <p>Further reading:</p>
 <ul>

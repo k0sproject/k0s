@@ -3051,32 +3051,32 @@ authentication to ensure secure access to artifacts.</p>
 <p>Starting with the current <code>PlanResourceURL</code> struct:</p>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">PlanResourceURL</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// URL is the URL of a downloadable resource.</span>
-<span class="w">    </span><span class="nx">URL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;url&quot;`</span>
+<span class="w">    </span><span class="nx">URL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:"url"`</span>
 
-<span class="w">    </span><span class="c1">// Sha256 provides an optional SHA256 hash of the URL&#39;s content for</span>
+<span class="w">    </span><span class="c1">// Sha256 provides an optional SHA256 hash of the URL's content for</span>
 <span class="w">    </span><span class="c1">// verification.</span>
-<span class="w">    </span><span class="nx">Sha256</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;sha256,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Sha256</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:"sha256,omitempty"`</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>We must specify to Autopilot where to access credentials for remote artifact
 pulls. This will be achieved by adjusting the struct as follows:</p>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">PlanResourceURL</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// URL is the URL of a downloadable resource.</span>
-<span class="w">    </span><span class="nx">URL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;url&quot;`</span>
+<span class="w">    </span><span class="nx">URL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:"url"`</span>
 
-<span class="w">    </span><span class="c1">// Sha256 provides an optional SHA256 hash of the URL&#39;s content for</span>
+<span class="w">    </span><span class="c1">// Sha256 provides an optional SHA256 hash of the URL's content for</span>
 <span class="w">    </span><span class="c1">// verification.</span>
-<span class="w">    </span><span class="nx">Sha256</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;sha256,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Sha256</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:"sha256,omitempty"`</span>
 
 <span class="w">    </span><span class="c1">// SecretRef holds a reference to a secret where the credentials are</span>
 <span class="w">    </span><span class="c1">// stored. We use these credentials when pulling the artifacts from the</span>
 <span class="w">    </span><span class="c1">// provided URL using</span>
 <span class="w">    </span><span class="c1">// any of the supported protocols (http, https, and oci).</span>
-<span class="w">    </span><span class="nx">SecretRef</span><span class="w"> </span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">SecretReference</span><span class="w"> </span><span class="s">`json:&quot;secretRef,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">SecretRef</span><span class="w"> </span><span class="o">*</span><span class="nx">corev1</span><span class="p">.</span><span class="nx">SecretReference</span><span class="w"> </span><span class="s">`json:"secretRef,omitempty"`</span>
 
 <span class="w">    </span><span class="c1">// InsecureSkipTLSVerify indicates whether certificates in the remote</span>
 <span class="w">    </span><span class="c1">// URL (if using TLS) can be ignored.</span>
-<span class="w">    </span><span class="nx">InsecureSkipTLSVerify</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="s">`json:&quot;insecureSkipTLSVerify,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">InsecureSkipTLSVerify</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="s">`json:"insecureSkipTLSVerify,omitempty"`</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><code>SecretRef</code> property is of type <code>SecretReference</code> as defined by
@@ -3140,7 +3140,7 @@ will be used for pulling artifacts using either HTTP[S] or OCI protocols.</p>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">creds</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
 <span class="nt">data</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">authorization</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Bearer</span><span class="nv"> </span><span class="s">abc123def456ghi789jkl0&quot;</span>
+<span class="w">  </span><span class="nt">authorization</span><span class="p">:</span><span class="w"> </span><span class="s">"Bearer</span><span class="nv"> </span><span class="s">abc123def456ghi789jkl0"</span>
 </code></pre></div>
 <p>The <code>authorization</code> entry is used as is, with its content placed directly into
 the <code>Authorization</code> header. A secret like the above will make Autopilot set

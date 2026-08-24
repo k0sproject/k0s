@@ -3366,7 +3366,7 @@ sudo<span class="w"> </span>install<span class="w"> </span>/tmp/k0s<span class="
 <p>― or ―</p>
 <p>Use the k0s download script (as one command) to download the latest stable k0s
 and make it executable in <code>/usr/bin/k0s</code>.</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">&#39;=https&#39;</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--proto<span class="w"> </span><span class="s1">'=https'</span><span class="w"> </span>--tlsv1.2<span class="w"> </span>-sSf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 </code></pre></div>
 <p>At this point you can run <code>k0s</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>k0s<span class="w"> </span>version
@@ -3389,15 +3389,15 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 <span class="go">  Executable in PATH: umount: /usr/bin/umount (pass)</span>
 <span class="go">  /proc file system: mounted (0x9fa0) (pass)</span>
 <span class="go">  Control Groups: version 2 (pass)</span>
-<span class="go">    cgroup controller &quot;cpu&quot;: available (pass)</span>
-<span class="go">    cgroup controller &quot;cpuacct&quot;: available (via cpu in version 2) (pass)</span>
-<span class="go">    cgroup controller &quot;cpuset&quot;: available (pass)</span>
-<span class="go">    cgroup controller &quot;memory&quot;: available (pass)</span>
-<span class="go">    cgroup controller &quot;devices&quot;: unknown (warning: insufficient permissions, try with elevated permissions)</span>
-<span class="go">    cgroup controller &quot;freezer&quot;: available (cgroup.freeze exists) (pass)</span>
-<span class="go">    cgroup controller &quot;pids&quot;: available (pass)</span>
-<span class="go">    cgroup controller &quot;hugetlb&quot;: available (pass)</span>
-<span class="go">    cgroup controller &quot;blkio&quot;: available (via io in version 2) (pass)</span>
+<span class="go">    cgroup controller "cpu": available (pass)</span>
+<span class="go">    cgroup controller "cpuacct": available (via cpu in version 2) (pass)</span>
+<span class="go">    cgroup controller "cpuset": available (pass)</span>
+<span class="go">    cgroup controller "memory": available (pass)</span>
+<span class="go">    cgroup controller "devices": unknown (warning: insufficient permissions, try with elevated permissions)</span>
+<span class="go">    cgroup controller "freezer": available (cgroup.freeze exists) (pass)</span>
+<span class="go">    cgroup controller "pids": available (pass)</span>
+<span class="go">    cgroup controller "hugetlb": available (pass)</span>
+<span class="go">    cgroup controller "blkio": available (via io in version 2) (pass)</span>
 <span class="go">  CONFIG_CGROUPS: Control Group support: built-in (pass)</span>
 <span class="go">    CONFIG_CGROUP_SCHED: Group CPU scheduler: built-in (pass)</span>
 <span class="go">      CONFIG_FAIR_GROUP_SCHED: Group scheduling for SCHED_OTHER: built-in (pass)</span>
@@ -3416,16 +3416,16 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 <span class="go">      CONFIG_NF_CONNTRACK: Netfilter connection tracking support: module (pass)</span>
 <span class="go">      CONFIG_NETFILTER_XTABLES: Netfilter Xtables support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_TARGET_REDIRECT: REDIRECT target support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_COMMENT: &quot;comment&quot; match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_COMMENT: "comment" match support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_MARK: nfmark target and match support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_SET: set target and match support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_TARGET_MASQUERADE: MASQUERADE target support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_NAT: &quot;SNAT and DNAT&quot; targets support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_ADDRTYPE: &quot;addrtype&quot; address type match support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_CONNTRACK: &quot;conntrack&quot; connection tracking match support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_MULTIPORT: &quot;multiport&quot; Multiple port match support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_RECENT: &quot;recent&quot; match support: module (pass)</span>
-<span class="go">        CONFIG_NETFILTER_XT_MATCH_STATISTIC: &quot;statistic&quot; match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_NAT: "SNAT and DNAT" targets support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_ADDRTYPE: "addrtype" address type match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_CONNTRACK: "conntrack" connection tracking match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_MULTIPORT: "multiport" Multiple port match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_RECENT: "recent" match support: module (pass)</span>
+<span class="go">        CONFIG_NETFILTER_XT_MATCH_STATISTIC: "statistic" match support: module (pass)</span>
 <span class="go">      CONFIG_NETFILTER_NETLINK: module (pass)</span>
 <span class="go">      CONFIG_NF_NAT: module (pass)</span>
 <span class="go">      CONFIG_IP_SET: IP set support: module (pass)</span>
@@ -3580,7 +3580,7 @@ token for it:</p>
 <p>To join an existing k0s cluster, create the join token file for the worker
 (where <code>$TOKEN_CONTENT</code> is one of the join tokens created in the control plane
 setup):</p>
-<div class="highlight"><pre><span></span><code><span class="go">sudo sh -c &#39;mkdir -p /var/lib/k0s/ &amp;&amp; umask 077 &amp;&amp; echo &quot;$TOKEN_CONTENT&quot; &gt; /var/lib/k0s/join-token&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="go">sudo sh -c 'mkdir -p /var/lib/k0s/ &amp;&amp; umask 077 &amp;&amp; echo "$TOKEN_CONTENT" &gt; /var/lib/k0s/join-token'</span>
 </code></pre></div>
 <p>After that, install the <code>k0sworker</code> service:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>worker<span class="w"> </span>--token-file<span class="w"> </span>/var/lib/k0s/join-token
@@ -3605,16 +3605,16 @@ setup):</p>
 <span class="go">             ├─1631 /usr/local/bin/k0s worker --token-file=/var/lib/k0s/join-token</span>
 <span class="go">             └─1643 /var/lib/k0s/bin/containerd --root=/var/lib/k0s/containerd --state=/run/k0s/containerd --address=/run/k0s/containerd.sock --log-level=info --config=/etc/k0s/containerd.toml</span>
 
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Starting to supervise&quot; component=containerd</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Started successfully, go nuts pid 1643&quot; component=containerd</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;starting OCIBundleReconciler&quot;</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;starting Kubelet&quot;</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Starting kubelet&quot;</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;detected 127.0.0.53 nameserver, assuming systemd-resolved, so using resolv.conf: /run/systemd/resolve/resolv.conf&quot;</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Starting to supervise&quot; component=kubelet</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;Started successfully, go nuts pid 1648&quot; component=kubelet</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;starting Status&quot;</span>
-<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time=&quot;2022-08-18 13:49:00&quot; level=info msg=&quot;starting Autopilot&quot;</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="Starting to supervise" component=containerd</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="Started successfully, go nuts pid 1643" component=containerd</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="starting OCIBundleReconciler"</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="starting Kubelet"</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="Starting kubelet"</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="detected 127.0.0.53 nameserver, assuming systemd-resolved, so using resolv.conf: /run/systemd/resolve/resolv.conf"</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="Starting to supervise" component=kubelet</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="Started successfully, go nuts pid 1648" component=kubelet</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="starting Status"</span>
+<span class="go">Aug 18 13:49:00 ubuntu k0s[1631]: time="2022-08-18 13:49:00" level=info msg="starting Autopilot"</span>
 </code></pre></div>
 <p>As this is a worker node, we cannot access the Kubernetes API via the builtin
 <code>k0s kc</code> subcommand, but we can check the k0s API instead:</p>

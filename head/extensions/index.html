@@ -2983,18 +2983,18 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <span class="w">  </span><span class="nt">charts</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
 <span class="w">    </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;11.16.8&quot;</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"11.16.8"</span>
 <span class="w">    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <span class="w">      </span><span class="no">storageSpec:</span>
 <span class="w">        </span><span class="no">emptyDir:</span>
 <span class="w">          </span><span class="no">medium: Memory</span>
 <span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="w">  </span><span class="c1"># We don&#39;t need to specify the repo in the repositories section for OCI charts</span>
+<span class="w">  </span><span class="c1"># We don't need to specify the repo in the repositories section for OCI charts</span>
 <span class="w">  </span><span class="c1"># unless a custom TLS transport is needed</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci-chart</span>
 <span class="w">    </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci://registry:8080/chart</span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.0.1&quot;</span>
-<span class="w">    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"0.0.1"</span>
+<span class="w">    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
 <span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 <span class="w">  </span><span class="c1"># OCI charts that require a custom TLS transport must add a repository entry </span>
 <span class="w">  </span><span class="c1"># pointing to TLS certificates on the controller node.</span>
@@ -3002,15 +3002,15 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <span class="w">  </span><span class="c1"># previously defined in the repository URL.</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci-chart-with-tls</span>
 <span class="w">    </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci://registry-with-private-ca.com:8080/chart</span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.0.1&quot;</span>
-<span class="w">    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"0.0.1"</span>
+<span class="w">    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
 <span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 <span class="w">  </span><span class="c1"># Other way is to use local tgz file with chart</span>
 <span class="w">  </span><span class="c1"># the file must exist all controller nodes</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tgz-chart</span>
 <span class="w">    </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/tmp/chart.tgz</span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.0.1&quot;</span>
-<span class="w">    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"0.0.1"</span>
+<span class="w">    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
 <span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 </code></pre></div>
 <p>By using the configuration above, the cluster would:</p>
@@ -3034,7 +3034,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-system</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">chartName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
-<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;14.6.1&quot;</span>
+<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"14.6.1"</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 <span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20m</span>
 <span class="w">  </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
@@ -3049,11 +3049,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <span class="w">    </span><span class="c1">#     name: helm-creds</span>
 <span class="nt">status</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">releaseName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus</span>
-<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;14.6.1&quot;</span>
-<span class="w">  </span><span class="nt">appVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.31.1&quot;</span>
+<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"14.6.1"</span>
+<span class="w">  </span><span class="nt">appVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"2.31.1"</span>
 <span class="w">  </span><span class="nt">revision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="w">  </span><span class="nt">updated</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2024-01-15T10:30:45Z&quot;</span>
+<span class="w">  </span><span class="nt">updated</span><span class="p">:</span><span class="w"> </span><span class="s">"2024-01-15T10:30:45Z"</span>
 </code></pre></div>
 <p>The <code>spec.repository</code> field allows each Chart to include its own repository configuration, making Charts self-contained and portable. When using k0s configuration file, k0s automatically embeds the repository configuration into the generated Chart resources.</p>
 <p>For more details on using Chart resources directly, see the <a href="../helm-charts/">Helm Charts</a> documentation.</p>

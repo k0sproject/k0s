@@ -3073,7 +3073,7 @@ Operator</a> based solutions, you can create a
 <code>KubeSchedulerDown</code> as they are based on Prometheus' internal <code>up</code> metrics. But
 you can get rid of these alerts by modifying them to detect a working component
 like this:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">absent</span><span class="o">(</span><span class="nv">apiserver_audit_event_total</span><span class="p">{</span><span class="nl">job</span><span class="o">=</span><span class="p">&quot;</span><span class="s">kube-scheduler</span><span class="p">&quot;}</span><span class="o">)</span>
+<div class="highlight"><pre><span></span><code><span class="kr">absent</span><span class="o">(</span><span class="nv">apiserver_audit_event_total</span><span class="p">{</span><span class="nl">job</span><span class="o">=</span><span class="p">"</span><span class="s">kube-scheduler</span><span class="p">"}</span><span class="o">)</span>
 </code></pre></div>
 <h2 id="jobs">Jobs<a class="headerlink" href="#jobs" title="Permanent link">#</a></h2>
 <p>The list of components which is scrapped by k0s:</p>

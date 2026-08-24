@@ -3232,7 +3232,7 @@ and `rebase` can get confused if you run the two together.
 Explain the problem that this commit is solving. Focus on why you
 are making this change as opposed to how (the code explains that).
 Are there side effects or other unintuitive consequences of this
-change? Here&#39;s the place to explain them.
+change? Here's the place to explain them.
 
 Further paragraphs come after blank lines.
 
@@ -3281,14 +3281,14 @@ pick<span class="w"> </span>a5f4a0d<span class="w"> </span>made<span class="w"> 
 <span class="c1"># r, reword &lt;commit&gt; = use commit, but edit the commit message</span>
 <span class="c1"># e, edit &lt;commit&gt; = use commit, but stop for amending</span>
 <span class="c1"># s, squash &lt;commit&gt; = use commit, but meld into previous commit</span>
-<span class="c1"># f, fixup &lt;commit&gt; = like &quot;squash&quot;, but discard this commit&#39;s log message</span>
+<span class="c1"># f, fixup &lt;commit&gt; = like "squash", but discard this commit's log message</span>
 <span class="c1"># x, exec &lt;command&gt; = run command (the rest of the line) using shell</span>
-<span class="c1"># b, break = stop here (continue rebase later with &#39;git rebase --continue&#39;)</span>
+<span class="c1"># b, break = stop here (continue rebase later with 'git rebase --continue')</span>
 <span class="c1"># d, drop &lt;commit&gt; = remove commit</span>
 <span class="c1"># l, label &lt;label&gt; = label current HEAD with a name</span>
 <span class="c1"># t, reset &lt;label&gt; = reset HEAD to a label</span>
 <span class="c1"># m, merge [-C &lt;commit&gt; | -c &lt;commit&gt;] &lt;label&gt; [# &lt;oneline&gt;]</span>
-<span class="c1"># .       create a merge commit using the original merge commit&#39;s</span>
+<span class="c1"># .       create a merge commit using the original merge commit's</span>
 <span class="c1"># .       message (or the oneline, if no original merge commit was</span>
 <span class="c1"># .       specified). Use -c &lt;commit&gt; to reword the commit message.</span>
 <span class="c1">#</span>
@@ -3300,7 +3300,7 @@ pick<span class="w"> </span>a5f4a0d<span class="w"> </span>made<span class="w"> 
 </code></pre></div>
 <p>Use a command line text editor to change the word <code>pick</code> to <code>f</code> of <code>fixup</code> for the commits you want to squash, then save your changes and continue the rebase:</p>
 <p>Per the output above, you can see that:</p>
-<div class="highlight"><pre><span></span><code>fixup<span class="w"> </span>&lt;commit&gt;<span class="w"> </span><span class="o">=</span><span class="w"> </span>like<span class="w"> </span><span class="s2">&quot;squash&quot;</span>,<span class="w"> </span>but<span class="w"> </span>discard<span class="w"> </span>this<span class="w"> </span>commit<span class="err">&#39;</span>s<span class="w"> </span>log<span class="w"> </span>message
+<div class="highlight"><pre><span></span><code>fixup<span class="w"> </span>&lt;commit&gt;<span class="w"> </span><span class="o">=</span><span class="w"> </span>like<span class="w"> </span><span class="s2">"squash"</span>,<span class="w"> </span>but<span class="w"> </span>discard<span class="w"> </span>this<span class="w"> </span>commit<span class="err">'</span>s<span class="w"> </span>log<span class="w"> </span>message
 </code></pre></div>
 <p>Which means that when rebased, the commit message "fixed some typos" will be removed, and squashed with the parent commit.</p>
 <h3 id="push-your-final-changes">Push Your Final Changes<a class="headerlink" href="#push-your-final-changes" title="Permanent link">#</a></h3>
