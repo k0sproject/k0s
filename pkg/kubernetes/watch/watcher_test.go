@@ -148,6 +148,7 @@ func TestWatcher(t *testing.T) {
 		t.Parallel()
 		provider, underTest := newTestWatcher()
 		provider.nextList.ResourceVersion = t.Name()
+		//nolint:unparam // signature is dictated by mockProvider.watch
 		provider.watch = func(metav1.ListOptions) error {
 			provider.ch = closedEventChanWith()
 			provider.watch = forbiddenWatch(t)
