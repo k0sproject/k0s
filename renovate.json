@@ -308,6 +308,18 @@
       "allowedVersions": "<=1.4"
     },
     {
+      "description": "Bump Helm for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchDepNames": [
+        "helm.sh/helm/**",
+        "helm/helm"
+      ],
+      "allowedVersions": "<=3.21"
+    },
+    {
       "description": "Bump containerd for release-1.35",
       "enabled": true,
       "matchBaseBranches": [
