@@ -17,6 +17,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component/featuregates"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -127,7 +128,7 @@ func (a *Manager) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		args["leader-elect"] = "false"
 	}
 
-	args = clusterConfig.Spec.FeatureGates.BuildArgs(args, kubeControllerManagerComponent)
+	args = featuregates.ToArgs(args, clusterConfig.Spec.FeatureGates, kubeControllerManagerComponent)
 
 	if args.Equals(a.previousConfig) && a.supervisor != nil {
 		// no changes and supervisor already running, do nothing
