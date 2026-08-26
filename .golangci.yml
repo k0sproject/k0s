@@ -91,6 +91,16 @@ linters:
         # This forbids to name variables "close", which seems natural for "close" functions.
         - name: redefines-builtin-id
           disabled: true
+    staticcheck:
+      checks:
+        # Ignore deprecations: They shouldn't break the CI. If this were the
+        # case, it would be pointless to have them. There's no way in reporting
+        # them as warnings without having a non-zero exit code.
+        # https://github.com/golangci/golangci-lint/pull/3184#issuecomment-1235438429
+        - '-SA1019'
+        # Re-enable when golangci-lint includes https://github.com/dominikh/go-tools/commit/6cb65e58a558452b52f57cb43267ff9df669a77a.
+        # See https://github.com/dominikh/go-tools/issues/1738 for details.
+        - '-SA4023'
     testifylint:
       enable-all: true
       disable:
@@ -103,10 +113,6 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
-    rules:
-      - linters:
-          - staticcheck
-        text: '^SA1019:'
     paths:
       - zz_*
       - build
