@@ -297,6 +297,17 @@
       "allowedVersions": "<=2.3"
     },
     {
+      "description": "Bump kine for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchDepNames": [
+        "k3s-io/kine"
+      ],
+      "allowedVersions": "<=0.16"
+    },
+    {
       "description": "Bump runc for release-1.36",
       "enabled": true,
       "matchBaseBranches": [
