@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/k0sproject/k0s/cmd/internal"
@@ -366,6 +367,19 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		leaderElector = leaderelector.NewLeasePool(c.K0sVars.InvocationID, adminClientFactory, "k0s-endpoint-reconciler")
 	}
 	nodeComponents.Add(ctx, leaderElector)
+
+	// TODO: Remove in v1.38+. Clean up the bogus on-disk etcd CRD manifest
+	// left behind by affected versions of k0s, so it doesn't fight the
+	// in-memory etcd-member stack over the CRD's stack-name label.
+	{
+		bogusEtcdDir := filepath.Join(c.K0sVars.ManifestsDir, "etcd")
+		bogusEtcdManifest := filepath.Join(bogusEtcdDir, "etcd-crd-etcd.k0sproject.io_etcdmembers.yaml")
+		if err := os.Remove(bogusEtcdManifest); err != nil && !os.IsNotExist(err) {
+			logrus.WithError(err).Warn("Failed to remove bogus etcd CRD manifest")
+		} else if err := os.Remove(bogusEtcdDir); err != nil && !os.IsNotExist(err) && !errors.Is(err, syscall.ENOTEMPTY) {
+			logrus.WithError(err).Warn("Failed to remove bogus etcd CRD manifest directory")
+		}
+	}
 
 	if !slices.Contains(flags.DisableComponents, constant.ApplierManagerComponentName) {
 		nodeComponents.Add(ctx, &applier.Manager{

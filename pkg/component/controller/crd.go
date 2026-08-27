@@ -28,7 +28,7 @@ type CRDStack struct {
 }
 
 type crdOpts struct {
-	stackName, assetsDir string
+	stackName string
 }
 
 type CRDOption func(*crdOpts)
@@ -42,9 +42,8 @@ func NewCRDStack(clients kubernetes.ClientFactoryInterface, leaderElector leader
 		opt(&options)
 	}
 
-	if options.assetsDir == "" {
+	if options.stackName == "" {
 		options.stackName = bundle
-		options.assetsDir = bundle
 	}
 
 	return &CRDStack{
@@ -57,10 +56,6 @@ func NewCRDStack(clients kubernetes.ClientFactoryInterface, leaderElector leader
 
 func WithStackName(stackName string) CRDOption {
 	return func(opts *crdOpts) { opts.stackName = stackName }
-}
-
-func WithCRDAssetsDir(assetsDir string) CRDOption {
-	return func(opts *crdOpts) { opts.assetsDir = assetsDir }
 }
 
 // Init implements [manager.Component]. It does nothing.
@@ -76,7 +71,7 @@ func (c *CRDStack) Start(context.Context) error {
 	go func() {
 		defer close(done)
 		leaderelection.RunLeaderTasks(ctx, c.leaderElector.CurrentStatus, func(ctx context.Context) {
-			resources, err := applier.ReadUnstructuredDir(static.CRDs, c.assetsDir)
+			resources, err := applier.ReadUnstructuredDir(static.CRDs, c.bundle)
 			if err != nil {
 				logrus.WithError(err).Errorf("Failed to read %s CRD stack", c.bundle)
 				return
