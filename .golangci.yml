@@ -86,6 +86,11 @@ linters:
         SPDX-License-Identifier: Apache-2.0
     misspell:
       locale: US
+    modernize:
+      disable:
+        # A Go 1.27 feature that affects the whole codebase.
+        # Unclear whether it's a good idea for k0s to enforce this.
+        - embedlit
     revive:
       rules:
         # This forbids to name variables "close", which seems natural for "close" functions.
