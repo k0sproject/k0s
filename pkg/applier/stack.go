@@ -132,8 +132,10 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			continue
 		} else { // The resource already exists, we need to update/patch it
 			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
-			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
-				s.log.Debug("resource checksums match, no need to update")
+			checksumMatches := serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum
+			stackNameMatches := serverResource.GetLabels()[NameLabel] == s.Name
+			if checksumMatches && stackNameMatches {
+				s.log.Debug("resource checksum and stack name match, no need to update")
 				s.keepResource(resource)
 				continue
 			}
