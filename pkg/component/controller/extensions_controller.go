@@ -318,7 +318,12 @@ func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Char
 	}
 	defer cleanup()
 
-	if err := helmCmd.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
+	timeout, err := time.ParseDuration(chart.Spec.Timeout)
+	if err != nil || timeout <= 0 {
+		timeout = defaultTimeout
+	}
+
+	if err := helmCmd.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace, timeout); err != nil {
 		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
@@ -503,7 +508,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 
 		switch {
 		case status == release.StatusPendingInstall, status == release.StatusFailed, status == release.StatusUninstalling:
-			if err := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace); err != nil {
+			if err := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace, timeout); err != nil {
 				return fmt.Errorf("failed to uninstall %q in %q before reinstall: %w", releaseName, chart.Spec.Namespace, err)
 			}
 			cr.L.Info("Uninstalled release ", releaseName, " before reinstall due to status ", status)
@@ -531,7 +536,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 					case <-ctx.Done():
 						err = fmt.Errorf("%w (%w)", err, context.Cause(ctx))
 					default:
-						if uninstallErr := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace); uninstallErr != nil {
+						if uninstallErr := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace, timeout); uninstallErr != nil {
 							err = fmt.Errorf("an error occurred while uninstalling: %w; original install error: %w", uninstallErr, err)
 						}
 					}
