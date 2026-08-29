@@ -39,6 +39,14 @@ import (
 
 const etcdGID = 0
 
+// etcdReadyCheckTimeout bounds a single etcd readiness probe. The manager
+// polls Ready repeatedly against its own overall readiness deadline
+// (Manager.ReadyWaitDuration, 2 minutes by default), so this timeout only
+// needs to be long enough for etcd to answer a local status request and
+// short enough that one slow or unresponsive probe doesn't eat a large
+// chunk of that budget before the next poll attempt.
+const etcdReadyCheckTimeout = 1 * time.Second
+
 // Etcd implement the component interface to run etcd
 type Etcd struct {
 	CertManager certificate.Manager
@@ -434,9 +442,9 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 }
 
 // Health-check interface
-func (e *Etcd) Ready() error {
+func (e *Etcd) Ready(ctx context.Context) error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, etcdReadyCheckTimeout)
 	defer cancel()
 	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
 	return err

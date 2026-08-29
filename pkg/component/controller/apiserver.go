@@ -286,7 +286,7 @@ func (a *APIServer) Stop() error {
 }
 
 // Health-check interface
-func (a *APIServer) Ready() error {
+func (a *APIServer) Ready(ctx context.Context) error {
 	// Load client cert so the api can authenticate the request.
 	certFile := filepath.Join(a.K0sVars.CertRootDir, "admin.crt")
 	keyFile := filepath.Join(a.K0sVars.CertRootDir, "admin.key")
@@ -311,7 +311,11 @@ func (a *APIServer) Ready() error {
 	}
 	client := &http.Client{Transport: tr}
 	apiAddress := net.JoinHostPort(a.NodeConfig.Spec.API.Address, strconv.Itoa(a.NodeConfig.Spec.API.Port))
-	resp, err := client.Get(fmt.Sprintf("https://%s/readyz?verbose", apiAddress))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://%s/readyz?verbose", apiAddress), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
