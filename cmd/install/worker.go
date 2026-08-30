@@ -38,7 +38,7 @@ All default values of worker command will be passed to the service stub unless o
 			}
 
 			args := append([]string{"worker"}, flagsAndVals...)
-			if err := install.InstallService(args, envVars, installFlags.force); err != nil {
+			if err := install.InstallService(cmd.Context(), args, envVars, installFlags.force); err != nil {
 				return fmt.Errorf("failed to install worker service: %w", err)
 			}
 
