@@ -3,7 +3,7 @@ backrefs==8.0
 bracex==3.0.1
 certifi==2026.7.22
 charset-normalizer==3.4.7
-click==8.4.2
+click==8.5.0
 colorama==0.4.6
 ghp-import==2.1.0
 hjson==3.1.0
