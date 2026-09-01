@@ -235,9 +235,7 @@ func (p *EnvoyProxy) Validate(path *field.Path) (errs field.ErrorList) {
 	}
 	errs = validateProxyConfig(path, p.Image, p.ImagePullPolicy, p.APIServerBindPort, p.KonnectivityServerBindPort)
 
-	for i, err := range p.Patches.Validate() {
-		errs = append(errs, field.Invalid(path.Child("patches").Index(i), p.Patches[i], err.Error()))
-	}
+	errs = append(errs, p.Patches.validate(path.Child("patches"))...)
 
 	return
 }
@@ -292,7 +290,11 @@ func (p *Traefik) Validate(path *field.Path) (errs field.ErrorList) {
 	if p == nil {
 		return
 	}
-	return validateProxyConfig(path, p.Image, p.ImagePullPolicy, p.APIServerBindPort, p.KonnectivityServerBindPort)
+	errs = validateProxyConfig(path, p.Image, p.ImagePullPolicy, p.APIServerBindPort, p.KonnectivityServerBindPort)
+
+	errs = append(errs, p.Patches.validate(path.Child("patches"))...)
+
+	return
 }
 
 func validateProxyConfig(path *field.Path, imageSpec *ImageSpec, pullPolicy corev1.PullPolicy, apiServerBindPort int32, konnectivityServerBindPort *int32) (errs field.ErrorList) {

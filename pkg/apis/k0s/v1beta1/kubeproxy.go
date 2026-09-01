@@ -110,7 +110,7 @@ func (k *KubeProxy) Validate() []error {
 	}
 
 	// Patches are applied regardless of whether kube-proxy itself is enabled.
-	errors := k.Patches.validate(field.NewPath("kubeProxy", "patches"))
+	errors := toErrors(k.Patches.validate(field.NewPath("kubeProxy", "patches")))
 
 	if k.Disabled {
 		return errors
