@@ -351,6 +351,17 @@
       "allowedVersions": "/^v?[01]\\.35\\./"
     },
     {
+      "description": "Bump Envoy for release-1.35",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.35"
+      ],
+      "matchDepNames": [
+        "quay.io/k0sproject/envoy-distroless"
+      ],
+      "allowedVersions": "<=1.37"
+    },
+    {
       "description": "Bump Alpine for release-1.34",
       "enabled": true,
       "matchBaseBranches": [
