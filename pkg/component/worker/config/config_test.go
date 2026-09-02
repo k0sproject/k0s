@@ -26,12 +26,12 @@ func TestToConfigMapData(t *testing.T) {
 			assert.Equal(t, test.data, data)
 		})
 	}
-}
 
-func TestToConfigMapData_NilProfile(t *testing.T) {
-	data, err := ToConfigMapData(nil)
-	assert.Nil(t, data)
-	assert.EqualError(t, err, "cannot marshal nil profile")
+	t.Run("nil_profile", func(t *testing.T) {
+		data, err := ToConfigMapData(nil)
+		assert.Nil(t, data)
+		assert.EqualError(t, err, "cannot marshal nil profile")
+	})
 }
 
 func TestFromConfigMapData(t *testing.T) {
