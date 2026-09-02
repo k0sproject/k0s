@@ -31,6 +31,15 @@ linters:
   settings:
     depguard:
       rules:
+        logging:
+          list-mode: lax
+          files:
+            - '!**/internal/pkg/log/*.go'
+          deny:
+            - pkg: github.com/cloudflare/cfssl/log
+              desc: >-
+                Use logrus instead. The cfssl logging is routed there. Probably
+                imported by accident when referring to a bare "log" identifier.
         cloud-provider:
           list-mode: lax
           files:
