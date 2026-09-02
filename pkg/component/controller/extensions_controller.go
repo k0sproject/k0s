@@ -318,10 +318,11 @@ func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Char
 	}
 	defer cleanup()
 
-	timeout, err := time.ParseDuration(chart.Spec.Timeout)
-	if err != nil || timeout <= 0 {
-		timeout = defaultTimeout
-	}
+	// Chart.Spec.Timeout also bounds Helm's wait-for-delete here: callers
+	// never attach a ctx deadline, so leaving this at zero used to make the
+	// wait fail instantly with "context deadline exceeded" instead of
+	// actually waiting for the release's resources to go away (#8181).
+	timeout := cr.chartTimeout(chart)
 
 	if err := helmCmd.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace, timeout); err != nil {
 		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
@@ -352,6 +353,21 @@ func removeFinalizer(ctx context.Context, c client.Client, chart *helmv1beta1.Ch
 }
 
 const defaultTimeout = 10 * time.Minute
+
+// chartTimeout parses chart.Spec.Timeout, falling back to defaultTimeout
+// when it's unset, unparseable, or non-positive.
+func (cr *ChartReconciler) chartTimeout(chart helmv1beta1.Chart) time.Duration {
+	timeout, err := time.ParseDuration(chart.Spec.Timeout)
+	if err != nil {
+		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
+		return defaultTimeout
+	}
+	if timeout <= 0 {
+		cr.L.Tracef("Using default timeout `%s`, failed to parse `%s`", defaultTimeout, chart.Spec.Timeout)
+		return defaultTimeout
+	}
+	return timeout
+}
 
 // loadAndMergeRepositoryConfig loads repository configuration from a secret and merges it
 // with inline configuration. Secret values take precedence over inline values.
@@ -433,16 +449,7 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) (err error) {
 	var isInstalling bool
 	var chartRelease *release.Release
-	var timeout time.Duration
-	timeout, err = time.ParseDuration(chart.Spec.Timeout)
-	if err != nil {
-		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
-		timeout = defaultTimeout
-	}
-	if timeout == 0 {
-		cr.L.Tracef("Using default timeout `%s`, failed to parse `%s`", defaultTimeout, chart.Spec.Timeout)
-		timeout = defaultTimeout
-	}
+	timeout := cr.chartTimeout(chart)
 	defer func() {
 		if err == nil {
 			return

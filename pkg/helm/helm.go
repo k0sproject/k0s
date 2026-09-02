@@ -495,31 +495,13 @@ func (hc *Commands) UninstallRelease(ctx context.Context, releaseName, namespace
 	}
 	helmAction := action.NewUninstall(cfg)
 
-	// Mirror InstallChart/UpgradeChart and honor the caller-supplied
-	// timeout for the wait-for-delete phase below. The uninstall action
-	// doesn't derive its Timeout from ctx the way RunWithContext does for
-	// install/upgrade, so it has to be set explicitly here; callers such as
-	// the Chart reconciler don't normally attach a deadline to ctx, which
-	// used to leave Timeout at its zero value and made the subsequent wait
-	// fail instantly with "context deadline exceeded" instead of actually
-	// waiting for the release's resources to go away. Still clamp to ctx's
-	// own deadline when one happens to be set and it's the tighter bound.
-	helmAction.Timeout = effectiveTimeout(ctx, timeout)
+	// The uninstall action doesn't derive Timeout from ctx like RunWithContext
+	// does for install/upgrade, so it has to be set explicitly here.
+	helmAction.Timeout = timeout
 
 	helmAction.Wait = true
 	helmAction.DeletionPropagation = string(metav1.DeletePropagationForeground)
 
 	_, err = helmAction.Run(releaseName)
 	return err
-}
-
-// effectiveTimeout returns timeout, clamped to ctx's remaining time when ctx
-// has a deadline that's sooner than timeout.
-func effectiveTimeout(ctx context.Context, timeout time.Duration) time.Duration {
-	if deadline, ok := ctx.Deadline(); ok {
-		if remaining := time.Until(deadline); remaining < timeout {
-			return remaining
-		}
-	}
-	return timeout
 }
