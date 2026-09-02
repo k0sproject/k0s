@@ -61,7 +61,7 @@ With the controller subcommand you can setup a single node cluster by running:
 			}
 
 			args := append([]string{"controller"}, flagsAndVals...)
-			if err := install.InstallService(args, installFlags.envVars, installFlags.force); err != nil {
+			if err := install.InstallService(cmd.Context(), args, installFlags.envVars, installFlags.force); err != nil {
 				return fmt.Errorf("failed to install controller service: %w", err)
 			}
 

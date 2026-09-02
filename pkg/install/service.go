@@ -4,11 +4,14 @@
 package install
 
 import (
+	"context"
 	"errors"
 	"runtime"
+	"time"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 var (
@@ -53,7 +56,7 @@ func InstalledService() (service.Service, error) {
 }
 
 // InstallService installs the k0s service, per the given arguments, and the detected platform
-func InstallService(args []string, envVars []string, force bool) error {
+func InstallService(ctx context.Context, args []string, envVars []string, force bool) error {
 	var svcConfig *service.Config
 
 	prg := &Program{}
@@ -82,10 +85,31 @@ func InstallService(args []string, envVars []string, force bool) error {
 	svcConfig.Arguments = args
 
 	if force {
+		if runtime.GOOS == "windows" {
+			// On Windows, the service must be stopped first
+			if err = s.Stop(); err != nil && !errors.Is(err, service.ErrNotInstalled) {
+				logrus.Warnf("failed to stop service before re-install: %v", err)
+			}
+		}
+
 		logrus.Infof("Uninstalling %s service", svcConfig.Name)
 		err = s.Uninstall()
 		if err != nil && !errors.Is(err, service.ErrNotInstalled) {
 			logrus.Warnf("failed to uninstall service: %v", err)
+		}
+		// On windows the service delete/uninstall is async, wait till it is done
+		if runtime.GOOS == "windows" {
+			if err = wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (done bool, err error) {
+				_, err = s.Status()
+				if errors.Is(err, service.ErrNotInstalled) {
+					return true, nil
+				}
+				logrus.Info("waiting for the service to be actually deleted")
+				return false, nil
+			}); err != nil {
+				logrus.Errorf("failed to wait service to be deleted: %v", err)
+				return err
+			}
 		}
 	}
 
