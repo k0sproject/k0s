@@ -28,6 +28,12 @@ func TestToConfigMapData(t *testing.T) {
 	}
 }
 
+func TestToConfigMapData_NilProfile(t *testing.T) {
+	data, err := ToConfigMapData(nil)
+	assert.Nil(t, data)
+	assert.EqualError(t, err, "cannot marshal nil profile")
+}
+
 func TestFromConfigMapData(t *testing.T) {
 	for _, test := range roundtripTests {
 		t.Run(test.name, func(t *testing.T) {
