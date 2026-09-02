@@ -522,6 +522,9 @@ type ImageSources map[string]time.Time
 // the ZIP payload of the k0s executable.
 func bundleSourceExists(payloadFS fs.FS, path string, modtime time.Time) (bool, error) {
 	if name, embedded := strings.CutPrefix(path, embeddedSourcePrefix); embedded {
+		if payloadFS == nil {
+			return false, fmt.Errorf("can't tell if embedded bundle %s exists: the embedded payload couldn't be opened", name)
+		}
 		// Embedded bundles are identified by their contents, which are already
 		// known to be unchanged if the payload still contains them. Comparing
 		// modification times here would unpin images whenever the k0s
