@@ -4,6 +4,7 @@
 package cleanup
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -25,12 +26,18 @@ func NewConfig(debug bool, k0sVars *config.CfgVars, systemUsers *k0sv1beta1.Syst
 	return &Config{cleanupSteps: steps}, nil
 }
 
-func (c *Config) Cleanup() error {
+func (c *Config) Cleanup(ctx context.Context) error {
 	var errs []error
 
 	for _, step := range c.cleanupSteps {
+		// Some steps are not-so context aware, before each step,
+		// check if the context is still valid, if not, abort the cleanup
+		if err := context.Cause(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("cleanup aborted due to context error: %w", err))
+			break
+		}
 		logrus.Info("* ", step.Name())
-		if err := step.Run(); err != nil {
+		if err := step.Run(ctx); err != nil {
 			logrus.Debug(err)
 			errs = append(errs, err)
 		}
@@ -44,7 +51,7 @@ func (c *Config) Cleanup() error {
 // Step interface is used to implement cleanup steps
 type Step interface {
 	// Run impelements specific cleanup operations
-	Run() error
+	Run(ctx context.Context) error
 	// Name returns name of the step for conveninece
 	Name() string
 }
