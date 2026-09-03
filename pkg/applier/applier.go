@@ -74,17 +74,6 @@ func (a *Applier) Apply(ctx context.Context) error {
 		return err
 	}
 
-	// A stack directory without any manifest files is indistinguishable from
-	// one whose owning component hasn't written its manifest yet (e.g. right
-	// after a restart, before the cluster config is available again). Treat
-	// it as "nothing to do yet" rather than pruning everything previously
-	// applied for this stack; stacks are deleted explicitly via Delete, which
-	// is triggered by the stack directory itself being removed.
-	if len(files) == 0 {
-		a.log.Debug("no manifests found, skipping apply")
-		return nil
-	}
-
 	resources, err := a.parseFiles(files)
 	if err != nil {
 		return err

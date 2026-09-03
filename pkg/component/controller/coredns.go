@@ -319,7 +319,7 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 
 // Init does nothing
 func (c *CoreDNS) Init(_ context.Context) error {
-	return dir.Init(c.manifestDir, constant.ManifestsDirMode)
+	return nil
 }
 
 // Run runs the CoreDNS reconciler component
@@ -433,6 +433,9 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		reflect.DeepEqual(c.previousPatches, patches) {
 		c.log.Debug("Configuration is up to date, not gonna do anything")
 		return nil
+	}
+	if err := dir.Init(c.manifestDir, constant.ManifestsDirMode); err != nil {
+		return fmt.Errorf("error creating coredns manifest dir: %w, will retry", err)
 	}
 	tw := templatewriter.TemplateWriter{
 		Name:     "coredns",

@@ -272,10 +272,6 @@ func (m *MetricServer) Start(ctx context.Context) error {
 	ctx, m.tickerDone = context.WithCancel(ctx)
 
 	msDir := filepath.Join(m.K0sVars.ManifestsDir, "metricserver")
-	err := dir.Init(msDir, constant.ManifestsDirMode)
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
@@ -295,6 +291,10 @@ func (m *MetricServer) Start(ctx context.Context) error {
 					patches = ms.Patches
 				}
 				if previousConfig == newConfig && reflect.DeepEqual(previousPatches, patches) {
+					continue
+				}
+				if err := dir.Init(msDir, constant.ManifestsDirMode); err != nil {
+					m.log.Errorf("error creating metrics-server manifest dir: %s. will retry", err.Error())
 					continue
 				}
 				tw := templatewriter.TemplateWriter{
