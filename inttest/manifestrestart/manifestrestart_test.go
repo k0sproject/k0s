@@ -29,7 +29,13 @@ type ManifestRestartSuite struct {
 func (s *ManifestRestartSuite) TestManifestDirNotPruned() {
 	ctx := s.Context()
 
-	s.Require().NoError(s.InitController(0))
+	// Use dynamic config: the static config source hands the config to
+	// components over a local, in-memory channel, so the manifest dir tends
+	// to get its first write well within the applier's 1s debounce window
+	// regardless of when the dir was created. Dynamic config only becomes
+	// available once the apiserver is up and the ClusterConfig CR has been
+	// read back, which is what actually exposes this race in practice.
+	s.Require().NoError(s.InitController(0, "--enable-dynamic-config"))
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
