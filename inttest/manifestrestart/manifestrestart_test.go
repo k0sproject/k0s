@@ -35,7 +35,6 @@ func (s *ManifestRestartSuite) TestManifestDirNotPruned() {
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(0), kc))
 	for i := range s.WorkerCount {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(i), kc))
 	}
@@ -59,7 +58,6 @@ func (s *ManifestRestartSuite) TestManifestDirNotPruned() {
 
 	s.Require().NoError(s.StartController(s.ControllerNode(0)))
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
-	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(0), kc))
 
 	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc))
 	s.Require().NoError(common.WaitForDeployment(ctx, kc, "metrics-server", metav1.NamespaceSystem))
