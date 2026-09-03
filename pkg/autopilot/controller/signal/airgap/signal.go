@@ -16,7 +16,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	cr "sigs.k8s.io/controller-runtime"
-	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crev "sigs.k8s.io/controller-runtime/pkg/event"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -91,17 +90,14 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 	// We have no way at the moment to identify what version an airgap bundle is, or what version is
 	// installed, so always download.
 
-	signalNodeCopy := sctx.Delegate.DeepCopy(sctx.SignalNode)
 	status := Downloading
 
-	sctx.SignalData.Status = apsigv2.NewStatus(status)
-	if err := sctx.SignalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to marshal airgap signal data for node='%s': %w", signalNodeCopy.GetName(), err)
-	}
-
-	sctx.Log.Infof("Updating signaling response to '%s'", status)
-	if err := sctx.Client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to update airgap signal node='%s' with status='%s': %w", signalNodeCopy.GetName(), status, err)
+	// Record the status on the signal node as it is now, not as it was read at
+	// the start of this reconcile. See [apsigcomm.UpdateSignalStatus].
+	nodeName := sctx.SignalNode.GetName()
+	key := sctx.Delegate.CreateNamespacedName(nodeName)
+	if _, err := apsigcomm.UpdateSignalStatus(ctx, sctx.Log, sctx.Client, sctx.Delegate, key, *sctx.SignalData, []string{""}, apsigv2.NewStatus(status)); err != nil {
+		return cr.Result{}, fmt.Errorf("unable to update airgap signal node='%s' with status='%s': %w", nodeName, status, err)
 	}
 
 	return cr.Result{}, nil
