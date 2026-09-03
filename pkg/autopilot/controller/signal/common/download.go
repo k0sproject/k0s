@@ -76,26 +76,24 @@ func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.
 
 	logger.Infof("Starting download of '%s'", manifest.URL)
 
+	var newStatus *apsigv2.Status
 	httpdl := apdl.NewDownloader(manifest.Config)
 	if err := httpdl.Download(ctx); err != nil {
 		logger.Errorf("Unable to download '%s': %v", manifest.URL, err)
 
 		// When the download is complete move the status to `FailedDownload`
-		signalData.Status = apsigv2.NewStatus(FailedDownload)
+		newStatus = apsigv2.NewStatus(FailedDownload)
 
 	} else {
 		logger.Infof("Download of '%s' successful", manifest.URL)
 		// When the download is complete move the status to the success state
-		signalData.Status = apsigv2.NewStatus(manifest.SuccessState)
+		newStatus = apsigv2.NewStatus(manifest.SuccessState)
 	}
 
-	if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("failed to marshal signal data: %w", err)
-	}
-
-	logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
-	if err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
-		return cr.Result{}, fmt.Errorf("failed to update signal node to status '%s': %w", signalData.Status.Status, err)
+	// The download above may have taken a while, so don't write back the
+	// signal node as it was read before it started. See [UpdateSignalStatus].
+	if _, err := UpdateSignalStatus(ctx, logger, r.client, r.delegate, req.NamespacedName, signalData, []string{"", Downloading}, newStatus); err != nil {
+		return cr.Result{}, fmt.Errorf("failed to update signal node to status '%s': %w", newStatus.Status, err)
 	}
 
 	return cr.Result{}, nil
