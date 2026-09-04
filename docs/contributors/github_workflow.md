@@ -71,8 +71,12 @@ Commit and sign your changes:
 git commit --signoff
 ```
 
-The commit message should have a [short](https://cbea.ms/git-commit/#limit-50), [capitalized](https://cbea.ms/git-commit/#capitalize) title [without trailing period](https://cbea.ms/git-commit/#end) as first line. After the title
-a [blank line](https://cbea.ms/git-commit/#separate) and then a longer description that [explains why](https://cbea.ms/git-commit/#why-not-how) the change was made, unless it is obvious.
+Commit messages should have a [short](https://cbea.ms/git-commit/#limit-50),
+[capitalized](https://cbea.ms/git-commit/#capitalize) subject [without trailing
+period](https://cbea.ms/git-commit/#end) as first line. After the subject a
+[blank line](https://cbea.ms/git-commit/#separate) and then a longer description
+that [explains why](https://cbea.ms/git-commit/#why-not-how) the change was
+made, unless it is obvious.
 
 Use [imperative mood](https://cbea.ms/git-commit/#imperative) in the commit message.
 
@@ -100,17 +104,50 @@ Further paragraphs come after blank lines.
  - Typically a hyphen or asterisk is used for the bullet, preceded
    by a single space, with blank lines in between.
 
-If you use an issue tracker, put references to them at the bottom,
-like this:
+Put references to earlier commits and other relevant material at the
+bottom, like this:
 
-Fixes: https://github.com/k0sproject/k0s/issues/373
-See also: #456, #789
+Fixes: a50271db8 ("Implement k0s feature gates")
+See: f9773809e ("Encapsulate debug flag handling")
+See: https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/
 
 Signed-off-by: Name Lastname <user@example.com>
-
 ```
 
-You can go back and edit/build/test some more, then `commit --amend` in a few cycles.
+The commit message is read by whoever looks at this change years from now via
+`git blame` or `git log`. Write it for them:
+
+- State what was wrong, what the change does, and why. If the change fixes a
+  regression, say what the effect was in released versions.
+- Mention non-obvious constraints the code depends on, such as ordering,
+  timing, or compatibility with data written by earlier versions. These are
+  the things a future reader can't reconstruct from the diff.
+- If you remove dead code or do unrelated cleanup while you're there, say so.
+  Don't present it as part of the fix.
+- Leave out how you found the bug, what you tried, what the change does *not*
+  fix, and anything addressed to the reviewer. That material belongs in the
+  pull request description or the discussion.
+- Don't reference source file paths unless it aids understanding. The diff
+  already lists them.
+
+Use `Fixes:` for the commit that introduced the problem this change corrects,
+if it can be identified. The issue a change resolves is referenced from the
+pull request description instead, where GitHub's closing keywords act on it.
+Use `See:` for anything else that helps to understand the change: related
+commits, external documentation, specifications, and the like.
+
+When referencing other commits, use the abbreviated hash, e.g. as printed by
+`git log --oneline`, along with the subject line: `a50271db8 ("Implement k0s
+feature gates")`. That way, the reference is meaningful in `git log`, whether or
+not the hash resolves. In general, prefer what works locally over what only
+works on GitHub.
+
+Note that GitHub adds a timeline event to an issue or pull request whenever a
+commit referencing it is pushed to any public repository, including your own
+fork. Since a rebase creates new commits, every force-push repeats those events,
+and frequent rebases leave a trail of identical entries in the timeline. That's
+another reason to reference issues and pull requests from the pull request
+description rather than from commit messages.
 
 When ready, push your changes to your fork's repository:
 
@@ -118,11 +155,26 @@ When ready, push your changes to your fork's repository:
 git push --set-upstream my_fork my_feature_branch
 ```
 
+You can go back and edit/build/test some more, then `commit --amend` in a few
+cycles.
+
+After review rounds, fold any fixup commits into the commits they belong to and
+rewrite the messages so that each commit describes its final change, not its
+history. Commits titled "Address review comments" are fine during reviews, but
+clutter the history once merged. See [Squashing Commits](#squashing-commits) for
+how to do that.
+
 ## Open a Pull Request
 
 See GitHub's docs on how to [create a pull request from a fork][pr-from-fork].
 
-[pr-from-fork]: https://docs.github.com/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork
+The purpose of the pull request description is to facilitate discussion. It
+should include the context, the alternatives considered, what was verified and
+how it was verified, and what the change deliberately leaves out. It must not
+contradict the commit messages. When you rewrite commits after a review round,
+re-read the description and update it, too.
+
+[pr-from-fork]: https://docs.github.com/pull-requests/how-tos/create-pull-requests/creating-a-pull-request-from-a-fork
 
 ### Get a code review
 
