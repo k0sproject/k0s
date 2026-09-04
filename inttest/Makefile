@@ -51,6 +51,33 @@ check-bootloose-alpine-buildx:
 	$(DOCKER) build --progress=plain -t update-server --build-arg BASE=bootloose-alpine -f update-server/Dockerfile update-server
 	touch $@
 
+# An image that's not part of the k0s image bundle, so that it can only have been
+# imported from the k0s executable's ZIP payload. Kept small, as it's embedded
+# into a k0s executable that gets distributed to all the test's nodes.
+embedded_test_image = docker.io/library/alpine:$(alpine_patch_version)
+
+embedded-test-images.tar: ../embedded-bins/Makefile.variables Makefile
+	$(DOCKER) pull --platform=linux/$(ARCH) '$(embedded_test_image)'
+	$(DOCKER) image save -o '$@' '$(embedded_test_image)'
+
+# A k0s executable with an image bundle embedded in its ZIP payload. Built using
+# the procedure that's documented in docs/airgap-install.md, so that the docs get
+# tested along with the import itself.
+#
+# Note that ../k0s is used instead of K0S_PATH: target specific variables are
+# inherited by prerequisites, and check-embedded-images points K0S_PATH at this
+# very executable.
+k0s-embedded-images: embedded-test-images.tar
+	rm -rf -- '$@' '$@.zip' '$@.tmp'
+	mkdir -p '$@.tmp/images'
+	cp -- '$<' '$@.tmp/images/test-images.tar'
+	cp -- ../k0s '$@.zip'
+	zip -A '$@.zip'
+	cd '$@.tmp' && zip -0 '$(CURDIR)/$@.zip' images/test-images.tar
+	rm -rf -- '$@.tmp'
+	chmod +x '$@.zip'
+	mv -- '$@.zip' '$@'
+
 check-network: bin/sonobuoy
 	$(realpath bin/sonobuoy) run --wait=1200 --plugin=e2e --plugin-env=e2e.E2E_USE_GO_RUNNER=true \
 		--e2e-focus='\[sig-network\].*\[Conformance\]' \
@@ -84,6 +111,11 @@ check-ap-updater-periodic: TIMEOUT=10m
 check-configchange: TIMEOUT=8m
 
 check-ctr: TIMEOUT=10m
+
+# Run this test with a k0s executable that has an image bundle embedded in it.
+check-embedded-images: export K0S_PATH = $(CURDIR)/k0s-embedded-images
+check-embedded-images: export K0S_EMBEDDED_TEST_IMAGE = $(embedded_test_image)
+check-embedded-images: k0s-embedded-images
 
 check-kubeletcertrotate: TIMEOUT=15m
 
@@ -123,3 +155,4 @@ $(smoketests): .bootloose-alpine.stamp
 clean:
 	-[ -x bin/sonobuoy ] && bin/sonobuoy delete
 	rm -rf bin sonobuoy/*_sonobuoy_*.tar.gz .*.stamp
+	rm -rf embedded-test-images.tar k0s-embedded-images k0s-embedded-images.zip k0s-embedded-images.tmp
