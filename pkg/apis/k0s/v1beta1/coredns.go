@@ -18,6 +18,6 @@ func (c *CoreDNS) Validate(path *field.Path) (errs []error) {
 	if c == nil {
 		return
 	}
-	errs = append(errs, c.Patches.validate(path.Child("patches"))...)
+	errs = append(errs, toErrors(c.Patches.validate(path.Child("patches")))...)
 	return
 }
