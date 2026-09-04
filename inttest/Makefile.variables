@@ -85,6 +85,7 @@ smoketests := \
 	check-privileged-port \
 	check-psp \
 	check-reset \
+	check-restore-ipchange \
 	check-singlenode \
 	check-stackapplier \
 	check-statussocket \
