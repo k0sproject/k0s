@@ -16,6 +16,7 @@ import (
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
+	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -207,16 +208,12 @@ func (r *cordonUncordon) moveToNextState(ctx context.Context, signalNode crcli.O
 		return fmt.Errorf("unable to unmarshal signal data: %w", err)
 	}
 
-	signalData.Status = apsigv2.NewStatus(r.nextState)
-	signalNodeCopy := r.delegate.DeepCopy(signalNode)
-
-	if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-		return fmt.Errorf("unable to marshal signal data: %w", err)
-	}
-
-	logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
-	if err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
-		logger.Errorf("Failed to update signal node to status '%s': %v", signalData.Status.Status, err)
+	// Cordoning and draining can take a while, so don't write back the signal
+	// node as it was read before that started. See [apsigcomm.UpdateSignalStatus].
+	newStatus := apsigv2.NewStatus(r.nextState)
+	key := r.delegate.CreateNamespacedName(signalNode.GetName())
+	if _, err := apsigcomm.UpdateSignalStatus(ctx, logger, r.client, r.delegate, key, signalData, []string{"", r.currentState}, newStatus); err != nil {
+		logger.Errorf("Failed to update signal node to status '%s': %v", newStatus.Status, err)
 		return err
 	}
 	return nil

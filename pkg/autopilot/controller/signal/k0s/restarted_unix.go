@@ -12,6 +12,7 @@ import (
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
+	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -117,16 +118,9 @@ func (r *restarted) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 	// Move to the next successful state 'UnCordoning' if our versions match
 
 	if k0sVersion == signalData.Command.K0sUpdate.Version || signalData.Command.K0sUpdate.ForceUpdate {
-		signalNodeCopy := r.delegate.DeepCopy(signalNode)
-		signalData.Status = apsigv2.NewStatus(UnCordoning)
-
-		if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-			return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.Name, err)
-		}
-
-		logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
-		if err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
-			return cr.Result{}, fmt.Errorf("unable to update signal node with '%s' status: %w", signalData.Status.Status, err)
+		newStatus := apsigv2.NewStatus(UnCordoning)
+		if _, err := apsigcomm.UpdateSignalStatus(ctx, logger, r.client, r.delegate, req.NamespacedName, signalData, []string{"", Restart}, newStatus); err != nil {
+			return cr.Result{}, fmt.Errorf("unable to update signal node with '%s' status: %w", newStatus.Status, err)
 		}
 
 		return cr.Result{}, nil
