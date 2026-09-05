@@ -284,7 +284,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 					Kubeconfig: "/var/lib/kube-proxy/kubeconfig.conf",
 				},
 				ClusterCIDR:        clusterConfig.Spec.Network.BuildPodCIDR(k.nodeConfig.Spec.PrimaryAddressFamily()),
-				FeatureGates:       featuregates.ToMap(clusterConfig.Spec.FeatureGates, "kube-proxy"),
+				FeatureGates:       featuregates.ToMap(clusterConfig.Spec.FeatureGates, v1beta1.FeatureComponentKubeProxy),
 				Mode:               kubeproxyv1alpha1.ProxyMode(kubeProxy.Mode),
 				MetricsBindAddress: kubeProxy.MetricsBindAddress,
 				HealthzBindAddress: kubeProxy.HealthzBindAddress,
