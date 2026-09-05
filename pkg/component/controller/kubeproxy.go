@@ -69,7 +69,7 @@ func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, ha
 }
 
 func (k *KubeProxy) Init(context.Context) error {
-	return dir.Init(k.manifestDir, constant.ManifestsDirMode)
+	return nil
 }
 
 func (k *KubeProxy) Start(context.Context) error {
@@ -161,6 +161,10 @@ func (k *KubeProxy) Stop() error {
 }
 
 func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error {
+	if err := dir.Init(k.manifestDir, constant.ManifestsDirMode); err != nil {
+		return err
+	}
+
 	return file.AtomicWithTarget(filepath.Join(k.manifestDir, "kube-proxy.yaml")).
 		Do(func(unbuffered file.AtomicWriter) error {
 			buf := bufio.NewWriter(unbuffered)
