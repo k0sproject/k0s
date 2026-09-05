@@ -318,7 +318,13 @@ func (cr *ChartReconciler) uninstall(ctx context.Context, chart helmv1beta1.Char
 	}
 	defer cleanup()
 
-	if err := helmCmd.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
+	// Chart.Spec.Timeout also bounds Helm's wait-for-delete here: callers
+	// never attach a ctx deadline, so leaving this at zero used to make the
+	// wait fail instantly with "context deadline exceeded" instead of
+	// actually waiting for the release's resources to go away (#8181).
+	timeout := cr.chartTimeout(chart)
+
+	if err := helmCmd.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace, timeout); err != nil {
 		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
@@ -347,6 +353,21 @@ func removeFinalizer(ctx context.Context, c client.Client, chart *helmv1beta1.Ch
 }
 
 const defaultTimeout = 10 * time.Minute
+
+// chartTimeout parses chart.Spec.Timeout, falling back to defaultTimeout
+// when it's unset, unparseable, or non-positive.
+func (cr *ChartReconciler) chartTimeout(chart helmv1beta1.Chart) time.Duration {
+	timeout, err := time.ParseDuration(chart.Spec.Timeout)
+	if err != nil {
+		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
+		return defaultTimeout
+	}
+	if timeout <= 0 {
+		cr.L.Tracef("Using default timeout `%s`, failed to parse `%s`", defaultTimeout, chart.Spec.Timeout)
+		return defaultTimeout
+	}
+	return timeout
+}
 
 // loadAndMergeRepositoryConfig loads repository configuration from a secret and merges it
 // with inline configuration. Secret values take precedence over inline values.
@@ -428,16 +449,7 @@ func (cr *ChartReconciler) loadAndMergeRepositoryConfig(ctx context.Context, cha
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv1beta1.Chart) (err error) {
 	var isInstalling bool
 	var chartRelease *release.Release
-	var timeout time.Duration
-	timeout, err = time.ParseDuration(chart.Spec.Timeout)
-	if err != nil {
-		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
-		timeout = defaultTimeout
-	}
-	if timeout == 0 {
-		cr.L.Tracef("Using default timeout `%s`, failed to parse `%s`", defaultTimeout, chart.Spec.Timeout)
-		timeout = defaultTimeout
-	}
+	timeout := cr.chartTimeout(chart)
 	defer func() {
 		if err == nil {
 			return
@@ -503,7 +515,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 
 		switch {
 		case status == release.StatusPendingInstall, status == release.StatusFailed, status == release.StatusUninstalling:
-			if err := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace); err != nil {
+			if err := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace, timeout); err != nil {
 				return fmt.Errorf("failed to uninstall %q in %q before reinstall: %w", releaseName, chart.Spec.Namespace, err)
 			}
 			cr.L.Info("Uninstalled release ", releaseName, " before reinstall due to status ", status)
@@ -531,7 +543,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 					case <-ctx.Done():
 						err = fmt.Errorf("%w (%w)", err, context.Cause(ctx))
 					default:
-						if uninstallErr := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace); uninstallErr != nil {
+						if uninstallErr := helmCmd.UninstallRelease(ctx, releaseName, chart.Spec.Namespace, timeout); uninstallErr != nil {
 							err = fmt.Errorf("an error occurred while uninstalling: %w; original install error: %w", uninstallErr, err)
 						}
 					}
