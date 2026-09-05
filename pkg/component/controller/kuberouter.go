@@ -65,7 +65,7 @@ func NewKubeRouter(k0sVars *config.CfgVars, primaryAddressFamily v1beta1.Primary
 
 // Init implements [manager.Component].
 func (k *KubeRouter) Init(context.Context) error {
-	return dir.Init(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter"), constant.ManifestsDirMode)
+	return nil
 }
 
 // Stop no-op as nothing running
@@ -169,6 +169,10 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	err := tw.WriteToBuffer(output)
 	if err != nil {
 		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
+	}
+
+	if err := dir.Init(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter"), constant.ManifestsDirMode); err != nil {
+		return fmt.Errorf("error creating kube-router manifest dir: %w", err)
 	}
 
 	if err := file.AtomicWithTarget(filepath.Join(k.k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml")).

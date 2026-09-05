@@ -77,10 +77,6 @@ func NewMetrics(k0sVars *config.CfgVars, clientCF kubeutil.ClientFactoryInterfac
 
 // Init implements [manager.Component].
 func (m *Metrics) Init(context.Context) error {
-	if err := dir.Init(filepath.Join(m.K0sVars.ManifestsDir, "metrics"), constant.ManifestsDirMode); err != nil {
-		return err
-	}
-
 	var j *job
 	j, err := m.newJob("kube-scheduler", "https://localhost:10259/metrics")
 	if err != nil {
@@ -139,6 +135,9 @@ func (m *Metrics) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	m.log.Debug("reconcile method called for: Metrics")
 
 	if m.clusterConfig == nil || clusterConfig.Spec.Images.PushGateway.URI() != m.clusterConfig.Spec.Images.PushGateway.URI() {
+		if err := dir.Init(filepath.Join(m.K0sVars.ManifestsDir, "metrics"), constant.ManifestsDirMode); err != nil {
+			return err
+		}
 		tw := templatewriter.TemplateWriter{
 			Name:     "pushgateway-with-ttl",
 			Template: pushGatewayTemplate,
