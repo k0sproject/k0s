@@ -39,7 +39,7 @@ func (f *Fake) Stop() error {
 	f.StopCalled = true
 	return f.StopErr
 }
-func (f *Fake) Ready() error {
+func (f *Fake) Ready(_ context.Context) error {
 	f.HealthyCalled = true
 	return f.HealthyErr
 }

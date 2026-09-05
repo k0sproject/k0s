@@ -229,7 +229,7 @@ func (r *Reconciler) Start(ctx context.Context) error {
 	return nil
 }
 
-func (r *Reconciler) Ready() error {
+func (r *Reconciler) Ready(_ context.Context) error {
 	if err := func() error {
 		r.mu.Lock()
 		defer r.mu.Unlock()
