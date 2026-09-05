@@ -375,8 +375,10 @@ func (s *Stack) clientForResource(mapper meta.ResettableRESTMapper, resource uns
 }
 
 func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper meta.ResettableRESTMapper, groupVersionKind *schema.GroupVersionKind) []unstructured.Unstructured {
-	mapping, _ := getRESTMapping(mapper, groupVersionKind)
-	// FIXME error handling...
+	mapping, err := getRESTMapping(mapper, groupVersionKind)
+	if err != nil {
+		s.log.Debugf("error getting REST mapping for pruning: %s", err.Error())
+	}
 	if mapping != nil {
 		client, err := s.Clients.GetDynamicClient()
 		if err != nil {
@@ -397,7 +399,7 @@ func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.Reso
 	}
 	resourceList, err := drClient.List(ctx, listOpts)
 	if err != nil {
-		// FIXME why no error propagation !??!
+		s.log.Debugf("error listing resources for pruning: %s", err.Error())
 		return nil
 	}
 	for _, resource := range resourceList.Items {
