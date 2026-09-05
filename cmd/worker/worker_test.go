@@ -13,6 +13,7 @@ import (
 
 func TestKubeconfigGetterFromJoinToken_NoSources(t *testing.T) {
 	t.Setenv(internal.EnvVarToken, "")
+	t.Setenv(internal.EnvVarJoinToken, "")
 
 	getter := kubeconfigGetterFromJoinToken("", "")
 	require.Nil(t, getter)
@@ -20,6 +21,7 @@ func TestKubeconfigGetterFromJoinToken_NoSources(t *testing.T) {
 
 func TestKubeconfigGetterFromJoinToken_TokenFileLazy(t *testing.T) {
 	t.Setenv(internal.EnvVarToken, "")
+	t.Setenv(internal.EnvVarJoinToken, "")
 	tokenFile := filepath.Join(t.TempDir(), "missing.token")
 
 	getter := kubeconfigGetterFromJoinToken(tokenFile, "")
@@ -32,6 +34,18 @@ func TestKubeconfigGetterFromJoinToken_TokenFileLazy(t *testing.T) {
 
 func TestKubeconfigGetterFromJoinToken_EnvVarDeferred(t *testing.T) {
 	t.Setenv(internal.EnvVarToken, "not-base64")
+	t.Setenv(internal.EnvVarJoinToken, "")
+
+	getter := kubeconfigGetterFromJoinToken("", "")
+	require.NotNil(t, getter)
+
+	_, err := getter()
+	require.ErrorContains(t, err, "failed to decode join token")
+}
+
+func TestKubeconfigGetterFromJoinToken_JoinEnvVarDeferred(t *testing.T) {
+	t.Setenv(internal.EnvVarToken, "")
+	t.Setenv(internal.EnvVarJoinToken, "not-base64")
 
 	getter := kubeconfigGetterFromJoinToken("", "")
 	require.NotNil(t, getter)
@@ -42,6 +56,7 @@ func TestKubeconfigGetterFromJoinToken_EnvVarDeferred(t *testing.T) {
 
 func TestKubeconfigGetterFromJoinToken_InvalidArgDeferred(t *testing.T) {
 	t.Setenv(internal.EnvVarToken, "")
+	t.Setenv(internal.EnvVarJoinToken, "")
 
 	getter := kubeconfigGetterFromJoinToken("", "invalid")
 	require.NotNil(t, getter)
