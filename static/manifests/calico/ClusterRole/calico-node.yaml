@@ -62,10 +62,13 @@ rules:
     verbs:
       - watch
       - list
-  # Watch for changes to Kubernetes ClusterNetworkPolicies.
+  # Watch for changes to Kubernetes ClusterNetworkPolicies,
+  # AdminNetworkPolicies and BaselineAdminNetworkPolicies.
   - apiGroups: ["policy.networking.k8s.io"]
     resources:
       - clusternetworkpolicies
+      - adminnetworkpolicies
+      - baselineadminnetworkpolicies
     verbs:
       - watch
       - list
