@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,19 +24,20 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/downloader"
-	"helm.sh/helm/v3/pkg/getter"
-	"helm.sh/helm/v3/pkg/kube"
-	"helm.sh/helm/v3/pkg/registry"
-	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/repo"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
+	"helm.sh/helm/v4/pkg/action"
+	charts "helm.sh/helm/v4/pkg/chart"
+	"helm.sh/helm/v4/pkg/chart/v2/loader"
+	"helm.sh/helm/v4/pkg/downloader"
+	"helm.sh/helm/v4/pkg/getter"
+	"helm.sh/helm/v4/pkg/kube"
+	"helm.sh/helm/v4/pkg/registry"
+	"helm.sh/helm/v4/pkg/release"
+	repov1 "helm.sh/helm/v4/pkg/repo/v1"
+	"helm.sh/helm/v4/pkg/storage"
+	"helm.sh/helm/v4/pkg/storage/driver"
 
 	"github.com/sirupsen/logrus"
+	sloghook "github.com/sirupsen/logrus/hooks/slog"
 	"sigs.k8s.io/yaml"
 )
 
@@ -74,8 +76,9 @@ type Commands struct {
 	clients         ClientGetter
 	registryManager *ociRegistryManager
 
-	repoFile     string
-	helmCacheDir string
+	repoFile               string
+	helmRepositoryCacheDir string
+	helmContentCacheDir    string
 }
 
 var getters = getter.Providers{
@@ -108,13 +111,15 @@ func NewCommands(clients ClientGetter, repo *Repository) (*Commands, func(), err
 	}
 
 	repoFile := filepath.Join(tmpDir, "repositories.yaml")
-	helmCacheDir := filepath.Join(tmpDir, "cache")
+	helmRepositoryCacheDir := filepath.Join(tmpDir, "repository")
+	helmContentCacheDir := filepath.Join(tmpDir, "content")
 
 	commands := &Commands{
-		clients:         clients,
-		repoFile:        repoFile,
-		registryManager: newOCIRegistryManager(),
-		helmCacheDir:    helmCacheDir,
+		clients:                clients,
+		repoFile:               repoFile,
+		registryManager:        newOCIRegistryManager(),
+		helmRepositoryCacheDir: helmRepositoryCacheDir,
+		helmContentCacheDir:    helmContentCacheDir,
 	}
 
 	// Initialize repository if provided
@@ -201,13 +206,13 @@ func (hc *Commands) getActionCfg(ctx context.Context, namespace string) (*action
 	}
 
 	driver := driver.NewSecrets(clients.CoreV1().Secrets(namespace))
-	driver.Log = log.WithField("helm", "driver").Debugf
+	sloglogger := slog.New(sloghook.NewHandler(log.WithField("helm", "driver").Logger, nil))
+	driver.SetLogger(sloglogger.Handler())
 
 	return &action.Configuration{
 		RESTClientGetter: getter,
 		Releases:         storage.Init(driver),
-		KubeClient:       newKubeClient(ctx, getter, log.WithField("helm", "client")),
-		Log:              log.WithField("helm", "action").Debugf,
+		KubeClient:       kube.New(getter),
 		HookOutputFunc: func(namespace, pod, container string) io.Writer {
 			return internallog.NewWriter(
 				log.WithFields(logrus.Fields{
@@ -237,12 +242,12 @@ func (hc *Commands) initRepository(repoCfg Repository) error {
 		return fmt.Errorf("can't add repository to %s: %w", hc.repoFile, err)
 	}
 
-	var f repo.File
+	var f repov1.File
 	if err := yaml.Unmarshal(b, &f); err != nil {
 		return fmt.Errorf("can't add repository to %s: %w", hc.repoFile, err)
 	}
 
-	c := repo.Entry{
+	c := repov1.Entry{
 		Name:                  repoCfg.Name,
 		URL:                   repoCfg.URL,
 		Username:              repoCfg.Username,
@@ -250,14 +255,14 @@ func (hc *Commands) initRepository(repoCfg Repository) error {
 		CertFile:              repoCfg.CertFile,
 		KeyFile:               repoCfg.KeyFile,
 		CAFile:                repoCfg.CAFile,
-		InsecureSkipTLSverify: repoCfg.IsInsecure(),
+		InsecureSkipTLSVerify: repoCfg.IsInsecure(),
 	}
 
-	r, err := repo.NewChartRepository(&c, getters)
+	r, err := repov1.NewChartRepository(&c, getters)
 	if err != nil {
 		return fmt.Errorf("can't add repository to %s: %w", hc.repoFile, err)
 	}
-	r.CachePath = hc.helmCacheDir
+	r.CachePath = hc.helmRepositoryCacheDir
 
 	if _, err := r.DownloadIndexFile(); err != nil {
 		return fmt.Errorf("can't add repository: %q is not a valid chart repository or cannot be reached: %w", "repo", err)
@@ -270,18 +275,24 @@ func (hc *Commands) initRepository(repoCfg Repository) error {
 	return nil
 }
 
-func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string, registryClient *registry.Client) error {
-	if chart.Metadata.Dependencies == nil {
+func (hc *Commands) downloadDependencies(chart charts.Charter, chartPath string, registryClient *registry.Client) error {
+	ac, err := charts.NewAccessor(chart)
+	if err != nil {
+		return err
+	}
+	deps := ac.MetaDependencies()
+	if len(deps) == 0 {
 		return nil
 	}
-	if err := action.CheckDependencies(chart, chart.Metadata.Dependencies); err != nil {
+	if err := action.CheckDependencies(chart, deps); err != nil {
 		man := &downloader.Manager{
 			Out:              os.Stdout,
 			ChartPath:        chartPath,
 			SkipUpdate:       false,
 			Getters:          getters,
 			RepositoryConfig: hc.repoFile,
-			RepositoryCache:  hc.helmCacheDir,
+			RepositoryCache:  hc.helmRepositoryCacheDir,
+			ContentCache:     hc.helmContentCacheDir,
 			Debug:            false,
 			RegistryClient:   registryClient,
 		}
@@ -290,6 +301,30 @@ func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string, r
 		}
 	}
 	return nil
+}
+
+// resolveRegistryClient returns the registry client configured for chartName's
+// repository. For OCI charts without a configured repository (anonymous access),
+// it falls back to an anonymous registry client: Helm v4 requires a non-nil
+// RegistryClient to resolve any OCI chart reference.
+func (hc *Commands) resolveRegistryClient(chartName string) (*registry.Client, error) {
+	client, err := hc.registryManager.GetRegistryClient(chartName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get registry client: %w", err)
+	}
+	if client == nil && registry.IsOCI(chartName) {
+		log := logrus.WithField("component", "helm")
+		client, err = registry.NewClient(registry.ClientOptWriter(internallog.NewWriter(
+			log.WithFields(logrus.Fields{
+				"helm":  "registryclient",
+				"chart": chartName,
+			}), logrus.DebugLevel, 16*1024,
+		)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get anonymous registry client: %w", err)
+		}
+	}
+	return client, nil
 }
 
 func (hc *Commands) locateChart(name string, version string, registryClient *registry.Client) (string, error) {
@@ -306,20 +341,18 @@ func (hc *Commands) locateChart(name string, version string, registryClient *reg
 		return name, fmt.Errorf("can't locate chart: path not found: %s", name)
 	}
 
+	log := logrus.WithField("component", "helm")
 	dl := downloader.ChartDownloader{
-		Out:              os.Stdout,
+		Out:              internallog.NewWriter(log.WithField("helm", "chartdownloader"), logrus.DebugLevel, 16*1024),
 		Getters:          getters,
 		Options:          []getter.Option{getter.WithRegistryClient(registryClient)},
 		RepositoryConfig: hc.repoFile,
-		RepositoryCache:  hc.helmCacheDir,
+		RepositoryCache:  hc.helmRepositoryCacheDir,
+		ContentCache:     hc.helmContentCacheDir,
 		RegistryClient:   registryClient,
 	}
 
-	if err := dir.Init(hc.helmCacheDir, constant.DataDirMode); err != nil {
-		return "", fmt.Errorf("can't locate chart `%s-%s`: %w", name, version, err)
-	}
-
-	filename, _, err := dl.DownloadTo(name, version, hc.helmCacheDir)
+	filename, _, err := dl.DownloadToCache(name, version)
 	if err == nil {
 		lname, err := filepath.Abs(filename)
 		if err != nil {
@@ -330,11 +363,8 @@ func (hc *Commands) locateChart(name string, version string, registryClient *reg
 	return filename, fmt.Errorf("can't locate chart `%s-%s`: %w", name, version, err)
 }
 
-func (hc *Commands) isInstallable(chart *chart.Chart) bool {
-	if chart.Metadata.Type != "" && chart.Metadata.Type != "application" {
-		return false
-	}
-	return true
+func isChartInstallable(chartType string) bool {
+	return chartType == "" || chartType == "application"
 }
 
 // Used as the cancellation cause for the internal action context on method
@@ -347,7 +377,7 @@ func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 var errHelmOperationInterrupted = errors.New("helm operation interrupted")
 
 // Retrieves the latest release from Helm storage.
-func (hc *Commands) GetRelease(ctx context.Context, releaseName, namespace string) (*release.Release, error) {
+func (hc *Commands) GetRelease(ctx context.Context, releaseName, namespace string) (release.Releaser, error) {
 	// The Helm get action doesn't offer RunWithContext. Instead, use ctx for
 	// action configuration and transport control directly. Let transport
 	// interruption handle cancellation while the get action is in progress.
@@ -365,7 +395,7 @@ func (hc *Commands) GetRelease(ctx context.Context, releaseName, namespace strin
 
 // InstallChart installs a helm chart
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, replace bool) (*release.Release, error) {
+func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, replace bool) (release.Releaser, error) {
 	// Keep the action's context detached from the caller's cancellation so that
 	// we can explicitly terminate the Helm internals when this method exits.
 	// The install action still receives the caller context via the
@@ -378,15 +408,16 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
 
-	cfg.RegistryClient, err = hc.registryManager.GetRegistryClient(chartName)
+	cfg.RegistryClient, err = hc.resolveRegistryClient(chartName)
 	if err != nil {
-		return nil, fmt.Errorf("can't get registry client for chart `%s`: %w", chartName, err)
+		return nil, err
 	}
 
 	install := action.NewInstall(cfg)
 	install.CreateNamespace = true
 	install.WaitForJobs = true
-	install.Wait = true
+	install.WaitStrategy = kube.StatusWatcherStrategy
+	install.WaitOptions = []kube.WaitOption{kube.WithWaitContext(ctx)}
 	install.Timeout = timeout
 	chartDir, err := hc.locateChart(chartName, version, cfg.RegistryClient)
 	if err != nil {
@@ -406,7 +437,7 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 	if err != nil {
 		return nil, fmt.Errorf("can't load loadedChart `%s`: %w", chartDir, err)
 	}
-	if !hc.isInstallable(loadedChart) {
+	if !isChartInstallable(loadedChart.Metadata.Type) {
 		return nil, fmt.Errorf("loadedChart with type `%s` is not installable", loadedChart.Metadata.Type)
 	}
 
@@ -424,7 +455,7 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 
 // UpgradeChart upgrades a helm chart.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, force bool) (*release.Release, error) {
+func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, force bool) (release.Releaser, error) {
 	// Keep the action's context detached from the caller's cancellation so that
 	// we can explicitly terminate the Helm internals when this method exits.
 	// The upgrade action still receives the caller context via the
@@ -437,18 +468,19 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
 
-	cfg.RegistryClient, err = hc.registryManager.GetRegistryClient(chartName)
+	cfg.RegistryClient, err = hc.resolveRegistryClient(chartName)
 	if err != nil {
-		return nil, fmt.Errorf("can't get registry client for chart `%s`: %w", chartName, err)
+		return nil, err
 	}
 
 	upgrade := action.NewUpgrade(cfg)
 	upgrade.Namespace = namespace
-	upgrade.Wait = true
+	upgrade.WaitStrategy = kube.StatusWatcherStrategy
+	upgrade.WaitOptions = []kube.WaitOption{kube.WithWaitContext(ctx)}
 	upgrade.WaitForJobs = true
 	upgrade.Install = true
-	upgrade.Force = force
-	upgrade.Atomic = true
+	upgrade.ForceReplace = force
+	upgrade.RollbackOnFailure = true
 	upgrade.Timeout = timeout
 	chartDir, err := hc.locateChart(chartName, version, cfg.RegistryClient)
 	if err != nil {
@@ -458,7 +490,7 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	if err != nil {
 		return nil, fmt.Errorf("can't load loadedChart `%s`: %w", chartDir, err)
 	}
-	if !hc.isInstallable(loadedChart) {
+	if !isChartInstallable(loadedChart.Metadata.Type) {
 		return nil, fmt.Errorf("loadedChart with type `%s` is not installable", loadedChart.Metadata.Type)
 	}
 
@@ -499,7 +531,8 @@ func (hc *Commands) UninstallRelease(ctx context.Context, releaseName, namespace
 		helmAction.Timeout = time.Until(deadline)
 	}
 
-	helmAction.Wait = true
+	helmAction.WaitStrategy = kube.StatusWatcherStrategy
+	helmAction.WaitOptions = []kube.WaitOption{kube.WithWaitContext(ctx)}
 	helmAction.DeletionPropagation = string(metav1.DeletePropagationForeground)
 
 	_, err = helmAction.Run(releaseName)
