@@ -6,43 +6,24 @@ package k0scontext
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
 	"time"
+
+	"github.com/k0sproject/k0s/internal/sync/activity"
 )
 
 // Returns a context that times out after a specified period of inactivity.
 // Calls to the keepAlive function will reset the timeout, ensuring that the
 // context will remain valid for as long as there is activity.
 func WithInactivityTimeout(ctx context.Context, timeout time.Duration) (_ context.Context, _ context.CancelCauseFunc, keepAlive func()) {
-	var lastActivity atomic.Pointer[time.Time]
-	keepAlive = func() {
-		now := time.Now()
-		lastActivity.Store(&now)
-	}
-
 	ctx, cancel := context.WithCancelCause(ctx)
-	keepAlive() // initialize the pointer
-
+	touch, last := activity.Tracker(time.Now())
 	go func() {
-		for {
-			lastActivity := *lastActivity.Load()
-			remaining := time.Until(lastActivity.Add(timeout))
-
-			if remaining <= 0 {
-				cancel(&InactivityError{lastActivity, timeout})
-				return
-			}
-
-			select {
-			// Recalculate timeout to minimize drift.
-			case <-time.After(time.Until(lastActivity.Add(timeout))):
-			case <-ctx.Done():
-				return
-			}
-		}
+		activity.Debounce(ctx.Done(), timeout, last, func(activity time.Time) {
+			cancel(&InactivityError{activity, timeout})
+		})
 	}()
 
-	return &inactivityContext{ctx}, cancel, keepAlive
+	return &inactivityContext{ctx}, cancel, func() { touch(time.Now()) }
 }
 
 // An error indicating that a context timed out due to inactivity.
