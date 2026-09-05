@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -204,10 +205,114 @@ func TestSchedulable(t *testing.T) {
 			nil,
 			true,
 		},
+
+		// Ensures that a stale error annotation on a ControlNode is cleared before the new signal is sent.
+		{
+			"ControlNodeErrorClearedOnNewSignal",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ControlNode",
+						APIVersion: "autopilot.k0sproject.io/v1beta2",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "controller0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+						Annotations: map[string]string{
+							apdel.SignalErrorAnnotation: `{"planID":"oldplan","reason":"FailedDownload","message":"stale error","timestamp":"2024-01-01T00:00:00Z"}`,
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
+					Version: "v99.99.99",
+					Platforms: apv1beta2.PlanPlatformResourceURLMap{
+						"theOS-theArch": {URL: "https://k0s.example.com/downloads/k0s-v99.99.99-theOS-theArch"},
+					},
+					Targets: apv1beta2.PlanCommandTargets{
+						Controllers: apv1beta2.PlanCommandTarget{
+							Discovery: apv1beta2.PlanCommandTargetDiscovery{
+								Static: &apv1beta2.PlanCommandTargetDiscoveryStatic{Nodes: []string{"controller0"}},
+							},
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommandStatus{
+				ID:    123,
+				State: appc.PlanSchedulable,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Controllers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
+					},
+				},
+			},
+			appc.PlanSchedulableWait,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalSent),
+			},
+			nil,
+			false,
+		},
+
+		// Ensures that a stale last-error annotation on a Node is cleared before the new signal is sent.
+		{
+			"NodeErrorAnnotationClearedOnNewSignal",
+			[]crcli.Object{
+				&corev1.Node{
+					TypeMeta: metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "worker0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+						Annotations: map[string]string{
+							"k0sproject.io/autopilot-last-error": `{"planID":"oldplan","reason":"FailedDownload","message":"stale error","timestamp":"2024-01-01T00:00:00Z"}`,
+						},
+					},
+					Status: corev1.NodeStatus{
+						Conditions: []corev1.NodeCondition{{Type: corev1.NodeReady, Status: corev1.ConditionTrue}},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
+					Version: "v99.99.99",
+					Platforms: apv1beta2.PlanPlatformResourceURLMap{
+						"theOS-theArch": {URL: "https://k0s.example.com/downloads/k0s-v99.99.99-theOS-theArch"},
+					},
+					Targets: apv1beta2.PlanCommandTargets{
+						Workers: apv1beta2.PlanCommandTarget{
+							Discovery: apv1beta2.PlanCommandTargetDiscovery{
+								Static: &apv1beta2.PlanCommandTargetDiscoveryStatic{Nodes: []string{"worker0"}},
+							},
+							Limits: apv1beta2.PlanCommandTargetLimits{Concurrent: 1},
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommandStatus{
+				ID:    123,
+				State: appc.PlanSchedulable,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+					},
+				},
+			},
+			appc.PlanSchedulableWait,
+			false,
+			nil,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+			},
+			false,
+		},
 	}
 
 	scheme := apimruntime.NewScheme()
 	assert.NoError(t, apscheme.AddToScheme(scheme))
+	assert.NoError(t, corev1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -249,6 +354,19 @@ func TestSchedulable(t *testing.T) {
 
 			assert.True(t, cmp.Equal(test.expectedPlanStatusControllers, test.status.K0sUpdate.Controllers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
 			assert.True(t, cmp.Equal(test.expectedPlanStatusWorkers, test.status.K0sUpdate.Workers, cmpopts.IgnoreFields(apv1beta2.PlanCommandTargetStatus{}, "LastUpdatedTimestamp")))
+
+			if test.name == "ControlNodeErrorClearedOnNewSignal" {
+				cn := &apv1beta2.ControlNode{}
+				assert.NoError(t, client.Get(ctx, types.NamespacedName{Name: "controller0"}, cn))
+				_, hasAnnotation := cn.GetAnnotations()[apdel.SignalErrorAnnotation]
+				assert.False(t, hasAnnotation, "error annotation should be cleared before new signal")
+			}
+			if test.name == "NodeErrorAnnotationClearedOnNewSignal" {
+				node := &corev1.Node{}
+				assert.NoError(t, client.Get(ctx, types.NamespacedName{Name: "worker0"}, node))
+				_, hasAnnotation := node.GetAnnotations()[apdel.SignalErrorAnnotation]
+				assert.False(t, hasAnnotation)
+			}
 
 		})
 	}
