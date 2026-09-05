@@ -676,8 +676,11 @@ func (s *BootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string, error) {
 	// assume we have main on node 0 always
 	controllerNode := s.ControllerNode(0)
-	s.Contains([]string{"controller", "worker"}, role, "Bad role")
-	ssh, err := s.SSH(s.Context(), controllerNode)
+	return s.JoinToken(s.Context(), controllerNode, role, extraArgs...)
+}
+
+func (s *BootlooseSuite) JoinToken(ctx context.Context, nodeName, role string, extraArgs ...string) (string, error) {
+	ssh, err := s.SSH(ctx, nodeName)
 	if err != nil {
 		return "", err
 	}
@@ -685,7 +688,7 @@ func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 
 	tokenCmd := fmt.Sprintf("%s token create --role=%s %s", s.K0sFullPath, role, strings.Join(extraArgs, " "))
 	var tokenBuf bytes.Buffer
-	if err := ssh.Exec(s.Context(), tokenCmd, SSHStreams{Out: &tokenBuf}); err != nil {
+	if err := ssh.Exec(ctx, tokenCmd, SSHStreams{Out: &tokenBuf}); err != nil {
 		return "", fmt.Errorf("can't get join token: %w", err)
 	}
 
