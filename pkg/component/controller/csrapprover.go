@@ -16,12 +16,14 @@ import (
 	v1 "k8s.io/api/certificates/v1"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/sets"
 	clientset "k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	certificates "k8s.io/kubernetes/pkg/apis/certificates"
 )
 
@@ -62,83 +64,97 @@ func (a *CSRApprover) Init(_ context.Context) error {
 	return nil
 }
 
-// Run every 10 seconds checks for newly issued CSRs and approves them
+// kubeletServingSignerSelector limits the watch to CSRs requesting a
+// kubelet-serving certificate, the only kind this approver ever acts on.
+var kubeletServingSignerSelector = fields.OneTermEqualSelector("spec.signerName", "kubernetes.io/kubelet-serving")
+
+// Start watches for CSRs requesting a kubelet-serving certificate and
+// approves them as they show up, instead of polling the API on a fixed
+// interval.
 func (a *CSRApprover) Start(ctx context.Context) error {
 	ctx, a.stop = context.WithCancel(ctx)
-	go func() {
-		defer a.stop()
-		ticker := time.NewTicker(10 * time.Second) // TODO: sometimes this should be refactored so it watches instead of polls for CSRs
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				err := a.approveCSR(ctx)
-				if err != nil {
-					a.log.WithError(err).Warn("CSR approval failed")
-				}
-			case <-ctx.Done():
-				a.log.Info("CSR Approver context done")
-				return
-			}
-		}
-	}()
+	go a.watchCSRs(ctx)
 
 	return nil
 }
 
+// watchCSRs runs until ctx is done, reacting to every CSR that matches
+// kubeletServingSignerSelector, be it already present or newly created.
+func (a *CSRApprover) watchCSRs(ctx context.Context) {
+	defer a.stop()
+
+	var lastObservedVersion string
+	err := watch.CertificateSigningRequests(a.clientset.CertificatesV1().CertificateSigningRequests()).
+		WithFieldSelector(kubeletServingSignerSelector).
+		WithErrorCallback(func(err error) (time.Duration, error) {
+			retryDelay, e := watch.IsRetryable(err)
+			if e == nil {
+				a.log.WithError(err).Debugf(
+					"Encountered transient error while watching CSRs"+
+						", last observed resource version was %q"+
+						", retrying in %s",
+					lastObservedVersion, retryDelay,
+				)
+				return retryDelay, nil
+			}
+			a.log.WithError(e).Error("bailing out CSR watch")
+			return 0, err
+		}).
+		Until(ctx, func(csr *v1.CertificateSigningRequest) (bool, error) {
+			lastObservedVersion = csr.ResourceVersion
+			if err := a.approveCSR(ctx, csr); err != nil {
+				a.log.WithError(err).Warn("CSR approval failed")
+			}
+			return false, nil // never stop watching
+		})
+
+	if canceled := context.Cause(ctx); errors.Is(err, canceled) {
+		a.log.WithError(err).Info("CSR watch terminated")
+	} else {
+		a.log.WithError(err).Error("CSR watch terminated unexpectedly")
+	}
+}
+
 // Majority of this code has been adapted from https://github.com/kontena/kubelet-rubber-stamp
-func (a *CSRApprover) approveCSR(ctx context.Context) error {
+func (a *CSRApprover) approveCSR(ctx context.Context, csr *v1.CertificateSigningRequest) error {
 	if !a.leaderElector.IsLeader() {
 		a.log.Debug("not the leader, can't approve certificates")
 		return nil
 	}
 
-	opts := metav1.ListOptions{
-		FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
-	}
-
-	csrs, err := a.clientset.CertificatesV1().CertificateSigningRequests().List(ctx, opts)
-	if err != nil {
-		return fmt.Errorf("can't fetch CSRs: %w", err)
-	}
-
-	for _, csr := range csrs.Items {
-		if approved, denied := getCertApprovalCondition(&csr.Status); approved || denied {
-			a.log.Debugf("CSR %s is approved=%t || denied=%t. Carry on", csr.Name, approved, denied)
-			continue
-		}
-
-		x509cr, err := parseCSR(&csr)
-		if err != nil {
-			return fmt.Errorf("unable to parse csr %q: %w", csr.Name, err)
-		}
-
-		if err := a.ensureKubeletServingCert(&csr, x509cr); err != nil {
-			a.log.WithError(err).Infof("Not approving CSR %q as it is not recognized as a kubelet-serving certificate", csr.Name)
-			continue
-		}
-
-		approved, err := a.authorize(ctx, &csr, authorization.ResourceAttributes{
-			Group:    "certificates.k8s.io",
-			Resource: "certificatesigningrequests",
-			Verb:     "create",
-		})
-		if err != nil {
-			return fmt.Errorf("SubjectAccessReview failed for CSR %q: %w", csr.Name, err)
-		}
-
-		if !approved {
-			return fmt.Errorf("failed to perform SubjectAccessReview for CSR %q", csr.Name)
-		}
-
-		a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.Name, x509cr.DNSNames, x509cr.IPAddresses)
-		appendApprovalCondition(&csr, "Auto approving kubelet serving certificate after SubjectAccessReview.")
-		_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, &csr, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("error updating approval for CSR %q: %w", csr.Name, err)
-		}
-
+	if approved, denied := getCertApprovalCondition(&csr.Status); approved || denied {
+		a.log.Debugf("CSR %s is approved=%t || denied=%t. Carry on", csr.Name, approved, denied)
 		return nil
+	}
+
+	x509cr, err := parseCSR(csr)
+	if err != nil {
+		return fmt.Errorf("unable to parse csr %q: %w", csr.Name, err)
+	}
+
+	if err := a.ensureKubeletServingCert(csr, x509cr); err != nil {
+		a.log.WithError(err).Infof("Not approving CSR %q as it is not recognized as a kubelet-serving certificate", csr.Name)
+		return nil
+	}
+
+	approved, err := a.authorize(ctx, csr, authorization.ResourceAttributes{
+		Group:    "certificates.k8s.io",
+		Resource: "certificatesigningrequests",
+		Verb:     "create",
+	})
+	if err != nil {
+		return fmt.Errorf("SubjectAccessReview failed for CSR %q: %w", csr.Name, err)
+	}
+
+	if !approved {
+		return fmt.Errorf("failed to perform SubjectAccessReview for CSR %q", csr.Name)
+	}
+
+	a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.Name, x509cr.DNSNames, x509cr.IPAddresses)
+	appendApprovalCondition(csr, "Auto approving kubelet serving certificate after SubjectAccessReview.")
+	_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, csr, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("error updating approval for CSR %q: %w", csr.Name, err)
 	}
 
 	return nil
