@@ -17,19 +17,23 @@ upgrade.
 
 ## Supported skew
 
-k0s follows the upstream Kubernetes
-[version skew policy](https://kubernetes.io/releases/version-skew-policy/).
-In practice, that means:
+k0s is designed and tested for clusters in which all nodes run either the same
+minor version or two adjacent ones, as happens during a rolling upgrade. In
+practice, that means:
 
-- **Control plane components** (kube-apiserver, kube-controller-manager,
-  kube-scheduler) must all be within **one minor** of each other in a
-  multi-controller cluster.
-- **kubelet** on a worker may be **up to three minors older** than the
-  oldest kube-apiserver in the cluster, but **must never be newer**.
-- **kube-proxy** on a worker must match the kubelet's minor version.
+- **Controllers** must all be within **one minor** of each other.
+- **Workers** may be **one minor older** than the controllers, but **must
+  never be newer**.
 
-Patch-version differences inside the same minor are always supported and
-are the expected state during a phased upgrade.
+Patch-version differences inside the same minor are always supported and are the
+expected state during a phased upgrade.
+
+Note that the upstream Kubernetes [version skew policy] permits wider skews,
+such as kubelets up to three minors older than the API server. k0s doesn't
+support those. Each k0s version is only expected to interoperate with the
+previous one, and upgrades proceed one minor at a time.
+
+[version skew policy]: https://kubernetes.io/releases/version-skew-policy/
 
 ## Upgrades
 
@@ -38,12 +42,16 @@ When upgrading k0s in place:
 1. Upgrade controllers first, **one minor at a time** (e.g. v1.30 → v1.31,
    not v1.30 → v1.32).
 2. Upgrade workers after the control plane is fully on the new minor.
-3. Stay on the latest patch release of the old minor before stepping up to
-   the next minor.
+3. Consider moving to the latest patch release of the old minor first. This
+   isn't required, but it takes the old minor's latest fixes along into the
+   upgrade.
 
-[Autopilot](autopilot.md) automates this with multi-step plans; if you
-upgrade manually or via [k0sctl](k0sctl-install.md), make the same staging
-explicit in your plan.
+[Autopilot], [k0sctl], and [k0smotron] all upgrade controllers before workers.
+When upgrading manually, keep to the same order.
+
+[Autopilot]: autopilot.md
+[k0sctl]: k0sctl-install.md
+[k0smotron]: https://github.com/k0sproject/k0smotron
 
 ## Downgrades
 
