@@ -20,6 +20,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
+	k0spatches "github.com/k0sproject/k0s/internal/pkg/patches"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/worker"
@@ -27,7 +28,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"sigs.k8s.io/yaml"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -438,4 +441,24 @@ func getLoopbackIP(ctx context.Context) (net.IP, error) {
 	}
 
 	return net.IP{127, 0, 0, 1}, err
+}
+
+func patchPod(pod *corev1.Pod, patches v1beta1.Patches) (*corev1.Pod, error) {
+	// patches work via marshaled data, so convert to pod to yaml and back to apply the patches
+	podBytes, err := yaml.Marshal(pod)
+	if err != nil {
+		return pod, fmt.Errorf("failed to marshal pod manifest for patching: %w", err)
+	}
+
+	patchedBytes, err := k0spatches.Apply(podBytes, patches)
+	if err != nil {
+		return pod, fmt.Errorf("failed to apply patches to pod manifest: %w", err)
+	}
+
+	var patchedPod corev1.Pod
+	if err := yaml.Unmarshal(patchedBytes, &patchedPod); err != nil {
+		return pod, fmt.Errorf("failed to unmarshal patched pod manifest: %w", err)
+	}
+
+	return &patchedPod, nil
 }
