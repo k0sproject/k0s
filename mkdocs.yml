@@ -95,6 +95,7 @@ nav:
   - Contributing:
       - Getting Started: contributors/index.md
       - GitHub Workflow: contributors/github_workflow.md
+      - Code guidelines: contributors/code_guidelines.md
       - Testing: contributors/testing.md
       - Documentation: contributors/docs.md
 
