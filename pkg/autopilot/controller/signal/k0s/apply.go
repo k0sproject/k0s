@@ -16,6 +16,7 @@ import (
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
+	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
@@ -151,22 +152,28 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 	}
 
 	// When the k0s process has been terminated, move to 'Restart'
-	signalNodeCopy := r.delegate.DeepCopy(signalNode)
-
-	signalData.Status = apsigv2.NewStatus(Restart)
-	if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to marshal signal data for node='%s': %w", req.Name, err)
-	}
-
-	logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
+	newStatus := apsigv2.NewStatus(Restart)
 
 	// Record the pending restart before making the 'Restart' status visible to
 	// the API. The restart controllers may never observe a 'Restart' status
 	// that has been written by this process without knowing that it's pending.
-	r.restartInitiated(signalData)
+	// This has to be the very same status that gets recorded below, timestamp
+	// included, as that's what identifies the restart as pending.
+	//
+	// Recording it up front means it's also recorded in case the status below
+	// turns out to be superseded and isn't written at all. That's harmless:
+	// a pending restart is only ever matched against the exact same request
+	// and status, timestamp included, so an entry for a request that no longer
+	// exists can't match anything anymore.
+	restartInitiatedData := signalData
+	restartInitiatedData.Status = newStatus
+	r.restartInitiated(restartInitiatedData)
 
-	if err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
-		return cr.Result{Requeue: true}, fmt.Errorf("failed to update signal node to status '%s': %w", signalData.Status.Status, err)
+	// The file operations above can take a while, so don't write back the
+	// signal node as it was read before they started. See
+	// [apsigcomm.UpdateSignalStatus].
+	if _, err := apsigcomm.UpdateSignalStatus(ctx, logger, r.client, r.delegate, req.NamespacedName, signalData, []string{"", ApplyingUpdate}, newStatus); err != nil {
+		return cr.Result{Requeue: true}, fmt.Errorf("failed to update signal node to status '%s': %w", newStatus.Status, err)
 	}
 
 	// Clean up k0s.tmp after a successful apply. If the file does not exist

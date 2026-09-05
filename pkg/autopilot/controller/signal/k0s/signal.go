@@ -19,7 +19,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	cr "sigs.k8s.io/controller-runtime"
-	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crev "sigs.k8s.io/controller-runtime/pkg/event"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -124,28 +123,30 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 		status = apsigcomm.Completed
 	}
 
-	// Populate the response into the annotations
-	signalNodeCopy := sctx.Delegate.DeepCopy(sctx.SignalNode)
-
 	var oldStatus string
 	if sctx.SignalData.Status != nil {
 		oldStatus = sctx.SignalData.Status.Status
 	}
-	sctx.SignalData.Status = apsigv2.NewStatus(status)
-	if err := sctx.SignalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to marshal k0s signal data for node='%s': %w", signalNodeCopy.GetName(), err)
+
+	// Determining the k0s version above talks to the status socket, so don't
+	// write back the signal node as it was read before that.
+	// See [apsigcomm.UpdateSignalStatus].
+	nodeName := sctx.SignalNode.GetName()
+	key := sctx.Delegate.CreateNamespacedName(nodeName)
+	recorded, err := apsigcomm.UpdateSignalStatus(ctx, sctx.Log, sctx.Client, sctx.Delegate, key, *sctx.SignalData, []string{""}, apsigv2.NewStatus(status))
+	if err != nil {
+		return cr.Result{}, fmt.Errorf("unable to update k0s signal node='%s' with status='%s': %w", nodeName, status, err)
 	}
 
-	sctx.Log.Infof("Updating signaling response to '%s'", status)
-	if err := sctx.Client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to update k0s signal node='%s' with status='%s': %w", signalNodeCopy.GetName(), status, err)
+	// Only report a transition that actually happened. The status is not
+	// recorded if the request was superseded while the version was determined.
+	if recorded {
+		_ = apcomm.ReportEvent(&apcomm.Event{
+			ClusterID: h.clusterID,
+			OldStatus: oldStatus,
+			NewStatus: status,
+		})
 	}
-
-	_ = apcomm.ReportEvent(&apcomm.Event{
-		ClusterID: h.clusterID,
-		OldStatus: oldStatus,
-		NewStatus: status,
-	})
 
 	return cr.Result{}, nil
 }
