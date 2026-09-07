@@ -8,10 +8,17 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metadatafake "k8s.io/client-go/metadata/fake"
 )
 
 func TestCoreDNS_RenderWithPatch(t *testing.T) {
@@ -34,6 +41,52 @@ func TestCoreDNS_RenderWithPatch(t *testing.T) {
 	var buf bytes.Buffer
 	require.NoError(t, tw.WriteToBuffer(&buf))
 	assert.Contains(t, buf.String(), "patched")
+}
+
+func TestCoreDNS_Reconcile_Leading(t *testing.T) {
+	clients := testutil.NewFakeClientFactory()
+	c := &CoreDNS{
+		clusterDomain: "cluster.local",
+		dnsAddress:    "10.96.0.10",
+		client:        metadatafake.NewSimpleMetadataClient(metadatafake.NewTestScheme()),
+		clientFactory: clients,
+		leaderElector: leaderelector.Off(),
+		log:           logrus.WithField("component", "coredns"),
+	}
+
+	require.NoError(t, c.Reconcile(t.Context(), v1beta1.DefaultClusterConfig()))
+
+	_, err := clients.Client.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(t.Context(), "coredns", metav1.GetOptions{})
+	assert.NoError(t, err, "expected the coredns ConfigMap to be applied")
+}
+
+func TestCoreDNS_Reconcile_NotLeading(t *testing.T) {
+	clients := testutil.NewFakeClientFactory()
+	c := &CoreDNS{
+		clusterDomain: "cluster.local",
+		dnsAddress:    "10.96.0.10",
+		client:        metadatafake.NewSimpleMetadataClient(metadatafake.NewTestScheme()),
+		clientFactory: clients,
+		leaderElector: pendingLeaderElector{},
+		log:           logrus.WithField("component", "coredns"),
+	}
+
+	require.NoError(t, c.Reconcile(t.Context(), v1beta1.DefaultClusterConfig()))
+
+	_, err := clients.Client.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(t.Context(), "coredns", metav1.GetOptions{})
+	assert.True(t, apierrors.IsNotFound(err), "a non-leader must not apply the coredns stack, got: %v", err)
+	lastKnownClusterConfig, _ := c.lastKnownClusterConfig.Peek()
+	assert.NotNil(t, lastKnownClusterConfig, "lastKnownClusterConfig must still be tracked so a later leadership change gets picked up")
+}
+
+// pendingLeaderElector is a [leaderelector.Interface] that never leads.
+type pendingLeaderElector struct{}
+
+func (pendingLeaderElector) IsLeader() bool                  { return false }
+func (pendingLeaderElector) AddAcquiredLeaseCallback(func()) {}
+func (pendingLeaderElector) AddLostLeaseCallback(func())     {}
+func (pendingLeaderElector) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
+	return leaderelection.StatusPending, nil
 }
 
 func Test_replicaCount(t *testing.T) {

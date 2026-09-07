@@ -388,6 +388,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			IgnoredStacks: []string{
 				controller.AutopilotStackName,
 				controller.ClusterConfigStackName,
+				controller.CoreDNSStackName,
 				controller.EtcdMemberStackName,
 				controller.HelmExtensionStackName,
 				controller.SystemRBACStackName,
@@ -539,7 +540,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.CoreDNSComponentname) {
-		coreDNS, err := controller.NewCoreDNS(c.K0sVars, adminClientFactory, nodeConfig)
+		coreDNS, err := controller.NewCoreDNS(adminClientFactory, leaderElector, nodeConfig)
 		if err != nil {
 			return fmt.Errorf("failed to create CoreDNS reconciler: %w", err)
 		}
