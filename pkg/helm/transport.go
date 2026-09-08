@@ -13,13 +13,19 @@ import (
 	"sync"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
-	"k8s.io/client-go/transport"
+	"k8s.io/client-go/rest"
 )
+
+// Holds an HTTP transport with the same defaults that client-go applies to
+// the transports it builds.
+var defaultTransport = sync.OnceValue(func() *http.Transport {
+	return utilnet.SetTransportDefaults(new(http.Transport))
+})
 
 // Injects an external interruption signal into HTTP transports.
 //
 // It propagates interruption across:
-//   - network connections, by wrapping DialContext and DialTLSContext,
+//   - network connections, by wrapping the dialer,
 //   - request execution, by injecting a wrapping RoundTripper that mangles request contexts,
 //   - response-body I/O, by wrapping request bodies returned by the underlying RoundTrippers.
 type transportControl struct {
@@ -27,63 +33,40 @@ type transportControl struct {
 	interruptedErr error
 }
 
-// Inject the transport control into wrapTransport, returning the combined
-// wrapper function.
+// Injects the transport control into config.
 //
-// Note that this only supports RoundTrippers of type [*http.Transport].
-func (c *transportControl) wrap(wrapTransport transport.WrapperFunc) transport.WrapperFunc {
-	wrappers := make([]transport.WrapperFunc, 0, 3)
-	wrappers = append(wrappers, c.transport) // Needs to come first to wrap *http.Transport.
-	if wrapTransport != nil {
-		wrappers = append(wrappers, wrapTransport) // This is the original wrapper.
+// Note that this only supports configs that don't have a Transport set.
+func (c *transportControl) injectInto(config *rest.Config) error {
+	// The interruptible dialer is hooked in via config.Dial, which allows
+	// client-go to build its transport around it while keeping all the
+	// transport layers that client-go adds (TLS cache tracking, CA rotation,
+	// and so on) intact. However, custom transports are not supported because
+	// client-go ignores the dialer for those.
+	if config.Transport != nil {
+		// Nothing in k0s can currently produce a REST config with a custom
+		// transport. In particular, REST configs constructed from kubeconfigs
+		// will never have a transport set.
+		return errors.New("custom transports are not supported")
 	}
-	wrappers = append(wrappers, c.roundTripper) // Injects externally cancellable request contexts.
-
-	return transport.Wrappers(wrappers...)
-}
-
-func (c *transportControl) transport(rt http.RoundTripper) http.RoundTripper {
-	// Unwrap any RoundTripperWrapper layers
-	for {
-		if _, ok := rt.(*http.Transport); ok {
-			break
-		}
-		if w, ok := rt.(utilnet.RoundTripperWrapper); ok {
-			rt = w.WrappedRoundTripper()
-			continue
-		}
-		err := fmt.Errorf("expected an *http.Transport, got %T", rt)
-		return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			return nil, err
-		})
+	dial := config.Dial
+	if dial == nil {
+		dial = defaultTransport().DialContext
 	}
+	config.Dial = c.wrapDial(dial)
 
-	transport := rt.(*http.Transport).Clone()
-
-	if dial := transport.DialContext; dial == nil && transport.Dial != nil {
-		err := errors.New("cannot deal with the deprecated transport.Dial")
-		return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			return nil, err
-		})
-	} else {
-		if dial == nil {
-			dial = (&net.Dialer{}).DialContext
-		}
-		transport.DialContext = c.wrapDial(dial)
+	// The transport control is short-lived, and so is its dialer. Setting a
+	// dialer makes client-go's TLS transport cache key unique to this config,
+	// so that every client created from it would leave behind an entry in the
+	// cache. Setting the proxy func explicitly to the upstream default makes the
+	// config uncacheable altogether, as client-go can't compare proxy funcs.
+	if config.Proxy == nil {
+		config.Proxy = defaultTransport().Proxy
 	}
 
-	if dial := transport.DialTLSContext; dial == nil {
-		if transport.DialTLS != nil {
-			err := errors.New("cannot deal with the deprecated transport.DialTLS")
-			return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-				return nil, err
-			})
-		}
-	} else {
-		transport.DialTLSContext = c.wrapDial(dial)
-	}
+	// Injects externally cancellable request contexts.
+	config.Wrap(c.roundTripper)
 
-	return transport
+	return nil
 }
 
 type dialFunc = func(ctx context.Context, net, addr string) (net.Conn, error)
