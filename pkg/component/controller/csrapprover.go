@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	authorization "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/certificates/v1"
@@ -24,6 +25,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 	certificates "k8s.io/kubernetes/pkg/apis/certificates"
 )
 
@@ -70,10 +72,12 @@ var kubeletServingSignerSelector = fields.OneTermEqualSelector("spec.signerName"
 
 // Start watches for CSRs requesting a kubelet-serving certificate and
 // approves them as they show up, instead of polling the API on a fixed
-// interval.
+// interval. The watch only runs while this process is the leader, so a
+// leadership change restarts it and re-lists, picking up anything that
+// might have been missed during the transition.
 func (a *CSRApprover) Start(ctx context.Context) error {
 	ctx, a.stop = context.WithCancel(ctx)
-	go a.watchCSRs(ctx)
+	go leaderelection.RunLeaderTasks(ctx, a.leaderElector.CurrentStatus, a.watchCSRs)
 
 	return nil
 }
@@ -81,8 +85,6 @@ func (a *CSRApprover) Start(ctx context.Context) error {
 // watchCSRs runs until ctx is done, reacting to every CSR that matches
 // kubeletServingSignerSelector, be it already present or newly created.
 func (a *CSRApprover) watchCSRs(ctx context.Context) {
-	defer a.stop()
-
 	var lastObservedVersion string
 	err := watch.CertificateSigningRequests(a.clientset.CertificatesV1().CertificateSigningRequests()).
 		WithFieldSelector(kubeletServingSignerSelector).
@@ -102,7 +104,24 @@ func (a *CSRApprover) watchCSRs(ctx context.Context) {
 		}).
 		Until(ctx, func(csr *v1.CertificateSigningRequest) (bool, error) {
 			lastObservedVersion = csr.ResourceVersion
-			if err := a.approveCSR(ctx, csr); err != nil {
+			// Re-fetch on every attempt rather than reusing the watch-delivered
+			// object, so a retry after a transient failure isn't fighting a
+			// stale resourceVersion.
+			name := csr.Name
+			err := retry.Do(
+				func() error {
+					fresh, err := a.clientset.CertificatesV1().CertificateSigningRequests().Get(ctx, name, metav1.GetOptions{})
+					if err != nil {
+						return err
+					}
+					return a.approveCSR(ctx, fresh)
+				},
+				retry.Context(ctx),
+				retry.Attempts(3),
+				retry.Delay(2*time.Second),
+				retry.LastErrorOnly(true),
+			)
+			if err != nil {
 				a.log.WithError(err).Warn("CSR approval failed")
 			}
 			return false, nil // never stop watching
@@ -117,11 +136,6 @@ func (a *CSRApprover) watchCSRs(ctx context.Context) {
 
 // Majority of this code has been adapted from https://github.com/kontena/kubelet-rubber-stamp
 func (a *CSRApprover) approveCSR(ctx context.Context, csr *v1.CertificateSigningRequest) error {
-	if !a.leaderElector.IsLeader() {
-		a.log.Debug("not the leader, can't approve certificates")
-		return nil
-	}
-
 	if approved, denied := getCertApprovalCondition(&csr.Status); approved || denied {
 		a.log.Debugf("CSR %s is approved=%t || denied=%t. Carry on", csr.Name, approved, denied)
 		return nil

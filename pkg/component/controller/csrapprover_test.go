@@ -17,7 +17,6 @@ import (
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
-	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	authorizationv1 "k8s.io/api/authorization/v1"
@@ -67,7 +66,7 @@ func TestBasicCRSApprover(t *testing.T) {
 	assert.NotNil(t, csr)
 	assert.Equal(t, newCsr.Name, csr.Name)
 	for _, c := range csr.Status.Conditions {
-		assert.True(t, c.Type == certv1.CertificateApproved && c.Reason == "Autoapproved by K0s CSRApprover" && c.Status == core.ConditionTrue)
+		assert.True(t, c.Type == certv1.CertificateApproved && c.Reason == "Autoapproved by K0S CSRApprover" && c.Status == core.ConditionTrue)
 	}
 }
 
@@ -120,16 +119,18 @@ func TestCSRApproverWatch(t *testing.T) {
 	newCsr, err := client.CertificatesV1().CertificateSigningRequests().Create(ctx, csrReq, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// This would only succeed within the test's timeout if the approver
-	// reacts to the CSR being created, rather than waiting for its next poll
-	// tick (which no longer exists).
-	require.NoError(t, watch.CertificateSigningRequests(client.CertificatesV1().CertificateSigningRequests()).
-		WithObjectName(newCsr.Name).
-		Until(ctx, func(csr *certv1.CertificateSigningRequest) (bool, error) {
-			approved, _ := getCertApprovalCondition(&csr.Status)
-			return approved, nil
-		}),
-	)
+	// This would only pass within the timeout if the approver reacts to the
+	// CSR being created, rather than waiting for its next poll tick (which
+	// no longer exists). A single Get, polled, is enough, no need for a
+	// second watch on top of the approver's own one.
+	require.EventuallyWithT(t, func(t *assert.CollectT) {
+		csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, newCsr.Name, metav1.GetOptions{})
+		if !assert.NoError(t, err) {
+			return
+		}
+		approved, _ := getCertApprovalCondition(&csr.Status)
+		assert.True(t, approved)
+	}, 10*time.Second, 10*time.Millisecond)
 }
 
 // pemWithValidKubeletServingTemplate builds a CSR that satisfies
