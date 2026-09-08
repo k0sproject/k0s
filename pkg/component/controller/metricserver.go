@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -271,10 +273,6 @@ func (m *MetricServer) Start(ctx context.Context) error {
 	ctx, m.tickerDone = context.WithCancel(ctx)
 
 	msDir := filepath.Join(m.K0sVars.ManifestsDir, "metricserver")
-	err := dir.Init(msDir, constant.ManifestsDirMode)
-	if err != nil {
-		return err
-	}
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
@@ -297,8 +295,16 @@ func (m *MetricServer) Start(ctx context.Context) error {
 					Data:     newConfig,
 					Path:     filepath.Join(msDir, "metric_server.yaml"),
 				}
-				err = tw.Write()
-				if err != nil {
+				var manifest bytes.Buffer
+				if err := tw.WriteToBuffer(&manifest); err != nil {
+					m.log.Errorf("error rendering metric server manifests: %s. will retry", err.Error())
+					continue
+				}
+				if err := dir.Init(msDir, constant.ManifestsDirMode); err != nil {
+					m.log.WithError(err).Error("Failed to create metrics-server manifest dir, will retry")
+					continue
+				}
+				if err := file.WriteContentAtomically(filepath.Join(msDir, "metric_server.yaml"), manifest.Bytes(), constant.CertMode); err != nil {
 					m.log.Errorf("error writing metric server manifests: %s. will retry", err.Error())
 					continue
 				}
