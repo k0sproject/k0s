@@ -166,13 +166,17 @@ func (a *CSRApprover) authorize(ctx context.Context, csr *v1.CertificateSigningR
 }
 
 func (a *CSRApprover) ensureKubeletServingCert(csr *v1.CertificateSigningRequest) (*x509.CertificateRequest, error) {
-	cr, err := certificates.ParseCSR(csr.Spec.Request)
+	return validateKubeletServingCSR(&csr.Spec)
+}
+
+func validateKubeletServingCSR(spec *v1.CertificateSigningRequestSpec) (*x509.CertificateRequest, error) {
+	cr, err := certificates.ParseCSR(spec.Request)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse CSR %q: %w", csr.Name, err)
+		return nil, fmt.Errorf("unable to parse certificate request: %w", err)
 	}
 
 	usages := sets.NewString()
-	for _, usage := range csr.Spec.Usages {
+	for _, usage := range spec.Usages {
 		usages.Insert(string(usage))
 	}
 
