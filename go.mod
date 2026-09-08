@@ -36,7 +36,7 @@ require (
 	github.com/opencontainers/selinux v1.15.1
 	github.com/otiai10/copy v1.14.1
 	github.com/pelletier/go-toml v1.9.5
-	github.com/prometheus/client_model v0.6.2
+	github.com/prometheus/client_model v0.6.3
 	github.com/prometheus/common v0.71.0
 	github.com/robfig/cron v1.2.0
 	github.com/segmentio/analytics-go/v3 v3.3.0
