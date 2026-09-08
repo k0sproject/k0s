@@ -892,17 +892,25 @@ func (s *BootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username 
 }
 
 func (s *BootlooseSuite) ClientFactory(node string, k0sKubeconfigArgs ...string) *kubeutil.ClientFactory {
-	var lbAddr string
+	var lbHost string
 	if s.WithLB {
-		lbAddr = s.GetLBAddress()
+		// Reach the load balancer through its published port rather than its
+		// container IP. Clients stay behind the load balancer either way, but
+		// container IPs are not routable from the host on Docker Desktop for
+		// macOS, where the containers live in a VM.
+		machine, err := s.MachineForName(s.LBNode())
+		s.Require().NoError(err)
+		hostPort, err := machine.HostPort(s.KubeAPIExternalPort)
+		s.Require().NoError(err)
+		lbHost = net.JoinHostPort("localhost", strconv.Itoa(hostPort))
 	}
 	return &kubeutil.ClientFactory{
 		LoadRESTConfig: func() (*rest.Config, error) {
 			restConfig, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
-			if err != nil || lbAddr == "" {
+			if err != nil || lbHost == "" {
 				return restConfig, err
 			}
-			restConfig.Host = net.JoinHostPort(lbAddr, strconv.Itoa(s.KubeAPIExternalPort))
+			restConfig.Host = lbHost
 			return restConfig, nil
 		},
 	}
