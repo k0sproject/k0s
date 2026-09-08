@@ -53,6 +53,8 @@ jobs:
           github_token: ${{ secrets.GH_BACKPORT_TOKEN }}
           github_workspace: ${{ github.workspace }}
 
+          auto_merge_enabled: true
+
           # Regex pattern to match github labels
           # The capture group catches the target branch
           # i.e. label backport/release-1.23 will create backport PR for branch release-1.23
