@@ -6,7 +6,6 @@ package controller
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -118,10 +117,7 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 
 // Init implements [manager.Component].
 func (c *Calico) Init(context.Context) error {
-	return errors.Join(
-		dir.Init(filepath.Join(c.manifestsDir, "calico_init"), constant.ManifestsDirMode),
-		dir.Init(filepath.Join(c.manifestsDir, "calico"), constant.ManifestsDirMode),
-	)
+	return nil
 }
 
 // Start implements [manager.Component].
@@ -198,6 +194,10 @@ func (c *Calico) Start(context.Context) error {
 func (c *Calico) dumpCRDs() error {
 	var emptyStruct struct{}
 
+	if err := dir.Init(filepath.Join(c.manifestsDir, "calico_init"), constant.ManifestsDirMode); err != nil {
+		return err
+	}
+
 	// Write the CRD definitions only at "boot", they do not change during runtime
 	crds, err := fs.ReadDir(static.CalicoManifests, "CustomResourceDefinition")
 	if err != nil {
@@ -235,6 +235,10 @@ func (c *Calico) dumpCRDs() error {
 }
 
 func (c *Calico) processConfigChanges(newConfig *calicoConfig) error {
+	if err := dir.Init(filepath.Join(c.manifestsDir, "calico"), constant.ManifestsDirMode); err != nil {
+		return err
+	}
+
 	manifestDirectories, err := fs.ReadDir(static.CalicoManifests, ".")
 	if err != nil {
 		return fmt.Errorf("error retrieving calico manifests: %w, will retry", err)
