@@ -73,7 +73,8 @@ check-addons: TIMEOUT=10m
 # Autopilot 3x3 HA test can take a while to run
 check-ap-ha3x3: export K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
-# check-ap-controllerworker might need to re-download the new bin few times, so give it a bit more time to complete
+# check-ap-controllerworker updates three controller+worker nodes one by one,
+# which takes longer than the default timeout allows
 check-ap-controllerworker: TIMEOUT=10m
 
 check-ap-updater: .update-server.stamp
