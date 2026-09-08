@@ -106,12 +106,8 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 			continue
 		}
 
-		x509cr, err := certificates.ParseCSR(csr.Spec.Request)
+		cr, err := a.ensureKubeletServingCert(&csr)
 		if err != nil {
-			return fmt.Errorf("unable to parse CSR %q: %w", csr.Name, err)
-		}
-
-		if err := a.ensureKubeletServingCert(&csr, x509cr); err != nil {
 			a.log.WithError(err).Infof("Not approving CSR %q as it is not recognized as a kubelet-serving certificate", csr.Name)
 			continue
 		}
@@ -129,7 +125,7 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 			return fmt.Errorf("failed to perform SubjectAccessReview for CSR %q", csr.Name)
 		}
 
-		a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.Name, x509cr.DNSNames, x509cr.IPAddresses)
+		a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.Name, cr.DNSNames, cr.IPAddresses)
 		appendApprovalCondition(&csr, "Auto approving kubelet serving certificate after SubjectAccessReview.")
 		_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, &csr, metav1.UpdateOptions{})
 		if err != nil {
@@ -166,13 +162,22 @@ func (a *CSRApprover) authorize(ctx context.Context, csr *v1.CertificateSigningR
 	return sar.Status.Allowed, nil
 }
 
-func (a *CSRApprover) ensureKubeletServingCert(csr *v1.CertificateSigningRequest, x509cr *x509.CertificateRequest) error {
+func (a *CSRApprover) ensureKubeletServingCert(csr *v1.CertificateSigningRequest) (*x509.CertificateRequest, error) {
+	cr, err := certificates.ParseCSR(csr.Spec.Request)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse CSR %q: %w", csr.Name, err)
+	}
+
 	usages := sets.NewString()
 	for _, usage := range csr.Spec.Usages {
 		usages.Insert(string(usage))
 	}
 
-	return certificates.ValidateKubeletServingCSR(x509cr, usages)
+	if err := certificates.ValidateKubeletServingCSR(cr, usages); err != nil {
+		return nil, err
+	}
+
+	return cr, nil
 }
 
 func getCertApprovalCondition(status *v1.CertificateSigningRequestStatus) (approved bool, denied bool) {
