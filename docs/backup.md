@@ -38,6 +38,14 @@ k0s backup --save-path=<directory>
 The directory used for the `save-path` value must exist and be writable. The default value is the current working directory.
 The command provides backup archive using following naming convention: `k0s_backup_<ISODatetimeString>.tar.gz`
 
+If the controller was started with a configuration file in a non-default location, pass the same path to the backup command, so that it can find and store the configuration:
+
+```shell
+k0s backup --config=/etc/k0s/my-cluster.yaml --save-path=<directory>
+```
+
+The configuration is always stored in the archive as `k0s.yaml`, whatever the file is called on the node. A cluster that runs without a configuration file at all is backed up without one, and restoring such an archive falls back to the k0s defaults.
+
 Because of the date/time usage, it is guaranteed that none of the previously created archives would be overwritten.
 
 To output the backup archive to standard output, use `-` as the save path.
