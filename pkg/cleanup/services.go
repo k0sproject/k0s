@@ -6,6 +6,7 @@
 package cleanup
 
 import (
+	"context"
 	"errors"
 	"io/fs"
 	"os/exec"
@@ -23,7 +24,7 @@ func (s *services) Name() string {
 }
 
 // Run uninstalls k0s services that are found on the host
-func (s *services) Run() error {
+func (s *services) Run(context.Context) error {
 	var errs []error
 
 	for _, role := range []string{"controller", "worker"} {

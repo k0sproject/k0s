@@ -27,7 +27,7 @@ func NewResetCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = uninstall.Run(uninstall.Options{
+			err = uninstall.Run(cmd.Context(), uninstall.Options{
 				Vars:      opts.K0sVars,
 				CriSocket: opts.CriSocket,
 				Debug:     debugFlags.IsDebug(),
