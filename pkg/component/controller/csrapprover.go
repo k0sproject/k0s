@@ -6,8 +6,6 @@ package controller
 import (
 	"context"
 	"crypto/x509"
-	"encoding/pem"
-	"errors"
 	"fmt"
 	"time"
 
@@ -111,9 +109,9 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 			continue
 		}
 
-		x509cr, err := parseCSR(&csr)
+		x509cr, err := certificates.ParseCSR(csr.Spec.Request)
 		if err != nil {
-			return fmt.Errorf("unable to parse csr %q: %w", csr.Name, err)
+			return fmt.Errorf("unable to parse CSR %q: %w", csr.Name, err)
 		}
 
 		if err := a.ensureKubeletServingCert(&csr, x509cr); err != nil {
@@ -190,21 +188,6 @@ func getCertApprovalCondition(status *v1.CertificateSigningRequestStatus) (appro
 		}
 	}
 	return
-}
-
-// parseCSR extracts the CSR from the API object and decodes it.
-func parseCSR(obj *v1.CertificateSigningRequest) (*x509.CertificateRequest, error) {
-	// extract PEM from request object
-	pemBytes := obj.Spec.Request
-	block, _ := pem.Decode(pemBytes)
-	if block == nil || block.Type != "CERTIFICATE REQUEST" {
-		return nil, errors.New("PEM block type must be CERTIFICATE REQUEST")
-	}
-	csr, err := x509.ParseCertificateRequest(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-	return csr, nil
 }
 
 func appendApprovalCondition(csr *v1.CertificateSigningRequest, message string) {
