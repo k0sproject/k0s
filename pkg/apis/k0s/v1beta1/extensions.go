@@ -8,7 +8,7 @@ import (
 	"errors"
 	"time"
 
-	"helm.sh/helm/v3/pkg/chartutil"
+	chartutil "helm.sh/helm/v4/pkg/chart/v2/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

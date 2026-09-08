@@ -13,7 +13,7 @@ import (
 	"os"
 	"sync"
 
-	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v4/pkg/registry"
 	"k8s.io/client-go/util/cert"
 )
 

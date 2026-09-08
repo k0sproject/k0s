@@ -46,6 +46,7 @@ type CfgVars struct {
 	// Helm config
 	HelmHome             string
 	HelmRepositoryCache  string
+	HelmContentCache     string
 	HelmRepositoryConfig string
 
 	stdin io.Reader
@@ -183,7 +184,8 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 
 		// Helm Config
 		HelmHome:             helmHome,
-		HelmRepositoryCache:  filepath.Join(helmHome, "cache"),
+		HelmRepositoryCache:  filepath.Join(helmHome, "repository"),
+		HelmContentCache:     filepath.Join(helmHome, "content"),
 		HelmRepositoryConfig: filepath.Join(helmHome, "repositories.yaml"),
 
 		stdin: os.Stdin,

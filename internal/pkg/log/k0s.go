@@ -4,8 +4,11 @@
 package log
 
 import (
+	"log/slog"
+
 	"github.com/bombsimon/logrusr/v4"
 	cfssllog "github.com/cloudflare/cfssl/log"
+	"github.com/go-logr/logr"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/grpclog"
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -26,6 +29,11 @@ func InitLogging() (Backend, ShutdownLoggingFunc) {
 	cfssllog.SetLogger((*cfsslAdapter)(logrus.WithField("component", "cfssl")))
 	crlog.SetLogger(logrusr.New(logrus.WithField("component", "controller-runtime")))
 	grpclog.SetLoggerV2(&grpcAdapter{logrus.WithField("component", "grpc")})
+
+	// Helm uses slog directly in some code paths, ensure a default
+	// handler is set to avoid bypassing k0s's logging setup
+	handler := logr.ToSlogHandler(logrusr.New(logrus.WithField("component", "helm")))
+	slog.SetDefault(slog.New(handler))
 
 	SetWarnLevel()
 

@@ -42,8 +42,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/stretchr/testify/require"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v4/pkg/action"
+	"helm.sh/helm/v4/pkg/cli"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -128,7 +128,7 @@ func (as *AddonsSuite) pushChartToLocalRegistry() {
 	helmEnv := cli.New()
 
 	cfg := &action.Configuration{}
-	err := cfg.Init(helmEnv.RESTClientGetter(), "", "memory", as.T().Logf)
+	err := cfg.Init(helmEnv.RESTClientGetter(), "", "memory")
 	as.Require().NoError(err)
 
 	pushAction := action.NewPushWithOpts(
