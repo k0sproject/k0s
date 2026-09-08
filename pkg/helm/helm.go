@@ -481,7 +481,7 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 
 // UninstallRelease uninstalls a release.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UninstallRelease(ctx context.Context, releaseName, namespace string) error {
+func (hc *Commands) UninstallRelease(ctx context.Context, releaseName, namespace string, timeout time.Duration) error {
 	// The Helm uninstall action doesn't offer RunWithContext. Instead, use ctx
 	// for action configuration and transport control directly. Let transport
 	// interruption handle cancellation while the uninstall action is in
@@ -494,10 +494,10 @@ func (hc *Commands) UninstallRelease(ctx context.Context, releaseName, namespace
 		return fmt.Errorf("can't create helmAction configuration: %w", err)
 	}
 	helmAction := action.NewUninstall(cfg)
-	deadline, ok := ctx.Deadline()
-	if ok {
-		helmAction.Timeout = time.Until(deadline)
-	}
+
+	// The uninstall action doesn't derive Timeout from ctx like RunWithContext
+	// does for install/upgrade, so it has to be set explicitly here.
+	helmAction.Timeout = timeout
 
 	helmAction.Wait = true
 	helmAction.DeletionPropagation = string(metav1.DeletePropagationForeground)
