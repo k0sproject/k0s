@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/client-go/metadata"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -319,7 +321,7 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 
 // Init does nothing
 func (c *CoreDNS) Init(_ context.Context) error {
-	return dir.Init(c.manifestDir, constant.ManifestsDirMode)
+	return nil
 }
 
 // Run runs the CoreDNS reconciler component
@@ -438,11 +440,16 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		Name:     "coredns",
 		Template: coreDNSTemplate,
 		Data:     cfg,
-		Path:     filepath.Join(c.manifestDir, "coredns.yaml"),
 		Patches:  patches,
 	}
-	err = tw.Write()
-	if err != nil {
+	var manifest bytes.Buffer
+	if err := tw.WriteToBuffer(&manifest); err != nil {
+		return fmt.Errorf("error rendering coredns manifests: %w, will retry", err)
+	}
+	if err := dir.Init(c.manifestDir, constant.ManifestsDirMode); err != nil {
+		return err
+	}
+	if err := file.WriteContentAtomically(filepath.Join(c.manifestDir, "coredns.yaml"), manifest.Bytes(), constant.CertMode); err != nil {
 		return fmt.Errorf("error writing coredns manifests: %w, will retry", err)
 	}
 	c.previousConfig = cfg
