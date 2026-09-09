@@ -11,6 +11,9 @@ import (
 	apdl "github.com/k0sproject/k0s/pkg/autopilot/download"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/util/retry"
+
 	"github.com/sirupsen/logrus"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -89,12 +92,28 @@ func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.
 		signalData.Status = apsigv2.NewStatus(manifest.SuccessState)
 	}
 
-	if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
-		return cr.Result{}, fmt.Errorf("failed to marshal signal data: %w", err)
-	}
-
 	logger.Infof("Updating signaling response to '%s'", signalData.Status.Status)
-	if err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
+
+	// Conflicts are resolved by refreshing the signal node and re-applying the
+	// signal data on top of it. Simply returning the error would requeue the
+	// request, which would repeat the download that just succeeded. As long as
+	// the signal node is being updated by others more frequently than it takes
+	// to perform the download, the download would be repeated indefinitely.
+	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		if err := signalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
+			return fmt.Errorf("failed to marshal signal data: %w", err)
+		}
+
+		err := r.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{})
+		if apierrors.IsConflict(err) {
+			logger.WithError(err).Debug("Conflict while updating signal node, refreshing it")
+			if getErr := r.client.Get(ctx, req.NamespacedName, signalNodeCopy); getErr != nil {
+				return fmt.Errorf("failed to refresh signal node: %w", getErr)
+			}
+		}
+
+		return err
+	}); err != nil {
 		return cr.Result{}, fmt.Errorf("failed to update signal node to status '%s': %w", signalData.Status.Status, err)
 	}
 
