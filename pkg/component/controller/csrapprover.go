@@ -8,10 +8,13 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"net"
+	"net/netip"
 	"slices"
 	"strings"
 	"time"
 
+	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
@@ -32,6 +35,7 @@ import (
 	"k8s.io/kubernetes/pkg/auth/nodeidentifier"
 	utilsnet "k8s.io/utils/net"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/sirupsen/logrus"
 )
 
@@ -44,17 +48,47 @@ type CSRApprover struct {
 	leaderElector     leaderelector.Interface
 	clientset         clientset.Interface
 	nodeIdentifier    nodeidentifier.NodeIdentifier
+	serviceCIDRs      []netip.Prefix
+	clusterDomain     string
 }
 
 var _ manager.Component = (*CSRApprover)(nil)
 
 // NewCSRApprover creates the CSRApprover component
-func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface) *CSRApprover {
+func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface, network *v1beta1.Network) *CSRApprover {
+	cidrs := []string{network.ServiceCIDR}
+	if network.DualStack.Enabled {
+		cidrs = append(cidrs, network.DualStack.IPv6ServiceCIDR)
+	}
+	prefixes := make([]netip.Prefix, len(cidrs))
+	for i := range cidrs {
+		// Need to use net.ParseCIDR here as this is what the validation uses,
+		// and it's more permissive than netip.ParsePrefix, i.e. it allows
+		// leading zeroes for the bit count.
+		_, ipNet, err := net.ParseCIDR(cidrs[i])
+		if err != nil {
+			panic(err) // CIDR validity is checked early on during config validation
+		}
+
+		// Below calls can't fail for net.IPNet values produced by net.ParseCIDR.
+		addr, _ := netip.AddrFromSlice(ipNet.IP)
+		prefixLen, _ := ipNet.Mask.Size()
+
+		// Construct a normalized prefix.
+		prefixes[i] = k0snet.UnmapPrefix(netip.PrefixFrom(addr, prefixLen)).Masked()
+	}
+
 	return &CSRApprover{
 		ClusterConfig:     c,
 		leaderElector:     leaderElector,
 		KubeClientFactory: kubeClientFactory,
 		nodeIdentifier:    nodeidentifier.NewDefaultNodeIdentifier(),
+		serviceCIDRs:      prefixes,
+
+		// Normalize the cluster domain to be lowercase, so we can use substring
+		// matches later on. This is safe, as it is proven to be ASCII only
+		// during configuration validation at startup.
+		clusterDomain: strings.TrimSuffix(strings.ToLower(network.ClusterDomain), "."),
 	}
 }
 
@@ -184,9 +218,10 @@ func (a *CSRApprover) authorizeCSRCreation(ctx context.Context, csr *certificate
 }
 
 // Checks that the CSR is a well-formed kubelet-serving certificate request that
-// was submitted by the very node whose identity it requests, that the requester
-// is allowed to create such requests, and that it only requests names and
-// addresses that the node reports for itself.
+// was submitted by the very node whose identity it requests, that it doesn't
+// request any names or addresses reserved for in-cluster services, that the
+// requester is allowed to create such requests, and that it only requests names
+// and addresses that the node reports for itself.
 func (a *CSRApprover) authorizeKubeletServingCSR(ctx context.Context, csr *certificatesv1.CertificateSigningRequest) (*x509.CertificateRequest, error) {
 	// This only checks the shape of the request. Whether the requester is
 	// actually entitled to impersonate the requested identity is up to k0s.
@@ -197,6 +232,13 @@ func (a *CSRApprover) authorizeKubeletServingCSR(ctx context.Context, csr *certi
 
 	nodeName, err := a.verifyNodeIdentity(csr, cr)
 	if err != nil {
+		return nil, err
+	}
+
+	// Never issue certificates for names and addresses that identify the
+	// cluster's control plane or other in-cluster services, before even
+	// checking what the node reports.
+	if err := a.denyInClusterSANs(cr); err != nil {
 		return nil, err
 	}
 
@@ -246,6 +288,51 @@ func (a *CSRApprover) verifyNodeIdentity(csr *certificatesv1.CertificateSigningR
 		return "", fmt.Errorf("requested subject's common name %q doesn't match requesting user name %q", requested, requesting)
 	}
 	return nodeName, nil
+}
+
+func (a *CSRApprover) denyInClusterSANs(cr *x509.CertificateRequest) error {
+	for i, dnsName := range cr.DNSNames {
+		if !govalidator.IsDNSName(dnsName) {
+			return fmt.Errorf("DNSNames[%d]: invalid: %q", i, dnsName)
+		}
+		// Certificate verification is case-insensitive, so compare the
+		// normalized form. This is safe, as dnsName is proven to be ASCII only.
+		subdomain := strings.TrimSuffix(strings.ToLower(dnsName), ".")
+		if subdomain == "kubernetes" || subdomain == "kubernetes.default" {
+			return fmt.Errorf("DNSNames[%d]: forbidden: %q: reserved for in-cluster services", i, dnsName)
+		}
+		for _, domain := range [...]string{"svc", a.clusterDomain} {
+			// The dnsName is a valid all-lowercase DNS name (checked above), as
+			// well as a.clusterDomain (checked during configuration validation
+			// at startup, and during component creation). So we can safely
+			// perform a suffix match. The strings must either be equal
+			// (len(prefix) == 0) or the prefix must end with a dot. A prefix
+			// that consists of nothing but a dot can't occur, as a valid DNS
+			// name never starts with a dot.
+			prefix, ok := strings.CutSuffix(subdomain, domain)
+			if !ok {
+				continue
+			}
+			if n := len(prefix); n == 0 || prefix[n-1] == '.' {
+				return fmt.Errorf("DNSNames[%d]: forbidden: %q: reserved for in-cluster services", i, dnsName)
+			}
+		}
+	}
+	for i, address := range cr.IPAddresses {
+		ip, ok := netip.AddrFromSlice(address)
+		if !ok {
+			return fmt.Errorf("IPAddresses[%d]: invalid: %q: not an IP address", i, address)
+		}
+		// Unmap IPv4-mapped IPv6 addresses, as they get compared against
+		// unmapped prefixes. Otherwise, they wouldn't match an IPv4 prefix.
+		ip = ip.Unmap()
+		for _, cidr := range a.serviceCIDRs {
+			if cidr.Contains(ip) {
+				return fmt.Errorf("IPAddresses[%d]: forbidden: %q: is inside a cluster service CIDR", i, address)
+			}
+		}
+	}
+	return nil
 }
 
 func (a *CSRApprover) verifyNode(ctx context.Context, nodeName string, cr *x509.CertificateRequest) error {

@@ -61,6 +61,19 @@ func TestCSRApprover(t *testing.T) {
 		}
 	}
 
+	// Returns the test node with additional addresses in its status.
+	nodeClaiming := func(addresses ...string) []runtime.Object {
+		claiming := node.DeepCopy()
+		for _, address := range addresses {
+			addressType := corev1.NodeInternalDNS
+			if net.ParseIP(address) != nil {
+				addressType = corev1.NodeInternalIP
+			}
+			claiming.Status.Addresses = append(claiming.Status.Addresses, corev1.NodeAddress{Type: addressType, Address: address})
+		}
+		return []runtime.Object{claiming}
+	}
+
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
 
@@ -80,6 +93,7 @@ func TestCSRApprover(t *testing.T) {
 		template   *x509.CertificateRequest
 		reviewMode reviewMode
 		objects    []runtime.Object
+		network    *v1beta1.Network
 
 		expectedLog string
 		expectedErr string
@@ -145,19 +159,142 @@ func TestCSRApprover(t *testing.T) {
 			testCase: "certificate with a foreign DNS name",
 			template: func() *x509.CertificateRequest {
 				t := validTemplate()
-				t.DNSNames = append(t.DNSNames, "kubernetes.default.svc")
+				t.DNSNames = append(t.DNSNames, "example.com")
 				return t
 			}(),
-			expectedErr: `DNSNames[1]: forbidden: "kubernetes.default.svc": is not a node address of csr-approver-test-node`,
+			expectedErr: `DNSNames[1]: forbidden: "example.com": is not a node address of csr-approver-test-node`,
 		},
 		{
 			testCase: "certificate with a foreign IP address",
 			template: func() *x509.CertificateRequest {
 				t := validTemplate()
+				t.IPAddresses = append(t.IPAddresses, net.IP{192, 0, 2, 1})
+				return t
+			}(),
+			expectedErr: `IPAddresses[1]: forbidden: "192.0.2.1": is not a node address of csr-approver-test-node`,
+		},
+		{
+			testCase: "node with a name that merely resembles the cluster domain",
+			objects:  nodeClaiming("node.mycluster.local"),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "node.mycluster.local")
+				return t
+			}(),
+		},
+		// Names and addresses that belong to the control plane or in-cluster
+		// services are rejected regardless of what the node reports for itself.
+		{
+			testCase: "certificate for the API server's cluster IP",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
 				t.IPAddresses = append(t.IPAddresses, net.IP{10, 96, 0, 1})
 				return t
 			}(),
-			expectedErr: `IPAddresses[1]: forbidden: "10.96.0.1": is not a node address of csr-approver-test-node`,
+			expectedErr: `IPAddresses[1]: forbidden: "10.96.0.1": is inside a cluster service CIDR`,
+		},
+		{
+			testCase: "zero-padded service CIDR",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.IPAddresses = append(t.IPAddresses, net.IP{10, 96, 0, 1})
+				return t
+			}(),
+			network: func() *v1beta1.Network {
+				n := v1beta1.DefaultNetwork()
+				n.ServiceCIDR = "10.96.0.0/012"
+				return n
+			}(),
+			expectedErr: `IPAddresses[1]: forbidden: "10.96.0.1": is inside a cluster service CIDR`,
+		},
+		{
+			testCase: "certificate for the API server's IPv6 cluster IP",
+			network: func() *v1beta1.Network {
+				n := v1beta1.DefaultNetwork()
+				n.DualStack = v1beta1.DualStack{Enabled: true, IPv6PodCIDR: "fd00:10:244::/64", IPv6ServiceCIDR: "fd00:10:96::/108"}
+				return n
+			}(),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.IPAddresses = append(t.IPAddresses, net.IP{0: 0xfd, 3: 0x10, 5: 0x96, 15: 1})
+				return t
+			}(),
+			expectedErr: `IPAddresses[1]: forbidden: "fd00:10:96::1": is inside a cluster service CIDR`,
+		},
+		{
+			testCase: "certificate for the API server's service name",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "kubernetes.default.svc")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "kubernetes.default.svc": reserved for in-cluster services`,
+		},
+		{
+			testCase: "certificate for the API server's short service name",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "kubernetes")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "kubernetes": reserved for in-cluster services`,
+		},
+		{
+			testCase: "certificate for the API server's cluster IP with the service CIDR in IPv4-mapped notation",
+			objects:  nodeClaiming("10.96.0.1"),
+			network: func() *v1beta1.Network {
+				n := v1beta1.DefaultNetwork()
+				n.ServiceCIDR = "::ffff:10.96.0.0/108"
+				return n
+			}(),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.IPAddresses = append(t.IPAddresses, net.IP{10, 96, 0, 1})
+				return t
+			}(),
+			expectedErr: `IPAddresses[1]: forbidden: "10.96.0.1": is inside a cluster service CIDR`,
+		},
+		{
+			testCase: "certificate for the API server's service name in non-canonical notation",
+			objects:  nodeClaiming("Kubernetes.Default."),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "Kubernetes.Default.")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "Kubernetes.Default.": reserved for in-cluster services`,
+		},
+		{
+			testCase: "certificate for another service's name",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "metrics-server.kube-system.svc")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "metrics-server.kube-system.svc": reserved for in-cluster services`,
+		},
+		{
+			testCase: "certificate for a name in the cluster domain",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "foo.bar.cluster.local")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "foo.bar.cluster.local": reserved for in-cluster services`,
+		},
+		{
+			testCase: "certificate for a name in a custom cluster domain",
+			network: func() *v1beta1.Network {
+				n := v1beta1.DefaultNetwork()
+				n.ClusterDomain = "example.com"
+				return n
+			}(),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "foo.bar.example.com")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "foo.bar.example.com": reserved for in-cluster services`,
 		},
 	} {
 		t.Run(tt.testCase, func(t *testing.T) {
@@ -172,6 +309,9 @@ func TestCSRApprover(t *testing.T) {
 			}
 			if tt.objects == nil {
 				tt.objects = []runtime.Object{node}
+			}
+			if tt.network == nil {
+				tt.network = v1beta1.DefaultNetwork()
 			}
 
 			synctest.Test(t, func(t *testing.T) {
@@ -206,7 +346,7 @@ func TestCSRApprover(t *testing.T) {
 
 				logger, logs := test.NewNullLogger()
 				ctx := k0scontext.WithValue[logrus.FieldLogger](t.Context(), logger)
-				underTest := controller.NewCSRApprover(&v1beta1.ClusterConfig{}, leaderelector.Off(), fakeFactory)
+				underTest := controller.NewCSRApprover(&v1beta1.ClusterConfig{}, leaderelector.Off(), fakeFactory, tt.network)
 				require.NoError(t, underTest.Init(ctx))
 				require.NoError(t, underTest.Start(ctx))
 				t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
