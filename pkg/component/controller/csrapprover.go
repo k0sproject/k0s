@@ -9,22 +9,24 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	authorization "k8s.io/api/authorization/v1"
-	v1 "k8s.io/api/certificates/v1"
-	core "k8s.io/api/core/v1"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/k0scontext"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
+	authorizationv1 "k8s.io/api/authorization/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	clientset "k8s.io/client-go/kubernetes"
-
-	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
-	"github.com/k0sproject/k0s/pkg/component/manager"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	certificates "k8s.io/kubernetes/pkg/apis/certificates"
+
+	"github.com/sirupsen/logrus"
 )
 
 type CSRApprover struct {
-	log  *logrus.Entry
+	log  logrus.FieldLogger
 	stop context.CancelFunc
 
 	KubeClientFactory kubeutil.ClientFactoryInterface
@@ -39,7 +41,6 @@ func NewCSRApprover(leaderElector leaderelector.Interface, kubeClientFactory kub
 	return &CSRApprover{
 		leaderElector:     leaderElector,
 		KubeClientFactory: kubeClientFactory,
-		log:               logrus.WithFields(logrus.Fields{"component": "csrapprover"}),
 	}
 }
 
@@ -50,7 +51,11 @@ func (a *CSRApprover) Stop() error {
 }
 
 // Init initializes the component needs
-func (a *CSRApprover) Init(_ context.Context) error {
+func (a *CSRApprover) Init(ctx context.Context) error {
+	a.log = k0scontext.ValueOrElse(ctx, func() logrus.FieldLogger {
+		return logrus.StandardLogger()
+	}).WithField("component", "csrapprover")
+
 	var err error
 	a.clientset, err = a.KubeClientFactory.GetClient()
 	if err != nil {
@@ -112,7 +117,7 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 			continue
 		}
 
-		approved, err := a.authorize(ctx, &csr, authorization.ResourceAttributes{
+		approved, err := a.authorize(ctx, &csr, authorizationv1.ResourceAttributes{
 			Group:    "certificates.k8s.io",
 			Resource: "certificatesigningrequests",
 			Verb:     "create",
@@ -138,14 +143,14 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 	return nil
 }
 
-func (a *CSRApprover) authorize(ctx context.Context, csr *v1.CertificateSigningRequest, rattrs authorization.ResourceAttributes) (bool, error) {
-	extra := make(map[string]authorization.ExtraValue)
+func (a *CSRApprover) authorize(ctx context.Context, csr *certificatesv1.CertificateSigningRequest, rattrs authorizationv1.ResourceAttributes) (bool, error) {
+	extra := make(map[string]authorizationv1.ExtraValue)
 	for k, v := range csr.Spec.Extra {
-		extra[k] = authorization.ExtraValue(v)
+		extra[k] = authorizationv1.ExtraValue(v)
 	}
 
-	sar := &authorization.SubjectAccessReview{
-		Spec: authorization.SubjectAccessReviewSpec{
+	sar := &authorizationv1.SubjectAccessReview{
+		Spec: authorizationv1.SubjectAccessReviewSpec{
 			User:               csr.Spec.Username,
 			UID:                csr.Spec.UID,
 			Groups:             csr.Spec.Groups,
@@ -162,11 +167,11 @@ func (a *CSRApprover) authorize(ctx context.Context, csr *v1.CertificateSigningR
 	return sar.Status.Allowed, nil
 }
 
-func (a *CSRApprover) ensureKubeletServingCert(csr *v1.CertificateSigningRequest) (*x509.CertificateRequest, error) {
+func (a *CSRApprover) ensureKubeletServingCert(csr *certificatesv1.CertificateSigningRequest) (*x509.CertificateRequest, error) {
 	return validateKubeletServingCSR(&csr.Spec)
 }
 
-func validateKubeletServingCSR(spec *v1.CertificateSigningRequestSpec) (*x509.CertificateRequest, error) {
+func validateKubeletServingCSR(spec *certificatesv1.CertificateSigningRequestSpec) (*x509.CertificateRequest, error) {
 	cr, err := certificates.ParseCSR(spec.Request)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse certificate request: %w", err)
@@ -184,23 +189,23 @@ func validateKubeletServingCSR(spec *v1.CertificateSigningRequestSpec) (*x509.Ce
 	return cr, nil
 }
 
-func getCertApprovalCondition(status *v1.CertificateSigningRequestStatus) (approved bool, denied bool) {
+func getCertApprovalCondition(status *certificatesv1.CertificateSigningRequestStatus) (approved bool, denied bool) {
 	for _, c := range status.Conditions {
-		if c.Type == v1.CertificateApproved {
+		if c.Type == certificatesv1.CertificateApproved {
 			approved = true
 		}
-		if c.Type == v1.CertificateDenied {
+		if c.Type == certificatesv1.CertificateDenied {
 			denied = true
 		}
 	}
 	return
 }
 
-func appendApprovalCondition(csr *v1.CertificateSigningRequest, message string) {
-	csr.Status.Conditions = append(csr.Status.Conditions, v1.CertificateSigningRequestCondition{
-		Type:    v1.CertificateApproved,
+func appendApprovalCondition(csr *certificatesv1.CertificateSigningRequest, message string) {
+	csr.Status.Conditions = append(csr.Status.Conditions, certificatesv1.CertificateSigningRequestCondition{
+		Type:    certificatesv1.CertificateApproved,
 		Reason:  "Autoapproved by K0s CSRApprover",
 		Message: message,
-		Status:  core.ConditionTrue,
+		Status:  corev1.ConditionTrue,
 	})
 }
