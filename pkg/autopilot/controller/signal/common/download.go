@@ -83,6 +83,11 @@ func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.
 		// When the download is complete move the status to `FailedDownload`
 		signalData.Status = apsigv2.NewStatus(FailedDownload)
 
+		// Persist error details so the plan controller can surface them.
+		if werr := r.delegate.WriteSignalError(ctx, r.client, signalNodeCopy, signalData.PlanID, FailedDownload, err.Error()); werr != nil {
+			logger.Warnf("Unable to write signal error to node status: %v", werr)
+		}
+
 	} else {
 		logger.Infof("Download of '%s' successful", manifest.URL)
 		// When the download is complete move the status to the success state

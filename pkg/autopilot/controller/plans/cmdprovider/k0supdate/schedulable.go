@@ -78,6 +78,10 @@ func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1bet
 	// disagree. This target state will move to `IncompleteTargets` in this case.
 
 	signalNodeCopy := signalNodeDelegate.DeepCopy(signalNode)
+
+	// Clear any stale error annotation from a previous attempt before sending the new signal.
+	signalNodeDelegate.ClearSignalError(ctx, kp.client, signalNodeCopy)
+
 	signalNodeCommandBuilder, err := signalNodeK0sUpdateCommandBuilder(signalNodeCopy, cmd, status)
 	if err != nil {
 		logger.Warnf("Unable to build signal node content: %v", err)
