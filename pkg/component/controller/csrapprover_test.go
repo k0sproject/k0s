@@ -13,6 +13,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"net"
+	"net/netip"
 	"testing"
 	"testing/synctest"
 
@@ -44,6 +45,7 @@ func TestCSRApprover(t *testing.T) {
 			Addresses: []corev1.NodeAddress{
 				{Type: corev1.NodeHostName, Address: "csr-approver-test-node"},
 				{Type: corev1.NodeInternalIP, Address: "10.0.0.1"},
+				{Type: corev1.NodeInternalIP, Address: "FD00:0000:0000:0000:0000:0000:0000:0001"},
 			},
 		},
 	}
@@ -70,14 +72,28 @@ func TestCSRApprover(t *testing.T) {
 	)
 
 	for _, tt := range []struct {
-		testCase    string
-		template    *x509.CertificateRequest // gets defaulted to a valid template if nil
-		reviewMode  reviewMode
+		testCase string
+
+		// The following things get defaulted to valid values if zero
+		username   string
+		groups     []string
+		template   *x509.CertificateRequest
+		reviewMode reviewMode
+		objects    []runtime.Object
+
 		expectedLog string
 		expectedErr string
 	}{
 		{
 			testCase: "node requesting its own certificate",
+		},
+		{
+			testCase: "node requesting its own certificate with non-canonical IP notation",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.IPAddresses = append(t.IPAddresses, netip.AddrFrom16([16]byte{0: 0xfd, 15: 1}).AsSlice())
+				return t
+			}(),
 		},
 		{
 			testCase:    "SubjectAccessReview fails",
@@ -99,14 +115,67 @@ func TestCSRApprover(t *testing.T) {
 			}(),
 			expectedErr: "subject organization is not system:nodes",
 		},
+		{
+			testCase:    "bootstrap identity requesting a node certificate",
+			username:    "system:bootstrap:abcdef",
+			groups:      []string{"system:bootstrappers", "system:authenticated"},
+			expectedErr: `not requested by a node identity: user "system:bootstrap:abcdef" in group(s) ["system:bootstrappers" "system:authenticated"]`,
+		},
+		{
+			testCase:    "empty requesting node name",
+			username:    "system:node:",
+			expectedErr: `requesting node name "" is invalid: a lowercase RFC 1123 subdomain must consist of`,
+		},
+		{
+			testCase:    "node user name without system:nodes group",
+			groups:      []string{"system:authenticated"},
+			expectedErr: `not requested by a node identity: user "system:node:csr-approver-test-node" in group(s) ["system:authenticated"]`,
+		},
+		{
+			testCase:    "node requesting a certificate for another node",
+			username:    "system:node:unrelated-worker",
+			expectedErr: `requested subject's common name "system:node:csr-approver-test-node" doesn't match requesting user name "system:node:unrelated-worker"`,
+		},
+		{
+			testCase:    "certificate for a non-existent node",
+			objects:     []runtime.Object{},
+			expectedErr: `nodes "csr-approver-test-node" not found`,
+		},
+		{
+			testCase: "certificate with a foreign DNS name",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "kubernetes.default.svc")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "kubernetes.default.svc": is not a node address of csr-approver-test-node`,
+		},
+		{
+			testCase: "certificate with a foreign IP address",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.IPAddresses = append(t.IPAddresses, net.IP{10, 96, 0, 1})
+				return t
+			}(),
+			expectedErr: `IPAddresses[1]: forbidden: "10.96.0.1": is not a node address of csr-approver-test-node`,
+		},
 	} {
 		t.Run(tt.testCase, func(t *testing.T) {
+			if tt.username == "" {
+				tt.username = "system:node:csr-approver-test-node"
+			}
 			if tt.template == nil {
 				tt.template = validTemplate()
 			}
+			if tt.groups == nil {
+				tt.groups = []string{"system:nodes"}
+			}
+			if tt.objects == nil {
+				tt.objects = []runtime.Object{node}
+			}
 
 			synctest.Test(t, func(t *testing.T) {
-				fakeFactory := testutil.NewFakeClientFactory(node)
+				fakeFactory := testutil.NewFakeClientFactory(tt.objects...)
 				client := fakeFactory.Client.(*kubernetesfake.Clientset)
 
 				if tt.reviewMode != reviewModeNone {
@@ -127,8 +196,8 @@ func TestCSRApprover(t *testing.T) {
 					Spec: certv1.CertificateSigningRequestSpec{
 						Request:    pemWithTemplate(tt.template, privateKey),
 						SignerName: certv1.KubeletServingSignerName,
-						Username:   "system:node:csr-approver-test-node",
-						Groups:     []string{"system:nodes"},
+						Username:   tt.username,
+						Groups:     tt.groups,
 						Usages:     []certv1.KeyUsage{certv1.UsageDigitalSignature, certv1.UsageServerAuth},
 					},
 				}
