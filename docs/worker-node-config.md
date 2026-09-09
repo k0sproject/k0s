@@ -92,6 +92,10 @@ the following conditions:
   requesting user must have the `system:node:<nodeName>` name and be a member of
   the `system:nodes` group, and the certificate's common name must be identical
   to the requesting user name.
+- The requested DNS names and IP addresses don't identify the cluster's control
+  plane or other in-cluster services: no IP address may be inside the service
+  CIDR(s), and no DNS name may be `kubernetes`, `kubernetes.default`, or a name
+  within the `svc` or cluster domains.
 - The node exists in the cluster.
 - The requested DNS names and IP addresses are all listed in the node's
   `status.addresses`.
