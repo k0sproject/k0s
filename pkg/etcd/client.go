@@ -207,6 +207,11 @@ func (c *Client) PromoteMember(ctx context.Context, memberID uint64) error {
 	return err
 }
 
+func (c *Client) SetPeerURL(ctx context.Context, memberID uint64, peerURL string) error {
+	_, err := c.client.MemberUpdate(ctx, memberID, []string{peerURL})
+	return err
+}
+
 // Close closes the etcd client
 func (c *Client) Close() error {
 	return c.client.Close()

@@ -53,6 +53,17 @@ k0s restore /tmp/k0s_backup_2021-04-26T19_51_57_000Z.tar.gz
 The command would fail if the data directory for the current controller has overlapping data with the backup archive content.
 
 The command would use the archived `k0s.yaml` as the cluster configuration description.
+It is written to the current working directory as `k0s_<archive timestamp>.yaml`
+(use `--config-out` to change this).
+
+If the backup is restored onto a node with a different IP address than the one
+it was taken on, and the archived configuration pins the etcd peer address via
+`spec.storage.etcd.peerAddress`, adjust it before starting the controller:
+either set it to the new node's address or remove it to have it detected
+automatically. Then start the controller with `--config` pointing at the
+adjusted file. k0s will update the peer URL of the restored etcd member
+accordingly on startup. This only works as long as the restored controller is
+the sole etcd member, i.e. before any additional controllers are joined.
 
 In case if your cluster is HA, after restoring single controller node, join the rest of the controller nodes to the cluster.
 E.g. steps for N nodes cluster would be:
