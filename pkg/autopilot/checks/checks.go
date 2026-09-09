@@ -25,6 +25,9 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 		return err
 	}
 
+	// Refresh the discovery cache to ensure that we catch freshly created CRDs.
+	discoveryClient.Invalidate()
+
 	_, resources, err := discoveryClient.ServerGroupsAndResources()
 	if err != nil {
 		log.WithError(err).Warn("Error while discovering supported API groups and resources")
