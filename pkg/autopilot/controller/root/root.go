@@ -19,6 +19,7 @@ type RootConfig struct {
 	MetricsBindAddr     string
 	HealthProbeBindAddr string
 	ExcludeFromPlans    []string
+	StatusSocketPath    string
 }
 
 // Root is the 'root' of all controllers
