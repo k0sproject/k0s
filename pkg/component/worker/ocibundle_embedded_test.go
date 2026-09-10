@@ -123,6 +123,14 @@ func TestBundleSourcesFromDir(t *testing.T) {
 	assert.Equal(t, "some bundle", string(contents))
 }
 
+type erroringFS struct {
+	err error
+}
+
+func (e erroringFS) Open(name string) (fs.File, error) {
+	return nil, e.err
+}
+
 func TestImageSources_EmbeddedBundles(t *testing.T) {
 	payloadFS := fstest.MapFS{"images/some.tar": payloadEntry("some bundle")}
 
@@ -161,21 +169,21 @@ func TestImageSources_EmbeddedBundles(t *testing.T) {
 		assert.False(t, exists)
 	})
 
-	// Embedded bundle names are not paths in the node's file system. They must
-	// never be resolved as such, no matter how they look. Names that aren't valid
-	// payload entry names are reported as an error rather than as non-existing,
-	// since the latter would unpin the image.
-	t.Run("notResolvedInFileSystem", func(t *testing.T) {
-		dir := t.TempDir()
-		decoy := filepath.Join(dir, "decoy.tar")
-		require.NoError(t, os.WriteFile(decoy, []byte("decoy"), 0644))
-		info, err := os.Stat(decoy)
-		require.NoError(t, err)
-
-		sources := ImageSources{embeddedSourcePrefix + decoy: info.ModTime()}
+	// Names that aren't valid payload entry names are reported as an error rather
+	// than as non-existing, since the latter would unpin the image.
+	t.Run("invalid path", func(t *testing.T) {
+		sources := ImageSources{embeddedSourcePrefix + "../../decoy.tar": time.Now()}
 		exists, err := sources.Exist(payloadFS)
 		assert.ErrorIs(t, err, fs.ErrInvalid)
 		assert.False(t, exists, "An embedded bundle must not be resolved in the file system")
+	})
+
+	// We must treat error from stat as a failure rather than as non-existing plus error
+	t.Run("embedded stat fails", func(t *testing.T) {
+		sources := ImageSources{"k0s-embedded://images/some.tar": time.Now()}
+		exists, err := sources.Exist(erroringFS{err: fs.ErrInvalid})
+		assert.ErrorIs(t, err, fs.ErrInvalid)
+		assert.False(t, exists)
 	})
 
 	// Sources of both kinds may be recorded for the same image.

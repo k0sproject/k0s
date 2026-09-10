@@ -137,6 +137,12 @@ func TestPayload_SynthesizedDirectories(t *testing.T) {
 		}
 		assert.Equal(t, []string{"containerd", "etcd"}, names)
 	})
+
+	t.Run("absolute path not accepted", func(t *testing.T) {
+		data, err := fs.ReadFile(payload, "/images/some.tar")
+		require.ErrorIs(t, err, fs.ErrInvalid)
+		assert.Empty(t, data)
+	})
 }
 
 func TestContentID(t *testing.T) {
