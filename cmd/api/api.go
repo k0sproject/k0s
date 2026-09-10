@@ -134,7 +134,7 @@ func loadRuntimeConfig(log logrus.FieldLogger, stdin io.Reader) (*config.Runtime
 
 func buildServer(log logrus.FieldLogger, k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) (*http.Server, error) {
 	// Single kube client for whole lifetime of the API
-	client, err := kubeutil.NewClientFromFile(k0sVars.AdminKubeConfigPath)
+	client, err := kubeutil.NewClientFromFile(k0sVars.K0sControlAPIKubeConfigPath)
 	if err != nil {
 		return nil, err
 	}

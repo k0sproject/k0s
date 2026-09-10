@@ -96,12 +96,28 @@ func (c *Certificates) Init(ctx context.Context) error {
 			return err
 		}
 
-		// owned by apiServerUID so the k0s control API process can read it
-		if err := kubeConfig(c.K0sVars.AdminKubeConfigPath, kubeConfigAPIUrl, c.CACert, adminCert.Cert, adminCert.Key, apiServerUID, constant.OwnerOnlyMode); err != nil {
+		if err := kubeConfig(c.K0sVars.AdminKubeConfigPath, kubeConfigAPIUrl, c.CACert, adminCert.Cert, adminCert.Key, users.RootUID, constant.OwnerOnlyMode); err != nil {
 			return err
 		}
 
 		return c.CertManager.CreateKeyPair("sa", c.K0sVars, apiServerUID)
+	})
+
+	eg.Go(func() error {
+		// k0s control API cert & kubeconfig, so it doesn't need to read the admin kubeconfig
+		k0sControlAPIReq := certificate.Request{
+			Name:   "k0s-control-api",
+			CN:     "system:k0s-control-api",
+			O:      "system:masters", // TODO: Scope this down once the control API has its own RBAC
+			CACert: caCertPath,
+			CAKey:  caCertKey,
+		}
+		k0sControlAPICert, err := c.CertManager.EnsureCertificate(k0sControlAPIReq, apiServerUID, c.ClusterSpec.API.CA.CertificatesExpireAfter.Duration)
+		if err != nil {
+			return err
+		}
+
+		return kubeConfig(c.K0sVars.K0sControlAPIKubeConfigPath, kubeConfigAPIUrl, c.CACert, k0sControlAPICert.Cert, k0sControlAPICert.Key, apiServerUID, constant.CertSecureMode)
 	})
 
 	if c.KonnectivityEnabled {
