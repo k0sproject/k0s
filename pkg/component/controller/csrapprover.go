@@ -6,6 +6,7 @@ package controller
 import (
 	"context"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"time"
 
@@ -89,6 +90,10 @@ func (a *CSRApprover) Start(ctx context.Context) error {
 	return nil
 }
 
+type csrCheckErr struct{ error }
+
+func (e csrCheckErr) Unwrap() error { return e.error }
+
 // Majority of this code has been adapted from https://github.com/kontena/kubelet-rubber-stamp
 func (a *CSRApprover) approveCSR(ctx context.Context) error {
 	if !a.leaderElector.IsLeader() {
@@ -111,23 +116,21 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 			continue
 		}
 
-		cr, err := a.ensureKubeletServingCert(&csr)
+		cr, err := a.ensureKubeletServingCert(ctx, &csr)
 		if err != nil {
-			a.log.WithError(err).Infof("Not approving CSR %q as it is not recognized as a kubelet-serving certificate", csr.Name)
+			select {
+			case <-ctx.Done():
+				return err
+			default:
+			}
+
+			log := a.log.WithError(err)
+			if _, ok := errors.AsType[csrCheckErr](err); ok {
+				log.Warnf("Failed to check CSR %q", csr.Name)
+			} else {
+				log.Infof("Not approving CSR %q as it is not recognized as a kubelet-serving certificate", csr.Name)
+			}
 			continue
-		}
-
-		approved, err := a.authorize(ctx, &csr, authorizationv1.ResourceAttributes{
-			Group:    "certificates.k8s.io",
-			Resource: "certificatesigningrequests",
-			Verb:     "create",
-		})
-		if err != nil {
-			return fmt.Errorf("SubjectAccessReview failed for CSR %q: %w", csr.Name, err)
-		}
-
-		if !approved {
-			return fmt.Errorf("failed to perform SubjectAccessReview for CSR %q", csr.Name)
 		}
 
 		a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.Name, cr.DNSNames, cr.IPAddresses)
@@ -143,7 +146,7 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 	return nil
 }
 
-func (a *CSRApprover) authorize(ctx context.Context, csr *certificatesv1.CertificateSigningRequest, rattrs authorizationv1.ResourceAttributes) (bool, error) {
+func (a *CSRApprover) authorizeCSRCreation(ctx context.Context, csr *certificatesv1.CertificateSigningRequest) (bool, error) {
 	extra := make(map[string]authorizationv1.ExtraValue)
 	for k, v := range csr.Spec.Extra {
 		extra[k] = authorizationv1.ExtraValue(v)
@@ -151,11 +154,15 @@ func (a *CSRApprover) authorize(ctx context.Context, csr *certificatesv1.Certifi
 
 	sar := &authorizationv1.SubjectAccessReview{
 		Spec: authorizationv1.SubjectAccessReviewSpec{
-			User:               csr.Spec.Username,
-			UID:                csr.Spec.UID,
-			Groups:             csr.Spec.Groups,
-			Extra:              extra,
-			ResourceAttributes: &rattrs,
+			User:   csr.Spec.Username,
+			UID:    csr.Spec.UID,
+			Groups: csr.Spec.Groups,
+			Extra:  extra,
+			ResourceAttributes: &authorizationv1.ResourceAttributes{
+				Group:    certificatesv1.GroupName,
+				Resource: "certificatesigningrequests",
+				Verb:     "create",
+			},
 		},
 	}
 
@@ -167,8 +174,19 @@ func (a *CSRApprover) authorize(ctx context.Context, csr *certificatesv1.Certifi
 	return sar.Status.Allowed, nil
 }
 
-func (a *CSRApprover) ensureKubeletServingCert(csr *certificatesv1.CertificateSigningRequest) (*x509.CertificateRequest, error) {
-	return validateKubeletServingCSR(&csr.Spec)
+func (a *CSRApprover) ensureKubeletServingCert(ctx context.Context, csr *certificatesv1.CertificateSigningRequest) (*x509.CertificateRequest, error) {
+	cr, err := validateKubeletServingCSR(&csr.Spec)
+	if err != nil {
+		return nil, err
+	}
+
+	if approved, err := a.authorizeCSRCreation(ctx, csr); err != nil {
+		return nil, csrCheckErr{fmt.Errorf("SubjectAccessReview failed: %w", err)}
+	} else if !approved {
+		return nil, errors.New("requesting user is not allowed to create certificate signing requests")
+	}
+
+	return cr, nil
 }
 
 func validateKubeletServingCSR(spec *certificatesv1.CertificateSigningRequestSpec) (*x509.CertificateRequest, error) {
