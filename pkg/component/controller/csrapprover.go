@@ -20,6 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	certificates "k8s.io/kubernetes/pkg/apis/certificates"
 
@@ -66,25 +67,22 @@ func (a *CSRApprover) Init(ctx context.Context) error {
 	return nil
 }
 
-// Run every 10 seconds checks for newly issued CSRs and approves them
+// Checks roughly every 10 seconds for newly issued kubelet-serving CSRs and
+// approves them if they meet all the criteria.
 func (a *CSRApprover) Start(ctx context.Context) error {
 	ctx, a.stop = context.WithCancel(ctx)
 	go func() {
 		defer a.stop()
-		ticker := time.NewTicker(10 * time.Second) // TODO: sometimes this should be refactored so it watches instead of polls for CSRs
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				err := a.approveCSR(ctx)
-				if err != nil {
-					a.log.WithError(err).Warn("CSR approval failed")
-				}
-			case <-ctx.Done():
-				a.log.Info("CSR Approver context done")
-				return
+
+		// TODO: sometimes this should be refactored so it watches instead of polls for CSRs
+		wait.JitterUntilWithContext(ctx, func(ctx context.Context) {
+			err := a.approveCSR(ctx)
+			if err != nil {
+				a.log.WithError(err).Warn("CSR approval failed")
 			}
-		}
+		}, 8*time.Second, 0.5, true)
+
+		a.log.Info("CSR Approver context done")
 	}()
 
 	return nil

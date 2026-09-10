@@ -15,7 +15,6 @@ import (
 	"net"
 	"testing"
 	"testing/synctest"
-	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
@@ -142,7 +141,6 @@ func TestCSRApprover(t *testing.T) {
 				require.NoError(t, underTest.Start(ctx))
 				t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
-				time.Sleep(10 * time.Second)
 				synctest.Wait()
 
 				csr, err = client.CertificatesV1().CertificateSigningRequests().Get(t.Context(), csr.Name, metav1.GetOptions{})
