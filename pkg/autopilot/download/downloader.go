@@ -19,7 +19,8 @@ import (
 )
 
 type Downloader interface {
-	Download(ctx context.Context) error
+	// Downloads the configured URL, returning the path to the downloaded file.
+	Download(ctx context.Context) (string, error)
 }
 
 type Config struct {
@@ -42,8 +43,8 @@ func NewDownloader(config Config) Downloader {
 	}
 }
 
-// Performs the download process.
-func (d *downloader) Download(ctx context.Context) (err error) {
+// Performs the download process, returning the path to the downloaded file.
+func (d *downloader) Download(ctx context.Context) (_ string, err error) {
 	var targets []io.Writer
 
 	// If we've been provided a hash and actual value to compare with, use it.
@@ -51,7 +52,7 @@ func (d *downloader) Download(ctx context.Context) (err error) {
 	if d.config.Hasher != nil && d.config.ExpectedHash != "" {
 		expectedHash, err = hex.DecodeString(d.config.ExpectedHash)
 		if err != nil {
-			return fmt.Errorf("invalid update hash: %w", err)
+			return "", fmt.Errorf("invalid update hash: %w", err)
 		}
 		targets = append(targets, d.config.Hasher)
 	}
@@ -63,7 +64,7 @@ func (d *downloader) Download(ctx context.Context) (err error) {
 	} else {
 		fileName = filepath.Base(d.config.Filename)
 		if fileName != d.config.Filename {
-			return fmt.Errorf("filename contains path elements: %s", d.config.Filename)
+			return "", fmt.Errorf("filename contains path elements: %s", d.config.Filename)
 		}
 		fileName = d.config.Filename
 	}
@@ -71,7 +72,7 @@ func (d *downloader) Download(ctx context.Context) (err error) {
 	// Set up target file for download.
 	target, err := file.AtomicWithTarget(filepath.Join(d.config.DownloadDir, fileName)).Open()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer func() { err = errors.Join(err, target.Close()) }()
 	targets = append(targets, target)
@@ -84,20 +85,22 @@ func (d *downloader) Download(ctx context.Context) (err error) {
 
 	// Download from URL into targets.
 	if err = internalhttp.Download(ctx, d.config.URL, io.MultiWriter(targets...), downloadOpts...); err != nil {
-		return fmt.Errorf("download failed: %w", err)
+		return "", fmt.Errorf("download failed: %w", err)
 	}
 
 	// Check the hash of the downloaded data and fail if it doesn't match.
 	if expectedHash != nil {
 		if downloadedHash := d.config.Hasher.Sum(nil); !bytes.Equal(expectedHash, downloadedHash) {
-			return fmt.Errorf("hash mismatch: expected %x, got %x", expectedHash, downloadedHash)
+			return "", fmt.Errorf("hash mismatch: expected %x, got %x", expectedHash, downloadedHash)
 		}
 	}
 
 	// All is well. Finish the download.
 	if err := target.FinishWithBaseName(fileName); err != nil {
-		return fmt.Errorf("failed to finish download: %w", err)
+		return "", fmt.Errorf("failed to finish download: %w", err)
 	}
 
-	return nil
+	// Mirror how FinishWithBaseName resolved the target. It is absolute, since
+	// the writer made it so, and the returned path has to be the same file.
+	return filepath.Join(filepath.Dir(target.Name()), fileName), nil
 }
