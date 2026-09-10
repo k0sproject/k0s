@@ -41,7 +41,9 @@ type Component interface {
 
 type Ready interface {
 	// Ready performs a ready check and indicates that a component is ready to run.
-	Ready() error
+	// The given context may be used to bound and cancel the readiness check; it is
+	// derived from the context passed to the manager's Start method.
+	Ready(context.Context) error
 }
 
 // Reconciler defines the component interface that is reconciled based
