@@ -4,6 +4,7 @@
 package controller_test
 
 import (
+	"cmp"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -62,19 +63,33 @@ func TestCSRApprover(t *testing.T) {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
 
+	type reviewMode uint8
+	const (
+		reviewModeAllow reviewMode = iota
+		reviewModeNone
+		reviewModeFail
+	)
+
 	for _, tt := range []struct {
-		testCase          string
-		template          *x509.CertificateRequest // gets defaulted to a valid template if nil
-		noReviewAutoAllow bool
-		expectedErr       string
+		testCase    string
+		template    *x509.CertificateRequest // gets defaulted to a valid template if nil
+		reviewMode  reviewMode
+		expectedLog string
+		expectedErr string
 	}{
 		{
 			testCase: "node requesting its own certificate",
 		},
 		{
-			testCase:          "SubjectAccessReview fails",
-			noReviewAutoAllow: true,
-			expectedErr:       "failed to perform SubjectAccessReview",
+			testCase:    "SubjectAccessReview fails",
+			reviewMode:  reviewModeFail,
+			expectedLog: "Failed to check CSR",
+			expectedErr: "SubjectAccessReview failed",
+		},
+		{
+			testCase:    "SubjectAccessReview not allowed",
+			reviewMode:  reviewModeNone,
+			expectedErr: "requesting user is not allowed to create certificate signing requests",
 		},
 		{
 			testCase: "certificate that is not a kubelet-serving certificate",
@@ -95,10 +110,13 @@ func TestCSRApprover(t *testing.T) {
 				fakeFactory := testutil.NewFakeClientFactory(node)
 				client := fakeFactory.Client.(*kubernetesfake.Clientset)
 
-				if !tt.noReviewAutoAllow {
+				if tt.reviewMode != reviewModeNone {
 					// Allow the SubjectAccessReview, so that it's actually the
 					// approver's own checks that decide about the approval.
 					client.PrependReactor("create", "subjectaccessreviews", func(action k8stesting.Action) (bool, runtime.Object, error) {
+						if tt.reviewMode == reviewModeFail {
+							return true, nil, assert.AnError
+						}
 						sar := action.(k8stesting.CreateAction).GetObject().(*authorizationv1.SubjectAccessReview)
 						sar.Status.Allowed = true
 						return true, sar, nil
@@ -148,10 +166,12 @@ func TestCSRApprover(t *testing.T) {
 				require.Len(t, entries, 1, "Expected exactly one log message")
 				loggedMsg, loggedErr := entries[0].Message, entries[0].Data[logrus.ErrorKey]
 				if tt.expectedErr == "" {
+					assert.Contains(t, loggedMsg, cmp.Or(tt.expectedLog, "approving csr csrapprover_test"))
 					if loggedErr != nil {
 						assert.NoErrorf(t, loggedErr.(error), "Message: %s", loggedMsg)
 					}
 				} else {
+					assert.Contains(t, loggedMsg, cmp.Or(tt.expectedLog, "Not approving CSR"))
 					if assert.NotNilf(t, loggedErr, "No error was logged: %s", loggedMsg) {
 						assert.ErrorContainsf(t, loggedErr.(error), tt.expectedErr, "Message: %s", loggedMsg)
 					}
