@@ -194,8 +194,8 @@ func (k *Konnectivity) runServer(ctx context.Context, count uint) error {
 }
 
 // Ready implements manager.Ready.
-func (k *Konnectivity) Ready() error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+func (k *Konnectivity) Ready(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	// This is somehow flipped: Check healthz instead of readyz.
 	return k.health(ctx, "/healthz")
