@@ -29,6 +29,11 @@ When adding new adopters, please adhere roughly to the following format:
   Project: HPCaaS<br>
   DeepSquare embeds it into their HPCaaS [service](https://deepsquare.io/wp-content/uploads/2023/05/DeepSquare_White-Paper-1.pdf).
 
+* [Defense Unicorns](https://defenseunicorns.com)<br>
+  Project: Unified Defense Stack<br>
+  Defense Unicorns uses k0s to provide a lightweight and production ready
+  Kubernetes distribution to mission and critical environments.
+
 * [k0smotron](https://k0smotron.io/)<br>
   Project: Managing hosted k0s clusters and full Cluster API provider for k0s<br>
   K0smotron focuses on managing hosted k0s clusters within an existing
