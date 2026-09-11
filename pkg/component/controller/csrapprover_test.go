@@ -4,6 +4,7 @@
 package controller_test
 
 import (
+	"bytes"
 	"cmp"
 	"crypto"
 	"crypto/ecdsa"
@@ -15,6 +16,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -108,6 +110,7 @@ func TestCSRApprover(t *testing.T) {
 		username   string
 		groups     []string
 		template   *x509.CertificateRequest
+		csr        *certv1.CertificateSigningRequest // takes precedence over template
 		reviewMode reviewMode
 		objects    []runtime.Object
 		network    *v1beta1.Network
@@ -125,6 +128,63 @@ func TestCSRApprover(t *testing.T) {
 				t.IPAddresses = append(t.IPAddresses, netip.AddrFrom16([16]byte{0: 0xfd, 15: 1}).AsSlice())
 				return t
 			}(),
+		},
+		{
+			testCase: "node reporting 4096 addresses",
+			objects: func() []runtime.Object {
+				addresses := make([]string, 4096-len(node.Status.Addresses))
+				for i := range addresses {
+					addresses[i] = fmt.Sprintf("worker-%04d", i)
+				}
+				return nodeClaiming(addresses...)
+			}(),
+		},
+		{
+			testCase: "node reporting 4097 addresses",
+			objects: func() []runtime.Object {
+				addresses := make([]string, 4097-len(node.Status.Addresses))
+				for i := range addresses {
+					addresses[i] = fmt.Sprintf("worker-%04d", i)
+				}
+				return nodeClaiming(addresses...)
+			}(),
+			expectedErr: "node reports more than 4096 addresses",
+		},
+		{
+			testCase: "certificate request of 512 KiB",
+			csr: func() *certv1.CertificateSigningRequest {
+				csr := validSigningRequest(validTemplate())
+				csr.Spec.Request = append(csr.Spec.Request, bytes.Repeat([]byte{'\n'}, (512*1024)-len(csr.Spec.Request))...)
+				return csr
+			}(),
+		},
+		{
+			testCase: "certificate request of 512 KiB plus one byte",
+			csr: func() *certv1.CertificateSigningRequest {
+				csr := validSigningRequest(validTemplate())
+				csr.Spec.Request = append(csr.Spec.Request, bytes.Repeat([]byte{'\n'}, (512*1024)+1-len(csr.Spec.Request))...)
+				return csr
+			}(),
+			expectedErr: "certificate request size exceeds 512 KiB",
+		},
+		{
+			testCase: "certificate with 4096 SANs",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, slices.Repeat([]string{t.DNSNames[0]}, 2048-len(t.DNSNames))...)
+				t.IPAddresses = append(t.IPAddresses, slices.Repeat([]net.IP{t.IPAddresses[0]}, 2048-len(t.IPAddresses))...)
+				return t
+			}(),
+		},
+		{
+			testCase: "certificate with 4097 SANs",
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, slices.Repeat([]string{t.DNSNames[0]}, 2049-len(t.DNSNames))...)
+				t.IPAddresses = append(t.IPAddresses, slices.Repeat([]net.IP{t.IPAddresses[0]}, 2048-len(t.IPAddresses))...)
+				return t
+			}(),
+			expectedErr: "certificate request contains more than 4096 SANs",
 		},
 		{
 			testCase:    "SubjectAccessReview fails",
@@ -318,9 +378,6 @@ func TestCSRApprover(t *testing.T) {
 			if tt.username == "" {
 				tt.username = "system:node:csr-approver-test-node"
 			}
-			if tt.template == nil {
-				tt.template = validTemplate()
-			}
 			if tt.groups == nil {
 				tt.groups = []string{"system:nodes"}
 			}
@@ -348,7 +405,14 @@ func TestCSRApprover(t *testing.T) {
 					})
 				}
 
-				csr := validSigningRequest(tt.template)
+				csr := tt.csr
+				if tt.csr == nil {
+					template := tt.template
+					if template == nil {
+						template = validTemplate()
+					}
+					csr = validSigningRequest(template)
+				}
 				csr.Spec.Username, csr.Spec.Groups = tt.username, tt.groups
 
 				_, err := client.CertificatesV1().CertificateSigningRequests().Create(t.Context(), csr, metav1.CreateOptions{})

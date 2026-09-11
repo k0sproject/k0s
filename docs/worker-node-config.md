@@ -86,8 +86,11 @@ Kubernetes doesn't approve these CSRs automatically. k0s ships a controller
 component called `csr-approver` that does so, provided the request meets all of
 the following conditions:
 
+- The PEM-encoded certificate request size doesn't exceed 512 KiB.
 - It is a well-formed kubelet serving certificate request, according to
   Kubernetes' validation rules.
+- The certificate request has no more than 4096 SANs, counting DNS names and IP
+  addresses together.
 - It was created by the very node it requests the certificate for. The
   requesting user must have the `system:node:<nodeName>` name and be a member of
   the `system:nodes` group, and the certificate's common name must be identical
@@ -97,6 +100,7 @@ the following conditions:
   CIDR(s), and no DNS name may be `kubernetes`, `kubernetes.default`, or a name
   within the `svc` or cluster domains.
 - The node exists in the cluster.
+- The node's `status.addresses` contains no more than 4096 entries.
 - The requested DNS names and IP addresses are all listed in the node's
   `status.addresses`.
 
