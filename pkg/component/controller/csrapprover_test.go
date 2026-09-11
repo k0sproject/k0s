@@ -12,10 +12,12 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"net"
 	"net/netip"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller"
@@ -61,6 +63,24 @@ func TestCSRApprover(t *testing.T) {
 		}
 	}
 
+	validSigningRequest := func() func(template *x509.CertificateRequest) *certv1.CertificateSigningRequest {
+		privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		require.NoError(t, err)
+
+		return func(template *x509.CertificateRequest) *certv1.CertificateSigningRequest {
+			return &certv1.CertificateSigningRequest{
+				ObjectMeta: metav1.ObjectMeta{Name: "csrapprover_test"},
+				Spec: certv1.CertificateSigningRequestSpec{
+					Request:    pemWithTemplate(template, privateKey),
+					SignerName: certv1.KubeletServingSignerName,
+					Username:   "system:node:" + node.Name,
+					Groups:     []string{"system:nodes"},
+					Usages:     []certv1.KeyUsage{certv1.UsageDigitalSignature, certv1.UsageServerAuth},
+				},
+			}
+		}
+	}()
+
 	// Returns the test node with additional addresses in its status.
 	nodeClaiming := func(addresses ...string) []runtime.Object {
 		claiming := node.DeepCopy()
@@ -73,9 +93,6 @@ func TestCSRApprover(t *testing.T) {
 		}
 		return []runtime.Object{claiming}
 	}
-
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	require.NoError(t, err)
 
 	type reviewMode uint8
 	const (
@@ -112,7 +129,7 @@ func TestCSRApprover(t *testing.T) {
 		{
 			testCase:    "SubjectAccessReview fails",
 			reviewMode:  reviewModeFail,
-			expectedLog: "Failed to check CSR",
+			expectedLog: `Failed to process CSR "csrapprover_test"`,
 			expectedErr: "SubjectAccessReview failed",
 		},
 		{
@@ -331,16 +348,9 @@ func TestCSRApprover(t *testing.T) {
 					})
 				}
 
-				csr := &certv1.CertificateSigningRequest{
-					ObjectMeta: metav1.ObjectMeta{Name: "csrapprover_test"},
-					Spec: certv1.CertificateSigningRequestSpec{
-						Request:    pemWithTemplate(tt.template, privateKey),
-						SignerName: certv1.KubeletServingSignerName,
-						Username:   tt.username,
-						Groups:     tt.groups,
-						Usages:     []certv1.KeyUsage{certv1.UsageDigitalSignature, certv1.UsageServerAuth},
-					},
-				}
+				csr := validSigningRequest(tt.template)
+				csr.Spec.Username, csr.Spec.Groups = tt.username, tt.groups
+
 				_, err := client.CertificatesV1().CertificateSigningRequests().Create(t.Context(), csr, metav1.CreateOptions{})
 				require.NoError(t, err)
 
@@ -356,18 +366,11 @@ func TestCSRApprover(t *testing.T) {
 				csr, err = client.CertificatesV1().CertificateSigningRequests().Get(t.Context(), csr.Name, metav1.GetOptions{})
 				require.NoError(t, err)
 
-				var approvedCond *certv1.CertificateSigningRequestCondition
-				for _, c := range csr.Status.Conditions {
-					if c.Type == certv1.CertificateApproved {
-						approvedCond = &c
-						break
-					}
+				var expectedApproved corev1.ConditionStatus
+				if tt.expectedErr == "" {
+					expectedApproved = corev1.ConditionTrue
 				}
-				if tt.expectedErr != "" {
-					assert.Nil(t, approvedCond, "Expected no approved condition at all")
-				} else if assert.NotNil(t, approvedCond, "Expected an approved condition") {
-					assert.Equalf(t, corev1.ConditionTrue, approvedCond.Status, "Unexpected status in approved condition: %v", approvedCond)
-				}
+				assertApprovedStatus(t, expectedApproved, csr)
 
 				entries := logs.AllEntries()
 				require.Len(t, entries, 1, "Expected exactly one log message")
@@ -386,6 +389,99 @@ func TestCSRApprover(t *testing.T) {
 			})
 		})
 	}
+
+	t.Run("handles all pending requests in one pass", func(t *testing.T) {
+		var objects []runtime.Object
+		for i := range 3 {
+			node := node.DeepCopy()
+			node.Name = fmt.Sprintf("csr-test-node-%d", i)
+
+			template := validTemplate()
+			template.Subject.CommonName = "system:node:" + node.Name
+			csr := validSigningRequest(template)
+			csr.Name = fmt.Sprintf("csr-approver-test-%d", i)
+			csr.Spec.Username = template.Subject.CommonName
+
+			objects = append(objects, node, csr)
+		}
+
+		synctest.Test(t, func(t *testing.T) {
+			fakeFactory := testutil.NewFakeClientFactory(objects...)
+			client := fakeFactory.Client.(*kubernetesfake.Clientset)
+
+			client.PrependReactor("create", "subjectaccessreviews", func(action k8stesting.Action) (bool, runtime.Object, error) {
+				sar := action.(k8stesting.CreateAction).GetObject().(*authorizationv1.SubjectAccessReview)
+				sar.Status.Allowed = true
+				return true, sar, nil
+			})
+
+			underTest := controller.NewCSRApprover(leaderelector.Off(), fakeFactory, v1beta1.DefaultNetwork())
+			require.NoError(t, underTest.Init(t.Context()))
+			require.NoError(t, underTest.Start(t.Context()))
+			t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
+
+			synctest.Wait()
+
+			csrs, err := client.CertificatesV1().CertificateSigningRequests().List(t.Context(), metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Len(t, csrs.Items, 3)
+			for i := range csrs.Items {
+				assertApprovedStatus(t, corev1.ConditionTrue, &csrs.Items[i])
+			}
+		})
+	})
+
+	t.Run("handles newest request per node first", func(t *testing.T) {
+		// Lists are sorted by name. The newest request is in the middle, so
+		// that neither the first nor the last request in the list is the one to
+		// be picked.
+		now := metav1.Now()
+		csr1 := validSigningRequest(validTemplate())
+		csr1.Name, csr1.CreationTimestamp = "csr-1", metav1.NewTime(now.Add(-2*time.Hour))
+		csr2 := csr1.DeepCopy()
+		csr2.Name, csr2.CreationTimestamp = "csr-2", now
+		csr3 := csr1.DeepCopy()
+		csr3.Name, csr3.CreationTimestamp = "csr-3", metav1.NewTime(now.Add(-1*time.Hour))
+
+		synctest.Test(t, func(t *testing.T) {
+			fakeFactory := testutil.NewFakeClientFactory(node, csr1, csr2, csr3)
+			client := fakeFactory.Client.(*kubernetesfake.Clientset)
+
+			client.PrependReactor("create", "subjectaccessreviews", func(action k8stesting.Action) (bool, runtime.Object, error) {
+				sar := action.(k8stesting.CreateAction).GetObject().(*authorizationv1.SubjectAccessReview)
+				sar.Status.Allowed = true
+				return true, sar, nil
+			})
+
+			underTest := controller.NewCSRApprover(leaderelector.Off(), fakeFactory, v1beta1.DefaultNetwork())
+			require.NoError(t, underTest.Init(t.Context()))
+			require.NoError(t, underTest.Start(t.Context()))
+			t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
+
+			// Expect three ticks, csr2 first, then csr3, then csr1.
+			for i, tick := range [][3]bool{
+				{false, true, false},
+				{false, true, true},
+				{true, true, true},
+			} {
+				synctest.Wait()
+				t.Log("Tick", i+1)
+
+				csrs, err := client.CertificatesV1().CertificateSigningRequests().List(t.Context(), metav1.ListOptions{})
+				if assert.NoError(t, err) && assert.Len(t, csrs.Items, len(tick)) {
+					for i, expected := range tick {
+						var expectedStatus corev1.ConditionStatus
+						if expected {
+							expectedStatus = corev1.ConditionTrue
+						}
+						assertApprovedStatus(t, expectedStatus, &csrs.Items[i])
+					}
+				}
+
+				time.Sleep(12 * time.Second)
+			}
+		})
+	})
 }
 
 func pemWithTemplate(template *x509.CertificateRequest, key crypto.PrivateKey) []byte {
@@ -405,4 +501,21 @@ func pemWithTemplate(template *x509.CertificateRequest, key crypto.PrivateKey) [
 	}
 
 	return p
+}
+
+func assertApprovedStatus(t *testing.T, expected corev1.ConditionStatus, csr *certv1.CertificateSigningRequest) {
+	t.Helper()
+
+	var approvedCond *certv1.CertificateSigningRequestCondition
+	for _, c := range csr.Status.Conditions {
+		if c.Type == certv1.CertificateApproved {
+			approvedCond = &c
+			break
+		}
+	}
+	if expected == "" {
+		assert.Nilf(t, approvedCond, "Expected no approved condition at all for %s", csr.Name)
+	} else if assert.NotNilf(t, approvedCond, "Expected an approved condition for %s", csr.Name) {
+		assert.Equalf(t, expected, approvedCond.Status, "Unexpected status in approved condition for %s: %v", csr.Name, approvedCond)
+	}
 }

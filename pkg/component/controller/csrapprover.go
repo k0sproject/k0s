@@ -8,6 +8,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"iter"
+	"maps"
 	"net"
 	"net/netip"
 	"slices"
@@ -142,49 +144,76 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 		return nil
 	}
 
+	pending, err := a.fetchPendingCSRs(ctx)
+	if err != nil {
+		return nil
+	}
+
+	for csr := range pending {
+		err := a.processCSR(ctx, csr)
+		select {
+		case <-ctx.Done():
+			if err == nil {
+				return nil
+			}
+			return fmt.Errorf("while processing %s: %w", csr.Name, err)
+
+		default:
+			if err != nil {
+				a.log.WithError(err).Warnf("Failed to process CSR %q", csr.Name)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (a *CSRApprover) fetchPendingCSRs(ctx context.Context) (iter.Seq[*certificatesv1.CertificateSigningRequest], error) {
 	opts := metav1.ListOptions{
 		FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
 	}
 
 	csrs, err := a.clientset.CertificatesV1().CertificateSigningRequests().List(ctx, opts)
 	if err != nil {
-		return fmt.Errorf("can't fetch CSRs: %w", err)
+		return nil, fmt.Errorf("can't fetch CSRs: %w", err)
 	}
 
-	for _, csr := range csrs.Items {
+	// Only consider the newest pending request of each requesting user. A
+	// kubelet never has more than one request outstanding, so this doesn't hold
+	// back legitimate requests, but it caps the work that a single identity can
+	// cause per pass.
+	pending := make(map[string]*certificatesv1.CertificateSigningRequest)
+	for i := range csrs.Items {
+		csr := &csrs.Items[i]
 		if approved, denied := getCertApprovalCondition(&csr.Status); approved || denied {
 			a.log.Debugf("CSR %s is approved=%t || denied=%t. Carry on", csr.Name, approved, denied)
 			continue
 		}
+		if newest, ok := pending[csr.Spec.Username]; !ok || newest.CreationTimestamp.Before(&csr.CreationTimestamp) {
+			pending[csr.Spec.Username] = csr
+		}
+	}
 
-		cr, err := a.authorizeKubeletServingCSR(ctx, &csr)
-		if err != nil {
-			select {
-			case <-ctx.Done():
-				return err
-			default:
-			}
+	// Rely on Go's randomized map iteration order, so that nobody
+	// can starve others by choosing request names that sort first.
+	return maps.Values(pending), nil
+}
 
-			log := a.log.WithError(err)
-			if _, ok := errors.AsType[csrCheckErr](err); ok {
-				log.Warnf("Failed to check CSR %q", csr.Name)
-			} else {
-				log.Infof("Not approving CSR %q as it is not recognized as a kubelet-serving certificate", csr.Name)
-			}
-			continue
+func (a *CSRApprover) processCSR(ctx context.Context, csr *certificatesv1.CertificateSigningRequest) error {
+	cr, err := a.authorizeKubeletServingCSR(ctx, csr)
+	if err != nil {
+		if _, ok := errors.AsType[csrCheckErr](err); ok {
+			return err
 		}
 
-		a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.Name, cr.DNSNames, cr.IPAddresses)
-		appendApprovalCondition(&csr, "Auto approving kubelet serving certificate after SubjectAccessReview.")
-		_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, &csr, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("error updating approval for CSR %q: %w", csr.Name, err)
-		}
-
+		a.log.WithError(err).Infof("Not approving CSR %q as it is not recognized as a kubelet-serving certificate", csr.Name)
 		return nil
 	}
 
-	return nil
+	a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.Name, cr.DNSNames, cr.IPAddresses)
+	appendApprovalCondition(csr, "Auto approving kubelet serving certificate after SubjectAccessReview.")
+	_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, csr, metav1.UpdateOptions{})
+	return err
 }
 
 func (a *CSRApprover) authorizeCSRCreation(ctx context.Context, csr *certificatesv1.CertificateSigningRequest) (bool, error) {
