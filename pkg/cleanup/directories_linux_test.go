@@ -8,6 +8,7 @@ package cleanup
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -30,6 +31,28 @@ func stubSeams(t *testing.T, mounter mount.Interface, removeErrFor string) *[]st
 		removed = append(removed, path)
 		if removeErrFor != "" && path == removeErrFor {
 			return errors.New("injected removal failure")
+		}
+		return nil
+	}
+	return &removed
+}
+
+// stubSeamsErr is stubSeams with a caller-supplied error returned for the
+// removal of one specific path, so a test can inject a synthetic *os.PathError
+// and exercise the mounted-directory tolerance logic (errorIsUnlinkat) without
+// a real mount point.
+func stubSeamsErr(t *testing.T, mounter mount.Interface, errPath string, errVal error) *[]string {
+	t.Helper()
+	var removed []string
+
+	prevMounter, prevRemove := newMounter, removeAll
+	t.Cleanup(func() { newMounter, removeAll = prevMounter, prevRemove })
+
+	newMounter = func() mount.Interface { return mounter }
+	removeAll = func(path string) error {
+		removed = append(removed, path)
+		if path == errPath {
+			return errVal
 		}
 		return nil
 	}
@@ -131,4 +154,46 @@ func TestRunHandlesRunDirNestedInDataDir(t *testing.T) {
 
 	assert.Contains(t, unmountedPaths(fake), taskMount)
 	assert.Equal(t, []string{d.kubeletRootDir, d.runDir, d.dataDir}, *removed)
+}
+
+
+// The run dir can itself be a mount point (e.g. a tmpfs on /run/k0s). os.RemoveAll
+// then empties it and returns an unlinkat error on the mountpoint directory,
+// which the cleanup tolerates rather than failing. This exercises the k0s
+// decision logic with a synthetic *os.PathError; the kernel behavior that
+// actually produces it is covered by a live test (see the PR).
+func TestRunToleratesUnlinkatWhenRunDirIsAMountPoint(t *testing.T) {
+	d := testDirs(t)
+	fake := mount.NewFakeMounter([]mount.MountPoint{{Path: d.runDir}})
+	removed := stubSeamsErr(t, fake, d.runDir, &os.PathError{Op: "unlinkat", Path: d.runDir, Err: errors.New("directory not empty")})
+
+	require.NoError(t, d.Run(context.Background()),
+		"an unlinkat on a run dir that is itself a mount point must be tolerated")
+	assert.Equal(t, []string{d.kubeletRootDir, d.runDir, d.dataDir}, *removed,
+		"tolerating the run dir removal must not stop the data dir cleanup")
+}
+
+// A non-unlinkat error (or an unlinkat on a different path) on a mounted run dir
+// is a real failure, not the empty-a-mount-point case, so it must surface.
+func TestRunFailsOnNonUnlinkatErrorForMountedRunDir(t *testing.T) {
+	d := testDirs(t)
+	fake := mount.NewFakeMounter([]mount.MountPoint{{Path: d.runDir}})
+	removed := stubSeamsErr(t, fake, d.runDir, &os.PathError{Op: "remove", Path: d.runDir, Err: errors.New("permission denied")})
+
+	err := d.Run(context.Background())
+	require.ErrorContains(t, err, "contents of mounted run-dir")
+	assert.NotContains(t, *removed, d.dataDir, "a hard run dir failure must not proceed to the data dir")
+}
+
+// The unlinkat tolerance is gated on the run dir being a mount point. The same
+// error when the run dir is NOT mounted is a genuine failure and must surface.
+func TestRunFailsOnUnlinkatWhenRunDirNotMounted(t *testing.T) {
+	d := testDirs(t)
+	removed := stubSeamsErr(t, mount.NewFakeMounter(nil), d.runDir, &os.PathError{Op: "unlinkat", Path: d.runDir, Err: errors.New("directory not empty")})
+
+	err := d.Run(context.Background())
+	require.ErrorContains(t, err, d.runDir)
+	assert.NotContains(t, err.Error(), "contents of mounted run-dir",
+		"an unmounted run dir failure is the hard-delete error, not the mounted-tolerance path")
+	assert.NotContains(t, *removed, d.dataDir)
 }
