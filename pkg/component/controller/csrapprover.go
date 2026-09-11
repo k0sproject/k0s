@@ -38,7 +38,24 @@ import (
 	utilsnet "k8s.io/utils/net"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/dustin/go-humanize"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	// The CSRApprover won't approve any CSR whose certificate request contains
+	// more SANs than this threshold. Additionally, it won't approve any CSRs
+	// for nodes reporting more addresses than this threshold, since CSRs
+	// created by regular kubelets have one SAN per node address. Cloud
+	// providers may report every private IP of a node's network interfaces
+	// as a node address, including secondary IPs allocated to pods, so the
+	// threshold has to be well above the IP capacity of the largest instances.
+	csrApproverMaxSANs = 4096
+
+	// The CSRApprover won't approve any CSR whose certificate request size
+	// exceeds this threshold. 512 KiB are more than enough room for 4096 IP
+	// SANs plus a couple of very large DNS name SANs.
+	csrApproverMaxRequestSize = 512 * 1024
 )
 
 type CSRApprover struct {
@@ -285,6 +302,10 @@ func (a *CSRApprover) authorizeKubeletServingCSR(ctx context.Context, csr *certi
 }
 
 func validateKubeletServingCSR(spec *certificatesv1.CertificateSigningRequestSpec) (*x509.CertificateRequest, error) {
+	if len(spec.Request) > csrApproverMaxRequestSize {
+		return nil, errors.New("certificate request size exceeds " + humanize.IBytes(csrApproverMaxRequestSize))
+	}
+
 	cr, err := certificates.ParseCSR(spec.Request)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse certificate request: %w", err)
@@ -297,6 +318,10 @@ func validateKubeletServingCSR(spec *certificatesv1.CertificateSigningRequestSpe
 
 	if err := certificates.ValidateKubeletServingCSR(cr, usages); err != nil {
 		return nil, err
+	}
+
+	if len(cr.DNSNames)+len(cr.IPAddresses) > csrApproverMaxSANs {
+		return nil, fmt.Errorf("certificate request contains more than %d SANs", csrApproverMaxSANs)
 	}
 
 	return cr, nil
@@ -372,32 +397,32 @@ func (a *CSRApprover) verifyNode(ctx context.Context, nodeName string, cr *x509.
 		}
 		return csrCheckErr{fmt.Errorf("failed to get node %q: %w", nodeName, err)}
 	}
+	if len(node.Status.Addresses) > csrApproverMaxSANs {
+		return fmt.Errorf("node reports more than %d addresses", csrApproverMaxSANs)
+	}
 
 	// The certificate may only be valid for the names and addresses that the
 	// node reports for itself. This mirrors how the kubelet builds its serving
 	// certificate requests. Normalize IP addresses on both sides to mitigate
 	// different but otherwise equivalent string notations.
-	var (
-		nodeAddresses []string
-		errs          []error
-	)
+	nodeAddresses := make(map[string]struct{})
+	var errs []error
 	for _, address := range node.Status.Addresses {
 		address := address.Address
 		// Kubernetes uses ParseIPSloppy for backwards compatibility.
 		if ip := utilsnet.ParseIPSloppy(address); ip != nil {
 			address = ip.String()
 		}
-		if !slices.Contains(nodeAddresses, address) {
-			nodeAddresses = append(nodeAddresses, address)
-		}
+		nodeAddresses[address] = struct{}{}
 	}
 	for i, dnsName := range cr.DNSNames {
-		if !slices.Contains(nodeAddresses, dnsName) {
+		if _, ok := nodeAddresses[dnsName]; !ok {
 			errs = append(errs, fmt.Errorf("DNSNames[%d]: forbidden: %q: is not a node address of %s", i, dnsName, nodeName))
 		}
 	}
 	for i, address := range cr.IPAddresses {
-		if address := address.String(); !slices.Contains(nodeAddresses, address) {
+		address := address.String()
+		if _, ok := nodeAddresses[address]; !ok {
 			errs = append(errs, fmt.Errorf("IPAddresses[%d]: forbidden: %q: is not a node address of %s", i, address, nodeName))
 		}
 	}
