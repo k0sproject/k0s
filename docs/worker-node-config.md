@@ -105,9 +105,12 @@ logged by the k0s controller. Note that a node's addresses are reported by its
 kubelet, so flags like `--node-ip` directly influence which addresses a
 certificate may be issued for.
 
-The CSR approver can be turned off via `k0s controller --disable-components
-csr-approver`. In that case, kubelet serving certificates need to be approved by
-some other means, otherwise the affected kubelet APIs remain unavailable.
+The CSR approver checks for pending requests periodically. It only considers the
+newest pending request of each node per pass, so that a node can't hold up
+others by creating large numbers of requests. It can be turned off via `k0s
+controller --disable-components csr-approver`. In that case, kubelet serving
+certificates need to be approved by some other means, otherwise the affected
+kubelet APIs remain unavailable.
 
 [Certificate Signing Requests]: https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
 [Kubernetes Metrics Server]: https://github.com/kubernetes-sigs/metrics-server
