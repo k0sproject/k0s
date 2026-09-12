@@ -183,7 +183,7 @@ pick a5f4a0d made some review changes
 # Note that empty commits are commented out
 ```
 
-Use a command line text editor to change the word `pick` to `f` of `fixup` for the commits you want to squash, then save your changes and continue the rebase:
+Use a command line text editor to change the word `pick` to `f` or `fixup` for the commits you want to squash, then save your changes and continue the rebase:
 
 Per the output above, you can see that:
 

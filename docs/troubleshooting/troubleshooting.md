@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Common Pitfalls
 
-There are few common cases we've seen where k0s fails to run properly.
+There are a few common cases we've seen where k0s fails to run properly.
 
 ## CoreDNS in crash-loop
 
@@ -97,7 +97,7 @@ to
 
 ## Pods pending when using cloud providers
 
-Once we enable [cloud provider support](../cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This taint will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.
+Once we enable [cloud provider support](../cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This taint will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs a second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.
 
 For troubleshooting your specific cloud provider see its documentation.
 
@@ -105,7 +105,7 @@ For troubleshooting your specific cloud provider see its documentation.
 
 By default k0s does not run on nodes where `/usr` is read only.
 
-This can be fixed by changing the default path for `volumePluginDir` in your k0s config. You will need to change to values, one for the kubelet itself, and one for Calico.
+This can be fixed by changing the default path for `volumePluginDir` in your k0s config. You will need to change two values, one for the kubelet itself, and one for Calico.
 
 Here is a snippet of an example config with the default values changed:
 
