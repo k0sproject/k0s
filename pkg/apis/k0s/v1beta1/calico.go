@@ -103,7 +103,7 @@ func (c *Calico) Validate(path *field.Path) (errs []error) {
 		errs = append(errs, field.NotSupported(path.Child("mode"), c.Mode, allowed))
 	}
 
-	errs = append(errs, c.Patches.validate(path.Child("patches"))...)
+	errs = append(errs, toErrors(c.Patches.validate(path.Child("patches")))...)
 
 	return
 }
