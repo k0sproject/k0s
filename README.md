@@ -37,6 +37,8 @@ k0s is distributed as a single binary with zero host OS dependencies besides the
 <!-- Start Key Features -->
 ## Key Features
 
+> **Networking:** For details on `spec.network` options such as `serviceCIDR`, the bundled Calico version, and the `calico.mode`/`calico.overlay` settings, see the [k0s networking documentation](https://docs.k0sproject.io/stable/networking/) and [configuration reference](https://docs.k0sproject.io/stable/configuration/).
+
 - Certified and 100% upstream Kubernetes
 - Multiple installation methods: [single-node](docs/install.md), [multi-node](docs/k0sctl-install.md), [airgap](docs/airgap-install.md) and [Docker](docs/k0s-in-docker.md)
 - Automatic lifecycle management with k0sctl: [upgrade](docs/upgrade.md), [backup and restore](docs/backup.md)
