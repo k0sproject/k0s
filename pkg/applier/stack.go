@@ -375,11 +375,15 @@ func (s *Stack) clientForResource(mapper meta.ResettableRESTMapper, resource uns
 }
 
 func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper meta.ResettableRESTMapper, groupVersionKind *schema.GroupVersionKind) []unstructured.Unstructured {
-	mapping, _ := getRESTMapping(mapper, groupVersionKind)
+	mapping, err := getRESTMapping(mapper, groupVersionKind)
 	// FIXME error handling...
+	if err != nil {
+		s.log.WithError(err).Warn("failed to get REST mapping while finding prunable resources")
+	}
 	if mapping != nil {
 		client, err := s.Clients.GetDynamicClient()
 		if err != nil {
+			s.log.WithError(err).Warn("failed to get dynamic client while finding prunable resources")
 			return nil
 		}
 		// We're running this with full admin rights, we should have capability to get stuff with single call
@@ -398,6 +402,7 @@ func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.Reso
 	resourceList, err := drClient.List(ctx, listOpts)
 	if err != nil {
 		// FIXME why no error propagation !??!
+		s.log.WithError(err).Warn("failed to list resources while finding prunable resources")
 		return nil
 	}
 	for _, resource := range resourceList.Items {
