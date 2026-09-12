@@ -112,7 +112,7 @@ func TestAddToImageSources(t *testing.T) {
 	info1, err := os.Stat(img0)
 	require.NoError(t, err)
 
-	err = AddToImageSources(&image, img1, info1.ModTime())
+	err = AddToImageSources(&image, emptyFS{}, img1, info1.ModTime())
 	require.NoError(t, err)
 
 	expected := ImageSources{
@@ -128,7 +128,7 @@ func TestAddToImageSources(t *testing.T) {
 	err = os.Remove(img0)
 	require.NoError(t, err)
 
-	err = AddToImageSources(&image, img1, info1.ModTime())
+	err = AddToImageSources(&image, emptyFS{}, img1, info1.ModTime())
 	require.NoError(t, err)
 
 	expected = ImageSources{img1: info1.ModTime()}
