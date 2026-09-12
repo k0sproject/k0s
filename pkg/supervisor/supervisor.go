@@ -46,6 +46,7 @@ type Supervisor struct {
 	GID            int
 	TimeoutStop    time.Duration
 	TimeoutRespawn time.Duration
+	AdditionalEnv  []string
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
 	// A function to clean some leftovers before starting or restarting the supervised process
@@ -245,7 +246,7 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 			} else {
 				s.cmd = exec.Command(s.BinPath, s.Args...)
 				s.cmd.Dir = s.DataDir
-				s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix)
+				s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix, s.AdditionalEnv)
 				if s.Stdin != nil {
 					s.cmd.Stdin = s.Stdin()
 				}
@@ -351,8 +352,8 @@ func (s *Supervisor) maybeCleanupPIDFile(ctx context.Context) error {
 // Prepare the env for exec:
 // - handle component specific env
 // - inject k0s embedded bins into path
-func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
-	env := os.Environ()
+func getEnv(dataDir, component string, keepEnvPrefix bool, env []string) []string {
+	env = append(env, os.Environ()...)
 	componentPrefix := strings.ToUpper(component) + "_"
 
 	// put the component specific env vars in the front.
