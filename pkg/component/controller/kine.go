@@ -147,8 +147,8 @@ func (k *Kine) Stop() error {
 const hcKey = "/k0s-health-check"
 const hcValue = "value"
 
-func (k *Kine) Ready() error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+func (k *Kine) Ready(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
 	ok, err := k.bypassClient.Write(ctx, hcKey, hcValue, 64*time.Second)
