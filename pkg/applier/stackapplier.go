@@ -5,16 +5,15 @@ package applier
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"github.com/avast/retry-go"
+	fswatch "github.com/k0sproject/k0s/internal/os/fs/watch"
+	"github.com/k0sproject/k0s/internal/sync/activity"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
-	"github.com/fsnotify/fsnotify"
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -51,65 +50,29 @@ func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInte
 
 // Run watches the stack for updates and executes the initial apply.
 func (s *StackApplier) Run(ctx context.Context) error {
-	if ctx.Err() != nil {
-		return nil // The context is already done.
-	}
+	var wg sync.WaitGroup
+	defer wg.Wait()
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return fmt.Errorf("failed to create watcher: %w", err)
-	}
-
-	trigger := make(chan struct{}, 1)
-	watchErr := make(chan error, 1)
-	go func() { watchErr <- s.runWatcher(watcher, trigger, ctx.Done()) }()
-
-	if err := watcher.Add(s.path); err != nil {
-		return fmt.Errorf("failed to watch %q: %w", s.path, err)
-	}
-
-	for {
-		select {
-		case <-trigger:
+	stackChanged, lastStackChange := activity.Tracker(time.Time{})
+	wg.Go(func() {
+		activity.Debounce(ctx.Done(), 1*time.Second, lastStackChange, func(time.Time) {
 			s.apply(ctx)
-		case err := <-watchErr:
-			return err
-		}
-	}
-}
+		})
+	})
 
-func (s *StackApplier) runWatcher(watcher *fsnotify.Watcher, trigger chan<- struct{}, stop <-chan struct{}) (err error) {
-	defer func() { err = errors.Join(err, watcher.Close()) }()
-
-	const timeout = 1 * time.Second // debounce events for one second
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
-	for {
-		select {
-		case err := <-watcher.Errors:
-			return fmt.Errorf("while watching stack: %w", err)
-
-		case event := <-watcher.Events:
-			// Only consider events on manifest files
-			if match, _ := filepath.Match(manifestFilePattern, filepath.Base(event.Name)); !match {
-				continue
+	return fswatch.Dir(ctx, s.path, fswatch.HandlerFunc(func(e fswatch.Event) {
+		// Ignore changes to paths that aren't manifest files.
+		if e, ok := e.(*fswatch.Changed); ok {
+			if match, _ := filepath.Match(manifestFilePattern, e.Name); !match {
+				return
 			}
-			timer.Reset(timeout)
-
-		case <-timer.C:
-			select {
-			case trigger <- struct{}{}:
-			default:
-			}
-
-		case <-stop:
-			return nil
 		}
-	}
+
+		stackChanged(time.Now())
+	}))
 }
 
 func (s *StackApplier) apply(ctx context.Context) {
