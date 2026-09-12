@@ -44,9 +44,10 @@ func TestCalicoManifests(t *testing.T) {
 				assert.NotContains(t, entry.Name(), "calico-crd")
 			}
 		}
-		if entries, err := os.ReadDir(filepath.Join(calico.manifestsDir, "calico_init")); assert.NoError(t, err) {
-			assert.Empty(t, entries)
-		}
+		// calico_init is only created lazily, right before the CRDs are
+		// dumped into it, so it must not exist yet.
+		_, err := os.Stat(filepath.Join(calico.manifestsDir, "calico_init"))
+		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
 
 	t.Run("must_have_wireguard_enabled_if_config_has", func(t *testing.T) {

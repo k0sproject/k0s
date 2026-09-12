@@ -4,7 +4,7 @@
 package controller
 
 import (
-	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
@@ -69,7 +69,7 @@ func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, ha
 }
 
 func (k *KubeProxy) Init(context.Context) error {
-	return dir.Init(k.manifestDir, constant.ManifestsDirMode)
+	return nil
 }
 
 func (k *KubeProxy) Start(context.Context) error {
@@ -161,56 +161,57 @@ func (k *KubeProxy) Stop() error {
 }
 
 func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error {
-	return file.AtomicWithTarget(filepath.Join(k.manifestDir, "kube-proxy.yaml")).
-		Do(func(unbuffered file.AtomicWriter) error {
-			buf := bufio.NewWriter(unbuffered)
+	var buf bytes.Buffer
 
-			templateData := struct {
-				*kubeProxyTemplateData
-				ConfigHash string
-			}{
-				kubeProxyTemplateData: &cfg.TemplateData,
-			}
+	templateData := struct {
+		*kubeProxyTemplateData
+		ConfigHash string
+	}{
+		kubeProxyTemplateData: &cfg.TemplateData,
+	}
 
-			if configMap, err := cfg.ConfigMapData.toConfigMap(); err != nil {
-				return err
-			} else {
-				hasher := sha256.New()
-				buf := io.MultiWriter(hasher, buf)
-				codec := applier.CodecFor(kubernetesscheme.Scheme)
-				if err := codec.Encode(configMap, buf); err != nil {
-					return err
-				}
-				templateData.ConfigHash = base64.RawURLEncoding.EncodeToString(hasher.Sum(nil))
-			}
+	if configMap, err := cfg.ConfigMapData.toConfigMap(); err != nil {
+		return err
+	} else {
+		hasher := sha256.New()
+		w := io.MultiWriter(hasher, &buf)
+		codec := applier.CodecFor(kubernetesscheme.Scheme)
+		if err := codec.Encode(configMap, w); err != nil {
+			return err
+		}
+		templateData.ConfigHash = base64.RawURLEncoding.EncodeToString(hasher.Sum(nil))
+	}
 
-			if err := (&templatewriter.TemplateWriter{
-				Name:     "kube-proxy",
-				Template: proxyTemplate,
-				Data:     &templateData,
-				Patches:  cfg.Patches,
-			}).WriteToBuffer(buf); err != nil {
-				return err
-			}
+	if err := (&templatewriter.TemplateWriter{
+		Name:     "kube-proxy",
+		Template: proxyTemplate,
+		Data:     &templateData,
+		Patches:  cfg.Patches,
+	}).WriteToBuffer(&buf); err != nil {
+		return err
+	}
 
-			if includeWindows {
-				proxyWindowsTemplate, err := fs.ReadFile(static.WindowsManifests, "DaemonSet/kube-proxy-windows.yaml")
-				if err != nil {
-					return err
-				}
+	if includeWindows {
+		proxyWindowsTemplate, err := fs.ReadFile(static.WindowsManifests, "DaemonSet/kube-proxy-windows.yaml")
+		if err != nil {
+			return err
+		}
 
-				if err := (&templatewriter.TemplateWriter{
-					Name:     "kube-proxy-windows",
-					Template: string(proxyWindowsTemplate),
-					Data:     &templateData,
-					Patches:  cfg.Patches,
-				}).WriteToBuffer(buf); err != nil {
-					return err
-				}
-			}
+		if err := (&templatewriter.TemplateWriter{
+			Name:     "kube-proxy-windows",
+			Template: string(proxyWindowsTemplate),
+			Data:     &templateData,
+			Patches:  cfg.Patches,
+		}).WriteToBuffer(&buf); err != nil {
+			return err
+		}
+	}
 
-			return buf.Flush()
-		})
+	if err := dir.Init(k.manifestDir, constant.ManifestsDirMode); err != nil {
+		return err
+	}
+
+	return file.AtomicWithTarget(filepath.Join(k.manifestDir, "kube-proxy.yaml")).Write(buf.Bytes())
 }
 
 func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig {
