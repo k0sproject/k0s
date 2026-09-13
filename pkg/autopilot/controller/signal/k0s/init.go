@@ -38,7 +38,7 @@ import (
 // controller-runtime manager. The restart tracker's lifetime needs to be tied
 // to the process, i.e. it has to be shared by all the managers this function is
 // called with throughout the lifetime of the process.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *RestartTracker, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *RestartTracker, statusSocketPath string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
 	if restartTracker == nil {
 		return errors.New("restart tracker is required")
 	}
@@ -59,7 +59,11 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	logger.Infof("Using effective hostname = '%v'", hostname)
 
 	k0sVersionHandler := func() (string, error) {
-		return getK0sVersion(status.DefaultSocketPath)
+		socket := statusSocketPath
+		if socket == "" {
+			socket = status.DefaultSocketPath
+		}
+		return getK0sVersion(socket)
 	}
 
 	if enableWorker {
