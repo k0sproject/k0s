@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.32.1/charts/calico/templates/tier-getter.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.32.2/charts/calico/templates/tier-getter.yaml
 # Implements the necessary permissions for the kube-controller-manager to interact with
 # Tiers and Tiered Policies for GC.
 #
