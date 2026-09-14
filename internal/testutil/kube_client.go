@@ -125,6 +125,13 @@ func makeAPIResourceLists(scheme *runtime.Scheme) (allResources []*metav1.APIRes
 			}
 
 			// Skip kinds that don't have an associated list kind.
+			// FIXME: This is a very blunt check if a type describes a top-level
+			// resource or not. However, there are some resources that don't
+			// have an associated list type which end up as false negatives
+			// here, but they're currently not being tested via the fake
+			// clients. Might be fixed by implementing a more sophisticated
+			// detection method, e.g. by scanning the clientsets, as outlined
+			// below, when detecting if resources are namespaced or not.
 			if !scheme.Recognizes(gv.WithKind(kind + "List")) {
 				continue
 			}
@@ -151,6 +158,16 @@ func makeAPIResourceLists(scheme *runtime.Scheme) (allResources []*metav1.APIRes
 			}
 
 			resources = append(resources, resource)
+		}
+
+		// Skip group versions that ended up without any resources. A real API
+		// server never advertises empty group versions.
+		// FIXME: This currently happens for group versions whose kinds all lack
+		// a list kind, e.g. the review kinds in authentication.k8s.io and
+		// authorization.k8s.io, due to the imperfect heuristics in the above
+		// loop.
+		if len(resources) == 0 {
+			continue
 		}
 
 		allResources = append(allResources, &metav1.APIResourceList{
