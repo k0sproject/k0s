@@ -25,17 +25,20 @@ import (
 
 // Creates a new fake clientset backed by the given ObjectTracker.
 // This should only be used with the auto-generated fake clientsets.
-// Discovery() will return nil.
-func NewClientset[T any](discovery *discoveryfake.FakeDiscovery, tracker testing.ObjectTracker) *T {
-	p := new(T)
-
-	// Assume that a pointer to T is a fake client.
-	c := any(p).(testing.FakeClient)
+func NewClientset[T any, PT interface {
+	*T
+	testing.FakeClient
+}](discovery *discoveryfake.FakeDiscovery, tracker testing.ObjectTracker) *T {
+	p := PT(new(T))
 
 	// This wire code is adopted from the generated fake clients.
-	c.AddReactor("*", "*", testing.ObjectReaction(tracker))
-	c.AddWatchReactor("*", func(action testing.Action) (bool, watch.Interface, error) {
-		watch, err := tracker.Watch(action.GetResource(), action.GetNamespace())
+	p.AddReactor("*", "*", testing.ObjectReaction(tracker))
+	p.AddWatchReactor("*", func(action testing.Action) (bool, watch.Interface, error) {
+		var opts metav1.ListOptions
+		if watchAction, ok := action.(testing.WatchActionImpl); ok {
+			opts = watchAction.ListOptions
+		}
+		watch, err := tracker.Watch(action.GetResource(), action.GetNamespace(), opts)
 		if err != nil {
 			return false, nil, err
 		}
@@ -156,7 +159,7 @@ func (t *TransformingObjectTracker) Apply(gvr schema.GroupVersionResource, apply
 
 // Watch implements testing.ObjectTracker.
 func (t *TransformingObjectTracker) Watch(gvr schema.GroupVersionResource, ns string, opts ...metav1.ListOptions) (watch.Interface, error) {
-	w, err := t.Inner.Watch(gvr, ns)
+	w, err := t.Inner.Watch(gvr, ns, opts...)
 	if err != nil {
 		return w, err
 	}
