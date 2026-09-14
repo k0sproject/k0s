@@ -86,12 +86,12 @@ func (t *TransformingObjectTracker) Create(gvr schema.GroupVersionResource, obj 
 }
 
 // Delete implements testing.ObjectTracker.
-func (t *TransformingObjectTracker) Delete(gvr schema.GroupVersionResource, ns string, name string, opts ...metav1.DeleteOptions) error {
-	return t.Inner.Delete(gvr, ns, ns, opts...)
+func (t *TransformingObjectTracker) Delete(gvr schema.GroupVersionResource, ns, name string, opts ...metav1.DeleteOptions) error {
+	return t.Inner.Delete(gvr, ns, name, opts...)
 }
 
 // Get implements testing.ObjectTracker.
-func (t *TransformingObjectTracker) Get(gvr schema.GroupVersionResource, ns string, name string, opts ...metav1.GetOptions) (runtime.Object, error) {
+func (t *TransformingObjectTracker) Get(gvr schema.GroupVersionResource, ns, name string, opts ...metav1.GetOptions) (runtime.Object, error) {
 	obj, err := t.Inner.Get(gvr, ns, name, opts...)
 	if err != nil {
 		return nil, err
