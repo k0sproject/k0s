@@ -11,6 +11,7 @@ import (
 	"time"
 	"unsafe"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	discoveryfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic/fake"
+	metadatafake "k8s.io/client-go/metadata/fake"
 	"k8s.io/client-go/testing"
 )
 
@@ -70,8 +72,53 @@ func TypedObjectTrackerFrom(scheme *runtime.Scheme, dynamicClient *fake.FakeDyna
 	}
 }
 
+// Creates a new fake metadata client that is backed by the given client. Note
+// that this client doesn't support write operations besides patching. Use the
+// given client directly for writing instead.
+func NewMetadataClient(client *fake.FakeDynamicClient) *metadatafake.FakeMetadataClient {
+	// The fake metadata client lists with a made-up group and an empty kind.
+	// That resulting kind needs to be known to the dynamic client's scheme.
+	// Core v1 "List" is: it's registered as an unstructured list, like any
+	// other kind ending in "List". The resulting object is externalized per
+	// item anyways, so the actual list kind doesn't matter.
+	listKind := corev1.SchemeGroupVersion.WithKind("")
+
+	dynTracker := client.Tracker()
+	metadataClient := NewClientset[metadatafake.FakeMetadataClient](nil, &TransformingObjectTracker{
+		Inner:    dynTracker,
+		ListKind: func(schema.GroupVersionKind) schema.GroupVersionKind { return listKind },
+		Internalize: func(runtime.Object) (runtime.Object, error) {
+			panic("the fake metadata client is read-and-patch only")
+		},
+		Externalize: func(o runtime.Object, _ schema.GroupVersionKind) (runtime.Object, error) {
+			return toPartialObjectMetadata(o)
+		},
+	})
+
+	// Apply patches via the dynamic client's tracker, so that they're applied
+	// to the full objects, like a real API server would do. Applying them via
+	// the metadata client's tracker would apply them to the metadata-only view
+	// instead, and then overwrite the full objects with that partial view.
+	// NB: The API server applies patches to the full objects and doesn't
+	// restrict them to metadata fields in any way, so a patch sent via a
+	// metadata client may also change non-metadata fields.
+	patchReaction := testing.ObjectReaction(dynTracker)
+	metadataClient.PrependReactor("patch", "*", func(action testing.Action) (bool, runtime.Object, error) {
+		handled, obj, err := patchReaction(action)
+		if !handled || err != nil {
+			return handled, obj, err
+		}
+
+		partial, err := toPartialObjectMetadata(obj)
+		return true, partial, err
+	})
+
+	return metadataClient
+}
+
 type TransformingObjectTracker struct {
 	Inner       testing.ObjectTracker
+	ListKind    func(schema.GroupVersionKind) schema.GroupVersionKind // Optional.
 	Internalize func(runtime.Object) (runtime.Object, error)
 	Externalize func(runtime.Object, schema.GroupVersionKind) (runtime.Object, error)
 }
@@ -110,6 +157,10 @@ func (t *TransformingObjectTracker) Get(gvr schema.GroupVersionResource, ns, nam
 
 // List implements testing.ObjectTracker.
 func (t *TransformingObjectTracker) List(gvr schema.GroupVersionResource, gvk schema.GroupVersionKind, ns string, opts ...metav1.ListOptions) (runtime.Object, error) {
+	if t.ListKind != nil {
+		gvk = t.ListKind(gvk)
+	}
+
 	obj, err := t.Inner.List(gvr, gvk, ns, opts...)
 	if err != nil {
 		return nil, err
@@ -226,6 +277,39 @@ func toUnstructured(scheme *runtime.Scheme, obj runtime.Object) (runtime.Object,
 	}
 
 	return &u, nil
+}
+
+func toPartialObjectMetadata(obj runtime.Object) (runtime.Object, error) {
+	if meta.IsListType(obj) {
+		var list metav1.List
+		if listMeta, err := meta.ListAccessor(obj); err == nil {
+			list.ResourceVersion = listMeta.GetResourceVersion()
+			list.Continue = listMeta.GetContinue()
+			list.RemainingItemCount = listMeta.GetRemainingItemCount()
+		}
+
+		if err := meta.EachListItem(obj, func(obj runtime.Object) error {
+			partial, err := toPartialObjectMetadata(obj)
+			if err != nil {
+				return err
+			}
+			list.Items = append(list.Items, runtime.RawExtension{Object: partial})
+			return nil
+		}); err != nil {
+			return obj, err
+		}
+
+		return &list, nil
+	}
+
+	accessor, err := meta.Accessor(obj)
+	if err != nil {
+		return obj, err
+	}
+
+	partial := meta.AsPartialObjectMetadata(accessor)
+	partial.SetGroupVersionKind(metav1.SchemeGroupVersion.WithKind("PartialObjectMetadata"))
+	return partial, nil
 }
 
 func fromUnstructured(scheme *runtime.Scheme, obj runtime.Object, gvk schema.GroupVersionKind) (runtime.Object, error) {
