@@ -3084,31 +3084,33 @@ k0s</strong> that you mix in one cluster — for example, controllers running k0
 <code>v1.31.x+k0s.0</code> while workers still run <code>v1.30.x+k0s.0</code> during a rolling
 upgrade.</p>
 <h2 id="supported-skew">Supported skew<a class="headerlink" href="#supported-skew" title="Permanent link">#</a></h2>
-<p>k0s follows the upstream Kubernetes
-<a href="https://kubernetes.io/releases/version-skew-policy/">version skew policy</a>.
-In practice, that means:</p>
+<p>k0s is designed and tested for clusters in which all nodes run either the same
+minor version or two adjacent ones, as happens during a rolling upgrade. In
+practice, that means:</p>
 <ul>
-<li><strong>Control plane components</strong> (kube-apiserver, kube-controller-manager,
-  kube-scheduler) must all be within <strong>one minor</strong> of each other in a
-  multi-controller cluster.</li>
-<li><strong>kubelet</strong> on a worker may be <strong>up to three minors older</strong> than the
-  oldest kube-apiserver in the cluster, but <strong>must never be newer</strong>.</li>
-<li><strong>kube-proxy</strong> on a worker must match the kubelet's minor version.</li>
+<li><strong>Controllers</strong> must all be within <strong>one minor</strong> of each other.</li>
+<li><strong>Workers</strong> may be <strong>one minor older</strong> than the controllers, but <strong>must never
+  be newer</strong>. This only applies to cluster upgrades. When <strong>bootstrapping a new
+  cluster</strong>, workers must run the <strong>same minor</strong> as the controllers.</li>
 </ul>
-<p>Patch-version differences inside the same minor are always supported and
-are the expected state during a phased upgrade.</p>
+<p>Patch-version differences inside the same minor are always supported and are the
+expected state during a phased upgrade.</p>
+<p>Note that the upstream Kubernetes <a href="https://kubernetes.io/releases/version-skew-policy/">version skew policy</a> permits wider skews,
+such as kubelets up to three minors older than the API server. k0s doesn't
+support those. Each k0s version is only expected to interoperate with the
+previous one, and upgrades proceed one minor at a time.</p>
 <h2 id="upgrades">Upgrades<a class="headerlink" href="#upgrades" title="Permanent link">#</a></h2>
 <p>When upgrading k0s in place:</p>
 <ol>
 <li>Upgrade controllers first, <strong>one minor at a time</strong> (e.g. v1.30 → v1.31,
    not v1.30 → v1.32).</li>
 <li>Upgrade workers after the control plane is fully on the new minor.</li>
-<li>Stay on the latest patch release of the old minor before stepping up to
-   the next minor.</li>
+<li>Consider moving to the latest patch release of the old minor first. This
+   isn't required, but it takes the old minor's latest fixes along into the
+   upgrade.</li>
 </ol>
-<p><a href="../autopilot/">Autopilot</a> automates this with multi-step plans; if you
-upgrade manually or via <a href="../k0sctl-install/">k0sctl</a>, make the same staging
-explicit in your plan.</p>
+<p><a href="../autopilot/">Autopilot</a>, <a href="../k0sctl-install/">k0sctl</a>, and <a href="https://github.com/k0sproject/k0smotron">k0smotron</a> all upgrade controllers before workers.
+When upgrading manually, keep to the same order.</p>
 <h2 id="downgrades">Downgrades<a class="headerlink" href="#downgrades" title="Permanent link">#</a></h2>
 <p>Downgrades are <strong>not</strong> supported by upstream Kubernetes and are not tested
 by k0s. If a release needs to be rolled back, restore from a
