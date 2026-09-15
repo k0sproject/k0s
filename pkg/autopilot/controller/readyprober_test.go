@@ -99,7 +99,7 @@ func TestReadyProberContextCanceled(t *testing.T) {
 	cf := testutil.NewFakeClientFactory(newControlNode("controller0", hostPort.Host()))
 	targets := []autopilotv1beta2.PlanCommandTargetStatus{{Name: "controller0"}}
 
-	canceled, cancel := context.WithCancel(context.Background())
+	canceled, cancel := context.WithCancel(t.Context())
 	cancel()
 	prober := newTestProber(t, int(hostPort.Port()), cf)
 	err := prober.probeTargets(canceled, targets)
