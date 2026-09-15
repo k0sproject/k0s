@@ -42,6 +42,10 @@ func NewBackupCmd() *cobra.Command {
 				return err
 			}
 			c := (*command)(opts)
+			// Reading the config from stdin would consume it, leaving nothing to store in the archive.
+			if c.K0sVars.StartupConfigPath == "-" {
+				return errors.New("command 'k0s backup' cannot read the configuration from stdin")
+			}
 			nodeConfig, err := c.K0sVars.NodeConfig()
 			if err != nil {
 				return err
@@ -57,6 +61,7 @@ func NewBackupCmd() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.AddFlagSet(config.FileInputFlag())
 	flags.StringVar(&savePath, "save-path", "", "destination directory path for backup assets, use '-' for stdout")
 
 	return cmd
