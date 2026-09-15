@@ -77,10 +77,6 @@ func NewMetrics(k0sVars *config.CfgVars, clientCF kubeutil.ClientFactoryInterfac
 
 // Init implements [manager.Component].
 func (m *Metrics) Init(context.Context) error {
-	if err := dir.Init(filepath.Join(m.K0sVars.ManifestsDir, "metrics"), constant.ManifestsDirMode); err != nil {
-		return err
-	}
-
 	var j *job
 	j, err := m.newJob("kube-scheduler", "https://localhost:10259/metrics")
 	if err != nil {
@@ -149,14 +145,15 @@ func (m *Metrics) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 			},
 		}
 		output := bytes.NewBuffer([]byte{})
-		err := tw.WriteToBuffer(output)
-		if err != nil {
+		if err := tw.WriteToBuffer(output); err != nil {
 			return err
 		}
-		err = file.AtomicWithTarget(filepath.Join(m.K0sVars.ManifestsDir, "metrics", "pushgateway.yaml")).
+		if err := dir.Init(filepath.Join(m.K0sVars.ManifestsDir, "metrics"), constant.ManifestsDirMode); err != nil {
+			return err
+		}
+		if err := file.AtomicWithTarget(filepath.Join(m.K0sVars.ManifestsDir, "metrics", "pushgateway.yaml")).
 			WithPermissions(constant.CertMode).
-			Write(output.Bytes())
-		if err != nil {
+			Write(output.Bytes()); err != nil {
 			return err
 		}
 	}

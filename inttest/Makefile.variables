@@ -62,6 +62,7 @@ smoketests := \
 	check-kubeletcertrotate \
 	check-kuberouter \
 	check-kuberouter-ipv6 \
+	check-manifestrestart \
 	check-metrics \
 	check-metricsscraper \
 	check-metricsscraper-singlenode \
