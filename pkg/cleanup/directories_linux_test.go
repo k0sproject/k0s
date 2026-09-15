@@ -1,12 +1,11 @@
 //go:build linux
 
-// SPDX-FileCopyrightText: 2025 k0s authors
+// SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
 package cleanup
 
 import (
-	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -98,7 +97,7 @@ func TestRunUnmountsLeftoverMountsUnderEveryManagedDir(t *testing.T) {
 	})
 	stubSeams(t, fake, "")
 
-	require.NoError(t, d.Run(context.Background()))
+	require.NoError(t, d.Run(t.Context()))
 
 	unmounted := unmountedPaths(fake)
 	assert.Contains(t, unmounted, taskMount,
@@ -116,7 +115,7 @@ func TestRunDeletesDataDirLast(t *testing.T) {
 	d := testDirs(t)
 	removed := stubSeams(t, mount.NewFakeMounter(nil), "")
 
-	require.NoError(t, d.Run(context.Background()))
+	require.NoError(t, d.Run(t.Context()))
 
 	assert.Equal(t, []string{d.kubeletRootDir, d.runDir, d.dataDir}, *removed)
 }
@@ -128,7 +127,7 @@ func TestRunPreservesDataDirWhenRunDirDeletionFails(t *testing.T) {
 	d := testDirs(t)
 	removed := stubSeams(t, mount.NewFakeMounter(nil), d.runDir)
 
-	err := d.Run(context.Background())
+	err := d.Run(t.Context())
 
 	require.ErrorContains(t, err, d.runDir)
 	assert.NotContains(t, *removed, d.dataDir,
@@ -150,12 +149,11 @@ func TestRunHandlesRunDirNestedInDataDir(t *testing.T) {
 	fake := mount.NewFakeMounter([]mount.MountPoint{{Path: taskMount}})
 	removed := stubSeams(t, fake, "")
 
-	require.NoError(t, d.Run(context.Background()))
+	require.NoError(t, d.Run(t.Context()))
 
 	assert.Contains(t, unmountedPaths(fake), taskMount)
 	assert.Equal(t, []string{d.kubeletRootDir, d.runDir, d.dataDir}, *removed)
 }
-
 
 // The run dir can itself be a mount point (e.g. a tmpfs on /run/k0s). os.RemoveAll
 // then empties it and returns an unlinkat error on the mountpoint directory,
@@ -167,7 +165,7 @@ func TestRunToleratesUnlinkatWhenRunDirIsAMountPoint(t *testing.T) {
 	fake := mount.NewFakeMounter([]mount.MountPoint{{Path: d.runDir}})
 	removed := stubSeamsErr(t, fake, d.runDir, &os.PathError{Op: "unlinkat", Path: d.runDir, Err: errors.New("directory not empty")})
 
-	require.NoError(t, d.Run(context.Background()),
+	require.NoError(t, d.Run(t.Context()),
 		"an unlinkat on a run dir that is itself a mount point must be tolerated")
 	assert.Equal(t, []string{d.kubeletRootDir, d.runDir, d.dataDir}, *removed,
 		"tolerating the run dir removal must not stop the data dir cleanup")
@@ -180,7 +178,7 @@ func TestRunFailsOnNonUnlinkatErrorForMountedRunDir(t *testing.T) {
 	fake := mount.NewFakeMounter([]mount.MountPoint{{Path: d.runDir}})
 	removed := stubSeamsErr(t, fake, d.runDir, &os.PathError{Op: "remove", Path: d.runDir, Err: errors.New("permission denied")})
 
-	err := d.Run(context.Background())
+	err := d.Run(t.Context())
 	require.ErrorContains(t, err, "contents of mounted run-dir")
 	assert.NotContains(t, *removed, d.dataDir, "a hard run dir failure must not proceed to the data dir")
 }
@@ -191,7 +189,7 @@ func TestRunFailsOnUnlinkatWhenRunDirNotMounted(t *testing.T) {
 	d := testDirs(t)
 	removed := stubSeamsErr(t, mount.NewFakeMounter(nil), d.runDir, &os.PathError{Op: "unlinkat", Path: d.runDir, Err: errors.New("directory not empty")})
 
-	err := d.Run(context.Background())
+	err := d.Run(t.Context())
 	require.ErrorContains(t, err, d.runDir)
 	assert.NotContains(t, err.Error(), "contents of mounted run-dir",
 		"an unmounted run dir failure is the hard-delete error, not the mounted-tolerance path")
