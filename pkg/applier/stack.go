@@ -18,6 +18,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
 
@@ -33,14 +35,52 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Provides the Kubernetes clients required to apply a [Stack].
+type Clients interface {
+	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
+	GetDynamicClient() (dynamic.Interface, error)
+	GetAPIExtensionsClient() (apiextensionsclientset.Interface, error)
+}
+
+// Returns a [Clients] implementation backed by clientFactory. It lazily creates
+// a memory-cached discovery client that lives as long as the returned instance.
+// Hence the lifetime of the returned instance determines the lifetime of the
+// discovery cache.
+func NewClients(clientFactory kubernetes.ClientFactoryInterface) Clients {
+	return &clients{ClientFactoryInterface: clientFactory}
+}
+
+type clients struct {
+	kubernetes.ClientFactoryInterface
+	mu        sync.Mutex
+	discovery discovery.CachedDiscoveryInterface
+}
+
+// GetDiscoveryClient implements [Clients].
+func (c *clients) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.discovery == nil {
+		client, err := c.GetClient()
+		if err != nil {
+			return nil, err
+		}
+		c.discovery = memory.NewMemCacheClient(client.Discovery())
+	}
+
+	return c.discovery, nil
+}
+
 func ApplyStack(ctx context.Context, clients kubernetes.ClientFactoryInterface, resources []*unstructured.Unstructured, stackName string) error {
+	applierClients := NewClients(clients)
 	var lastErr error
 	if err := retry.Do(
 		func() error {
 			stack := Stack{
 				Name:      stackName,
 				Resources: resources,
-				Clients:   clients,
+				Clients:   applierClients,
 			}
 			lastErr = stack.Apply(ctx, true)
 			return lastErr
@@ -66,7 +106,7 @@ type Stack struct {
 	Name          string
 	Resources     []*unstructured.Unstructured
 	keepResources []string
-	Clients       kubernetes.ClientFactoryInterface
+	Clients       Clients
 
 	log *logrus.Entry
 }
@@ -76,11 +116,11 @@ type Stack struct {
 func (s *Stack) Apply(ctx context.Context, prune bool) error {
 	s.log = logrus.WithField("stack", s.Name)
 
-	discoveryClient, err := s.Clients.GetDiscoveryClient()
+	dynamicClient, err := s.Clients.GetDynamicClient()
 	if err != nil {
 		return err
 	}
-	dynamicClient, err := s.Clients.GetDynamicClient()
+	discoveryClient, err := s.Clients.GetDiscoveryClient()
 	if err != nil {
 		return err
 	}

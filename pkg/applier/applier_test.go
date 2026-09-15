@@ -76,7 +76,8 @@ spec:
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "test-deploy.yaml"), []byte(templateDeployment), 0400))
 
 	fakes := kubeutil.NewFakeClientFactory()
-	a := applier.NewApplier(dir, fakes)
+	clients := applier.NewClients(fakes)
+	a := applier.NewApplier(dir, clients)
 
 	ctx := t.Context()
 	err := a.Apply(ctx)
@@ -97,7 +98,7 @@ spec:
 	assert.NoError(t, err)
 
 	// Attempt to delete the stack with a different applier
-	a2 := applier.NewApplier(dir, fakes)
+	a2 := applier.NewApplier(dir, clients)
 	assert.NoError(t, a2.Delete(ctx))
 	// Check that the resources are deleted
 	_, err = fakes.DynamicClient.Resource(*gv).Namespace(metav1.NamespaceSystem).Get(ctx, "applier-test", metav1.GetOptions{})
