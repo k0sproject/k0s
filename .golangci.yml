@@ -120,6 +120,10 @@ linters:
       disable:
         - require-error # flags too many legitimate use cases
         - suite-thelper # flags too many legitimate use cases
+    usetesting: # Enable all off-by-default lints
+      context-background: true
+      context-todo: true
+      os-temp-dir: true
   exclusions:
     generated: lax
     presets:
