@@ -24,6 +24,13 @@ detailed guide on the recommended workflow can be found below:
 
 [GitHub flow]: https://docs.github.com/get-started/quickstart/github-flow
 
+## Code guidelines
+
+Guidelines for the k0s code base, beyond what the linters enforce, are collected
+here:
+
+- [Code guidelines](code_guidelines.md)
+
 ## Code Testing
 
 All submitted PRs go through a set of tests and reviews. You can run most of these tests *before* a PR is submitted.

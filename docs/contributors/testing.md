@@ -12,7 +12,9 @@ before submitting the PR.
 
 ## Run Local Verifications
 
-Please run the following style and formatting commands and fix/check-in any changes:
+Please run the following style and formatting commands, and then fix and check
+in any changes. These commands catch formatting and common mistakes. For
+anything they can't catch, see the [code guidelines](code_guidelines.md).
 
 1. Linting
 

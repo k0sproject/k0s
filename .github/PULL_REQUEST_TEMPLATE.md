@@ -7,6 +7,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 <!-- Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change. -->
 
+<!-- Use "Fixes #N" only if this PR resolves the issue. Otherwise, use "See #N". -->
+
 Fixes # (issue)
 
 ## Type of change
@@ -27,10 +29,10 @@ Fixes # (issue)
 
 ## Checklist
 
-- [ ] My code follows the style [guidelines](https://docs.k0sproject.io/head/contributors/) of this project
+- [ ] My code follows the [code guidelines](https://docs.k0sproject.io/head/contributors/code_guidelines/) of this project
 - [ ] My commit messages are [signed-off](https://docs.k0sproject.io/head/contributors/github_workflow/)
 - [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have commented my code, particularly explaining any non-obvious constraints
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works
