@@ -243,7 +243,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	}
 	clusterID := string(ns.UID)
 
-	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], restartTracker, c.cfg.K0sDataDir, c.enableWorker, clusterID, event); err != nil {
+	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], restartTracker, c.cfg.K0sDataDir, c.cfg.StatusSocketPath, c.enableWorker, clusterID, event); err != nil {
 		logger.WithError(err).Error("unable to register signal controllers")
 		return err
 	}
@@ -253,7 +253,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return err
 	}
 
-	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, c.clusterInfoCollector, leaderMode, clusterID); err != nil {
+	if err := updates.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, c.clusterInfoCollector, leaderMode, clusterID, c.cfg.StatusSocketPath); err != nil {
 		logger.WithError(err).Error("unable to register updates controllers")
 		return err
 	}
