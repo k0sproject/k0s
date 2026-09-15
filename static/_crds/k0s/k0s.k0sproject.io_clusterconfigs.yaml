@@ -227,18 +227,17 @@ spec:
                   description: FeatureGate specifies single feature gate
                   properties:
                     components:
-                      default:
-                      - kube-apiserver
-                      - kube-controller-manager
-                      - kubelet
-                      - kube-scheduler
-                      - kube-proxy
                       description: |-
-                        Components to use feature gate on
-                        Default: kube-apiserver, kube-controller-manager, kubelet, kube-scheduler, kube-proxy
+                        Components to use feature gate on. Applies to all Kubernetes components
+                        if empty.
                       items:
+                        enum:
+                        - kube-apiserver
+                        - kube-controller-manager
+                        - kube-proxy
+                        - kube-scheduler
+                        - kubelet
                         type: string
-                      minItems: 1
                       type: array
                       x-kubernetes-list-type: set
                     enabled:
