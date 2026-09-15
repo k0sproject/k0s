@@ -20,15 +20,12 @@ import (
 )
 
 func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubernetes.ClientFactoryInterface, newVersion string) error {
-	discoveryClient, err := clientFactory.GetDiscoveryClient()
+	client, err := clientFactory.GetClient()
 	if err != nil {
 		return err
 	}
 
-	// Refresh the discovery cache to ensure that we catch freshly created CRDs.
-	discoveryClient.Invalidate()
-
-	_, resources, err := discoveryClient.ServerGroupsAndResources()
+	_, resources, err := client.Discovery().ServerGroupsAndResourcesWithContext(ctx)
 	if err != nil {
 		log.WithError(err).Warn("Error while discovering supported API groups and resources")
 		if len(resources) == 0 {
@@ -66,12 +63,8 @@ func CanUpdate(ctx context.Context, log logrus.FieldLogger, clientFactory kubern
 			}
 
 			if metaClient == nil {
-				restConfig, err := clientFactory.GetRESTConfig()
+				metaClient, err = clientFactory.GetMetadataClient()
 				if err != nil {
-					return err
-				}
-
-				if metaClient, err = metadata.NewForConfig(restConfig); err != nil {
 					return err
 				}
 			}

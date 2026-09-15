@@ -23,14 +23,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
 	discoveryfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
 	kubernetesfake "k8s.io/client-go/kubernetes/fake"
 	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"
 )
 
@@ -57,13 +56,14 @@ func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
 	// transform between typed and unstructured objects.
 	tracker := fakeclient.TypedObjectTrackerFrom(scheme, fakeDynamic)
 	kubeClients := fakeclient.NewClientset[kubernetesfake.Clientset](fakeDiscovery, tracker)
+	metadataClient := fakeclient.NewMetadataClient(fakeDynamic)
 	apiExtensionsClients := fakeclient.NewClientset[apiextensionsfake.Clientset](fakeDiscovery, tracker)
 	k0sClients := fakeclient.NewClientset[k0sfake.Clientset](fakeDiscovery, tracker)
 
 	return &FakeClientFactory{
 		DynamicClient:       fakeDynamic,
 		Client:              kubeClients,
-		DiscoveryClient:     memory.NewMemCacheClient(fakeDiscovery),
+		MetadataClient:      metadataClient,
 		APIExtensionsClient: apiExtensionsClients,
 		K0sClient:           k0sClients,
 	}
@@ -72,7 +72,7 @@ func NewFakeClientFactory(objects ...runtime.Object) *FakeClientFactory {
 type FakeClientFactory struct {
 	DynamicClient       *dynamicfake.FakeDynamicClient
 	Client              kubernetes.Interface
-	DiscoveryClient     discovery.CachedDiscoveryInterface
+	MetadataClient      metadata.Interface
 	APIExtensionsClient *apiextensionsfake.Clientset
 	K0sClient           *k0sfake.Clientset
 }
@@ -85,8 +85,8 @@ func (f *FakeClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	return f.DynamicClient, nil
 }
 
-func (f *FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
-	return f.DiscoveryClient, nil
+func (f *FakeClientFactory) GetMetadataClient() (metadata.Interface, error) {
+	return f.MetadataClient, nil
 }
 
 func (f *FakeClientFactory) GetAPIExtensionsClient() (apiextensionsclientset.Interface, error) {
@@ -125,6 +125,13 @@ func makeAPIResourceLists(scheme *runtime.Scheme) (allResources []*metav1.APIRes
 			}
 
 			// Skip kinds that don't have an associated list kind.
+			// FIXME: This is a very blunt check if a type describes a top-level
+			// resource or not. However, there are some resources that don't
+			// have an associated list type which end up as false negatives
+			// here, but they're currently not being tested via the fake
+			// clients. Might be fixed by implementing a more sophisticated
+			// detection method, e.g. by scanning the clientsets, as outlined
+			// below, when detecting if resources are namespaced or not.
 			if !scheme.Recognizes(gv.WithKind(kind + "List")) {
 				continue
 			}
@@ -151,6 +158,16 @@ func makeAPIResourceLists(scheme *runtime.Scheme) (allResources []*metav1.APIRes
 			}
 
 			resources = append(resources, resource)
+		}
+
+		// Skip group versions that ended up without any resources. A real API
+		// server never advertises empty group versions.
+		// FIXME: This currently happens for group versions whose kinds all lack
+		// a list kind, e.g. the review kinds in authentication.k8s.io and
+		// authorization.k8s.io, due to the imperfect heuristics in the above
+		// loop.
+		if len(resources) == 0 {
+			continue
 		}
 
 		allResources = append(allResources, &metav1.APIResourceList{

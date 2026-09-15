@@ -12,10 +12,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -24,7 +23,7 @@ import (
 type ClientFactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
 	GetDynamicClient() (dynamic.Interface, error)
-	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
+	GetMetadataClient() (metadata.Interface, error)
 	GetAPIExtensionsClient() (apiextensionsclientset.Interface, error)
 	GetK0sClient() (k0sclientset.Interface, error)
 	GetConfigClient() (cfgClient.ClusterConfigInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
@@ -40,7 +39,7 @@ type ClientFactory struct {
 
 	client              kubernetes.Interface
 	dynamicClient       dynamic.Interface
-	discoveryClient     discovery.CachedDiscoveryInterface
+	metadataClient      metadata.Interface
 	apiExtensionsClient apiextensionsclientset.Interface
 	k0sClient           k0sclientset.Interface
 	restConfig          *rest.Config
@@ -94,12 +93,12 @@ func (c *ClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	return client, nil
 }
 
-func (c *ClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+func (c *ClientFactory) GetMetadataClient() (metadata.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	if c.discoveryClient != nil {
-		return c.discoveryClient, nil
+	if c.metadataClient != nil {
+		return c.metadataClient, nil
 	}
 
 	config, err := c.getRESTConfig()
@@ -107,15 +106,14 @@ func (c *ClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface
 		return nil, err
 	}
 
-	client, err := discovery.NewDiscoveryClientForConfig(config)
+	client, err := metadata.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
-	cachedClient := memory.NewMemCacheClient(client)
 
-	c.discoveryClient = cachedClient
+	c.metadataClient = client
 
-	return cachedClient, nil
+	return client, nil
 }
 
 func (c *ClientFactory) GetAPIExtensionsClient() (apiextensionsclientset.Interface, error) {
