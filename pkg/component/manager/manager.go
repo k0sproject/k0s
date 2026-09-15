@@ -186,10 +186,11 @@ func waitForReady(ctx context.Context, comp Component, name string, timeout time
 
 	// loop forever, until the context is canceled or until etcd is healthy
 	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
 	l := logrus.WithField("component", name)
 	for {
 		l.Debugf("waiting for component readiness")
-		if err := compWithReady.Ready(); err != nil {
+		if err := compWithReady.Ready(ctx); err != nil {
 			l.WithError(err).Debugf("component not ready yet")
 		} else {
 			return nil

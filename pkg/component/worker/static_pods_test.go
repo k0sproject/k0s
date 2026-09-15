@@ -182,7 +182,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("health_check_fails_without_init", func(t *testing.T) {
-		err := underTest.Ready()
+		err := underTest.Ready(t.Context())
 		require.Error(t, err)
 		require.Equal(t, "static_pods component is not yet running", err.Error())
 	})
@@ -211,7 +211,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("health_check_fails_before_run", func(t *testing.T) {
-		err := underTest.Ready()
+		err := underTest.Ready(t.Context())
 		require.Error(t, err)
 		require.Equal(t, "static_pods component is not yet running", err.Error())
 	})
@@ -247,7 +247,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("health_check_works", func(t *testing.T) {
-		err := underTest.Ready()
+		err := underTest.Ready(t.Context())
 		assert.NoError(t, err)
 		lastLog := logs.LastEntry()
 		require.Equal(t, "Answering health check", lastLog.Message)
@@ -298,7 +298,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 			expectedErrMsg = "No connection could be made because the target machine actively refused it."
 		}
 
-		err := underTest.Ready()
+		err := underTest.Ready(t.Context())
 		require.ErrorContains(t, err, expectedErrMsg)
 	})
 
