@@ -298,12 +298,7 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 		return nil, err
 	}
 
-	restConfig, err := clientFactory.GetRESTConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := metadata.NewForConfig(restConfig)
+	client, err := clientFactory.GetMetadataClient()
 	if err != nil {
 		return nil, err
 	}
