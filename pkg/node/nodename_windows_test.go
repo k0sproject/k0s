@@ -25,7 +25,7 @@ func TestGetNodeNameWindows(t *testing.T) {
 	baseURL := startFakeMetadataServer(t)
 
 	t.Run("no_metadata_service_available", func(t *testing.T) {
-		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL))
+		ctx := k0scontext.WithValue(t.Context(), nodenameURL(baseURL))
 		name, err := getNodeName(ctx, "")
 		if assert.NoError(t, err) {
 			assert.Equal(t, apitypes.NodeName(kubeHostname), name)
@@ -33,7 +33,7 @@ func TestGetNodeNameWindows(t *testing.T) {
 	})
 
 	t.Run("metadata_service_is_available", func(t *testing.T) {
-		ctx := k0scontext.WithValue(context.TODO(), nodenameURL(baseURL+"/latest/meta-data/local-hostname"))
+		ctx := k0scontext.WithValue(t.Context(), nodenameURL(baseURL+"/latest/meta-data/local-hostname"))
 		name, err := getNodeName(ctx, "")
 		if assert.NoError(t, err) {
 			assert.Equal(t, apitypes.NodeName("some-hostname from aws_metadata"), name)
@@ -60,7 +60,8 @@ func startFakeMetadataServer(t *testing.T) string {
 	}()
 
 	t.Cleanup(func() {
-		err := server.Shutdown(context.Background())
+		// The test's context is already canceled when cleanup functions run.
+		err := server.Shutdown(context.Background()) //nolint:usetesting
 		if !assert.NoError(t, err, "Couldn't shutdown HTTP server") {
 			return
 		}
