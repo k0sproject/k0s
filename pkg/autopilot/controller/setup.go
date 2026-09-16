@@ -58,14 +58,14 @@ func (c *rootController) setup(ctx context.Context) error {
 
 // createControlNode creates a new control node, ignoring errors if one already exists
 // for this physical host.
-func (sc *rootController) createControlNode(ctx context.Context, name, nodeName string) error {
-	if !sc.apiAddress.IsValid() {
+func (c *rootController) createControlNode(ctx context.Context, name, nodeName string) error {
+	if !c.apiAddress.IsValid() {
 		return errors.New("no API address given")
 	}
-	apiAddress := sc.apiAddress.String()
+	apiAddress := c.apiAddress.String()
 
-	logger := sc.log.WithField("component", "setup")
-	client, err := sc.kubeClientFactory.GetK0sClient()
+	logger := c.log.WithField("component", "setup")
+	client, err := c.kubeClientFactory.GetK0sClient()
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (sc *rootController) createControlNode(ctx context.Context, name, nodeName 
 	node, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		logger.Info("Autopilot 'controlnodes' CRD not found, waiting...")
-		if err := sc.waitForControlNodesCRD(ctx); err != nil {
+		if err := c.waitForControlNodesCRD(ctx); err != nil {
 			return fmt.Errorf("while waiting for autopilot 'controlnodes' CRD: %w", err)
 		}
 
@@ -82,7 +82,7 @@ func (sc *rootController) createControlNode(ctx context.Context, name, nodeName 
 
 		logger.Infof("ControlNode '%s' not found, creating", name)
 		mode := apconst.K0SControlNodeModeController
-		if sc.enableWorker {
+		if c.enableWorker {
 			mode = apconst.K0SControlNodeModeControllerWorker
 		}
 		node = &apv1beta2.ControlNode{
@@ -129,8 +129,8 @@ func (sc *rootController) createControlNode(ctx context.Context, name, nodeName 
 
 // waitForControlNodesCRD waits until the controlnodes CRD is established for
 // max 2 minutes.
-func (sc *rootController) waitForControlNodesCRD(ctx context.Context) error {
-	extClient, err := sc.kubeClientFactory.GetAPIExtensionsClient()
+func (c *rootController) waitForControlNodesCRD(ctx context.Context) error {
+	extClient, err := c.kubeClientFactory.GetAPIExtensionsClient()
 	if err != nil {
 		return fmt.Errorf("unable to obtain extensions client: %w", err)
 	}
@@ -141,7 +141,7 @@ func (sc *rootController) waitForControlNodesCRD(ctx context.Context) error {
 		WithObjectName("controlnodes."+apv1beta2.GroupName).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryDelay, e := watch.IsRetryable(err); e == nil {
-				sc.log.WithError(err).Debugf(
+				c.log.WithError(err).Debugf(
 					"Encountered transient error while waiting for autopilot 'controlnodes' CRD, retrying in %s",
 					retryDelay,
 				)

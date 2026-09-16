@@ -23,6 +23,6 @@ func DefaultClusterTelemetry() *ClusterTelemetry {
 }
 
 // Validate stub for Validateable interface
-func (c *ClusterTelemetry) Validate() []error {
+func (*ClusterTelemetry) Validate() []error {
 	return nil
 }

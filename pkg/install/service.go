@@ -57,6 +57,8 @@ func InstalledService() (service.Service, error) {
 }
 
 // InstallService installs the k0s service, per the given arguments, and the detected platform
+//
+//nolint:revive // TODO figure out a new name
 func InstallService(ctx context.Context, args []string, envVars []string, force bool) error {
 	var svcConfig *service.Config
 

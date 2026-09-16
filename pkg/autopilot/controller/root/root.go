@@ -7,8 +7,7 @@ import (
 	"context"
 )
 
-// TODO: decide on renaming root.RootConfig -> root.Config
-type RootConfig struct {
+type RootConfig struct { //nolint:revive // TODO rename to Config
 	InvocationID        string
 	KubeConfig          string
 	K0sDataDir          string
