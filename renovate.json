@@ -124,6 +124,18 @@
       "respectLatest": false
     },
     {
+      "description": "Separate Kubernetes patch and minor bumps for the main branch",
+      "matchBaseBranches": [
+        "main"
+      ],
+      "matchPackageNames": [
+        "k8s.io/**",
+        "**/kubernetes",
+        "**/kube-proxy"
+      ],
+      "separateMinorPatch": true
+    },
+    {
       "description": "Ignore some pinned dependencies",
       "enabled": false,
       "matchDatasources": [
