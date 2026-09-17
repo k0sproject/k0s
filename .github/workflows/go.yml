@@ -227,9 +227,7 @@ jobs:
     name: "Build :: k0s :: arm"
     if: github.repository == 'k0sproject/k0s'
     runs-on:
-      - self-hosted
-      - linux
-      - arm
+      - alpine-runner-test
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"
@@ -335,9 +333,7 @@ jobs:
           - check-calico
           - check-airgap
     runs-on:
-      - self-hosted
-      - linux
-      - arm
+      - alpine-runner-test
 
     steps:
       - name: Check out code into the Go module directory
