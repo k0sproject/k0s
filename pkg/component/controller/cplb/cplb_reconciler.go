@@ -30,7 +30,7 @@ import (
 // CPLBReconciler monitors the endpoints of the "kubernetes" service in the
 // "default" namespace. It notifies changes though the updateCh channel provided
 // in the constructor.
-type CPLBReconciler struct {
+type CPLBReconciler struct { //nolint:revive // TODO rename to Reconciler
 	apiPort        int
 	log            *logrus.Entry
 	kubeconfigPath string

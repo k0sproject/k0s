@@ -70,7 +70,7 @@ func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, o
 	} else {
 		b.Log.Infof("About to bundle %d artifacts", len)
 		var close func()
-		client, close = newHttpClient(b.InsecureRegistries == SkipTLSVerifyOCIRegistry)
+		client, close = newHTTPClient(b.InsecureRegistries == SkipTLSVerifyOCIRegistry)
 		defer close()
 	}
 
@@ -228,7 +228,7 @@ func (b *OCIArtifactsBundler) manifestsForRef(log *logrus.Entry, ref reference.N
 	return manifests, nil
 }
 
-func newHttpClient(insecureSkipTLSVerify bool) (_ *http.Client, close func()) {
+func newHTTPClient(insecureSkipTLSVerify bool) (_ *http.Client, close func()) {
 	// This transports is, by design, a trimmed down version of http's DefaultTransport.
 	// No need to have all those timeouts the default client brings in.
 	transport := &http.Transport{Proxy: http.ProxyFromEnvironment}
@@ -444,25 +444,25 @@ type ociLayoutArchiveWriter struct {
 	blobs []digest.Digest
 }
 
-func (t *ociLayoutArchive) doSynchronized(exclusive bool, fn func(w *ociLayoutArchiveWriter) error) (err error) {
+func (a *ociLayoutArchive) doSynchronized(exclusive bool, fn func(w *ociLayoutArchiveWriter) error) (err error) {
 	if exclusive {
-		t.mu.Lock()
+		a.mu.Lock()
 		defer func() {
 			if err != nil {
-				t.w = nil
+				a.w = nil
 			}
-			t.mu.Unlock()
+			a.mu.Unlock()
 		}()
 	} else {
-		t.mu.RLock()
-		defer t.mu.RUnlock()
+		a.mu.RLock()
+		defer a.mu.RUnlock()
 	}
 
-	if t.w == nil {
+	if a.w == nil {
 		return errors.New("writer is broken")
 	}
 
-	return fn(t.w)
+	return fn(a.w)
 }
 
 // Exists implements [oras.Target].

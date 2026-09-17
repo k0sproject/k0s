@@ -12,19 +12,19 @@ import (
 var (
 	//go:embed _crds
 	crds embed.FS
-	CRDs fs.FS = subFS(crds, "_crds")
+	CRDs = subFS(crds, "_crds")
 )
 
 var (
 	//go:embed manifests/calico
 	calicoManifests embed.FS
-	CalicoManifests fs.FS = subFS(calicoManifests, "manifests", "calico")
+	CalicoManifests = subFS(calicoManifests, "manifests", "calico")
 )
 
 var (
 	//go:embed manifests/windows
 	windowsManifests embed.FS
-	WindowsManifests fs.FS = subFS(windowsManifests, "manifests", "windows")
+	WindowsManifests = subFS(windowsManifests, "manifests", "windows")
 )
 
 func subFS(f fs.FS, segments ...string) fs.FS {

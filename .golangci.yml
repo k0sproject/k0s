@@ -101,10 +101,30 @@ linters:
         # Unclear whether it's a good idea for k0s to enforce this.
         - embedlit
     revive:
+      enable-default-rules: true # This is required as soon as individual rules get listed.
       rules:
+        # Doesn't take comments into account.
+        - name: empty-block
+          disabled: true
+        # Used intentionally to limit the scope of initialized variables.
+        - name: indent-error-flow
+          disabled: true
+        # Used intentionally to limit the scope of initialized variables.
+        - name: superfluous-else
+          disabled: true
         # This forbids to name variables "close", which seems natural for "close" functions.
         - name: redefines-builtin-id
           disabled: true
+        # Flags callback and interface method parameters, where the names serve as documentation.
+        # Removable parameters are already reported by unparam.
+        - name: unused-parameter
+          disabled: true
+        - name: var-naming
+          arguments:
+            - [] # Empty allowlist (positional arg)
+            - [] # Empty blocklist (positional arg)
+            # Mostly for C constants
+            - - upper-case-const: true
     staticcheck:
       checks:
         # Ignore deprecations: They shouldn't break the CI. If this were the

@@ -40,7 +40,6 @@ func testListenFunc(t *testing.T, ln net.Listener) func(network, laddr string) (
 		}
 		if laddr != testFrontAddr {
 			t.Fatalf("got Listen call with laddr %q, want %q", laddr, testFrontAddr)
-			panic("bogus address")
 		}
 		return ln, nil
 	}

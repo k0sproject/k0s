@@ -6,7 +6,7 @@ package internal
 import (
 	"errors"
 	"net/http"
-	_ "net/http/pprof"
+	_ "net/http/pprof" // registers the pprof handlers on the default serve mux
 	"os"
 	"strconv"
 

@@ -27,7 +27,7 @@ type FactoryInterface interface {
 }
 
 // Deprecated: Use [kubeutil.ClientFactory] instead.
-type ClientFactory struct {
+type ClientFactory struct { //nolint:revive // deprecated
 	kubeutil.ClientFactoryInterface
 }
 
