@@ -11,8 +11,12 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
-	"sigs.k8s.io/yaml"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -59,11 +63,10 @@ func TestCalicoManifests(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil))
 
-		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
-		require.NoError(t, err, "must have daemon set for calico")
-		spec := daemonSetContainersEnv{}
-		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
-		spec.RequireContainerHasEnvVariable(t, "calico-node", "FELIX_WIREGUARDENABLED", "true")
+		daemonSet := requireResource[appsv1.DaemonSet](t, calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml")
+		calicoNode := findContainer(daemonSet.Spec.Template.Spec.Containers, "calico-node")
+		require.NotNil(t, calicoNode, "No calico-node container")
+		assertEnvVar(t, calicoNode.Env, "FELIX_WIREGUARDENABLED", new("true"))
 	})
 
 	t.Run("must_not_have_wireguard_enabled_if_config_has_no", func(t *testing.T) {
@@ -72,13 +75,13 @@ func TestCalicoManifests(t *testing.T) {
 
 		cfg, err := calico.getConfig(clusterConfig)
 		require.NoError(t, err)
-		_ = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil)
+		err = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil)
+		require.NoError(t, err)
 
-		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
-		require.NoError(t, err, "must have daemon set for calico")
-		spec := daemonSetContainersEnv{}
-		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
-		spec.RequireContainerHasNoEnvVariable(t, "calico-node", "FELIX_WIREGUARDENABLED")
+		daemonSet := requireResource[appsv1.DaemonSet](t, calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml")
+		calicoNode := findContainer(daemonSet.Spec.Template.Spec.Containers, "calico-node")
+		require.NotNil(t, calicoNode, "No calico-node container")
+		assertEnvVar(t, calicoNode.Env, "FELIX_WIREGUARDENABLED", nil)
 	})
 
 	t.Run("ip_autodetection", func(t *testing.T) {
@@ -93,14 +96,14 @@ func TestCalicoManifests(t *testing.T) {
 				"IPv6 autodetection was not specified, hence it should be the same as the IPv4 autodetection method.")
 			cfg, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
-			_ = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil)
-			daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
-			require.NoError(t, err, "must have daemon set for calico")
+			err = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil)
+			require.NoError(t, err)
 
-			spec := daemonSetContainersEnv{}
-			require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
-			spec.RequireContainerHasEnvVariable(t, "calico-node", "IP6_AUTODETECTION_METHOD", templateContext.IPAutodetectionMethod)
-			spec.RequireContainerHasEnvVariable(t, "calico-node", "IP_AUTODETECTION_METHOD", templateContext.IPAutodetectionMethod)
+			daemonSet := requireResource[appsv1.DaemonSet](t, calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml")
+			calicoNode := findContainer(daemonSet.Spec.Template.Spec.Containers, "calico-node")
+			require.NotNil(t, calicoNode, "No calico-node container")
+			assertEnvVar(t, calicoNode.Env, "IP6_AUTODETECTION_METHOD", &templateContext.IPAutodetectionMethod)
+			assertEnvVar(t, calicoNode.Env, "IP_AUTODETECTION_METHOD", &templateContext.IPAutodetectionMethod)
 		})
 		t.Run("use_IPV6AutodetectionMethod_for_ipv6_if_specified", func(t *testing.T) {
 			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
@@ -112,14 +115,14 @@ func TestCalicoManifests(t *testing.T) {
 			require.Equal(t, clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod, templateContext.IPV6AutodetectionMethod)
 			cfg, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
-			_ = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil)
-			daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
-			require.NoError(t, err, "must have daemon set for calico")
+			err = calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil)
+			require.NoError(t, err)
 
-			spec := daemonSetContainersEnv{}
-			require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
-			spec.RequireContainerHasEnvVariable(t, "calico-node", "IP6_AUTODETECTION_METHOD", templateContext.IPV6AutodetectionMethod)
-			spec.RequireContainerHasEnvVariable(t, "calico-node", "IP_AUTODETECTION_METHOD", templateContext.IPAutodetectionMethod)
+			daemonSet := requireResource[appsv1.DaemonSet](t, calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml")
+			calicoNode := findContainer(daemonSet.Spec.Template.Spec.Containers, "calico-node")
+			require.NotNil(t, calicoNode, "No calico-node container")
+			assertEnvVar(t, calicoNode.Env, "IP6_AUTODETECTION_METHOD", &templateContext.IPV6AutodetectionMethod)
+			assertEnvVar(t, calicoNode.Env, "IP_AUTODETECTION_METHOD", &templateContext.IPAutodetectionMethod)
 		})
 	})
 
@@ -142,21 +145,26 @@ func TestCalicoManifests(t *testing.T) {
 				require.NoError(t, err)
 				require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil))
 
-				daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
-				require.NoError(t, err, "must have daemon set for calico")
-				spec := daemonSetContainersEnv{}
-				require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+				daemonSet := requireResource[appsv1.DaemonSet](t, calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml")
+				container := findContainer(daemonSet.Spec.Template.Spec.Containers, "calico-node")
+				require.NotNil(t, container, "No calico-node container")
 				for _, varName := range []string{"FELIX_IPINIPMTU", "FELIX_VXLANMTU", "FELIX_WIREGUARDMTU"} {
-					spec.RequireContainerHasEnvVariable(t, "calico-node", varName, test.expected)
+					assertEnvVar(t, container.Env, varName, new(test.expected))
 				}
-				assert.Contains(t, string(daemonSetManifestRaw), `"mtu": `+test.expected+",")
+				container = findContainer(daemonSet.Spec.Template.Spec.InitContainers, "install-cni")
+				require.NotNil(t, container, "No install-cni init container")
+				idx := slices.IndexFunc(container.Env, func(env corev1.EnvVar) bool { return env.Name == "CNI_NETWORK_CONFIG" })
+				if assert.GreaterOrEqual(t, 0, idx, "No CNI_NETWORK_CONFIG environment variable") {
+					assert.Contains(t, container.Env[idx].Value, `"mtu": `+test.expected+",")
+				}
 
-				daemonSetManifestRaw, err = os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node-windows.yaml"))
-				require.NoError(t, err, "must have daemon set for calico on Windows")
-				spec = daemonSetContainersEnv{}
-				require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
-				spec.RequireContainerHasEnvVariable(t, "install-cni", "CNI_MTU", test.expected)
-				spec.RequireContainerHasEnvVariable(t, "felix", "FELIX_VXLANMTU", test.expected)
+				daemonSet = requireResource[appsv1.DaemonSet](t, calico.manifestsDir, "calico", "calico-DaemonSet-calico-node-windows.yaml")
+				container = findContainer(daemonSet.Spec.Template.Spec.InitContainers, "install-cni")
+				require.NotNil(t, container, "No install-cni init container in Windows DaemonSet")
+				assertEnvVar(t, container.Env, "CNI_MTU", new(test.expected))
+				container = findContainer(daemonSet.Spec.Template.Spec.Containers, "felix")
+				require.NotNil(t, container, "No felix container in Windows DaemonSet")
+				assertEnvVar(t, container.Env, "FELIX_VXLANMTU", new(test.expected))
 			})
 		}
 	})
@@ -175,76 +183,60 @@ func TestCalicoManifests(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, false}, nil))
 
-		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
-		require.NoError(t, err, "must have daemon set for calico")
-		spec := daemonSetContainersEnv{}
-		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
-		spec.RequireContainerHasEnvVariable(t, "calico-node", "CALICO_IPV4POOL_CIDR", "10.244.0.0/16")
+		daemonSet := requireResource[appsv1.DaemonSet](t, calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml")
+		calicoNode := findContainer(daemonSet.Spec.Template.Spec.Containers, "calico-node")
+		require.NotNil(t, calicoNode, "No calico-node container")
+		assertEnvVar(t, calicoNode.Env, "CALICO_IPV4POOL_CIDR", new("10.244.0.0/16"))
 	})
 }
 
-// this structure is needed only for unit tests and basically it describes some fields that are needed to be parsed out of the daemon set manifest
-type daemonSetContainersEnv struct {
-	Spec struct {
-		Template struct {
-			Spec struct {
-				InitContainers []daemonSetContainer `yaml:"initContainers"`
-				Containers     []daemonSetContainer `yaml:"containers"`
-				Volumes        []struct {
-					Name     string `yaml:"name"`
-					HostPath struct {
-						Type string `yaml:"type"`
-						Path string `yaml:"path"`
-					} `yaml:"hostPath"`
-				} `yaml:"volumes"`
-			} `yaml:"spec"`
-		} `yaml:"template"`
-	} `yaml:"spec"`
-}
+func requireResource[T any, PT interface {
+	*T
+	runtime.Object
+}](t *testing.T, path ...string) (found *T) {
+	t.Helper()
 
-type daemonSetContainer struct {
-	Name string `yaml:"name"`
-	Env  []struct {
-		Name      string `yaml:"name"`
-		Value     string `yaml:"value"`
-		ValueFrom any    `yaml:"valueFrom"`
-	} `yaml:"env"`
-}
+	raw, err := os.Open(filepath.Join(path...))
+	require.NoError(t, err)
+	defer raw.Close()
 
-func (ds daemonSetContainersEnv) allContainers() []daemonSetContainer {
-	return slices.Concat(ds.Spec.Template.Spec.InitContainers, ds.Spec.Template.Spec.Containers)
-}
-
-func (ds daemonSetContainersEnv) RequireContainerHasEnvVariable(t *testing.T, containerName string, varName string, varValue string) {
-	containerFound := false
-	for _, container := range ds.allContainers() {
-		if container.Name != containerName {
-			continue
-		}
-		containerFound = true
-		found := false
-		for _, envSpec := range container.Env {
-			if envSpec.Name == varName {
-				found = true
-				require.Equal(t, varValue, envSpec.Value)
+	for obj, err := range testutil.ParseObjects(scheme.Scheme, raw) {
+		require.NoErrorf(t, err, "While parsing %s", raw.Name())
+		if obj, ok := obj.(PT); ok {
+			if found == nil {
+				found = obj
+				continue
 			}
 		}
-		require.Truef(t, found, "Variable %s not found", varName)
+
+		require.Failf(t, "Unexpected object", "%#v", obj)
 	}
-	require.Truef(t, containerFound, "Container %s not found", containerName)
+
+	return found
 }
 
-func (ds daemonSetContainersEnv) RequireContainerHasNoEnvVariable(t *testing.T, containerName string, varName string) {
-	for _, container := range ds.allContainers() {
-		if container.Name != containerName {
-			continue
+func findContainer(containers []corev1.Container, name string) *corev1.Container {
+	for i := range containers {
+		if containers[i].Name == name {
+			return &containers[i]
 		}
-		found := false
-		for _, envSpec := range container.Env {
-			if envSpec.Name == varName {
-				found = true
+	}
+	return nil
+}
+
+func assertEnvVar(t *testing.T, vars []corev1.EnvVar, name string, value *string) {
+	t.Helper()
+	for _, env := range vars {
+		if env.Name == name {
+			if value == nil {
+				assert.Failf(t, "Expected environment variable to be unset", "Actual value of %s: %q", name, env.Value)
+			} else {
+				assert.Equalf(t, *value, env.Value, "Unexpected value of environment variable %s", name)
 			}
+			return
 		}
-		require.Falsef(t, found, "Variable %s must not be found", varName)
+	}
+	if value != nil {
+		assert.Failf(t, "Expected environment variable to be present", "Expected value of %s: %q", name, *value)
 	}
 }
