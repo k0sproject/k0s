@@ -45,15 +45,14 @@ type ClusterSpec struct {
 	MetricsServer     *MetricsServer         `json:"metricsServer,omitempty"`
 }
 
-// UnmarshalJSON decodes ClusterSpec while tolerating the removed
-// "podSecurityPolicy" field. It used to configure the (now removed) pod
-// security policy admission controller and may still be present in on-disk
-// configs (e.g. written by k0sctl), so it's accepted and discarded here
-// instead of failing strict decoding.
 func (s *ClusterSpec) UnmarshalJSON(data []byte) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 
+	// podSecurityPolicy configured the (now removed) pod security policy
+	// admission controller. It may still be present in on-disk configs
+	// (e.g. written by k0sctl), so it's accepted and discarded here
+	// instead of failing strict decoding.
 	type clusterSpec ClusterSpec
 	spec := struct {
 		*clusterSpec
@@ -375,7 +374,8 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 
-	if err := decoder.Decode(jc); err != nil {
+	err := decoder.Decode(jc)
+	if err != nil {
 		return err
 	}
 

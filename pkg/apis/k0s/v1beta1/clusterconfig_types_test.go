@@ -270,16 +270,7 @@ spec:
 	assert.Equal(t, DefaultExtensions(), e.Spec.Extensions)
 }
 
-// TestNullValuesWithIgnoredUnknownField ensures that defaults are still
-// applied to null fields even when the config also contains the removed
-// podSecurityPolicy field, which ClusterSpec.UnmarshalJSON accepts and
-// discards instead of failing strict decoding. Previously, that field
-// caused an "unknown field" decode error that was forgiven by a caller
-// after the fact, but only once UnmarshalJSON had already returned before
-// applying any defaults, so installConfig: null (and other null fields)
-// leaked through as nil.
-// https://github.com/k0sproject/k0s/issues/3986
-func TestNullValuesWithIgnoredUnknownField(t *testing.T) {
+func TestConfigFromBytes_NullValuesAndPSP(t *testing.T) {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
@@ -298,11 +289,7 @@ spec:
 	require.NotNil(t, c.Spec.Install.SystemUsers)
 }
 
-// TestTelemetryIgnoresRemovedIntervalField ensures that the removed
-// telemetry.interval field (which used to configure the telemetry interval)
-// is accepted and discarded by ClusterTelemetry.UnmarshalJSON instead of
-// failing strict decoding, e.g. for on-disk configs written by k0sctl.
-func TestTelemetryIgnoresRemovedIntervalField(t *testing.T) {
+func TestConfigFromBytes_TelemetryIgnoresInterval(t *testing.T) {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
