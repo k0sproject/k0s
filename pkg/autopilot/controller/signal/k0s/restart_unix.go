@@ -86,13 +86,14 @@ type restart struct {
 	client           crcli.Client
 	delegate         apdel.ControllerDelegate
 	isRestartPending IsRestartPendingFunc
+	statusSocketPath string
 }
 
 // registerRestart registers the 'restart' controller to the controller-runtime manager.
 //
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
-func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, isRestartPending IsRestartPendingFunc) error {
+func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, isRestartPending IsRestartPendingFunc, statusSocketPath string) error {
 	name := strings.ToLower(delegate.Name()) + "_k0s_restart"
 	logger.Info("Registering reconciler: ", name)
 
@@ -106,6 +107,7 @@ func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred
 				client:           mgr.GetClient(),
 				delegate:         delegate,
 				isRestartPending: isRestartPending,
+				statusSocketPath: statusSocketPath,
 			},
 		)
 }
@@ -127,7 +129,7 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 
 	// Get the current version of k0s
 	logger.Info("Determining the current version of k0s")
-	k0sVersion, err := getK0sVersion(status.DefaultSocketPath)
+	k0sVersion, err := getK0sVersion(r.statusSocketPath)
 	if err != nil {
 		logger.Info("Unable to determine current verion of k0s; requeuing")
 		return cr.Result{}, fmt.Errorf("unable to get k0s version: %w", err)
@@ -180,7 +182,7 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 
 	logger.Info("Preparing to restart k0s")
 
-	k0sPid, err := getK0sPid(status.DefaultSocketPath)
+	k0sPid, err := getK0sPid(r.statusSocketPath)
 	if err != nil {
 		logger.Info("Unable to determine current k0s pid; requeuing")
 		return cr.Result{RequeueAfter: restartRequeueDuration}, fmt.Errorf("unable to get k0s pid: %w", err)
