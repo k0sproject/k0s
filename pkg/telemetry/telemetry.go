@@ -10,7 +10,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,7 +68,7 @@ func (c *Component) collectTelemetry(ctx context.Context, clients kubernetes.Int
 	data.WorkerData = wds
 	data.MEMTotal = sums.memTotal
 	data.CPUTotal = sums.cpuTotal
-	data.ControlPlaneNodesCount, err = kubeutil.CountActiveControllerLeases(ctx, clients)
+	data.ControlPlaneNodesCount, err = leasecounter.ActiveLeases(ctx, clients)
 	if err != nil {
 		return data, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
