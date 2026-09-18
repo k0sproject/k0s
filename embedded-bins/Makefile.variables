@@ -1,5 +1,5 @@
-# renovate: datasource=docker depName=docker.io/library/alpine versioning=docker
-alpine_patch_version = 3.24.2
+alpine_image = docker.io/library/alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+alpine_patch_version = $(lastword $(subst :, ,$(firstword $(subst @, ,$(alpine_image)))))
 alpine_version = $(word 1,$(subst ., ,$(alpine_patch_version))).$(word 2,$(subst ., ,$(alpine_patch_version)))
 
 # renovate: datasource=golang-version depName=go
@@ -73,11 +73,11 @@ konnectivity_build_go_ldflags = -w -s
 konnectivity_build_go_ldflags_extra = -extldflags=-static
 
 iptables_version = 1.8.13
-iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
+iptables_buildimage = $(alpine_image)
 
 # renovate: datasource=github-tags depName=acassen/keepalived
 keepalived_version = 2.4.3
-keepalived_buildimage = docker.io/library/alpine:$(alpine_patch_version)
+keepalived_buildimage = $(alpine_image)
 keepalived_build_cflags = -static -s
 keepalived_build_ldflags = -static
 keepalived_build_configure_flags = --disable-dynamic-linking

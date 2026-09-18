@@ -17,7 +17,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: wait-for-dependency
-          image: docker.io/library/busybox:1-musl
+          image: {{ required "hook.image must be set" .Values.hook.image }}
           command:
             - sh
             - -c
