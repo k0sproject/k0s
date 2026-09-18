@@ -402,7 +402,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.CsrApproverComponentName) {
-		nodeComponents.Add(ctx, controller.NewCSRApprover(leaderElector, adminClientFactory))
+		nodeComponents.Add(ctx, controller.NewCSRApprover(leaderElector, adminClientFactory, nodeConfig.Spec.Network))
 	}
 
 	if flags.EnableK0sCloudProvider {
