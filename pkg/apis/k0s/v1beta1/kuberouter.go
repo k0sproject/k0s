@@ -65,7 +65,7 @@ func (k *KubeRouter) Validate(path *field.Path) (errs []error) {
 	if k == nil {
 		return
 	}
-	errs = append(errs, k.Patches.validate(path.Child("patches"))...)
+	errs = append(errs, toErrors(k.Patches.validate(path.Child("patches")))...)
 	return
 }
 
